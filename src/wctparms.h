@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-enum BBSearchStrat {
+enum BBNodeSelection {
     min_search_strategy    = 0,
     no_branching    = min_search_strategy,
     min_lb_strategy = 1,
@@ -73,7 +73,7 @@ enum print {
     use_print = 1,
 };
 
-enum BranchandBoundStrat {
+enum BBSearchStrategy {
     min_bb_strategy = 0,
     conflict_strategy = min_bb_strategy,
     ahv_strategy = 1,
