@@ -39,10 +39,10 @@ namespace tdzdd
     int const NODE_ROW_OFFSET = NODE_COL_BITS + NODE_ATTR_BITS;
     int const NODE_ATTR_OFFSET = NODE_COL_BITS;
 
-    uint64_t const NODE_ROW_MAX = (uint64_t(1) << NODE_ROW_BITS) - 1;
+    //uint64_t const NODE_ROW_MAX = (uint64_t(1) << NODE_ROW_BITS) - 1;
     uint64_t const NODE_COL_MAX = (uint64_t(1) << NODE_COL_BITS) - 1;
 
-    uint64_t const NODE_ROW_MASK = NODE_ROW_MAX << NODE_ROW_OFFSET;
+    //uint64_t const NODE_ROW_MASK = NODE_ROW_MAX << NODE_ROW_OFFSET;
     uint64_t const NODE_ATTR_MASK = uint64_t(1) << NODE_ATTR_OFFSET;
 
     class NodeId

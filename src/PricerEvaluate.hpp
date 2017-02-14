@@ -461,7 +461,7 @@ class WeightBDD: public
     }
 
     Optimal_Solution<T> get_objective(tdzdd::NodeTableHandler<2> diagram,
-                                      tdzdd::DataTable<PricerWeightBDD<T>> *data_table, const tdzdd::NodeId *f) {
+                                      tdzdd::DataTable<PricerWeightBDD<T> > *data_table, const tdzdd::NodeId *f) {
         Optimal_Solution<T> sol;
         sol.obj = (*data_table)[f->row()][f->col()].obj;
         tdzdd::NodeId cur_node = *f;
@@ -543,7 +543,7 @@ class WeightZDD: public
     }
 
     Optimal_Solution<T> get_objective(tdzdd::NodeTableHandler<2> diagram,
-                                      tdzdd::DataTable<PricerWeightZDD<T>> *data_table, const tdzdd::NodeId *f) {
+                                      tdzdd::DataTable<PricerWeightZDD<T> > *data_table, const tdzdd::NodeId *f) {
         Optimal_Solution<T> sol;
         sol.C_max = 0;
         node<T> *ptr = (*data_table)[f->row()][f->col()].list[sol.C_max];
