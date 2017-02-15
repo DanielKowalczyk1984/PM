@@ -294,7 +294,7 @@ int backup_wctdata(wctdata *pd, wctproblem *problem);
  * wct.c
  */
 
-int read_problem(char *f, int *njobs, int **duration, int **weights);
+int read_problem(char *f, int *njobs, int **duration, int **duedate, int **weights, int nmachines);
 
 /** Preprocess data */
 gint compare_readytime(gconstpointer a, gconstpointer b);
