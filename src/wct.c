@@ -11,6 +11,7 @@
 int recover_elist(wctdata *pd);
 int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b);
 int compare_nodes_bfs(BinomialHeapValue a, BinomialHeapValue b);
+int compare_edd(const void *a, const void *b);
 static int get_int_heap_key(double dbl_heap_key, int v1, int v2, int nmachines,
                             int njobs,
                             double error);
@@ -67,6 +68,17 @@ int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b) {
     }
 }
 
+int compare_edd(const void *a,const void *b){
+    Job *x = (Job *)a;
+    Job *y = (Job *)b;
+
+    if(x->duetime == y->duetime) {
+        return y->processingime - x->processingime;
+    } else {
+        return x->duetime - y->duetime;
+    }
+}
+
 int compare_nodes_dfs_ahv(BinomialHeapValue a, BinomialHeapValue b) {
     double lp_a = (((wctdata *)a)->LP_lower_bound - ((wctdata *)a)->depth * 10000);
     double lp_b = (((wctdata *)b)->LP_lower_bound - ((wctdata *)b)->depth * 10000);
@@ -100,23 +112,21 @@ void set_dbg_lvl(int dbglvl) {
 /**
  * Reading of the jobfile
  */
-static int permute_nodes(int *invorder, int njobs, int *duration,
-                         int *weight, int **durationlist, int **weightlist);
-int read_problem(char *f, int *njobs, int **durationlist, int **weightlist) {
-    int i, val = 0;
-    int nbjobs = 0,  prob = 0;
-    int curduration, curweight, curjob = 0;
+// static int permute_nodes(int *invorder, int njobs, int *duration, int *duedate,
+//                          int *weight, int **durationlist, int **duedatelist, int **weightlist);
+int read_problem(char *f, int *njobs, int **durationlist, int **duedatelist, int **weightlist, int nmachines) {
+    int val = 0;
+    int nbjobs = 0;
+    int curduration, curduedate, curweight, curjob = 0;
     int *duration = (int *) NULL;
+    int *duedate = (int *) NULL;
     int *weight = (int *) NULL;
-    double *ratio = (double *) NULL;
     char buf[256], *p;
     int bufsize;
     const char *delim = " \n";
     char *data = (char *) NULL;
     char *buf2 = (char *) NULL;
     FILE *in = (FILE *) NULL;
-    int *perm = (int *) NULL;
-    int *iperm = (int *)NULL;
     in = fopen(f, "r");
 
     if (!in) {
@@ -127,32 +137,17 @@ int read_problem(char *f, int *njobs, int **durationlist, int **weightlist) {
 
     if (fgets(buf, 254, in) != NULL) {
         p = buf;
-
-        if (p[0] == 'p') {
-            if (prob) {
-                fprintf(stderr, "ERROR: in this file we have to p lines\n");
-                val = 1;
-                goto CLEAN;
-            }
-
-            prob = 1;
-            strtok(p, delim);
-            data = strtok(NULL, delim);
-            sscanf(data, "%d", &nbjobs);
-            bufsize = 2 * nbjobs * (2 + (int) ceil(log((double)nbjobs + 10)));
-            buf2 = (char *) CC_SAFE_MALLOC(bufsize, char);
-            CCcheck_NULL_2(buf2, "Failed to allocate buf2");
-            weight = CC_SAFE_MALLOC(nbjobs, int);
-            CCcheck_NULL_2(weight, "out of memory for weight");
-            duration = CC_SAFE_MALLOC(nbjobs, int);
-            CCcheck_NULL_2(duration, "Failed to allocate memory");
-            ratio = CC_SAFE_MALLOC(nbjobs, double);
-            CCcheck_NULL_2(ratio, "Failed to allocate memory");
-        } else {
-            fprintf(stderr, "File has to give first the number vertices and edges.\n");
-            val = 1;
-            goto CLEAN;
-        }
+        data = strtok(p, delim);
+        sscanf(data, " %d", &nbjobs);
+        bufsize = 3 * nbjobs * (2 + (int) ceil(log((double)nbjobs + 10)));
+        buf2 = (char *) CC_SAFE_MALLOC(bufsize, char);
+        CCcheck_NULL_2(buf2, "Failed to allocate buf2");
+        weight = CC_SAFE_MALLOC(nbjobs, int);
+        CCcheck_NULL_2(weight, "out of memory for weight");
+        duedate = CC_SAFE_MALLOC(nbjobs, int);
+        CCcheck_NULL_2(duedate, "Out of memory for duedate");
+        duration = CC_SAFE_MALLOC(nbjobs, int);
+        CCcheck_NULL_2(duration, "Failed to allocate memory");
     } else {
         val = 1;
         goto CLEAN;
@@ -160,63 +155,49 @@ int read_problem(char *f, int *njobs, int **durationlist, int **weightlist) {
 
     while (fgets(buf2, bufsize, in) != (char *)NULL) {
         p = buf2;
-
-        if (p[0] == 'p') {
-            if (prob) {
-                fprintf(stderr, "ERROR: in this file we have to p lines\n");
-                val = 1;
-                goto CLEAN;
-            }
-        } else if (p[0] == 'n') {
-            if (!prob) {
-                fprintf(stderr, "ERROR n before p in file\n");
-                val = 1;
-                goto CLEAN;
-            }
-
-            strtok(p, delim);
-            data = strtok(NULL, delim);
-            sscanf(data, "%d", &curweight);
-            data = strtok(NULL, delim);
-            sscanf(data, "%d", &curduration);
-            weight[curjob] = curweight;
-            duration[curjob] = curduration;
-            data = strtok(NULL, delim);
-            curjob++;
-        }
+        data = strtok(p, delim);
+        sscanf(data, "%d", &curduration);
+        data = strtok(NULL, delim);
+        sscanf(data, "%d", &curduedate);
+        data = strtok(NULL, delim);
+        sscanf(data, "%d", &curweight);
+        weight[curjob] = curweight;
+        duedate[curjob] = curduedate/nmachines;
+        duration[curjob] = curduration;
+        data = strtok(NULL, delim);
+        curjob++;
     }
 
-    perm = CC_SAFE_MALLOC(nbjobs, int);
-    CCcheck_NULL_2(perm, "Failed to allocate memory");
+    // perm = CC_SAFE_MALLOC(nbjobs, int);
+    // CCcheck_NULL_2(perm, "Failed to allocate memory");
 
-    for (i = 0; i < nbjobs; i++) {
-        perm[i] = i;
-        ratio[i] = (double) duration[i] / (double) weight[i];
-    }
+    // for (i = 0; i < nbjobs; i++) {
+    //     perm[i] = i;
+    //     ratio[i] = (double) duedate[i];
+    // }
 
-    CCutil_double_perm_quicksort(perm, ratio, nbjobs);
-    iperm = CC_SAFE_MALLOC(nbjobs, int);
-    CCcheck_NULL_2(iperm, "Failed to allocate memory");
+    // CCutil_double_perm_quicksort(perm, ratio, nbjobs);
+    // iperm = CC_SAFE_MALLOC(nbjobs, int);
+    // CCcheck_NULL_2(iperm, "Failed to allocate memory");
 
-    for (i = 0; i < nbjobs; ++i) {
-        iperm[perm[i]] = i;
-    }
+    // for (i = 0; i < nbjobs; ++i) {
+    //     iperm[perm[i]] = i;
+    // }
 
-    permute_nodes(iperm, nbjobs, duration, weight, durationlist, weightlist);
+    // permute_nodes(iperm, nbjobs, duration, duedate, weight, durationlist, duedatelist, weightlist);
+    *durationlist = duration;
+    *duedatelist = duedate;
+    *weightlist = weight;
     *njobs = nbjobs;
 CLEAN:
 
     if (val) {
-        CC_IFFREE(*durationlist, int);
-        CC_IFFREE(*weightlist, int);
+        CC_IFFREE(weight, int);
+        CC_IFFREE(duration, int);
+        CC_IFFREE(duedate, int);
     }
 
-    CC_IFFREE(weight, int);
-    CC_IFFREE(duration, int);
     CC_IFFREE(buf2, char);
-    CC_IFFREE(perm, int);
-    CC_IFFREE(iperm, int);
-    CC_IFFREE(ratio, double);
 
     if (in) {
         fclose(in);
@@ -225,31 +206,37 @@ CLEAN:
     return val;
 }
 
-static int permute_nodes(int *invorder, int njobs,  int *duration,
-                         int *weights, int **durationlist, int **weightlist) {
-    int i, val = 0;
-    int *idurationlist = (int *) NULL, *iweightlist = (int *) NULL;
-    iweightlist = CC_SAFE_MALLOC(njobs, int);
-    CCcheck_NULL_2(iweightlist, "out of memory for iweights");
-    idurationlist = CC_SAFE_MALLOC(njobs, int);
-    CCcheck_NULL_2(iweightlist, "out of memory for iweights");
+// static int permute_nodes(int *invorder, int njobs,  int *duration, int *duedate,
+//                          int *weights, int **durationlist, int **duedatelist, int **weightlist) {
+//     int i, val = 0;
+//     int *idurationlist = (int *) NULL, *iweightlist = (int *) NULL, *iduedatelist = (int*) NULL;
+//     iweightlist = CC_SAFE_MALLOC(njobs, int);
+//     CCcheck_NULL_2(iweightlist, "out of memory for iweights");
+//     idurationlist = CC_SAFE_MALLOC(njobs, int);
+//     CCcheck_NULL_2(iweightlist, "out of memory for iweights");
+//     iduedatelist = CC_SAFE_MALLOC(njobs, int);
+//     CCcheck_NULL_2(iduedatelist, "out of memory for iduedate");
 
-    for (i = 0; i < njobs; i++) {
-        iweightlist[invorder[i]] = weights[i];
-        idurationlist[invorder[i]] = duration[i];
-    }
+//     for (i = 0; i < njobs; i++) {
+//         iweightlist[invorder[i]] = weights[i];
+//         idurationlist[invorder[i]] = duration[i];
+//         iduedatelist[invorder[i]] = duedate[i];
 
-    *durationlist =  idurationlist;
-    *weightlist = iweightlist;
-CLEAN:
+//     }
 
-    if (val) {
-        CC_IFFREE(iweightlist, int);
-        CC_IFFREE(idurationlist, int);
-    }
+//     *durationlist =  idurationlist;
+//     *weightlist = iweightlist;
+//     *duedatelist = iduedatelist;
+// CLEAN:
 
-    return val;
-}
+//     if (val) {
+//         CC_IFFREE(iweightlist, int);
+//         CC_IFFREE(idurationlist, int);
+//         CC_IFFREE(iduedatelist, int);
+//     }
+
+//     return val;
+// }
 
 /** Printing sizes of ZDD */
 MAYBE_UNUSED
@@ -543,8 +530,6 @@ void lpwctdata_free(wctdata *pd) {
     CC_IFFREE(pd->subgradient, double);
     CC_IFFREE(pd->subgradient_in, double);
     CC_IFFREE(pd->rhs, double);
-    CC_IFFREE(pd->releasetime, int);
-    CC_IFFREE(pd->duetime, int);
     heur_free(pd);
 
     if (pd->solver) {
@@ -1211,20 +1196,20 @@ CLEAN:
 }
 
 int calculate_Hmax(int *durations, int nmachines, int njobs) {
-    int i, max = 0, val = 0;
+    int i, max = durations[0], val = 0;
     double temp;
 
     for (i = 0; i < njobs; ++i) {
-        val += durations[i];
-
-        if (max < durations[i]) {
+        if(max < durations[i]) {
             max = durations[i];
         }
+        val += durations[i];
+
     }
 
-    val += (nmachines - 1) * max;
+    val -= max;
     temp = (double) val;
-    temp = temp / (double)nmachines;
+    temp = temp / (double)nmachines + max;
     val = (int) ceil(temp);
     return val;
 }
@@ -1251,69 +1236,73 @@ int calculate_Hmin(int *durations, int nmachines, int njobs, int *perm,
 int Preprocessdata(wctproblem *problem, wctdata *pd) {
     int i, val = 0;
     int njobs = pd->njobs;
-    int nmachines = pd->nmachines;
     Job *jobarray = (Job *) NULL;
-    int *perm = (int *) NULL;
+    int *duration = (int*) NULL;
+    int *weight = (int*) NULL;
+    int *duetime = (int *) NULL;
     int *release_time = (int *) NULL;
-    int *due_time = (int *) NULL;
-    double H;
     int sum = 0;
     jobarray = CC_SAFE_MALLOC(pd->njobs, Job);
     CCcheck_NULL_2(jobarray, "Failed to allocate memory");
-    perm = CC_SAFE_MALLOC(njobs, int);
-    CCcheck_NULL_2(perm, "Failed to allocate memory");
     release_time = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(release_time, "Failed to allocate releasetime");
-    due_time = CC_SAFE_MALLOC(njobs, int);
-    CCcheck_NULL_2(due_time, "Failed to allocate duetime");
+    duetime = CC_SAFE_MALLOC(njobs, int);
+    CCcheck_NULL_2(duetime, "Failed to allocate duetime");
+    weight = CC_SAFE_MALLOC(njobs, int);
+    CCcheck_NULL_2(weight, "Failed to allocate weight");
+    duration = CC_SAFE_MALLOC(njobs, int);
+    CCcheck_NULL_2(duration, "Failed to allocate duration");
 
     /** Initialize jobarray of rootnode */
     for (i = 0; i < njobs; ++i) {
         jobarray[i].weight = problem->weight[i];
         jobarray[i].processingime = problem->duration[i];
-        sum += jobarray[i].processingime;
         jobarray[i].releasetime = 0;
-        jobarray[i].duetime = 0;
+        jobarray[i].duetime = problem->duetime[i];
         jobarray[i].job = i;
+        sum += jobarray[i].processingime;
         jobarray[i].due_list = (GList *) NULL;
         jobarray[i].ready_list = (GList *) NULL;
-        perm[i] = i;
+    }
+    CC_IFFREE(problem->weight, int);
+    CC_IFFREE(problem->duration, int);
+    CC_IFFREE(problem->duetime, int);
+
+    qsort(jobarray, njobs, sizeof(Job), compare_edd);
+    for (int i = 0; i < njobs; ++i)
+    {
+        printf("%d %d %d\n", jobarray[i].duetime, jobarray[i].processingime, jobarray[i].weight);
     }
 
-    CCutil_int_perm_quicksort_0(perm, problem->duration, njobs);
-    /** Calculate H_max */
-    pd->H_max = calculate_Hmax(problem->duration, pd->nmachines, njobs);
-
     for (i = 0; i < njobs; ++i) {
-        jobarray[i].duetime = pd->H_max;
-    }
-
-    printf("H_max = %d, ", pd->H_max);
-    /** Calculate H_min */
-    pd->H_min = calculate_Hmin(problem->duration, pd->nmachines, njobs, perm, &H);
-    printf("H_min = %d, ", pd->H_min);
-    printf("sum = %d\n", sum);
-    /** Calculate ready times and due times */
-    calculate_ready_due_times(jobarray, njobs, nmachines, H);
-    problem->jobarray = jobarray;
-
-    for (i = 0; i < njobs; ++i) {
+        duration[i] = jobarray[i].processingime;
+        weight[i] = jobarray[i].weight;
         release_time[i] = jobarray[i].releasetime;
-        due_time[i] = jobarray[i].duetime;
+        duetime[i] = jobarray[i].duetime;
     }
 
     pd->jobarray = jobarray;
-    pd->releasetime = release_time;
-    pd->duetime = due_time;
-    pd->duration = problem->duration;
-    pd->weights = problem->weight;
+    pd->releasetime = problem->releasetime = release_time;
+    pd->duetime = problem->duetime = duetime;
+    pd->duration = problem->duration =  duration;
+    pd->weights = problem->weight = weight;
+    //CCutil_int_perm_quicksort_0(perm, problem->duration, njobs);
+    /** Calculate H_max */
+    pd->H_max = calculate_Hmax(pd->duration, pd->nmachines, njobs);
+    printf("H_max = %d\n ", pd->H_max);
+    problem->jobarray = jobarray;
+
+
 CLEAN:
 
     if (val) {
         CC_IFFREE(jobarray, Job);
+        CC_IFFREE(release_time,int);
+        CC_IFFREE(duetime, int);
+        CC_IFFREE(duration, int);
+        CC_IFFREE(weight, int);
     }
 
-    CC_IFFREE(perm, int);
     return val;
 }
 
@@ -2488,12 +2477,8 @@ static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd,
     pd->duration = parent_pd->duration;
     pd->weights = parent_pd->weights;
     pd->jobarray = parent_pd->jobarray;
-    pd->releasetime = CC_SAFE_MALLOC(pd->njobs, int);
-    CCcheck_NULL_2(pd->releasetime, "Failed to allocate  memory");
-    pd->duetime = CC_SAFE_MALLOC(pd->njobs, int);
-    CCcheck_NULL_2(pd->duetime, "Failed to allocate memory");
-    memcpy(pd->releasetime, parent_pd->releasetime, sizeof(int)*pd->njobs);
-    memcpy(pd->duetime, parent_pd->duetime, sizeof(int)*pd->njobs);
+    pd->releasetime = parent_pd->releasetime;
+    pd->duetime = parent_pd->duetime;
     /** Init lower bound and upper bound of node */
     pd->upper_bound = parent_pd->upper_bound;
     pd->lower_bound = parent_pd->lower_bound;
@@ -2975,12 +2960,8 @@ static int create_same_conflict(wctproblem *problem, wctdata *parent_pd,
     pd->jobarray = parent_pd->jobarray;
     pd->ecount_same = parent_pd->ecount_same + 1;
     pd->ecount_differ = parent_pd->ecount_differ;
-    pd->releasetime = CC_SAFE_MALLOC(pd->njobs, int);
-    CCcheck_NULL_2(pd->releasetime, "Failed to allocate memory");
-    pd->duetime = CC_SAFE_MALLOC(pd->njobs, int);
-    CCcheck_NULL_2(pd->duetime, "Failed to allocate memory");
-    memcpy(pd->releasetime, parent_pd->releasetime, sizeof(int)*pd->njobs);
-    memcpy(pd->duetime, parent_pd->duetime, sizeof(int)*pd->njobs);
+    pd->releasetime = parent_pd->releasetime;
+    pd->duetime = parent_pd->duetime;
     /** Init lower bound and upper bound */
     pd->upper_bound = parent_pd->upper_bound;
     pd->lower_bound = parent_pd->lower_bound;
