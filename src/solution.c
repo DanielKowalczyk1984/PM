@@ -12,6 +12,7 @@ void solution_init(solution *sol) {
         sol->part     = (partlist *)NULL;
         sol->vlist    = (joblist *)NULL;
         sol->perm     = (int *)NULL;
+        sol->c        = (int*) NULL;
         sol->nmachines   = 0;
         sol->njobs   = 0;
         sol->totalweightcomptime = 0;
@@ -32,6 +33,7 @@ void solution_free(solution *sol) {
         CC_IFFREE(sol->part, partlist);
         CC_IFFREE(sol->vlist, joblist);
         CC_IFFREE(sol->perm, int);
+        CC_IFFREE(sol->c, int);
         sol->nmachines   = 0;
         sol->totalweightcomptime = 0;
         sol->njobs   = 0;
@@ -71,6 +73,8 @@ int solution_alloc(solution *sol, int nmachines, int njobs) {
     CCcheck_NULL_2(sol->vlist, "Failed to allocate memory to vlist");
     sol->perm = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(sol->perm, "Failed to allocate memory to perm");
+    sol->c = CC_SAFE_MALLOC(njobs, int);
+    CCcheck_NULL_2(sol->c, "Failed to allocate memory");
 
     for (i = 0; i < njobs; ++i) {
         joblist_init(sol->vlist + i);
@@ -87,6 +91,7 @@ CLEAN:
         CC_IFFREE(sol->part, partlist);
         CC_IFFREE(sol->vlist, joblist);
         CC_IFFREE(sol->perm, int);
+        CC_IFFREE(sol->c, int);
     }
 
     return val;

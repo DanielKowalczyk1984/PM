@@ -300,7 +300,7 @@ int read_problem(char *f, int *njobs, int **duration, int **duedate, int **weigh
 gint compare_readytime(gconstpointer a, gconstpointer b);
 int calculate_ready_due_times(Job *jobarray, int njobs, int nmachines,
                               double Hmin);
-int calculate_Hmax(int *durations, int nmachines, int njobs);
+int calculate_Hmax(Job *jobarray, int nmachines, int njobs);
 int calculate_Hmin(int *durations, int nmachines, int njobs, int *perm,
                    double *H);
 int Preprocessdata(wctproblem *problem, wctdata *pd);

@@ -1,14 +1,14 @@
 #include "tdzdd/DdSpec.hpp"
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
+#include "datastructsol.h"
 
 class conflict_state {
   public:
     boost::dynamic_bitset<> add;
     boost::dynamic_bitset<> remove;
 
-    conflict_state() {
-    };
+    conflict_state() {};
 
     ~conflict_state() {};
 
@@ -16,30 +16,28 @@ class conflict_state {
 
 
 class PricerSpec: public tdzdd::DdSpec<PricerSpec, int, 2> {
+    Job *jobarray;
     int nbjobs;
-    int *p;
-    int *r;
-    int *d;
     int Hmin;
     int Hmax;
 
   public:
     int *sum_p;
     int *min_p;
-    PricerSpec(int *_p, int *_r, int *_d, int njobs, int Hmin, int Hmax): p(_p),
-        r(_r), d(_d), Hmin(Hmin), Hmax(Hmax) {
-        nbjobs = njobs;
+    PricerSpec(Job * _jobarray,int _nbjobs, int Hmin, int Hmax): jobarray(_jobarray), nbjobs(_nbjobs),
+      Hmin(Hmin), Hmax(Hmax) {
+        nbjobs = _nbjobs;
         sum_p = new int [nbjobs];
         min_p = new int [nbjobs];
         int end = nbjobs - 1;
-        sum_p[end] = p[end];
-        min_p[end] = p[end];
+        sum_p[end] = jobarray[end].processingime;
+        min_p[end] = jobarray[end].processingime;
 
         for (int  i = end - 1; i >= 0; i--) {
-            sum_p[i] = sum_p[ i + 1] + p[i];
+            sum_p[i] = sum_p[ i + 1] + jobarray[i].processingime;
 
-            if (p[i] < min_p[i + 1]) {
-                min_p[i] = p[i];
+            if (jobarray[i].processingime < min_p[i + 1]) {
+                min_p[i] = jobarray[i].processingime;
             } else {
                 min_p[i] = min_p[i + 1];
             }
@@ -58,10 +56,10 @@ class PricerSpec: public tdzdd::DdSpec<PricerSpec, int, 2> {
         int job = nbjobs - level;
         int _j;
         assert(0 <= job && job <= nbjobs - 1);
-        int temp_p = p[job];
+        int temp_p = jobarray[job].processingime;
 
         if (level - 1 == 0 && value) {
-            return (state + p[job] >= Hmin && state + p[job] <= Hmax) ? -1 : 0;
+            return (state + jobarray[job].processingime >= Hmin && state + jobarray[job].processingime <= Hmax) ? -1 : 0;
         } else if (level - 1 == 0) {
             return (state  >= Hmin && state <= Hmax) ? -1 : 0;
         }
@@ -122,7 +120,7 @@ class PricerSpec: public tdzdd::DdSpec<PricerSpec, int, 2> {
         int i, val = nbjobs;
 
         for (i = j + 1; i < nbjobs; ++i) {
-            if (state >= r[i] && state <= d[i] - p[i]) {
+            if (state >= jobarray[i].releasetime && state <= jobarray[i].duetime - jobarray[i].processingime) {
                 val = i;
                 break;
             }

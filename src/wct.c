@@ -38,15 +38,6 @@ static int collect_same_child_wide(wctdata *cd);
 static int remove_finished_subtree_wide(wctdata *child);
 //static int trigger_lb_changes_wide(wctdata *child);
 /** help functions for ahv branching */
-int branching_msg_ahv(wctdata *pd, wctproblem *problem);
-static int create_releasetime_ahv(wctproblem *problem, wctdata *parent_pd,
-                                  wctdata **child, int branch_job, int completion_time);
-static int create_duetime_ahv(wctproblem *problem, wctdata *parent_pd,
-                              wctdata **child, int branch_job, int completiontime);
-static int collect_duetime_child_ahv(wctdata *pd);
-static int collect_releasetime_child_ahv(wctdata *pd);
-static int remove_finished_subtree_ahv(wctdata *pd);
-static int trigger_lb_changes_ahv(wctdata *child);
 
 static int print_size_to_csv(wctproblem *problem, wctdata *pd);
 /** small submipping heuristic */
@@ -58,8 +49,8 @@ static const double min_ndelrow_ratio = 0.3;
 int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b) {
     wctdata *x = (wctdata *)a;
     wctdata *y = (wctdata *)b;
-    double lp_a = (x->LP_lower_bound_BB - x->depth * 10000 - 0.5*(x->id % 2));
-    double lp_b = (y->LP_lower_bound_BB - y->depth * 10000 - 0.5*(y->id % 2));
+    double lp_a = (x->LP_lower_bound_BB - x->depth * 10000 - 0.5 * (x->id % 2));
+    double lp_b = (y->LP_lower_bound_BB - y->depth * 10000 - 0.5 * (y->id % 2));
 
     if (lp_a < lp_b) {
         return -1;
@@ -68,11 +59,11 @@ int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b) {
     }
 }
 
-int compare_edd(const void *a,const void *b){
+int compare_edd(const void *a, const void *b) {
     Job *x = (Job *)a;
     Job *y = (Job *)b;
 
-    if(x->duetime == y->duetime) {
+    if (x->duetime == y->duetime) {
         return y->processingime - x->processingime;
     } else {
         return x->duetime - y->duetime;
@@ -114,7 +105,8 @@ void set_dbg_lvl(int dbglvl) {
  */
 // static int permute_nodes(int *invorder, int njobs, int *duration, int *duedate,
 //                          int *weight, int **durationlist, int **duedatelist, int **weightlist);
-int read_problem(char *f, int *njobs, int **durationlist, int **duedatelist, int **weightlist, int nmachines) {
+int read_problem(char *f, int *njobs, int **durationlist, int **duedatelist,
+                 int **weightlist, int nmachines) {
     int val = 0;
     int nbjobs = 0;
     int curduration, curduedate, curweight, curjob = 0;
@@ -162,7 +154,7 @@ int read_problem(char *f, int *njobs, int **durationlist, int **duedatelist, int
         data = strtok(NULL, delim);
         sscanf(data, "%d", &curweight);
         weight[curjob] = curweight;
-        duedate[curjob] = curduedate/nmachines;
+        duedate[curjob] = curduedate / nmachines;
         duration[curjob] = curduration;
         data = strtok(NULL, delim);
         curjob++;
@@ -377,7 +369,6 @@ void init_BB_tree(wctproblem *problem) {
 }
 
 void wctproblem_free(wctproblem *problem) {
-    int n = problem->root_pd.njobs;
     /*free the parameters*/
     wctparms_free(&(problem->parms));
     wctdata_free(&(problem->root_pd));
@@ -402,17 +393,6 @@ void wctproblem_free(wctproblem *problem) {
     CC_IFFREE(problem->releasetime, int);
     CC_IFFREE(problem->duration, int);
     CC_IFFREE(problem->weight, int);
-
-    for (int i = 0; i < n; i++) {
-        if (problem->jobarray[i].due_list) {
-            g_list_free(problem->jobarray[i].due_list);
-        }
-
-        if (problem->jobarray[i].ready_list) {
-            g_list_free(problem->jobarray[i].ready_list);
-        }
-    }
-
     CC_IFFREE(problem->jobarray, Job);
 }
 
@@ -426,10 +406,10 @@ void wctdata_init(wctdata *pd) {
     /*Initialization graph data*/
     pd->njobs = 0;
     pd->orig_node_ids = (int *) NULL;
-    pd->duration = (int *)NULL;
-    pd->weights = (int *)NULL;
-    pd->duetime = (int *) NULL;
-    pd->releasetime = (int *) NULL;
+    // pd->duration = (int *)NULL;
+    // pd->weights = (int *)NULL;
+    // pd->duetime = (int *) NULL;
+    // pd->releasetime = (int *) NULL;
     pd->jobarray = (Job *)NULL;
     pd->H_max = 0;
     pd->H_min = 0;
@@ -549,8 +529,7 @@ void children_data_free(wctdata *pd) {
         wctdata_free(&(pd->same_children[i]));
     }
 
-    for (i = 0; i < pd->nduetime; ++i)
-    {
+    for (i = 0; i < pd->nduetime; ++i) {
         wctdata_free(&(pd->duetime_child[i]));
     }
 
@@ -561,8 +540,7 @@ void children_data_free(wctdata *pd) {
         wctdata_free(&(pd->diff_children[i]));
     }
 
-    for (i = 0; i < pd->nreleasetime; ++i)
-    {
+    for (i = 0; i < pd->nreleasetime; ++i) {
         wctdata_free(&(pd->releasetime_child[i]));
     }
 
@@ -1152,7 +1130,6 @@ int calculate_ready_due_times(Job *jobarray, int njobs, int nmachines,
             }
         }
 
-        jobarray[i].due_list = temp_list;
     }
 
     for (i = 0; i < njobs; ++i) {
@@ -1186,7 +1163,6 @@ int calculate_ready_due_times(Job *jobarray, int njobs, int nmachines,
             jobarray[i].duetime = delta;
         }
 
-        jobarray[i].ready_list = templist;
     }
 
 CLEAN:
@@ -1195,15 +1171,13 @@ CLEAN:
     return val;
 }
 
-int calculate_Hmax(int *durations, int nmachines, int njobs) {
-    int i, max = durations[0], val = 0;
+int calculate_Hmax(Job *jobarray , int nmachines, int njobs) {
+    int i, max = jobarray[0].processingime, val = 0;
     double temp;
 
     for (i = 0; i < njobs; ++i) {
-        if(max < durations[i]) {
-            max = durations[i];
-        }
-        val += durations[i];
+        max = CC_MAX(jobarray[i].processingime, max);
+        val += jobarray[i].processingime;
 
     }
 
@@ -1237,8 +1211,8 @@ int Preprocessdata(wctproblem *problem, wctdata *pd) {
     int i, val = 0;
     int njobs = pd->njobs;
     Job *jobarray = (Job *) NULL;
-    int *duration = (int*) NULL;
-    int *weight = (int*) NULL;
+    int *duration = (int *) NULL;
+    int *weight = (int *) NULL;
     int *duetime = (int *) NULL;
     int *release_time = (int *) NULL;
     int sum = 0;
@@ -1261,18 +1235,13 @@ int Preprocessdata(wctproblem *problem, wctdata *pd) {
         jobarray[i].duetime = problem->duetime[i];
         jobarray[i].job = i;
         sum += jobarray[i].processingime;
-        jobarray[i].due_list = (GList *) NULL;
-        jobarray[i].ready_list = (GList *) NULL;
     }
+
     CC_IFFREE(problem->weight, int);
     CC_IFFREE(problem->duration, int);
     CC_IFFREE(problem->duetime, int);
 
     qsort(jobarray, njobs, sizeof(Job), compare_edd);
-    for (int i = 0; i < njobs; ++i)
-    {
-        printf("%d %d %d\n", jobarray[i].duetime, jobarray[i].processingime, jobarray[i].weight);
-    }
 
     for (i = 0; i < njobs; ++i) {
         duration[i] = jobarray[i].processingime;
@@ -1281,23 +1250,22 @@ int Preprocessdata(wctproblem *problem, wctdata *pd) {
         duetime[i] = jobarray[i].duetime;
     }
 
-    pd->jobarray = jobarray;
-    pd->releasetime = problem->releasetime = release_time;
-    pd->duetime = problem->duetime = duetime;
-    pd->duration = problem->duration =  duration;
-    pd->weights = problem->weight = weight;
+    pd->jobarray = problem->jobarray = jobarray;
+    // pd->releasetime = problem->releasetime = release_time;
+    // pd->duetime = problem->duetime = duetime;
+    // pd->duration = problem->duration =  duration;
+    // pd->weights = problem->weight = weight;
     //CCutil_int_perm_quicksort_0(perm, problem->duration, njobs);
     /** Calculate H_max */
-    pd->H_max = calculate_Hmax(pd->duration, pd->nmachines, njobs);
+    pd->H_max = calculate_Hmax(pd->jobarray, pd->nmachines, njobs);
     printf("H_max = %d\n ", pd->H_max);
-    problem->jobarray = jobarray;
 
 
 CLEAN:
 
     if (val) {
         CC_IFFREE(jobarray, Job);
-        CC_IFFREE(release_time,int);
+        CC_IFFREE(release_time, int);
         CC_IFFREE(duetime, int);
         CC_IFFREE(duration, int);
         CC_IFFREE(weight, int);
@@ -1640,52 +1608,6 @@ static void adapt_global_upper_bound(wctproblem *problem, int new_upper_bound) {
     }
 }
 
-static int collect_releasetime_child_ahv(wctdata *cd) {
-    int val = 0;
-    int c;
-
-    for (c = 0; c < cd->nreleasetime; ++c) {
-        if (cd->releasetime_child[c].nbbest && (!cd->nbbest ||
-                                                cd->releasetime_child[c].upper_bound < cd->upper_bound)) {
-            if (cd->nbbest) {
-                Schedulesets_free(&(cd->bestcolors), &(cd->nbbest));
-            }
-
-            cd->upper_bound = cd->besttotwct = cd->releasetime_child[c].upper_bound;
-            cd->nbbest = cd->releasetime_child[c].nbbest;
-            cd->releasetime_child[c].nbbest = 0;
-            cd->bestcolors = cd->releasetime_child[c].bestcolors;
-            cd->releasetime_child[c].bestcolors = (Scheduleset *) NULL;
-            /** Check if the solution is feasible, i.e. every job is covered */
-        }
-    }
-
-    return val;
-}
-
-static int collect_duetime_child_ahv(wctdata *cd) {
-    int rval = 0;
-    int c;
-
-    for (c = 0; c < cd->nduetime; ++c) {
-        if (cd->duetime_child[c].nbbest && (!cd->nbbest ||
-                                            cd->duetime_child[c].upper_bound <= cd->upper_bound)) {
-            if (cd->nbbest) {
-                Schedulesets_free(&(cd->bestcolors), &(cd->nbbest));
-            }
-
-            cd->upper_bound = cd->duetime_child[c].upper_bound;
-            cd->nbbest = cd->duetime_child[c].nbbest;
-            cd->duetime_child[c].nbbest = 0;
-            cd->bestcolors = cd->duetime_child[c].bestcolors;
-            cd->duetime_child[c].bestcolors = (Scheduleset *) NULL;
-            /** Check if the solution is feasible, i.e. every job is covered */
-        }
-    }
-
-    return rval;
-}
-
 static int collect_same_child_wide(wctdata *cd) {
     int rval = 0;
     int c;
@@ -1902,67 +1824,6 @@ CLEAN:
     return val;
 }
 
-MAYBE_UNUSED
-static int remove_finished_subtree_ahv(wctdata *child) {
-    int rval = 0;
-    int i;
-    wctdata *cd = (wctdata *) child;
-    int all_due_finished = 1;
-    int all_ready_finished = 1;
-
-    while (cd) {
-        for (i = 0; i < cd->nduetime; ++i) {
-            if (cd->duetime_child[i].status < infeasible) {
-                all_due_finished = 0;
-                break;
-            }
-        }
-
-        if (cd->nduetime && all_due_finished) {
-            rval = collect_duetime_child_ahv(cd);
-            CCcheck_val_2(rval, "Failed in collect_same_children");
-
-            for (i = 0;  i < cd->nduetime; ++i) {
-                wctdata_free(cd->duetime_child + i);
-            }
-
-            free(cd->duetime_child);
-            cd->duetime_child = (wctdata *) NULL;
-            cd->nduetime = 0;
-        }
-
-        for (i = 0; i < cd->nreleasetime; ++i) {
-            if (cd->releasetime_child[i].status < infeasible) {
-                all_ready_finished = 0;
-                break;
-            }
-        }
-
-        if (cd->nreleasetime && all_ready_finished) {
-            rval = collect_releasetime_child_ahv(cd);
-            CCcheck_val_2(rval, "Failed in collect_diff_children");
-
-            for (i = 0;  i < cd->nreleasetime; ++i) {
-                wctdata_free(cd->releasetime_child + i);
-            }
-
-            free(cd->releasetime_child);
-            cd->releasetime_child = (wctdata *) NULL;
-            cd->nreleasetime = 0;
-        }
-
-        if (!cd->duetime_child && !cd->releasetime_child) {
-            cd->status = finished;
-            cd = cd->parent;
-        } else {
-            cd = (wctdata *) NULL;
-        }
-    }
-
-CLEAN:
-    return rval;
-}
-
 int set_id_and_name(wctdata *pd, int id, const char *fname) {
     int val = 0;
     int sval = 0;
@@ -1979,187 +1840,7 @@ CLEAN:
     return val;
 }
 
-static int create_duetime_ahv(wctproblem *problem, wctdata *parent_cd,
-                              wctdata **child, int branch_job, int completiontime) {
-    int val = 0;
-    wctparms *parms = &(problem->parms);
-    wctdata    *pd = (wctdata *) NULL;
-    pd = (wctdata *) CC_SAFE_MALLOC(1, wctdata);
-    CCcheck_NULL_2(pd, "Failed to allocate pd");
-    wctdata_init(pd);
-    /** Init B&B data */
-    pd->parent = parent_cd;
-    pd->depth = parent_cd->depth + 1;
-    // parent_cd->nduetime += 1;
-    // parent_cd->duetime_child = pd;
-    pd->branch_job = branch_job;
-    pd->completiontime = completiontime;
-    /** init jobs data */
-    pd->njobs = parent_cd->njobs;
-    pd->nmachines = parent_cd->nmachines;
-    pd->duration = parent_cd->duration;
-    pd->weights = parent_cd->weights;
-    pd->jobarray = parent_cd->jobarray;
-    pd->H_min = parent_cd->H_min;
-    pd->H_max = parent_cd->H_max;
-    /** init lower and upper bound data */
-    pd->upper_bound = parent_cd->upper_bound;
-    pd->lower_bound = parent_cd->lower_bound;
-    pd->LP_lower_bound = parent_cd->LP_lower_bound;
-    pd->LP_lower_bound_dual = parent_cd->LP_lower_bound_dual;
-    pd->dbl_safe_lower_bound = parent_cd->dbl_safe_lower_bound;
-    /** adjusted duetime */
-    pd->releasetime = CC_SAFE_MALLOC(pd->njobs, int);
-    CCcheck_NULL_2(pd->releasetime, "Failed to allocate memory");
-    pd->duetime = CC_SAFE_MALLOC(pd->njobs, int);
-    CCcheck_NULL_2(pd->duetime, "Failed to allocate memory");
-    pd->ecount_same = parent_cd->ecount_same + 1;
-    pd->ecount_differ = parent_cd->ecount_differ;
-    memcpy(pd->releasetime, parent_cd->releasetime, sizeof(int)*pd->njobs);
-    memcpy(pd->duetime, parent_cd->duetime, sizeof(int)*pd->njobs);
-    pd->duetime[branch_job] = completiontime;
-    /** Construct PricerSolver */
-    CCutil_start_timer(&(problem->tot_build_dd));
 
-    switch (parms->solver) {
-    case bdd_solver:
-        pd->solver = newSolver(pd->duration, pd->weights, pd->releasetime, pd->duetime,
-                               pd->njobs, pd->H_min, pd->H_max);
-
-        if ((size_t)pd->njobs != get_numberrows_bdd(pd->solver)) {
-            pd->status = infeasible;
-
-            if (pd->solver) {
-                freeSolver(pd->solver);
-                pd->solver = (PricerSolver *) NULL;
-            }
-
-            CCutil_suspend_timer(&(problem->tot_build_dd));
-            *child = pd;
-            goto CLEAN;
-        } else {
-            init_tables(pd->solver);
-        }
-
-        break;
-
-    case zdd_solver:
-        pd->solver = newSolver(pd->duration, pd->weights, pd->releasetime, pd->duetime,
-                               pd->njobs, pd->H_min, pd->H_max);
-
-        if ((size_t)pd->njobs != get_numberrows_zdd(pd->solver)) {
-            pd->status = infeasible;
-
-            if (pd->solver) {
-                freeSolver(pd->solver);
-                pd->solver = (PricerSolver *) NULL;
-            }
-
-            CCutil_suspend_timer(&(problem->tot_build_dd));
-            *child = pd;
-            goto CLEAN;
-        } else {
-            init_tables(pd->solver);
-        }
-
-        break;
-
-    case DP_solver:
-        pd->solver = newSolverDP(pd->duration, pd->weights, pd->releasetime,
-                                 pd->duetime, pd->njobs, pd->H_min, pd->H_max);
-        break;
-    }
-
-    CCutil_suspend_timer(&(problem->tot_build_dd));
-    /** transfer feasible schedules */
-    pd->gallocated = parent_cd->ccount;
-    pd->cclasses = CC_SAFE_MALLOC(pd->gallocated, Scheduleset);
-    CCcheck_NULL_2(pd->cclasses, "Failed to allocate memory");
-    pd->ccount = 0;
-
-    for (int i = 0; i < parent_cd->ccount; i++) {
-        gboolean construct = 1;
-        int *C = (int *) NULL;
-
-        if ((C = (int *) g_hash_table_lookup(parent_cd->cclasses[i].table,
-                                             GINT_TO_POINTER(branch_job)))) {
-            if (pd->duetime[branch_job] < *C) {
-                construct = 0;
-            }
-        }
-
-        if (construct) {
-            int j;
-            Scheduleset_init(pd->cclasses + pd->ccount);
-            pd->cclasses[pd->ccount].members =  CC_SAFE_MALLOC(parent_cd->cclasses[i].count
-                                                + 1, int);
-            pd->cclasses[pd->ccount].C = CC_SAFE_MALLOC(parent_cd->cclasses[i].count, int);
-            pd->cclasses[pd->ccount].table = g_hash_table_new(g_direct_hash,
-                                             g_direct_equal);
-            pd->cclasses[pd->ccount].count = 0;
-            pd->cclasses[pd->ccount].age = 0;
-            pd->cclasses[pd->ccount].totweight = 0;
-            pd->cclasses[pd->ccount].totwct = 0;
-
-            for (j = 0; j < parent_cd->cclasses[i].count && construct; ++j) {
-                pd->cclasses[pd->ccount].members[(pd->cclasses[pd->ccount].count)] =
-                    parent_cd->cclasses[i].members[j];
-                pd->cclasses[pd->ccount].totweight +=
-                    pd->duration[parent_cd->cclasses[i].members[j]];
-                pd->cclasses[pd->ccount].C[(pd->cclasses[pd->ccount].count)] =
-                    pd->cclasses[pd->ccount].totweight;
-                g_hash_table_insert(pd->cclasses[pd->ccount].table,
-                                    GINT_TO_POINTER(
-                                        pd->cclasses[pd->ccount].members[(pd->cclasses[pd->ccount].count)]),
-                                    pd->cclasses[pd->ccount].C + (pd->cclasses[pd->ccount].count));
-                pd->cclasses[pd->ccount].totwct +=
-                    pd->weights[parent_cd->cclasses[i].members[j]] *
-                    pd->cclasses[pd->ccount].totweight;
-                pd->cclasses[pd->ccount].count++;
-            }
-
-            pd->cclasses[pd->ccount].members[pd->cclasses[pd->ccount].count] = pd->njobs;
-            pd->ccount++;
-
-            if (dbg_lvl() > 1) {
-                printf("PARENT SET SAME ");
-
-                for (j = 0; j < parent_cd->cclasses[i].count; ++j) {
-                    printf(" %d", parent_cd->cclasses[i].members[j]);
-                }
-
-                printf("\n");
-                printf("TRANS SET SAME");
-
-                for (j = 0; j < pd->cclasses[pd->ccount - 1].count; ++j) {
-                    printf(" %d", pd->cclasses[pd->ccount - 1].members[j]);
-                }
-
-                printf("\n");
-            }
-        }
-    }
-
-    for (int i = pd->ccount; i < pd->gallocated; i++) {
-        Scheduleset_init(pd->cclasses + i);
-    }
-
-    val = prune_duplicated_sets(pd);
-    CCcheck_val_2(val, "Failed in prune_duplicated_sets");
-    *child = pd;
-CLEAN:
-
-    if (val) {
-        if (pd) {
-            wctdata_free(pd);
-            free(pd);
-        }
-
-        parent_cd->duetime_child = (wctdata *) NULL;
-    }
-
-    return val;
-}
 MAYBE_UNUSED
 static int is_releasetime_child(wctdata *cd) {
     int i;
@@ -2291,10 +1972,6 @@ static int create_diff_wide(wctproblem *problem, wctdata *parent_pd, int v1,
     /** Init jobs data */
     pd->njobs = parent_pd->njobs;
     pd->nmachines = parent_pd->nmachines;
-    pd->duration = parent_pd->duration;
-    pd->releasetime = parent_pd->releasetime;
-    pd->duetime = parent_pd->duetime;
-    pd->weights = parent_pd->weights;
     pd->jobarray = parent_pd->jobarray;
     /** Init lower bound and upper bound of node */
     pd->upper_bound = parent_pd->upper_bound;
@@ -2398,7 +2075,7 @@ static int create_diff_wide(wctproblem *problem, wctdata *parent_pd, int v1,
                 pd->cclasses[pd->ccount].members[pd->cclasses[pd->ccount].count] =
                     parent_pd->cclasses[i].members[j];
                 pd->cclasses[pd->ccount].totweight +=
-                    parent_pd->duration[parent_pd->cclasses[i].members[j]];
+                    parent_pd->jobarray[parent_pd->cclasses[i].members[j]].processingime;
                 pd->cclasses[pd->ccount].C[pd->cclasses[pd->ccount].count] =
                     pd->cclasses[pd->ccount].totweight;
                 g_hash_table_insert(pd->cclasses[pd->ccount].table,
@@ -2406,7 +2083,7 @@ static int create_diff_wide(wctproblem *problem, wctdata *parent_pd, int v1,
                                         pd->cclasses[pd->ccount].members[pd->cclasses[pd->ccount].count]),
                                     pd->cclasses[pd->ccount].C + pd->cclasses[pd->ccount].count);
                 pd->cclasses[pd->ccount].totwct +=
-                    parent_pd->weights[parent_pd->cclasses[i].members[j]] *
+                    parent_pd->jobarray[parent_pd->cclasses[i].members[j]].weight *
                     pd->cclasses[pd->ccount].totweight;
                 (pd->cclasses[pd->ccount].count)++;
             }
@@ -2474,11 +2151,7 @@ static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd,
     /** Init jobs data */
     pd->njobs = parent_pd->njobs;
     pd->nmachines = parent_pd->nmachines;
-    pd->duration = parent_pd->duration;
-    pd->weights = parent_pd->weights;
     pd->jobarray = parent_pd->jobarray;
-    pd->releasetime = parent_pd->releasetime;
-    pd->duetime = parent_pd->duetime;
     /** Init lower bound and upper bound of node */
     pd->upper_bound = parent_pd->upper_bound;
     pd->lower_bound = parent_pd->lower_bound;
@@ -2494,7 +2167,7 @@ static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd,
         CCutil_start_resume_time(&(problem->tot_build_dd));
         pd->solver = copySolver(pd->parent->solver);
         add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 0);
-        set_release_due_time(pd->solver, pd->releasetime, pd->duetime);
+        set_release_due_time(pd->solver, pd->jobarray);
 
         switch (parms->solver) {
         case bdd_solver:
@@ -2568,7 +2241,7 @@ static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd,
                 pd->cclasses[pd->ccount].members[pd->cclasses[pd->ccount].count] =
                     parent_pd->cclasses[i].members[j];
                 pd->cclasses[pd->ccount].totweight +=
-                    parent_pd->duration[parent_pd->cclasses[i].members[j]];
+                    parent_pd->jobarray[parent_pd->cclasses[i].members[j]].processingime;
                 pd->cclasses[pd->ccount].C[pd->cclasses[pd->ccount].count] =
                     pd->cclasses[pd->ccount].totweight;
                 g_hash_table_insert(pd->cclasses[pd->ccount].table,
@@ -2576,7 +2249,7 @@ static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd,
                                         pd->cclasses[pd->ccount].members[pd->cclasses[pd->ccount].count]),
                                     pd->cclasses[pd->ccount].C + pd->cclasses[pd->ccount].count);
                 pd->cclasses[pd->ccount].totwct +=
-                    parent_pd->weights[parent_pd->cclasses[i].members[j]] *
+                    parent_pd->jobarray[parent_pd->cclasses[i].members[j]].weight *
                     pd->cclasses[pd->ccount].totweight;
                 (pd->cclasses[pd->ccount].count)++;
             }
@@ -2674,15 +2347,16 @@ static int transfer_same_cclasses_wide(wctdata *pd,
             pd->cclasses[pd->ccount].members[(pd->cclasses[pd->ccount].count)] =
                 parent_cclasses[i].members[j];
             pd->cclasses[pd->ccount].totweight +=
-                pd->duration[parent_cclasses[i].members[j]];
+                pd->jobarray[parent_cclasses[i].members[j]].processingime;
             pd->cclasses[pd->ccount].C[(pd->cclasses[pd->ccount].count)] =
                 pd->cclasses[pd->ccount].totweight;
             g_hash_table_insert(pd->cclasses[pd->ccount].table,
                                 GINT_TO_POINTER(
                                     pd->cclasses[pd->ccount].members[(pd->cclasses[pd->ccount].count)]),
                                 pd->cclasses[pd->ccount].C + (pd->cclasses[pd->ccount].count));
-            pd->cclasses[pd->ccount].totwct += pd->weights[parent_cclasses[i].members[j]] *
-                                               pd->cclasses[pd->ccount].totweight;
+            pd->cclasses[pd->ccount].totwct +=
+                pd->jobarray[parent_cclasses[i].members[j]].weight *
+                pd->cclasses[pd->ccount].totweight;
             pd->cclasses[pd->ccount].count++;
             /* else 'parent_cclasses[i].members[j] == v2' and we skip it*/
         }
@@ -2759,15 +2433,16 @@ static int transfer_same_cclasses(wctdata *pd,
             pd->cclasses[pd->ccount].members[(pd->cclasses[pd->ccount].count)] =
                 parent_cclasses[i].members[j];
             pd->cclasses[pd->ccount].totweight +=
-                pd->duration[parent_cclasses[i].members[j]];
+                pd->jobarray[parent_cclasses[i].members[j]].processingime;
             pd->cclasses[pd->ccount].C[(pd->cclasses[pd->ccount].count)] =
                 pd->cclasses[pd->ccount].totweight;
             g_hash_table_insert(pd->cclasses[pd->ccount].table,
                                 GINT_TO_POINTER(
                                     pd->cclasses[pd->ccount].members[(pd->cclasses[pd->ccount].count)]),
                                 pd->cclasses[pd->ccount].C + (pd->cclasses[pd->ccount].count));
-            pd->cclasses[pd->ccount].totwct += pd->weights[parent_cclasses[i].members[j]] *
-                                               pd->cclasses[pd->ccount].totweight;
+            pd->cclasses[pd->ccount].totwct +=
+                pd->jobarray[parent_cclasses[i].members[j]].weight *
+                pd->cclasses[pd->ccount].totweight;
             pd->cclasses[pd->ccount].count++;
         }
 
@@ -2847,10 +2522,6 @@ static int create_same_wide(wctproblem *problem, wctdata *parent_pd,
     /** Init jobs data */
     pd->njobs = parent_pd->njobs;
     pd->nmachines = parent_pd->nmachines;
-    pd->duration = parent_pd->duration;
-    pd->releasetime = parent_pd->releasetime;
-    pd->duetime = parent_pd->duetime;
-    pd->weights = parent_pd->weights;
     pd->jobarray = parent_pd->jobarray;
     pd->ecount_same = parent_pd->ecount_same + 1;
     pd->ecount_differ = parent_pd->ecount_differ;
@@ -2955,13 +2626,9 @@ static int create_same_conflict(wctproblem *problem, wctdata *parent_pd,
     /** Init jobs data */
     pd->njobs = parent_pd->njobs;
     pd->nmachines = parent_pd->nmachines;
-    pd->duration = parent_pd->duration;
-    pd->weights = parent_pd->weights;
     pd->jobarray = parent_pd->jobarray;
     pd->ecount_same = parent_pd->ecount_same + 1;
     pd->ecount_differ = parent_pd->ecount_differ;
-    pd->releasetime = parent_pd->releasetime;
-    pd->duetime = parent_pd->duetime;
     /** Init lower bound and upper bound */
     pd->upper_bound = parent_pd->upper_bound;
     pd->lower_bound = parent_pd->lower_bound;
@@ -2977,7 +2644,7 @@ static int create_same_conflict(wctproblem *problem, wctdata *parent_pd,
         CCutil_start_resume_time(&(problem->tot_build_dd));
         pd->solver = copySolver(pd->parent->solver);
         add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 1);
-        set_release_due_time(pd->solver, pd->releasetime, pd->duetime);
+        set_release_due_time(pd->solver, pd->jobarray);
 
         switch (parms->solver) {
         case bdd_solver:
@@ -3108,189 +2775,6 @@ CLEAN:
     CC_IFFREE(path, wctdata *);
     return val;
 }
-
-static int create_releasetime_ahv(wctproblem *problem, wctdata *parent_cd,
-                                  wctdata **child, int branch_job, int completiontime) {
-    int val = 0;
-    wctparms *parms = &(problem->parms);
-    wctdata    *pd = (wctdata *) NULL;
-    pd = (wctdata *) CC_SAFE_MALLOC(1, wctdata);
-    CCcheck_NULL_2(pd, "Failed to allocate pd");
-    wctdata_init(pd);
-    /** Init B&B data */
-    pd->parent = parent_cd;
-    pd->depth = parent_cd->depth + 1;
-    // parent_cd->nreleasetime += 1;
-    // parent_cd->releasetime_child = pd;
-    pd->branch_job = branch_job;
-    pd->completiontime = completiontime;
-    /** Init jobs data */
-    pd->njobs  = parent_cd->njobs;
-    pd->nmachines = parent_cd->nmachines;
-    pd->duration = parent_cd->duration;
-    pd->weights = parent_cd->weights;
-    pd->jobarray = parent_cd->jobarray;
-    pd->H_min = parent_cd->H_min;
-    pd->H_max = parent_cd->H_max;
-    /** Init lower and upper bound at the node */
-    pd->upper_bound = parent_cd->upper_bound;
-    pd->lower_bound = parent_cd->lower_bound;
-    pd->LP_lower_bound = parent_cd->LP_lower_bound;
-    pd->LP_lower_bound_dual = parent_cd->LP_lower_bound_dual;
-    pd->dbl_safe_lower_bound = parent_cd->dbl_safe_lower_bound;
-    /** adjusted release_time */
-    pd->releasetime = CC_SAFE_MALLOC(pd->njobs, int);
-    pd->ecount_differ = parent_cd->ecount_differ + 1;
-    pd->ecount_same = parent_cd->ecount_same;
-    CCcheck_NULL_2(pd->releasetime, "Failed to allocate memory");
-    pd->duetime = CC_SAFE_MALLOC(pd->njobs, int);
-    CCcheck_NULL_2(pd->duetime, "Failed to allocate memory");
-    memcpy(pd->releasetime, parent_cd->releasetime, sizeof(int)*pd->njobs);
-    memcpy(pd->duetime, parent_cd->duetime, sizeof(int)*pd->njobs);
-    pd->releasetime[branch_job] = completiontime + 1 - pd->duration[branch_job];
-    /** Construct PricerSolver */
-    CCutil_start_timer(&(problem->tot_build_dd));
-
-    switch (parms->solver) {
-    case bdd_solver:
-        pd->solver = newSolver(pd->duration, pd->weights, pd->releasetime, pd->duetime,
-                               pd->njobs, pd->H_min, pd->H_max);
-
-        if ((size_t)pd->njobs != get_numberrows_bdd(pd->solver)) {
-            pd->status = infeasible;
-
-            if (pd->solver) {
-                freeSolver(pd->solver);
-                pd->solver = (PricerSolver *) NULL;
-            }
-
-            CCutil_suspend_timer(&(problem->tot_build_dd));
-            *child = pd;
-            goto CLEAN;
-        } else {
-            init_tables(pd->solver);
-        }
-
-        break;
-
-    case zdd_solver:
-        pd->solver = newSolver(pd->duration, pd->weights, pd->releasetime, pd->duetime,
-                               pd->njobs, pd->H_min, pd->H_max);
-
-        if ((size_t)pd->njobs != get_numberrows_zdd(pd->solver)) {
-            pd->status = infeasible;
-
-            if (pd->solver) {
-                freeSolver(pd->solver);
-                pd->solver = (PricerSolver *) NULL;
-            }
-
-            CCutil_suspend_timer(&(problem->tot_build_dd));
-            *child = pd;
-            goto CLEAN;
-        } else {
-            init_tables(pd->solver);
-        }
-
-        break;
-
-    case DP_solver:
-        pd->solver = newSolverDP(pd->duration, pd->weights, pd->releasetime,
-                                 pd->duetime, pd->njobs, pd->H_min, pd->H_max);
-        break;
-    }
-
-    CCutil_suspend_timer(&(problem->tot_build_dd));;
-    /** transfer feasible schedules */
-    pd->gallocated = parent_cd->ccount;
-    pd->cclasses = CC_SAFE_MALLOC(pd->gallocated, Scheduleset);
-    CCcheck_NULL_2(pd->cclasses, "Failed to allocate memory");
-    pd->ccount = 0;
-
-    for (int i = 0; i < parent_cd->ccount; i++) {
-        gboolean construct = 1;
-        int *C = (int *) NULL;
-
-        if ((C = (int *) g_hash_table_lookup(parent_cd->cclasses[i].table,
-                                             GINT_TO_POINTER(branch_job)))) {
-            if (pd->releasetime[branch_job] + pd->duration[branch_job] > *C) {
-                construct = 0;
-            }
-        }
-
-        if (construct) {
-            int j;
-            Scheduleset_init(pd->cclasses + pd->ccount);
-            pd->cclasses[pd->ccount].members =  CC_SAFE_MALLOC(parent_cd->cclasses[i].count
-                                                + 1, int);
-            pd->cclasses[pd->ccount].C = CC_SAFE_MALLOC(parent_cd->cclasses[i].count, int);
-            pd->cclasses[pd->ccount].table = g_hash_table_new(g_direct_hash,
-                                             g_direct_equal);
-            pd->cclasses[pd->ccount].count = 0;
-            pd->cclasses[pd->ccount].age = 0;
-            pd->cclasses[pd->ccount].totweight = 0;
-            pd->cclasses[pd->ccount].totwct = 0;
-
-            for (j = 0; j < parent_cd->cclasses[i].count && construct; ++j) {
-                pd->cclasses[pd->ccount].members[(pd->cclasses[pd->ccount].count)] =
-                    parent_cd->cclasses[i].members[j];
-                pd->cclasses[pd->ccount].totweight +=
-                    pd->duration[parent_cd->cclasses[i].members[j]];
-                pd->cclasses[pd->ccount].C[(pd->cclasses[pd->ccount].count)] =
-                    pd->cclasses[pd->ccount].totweight;
-                g_hash_table_insert(pd->cclasses[pd->ccount].table,
-                                    GINT_TO_POINTER(
-                                        pd->cclasses[pd->ccount].members[(pd->cclasses[pd->ccount].count)]),
-                                    pd->cclasses[pd->ccount].C + (pd->cclasses[pd->ccount].count));
-                pd->cclasses[pd->ccount].totwct +=
-                    pd->weights[parent_cd->cclasses[i].members[j]] *
-                    pd->cclasses[pd->ccount].totweight;
-                pd->cclasses[pd->ccount].count++;
-            }
-
-            pd->cclasses[pd->ccount].members[pd->cclasses[pd->ccount].count] = pd->njobs;
-            pd->ccount++;
-
-            if (dbg_lvl() > 1) {
-                printf("PARENT SET SAME ");
-
-                for (j = 0; j < parent_cd->cclasses[i].count; ++j) {
-                    printf(" %d", parent_cd->cclasses[i].members[j]);
-                }
-
-                printf("\n");
-                printf("TRANS SET SAME");
-
-                for (j = 0; j < pd->cclasses[pd->ccount - 1].count; ++j) {
-                    printf(" %d", pd->cclasses[pd->ccount - 1].members[j]);
-                }
-
-                printf("\n");
-            }
-        }
-    }
-
-    for (int i = pd->ccount; i < pd->gallocated; i++) {
-        Scheduleset_init(pd->cclasses + i);
-    }
-
-    val = prune_duplicated_sets(pd);
-    CCcheck_val_2(val, "Failed in prune_duplicated_sets");
-    *child = pd;
-CLEAN:
-
-    if (val) {
-        if (pd) {
-            wctdata_free(pd);
-            free(pd);
-        }
-
-        parent_cd->releasetime_child = (wctdata *) NULL;
-    }
-
-    return val;
-}
-
 
 
 static int find_strongest_children_conflict(int *strongest_v1,
@@ -3425,113 +2909,6 @@ CLEAN:
     return val;
 }
 
-static int find_strongest_children_ahv(int *strongest_v1, wctdata *pd,
-                                       wctproblem *problem, GList *branchnodes, int *completiontime) {
-    int    rval = 0;
-    int    max_non_improving_branches  = 3; /* cd->njobs / 100 + 1; */
-    int    remaining_branches          = max_non_improving_branches;
-    double strongest_dbl_lb = 0.0;
-    wctparms *parms = &(problem->parms);
-    *strongest_v1 = -1;
-    GList *it = branchnodes;
-    int v1;
-
-    switch (parms->strong_branching) {
-    case use_strong_branching:
-        while (it && (remaining_branches--)) {
-            v1 = GPOINTER_TO_INT(it->data);
-            double dbl_child_lb;
-            wctdata *duetime_child = (wctdata *) NULL;
-            wctdata *releasetime_child = (wctdata *) NULL;
-
-            if (dbg_lvl() > 0) {
-                printf("Creating branches for v1 = %d, C = %d.\n", v1, completiontime[v1]);
-            }
-
-            /* Create duetime and releasetime */
-            rval = create_duetime_ahv(problem, pd, &duetime_child, v1, completiontime[v1]);
-            CCcheck_val_2(rval, "Failed in create_duetime");
-            rval = create_releasetime_ahv(problem, pd, &releasetime_child, v1,
-                                          completiontime[v1]);
-            CCcheck_val_2(rval, "Failed in create_differ");
-
-            if (duetime_child->status != infeasible) {
-                duetime_child->maxiterations = 5;
-                compute_lower_bound(problem, duetime_child);
-            }
-
-            if (releasetime_child->status != infeasible) {
-                releasetime_child->maxiterations = 5;
-                compute_lower_bound(problem, releasetime_child);
-            }
-
-            dbl_child_lb = (duetime_child->LP_lower_bound_dual <
-                            releasetime_child->LP_lower_bound_dual) ?
-                           duetime_child->LP_lower_bound_dual : releasetime_child->LP_lower_bound_dual;
-
-            if (dbl_child_lb > strongest_dbl_lb) {
-                strongest_dbl_lb = dbl_child_lb;
-                *strongest_v1     = v1;
-                remaining_branches = max_non_improving_branches;
-
-                if (pd->duetime_child) {
-                    wctdata_free(pd->duetime_child);
-                    free(pd->duetime_child);
-                    pd->nduetime = 0;
-                }
-
-                pd->nduetime = 1;
-                pd->duetime_child = duetime_child;
-                duetime_child->maxiterations = 1000000;
-
-                if (pd->releasetime_child) {
-                    wctdata_free(pd->releasetime_child);
-                    free(pd->releasetime_child);
-                    pd->nreleasetime = 0;
-                }
-
-                pd->nreleasetime = 1;
-                pd->releasetime_child = releasetime_child;
-                releasetime_child->maxiterations = 1000000;
-            } else {
-                wctdata_free(duetime_child);
-                free(duetime_child);
-                wctdata_free(releasetime_child);
-                free(releasetime_child);
-            }
-
-            it = it->next;
-        }
-
-        if (dbg_lvl() > 0) {
-            printf("Found strongest child bound of %f for v1 = %d.\n",
-                   strongest_dbl_lb, *strongest_v1);
-        }
-
-        break;
-
-    case no_strong_branching:
-        v1 = GPOINTER_TO_INT(it->data);
-
-        if (dbg_lvl() > 0) {
-            printf("Creating branches for v1 = %d, C = %d.\n", v1, completiontime[v1]);
-        }
-
-        rval = create_duetime_ahv(problem, pd, &(pd->duetime_child), v1,
-                                  completiontime[v1]);
-        CCcheck_val_2(rval, "Failed in create_duetime");
-        pd->nduetime = 1;
-        rval = create_releasetime_ahv(problem, pd, &(pd->releasetime_child), v1,
-                                      completiontime[v1]);
-        CCcheck_val_2(rval, "Failed in create_differ");
-        pd->nreleasetime = 1;
-        break;
-    }
-
-CLEAN:
-    return rval;
-}
-
 static void Scheduleset_unify(Scheduleset *cclasses, int *new_ccount,
                               int ccount) {
     int i;
@@ -3583,76 +2960,6 @@ int prune_duplicated_sets(wctdata *pd) {
     return val;
 }
 
-int create_branches_ahv(wctdata *pd, wctproblem *problem) {
-    int val = 0;
-    int status;
-    int strongest_v1 = -1;
-    GList *branchjobs = (GList *) NULL;
-    int *min_completiontime = (int *) NULL;
-
-    if (!pd->LP) {
-        val = build_lp(pd, 1);
-        CCcheck_val_2(val, "Failed at build_lp");
-    }
-
-    if (!pd->ccount) {
-        compute_lower_bound(problem, pd);
-    }
-
-    assert(pd->ccount != 0);
-    CC_IFFREE(pd->x, double);
-    pd->x = CC_SAFE_MALLOC(pd->ccount, double);
-    CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
-    val = wctlp_optimize(pd->LP, &status);
-    CCcheck_val_2(val, "Failed at wctlp_optimize");
-    val = wctlp_x(pd->LP, pd->x, 0);
-    CCcheck_val_2(val, "Failed at wctlp_x");
-    val = test_theorem_ahv(pd, &branchjobs, &min_completiontime);
-    CCcheck_val_2(val, "Failed in test ahv");
-
-    if (g_list_length(branchjobs) == 0) {
-        printf("LP returned integral solution\n");
-        val = grab_integral_solution_ahv(pd, min_completiontime);
-        CCcheck_val_2(val, "Failed in grab_int_sol");
-        assert(pd->status = finished);
-        goto CLEAN;
-    }
-
-    val = find_strongest_children_ahv(&strongest_v1, pd, problem, branchjobs,
-                                      min_completiontime);
-    CCcheck_val_2(val, "Failed in find_strongest_children");
-
-    val = set_id_and_name(pd->duetime_child, problem->nwctdata++, pd->pname);
-    CCcheck_val_2(val, "Failed in set_id_and_name");
-
-    if (pd->duetime_child->status != infeasible) {
-        if (problem->parms.print && problem->parms.solver < DP_solver) {
-            print_size_to_csv(problem, pd->duetime_child);
-        }
-
-        val = compute_lower_bound(problem, pd->duetime_child);
-        CCcheck_val_2(val, "Failed in compute_lower_bound");
-    }
-
-    val = set_id_and_name(pd->releasetime_child, problem->nwctdata++, pd->pname);
-    CCcheck_val_2(val, "Failed in set_id_and_name");
-
-    if (pd->releasetime_child->status != infeasible) {
-        if (problem->parms.print && problem->parms.solver < DP_solver) {
-            print_size_to_csv(problem, pd->releasetime_child);
-        }
-
-        val = compute_lower_bound(problem, pd->releasetime_child);
-        CCcheck_val_2(val, "Failed in compute_lower_bound");
-    }
-
-CLEAN:
-    lpwctdata_free(pd);
-    g_list_free(branchjobs);
-    CC_IFFREE(min_completiontime, int);
-    return val;
-}
-
 double safe_lower_dbl(int numerator, int denominator) {
     double result;
     double denom_mult;
@@ -3665,44 +2972,6 @@ double safe_lower_dbl(int numerator, int denominator) {
     return result;
 }
 
-static int trigger_lb_changes_ahv(wctdata *child) {
-    int val = 0;
-    int i;
-    int new_lower_bound = child->lower_bound;
-    wctdata *pd = (wctdata *) child->parent;
-
-    while (pd) {
-        for (i = 0;  i < pd->nduetime; ++i) {
-            if (pd->duetime_child[i].lower_bound < new_lower_bound) {
-                new_lower_bound = pd->duetime_child[i].lower_bound;
-            }
-        }
-
-        for (i = 0;  i < pd->nreleasetime; ++i) {
-            if (pd->releasetime_child[i].lower_bound < new_lower_bound) {
-                new_lower_bound = pd->releasetime_child[i].lower_bound;
-            }
-        }
-
-        if (new_lower_bound > pd->lower_bound) {
-            if (! pd->parent) {   /* i.e. pd == root_cd */
-                time_t current_time;
-                char   current_timestr[40] = "";
-                (void) time(&current_time);
-                strftime(current_timestr, 39, "%c", localtime(&current_time));
-                printf("Lower bound increased from %d to %d (%s). \n",
-                       pd->lower_bound, new_lower_bound, current_timestr);
-            }
-
-            pd->lower_bound = new_lower_bound;
-            pd = pd->parent;
-        } else  {
-            pd = (wctdata *) NULL;
-        }
-    }
-
-    return val;
-}
 
 static int trigger_lb_changes_conflict(wctdata *child) {
     int val = 0;
@@ -3776,8 +3045,9 @@ static int grab_int_sol(wctdata *pd, double *x, double tolerance) {
                     colored[pd->cclasses[i].members[k]] = 1;
                     pd->bestcolors[j].members[pd->bestcolors[j].count++] =
                         pd->cclasses[i].members[k];
-                    pd->bestcolors[j].totweight += pd->duration[pd->cclasses[i].members[k]];
-                    pd->bestcolors[j].totwct += pd->weights[pd->cclasses[i].members[k]] *
+                    pd->bestcolors[j].totweight +=
+                        pd->jobarray[pd->cclasses[i].members[k]].processingime;
+                    pd->bestcolors[j].totwct += pd->jobarray[pd->cclasses[i].members[k]].weight *
                                                 pd->bestcolors[j].totweight;
                 }
             }
@@ -3829,11 +3099,12 @@ static int get_int_heap_key(double dbl_heap_key, int v1, int v2, int nmachines,
     // if (dbl_heap_key >= 1.0 - lp_int_tolerance()) {
     //     return val;
     // }
-    
+
     // val = x_frac(MIN(1.0, dbl_heap_key + ABS((v2 - v1)) * error2), error);
     int val = INT_MAX - 1;
     double temp;
-    if(dbl_heap_key > 0.5 && nmachines == 1) {
+
+    if (dbl_heap_key > 0.5 && nmachines == 1) {
         temp = 1 - dbl_heap_key;
     } else  {
         temp = dbl_heap_key;
@@ -3928,7 +3199,8 @@ static int insert_frac_pairs_into_heap(wctdata *pd, const double x[],
                                   2;
             double dbl_heap_key = nodepair_weights[ref_key] / denom;
             // printf("error %f %d %d %f\n",dbl_heap_key, v1, v2, mean_error[ref_key]);
-            int    int_heap_key =  get_int_heap_key(dbl_heap_key, v1, v2, mean_counter[ref_key],
+            int    int_heap_key =  get_int_heap_key(dbl_heap_key, v1, v2,
+                                                    mean_counter[ref_key],
                                                     pd->njobs,
                                                     mean_error[ref_key]);
             val = pmcheap_insert(heap, int_heap_key + 1,
@@ -4289,10 +3561,6 @@ int insert_into_branching_heap(wctdata *pd, wctproblem *problem) {
         CCcheck_val_2(val, "Failed in trigger_lb_changes_conflict");
         break;
 
-    case ahv_strategy:
-        val = trigger_lb_changes_ahv(pd);
-        CCcheck_val_2(val, "Failed  in trigger_lb_changes_ahv")
-        break;
     }
 
 CLEAN:
@@ -4342,11 +3610,6 @@ void insert_node_for_exploration(wctdata *pd, wctproblem *problem) {
     case conflict_strategy:
     case cbfs_conflict_strategy:
         trigger_lb_changes_conflict(pd);
-        break;
-
-    case ahv_strategy:
-    case cbfs_ahv_strategy:
-        trigger_lb_changes_ahv(pd);
         break;
     }
 }
@@ -4425,27 +3688,6 @@ int branching_msg(wctdata *pd, wctproblem *problem) {
     return 0;
 }
 
-int branching_msg_ahv(wctdata *pd, wctproblem *problem) {
-    BinomialHeap *heap = problem->br_heap_a;
-    wctdata *root = &(problem->root_pd);
-
-    if (pd->lower_bound < pd->upper_bound) {
-        CCutil_suspend_timer(&problem->tot_cputime);
-        printf("Branching with lb %d (LP %f) at depth %d (id = %d, "
-               "time = %f, unprocessed nodes = %d, nbjobs= %d, upper bound = %d, lower bound = %d, branch_job = %d, completion_time= %d, nbduetime= %d,  nb_cols = %d).\n",
-               pd->lower_bound, pd->LP_lower_bound,
-               pd->depth,
-               pd->id, problem->tot_cputime.cum_zeit, binomial_heap_num_entries(heap),
-               pd->njobs, problem->global_upper_bound, root->lower_bound,
-               pd->branch_job, pd->completiontime, pd->ecount_same, 
-               pd->ccount);
-        CCutil_resume_timer(&problem->tot_cputime);
-        problem->nb_explored_nodes++;
-    }
-
-    return 0;
-}
-
 
 int branching_msg_cbfs(wctdata *pd, wctproblem *problem) {
     int nb_nodes = 0;
@@ -4473,42 +3715,14 @@ int branching_msg_cbfs(wctdata *pd, wctproblem *problem) {
     return 0;
 }
 
-int branching_msg_cbfs_ahv(wctdata *pd, wctproblem *problem) {
-    int nb_nodes = 0;
-    wctdata *root = &(problem->root_pd);
-
-    for (unsigned int i = 0; i < problem->unexplored_states->len; ++i) {
-        BinomialHeap *heap = (BinomialHeap *)(problem->unexplored_states->pdata[i]);
-        nb_nodes += binomial_heap_num_entries(heap);
-    }
-
-    if (pd->lower_bound < pd->upper_bound) {
-        CCutil_suspend_timer(&problem->tot_cputime);
-        printf("Branching with lb %d (LP %f) at depth %d (id = %d, "
-               "time = %f, unprocessed nodes = %d, nbjobs= %d, upper bound = %d, lower bound = %d, branchjob = %d, completiontime = %d, nbreleasetime = %d, nbduetime = %d, ZDD size = %lu,  nb_cols = %d ).\n",
-               pd->lower_bound, pd->LP_lower_bound,
-               pd->depth,
-               pd->id, problem->tot_cputime.cum_zeit, nb_nodes, pd->njobs,
-               problem->global_upper_bound, root->lower_bound, pd->branch_job,
-               pd->completiontime, pd->ecount_differ, pd->ecount_same,
-               get_datasize(pd->solver),
-               pd->ccount);
-        CCutil_resume_timer(&problem->tot_cputime);
-        problem->nb_explored_nodes++;
-    }
-
-    return 0;
-}
-
-int sequential_branching_ahv(wctproblem *problem) {
+int sequential_cbfs_branch_and_bound_conflict(wctproblem *problem) {
     int val = 0;
     wctdata *pd;
-    BinomialHeap *br_heap = problem->br_heap_a;
     wctparms *parms = &(problem->parms);
-    printf("ENTERED SEQUANTIAL BRANCHING AHV:\n");
+    printf("ENTERED SEQUANTIAL BRANCHING CONFLICT + CBFS SEARCHING:\n");
     CCutil_suspend_timer(&problem->tot_branch_and_bound);
 
-    while ((pd = (wctdata *) binomial_heap_pop(br_heap))
+    while ((pd = get_next_node(problem))
             && problem->tot_branch_and_bound.cum_zeit < parms->branching_cpu_limit) {
         CCutil_resume_timer(&problem->tot_branch_and_bound);
         int i;
@@ -4516,28 +3730,29 @@ int sequential_branching_ahv(wctproblem *problem) {
 
         if (pd->lower_bound >= pd->upper_bound || pd->eta_in > pd->upper_bound - 1) {
             skip_wctdata(pd, problem);
-            remove_finished_subtree_ahv(pd);
+            remove_finished_subtree_conflict(pd);
         } else {
-            branching_msg_ahv(pd, problem);
+            branching_msg_cbfs(pd, problem);
+            /** Construct PricerSolver */
+            /*val = recover_elist(pd);
+            CCcheck_val_2(val, "Failed in recover_elist");*/
 
             if (problem->maxdepth < pd->depth) {
                 problem->maxdepth = pd->depth;
             }
 
-            val = create_branches_ahv(pd, problem);
+            val = create_branches_conflict(pd, problem);
             CCcheck_val_2(val, "Failed at create_branches");
 
-            for (i = 0; i < pd->nduetime; i++) {
-                val = insert_into_branching_heap(pd->duetime_child + i, problem);
-                CCcheck_val_2(val, "Failed at insert_into_branching_heap");
+            for (i = 0; i < pd->nsame; i++) {
+                insert_node_for_exploration(&(pd->same_children[i]), problem);
             }
 
-            for (i = 0; i < pd->nreleasetime; i++) {
-                val = insert_into_branching_heap(pd->releasetime_child + i, problem);
-                CCcheck_val_2(val, "Failed in insert_into_branching_heap");
+            for (i = 0; i < pd->ndiff; i++) {
+                insert_node_for_exploration(pd->diff_children + i, problem);
             }
 
-//            assert(pd->lower_bound <= pd->upper_bound);
+            //assert(pd->lower_bound <= pd->upper_bound);
             adapt_global_upper_bound(problem, pd->upper_bound);
 
             if (pd->upper_bound == pd->lower_bound) {
@@ -4545,7 +3760,7 @@ int sequential_branching_ahv(wctproblem *problem) {
                     problem->found = 1;
                 }
 
-                remove_finished_subtree_ahv(pd);
+                remove_finished_subtree_conflict(pd);
             }
 
         }
@@ -4560,7 +3775,6 @@ int sequential_branching_ahv(wctproblem *problem) {
                parms->branching_cpu_limit);
     }
 
-    children_data_free(&problem->root_pd);
 CLEAN:
     return val;
 }
@@ -4630,132 +3844,6 @@ int sequential_branching_conflict(wctproblem *problem) {
 CLEAN:
     return val;
 }
-
-int sequential_cbfs_branch_and_bound_conflict(wctproblem *problem) {
-    int val = 0;
-    wctdata *pd;
-    wctparms *parms = &(problem->parms);
-    printf("ENTERED SEQUANTIAL BRANCHING CONFLICT + CBFS SEARCHING:\n");
-    CCutil_suspend_timer(&problem->tot_branch_and_bound);
-
-    while ((pd = get_next_node(problem))
-            && problem->tot_branch_and_bound.cum_zeit < parms->branching_cpu_limit) {
-        CCutil_resume_timer(&problem->tot_branch_and_bound);
-        int i;
-        pd->upper_bound = problem->global_upper_bound;
-
-        if (pd->lower_bound >= pd->upper_bound || pd->eta_in > pd->upper_bound - 1) {
-            skip_wctdata(pd, problem);
-            remove_finished_subtree_conflict(pd);
-        } else {
-            branching_msg_cbfs(pd, problem);
-            /** Construct PricerSolver */
-            /*val = recover_elist(pd);
-            CCcheck_val_2(val, "Failed in recover_elist");*/
-
-            if (problem->maxdepth < pd->depth) {
-                problem->maxdepth = pd->depth;
-            }
-
-            val = create_branches_conflict(pd, problem);
-            CCcheck_val_2(val, "Failed at create_branches");
-
-            for (i = 0; i < pd->nsame; i++) {
-                insert_node_for_exploration(&(pd->same_children[i]), problem);
-            }
-
-            for (i = 0; i < pd->ndiff; i++) {
-                insert_node_for_exploration(pd->diff_children + i, problem);
-            }
-
-            //assert(pd->lower_bound <= pd->upper_bound);
-            adapt_global_upper_bound(problem, pd->upper_bound);
-
-            if (pd->upper_bound == pd->lower_bound) {
-                if (pd->depth == 0) {
-                    problem->found = 1;
-                }
-
-                remove_finished_subtree_conflict(pd);
-            }
-
-        }
-
-        CCutil_suspend_timer(&problem->tot_branch_and_bound);
-    }
-
-    CCutil_resume_timer(&problem->tot_branch_and_bound);
-
-    if (pd) {
-        printf("Branching timeout of %f second reached\n",
-               parms->branching_cpu_limit);
-    }
-
-CLEAN:
-    return val;
-}
-
-int sequential_cbfs_branch_and_bound_ahv(wctproblem *problem) {
-    int val = 0;
-    wctdata *pd;
-    wctparms *parms = &(problem->parms);
-    printf("ENTERED SEQUANTIAL BRANCHING CONFLICT + CBFS SEARCHING:\n");
-    CCutil_suspend_timer(&problem->tot_branch_and_bound);
-
-    while ((pd = get_next_node(problem))
-            && problem->tot_branch_and_bound.cum_zeit < parms->branching_cpu_limit) {
-        CCutil_resume_timer(&problem->tot_branch_and_bound);
-        int i;
-        pd->upper_bound = problem->global_upper_bound;
-
-        if (pd->lower_bound >= pd->upper_bound || pd->eta_in > pd->upper_bound - 1) {
-            skip_wctdata(pd, problem);
-            remove_finished_subtree_ahv(pd);
-        } else {
-            branching_msg_cbfs_ahv(pd, problem);
-
-            if (problem->maxdepth < pd->depth) {
-                problem->maxdepth = pd->depth;
-            }
-
-            val = create_branches_ahv(pd, problem);
-            CCcheck_val_2(val, "Failed at create_branches");
-
-            for (i = 0; i < pd->nduetime; i++) {
-                insert_node_for_exploration(pd->duetime_child + i, problem);
-            }
-
-            for (i = 0; i < pd->nreleasetime; i++) {
-                insert_node_for_exploration(pd->releasetime_child + i, problem);
-            }
-
-            assert(pd->lower_bound <= pd->upper_bound);
-            adapt_global_upper_bound(problem, pd->upper_bound);
-
-            if (pd->upper_bound == pd->lower_bound) {
-                if (pd->depth == 0) {
-                    problem->found = 1;
-                }
-
-                remove_finished_subtree_ahv(pd);
-            }
-
-        }
-
-        CCutil_suspend_timer(&problem->tot_branch_and_bound);
-    }
-
-    CCutil_resume_timer(&problem->tot_branch_and_bound);
-
-    if (pd) {
-        printf("Branching timeout of %f second reached\n",
-               parms->branching_cpu_limit);
-    }
-
-CLEAN:
-    return val;
-}
-
 
 int sequential_branching_wide(wctproblem *problem) {
     int val = 0;
@@ -4988,9 +4076,9 @@ int build_lp(wctdata *pd, int construct) {
                 pd->newsets[0].count++;
                 pd->newsets[0].members[0] = i;
                 pd->newsets[0].members[1] = pd->njobs;
-                pd->newsets[0].totwct = pd->weights[i] * pd->duration[i];
-                pd->newsets[0].totweight = pd->duration[i];
-                pd->newsets[0].C[0] = pd->duration[i];
+                pd->newsets[0].totwct = pd->jobarray[i].weight * pd->jobarray[i].processingime;
+                pd->newsets[0].totweight = pd->jobarray[i].processingime;
+                pd->newsets[0].C[0] = pd->jobarray[i].processingime;
                 g_hash_table_insert(pd->newsets[0].table, GINT_TO_POINTER(i), pd->newsets[0].C);
                 pd->newsets->age = 0;
                 val = wctlp_addcol(pd->LP, 2, pd->newsets[0].members, pd->coef,
@@ -5110,9 +4198,9 @@ int build_lp_part(wctdata *pd) {
                 pd->newsets[0].count++;
                 pd->newsets[0].members[0] = i;
                 pd->newsets[0].members[1] = pd->njobs;
-                pd->newsets[0].totwct = pd->weights[i] * pd->duration[i];
-                pd->newsets[0].totweight = pd->duration[i];
-                pd->newsets[0].C[0] = pd->duration[i];
+                pd->newsets[0].totwct = pd->jobarray[i].weight * pd->jobarray[i].processingime;
+                pd->newsets[0].totweight = pd->jobarray[i].processingime;
+                pd->newsets[0].C[0] = pd->jobarray[i].processingime;
                 g_hash_table_insert(pd->newsets[0].table, GINT_TO_POINTER(i), pd->newsets[0].C);
                 pd->newsets->age = 0;
                 val = wctlp_addcol(pd->LP, 2, pd->newsets[0].members, pd->coef,
@@ -5589,20 +4677,12 @@ int compute_schedule(wctproblem *problem) {
             CCcheck_val(val, "Failed in sequential_branching_conflict");
             break;
 
-        case ahv_strategy:
-            val = sequential_branching_ahv(problem);
-            CCcheck_val_2(val, "Failed in sequential_branching_ahv");
-            break;
-
         case cbfs_conflict_strategy:
             val = sequential_cbfs_branch_and_bound_conflict(problem);
             CCcheck_val_2(val, "Failed in CBFS conflict branching");
             break;
 
-        case cbfs_ahv_strategy:
-            val = sequential_cbfs_branch_and_bound_ahv(problem);
-            CCcheck_val_2(val, "Failed in CBFS AHV branching");
-            break;
+
         }
 
         CCutil_stop_timer(&(problem->tot_branch_and_bound), 0);

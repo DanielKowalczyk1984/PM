@@ -13,8 +13,6 @@ typedef struct _Job {
     int processingime;
     int releasetime;
     int duetime;
-    GList *ready_list;
-    GList *due_list;
 } Job;
 
 
@@ -83,6 +81,7 @@ typedef struct _solution {
     int dist;
     int iter;
     double fitness;
+    int *c;
 } solution;
 
 

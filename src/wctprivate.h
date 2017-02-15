@@ -15,9 +15,9 @@ extern "C" {
  */
 
 typedef struct PricerSolver PricerSolver;
-PricerSolver *newSolver(int *p, int *w, int *r, int *d, int nbjobs, int Hmin,
+PricerSolver *newSolver(Job *jobarray, int nbjobs, int Hmin,
                         int Hmax);
-PricerSolver *newSolverDP(int *p, int *w, int *r, int *d, int nbjobs, int Hmin,
+PricerSolver *newSolverDP(Job *jobarray, int nbjobs, int Hmin,
                           int Hmax);
 PricerSolver *copySolver(PricerSolver *src);
 void freeSolver(PricerSolver *src);
@@ -36,7 +36,7 @@ int add_one_conflict(PricerSolver *solver, wctparms *parms, int v1, int v2,
 int init_tables(PricerSolver *solver);
 size_t get_numberrows_zdd(PricerSolver *solver);
 size_t get_numberrows_bdd(PricerSolver *solver);
-void set_release_due_time(PricerSolver *solver, int *releasetime, int *duetime);
+void set_release_due_time(PricerSolver *solver, Job *jobarray);
 /**
  * scatter search data types
  */
@@ -121,10 +121,10 @@ struct wctdata {
     // The job information
     int njobs;
     int nmachines;
-    int *duetime;
-    int *releasetime;
-    int *duration;
-    int *weights;
+    // int *duetime;
+    // int *releasetime;
+    // int *duration;
+    // int *weights;
     int *orig_node_ids;
     //data for meta heuristic
     Job *jobarray;

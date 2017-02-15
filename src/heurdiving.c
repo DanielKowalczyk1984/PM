@@ -523,8 +523,8 @@ int constructsolution(wctdata *pd, int nmachines, int *success) {
                         covered[pd->cclasses[i].members[k]] = 1;
                         pd->bestcolors[tmp].members[pd->bestcolors[tmp].count++] =
                             pd->cclasses[i].members[k];
-                        pd->bestcolors[tmp].totweight += pd->duration[pd->cclasses[i].members[k]];
-                        pd->bestcolors[tmp].totwct += pd->weights[pd->cclasses[i].members[k]] *
+                        pd->bestcolors[tmp].totweight += pd->jobarray[pd->cclasses[i].members[k]].processingime;
+                        pd->bestcolors[tmp].totwct += pd->jobarray[pd->cclasses[i].members[k]].weight *
                                                       pd->bestcolors[tmp].totweight;
                         counter++;
                     }

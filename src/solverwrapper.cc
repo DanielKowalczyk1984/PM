@@ -6,7 +6,7 @@
 #include <vector>
 
 template<typename T = double, bool reverse = false>
-int construct_sol(Scheduleset **set, int *nnewsets, int *d,
+int construct_sol(Scheduleset **set, int *nnewsets, Job *jobarray,
                   Optimal_Solution<T> &sol, int nbjobs) {
     int val = 0;
     int nbset = 1;
@@ -29,7 +29,7 @@ int construct_sol(Scheduleset **set, int *nnewsets, int *d,
     }
 
     for (size_t i = 0; i < sol.jobs.size(); i++) {
-        C += d[newset->members[i]];
+        C += jobarray[newset->members[i]].processingime;
         newset->C[i] = C;
         g_hash_table_insert(newset->table, GINT_TO_POINTER(newset->members[i]),
                             newset->C + i);
@@ -51,14 +51,14 @@ CLEAN:
 }
 
 extern "C" {
-    PricerSolver *newSolver(int *p, int *w, int *r, int *d, int nbjobs, int Hmin,
+    PricerSolver *newSolver(Job *jobarray, int nbjobs, int Hmin,
                             int Hmax) {
-        return new PricerSolver(p, w, r, d, nbjobs, Hmin, Hmax);
+        return new PricerSolver(jobarray, nbjobs, Hmin, Hmax);
     }
 
-    PricerSolver *newSolverDP(int *p, int *w, int *r, int *d, int nbjobs, int Hmin,
+    PricerSolver *newSolverDP(Job *jobarray, int nbjobs, int Hmin,
                               int Hmax) {
-        return new PricerSolver(p, w, r, d, nbjobs, Hmin, Hmax, false);
+        return new PricerSolver(jobarray, nbjobs, Hmin, Hmax, false);
     }
 
     PricerSolver *copySolver(PricerSolver *src) {
@@ -79,7 +79,7 @@ extern "C" {
         Optimal_Solution<double> s = pd->solver->solve_duration_zdd_double(pd->pi);
 
         if (s.obj > 0.00001) {
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->duration, s,
+            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
                                 pd->njobs);
             CCcheck_val_2(val, "Failed in construct_sol_zdd");
         } else {
@@ -95,7 +95,7 @@ CLEAN:
         Optimal_Solution<double> s = pd->solver->solve_duration_bdd_double(pd->pi);
 
         if (s.obj > 0.00001) {
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->duration, s,
+            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
                                 pd->njobs);
             CCcheck_val_2(val, "Failed to construct_sol_bdd");
         } else {
@@ -111,7 +111,7 @@ CLEAN:
         Optimal_Solution<double> s = pd->solver->dynamic_programming_ahv(pd->pi);
 
         if (s.obj < -0.00001) {
-            val = construct_sol<double, true>(&(pd->newsets), &(pd->nnewsets), pd->duration,
+            val = construct_sol<double, true>(&(pd->newsets), &(pd->nnewsets), pd->jobarray,
                                               s, pd->njobs);
             CCcheck_val_2(val, "Failed in constructing sol");
         } else {
@@ -128,7 +128,7 @@ CLEAN:
         Optimal_Solution<double> s = pd->solver->dynamic_programming_ahv(data->pi);
 
         if (s.obj < -0.00001) {
-            val = construct_sol<double, true>(&(pd->newsets), &(pd->nnewsets), pd->duration,
+            val = construct_sol<double, true>(&(pd->newsets), &(pd->nnewsets), pd->jobarray,
                                               s, pd->njobs);
             CCcheck_val_2(val, "Failed in constructing sol");
         } else {
@@ -144,7 +144,7 @@ CLEAN:
         Optimal_Solution<double> s = pd->solver->solve_farkas_double(pd->pi);
 
         if (s.obj < -0.00001) {
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->duration, s,
+            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
                                 pd->njobs);
             CCcheck_val_2(val, "Failed in constructing jobs");
         } else {
@@ -160,7 +160,7 @@ CLEAN:
         Optimal_Solution<double> s = pd->solver->dynamic_programming_ahv_farkas(pd->pi);
 
         if (s.obj < -0.00001) {
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->duration, s,
+            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
                                 pd->njobs);
             CCcheck_val_2(val, "Failed in constructing jobs");
         } else {
@@ -177,7 +177,7 @@ CLEAN:
         Optimal_Solution<double> s = pd->solver->solve_farkas_double(data->pi);
 
         if (s.obj < -0.00001) {
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->duration, s,
+            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
                                 pd->njobs);
             CCcheck_val_2(val, "Failed in constructing jobs");
         } else {
@@ -193,7 +193,7 @@ CLEAN:
         Optimal_Solution<double> s = pd->solver->solve_weight_bdd_double(pd->pi);
 
         if (s.obj > 0.00001) {
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->duration, s,
+            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
                                 pd->njobs);
             CCcheck_val_2(val, "Failed in construction")
         } else {
@@ -210,7 +210,7 @@ CLEAN:
         Optimal_Solution<double> s = pd->solver->solve_weight_bdd_double(data->pi);
 
         if (s.obj > 0.00001) {
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->duration, s,
+            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
                                 pd->njobs);
             CCcheck_val_2(val, "Failed in construction")
         } else {
@@ -226,7 +226,7 @@ CLEAN:
         Optimal_Solution<double> s = pd->solver->solve_weight_zdd_double(pd->pi);
 
         if (s.obj > 0.00001) {
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->duration, s,
+            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
                                 pd->njobs);
             CCcheck_val_2(val, "Failed in construction")
         } else {
@@ -243,7 +243,7 @@ CLEAN:
         Optimal_Solution<double> s = pd->solver->solve_weight_zdd_double(data->pi);
 
         if (s.obj > 0.00001) {
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->duration, s,
+            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
                                 pd->njobs);
             CCcheck_val_2(val, "Failed in construction")
         } else {
@@ -377,9 +377,8 @@ CLEAN:
         return val;
     }
 
-    void set_release_due_time(PricerSolver *solver, int *releasetime,
-                              int *duetime) {
-        solver->set_release_due_time(releasetime, duetime);
+    void set_release_due_time(PricerSolver *solver, Job* jobarray) {
+        solver->set_release_due_time(jobarray);
     }
 
     void compute_subgradient(Optimal_Solution<double> &sol, double *sub_gradient,
@@ -556,13 +555,13 @@ CLEAN:
         switch (parms->solver) {
         case bdd_solver:
         case zdd_solver:
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->duration, sol,
+            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, sol,
                                 pd->njobs);
             CCcheck_val_2(val, "Failed in construction of solution");
             break;
 
         case DP_solver:
-            val = construct_sol<double, true>(&(pd->newsets), &(pd->nnewsets), pd->duration,
+            val = construct_sol<double, true>(&(pd->newsets), &(pd->nnewsets), pd->jobarray,
                                               sol, pd->njobs);
             CCcheck_val_2(val, "Failed in construction of solution");
             break;

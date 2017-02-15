@@ -7,6 +7,7 @@
 #include <array>
 #include <unordered_map>
 #include <boost/dynamic_bitset.hpp>
+#include "datastructsol.h"
 
 template<typename T>
 class node {
@@ -286,14 +287,13 @@ template<typename E, typename T>
 class DurationZDD: public
     tdzdd::DdEval<E, PricerInfoZDD<T>, Optimal_Solution<T> > {
     T *pi;
-    int *p;
-    int *w;
+    Job *jobarray;
     int nbjobs;
     int L;
 
   public:
-    DurationZDD(T *_pi, int *_p, int *_w, int _nbjobs, int _L)
-        : pi(_pi), p(_p), w(_w), nbjobs(_nbjobs), L(_L) {
+    DurationZDD(T *_pi, Job *_jobarray, int _nbjobs, int _L)
+        : pi(_pi), jobarray(_jobarray), nbjobs(_nbjobs), L(_L) {
     };
 
     void evalTerminal(PricerInfoZDD<T> &n, bool one) {
@@ -310,12 +310,12 @@ class DurationZDD: public
         PricerInfoZDD<T> *n1 = values.get_ptr(1);
 
         for (int k = 0; k < L + 1; ++k) {
-            int it = k + p[j];
+            int it = k + jobarray[j].processingime;
 
             if (it <= L) {
-                if (n1->obj[it] < n.obj[k] - w[j]*it + pi[j]) {
-                    n1->obj[it] = n.obj[k] - w[j] * it + pi[j];
-                    n1->cost[it] = n.cost[k] + w[j] * it;
+                if (n1->obj[it] < n.obj[k] - jobarray[j].weight*it + pi[j]) {
+                    n1->obj[it] = n.obj[k] - jobarray[j].weight * it + pi[j];
+                    n1->cost[it] = n.cost[k] + jobarray[j].weight * it;
                     n1->A[it].clear();
                     n1->A[it] = n.A[k];
                     n1->A[it][j] = true;
@@ -364,13 +364,12 @@ template<typename E, typename T>
 class DurationBDD: public
     tdzdd::DdEval<E, PricerInfoBDD<T>, Optimal_Solution<T> > {
     T *pi;
-    int *p;
-    int *w;
+    Job *jobarray;
     int nbjobs;
 
   public:
-    DurationBDD(T *_pi, int *_p, int *_w, int _nbjobs)
-        : pi(_pi), p(_p), w(_w), nbjobs(_nbjobs) {
+    DurationBDD(T *_pi, Job *_jobarray, int _nbjobs)
+        : pi(_pi),jobarray(_jobarray), nbjobs(_nbjobs) {
     };
 
     void evalTerminal(PricerInfoBDD<T> &n, bool one) {
@@ -394,10 +393,10 @@ class DurationBDD: public
             n0->jobs = n.jobs;
         }
 
-        if (n1->obj < n.obj - (T) w[j] * (n.sum_p + p[j]) +  pi[j]) {
-            n1->obj = n.obj - (T) w[j] * (n.sum_p + p[j]) + pi[j];
-            n1->cost = n.cost + w[j] * (n.sum_p + p[j]);
-            n1->sum_p = n.sum_p + p[j];
+        if (n1->obj < n.obj - (T) jobarray[j].weight * (n.sum_p + jobarray[j].processingime) +  pi[j]) {
+            n1->obj = n.obj - (T) jobarray[j].weight * (n.sum_p + jobarray[j].processingime) + pi[j];
+            n1->cost = n.cost + jobarray[j].weight * (n.sum_p + jobarray[j].processingime);
+            n1->sum_p = n.sum_p + jobarray[j].processingime;
             n1->jobs = n.jobs;
             n1->jobs.push_back(j);
         }
@@ -421,15 +420,12 @@ template<typename E, typename T>
 class WeightBDD: public
     tdzdd::DdEval<E, PricerWeightBDD<T>, Optimal_Solution<T> > {
     T *pi;
-    int *p;
-    int *w;
-    int *r;
-    int *d;
+    Job *jobarray;
     int nbjobs;
 
   public:
-    WeightBDD(T *_pi, int *_p, int *_w, int *_r, int *_d, int _nbjobs)
-        : pi(_pi), p(_p), w(_w), r(_r), d(_d), nbjobs(_nbjobs) {
+    WeightBDD(T *_pi, Job *_jobarray, int _nbjobs)
+        : pi(_pi), jobarray(_jobarray), nbjobs(_nbjobs) {
     };
 
     void evalTerminal(PricerWeightBDD<T> &n) {
@@ -447,11 +443,11 @@ class WeightBDD: public
         PricerWeightBDD<T> *n0 = values.get_ptr(0);
         PricerWeightBDD<T> *n1 = values.get_ptr(1);
 
-        if (n0->obj >= n1->obj - (T) w[j] * (n->sum_p + p[j]) + pi[j]) {
+        if (n0->obj >= n1->obj - (T) jobarray[j].weight * (n->sum_p + jobarray[j].processingime) + pi[j]) {
             n->obj = n0->obj;
             n->take = false;
         } else {
-            n->obj = n1->obj - (T) w[j] * (n->sum_p + p[j]) + pi[j];
+            n->obj = n1->obj - (T) jobarray[j].weight * (n->sum_p + jobarray[j].processingime) + pi[j];
             n->take = true;
         }
     }
@@ -470,11 +466,11 @@ class WeightBDD: public
         int j = nbjobs - cur_node.row();
 
         while (cur_node.row() != 0 || cur_node.col() != 0) {
-            if ((*data_table)[cur_node.row()][cur_node.col()].take &&  r[j] <= sol.C_max &&
-                    sol.C_max + p[j] <= d[j]) {
+            if ((*data_table)[cur_node.row()][cur_node.col()].take &&  jobarray[j].releasetime <= sol.C_max &&
+                    sol.C_max + jobarray[j].processingime <= jobarray[j].duetime) {
                 sol.jobs.push_back(j);
-                sol.C_max += p[j];
-                sol.cost += w[j] * sol.C_max;
+                sol.C_max += jobarray[j].processingime;
+                sol.cost += jobarray[j].weight * sol.C_max;
                 cur_node = diagram.privateEntity().child(cur_node, 1);
                 j = nbjobs - cur_node.row();
             } else {
@@ -491,18 +487,15 @@ template<typename E, typename T>
 class WeightZDD: public
     tdzdd::DdEval<E, PricerWeightZDD<T>, Optimal_Solution<T> > {
     T *pi;
-    int *p;
-    int *w;
-    int *r;
-    int *d;
+    Job *jobarray;
     int nbjobs;
     int H_min;
     int H_max;
 
   public:
-    WeightZDD(T *_pi, int *_p, int *_w, int *_r, int *_d, int _nbjobs, int Hmin,
+    WeightZDD(T *_pi, Job *_jobarray, int _nbjobs, int Hmin,
               int Hmax)
-        : pi(_pi), p(_p), w(_w), r(_r), d(_d), nbjobs(_nbjobs), H_min(Hmin),
+        : pi(_pi), jobarray(_jobarray), nbjobs(_nbjobs), H_min(Hmin),
           H_max(Hmax) {
     };
 
@@ -524,11 +517,11 @@ class WeightZDD: public
             T obj0 = p0->obj;
             T obj1 = p1->obj;
 
-            if (obj0 >= obj1 - w[j] * (weight + p[j]) + pi[j]) {
+            if (obj0 >= obj1 - jobarray[j].weight * (weight + jobarray[j].processingime) + pi[j]) {
                 (*it)->obj = obj0;
                 (*it)->take = false;
             } else {
-                (*it)->obj = obj1 - w[j] * (weight + p[j]) + pi[j];
+                (*it)->obj = obj1 - jobarray[j].weight * (weight + jobarray[j].processingime) + pi[j];
                 (*it)->take = true;
             };
         }
@@ -552,10 +545,10 @@ class WeightZDD: public
         int j = ptr->job;
 
         while (ptr->job != nbjobs) {
-            if (ptr->take && r[j] <= sol.C_max && sol.C_max + p[j] <= d[j]) {
+            if (ptr->take && jobarray[j].releasetime <= sol.C_max && sol.C_max + jobarray[j].processingime <= jobarray[j].duetime) {
                 sol.jobs.push_back(ptr->job);
-                sol.C_max += p[j];
-                sol.cost += w[j] * sol.C_max;
+                sol.C_max += jobarray[j].processingime;
+                sol.cost += jobarray[j].weight * sol.C_max;
                 ptr = ptr->y;
                 j = ptr->job;
             } else {
@@ -574,13 +567,12 @@ class WeightZDD: public
 template<typename E, typename T>
 class Farkas: public tdzdd::DdEval<E, PricerInfoBDD<T> > {
     T *pi;
-    int *p;
-    int *w;
+    Job *jobarray;
     int nbjobs;
 
   public:
-    Farkas(T *_pi, int *_p, int *_w, int _nbjobs)
-        : pi(_pi), p(_p), w(_w), nbjobs(_nbjobs) {
+    Farkas(T *_pi, Job *_jobarray, int _nbjobs)
+        : pi(_pi), jobarray(_jobarray), nbjobs(_nbjobs) {
     };
 
     void evalTerminal(PricerInfoBDD<T> &n, bool one) {
@@ -605,8 +597,8 @@ class Farkas: public tdzdd::DdEval<E, PricerInfoBDD<T> > {
 
         if (n1->obj < n.obj + pi[j]) {
             n1->obj = n.obj + pi[j];
-            n1->cost = n.cost + w[j] * (n.sum_p + p[j]);
-            n1->sum_p = n.sum_p + p[j];
+            n1->cost = n.cost + jobarray[j].weight * (n.sum_p + jobarray[j].processingime);
+            n1->sum_p = n.sum_p + jobarray[j].processingime;
         }
     }
 
@@ -624,18 +616,15 @@ template<typename E, typename T>
 class FarkasZDD: public
     tdzdd::DdEval<E, PricerFarkasZDD<T>, Optimal_Solution<T> > {
     T *pi;
-    int *p;
-    int *w;
-    int *r;
-    int *d;
+    Job *jobarray;
     int nbjobs;
     int H_min;
     int H_max;
 
   public:
-    FarkasZDD(T *_pi, int *_p, int *_w, int *_r, int *_d, int _nbjobs, int Hmin,
+    FarkasZDD(T *_pi, Job *_jobarray, int _nbjobs, int Hmin,
               int Hmax)
-        : pi(_pi), p(_p), w(_w), r(_r), d(_d), nbjobs(_nbjobs), H_min(Hmin),
+        : pi(_pi), jobarray(_jobarray), nbjobs(_nbjobs), H_min(Hmin),
           H_max(Hmax) {
     };
 
@@ -673,11 +662,11 @@ class FarkasZDD: public
         int j = nbjobs - cur_node.row();
 
         while (cur_node.row() != 0) {
-            if ((*data_table)[cur_node.row()][cur_node.col()].take &&  r[j] <= sol.C_max &&
-                    sol.C_max + p[j] <= d[j]) {
+            if ((*data_table)[cur_node.row()][cur_node.col()].take &&  jobarray[j].releasetime <= sol.C_max &&
+                    sol.C_max + jobarray[j].processingime <= jobarray[j].duetime) {
                 sol.jobs.push_back(j);
-                sol.C_max += p[j];
-                sol.cost += w[j] * sol.C_max;
+                sol.C_max += jobarray[j].processingime;
+                sol.cost += jobarray[j].weight * sol.C_max;
                 cur_node = diagram.privateEntity().child(cur_node, 1);
                 j = nbjobs - cur_node.row();
             } else {
@@ -691,34 +680,34 @@ class FarkasZDD: public
 };
 
 struct DurationZDDdouble: DurationZDD<DurationZDDdouble, double> {
-    DurationZDDdouble(double *_pi, int *_p, int *_w, int _nbjobs,
-                      int H_max): DurationZDD<DurationZDDdouble,  double>(_pi, _p, _w, _nbjobs,
+    DurationZDDdouble(double *_pi, Job *_jobarray, int _nbjobs,
+                      int H_max): DurationZDD<DurationZDDdouble,  double>(_pi, _jobarray, _nbjobs,
                                   H_max) {
     };
 };
 
 struct DurationBDDdouble: DurationBDD<DurationBDDdouble, double> {
-    DurationBDDdouble(double *_pi, int *_p, int *_w,
-                      int _nbjobs): DurationBDD<DurationBDDdouble, double>(_pi, _p, _w, _nbjobs) {
+    DurationBDDdouble(double *_pi, Job *_jobarray,
+                      int _nbjobs): DurationBDD<DurationBDDdouble, double>(_pi, _jobarray, _nbjobs) {
     };
 };
 
 struct WeightBDDdouble: WeightBDD<WeightBDDdouble, double> {
-    WeightBDDdouble(double *_pi, int *_p, int *_w, int *r, int *d,
-                    int _nbjobs): WeightBDD<WeightBDDdouble, double>(_pi, _p, _w, r, d, _nbjobs) {
+    WeightBDDdouble(double *_pi, Job *_jobarray,
+                    int _nbjobs): WeightBDD<WeightBDDdouble, double>(_pi, _jobarray, _nbjobs) {
     };
 };
 
 struct WeightZDDdouble: WeightZDD<WeightZDDdouble, double> {
-    WeightZDDdouble(double *_pi, int *_p, int *_w, int *r, int *d, int _nbjobs,
-                    int Hmin, int Hmax): WeightZDD<WeightZDDdouble, double>(_pi, _p, _w, r, d,
+    WeightZDDdouble(double *_pi, Job *_jobarray, int _nbjobs,
+                    int Hmin, int Hmax): WeightZDD<WeightZDDdouble, double>(_pi, _jobarray,
                                 _nbjobs, Hmin, Hmax) {
     };
 };
 
 struct FarkasZDDdouble: FarkasZDD<FarkasZDDdouble, double> {
-    FarkasZDDdouble(double *_pi, int *_p, int *_w, int *r, int *d, int _nbjobs,
-                    int Hmin, int Hmax): FarkasZDD<FarkasZDDdouble, double>(_pi, _p, _w, r, d,
+    FarkasZDDdouble(double *_pi, Job *_jobarray, int _nbjobs,
+                    int Hmin, int Hmax): FarkasZDD<FarkasZDDdouble, double>(_pi, _jobarray,
                                 _nbjobs, Hmin, Hmax) {
     };
 };
