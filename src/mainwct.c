@@ -335,9 +335,9 @@ int main(int ac, char **av) {
 
     fflush(stdout);
     /** Reading and preprocessing the data */
-    val  = read_problem(parms->jobfile, &(pd->njobs), &(problem.duration),
-                        &(problem.weight));
     pd->nmachines = parms->nmachines;
+    val  = read_problem(parms->jobfile, &(pd->njobs), &(problem.duration), &(problem.duetime),
+                        &(problem.weight), pd->nmachines);
     CCcheck_val(val, "read_adjlist failed");
     pd->orig_node_ids = (int *)CC_SAFE_MALLOC(pd->njobs, int);
     CCcheck_NULL_2(pd->orig_node_ids, "No memory to allocated orig_node_ids\n");
@@ -347,39 +347,38 @@ int main(int ac, char **av) {
     }
 
     Preprocessdata(&problem, pd);
-    printf("Reading and preprocessing of the data took %f seconds\n",
-           CCutil_zeit() - start_time);
-    /** Computing initial lowerbound */
-    CCutil_start_timer(&(problem.tot_lb));
-    problem.global_lower_bound = lowerbound_eei(pd->jobarray, pd->njobs,
-                                 pd->nmachines);
-    problem.global_lower_bound = CC_MAX(problem.global_lower_bound,
-                                        lowerbound_cp(pd->jobarray, pd->njobs, pd->nmachines));
-    problem.global_lower_bound = CC_MAX(problem.global_lower_bound,
-                                        lowerbound_cw(pd->jobarray, pd->njobs, pd->nmachines));
-    CCutil_stop_timer(&(problem.tot_lb), 0);
-    printf("Computing lowerbound EEI, CP and CW took %f seconds\n",
-           problem.tot_lb.cum_zeit);
-    /** Construction Pricersolver at the root node */
-    CCutil_start_resume_time(&(problem.tot_build_dd));
-    pd->solver = newSolver(pd->duration, pd->weights, pd->releasetime, pd->duetime,
-                           pd->njobs, pd->H_min, pd->H_max);
-    CCutil_suspend_timer(&(problem.tot_build_dd));
+    printf("Reading and preprocessing of the data took %f seconds\n", CCutil_zeit() - start_time);
+    // /** Computing initial lowerbound */
+    // CCutil_start_timer(&(problem.tot_lb));
+    // problem.global_lower_bound = lowerbound_eei(pd->jobarray, pd->njobs,
+    //                              pd->nmachines);
+    // problem.global_lower_bound = CC_MAX(problem.global_lower_bound,
+    //                                     lowerbound_cp(pd->jobarray, pd->njobs, pd->nmachines));
+    // problem.global_lower_bound = CC_MAX(problem.global_lower_bound,
+    //                                     lowerbound_cw(pd->jobarray, pd->njobs, pd->nmachines));
+    // CCutil_stop_timer(&(problem.tot_lb), 0);
+    // printf("Computing lowerbound EEI, CP and CW took %f seconds\n",
+    //        problem.tot_lb.cum_zeit);
+    // /** Construction Pricersolver at the root node */
+    // CCutil_start_resume_time(&(problem.tot_build_dd));
+    // pd->solver = newSolver(pd->duration, pd->weights, pd->releasetime, pd->duetime,
+    //                        pd->njobs, pd->H_min, pd->H_max);
+    // CCutil_suspend_timer(&(problem.tot_build_dd));
 
-    /** Construct Feasible solutions */
-    if (parms->nb_feas_sol > 0) {
-        construct_feasible_solutions(&problem);
-    }
+    // /** Construct Feasible solutions */
+    // if (parms->nb_feas_sol > 0) {
+    //     construct_feasible_solutions(&problem);
+    // }
 
-    /** Compute Schedule with Branch and Price */
-    compute_schedule(&problem);
+    // /** Compute Schedule with Branch and Price */
+    // compute_schedule(&problem);
 
-    /** Print all the information to screen and csv */
-    if (problem.parms.print) {
-        print_to_csv(&problem);
-    }
+    // /** Print all the information to screen and csv */
+    // if (problem.parms.print) {
+    //     print_to_csv(&problem);
+    // }
 
-    print_to_screen(&problem);
+    // print_to_screen(&problem);
 
 CLEAN:
     wctproblem_free(&problem);
