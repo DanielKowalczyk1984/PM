@@ -244,11 +244,20 @@ struct wctproblem {
     wctparms parms;
     wctdata root_pd;
     /** Job data */
-    int *duration;
-    int *weight;
-    int *releasetime;
-    int *duetime;
     Job *jobarray;
+    /** Summary of jobs */
+    int njobs;
+    int psum;
+    int pmax;
+    int pmin;
+    int dmax;
+    int dmin;
+    int T;
+    /** EDD order of the jobs */
+    Job **ojobarray;
+    /** nmachines */
+    int nmachines;
+
 
     int nwctdata;
     int global_upper_bound;
@@ -260,14 +269,13 @@ struct wctproblem {
     int maxdepth;
 
     problem_status status;
-    /* Scatter search*/
-    SS scatter_search;
 
     /* All stable sets*/
     Scheduleset *initsets;
     int nbinitsets;
     int gallocated;
     /* Best Solution*/
+    solution *opt_sol;
     Scheduleset *bestschedule;
     int nbestschedule;
     /*heap variables*/
