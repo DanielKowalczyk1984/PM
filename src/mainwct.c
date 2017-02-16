@@ -335,12 +335,9 @@ int main(int ac, char **av) {
 
     fflush(stdout);
     /** Reading and preprocessing the data */
-    pd->nmachines = parms->nmachines;
-    val  = read_problem(parms->jobfile, &(pd->njobs), &(problem.duration), &(problem.duetime),
-                        &(problem.weight), pd->nmachines);
+    problem.nmachines = parms->nmachines;
+    val  = read_problem(parms->jobfile, &problem, problem.nmachines);
     CCcheck_val(val, "read_adjlist failed");
-    pd->orig_node_ids = (int *)CC_SAFE_MALLOC(pd->njobs, int);
-    CCcheck_NULL_2(pd->orig_node_ids, "No memory to allocated orig_node_ids\n");
 
     for (i = 0; i < pd->njobs; i++) {
         pd->orig_node_ids[i] = i;
@@ -348,6 +345,7 @@ int main(int ac, char **av) {
 
     Preprocessdata(&problem, pd);
     printf("Reading and preprocessing of the data took %f seconds\n", CCutil_zeit() - start_time);
+    heuristic_rpup(&problem);
     // /** Computing initial lowerbound */
     // CCutil_start_timer(&(problem.tot_lb));
     // problem.global_lower_bound = lowerbound_eei(pd->jobarray, pd->njobs,

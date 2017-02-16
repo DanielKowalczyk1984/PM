@@ -485,7 +485,7 @@ int partlist_to_Scheduleset(partlist *part, int nbpart, int njobs,
         if (g_queue_get_length(part[i].list) != 0) {
             Scheduleset_init(temp_sets + k);
             temp_sets[k].count = g_queue_get_length(part[i].list);
-            temp_sets[k].totweight = part[i].completiontime;
+            temp_sets[k].totweight = part[i].c;
             temp_sets[k].members = CC_SAFE_MALLOC(temp_sets[k].count + 1, int);
             CCcheck_NULL(temp_sets[k].members, "Failed to allocate memory to members");
             temp_sets[k].totwct = 0;

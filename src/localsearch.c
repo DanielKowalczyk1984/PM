@@ -120,7 +120,7 @@ int local_search_machine_general_best(solution *sol, int lowerbound, int k,
     moved = 1;
     CCutil_start_timer(&time_move);
 
-    while (moved && sol->totalweightcomptime != lowerbound) {
+    while (moved && sol->tw != lowerbound) {
         nbiter++;
         moved = 0;
         max = 0;
@@ -265,19 +265,19 @@ int local_search_machine_general_best(solution *sol, int lowerbound, int k,
 
             if (l == 0) {
                 for (it1 = 0; it1 < k; ++it1) {
-                    partlist_move_order(L_max, sol->vlist, K_jobs_max[it1], njobs);
+                    //partlist_move_order(L_max, sol->vlist, K_jobs_max[it1], njobs);
                 }
             } else if (l > 0) {
                 for (it1 = 0; it1 < k; ++it1) {
-                    partlist_move_order(L_max, sol->vlist, K_jobs_max[it1], njobs);
+                    //partlist_move_order(L_max, sol->vlist, K_jobs_max[it1], njobs);
                 }
 
                 for (it1 = 0; it1 < l; ++it1) {
-                    partlist_move_order(K_max, sol->vlist, L_jobs_max[it1], njobs);
+                    //partlist_move_order(K_max, sol->vlist, L_jobs_max[it1], njobs);
                 }
             }
 
-            sol->totalweightcomptime -= max;
+            sol->tw -= max;
         }
     };
 
@@ -285,7 +285,7 @@ int local_search_machine_general_best(solution *sol, int lowerbound, int k,
 
     if (dbg_lvl()) {
         printf("local search %d  - %d -> number of iterations = %d, objective = %d, time = %f, time per iteration = %f, improvement = %d\n",
-               k, l, nbiter, sol->totalweightcomptime, time_move.cum_zeit,
+               k, l, nbiter, sol->tw, time_move.cum_zeit,
                time_move.cum_zeit / nbiter, improvement);
     }
 
@@ -334,7 +334,7 @@ int local_search_machine_general_first(solution *sol, int lowerbound, int k,
     moved = 1;
     CCutil_start_timer(&time_move);
 
-    while (moved && sol->totalweightcomptime != lowerbound) {
+    while (moved && sol->tw != lowerbound) {
         nbiter++;
         moved = 0;
         max = 0;
@@ -481,16 +481,16 @@ int local_search_machine_general_first(solution *sol, int lowerbound, int k,
             improvement += max;
 
             for (it1 = 0; it1 < k; ++it1) {
-                partlist_move_order(L_max, sol->vlist, K_jobs_max[it1], njobs);
+                //partlist_move_order(L_max, sol->vlist, K_jobs_max[it1], njobs);
             }
 
             if (l > 0) {
                 for (it1 = 0; it1 < l; ++it1) {
-                    partlist_move_order(K_max, sol->vlist, L_jobs_max[it1], njobs);
+                    //partlist_move_order(K_max, sol->vlist, L_jobs_max[it1], njobs);
                 }
             }
 
-            sol->totalweightcomptime -= max;
+            sol->tw -= max;
         }
     };
 
@@ -498,7 +498,7 @@ int local_search_machine_general_first(solution *sol, int lowerbound, int k,
 
     if (dbg_lvl()) {
         printf("local search %d  - %d -> number of iterations = %d, objective = %d, time = %f, time per iteration = %f, improvement = %d\n",
-               k, l, nbiter, sol->totalweightcomptime, time_move.cum_zeit,
+               k, l, nbiter, sol->tw, time_move.cum_zeit,
                time_move.cum_zeit / nbiter, improvement);
     }
 
@@ -544,7 +544,7 @@ void localsearch_random_k(solution *sol, int lowerbound, int nb) {
     local_search_machine_general_first(sol, lowerbound, k, l);
     matrix[k][l] = 1;
 
-    for (i = 0; i < tot && !(sol->totalweightcomptime == lowerbound); ++i) {
+    for (i = 0; i < tot && !(sol->tw == lowerbound); ++i) {
         while (matrix[k][l] != 0) {
             k = g_random_int_range(1, nb);
             l = g_random_int_range(0, k + 1);

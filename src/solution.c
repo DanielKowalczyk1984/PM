@@ -11,14 +11,11 @@ void solution_init(solution *sol) {
     if (sol) {
         sol->part     = (partlist *)NULL;
         sol->vlist    = (joblist *)NULL;
-        sol->perm     = (int *)NULL;
+        sol->perm     = (Job **)NULL;
         sol->c        = (int*) NULL;
         sol->nmachines   = 0;
         sol->njobs   = 0;
-        sol->totalweightcomptime = 0;
-        sol->dist     = 0;
-        sol->iter     = 0;
-        sol->fitness  = .0;
+        sol->tw = 0;
     }
 }
 
@@ -32,28 +29,25 @@ void solution_free(solution *sol) {
 
         CC_IFFREE(sol->part, partlist);
         CC_IFFREE(sol->vlist, joblist);
-        CC_IFFREE(sol->perm, int);
+        CC_IFFREE(sol->perm, Job*);
         CC_IFFREE(sol->c, int);
         sol->nmachines   = 0;
-        sol->totalweightcomptime = 0;
+        sol->tw = 0;
         sol->njobs   = 0;
-        sol->dist     = 0;
-        sol->iter     = 0;
-        sol->fitness  = .0;
     }
 }
 
-int solution_alloc(solution *sol, int nmachines, int njobs) {
+solution* solution_alloc(int nmachines, int njobs) {
     int val = 0;
+    int i;
+    
+    solution *sol = (solution *) NULL;
+    sol = CC_SAFE_MALLOC(1, solution);
+    CCcheck_NULL_2(sol, "Failed to allocate memory");
+    solution_init(sol);
+
     sol->nmachines  = nmachines;
     sol->njobs = njobs;
-    int i;
-
-    if (sol->vlist != NULL || sol->part != NULL) {
-        fprintf(stderr, "Error we already allocated memory to part or vlist\n");
-        val = 1;
-        goto CLEAN;
-    }
 
     sol->part = CC_SAFE_MALLOC(nmachines, partlist);
     CCcheck_NULL_2(sol->part, "Failed to allocate memory to part");
@@ -71,30 +65,24 @@ int solution_alloc(solution *sol, int nmachines, int njobs) {
 
     sol->vlist = CC_SAFE_MALLOC(njobs, joblist);
     CCcheck_NULL_2(sol->vlist, "Failed to allocate memory to vlist");
-    sol->perm = CC_SAFE_MALLOC(njobs, int);
+    sol->perm = CC_SAFE_MALLOC(njobs, Job*);
     CCcheck_NULL_2(sol->perm, "Failed to allocate memory to perm");
     sol->c = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(sol->c, "Failed to allocate memory");
+    fill_int(sol->c, sol->njobs, 0);
 
     for (i = 0; i < njobs; ++i) {
         joblist_init(sol->vlist + i);
-        sol->perm[i] = -1;
+        sol->perm[i] = (Job *) NULL;
     }
 
 CLEAN:
 
     if (val) {
-        for (i = 0; i < nmachines; i++) {
-            partlist_free(sol->part + i);
-        }
-
-        CC_IFFREE(sol->part, partlist);
-        CC_IFFREE(sol->vlist, joblist);
-        CC_IFFREE(sol->perm, int);
-        CC_IFFREE(sol->c, int);
+        solution_free(sol);
     }
 
-    return val;
+    return sol;
 }
 
 gint comparefunc(const void *a, const void *b, void *data) {
@@ -105,8 +93,8 @@ gint comparefunc(const void *a, const void *b, void *data) {
 }
 
 gint compare_func(const void *a, const void *b) {
-    const int *v = &(((const partlist *)a)->completiontime);
-    const int *w = &(((const partlist *)b)->completiontime);
+    const int *v = &(((const partlist *)a)->c);
+    const int *w = &(((const partlist *)b)->c);
 
     if (*v != *w) {
         return *v - *w;
@@ -132,12 +120,12 @@ void solution_max(solution *sol) {
     int max = 0;
 
     for (int i = 0; i < sol->nmachines; ++i) {
-        if (sol->part[i].completiontime > max) {
-            max = sol->part[i].completiontime;
+        if (sol->part[i].c > max) {
+            max = sol->part[i].c;
         }
     }
 
-    sol->totalweightcomptime = max;
+    sol->tw = max;
 }
 
 void solution_unique(solution *sol) {
@@ -150,7 +138,7 @@ void solution_unique(solution *sol) {
 
     /** Compute permutation */
     if (sol->perm == NULL) {
-        sol->perm = CC_SAFE_MALLOC(sol->njobs, int);
+        sol->perm = CC_SAFE_MALLOC(sol->njobs, Job*);
     }
 
     for (i = 0; i < nmachines; i++) {
@@ -158,7 +146,7 @@ void solution_unique(solution *sol) {
         temp_partlist->key = i;
 
         for (it = temp_partlist->list->head; it; it = it->next) {
-            sol->perm[counter] = ((Job *)it->data)->job;
+            sol->perm[counter] = ((Job *)it->data);
             sol->vlist[((Job *)it->data)->job].part = sol->part + i;
             counter++;
         }
@@ -173,12 +161,12 @@ void solution_print(solution *sol) {
             printf("%d ", ((Job *)it->data)->job);
         }
 
-        printf("with C =  %d, wC = %d and %d jobs\n", sol->part[i].completiontime,
-               sol->part[i].totcompweight
+        printf("with C =  %d, wC = %d and %d jobs\n", sol->part[i].c,
+               sol->part[i].tw
                , g_queue_get_length(sol->part[i].list));
     }
 
-    printf("with total weighted completion time %d\n", sol->totalweightcomptime);
+    printf("with total weighted tardiness %d\n", sol->tw);
 }
 
 void test_SOLUTION(solution *sol) {
@@ -195,32 +183,29 @@ void test_SOLUTION(solution *sol) {
     }
 }
 
-int solution_copy(solution *dest, solution src) {
+int solution_copy(solution *dest, solution *src) {
     int val = 0;
     int counter = 0;
-    solution_init(dest);
-    dest->dist     = src.dist;
-    dest->fitness  = src.fitness;
-    dest->iter     = src.iter;
-    dest->totalweightcomptime = src.totalweightcomptime;
-    dest->nmachines   = src.nmachines;
-    dest->njobs   = src.njobs;
-    val = solution_alloc(dest, dest->nmachines, dest->njobs);
+
+
+
+    dest = solution_alloc(src->nmachines, src->njobs);
     CCcheck_val_2(val, "Failed in  solution_alloc");
+    dest->tw = src->tw;
 
     for (int i = 0; i < dest->nmachines; i++) {
-        dest->part[i].key = src.part[i].key;
-        dest->part[i].totcompweight = src.part[i].totcompweight;
+        dest->part[i].key = src->part[i].key;
+        dest->part[i].tw = src->part[i].tw;
         g_queue_free(dest->part[i].list);
         dest->part[i].list = (GQueue *) NULL;
-        dest->part[i].list = g_queue_copy(src.part[i].list);
-        memcpy(dest->part[i].sumtimes, src.part[i].sumtimes, sizeof(int)*dest->njobs);
-        memcpy(dest->part[i].sumweights, src.part[i].sumweights,
+        dest->part[i].list = g_queue_copy(src->part[i].list);
+        memcpy(dest->part[i].sumtimes, src->part[i].sumtimes, sizeof(int)*dest->njobs);
+        memcpy(dest->part[i].sumweights, src->part[i].sumweights,
                sizeof(int)*dest->njobs);
-        dest->part[i].completiontime = src.part[i].completiontime;
+        dest->part[i].c = src->part[i].c;
 
         for (GList *it = dest->part[i].list->head; it; it = it->next) {
-            dest->perm[counter] = ((Job *)it->data)->job;
+            dest->perm[counter] = ((Job *)it->data);
             dest->vlist[((Job *)it->data)->job].part = dest->part + i;
             counter++;
         }
@@ -239,24 +224,21 @@ CLEAN:
 int solution_update(solution *dest, solution src) {
     int val = 0;
     int counter = 0;
-    dest->dist     = src.dist;
-    dest->fitness  = src.fitness;
-    dest->iter     = src.iter;
-    dest->totalweightcomptime = src.totalweightcomptime;
+    dest->tw = src.tw;
     dest->nmachines   = src.nmachines;
     dest->njobs   = src.njobs;
 
     for (int i = 0; i < dest->nmachines; i++) {
         g_queue_free(dest->part[i].list);
-        dest->part[i].totcompweight = src.part[i].totcompweight;
+        dest->part[i].tw = src.part[i].tw;
         dest->part[i].list = g_queue_copy(src.part[i].list);
-        dest->part[i].completiontime = src.part[i].completiontime;
+        dest->part[i].c = src.part[i].c;
         memcpy(dest->part[i].sumtimes, src.part[i].sumtimes, sizeof(int)*dest->njobs);
         memcpy(dest->part[i].sumweights, src.part[i].sumweights,
                sizeof(int)*dest->njobs);
 
         for (GList *it = dest->part[i].list->head; it; it = it->next) {
-            dest->perm[counter] = ((Job *)it->data)->job;
+            dest->perm[counter] = ((Job *)it->data);
             dest->vlist[((Job *)it->data)->job].part = dest->part + i;
             counter++;
         }
@@ -272,20 +254,20 @@ void solution_calc(solution *sol, Job *jobarray) {
     GList *it = (GList *) NULL;
     Job *temp_job = (Job *) NULL;
     partlist *temp_partlist = (partlist *) NULL;
-    sol->totalweightcomptime = 0;
+    sol->tw = 0;
 
     /** Order in WSPT order and compute objective value of this solution */
     for (i = 0; i < nmachines; ++i) {
         temp_partlist = sol->part + i;
-        temp_partlist->completiontime = 0;
+        temp_partlist->c = 0;
         g_queue_sort(temp_partlist->list, (GCompareDataFunc)comparefunc, NULL);
 
         for (it = temp_partlist->list->head; it; it = g_list_next(it)) {
             temp_job = ((Job *)it->data);
-            temp_partlist->completiontime += temp_job->processingime ;
-            temp_partlist->totcompweight += temp_job->weight *
-                                            temp_partlist->completiontime;
-            sol->totalweightcomptime += temp_partlist->completiontime * temp_job->weight;
+            temp_partlist->c += temp_job->processingime ;
+            temp_partlist->tw += temp_job->weight *
+                                            temp_partlist->c;
+            sol->tw += temp_partlist->c * temp_job->weight;
         }
     }
 
@@ -336,18 +318,18 @@ void solution_wct(solution *sol) {
     GList *it = (GList *) NULL;
     Job *temp_job = (Job *) NULL;
     partlist *temp_partlist = (partlist *) NULL;
-    sol->totalweightcomptime = 0;
+    sol->tw = 0;
 
     /** Order in WSPT order and compute objective value of this solution */
     for (i = 0; i < nmachines; ++i) {
         temp_partlist = sol->part + i;
-        temp_partlist->completiontime = 0;
+        temp_partlist->c = 0;
         g_queue_sort(temp_partlist->list, (GCompareDataFunc)comparefunc, NULL);
 
         for (it = temp_partlist->list->head; it; it = g_list_next(it)) {
             temp_job = ((Job *)it->data);
-            temp_partlist->completiontime += temp_job->processingime;
-            sol->totalweightcomptime += temp_partlist->completiontime * temp_job->weight;
+            temp_partlist->c += temp_job->processingime;
+            sol->tw += temp_partlist->c * temp_job->weight;
         }
     }
 }
