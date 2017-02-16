@@ -57,8 +57,8 @@ typedef struct _partlist {
     GQueue *list;
     int *sumtimes;
     int *sumweights;
-    int completiontime;
-    int totcompweight;
+    int c;
+    int tw;
     int key;
 } partlist;
 
@@ -74,14 +74,11 @@ typedef struct _joblist {
 typedef struct _solution {
     partlist *part;
     joblist *vlist;
-    int *perm;
-    int totalweightcomptime;
+    Job **perm;
+    int *c;
+    int tw;
     int njobs;
     int nmachines;
-    int dist;
-    int iter;
-    double fitness;
-    int *c;
 } solution;
 
 
@@ -93,14 +90,10 @@ void partlist_free(partlist *part);
 void partlist_init(partlist *part);
 void joblist_init(joblist *vlist);
 void partition_init(partlist *part, joblist *vlist, int nbpart, int jcount);
-int partlist_insert_order(partlist *part, joblist *vlist, struct _Job *job,
-                          int njobs);
 int partlist_insert(partlist *part, joblist *vlist, struct _Job *job);
 int partlist_delete(joblist *vlist, struct _Job *job);
 int partlist_delete_custom(joblist *vlist, struct _Job *job, int njobs);
 void partlist_move(partlist *part, joblist *vlist, struct _Job *job);
-void partlist_move_order(partlist *part, joblist *vlist, struct _Job *job,
-                         int jobs);
 int partition_order(const void *a, const void *b, void *data);
 int find_vertex(const void *a, const void *b);
 
@@ -115,7 +108,7 @@ int partlist_more_totweight(partlist *c1, partlist *c2);
 
 void solution_init(solution *sol);
 void solution_free(solution *sol);
-int solution_alloc(solution *sol, int nbpart, int jcount);
+solution* solution_alloc(int nmachines, int njobs);
 
 void solution_unique(solution *sol);
 void solution_calc(solution *sol, struct _Job *joblist);
@@ -123,7 +116,7 @@ void solution_max(solution *sol);
 void solution_print(solution *sol);
 void test_SOLUTION(solution *sol);
 void solution_wct(solution *sol);
-int solution_copy(solution *dest, solution src);
+int solution_copy(solution *dest, solution *src);
 int solution_update(solution *dest, solution src);
 int solution_check(partlist *part, int jcount);
 
