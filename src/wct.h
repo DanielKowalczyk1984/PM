@@ -212,7 +212,7 @@ int backup_wctdata(wctdata *pd, wctproblem *problem);
  * wct.c
  */
 
-int read_problem(char *f, wctproblem *problem, int nmachines);
+int read_problem(wctproblem *problem);
 
 /** Preprocess data */
 gint compare_readytime(gconstpointer a, gconstpointer b);
@@ -221,7 +221,7 @@ int calculate_ready_due_times(Job *jobarray, int njobs, int nmachines,
 int calculate_Hmax(Job *jobarray, int nmachines, int njobs);
 int calculate_Hmin(int *durations, int nmachines, int njobs, int *perm,
                    double *H);
-int Preprocessdata(wctproblem *problem, wctdata *pd);
+int preprocess_data(wctproblem *problem);
 
 
 /**
