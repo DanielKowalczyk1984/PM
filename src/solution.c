@@ -16,6 +16,7 @@ void solution_init(solution *sol) {
         sol->nmachines   = 0;
         sol->njobs   = 0;
         sol->tw = 0;
+        sol->b = 0;
     }
 }
 
@@ -34,6 +35,7 @@ void solution_free(solution *sol) {
         sol->nmachines   = 0;
         sol->tw = 0;
         sol->njobs   = 0;
+        sol->b = 0;
     }
 }
 
@@ -48,18 +50,14 @@ solution* solution_alloc(int nmachines, int njobs) {
 
     sol->nmachines  = nmachines;
     sol->njobs = njobs;
+    sol->tw = 0;
+    sol->b = 0;
 
     sol->part = CC_SAFE_MALLOC(nmachines, partlist);
     CCcheck_NULL_2(sol->part, "Failed to allocate memory to part");
 
     for (i = 0; i < nmachines; ++i) {
         partlist_init(sol->part + i);
-        sol->part[i].sumtimes = CC_SAFE_MALLOC(njobs, int);
-        CCcheck_NULL_2(sol->part[i].sumtimes, "Failed to allocate memory");
-        fill_int(sol->part[i].sumtimes, njobs, 0);
-        sol->part[i].sumweights = CC_SAFE_MALLOC(njobs, int);
-        CCcheck_NULL_2(sol->part[i].sumweights, "Failed to allocate memory");
-        fill_int(sol->part[i].sumweights, njobs, 0);
         (sol->part + i)->key = i;
     }
 
@@ -186,12 +184,10 @@ void test_SOLUTION(solution *sol) {
 int solution_copy(solution *dest, solution *src) {
     int val = 0;
     int counter = 0;
-
-
-
     dest = solution_alloc(src->nmachines, src->njobs);
     CCcheck_val_2(val, "Failed in  solution_alloc");
     dest->tw = src->tw;
+    dest->b = src->b;
 
     for (int i = 0; i < dest->nmachines; i++) {
         dest->part[i].key = src->part[i].key;
@@ -199,9 +195,6 @@ int solution_copy(solution *dest, solution *src) {
         g_queue_free(dest->part[i].list);
         dest->part[i].list = (GQueue *) NULL;
         dest->part[i].list = g_queue_copy(src->part[i].list);
-        memcpy(dest->part[i].sumtimes, src->part[i].sumtimes, sizeof(int)*dest->njobs);
-        memcpy(dest->part[i].sumweights, src->part[i].sumweights,
-               sizeof(int)*dest->njobs);
         dest->part[i].c = src->part[i].c;
 
         for (GList *it = dest->part[i].list->head; it; it = it->next) {
@@ -221,40 +214,34 @@ CLEAN:
     return val;
 }
 
-int solution_update(solution *dest, solution src) {
+int solution_update(solution *dest, solution *src) {
     int val = 0;
-    int counter = 0;
-    dest->tw = src.tw;
-    dest->nmachines   = src.nmachines;
-    dest->njobs   = src.njobs;
+    dest->tw = src->tw;
+    dest->b = src->b;
+    dest->nmachines   = src->nmachines;
+    dest->njobs   = src->njobs;
 
     for (int i = 0; i < dest->nmachines; i++) {
         g_queue_free(dest->part[i].list);
-        dest->part[i].tw = src.part[i].tw;
-        dest->part[i].list = g_queue_copy(src.part[i].list);
-        dest->part[i].c = src.part[i].c;
-        memcpy(dest->part[i].sumtimes, src.part[i].sumtimes, sizeof(int)*dest->njobs);
-        memcpy(dest->part[i].sumweights, src.part[i].sumweights,
-               sizeof(int)*dest->njobs);
-
-        for (GList *it = dest->part[i].list->head; it; it = it->next) {
-            dest->perm[counter] = ((Job *)it->data);
-            dest->vlist[((Job *)it->data)->job].part = dest->part + i;
-            counter++;
-        }
+        dest->part[i].tw = src->part[i].tw;
+        dest->part[i].list = g_queue_copy(src->part[i].list);
+        dest->part[i].c = src->part[i].c;
     }
+
+    memcpy(dest->perm, src->perm, src->njobs*sizeof(Job*));
+    memcpy(dest->vlist, src->vlist,src->njobs*sizeof(joblist));
 
     return val;
 }
 
 void solution_calc(solution *sol, Job *jobarray) {
-    int i, j;
-    int njobs = sol->njobs;
+    int i;
     int nmachines = sol->nmachines;
     GList *it = (GList *) NULL;
     Job *temp_job = (Job *) NULL;
     partlist *temp_partlist = (partlist *) NULL;
     sol->tw = 0;
+    sol->b = 0;
 
     /** Order in WSPT order and compute objective value of this solution */
     for (i = 0; i < nmachines; ++i) {
@@ -271,45 +258,9 @@ void solution_calc(solution *sol, Job *jobarray) {
         }
     }
 
-    /** Initialize sum weights and sum times */
-    for (i = 0; i < nmachines; ++i) {
-        temp_partlist = sol->part + i;
-
-        if (sol->vlist[0].part == temp_partlist) {
-            temp_partlist->sumtimes[0] = jobarray[0].processingime;
-        } else  {
-            temp_partlist->sumtimes[0] = 0;
-        }
-
-        temp_partlist->sumweights[sol->njobs - 1] = 0;
-    }
-
     /** Compute sum weights and sum times */
-    for (j = 1; j < njobs; j++) {
-        for (i = 0; i < nmachines; i++) {
-            temp_partlist = sol->part + i;
 
-            if (sol->vlist[j].part == temp_partlist) {
-                temp_partlist->sumtimes[j] = temp_partlist->sumtimes[j - 1] +
-                                             jobarray[j].processingime;
-            } else {
-                temp_partlist->sumtimes[j] = temp_partlist->sumtimes[j - 1];
-            }
-        }
-    }
 
-    for (j = njobs - 1; j > 0; --j) {
-        for (i = 0; i < nmachines; ++i) {
-            temp_partlist = sol->part + i;
-
-            if (sol->vlist[j].part == temp_partlist) {
-                temp_partlist->sumweights[j - 1] = temp_partlist->sumweights[j] +
-                                                   jobarray[j].weight;
-            } else {
-                temp_partlist->sumweights[j - 1] = temp_partlist->sumweights[j];
-            }
-        }
-    }
 }
 
 void solution_wct(solution *sol) {
@@ -319,6 +270,7 @@ void solution_wct(solution *sol) {
     Job *temp_job = (Job *) NULL;
     partlist *temp_partlist = (partlist *) NULL;
     sol->tw = 0;
+    sol->b = 0;
 
     /** Order in WSPT order and compute objective value of this solution */
     for (i = 0; i < nmachines; ++i) {
