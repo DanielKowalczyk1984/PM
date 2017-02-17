@@ -16,16 +16,12 @@ void partlist_free(partlist *part) {
         }
 
         part->list = (GQueue *) NULL;
-        CC_IFFREE(part->sumweights, int);
-        CC_IFFREE(part->sumtimes, int);
     }
 }
 
 void partlist_init(partlist *part) {
     if (part) {
         part->list = g_queue_new();
-        part->sumtimes = (int *) NULL;
-        part->sumweights = (int *) NULL;
         part->c = 0;
         part->tw = 0;
     }
@@ -42,8 +38,6 @@ void partition_init(partlist *part, joblist *jlist, int nbpart, int njobs) {
 
     for (i = 0; i < nbpart; i++) {
         partlist_init(&part[i]);
-        part[i].sumtimes = CC_SAFE_MALLOC(njobs, int);
-        part[i].sumweights = CC_SAFE_MALLOC(njobs, int);
         part[i].key = i;
     }
 
