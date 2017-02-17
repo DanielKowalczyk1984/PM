@@ -11,9 +11,7 @@ int sort_jobs(gconstpointer a, gconstpointer b) {
 
 int move(Job *j, partlist *m_j, partlist *m_i) {
     int nb_job = j->job;
-    return j->processingime * (m_j->sumweights[nb_job] - m_i->sumweights[nb_job])
-           + j->weight * (m_j->sumtimes[nb_job] - m_i->sumtimes[nb_job] -
-                          j->processingime);
+    return 0;
 }
 
 int k_l_move_general(Job **K_jobs, Job **L_jobs, partlist *m_k, partlist *m_l,
