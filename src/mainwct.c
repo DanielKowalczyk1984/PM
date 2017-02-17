@@ -166,32 +166,6 @@ CLEAN:
     return val;
 }
 
-static int get_problem_name(char *pname, const char *efname) {
-    int    rval = 0;
-    int    len = 0;
-    const char *fname = strrchr(efname, '/');
-    const char *lastdot = strrchr(efname, '.');
-
-    if (!fname) {
-        fname = efname;
-    } else {
-        fname++;
-    }
-
-    if (lastdot) {
-        len = lastdot - fname + 1;
-    } else {
-        len = strlen(fname);
-    }
-
-    if (snprintf(pname, len, "%s", fname) < 0) {
-        rval = 1;
-    }
-
-    printf("Extracted problem name %s\n", pname);
-    return rval;
-}
-
 MAYBE_UNUSED
 static int print_to_csv(wctproblem *problem) {
     int val = 0;
@@ -307,27 +281,24 @@ static int print_to_screen(wctproblem *problem) {
 
 int main(int ac, char **av) {
     int val = 0;
-    int i;
     wctproblem problem;
-    wctproblem_init(&problem);
-    CCcheck_val(val, "Failed in wctproblem_init");
-    wctparms *parms = &(problem.parms);
-    wctdata *pd = &(problem.root_pd);
+    wctdata *pd;
+    wctparms *parms;
+    double start_time;
+
     val = program_header(ac, av);
-    CCcheck_val(val, "Failed in programheader");
+    CCcheck_val_2(val, "Failed in program_header")
+    wctproblem_init(&problem);
     CCutil_start_timer(&(problem.tot_cputime));
-    double start_time = CCutil_zeit();
+    start_time = CCutil_zeit();
+    problem.real_time = getRealTime();
+    problem.nwctdata = 1;
+    pd = &(problem.root_pd);
     wctdata_init(pd);
     pd->id = 0;
-    problem.nwctdata = 1;
+    parms = &(problem.parms);
     val = parseargs(ac, av, parms);
-    problem.real_time = getRealTime();
-
-    if (val) {
-        goto CLEAN;
-    }
-
-    get_problem_name(pd->pname, parms->jobfile);
+    CCcheck_val_2(val, "Failed in parseargs");
 
     if (dbg_lvl() > 1) {
         printf("Debugging turned on\n");
@@ -335,17 +306,12 @@ int main(int ac, char **av) {
 
     fflush(stdout);
     /** Reading and preprocessing the data */
-    problem.nmachines = parms->nmachines;
-    val  = read_problem(parms->jobfile, &problem, problem.nmachines);
-    CCcheck_val(val, "read_adjlist failed");
-
-    for (i = 0; i < pd->njobs; i++) {
-        pd->orig_node_ids[i] = i;
-    }
-
-    Preprocessdata(&problem, pd);
-    printf("Reading and preprocessing of the data took %f seconds\n", CCutil_zeit() - start_time);
+    val  = read_problem(&problem);
+    CCcheck_val_2(val, "read_adjlist failed");
+    val = preprocess_data(&problem);
+    CCcheck_val_2(val, "Failed at preprocess_data");
     heuristic_rpup(&problem);
+    printf("Reading and preprocessing of the data took %f seconds\n", CCutil_zeit() - start_time);
     // /** Computing initial lowerbound */
     // CCutil_start_timer(&(problem.tot_lb));
     // problem.global_lower_bound = lowerbound_eei(pd->jobarray, pd->njobs,
