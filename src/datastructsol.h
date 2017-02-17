@@ -55,8 +55,6 @@ typedef struct adjGraph {
 
 typedef struct _partlist {
     GQueue *list;
-    int *sumtimes;
-    int *sumweights;
     int c;
     int tw;
     int key;
@@ -77,6 +75,7 @@ typedef struct _solution {
     Job **perm;
     int *c;
     int tw;
+    int b;
     int njobs;
     int nmachines;
 } solution;
@@ -117,7 +116,7 @@ void solution_print(solution *sol);
 void test_SOLUTION(solution *sol);
 void solution_wct(solution *sol);
 int solution_copy(solution *dest, solution *src);
-int solution_update(solution *dest, solution src);
+int solution_update(solution *dest, solution *src);
 int solution_check(partlist *part, int jcount);
 
 /**
