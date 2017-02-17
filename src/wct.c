@@ -59,6 +59,32 @@ int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b) {
     }
 }
 
+static int get_problem_name(char *pname, const char *efname) {
+    int    rval = 0;
+    int    len = 0;
+    const char *fname = strrchr(efname, '/');
+    const char *lastdot = strrchr(efname, '.');
+
+    if (!fname) {
+        fname = efname;
+    } else {
+        fname++;
+    }
+
+    if (lastdot) {
+        len = lastdot - fname + 1;
+    } else {
+        len = strlen(fname);
+    }
+
+    if (snprintf(pname, len, "%s", fname) < 0) {
+        rval = 1;
+    }
+
+    printf("Extracted problem name %s\n", pname);
+    return rval;
+}
+
 int compare_edd(const void *a, const void *b) {
     Job *x = (Job *)a;
     Job *y = (Job *)b;
@@ -77,32 +103,31 @@ int compare_edd(const void *a, const void *b) {
  *        b: job y
  *
  */
-int _job_compare_edd(const void *a, const void *b)
-{
-  Job *x = *((Job **) a);
-  Job *y = *((Job **) b);
+int _job_compare_edd(const void *a, const void *b) {
+    Job *x = *((Job **) a);
+    Job *y = *((Job **) b);
 
 
 
-  if(x->duetime > y->duetime) {
-    return(1);
-  } else if(x->duetime < y->duetime) {
-    return(-1);
-  } else if(x->processingime > y->processingime) {
-    return(1);
-  } else if(x->processingime < y->processingime) {
-    return(-1);
-  } else if(x->weight > y->weight) {
-    return(1);
-  } else if(x->weight < y->weight) {
-    return(-1);
-  } else if(x->job > y->job) {
-    return(1);
-  } else if(x->job < y->job) {
-    return(-1);
-  }
+    if (x->duetime > y->duetime) {
+        return (1);
+    } else if (x->duetime < y->duetime) {
+        return (-1);
+    } else if (x->processingime > y->processingime) {
+        return (1);
+    } else if (x->processingime < y->processingime) {
+        return (-1);
+    } else if (x->weight > y->weight) {
+        return (1);
+    } else if (x->weight < y->weight) {
+        return (-1);
+    } else if (x->job > y->job) {
+        return (1);
+    } else if (x->job < y->job) {
+        return (-1);
+    }
 
-  return(0);
+    return (0);
 }
 
 int compare_nodes_dfs_ahv(BinomialHeapValue a, BinomialHeapValue b) {
@@ -138,12 +163,10 @@ void set_dbg_lvl(int dbglvl) {
 /**
  * Reading of the jobfile
  */
-// static int permute_nodes(int *invorder, int njobs, int *duration, int *duedate,
-//                          int *weight, int **durationlist, int **duedatelist, int **weightlist);
-int read_problem(char *f, wctproblem* problem, int nmachines) {
+int read_problem(wctproblem *problem) {
     int val = 0;
     int nbjobs = 0;
-    int curduration, curduedate, curweight, curjob = 0;
+    int curduration, curduedate, curweight, curjob;
     Job *_jobarray = (Job *) NULL;
     char buf[256], *p;
     int bufsize;
@@ -151,13 +174,21 @@ int read_problem(char *f, wctproblem* problem, int nmachines) {
     char *data = (char *) NULL;
     char *buf2 = (char *) NULL;
     FILE *in = (FILE *) NULL;
-    in = fopen(f, "r");
+    wctdata *pd;
+    wctparms *parms;
+
+    parms = &(problem->parms);
+    pd = &(problem->root_pd);
+    in = fopen(parms->jobfile, "r");
+    curjob = 0;
 
     if (!in) {
-        fprintf(stderr, "Unable to open file %s\n", f);
+        fprintf(stderr, "Unable to open file %s\n", parms->jobfile);
         val = 1;
         goto CLEAN;
     }
+
+    get_problem_name(pd->pname, parms->jobfile);
 
     if (fgets(buf, 254, in) != NULL) {
         p = buf;
@@ -183,7 +214,7 @@ int read_problem(char *f, wctproblem* problem, int nmachines) {
         data = strtok(NULL, delim);
         sscanf(data, "%d", &curweight);
         _jobarray[curjob].weight = curweight;
-        _jobarray[curjob].duetime = curduedate / nmachines;
+        _jobarray[curjob].duetime = curduedate / parms->nmachines;
         _jobarray[curjob].processingime = curduration;
         _jobarray[curjob].job = curjob;
         data = strtok(NULL, delim);
@@ -191,6 +222,9 @@ int read_problem(char *f, wctproblem* problem, int nmachines) {
     }
 
     problem->njobs = nbjobs;
+    problem->nmachines = parms->nmachines;
+    pd->njobs = problem->njobs;
+    pd->nmachines = problem->nmachines;
 CLEAN:
 
     if (val) {
@@ -370,7 +404,7 @@ void wctproblem_free(wctproblem *problem) {
     Schedulesets_free(&(problem->initsets), &(problem->gallocated));
     Schedulesets_free(&(problem->bestschedule), &(problem->nbestschedule));
     CC_IFFREE(problem->jobarray, Job);
-    CC_IFFREE(problem->ojobarray, Job*);
+    CC_IFFREE(problem->ojobarray, Job *);
     solution_free(problem->opt_sol);
     CC_IFFREE(problem->opt_sol, solution);
 }
@@ -1186,38 +1220,42 @@ int calculate_Hmin(int *durations, int nmachines, int njobs, int *perm,
     return val;
 }
 
-int Preprocessdata(wctproblem *problem, wctdata *pd) {
+int preprocess_data(wctproblem *problem) {
     int val = 0;
     int temp = 0;
     double temp_dbl = 0.0;
     int njobs = problem->njobs;
     Job **_ojobarray = (Job **) NULL;
+    wctdata *pd = (wctdata *) NULL;
 
     /** Initialize jobarray of rootnode */
     for (unsigned i = 0; i < njobs; ++i) {
         problem->psum += problem->jobarray[i].processingime;
-        problem->pmax = CC_MAX(problem->pmax,problem->jobarray[i].processingime);
-        problem->pmin = CC_MIN(problem->pmin,problem->jobarray[i].processingime);
-        problem->dmax = CC_MAX(problem->dmax,problem->jobarray[i].duetime);
-        problem->dmin = CC_MIN(problem->pmin,problem->jobarray[i].duetime);
+        problem->pmax = CC_MAX(problem->pmax, problem->jobarray[i].processingime);
+        problem->pmin = CC_MIN(problem->pmin, problem->jobarray[i].processingime);
+        problem->dmax = CC_MAX(problem->dmax, problem->jobarray[i].duetime);
+        problem->dmin = CC_MIN(problem->pmin, problem->jobarray[i].duetime);
     }
+    pd = &(problem->root_pd);
 
     /** Calculate H_max */
     temp = problem->psum - problem->pmax;
     temp_dbl = (double) temp;
-    temp_dbl = temp_dbl/problem->nmachines +  problem->pmax;
+    temp_dbl = temp_dbl / problem->nmachines +  problem->pmax;
     problem->T = pd->H_max = (int) ceil(temp_dbl);
-    printf("H_max = %d\n ", pd->H_max);
+    printf("H_max = %d\n", pd->H_max);
 
     /** Create edd ordered array*/
-    _ojobarray= CC_SAFE_MALLOC(njobs, Job*);
+    _ojobarray = CC_SAFE_MALLOC(njobs, Job *);
     CCcheck_NULL_2(_ojobarray, "Failed to allocate memory");
+
     for (unsigned i = 0; i < njobs; ++i) {
         _ojobarray[i] = &(problem->jobarray[i]);
     }
-    qsort((void *) _ojobarray, njobs, sizeof(Job*), _job_compare_edd);
 
-    for(unsigned i = 0; i < problem->njobs; ++i) {
+    qsort((void *) _ojobarray, njobs, sizeof(Job *), _job_compare_edd);
+
+    for (unsigned i = 0; i < problem->njobs; ++i) {
         _ojobarray[i]->job = i;
     }
 
@@ -1228,9 +1266,9 @@ int Preprocessdata(wctproblem *problem, wctdata *pd) {
 
 
 CLEAN:
-    
-    if(val) {
-        CC_IFFREE(_ojobarray, Job*);
+
+    if (val) {
+        CC_IFFREE(_ojobarray, Job *);
     }
 
     return val;
