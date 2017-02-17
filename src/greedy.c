@@ -1,7 +1,7 @@
 #include "wct.h"
 
 static int add_feasible_solution(wctproblem *problem, solution *new_sol);
-static int solution_set_c(wctproblem *prob, solution *sol);
+static int solution_set_c(solution *sol);
 
 /**
  * comparefunctions
@@ -43,30 +43,29 @@ int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
     }
 }
 
-int _job_compare_spt(const void *a, const void *b)
-{
-  Job *x = *((Job **) a);
-  Job *y = *((Job **) b);
+int _job_compare_spt(const void *a, const void *b) {
+    Job *x = *((Job **) a);
+    Job *y = *((Job **) b);
 
-  if(x->processingime > y->processingime) {
-    return(1);
-  } else if(x->processingime < y->processingime) {
-    return(-1);
-  } else if(x->duetime > y->duetime) {
-    return(1);
-  } else if(x->duetime < y->duetime) {
-    return(-1);
-  } else if(x->weight > y->weight) {
-    return(1);
-  } else if(x->weight < y->weight) {
-    return(-1);
-  } else if(x->job > y->job) {
-    return(1);
-  } else if(x->job < y->job) {
-    return(-1);
-  }
+    if (x->processingime > y->processingime) {
+        return (1);
+    } else if (x->processingime < y->processingime) {
+        return (-1);
+    } else if (x->duetime > y->duetime) {
+        return (1);
+    } else if (x->duetime < y->duetime) {
+        return (-1);
+    } else if (x->weight > y->weight) {
+        return (1);
+    } else if (x->weight < y->weight) {
+        return (-1);
+    } else if (x->job > y->job) {
+        return (1);
+    } else if (x->job < y->job) {
+        return (-1);
+    }
 
-  return(0);
+    return (0);
 }
 
 /**
@@ -184,107 +183,171 @@ CLEAN:
 }
 
 
-static int solution_set_c(wctproblem *prob, solution *sol){
+static int solution_set_c(solution *sol) {
     int val = 0;
-    partlist *tmp = (partlist*) NULL;
+    partlist *tmp = (partlist *) NULL;
     Job *j = (Job *) NULL;
-    BinomialHeap *heap = binomial_heap_new(BINOMIAL_HEAP_TYPE_MIN, compare_completion_time);
+    BinomialHeap *heap = binomial_heap_new(BINOMIAL_HEAP_TYPE_MIN,
+                                           compare_completion_time);
     CCcheck_NULL_2(heap, "Failed to allocate memory to heap");
-    for(unsigned i = 0; i < sol->nmachines; ++i) {
+    sol->tw = 0;
+    sol->b = 0;
+
+    for (unsigned i = 0; i < sol->nmachines; ++i) {
+        sol->part[i].c = 0;
+        sol->part[i].tw = 0;
+        sol->part[i].key = i;
         binomial_heap_insert(heap, sol->part + i);
     }
 
-    for(unsigned i = 0; i < sol->njobs; ++i) {
+    for (unsigned i = 0; i < sol->njobs; ++i) {
         j = sol->perm[i];
         tmp = (partlist *) binomial_heap_pop(heap);
-        partlist_insert(tmp, sol->vlist, j);
+        tmp->c += j->processingime;
         sol->c[i] = tmp->c;
+        sol->tw += j->weight * (CC_MAX(0, sol->c[i] - j->duetime));
+        sol->b += j->duetime * (sol->njobs - i);
         binomial_heap_insert(heap, tmp);
     }
 
-    for(unsigned i = 0; i < sol->nmachines; ++i) {
-        sol->tw += sol->part[i].tw;
-    }
+CLEAN:
 
-    CLEAN:
-    if(val) {
+    if (val) {
         solution_free(sol);
     }
+
     binomial_heap_free(heap);
     return val;
 }
 
-int construct_spt(wctproblem *prob, solution *sol){
+int construct_spt(wctproblem *prob, solution *sol) {
     int val = 0;
 
-    for(unsigned i = 0; i < prob->njobs; ++i) {
+    for (unsigned i = 0; i < prob->njobs; ++i) {
         sol->perm[i] = prob->ojobarray[i];
     }
 
     sol->njobs = prob->njobs;
     sol->nmachines = prob->nmachines;
-    qsort(sol->perm, sol->njobs, sizeof(Job*), _job_compare_spt);
+    qsort(sol->perm, sol->njobs, sizeof(Job *), _job_compare_spt);
 
-    val = solution_set_c(prob, sol);
+    val = solution_set_c(sol);
     CCcheck_val_2(val, "Failed in solution_set_c");
 
-    CLEAN:
+CLEAN:
     return val;
 }
 
-int construct_edd(wctproblem *prob, solution *sol){
+int construct_edd(wctproblem *prob, solution *sol) {
     int val = 0;
 
-    for(unsigned i = 0; i < prob->njobs; ++i) {
+    for (unsigned i = 0; i < prob->njobs; ++i) {
         sol->perm[i] = prob->ojobarray[i];
     }
 
     sol->njobs = prob->njobs;
     sol->nmachines = prob->nmachines;
 
-    val = solution_set_c(prob, sol);
+    val = solution_set_c(sol);
     CCcheck_val_2(val, "failed in solution_set_c");
 
-    CLEAN:
+CLEAN:
     return val;
 }
 
 
-void permutation_solution(GRand *rand_uniform, solution *sol){
+void permutation_solution(GRand *rand_uniform, solution *sol) {
     unsigned i;
     Job *tmp = (Job *) NULL;
+
     for (i = 0; i <= sol->njobs - 2 ; i++) {
-        unsigned j = g_rand_int_range(rand_uniform, 0, sol->njobs - i); /* A random integer such that 0 ≤ j < n-i*/
-        CC_SWAP(sol->perm[i], sol->perm[i+j],tmp);   /* Swap an existing element [i+j] to position [i] */
+        unsigned j = g_rand_int_range(rand_uniform, 0,
+                                      sol->njobs - i); 
+        CC_SWAP(sol->perm[i], sol->perm[i + j],
+                tmp);
     }
 }
 
-int heuristic_rpup(wctproblem *prob){
+void local_search_gpi(solution *sol) {
+    int move = 1;
+    int tw2;
+    int b2;
+    Job *tmp = (Job *) NULL;
+    int iteration = 0;
+
+
+    while (move) {
+        tw2 = sol->tw;
+        b2 = sol->b;
+        move = 0;
+
+        for (unsigned i = 0; i < sol->njobs - 1 && !move; ++i) {
+            for (unsigned j = i + 1; j < sol->njobs && !move; ++j) {
+                CC_SWAP(sol->perm[i], sol->perm[j], tmp);
+                solution_set_c(sol);
+
+                if (sol->tw < tw2) {
+                    move = 1;
+                } else {
+                    CC_SWAP(sol->perm[i], sol->perm[j], tmp);
+                }
+
+                iteration++;
+            }
+        }
+    }
+
+    printf("number of iterations %d\n", iteration);
+}
+
+int heuristic_rpup(wctproblem *prob) {
     int  val = 0;
     GRand *rand_uniform = g_rand_new_with_seed(1984);
-    int N = 30*prob->nmachines*prob->njobs;
-    int i = 0;
-    solution *sol = solution_alloc(prob->nmachines, prob->njobs);
+    int N = 30 * prob->nmachines;
+    int i = 1;
+    solution *opt_sol = (solution *) NULL;
+    solution *sol = (solution *) NULL;
+    CCutil_timer test;
+    CCutil_init_timer(&test, (char *) NULL);
+
+
+
+    sol = solution_alloc(prob->nmachines, prob->njobs);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     prob->opt_sol = solution_alloc(prob->nmachines, prob->njobs);
     CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
+    opt_sol = prob->opt_sol;
 
-    val = construct_edd(prob, prob->opt_sol);
+    val = construct_edd(prob, sol);
     CCcheck_val_2(val, "Failed in construct_edd");
+    solution_update(opt_sol, sol);
 
-    for(i = 0; i < prob->njobs; ++i) {
-        sol->perm[i] = prob->jobarray + i;
-    }
-    while(i < N) {
-        if(i%5 == 0) {
+    while (i < N) {
+        if (i % 5 == 0) {
             permutation_solution(rand_uniform, sol);
+            solution_set_c(sol);
         }
+
+        CCutil_start_timer(&test);
+        local_search_gpi(sol);
+        CCutil_suspend_timer(&test);
+        printf("test %f\n", test.cum_zeit);
+
+        if (sol->tw < opt_sol->tw) {
+            solution_update(opt_sol, sol);
+            solution_print(opt_sol);
+        }
+
+        if (i % 20 == 0) {
+            printf("test iteration %d\n", i);
+        }
+
         i++;
     }
 
     solution_print(prob->opt_sol);
 
-    CLEAN:
+CLEAN:
     solution_free(sol);
     CC_IFFREE(sol, solution);
     g_rand_free(rand_uniform);
