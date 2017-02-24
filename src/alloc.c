@@ -28,21 +28,19 @@ void *CCutil_allocrus(size_t size) {
     return mem;
 }
 
-void CCutil_freerus(void *p) {
-    if (!p) {
+void CCutil_freerus(void *ptr) {
+    if (!ptr) {
         fprintf(stderr, "Warning: null pointer freed\n");
         return;
     }
 
-    free(p);
+    free(ptr);
 }
 
 void *CCutil_reallocrus(void *ptr, size_t size) {
     void *newptr;
 
-    if (!ptr) {
-        return CCutil_allocrus(size);
-    } else {
+    if (ptr) {
         newptr = (void *) realloc(ptr, size);
 
         if (!newptr) {
@@ -51,13 +49,15 @@ void *CCutil_reallocrus(void *ptr, size_t size) {
         }
 
         return newptr;
-    }
+    } 
+    
+    return CCutil_allocrus(size);
 }
 
 int CCutil_reallocrus_scale(void **pptr, int *pnnum, int count, double scale,
                             size_t size) {
     int newsize = (int)(((double) * pnnum) * scale);
-    void *p;
+    void *ptr;
 
     if (newsize < *pnnum + 1000) {
         newsize = *pnnum + 1000;
@@ -67,24 +67,24 @@ int CCutil_reallocrus_scale(void **pptr, int *pnnum, int count, double scale,
         newsize = count;
     }
 
-    p = CCutil_reallocrus(*pptr, newsize * size);
+    ptr = CCutil_reallocrus(*pptr, newsize * size);
 
-    if (!p) {
-        return 1;
-    } else {
-        *pptr = p;
+    if (ptr) {
+        *pptr = ptr;
         *pnnum = newsize;
         return 0;
-    }
+    } 
+    
+    return 1;
 }
 
 int CCutil_reallocrus_count(void **pptr, int count, size_t size) {
-    void *p = CCutil_reallocrus(*pptr, count * size);
+    void *ptr = CCutil_reallocrus(*pptr, count * size);
 
-    if (!p) {
-        return 1;
-    } else {
-        *pptr = p;
+    if (ptr) {
+        *pptr = ptr;
         return 0;
-    }
+    } 
+    
+    return 1;
 }
