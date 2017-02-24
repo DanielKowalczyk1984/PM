@@ -1,113 +1,113 @@
 #include "util.h"
 
-void fill_int(int *dst, int n, int v) {
-    if (n & 1) {
-        *dst++ = v;
+void fill_int(int *dst, int nbr, int val) {
+    if (nbr % 1 != 0) {
+        *dst++ = val;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    if (n & 1) {
-        *dst++ = v;
-        *dst++ = v;
+    if (nbr % 2 != 0) {
+        *dst++ = val;
+        *dst++ = val;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    while (n--) {
-        dst[0] = v;
-        dst[1] = v;
-        dst[2] = v;
-        dst[3] = v;
+    while (nbr--) {
+        dst[0] = val;
+        dst[1] = val;
+        dst[2] = val;
+        dst[3] = val;
         dst += 4;
     }
 }
 
-void fill_dbl(double *dst, int n, double v) {
-    if (n & 1) {
-        *dst++ = v;
+void fill_dbl(double *dst, int nbr, double val) {
+    if (nbr % 2 != 0) {
+        *dst++ = val;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    if (n & 1) {
-        *dst++ = v;
-        *dst++ = v;
+    if (nbr % 2 != 0) {
+        *dst++ = val;
+        *dst++ = val;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    while (n--) {
-        dst[0] = v;
-        dst[1] = v;
-        dst[2] = v;
-        dst[3] = v;
+    while (nbr--) {
+        dst[0] = val;
+        dst[1] = val;
+        dst[2] = val;
+        dst[3] = val;
         dst += 4;
     }
 }
 
 
-void fill_float(float *dst, int n, float v) {
-    if (n & 1) {
-        *dst++ = v;
+void fill_float(float *dst, int nbr, float val) {
+    if (nbr % 2 != 0) {
+        *dst++ = val;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    if (n & 1) {
-        *dst++ = v;
-        *dst++ = v;
+    if (nbr % 2 != 0) {
+        *dst++ = val;
+        *dst++ = val;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    while (n--) {
-        dst[0] = v;
-        dst[1] = v;
-        dst[2] = v;
-        dst[3] = v;
+    while (nbr--) {
+        dst[0] = val;
+        dst[1] = val;
+        dst[2] = val;
+        dst[3] = val;
         dst += 4;
     }
 }
 
-void fill_char(char *dst, int n, char v) {
-    if (n & 1) {
-        *dst++ = v;
+void fill_char(char *dst, int nbr, char val) {
+    if (nbr % 2 != 0) {
+        *dst++ = val;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    if (n & 1) {
-        *dst++ = v;
-        *dst++ = v;
+    if (nbr % 2 != 0) {
+        *dst++ = val;
+        *dst++ = val;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    while (n--) {
-        dst[0] = v;
-        dst[1] = v;
-        dst[2] = v;
-        dst[3] = v;
+    while (nbr--) {
+        dst[0] = val;
+        dst[1] = val;
+        dst[2] = val;
+        dst[3] = val;
         dst += 4;
     }
 }
 
-void acopy_int(const int *src, int *dst, int n) {
-    if (n & 1) {
+void acopy_int(const int *src, int *dst, int nbr) {
+    if (nbr % 2 != 0) {
         *dst++ = *src++;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    if (n & 1) {
+    if (nbr % 2 != 0) {
         *dst++ = *src++;
         *dst++ = *src++;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    while (n--) {
+    while (nbr--) {
         dst[0] = src[0];
         dst[1] = src[1];
         dst[2] = src[2];
@@ -118,21 +118,21 @@ void acopy_int(const int *src, int *dst, int n) {
 }
 
 
-void acopy_dbl(const double *src, double *dst, int n) {
-    if (n & 1) {
+void acopy_dbl(const double *src, double *dst, int nbr) {
+    if (nbr % 2 != 0) {
         *dst++ = *src++;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    if (n & 1) {
+    if (nbr % 2 != 0) {
         *dst++ = *src++;
         *dst++ = *src++;
     }
 
-    n >>= 1;
+    nbr >>= 1;
 
-    while (n--) {
+    while (nbr--) {
         dst[0] = src[0];
         dst[1] = src[1];
         dst[2] = src[2];
