@@ -13,6 +13,7 @@ typedef struct _Job {
     int processingime;
     int releasetime;
     int duetime;
+    int index;
 } Job;
 
 
@@ -55,6 +56,7 @@ typedef struct adjGraph {
 
 typedef struct _partlist {
     GQueue *list;
+    GPtrArray *machine;
     int c;
     int tw;
     int key;
