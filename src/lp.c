@@ -21,17 +21,17 @@ const double int_tolerance = 0.00001;
 
 int wctlp_init(wctlp **lp, const char *name) {
     int val = 0;
-    (*lp) = (wctlp *) CC_SAFE_MALLOC(1, wctlp);
-    CCcheck_NULL(lp, "Out of memory for lp");
     (*lp)->env = (GRBenv *) NULL;
     (*lp)->model = (GRBmodel *) NULL;
     val = GRBloadenv(&((*lp)->env), NULL);
+    CCcheck_val(val, "GRBloadenv failed");
+    (*lp) = (wctlp *) CC_SAFE_MALLOC(1, wctlp);
+    CCcheck_NULL(lp, "Out of memory for lp");
 
     if (val) {
         printf("val = %d\n", val);
     }
 
-    CCcheck_val(val, "GRBloadenv failed");
     val = GRBsetintparam((*lp)->env, GRB_INT_PAR_OUTPUTFLAG,
                          (dbg_lvl() > 1) ? 1 : 0);
     CHECK_VAL_GRB(val, "GRBsetintparam OUTPUTFLAG failed", (*lp)->env);
@@ -92,6 +92,7 @@ int wctlp_optimize(wctlp *lp, int *status) {
 
         default:
             printf("%d", *status);
+            break;
         }
 
         printf("\n");
@@ -308,6 +309,7 @@ int wctlp_basis_cols(wctlp *lp, int *cstat, int first) {
         default:
             val = 1;
             CHECK_VAL_GRB(val, "ERROR: Received unknwn cstat", lp->env);
+            break;
         }
     }
 
@@ -487,6 +489,7 @@ void wctlp_printerrorcode(int c) {
 
     default:
         printf("Unknown error code: %d", c);
+        break;
     }
 }
 
