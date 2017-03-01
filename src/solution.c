@@ -151,17 +151,19 @@ void solution_unique(solution *sol) {
     }
 }
 
+void print_machine(gpointer j, gpointer data){
+    Job * tmp = (Job *) j;
+    printf("%d ", tmp->job);
+}
+
 void solution_print(solution *sol) {
     for (int i = 0; i < sol->nmachines; ++i) {
         printf("Machine %d: ", sol->part[i].key);
 
-        for (GList *it = sol->part[i].list->head; it; it = it->next) {
-            printf("%d ", ((Job *)it->data)->job);
-        }
-
+        g_ptr_array_foreach(sol->part[i].machine, print_machine, NULL);
         printf("with C =  %d, wC = %d and %d jobs\n", sol->part[i].c,
                sol->part[i].tw
-               , g_queue_get_length(sol->part[i].list));
+               , sol->part[i].machine->len);
     }
 
     printf("with total weighted tardiness %d\n", sol->tw);
