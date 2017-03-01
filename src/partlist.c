@@ -14,6 +14,9 @@ void partlist_free(partlist *part) {
         if (part->list != (GQueue *) NULL) {
             g_queue_free(part->list);
         }
+        if(part->machine != (GPtrArray *) NULL) {
+            g_ptr_array_free(part->machine, TRUE);
+        }
 
         part->list = (GQueue *) NULL;
     }
@@ -24,6 +27,7 @@ void partlist_init(partlist *part) {
         part->list = g_queue_new();
         part->c = 0;
         part->tw = 0;
+        part->machine = g_ptr_array_new();
     }
 }
 
