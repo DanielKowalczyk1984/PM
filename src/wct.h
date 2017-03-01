@@ -107,6 +107,39 @@ typedef struct LS_data {
     void *obj;
 } LS_data;
 
+ 
+typedef struct _slope_t
+{
+    int b1; /* begin of segment*/
+    int b2; /* end of segment*/
+    int c;  /* value of the function at b1*/
+    int alpha; /* slope of the function */
+} slope_t;
+
+typedef struct _processing_list_data{
+  int pos;
+  int p;
+} processing_list_data;
+
+typedef struct _local_search_data
+{
+  int nmachines;
+  int *njobs;
+  int **W;
+  GList *** g;
+  processing_list_data ** processing_list;
+  slope_t *list_slope_t;
+  int len_list_slope_t;
+} local_search_data;
+
+local_search_data *local_search_data_init(solution *sol);
+void local_search_data_free(local_search_data *data);
+int local_search_create_processing_list(solution *sol, local_search_data *data,
+                                        int l) ;
+int local_search_data_calculate(solution *sol, local_search_data *data);
+int local_search_create_g(solution *sol, local_search_data *data);
+void local_search_forward_insertion(solution *sol, local_search_data *data, int l);
+
 
 int compare_max(const void *, const void *);
 int compare_min(const void *, const void *);
