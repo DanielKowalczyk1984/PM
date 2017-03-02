@@ -102,12 +102,6 @@ void print_list1(SS *scatter_search);
  */
 
 /* local search methods */
-typedef struct LS_data {
-    int key;
-    void *obj;
-} LS_data;
-
- 
 typedef struct _slope_t
 {
     int b1; /* begin of segment*/
@@ -128,51 +122,22 @@ typedef struct _local_search_data
   int **W;
   GList *** g;
   processing_list_data ** processing_list;
-  slope_t *list_slope_t;
-  int len_list_slope_t;
+
+  int updated;
+  int l1;
+  int l2;
 } local_search_data;
 
 local_search_data *local_search_data_init(solution *sol);
 void local_search_data_free(local_search_data *data);
+
 int local_search_create_processing_list(solution *sol, local_search_data *data,
                                         int l) ;
-int local_search_data_calculate(solution *sol, local_search_data *data);
+int local_search_create_W(solution *sol, local_search_data *data);
 int local_search_create_g(solution *sol, local_search_data *data);
 void local_search_forward_insertion(solution *sol, local_search_data *data, int l);
+void local_seach_update_forward_insertion(solution *sol, int i_best, int j_best, int k_best, int l);
 
-
-int compare_max(const void *, const void *);
-int compare_min(const void *, const void *);
-LS_data *construct_data(void *data, int key);
-void free_LS(void *data);
-int k_l_move_general(Job **K_jobs, Job **L_jobs, partlist *m_k, partlist *m_l,
-                     solution *sol, int k, int l);
-
-/**
- * localsearch functions
- */
-
-int k_l_move_general(Job **K_jobs, Job **L_jobs, partlist *m_k, partlist *m_l,
-                     solution *sol, int k, int l);
-int local_search_machine_general_best(solution *sol, int lowerbound, int k,
-                                      int l);
-int local_search_machine_general_first(solution *sol, int lowerbound, int k,
-                                       int l);
-void localsearch_wrap(solution *sol, int lowerbound, int best);
-
-/**
- * compare_functions
- */
-int sort_jobs(gconstpointer a, gconstpointer b);
-
-/**
- * localsearch_wrappers
- */
-
-void localsearch(solution *sol, int lowerbound);
-void localsearch_SS(solution *sol, int lowerbound);
-void localsearch_random(solution *sol, int lowerbound);
-void localsearch_random_k(solution *sol, int lowerbound, int nb);
 
 /**
  * wct.c

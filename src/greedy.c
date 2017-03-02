@@ -368,7 +368,7 @@ int heuristic_rpup(wctproblem *prob) {
     val = construct_edd(prob, sol);
     CCcheck_val_2(val, "Failed construct edd");
     data = local_search_data_init(sol);
-    local_search_data_calculate(sol, data);
+    local_search_create_W(sol, data);
     local_search_create_g(sol, data);
     local_search_create_processing_list(sol, data, 1);
     //for(unsigned i = 0; i < 1000; ++i) {
@@ -453,7 +453,6 @@ static int add_feasible_solution(wctproblem *problem, solution *new_sol) {
     int val = 0;
     wctdata *root_pd = &(problem->root_pd);
     solution_calc(new_sol, root_pd->jobarray);
-    localsearch_wrap(new_sol, problem->global_lower_bound, 0);
     solution_unique(new_sol);
 
 

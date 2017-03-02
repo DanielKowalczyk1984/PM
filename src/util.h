@@ -128,6 +128,8 @@ void set_dbg_lvl(int dbglvl);
 
 #define CC_SAFE_MALLOC(nnum,type)   (type *) CCutil_allocrus (((size_t) (nnum)) * sizeof (type))           \
 
+#define CC_SAFE_REALLOC(ptr,nnum,type)   (type *) CCutil_reallocrus ((void *) ptr, ((size_t) (nnum)) * sizeof (type))           \
+
 #define CC_FREE(object,type) {                                             \
         CCutil_freerus ((void *) (object));                                    \
         object = (type *) NULL;                                                \

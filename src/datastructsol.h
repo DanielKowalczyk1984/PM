@@ -60,6 +60,7 @@ typedef struct _partlist {
     int c;
     int tw;
     int key;
+    int used;
 } partlist;
 
 typedef struct _joblist {

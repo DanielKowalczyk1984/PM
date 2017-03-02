@@ -28,6 +28,7 @@ void partlist_init(partlist *part) {
         part->c = 0;
         part->tw = 0;
         part->machine = g_ptr_array_new();
+        part->used = 1;
     }
 }
 
