@@ -121,7 +121,8 @@ typedef struct _local_search_data
   int *njobs;
   int **W;
   GList *** g;
-  processing_list_data ** processing_list;
+  processing_list_data ** processing_list_f;
+  processing_list_data ** processing_list_b;
 
   int updated;
   int l1;
@@ -131,12 +132,18 @@ typedef struct _local_search_data
 local_search_data *local_search_data_init(solution *sol);
 void local_search_data_free(local_search_data *data);
 
+/** Preperation of the data */
 int local_search_create_processing_list(solution *sol, local_search_data *data,
+                                        int l) ;
+int local_search_create_processing_list_b(solution *sol, local_search_data *data,
                                         int l) ;
 int local_search_create_W(solution *sol, local_search_data *data);
 int local_search_create_g(solution *sol, local_search_data *data);
+/** Search for the best intra insertion */
 void local_search_forward_insertion(solution *sol, local_search_data *data, int l);
-void local_seach_update_forward_insertion(solution *sol, int i_best, int j_best, int k_best, int l);
+void local_search_backward_insertion(solution *sol, local_search_data *data,int l) ;
+/** update of the intra insertion */
+void local_seach_update_insertion(solution *sol, int i_best, int j_best, int k_best, int l);
 
 
 /**
