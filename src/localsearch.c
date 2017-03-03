@@ -6,7 +6,7 @@ void destroy_slope_t(gpointer data){
     CC_IFFREE(tmp, slope_t);
 }
 
-inline int compute_g(slope_t *x, int t) {
+int compute_g(slope_t *x, int t) {
     return x->c + x->alpha * (t - x->b1);
 }
 
@@ -18,6 +18,20 @@ int compare_process_list(gconstpointer a, gconstpointer b) {
         return -1;
     } else if (x->p < y->p) {
         return 1;
+    }
+
+    return 0;
+
+}
+
+int compare_process_list_b(gconstpointer a, gconstpointer b) {
+    processing_list_data *x = (processing_list_data *) a;
+    processing_list_data *y = (processing_list_data *) b;
+
+    if (x->p > y->p) {
+        return 1;
+    } else if (x->p < y->p) {
+        return -1;
     }
 
     return 0;
@@ -61,14 +75,16 @@ local_search_data *local_search_data_init(solution *sol) {
 
     data->W = CC_SAFE_MALLOC(nmachines, int *);
     data->g = CC_SAFE_MALLOC(nmachines, GList **);
-    data->processing_list = CC_SAFE_MALLOC(nmachines, processing_list_data *);
+    data->processing_list_f = CC_SAFE_MALLOC(nmachines, processing_list_data *);
+    data->processing_list_b = CC_SAFE_MALLOC(nmachines, processing_list_data *);
     data->njobs = CC_SAFE_MALLOC(nmachines, int);
 
     for (i = 0; i < nmachines; ++i) {
         data->njobs[i] = sol->part[i].machine->len;
         data->W[i] = CC_SAFE_MALLOC(data->njobs[i], int);
         data->g[i] = CC_SAFE_MALLOC(data->njobs[i], GList *);
-        data->processing_list[i] = (processing_list_data *) NULL;
+        data->processing_list_f[i] = (processing_list_data *) NULL;
+        data->processing_list_b[i] = (processing_list_data *) NULL;
 
         for (j = 0; j < sol->part[i].machine->len; ++j) {
             data->g[i][j] = (GList *) NULL;
@@ -87,14 +103,16 @@ CLEAN:
             CC_IFFREE(data->g[i], GList *);
             CC_IFFREE(data->W[i], int);
 
-            if (data->processing_list[i] != NULL) {
-                CC_IFFREE(data->processing_list[i], processing_list_data);
+            if (data->processing_list_f[i] != NULL) {
+                CC_IFFREE(data->processing_list_f[i], processing_list_data);
+                CC_IFFREE(data->processing_list_b[i], processing_list_data);
             }
         }
 
         CC_IFFREE(data->g, GList **);
         CC_IFFREE(data->W, int *);
-        CC_IFFREE(data->processing_list, processing_list_data *);
+        CC_IFFREE(data->processing_list_f, processing_list_data *);
+        CC_IFFREE(data->processing_list_b, processing_list_data *);
         CC_IFFREE(data->njobs, int);
         CC_IFFREE(data, local_search_data);
     }
@@ -117,14 +135,16 @@ void local_search_data_free(local_search_data *data) {
             CC_IFFREE(data->g[i], GList *);
             CC_IFFREE(data->W[i], int);
 
-            if (data->processing_list[i] != NULL) {
-                CC_IFFREE(data->processing_list[i], processing_list_data);
+            if (data->processing_list_f[i] != NULL) {
+                CC_IFFREE(data->processing_list_f[i], processing_list_data);
+                CC_IFFREE(data->processing_list_b[i], processing_list_data);
             }
         }
 
         CC_IFFREE(data->g, GList **);
         CC_IFFREE(data->W, int *);
-        CC_IFFREE(data->processing_list, processing_list_data *);
+        CC_IFFREE(data->processing_list_f, processing_list_data *);
+        CC_IFFREE(data->processing_list_b, processing_list_data *);
         CC_IFFREE(data->njobs, int);
         CC_IFFREE(data, local_search_data);
     }
@@ -172,19 +192,55 @@ int local_search_create_processing_list(solution *sol, local_search_data *data,
             C += j1->processingime;
         }
 
-        data->processing_list[i] = CC_SAFE_REALLOC(data->processing_list[i], data->njobs[i] - l, processing_list_data);
+        data->processing_list_f[i] = CC_SAFE_REALLOC(data->processing_list_f[i], data->njobs[i] - l, processing_list_data);
 
 
         for (unsigned j = 0; j < data->njobs[i] - l ; ++j) {
             j1 = (Job *) g_ptr_array_index(sol->part[i].machine, j);
             j2 = (Job *) g_ptr_array_index(sol->part[i].machine, j + l);
-            data->processing_list[i][j].pos = j;
-            data->processing_list[i][j].p = C;
+            data->processing_list_f[i][j].pos = j;
+            data->processing_list_f[i][j].p = C;
             C = C -  j1->processingime + j2->processingime;
         }
 
-        qsort(data->processing_list[i], data->njobs[i] - l,
+        qsort(data->processing_list_f[i], data->njobs[i] - l,
               sizeof(processing_list_data), compare_process_list);
+    }
+
+    return val;
+}
+
+int local_search_create_processing_list_b(solution *sol, local_search_data *data,
+                                        int l) {
+    int val = 0;
+    Job *j1, *j2;
+    int C;
+    int njobs;
+
+    for (unsigned i = 0; i < data->nmachines; ++i) {
+        C = 0;
+        njobs = data->njobs[i];
+        GPtrArray *machine = sol->part[i].machine;
+
+
+        for (unsigned j = njobs - l; j < njobs; ++j) {
+            j1 = (Job *) g_ptr_array_index(machine, j);
+            C += j1->processingime;
+        }
+
+        data->processing_list_b[i] = CC_SAFE_REALLOC(data->processing_list_b[i], njobs - l, processing_list_data);
+
+
+        for (unsigned j = njobs - l; j > 0 ; --j) {
+            j1 = (Job *) g_ptr_array_index(machine, j - 1);
+            j2 = (Job *) g_ptr_array_index(sol->part[i].machine, j + l - 1);
+            data->processing_list_b[i][njobs - l - j].pos = j;
+            data->processing_list_b[i][njobs - l - j].p = C;
+            C = C + j1->processingime - j2->processingime;
+        }
+
+        qsort(data->processing_list_b[i], njobs - l,
+              sizeof(processing_list_data), compare_process_list_b);
     }
 
     return val;
@@ -275,7 +331,7 @@ int local_search_create_g(solution *sol, local_search_data *data) {
     return val;
 }
 
-void local_search_update_forward_insertion(solution *sol, int i_best,
+void local_search_update_insertion(solution *sol, int i_best,
         int j_best, int k_best, int l) {
     Job *tmp;
     sol->tw -= sol->part[k_best].tw;
@@ -316,8 +372,8 @@ void local_search_forward_insertion(solution *sol, local_search_data *data,
     g = CC_SAFE_MALLOC(sol->njobs, int *);
     h = CC_SAFE_MALLOC(sol->njobs, int *);
     hh = CC_SAFE_MALLOC(sol->njobs, int *);
-    iterators = CC_SAFE_MALLOC(sol->njobs, GList *);
     gg = CC_SAFE_MALLOC(sol->njobs, int);
+    iterators = CC_SAFE_MALLOC(sol->njobs, GList *);
 
     for (unsigned i = 0; i < sol->njobs; ++i) {
         g[i] = CC_SAFE_MALLOC(sol->njobs, int);
@@ -331,8 +387,8 @@ void local_search_forward_insertion(solution *sol, local_search_data *data,
     for (unsigned k = 0; k < sol->nmachines; ++k) {
         /** compute g */
         for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
-            pos = data->processing_list[k][i].pos;
-            p = data->processing_list[k][i].p;
+            pos = data->processing_list_f[k][i].pos;
+            p = data->processing_list_f[k][i].p;
             GList *it = data->g[k][pos];
 
             for (unsigned j = pos + l; j < data->njobs[k]; ++j) {
@@ -420,8 +476,8 @@ void local_search_forward_insertion(solution *sol, local_search_data *data,
         iterators[data->njobs[k] - 1] = (GList *) NULL;
 
         for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
-            pos = data->processing_list[k][i].pos;
-            p = data->processing_list[k][i].p;
+            pos = data->processing_list_f[k][i].pos;
+            p = data->processing_list_f[k][i].p;
 
             for (unsigned j = pos + l; j < data->njobs[k]; ++j) {
                 if (iterators[j] != (GList *) NULL) {
@@ -475,14 +531,12 @@ void local_search_forward_insertion(solution *sol, local_search_data *data,
     }
 
     /** update to best improvement */
-    solution_print(sol);
     if (update) {
-        local_search_update_forward_insertion(sol, i_best, j_best, k_best, l);
-        solution_print(sol);
+        local_search_update_insertion(sol, i_best, j_best, k_best, l);
     }
 
     if(dbg_lvl() > 0) {
-        printf("forward insertion with l = %d and running time = %f\n", l, CCutil_zeit() - runningtime);
+        printf("forward insertion with l = %d, running time = %f and improvement %d\n", l, CCutil_zeit() - runningtime, max);
     }
 
     for (unsigned i = 0; i < sol->njobs; ++i) {
@@ -501,7 +555,8 @@ void local_search_forward_insertion(solution *sol, local_search_data *data,
 
 void local_search_backward_insertion(solution *sol, local_search_data *data,
                                     int l) {
-    int pos, p;
+    int p;
+    int c;
     slope_t *tmp;
     int **g, **h, *gg, **hh;
     int move;
@@ -528,72 +583,94 @@ void local_search_backward_insertion(solution *sol, local_search_data *data,
     max = 0;
 
     for (unsigned k = 0; k < sol->nmachines; ++k) {
+        int njobs = data->njobs[k];
+        GPtrArray *machine = sol->part[k].machine;
         /** compute g */
-        for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
-            pos = data->processing_list[k][i].pos;
-            p = data->processing_list[k][i].p;
-            GList *it = data->g[k][pos];
+        for (int i = njobs - l; i > 0; --i) {
+            GList *it = data->g[k][i];
 
-            for (unsigned j = pos + l; j < data->njobs[k]; ++j) {
+            for (int j = 0; j < i ; ++j) {
                 tmp = (slope_t *) it->data;
-                tmp_j = (Job *) g_ptr_array_index(sol->part[k].machine, j);
-                move = !(tmp->b1 <= sol->c[tmp_j->job] - p &&
-                         tmp->b2 >= sol->c[tmp_j->job] - p);
+                if(j == 0) {
+                    c = 0;
+                } else {
+                    tmp_j = (Job *) g_ptr_array_index(machine, j - 1);
+                    c = sol->c[tmp_j->job];
+                }
+                move = !(tmp->b1 <= c &&
+                         tmp->b2 >= c );
 
                 while (move) {
                     it = it->next;
 
                     if (it != (GList *) NULL) {
                         tmp = (slope_t *) it->data;
-                        move = !(tmp->b1 <= sol->c[tmp_j->job] - p &&
-                                 tmp->b2 >= sol->c[tmp_j->job] - p);
+                        move = !(tmp->b1 <= c &&
+                                 tmp->b2 >= c );
                     } else {
                         move = 0;
                     }
                 }
 
-                g[pos][j] = compute_g(tmp, sol->c[tmp_j->job] - p);
+                g[i][j] = compute_g(tmp, c);
 
             }
         }
 
         /** compute h */
-        for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
+        for(unsigned j = 0; j < njobs - l; ++j) {
+            h[njobs - l][j] = 0;
+        }
+
+        p = 0;
+        for(unsigned i = njobs - l - 1; i < njobs - 1; ++i) {
+            tmp_j = (Job *) g_ptr_array_index(machine, i);
+            p += tmp_j->processingime;
+        }
+
+        for (int i = njobs - l - 1; i > 0; --i) {
             GList *it = data->g[k][i + l];
 
-            for (unsigned j = i + l; j < data->njobs[k]; ++j) {
+            for (int j = 0 ; j < i ; ++j) {
                 tmp = (slope_t *) it->data;
-                tmp_j = (Job *) g_ptr_array_index(sol->part[k].machine, j);
-                move = !(tmp->b1 <= sol->c[tmp_j->job] && tmp->b2 >= sol->c[tmp_j->job]);
+                if(j == 0) {
+                    c = p;
+                } else {
+                    tmp_j = (Job *) g_ptr_array_index(machine, j - 1);
+                    c = p + sol->c[tmp_j->job];
+                }
+
+                move = !(tmp->b1 <= c &&
+                         tmp->b2 >= c );
 
                 while (move) {
                     it = it->next;
 
                     if (it != (GList *) NULL) {
                         tmp = (slope_t *) it->data;
-                        move = !(tmp->b1 <= sol->c[tmp_j->job] && tmp->b2 >= sol->c[tmp_j->job]);
+                        move = !(tmp->b1 <= c &&
+                                 tmp->b2 >= c );
                     } else {
                         move = 0;
                     }
                 }
 
-                h[i][j] = compute_g(tmp, sol->c[tmp_j->job]);
-
+                h[i][j] = compute_g(tmp, c );
             }
+
+            tmp_j = (Job *) g_ptr_array_index(machine, i + l - 1);
+            p -= tmp_j->processingime;
+            tmp_j = (Job *) g_ptr_array_index(machine, i - 1);
+            p += tmp_j->processingime;
         }
 
         /** compute gg */
-        for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
-            GList *it = data->g[k][i + l];
+        for (unsigned i = njobs - l; i > 0; --i) {
+            GList *it = data->g[k][i];
             tmp = (slope_t *) it->data;
-            int c;
 
-            if (i != 0) {
-                tmp_j = (Job *) g_ptr_array_index(sol->part[k].machine, i - 1);
-                c  = sol->c[tmp_j->job];
-            } else {
-                c = 0;
-            }
+            tmp_j = (Job *) g_ptr_array_index(machine, i + l - 1);
+            c  = sol->c[tmp_j->job];
 
             move = !(tmp->b1 <= c && tmp->b2 >= c);
 
@@ -612,58 +689,58 @@ void local_search_backward_insertion(solution *sol, local_search_data *data,
         }
 
         /** compute hh */
-        for (unsigned j = l; j < data->njobs[k] - 1; ++j) {
-            iterators[j] = data->g[k][j + 1];
+        for (unsigned j = 0; j < njobs - l; ++j) {
+            iterators[j] = data->g[k][j];
         }
 
-        iterators[data->njobs[k] - 1] = (GList *) NULL;
+        for (unsigned i = 0; i < njobs - l;++i) {
+            p = data->processing_list_b[k][i].p;
+            int pos = data->processing_list_b[k][i].pos;
 
-        for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
-            pos = data->processing_list[k][i].pos;
-            p = data->processing_list[k][i].p;
-
-            for (unsigned j = pos + l; j < data->njobs[k]; ++j) {
-                if (iterators[j] != (GList *) NULL) {
+            for (unsigned j = 0; j < pos; ++j) {
                     tmp = (slope_t *) iterators[j]->data;
-                    tmp_j = (Job *) g_ptr_array_index(sol->part[k].machine, j);
-                    move = !(tmp->b1 <= sol->c[tmp_j->job] - p &&
-                             tmp->b2 >= sol->c[tmp_j->job] - p);
+                    if(j == 0) {
+                        c = p;
+                    } else {
+                        tmp_j = (Job *) g_ptr_array_index(machine, j - 1);
+                        c = p + sol->c[tmp_j->job];
+                    }
+                    move = !(tmp->b1 <= c &&
+                             tmp->b2 >= c);
 
                     while (move) {
                         iterators[j] = iterators[j]->next;
 
                         if (iterators[j] != (GList *) NULL) {
                             tmp = (slope_t *) iterators[j]->data;
-                            move = !(tmp->b1 <= sol->c[tmp_j->job] - p &&
-                                     tmp->b2 >= sol->c[tmp_j->job] - p);
+                            move = !(tmp->b1 <= c &&
+                                     tmp->b2 >= c);
                         } else {
                             move = 0;
                         }
                     }
 
-                    hh[pos][j] = compute_g(tmp, sol->c[tmp_j->job] - p);
-                } else {
-                    hh[pos][j] = 0;
-                }
+                    hh[pos][j] = compute_g(tmp, c);
+
 
             }
         }
 
-        for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
-            for (unsigned j = i + l; j < data->njobs[k]; ++j) {
-                int tmp = 0;
+        for (unsigned i = njobs - l; i > 0 ; --i) {
+            for (int j = i - 1; j >= 0; --j) {
+                int t = 0;
 
-                if (i != 0) {
-                    tmp += data->W[k][i - 1];
+                if (j != 0) {
+                    t += data->W[k][j - 1];
                 }
 
-                tmp += g[i][j] - h[i][j];
-                tmp += gg[i] - hh[i][j];
-                tmp += data->W[k][data->njobs[k] - 1]  - data->W[k][j];
-                printf("%d %d %d %d %d\n",sol->part[k].tw - tmp , tmp, sol->part[k].tw, i, j);
+                t += g[i][j] - h[i][j];
+                t += hh[i][j] - gg[i];
+                t += data->W[k][njobs - 1]  - data->W[k][i + l - 1];
+                printf("%d %d %d %d %d\n",sol->part[k].tw - t , t, sol->part[k].tw, i, j);
 
-                if (sol->part[k].tw - tmp > max ) {
-                    max = sol->part[k].tw - tmp;
+                if (sol->part[k].tw - t > max ) {
+                    max = sol->part[k].tw - t;
                     i_best = i;
                     j_best = j;
                     k_best = k;
@@ -674,14 +751,12 @@ void local_search_backward_insertion(solution *sol, local_search_data *data,
     }
 
     /** update to best improvement */
-    solution_print(sol);
     if (update) {
-        local_search_update_forward_insertion(sol, i_best, j_best, k_best, l);
-        solution_print(sol);
+        local_search_update_insertion(sol, i_best, j_best, k_best, l);
     }
 
     if(dbg_lvl() > 0) {
-        printf("forward insertion with l = %d and running time = %f\n", l, CCutil_zeit() - runningtime);
+        printf("backward insertion with l = %d, running time = %f and improvement %d\n", l, CCutil_zeit() - runningtime, max);
     }
 
     for (unsigned i = 0; i < sol->njobs; ++i) {
@@ -728,125 +803,16 @@ void local_search_swap_insertion(solution *sol, local_search_data *data,
 
     for (unsigned k = 0; k < sol->nmachines; ++k) {
         /** compute g */
-        for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
-            pos = data->processing_list[k][i].pos;
-            p = data->processing_list[k][i].p;
-            GList *it = data->g[k][pos];
 
-            for (unsigned j = pos + l; j < data->njobs[k]; ++j) {
-                tmp = (slope_t *) it->data;
-                tmp_j = (Job *) g_ptr_array_index(sol->part[k].machine, j);
-                move = !(tmp->b1 <= sol->c[tmp_j->job] - p &&
-                         tmp->b2 >= sol->c[tmp_j->job] - p);
-
-                while (move) {
-                    it = it->next;
-
-                    if (it != (GList *) NULL) {
-                        tmp = (slope_t *) it->data;
-                        move = !(tmp->b1 <= sol->c[tmp_j->job] - p &&
-                                 tmp->b2 >= sol->c[tmp_j->job] - p);
-                    } else {
-                        move = 0;
-                    }
-                }
-
-                g[pos][j] = compute_g(tmp, sol->c[tmp_j->job] - p);
-
-            }
-        }
 
         /** compute h */
-        for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
-            GList *it = data->g[k][i + l];
 
-            for (unsigned j = i + l; j < data->njobs[k]; ++j) {
-                tmp = (slope_t *) it->data;
-                tmp_j = (Job *) g_ptr_array_index(sol->part[k].machine, j);
-                move = !(tmp->b1 <= sol->c[tmp_j->job] && tmp->b2 >= sol->c[tmp_j->job]);
-
-                while (move) {
-                    it = it->next;
-
-                    if (it != (GList *) NULL) {
-                        tmp = (slope_t *) it->data;
-                        move = !(tmp->b1 <= sol->c[tmp_j->job] && tmp->b2 >= sol->c[tmp_j->job]);
-                    } else {
-                        move = 0;
-                    }
-                }
-
-                h[i][j] = compute_g(tmp, sol->c[tmp_j->job]);
-
-            }
-        }
 
         /** compute gg */
-        for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
-            GList *it = data->g[k][i + l];
-            tmp = (slope_t *) it->data;
-            int c;
 
-            if (i != 0) {
-                tmp_j = (Job *) g_ptr_array_index(sol->part[k].machine, i - 1);
-                c  = sol->c[tmp_j->job];
-            } else {
-                c = 0;
-            }
-
-            move = !(tmp->b1 <= c && tmp->b2 >= c);
-
-            while (move) {
-                it = it->next;
-
-                if (it != (GList *) NULL) {
-                    tmp = (slope_t *) it->data;
-                    move = !(tmp->b1 <= c && tmp->b2 >= c);
-                } else {
-                    move = 0;
-                }
-            }
-
-            gg[i] = compute_g(tmp, c);
-        }
 
         /** compute hh */
-        for (unsigned j = l; j < data->njobs[k] - 1; ++j) {
-            iterators[j] = data->g[k][j + 1];
-        }
 
-        iterators[data->njobs[k] - 1] = (GList *) NULL;
-
-        for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
-            pos = data->processing_list[k][i].pos;
-            p = data->processing_list[k][i].p;
-
-            for (unsigned j = pos + l; j < data->njobs[k]; ++j) {
-                if (iterators[j] != (GList *) NULL) {
-                    tmp = (slope_t *) iterators[j]->data;
-                    tmp_j = (Job *) g_ptr_array_index(sol->part[k].machine, j);
-                    move = !(tmp->b1 <= sol->c[tmp_j->job] - p &&
-                             tmp->b2 >= sol->c[tmp_j->job] - p);
-
-                    while (move) {
-                        iterators[j] = iterators[j]->next;
-
-                        if (iterators[j] != (GList *) NULL) {
-                            tmp = (slope_t *) iterators[j]->data;
-                            move = !(tmp->b1 <= sol->c[tmp_j->job] - p &&
-                                     tmp->b2 >= sol->c[tmp_j->job] - p);
-                        } else {
-                            move = 0;
-                        }
-                    }
-
-                    hh[pos][j] = compute_g(tmp, sol->c[tmp_j->job] - p);
-                } else {
-                    hh[pos][j] = 0;
-                }
-
-            }
-        }
 
         for (unsigned i = 0; i < data->njobs[k] - l; ++i) {
             for (unsigned j = i + l; j < data->njobs[k]; ++j) {
@@ -875,7 +841,7 @@ void local_search_swap_insertion(solution *sol, local_search_data *data,
     /** update to best improvement */
     solution_print(sol);
     if (update) {
-        local_search_update_forward_insertion(sol, i_best, j_best, k_best, l);
+        local_search_update_insertion(sol, i_best, j_best, k_best, l);
         solution_print(sol);
     }
 
