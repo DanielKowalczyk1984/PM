@@ -144,6 +144,8 @@ void local_search_forward_insertion(solution *sol, local_search_data *data, int 
 void local_search_backward_insertion(solution *sol, local_search_data *data,int l) ;
 /** update of the intra insertion */
 void local_seach_update_insertion(solution *sol, int i_best, int j_best, int k_best, int l);
+void local_search_swap_intra(solution *sol, local_search_data *data,
+                                    int l1, int l2);
 
 
 /**
