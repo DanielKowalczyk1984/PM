@@ -368,13 +368,9 @@ int heuristic_rpup(wctproblem *prob) {
     val = construct_edd(prob, sol);
     CCcheck_val_2(val, "Failed construct edd");
     data = local_search_data_init(sol);
-    local_search_create_W(sol, data);
-    local_search_create_g(sol, data);
-    local_search_create_processing_list(sol, data, 1);
-    //for(unsigned i = 0; i < 1000; ++i) {
-        /* code */
-        local_search_forward_insertion(sol, data, 1);
-    //}
+    do {
+        local_search_swap_intra(sol, data, 2,1);
+    } while(data->updated);
     local_search_data_free(data);
 
 
@@ -386,37 +382,37 @@ int heuristic_rpup(wctproblem *prob) {
     CCcheck_val_2(val, "Failed in construct_edd");
     solution_update(opt_sol, sol);
 
-    while (i < N) {
-        if (i % 5 == 0) {
-            permutation_solution(rand_uniform, sol);
-            solution_set_c(sol);
-        }
+    // while (i < N) {
+    //     if (i % 5 == 0) {
+    //         permutation_solution(rand_uniform, sol);
+    //         solution_set_c(sol);
+    //     }
 
-        CCutil_start_timer(&test);
-        local_search_gpi(sol, &i);
-        CCutil_suspend_timer(&test);
-        printf("%f\n", test.cum_zeit);
+    //     CCutil_start_timer(&test);
+    //     local_search_gpi(sol, &i);
+    //     CCutil_suspend_timer(&test);
+    //     printf("%f\n", test.cum_zeit);
 
-        if (sol->tw < opt_sol->tw) {
-            solution_update(opt_sol, sol);
-        }
+    //     if (sol->tw < opt_sol->tw) {
+    //         solution_update(opt_sol, sol);
+    //     }
 
-        if (i % 20 == 0) {
-            printf("test iteration %d\n", i);
-        }
+    //     if (i % 20 == 0) {
+    //         printf("test iteration %d\n", i);
+    //     }
 
-        for (unsigned j = 0; j < 3; ++j) {
-            k = g_rand_int_range(rand_uniform, 0, sol->njobs);
+    //     for (unsigned j = 0; j < 3; ++j) {
+    //         k = g_rand_int_range(rand_uniform, 0, sol->njobs);
 
-            do l = g_rand_int_range(rand_uniform, 0, sol->njobs); while (k == l);
+    //         do l = g_rand_int_range(rand_uniform, 0, sol->njobs); while (k == l);
 
-            CC_SWAP(sol->perm[k], sol->perm[l], tmp);
-        }
+    //         CC_SWAP(sol->perm[k], sol->perm[l], tmp);
+    //     }
 
-        solution_set_c(sol);
+    //     solution_set_c(sol);
 
-        i++;
-    }
+    //     i++;
+    // }
 
     solution_print(prob->opt_sol);
 
