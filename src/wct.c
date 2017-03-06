@@ -204,7 +204,7 @@ int read_problem(wctproblem *problem) {
         val = 1;
         goto CLEAN;
     }
-
+    int count = 0;
     while (fgets(buf2, bufsize, in) != (char *)NULL) {
         p = buf2;
         data = strtok(p, delim);
@@ -216,6 +216,9 @@ int read_problem(wctproblem *problem) {
         _jobarray[curjob].weight = curweight;
         _jobarray[curjob].duetime = curduedate / parms->nmachines;
         _jobarray[curjob].processingime = curduration;
+        if(_jobarray[curjob].processingime > _jobarray[curjob].duetime) {
+            _jobarray[curjob].duetime = _jobarray[curjob].processingime;
+        }
         _jobarray[curjob].job = curjob;
         data = strtok(NULL, delim);
         curjob++;
