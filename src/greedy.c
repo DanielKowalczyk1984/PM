@@ -368,9 +368,9 @@ int heuristic_rpup(wctproblem *prob) {
     val = construct_edd(prob, sol);
     CCcheck_val_2(val, "Failed construct edd");
     data = local_search_data_init(sol);
-    do {
-        local_search_swap_intra(sol, data, 2,1);
-    } while(data->updated);
+    do{
+        local_search_insertion_inter(sol, data, 1);
+    }while(data->updated);
     local_search_data_free(data);
 
 
