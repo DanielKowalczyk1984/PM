@@ -118,7 +118,7 @@ typedef struct _processing_list_data{
 typedef struct _local_search_data
 {
   int nmachines;
-  int *njobs;
+  int njobs;
   int **W;
   GList *** g;
   processing_list_data ** processing_list_f;
@@ -142,10 +142,16 @@ int local_search_create_g(solution *sol, local_search_data *data);
 /** Search for the best intra insertion */
 void local_search_forward_insertion(solution *sol, local_search_data *data, int l);
 void local_search_backward_insertion(solution *sol, local_search_data *data,int l) ;
+int local_search_create_processing_list_insertion_inter(solution *sol, local_search_data *data,
+                                        int l) ;
 /** update of the intra insertion */
 void local_seach_update_insertion(solution *sol, int i_best, int j_best, int k_best, int l);
 void local_search_swap_intra(solution *sol, local_search_data *data,
                                     int l1, int l2);
+void local_search_insertion_inter(solution *sol, local_search_data *data,
+                                    int l) ;
+void local_search_update_insertion_inter(solution *sol, int i_best,
+        int j_best, int k_best, int kk_best, int l);
 
 
 /**
