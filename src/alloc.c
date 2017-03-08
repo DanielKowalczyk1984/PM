@@ -9,6 +9,7 @@
 ////////////////////////////////////////////////////////////////
 
 #include "util.h"
+#include <assert.h>
 
 void *CCutil_allocrus(size_t size) {
     void *mem = (void *) NULL;

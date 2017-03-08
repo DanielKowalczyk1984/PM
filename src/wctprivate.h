@@ -253,6 +253,7 @@ struct wctproblem {
     int dmax;
     int dmin;
     int T;
+    int off;
     /** EDD order of the jobs */
     Job **ojobarray;
     /** nmachines */

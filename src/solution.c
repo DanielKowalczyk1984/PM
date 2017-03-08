@@ -17,6 +17,7 @@ void solution_init(solution *sol) {
         sol->njobs   = 0;
         sol->tw = 0;
         sol->b = 0;
+        sol->off = 0;
     }
 }
 
@@ -36,10 +37,11 @@ void solution_free(solution *sol) {
         sol->tw = 0;
         sol->njobs   = 0;
         sol->b = 0;
+        sol->off = 0;
     }
 }
 
-solution* solution_alloc(int nmachines, int njobs) {
+solution* solution_alloc(int nmachines, int njobs, int off) {
     int val = 0;
     int i;
     
@@ -52,6 +54,7 @@ solution* solution_alloc(int nmachines, int njobs) {
     sol->njobs = njobs;
     sol->tw = 0;
     sol->b = 0;
+    sol->off = off;
 
     sol->part = CC_SAFE_MALLOC(nmachines, partlist);
     CCcheck_NULL_2(sol->part, "Failed to allocate memory to part");
@@ -153,12 +156,12 @@ void solution_unique(solution *sol) {
 
 void print_machine(gpointer j, gpointer data){
     Job * tmp = (Job *) j;
-    printf("%d ", tmp->job);
+    printf("%2d ", tmp->job);
 }
 
 void solution_print(solution *sol) {
     for (int i = 0; i < sol->nmachines; ++i) {
-        printf("Machine %d: ", sol->part[i].key);
+        printf("Machine %-1d: ", sol->part[i].key);
 
         g_ptr_array_foreach(sol->part[i].machine, print_machine, NULL);
         printf("with C =  %d, wC = %d and %d jobs\n", sol->part[i].c,
@@ -166,7 +169,7 @@ void solution_print(solution *sol) {
                , sol->part[i].machine->len);
     }
 
-    printf("with total weighted tardiness %d\n", sol->tw);
+    printf("with total weighted tardiness %d\n", sol->tw + sol->off);
 }
 
 void test_SOLUTION(solution *sol) {
@@ -186,10 +189,11 @@ void test_SOLUTION(solution *sol) {
 int solution_copy(solution *dest, solution *src) {
     int val = 0;
     int counter = 0;
-    dest = solution_alloc(src->nmachines, src->njobs);
+    dest = solution_alloc(src->nmachines, src->njobs, src->off);
     CCcheck_val_2(val, "Failed in  solution_alloc");
     dest->tw = src->tw;
     dest->b = src->b;
+    dest->off = src->off;
 
     for (int i = 0; i < dest->nmachines; i++) {
         dest->part[i].key = src->part[i].key;
@@ -222,9 +226,16 @@ int solution_update(solution *dest, solution *src) {
     dest->b = src->b;
     dest->nmachines   = src->nmachines;
     dest->njobs   = src->njobs;
+    dest->off = src->off;
+    memcpy(dest->c, src->c, dest->njobs*sizeof(int));
 
     for (int i = 0; i < dest->nmachines; i++) {
         g_queue_free(dest->part[i].list);
+        g_ptr_array_free(dest->part[i].machine, TRUE);
+        dest->part[i].machine = g_ptr_array_new();
+        for(unsigned j = 0; j < src->part[i].machine->len; ++j) {
+            g_ptr_array_add(dest->part[i].machine, g_ptr_array_index(src->part[i].machine, j));
+        }
         dest->part[i].tw = src->part[i].tw;
         dest->part[i].list = g_queue_copy(src->part[i].list);
         dest->part[i].c = src->part[i].c;
