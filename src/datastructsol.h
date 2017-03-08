@@ -81,6 +81,7 @@ typedef struct _solution {
     int b;
     int njobs;
     int nmachines;
+    int off;
 } solution;
 
 
@@ -110,7 +111,7 @@ int partlist_more_totweight(partlist *c1, partlist *c2);
 
 void solution_init(solution *sol);
 void solution_free(solution *sol);
-solution* solution_alloc(int nmachines, int njobs);
+solution* solution_alloc(int nmachines, int njobs, int off);
 
 void solution_unique(solution *sol);
 void solution_calc(solution *sol, struct _Job *joblist);
