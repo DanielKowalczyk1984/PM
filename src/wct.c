@@ -204,7 +204,7 @@ int read_problem(wctproblem *problem) {
         val = 1;
         goto CLEAN;
     }
-    int count = 0;
+
     while (fgets(buf2, bufsize, in) != (char *)NULL) {
         p = buf2;
         data = strtok(p, delim);
@@ -217,6 +217,7 @@ int read_problem(wctproblem *problem) {
         _jobarray[curjob].duetime = curduedate / parms->nmachines;
         _jobarray[curjob].processingime = curduration;
         if(_jobarray[curjob].processingime > _jobarray[curjob].duetime) {
+            problem->off += curweight * (curduration - _jobarray[curjob].duetime);
             _jobarray[curjob].duetime = _jobarray[curjob].processingime;
         }
         _jobarray[curjob].job = curjob;
@@ -326,6 +327,7 @@ void wctproblem_init(wctproblem *problem) {
     problem->pmin = INT_MAX;
     problem->dmax = INT_MIN;
     problem->dmin = INT_MAX;
+    problem->off = 0;
     /*B&B info*/
     problem->nwctdata = 0;
     problem-> global_upper_bound = INT_MAX;
@@ -1548,7 +1550,7 @@ static int grab_integral_solution_ahv(wctdata *pd, int *completion_time) {
     solution *sol = (solution *) NULL;
     partlist *part = (partlist *) NULL;
     Job *job = (Job *) NULL;
-    sol = solution_alloc(pd->nmachines, pd->njobs);
+    sol = solution_alloc(pd->nmachines, pd->njobs, 0);
     CCcheck_NULL_2(sol, "Failed to allocate memory")
     val = pmcheap_init(&heap_sol, pd->nmachines);
     CCcheck_val_2(val, "Failed at pmcheap_init");
@@ -4266,7 +4268,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     /** Construct solutions if list of columns is empty */
     if (!pd->ccount && parms->construct) {
         solution *new_sol;
-        new_sol = solution_alloc(pd->nmachines, pd->njobs);
+        new_sol = solution_alloc(pd->nmachines, pd->njobs, 0);
         construct_edd(problem, new_sol);
         partlist_to_Scheduleset(new_sol->part, pd->nmachines, pd->njobs,
                                 &(pd->cclasses), &(pd->ccount));
