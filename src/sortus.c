@@ -68,7 +68,8 @@
 
 
 
-void CCutil_int_array_quicksort(int *len, int n) {
+void CCutil_int_array_quicksort(int *len, int n)
+{
     int i, j, temp, t;
 
     if (n <= 1) {
@@ -101,7 +102,8 @@ void CCutil_int_array_quicksort(int *len, int n) {
     CCutil_int_array_quicksort(len + i, n - i);
 }
 
-void CCutil_int_array_quicksort_0(int *len, int n) {
+void CCutil_int_array_quicksort_0(int *len, int n)
+{
     int i, j, temp, t;
 
     if (n <= 1) {
@@ -134,7 +136,8 @@ void CCutil_int_array_quicksort_0(int *len, int n) {
     CCutil_int_array_quicksort_0(len + i, n - i);
 }
 
-void CCutil_int_perm_quicksort(int *perm, int *len, int n) {
+void CCutil_int_perm_quicksort(int *perm, int *len, int n)
+{
     int i, j, temp, t;
 
     if (n <= 1) {
@@ -167,7 +170,8 @@ void CCutil_int_perm_quicksort(int *perm, int *len, int n) {
     CCutil_int_perm_quicksort(perm + i, len, n - i);
 }
 
-void CCutil_int_perm_quicksort_0(int *perm, int *len, int n) {
+void CCutil_int_perm_quicksort_0(int *perm, int *len, int n)
+{
     int i, j, temp, t;
 
     if (n <= 1) {
@@ -201,7 +205,8 @@ void CCutil_int_perm_quicksort_0(int *perm, int *len, int n) {
 }
 
 
-void CCutil_double_perm_quicksort(int *perm, double *len, int n) {
+void CCutil_double_perm_quicksort(int *perm, double *len, int n)
+{
     int i, j, temp;
     double t;
 
@@ -236,7 +241,8 @@ void CCutil_double_perm_quicksort(int *perm, double *len, int n) {
 }
 
 
-static int partition(int *input, int p, int r) {
+static int partition(int *input, int p, int r)
+{
     int pivot = input[r];
 
     while (p < r) {
@@ -260,7 +266,8 @@ static int partition(int *input, int p, int r) {
     return r;
 }
 
-int CCutil_quickselect(int *input, int p, int r, int k) {
+int CCutil_quickselect(int *input, int p, int r, int k)
+{
     if (p == r) {
         return input[p];
     }
@@ -277,7 +284,8 @@ int CCutil_quickselect(int *input, int p, int r, int k) {
     }
 }
 
-static int recursiveSelect(int *V, int *inds, int start, int end, int k) {
+static int recursiveSelect(int *V, int *inds, int start, int end, int k)
+{
     /*recursively partitions vector V to find kth element */
     int pivot, i, tmp;
     float tmpdbl;
@@ -326,7 +334,8 @@ static int recursiveSelect(int *V, int *inds, int start, int end, int k) {
 }
 
 
-int quickselect(int *V, int N, int k) {
+int quickselect(int *V, int N, int k)
+{
     /* returns the index of the kth greatest value in vector V */
     int *Vcopy;
     int i, *inds, ret;

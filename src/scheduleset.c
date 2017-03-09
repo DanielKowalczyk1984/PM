@@ -15,7 +15,8 @@
 
 void iterator(gpointer key, gpointer value, gpointer user_data);
 
-void iterator(gpointer key, gpointer value, gpointer user_data) {
+void iterator(gpointer key, gpointer value, gpointer user_data)
+{
     GHashTable *new_table = (GHashTable *) user_data;
     g_hash_table_insert(new_table, key, value);
 }
@@ -70,7 +71,8 @@ static int copy_Schedulesets(Scheduleset *dst, Scheduleset *src, int nsrc);
         }                                                                   \
     }
 
-void Scheduleset_init(Scheduleset *set) {
+void Scheduleset_init(Scheduleset *set)
+{
     if (set) {
         set->members  = (int *) NULL;
         set->C = (int *) NULL;
@@ -84,7 +86,8 @@ void Scheduleset_init(Scheduleset *set) {
     }
 }
 
-void Scheduleset_free(Scheduleset *set) {
+void Scheduleset_free(Scheduleset *set)
+{
     if (set && set->members) {
         CC_IFFREE(set->members, int);
         CC_IFFREE(set->C, int);
@@ -101,12 +104,13 @@ void Scheduleset_free(Scheduleset *set) {
     }
 }
 
-void Schedulesets_free(Scheduleset **sets, int *nsets) {
+void Schedulesets_free(Scheduleset **sets, int *nsets)
+{
     int i = 0;
 
     if (*sets) {
         for (i = 0; i < *nsets; i++) {
-            Scheduleset_free(&(*sets)[i]);
+            Scheduleset_free(& (*sets) [i]);
         }
 
         CC_IFFREE(*sets, Scheduleset);
@@ -116,7 +120,8 @@ void Schedulesets_free(Scheduleset **sets, int *nsets) {
 }
 
 int COLORcopy_sets(Scheduleset **s, int *nsets,  Scheduleset *src_s,
-                   int src_nsets) {
+                   int src_nsets)
+{
     int val = 0;
 
     //int i;
@@ -146,7 +151,8 @@ CLEAN:
 }
 
 int update_Schedulesets(Scheduleset **dst, int *ndst,  Scheduleset *src,
-                        int nsrc) {
+                        int nsrc)
+{
     int val  = 0;
     Schedulesets_free(dst, ndst);
     val = COLORcopy_sets(dst, ndst, src, nsrc);
@@ -155,7 +161,8 @@ CLEAN:
     return val;
 }
 
-static int copy_Schedulesets(Scheduleset *dst,  Scheduleset *src, int nsrc) {
+static int copy_Schedulesets(Scheduleset *dst,  Scheduleset *src, int nsrc)
+{
     int val = 0;
 
     if (nsrc & 1) {
@@ -183,9 +190,10 @@ static int copy_Schedulesets(Scheduleset *dst,  Scheduleset *src, int nsrc) {
     return val;
 }
 
-int add_Schedulesets(Scheduleset **dst, int *ndst, Scheduleset *src, int nsrc) {
+int add_Schedulesets(Scheduleset **dst, int *ndst, Scheduleset *src, int nsrc)
+{
     int val = 0;
-    Scheduleset *tmpsets = (Scheduleset *)NULL;
+    Scheduleset *tmpsets = (Scheduleset *) NULL;
 
     if (*ndst == 0) {
         tmpsets = CC_SAFE_MALLOC(nsrc, Scheduleset);
@@ -212,7 +220,8 @@ CLEAN:
     return val;
 }
 
-void Scheduleset_SWAP(Scheduleset *c1, Scheduleset *c2, Scheduleset *t) {
+void Scheduleset_SWAP(Scheduleset *c1, Scheduleset *c2, Scheduleset *t)
+{
     if (c1 != c2) {
         memcpy(t, c2, sizeof(Scheduleset));
         memcpy(c2, c1, sizeof(Scheduleset));
@@ -220,7 +229,8 @@ void Scheduleset_SWAP(Scheduleset *c1, Scheduleset *c2, Scheduleset *t) {
     }
 }
 
-int Scheduleset_less(Scheduleset *c1, Scheduleset *c2) {
+int Scheduleset_less(Scheduleset *c1, Scheduleset *c2)
+{
     int i;
 
     if (c1->count != c2->count) {
@@ -236,7 +246,8 @@ int Scheduleset_less(Scheduleset *c1, Scheduleset *c2) {
     return 0;
 }
 
-int Scheduleset_more(Scheduleset *c1, Scheduleset *c2) {
+int Scheduleset_more(Scheduleset *c1, Scheduleset *c2)
+{
     int i;
 
     if (c1->count != c2->count) {
@@ -252,7 +263,8 @@ int Scheduleset_more(Scheduleset *c1, Scheduleset *c2) {
     return 0;
 }
 
-int Scheduleset_less_totweight(Scheduleset *c1, Scheduleset *c2) {
+int Scheduleset_less_totweight(Scheduleset *c1, Scheduleset *c2)
+{
     int i;
 
     if (c1->totweight != c2->totweight) {
@@ -268,7 +280,8 @@ int Scheduleset_less_totweight(Scheduleset *c1, Scheduleset *c2) {
     return 0;
 }
 
-int Scheduleset_more_totweight(Scheduleset *c1, Scheduleset *c2) {
+int Scheduleset_more_totweight(Scheduleset *c1, Scheduleset *c2)
+{
     int i;
 
     if (c1->totweight != c2->totweight) {
@@ -284,7 +297,8 @@ int Scheduleset_more_totweight(Scheduleset *c1, Scheduleset *c2) {
     return 0;
 }
 
-int Scheduleset_less_wct(Scheduleset *c1, Scheduleset *c2) {
+int Scheduleset_less_wct(Scheduleset *c1, Scheduleset *c2)
+{
     int i;
 
     if (c1->totwct != c2->totwct) {
@@ -301,7 +315,8 @@ int Scheduleset_less_wct(Scheduleset *c1, Scheduleset *c2) {
 }
 
 void Scheduleset_quicksort(Scheduleset *cclasses, int ccount,
-                           int (*functionPtr)(Scheduleset *, Scheduleset *)) {
+                           int (*functionPtr)(Scheduleset *, Scheduleset *))
+{
     int i, j;
     Scheduleset temp, t;
 
@@ -309,10 +324,10 @@ void Scheduleset_quicksort(Scheduleset *cclasses, int ccount,
         return;
     }
 
-    Scheduleset_SWAP(&(cclasses[0]), &(cclasses[(ccount - 1) / 2]), &temp);
+    Scheduleset_SWAP(& (cclasses[0]), & (cclasses[(ccount - 1) / 2]), &temp);
     i = 0;
     j = ccount;
-    memcpy(&t, &(cclasses[0]), sizeof(Scheduleset));
+    memcpy(&t, & (cclasses[0]), sizeof(Scheduleset));
 
     while (1) {
         do {
@@ -321,22 +336,23 @@ void Scheduleset_quicksort(Scheduleset *cclasses, int ccount,
 
         do {
             j--;
-        } while ((*functionPtr)(&t, &(cclasses[j])));
+        } while ((*functionPtr)(&t, & (cclasses[j])));
 
         if (j < i) {
             break;
         }
 
-        Scheduleset_SWAP(& (cclasses[i]), &(cclasses[j]), &temp);
+        Scheduleset_SWAP(& (cclasses[i]), & (cclasses[j]), &temp);
     }
 
-    Scheduleset_SWAP(&(cclasses[0]), &(cclasses[j]), &temp);
+    Scheduleset_SWAP(& (cclasses[0]), & (cclasses[j]), &temp);
     Scheduleset_quicksort(cclasses, j, (*functionPtr));
     Scheduleset_quicksort(cclasses + i, ccount - i, (*functionPtr));
 }
 
 void Scheduleset_permquicksort(int *perm, Scheduleset *cclasses, int ccount,
-                               int (*functionPtr)(Scheduleset *, Scheduleset *)) {
+                               int (*functionPtr)(Scheduleset *, Scheduleset *))
+{
     int i, j, temp;
     Scheduleset t;
 
@@ -347,16 +363,16 @@ void Scheduleset_permquicksort(int *perm, Scheduleset *cclasses, int ccount,
     CC_SWAP(perm[0], perm[(ccount - 1) / 2], temp);
     i = 0;
     j = ccount;
-    memcpy(&t, &(cclasses[perm[0]]), sizeof(Scheduleset));
+    memcpy(&t, & (cclasses[perm[0]]), sizeof(Scheduleset));
 
     while (1) {
         do {
             i++;
-        } while (i < ccount && (*functionPtr)(&(cclasses[perm[i]]), &t));
+        } while (i < ccount && (*functionPtr)(& (cclasses[perm[i]]), &t));
 
         do {
             j--;
-        } while ((*functionPtr)(&t, &(cclasses[perm[j]])));
+        } while ((*functionPtr)(&t, & (cclasses[perm[j]])));
 
         if (j < i) {
             break;
@@ -370,7 +386,8 @@ void Scheduleset_permquicksort(int *perm, Scheduleset *cclasses, int ccount,
     Scheduleset_permquicksort(perm + i, cclasses, ccount - i, (*functionPtr));
 }
 
-int Scheduleset_check_set(Scheduleset *set, int vcount) {
+int Scheduleset_check_set(Scheduleset *set, int vcount)
+{
     int val = 0;
     int i;
     int *coloring = (int *) CC_SAFE_MALLOC(vcount, int);
@@ -391,7 +408,8 @@ CLEAN:
 }
 
 
-int  Scheduleset_check(Scheduleset *set, int ccount, int vcount) {
+int  Scheduleset_check(Scheduleset *set, int ccount, int vcount)
+{
     int val = 0;
     int i;
     int *covered = (int *) CC_SAFE_MALLOC(vcount, int);
@@ -400,7 +418,7 @@ int  Scheduleset_check(Scheduleset *set, int ccount, int vcount) {
 
     for (i = 0; i < ccount; ++i) {
         int j;
-        val =  Scheduleset_check_set(&(set[i]), vcount);
+        val =  Scheduleset_check_set(& (set[i]), vcount);
         CCcheck_val_2(val, "Failed to verify stable set");
 
         for (j = 0; j < set[i].count; j++) {
@@ -428,7 +446,8 @@ CLEAN:
     return val;
 }
 
-int print_schedule(Scheduleset *cclasses, int ccount) {
+int print_schedule(Scheduleset *cclasses, int ccount)
+{
     int i, j;
     int sum = 0;
 
@@ -450,7 +469,8 @@ int print_schedule(Scheduleset *cclasses, int ccount) {
     return 0;
 }
 
-int Scheduleset_max(Scheduleset *cclasses, int ccount) {
+int Scheduleset_max(Scheduleset *cclasses, int ccount)
+{
     int val = 0;
     int i;
 
@@ -465,26 +485,19 @@ int Scheduleset_max(Scheduleset *cclasses, int ccount) {
 
 int partlist_to_Scheduleset(partlist *part, int nbpart, int njobs,
                             Scheduleset **classes,
-                            int *ccount) {
+                            int *ccount)
+{
     int val = 0;
     int i, j = 0, k = 0;
     Schedulesets_free(classes, ccount);
-
-    for (i = 0; i < nbpart; i++) {
-        if (g_queue_get_length(part[i].list) != 0) {
-            j++;
-        }
-    }
-
     *ccount = j;
-    Scheduleset *temp_sets = (Scheduleset *)NULL;
+    Scheduleset *temp_sets = (Scheduleset *) NULL;
     temp_sets = CC_SAFE_MALLOC(*ccount, Scheduleset);
     CCcheck_NULL_2(temp_sets, "Failed to allocate memory to temp_sets");
 
     for (i  = 0; i < nbpart; i++) {
-        if (g_queue_get_length(part[i].list) != 0) {
+        if (0) {
             Scheduleset_init(temp_sets + k);
-            temp_sets[k].count = g_queue_get_length(part[i].list);
             temp_sets[k].totweight = part[i].c;
             temp_sets[k].members = CC_SAFE_MALLOC(temp_sets[k].count + 1, int);
             CCcheck_NULL(temp_sets[k].members, "Failed to allocate memory to members");
@@ -493,12 +506,12 @@ int partlist_to_Scheduleset(partlist *part, int nbpart, int njobs,
             CCcheck_NULL(temp_sets[k].C, "Failed to allocate memory to C");
             temp_sets[k].table = g_hash_table_new(g_direct_hash, g_direct_equal);
             CCcheck_NULL(temp_sets[k].table, "Failed to construct table");
-            GList *v = part[i].list->head;
+            GList *v = (GList *) NULL;
             j = 0;
             int completion = 0;
 
             while (v != NULL) {
-                Job *job = (Job *)v->data;
+                Job *job = (Job *) v->data;
                 completion += job->processingime;
                 temp_sets[k].C[j] = completion;
                 temp_sets[k].members[j] = job->job;

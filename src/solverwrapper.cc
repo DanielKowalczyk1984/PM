@@ -7,7 +7,8 @@
 
 template<typename T = double, bool reverse = false>
 int construct_sol(Scheduleset **set, int *nnewsets, Job *jobarray,
-                  Optimal_Solution<T> &sol, int nbjobs) {
+                  Optimal_Solution<T>& sol, int nbjobs)
+{
     int val = 0;
     int nbset = 1;
     int C = 0;
@@ -52,29 +53,35 @@ CLEAN:
 
 extern "C" {
     PricerSolver *newSolver(Job *jobarray, int nbjobs, int Hmin,
-                            int Hmax) {
+                            int Hmax)
+    {
         return new PricerSolver(jobarray, nbjobs, Hmin, Hmax);
     }
 
     PricerSolver *newSolverDP(Job *jobarray, int nbjobs, int Hmin,
-                              int Hmax) {
+                              int Hmax)
+    {
         return new PricerSolver(jobarray, nbjobs, Hmin, Hmax, false);
     }
 
-    PricerSolver *copySolver(PricerSolver *src) {
+    PricerSolver *copySolver(PricerSolver *src)
+    {
         return new PricerSolver(*src);
     }
 
-    void print_dot_file(PricerSolver *solver, char* name){
+    void print_dot_file(PricerSolver *solver, char *name)
+    {
         solver->create_dot_zdd(name);
     }
 
-    void freeSolver(PricerSolver *src) {
+    void freeSolver(PricerSolver *src)
+    {
         delete src;
         src = (PricerSolver *) NULL;
     }
 
-    int solvedblzdd(wctdata *pd) {
+    int solvedblzdd(wctdata *pd)
+    {
         int val = 0;
         Optimal_Solution<double> s = pd->solver->solve_duration_zdd_double(pd->pi);
 
@@ -86,11 +93,12 @@ extern "C" {
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solvedblbdd(wctdata *pd) {
+    int solvedblbdd(wctdata *pd)
+    {
         int val = 0;
         Optimal_Solution<double> s = pd->solver->solve_duration_bdd_double(pd->pi);
 
@@ -102,11 +110,12 @@ CLEAN:
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_dynamic_programming_ahv(wctdata *pd) {
+    int solve_dynamic_programming_ahv(wctdata *pd)
+    {
         int val = 0;
         Optimal_Solution<double> s = pd->solver->dynamic_programming_ahv(pd->pi);
 
@@ -118,11 +127,12 @@ CLEAN:
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_dynamic_programming_ahv_CG_heur(LP_data_CG_heur *data) {
+    int solve_dynamic_programming_ahv_CG_heur(LP_data_CG_heur *data)
+    {
         int val = 0;
         wctdata *pd = data->pd;
         Optimal_Solution<double> s = pd->solver->dynamic_programming_ahv(data->pi);
@@ -135,11 +145,12 @@ CLEAN:
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_farkas_dbl(wctdata *pd) {
+    int solve_farkas_dbl(wctdata *pd)
+    {
         int val = 0;
         Optimal_Solution<double> s = pd->solver->solve_farkas_double(pd->pi);
 
@@ -151,11 +162,12 @@ CLEAN:
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_farkas_dbl_DP(wctdata *pd) {
+    int solve_farkas_dbl_DP(wctdata *pd)
+    {
         int val = 0;
         Optimal_Solution<double> s = pd->solver->dynamic_programming_ahv_farkas(pd->pi);
 
@@ -167,11 +179,12 @@ CLEAN:
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_farkas_dbl_CG_heur(LP_data_CG_heur *data) {
+    int solve_farkas_dbl_CG_heur(LP_data_CG_heur *data)
+    {
         int val = 0;
         wctdata *pd = data->pd;
         Optimal_Solution<double> s = pd->solver->solve_farkas_double(data->pi);
@@ -184,11 +197,12 @@ CLEAN:
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_weight_dbl_bdd(wctdata *pd) {
+    int solve_weight_dbl_bdd(wctdata *pd)
+    {
         int val = 0;
         Optimal_Solution<double> s = pd->solver->solve_weight_bdd_double(pd->pi);
 
@@ -200,11 +214,12 @@ CLEAN:
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_weight_dbl_bdd_CG_heur(LP_data_CG_heur *data) {
+    int solve_weight_dbl_bdd_CG_heur(LP_data_CG_heur *data)
+    {
         int val = 0;
         wctdata *pd = data->pd;
         Optimal_Solution<double> s = pd->solver->solve_weight_bdd_double(data->pi);
@@ -217,11 +232,12 @@ CLEAN:
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_weight_dbl_zdd(wctdata *pd) {
+    int solve_weight_dbl_zdd(wctdata *pd)
+    {
         int val = 0;
         Optimal_Solution<double> s = pd->solver->solve_weight_zdd_double(pd->pi);
 
@@ -233,11 +249,12 @@ CLEAN:
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_weight_dbl_zdd_CG_heur(LP_data_CG_heur *data) {
+    int solve_weight_dbl_zdd_CG_heur(LP_data_CG_heur *data)
+    {
         int val = 0;
         wctdata *pd = data->pd;
         Optimal_Solution<double> s = pd->solver->solve_weight_zdd_double(data->pi);
@@ -250,149 +267,163 @@ CLEAN:
             pd->nnewsets = 0;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    void deletePricerSolver(PricerSolver *solver) {
+    void deletePricerSolver(PricerSolver *solver)
+    {
         if (solver) {
             delete solver;
             solver = (PricerSolver *) NULL;
         }
     }
 
-    int calculate_table(PricerSolver *solver, wctparms *parms) {
+    int calculate_table(PricerSolver *solver, wctparms *parms)
+    {
         int val = 0;
 
         switch (parms->solver) {
-        case bdd_solver:
-            solver->init_bdd_table();
-            break;
+            case bdd_solver:
+                solver->init_bdd_table();
+                break;
 
-        case zdd_solver:
-            solver->init_zdd_table();
-            break;
+            case zdd_solver:
+                solver->init_zdd_table();
+                break;
 
-        case DP_solver:
-            break;
+            case DP_solver:
+                break;
         }
 
         switch (parms->construct) {
-        case yes_construct:
-            break;
+            case yes_construct:
+                break;
 
-        case no_construct:
-            solver->init_table_farkas();
-            break;
+            case no_construct:
+                solver->init_table_farkas();
+                break;
         }
 
         return val = 0;
     }
 
     int add_conflict_constraints(PricerSolver *solver, wctparms *parms,
-                                 int *elist_same, int ecount_same, int *elist_differ, int  ecount_differ) {
+                                 int *elist_same, int ecount_same, int *elist_differ, int  ecount_differ)
+    {
         int val = 0;
 
         switch (parms->solver) {
-        case bdd_solver:
-            solver->init_bdd_conflict_solver(elist_same, ecount_same, elist_differ,
-                                             ecount_differ);
-            break;
+            case bdd_solver:
+                solver->init_bdd_conflict_solver(elist_same, ecount_same, elist_differ,
+                                                 ecount_differ);
+                break;
 
-        case zdd_solver:
-            solver->init_zdd_conflict_solver(elist_same, ecount_same, elist_differ,
-                                             ecount_differ);
-            break;
+            case zdd_solver:
+                solver->init_zdd_conflict_solver(elist_same, ecount_same, elist_differ,
+                                                 ecount_differ);
+                break;
 
-        case DP_solver:
-            break;
+            case DP_solver:
+                break;
         }
 
         return val;
     }
 
-    void iterate_dd(PricerSolver *solver) {
+    void iterate_dd(PricerSolver *solver)
+    {
         solver->iterate_dd();
     }
 
-    void iterate_zdd(PricerSolver *solver) {
+    void iterate_zdd(PricerSolver *solver)
+    {
         solver->iterate_zdd();
     }
 
     int free_conflict_constraints(PricerSolver *solver, wctparms *parms,
-                                  int ecount_same, int ecount_differ) {
+                                  int ecount_same, int ecount_differ)
+    {
         int val = 0;
 
         switch (parms->solver) {
-        case bdd_solver:
-            solver->free_bdd_solver(ecount_same, ecount_differ);
-            break;
+            case bdd_solver:
+                solver->free_bdd_solver(ecount_same, ecount_differ);
+                break;
 
-        case zdd_solver:
-            solver->free_zdd_solver(ecount_same, ecount_differ);
-            break;
+            case zdd_solver:
+                solver->free_zdd_solver(ecount_same, ecount_differ);
+                break;
 
-        case DP_solver:
-            break;
+            case DP_solver:
+                break;
         }
 
         return val;
     }
 
-    size_t get_datasize(PricerSolver *solver) {
+    size_t get_datasize(PricerSolver *solver)
+    {
         return solver->zdd->size();
     }
 
-    size_t get_numberrows_zdd(PricerSolver *solver) {
+    size_t get_numberrows_zdd(PricerSolver *solver)
+    {
         return solver->zdd->root().row();
     }
 
-    size_t get_numberrows_bdd(PricerSolver *solver) {
+    size_t get_numberrows_bdd(PricerSolver *solver)
+    {
         return solver->dd->root().row();
     }
 
     int add_one_conflict(PricerSolver *solver, wctparms *parms, int v1, int v2,
-                         int same) {
+                         int same)
+    {
         int val = 0;
 
         switch (parms->solver) {
-        case bdd_solver:
-            solver->init_bdd_one_conflict(v1, v2, same);
-            break;
+            case bdd_solver:
+                solver->init_bdd_one_conflict(v1, v2, same);
+                break;
 
-        case zdd_solver:
-            solver->init_zdd_one_conflict(v1, v2, same);
-            break;
+            case zdd_solver:
+                solver->init_zdd_one_conflict(v1, v2, same);
+                break;
 
-        case DP_solver:
-            break;
+            case DP_solver:
+                break;
         }
 
         return val;
     }
 
-    int init_tables(PricerSolver *solver) {
+    int init_tables(PricerSolver *solver)
+    {
         int val = 0;
         solver->init_tables();
         return val;
     }
 
-    void set_release_due_time(PricerSolver *solver, Job* jobarray) {
+    void set_release_due_time(PricerSolver *solver, Job *jobarray)
+    {
         solver->set_release_due_time(jobarray);
     }
 
-    void compute_subgradient(Optimal_Solution<double> &sol, double *sub_gradient,
-                             double *rhs, int nbjobs, int nbmachines) {
+    void compute_subgradient(Optimal_Solution<double>& sol, double *sub_gradient,
+                             double *rhs, int nbjobs, int nbmachines)
+    {
         fill_dbl(sub_gradient, nbjobs, 1.0);
         sub_gradient[nbjobs] = nbmachines;
 
-        for (auto &v : sol.jobs) {
+        for (auto& v : sol.jobs) {
             sub_gradient[v] -= (double) nbmachines * 1.0;
         }
     }
 
     void adjust_alpha(double *pi_out, double *pi_in, double *subgradient,
-                      int nbjobs, double &alpha) {
+                      int nbjobs, double& alpha)
+    {
         double sum = 0.0;
 
         for (int i = 0; i <= nbjobs; ++i) {
@@ -407,7 +438,8 @@ CLEAN:
     }
 
     void compute_pi_eta_sep(int vcount, double *pi_sep, double *eta_sep,
-                            double alpha, double *pi_in, double *eta_in, double *pi_out, double *eta_out) {
+                            double alpha, double *pi_in, double *eta_in, double *pi_out, double *eta_out)
+    {
         int i;
         double beta = 1.0 - alpha;
 
@@ -418,56 +450,59 @@ CLEAN:
         *eta_sep = alpha * (*eta_in) + beta * (*eta_out);
     }
 
-    int solve_pricing(wctdata *pd, wctparms *parms) {
+    int solve_pricing(wctdata *pd, wctparms *parms)
+    {
         int val = 0;
 
         switch (parms->solver) {
-        case bdd_solver:
-            val = solve_weight_dbl_bdd(pd);
-            CCcheck_val_2(val, "Failed solve_weight_dbl_bdd");
-            break;
+            case bdd_solver:
+                val = solve_weight_dbl_bdd(pd);
+                CCcheck_val_2(val, "Failed solve_weight_dbl_bdd");
+                break;
 
-        case zdd_solver:
-            val = solve_weight_dbl_zdd(pd);
-            CCcheck_val_2(val, "Failed solve_weight_dbl_zdd")
-            break;
+            case zdd_solver:
+                val = solve_weight_dbl_zdd(pd);
+                CCcheck_val_2(val, "Failed solve_weight_dbl_zdd")
+                break;
 
-        case DP_solver:
-            val = solve_dynamic_programming_ahv(pd);
-            CCcheck_val_2(val, "Failed in solve_dynamic_programming_ahv")
-            break;
+            case DP_solver:
+                val = solve_dynamic_programming_ahv(pd);
+                CCcheck_val_2(val, "Failed in solve_dynamic_programming_ahv")
+                break;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_pricing_CG_heur(LP_data_CG_heur *data, wctparms *parms) {
+    int solve_pricing_CG_heur(LP_data_CG_heur *data, wctparms *parms)
+    {
         int val = 0;
 
         switch (parms->solver) {
-        case bdd_solver:
-            val = solve_weight_dbl_bdd_CG_heur(data);
-            CCcheck_val_2(val, "Failed solve_weight_dbl_bdd");
-            break;
+            case bdd_solver:
+                val = solve_weight_dbl_bdd_CG_heur(data);
+                CCcheck_val_2(val, "Failed solve_weight_dbl_bdd");
+                break;
 
-        case zdd_solver:
-            val = solve_weight_dbl_zdd_CG_heur(data);
-            CCcheck_val_2(val, "Failed solve_weight_dbl_zdd")
-            break;
+            case zdd_solver:
+                val = solve_weight_dbl_zdd_CG_heur(data);
+                CCcheck_val_2(val, "Failed solve_weight_dbl_zdd")
+                break;
 
-        case DP_solver:
-            val = solve_dynamic_programming_ahv_CG_heur(data);
-            CCcheck_val_2(val, "Failed in solve_dynamic_programming_ahv")
-            break;
+            case DP_solver:
+                val = solve_dynamic_programming_ahv_CG_heur(data);
+                CCcheck_val_2(val, "Failed in solve_dynamic_programming_ahv")
+                break;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    double compute_lagrange(Optimal_Solution<double> &sol, double *rhs, double *pi,
-                            int nbjobs, int nbmachines) {
+    double compute_lagrange(Optimal_Solution<double>& sol, double *rhs, double *pi,
+                            int nbjobs, int nbmachines)
+    {
         double result = 0;
         double a = 0.0;
         int i;
@@ -489,14 +524,16 @@ CLEAN:
     }
 
     void compute_lagrange_iterator(gpointer key, gpointer value,
-                                   gpointer user_data) {
+                                   gpointer user_data)
+    {
         double *a = (double *) user_data;
         Scheduleset *set = (Scheduleset *) key;
         *a += set->totwct;
     }
 
     double compute_lagrange_CG_heur(double *pi, int njobs, GHashTable *part_sol,
-                                    double *a, double K, Optimal_Solution<double> &sol) {
+                                    double *a, double K, Optimal_Solution<double>& sol)
+    {
         double result = pi[njobs];
         double temp = 0.0;
         int i;
@@ -518,8 +555,9 @@ CLEAN:
         return result;
     }
 
-    double compute_reduced_cost(Optimal_Solution<double> &sol, double *pi,
-                                int nbjobs) {
+    double compute_reduced_cost(Optimal_Solution<double>& sol, double *pi,
+                                int nbjobs)
+    {
         double result = pi[nbjobs];
         std::vector<int> *v = &(sol.jobs);
 
@@ -532,46 +570,49 @@ CLEAN:
     }
 
     void compute_sol_stab(PricerSolver *solver, wctparms *parms, double *pi,
-                          Optimal_Solution<double> *sol) {
+                          Optimal_Solution<double> *sol)
+    {
         switch (parms->solver) {
-        case bdd_solver:
-            *sol = solver->solve_weight_bdd_double(pi);
-            break;
+            case bdd_solver:
+                *sol = solver->solve_weight_bdd_double(pi);
+                break;
 
-        case zdd_solver:
-            *sol = solver->solve_weight_zdd_double(pi);
-            break;
+            case zdd_solver:
+                *sol = solver->solve_weight_zdd_double(pi);
+                break;
 
-        case DP_solver:
-            *sol = solver->dynamic_programming_ahv(pi);
-            break;
+            case DP_solver:
+                *sol = solver->dynamic_programming_ahv(pi);
+                break;
         }
     }
 
     int construct_sol_stab(wctdata *pd, wctparms *parms,
-                           Optimal_Solution<double> &sol) {
+                           Optimal_Solution<double>& sol)
+    {
         int val = 0;
 
         switch (parms->solver) {
-        case bdd_solver:
-        case zdd_solver:
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, sol,
-                                pd->njobs);
-            CCcheck_val_2(val, "Failed in construction of solution");
-            break;
+            case bdd_solver:
+            case zdd_solver:
+                val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, sol,
+                                    pd->njobs);
+                CCcheck_val_2(val, "Failed in construction of solution");
+                break;
 
-        case DP_solver:
-            val = construct_sol<double, true>(&(pd->newsets), &(pd->nnewsets), pd->jobarray,
-                                              sol, pd->njobs);
-            CCcheck_val_2(val, "Failed in construction of solution");
-            break;
+            case DP_solver:
+                val = construct_sol<double, true>(&(pd->newsets), &(pd->nnewsets), pd->jobarray,
+                                                  sol, pd->njobs);
+                CCcheck_val_2(val, "Failed in construction of solution");
+                break;
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_stab(wctdata *pd, wctparms *parms) {
+    int solve_stab(wctdata *pd, wctparms *parms)
+    {
         int val = 0;
         int heading_in = 0;
         PricerSolver *solver = pd->solver;
@@ -638,11 +679,12 @@ CLEAN:
                    heading_in, pd->alpha, pd->eta_out, pd->eta_in);
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_stab_CG_heur(wctproblem *problem, LP_data_CG_heur *data) {
+    int solve_stab_CG_heur(wctproblem *problem, LP_data_CG_heur *data)
+    {
         int val = 0;
         int heading_in = 0;
         wctparms *parms = &(problem->parms);
@@ -711,11 +753,12 @@ CLEAN:
         printf("heading = %d, alpha = %f, result of primal bound and Lagragian bound: out =%f, in = %f m = %f\n",
                heading_in, data->alpha, data->eta_out, data->eta_in, data->K);
         //}
-CLEAN:
+    CLEAN:
         return val;
     }
 
-    int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
+    int solve_stab_dynamic(wctdata *pd, wctparms *parms)
+    {
         int val = 0;
         PricerSolver *solver = pd->solver;
         Optimal_Solution<double> sol;
@@ -767,7 +810,7 @@ CLEAN:
                    pd->alpha, pd->eta_out, pd->eta_in);
         }
 
-CLEAN:
+    CLEAN:
         return val;
     }
 }

@@ -9,9 +9,9 @@
 ////////////////////////////////////////////////////////////////
 
 #include "util.h"
-#include <assert.h>
 
-void *CCutil_allocrus(size_t size) {
+void *CCutil_allocrus(size_t size)
+{
     void *mem = (void *) NULL;
 
     if (size == 0) {
@@ -29,7 +29,8 @@ void *CCutil_allocrus(size_t size) {
     return mem;
 }
 
-void CCutil_freerus(void *ptr) {
+void CCutil_freerus(void *ptr)
+{
     if (!ptr) {
         fprintf(stderr, "Warning: null pointer freed\n");
         return;
@@ -38,10 +39,13 @@ void CCutil_freerus(void *ptr) {
     free(ptr);
 }
 
-void *CCutil_reallocrus(void *ptr, size_t size) {
+void *CCutil_reallocrus(void *ptr, size_t size)
+{
     void *newptr;
 
-    if (ptr) {
+    if (!ptr) {
+        return CCutil_allocrus(size);
+    } else {
         newptr = (void *) realloc(ptr, size);
 
         if (!newptr) {
@@ -50,13 +54,15 @@ void *CCutil_reallocrus(void *ptr, size_t size) {
         }
 
         return newptr;
-    } 
-    
-    return CCutil_allocrus(size);
+    }
 }
 
-int CCutil_reallocrus_scale(void **pptr, int *pnnum, int count, double scale,
-                            size_t size) {
+int CCutil_reallocrus_scale(void **pptr,
+                            int *pnnum,
+                            int count,
+                            double scale,
+                            size_t size)
+{
     int newsize = (int)(((double) * pnnum) * scale);
     void *ptr;
 
@@ -70,22 +76,23 @@ int CCutil_reallocrus_scale(void **pptr, int *pnnum, int count, double scale,
 
     ptr = CCutil_reallocrus(*pptr, newsize * size);
 
-    if (ptr) {
+    if (!ptr) {
+        return 1;
+    } else {
         *pptr = ptr;
         *pnnum = newsize;
         return 0;
-    } 
-    
-    return 1;
+    }
 }
 
-int CCutil_reallocrus_count(void **pptr, int count, size_t size) {
+int CCutil_reallocrus_count(void **pptr, int count, size_t size)
+{
     void *ptr = CCutil_reallocrus(*pptr, count * size);
 
-    if (ptr) {
+    if (!ptr) {
+        return 1;
+    } else {
         *pptr = ptr;
         return 0;
-    } 
-    
-    return 1;
+    }
 }
