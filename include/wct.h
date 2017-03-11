@@ -4,6 +4,7 @@
 
 #include "wctprivate.h"
 #include "defs.h"
+#include "datastructsol.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,10 +25,13 @@ typedef struct _pair_job_machine pair_job_machine;
 int construct_wspt ( Job *jobarray, int njobs, int  nmachines,
                      solution  *new_sol );
 
+
 void update_bestschedule ( wctproblem *problem, solution *new_sol );
 int construct_feasible_solutions ( wctproblem *problem );
 int construct_edd ( wctproblem *prob, solution *sol );
 int construct_spt ( wctproblem *prob, solution *sol );
+int construct_random(wctproblem *prob, solution *sol, GRand *rand_uniform);
+
 int heuristic_rpup ( wctproblem *prob );
 
 /*
@@ -126,11 +130,6 @@ local_search_data *local_search_data_init ( solution *sol );
 void local_search_data_free ( local_search_data *data );
 
 /** Preperation of the data */
-int local_search_create_processing_list ( solution *sol, local_search_data *data,
-        int l ) ;
-int local_search_create_processing_list_b ( solution *sol,
-        local_search_data *data,
-        int l ) ;
 int local_search_create_W ( solution *sol, local_search_data *data );
 int local_search_create_g ( solution *sol, local_search_data *data );
 /** Search for the best intra insertion */
@@ -138,20 +137,15 @@ void local_search_forward_insertion ( solution *sol, local_search_data *data,
                                       int l );
 void local_search_backward_insertion ( solution *sol, local_search_data *data,
                                        int l ) ;
-int local_search_create_processing_list_insertion_inter ( solution *sol,
-        local_search_data *data,
-        int l ) ;
-/** update of the intra insertion */
-void local_seach_update_insertion ( solution *sol, int i_best, int j_best,
-                                    int k_best, int l, int improvement );
 void local_search_swap_intra ( solution *sol, local_search_data *data,
                                int l1, int l2 );
 void local_search_insertion_inter ( solution *sol, local_search_data *data,
                                     int l ) ;
-void local_search_update_insertion_inter ( solution *sol, int i_best,
-        int j_best, int k_best, int kk_best, int l, int improvement );
 void local_search_swap_inter ( solution *sol, local_search_data *data,
                                int l1, int l2 );
+
+
+void RVND(solution *sol, local_search_data *data);
 
 
 /**
@@ -236,14 +230,6 @@ int calculate_Hmin ( int *durations, int nmachines, int njobs, int *perm,
                      double *H );
 int preprocess_data ( wctproblem *problem );
 
-
-/**
- * heurdiving.c
- */
-
-int heur_exec ( wctproblem *problem, wctdata *pd, int *result );
-void heur_init ( wctdata *pd );
-void heur_free ( wctdata *pd );
 
 /**
  * solverwrapper.cc
