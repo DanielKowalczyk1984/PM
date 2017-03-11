@@ -38,7 +38,6 @@ static void usage(char *f)
             "   -z int  Pricing solver technique: 0 = BDD(default), 1 = ZDD, 2 = DP\n");
     fprintf(stderr,
             "   -c int  Construct heuristically solutions: 0 = yes(default), 1 = no\n");
-    fprintf(stderr, "   -D int  Use diving heuristic: 0 = no(default), 1 = yes\n");
     fprintf(stderr, "   -t int  Use ahv test: 0 = no(default), 1 = yes\n");
     fprintf(stderr, "   -p int  Print csv-files: 0 = no(default), 1 = yes\n");
     fprintf(stderr,
@@ -109,11 +108,6 @@ static int parseargs(int ac, char **av, wctparms *parms)
             case 'c':
                 val = wctparms_set_construct(parms, atoi(optarg));
                 CCcheck_val(val, "Failed in construct sol");
-                break;
-
-            case 'D':
-                val = wctparms_set_diving_heuristic(parms, atoi(optarg));
-                CCcheck_val(val, "Failed in diving_heuristic");
                 break;
 
             case 't':
