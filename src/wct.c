@@ -3,8 +3,6 @@
 #include <assert.h>
 #include "wct.h"
 #include "wctparms.h"
-#include "heurdiving.h"
-#include "new_heurdiving.h"
 
 #define MEAN_ERROR 0.5
 
@@ -94,8 +92,8 @@ static int get_problem_name(char *pname, const char *efname)
 
 int compare_edd(const void *a, const void *b)
 {
-    Job *x = (Job *) a;
-    Job *y = (Job *) b;
+    const Job *x = (const Job *) a;
+    const Job *y = (const Job *) b;
 
     if (x->duetime == y->duetime) {
         return y->processingime - x->processingime;
@@ -111,10 +109,10 @@ int compare_edd(const void *a, const void *b)
  *        b: job y
  *
  */
-int _job_compare_edd(const void *a, const void *b)
+static int _job_compare_edd(const void *a, const void *b)
 {
-    Job *x = * ((Job **) a);
-    Job *y = * ((Job **) b);
+    const Job *x = * ((Job * const *) a);
+    const Job *y = * ((Job * const *) b);
 
     if (x->duetime > y->duetime) {
         return (1);
@@ -137,7 +135,7 @@ int _job_compare_edd(const void *a, const void *b)
     return (0);
 }
 
-int compare_nodes_dfs_ahv(BinomialHeapValue a, BinomialHeapValue b)
+static int compare_nodes_dfs_ahv(BinomialHeapValue a, BinomialHeapValue b)
 {
     double lp_a = (((wctdata *) a)->LP_lower_bound - ((
                        wctdata *) a)->depth * 10000);
@@ -402,7 +400,6 @@ void wctproblem_init(wctproblem *problem)
     CCutil_init_timer(& (problem->tot_lb_lp), "tot_lb_lp");
     CCutil_init_timer(& (problem->tot_lb), "tot_lb");
     CCutil_init_timer(& (problem->tot_pricing), "tot_pricing");
-    CCutil_init_timer(& (problem->tot_lb_heur), "tot_lb_heur");
     /* Scatter sear init*/
     //SS_init(&problem->scatter_search, 15, 10, 0.1);
 }
@@ -543,7 +540,6 @@ void wctdata_init(wctdata *pd)
     pd->nb_wide = 0;
     pd->same_children_wide = (wctdata **) NULL;
     pd->diff_children_wide = (wctdata **) NULL;
-    heur_init(pd);
 }
 
 static void free_elist(wctdata *cd, wctparms *parms)
@@ -573,7 +569,6 @@ void lpwctdata_free(wctdata *pd)
     CC_IFFREE(pd->subgradient, double);
     CC_IFFREE(pd->subgradient_in, double);
     CC_IFFREE(pd->rhs, double);
-    heur_free(pd);
 
     if (pd->solver) {
         freeSolver(pd->solver);
@@ -665,598 +660,6 @@ gint compare_readytime(gconstpointer a, gconstpointer b)
     const int *x = & (((const Job *) a)->processingime);
     const int *y = & (((const Job *) b)->processingime);
     return (*x - *y);
-}
-
-int lowerbound_0(GList *list, int nb, int nmachines)
-{
-    int val = 0;
-    int counter = 0;
-    GList *it = list;
-
-    for (; it && counter < nb - nmachines + 1 ; it = it->next) {
-        val += ((Job *) it->data)->processingime;
-        counter++;
-    }
-
-    val = (int) ceil((double) val / (double) nmachines);
-    return val;
-}
-
-int lowerbound_0_duetime(GList *list, int p, int nb, int nmachines)
-{
-    int val = p;
-    int counter = 0;
-    GList *it = list;
-
-    for (; it ; it = it->next) {
-        val += ((Job *) it->data)->processingime;
-        counter++;
-    }
-
-    val = (int) ceil((double) val / (double) nmachines);
-    return val;
-}
-
-int lowerbound_1(GList *list, int nb, int nmachines)
-{
-    int val = 0;
-    int counter = 0;
-    GList *it = list;
-
-    for (; it && counter < nb - nmachines + 1 ; it = it->next) {
-        int p = ((Job *) it->data)->processingime;
-        val = (p > val) ? p : val;
-        counter++;
-    }
-
-    return val;
-}
-
-int lowerbound_1_duetime(GList *list, int p, int nb, int nmachines)
-{
-    int val = p;
-    int counter = 0;
-    GList *it = list;
-
-    for (; it ; it = it->next) {
-        int tmp_p = ((Job *) it->data)->processingime;
-        val = (tmp_p > val) ? tmp_p : val;
-        counter++;
-    }
-
-    return val;
-}
-
-int lowerbound_2(GList *list, int nb, int nmachines)
-{
-    int val = 0;
-    int counter = 0;
-    int *tmpweights = CC_SAFE_MALLOC(nb - nmachines + 1, int);
-    GList *it = list;
-
-    for (; it && counter < nb - nmachines + 1 ; it = it->next) {
-        int p = ((Job *) it->data)->processingime;
-        tmpweights[counter] = p;
-        counter++;
-    }
-
-    val = tmpweights[quickselect(tmpweights, nb - nmachines + 1,
-                                                         nmachines - 1)];
-    val += tmpweights[quickselect(tmpweights, nb - nmachines + 1,
-                                                          nmachines)];
-    CC_IFFREE(tmpweights, int)
-    return val;
-}
-
-int lowerbound_2_duetime(GList *list, int p, int nb, int nmachines)
-{
-    int val = 0;
-    int counter = 0;
-    int *tmpweights = CC_SAFE_MALLOC(nb + 1, int);
-    GList *it = list;
-    tmpweights[counter++] = p;
-
-    for (; it ; it = it->next) {
-        int tmp_p = ((Job *) it->data)->processingime;
-        tmpweights[counter] = tmp_p;
-        counter++;
-    }
-
-    val = tmpweights[quickselect(tmpweights, nb  + 1, nmachines - 1)];
-    val += tmpweights[quickselect(tmpweights, nb  + 1, nmachines)];
-    CC_IFFREE(tmpweights, int)
-    return val;
-}
-
-int lowerbound_FS(int n, int *weights, int capacity, int k)
-{
-    int i, j, l, val = 0;
-    double *dbl_weights = (double *) NULL;
-    double *epsilon = (double *) NULL;
-    double **u = (double **) NULL;
-    double *inv_k = (double *) NULL;
-    double *SJ1 = (double *) NULL;
-    double *SJ2 = (double *) NULL;
-    dbl_weights = CC_SAFE_MALLOC(n + 1, double);
-    CCcheck_NULL(dbl_weights, "Failed to allocate memory");
-    epsilon = CC_SAFE_MALLOC(n + 1, double);
-    CCcheck_NULL(epsilon, "Failed to allocate memory");
-    u = CC_SAFE_MALLOC(k, double *);
-    CCcheck_NULL(u, "Failed to allocate memory");
-    inv_k = CC_SAFE_MALLOC(k, double);
-    CCcheck_NULL(inv_k, "Failed to allocate memory");
-    SJ1 = CC_SAFE_MALLOC(k, double);
-    CCcheck_NULL(SJ1, "Failed to allocate memory");
-    SJ2 = CC_SAFE_MALLOC(k, double);
-    CCcheck_NULL(SJ2, "Failed to allocate memory");
-
-    for (i = 0; i < k; i++) {
-        u[i] = CC_SAFE_MALLOC(n + 1, double);
-        u[i][n] = .0;
-        inv_k[i] = (double) 1 / (i + 2);
-    }
-
-    dbl_weights[n] = .0;
-    epsilon[n] = .0;
-
-    for (i = 0; i < n; i++) {
-        dbl_weights[i] = nextafter((double) weights[i] / capacity, 0.0);
-    }
-
-    i = 0;
-
-    while (dbl_weights[i] > 0.5 && i != n) {
-        i++;
-    }
-
-    if (i == 0) {
-        double tmp_dbl = .0;
-
-        for (j = 0; j < n; j++) {
-            tmp_dbl += dbl_weights[j];
-        }
-
-        val = (int) ceil(tmp_dbl);
-    } else {
-        int j1 = 0;
-        fill_dbl(SJ1, k, .0);
-
-        while (dbl_weights[j1] > 1.0 - dbl_weights[i]) {
-            epsilon[j1] = 1.0;
-
-            for (j = 0 ; j < k; j++) {
-                u[j][j1] = 1.0;
-                SJ1[j] += u[j][j1];
-            }
-
-            j1++;
-
-            if (j1 == i) {
-                break;
-            }
-        }
-
-        fill_dbl(SJ2, k, .0);
-
-        for (j = j1; j < i; j++) {
-            epsilon[j] = dbl_weights[j];
-
-            for (l = 0; l < k; l++) {
-                if (trunc(epsilon[j] * (l + 3)) == epsilon[j] * (l + 3)) {
-                    u[l][j] = epsilon[j];
-                } else {
-                    u[l][j] = floor((l + 3) * epsilon[j]) * inv_k[l];
-                }
-
-                SJ2[l] += u[l][j];
-            }
-        }
-
-        int j2 = i;
-
-        while (dbl_weights[j2 + 1] == dbl_weights[j2]) {
-            epsilon[j2 + 1] = epsilon[j2];
-
-            for (l = 0; l < k; l++) {
-                u[l][j2 + 1] = u[l][j2];
-                SJ2[l] += u[l][j2];
-            }
-
-            j2++;
-        }
-
-        do {
-            for (l = 0; l < k; l++) {
-                val = CC_MAX(val, (int) ceil(SJ1[l] + SJ2[l]));
-            }
-
-            j2++;
-
-            if (j2 < n) {
-                double tmp_epsilon = dbl_weights[j2];
-                epsilon[j2] = dbl_weights[j2];
-
-                for (l = 0; l < k; l++) {
-                    if (trunc(epsilon[j2] * (l + 3)) == epsilon[j2] * (l + 3)) {
-                        u[l][j2] = epsilon[j2];
-                    } else {
-                        u[l][j2] = floor((l + 3) * epsilon[j2]) * inv_k[l];
-                    }
-                }
-
-                while (dbl_weights[j2 + 1] == dbl_weights[j2]) {
-                    epsilon[j2 + 1] = epsilon[j2];
-
-                    for (l = 0; l < k; l++) {
-                        u[l][j2 + 1] = u[l][j2];
-                        SJ2[l] += u[l][j2];
-                    }
-
-                    j2++;
-                }
-
-                while (j1 > 0 && dbl_weights[j1 - 1] <= 1.0 - tmp_epsilon) {
-                    j1--;
-                    epsilon[j1] = dbl_weights[j1];
-
-                    for (l = 0; l < k; l++) {
-                        SJ1[l] -= u[l][j1];
-
-                        if (trunc(epsilon[j1] * (l + 3)) == epsilon[j1] * (l + 3)) {
-                            u[l][j1] = epsilon[j1];
-                        } else {
-                            u[l][j1] = floor((l + 3) * epsilon[j1]) * inv_k[l];
-                        }
-
-                        SJ2[l] += u[l][j1];
-                    }
-                }
-            }
-        } while (j2 <= n);
-    }
-
-    CC_IFFREE(dbl_weights, double);
-    CC_IFFREE(epsilon, double);
-
-    for (l = 0; l < k; l++) {
-        CC_IFFREE(u[l], double);
-    }
-
-    CC_IFFREE(u, double *);
-    CC_IFFREE(inv_k, double);
-    CC_IFFREE(SJ1, double);
-    CC_IFFREE(SJ2, double);
-    return val;
-}
-
-int FS_lowerbound_readytime(GList *list, int nb, int nmachines,
-                            int H_max)
-{
-    int val = 0;
-    int counter = 0;
-    int L = 0;
-    int U = H_max;
-    int *tmpweights = CC_SAFE_MALLOC(nb - nmachines + 1, int);
-    GList *it = list;
-
-    for (; it && counter < nb - nmachines + 1 ; it = it->next) {
-        int p = ((Job *) it->data)->processingime;
-        tmpweights[counter] = p;
-        counter++;
-    }
-
-    while (L < U) {
-        int c  = (int) floor((double)(L + U) / 2);
-        int n = lowerbound_FS(nb - nmachines + 1, tmpweights, c, 100);
-
-        if (n > nmachines) {
-            L = c + 1;
-            val = L;
-        } else {
-            U = c;
-        }
-    }
-
-    CC_IFFREE(tmpweights, int);
-    return val;
-}
-
-int FS_lowerbound_duetime(GList *list, int p, int nb, int nmachines,
-                          int H_max)
-{
-    int val = 0;
-    int counter = 0;
-    int L = 0;
-    int U = H_max;
-    int *tmpweights = CC_SAFE_MALLOC(nb + 1, int);
-    tmpweights[counter++] = p;
-    GList *it = list;
-
-    for (; it ; it = it->next) {
-        int tmp_p = ((Job *) it->data)->processingime;
-        tmpweights[counter] = tmp_p;
-        counter++;
-    }
-
-    while (L < U) {
-        int c  = (int) floor((double)(L + U) / 2);
-        int n = lowerbound_FS(nb + 1, tmpweights, c, 100);
-
-        if (n > nmachines) {
-            L = c + 1;
-            val = L;
-        } else {
-            U = c;
-        }
-    }
-
-    CC_IFFREE(tmpweights, int)
-    return val;
-}
-
-
-int lowerbound_MT(int n, int *weights, int capacity)
-{
-    int val = 0;
-    int i = 0;
-    int *temp_weights = (int *) NULL;
-    temp_weights = CC_SAFE_MALLOC(n + 1, int);
-    CCcheck_NULL(temp_weights, "Failed to allocate memory to temp_weights");
-    memcpy(temp_weights, weights, n * sizeof(int));
-    temp_weights[n] = 0;
-
-    while (temp_weights[i] > capacity / 2 && i != n) {
-        i++;
-    }
-
-    if (i == 0) {
-        for (int j = 0; j < n; j++) {
-            val += weights[j];
-        }
-
-        val = (int) ceil((double) val / capacity);
-    } else {
-        int CJ12 = i;
-        int SJ = 0;
-
-        for (int  j = i; j < n; j++) {
-            SJ += temp_weights[j];
-        }
-
-        int j1 = 0;
-
-        while (temp_weights[j1] > capacity - temp_weights[i]) {
-            j1++;
-
-            if (j1 == i) {
-                break;
-            }
-        }
-
-        int CJ2 = i - j1;
-        int SJ2 = 0;
-        int SJ2beta = 0;
-
-        for (int j = j1; j < i; j++) {
-            SJ2 += temp_weights[j];
-            SJ2beta += floor((double)((capacity - temp_weights[j]) /
-                                      (temp_weights[j])));
-        }
-
-        int j2 = i;
-        int SJ3 = temp_weights[j2];
-        int CJ3 = 1;
-
-        while (temp_weights[j2 + 1] == temp_weights[j2]) {
-            j2++;
-            SJ3 += temp_weights[j2];
-            CJ3++;
-        }
-
-        val = CJ12;
-
-        do {
-            int p = temp_weights[j2 - 1];
-            int term1 = CC_MAX((int) ceil((double)(SJ3 + SJ2) / capacity - CJ2), 0);
-            val = CC_MAX(val, CJ12 + term1);
-            int term2 = CC_MAX((int) ceil((double)(CJ3 - SJ2beta) / (floor((
-                                              double) capacity / p))), 0);
-            val = CC_MAX(val, CJ12 + term2);
-            j2++;
-
-            if (j2 <= n - 1) {
-                SJ3 += temp_weights[j2];
-                CJ3++;
-                p = temp_weights[j2];
-
-                while (temp_weights[j2 + 1] == temp_weights[j2]) {
-                    j2++;
-                    SJ3 += temp_weights[j2];
-                    CJ3++;
-                }
-
-                while (j1 > 0 && temp_weights[j1 - 1] <= capacity - p) {
-                    j1--;
-                    CJ2++;
-                    SJ2 += temp_weights[j1];
-                }
-
-                SJ2beta = 0;
-
-                for (int j = j1; j < i; ++j) {
-                    SJ2beta += floor((double)((capacity - temp_weights[j]) / (p)));
-                }
-            }
-        } while (j2 <= n);
-    }
-
-    CC_IFFREE(temp_weights, int);
-    return val;
-}
-
-int MT_lowerbound_readytime(GList *list, int nb, int nmachines,
-                            int H_max)
-{
-    int val = 0;
-    int counter = 0;
-    int L = 0;
-    int U = H_max;
-    int *tmpweights = CC_SAFE_MALLOC(nb - nmachines + 1, int);
-    GList *it = list;
-
-    for (; it && counter < nb - nmachines + 1 ; it = it->next) {
-        int p = ((Job *) it->data)->processingime;
-        tmpweights[counter] = p;
-        counter++;
-    }
-
-    while (L < U) {
-        int c  = (int) floor((double)(L + U) / 2);
-        int n = lowerbound_MT(nb - nmachines + 1, tmpweights, c);
-
-        if (n > nmachines) {
-            L = c + 1;
-            val = L;
-        } else {
-            U = c;
-        }
-    }
-
-    CC_IFFREE(tmpweights, int);
-    return val;
-}
-
-
-int MT_lowerbound_duetime(GList *list,
-                          int p,
-                          int nb,
-                          int nmachines,
-                          int H_max)
-{
-    int val = 0;
-    int counter = 0;
-    int L = 0;
-    int U = H_max;
-    int *tmpweights = CC_SAFE_MALLOC(nb + 1, int);
-    tmpweights[counter++] = p;
-    GList *it = list;
-
-    for (; it ; it = it->next) {
-        int tmp_p = ((Job *) it->data)->processingime;
-        tmpweights[counter] = tmp_p;
-        counter++;
-    }
-
-    while (L < U) {
-        int c  = (int) floor((double)(L + U) / 2);
-        int n = lowerbound_MT(nb + 1, tmpweights, c);
-
-        if (n > nmachines) {
-            L = c + 1;
-            val = L;
-        } else {
-            U = c;
-        }
-    }
-
-    CC_IFFREE(tmpweights, int)
-    return val;
-}
-
-int calculate_ready_due_times(Job *jobarray, int njobs, int nmachines,
-                              double H)
-{
-    int i, j, val = 0;
-    int *sumleft = (int *) NULL;
-    int *sumright = (int *) NULL;
-    int temp_duration, temp_weight;
-    //int H_max = jobarray[0].duetime;
-    sumleft = CC_SAFE_MALLOC(njobs, int);
-    CCcheck_NULL_2(sumleft, "Failed to, allocate memory");
-    sumright = CC_SAFE_MALLOC(njobs, int);
-    CCcheck_NULL_2(sumright, "Failed to allocate memory");
-    sumleft[0] = 0;
-
-    for (i = 1; i < njobs; ++i) {
-        sumleft[i] = sumleft[i - 1] + jobarray[i - 1].processingime;
-    }
-
-    sumright[njobs - 1] = jobarray[njobs - 1].processingime;
-
-    for (i = njobs - 2 ; i >= 0; --i) {
-        sumright[i] = sumright[i + 1] + jobarray[i].processingime;
-    }
-
-    for (i = 0  ; i < njobs; ++i) {
-        temp_duration = jobarray[i].processingime;
-        temp_weight = jobarray[i].weight;
-        GList *temp_list = (GList *) NULL;
-        int nb = 0;
-
-        for (j = 0; j < i; ++j) {
-            if ((jobarray[j].processingime <= temp_duration &&
-                    jobarray[j].weight > temp_weight) ||
-                    (jobarray[j].processingime < temp_duration
-                     && jobarray[j].weight >= temp_weight)
-                    || ((double) sumleft[j] <= H - (double) sumright[i])) {
-                temp_list = g_list_append(temp_list, jobarray + j);
-                nb++;
-            }
-        }
-
-        if (nb > nmachines - 1) {
-            temp_list = g_list_sort(temp_list, compare_readytime);
-            jobarray[i].releasetime = CC_MAX(lowerbound_0(temp_list, nb, nmachines),
-                                             lowerbound_1(temp_list, nb, nmachines));
-
-            if (nb  - nmachines + 1 > nmachines) {
-                int tmp = lowerbound_2(temp_list,  nb,  nmachines);
-                //tmp = CC_MAX(tmp, MT_lowerbound_readytime(temp_list, nb, nmachines, H_max));
-                jobarray[i].releasetime = tmp > jobarray[i].releasetime ? tmp :
-                                          jobarray[i].releasetime ;
-            }
-        }
-    }
-
-    for (i = 0; i < njobs; ++i) {
-        temp_duration = jobarray[i].processingime;
-        temp_weight = jobarray[i].weight;
-        int nb = 0;
-        GList *templist = (GList *) NULL;
-
-        for (j = i + 1; j < njobs; ++j) {
-            if ((jobarray[j].processingime >= temp_duration &&
-                    jobarray[i].weight < temp_weight) ||
-                    (jobarray[j].processingime > temp_duration
-                     && jobarray[i].weight <= temp_weight)
-                    || (sumleft[i] <= H - (double) sumright[j])) {
-                templist = g_list_append(templist, jobarray + j);
-                nb++;
-            }
-        }
-
-        int tmp = CC_MAX(lowerbound_0_duetime(templist, temp_duration, nb,
-                                              nmachines),
-                         lowerbound_1_duetime(templist, temp_duration, nb, nmachines));
-
-        if (nb > nmachines - 1) {
-            tmp = CC_MAX(tmp, lowerbound_2_duetime(templist, temp_duration, nb,
-                                                   nmachines));
-            //tmp = CC_MAX(tmp, FS_lowerbound_duetime(templist, temp_duration, nb, nmachines, H_max));
-            //tmp = CC_MAX(tmp, MT_lowerbound_duetime(templist, temp_duration, nb, nmachines, H_max));
-        }
-
-        int delta = jobarray[i].duetime - tmp + jobarray[i].processingime;
-
-        if (delta < jobarray[i].duetime) {
-            jobarray[i].duetime = delta;
-        }
-    }
-
-CLEAN:
-    CC_IFFREE(sumleft, int);
-    CC_IFFREE(sumright, int);
-    return val;
 }
 
 int calculate_Hmax(Job *jobarray, int nmachines, int njobs)
@@ -3360,7 +2763,6 @@ CLEAN:
 int create_branches_conflict(wctdata *pd, wctproblem *problem)
 {
     int val = 0;
-    int result = DELEYAD;
     int status;
     int i;
     double *x = (double *) NULL;
@@ -3445,20 +2847,6 @@ int create_branches_conflict(wctdata *pd, wctproblem *problem)
         }
     }
 
-    if (pd->depth % 5 == 0 && parms->diving_heuristic) {
-        //parms->stab_technique = no_stab;
-        printf("starting heur\n");
-        getchar();
-        val = heur_exec(problem, pd, &result);
-        CCcheck_val_2(val, "Failed at heur_exec");
-
-        if (result == FOUNDSOL) {
-            printf("Heuristic found solution\n");
-        }
-
-        parms->stab_technique = stab_wentgnes;
-    }
-
     if (dbg_lvl() > 1) {
         printf("Collected %d branching candidates.\n", pmcheap_size(heap));
     }
@@ -3528,7 +2916,6 @@ CLEAN:
 int create_branches_wide(wctdata *pd, wctproblem *problem)
 {
     int val = 0;
-    int result = DELEYAD;
     int status;
     int i;
     int *v1_wide = (int *) NULL;
@@ -3588,17 +2975,6 @@ int create_branches_wide(wctdata *pd, wctproblem *problem)
         CCcheck_val_2(val, "Failed in grab_int_sol");
         assert(pd->status = finished);
         goto CLEAN;
-    }
-
-    if (pd->depth % 5 == 0 && parms->diving_heuristic) {
-        val = heur_exec(problem, pd, &result);
-        CCcheck_val_2(val, "Failed at heur_exec");
-
-        if (result == FOUNDSOL) {
-            printf("Heuristic found solution\n");
-            assert(pd->status = finished);
-            goto CLEAN;
-        }
     }
 
     if (dbg_lvl() > 1) {
