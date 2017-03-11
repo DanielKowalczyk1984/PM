@@ -83,21 +83,6 @@ typedef struct _SS {
 } SS;
 
 
-typedef struct heur_diving {
-    int backtrack;
-    int usefarkasonly;
-
-    int maxdiscdepth;
-    int maxdiscrepancy;
-
-    double *sol;
-    double *roundedsol;
-    int ccount;
-
-    double objval;
-    double roundedsum;
-} heur_diving;
-
 /**
  * wct data types nodes of branch and bound tree
  */
@@ -219,8 +204,6 @@ struct wctdata {
     wctdata **diff_children_wide;
 
     wctdata *parent;
-    //heur_diving
-    heur_diving heur_data;
 
     char pname[MAX_PNAME_LEN];
 };
@@ -296,7 +279,6 @@ struct wctproblem {
     CCutil_timer tot_lb;
     CCutil_timer tot_lb_lp_root;
     CCutil_timer tot_lb_lp;
-    CCutil_timer tot_lb_heur;
     CCutil_timer tot_pricing;
     CCutil_timer tot_scatter_search;
     double real_time;
