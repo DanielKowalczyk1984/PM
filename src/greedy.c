@@ -2,7 +2,13 @@
 
 static int add_feasible_solution(wctproblem *problem, solution *new_sol);
 static int solution_set_c(solution *sol);
+static void perturb_swap(solution *sol, local_search_data *data, int l1, int l2,
+                         GRand *rand_uniform);
+void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform);
 void permutation_solution(GRand *rand_uniform, solution *sol);
+
+int _job_compare_spt(const void *a, const void *b);
+int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b);
 
 /**
  * comparefunctions
@@ -30,8 +36,8 @@ int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b)
 
 int _job_compare_spt(const void *a, const void *b)
 {
-    Job *x = * ((Job **) a);
-    Job *y = * ((Job **) b);
+    const Job *x =  ((const Job *) &a);
+    const Job *y =  ((const Job *) &b);
 
     if (x->processingime > y->processingime) {
         return 1;
@@ -167,24 +173,6 @@ void permutation_solution(GRand *rand_uniform, solution *sol)
     }
 }
 
-void solution_forward_insertion(solution *sol, int i, int j)
-{
-    Job *tmp = sol->perm[i];
-    memcpy(sol->perm + i, sol->perm + i + 1, (j - i) *sizeof(Job *));
-    sol->perm[j] = tmp;
-}
-
-void solution_forward_insertion_inverse(solution *sol, int i, int j)
-{
-    Job *tmp = sol->perm[j];
-    memcpy(sol->perm + i + 1, sol->perm + i, (j - i) *sizeof(Job *));
-    sol->perm[i] = tmp;
-}
-
-void local_search_gpi(solution *sol, int *iteration)
-{
-}
-
 void RVND(solution *sol, local_search_data *data)
 {
     do {
@@ -280,8 +268,8 @@ void RVND(solution *sol, local_search_data *data)
     } while (data->updated);
 }
 
-void perturb_swap(solution *sol, local_search_data *data, int l1, int l2,
-                  GRand *rand_uniform)
+static void perturb_swap(solution *sol, local_search_data *data, int l1, int l2,
+                         GRand *rand_uniform)
 {
     int m1, m2;
     int i1 = 0, i2 = 0 ;
@@ -376,10 +364,6 @@ void perturb_swap(solution *sol, local_search_data *data, int l1, int l2,
     }
 
     sol->tw += part1->tw + part2->tw;
-    part1->used = 1;
-    part2->used = 1;
-    local_search_create_W(sol, data);
-    local_search_create_g(sol, data);
     CC_IFFREE(tmp1, Job *);
     CC_IFFREE(tmp2, Job *);
 }
@@ -410,6 +394,13 @@ void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform)
     for (unsigned i = 0; i < L; ++i) {
         perturb_swap(sol, data, 2, 3, rand_uniform);
     }
+
+    for (unsigned i = 0; i < sol->nmachines; ++i) {
+        sol->part[i].used = 1;
+    }
+
+    local_search_create_W(sol, data);
+    local_search_create_g(sol, data);
 }
 
 int heuristic_rpup(wctproblem *prob)
@@ -457,13 +448,6 @@ int heuristic_rpup(wctproblem *prob)
             }
 
             solution_update(sol1, sol);
-
-            for (unsigned i = 0; i < sol->nmachines; ++i) {
-                sol1->part[i].used = 1;
-            }
-
-            local_search_create_W(sol1, data_RS);
-            local_search_create_g(sol1, data_RS);
             Perturb(sol1, data_RS, rand_uniform);
         }
 
@@ -476,7 +460,6 @@ int heuristic_rpup(wctproblem *prob)
         CC_IFFREE(sol1, solution);
     }
 
-    CCcheck_val_2(val, "Failed in construct_edd");
     solution_print(prob->opt_sol);
 CLEAN:
     solution_free(sol);
