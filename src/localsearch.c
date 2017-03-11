@@ -1,6 +1,11 @@
 #include <assert.h>
 #include "wct.h"
 
+int compare_process_list(gconstpointer a, gconstpointer b);
+int compare_process_list_b(gconstpointer a, gconstpointer b);
+int local_search_compare_lateness(gconstpointer a, gconstpointer b,
+                                  gpointer data);
+
 static void destroy_slope_t (gpointer data)
 {
     slope_t *tmp = (slope_t *) data;
@@ -36,8 +41,8 @@ static void compute_it(GList **it, int c)
 
 int compare_process_list(gconstpointer a, gconstpointer b)
 {
-    processing_list_data *x = (processing_list_data *) a;
-    processing_list_data *y = (processing_list_data *) b;
+    const processing_list_data *x = (const processing_list_data *) a;
+    const processing_list_data *y = (const processing_list_data *) b;
 
     if (x->p > y->p) {
         return -1;
@@ -50,8 +55,8 @@ int compare_process_list(gconstpointer a, gconstpointer b)
 
 int compare_process_list_b(gconstpointer a, gconstpointer b)
 {
-    processing_list_data *x = (processing_list_data *) a;
-    processing_list_data *y = (processing_list_data *) b;
+    const processing_list_data *x = (const processing_list_data *) a;
+    const processing_list_data *y = (const processing_list_data *) b;
 
     if (x->p > y->p) {
         return 1;
@@ -216,7 +221,7 @@ int local_search_create_W(solution *sol, local_search_data *data)
     return val;
 }
 
-int local_search_create_processing_list(solution *sol, local_search_data *data,
+static int local_search_create_processing_list(solution *sol, local_search_data *data,
                                         int l)
 {
     int val = 0;
@@ -248,7 +253,7 @@ int local_search_create_processing_list(solution *sol, local_search_data *data,
     return val;
 }
 
-int local_search_create_processing_list_b(solution *sol,
+static int local_search_create_processing_list_b(solution *sol,
         local_search_data *data,
         int l)
 {
@@ -282,7 +287,7 @@ int local_search_create_processing_list_b(solution *sol,
     return val;
 }
 
-int local_search_create_processing_list_swap(solution *sol,
+static int local_search_create_processing_list_swap(solution *sol,
         local_search_data *data,
         int l1, int l2)
 {
@@ -338,7 +343,7 @@ int local_search_create_processing_list_swap(solution *sol,
     return val;
 }
 
-int local_search_create_processing_list_insertion_inter(solution *sol,
+static int local_search_create_processing_list_insertion_inter(solution *sol,
         local_search_data *data,
         int l)
 {
@@ -375,7 +380,7 @@ int local_search_create_processing_list_insertion_inter(solution *sol,
     return val;
 }
 
-int local_search_create_processing_list_swap_inter(solution *sol,
+static int local_search_create_processing_list_swap_inter(solution *sol,
         local_search_data *data,
         int l1, int l2)
 {
@@ -519,7 +524,7 @@ int local_search_create_g(solution *sol, local_search_data *data)
     return val;
 }
 
-void local_search_update_insertion(solution *sol, int i_best,
+static void local_search_update_insertion(solution *sol, int i_best,
                                    int j_best, int k_best, int l, int improvement)
 {
     Job *tmp;
@@ -548,7 +553,7 @@ void local_search_update_insertion(solution *sol, int i_best,
     sol->part[k_best].used = 1;
 }
 
-void local_search_update_insertion_inter(solution *sol, int i_best,
+static void local_search_update_insertion_inter(solution *sol, int i_best,
         int j_best, int k_best, int kk_best, int l, int improvement)
 {
     Job *tmp;
@@ -590,7 +595,7 @@ void local_search_update_insertion_inter(solution *sol, int i_best,
     sol->part[kk_best].used = 1;
 }
 
-void local_search_update_swap(solution *sol, int i_best, int j_best, int k_best,
+static void local_search_update_swap(solution *sol, int i_best, int j_best, int k_best,
                               int l1, int l2, int improvement)
 {
     Job *tmp;
@@ -643,7 +648,7 @@ void local_search_update_swap(solution *sol, int i_best, int j_best, int k_best,
     part->used = 1;
 }
 
-void local_search_update_inter_swap(solution *sol, int i_best, int j_best,
+static void local_search_update_inter_swap(solution *sol, int i_best, int j_best,
                                     int k_best, int kk_best,
                                     int l1, int l2, int improvement)
 {
@@ -737,7 +742,7 @@ void local_search_forward_insertion(solution *sol,
     max = 0;
     local_search_create_processing_list(sol, data, l);
 
-    for (unsigned k = 0; k < sol->nmachines && !update ; ++k) {
+    for (unsigned k = 0; k < sol->nmachines  ; ++k) {
         /** compute g */
         int njobs = sol->part[k].machine->len;
 
@@ -894,7 +899,7 @@ void local_search_backward_insertion(solution *sol, local_search_data *data,
     max = 0;
     local_search_create_processing_list_b(sol, data, l);
 
-    for (unsigned k = 0; k < sol->nmachines && !update; ++k) {
+    for (unsigned k = 0; k < sol->nmachines ; ++k) {
         int njobs = sol->part[k].machine->len;
         GPtrArray *machine = sol->part[k].machine;
 
@@ -1072,7 +1077,7 @@ void local_search_swap_intra(solution *sol, local_search_data *data,
     max = 0;
     local_search_create_processing_list_swap(sol, data, l1, l2);
 
-    for (unsigned k = 0; k < sol->nmachines && !update; ++k) {
+    for (unsigned k = 0; k < sol->nmachines; ++k) {
         int njobs = sol->part[k].machine->len;
         GPtrArray *machine = sol->part[k].machine;
 
@@ -1293,11 +1298,11 @@ void local_search_insertion_inter(solution *sol, local_search_data *data,
     max = 0;
     local_search_create_processing_list_insertion_inter(sol, data, l);
 
-    for (unsigned k1 = 0; k1 < sol->nmachines && !update; ++k1) {
+    for (unsigned k1 = 0; k1 < sol->nmachines ; ++k1) {
         int njobs1 = sol->part[k1].machine->len;
         GPtrArray *machine1 = sol->part[k1].machine;
 
-        for (unsigned k2 = 0; k2 < sol->nmachines && ! update; ++k2) {
+        for (unsigned k2 = 0; k2 < sol->nmachines ; ++k2) {
             if (k1 == k2) {
                 continue;
             }
@@ -1483,7 +1488,7 @@ void local_search_swap_inter(solution *sol, local_search_data *data,
     max = 0;
     local_search_create_processing_list_swap_inter(sol, data, l1, l2);
 
-    for (unsigned k1 = 0; k1 < sol->nmachines && !update; ++k1) {
+    for (unsigned k1 = 0; k1 < sol->nmachines ; ++k1) {
         int njobs1 = sol->part[k1].machine->len;
         GPtrArray *machine1 = sol->part[k1].machine;
 
