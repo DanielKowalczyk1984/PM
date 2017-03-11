@@ -138,7 +138,7 @@ def main():
     try:
         os.chdir(exe_directory)
     except OSError:
-        print OSError.errno
+        print( OSError.errno)
         sys.exit(status=2)
     else:
         for n in args.number_jobs:
