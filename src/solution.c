@@ -97,7 +97,7 @@ gint order_weight(gconstpointer a, gconstpointer b, void *data)
     return - (*v - *w);
 }
 
-void print_machine(gpointer j, gpointer data)
+static void print_machine(gpointer j, gpointer data)
 {
     Job *tmp = (Job *) j;
     printf("%3d ", tmp->job);
