@@ -24,23 +24,23 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <algorithm>
 #include <cassert>
 #include <cstring>
-#include <stdint.h>
 
 #include "MemoryPool.hpp"
 #include "MyHashTable.hpp"
 
 namespace tdzdd {
 
-template<size_t N>
+template <size_t N>
 class MyBitSet {
     static size_t const offset = (N == 0) ? 1 : 0;
 
     uint64_t array_[(N == 0) ? 1 : N];
 
-    uint64_t& word(size_t i) {
+    uint64_t &word(size_t i) {
         assert(i < numWords());
         return array_[i + offset];
     }
@@ -50,11 +50,9 @@ class MyBitSet {
         return array_[i + offset];
     }
 
-    uint64_t mask(size_t i) const {
-        return uint64_t(1) << i;
-    }
+    uint64_t mask(size_t i) const { return uint64_t(1) << i; }
 
-public:
+   public:
     MyBitSet(uint64_t n = 0) {
         array_[0] = n;
         for (size_t i = (N == 0) ? 0 : 1; i < numWords(); ++i) {
@@ -66,9 +64,7 @@ public:
      * Gets the number of words for a bit vector.
      * @return the number of words.
      */
-    size_t numWords() const {
-        return (N == 0) ? array_[0] : N;
-    }
+    size_t numWords() const { return (N == 0) ? array_[0] : N; }
 
     /**
      * Initializes the set to be empty.
@@ -96,8 +92,8 @@ public:
      * @param i element number.
      */
     void add(size_t i) {
-        uint64_t& w = word(i / 64);
-        uint64_t m = mask(i % 64);
+        uint64_t &w = word(i / 64);
+        uint64_t  m = mask(i % 64);
         w |= m;
     }
 
@@ -106,8 +102,8 @@ public:
      * @param i element number.
      */
     void remove(size_t i) {
-        uint64_t& w = word(i / 64);
-        uint64_t m = mask(i % 64);
+        uint64_t &w = word(i / 64);
+        uint64_t  m = mask(i % 64);
         w &= ~m;
     }
 
@@ -117,10 +113,10 @@ public:
      * @param i element number.
      */
     void pullout(size_t i) {
-        size_t k = i / 64;
-        uint64_t* p = &word(k);
-        uint64_t* q = p + numWords();
-        uint64_t m = mask(i % 64 + 1) - 1;
+        size_t    k = i / 64;
+        uint64_t *p = &word(k);
+        uint64_t *q = p + numWords();
+        uint64_t  m = mask(i % 64 + 1) - 1;
         *p = (*p & ~m) | ((*p << 1) & m);
         while (++p < q) {
             *(p - 1) |= *p >> 63;
@@ -144,7 +140,7 @@ public:
      * @param o the other bit-vector.
      * @return true if the intersection is not empty.
      */
-    bool intersects(MyBitSet const& o) const {
+    bool intersects(MyBitSet const &o) const {
         size_t n = std::min(numWords(), o.numWords());
         for (size_t i = 0; i < n; ++i) {
             if (word(i) & o.word(i)) return true;
@@ -153,27 +149,23 @@ public:
     }
 
     class const_iterator {
-        MyBitSet const& bitSet;
-        size_t wordPos;
-        int bitPos;
-        uint64_t word;
+        MyBitSet const &bitSet;
+        size_t          wordPos;
+        int             bitPos;
+        uint64_t        word;
 
-    public:
-        const_iterator(MyBitSet const& bitSet)
-                : bitSet(bitSet), wordPos(bitSet.numWords()), bitPos(-1),
-                  word(0) {
-        }
+       public:
+        const_iterator(MyBitSet const &bitSet)
+            : bitSet(bitSet), wordPos(bitSet.numWords()), bitPos(-1), word(0) {}
 
-        const_iterator(MyBitSet const& bitSet, size_t i)
-                : bitSet(bitSet), wordPos(i), bitPos(-1), word(bitSet.word(i)) {
+        const_iterator(MyBitSet const &bitSet, size_t i)
+            : bitSet(bitSet), wordPos(i), bitPos(-1), word(bitSet.word(i)) {
             ++(*this);
         }
 
-        size_t operator*() const {
-            return wordPos * 64 + bitPos;
-        }
+        size_t operator*() const { return wordPos * 64 + bitPos; }
 
-        const_iterator& operator++() {
+        const_iterator &operator++() {
             while (word == 0) {
                 bitPos = -1;
                 if (++wordPos >= bitSet.numWords()) {
@@ -186,34 +178,31 @@ public:
             if (word == uint64_t(1) << 63) {
                 bitPos = 63;
                 word = 0;
-            }
-            else {
+            } else {
                 int k = __builtin_ffsll(word);
                 bitPos += k;
                 word >>= k;
             }
 
-//            int k = __builtin_ffsll(word);
-//            bitPos += k;
-//            word = (k < 64) ? word >> k : 0;
+            //            int k = __builtin_ffsll(word);
+            //            bitPos += k;
+            //            word = (k < 64) ? word >> k : 0;
 
-//            while ((word & 1) == 0) {
-//                word >>= 1;
-//                ++bitPos;
-//            }
-//            word >>= 1;
-//            ++bitPos;
+            //            while ((word & 1) == 0) {
+            //                word >>= 1;
+            //                ++bitPos;
+            //            }
+            //            word >>= 1;
+            //            ++bitPos;
 
             return *this;
         }
 
-        bool operator==(const_iterator const& o) const {
+        bool operator==(const_iterator const &o) const {
             return wordPos == o.wordPos && bitPos == o.bitPos;
         }
 
-        bool operator!=(const_iterator const& o) const {
-            return !(*this == o);
-        }
+        bool operator!=(const_iterator const &o) const { return !(*this == o); }
     };
 
     /**
@@ -228,9 +217,7 @@ public:
      * Returns an iterator to the end.
      * @return iterator to the end.
      */
-    const_iterator end() const {
-        return const_iterator(*this);
-    }
+    const_iterator end() const { return const_iterator(*this); }
 
     /**
      * Gets the hash code of this object.
@@ -250,7 +237,7 @@ public:
      * @param o another object.
      * @return true if equivalent.
      */
-    bool operator==(MyBitSet const& o) const {
+    bool operator==(MyBitSet const &o) const {
         size_t n = numWords();
         if (o.numWords() != n) return false;
         for (size_t i = 0; i < n; ++i) {
@@ -265,7 +252,7 @@ public:
      * @param o the object.
      * @return os.
      */
-    friend std::ostream& operator<<(std::ostream& os, MyBitSet const& o) {
+    friend std::ostream &operator<<(std::ostream &os, MyBitSet const &o) {
         bool comma = false;
         os << '{';
         for (const_iterator t = o.begin(); t != o.end(); ++t) {
@@ -277,69 +264,60 @@ public:
     }
 };
 
-class MyBitSetOnPool: public MyBitSet<0> {
-    MyBitSetOnPool(size_t n)
-            : MyBitSet<0>(n) {
-    }
+class MyBitSetOnPool : public MyBitSet<0> {
+    MyBitSetOnPool(size_t n) : MyBitSet<0>(n) {}
 
-public:
-    static MyBitSetOnPool* newInstance(MemoryPool& pool, size_t bits) {
+   public:
+    static MyBitSetOnPool *newInstance(MemoryPool &pool, size_t bits) {
         size_t n = (bits + 63) / 64;
         return new (pool.allocate<uint64_t>(1 + n)) MyBitSetOnPool(n);
     }
 };
 
-template<typename T, size_t N>
+template <typename T, size_t N>
 class MySmallSet {
     size_t size_;
-    T array_[N == 0 ? 1 : N];
+    T      array_[N == 0 ? 1 : N];
 
-public:
-    MySmallSet()
-            : size_(0) {
-    }
+   public:
+    MySmallSet() : size_(0) {}
 
     /**
      * Gets the number of elements.
      * @return the number of elements.
      */
-    size_t size() const {
-        return size_;
-    }
+    size_t size() const { return size_; }
 
     /**
      * Initializes the set to be empty.
      */
-    void clear() {
-        size_ = 0;
-    }
+    void clear() { size_ = 0; }
 
     /**
      * Checks if the set is empty.
      * @return true if empty.
      */
-    bool empty() const {
-        return size_ == 0;
-    }
+    bool empty() const { return size_ == 0; }
 
     /**
      * Adds an element.
      * @param e element.
      */
-//    void add(T const& e) {
-//        T* p = std::lower_bound(array_, array_ + size_, e);
-//        if (p != array_ + size_ && *p == e) return;
-//        if (N > 0 && size_ >= N - 1) throw std::out_of_range("MySmallSet::add");
-//        for (T* q = array_ + size_; q != p; --q) {
-//            *q = *(q - 1);
-//        }
-//        *p = e;
-//        ++size_;
-//    }
-    void add(T const& e) {
+    //    void add(T const& e) {
+    //        T* p = std::lower_bound(array_, array_ + size_, e);
+    //        if (p != array_ + size_ && *p == e) return;
+    //        if (N > 0 && size_ >= N - 1) throw
+    //        std::out_of_range("MySmallSet::add");
+    //        for (T* q = array_ + size_; q != p; --q) {
+    //            *q = *(q - 1);
+    //        }
+    //        *p = e;
+    //        ++size_;
+    //    }
+    void add(T const &e) {
         if (N > 0 && size_ >= N - 1) throw std::out_of_range("MySmallSet::add");
-        T* pz = array_ + size_;
-        T* p = pz - 1;
+        T *pz = array_ + size_;
+        T *p = pz - 1;
         while (array_ <= p && e <= *p) {
             if (e == *p) {
                 while (++p < pz) {
@@ -358,11 +336,11 @@ public:
      * Removes an element.
      * @param e element.
      */
-    void remove(T const& e) {
-        T* p = std::lower_bound(array_, array_ + size_, e);
+    void remove(T const &e) {
+        T *p = std::lower_bound(array_, array_ + size_, e);
         if (p == array_ + size_ || *p != e) return;
         --size_;
-        for (T* q = p; q != array_ + size_; ++q) {
+        for (T *q = p; q != array_ + size_; ++q) {
             *q = *(q + 1);
         }
     }
@@ -372,7 +350,7 @@ public:
      * @param e element.
      * @return true if the element is included.
      */
-    bool includes(T const& e) const {
+    bool includes(T const &e) const {
         return std::binary_search(array_, array_ + size_, e);
     }
 
@@ -382,8 +360,8 @@ public:
      * @param c sorted container.
      * @return true if they have the same set of elements.
      */
-    template<typename C>
-    bool equals(C const& c) const {
+    template <typename C>
+    bool equals(C const &c) const {
         typeof(begin()) p = begin();
         typeof(c.begin()) q = c.begin();
         typeof(end()) pz = end();
@@ -401,16 +379,18 @@ public:
      * @param c sorted container.
      * @return true if the intersection is not empty.
      */
-    template<typename C>
-    bool intersects(C const& c) const {
+    template <typename C>
+    bool intersects(C const &c) const {
         typeof(begin()) p = begin();
         typeof(c.begin()) q = c.begin();
         typeof(end()) pz = end();
         typeof(c.end()) qz = c.end();
         while (p != pz && q != qz) {
             if (*p == *q) return true;
-            if (*p < *q) ++p;
-            else ++q;
+            if (*p < *q)
+                ++p;
+            else
+                ++q;
         }
         return false;
     }
@@ -421,64 +401,56 @@ public:
      * @param c sorted container.
      * @return true if all elements are contained in this set.
      */
-    template<typename C>
-    bool containsAll(C const& c) const {
+    template <typename C>
+    bool containsAll(C const &c) const {
         typeof(begin()) p = begin();
         typeof(c.begin()) q = c.begin();
         typeof(end()) pz = end();
         typeof(c.end()) qz = c.end();
         while (p != pz && q != qz) {
             if (*p > *q) return false;
-            if (*p < *q) ++p;
-            else ++p, ++q;
+            if (*p < *q)
+                ++p;
+            else
+                ++p, ++q;
         }
         return q == qz;
     }
 
-    typedef T const* const_iterator;
+    typedef T const *const_iterator;
 
     /**
      * Returns an iterator to the beginning.
      * @return iterator to the beginning.
      */
-    const_iterator begin() const {
-        return array_;
-    }
+    const_iterator begin() const { return array_; }
 
     /**
      * Returns an iterator to the end.
      * @return iterator to the end.
      */
-    const_iterator end() const {
-        return array_ + size_;
-    }
+    const_iterator end() const { return array_ + size_; }
 
     class const_reverse_iterator {
-        T const* ptr;
+        T const *ptr;
 
-    public:
-        const_reverse_iterator(T const* ptr)
-                : ptr(ptr) {
-        }
+       public:
+        const_reverse_iterator(T const *ptr) : ptr(ptr) {}
 
-        T const& operator*() const {
-            return *ptr;
-        }
+        T const &operator*() const { return *ptr; }
 
-        T const* operator->() const {
-            return ptr;
-        }
+        T const *operator->() const { return ptr; }
 
-        const_reverse_iterator& operator++() {
+        const_reverse_iterator &operator++() {
             --ptr;
             return *this;
         }
 
-        bool operator==(const_reverse_iterator const& o) const {
+        bool operator==(const_reverse_iterator const &o) const {
             return ptr == o.ptr;
         }
 
-        bool operator!=(const_reverse_iterator const& o) const {
+        bool operator!=(const_reverse_iterator const &o) const {
             return ptr != o.ptr;
         }
     };
@@ -504,7 +476,7 @@ public:
      * @param i element number.
      * @return the i-th element.
      */
-    T const& get(size_t i) const {
+    T const &get(size_t i) const {
         assert(N == 0 || i < N);
         return array_[i];
     }
@@ -526,7 +498,7 @@ public:
      * @param o another object.
      * @return true if equivalent.
      */
-    bool operator==(MySmallSet const& o) const {
+    bool operator==(MySmallSet const &o) const {
         if (size_ != o.size_) return false;
         for (size_t k = 0; k < size_; ++k) {
             if (array_[k] != o.array_[k]) return false;
@@ -540,7 +512,7 @@ public:
      * @param o the object.
      * @return os.
      */
-    friend std::ostream& operator<<(std::ostream& os, MySmallSet const& o) {
+    friend std::ostream &operator<<(std::ostream &os, MySmallSet const &o) {
         bool comma = false;
         os << '{';
         for (size_t k = 0; k < o.size_; ++k) {
@@ -552,22 +524,23 @@ public:
     }
 };
 
-template<typename T>
-class MySmallSetOnPool: public MySmallSet<T,0> {
-public:
-    static MySmallSetOnPool* newInstance(MemoryPool& pool, size_t n) {
-        size_t m = (sizeof(MySmallSet<T,0> ) - sizeof(T) + sizeof(T) * n
-                + sizeof(size_t) - 1) / sizeof(size_t);
+template <typename T>
+class MySmallSetOnPool : public MySmallSet<T, 0> {
+   public:
+    static MySmallSetOnPool *newInstance(MemoryPool &pool, size_t n) {
+        size_t m = (sizeof(MySmallSet<T, 0>) - sizeof(T) + sizeof(T) * n +
+                    sizeof(size_t) - 1) /
+                   sizeof(size_t);
         return new (pool.allocate<size_t>(m)) MySmallSetOnPool();
     }
 
-    static MySmallSetOnPool* newInstance(MemoryPool& pool, int n) {
+    static MySmallSetOnPool *newInstance(MemoryPool &pool, int n) {
         return newInstance(pool, size_t(n));
     }
 
-    template<typename C>
-    static MySmallSetOnPool* newInstance(MemoryPool& pool, C const& copy) {
-        MySmallSetOnPool* obj = newInstance(pool, copy.size());
+    template <typename C>
+    static MySmallSetOnPool *newInstance(MemoryPool &pool, C const &copy) {
+        MySmallSetOnPool *obj = newInstance(pool, copy.size());
         for (typeof(copy.begin()) t = copy.begin(); t != copy.end(); ++t) {
             obj->add(*t);
         }
@@ -575,4 +548,4 @@ public:
     }
 };
 
-} // namespace tdzdd
+}  // namespace tdzdd

@@ -38,62 +38,58 @@ namespace tdzdd {
  */
 class MemoryPool {
     struct Unit {
-        Unit* next;
+        Unit *next;
     };
 
     static size_t const UNIT_SIZE = sizeof(Unit);
     static size_t const BLOCK_UNITS = 400000 / UNIT_SIZE;
     static size_t const MAX_ELEMENT_UNIS = BLOCK_UNITS / 10;
 
-    Unit* blockList;
+    Unit * blockList;
     size_t nextUnit;
 
-public:
-    MemoryPool()
-            : blockList(0), nextUnit(BLOCK_UNITS) {
+   public:
+    MemoryPool() : blockList(0), nextUnit(BLOCK_UNITS) {}
+
+    MemoryPool(MemoryPool const &o) : blockList(0), nextUnit(BLOCK_UNITS) {
+        //        if (o.blockList != 0) throw std::runtime_error(
+        //                "MemoryPool can't be copied unless it is empty!");
+        //                //FIXME
     }
 
-    MemoryPool(MemoryPool const& o)
-            : blockList(0), nextUnit(BLOCK_UNITS) {
-//        if (o.blockList != 0) throw std::runtime_error(
-//                "MemoryPool can't be copied unless it is empty!"); //FIXME
-    }
+    //    MemoryPool& operator=(MemoryPool const& o) {
+    //        if (o.blockList != 0) throw std::runtime_error(
+    //                "MemoryPool can't be copied unless it is empty!"); //FIXME
+    //        clear();
+    //        return *this;
+    //    }
 
-//    MemoryPool& operator=(MemoryPool const& o) {
-//        if (o.blockList != 0) throw std::runtime_error(
-//                "MemoryPool can't be copied unless it is empty!"); //FIXME
-//        clear();
-//        return *this;
-//    }
+    //    MemoryPool(MemoryPool&& o): blockList(o.blockList),
+    //    nextUnit(o.nextUnit)
+    //    {
+    //        o.blockList = 0;
+    //    }
+    //
+    //    MemoryPool& operator=(MemoryPool&& o) {
+    //        blockList = o.blockList;
+    //        nextUnit = o.nextUnit;
+    //        o.blockList = 0;
+    //        return *this;
+    //    }
 
-//    MemoryPool(MemoryPool&& o): blockList(o.blockList), nextUnit(o.nextUnit) {
-//        o.blockList = 0;
-//    }
-//
-//    MemoryPool& operator=(MemoryPool&& o) {
-//        blockList = o.blockList;
-//        nextUnit = o.nextUnit;
-//        o.blockList = 0;
-//        return *this;
-//    }
-
-    void moveFrom(MemoryPool& o) {
+    void moveFrom(MemoryPool &o) {
         blockList = o.blockList;
         nextUnit = o.nextUnit;
         o.blockList = 0;
     }
 
-    virtual ~MemoryPool() {
-        clear();
-    }
+    virtual ~MemoryPool() { clear(); }
 
-    bool empty() const {
-        return blockList == 0;
-    }
+    bool empty() const { return blockList == 0; }
 
     void clear() {
         while (blockList != 0) {
-            Unit* block = blockList;
+            Unit *block = blockList;
             blockList = blockList->next;
             delete[] block;
         }
@@ -103,16 +99,16 @@ public:
     void reuse() {
         if (blockList == 0) return;
         while (blockList->next != 0) {
-            Unit* block = blockList;
+            Unit *block = blockList;
             blockList = blockList->next;
             delete[] block;
         }
         nextUnit = 1;
     }
 
-    void splice(MemoryPool& o) {
+    void splice(MemoryPool &o) {
         if (blockList != 0) {
-            Unit** rear = &o.blockList;
+            Unit **rear = &o.blockList;
             while (*rear != 0) {
                 rear = &(*rear)->next;
             }
@@ -126,17 +122,16 @@ public:
         o.nextUnit = BLOCK_UNITS;
     }
 
-    void* alloc(size_t n) {
+    void *alloc(size_t n) {
         size_t const elementUnits = (n + UNIT_SIZE - 1) / UNIT_SIZE;
 
         if (elementUnits > MAX_ELEMENT_UNIS) {
             size_t m = elementUnits + 1;
-            Unit* block = new Unit[m];
+            Unit * block = new Unit[m];
             if (blockList == 0) {
                 block->next = 0;
                 blockList = block;
-            }
-            else {
+            } else {
                 block->next = blockList->next;
                 blockList->next = block;
             }
@@ -144,67 +139,55 @@ public:
         }
 
         if (nextUnit + elementUnits > BLOCK_UNITS) {
-            Unit* block = new Unit[BLOCK_UNITS];
+            Unit *block = new Unit[BLOCK_UNITS];
             block->next = blockList;
             blockList = block;
             nextUnit = 1;
             assert(nextUnit + elementUnits <= BLOCK_UNITS);
         }
 
-        Unit* p = blockList + nextUnit;
+        Unit *p = blockList + nextUnit;
         nextUnit += elementUnits;
         return p;
     }
 
-    template<typename T>
-    T* allocate(size_t n = 1) {
-        return static_cast<T*>(alloc(sizeof(T) * n));
+    template <typename T>
+    T *allocate(size_t n = 1) {
+        return static_cast<T *>(alloc(sizeof(T) * n));
     }
 
-    template<typename T>
-    class Allocator: public std::allocator<T> {
-    public:
-        MemoryPool* pool;
+    template <typename T>
+    class Allocator : public std::allocator<T> {
+       public:
+        MemoryPool *pool;
 
-        template<typename U>
+        template <typename U>
         struct rebind {
             typedef Allocator<U> other;
         };
 
-        Allocator() throw ()
-                : pool(0) {
-        }
+        Allocator() throw() : pool(0) {}
 
-        Allocator(MemoryPool& pool) throw ()
-                : pool(&pool) {
-        }
+        Allocator(MemoryPool &pool) throw() : pool(&pool) {}
 
-        Allocator(Allocator const& o) throw ()
-                : pool(o.pool) {
-        }
+        Allocator(Allocator const &o) throw() : pool(o.pool) {}
 
-        Allocator& operator=(Allocator const& o) {
+        Allocator &operator=(Allocator const &o) {
             pool = o.pool;
             return *this;
         }
 
-        template<typename U>
-        Allocator(Allocator<U> const& o) throw ()
-                : pool(o.pool) {
-        }
+        template <typename U>
+        Allocator(Allocator<U> const &o) throw() : pool(o.pool) {}
 
-        ~Allocator() throw () {
-        }
+        ~Allocator() throw() {}
 
-        T* allocate(size_t n, const void* = 0) {
-            return pool->allocate<T>(n);
-        }
+        T *allocate(size_t n, const void * = 0) { return pool->allocate<T>(n); }
 
-        void deallocate(T*, size_t) {
-        }
+        void deallocate(T *, size_t) {}
     };
 
-    template<typename T>
+    template <typename T>
     Allocator<T> allocator() {
         return Allocator<T>(*this);
     }
@@ -215,9 +198,9 @@ public:
      * @param o the object.
      * @return os.
      */
-    friend std::ostream& operator<<(std::ostream& os, MemoryPool const& o) {
+    friend std::ostream &operator<<(std::ostream &os, MemoryPool const &o) {
         int n = 0;
-        for (Unit* p = o.blockList; p != 0; p = p->next) {
+        for (Unit *p = o.blockList; p != 0; p = p->next) {
             ++n;
         }
         return os << "MemoryPool(" << n << ")";
@@ -229,10 +212,10 @@ public:
  */
 typedef MyVector<MemoryPool> MemoryPools;
 
-template<>
-inline void MyVector<MemoryPool>::moveElement(MemoryPool& from,
-        MemoryPool& to) {
+template <>
+inline void MyVector<MemoryPool>::moveElement(MemoryPool &from,
+                                              MemoryPool &to) {
     to.moveFrom(from);
 }
 
-} // namespace tdzdd
+}  // namespace tdzdd

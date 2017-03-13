@@ -24,19 +24,19 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <cxxabi.h>
+#include <cstdlib>
 #include <string>
 #include <typeinfo>
 
 namespace tdzdd {
 
-inline std::string demangle(char const* name) {
-    char* dName = abi::__cxa_demangle(name, 0, 0, 0);
+inline std::string demangle(char const *name) {
+    char *dName = abi::__cxa_demangle(name, 0, 0, 0);
     if (dName == 0) return name;
 
     std::string s;
-    char* p = dName;
+    char *      p = dName;
 
     for (char c = *p++; c; c = *p++) {
         s += c;
@@ -51,20 +51,18 @@ inline std::string demangle(char const* name) {
     return s;
 }
 
-inline std::string demangleTypename(char const* name) {
+inline std::string demangleTypename(char const *name) {
     std::string s = demangle(name);
-    size_t i = 0;
-    size_t j = 0;
+    size_t      i = 0;
+    size_t      j = 0;
 
     while (j + 1 < s.size()) {
         if (std::isalnum(s[j])) {
             ++j;
-        }
-        else if (s[j] == ':' && s[j + 1] == ':') {
+        } else if (s[j] == ':' && s[j + 1] == ':') {
             s = s.replace(i, j + 2 - i, "");
             j = i;
-        }
-        else {
+        } else {
             i = ++j;
         }
     }
@@ -72,14 +70,14 @@ inline std::string demangleTypename(char const* name) {
     return s;
 }
 
-template<typename T>
+template <typename T>
 std::string typenameof() {
     return demangleTypename(typeid(T).name());
 }
 
-template<typename T>
-std::string typenameof(T const& obj) {
+template <typename T>
+std::string typenameof(T const &obj) {
     return demangleTypename(typeid(obj).name());
 }
 
-} // namespace tdzdd
+}  // namespace tdzdd

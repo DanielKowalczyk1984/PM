@@ -1,7 +1,6 @@
 #include "util.h"
 
-void fill_int(int *dst, int nbr, int val)
-{
+void fill_int(int *dst, int nbr, int val) {
     if (nbr % 1 != 0) {
         *dst++ = val;
     }
@@ -24,8 +23,7 @@ void fill_int(int *dst, int nbr, int val)
     }
 }
 
-void fill_dbl(double *dst, int nbr, double val)
-{
+void fill_dbl(double *dst, int nbr, double val) {
     if (nbr % 2 != 0) {
         *dst++ = val;
     }
@@ -48,9 +46,7 @@ void fill_dbl(double *dst, int nbr, double val)
     }
 }
 
-
-void fill_float(float *dst, int nbr, float val)
-{
+void fill_float(float *dst, int nbr, float val) {
     if (nbr % 2 != 0) {
         *dst++ = val;
     }
@@ -73,8 +69,7 @@ void fill_float(float *dst, int nbr, float val)
     }
 }
 
-void fill_char(char *dst, int nbr, char val)
-{
+void fill_char(char *dst, int nbr, char val) {
     if (nbr % 2 != 0) {
         *dst++ = val;
     }
@@ -97,8 +92,7 @@ void fill_char(char *dst, int nbr, char val)
     }
 }
 
-void acopy_int(const int *src, int *dst, int nbr)
-{
+void acopy_int(const int *src, int *dst, int nbr) {
     if (nbr % 2 != 0) {
         *dst++ = *src++;
     }
@@ -122,9 +116,7 @@ void acopy_int(const int *src, int *dst, int nbr)
     }
 }
 
-
-void acopy_dbl(const double *src, double *dst, int nbr)
-{
+void acopy_dbl(const double *src, double *dst, int nbr) {
     if (nbr % 2 != 0) {
         *dst++ = *src++;
     }

@@ -25,44 +25,32 @@
  * When the ZBDD variables are not enough, they are
  * created automatically by BDD_NewVar().
  */
-template<typename E>
-class ToZBDDBase: public tdzdd::DdEval<E, ZBDD>
-{
-        int const offset;
+template <typename E> class ToZBDDBase : public tdzdd::DdEval<E, ZBDD> {
+  int const offset;
 
-    public:
-        ToZBDDBase(int offset = 0)
-            : offset(offset)
-        {
-        }
+public:
+  ToZBDDBase(int offset = 0) : offset(offset) {}
 
-        void initialize(int topLevel) const
-        {
-            while (BDD_VarUsed() < topLevel + offset) {
-                BDD_NewVar();
-            }
-        }
+  void initialize(int topLevel) const {
+    while (BDD_VarUsed() < topLevel + offset) {
+      BDD_NewVar();
+    }
+  }
 
-        void evalTerminal(ZBDD &f, bool one) const
-        {
-            f = ZBDD(one ? 1 : 0);
-        }
+  void evalTerminal(ZBDD &f, bool one) const { f = ZBDD(one ? 1 : 0); }
 
-        void evalNode(ZBDD &f, int level, tdzdd::DdValues<ZBDD, 2>   &values) const
-        {
-            ZBDD f0 = values.get(0);
-            ZBDD f1 = values.get(1);
+  void evalNode(ZBDD &f, int level, tdzdd::DdValues<ZBDD, 2> &values) const {
+    ZBDD f0 = values.get(0);
+    ZBDD f1 = values.get(1);
 
-            if (level + offset <= 0) {
-                f = f0;
-            } else {
-                f = f0 + f1.Change(BDD_VarOfLev(level + offset));
-            }
-        }
+    if (level + offset <= 0) {
+      f = f0;
+    } else {
+      f = f0 + f1.Change(BDD_VarOfLev(level + offset));
+    }
+  }
 };
 
-struct ToZDBB: public ToZBDDBase<ToZDBB> {
-    ToZDBB(int offset = 0): ToZBDDBase<ToZDBB>(offset)
-    {
-    }
+struct ToZDBB : public ToZBDDBase<ToZDBB> {
+  ToZDBB(int offset = 0) : ToZBDDBase<ToZDBB>(offset) {}
 };

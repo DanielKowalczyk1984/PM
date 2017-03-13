@@ -39,9 +39,9 @@ extern "C" {
 
 /* Define one of the following three to specify the type of signal
  * handling to use. */
-#define  CCSIGNAL_SIGACTION /* sigaction(), preferred */
-#undef  CCSIGNAL_SIGNAL    /* signal() */
-#undef  CCSIGNAL_NONE      /* no signal handling */
+#define CCSIGNAL_SIGACTION /* sigaction(), preferred */
+#undef CCSIGNAL_SIGNAL     /* signal() */
+#undef CCSIGNAL_NONE       /* no signal handling */
 
 /* Define if you have the gethostname function.  */
 #define HAVE_GETHOSTNAME
@@ -147,7 +147,3 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-
-
-

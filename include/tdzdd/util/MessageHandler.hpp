@@ -34,7 +34,7 @@
 
 namespace tdzdd {
 
-inline std::string capitalize(std::string const& s) {
+inline std::string capitalize(std::string const &s) {
     std::string t = s;
     if (t.size() >= 1) {
         t[0] = toupper(s[0]);
@@ -42,27 +42,23 @@ inline std::string capitalize(std::string const& s) {
     return t;
 }
 
-template<typename T>
-inline std::string to_string(T const& o) {
+template <typename T>
+inline std::string to_string(T const &o) {
     std::ostringstream oss;
     oss << o;
     return oss.str();
 }
 
-template<std::ostream& os>
-class MessageHandler_: public std::ostream {
-    class Buf: public std::streambuf {
-        MessageHandler_& mh;
+template <std::ostream &os>
+class MessageHandler_ : public std::ostream {
+    class Buf : public std::streambuf {
+        MessageHandler_ &mh;
 
-    public:
-        Buf(MessageHandler_& mh)
-                : mh(mh) {
-        }
+       public:
+        Buf(MessageHandler_ &mh) : mh(mh) {}
 
-    protected:
-        virtual void imbue(std::locale const& loc) {
-            os.imbue(loc);
-        }
+       protected:
+        virtual void imbue(std::locale const &loc) { os.imbue(loc); }
 
         virtual int overflow(int c) {
             if (!enabled) return c;
@@ -91,8 +87,7 @@ class MessageHandler_: public std::ostream {
             if (c == '\n') {
                 ++lineno;
                 column = 0;
-            }
-            else {
+            } else {
                 ++column;
             }
 
@@ -101,29 +96,35 @@ class MessageHandler_: public std::ostream {
     };
 
     static int const INDENT_SIZE = 2;
-    static bool enabled;
-    static int indentLevel;
-    static int lineno;
-    static int column;
-    static Buf* lastUser;
+    static bool      enabled;
+    static int       indentLevel;
+    static int       lineno;
+    static int       column;
+    static Buf *     lastUser;
 
-    Buf buf;
-    std::string name;
-    int indent;
-    int beginLine;
+    Buf           buf;
+    std::string   name;
+    int           indent;
+    int           beginLine;
     ResourceUsage initialUsage;
     ResourceUsage prevUsage;
-    int totalSteps;
-    int stepCount;
-    int dotCount;
-    time_t dotTime;
-    bool stepping;
+    int           totalSteps;
+    int           stepCount;
+    int           dotCount;
+    time_t        dotTime;
+    bool          stepping;
 
-public:
+   public:
     MessageHandler_()
-            : std::ostream(&buf), buf(*this), indent(indentLevel * INDENT_SIZE),
-              beginLine(0), totalSteps(0), stepCount(0),
-              dotCount(0), dotTime(0), stepping(false) {
+        : std::ostream(&buf),
+          buf(*this),
+          indent(indentLevel * INDENT_SIZE),
+          beginLine(0),
+          totalSteps(0),
+          stepCount(0),
+          dotCount(0),
+          dotTime(0),
+          stepping(false) {
         flags(os.flags());
         precision(os.precision());
         width(os.width());
@@ -139,7 +140,7 @@ public:
         return prev;
     }
 
-    MessageHandler_& begin(std::string const& s) {
+    MessageHandler_ &begin(std::string const &s) {
         if (!enabled) return *this;
         if (!name.empty()) end("aborted");
         name = s.empty() ? "level-" + std::to_string(indentLevel) : s;
@@ -153,7 +154,7 @@ public:
         return *this;
     }
 
-    MessageHandler_& setSteps(int steps) {
+    MessageHandler_ &setSteps(int steps) {
         if (!enabled) return *this;
         totalSteps = steps;
         stepCount = 0;
@@ -163,7 +164,7 @@ public:
         return *this;
     }
 
-    MessageHandler_& step(char dot = '-') {
+    MessageHandler_ &step(char dot = '-') {
         if (!enabled) return *this;
 
         if (!stepping && dotTime + 4 < std::time(0)) {
@@ -184,13 +185,12 @@ public:
                 ResourceUsage usage;
                 ResourceUsage diff = usage - prevUsage;
                 *this << std::setw(3) << std::right
-                        << (stepCount * 100 / totalSteps);
+                      << (stepCount * 100 / totalSteps);
                 *this << "% (" << diff.elapsedTime() << ", " << diff.memory()
-                        << ")\n";
+                      << ")\n";
                 prevUsage = usage;
             }
-        }
-        else {
+        } else {
             ++stepCount;
             while (dotCount * totalSteps < stepCount * 10) {
                 if (dotCount == 0) *this << ' ';
@@ -203,8 +203,8 @@ public:
         return *this;
     }
 
-    MessageHandler_& end(std::string const& msg = "", std::string const& info =
-            "") {
+    MessageHandler_ &end(std::string const &msg = "",
+                         std::string const &info = "") {
         if (!enabled) return *this;
         if (name.empty()) return *this;
 
@@ -213,24 +213,20 @@ public:
         if (beginLine == lineno) {
             if (!info.empty()) {
                 *this << " " << info;
-            }
-            else if (msg.empty()) {
+            } else if (msg.empty()) {
                 *this << " done";
-            }
-            else {
+            } else {
                 *this << " " << msg;
             }
             *this << " in " << rusage << ".\n";
 
             indent = --indentLevel * INDENT_SIZE;
-        }
-        else {
+        } else {
             indent = --indentLevel * INDENT_SIZE;
 
             if (msg.empty()) {
                 *this << "\nDone " << name;
-            }
-            else {
+            } else {
                 *this << "\n" << capitalize(msg);
             }
             if (!info.empty()) *this << " " << info;
@@ -241,31 +237,29 @@ public:
         return *this;
     }
 
-    MessageHandler_& end(size_t n) {
+    MessageHandler_ &end(size_t n) {
         if (!enabled) return *this;
         return end("", "<" + to_string(n) + ">");
     }
 
-    int col() const {
-        return column;
-    }
+    int col() const { return column; }
 };
 
-template<std::ostream& os>
-bool MessageHandler_<os>::enabled = false;
+template <std::ostream &os>
+bool                    MessageHandler_<os>::enabled = false;
 
-template<std::ostream& os>
-int MessageHandler_<os>::indentLevel = 0;
+template <std::ostream &os>
+int                     MessageHandler_<os>::indentLevel = 0;
 
-template<std::ostream& os>
-int MessageHandler_<os>::lineno = 1;
+template <std::ostream &os>
+int                     MessageHandler_<os>::lineno = 1;
 
-template<std::ostream& os>
-int MessageHandler_<os>::column = 0;
+template <std::ostream &os>
+int                     MessageHandler_<os>::column = 0;
 
-template<std::ostream& os>
-typename MessageHandler_<os>::Buf* MessageHandler_<os>::lastUser = 0;
+template <std::ostream &           os>
+typename MessageHandler_<os>::Buf *MessageHandler_<os>::lastUser = 0;
 
 typedef MessageHandler_<std::cerr> MessageHandler;
 
-} // namespace tdzdd
+}  // namespace tdzdd

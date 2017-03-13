@@ -24,12 +24,12 @@
 
 #pragma once
 
+#include <sys/resource.h>
+#include <sys/time.h>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <sys/time.h>
-#include <sys/resource.h>
 
 namespace tdzdd {
 
@@ -37,17 +37,14 @@ struct ResourceUsage {
     double etime;
     double utime;
     double stime;
-    long maxrss;
+    long   maxrss;
 
-    ResourceUsage() {
-        update();
-    }
+    ResourceUsage() { update(); }
 
     ResourceUsage(double etime, double utime, double stime, long maxrss)
-            : etime(etime), utime(utime), stime(stime), maxrss(maxrss) {
-    }
+        : etime(etime), utime(utime), stime(stime), maxrss(maxrss) {}
 
-    ResourceUsage& update() {
+    ResourceUsage &update() {
         struct timeval t;
         gettimeofday(&t, 0);
         etime = double(t.tv_sec) + double(t.tv_usec) / 1000000;
@@ -58,16 +55,16 @@ struct ResourceUsage {
         stime = s.ru_stime.tv_sec + s.ru_stime.tv_usec * 1e-6;
         maxrss = s.ru_maxrss;
 
-//        if (maxrss == 0) maxrss = readMemoryStatus("VmHWM:");
+        //        if (maxrss == 0) maxrss = readMemoryStatus("VmHWM:");
         return *this;
     }
 
-    ResourceUsage operator+(ResourceUsage const& u) const {
+    ResourceUsage operator+(ResourceUsage const &u) const {
         return ResourceUsage(etime + u.etime, utime + u.utime, stime + u.stime,
-                std::max(maxrss, u.maxrss));
+                             std::max(maxrss, u.maxrss));
     }
 
-    ResourceUsage& operator+=(ResourceUsage const& u) {
+    ResourceUsage &operator+=(ResourceUsage const &u) {
         etime += u.etime;
         utime += u.utime;
         stime += u.stime;
@@ -75,12 +72,12 @@ struct ResourceUsage {
         return *this;
     }
 
-    ResourceUsage operator-(ResourceUsage const& u) const {
+    ResourceUsage operator-(ResourceUsage const &u) const {
         return ResourceUsage(etime - u.etime, utime - u.utime, stime - u.stime,
-                std::max(maxrss, u.maxrss));
+                             std::max(maxrss, u.maxrss));
     }
 
-    ResourceUsage& operator-=(ResourceUsage const& u) {
+    ResourceUsage &operator-=(ResourceUsage const &u) {
         etime -= u.etime;
         utime -= u.utime;
         stime -= u.stime;
@@ -106,7 +103,7 @@ struct ResourceUsage {
         return ss.str();
     }
 
-    friend std::ostream& operator<<(std::ostream& os, ResourceUsage const& u) {
+    friend std::ostream &operator<<(std::ostream &os, ResourceUsage const &u) {
         std::ios_base::fmtflags backup = os.flags(std::ios::fixed);
         os.setf(std::ios::fixed);
 
@@ -118,73 +115,70 @@ struct ResourceUsage {
         return os;
     }
 
-private:
-//    long readMemoryStatus(std::string key) {
-//        std::ifstream ifs("/proc/self/status");
-//        std::string buf;
-//
-//        while (ifs.good()) {
-//            getline(ifs, buf);
-//            if (buf.compare(0, key.length(), key) == 0) {
-//                std::istringstream iss(buf.substr(key.length()));
-//                double size;
-//                std::string unit;
-//                iss >> size >> unit;
-//                switch (tolower(unit[0])) {
-//                case 'b':
-//                    size *= 1.0 / 1024.0;
-//                    break;
-//                case 'm':
-//                    size *= 1024.0;
-//                    break;
-//                case 'g':
-//                    size *= 1024.0 * 1024.0;
-//                    break;
-//                case 't':
-//                    size *= 1024.0 * 1024.0 * 1024.0;
-//                    break;
-//                }
-//                return long(size);
-//            }
-//        }
-//
-//        return 0;
-//    }
+   private:
+    //    long readMemoryStatus(std::string key) {
+    //        std::ifstream ifs("/proc/self/status");
+    //        std::string buf;
+    //
+    //        while (ifs.good()) {
+    //            getline(ifs, buf);
+    //            if (buf.compare(0, key.length(), key) == 0) {
+    //                std::istringstream iss(buf.substr(key.length()));
+    //                double size;
+    //                std::string unit;
+    //                iss >> size >> unit;
+    //                switch (tolower(unit[0])) {
+    //                case 'b':
+    //                    size *= 1.0 / 1024.0;
+    //                    break;
+    //                case 'm':
+    //                    size *= 1024.0;
+    //                    break;
+    //                case 'g':
+    //                    size *= 1024.0 * 1024.0;
+    //                    break;
+    //                case 't':
+    //                    size *= 1024.0 * 1024.0 * 1024.0;
+    //                    break;
+    //                }
+    //                return long(size);
+    //            }
+    //        }
+    //
+    //        return 0;
+    //    }
 };
 
 class ElapsedTimeCounter {
     double totalTime;
     double startTime;
 
-public:
-    ElapsedTimeCounter()
-            : totalTime(0), startTime(0) {
-    }
+   public:
+    ElapsedTimeCounter() : totalTime(0), startTime(0) {}
 
-    ElapsedTimeCounter& reset() {
+    ElapsedTimeCounter &reset() {
         totalTime = 0;
         return *this;
     }
 
-    ElapsedTimeCounter& start() {
+    ElapsedTimeCounter &start() {
         timeval t;
         gettimeofday(&t, 0);
         startTime = t.tv_sec + t.tv_usec * 1e-6;
         return *this;
     }
 
-    ElapsedTimeCounter& stop() {
+    ElapsedTimeCounter &stop() {
         timeval t;
         gettimeofday(&t, 0);
         totalTime += t.tv_sec + t.tv_usec * 1e-6 - startTime;
         return *this;
     }
 
-    operator double() const {
-        return totalTime;
-    }
+    operator double() const { return totalTime; }
 
-    friend std::ostream& operator<<(std::ostream& os, ElapsedTimeCounter const& o) {
+    friend std::ostream &operator<<(std::ostream &            os,
+                                    ElapsedTimeCounter const &o) {
         std::ios_base::fmtflags backup = os.flags(std::ios::fixed);
         os.setf(std::ios::fixed);
         os << std::setprecision(2) << o.totalTime << "s";
@@ -193,4 +187,4 @@ public:
     }
 };
 
-} // namespace tdzdd
+}  // namespace tdzdd

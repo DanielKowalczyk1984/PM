@@ -16,114 +16,112 @@ extern "C" {
 #endif
 
 enum BBNodeSelection {
-    min_search_strategy    = 0,
-    no_branching    = min_search_strategy,
-    min_lb_strategy = 1,
-    dfs_strategy    = 2,
-    max_strategy    = 3,
+  min_search_strategy = 0,
+  no_branching = min_search_strategy,
+  min_lb_strategy = 1,
+  dfs_strategy = 2,
+  max_strategy = 3,
 };
 
 enum CombineMethod {
-    min_combine_method = 0,
-    pm_combine_method  = min_combine_method,
-    path_combine_method = 1,
+  min_combine_method = 0,
+  pm_combine_method = min_combine_method,
+  path_combine_method = 1,
 };
 
 enum BranchandBound {
-    no = 0,
-    yes = 1,
+  no = 0,
+  yes = 1,
 };
 
 enum dualvariablesType {
-    Dbl = 0,
-    Int = 1,
+  Dbl = 0,
+  Int = 1,
 };
 
 enum stab_techniques {
-    no_stab = 0,
-    stab_wentgnes = 1,
-    stab_dynamic = 2,
+  no_stab = 0,
+  stab_wentgnes = 1,
+  stab_dynamic = 2,
 };
 
 enum pricing_solver {
-    min_solver = 0,
-    bdd_solver = min_solver,
-    zdd_solver = 1,
-    DP_solver = 2,
+  min_solver = 0,
+  bdd_solver = min_solver,
+  zdd_solver = 1,
+  DP_solver = 2,
 };
 
 enum construct_solutions {
-    min_construct_solutions = 1,
-    yes_construct = min_construct_solutions,
-    no_construct = 0,
+  min_construct_solutions = 1,
+  yes_construct = min_construct_solutions,
+  no_construct = 0,
 };
 
 enum test_ahv {
-    min_use_test = 0,
-    use_test = 1,
+  min_use_test = 0,
+  use_test = 1,
 };
 
 enum print {
-    min_print_size = 0,
-    use_print = 1,
+  min_print_size = 0,
+  use_print = 1,
 };
 
 enum BBSearchStrategy {
-    min_bb_strategy = 0,
-    conflict_strategy = min_bb_strategy,
-    ahv_strategy = 1,
-    cbfs_conflict_strategy = 2,
-    cbfs_ahv_strategy = 3,
+  min_bb_strategy = 0,
+  conflict_strategy = min_bb_strategy,
+  ahv_strategy = 1,
+  cbfs_conflict_strategy = 2,
+  cbfs_ahv_strategy = 3,
 };
 
 enum Strong_Branching {
-    min_strong_branching = 0,
-    use_strong_branching = min_strong_branching,
-    no_strong_branching = 1,
+  min_strong_branching = 0,
+  use_strong_branching = min_strong_branching,
+  no_strong_branching = 1,
 };
 
-
-
 typedef struct wctparms {
-    /**
-     * General parameters
-     */
-    int init_upper_bound;
-    int bb_search_strategy;
-    int bb_branch_strategy;
-    int strong_branching;
-    int parallel_branching;
-    int nb_feas_sol;
-    double branching_cpu_limit;
-    /**
-     * scatter search
-     */
-    int combine_method;
-    int scatter_search;
-    double scatter_search_cpu_limit;
-    /**
-     * column generation
-     */
-    int branchandbound;
-    int dual_var_type;
-    int stab_technique;
-    int solver;
-    int construct;
-    int test_ahv;
-    int print;
+  /**
+   * General parameters
+   */
+  int init_upper_bound;
+  int bb_search_strategy;
+  int bb_branch_strategy;
+  int strong_branching;
+  int parallel_branching;
+  int nb_feas_sol;
+  double branching_cpu_limit;
+  /**
+   * scatter search
+   */
+  int combine_method;
+  int scatter_search;
+  double scatter_search_cpu_limit;
+  /**
+   * column generation
+   */
+  int branchandbound;
+  int dual_var_type;
+  int stab_technique;
+  int solver;
+  int construct;
+  int test_ahv;
+  int print;
 
-    int delete_elists;
-    int delete_cclasses;
+  int delete_elists;
+  int delete_cclasses;
 
-    char *jobfile;
-    char *outfile;
-    char *cclasses_infile;
-    char *cclasses_outfile;
-    char *color_infile;
-    char *backupdir;
+  char *jobfile;
+  char *outfile;
+  char *cclasses_infile;
+  char *cclasses_outfile;
+  char *color_infile;
+  char *backupdir;
 
-    int upper_bounds_only;
-    int nmachines;
+  int upper_bounds_only;
+  int nmachines;
 } wctparms;
 
 /*Initialization and free memory*/
@@ -165,11 +163,6 @@ int wctparms_set_cclasses_infile(wctparms *parms, const char *fname);
 int wctparms_set_cclasses_outfile(wctparms *parms, const char *fname);
 int wctparms_set_color_infile(wctparms *parms, const char *fname);
 int wctparms_set_nmachines(wctparms *parms, int nmachines);
-
-
-
-
-
 
 #ifdef __cplusplus
 }

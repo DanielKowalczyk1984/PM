@@ -47,13 +47,12 @@ extern "C" {
  #include <pthread.h>
  #endif*/
 
-
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <float.h>
 #include <limits.h>
+#include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -116,55 +115,39 @@ extern "C" {
 #endif
 
 #ifdef CC_ATTRIBUTE
-#define CC_UNUSED __attribute__ ((unused))
+#define CC_UNUSED __attribute__((unused))
 #else
 #define CC_UNUSED
 #endif
 
 #ifdef CC_PROTO_PRINTF
 /* assume that if you're missing printf, you're missing a bunch */
-extern int
-printf(const char *, ...),
-       fprintf(FILE *, const char *, ...),
-       fflush(FILE *),
-       scanf(const char *, ...),
-       sscanf(const char *, const char *, ...),
-       fscanf(FILE *, const char *, ...),
-       fclose(FILE *),
-       ungetc(int, FILE *),
-       _filbuf(FILE *),
-       time(int *);
+extern int printf(const char *, ...), fprintf(FILE *, const char *, ...),
+    fflush(FILE *), scanf(const char *, ...),
+    sscanf(const char *, const char *, ...), fscanf(FILE *, const char *, ...),
+    fclose(FILE *), ungetc(int, FILE *), _filbuf(FILE *), time(int *);
 #ifdef CC_NETREADY
-extern int
-socket(int, int, int),
-       connect(int, const struct sockaddr *, int),
-       accept(int, struct sockaddr *, int *),
-       bind(int, const struct sockaddr *, int),
-       listen(int, int);
+extern int socket(int, int, int), connect(int, const struct sockaddr *, int),
+    accept(int, struct sockaddr *, int *),
+    bind(int, const struct sockaddr *, int), listen(int, int);
 #endif
-extern void
-*memset(void *, int, size_t),
-perror(const char *);
+extern void *memset(void *, int, size_t), perror(const char *);
 #endif
 
 #ifdef CC_PROTO_RENAME
-extern int
-rename(const char *, const char *);
+extern int rename(const char *, const char *);
 #endif
 
 #ifdef CC_PROTO_GETHOSTNAME
-extern int
-gethostname(char *, int);
+extern int gethostname(char *, int);
 #endif
 
 #ifdef CC_PROTO_GETRUSAGE
-extern int
-getrusage(int, struct rusage *);
+extern int getrusage(int, struct rusage *);
 #endif
 
 #ifdef CC_PROTO___VFORK
-extern pid_t
-__vfork(void);
+extern pid_t __vfork(void);
 #endif
 
 #ifndef NULL
@@ -172,7 +155,7 @@ __vfork(void);
 #endif
 
 #ifndef INT_MAX
-#define INT_MAX ((int) (~(((unsigned) 1) << ((8*sizeof(int))-1))))
+#define INT_MAX ((int)(~(((unsigned)1) << ((8 * sizeof(int)) - 1))))
 #endif
 
 #ifndef M_PI
@@ -192,9 +175,9 @@ __vfork(void);
 #undef SIG_ERR
 #undef SIG_DFL
 #undef SIG_IGN
-#define SIG_ERR ((void(*)(int))-1)
-#define SIG_DFL ((void(*)(int))0)
-#define SIG_IGN ((void(*)(int))1)
+#define SIG_ERR ((void (*)(int)) - 1)
+#define SIG_DFL ((void (*)(int))0)
+#define SIG_IGN ((void (*)(int))1)
 
 #endif
 
@@ -202,8 +185,4 @@ __vfork(void);
 }
 #endif
 
-#endif  /* __MACHDEFS_H */
-
-
-
-
+#endif /* __MACHDEFS_H */

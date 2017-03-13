@@ -33,3 +33,6 @@ target_link_libraries(${PROJECT_NAME} ${GUROBI_LIBRARY} ${GLIB_LIBRARIES} ${Boos
 
 # Include CppCcheck
 include(customCppCheck)
+
+# Include Clang-Format
+include(dev-tools)

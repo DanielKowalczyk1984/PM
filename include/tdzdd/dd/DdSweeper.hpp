@@ -27,135 +27,127 @@
 #include <cassert>
 #include <ostream>
 
-#include "Node.hpp"
-#include "NodeTable.hpp"
 #include "../util/MessageHandler.hpp"
 #include "../util/MyVector.hpp"
+#include "Node.hpp"
+#include "NodeTable.hpp"
 
-namespace tdzdd
-{
+namespace tdzdd {
+
+/**
+ * On-the-fly DD cleaner.
+ * Removes the nodes that are identified as equivalent to the 0-terminal
+ * while top-down DD construction.
+ */
+template <int ARITY>
+class DdSweeper {
+    static size_t const SWEEP_RATIO = 20;
+
+    NodeTableEntity<ARITY> &diagram;
+
+    MyVector<int>    sweepLevel;
+    MyVector<size_t> deadCount;
+    size_t           allCount;
+    size_t           maxCount;
+    NodeId *         rootPtr;
+
+   public:
+    /**
+     * Constructor.
+     * @param diagram the diagram to sweep.
+     */
+    DdSweeper(NodeTableEntity<ARITY> &diagram)
+        : diagram(diagram), allCount(0), maxCount(0), rootPtr(0) {}
 
     /**
-     * On-the-fly DD cleaner.
-     * Removes the nodes that are identified as equivalent to the 0-terminal
-     * while top-down DD construction.
+     * Set the root pointer.
+     * @param root reference to the root ID storage.
      */
-    template<int ARITY>
-    class DdSweeper
-    {
-            static size_t const SWEEP_RATIO = 20;
+    void setRoot(NodeId &root) { rootPtr = &root; }
 
-            NodeTableEntity<ARITY> &diagram;
+    /**
+     * Updates status and sweeps the DD if necessary.
+     * @param current current level.
+     * @param child the level at which edges from this level are completed.
+     * @param count the number of dead nodes at this level.
+     */
+    void update(size_t current, int child, size_t count) {
+        if (current <= 1) {
+            return;
+        }
 
-            MyVector<int> sweepLevel;
-            MyVector<size_t> deadCount;
-            size_t allCount;
-            size_t maxCount;
-            NodeId *rootPtr;
+        if (current >= sweepLevel.size()) {
+            sweepLevel.resize(current + 1);
+            deadCount.resize(current + 2);
+        }
 
-        public:
-            /**
-             * Constructor.
-             * @param diagram the diagram to sweep.
-             */
-            DdSweeper(NodeTableEntity<ARITY> &diagram) :
-                diagram(diagram), allCount(0), maxCount(0), rootPtr(0)
-            {
+        for (size_t i = child; i <= current; ++i) {
+            if (sweepLevel[i] > 0) {
+                break;
             }
 
-            /**
-             * Set the root pointer.
-             * @param root reference to the root ID storage.
-             */
-            void setRoot(NodeId &root)
-            {
-                rootPtr = &root;
-            }
+            sweepLevel[i] = current + 1;
+        }
 
-            /**
-             * Updates status and sweeps the DD if necessary.
-             * @param current current level.
-             * @param child the level at which edges from this level are completed.
-             * @param count the number of dead nodes at this level.
-             */
-            void update(size_t current, int child, size_t count)
-            {
-                if (current <= 1) {
-                    return;
-                }
+        deadCount[current] = count;
+        allCount += diagram[current].size();
+        int k = sweepLevel[current - 1];
 
-                if (current >= sweepLevel.size()) {
-                    sweepLevel.resize(current + 1);
-                    deadCount.resize(current + 2);
-                }
+        for (int i = sweepLevel[current]; i > k; --i) {
+            deadCount[k] += deadCount[i];
+            deadCount[i] = 0;
+        }
 
-                for (size_t i = child; i <= current; ++i) {
-                    if (sweepLevel[i] > 0) {
-                        break;
+        if (maxCount < allCount) {
+            maxCount = allCount;
+        }
+
+        if (deadCount[k] * SWEEP_RATIO < maxCount) {
+            return;
+        }
+
+        MyVector<MyVector<NodeId>> newId(diagram.numRows());
+        MessageHandler             mh;
+        mh.begin("sweeping") << " <" << diagram.size() << "> ...";
+
+        for (int i = k; i < diagram.numRows(); ++i) {
+            size_t m = diagram[i].size();
+            newId[i].resize(m);
+            size_t jj = 0;
+
+            for (size_t j = 0; j < m; ++j) {
+                Node<ARITY> &p = diagram[i][j];
+                bool         dead = true;
+
+                for (int b = 0; b < ARITY; ++b) {
+                    NodeId &f = p.branch[b];
+
+                    if (f.row() >= k) {
+                        f = newId[f.row()][f.col()];
                     }
 
-                    sweepLevel[i] = current + 1;
-                }
-
-                deadCount[current] = count;
-                allCount += diagram[current].size();
-                int k = sweepLevel[current - 1];
-
-                for (int i = sweepLevel[current]; i > k; --i) {
-                    deadCount[k] += deadCount[i];
-                    deadCount[i] = 0;
-                }
-
-                if (maxCount < allCount) {
-                    maxCount = allCount;
-                }
-
-                if (deadCount[k] * SWEEP_RATIO < maxCount) {
-                    return;
-                }
-
-                MyVector<MyVector<NodeId> > newId(diagram.numRows());
-                MessageHandler mh;
-                mh.begin("sweeping") << " <" << diagram.size() << "> ...";
-
-                for (int i = k; i < diagram.numRows(); ++i) {
-                    size_t m = diagram[i].size();
-                    newId[i].resize(m);
-                    size_t jj = 0;
-
-                    for (size_t j = 0; j < m; ++j) {
-                        Node<ARITY> &p = diagram[i][j];
-                        bool dead = true;
-
-                        for (int b = 0; b < ARITY; ++b) {
-                            NodeId &f = p.branch[b];
-
-                            if (f.row() >= k) {
-                                f = newId[f.row()][f.col()];
-                            }
-
-                            if (f != 0) {
-                                dead = false;
-                            }
-                        }
-
-                        if (dead) {
-                            newId[i][j] = 0;
-                        } else {
-                            newId[i][j] = NodeId(i, jj);
-                            diagram[i][jj] = p;
-                            ++jj;
-                        }
+                    if (f != 0) {
+                        dead = false;
                     }
-
-                    diagram[i].resize(jj);
                 }
 
-                *rootPtr = newId[rootPtr->row()][rootPtr->col()];
-                deadCount[k] = 0;
-                allCount = diagram.size();
-                mh.end(diagram.size());
+                if (dead) {
+                    newId[i][j] = 0;
+                } else {
+                    newId[i][j] = NodeId(i, jj);
+                    diagram[i][jj] = p;
+                    ++jj;
+                }
             }
-    };
 
-} // namespace tdzdd
+            diagram[i].resize(jj);
+        }
+
+        *rootPtr = newId[rootPtr->row()][rootPtr->col()];
+        deadCount[k] = 0;
+        allCount = diagram.size();
+        mh.end(diagram.size());
+    }
+};
+
+}  // namespace tdzdd
