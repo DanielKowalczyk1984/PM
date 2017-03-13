@@ -6,7 +6,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Define a local module path
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-include(CppcheckTargets)
 
 # Find Glib 
 find_package(Glib)
@@ -32,7 +31,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${GUROBI_INCLUDE_DIR} ${GLIB_
 target_link_libraries(${PROJECT_NAME} ${GUROBI_LIBRARY} ${GLIB_LIBRARIES} ${Boost_LIBRARIES} -lm -lpthread)
 
 # Include CppCcheck
+include(CppcheckTargets)
 include(customCppCheck)
 
-# Include Clang-Format
+# Include dev-tools
 include(dev-tools)
