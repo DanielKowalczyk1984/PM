@@ -257,19 +257,19 @@ int adjGraph_copy(adjGraph *Gdst, const adjGraph *Gsrc) {
     int  val = 0;
     int *elist = (int *)NULL;
     int  ecount;
-    int *tmp_weightlist = (int *)NULL;
-    tmp_weightlist = CC_SAFE_MALLOC(Gsrc->vcount, int);
-    CCcheck_NULL(tmp_weightlist, "Failed allocate memory to tmp_weightlist");
+    int *tmp_weightlist = CC_SAFE_MALLOC(Gsrc->vcount, int);
+    CCcheck_NULL_2(tmp_weightlist, "Failed allocate memory to tmp_weightlist");
 
     for (int i = 0; i < Gsrc->vcount; ++i) {
         tmp_weightlist[i] = Gsrc->nodelist[i].weight;
     }
 
     val = adjGraph_get_elist(&ecount, &elist, Gsrc);
-    CCcheck_val(val, "adjGraph_get_elist failed");
+    CCcheck_val_2(val, "adjGraph_get_elist failed");
     val = adjGraph_build(Gdst, Gsrc->vcount, ecount, elist, tmp_weightlist);
+    CCcheck_val_2(val, "adjGraph_build failed")
 
-    if (val) {
+        CLEAN : if (val) {
         adjGraph_free(Gdst);
     }
 
@@ -334,20 +334,19 @@ static void swap_nodes(int *v1, int *v2) {
 }
 
 static int unify_adjlist(int *adjlist, int degree, int *tmp_adjlist) {
-    int j;
     int new_degree = 0;
 
     if (degree) {
         tmp_adjlist[0] = adjlist[0];
         new_degree++;
 
-        for (j = 1; j < degree; ++j) {
+        for (int j = 1; j < degree; ++j) {
             if (adjlist[j] != adjlist[j - 1]) {
                 tmp_adjlist[new_degree++] = adjlist[j];
             }
         }
 
-        for (j = 0; j < new_degree; ++j) {
+        for (int j = 0; j < new_degree; ++j) {
             adjlist[j] = tmp_adjlist[j];
         }
     }
@@ -358,13 +357,12 @@ static int unify_adjlist(int *adjlist, int degree, int *tmp_adjlist) {
 int adjGraph_simplify(adjGraph *G) {
     int  val = 0;
     int  i, j;
-    int *tmp_adjlist = (int *)NULL;
-    int *tmp_weightlist = (int *)NULL;
     int  vcount, ecount;
-    tmp_adjlist = CC_SAFE_MALLOC(G->ecount, int);
-    CCcheck_NULL(tmp_adjlist, "Failed to allocate memory to tmp_adjlist");
-    tmp_weightlist = CC_SAFE_MALLOC(G->vcount, int);
-    CCcheck_NULL(tmp_weightlist, "Failed to allocate memory to tmp_weightlist");
+    int *tmp_adjlist = CC_SAFE_MALLOC(G->ecount, int);
+    int *tmp_weightlist = CC_SAFE_MALLOC(G->vcount, int);
+    CCcheck_NULL_2(tmp_adjlist, "Failed to allocate memory to tmp_adjlist");
+    CCcheck_NULL_2(tmp_weightlist,
+                   "Failed to allocate memory to tmp_weightlist");
 
     for (i = 0; i < G->vcount; i++) {
         tmp_weightlist[i] = G->nodelist[i].weight;
@@ -412,6 +410,7 @@ int adjGraph_simplify(adjGraph *G) {
     val = adjGraph_build(G, vcount, ecount, tmp_adjlist, tmp_weightlist);
     CCcheck_val(val, "Failed adjGraph_build");
 
+CLEAN:
     if (tmp_adjlist) {
         free(tmp_adjlist);
     }
@@ -487,20 +486,19 @@ int adjGraph_complement(adjGraph *Gc, const adjGraph *G) {
     int  val = 0;
     int  ecount = 0;
     int  ecount_chk = 0;
-    int *tmp_weightlist = (int *)NULL;
-    int *elist = (int *)NULL;
     int  v_i, a_i, na;
-    tmp_weightlist = CC_SAFE_MALLOC(G->vcount, int);
-    CCcheck_NULL(tmp_weightlist, "No memory for tmp_weightlist");
+    int *elist = (int *)NULL;
+    int *tmp_weightlist = CC_SAFE_MALLOC(G->vcount, int);
+    CCcheck_NULL_2(tmp_weightlist, "No memory for tmp_weightlist");
 
     for (int i = 0; i < G->vcount; ++i) {
         tmp_weightlist[i] = G->nodelist[i].weight;
     }
 
     val = adjGraph_copy(Gc, G);
-    CCcheck_val(val, "Failed adjGraph_copy");
+    CCcheck_val_2(val, "Failed adjGraph_copy");
     val = adjGraph_simplify(Gc);
-    CCcheck_val(val, "Failed in adjGraph_simplify");
+    CCcheck_val_2(val, "Failed in adjGraph_simplify");
     ecount_chk = (Gc->vcount * (Gc->vcount - 1)) / 2 - Gc->ecount;
 
     if (ecount_chk) {
@@ -567,10 +565,8 @@ void adjGraph_init(adjGraph *G) {
 }
 
 void adjGraph_free(adjGraph *G) {
-    int i;
-
     if (G) {
-        for (i = 0; i < G->vcount; i++) {
+        for (int i = 0; i < G->vcount; i++) {
             CC_IFFREE(G->adjMatrix[i], int);
         }
 
@@ -604,113 +600,115 @@ int read_adjlist(
     const char *delim = " \n";
     char *      data = (char *)NULL;
     char *      buf2 = (char *)NULL;
-    FILE *      in = (FILE *)NULL;
     int *       perm = (int *)NULL;
     int *       iperm = (int *)NULL;
-    in = fopen(f, "r");
+    FILE *      in = fopen(f, "r");
 
-    if (!in) {
+    if (in != (FILE *)NULL) {
+        if (fgets(buf, 254, in) != NULL) {
+            p = buf;
+
+            if (p[0] == 'p') {
+                if (prob) {
+                    fprintf(stderr, "ERROR: in this file we have to p lines\n");
+                    val = 1;
+                    goto CLEAN;
+                }
+
+                prob = 1;
+                strtok(p, delim);
+                data = strtok(NULL, delim);
+                sscanf(data, "%d", &vcount);
+                data = strtok(NULL, delim);
+                sscanf(data, "%d", &ecount);
+                bufsize =
+                    2 * vcount * (2 + (int)ceil(log((double)vcount + 10)));
+                buf2 = (char *)CC_SAFE_MALLOC(bufsize, char);
+                CCcheck_NULL_2(buf2, "Failed to allocate buf2");
+
+                if (ecount != 0) {
+                    elist = CC_SAFE_MALLOC(2 * ecount, int);
+                    CCcheck_NULL_2(elist, "out of memory for elist");
+                }
+
+                weight = CC_SAFE_MALLOC(vcount, int);
+                CCcheck_NULL_2(weight, "out of memory for weight");
+            } else {
+                fprintf(
+                    stderr,
+                    "File has to give first the number vertices and edges.\n");
+                val = 1;
+                goto CLEAN;
+            }
+        } else {
+            val = 1;
+            goto CLEAN;
+        }
+
+        while (fgets(buf2, bufsize, in) != (char *)NULL) {
+            p = buf2;
+
+            if (p[0] == 'p') {
+                if (prob) {
+                    fprintf(stderr, "ERROR: in this file we have to p lines\n");
+                    val = 1;
+                    goto CLEAN;
+                }
+            } else if (p[0] == 'n') {
+                if (!prob) {
+                    fprintf(stderr, "ERROR n before p in file\n");
+                    val = 1;
+                    goto CLEAN;
+                }
+
+                if (count > ecount) {
+                    fprintf(stderr, "ERROR: too many edges in file\n");
+                    val = 1;
+                    goto CLEAN;
+                }
+
+                strtok(p, delim);
+                data = strtok(NULL, delim);
+                sscanf(data, "%d", &curweight);
+                data = strtok(NULL, delim);
+                sscanf(data, "%d", &curnode);
+                weight[curnode] = curweight;
+                data = strtok(NULL, delim);
+
+                while (data != NULL) {
+                    elist[2 * count] = curnode;
+                    sscanf(data, "%d", &nodeadj);
+                    elist[2 * count + 1] = nodeadj;
+                    data = strtok(NULL, delim);
+                    count++;
+                }
+            }
+        }
+
+        perm = CC_SAFE_MALLOC(vcount, int);
+        CCcheck_NULL_2(perm, "Failed to allocate memory");
+
+        for (int i = 0; i < vcount; i++) {
+            perm[i] = i;
+        }
+
+        CCutil_int_perm_quicksort_0(perm, weight, vcount);
+        iperm = CC_SAFE_MALLOC(vcount, int);
+        CCcheck_NULL_2(iperm, "Failed to allocate memory");
+
+        for (int i = 0; i < vcount; ++i) {
+            iperm[perm[i]] = i;
+        }
+
+        permute_nodes(iperm, vcount, ecount, elist, weight, pelist, weightlist);
+        *pvcount = vcount;
+        *pecount = count;
+    } else {
         fprintf(stderr, "Unable to open file %s\n", f);
         val = 1;
         goto CLEAN;
     }
 
-    if (fgets(buf, 254, in) != NULL) {
-        p = buf;
-
-        if (p[0] == 'p') {
-            if (prob) {
-                fprintf(stderr, "ERROR: in this file we have to p lines\n");
-                val = 1;
-                goto CLEAN;
-            }
-
-            prob = 1;
-            strtok(p, delim);
-            data = strtok(NULL, delim);
-            sscanf(data, "%d", &vcount);
-            data = strtok(NULL, delim);
-            sscanf(data, "%d", &ecount);
-            bufsize = 2 * vcount * (2 + (int)ceil(log((double)vcount + 10)));
-            buf2 = (char *)CC_SAFE_MALLOC(bufsize, char);
-            CCcheck_NULL_2(buf2, "Failed to allocate buf2");
-
-            if (ecount != 0) {
-                elist = CC_SAFE_MALLOC(2 * ecount, int);
-                CCcheck_NULL_2(elist, "out of memory for elist");
-            }
-
-            weight = CC_SAFE_MALLOC(vcount, int);
-            CCcheck_NULL_2(weight, "out of memory for weight");
-        } else {
-            fprintf(stderr,
-                    "File has to give first the number vertices and edges.\n");
-            val = 1;
-            goto CLEAN;
-        }
-    } else {
-        val = 1;
-        goto CLEAN;
-    }
-
-    while (fgets(buf2, bufsize, in) != (char *)NULL) {
-        p = buf2;
-
-        if (p[0] == 'p') {
-            if (prob) {
-                fprintf(stderr, "ERROR: in this file we have to p lines\n");
-                val = 1;
-                goto CLEAN;
-            }
-        } else if (p[0] == 'n') {
-            if (!prob) {
-                fprintf(stderr, "ERROR n before p in file\n");
-                val = 1;
-                goto CLEAN;
-            }
-
-            if (count > ecount) {
-                fprintf(stderr, "ERROR: too many edges in file\n");
-                val = 1;
-                goto CLEAN;
-            }
-
-            strtok(p, delim);
-            data = strtok(NULL, delim);
-            sscanf(data, "%d", &curweight);
-            data = strtok(NULL, delim);
-            sscanf(data, "%d", &curnode);
-            weight[curnode] = curweight;
-            data = strtok(NULL, delim);
-
-            while (data != NULL) {
-                elist[2 * count] = curnode;
-                sscanf(data, "%d", &nodeadj);
-                elist[2 * count + 1] = nodeadj;
-                data = strtok(NULL, delim);
-                count++;
-            }
-        }
-    }
-
-    perm = CC_SAFE_MALLOC(vcount, int);
-    CCcheck_NULL_2(perm, "Failed to allocate memory");
-
-    for (int i = 0; i < vcount; i++) {
-        perm[i] = i;
-    }
-
-    CCutil_int_perm_quicksort_0(perm, weight, vcount);
-    iperm = CC_SAFE_MALLOC(vcount, int);
-    CCcheck_NULL_2(iperm, "Failed to allocate memory");
-
-    for (int i = 0; i < vcount; ++i) {
-        iperm[perm[i]] = i;
-    }
-
-    permute_nodes(iperm, vcount, ecount, elist, weight, pelist, weightlist);
-    *pvcount = vcount;
-    *pecount = count;
 CLEAN:
 
     if (val) {
@@ -776,18 +774,17 @@ int adjGraph_delete_unweighted(adjGraph *G,
                                int **    new_nweights,
                                const int nweights[]) {
     int  val = 0;
-    int *nmap = (int *)NULL;
-    int *newelist = (int *)NULL;
-    int *new_weightlist = (int *)NULL;
     int  i, a_i;
     int  vcount = 0;
     int  ecount = 0;
-    nmap = CC_SAFE_MALLOC(G->vcount, int);
-    CCcheck_NULL(nmap, "Failed to allocate nmap");
-    newelist = CC_SAFE_MALLOC(2 * G->ecount, int);
-    CCcheck_NULL(nmap, "Failed to allocate newelist");
-    new_weightlist = CC_SAFE_MALLOC(G->vcount, int);
-    CCcheck_NULL(new_weightlist, "Failed to allocate memory to new_weightlist");
+    int *nmap = CC_SAFE_MALLOC(G->vcount, int);
+    int *newelist = CC_SAFE_MALLOC(2 * G->ecount, int);
+    int *new_weightlist = CC_SAFE_MALLOC(G->vcount, int);
+
+    CCcheck_NULL_2(nmap, "Failed to allocate nmap");
+    CCcheck_NULL_2(nmap, "Failed to allocate newelist");
+    CCcheck_NULL_2(new_weightlist,
+                   "Failed to allocate memory to new_weightlist");
 
     for (i = 0; i < G->vcount; ++i) {
         if (nweights[i] == 0) {
@@ -823,7 +820,7 @@ int adjGraph_delete_unweighted(adjGraph *G,
 
     adjGraph_free(G);
     val = adjGraph_build(G, vcount, ecount, newelist, new_weightlist);
-    CCcheck_val(val, "Failed in COLORadjgraph_build");
+    CCcheck_val_2(val, "Failed in COLORadjgraph_build");
 
     if (dbg_lvl() > 1) {
         printf("Reduced graph has %d nodes and %d edges.\n", vcount, ecount);

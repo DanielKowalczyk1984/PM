@@ -198,10 +198,9 @@ int wctlp_addcol(wctlp * lp,
 
 int wctlp_deletecols(wctlp *lp, int first, int last) {
     int  val = 0;
-    int *dellist = (int *)NULL;
     int  ndel = last - first + 1;
     int  i;
-    dellist = CC_SAFE_MALLOC(ndel, int);
+    int *dellist = CC_SAFE_MALLOC(ndel, int);
     CCcheck_NULL_2(dellist, "Failed to allocated memory to dellist");
 
     for (i = 0; i < ndel; ++i) {

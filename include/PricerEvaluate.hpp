@@ -236,6 +236,7 @@ class Optimal_Solution {
         size_t                   it = ptr_max->find_first();
         obj = node->obj[it_max];
         cost = node->cost[it_max];
+        C_max = 0;
 
         while (it != boost::dynamic_bitset<>::npos) {
             if ((*ptr_max)[it]) {
@@ -246,16 +247,14 @@ class Optimal_Solution {
         }
     }
 
-    Optimal_Solution(PricerInfoBDD<T> *node) {
+    Optimal_Solution(PricerInfoBDD<T> *node) : jobs(node->jobs) {
         obj = node->obj;
-        jobs = node->jobs;
+        //jobs = std::vector<int>(node->jobs.begin(),node->jobs.end());
         cost = node->cost;
+        C_max = 0;
     }
 
-    Optimal_Solution() {
-        obj = 0;
-        cost = 0;
-        C_max = 0;
+    Optimal_Solution() : obj(0), cost(0), C_max(0) {
     }
 
     Optimal_Solution &operator=(const Optimal_Solution &other) {

@@ -28,18 +28,19 @@
 #include <cstdlib>
 #include <string>
 #include <typeinfo>
+#include <memory>
 
 namespace tdzdd {
 
-inline std::string demangle(char const *name) {
+inline std::unique_ptr<std::string> demangle(char const *name) {
     char *dName = abi::__cxa_demangle(name, 0, 0, 0);
-    if (dName == 0) return name;
+    if (dName == 0) return std::make_unique<std::string>(name);
 
-    std::string s;
+    auto s = std::make_unique<std::string>(0, strlen(name) + 1);
     char *      p = dName;
 
     for (char c = *p++; c; c = *p++) {
-        s += c;
+        *s += c;
         if (!isalnum(c)) {
             while (std::isspace(*p)) {
                 ++p;
@@ -51,16 +52,16 @@ inline std::string demangle(char const *name) {
     return s;
 }
 
-inline std::string demangleTypename(char const *name) {
-    std::string s = demangle(name);
+inline std::unique_ptr<std::string> demangleTypename(char const *name) {
+    std::unique_ptr<std::string> s = demangle(name);
     size_t      i = 0;
     size_t      j = 0;
 
-    while (j + 1 < s.size()) {
-        if (std::isalnum(s[j])) {
+    while (j + 1 < s->size()) {
+        if (std::isalnum((*s)[j])) {
             ++j;
-        } else if (s[j] == ':' && s[j + 1] == ':') {
-            s = s.replace(i, j + 2 - i, "");
+        } else if ((*s)[j] == ':' && (*s)[j + 1] == ':') {
+            *s = s->replace(i, j + 2 - i, "");
             j = i;
         } else {
             i = ++j;
@@ -71,13 +72,13 @@ inline std::string demangleTypename(char const *name) {
 }
 
 template <typename T>
-std::string typenameof() {
-    return demangleTypename(typeid(T).name());
+std::string &typenameof() {
+    return *demangleTypename(typeid(T).name());
 }
 
 template <typename T>
-std::string typenameof(T const &obj) {
-    return demangleTypename(typeid(obj).name());
+std::string &typenameof(T const &obj) {
+    return *demangleTypename(typeid(obj).name());
 }
 
 }  // namespace tdzdd

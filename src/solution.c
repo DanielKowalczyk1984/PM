@@ -19,30 +19,23 @@ void solution_init(solution *sol) {
     }
 }
 
-void solution_free(solution *sol) {
-    int i;
-
-    if (sol) {
-        for (i = 0; i < sol->nmachines; ++i) {
-            partlist_free(sol->part + i);
+void solution_free(solution **sol) {
+    if (*sol) {
+        for (int i = 0; i < (*sol)->nmachines; ++i) {
+            partlist_free((*sol)->part + i);
         }
 
-        CC_IFFREE(sol->part, partlist);
-        CC_IFFREE(sol->perm, Job *);
-        CC_IFFREE(sol->c, int);
-        sol->nmachines = 0;
-        sol->tw = 0;
-        sol->njobs = 0;
-        sol->b = 0;
-        sol->off = 0;
+        CC_IFFREE((*sol)->part, partlist);
+        CC_IFFREE((*sol)->perm, Job *);
+        CC_IFFREE((*sol)->c, int);
+        CC_IFFREE((*sol), solution);
     }
 }
 
 solution *solution_alloc(int nmachines, int njobs, int off) {
     int       val = 0;
     int       i;
-    solution *sol = (solution *)NULL;
-    sol = CC_SAFE_MALLOC(1, solution);
+    solution *sol = CC_SAFE_MALLOC(1, solution);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     solution_init(sol);
     sol->nmachines = nmachines;
@@ -71,7 +64,7 @@ solution *solution_alloc(int nmachines, int njobs, int off) {
 CLEAN:
 
     if (val) {
-        solution_free(sol);
+        solution_free(&sol);
     }
 
     return sol;
@@ -100,7 +93,7 @@ void solution_print(solution *sol) {
     for (int i = 0; i < sol->nmachines; ++i) {
         printf("Machine %-1d: ", sol->part[i].key);
         g_ptr_array_foreach(sol->part[i].machine, print_machine, NULL);
-        printf("with C =  %d, wC = %d and %d jobs\n", sol->part[i].c,
+        printf("with C =  %d, wC = %d and %u jobs\n", sol->part[i].c,
                sol->part[i].tw, sol->part[i].machine->len);
     }
 
@@ -124,8 +117,7 @@ int solution_copy(solution *dest, solution *src) {
 CLEAN:
 
     if (val) {
-        solution_free(dest);
-        CC_IFFREE(dest, solution);
+        solution_free(&dest);
     }
 
     return val;

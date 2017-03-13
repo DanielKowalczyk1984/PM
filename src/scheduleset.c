@@ -104,10 +104,8 @@ void Scheduleset_free(Scheduleset *set) {
 }
 
 void Schedulesets_free(Scheduleset **sets, int *nsets) {
-    int i = 0;
-
     if (*sets) {
-        for (i = 0; i < *nsets; i++) {
+        for (int i = 0; i < *nsets; i++) {
             Scheduleset_free(&(*sets)[i]);
         }
 
@@ -478,8 +476,7 @@ int partlist_to_Scheduleset(
     int i, j = 0, k = 0;
     Schedulesets_free(classes, ccount);
     *ccount = j;
-    Scheduleset *temp_sets = (Scheduleset *)NULL;
-    temp_sets = CC_SAFE_MALLOC(*ccount, Scheduleset);
+    Scheduleset *temp_sets = CC_SAFE_MALLOC(*ccount, Scheduleset);
     CCcheck_NULL_2(temp_sets, "Failed to allocate memory to temp_sets");
 
     for (i = 0; i < nbpart; i++) {

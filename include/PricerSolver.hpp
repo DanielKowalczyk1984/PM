@@ -530,6 +530,10 @@ class PricerSolver {
             H_min = other.H_min;
             jobarray = other.jobarray;
             nbjobs = other.nbjobs;
+            zdd_table = tdzdd::DataTable<PricerWeightZDD<double>>();
+            dd_table = tdzdd::DataTable<PricerWeightBDD<double>>();
+            farkas_table = tdzdd::DataTable<PricerFarkasZDD<double>>();
+            use_zdd = true;
         }
 
         return *this;
@@ -543,7 +547,7 @@ class PricerSolver {
         for (; it != zdd->end(); ++it) {
             std::vector<int>::const_iterator i = (*it).begin();
 
-            for (; i != (*it).end(); i++) {
+            for (; i != (*it).end(); ++i) {
                 std::cout << nbjobs - *i << " ";
             }
 
@@ -557,7 +561,7 @@ class PricerSolver {
         for (; it != dd->end(); ++it) {
             std::vector<int>::const_iterator i = (*it).begin();
 
-            for (; i != (*it).end(); i++) {
+            for (; i != (*it).end(); ++i) {
                 std::cout << nbjobs - *i << " ";
             }
 

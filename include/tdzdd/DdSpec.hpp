@@ -79,7 +79,7 @@ class DdSpecBase {
      * @param title title label.
      */
     void dumpDot(std::ostream &os = std::cout,
-                 std::string   title = typenameof<S>()) const {
+                 std::string   &title = typenameof<S>()) const {
         dumpDot_(os, false, title);
     }
 
@@ -90,7 +90,7 @@ class DdSpecBase {
      * @param title title label.
      */
     void dumpDotCut(std::ostream &os = std::cout,
-                    std::string   title = typenameof<S>()) const {
+                    std::string   &title = typenameof<S>()) const {
         dumpDot_(os, true, title);
     }
 
@@ -113,7 +113,7 @@ class DdSpecBase {
      * 1-terminal.
      * @param title title label.
      */
-    void dumpDot_(std::ostream &os, bool cut, std::string title) const {
+    void dumpDot_(std::ostream &os, bool cut, std::string &title) const {
         NodeTableHandler<S::ARITY> diagram;
         InstantDdBuilder<S, true> idb(entity(), diagram, os, cut);
         NodeId root;

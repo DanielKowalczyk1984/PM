@@ -111,15 +111,15 @@ typedef struct _local_search_data {
   int njobs;
   int **W;
   GList ***g;
-  processing_list_data **processing_list_f;
-  processing_list_data **processing_list_b;
-  processing_list_data **processing_list_inter1;
-  processing_list_data **processing_list_inter2;
+  processing_list_data **processing_list_1;
+  processing_list_data **processing_list_2;
+  // processing_list_data **processing_list_inter1;
+  // processing_list_data **processing_list_inter2;
   int updated;
 } local_search_data;
 
 local_search_data *local_search_data_init(solution *sol);
-void local_search_data_free(local_search_data *data);
+void local_search_data_free(local_search_data **data);
 
 /** Preperation of the data */
 int local_search_create_W(solution *sol, local_search_data *data);

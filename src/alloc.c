@@ -38,11 +38,10 @@ void CCutil_freerus(void *ptr) {
 }
 
 void *CCutil_reallocrus(void *ptr, size_t size) {
-    void *newptr;
-
     if (!ptr) {
         return CCutil_allocrus(size);
     } else {
+        void *newptr;
         newptr = (void *)realloc(ptr, size);
 
         if (!newptr) {

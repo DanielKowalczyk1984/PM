@@ -97,7 +97,7 @@ int partlist_more_totweight(partlist *c1, partlist *c2);
 ////////////////////////////////////////
 
 void solution_init(solution *sol);
-void solution_free(solution *sol);
+void solution_free(solution **sol);
 solution *solution_alloc(int nmachines, int njobs, int off);
 
 void solution_print(solution *sol);

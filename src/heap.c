@@ -194,11 +194,11 @@ static int pmcheap_siftdown(pmcheap *heap, int pos) {
     int *    perm = heap->perm;
     int *    iperm = heap->iperm;
     heapelm *elms = heap->elms;
-    int      minc, rightc;
     int      ref = perm[pos];
     int      key = heap->elms[ref].key;
 
     while (pos <= end_half) {
+        int minc, rightc;
         minc = pos << 1; /* j = k*2 */
         rightc = minc + 1;
 
@@ -368,9 +368,8 @@ int pmcheap_relabel(pmcheap *heap, int href, int new_key) {
         pmcheap_siftdown(heap, heap_pos);
     }
 
-    HEAP_INTEGRITY(rval, heap, "pmcheap_integrity failed in pmcheap_relabel.");
 #ifdef HEAP_INTEGRITY_CHECKS
-CLEANUP:
+    HEAP_INTEGRITY(rval, heap, "pmcheap_integrity failed in pmcheap_relabel.");
 #endif
     return rval;
 }

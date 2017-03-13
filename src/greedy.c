@@ -100,7 +100,7 @@ static int solution_set_c(solution *sol) {
 CLEAN:
 
     if (val) {
-        solution_free(sol);
+        solution_free(&sol);
     }
 
     binomial_heap_free(heap);
@@ -400,12 +400,13 @@ int heuristic_rpup(wctproblem *prob) {
     g_random_set_seed(1984);
     int          ILS = prob->njobs;
     int          IR = 10;
-    solution *   sol = (solution *)NULL;
+    solution *   sol;
     solution *   sol1 = (solution *)NULL;
     CCutil_timer test;
     CCutil_init_timer(&test, (char *)NULL);
     local_search_data *data = (local_search_data *)NULL;
     local_search_data *data_RS = (local_search_data *)NULL;
+
     sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
@@ -445,16 +446,14 @@ int heuristic_rpup(wctproblem *prob) {
             solution_update(prob->opt_sol, sol);
         }
 
-        local_search_data_free(data_RS);
-        solution_free(sol1);
-        CC_IFFREE(sol1, solution);
+        local_search_data_free(&data_RS);
+        solution_free(&sol1);
     }
 
     solution_print(prob->opt_sol);
 CLEAN:
-    solution_free(sol);
-    CC_IFFREE(sol, solution);
-    local_search_data_free(data);
+    solution_free(&sol);
+    local_search_data_free(&data);
     g_rand_free(rand_uniform);
     return val;
 }
@@ -511,8 +510,7 @@ int construct_feasible_solutions(wctproblem *problem) {
     CCutil_start_timer(timer);
     // while (1) {
     iterations++;
-    solution *new_sol = (solution *)NULL;
-    new_sol = solution_alloc(pd->nmachines, pd->njobs, problem->off);
+    solution *new_sol = solution_alloc(pd->nmachines, pd->njobs, problem->off);
     CCcheck_NULL(new_sol, "Failed to allocate")
 
         if (problem->status == no_sol) {}

@@ -222,8 +222,8 @@ static int print_to_csv(wctproblem *problem) {
     }
 
     fprintf(file,
-            "%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,%d,%f,%d,%d,%d,%"
-            "d,%d/%d/%d\n",
+            "%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,%d,%f,%d,%d,%d,%d,%u/"
+            "%u/%u\n",
             pd->pname, problem->real_time, problem->tot_cputime.cum_zeit,
             problem->tot_lb.cum_zeit, problem->tot_lb_lp_root.cum_zeit,
             problem->tot_lb_lp.cum_zeit, problem->tot_branch_and_bound.cum_zeit,

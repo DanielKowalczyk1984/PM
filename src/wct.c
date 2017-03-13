@@ -174,64 +174,64 @@ int read_problem(wctproblem *problem) {
     const char *delim = " \n";
     char *      data = (char *)NULL;
     char *      buf2 = (char *)NULL;
-    FILE *      in = (FILE *)NULL;
     wctdata *   pd;
     wctparms *  parms;
     parms = &(problem->parms);
     pd = &(problem->root_pd);
-    in = fopen(parms->jobfile, "r");
+    FILE *in = fopen(parms->jobfile, "r");
     curjob = 0;
 
-    if (!in) {
+    if (in != (FILE *)NULL) {
+        get_problem_name(pd->pname, parms->jobfile);
+
+        if (fgets(buf, 254, in) != NULL) {
+            p = buf;
+            data = strtok(p, delim);
+            sscanf(data, " %d", &nbjobs);
+            bufsize = 3 * nbjobs * (2 + (int)ceil(log((double)nbjobs + 10)));
+            buf2 = (char *)CC_SAFE_MALLOC(bufsize, char);
+            CCcheck_NULL_2(buf2, "Failed to allocate buf2");
+            problem->jobarray = CC_SAFE_MALLOC(nbjobs, Job);
+            _jobarray = problem->jobarray;
+            CCcheck_NULL_2(_jobarray, "Failed to allocate memory to _jobarray");
+        } else {
+            val = 1;
+            goto CLEAN;
+        }
+
+        while (fgets(buf2, bufsize, in) != (char *)NULL) {
+            p = buf2;
+            data = strtok(p, delim);
+            sscanf(data, "%d", &curduration);
+            data = strtok(NULL, delim);
+            sscanf(data, "%d", &curduedate);
+            data = strtok(NULL, delim);
+            sscanf(data, "%d", &curweight);
+            _jobarray[curjob].weight = curweight;
+            _jobarray[curjob].duetime = curduedate / parms->nmachines;
+            _jobarray[curjob].processingime = curduration;
+
+            if (_jobarray[curjob].processingime > _jobarray[curjob].duetime) {
+                problem->off +=
+                    curweight * (curduration - _jobarray[curjob].duetime);
+                _jobarray[curjob].duetime = _jobarray[curjob].processingime;
+            }
+
+            _jobarray[curjob].job = curjob;
+            data = strtok(NULL, delim);
+            curjob++;
+        }
+
+        problem->njobs = nbjobs;
+        problem->nmachines = parms->nmachines;
+        pd->njobs = problem->njobs;
+        pd->nmachines = problem->nmachines;
+    } else {
         fprintf(stderr, "Unable to open file %s\n", parms->jobfile);
         val = 1;
         goto CLEAN;
     }
 
-    get_problem_name(pd->pname, parms->jobfile);
-
-    if (fgets(buf, 254, in) != NULL) {
-        p = buf;
-        data = strtok(p, delim);
-        sscanf(data, " %d", &nbjobs);
-        bufsize = 3 * nbjobs * (2 + (int)ceil(log((double)nbjobs + 10)));
-        buf2 = (char *)CC_SAFE_MALLOC(bufsize, char);
-        CCcheck_NULL_2(buf2, "Failed to allocate buf2");
-        problem->jobarray = CC_SAFE_MALLOC(nbjobs, Job);
-        _jobarray = problem->jobarray;
-        CCcheck_NULL_2(_jobarray, "Failed to allocate memory to _jobarray");
-    } else {
-        val = 1;
-        goto CLEAN;
-    }
-
-    while (fgets(buf2, bufsize, in) != (char *)NULL) {
-        p = buf2;
-        data = strtok(p, delim);
-        sscanf(data, "%d", &curduration);
-        data = strtok(NULL, delim);
-        sscanf(data, "%d", &curduedate);
-        data = strtok(NULL, delim);
-        sscanf(data, "%d", &curweight);
-        _jobarray[curjob].weight = curweight;
-        _jobarray[curjob].duetime = curduedate / parms->nmachines;
-        _jobarray[curjob].processingime = curduration;
-
-        if (_jobarray[curjob].processingime > _jobarray[curjob].duetime) {
-            problem->off +=
-                curweight * (curduration - _jobarray[curjob].duetime);
-            _jobarray[curjob].duetime = _jobarray[curjob].processingime;
-        }
-
-        _jobarray[curjob].job = curjob;
-        data = strtok(NULL, delim);
-        curjob++;
-    }
-
-    problem->njobs = nbjobs;
-    problem->nmachines = parms->nmachines;
-    pd->njobs = problem->njobs;
-    pd->nmachines = problem->nmachines;
 CLEAN:
 
     if (val) {
@@ -291,7 +291,7 @@ static int print_size_to_csv(wctproblem *problem, wctdata *pd) {
                         "date");
             }
 
-            fprintf(file, "%s;%d;%lu;%d;%d;%d;%d;%d/%d/%d\n", root_node->pname,
+            fprintf(file, "%s;%d;%zu;%d;%d;%d;%d;%u/%u/%u\n", root_node->pname,
                     pd->depth, get_datasize(pd->solver), pd->ecount_same,
                     pd->ecount_differ, pd->v1, pd->v2, date.day, date.month,
                     date.year);
@@ -303,7 +303,7 @@ static int print_size_to_csv(wctproblem *problem, wctdata *pd) {
                         "size", "branch_job", "completion_time", "data");
             }
 
-            fprintf(file, "%s;%d;%lu;%d;%d;%d/%d/%d\n", root_node->pname,
+            fprintf(file, "%s;%d;%zu;%d;%d;%u/%u/%u\n", root_node->pname,
                     pd->depth, get_datasize(pd->solver), pd->branch_job,
                     pd->completiontime, date.day, date.month, date.year);
             break;
@@ -409,8 +409,7 @@ void wctproblem_free(wctproblem *problem) {
     Schedulesets_free(&(problem->bestschedule), &(problem->nbestschedule));
     CC_IFFREE(problem->jobarray, Job);
     CC_IFFREE(problem->ojobarray, Job *);
-    solution_free(problem->opt_sol);
-    CC_IFFREE(problem->opt_sol, solution);
+    solution_free(&(problem->opt_sol));
 }
 
 /*Functions for initialization and free the data*/
@@ -728,7 +727,7 @@ int compute_objective(wctdata *pd, wctparms *parms) {
         ((int)ceil(pd->LP_lower_bound_dual) < (int)ceil(pd->LP_lower_bound))
             ? (int)ceil(pd->LP_lower_bound_dual)
             : (int)ceil(pd->LP_lower_bound);
-    pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound, pd->LP_lower_bound);
+    pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound, pd->LP_lower_bound_dual);
 
     if (parms->stab_technique == stab_wentgnes ||
         parms->stab_technique == stab_dynamic) {
@@ -754,7 +753,6 @@ void make_pi_feasible(wctdata *pd) {
     for (c = 0; c < pd->ccount; ++c) {
         int    i;
         double colsum = .0;
-        double newcolsum = .0;
 
         for (i = 0; i < pd->cclasses[c].count; ++i) {
             if (signbit(pd->pi[pd->cclasses[c].members[i]])) {
@@ -773,6 +771,7 @@ void make_pi_feasible(wctdata *pd) {
         colsum = nextafter(colsum, DBL_MAX);
 
         if (colsum > pd->cclasses[c].totwct) {
+            double newcolsum = .0;
             for (i = 0; i < pd->cclasses[c].count; ++i) {
                 pd->pi[pd->cclasses[c].members[i]] /= colsum;
                 pd->pi[pd->cclasses[c].members[i]] *= pd->cclasses[c].totwct;
@@ -799,7 +798,6 @@ void make_pi_feasible_farkas_pricing(wctdata *pd) {
     for (c = 0; c < pd->ccount; ++c) {
         int    i;
         double colsum = .0;
-        double newcolsum = .0;
 
         for (i = 0; i < pd->cclasses[c].count; ++i) {
             if (signbit(pd->pi[pd->cclasses[c].members[i]])) {
@@ -813,6 +811,7 @@ void make_pi_feasible_farkas_pricing(wctdata *pd) {
         colsum += pd->pi[pd->cclasses[c].members[i]];
 
         if (colsum > pd->cclasses[c].totwct) {
+            double newcolsum = .0;
             for (i = 0; i < pd->cclasses[c].count; ++i) {
                 pd->pi[pd->cclasses[c].members[i]] /= colsum;
                 pd->pi[pd->cclasses[c].members[i]] *= pd->cclasses[c].totwct;
@@ -913,9 +912,8 @@ static int test_theorem_ahv(wctdata *pd,
                             int **   min_completiontime) {
     int    val = 0;
     int    i, j;
-    int *  temp_completiontime = (int *)NULL;
     GList *temp_branchjobs = (GList *)NULL;
-    temp_completiontime = CC_SAFE_MALLOC(pd->njobs, int);
+    int *  temp_completiontime = CC_SAFE_MALLOC(pd->njobs, int);
     CCcheck_NULL_2(temp_completiontime, "Failed to allocate memory");
     fill_int(temp_completiontime, pd->njobs, INT_MAX);
 
@@ -974,12 +972,12 @@ static int grab_integral_solution_ahv(wctdata *pd, int *completion_time) {
     int       totweight = 0;
     pmcheap * heap_sol = (pmcheap *)NULL;
     pmcheap * heap_jobs = (pmcheap *)NULL;
-    solution *sol = (solution *)NULL;
     partlist *part = (partlist *)NULL;
     Job *     job = (Job *)NULL;
-    sol = solution_alloc(pd->nmachines, pd->njobs, 0);
-    CCcheck_NULL_2(sol, "Failed to allocate memory") val =
-        pmcheap_init(&heap_sol, pd->nmachines);
+    solution *sol = solution_alloc(pd->nmachines, pd->njobs, 0);
+    CCcheck_NULL_2(sol, "Failed to allocate memory")
+
+        val = pmcheap_init(&heap_sol, pd->nmachines);
     CCcheck_val_2(val, "Failed at pmcheap_init");
     val = pmcheap_init(&(heap_jobs), pd->njobs);
     CCcheck_val_2(val, "Failed at pmcheap_init");
@@ -1027,8 +1025,7 @@ static int grab_integral_solution_ahv(wctdata *pd, int *completion_time) {
 CLEAN:
     pmcheap_free(heap_sol);
     pmcheap_free(heap_jobs);
-    solution_free(sol);
-    CC_IFFREE(sol, solution);
+    solution_free(&sol);
     return val;
 }
 
@@ -1665,14 +1662,11 @@ static int create_differ_conflict(
 
     for (i = 0; i < parent_pd->ccount; ++i) {
         int      j;
-        int      construct = 1;
-        gboolean v1_in;
-        gboolean v2_in;
-        v1_in = g_hash_table_contains(parent_pd->cclasses[i].table,
-                                      GINT_TO_POINTER(v1));
-        v2_in = g_hash_table_contains(parent_pd->cclasses[i].table,
-                                      GINT_TO_POINTER(v2));
-        construct = (v1_in && v2_in) ? 0 : 1;
+        gboolean v1_in = g_hash_table_contains(parent_pd->cclasses[i].table,
+                                               GINT_TO_POINTER(v1));
+        gboolean v2_in = g_hash_table_contains(parent_pd->cclasses[i].table,
+                                               GINT_TO_POINTER(v2));
+        int construct = (v1_in && v2_in) ? 0 : 1;
 
         if (construct) {
             Scheduleset_init(pd->cclasses + pd->ccount);
@@ -1768,16 +1762,14 @@ static int transfer_same_cclasses_wide(wctdata *          pd,
     pd->ccount = 0;
 
     for (i = 0; i < parent_ccount; ++i) {
-        int      j;
-        int      construct = 1;
-        gboolean v1_in;
-        gboolean v2_in;
+        int j;
+        int construct = 1;
 
         for (j = 0; j < pd->nb_wide && construct; j++) {
-            v1_in = g_hash_table_contains(parent_cclasses[i].table,
-                                          GINT_TO_POINTER(v1_wide[i]));
-            v2_in = g_hash_table_contains(parent_cclasses[i].table,
-                                          GINT_TO_POINTER(v2_wide[i]));
+            gboolean v1_in = g_hash_table_contains(parent_cclasses[i].table,
+                                                   GINT_TO_POINTER(v1_wide[i]));
+            gboolean v2_in = g_hash_table_contains(parent_cclasses[i].table,
+                                                   GINT_TO_POINTER(v2_wide[i]));
 
             if ((v1_in == 1 && v2_in == 0) || (v1_in == 0 && v2_in == 1)) {
                 construct = 0;
@@ -1977,9 +1969,8 @@ static int create_same_wide(wctproblem *problem,
                             int *       v2_wide,
                             int         nb_wide) {
     int       val = 0;
-    wctdata * pd = (wctdata *)NULL;
     wctparms *parms = &(problem->parms);
-    pd = (wctdata *)CC_SAFE_MALLOC(1, wctdata);
+    wctdata * pd = CC_SAFE_MALLOC(1, wctdata);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     wctdata_init(pd);
     /** Init B&B data */
@@ -2074,9 +2065,8 @@ CLEAN:
 static int create_same_conflict(
     wctproblem *problem, wctdata *parent_pd, wctdata **child, int v1, int v2) {
     int       val = 0;
-    wctdata * pd = (wctdata *)NULL;
     wctparms *parms = &(problem->parms);
-    pd = (wctdata *)CC_SAFE_MALLOC(1, wctdata);
+    wctdata * pd = CC_SAFE_MALLOC(1, wctdata);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     wctdata_init(pd);
     /** Init B&B data */
@@ -2419,14 +2409,13 @@ static void Scheduleset_unify(Scheduleset *cclasses,
 
 int prune_duplicated_sets(wctdata *pd) {
     int val = 0;
-    int i, j;
     Scheduleset_unify(pd->cclasses, &(pd->ccount), pd->ccount);
 
     if (dbg_lvl() > 1) {
-        for (i = 0; i < pd->ccount; ++i) {
+        for (int i = 0; i < pd->ccount; ++i) {
             printf("TRANSSORT SET ");
 
-            for (j = 0; j < pd->cclasses[i].count; ++j) {
+            for (int j = 0; j < pd->cclasses[i].count; ++j) {
                 printf(" %d", pd->cclasses[i].members[j]);
             }
 
@@ -2492,10 +2481,9 @@ static int grab_int_sol(wctdata *pd, double *x, double tolerance) {
     int    val = 0;
     double test_incumbent = .0;
     double incumbent;
-    int *  colored = (int *)NULL;
     int    i;
     int    tot_weighted = 0;
-    colored = CC_SAFE_MALLOC(pd->njobs, int);
+    int *  colored = CC_SAFE_MALLOC(pd->njobs, int);
     CCcheck_NULL_2(colored, "Failed to allocate colored");
     fill_int(colored, pd->njobs, 0);
     val = wctlp_objval(pd->LP, &incumbent);
@@ -2633,14 +2621,13 @@ static int insert_frac_pairs_into_heap(wctdata *    pd,
     int     val = 0;
     int     i;
     int     ref_key;
-    double *mean_error = (double *)NULL;
-    int *   mean_counter = (int *)NULL;
-    mean_error = CC_SAFE_MALLOC(npairs, double);
+    double *mean_error = CC_SAFE_MALLOC(npairs, double);
+    int *   mean_counter = CC_SAFE_MALLOC(npairs, int);
+
     CCcheck_NULL_2(mean_error, "Failed to allocate memory")
-        fill_dbl(mean_error, npairs, 0.0);
-    mean_counter = CC_SAFE_MALLOC(npairs, int);
-    CCcheck_NULL_2(mean_counter, "Failed to allocate memory")
-        fill_int(mean_counter, npairs, 0);
+        CCcheck_NULL_2(mean_counter, "Failed to allocate memory")
+            fill_dbl(mean_error, npairs, 0.0);
+    fill_int(mean_counter, npairs, 0);
 
     for (i = 0; i < pd->ccount; ++i) {
         int j;
@@ -2767,7 +2754,7 @@ int create_branches_conflict(wctdata *pd, wctproblem *problem) {
         printf("LP returned integral solution\n");
         val = grab_int_sol(pd, x, lp_int_tolerance());
         CCcheck_val_2(val, "Failed in grab_int_sol");
-        assert(pd->status = finished);
+        assert(pd->status == finished);
         goto CLEAN;
     }
 
@@ -2906,7 +2893,7 @@ int create_branches_wide(wctdata *pd, wctproblem *problem) {
         printf("LP returned integral solution\n");
         val = grab_int_sol(pd, pd->x, lp_int_tolerance());
         CCcheck_val_2(val, "Failed in grab_int_sol");
-        assert(pd->status = finished);
+        assert(pd->status == finished);
         goto CLEAN;
     }
 
@@ -3118,7 +3105,7 @@ int branching_msg_wide(wctdata *pd, wctproblem *problem) {
         CCutil_suspend_timer(&problem->tot_cputime);
         printf(
             "Branching with lb %d (LP %f) at depth %d (id = %d, "
-            "time = %f, unprocessed nodes = %d, nbjobs= %d, upper bound = %d, "
+            "time = %f, unprocessed nodes = %u, nbjobs= %d, upper bound = %d, "
             "lower bound = %d, v1 = %d, v2 = %d, nbdiff = %d, nbsame = %d ).\n",
             pd->lower_bound, pd->LP_lower_bound, pd->depth, pd->id,
             problem->tot_cputime.cum_zeit, binomial_heap_num_entries(heap),
@@ -3139,9 +3126,9 @@ int branching_msg(wctdata *pd, wctproblem *problem) {
         CCutil_suspend_timer(&problem->tot_cputime);
         printf(
             "Branching with lb %d (LP %f) at depth %d (id = %d, "
-            "time = %f, unprocessed nodes = %d, nbjobs= %d, upper bound = %d, "
+            "time = %f, unprocessed nodes = %u, nbjobs= %d, upper bound = %d, "
             "lower bound = %d, v1 = %d, v2 = %d, nbdiff = %d, nbsame = %d, ZDD "
-            "size= %lu, nb_cols = %d ).\n",
+            "size= %zu, nb_cols = %d ).\n",
             pd->lower_bound, pd->LP_lower_bound_BB, pd->depth, pd->id,
             problem->tot_cputime.cum_zeit, binomial_heap_num_entries(heap),
             pd->njobs, problem->global_upper_bound, root->lower_bound, pd->v1,
@@ -3170,7 +3157,7 @@ int branching_msg_cbfs(wctdata *pd, wctproblem *problem) {
             "Branching with lb %d (LP %f) at depth %d (id = %d, "
             "time = %f, unprocessed nodes = %d, nbjobs= %d, upper bound = %d, "
             "lower bound = %d, v1 = %d, v2 = %d, nbdiff = %d, nbsame = %d, ZDD "
-            "size = %lu, nb_cols = %d ).\n",
+            "size = %zu, nb_cols = %d ).\n",
             pd->lower_bound, pd->LP_lower_bound, pd->depth, pd->id,
             problem->tot_cputime.cum_zeit, nb_nodes, pd->njobs,
             problem->global_upper_bound, root->lower_bound, pd->v1, pd->v2,
@@ -3433,10 +3420,9 @@ static int delete_old_cclasses(wctdata *pd) {
 
     if (pd->dzcount > min_numdel) {
         int          new_ccount = 0;
-        Scheduleset *new_cclasses = (Scheduleset *)NULL;
-        assert(pd->gallocated >= pd->ccount);
-        new_cclasses = CC_SAFE_MALLOC(pd->gallocated, Scheduleset);
+        Scheduleset *new_cclasses = CC_SAFE_MALLOC(pd->gallocated, Scheduleset);
         CCcheck_NULL_2(new_cclasses, "Failed to allocate new_cclasses");
+        assert(pd->gallocated >= pd->ccount);
 
         for (i = 0; i < pd->gallocated; ++i) {
             Scheduleset_init(new_cclasses + i);
@@ -3495,9 +3481,8 @@ CLEAN:
 int build_lp(wctdata *pd, int construct) {
     int  val = 0;
     int  i, j;
-    int *covered = (int *)NULL;
     int  counter = 0;
-    covered = CC_SAFE_MALLOC(pd->njobs, int);
+    int *covered = CC_SAFE_MALLOC(pd->njobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
     fill_int(covered, pd->njobs, 0);
     val = wctlp_init(&(pd->LP), NULL);
@@ -3626,9 +3611,8 @@ CLEAN:
 int build_lp_part(wctdata *pd) {
     int  val = 0;
     int  i, j;
-    int *covered = (int *)NULL;
     int  counter = 0;
-    covered = CC_SAFE_MALLOC(pd->njobs, int);
+    int *covered = CC_SAFE_MALLOC(pd->njobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
     fill_int(covered, pd->njobs, 0);
     wctlp_free(&(pd->LP));
@@ -3760,7 +3744,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         construct_edd(problem, new_sol);
         partlist_to_Scheduleset(new_sol->part, pd->nmachines, pd->njobs,
                                 &(pd->cclasses), &(pd->ccount));
-        solution_free(new_sol);
+        solution_free(&new_sol);
         assert(pd->gallocated >= pd->ccount);
     }
 

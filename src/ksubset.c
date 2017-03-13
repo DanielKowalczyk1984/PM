@@ -3,7 +3,7 @@
 #include "util.h"
 
 int bin_coef(int n, int r) {
-    int i, b;
+    int b;
 
     if ((r < 0) || (n < r)) {
         return (0);
@@ -16,7 +16,7 @@ int bin_coef(int n, int r) {
     b = 1;
 
     if (r > 0) {
-        for (i = 0; i <= (r - 1); i = i + 1) {
+        for (int i = 0; i <= (r - 1); i = i + 1) {
             b = (b * (n - i)) / (i + 1);
         }
     }
@@ -72,13 +72,13 @@ CLEAN:
 }
 
 void k_subset_lex_rank(int *subset, int k, int n, int *r) {
-    int i, j, lo, hi;
+    int i, j;
     (*r) = 0;
     subset[0] = 0;
 
     for (i = 1; i <= k; i = i + 1) {
-        lo = subset[i - 1] + 1;
-        hi = subset[i] - 1;
+        int lo = subset[i - 1] + 1;
+        int hi = subset[i] - 1;
 
         if (lo <= hi) {
             for (j = lo; j <= hi; j = j + 1) {
@@ -89,11 +89,11 @@ void k_subset_lex_rank(int *subset, int k, int n, int *r) {
 }
 
 void k_subset_lex_unrank(int r, int *T, int n, int k) {
-    int x, i, y;
+    int x;
     x = 1;
 
-    for (i = 1; i <= k; i = i + 1) {
-        y = bin_coef(n - x, k - i);
+    for (int i = 1; i <= k; i = i + 1) {
+        int y = bin_coef(n - x, k - i);
 
         while (y <= r) {
             r = r - y;
@@ -116,12 +116,12 @@ int bisearch(int *       sorted,
              const void *target,
              int         size,
              int (*compare)(const void *key1, const void *key2)) {
-    int left, middle, right;
+    int left, right;
     left = 0;
     right = size - 1;
 
     while (left <= right) {
-        middle = (left + right) / 2;
+        int middle = (left + right) / 2;
 
         switch (compare((sorted + (middle)), target)) {
             case -1:
@@ -235,13 +235,13 @@ void ksubset_rec_generate(void *       data,
                           ulong        rq,
                           ulong        nq,
                           void (*visit)(const void *, const void *, ulong)) {
-    int temp;
     set->ct = 0;
     set->rct = 0;
     set->kmin = kmin;
     set->kmax = kmax;
 
     if (set->kmin > set->kmax) {
+        int temp;
         CC_SWAP(set->kmin, set->kmax, temp);
     }
 
@@ -280,6 +280,7 @@ void ksubset_next_rec(void *data, ksubset_rec *set, ulong d) {
 
         case 2:
             q = rv1 & 1;
+            break;
 
         case 3:
             q = (d ^ rv1) & 1;

@@ -67,10 +67,7 @@ void print_dot_file(PricerSolver *solver, char *name) {
     solver->create_dot_zdd(name);
 }
 
-void freeSolver(PricerSolver *src) {
-    delete src;
-    src = (PricerSolver *)NULL;
-}
+void freeSolver(PricerSolver *src) { delete src; }
 
 int solvedblzdd(wctdata *pd) {
     int                      val = 0;
@@ -188,7 +185,6 @@ CLEAN:
 void deletePricerSolver(PricerSolver *solver) {
     if (solver) {
         delete solver;
-        solver = (PricerSolver *)NULL;
     }
 }
 
