@@ -124,29 +124,6 @@
 				"debug"
 			],
 			"path": "."
-		},
-		{
-			"path": "~/tool/libSiPS-1.08p3"
-		},
-		{
-			"file_exclude_patterns":
-			[
-				".*",
-				"Find*"
-			],
-			"folder_exclude_patterns":
-			[
-				"buildlinux",
-				"buildmac",
-				"data",
-				"help",
-				"FindFiles",
-				"scripts",
-				"build_arch",
-				"release",
-				"debug"
-			],
-			"path": "~/Dropbox/NewPMCProject2.0"
 		}
 	],
 	"settings":
@@ -164,17 +141,19 @@
 				"use_only_additional_options": true
 			}
 		},
-
+		"sublimeclang_hide_output_when_empty": true,
 		"sublimeclang_options":
 		[
-		    "-isystem", "/usr/include/*",
-		    "-isystem", "/usr/include/c++/6.3.1/*",
-		    "-Wall"
+			"-isystem",
+			"/usr/include/*",
+			"-isystem",
+			"/usr/include/c++/6.3.1/*",
+			"-Wall"
 		],
 
 		"sublimeclang_options_script": "${project_path}/scripts/cmake_script.py ${project_path}/build_arch",
 		"sublimeclang_hide_output_when_empty": true,
-		"sublimeclang_reparse_on_activated": true,
+		"sublimeclang_reparse_on_activated": false,
 		"sublimeclang_reparse_on_save": true,
 	}
 }
