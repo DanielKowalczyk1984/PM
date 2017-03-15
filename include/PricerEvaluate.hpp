@@ -249,13 +249,12 @@ class Optimal_Solution {
 
     Optimal_Solution(PricerInfoBDD<T> *node) : jobs(node->jobs) {
         obj = node->obj;
-        //jobs = std::vector<int>(node->jobs.begin(),node->jobs.end());
+        // jobs = std::vector<int>(node->jobs.begin(),node->jobs.end());
         cost = node->cost;
         C_max = 0;
     }
 
-    Optimal_Solution() : obj(0), cost(0), C_max(0) {
-    }
+    Optimal_Solution() : obj(0), cost(0), C_max(0) {}
 
     Optimal_Solution &operator=(const Optimal_Solution &other) {
         obj = other.obj;

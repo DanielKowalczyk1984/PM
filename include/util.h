@@ -30,85 +30,85 @@ extern "C" {
 #define CC_OURABS(a) (((a) >= 0) ? (a) : -(a))
 
 #define CCcheck_val_2(val, msg)                                                \
-  {                                                                            \
-    if ((val)) {                                                               \
-      fflush(stdout);                                                          \
-      fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__);       \
-      goto CLEAN;                                                              \
-    }                                                                          \
-  }
+    {                                                                          \
+        if ((val)) {                                                           \
+            fflush(stdout);                                                    \
+            fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__); \
+            goto CLEAN;                                                        \
+        }                                                                      \
+    }
 
 #define CCcheck_val(val, msg)                                                  \
-  {                                                                            \
-    if ((val)) {                                                               \
-      fflush(stdout);                                                          \
-      fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__);       \
-    }                                                                          \
-  }
+    {                                                                          \
+        if ((val)) {                                                           \
+            fflush(stdout);                                                    \
+            fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__); \
+        }                                                                      \
+    }
 
 #define CCcheck_NULL(item, msg)                                                \
-  {                                                                            \
-    if (!(item)) {                                                             \
-      fflush(stdout);                                                          \
-      fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__);       \
-    }                                                                          \
-  }
+    {                                                                          \
+        if (!(item)) {                                                         \
+            fflush(stdout);                                                    \
+            fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__); \
+        }                                                                      \
+    }
 
 #define CCcheck_NULL_3(item, msg)                                              \
-  {                                                                            \
-    if (!(item)) {                                                             \
-      fflush(stdout);                                                          \
-      fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__);       \
-      goto CLEAN;                                                              \
-    }                                                                          \
-  }
+    {                                                                          \
+        if (!(item)) {                                                         \
+            fflush(stdout);                                                    \
+            fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__); \
+            goto CLEAN;                                                        \
+        }                                                                      \
+    }
 
 #define CCcheck_NULL_2(item, msg)                                              \
-  {                                                                            \
-    if (!(item)) {                                                             \
-      fflush(stdout);                                                          \
-      fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__);       \
-      val = 1;                                                                 \
-      goto CLEAN;                                                              \
-    }                                                                          \
-  }
+    {                                                                          \
+        if (!(item)) {                                                         \
+            fflush(stdout);                                                    \
+            fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__); \
+            val = 1;                                                           \
+            goto CLEAN;                                                        \
+        }                                                                      \
+    }
 
 #define CCcheck_fileio(rval, msg)                                              \
-  {                                                                            \
-    if (pval < 0) {                                                            \
-      fflush(stdout);                                                          \
-      fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__);       \
-      val = 1;                                                                 \
-      goto CLEAN;                                                              \
-    }                                                                          \
-  }
+    {                                                                          \
+        if (pval < 0) {                                                        \
+            fflush(stdout);                                                    \
+            fprintf(stderr, "%s at %s, line %d\n", (msg), __FILE__, __LINE__); \
+            val = 1;                                                           \
+            goto CLEAN;                                                        \
+        }                                                                      \
+    }
 
 #define CC_SBUFFER_SIZE (4000)
 #define CC_SFNAME_SIZE (32)
 
 typedef struct CC_SFILE {
-  int status;
-  int desc;
-  int type;
-  int chars_in_buffer;
-  int current_buffer_char; /* only used for reading */
-  int bits_in_last_char;   /* writing: number of empty bits in
-                            * buffer[chars_in_buffer];
-                            * reading: number of full bits in
-                            * buffer[?] */
-  int pos;
-  char fname[CC_SFNAME_SIZE];
-  char hname[CC_SFNAME_SIZE];
-  unsigned char buffer[CC_SBUFFER_SIZE];
+    int status;
+    int desc;
+    int type;
+    int chars_in_buffer;
+    int current_buffer_char; /* only used for reading */
+    int bits_in_last_char;   /* writing: number of empty bits in
+                              * buffer[chars_in_buffer];
+                              * reading: number of full bits in
+                              * buffer[?] */
+    int           pos;
+    char          fname[CC_SFNAME_SIZE];
+    char          hname[CC_SFNAME_SIZE];
+    unsigned char buffer[CC_SBUFFER_SIZE];
 } CC_SFILE;
 
 typedef struct CCrandstate {
-  int a;
-  int b;
-  int arr[55];
+    int a;
+    int b;
+    int arr[55];
 } CCrandstate;
 
-int dbg_lvl(void);
+int  dbg_lvl(void);
 void set_dbg_lvl(int dbglvl);
 
 /****************************************************************************/
@@ -130,29 +130,28 @@ void set_dbg_lvl(int dbglvl);
 /*                                                                          */
 /****************************************************************************/
 
-#define CC_SAFE_MALLOC(nnum, type)                                             \
-  (type *)CCutil_allocrus(((size_t)(nnum)) * sizeof(type))
+#define CC_SAFE_MALLOC(nnum, type) \
+    (type *)CCutil_allocrus(((size_t)(nnum)) * sizeof(type))
 
-#define CC_SAFE_REALLOC(ptr, nnum, type)                                       \
-  (type *)CCutil_reallocrus((void *)ptr, ((size_t)(nnum)) * sizeof(type))
+#define CC_SAFE_REALLOC(ptr, nnum, type) \
+    (type *)CCutil_reallocrus((void *)ptr, ((size_t)(nnum)) * sizeof(type))
 
-#define CC_FREE(object, type)                                                  \
-  {                                                                            \
-    CCutil_freerus((void *)(object));                                          \
-    object = (type *)NULL;                                                     \
-  }
+#define CC_FREE(object, type)             \
+    {                                     \
+        CCutil_freerus((void *)(object)); \
+        object = (type *)NULL;            \
+    }
 
-#define CC_IFFREE(object, type)                                                \
-  {                                                                            \
-    if ((object))                                                              \
-      CC_FREE((object), type);                                                 \
-  }
+#define CC_IFFREE(object, type)                \
+    {                                          \
+        if ((object)) CC_FREE((object), type); \
+    }
 
 void *CCutil_allocrus(size_t size), *CCutil_reallocrus(void *ptr, size_t size),
     CCutil_freerus(void *p);
 
-int CCutil_reallocrus_scale(void **pptr, int *pnnum, int count, double scale,
-                            size_t size),
+int CCutil_reallocrus_scale(
+    void **pptr, int *pnnum, int count, double scale, size_t size),
     CCutil_reallocrus_count(void **pptr, int count, size_t size);
 
 int pmcfile_exists(const char *filename);
@@ -168,17 +167,17 @@ int pmcdir_create(const char *dirname);
 /****************************************************************************/
 
 typedef struct heapelm {
-  int key;
-  void *obj;
+    int   key;
+    void *obj;
 } heapelm;
 
 typedef struct Heap_t {
-  int end;
-  int size;
-  int *perm;
-  int *iperm;
+    int  end;
+    int  size;
+    int *perm;
+    int *iperm;
 
-  heapelm *elms;
+    heapelm *elms;
 } pmcheap;
 
 int pmcheap_init(pmcheap **heap, int size), pmcheap_free(pmcheap *heap),
@@ -247,7 +246,9 @@ void CCutil_int_array_quicksort(int *len, int n),
 int CCutil_quickselect(int *len, int p, int n, int m);
 int quickselect(int *V, int N, int k);
 
-int bisearch(int *sorted, const void *target, int size,
+int bisearch(int *       sorted,
+             const void *target,
+             int         size,
              int (*compare)(const void *key1, const void *key2));
 
 /****************************************************************************/
@@ -289,10 +290,10 @@ void print_line(void);
 /****************************************************************************/
 
 typedef struct CCutil_timer {
-  double szeit;
-  double cum_zeit;
-  char name[40];
-  int count;
+    double szeit;
+    double cum_zeit;
+    char   name[40];
+    int    count;
 } CCutil_timer;
 
 double CCutil_zeit(void), CCutil_real_zeit(void),
@@ -322,10 +323,10 @@ int CCrandom_dbl_perm(double *perm, int n);
 /****************************************************************************/
 
 typedef struct ksubset_lex {
-  int n;
-  int j;
-  int m;
-  int *x;
+    int  n;
+    int  j;
+    int  m;
+    int *x;
 } ksubset_lex;
 
 int ksubset_init(int n, int k, ksubset_lex *set);
@@ -337,21 +338,25 @@ int ksubset_check(ksubset_lex *set);
 typedef unsigned long ulong;
 
 typedef struct ksubset_rec {
-  ulong n;
-  ulong kmin, kmax;
-  ulong *rv;
-  ulong ct;
-  ulong rct;
-  ulong rq;
-  ulong pq;
-  ulong nq;
-  void (*visit)(const void *, const void *, ulong);
+    ulong  n;
+    ulong  kmin, kmax;
+    ulong *rv;
+    ulong  ct;
+    ulong  rct;
+    ulong  rq;
+    ulong  pq;
+    ulong  nq;
+    void (*visit)(const void *, const void *, ulong);
 } ksubset_rec;
 
 int ksubset_rec_init(ksubset_rec *set, ulong n);
 void ksubset_rec_free(ksubset_rec *set);
-void ksubset_rec_generate(void *data, ksubset_rec *set, ulong kmin, ulong kmax,
-                          ulong rq, ulong nq,
+void ksubset_rec_generate(void *       data,
+                          ksubset_rec *set,
+                          ulong        kmin,
+                          ulong        kmax,
+                          ulong        rq,
+                          ulong        nq,
                           void (*visit)(const void *, const void *, ulong));
 void ksubset_next_rec(void *data, ksubset_rec *set, ulong d);
 
@@ -418,13 +423,13 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 typedef enum {
-  /** A minimum heap. */
+    /** A minimum heap. */
 
-  BINOMIAL_HEAP_TYPE_MIN,
+    BINOMIAL_HEAP_TYPE_MIN,
 
-  /** A maximum heap. */
+    /** A maximum heap. */
 
-  BINOMIAL_HEAP_TYPE_MAX
+    BINOMIAL_HEAP_TYPE_MAX
 } BinomialHeapType;
 
 /**
@@ -468,7 +473,7 @@ typedef struct _BinomialHeap BinomialHeap;
  *                         to allocate the memory.
  */
 
-BinomialHeap *binomial_heap_new(BinomialHeapType heap_type,
+BinomialHeap *binomial_heap_new(BinomialHeapType        heap_type,
                                 BinomialHeapCompareFunc compare_func);
 
 /**

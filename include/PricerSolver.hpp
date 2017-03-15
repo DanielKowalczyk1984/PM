@@ -1,9 +1,12 @@
-#include <iostream>
-#include <vector>
-#include "PricerConstruct.hpp"
+#ifndef INCLUDE_PRICERSOLVER_HPP
+#define INCLUDE_PRICERSOLVER_HPP
+
 #include <PricerEvaluate.hpp>
+#include <iostream>
 #include <tdzdd/DdStructure.hpp>
 #include <tdzdd/op/Lookahead.hpp>
+#include <vector>
+#include "PricerConstruct.hpp"
 
 class PricerSolver {
    public:
@@ -514,13 +517,8 @@ class PricerSolver {
             FarkasZDDdouble(pi, jobarray, nbjobs, H_min, H_max), farkas_table);
     }
 
-    void
-    addDuetimeConstraint() {
-    }
-
-    void addReleasetimeConstraint() {}
-
-    PricerSolver &operator=(PricerSolver const &other) {
+    PricerSolver &
+    operator=(PricerSolver const &other) {
         if (this != &other) {
             dd = new tdzdd::DdStructure<2>;
             zdd = new tdzdd::DdStructure<2>;
@@ -569,3 +567,5 @@ class PricerSolver {
         }
     }
 };
+
+#endif  // INCLUDE_PRICERSOLVER_HPP

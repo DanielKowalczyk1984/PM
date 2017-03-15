@@ -14,8 +14,8 @@ extern "C" {
  */
 
 struct _pair_job_machine {
-  int job;
-  int machine;
+    int job;
+    int machine;
 };
 
 typedef struct _pair_job_machine pair_job_machine;
@@ -40,8 +40,8 @@ gint compare_func1(gconstpointer a, gconstpointer b, void *user_data);
  */
 
 typedef struct _MACHINE {
-  double totweight;
-  double totcompletion;
+    double totweight;
+    double totcompletion;
 } MACHINE;
 
 int lowerbound_cw(Job *array, int njobs, int nmachines);
@@ -95,25 +95,25 @@ void print_list1(SS *scatter_search);
 
 /* local search methods */
 typedef struct _slope_t {
-  int b1;    /* begin of segment*/
-  int b2;    /* end of segment*/
-  int c;     /* value of the function at b1*/
-  int alpha; /* slope of the function */
+    int b1;    /* begin of segment*/
+    int b2;    /* end of segment*/
+    int c;     /* value of the function at b1*/
+    int alpha; /* slope of the function */
 } slope_t;
 
 typedef struct _processing_list_data {
-  int pos;
-  int p;
+    int pos;
+    int p;
 } processing_list_data;
 
 typedef struct _local_search_data {
-  int nmachines;
-  int njobs;
-  int **W;
-  GList ***g;
-  processing_list_data **processing_list_1;
-  processing_list_data **processing_list_2;
-  int updated;
+    int                    nmachines;
+    int                    njobs;
+    int **                 W;
+    GList ***              g;
+    processing_list_data **processing_list_1;
+    processing_list_data **processing_list_2;
+    int                    updated;
 } local_search_data;
 
 local_search_data *local_search_data_init(solution *sol);
@@ -123,16 +123,23 @@ void local_search_data_free(local_search_data **data);
 int local_search_create_W(solution *sol, local_search_data *data);
 int local_search_create_g(solution *sol, local_search_data *data);
 /** Search for the best intra insertion */
-void local_search_forward_insertion(solution *sol, local_search_data *data,
-                                    int l);
-void local_search_backward_insertion(solution *sol, local_search_data *data,
-                                     int l);
-void local_search_swap_intra(solution *sol, local_search_data *data, int l1,
-                             int l2);
-void local_search_insertion_inter(solution *sol, local_search_data *data,
-                                  int l);
-void local_search_swap_inter(solution *sol, local_search_data *data, int l1,
-                             int l2);
+void local_search_forward_insertion(solution *         sol,
+                                    local_search_data *data,
+                                    int                l);
+void local_search_backward_insertion(solution *         sol,
+                                     local_search_data *data,
+                                     int                l);
+void local_search_swap_intra(solution *         sol,
+                             local_search_data *data,
+                             int                l1,
+                             int                l2);
+void local_search_insertion_inter(solution *         sol,
+                                  local_search_data *data,
+                                  int                l);
+void local_search_swap_inter(solution *         sol,
+                             local_search_data *data,
+                             int                l1,
+                             int                l2);
 void RVND(solution *sol, local_search_data *data);
 
 /**
@@ -209,11 +216,13 @@ int read_problem(wctproblem *problem);
 
 /** Preprocess data */
 gint compare_readytime(gconstpointer a, gconstpointer b);
-int calculate_ready_due_times(Job *jobarray, int njobs, int nmachines,
+int calculate_ready_due_times(Job *  jobarray,
+                              int    njobs,
+                              int    nmachines,
                               double Hmin);
 int calculate_Hmax(Job *jobarray, int nmachines, int njobs);
-int calculate_Hmin(int *durations, int nmachines, int njobs, int *perm,
-                   double *H);
+int calculate_Hmin(
+    int *durations, int nmachines, int njobs, int *perm, double *H);
 int preprocess_data(wctproblem *problem);
 
 /**

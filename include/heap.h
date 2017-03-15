@@ -9,17 +9,17 @@ extern "C" {
 #define CCutil_MAXDBL (1e30)
 #define CCutil_MAXINT (2147483647)
 typedef struct heapelm {
-  int key;
-  void *obj;
+    int   key;
+    void *obj;
 } heapelm;
 
 typedef struct Heap_t {
-  int end;
-  int size;
-  int *perm;
-  int *iperm;
+    int  end;
+    int  size;
+    int *perm;
+    int *iperm;
 
-  heapelm *elms;
+    heapelm *elms;
 } pmcheap;
 
 int pmcheap_init(pmcheap **heap, int size), pmcheap_free(pmcheap *heap),
