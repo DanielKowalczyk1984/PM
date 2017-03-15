@@ -77,3 +77,4 @@ build_arch/*
 debug/*
 release/*
 build/*
+third_party
