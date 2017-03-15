@@ -9,9 +9,9 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#include "datastructsol.h"
-#include "defs.h"
-#include "util.h"
+#include <datastructsol.h>
+#include <defs.h>
+#include <util.h>
 
 void iterator(gpointer key, gpointer value, gpointer user_data);
 

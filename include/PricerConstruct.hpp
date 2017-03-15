@@ -1,7 +1,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <vector>
 #include "datastructsol.h"
-#include "tdzdd/DdSpec.hpp"
+#include <tdzdd/DdSpec.hpp>
 
 class conflict_state {
    public:

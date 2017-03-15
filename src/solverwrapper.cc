@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
-#include "PricerSolver.hpp"
-#include "wct.h"
-#include "wctparms.h"
+#include <PricerSolver.hpp>
+#include <wct.h>
+#include <wctparms.h>
 
 template <typename T = double, bool reverse = false>
 int construct_sol(Scheduleset **       set,

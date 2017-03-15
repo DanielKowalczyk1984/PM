@@ -1,7 +1,7 @@
-#include "wctparms.h"
+#include <wctparms.h>
 #include <limits.h>
 #include <string.h>
-#include "util.h"
+#include <util.h>
 
 void wctparms_init(wctparms *parms) {
     parms->init_upper_bound = INT_MAX;

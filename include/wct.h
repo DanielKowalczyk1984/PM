@@ -113,8 +113,6 @@ typedef struct _local_search_data {
   GList ***g;
   processing_list_data **processing_list_1;
   processing_list_data **processing_list_2;
-  // processing_list_data **processing_list_inter1;
-  // processing_list_data **processing_list_inter2;
   int updated;
 } local_search_data;
 
@@ -135,7 +133,6 @@ void local_search_insertion_inter(solution *sol, local_search_data *data,
                                   int l);
 void local_search_swap_inter(solution *sol, local_search_data *data, int l1,
                              int l2);
-
 void RVND(solution *sol, local_search_data *data);
 
 /**

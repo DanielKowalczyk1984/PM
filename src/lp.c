@@ -8,8 +8,8 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#include "lp.h"
-#include "util.h"
+#include <lp.h>
+#include <util.h>
 
 const double int_tolerance = 0.00001;
 

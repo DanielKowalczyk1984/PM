@@ -1,6 +1,6 @@
 #include <sys/utsname.h>
-#include "defs.h"
-#include "util.h"
+#include <defs.h>
+#include <util.h>
 
 int bin_coef(int n, int r) {
     int b;

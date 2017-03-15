@@ -1,5 +1,5 @@
 #include <assert.h>
-#include "wct.h"
+#include <wct.h>
 
 int compare_process_list(gconstpointer a, gconstpointer b);
 int compare_process_list_b(gconstpointer a, gconstpointer b);

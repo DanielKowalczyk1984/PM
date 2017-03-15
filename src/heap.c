@@ -9,8 +9,8 @@
 ////////////////////////////////////////////////////////////////
 
 #include <assert.h>
-#include "defs.h"
-#include "util.h"
+#include <defs.h>
+#include <util.h>
 
 /* #define HEAP_INTEGRITY_CHECKS 1 */
 

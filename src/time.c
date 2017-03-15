@@ -66,8 +66,8 @@
 /*                                                                          */
 /****************************************************************************/
 
-#include "defs.h"
-#include "util.h"
+#include <defs.h>
+#include <util.h>
 
 #ifdef HAVE_GETRUSAGE
 

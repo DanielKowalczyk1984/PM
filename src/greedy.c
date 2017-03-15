@@ -1,4 +1,4 @@
-#include "wct.h"
+#include <wct.h>
 
 static int add_feasible_solution(wctproblem *problem, solution *new_sol);
 static int solution_set_c(solution *sol);

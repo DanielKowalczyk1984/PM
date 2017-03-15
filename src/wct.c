@@ -1,8 +1,8 @@
-#include "wct.h"
+#include <wct.h>
+#include <wctparms.h>
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-#include "wctparms.h"
 
 #define MEAN_ERROR 0.5
 

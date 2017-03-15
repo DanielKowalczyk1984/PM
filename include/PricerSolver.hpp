@@ -1,9 +1,9 @@
 #include <iostream>
 #include <vector>
 #include "PricerConstruct.hpp"
-#include "PricerEvaluate.hpp"
-#include "tdzdd/DdStructure.hpp"
-#include "tdzdd/op/Lookahead.hpp"
+#include <PricerEvaluate.hpp>
+#include <tdzdd/DdStructure.hpp>
+#include <tdzdd/op/Lookahead.hpp>
 
 class PricerSolver {
    public:
@@ -545,7 +545,7 @@ class PricerSolver {
         tdzdd::DdStructure<2>::const_iterator it = zdd->begin();
 
         for (; it != zdd->end(); ++it) {
-            std::vector<int>::const_iterator i = (*it).begin();
+            std::set<int>::const_iterator i = (*it).begin();
 
             for (; i != (*it).end(); ++i) {
                 std::cout << nbjobs - *i << " ";
@@ -559,7 +559,7 @@ class PricerSolver {
         tdzdd::DdStructure<2>::const_iterator it = dd->begin();
 
         for (; it != dd->end(); ++it) {
-            std::vector<int>::const_iterator i = (*it).begin();
+            std::set<int>::const_iterator i = (*it).begin();
 
             for (; i != (*it).end(); ++i) {
                 std::cout << nbjobs - *i << " ";

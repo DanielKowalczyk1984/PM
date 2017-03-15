@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "datastructsol.h"
-#include "util.h"
+#include <datastructsol.h>
+#include <util.h>
 
 int partition_order(const void *a, const void *b, void *data) {
     (void)data;

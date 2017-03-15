@@ -8,9 +8,9 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#include "datastructsol.h"
-#include "defs.h"
-#include "util.h"
+#include <datastructsol.h>
+#include <defs.h>
+#include <util.h>
 
 static int permute_nodes(int * invorder,
                          int   vcount,

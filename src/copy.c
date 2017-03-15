@@ -1,4 +1,4 @@
-#include "util.h"
+#include <util.h>
 
 void fill_int(int *dst, int nbr, int val) {
     if (nbr % 1 != 0) {
