@@ -40,7 +40,6 @@ ExternalProject_Add(project_TdZdd
     BUILD_COMMAND ""
     CONFIGURE_COMMAND ""
     INSTALL_COMMAND ""
-    EXCLUDE_FROM_ALL
 )
 
 ExternalProject_Get_Property(project_TdZdd source_dir)
@@ -58,7 +57,7 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
 file(GLOB SOURCE_FILES  "src/*.c" "src/*.cc")
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-target_include_directories(${PROJECT_NAME} PRIVATE ${TdZDD_INCLUDE_DIR} ${EGlib_INCLUDE_DIR} ${GUROBI_INCLUDE_DIR} ${GLIB_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${COMMON_INCLUDES})
+target_include_directories(${PROJECT_NAME} PUBLIC ${TdZDD_INCLUDE_DIR} ${EGlib_INCLUDE_DIR} ${GUROBI_INCLUDE_DIR} ${GLIB_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${COMMON_INCLUDES})
 target_link_libraries(${PROJECT_NAME} ${EGlib_LIBRARY_DIR} ${GUROBI_LIBRARY} ${GLIB_LIBRARIES} ${Boost_LIBRARIES} -lm -lpthread)
 
 # Include CppCcheck
