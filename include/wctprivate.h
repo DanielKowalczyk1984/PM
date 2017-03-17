@@ -2,10 +2,11 @@
 #define WCT_PRIVATE_H
 
 #include <Scheduleset.h>
+#include <util.h>
 #include <solution.h>
-#include "lp.h"
-#include "util.h"
-#include "wctparms.h"
+#include <binomial-heap.h>
+#include <lp.h>
+#include <wctparms.h>
 
 #ifdef __cplusplus
 extern "C" {

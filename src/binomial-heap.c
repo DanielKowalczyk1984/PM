@@ -21,6 +21,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <limits.h>
 #include <string.h>
 
+#include <binomial-heap.h>
 #include <util.h>
 
 /* malloc() / free() testing */
