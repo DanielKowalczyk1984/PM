@@ -8,8 +8,8 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#include <datastructsol.h>
 #include <defs.h>
+#include <graph.h>
 #include <util.h>
 
 static int permute_nodes(int * invorder,

@@ -20,7 +20,8 @@
 /*  correctness or usefulness of this code.                                 */
 /*                                                                          */
 /****************************************************************************/
-
+#ifndef INCLUDE_CONFIG_H_
+#define INCLUDE_CONFIG_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -142,8 +143,11 @@ extern "C" {
 
 /* Define if unistd.h uses __vfork but does not prototype it */
 /* This happens under Irix 6 */
+
 #define CC_PROTO___VFORK
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif  // INCLUDE_CONFIG_H_

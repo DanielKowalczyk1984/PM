@@ -1,7 +1,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <tdzdd/DdSpec.hpp>
 #include <vector>
-#include "datastructsol.h"
+#include "solution.h"
 
 class conflict_state {
    public:
@@ -42,7 +42,10 @@ class PricerSpec : public tdzdd::DdSpec<PricerSpec, int, 2> {
         }
     }
 
-    ~PricerSpec() {}
+    ~PricerSpec() {
+        delete[] min_p;
+        delete[] sum_p;
+    }
 
     int getRoot(int &state) const {
         state = 0;
@@ -118,15 +121,15 @@ class PricerSpec : public tdzdd::DdSpec<PricerSpec, int, 2> {
 
    private:
     int min_job(int j, int state) const {
-        int i, val = nbjobs;
+        int i, val = j + 1;
 
-        for (i = j + 1; i < nbjobs; ++i) {
-            if (state >= jobarray[i].releasetime &&
-                state <= jobarray[i].duetime - jobarray[i].processingime) {
-                val = i;
-                break;
-            }
-        }
+        // for (i = j + 1; i < nbjobs; ++i) {
+        //     if (state >= jobarray[i].releasetime &&
+        //         state <= jobarray[i].duetime - jobarray[i].processingime) {
+        //         val = i;
+        //         break;
+        //     }
+        // }
 
         return val;
     }

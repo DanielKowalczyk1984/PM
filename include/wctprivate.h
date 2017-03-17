@@ -1,7 +1,8 @@
 #ifndef WCT_PRIVATE_H
 #define WCT_PRIVATE_H
 
-#include "datastructsol.h"
+#include <Scheduleset.h>
+#include <solution.h>
 #include "lp.h"
 #include "util.h"
 #include "wctparms.h"

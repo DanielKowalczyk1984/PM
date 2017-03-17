@@ -1,14 +1,12 @@
 #ifndef _WCT_H
 #define _WCT_H
 
-#include "datastructsol.h"
-#include "defs.h"
-#include "wctprivate.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include "defs.h"
+#include "wctprivate.h"
 /**
  * greedy.c
  */
@@ -29,6 +27,8 @@ int construct_spt(wctproblem *prob, solution *sol);
 int construct_random(wctproblem *prob, solution *sol, GRand *rand_uniform);
 
 int heuristic_rpup(wctproblem *prob);
+int partlist_to_Scheduleset(
+    partlist *part, int nbpart, int njobs, Scheduleset **classes, int *ccount);
 
 /*
 compare_functions

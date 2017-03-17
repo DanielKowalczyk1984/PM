@@ -486,7 +486,9 @@ int local_search_create_g(solution *sol, local_search_data *data) {
 static void local_search_update_insertion(
     solution *sol, int i_best, int j_best, int k_best, int l, int improvement) {
     Job *tmp;
-    int  old = sol->tw;
+#ifdef DEBUG
+    int old = sol->tw;
+#endif
     sol->tw -= sol->part[k_best].tw;
     sol->part[k_best].c = 0;
     sol->part[k_best].tw = 0;
@@ -507,8 +509,10 @@ static void local_search_update_insertion(
     }
 
     sol->tw += sol->part[k_best].tw;
-    assert(old - sol->tw == improvement);
     sol->part[k_best].used = 1;
+#ifdef DEBUG
+    assert(old - sol->tw == improvement);
+#endif
 }
 
 static void local_search_update_insertion_inter(solution *sol,
@@ -519,7 +523,9 @@ static void local_search_update_insertion_inter(solution *sol,
                                                 int       l,
                                                 int       improvement) {
     Job *tmp;
-    int  old = sol->tw;
+#ifdef DEBUG
+    int old = sol->tw;
+#endif
     sol->tw -= sol->part[k_best].tw;
     sol->tw -= sol->part[kk_best].tw;
     sol->part[k_best].c = 0;
@@ -552,7 +558,9 @@ static void local_search_update_insertion_inter(solution *sol,
     }
 
     sol->tw += sol->part[k_best].tw + sol->part[kk_best].tw;
+#ifdef DEBUG
     assert(old - sol->tw == improvement);
+#endif
     sol->part[k_best].used = 1;
     sol->part[kk_best].used = 1;
 }
@@ -567,7 +575,9 @@ static void local_search_update_swap(solution *sol,
     Job *     tmp;
     gpointer  swap;
     partlist *part = sol->part + k_best;
-    int       old = sol->tw;
+#ifdef DEBUG
+    int old = sol->tw;
+#endif
     sol->tw -= part->tw;
     part->c = 0;
     part->tw = 0;
@@ -610,7 +620,9 @@ static void local_search_update_swap(solution *sol,
     }
 
     sol->tw += part->tw;
+#ifdef DEBUG
     assert(old - sol->tw == improvement);
+#endif
     part->used = 1;
 }
 
@@ -626,7 +638,9 @@ static void local_search_update_inter_swap(solution *sol,
     gpointer  swap;
     partlist *part1 = sol->part + k_best;
     partlist *part2 = sol->part + kk_best;
-    int       old = sol->tw;
+#ifdef DEBUG
+    int old = sol->tw;
+#endif
     sol->tw -= part1->tw + part2->tw;
     part1->c = 0;
     part1->tw = 0;
@@ -679,7 +693,9 @@ static void local_search_update_inter_swap(solution *sol,
     }
 
     sol->tw += part1->tw + part2->tw;
+#ifdef DEBUG
     assert(old - sol->tw == improvement);
+#endif
     part1->used = 1;
     part2->used = 1;
 }

@@ -1,3 +1,4 @@
+#include <solution.h>
 #include <algorithm>
 #include <array>
 #include <boost/dynamic_bitset.hpp>
@@ -5,7 +6,6 @@
 #include <climits>
 #include <unordered_map>
 #include <vector>
-#include "datastructsol.h"
 #include "tdzdd/DdEval.hpp"
 #include "tdzdd/dd/NodeTable.hpp"
 

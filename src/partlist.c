@@ -1,5 +1,6 @@
+#include <partlist.h>
+#include <solution.h>
 #include <stdio.h>
-#include <datastructsol.h>
 #include <util.h>
 
 int partition_order(const void *a, const void *b, void *data) {

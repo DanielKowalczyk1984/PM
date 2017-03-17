@@ -1,5 +1,5 @@
+#include <solution.h>
 #include <string.h>
-#include <datastructsol.h>
 #include <util.h>
 
 gint comparefunc(const void *a, const void *b, void *data);

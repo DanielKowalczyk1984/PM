@@ -17,6 +17,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/utsname.h>
 
 #define CCutil_MAXDBL (1e30)
 #define CCutil_MAXINT (2147483647)
@@ -147,51 +148,19 @@ void set_dbg_lvl(int dbglvl);
         if ((object)) CC_FREE((object), type); \
     }
 
-void *CCutil_allocrus(size_t size), *CCutil_reallocrus(void *ptr, size_t size),
-    CCutil_freerus(void *p);
+void *CCutil_allocrus(size_t size);
+void *CCutil_reallocrus(void *ptr, size_t size);
+void CCutil_freerus(void *p);
 
 int CCutil_reallocrus_scale(
-    void **pptr, int *pnnum, int count, double scale, size_t size),
-    CCutil_reallocrus_count(void **pptr, int count, size_t size);
+    void **pptr, int *pnnum, int count, double scale, size_t size);
+int CCutil_reallocrus_count(void **pptr, int count, size_t size);
 
 int pmcfile_exists(const char *filename);
 
 int pmcdir_exists(const char *dirname);
 
 int pmcdir_create(const char *dirname);
-
-/****************************************************************************/
-/*                                                                          */
-/*                             heap.c                                       */
-/*                                                                          */
-/****************************************************************************/
-
-typedef struct heapelm {
-    int   key;
-    void *obj;
-} heapelm;
-
-typedef struct Heap_t {
-    int  end;
-    int  size;
-    int *perm;
-    int *iperm;
-
-    heapelm *elms;
-} pmcheap;
-
-int pmcheap_init(pmcheap **heap, int size), pmcheap_free(pmcheap *heap),
-    pmcheap_free_all(pmcheap *heap),
-    pmcheap_insert(pmcheap *heap, int key, void *obj),
-    pmcheap_remove(pmcheap *heap, int href),
-    pmcheap_get_key(const pmcheap *heap, int href),
-    pmcheap_size(const pmcheap *heap),
-    pmcheap_decrease_key(pmcheap *heap, int href, int new_key),
-    pmcheap_relabel(pmcheap *heap, int href, int new_key);
-void *pmcheap_get_obj(const pmcheap *heap, int href);
-
-void *pmcheap_min(pmcheap *heap), pmcheap_reset(pmcheap *heap),
-    pmcheap_reset_free(pmcheap *heap);
 
 /****************************************************************************/
 /*                                                                          */
@@ -237,11 +206,11 @@ int CCutil_swrite(CC_SFILE *f, char *buf, int size),
 /*                                                                          */
 /****************************************************************************/
 
-void CCutil_int_array_quicksort(int *len, int n),
-    CCutil_int_array_quicksort_0(int *len, int n),
-    CCutil_int_perm_quicksort(int *perm, int *len, int n),
-    CCutil_double_perm_quicksort(int *perm, double *len, int n),
-    CCutil_int_perm_quicksort_0(int *perm, int *len, int n);
+void CCutil_int_array_quicksort(int *len, int n);
+void CCutil_int_array_quicksort_0(int *len, int n);
+void CCutil_int_perm_quicksort(int *perm, int *len, int n);
+void CCutil_double_perm_quicksort(int *perm, double *len, int n);
+void CCutil_int_perm_quicksort_0(int *perm, int *len, int n);
 
 int CCutil_quickselect(int *len, int p, int n, int m);
 int quickselect(int *V, int N, int k);
@@ -273,13 +242,6 @@ void CCutil_readstr(FILE *f, char *s, int len), CCutil_printlabel(void);
 /* Construction of the header of the program*/
 int program_header(int ac, char **av);
 void dump_uname(void);
-
-/*Generation of k-subsets*/
-int bin_coef(int n, int r);
-void k_subset_init(int n, int k, int *subset, int *flag);
-int k_subset_lex_successor(int n, int k, int *subset, int *flag);
-void k_subset_lex_rank(int *subset, int k, int n, int *r);
-void k_subset_lex_unrank(int r, int *T, int n, int k);
 
 void print_line(void);
 
@@ -315,50 +277,6 @@ double getCPUTime(void);
 
 int CCrandom_int_perm(int *perm, int n);
 int CCrandom_dbl_perm(double *perm, int n);
-
-/****************************************************************************/
-/*                                                                          */
-/*                             ksubset.c                                    */
-/*                                                                          */
-/****************************************************************************/
-
-typedef struct ksubset_lex {
-    int  n;
-    int  j;
-    int  m;
-    int *x;
-} ksubset_lex;
-
-int ksubset_init(int n, int k, ksubset_lex *set);
-void ksubset_free(ksubset_lex *set);
-int ksubset_next(ksubset_lex *set);
-int *ksubset_data(ksubset_lex *set);
-int ksubset_check(ksubset_lex *set);
-
-typedef unsigned long ulong;
-
-typedef struct ksubset_rec {
-    ulong  n;
-    ulong  kmin, kmax;
-    ulong *rv;
-    ulong  ct;
-    ulong  rct;
-    ulong  rq;
-    ulong  pq;
-    ulong  nq;
-    void (*visit)(const void *, const void *, ulong);
-} ksubset_rec;
-
-int ksubset_rec_init(ksubset_rec *set, ulong n);
-void ksubset_rec_free(ksubset_rec *set);
-void ksubset_rec_generate(void *       data,
-                          ksubset_rec *set,
-                          ulong        kmin,
-                          ulong        kmax,
-                          ulong        rq,
-                          ulong        nq,
-                          void (*visit)(const void *, const void *, ulong));
-void ksubset_next_rec(void *data, ksubset_rec *set, ulong d);
 
 /****************************************************************************/
 /*                                                                          */

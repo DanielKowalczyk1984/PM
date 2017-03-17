@@ -30,14 +30,15 @@ class PricerSolver {
           use_zdd(_use_zdd) {
         if (use_zdd) {
             PricerSpec ps(jobarray, nbjobs, Hmin, Hmax);
-            dd = new tdzdd::DdStructure<2>(ps);
+            dd = new tdzdd::DdStructure<2>(100000);
             zdd = new tdzdd::DdStructure<2>;
             *zdd = *dd;
             zdd->zddReduce();
             printf("size BDD = %lu, size ZDD= %lu\n", dd->size(), zdd->size());
-            init_zdd_table();
-            init_bdd_table();
-            init_table_farkas();
+            // init_zdd_table();
+            // init_bdd_table();
+            // init_table_farkas();
+            create_dot_zdd("test.txt");
             delete[] ps.sum_p;
             delete[] ps.min_p;
         }
@@ -244,7 +245,7 @@ class PricerSolver {
             elist_differ[1] = v2;
         }
 
-        ConflictConstraints conflict(nbjobs, elist_same, ecount_same,
+        ConflictConstraints conflict(100000, elist_same, ecount_same,
                                      elist_differ, ecount_diff);
         zdd->zddSubset(tdzdd::ZddLookahead<ConflictConstraints>(conflict));
         zdd->zddReduce();
@@ -281,7 +282,7 @@ class PricerSolver {
                                   int *elist_differ,
                                   int  ecount_differ) {
         if (ecount_same + ecount_differ > 0) {
-            zdd = new tdzdd::DdStructure<2>;
+            // zdd = new tdzdd::DdStructure<2>;
             ConflictConstraints conflict(nbjobs, elist_same, ecount_same,
                                          elist_differ, ecount_differ);
             zdd->zddSubset(conflict);
@@ -290,7 +291,7 @@ class PricerSolver {
         }
 
         init_zdd_table();
-        init_table_farkas();
+        // init_table_farkas();
     }
 
     void free_bdd_solver(int ecount_same, int ecount_differ) {

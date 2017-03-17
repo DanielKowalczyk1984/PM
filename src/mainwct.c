@@ -278,11 +278,17 @@ static int print_to_screen(wctproblem *problem) {
 }
 
 int main(int ac, char **av) {
-    int        val = 0;
-    wctproblem problem;
-    wctdata *  pd;
-    wctparms * parms;
-    double     start_time;
+    int           val = 0;
+    wctproblem    problem;
+    wctdata *     pd;
+    wctparms *    parms;
+    PricerSolver *solver;
+    int *         a = CC_SAFE_MALLOC(1000, int);
+    for (unsigned i = 0; i < 100; ++i) {
+        a[2 * i] = 2;
+        a[2 * i + 1] = 4 + 50 * i;
+    }
+    double start_time;
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header") wctproblem_init(&problem);
     CCutil_start_timer(&(problem.tot_cputime));
@@ -305,12 +311,16 @@ int main(int ac, char **av) {
     val = read_problem(&problem);
     CCcheck_val_2(val, "read_adjlist failed");
     val = preprocess_data(&problem);
+    printf("%d \n", problem.njobs * problem.T - problem.psum);
     CCcheck_val_2(val, "Failed at preprocess_data");
+    // heuristic_rpup(&problem);
+    solver = newSolver(problem.jobarray, problem.njobs, pd->H_min, pd->H_max);
+    for (int i = 0; i < 100; ++i) {
+        add_one_conflict(solver, parms, a[2 * i], a[2 * i + 1], 0);
+    }
+    printf("test %zu\n", get_datasize(solver));
     printf("Reading and preprocessing of the data took %f seconds\n",
            CCutil_zeit() - start_time);
-    //heuristic_rpup(&problem);
-
-
 
 // /** Computing initial lowerbound */
 // CCutil_start_timer(&(problem.tot_lb));
@@ -320,7 +330,6 @@ int main(int ac, char **av) {
 //        problem.tot_lb.cum_zeit);
 // /** Construction Pricersolver at the root node */
 // CCutil_start_resume_time(&(problem.tot_build_dd));
-    //solver = newSolver(problem.jobarray, problem.njobs, pd->H_min, pd->H_max);
 
 // CCutil_suspend_timer(&(problem.tot_build_dd));
 // /** Construct Feasible solutions */
@@ -330,10 +339,10 @@ int main(int ac, char **av) {
 // /** Compute Schedule with Branch and Price */
 // compute_schedule(&problem);
 // /** Print all the information to screen and csv */
-    // if (problem.parms.print) {
-    //     print_to_csv(&problem);
-    // }
-    // print_to_screen(&problem);
+// if (problem.parms.print) {
+//     print_to_csv(&problem);
+// }
+// print_to_screen(&problem);
 CLEAN:
     wctproblem_free(&problem);
     return val;

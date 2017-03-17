@@ -1,8 +1,10 @@
-#include <wct.h>
-#include <wctparms.h>
 #include <assert.h>
+#include <graph.h>
+#include <heap.h>
 #include <math.h>
 #include <string.h>
+#include <wct.h>
+#include <wctparms.h>
 
 #define MEAN_ERROR 0.5
 
@@ -693,6 +695,70 @@ CLEAN:
 
     if (val) {
         CC_IFFREE(_ojobarray, Job *);
+    }
+
+    return val;
+}
+
+/**
+ * converts partlist to a scheduleset
+ * @param  part    partlist to convert
+ * @param  nbpart  number of machiines
+ * @param  njobs   number of jobs
+ * @param  classes array of scheduleset
+ * @param  ccount  number of schedulesets in the array
+ */
+int partlist_to_Scheduleset(
+    partlist *part, int nbpart, int njobs, Scheduleset **classes, int *ccount) {
+    int val = 0;
+    int i, j = 0, k = 0;
+    Schedulesets_free(classes, ccount);
+    *ccount = j;
+    Scheduleset *temp_sets = CC_SAFE_MALLOC(*ccount, Scheduleset);
+    CCcheck_NULL_2(temp_sets, "Failed to allocate memory to temp_sets");
+
+    for (i = 0; i < nbpart; i++) {
+        if (0) {
+            Scheduleset_init(temp_sets + k);
+            temp_sets[k].totweight = part[i].c;
+            temp_sets[k].members = CC_SAFE_MALLOC(temp_sets[k].count + 1, int);
+            CCcheck_NULL(temp_sets[k].members,
+                         "Failed to allocate memory to members");
+            temp_sets[k].totwct = 0;
+            temp_sets[k].C = CC_SAFE_MALLOC(temp_sets[k].count, int);
+            CCcheck_NULL(temp_sets[k].C, "Failed to allocate memory to C");
+            temp_sets[k].table =
+                g_hash_table_new(g_direct_hash, g_direct_equal);
+            CCcheck_NULL(temp_sets[k].table, "Failed to construct table");
+            GList *v = (GList *)NULL;
+            j = 0;
+            int completion = 0;
+
+            while (v != NULL) {
+                Job *job = (Job *)v->data;
+                completion += job->processingime;
+                temp_sets[k].C[j] = completion;
+                temp_sets[k].members[j] = job->job;
+                g_hash_table_insert(temp_sets[k].table,
+                                    GINT_TO_POINTER(job->job),
+                                    temp_sets[k].C + j);
+                temp_sets[k].totwct += job->weight * completion;
+                v = g_list_next(v);
+                j++;
+            }
+
+            temp_sets[k].members[j] = njobs;
+            // CCutil_int_array_quicksort( temp_sets[k].members,
+            // temp_sets[k].count );
+            k++;
+        }
+    }
+
+    *classes = temp_sets;
+CLEAN:
+
+    if (val) {
+        Schedulesets_free(&temp_sets, ccount);
     }
 
     return val;
