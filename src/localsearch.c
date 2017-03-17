@@ -1,7 +1,5 @@
-#ifndef NDEBUG
-#include <assert.h>
-#endif
-#include <wct.h>
+#include <localsearch.h>
+#include <util.h>
 
 int compare_process_list(gconstpointer a, gconstpointer b);
 int compare_process_list_b(gconstpointer a, gconstpointer b);

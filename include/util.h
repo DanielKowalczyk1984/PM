@@ -15,8 +15,7 @@
 extern "C" {
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <defs.h>
 #include <sys/utsname.h>
 
 #define CCutil_MAXDBL (1e30)
@@ -291,10 +290,7 @@ void fill_char(char *dst, int n, char v);
 void acopy_int(const int *src, int *dst, int n);
 void acopy_dbl(const double *src, double *dst, int n);
 
-/**
- * binomial-heap.c
- */
-
+int bin_coef(int n, int r);
 
 #ifdef __cplusplus
 }

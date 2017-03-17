@@ -147,4 +147,4 @@ unsigned int binomial_heap_num_entries(BinomialHeap *heap);
 }
 #endif
 
-#endif // BINOMIAL_HEAP_H
+#endif  // BINOMIAL_HEAP_H

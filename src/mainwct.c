@@ -284,7 +284,7 @@ int main(int ac, char **av) {
     wctparms *    parms;
     PricerSolver *solver;
     int *         a = CC_SAFE_MALLOC(1000, int);
-    for (unsigned i = 0; i < 100; ++i) {
+    for (unsigned i = 0; i < 10; ++i) {
         a[2 * i] = 2;
         a[2 * i + 1] = 4 + 50 * i;
     }

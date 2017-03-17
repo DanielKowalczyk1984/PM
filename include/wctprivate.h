@@ -2,10 +2,10 @@
 #define WCT_PRIVATE_H
 
 #include <Scheduleset.h>
-#include <util.h>
-#include <solution.h>
 #include <binomial-heap.h>
 #include <lp.h>
+#include <solution.h>
+#include <util.h>
 #include <wctparms.h>
 
 #ifdef __cplusplus
@@ -278,6 +278,10 @@ struct wctproblem {
     CCutil_timer tot_scatter_search;
     double       real_time;
 };
+
+/*Initialization and free memory for the problem*/
+void wctproblem_init(wctproblem *problem);
+void wctproblem_free(wctproblem *problem);
 
 /*Initialize pmc data*/
 void wctdata_init(wctdata *pd);

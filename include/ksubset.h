@@ -1,6 +1,10 @@
 #ifndef KSUBSET_H
 #define KSUBSET_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct ksubset_lex {
     int  n;
     int  j;
@@ -40,10 +44,12 @@ void ksubset_rec_generate(void *       data,
 void ksubset_next_rec(void *data, ksubset_rec *set, ulong d);
 
 /*Generation of k-subsets*/
-int bin_coef(int n, int r);
 void k_subset_init(int n, int k, int *subset, int *flag);
 int k_subset_lex_successor(int n, int k, int *subset, int *flag);
 void k_subset_lex_rank(int *subset, int k, int n, int *r);
 void k_subset_lex_unrank(int r, int *T, int n, int k);
 
+#ifdef __cplusplus
+}
+#endif
 #endif  // KSUBSET_H

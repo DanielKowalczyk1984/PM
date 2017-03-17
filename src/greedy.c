@@ -1,3 +1,4 @@
+#include <localsearch.h>
 #include <wct.h>
 
 static int add_feasible_solution(wctproblem *problem, solution *new_sol);

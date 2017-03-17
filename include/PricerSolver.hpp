@@ -30,7 +30,7 @@ class PricerSolver {
           use_zdd(_use_zdd) {
         if (use_zdd) {
             PricerSpec ps(jobarray, nbjobs, Hmin, Hmax);
-            dd = new tdzdd::DdStructure<2>(100000);
+            dd = new tdzdd::DdStructure<2>(50000);
             zdd = new tdzdd::DdStructure<2>;
             *zdd = *dd;
             zdd->zddReduce();
@@ -245,7 +245,7 @@ class PricerSolver {
             elist_differ[1] = v2;
         }
 
-        ConflictConstraints conflict(100000, elist_same, ecount_same,
+        ConflictConstraints conflict(50000, elist_same, ecount_same,
                                      elist_differ, ecount_diff);
         zdd->zddSubset(tdzdd::ZddLookahead<ConflictConstraints>(conflict));
         zdd->zddReduce();
