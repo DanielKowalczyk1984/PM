@@ -1,21 +1,20 @@
 if (GUROBI_INCLUDE_DIR)
   # in cache already
   set(GUROBI_FOUND TRUE)
-  set(GUROBI_INCLUDE_DIRS "${GUROBI_INCLUDE_DIR}" )
   set(GUROBI_LIBRARIES "${GUROBI_LIBRARY};${GUROBI_CXX_LIBRARY}" )
 else (GUROBI_INCLUDE_DIR)
 
 find_path(GUROBI_INCLUDE_DIR
-          NAMES  gurobi_c++.h
+          NAMES  gurobi_c++.h gurobi_c.h
           PATHS   
           "/opt/gurobi652/linux64/include"
-          "/opt/gurobi650/linux64/include/"
-                "$ENV{GUROBI_HOME}/include"
-                  "/Library/gurobi502/mac64/include"
-                  "/Library/gurobi650/mac64/include/"
-                  "/Library/gurobi604/mac64/include/"
-                 "C:\\libs\\gurobi502\\include"
-                 "/opt/gurobi563/linux64/include"
+          "/opt/gurobi650/linux64/include"
+          "$ENV{GUROBI_HOME}/include"
+          "/Library/gurobi502/mac64/include"
+          "/Library/gurobi650/mac64/include"
+          "/Library/gurobi604/mac64/include"
+           "C:\\libs\\gurobi502\\include"
+           "/opt/gurobi563/linux64/include"
           )
 
 find_library( GUROBI_LIBRARY
@@ -35,13 +34,13 @@ find_library( GUROBI_LIBRARY
               PATHS
               "/opt/gurobi652/linux64/lib/"
               "/opt/gurobi650/linux64/lib/"
-                    "/Library/gurobi604/mac64/lib/"
-                    "/opt/gurobi600/linux64/lib/"
-                    "$ENV{GUROBI_HOME}/lib"
-                    "/Library/gurobi650/mac64/lib"
-                    "/Library/gurobi502/mac64/lib"
-                    "C:\\libs\\gurobi502\\lib"
-                    "/opt/gurobi563/linux64/lib"
+              "/Library/gurobi604/mac64/lib/"
+              "/opt/gurobi600/linux64/lib/"
+              "$ENV{GUROBI_HOME}/lib"
+              "/Library/gurobi650/mac64/lib"
+              "/Library/gurobi502/mac64/lib"
+              "C:\\libs\\gurobi502\\lib"
+              "/opt/gurobi563/linux64/lib"
               )
 
 find_library( GUROBI_CXX_LIBRARY
@@ -53,30 +52,29 @@ find_library( GUROBI_CXX_LIBRARY
               PATHS
               "/opt/gurobi652/linux64/lib/"
               "/opt/gurobi650/linux64/lib/"
-                    "$ENV{GUROBI_HOME}/lib"
-                    "/Library/gurobi650/mac64/lib"
-                    "/Library/gurobi604/mac64/lib"
-                    "/Library/gurobi502/mac64/lib"
-                    "C:\\libs\\gurobi502\\lib"
-                    "/opt/gurobi563/linux64/lib/"
+              "$ENV{GUROBI_HOME}/lib"
+              "/Library/gurobi650/mac64/lib"
+              "/Library/gurobi604/mac64/lib"
+              "/Library/gurobi502/mac64/lib"
+              "C:\\libs\\gurobi502\\lib"
+              "/opt/gurobi563/linux64/lib/"
               )
 
-set(GUROBI_INCLUDE_DIRS "${GUROBI_INCLUDE_DIR}" )
-set(GUROBI_LIBRARIES "${GUROBI_CXX_LIBRARY}" )
+set(GUROBI_LIBRARIES "${GUROBI_CXX_LIBRARY};${GUROBI_LIBRARY}" )
 
-message(${GUROBI_CXX_LIBRARY})
-message(${GUROBI_INCLUDE_DIR})
-message(${GUROBI_LIBRARY})
-# use c++ headers as default
-# set(GUROBI_COMPILER_FLAGS "-DIL_STD" CACHE STRING "Gurobi Compiler Flags")
+# Version detection
+file(READ "${GUROBI_INCLUDE_DIR}/gurobi_c.h" GUROBI_C_H_CONTENTS)
+string(REGEX MATCH "#define GRB_VERSION_MAJOR *([0-9]+)" _dummy "${GUROBI_C_H_CONTENTS}")
+set(GRB_VERSION_MAJOR "${CMAKE_MATCH_1}")
+string(REGEX MATCH "#define GRB_VERSION_MINOR *([0-9]+)" _dummy "${GUROBI_C_H_CONTENTS}")
+set(GRB_VERSION_MINOR "${CMAKE_MATCH_1}")
+string(REGEX MATCH "#define GRB_VERSION_TECHNICAL *([0-9]+)" _dummy "${GUROBI_C_H_CONTENTS}")
+set(GRB_VERSION_MICRO "${CMAKE_MATCH_1}")
+set(GRB_VERSION "${GRB_VERSION_MAJOR}.${GRB_VERSION_MINOR}.${GRB_VERSION_MICRO}")
 
 include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set LIBCPLEX_FOUND to TRUE
-# if all listed variables are TRUE
-# find_package_handle_standard_args(GUROBI DEFAULT_MSG
-#                                    GUROBI_CXX_LIBRARY GUROBI_INCLUDE_DIR)
+find_package_handle_standard_args(GUROBI REQUIRED_VARS GUROBI_INCLUDE_DIR GUROBI_LIBRARIES VERSION_VAR GLIB_VERSION)
 
-mark_as_advanced(GUROBI_INCLUDE_DIR GUROBI_LIBRARY GUROBI_CXX_LIBRARY)
-set (CMAKE_SHARED_LINKER_FLAGS "-lgurobi_c++ -lgurobi65, --as-needed")
+mark_as_advanced(GUROBI_INCLUDE_DIR GUROBI_LIBRARIES)
 
 endif(GUROBI_INCLUDE_DIR)

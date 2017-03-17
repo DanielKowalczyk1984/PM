@@ -60,13 +60,9 @@
 #include "defs.h"
 #include "util.h"
 
-
 #define BITS_PER_PASS (8)
 
-#define NBINS (1<<BITS_PER_PASS)
-
-
-
+#define NBINS (1 << BITS_PER_PASS)
 
 void CCutil_int_array_quicksort(int *len, int n) {
     int i, j, temp, t;
@@ -200,9 +196,8 @@ void CCutil_int_perm_quicksort_0(int *perm, int *len, int n) {
     CCutil_int_perm_quicksort_0(perm + i, len, n - i);
 }
 
-
 void CCutil_double_perm_quicksort(int *perm, double *len, int n) {
-    int i, j, temp;
+    int    i, j, temp;
     double t;
 
     if (n <= 1) {
@@ -234,7 +229,6 @@ void CCutil_double_perm_quicksort(int *perm, double *len, int n) {
     CCutil_double_perm_quicksort(perm, len, j);
     CCutil_double_perm_quicksort(perm + i, len, n - i);
 }
-
 
 static int partition(int *input, int p, int r) {
     int pivot = input[r];
@@ -279,7 +273,7 @@ int CCutil_quickselect(int *input, int p, int r, int k) {
 
 static int recursiveSelect(int *V, int *inds, int start, int end, int k) {
     /*recursively partitions vector V to find kth element */
-    int pivot, i, tmp;
+    int   pivot, i, tmp;
     float tmpdbl;
 
     if (start == end - 1) { /* active set is only one entry    */
@@ -325,11 +319,10 @@ static int recursiveSelect(int *V, int *inds, int start, int end, int k) {
     }
 }
 
-
 int quickselect(int *V, int N, int k) {
     /* returns the index of the kth greatest value in vector V */
     int *Vcopy;
-    int i, *inds, ret;
+    int  i, *inds, ret;
 
     if (k >= N) {
         return -1;

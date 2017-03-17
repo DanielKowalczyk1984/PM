@@ -1,4 +1,4 @@
-#include "util.h"
+#include <util.h>
 
 void fill_int(int *dst, int nbr, int val) {
     if (nbr % 1 != 0) {
@@ -45,7 +45,6 @@ void fill_dbl(double *dst, int nbr, double val) {
         dst += 4;
     }
 }
-
 
 void fill_float(float *dst, int nbr, float val) {
     if (nbr % 2 != 0) {
@@ -116,7 +115,6 @@ void acopy_int(const int *src, int *dst, int nbr) {
         src += 4;
     }
 }
-
 
 void acopy_dbl(const double *src, double *dst, int nbr) {
     if (nbr % 2 != 0) {

@@ -1,0 +1,184 @@
+{
+	"SublimeLinter":
+	{
+		"linters":
+		{
+			"clang":
+			{
+				"extra_flags": "--std=c++11 -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wnested-externs -Wundef -Wcast-qual -Wcast-align -Wwrite-strings",
+				"include_dirs":
+				[
+					"/Library/gurobi650/mac64/include",
+					"/opt/gurobi650/linux64/include/",
+					"/usr/local/Cellar/glib/2.46.2/include/glib-2.0",
+					"/usr/local/Cellar/glib/2.46.2/lib/glib-2.0/include",
+					"/usr/include/glib-2.0",
+					"/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+					"/usr/include/x86_64-linux-gnu/c++/5.4.0",
+					"/usr/lib/gcc/x86_64-linux-gnu/5.4.0/include",
+					"/usr/lib/gcc/x86_64-linux-gnu/5.4.0/include-fixed",
+					"/usr/include/x86_64-linux-gnu",
+					"/usr/include",
+					"/usr/lib/gcc/x86_64-linux-gnu/5/include",
+					"/usr/lib/gcc/x86_64-linux-gnu/5/include/c++/*",
+					"/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed/",
+					"/usr/include/",
+					"/usr/include/glib-2.0",
+					"/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+					"/opt/gurobi652/linux64/include",
+					"/home/daniel/Dropbox/GSBPA/implementation/third_party/TdZDD/src/project_TdZdd/include",
+					"/home/daniel/Dropbox/GSBPA/implementation/third_party/EGlib/src/project_EGlib/include",
+					"/opt/gurobi652/linux64/include",
+					"/usr/include/glib-2.0",
+					"/usr/lib64/glib-2.0/include",
+					"/home/daniel/Dropbox/GSBPA/implementation/include"
+				]
+			},
+			"gcc": 
+			{
+			            "extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/GSBPA/implementation/include",
+			            "include_dirs": [
+			            	"-I/home/daniel/Dropbox/GSBPA/implementation/third_party/TdZDD/src/project_TdZdd/include",
+			            	"-I/home/daniel/Dropbox/GSBPA/implementation/third_party/EGlib/src/project_EGlib/include",
+			            	"-I/opt/gurobi652/linux64/include",
+			            	"-I/usr/include/glib-2.0",
+			            	"-I/usr/lib64/glib-2.0/include",
+			            	"-I/home/daniel/Dropbox/GSBPA/implementation/include"
+			            ]
+			        }
+		}
+	},
+	"build_systems":
+	[
+		{
+			"cmd":
+			[
+				"/usr/bin/make",
+				"-f",
+				"Makefile",
+				"VERBOSE=1",
+				"all"
+			],
+			"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+			"name": "WCTproject - all",
+			"working_dir": "${project_path}"
+		},
+		{
+			"cmd":
+			[
+				"/usr/bin/make",
+				"-f",
+				"Makefile",
+				"VERBOSE=1",
+				"clean"
+			],
+			"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+			"name": "WCTproject - clean",
+			"working_dir": "${project_path}"
+		},
+		{
+			"cmd":
+			[
+				"/usr/bin/make",
+				"-f",
+				"Makefile",
+				"VERBOSE=1",
+				"rebuild_cache"
+			],
+			"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+			"name": "WCTproject - rebuild_cache",
+			"working_dir": "${project_path}"
+		},
+		{
+			"cmd":
+			[
+				"/usr/bin/make",
+				"-f",
+				"Makefile",
+				"VERBOSE=1",
+				"wct"
+			],
+			"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+			"name": "WCTproject - wct",
+			"working_dir": "${project_path}"
+		},
+		{
+			"cmd":
+			[
+				"/usr/bin/make",
+				"-f",
+				"Makefile",
+				"VERBOSE=1",
+				"wct/fast"
+			],
+			"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+			"name": "WCTproject - wct/fast",
+			"working_dir": "${project_path}"
+		},
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "Anaconda Python Builder",
+			"selector": "source.python",
+			"shell_cmd": "\"python2.7\" -u \"$file\""
+		}
+	],
+	"folders":
+	[
+		{
+			"file_exclude_patterns":
+			[
+				".*"
+			],
+			"folder_exclude_patterns":
+			[
+				"buildlinux",
+				"buildmac",
+				"data",
+				"help",
+				"linux*",
+				"mac*",
+				"build_arch",
+				"release",
+				"debug",
+				"third_party/EGlib/"
+			],
+			"path": "."
+		}
+	],
+	"settings":
+	{
+		"AStyleFormatter":
+		{
+			"options_c":
+			{
+				"additional_options_file": "/home/daniel/.astylerc",
+				"use_only_additional_options": true
+			},
+			"options_c++":
+			{
+				"additional_options_file": "/home/daniel/.astylerc",
+				"use_only_additional_options": true
+			}
+		},
+		"sublimeclang_hide_output_when_empty": true,
+		"sublimeclang_options":
+		[
+			"-isystem",
+			"/usr/include/*",
+			"-isystem",
+			"/usr/include/c++/6.3.1/*",
+			"-Wall",
+			"-I/home/daniel/Dropbox/GSBPA/implementation/third_party/TdZDD/src/project_TdZdd/include",
+			"-I/home/daniel/Dropbox/GSBPA/implementation/third_party/EGlib/src/project_EGlib/include",
+			"-I/opt/gurobi652/linux64/include",
+			"-I/usr/include/glib-2.0",
+			"-I/usr/lib64/glib-2.0/include",
+			"-I/home/daniel/Dropbox/GSBPA/implementation/include"
+		],
+
+		//"sublimeclang_options_script": "${project_path}/scripts/cmake_script.py ${project_path}/build_arch",
+		"sublimeclang_hide_output_when_empty": true,
+		"sublimeclang_reparse_on_activated": false,
+		"sublimeclang_reparse_on_save": true,
+	}
+}

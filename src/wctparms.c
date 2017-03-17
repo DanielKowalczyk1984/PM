@@ -1,9 +1,7 @@
-#include "wctparms.h"
-#include "util.h"
-#include <string.h>
 #include <limits.h>
-
-
+#include <string.h>
+#include <util.h>
+#include <wctparms.h>
 
 void wctparms_init(wctparms *parms) {
     parms->init_upper_bound = INT_MAX;
@@ -19,17 +17,16 @@ void wctparms_init(wctparms *parms) {
     parms->stab_technique = no_stab;
     parms->solver = min_solver;
     parms->construct = min_construct_solutions;
-    parms->diving_heuristic = min_diving_heur;
     parms->test_ahv = min_use_test;
     parms->print = min_print_size;
     parms->delete_elists = 1;
     parms->delete_cclasses = 0;
-    parms->jobfile = (char *) NULL;
-    parms->outfile = (char *) NULL;
-    parms->cclasses_outfile = (char *) NULL;
-    parms->cclasses_infile = (char *) NULL;
-    parms->color_infile = (char *) NULL;
-    parms->backupdir = (char *) NULL;
+    parms->jobfile = (char *)NULL;
+    parms->outfile = (char *)NULL;
+    parms->cclasses_outfile = (char *)NULL;
+    parms->cclasses_infile = (char *)NULL;
+    parms->color_infile = (char *)NULL;
+    parms->backupdir = (char *)NULL;
     parms->upper_bounds_only = 0;
     parms->branching_cpu_limit = 3600.0;
     parms->scatter_search_cpu_limit = 40.0;
@@ -49,7 +46,7 @@ static int copy_string(char **dst, const char *src) {
     int len;
     len = (int)strlen(src) + 1;
     CC_IFFREE(*dst, char);
-    *dst = (char *) CC_SAFE_MALLOC(len, char);
+    *dst = (char *)CC_SAFE_MALLOC(len, char);
     CCcheck_NULL_2(*dst, "Failed to allocate dst");
     strcpy(*dst, src);
 CLEAN:
@@ -75,7 +72,6 @@ int wctparms_set_backupdir(wctparms *parms, const char *fname) {
 int wctparms_set_color_infile(wctparms *parms, const char *fname) {
     return copy_string(&(parms->color_infile), fname);
 }
-
 
 /*Functions for setting the branching parameters*/
 int wctparms_set_init_upper_bound(wctparms *parms, int bound) {
@@ -155,11 +151,6 @@ int wctparms_set_construct(wctparms *parms, int construct) {
     return 0;
 }
 
-int wctparms_set_diving_heuristic(wctparms *parms, int diving) {
-    parms->diving_heuristic = diving;
-    return 0;
-}
-
 int wctparms_set_test_ahv(wctparms *parms, int use) {
     parms->test_ahv = use;
     return 0;
@@ -169,4 +160,3 @@ int wctparms_set_print(wctparms *parms, int print) {
     parms->print = print;
     return 0;
 }
-
