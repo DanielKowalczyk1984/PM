@@ -1,41 +1,48 @@
-#include "PricerConstruct.hpp"
-#include "PricerEvaluate.hpp"
-#include "tdzdd/DdStructure.hpp"
-#include "tdzdd/op/Lookahead.hpp"
+#ifndef INCLUDE_PRICERSOLVER_HPP
+#define INCLUDE_PRICERSOLVER_HPP
+
+#include <PricerEvaluate.hpp>
 #include <iostream>
+#include <tdzdd/DdStructure.hpp>
+#include <tdzdd/op/Lookahead.hpp>
 #include <vector>
+#include "PricerConstruct.hpp"
 
 class PricerSolver {
-  public:
-    tdzdd::DdStructure<2> *dd;
-    tdzdd::DdStructure<2> *zdd;
-    Job *jobarray;
-    int nbjobs;
-    int H_min;
-    int H_max;
-    tdzdd::DataTable<PricerWeightZDD<double> > zdd_table;
-    tdzdd::DataTable<PricerWeightBDD<double> > dd_table;
-    tdzdd::DataTable<PricerFarkasZDD<double> > farkas_table;
-    bool use_zdd;
+   public:
+    tdzdd::DdStructure<2> *                   dd;
+    tdzdd::DdStructure<2> *                   zdd;
+    Job *                                     jobarray;
+    int                                       nbjobs;
+    int                                       H_min;
+    int                                       H_max;
+    tdzdd::DataTable<PricerWeightZDD<double>> zdd_table;
+    tdzdd::DataTable<PricerWeightBDD<double>> dd_table;
+    tdzdd::DataTable<PricerFarkasZDD<double>> farkas_table;
+    bool                                      use_zdd;
 
-    PricerSolver(Job *_jobarray, int &njobs, int &Hmin, int &Hmax,
-                 bool _use_zdd = true): jobarray(_jobarray), nbjobs(njobs), H_min(Hmin),
-        H_max(Hmax), use_zdd(_use_zdd) {
+    PricerSolver(
+        Job *_jobarray, int &njobs, int &Hmin, int &Hmax, bool _use_zdd = true)
+        : jobarray(_jobarray),
+          nbjobs(njobs),
+          H_min(Hmin),
+          H_max(Hmax),
+          use_zdd(_use_zdd) {
         if (use_zdd) {
             PricerSpec ps(jobarray, nbjobs, Hmin, Hmax);
-            dd = new tdzdd::DdStructure<2>(ps);
+            dd = new tdzdd::DdStructure<2>(50000);
             zdd = new tdzdd::DdStructure<2>;
             *zdd = *dd;
             zdd->zddReduce();
             printf("size BDD = %lu, size ZDD= %lu\n", dd->size(), zdd->size());
-            init_zdd_table();
-            init_bdd_table();
-            init_table_farkas();
-            delete [] ps.sum_p;
-            delete [] ps.min_p;
+            // init_zdd_table();
+            // init_bdd_table();
+            // init_table_farkas();
+            create_dot_zdd("test.txt");
+            delete[] ps.sum_p;
+            delete[] ps.min_p;
         }
     };
-
 
     PricerSolver(const PricerSolver &other) {
         dd = new tdzdd::DdStructure<2>;
@@ -83,7 +90,7 @@ class PricerSolver {
         }
 
         for (int i = 1; i <= nbjobs; ++i) {
-            tdzdd::MyVector<tdzdd::Node<2> > const &node =
+            tdzdd::MyVector<tdzdd::Node<2>> const &node =
                 node_handler_farkas.privateEntity()[i];
             size_t const mm = node.size();
             farkas_table[i].resize(mm);
@@ -96,12 +103,13 @@ class PricerSolver {
 
     void init_bdd_table() {
         tdzdd::NodeTableHandler<2> &handler = dd->getDiagram();
-        tdzdd::NodeId &root = dd->root();
+        tdzdd::NodeId &             root = dd->root();
         dd_table.init(root.row() + 1);
 
         /** init table */
-        for (int i = root.row(); i >= 0 ; i--) {
-            tdzdd::MyVector<tdzdd::Node<2>> const &node = handler.privateEntity()[i];
+        for (int i = root.row(); i >= 0; i--) {
+            tdzdd::MyVector<tdzdd::Node<2>> const &node =
+                handler.privateEntity()[i];
             size_t const m = node.size();
             dd_table[i].resize(m);
         }
@@ -109,12 +117,12 @@ class PricerSolver {
         /** init root */
         dd_table[root.row()][root.col()].init_node(0);
 
-        for (size_t i = root.row(); i > 0 ; i--) {
+        for (size_t i = root.row(); i > 0; i--) {
             size_t const m = dd_table[i].size();
-            int cur_job = nbjobs - i;
+            int          cur_job = nbjobs - i;
 
             for (size_t j = 0; j < m; j++) {
-                int sum_p = dd_table[i][j].sum_p;
+                int           sum_p = dd_table[i][j].sum_p;
                 tdzdd::NodeId cur_node = handler.privateEntity().child(i, j, 0);
 
                 if (cur_node.row() != 0) {
@@ -124,7 +132,8 @@ class PricerSolver {
                 cur_node = handler.privateEntity().child(i, j, 1);
 
                 if (cur_node.row() != 0) {
-                    dd_table[cur_node.row()][cur_node.col()].init_node(sum_p + jobarray[cur_job].processingime);
+                    dd_table[cur_node.row()][cur_node.col()].init_node(
+                        sum_p + jobarray[cur_job].processingime);
                 }
             }
         }
@@ -132,42 +141,53 @@ class PricerSolver {
         /** init terminal nodes */
         size_t const mm = handler.privateEntity()[0].size();
 
-        for (size_t j  = 0; j < mm; j++) {
+        for (size_t j = 0; j < mm; j++) {
             dd_table[0][j].init_terminal_node(j);
         }
     }
 
     void init_zdd_table() {
         tdzdd::NodeTableHandler<2> &handler = zdd->getDiagram();
-        tdzdd::NodeId &root = zdd->root();
+        tdzdd::NodeId &             root = zdd->root();
         zdd_table.init(root.row() + 1);
 
         /** init table */
-        for (int i = root.row(); i >= 0 ; i--) {
-            tdzdd::MyVector<tdzdd::Node<2>> const &node = handler.privateEntity()[i];
+        for (int i = root.row(); i >= 0; i--) {
+            tdzdd::MyVector<tdzdd::Node<2>> const &node =
+                handler.privateEntity()[i];
             size_t const m = node.size();
             zdd_table[i].resize(m);
         }
 
         /** init root */
-        zdd_table[root.row()][root.col()].add_weight(0,0);
+        zdd_table[root.row()][root.col()].add_weight(0, 0);
 
-        for (int i = root.row(); i > 0 ; i--) {
+        for (int i = root.row(); i > 0; i--) {
             size_t const m = zdd_table[i].size();
-            int cur_job = nbjobs - i;
+            int          cur_job = nbjobs - i;
 
             for (size_t j = 0; j < m; j++) {
-                tdzdd::NodeId cur_node_0 = handler.privateEntity().child(i, j, 0);
-                tdzdd::NodeId cur_node_1 = handler.privateEntity().child(i, j, 1);
+                tdzdd::NodeId cur_node_0 =
+                    handler.privateEntity().child(i, j, 0);
+                tdzdd::NodeId cur_node_1 =
+                    handler.privateEntity().child(i, j, 1);
 
                 // for (auto &it : zdd_table[i][j].info_node) {
                 //     zdd_table[cur_node_0.row()][cur_node_0.col()].add_weight(it.first);
-                //     zdd_table[cur_node_1.row()][cur_node_1.col()].add_weight(it.first + p[cur_job]);
+                //     zdd_table[cur_node_1.row()][cur_node_1.col()].add_weight(it.first
+                //     + p[cur_job]);
                 // }
 
-                for( my_iterator<double> it = zdd_table[i][j].list.begin(); it != zdd_table[i][j].list.end();it++){
-                        (*it)->n = zdd_table[cur_node_0.row()][cur_node_0.col()].add_weight((*it)->weight, nbjobs - cur_node_0.row());
-                        (*it)->y = zdd_table[cur_node_1.row()][cur_node_1.col()].add_weight((*it)->weight + jobarray[cur_job].processingime, nbjobs - cur_node_1.row());
+                for (my_iterator<double> it = zdd_table[i][j].list.begin();
+                     it != zdd_table[i][j].list.end(); it++) {
+                    (*it)->n = zdd_table[cur_node_0.row()][cur_node_0.col()]
+                                   .add_weight((*it)->weight,
+                                               nbjobs - cur_node_0.row());
+                    (*it)->y =
+                        zdd_table[cur_node_1.row()][cur_node_1.col()]
+                            .add_weight(
+                                (*it)->weight + jobarray[cur_job].processingime,
+                                nbjobs - cur_node_1.row());
                 }
             }
         }
@@ -175,16 +195,16 @@ class PricerSolver {
         /** init terminal nodes */
         size_t const mm = handler.privateEntity()[0].size();
 
-        for (size_t j = 0; j < mm ; j++) {
+        for (size_t j = 0; j < mm; j++) {
             zdd_table[0][j].init_terminal_node(j);
         }
     }
 
     void init_bdd_one_conflict(int v1, int v2, int same) {
-        int ecount_same = 0;
-        int ecount_diff = 0;
-        int *elist_same = (int *) NULL;
-        int *elist_differ = (int *) NULL;
+        int  ecount_same = 0;
+        int  ecount_diff = 0;
+        int *elist_same = (int *)NULL;
+        int *elist_differ = (int *)NULL;
 
         if (same) {
             ecount_same = 1;
@@ -198,20 +218,20 @@ class PricerSolver {
             elist_differ[1] = v2;
         }
 
-        ConflictConstraints conflict(nbjobs, elist_same, ecount_same, elist_differ,
-                                     ecount_diff);
+        ConflictConstraints conflict(nbjobs, elist_same, ecount_same,
+                                     elist_differ, ecount_diff);
         dd->zddSubset(conflict);
         *zdd = *dd;
         zdd->zddReduce();
-        delete [] elist_same;
-        delete [] elist_differ;
+        delete[] elist_same;
+        delete[] elist_differ;
     }
 
     void init_zdd_one_conflict(int v1, int v2, int same) {
-        int ecount_same = 0;
-        int ecount_diff = 0;
-        int *elist_same = (int *) NULL;
-        int *elist_differ = (int *) NULL;
+        int  ecount_same = 0;
+        int  ecount_diff = 0;
+        int *elist_same = (int *)NULL;
+        int *elist_differ = (int *)NULL;
 
         if (same) {
             ecount_same = 1;
@@ -225,21 +245,23 @@ class PricerSolver {
             elist_differ[1] = v2;
         }
 
-        ConflictConstraints conflict(nbjobs, elist_same, ecount_same, elist_differ,
-                                     ecount_diff);
+        ConflictConstraints conflict(50000, elist_same, ecount_same,
+                                     elist_differ, ecount_diff);
         zdd->zddSubset(tdzdd::ZddLookahead<ConflictConstraints>(conflict));
         zdd->zddReduce();
-        delete [] elist_same;
-        delete [] elist_differ;
+        delete[] elist_same;
+        delete[] elist_differ;
     }
 
-    void init_bdd_conflict_solver(int *elist_same, int ecount_same,
-                                  int *elist_differ, int ecount_differ) {
+    void init_bdd_conflict_solver(int *elist_same,
+                                  int  ecount_same,
+                                  int *elist_differ,
+                                  int  ecount_differ) {
         if (ecount_differ + ecount_same > 0) {
             dd = new tdzdd::DdStructure<2>;
             //*dd = root_dd;
-            ConflictConstraints conflict(nbjobs, elist_same, ecount_same, elist_differ,
-                                         ecount_differ);
+            ConflictConstraints conflict(nbjobs, elist_same, ecount_same,
+                                         elist_differ, ecount_differ);
             dd->zddSubset(conflict);
             zdd = new tdzdd::DdStructure<2>;
             *zdd = *dd;
@@ -255,19 +277,21 @@ class PricerSolver {
         init_table_farkas();
     }
 
-    void init_zdd_conflict_solver(int *elist_same, int ecount_same,
-                                  int *elist_differ, int ecount_differ) {
+    void init_zdd_conflict_solver(int *elist_same,
+                                  int  ecount_same,
+                                  int *elist_differ,
+                                  int  ecount_differ) {
         if (ecount_same + ecount_differ > 0) {
-            zdd = new tdzdd::DdStructure<2>;
-            ConflictConstraints conflict(nbjobs, elist_same, ecount_same, elist_differ,
-                                         ecount_differ);
+            // zdd = new tdzdd::DdStructure<2>;
+            ConflictConstraints conflict(nbjobs, elist_same, ecount_same,
+                                         elist_differ, ecount_differ);
             zdd->zddSubset(conflict);
             zdd->zddReduce();
         } else {
         }
 
         init_zdd_table();
-        init_table_farkas();
+        // init_table_farkas();
     }
 
     void free_bdd_solver(int ecount_same, int ecount_differ) {
@@ -293,14 +317,14 @@ class PricerSolver {
         Optimal_Solution<double> opt_sol;
         opt_sol.cost = 0;
         double **F;
-        bool **A;
-        int t_min = H_min;
-        F = new double* [nbjobs + 1];
-        A = new bool* [nbjobs + 1];
+        bool **  A;
+        int      t_min = H_min;
+        F = new double *[nbjobs + 1];
+        A = new bool *[nbjobs + 1];
 
         for (int i = 0; i < nbjobs + 1; i++) {
-            F[i] = new double [H_max + 1];
-            A[i] = new bool [H_max + 1];
+            F[i] = new double[H_max + 1];
+            A[i] = new bool[H_max + 1];
         }
 
         /** Initialisation */
@@ -324,9 +348,13 @@ class PricerSolver {
             int j = i - 1;
 
             for (int t = 0; t < H_max; t++) {
-                if (t >= jobarray[j].releasetime + jobarray[j].processingime && t <= jobarray[j].duetime) {
-                    if (F[j][t - jobarray[j].processingime] + (double) jobarray[j].weight*t - pi[j] < F[j][t]) {
-                        F[i][t] = F[j][t - jobarray[j].processingime] + (double) jobarray[j].weight * t - pi[j];
+                if (t >= jobarray[j].releasetime + jobarray[j].processingime &&
+                    t <= jobarray[j].duetime) {
+                    if (F[j][t - jobarray[j].processingime] +
+                            (double)jobarray[j].weight * t - pi[j] <
+                        F[j][t]) {
+                        F[i][t] = F[j][t - jobarray[j].processingime] +
+                                  (double)jobarray[j].weight * t - pi[j];
                         A[i][t] = true;
                     } else {
                         F[i][t] = F[j][t];
@@ -342,7 +370,7 @@ class PricerSolver {
         /** Find optimal solution */
         opt_sol.obj = F[nbjobs][0];
 
-        for (int i =  H_min; i < H_max + 1; i++) {
+        for (int i = H_min; i < H_max + 1; i++) {
             if (F[nbjobs][i] < opt_sol.obj) {
                 opt_sol.C_max = i;
                 opt_sol.obj = F[nbjobs][i];
@@ -353,7 +381,10 @@ class PricerSolver {
 
         /** Construct the solution */
         for (int i = nbjobs; i >= 1; --i) {
-            if (A[i][t_min] && jobarray[i - 1].releasetime + jobarray[i - 1].processingime <= t_min && t_min <= jobarray[i - 1].duetime) {
+            if (A[i][t_min] &&
+                jobarray[i - 1].releasetime + jobarray[i - 1].processingime <=
+                    t_min &&
+                t_min <= jobarray[i - 1].duetime) {
                 opt_sol.jobs.push_back(i - 1);
                 opt_sol.cost += jobarray[i - 1].weight * t_min;
                 t_min -= jobarray[i - 1].processingime;
@@ -371,18 +402,19 @@ class PricerSolver {
         return opt_sol;
     }
 
-    class Optimal_Solution<double> dynamic_programming_ahv_farkas(double *pi) {
+    class Optimal_Solution<double>
+    dynamic_programming_ahv_farkas(double *pi) {
         Optimal_Solution<double> opt_sol;
         opt_sol.cost = 0;
         double **F;
-        bool **A;
-        int t_min = H_min;
-        F = new double* [nbjobs + 1];
-        A = new bool* [nbjobs + 1];
+        bool **  A;
+        int      t_min = H_min;
+        F = new double *[nbjobs + 1];
+        A = new bool *[nbjobs + 1];
 
         for (int i = 0; i < nbjobs + 1; i++) {
-            F[i] = new double [H_max + 1];
-            A[i] = new bool [H_max + 1];
+            F[i] = new double[H_max + 1];
+            A[i] = new bool[H_max + 1];
         }
 
         /** Initialisation */
@@ -406,8 +438,9 @@ class PricerSolver {
             int j = i - 1;
 
             for (int t = 0; t < H_max; t++) {
-                if (t >= jobarray[j].releasetime + jobarray[j].processingime && t <= jobarray[j].duetime) {
-                    if (F[j][t - jobarray[j].processingime]  + pi[j] < F[j][t]) {
+                if (t >= jobarray[j].releasetime + jobarray[j].processingime &&
+                    t <= jobarray[j].duetime) {
+                    if (F[j][t - jobarray[j].processingime] + pi[j] < F[j][t]) {
                         F[i][t] = F[j][t - jobarray[j].processingime] + pi[j];
                         A[i][t] = true;
                     } else {
@@ -424,7 +457,7 @@ class PricerSolver {
         /** Find optimal solution */
         opt_sol.obj = F[nbjobs][0];
 
-        for (int i =  H_min; i < H_max + 1; i++) {
+        for (int i = H_min; i < H_max + 1; i++) {
             if (F[nbjobs][i] < opt_sol.obj) {
                 opt_sol.C_max = i;
                 opt_sol.obj = F[nbjobs][i];
@@ -435,7 +468,10 @@ class PricerSolver {
 
         /** Construct the solution */
         for (int i = nbjobs; i >= 1; --i) {
-            if (A[i][t_min] && jobarray[i - 1].releasetime + jobarray[i - 1].processingime <= t_min && t_min <= jobarray[i - 1].duetime) {
+            if (A[i][t_min] &&
+                jobarray[i - 1].releasetime + jobarray[i - 1].processingime <=
+                    t_min &&
+                t_min <= jobarray[i - 1].duetime) {
                 opt_sol.jobs.push_back(i - 1);
                 opt_sol.cost += jobarray[i - 1].weight * t_min;
                 t_min -= jobarray[i - 1].processingime;
@@ -453,38 +489,37 @@ class PricerSolver {
         return opt_sol;
     }
 
-
-
-    class Optimal_Solution<double> solve_duration_bdd_double(double *pi) {
+    class Optimal_Solution<double>
+    solve_duration_bdd_double(double *pi) {
         return dd->evaluate_reverse(DurationBDDdouble(pi, jobarray, nbjobs));
     }
 
-    class Optimal_Solution<double> solve_duration_zdd_double(double *pi) {
-        return zdd->evaluate_forward_DP(DurationZDDdouble(pi,jobarray, nbjobs, H_max));
+    class Optimal_Solution<double>
+    solve_duration_zdd_double(double *pi) {
+        return zdd->evaluate_forward_DP(
+            DurationZDDdouble(pi, jobarray, nbjobs, H_max));
     }
 
-    class Optimal_Solution<double> solve_weight_bdd_double(double *pi) {
-        return dd->evaluate_weight(WeightBDDdouble(pi,jobarray, nbjobs), dd_table);
+    class Optimal_Solution<double>
+    solve_weight_bdd_double(double *pi) {
+        return dd->evaluate_weight(WeightBDDdouble(pi, jobarray, nbjobs),
+                                   dd_table);
     }
 
-    class Optimal_Solution<double> solve_weight_zdd_double(double *pi) {
-        return zdd->evaluate_weight(WeightZDDdouble(pi, jobarray, nbjobs, H_min,
-                                    H_max), zdd_table);
+    class Optimal_Solution<double>
+    solve_weight_zdd_double(double *pi) {
+        return zdd->evaluate_weight(
+            WeightZDDdouble(pi, jobarray, nbjobs, H_min, H_max), zdd_table);
     }
 
-    class Optimal_Solution<double> solve_farkas_double(double *pi) {
-        return zdd->evaluate_weight(FarkasZDDdouble(pi, jobarray, nbjobs, H_min,
-                                    H_max), farkas_table);
+    class Optimal_Solution<double>
+    solve_farkas_double(double *pi) {
+        return zdd->evaluate_weight(
+            FarkasZDDdouble(pi, jobarray, nbjobs, H_min, H_max), farkas_table);
     }
 
-
-    void addDuetimeConstraint() {
-    }
-
-    void addReleasetimeConstraint() {
-    }
-
-    PricerSolver &operator=(PricerSolver const &other) {
+    PricerSolver &
+    operator=(PricerSolver const &other) {
         if (this != &other) {
             dd = new tdzdd::DdStructure<2>;
             zdd = new tdzdd::DdStructure<2>;
@@ -494,45 +529,44 @@ class PricerSolver {
             H_min = other.H_min;
             jobarray = other.jobarray;
             nbjobs = other.nbjobs;
+            zdd_table = tdzdd::DataTable<PricerWeightZDD<double>>();
+            dd_table = tdzdd::DataTable<PricerWeightBDD<double>>();
+            farkas_table = tdzdd::DataTable<PricerFarkasZDD<double>>();
+            use_zdd = true;
         }
 
         return *this;
     }
 
-    void set_release_due_time(Job *_jobarray) {
-        jobarray = _jobarray;
-    }
+    void set_release_due_time(Job *_jobarray) { jobarray = _jobarray; }
 
     void iterate_zdd() {
         tdzdd::DdStructure<2>::const_iterator it = zdd->begin();
 
         for (; it != zdd->end(); ++it) {
-            std::vector<int>::const_iterator i = (*it).begin();
+            std::set<int>::const_iterator i = (*it).begin();
 
-            for (; i != (*it).end(); i++) {
+            for (; i != (*it).end(); ++i) {
                 std::cout << nbjobs - *i << " ";
             }
 
             std::cout << std::endl;
         }
     }
-
 
     void iterate_dd() {
         tdzdd::DdStructure<2>::const_iterator it = dd->begin();
 
         for (; it != dd->end(); ++it) {
-            std::vector<int>::const_iterator i = (*it).begin();
+            std::set<int>::const_iterator i = (*it).begin();
 
-            for (; i != (*it).end(); i++) {
+            for (; i != (*it).end(); ++i) {
                 std::cout << nbjobs - *i << " ";
             }
 
             std::cout << std::endl;
         }
     }
-
-
 };
 
-
+#endif  // INCLUDE_PRICERSOLVER_HPP

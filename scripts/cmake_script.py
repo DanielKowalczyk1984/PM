@@ -42,7 +42,7 @@ def guess_option(filename, db):
     guessed = []
 
     name, ext = os.path.splitext(filename)
-    guesses = [name + '.cpp', name + '.c']
+    guesses = [name + '.cpp', name + '.c', name + '.h']
 
     for key in db.iterkeys():
         if key.endswith('main.cpp'):

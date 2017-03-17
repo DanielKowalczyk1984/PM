@@ -16,16 +16,16 @@ extern "C" {
 #endif
 
 enum BBNodeSelection {
-    min_search_strategy    = 0,
-    no_branching    = min_search_strategy,
+    min_search_strategy = 0,
+    no_branching = min_search_strategy,
     min_lb_strategy = 1,
-    dfs_strategy    = 2,
-    max_strategy    = 3,
+    dfs_strategy = 2,
+    max_strategy = 3,
 };
 
 enum CombineMethod {
     min_combine_method = 0,
-    pm_combine_method  = min_combine_method,
+    pm_combine_method = min_combine_method,
     path_combine_method = 1,
 };
 
@@ -82,24 +82,22 @@ enum Strong_Branching {
     no_strong_branching = 1,
 };
 
-
-
 typedef struct wctparms {
     /**
      * General parameters
      */
-    int init_upper_bound;
-    int bb_search_strategy;
-    int bb_branch_strategy;
-    int strong_branching;
-    int parallel_branching;
-    int nb_feas_sol;
+    int    init_upper_bound;
+    int    bb_search_strategy;
+    int    bb_branch_strategy;
+    int    strong_branching;
+    int    parallel_branching;
+    int    nb_feas_sol;
     double branching_cpu_limit;
     /**
      * scatter search
      */
-    int combine_method;
-    int scatter_search;
+    int    combine_method;
+    int    scatter_search;
     double scatter_search_cpu_limit;
     /**
      * column generation
@@ -165,11 +163,6 @@ int wctparms_set_cclasses_infile(wctparms *parms, const char *fname);
 int wctparms_set_cclasses_outfile(wctparms *parms, const char *fname);
 int wctparms_set_color_infile(wctparms *parms, const char *fname);
 int wctparms_set_nmachines(wctparms *parms, int nmachines);
-
-
-
-
-
 
 #ifdef __cplusplus
 }

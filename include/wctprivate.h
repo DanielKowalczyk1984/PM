@@ -1,10 +1,12 @@
 #ifndef WCT_PRIVATE_H
 #define WCT_PRIVATE_H
 
-#include "util.h"
-#include "datastructsol.h"
-#include "wctparms.h"
-#include "lp.h"
+#include <Scheduleset.h>
+#include <binomial-heap.h>
+#include <lp.h>
+#include <solution.h>
+#include <util.h>
+#include <wctparms.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,24 +17,28 @@ extern "C" {
  */
 
 typedef struct PricerSolver PricerSolver;
-PricerSolver *newSolver(Job *jobarray, int nbjobs, int Hmin,
-                        int Hmax);
-PricerSolver *newSolverDP(Job *jobarray, int nbjobs, int Hmin,
-                          int Hmax);
+PricerSolver *newSolver(Job *jobarray, int nbjobs, int Hmin, int Hmax);
+PricerSolver *newSolverDP(Job *jobarray, int nbjobs, int Hmin, int Hmax);
 PricerSolver *copySolver(PricerSolver *src);
 void freeSolver(PricerSolver *src);
 int calculate_table(PricerSolver *solver, wctparms *parms);
 void deletePricerSolver(PricerSolver *solver);
-int add_conflict_constraints(PricerSolver *solver, wctparms *parms,
-                             int *elist_same, int ecount_same, int *elist_differ, int  ecount_differ);
-int free_conflict_constraints(PricerSolver *solver, wctparms *parms,
-                              int ecount_same, int ecount_differ);
+int add_conflict_constraints(PricerSolver *solver,
+                             wctparms *    parms,
+                             int *         elist_same,
+                             int           ecount_same,
+                             int *         elist_differ,
+                             int           ecount_differ);
+int free_conflict_constraints(PricerSolver *solver,
+                              wctparms *    parms,
+                              int           ecount_same,
+                              int           ecount_differ);
 void iterate_dd(PricerSolver *solver);
 void iterate_zdd(PricerSolver *solver);
 size_t get_datasize(PricerSolver *solver);
 void copy_solver(PricerSolver **dest, PricerSolver *src);
-int add_one_conflict(PricerSolver *solver, wctparms *parms, int v1, int v2,
-                     int same);
+int add_one_conflict(
+    PricerSolver *solver, wctparms *parms, int v1, int v2, int same);
 int init_tables(PricerSolver *solver);
 size_t get_numberrows_zdd(PricerSolver *solver);
 size_t get_numberrows_bdd(PricerSolver *solver);
@@ -42,57 +48,51 @@ void set_release_due_time(PricerSolver *solver, Job *jobarray);
  */
 
 typedef struct _REFSET {
-    int newsol;
+    int        newsol;
     GPtrArray *list1;
-    int nb1;
+    int        nb1;
     GPtrArray *list2;
-    int nb2;
+    int        nb2;
 } REFSET;
 
 typedef struct _P {
-    int PSize;
+    int    PSize;
     GList *list;
-    int lenght;
+    int    lenght;
 } P;
 
-typedef enum {
-    init   = 0,
-    add    = 1,
-    update = 3,
-    opt    = 4
-}  scatter_status;
+typedef enum { init = 0, add = 1, update = 3, opt = 4 } scatter_status;
 
 typedef struct _SS {
     REFSET *rs;
-    P *p;
-    int b1;
-    int b2;
+    P *     p;
+    int     b1;
+    int     b2;
 
     Job **jobarray;
-    int njobs;
-    int nmachines;
-    int lowerbound;
-    int upperbound;
+    int   njobs;
+    int   nmachines;
+    int   lowerbound;
+    int   upperbound;
 
     double timelimit;
     GRand *random;
-    int iter;
-    int combine_method;
+    int    iter;
+    int    combine_method;
 
     scatter_status status;
 } SS;
-
 
 /**
  * wct data types nodes of branch and bound tree
  */
 typedef enum {
-    initialized             = 0,
-    LP_bound_estimated      = 1,
-    LP_bound_computed       = 2,
+    initialized = 0,
+    LP_bound_estimated = 1,
+    LP_bound_computed = 2,
     submitted_for_branching = 3,
-    infeasible              = 4,
-    finished                = 5,
+    infeasible = 4,
+    finished = 5,
 } data_status;
 
 typedef struct wctdata wctdata;
@@ -111,95 +111,92 @@ struct wctdata {
     // int *duration;
     // int *weights;
     int *orig_node_ids;
-    //data for meta heuristic
+    // data for meta heuristic
     Job *jobarray;
-    int H_max;
-    int H_min;
+    int  H_max;
+    int  H_min;
 
-    //The column generation lp information
-    wctlp *LP;
+    // The column generation lp information
+    wctlp * LP;
     double *x;
     double *coef;
     double *pi;
-    //PricerSolver
+    // PricerSolver
     PricerSolver *solver;
-    //Colorset(Assignments)
-    int ccount;
+    // Colorset(Assignments)
+    int          ccount;
     Scheduleset *cclasses;
-    int dzcount;
-    int gallocated;
+    int          dzcount;
+    int          gallocated;
     Scheduleset *newsets;
-    int nnewsets;
+    int          nnewsets;
 
-    int kpc_pi_scalef;
-    int kpc_pi_scalef_heur;
+    int  kpc_pi_scalef;
+    int  kpc_pi_scalef_heur;
     int *kpc_pi;
     int *kpc_pi_heur;
 
-    int lower_bound;
-    int upper_bound;
-    int lower_scaled_bound;
-    double partial_sol;
-    double dbl_safe_lower_bound;
-    double dbl_est_lower_bound;
-    double dbl_est_lower_bound_heur;
-    double LP_lower_bound;
-    double LP_lower_bound_heur;
-    double LP_lower_bound_dual;
-    double LP_lower_bound_BB;
+    int     lower_bound;
+    int     upper_bound;
+    int     lower_scaled_bound;
+    double  partial_sol;
+    double  dbl_safe_lower_bound;
+    double  dbl_est_lower_bound;
+    double  dbl_est_lower_bound_heur;
+    double  LP_lower_bound;
+    double  LP_lower_bound_heur;
+    double  LP_lower_bound_dual;
+    double  LP_lower_bound_BB;
     double *rhs;
-    int nnonimprovements;
+    int     nnonimprovements;
     /** Wentges smoothing technique */
     double *pi_in;
     double *pi_out;
     double *pi_sep;
     double *subgradient;
     double *subgradient_in;
-    double eta_in;
-    double eta_out;
-    double eta_sep;
-    double alpha;
-    int update;
-
+    double  eta_in;
+    double  eta_out;
+    double  eta_sep;
+    double  alpha;
+    int     update;
 
     // Best Solution
     Scheduleset *bestcolors;
-    int besttotwct;
-    int nbbest;
+    int          besttotwct;
+    int          nbbest;
 
     const Scheduleset *debugcolors;
-    int ndebugcolors;
-    int opt_track;
+    int                ndebugcolors;
+    int                opt_track;
 
-
-    //maxiterations and retireage
+    // maxiterations and retireage
     int maxiterations;
     int retirementage;
-
 
     /** Branching strategies */
     int choose;
     /** conflict */
-    int *elist_same;
-    int ecount_same;
-    int *elist_differ;
-    int ecount_differ;
+    int *    elist_same;
+    int      ecount_same;
+    int *    elist_differ;
+    int      ecount_differ;
     wctdata *same_children;
-    int nsame;
+    int      nsame;
     wctdata *diff_children;
-    int ndiff;
-    int v1, v2;
+    int      ndiff;
+    int      v1, v2;
     /** ahv branching */
     wctdata *duetime_child;
-    int nduetime;
+    int      nduetime;
     wctdata *releasetime_child;
-    int nreleasetime;
-    int branch_job;
-    int completiontime;
+    int      nreleasetime;
+    int      branch_job;
+    int      completiontime;
     /** wide branching conflict */
-    int *v1_wide;
-    int *v2_wide;
-    int nb_wide;
+    int *     v1_wide;
+    int *     v2_wide;
+    int       nb_wide;
     wctdata **same_children_wide;
     wctdata **diff_children_wide;
 
@@ -212,20 +209,19 @@ struct wctdata {
  * wct problem data type
  */
 
-
-typedef enum  {
+typedef enum {
     no_sol = 0,
     lp_feasible = 1,
-    feasible   = 2,
-    meta_heur  = 3,
-    optimal    = 4
+    feasible = 2,
+    meta_heur = 3,
+    optimal = 4
 } problem_status;
 
 typedef struct wctproblem wctproblem;
 
 struct wctproblem {
     wctparms parms;
-    wctdata root_pd;
+    wctdata  root_pd;
     /** Job data */
     Job *jobarray;
     /** Summary of jobs */
@@ -242,36 +238,35 @@ struct wctproblem {
     /** nmachines */
     int nmachines;
 
-
-    int nwctdata;
-    int global_upper_bound;
-    int first_upper_bound;
-    int global_lower_bound;
-    int first_lower_bound;
+    int    nwctdata;
+    int    global_upper_bound;
+    int    first_upper_bound;
+    int    global_lower_bound;
+    int    first_lower_bound;
     double first_rel_error;
     double rel_error;
-    int maxdepth;
+    int    maxdepth;
 
     problem_status status;
 
     /* All stable sets*/
     Scheduleset *initsets;
-    int nbinitsets;
-    int gallocated;
+    int          nbinitsets;
+    int          gallocated;
     /* Best Solution*/
-    solution *opt_sol;
+    solution *   opt_sol;
     Scheduleset *bestschedule;
-    int nbestschedule;
+    int          nbestschedule;
     /*heap variables*/
     BinomialHeap *br_heap_a;
-    GPtrArray *unexplored_states;
-    GQueue *non_empty_level_pqs;
-    unsigned int last_explored;
-    int mult_key;
-    int found;
-    int nb_explored_nodes;
-    int nb_generated_col;
-    int nb_generated_col_root;
+    GPtrArray *   unexplored_states;
+    GQueue *      non_empty_level_pqs;
+    unsigned int  last_explored;
+    int           mult_key;
+    int           found;
+    int           nb_explored_nodes;
+    int           nb_generated_col;
+    int           nb_generated_col_root;
     /*Cpu time measurement*/
     CCutil_timer tot_build_dd;
     CCutil_timer tot_cputime;
@@ -281,8 +276,12 @@ struct wctproblem {
     CCutil_timer tot_lb_lp;
     CCutil_timer tot_pricing;
     CCutil_timer tot_scatter_search;
-    double real_time;
+    double       real_time;
 };
+
+/*Initialization and free memory for the problem*/
+void wctproblem_init(wctproblem *problem);
+void wctproblem_free(wctproblem *problem);
 
 /*Initialize pmc data*/
 void wctdata_init(wctdata *pd);

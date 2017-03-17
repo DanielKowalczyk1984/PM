@@ -8,7 +8,6 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-
 #ifndef __LP_h
 #define __LP_h
 
@@ -18,38 +17,39 @@ extern "C" {
 
 #include <gurobi_c.h>
 
-#define CHECK_VAL_GRB(val,msg,env){                                                                 \
-        if ((val)){                                                                                     \
-            fprintf(stderr, "%s at %s, line %d: %s\n",(msg),__FILE__,__LINE__,GRBgeterrormsg (env) );   \
-        }                                                                                               \
+#define CHECK_VAL_GRB(val, msg, env)                                    \
+    {                                                                   \
+        if ((val)) {                                                    \
+            fprintf(stderr, "%s at %s, line %d: %s\n", (msg), __FILE__, \
+                    __LINE__, GRBgeterrormsg(env));                     \
+        }                                                               \
     }
 
-#define CHECK_VAL_GRB2(val,msg,env){                                                                \
-        if ((val)){                                                                                     \
-            fprintf(stderr, "%s at %s, line %d: %s\n",(msg),__FILE__,__LINE__,GRBgeterrormsg (env) );   \
-            goto CLEAN;                                                                                 \
-        }                                                                                               \
-        \
+#define CHECK_VAL_GRB2(val, msg, env)                                   \
+    {                                                                   \
+        if ((val)) {                                                    \
+            fprintf(stderr, "%s at %s, line %d: %s\n", (msg), __FILE__, \
+                    __LINE__, GRBgeterrormsg(env));                     \
+            goto CLEAN;                                                 \
+        }                                                               \
     }
 
 typedef struct wctlp wctlp;
 
 struct wctlp {
-    GRBenv *env;
+    GRBenv *  env;
     GRBmodel *model;
 
     double dbl_cutoff;
 };
 
 typedef struct wctlp_warmstart {
-    int rcount;
-    int ccount;
-    int *rstat;
-    int *cstat;
+    int     rcount;
+    int     ccount;
+    int *   rstat;
+    int *   cstat;
     double *dnorm;
 } wctlp_warmstart;
-
-
 
 #define wctlp_CONT 0
 #define wctlp_BIN 1
@@ -77,10 +77,22 @@ int wctlp_x(wctlp *, double *x, int first);
 
 int wctlp_basis_cols(wctlp *lp, int *cstat, int first);
 int wctlp_change_obj(wctlp *lp, int start, int len, double *values);
-int wctlp_addrow(wctlp *lp, int nzcount, int *cind, double *cval, char sense,
-                 double rhs, char *name);
-int wctlp_addcol(wctlp *lp, int nzcount, int *cind, double *cval, double obj,
-                 double lb, double ub, char vartype, char *name);
+int wctlp_addrow(wctlp * lp,
+                 int     nzcount,
+                 int *   cind,
+                 double *cval,
+                 char    sense,
+                 double  rhs,
+                 char *  name);
+int wctlp_addcol(wctlp * lp,
+                 int     nzcount,
+                 int *   cind,
+                 double *cval,
+                 double  obj,
+                 double  lb,
+                 double  ub,
+                 char    vartype,
+                 char *  name);
 int wctlp_deletecols(wctlp *lp, int first_cind, int last_cind);
 
 int wctlp_set_coltypes(wctlp *lp, char sense);

@@ -1,40 +1,38 @@
-#include "tdzdd/DdSpec.hpp"
-#include <vector>
 #include <boost/dynamic_bitset.hpp>
-#include "datastructsol.h"
+#include <tdzdd/DdSpec.hpp>
+#include <vector>
+#include "solution.h"
 
 class conflict_state {
-  public:
+   public:
     boost::dynamic_bitset<> add;
     boost::dynamic_bitset<> remove;
 
-    conflict_state() {};
+    conflict_state(){};
 
-    ~conflict_state() {};
-
+    ~conflict_state(){};
 };
 
-
-class PricerSpec: public tdzdd::DdSpec<PricerSpec, int, 2> {
+class PricerSpec : public tdzdd::DdSpec<PricerSpec, int, 2> {
     Job *jobarray;
-    int nbjobs;
-    int Hmin;
-    int Hmax;
+    int  nbjobs;
+    int  Hmin;
+    int  Hmax;
 
-  public:
+   public:
     int *sum_p;
     int *min_p;
-    PricerSpec(Job * _jobarray,int _nbjobs, int Hmin, int Hmax): jobarray(_jobarray), nbjobs(_nbjobs),
-      Hmin(Hmin), Hmax(Hmax) {
+    PricerSpec(Job *_jobarray, int _nbjobs, int Hmin, int Hmax)
+        : jobarray(_jobarray), nbjobs(_nbjobs), Hmin(Hmin), Hmax(Hmax) {
         nbjobs = _nbjobs;
-        sum_p = new int [nbjobs];
-        min_p = new int [nbjobs];
+        sum_p = new int[nbjobs];
+        min_p = new int[nbjobs];
         int end = nbjobs - 1;
         sum_p[end] = jobarray[end].processingime;
         min_p[end] = jobarray[end].processingime;
 
-        for (int  i = end - 1; i >= 0; i--) {
-            sum_p[i] = sum_p[ i + 1] + jobarray[i].processingime;
+        for (int i = end - 1; i >= 0; i--) {
+            sum_p[i] = sum_p[i + 1] + jobarray[i].processingime;
 
             if (jobarray[i].processingime < min_p[i + 1]) {
                 min_p[i] = jobarray[i].processingime;
@@ -45,6 +43,8 @@ class PricerSpec: public tdzdd::DdSpec<PricerSpec, int, 2> {
     }
 
     ~PricerSpec() {
+        delete[] min_p;
+        delete[] sum_p;
     }
 
     int getRoot(int &state) const {
@@ -59,9 +59,12 @@ class PricerSpec: public tdzdd::DdSpec<PricerSpec, int, 2> {
         int temp_p = jobarray[job].processingime;
 
         if (level - 1 == 0 && value) {
-            return (state + jobarray[job].processingime >= Hmin && state + jobarray[job].processingime <= Hmax) ? -1 : 0;
+            return (state + jobarray[job].processingime >= Hmin &&
+                    state + jobarray[job].processingime <= Hmax)
+                       ? -1
+                       : 0;
         } else if (level - 1 == 0) {
-            return (state  >= Hmin && state <= Hmax) ? -1 : 0;
+            return (state >= Hmin && state <= Hmax) ? -1 : 0;
         }
 
         if (value) {
@@ -72,7 +75,7 @@ class PricerSpec: public tdzdd::DdSpec<PricerSpec, int, 2> {
                 if (state + sum_p[_j] < Hmin) {
                     return 0;
                 }
-  
+
                 if ((sum >= Hmin && sum <= Hmax) && (sum + min_p[_j] > Hmax)) {
                     return -1;
                 }
@@ -93,7 +96,8 @@ class PricerSpec: public tdzdd::DdSpec<PricerSpec, int, 2> {
                     return 0;
                 }
 
-                if ((state >= Hmin && state  <= Hmax) && (state + min_p[_j] > Hmax)) {
+                if ((state >= Hmin && state <= Hmax) &&
+                    (state + min_p[_j] > Hmax)) {
                     return -1;
                 }
             } else {
@@ -115,27 +119,27 @@ class PricerSpec: public tdzdd::DdSpec<PricerSpec, int, 2> {
         return nbjobs - _j;
     }
 
-  private:
+   private:
     int min_job(int j, int state) const {
-        int i, val = nbjobs;
+        int i, val = j + 1;
 
-        for (i = j + 1; i < nbjobs; ++i) {
-            if (state >= jobarray[i].releasetime && state <= jobarray[i].duetime - jobarray[i].processingime) {
-                val = i;
-                break;
-            }
-        }
+        // for (i = j + 1; i < nbjobs; ++i) {
+        //     if (state >= jobarray[i].releasetime &&
+        //         state <= jobarray[i].duetime - jobarray[i].processingime) {
+        //         val = i;
+        //         break;
+        //     }
+        // }
 
         return val;
     }
-
 };
 
-class ConflictConstraints: public
-    tdzdd::DdSpec<ConflictConstraints, conflict_state, 2> {
-    int nbjobs;
-    std::vector<boost::dynamic_bitset<> > differsets;
-    std::vector<boost::dynamic_bitset<> > samesets;
+class ConflictConstraints
+    : public tdzdd::DdSpec<ConflictConstraints, conflict_state, 2> {
+    int                                  nbjobs;
+    std::vector<boost::dynamic_bitset<>> differsets;
+    std::vector<boost::dynamic_bitset<>> samesets;
 
     bool takeable(int job, conflict_state &state) {
         if (state.remove[job]) {
@@ -153,9 +157,13 @@ class ConflictConstraints: public
         return true;
     }
 
-  public:
-    ConflictConstraints(int _nbjobs, int *elist_same, int ecount_same,
-                        int *elist_differ, int ecount_differ): nbjobs(_nbjobs) {
+   public:
+    ConflictConstraints(int  _nbjobs,
+                        int *elist_same,
+                        int  ecount_same,
+                        int *elist_differ,
+                        int  ecount_differ)
+        : nbjobs(_nbjobs) {
         differsets.resize(_nbjobs);
         samesets.resize(_nbjobs);
 
@@ -173,8 +181,7 @@ class ConflictConstraints: public
         }
     };
 
-    ~ConflictConstraints() {
-    }
+    ~ConflictConstraints() {}
 
     int getRoot(conflict_state &state) const {
         state.add.resize(nbjobs);
@@ -224,7 +231,8 @@ class ConflictConstraints: public
         return nbjobs - _j;
     }
 
-    bool equalTo(conflict_state const &state1, conflict_state const &state2) const {
+    bool equalTo(conflict_state const &state1,
+                 conflict_state const &state2) const {
         if (state2.add != state1.add) {
             return false;
         }
@@ -268,4 +276,3 @@ class ConflictConstraints: public
         return val;
     }
 };
-

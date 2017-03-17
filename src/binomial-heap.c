@@ -18,38 +18,38 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  */
 
-#include <string.h>
 #include <limits.h>
+#include <string.h>
 
-#include "util.h"
+#include <binomial-heap.h>
+#include <util.h>
 
 /* malloc() / free() testing */
 
 #ifdef ALLOC_TESTING
-    #include "alloc-testing.h"
+#include "alloc-testing.h"
 #endif
 
 typedef struct _BinomialTree BinomialTree;
 
 struct _BinomialTree {
     BinomialHeapValue value;
-    unsigned short order;
-    unsigned short refcount;
-    BinomialTree **subtrees;
+    unsigned short    order;
+    unsigned short    refcount;
+    BinomialTree **   subtrees;
 };
 
 struct _BinomialHeap {
-    BinomialHeapType heap_type;
+    BinomialHeapType        heap_type;
     BinomialHeapCompareFunc compare_func;
-    unsigned int num_values;
-    BinomialTree **roots;
-    unsigned int roots_length;
+    unsigned int            num_values;
+    BinomialTree **         roots;
+    unsigned int            roots_length;
 };
 
-static int binomial_heap_cmp(BinomialHeap *heap,
+static int binomial_heap_cmp(BinomialHeap *    heap,
                              BinomialHeapValue data1,
-                             BinomialHeapValue data2)
-{
+                             BinomialHeapValue data2) {
     if (heap->heap_type == BINOMIAL_HEAP_TYPE_MIN) {
         return heap->compare_func(data1, data2);
     } else {
@@ -57,15 +57,13 @@ static int binomial_heap_cmp(BinomialHeap *heap,
     }
 }
 
-static void binomial_tree_ref(BinomialTree *tree)
-{
+static void binomial_tree_ref(BinomialTree *tree) {
     if (tree != NULL) {
         ++tree->refcount;
     }
 }
 
-static void binomial_tree_unref(BinomialTree *tree)
-{
+static void binomial_tree_unref(BinomialTree *tree) {
     if (tree == NULL) {
         return;
     }
@@ -87,12 +85,11 @@ static void binomial_tree_unref(BinomialTree *tree)
 }
 
 static BinomialTree *binomial_tree_merge(BinomialHeap *heap,
-        BinomialTree *tree1,
-        BinomialTree *tree2)
-{
+                                         BinomialTree *tree1,
+                                         BinomialTree *tree2) {
     BinomialTree *new_tree;
     BinomialTree *tmp;
-    int i;
+    int           i;
 
     /* Order tree1 and tree2 so that tree1 is the tree with the
      * smallest root */
@@ -105,7 +102,7 @@ static BinomialTree *binomial_tree_merge(BinomialHeap *heap,
     }
 
     /* Allocate a new tree */
-    new_tree = (BinomialTree *) malloc(sizeof(BinomialTree));
+    new_tree = (BinomialTree *)malloc(sizeof(BinomialTree));
 
     if (new_tree == NULL) {
         return NULL;
@@ -117,8 +114,8 @@ static BinomialTree *binomial_tree_merge(BinomialHeap *heap,
     new_tree->value = tree1->value;
     /* Copy subtrees of the smallest tree.  The last entry in the
      * array is the larger tree */
-    new_tree->subtrees = (BinomialTree **) malloc(sizeof(BinomialTree *) *
-                         new_tree->order);
+    new_tree->subtrees =
+        (BinomialTree **)malloc(sizeof(BinomialTree *) * new_tree->order);
 
     if (new_tree->subtrees == NULL) {
         free(new_tree);
@@ -143,8 +140,7 @@ static BinomialTree *binomial_tree_merge(BinomialHeap *heap,
  * references that have been added. */
 
 static void binomial_heap_merge_undo(BinomialTree **new_roots,
-                                     unsigned int count)
-{
+                                     unsigned int   count) {
     unsigned int i;
 
     for (i = 0; i <= count; ++i) {
@@ -157,15 +153,14 @@ static void binomial_heap_merge_undo(BinomialTree **new_roots,
 /* Merge the data in the 'other' heap into the 'heap' heap.
  * Returns non-zero if successful. */
 
-static int binomial_heap_merge(BinomialHeap *heap, BinomialHeap *other)
-{
+static int binomial_heap_merge(BinomialHeap *heap, BinomialHeap *other) {
     BinomialTree **new_roots;
-    unsigned int new_roots_length;
-    BinomialTree *vals[3];
-    BinomialTree *carry;
-    BinomialTree *new_carry;
-    unsigned int max;
-    unsigned int i;
+    unsigned int   new_roots_length;
+    BinomialTree * vals[3];
+    BinomialTree * carry;
+    BinomialTree * new_carry;
+    unsigned int   max;
+    unsigned int   i;
 
     /* Find the maximum length of the two heaps.  Add one because
      * after merging we may have one more value to carry over. */
@@ -177,7 +172,7 @@ static int binomial_heap_merge(BinomialHeap *heap, BinomialHeap *other)
     }
 
     /* Allocate an array for the new roots */
-    new_roots = (BinomialTree **) malloc(sizeof(BinomialTree *) * max);
+    new_roots = (BinomialTree **)malloc(sizeof(BinomialTree *) * max);
 
     if (new_roots == NULL) {
         return 0;
@@ -233,9 +228,7 @@ static int binomial_heap_merge(BinomialHeap *heap, BinomialHeap *other)
         if ((num_vals & 2) != 0) {
             /* Merge the first two values and carry to the
              * next iteration */
-            new_carry = binomial_tree_merge(heap,
-                                            vals[0],
-                                            vals[1]);
+            new_carry = binomial_tree_merge(heap, vals[0], vals[1]);
 
             if (new_carry == NULL) {
                 /* Remove references that we have added
@@ -275,9 +268,8 @@ static int binomial_heap_merge(BinomialHeap *heap, BinomialHeap *other)
     return 1;
 }
 
-BinomialHeap *binomial_heap_new(BinomialHeapType heap_type,
-                                BinomialHeapCompareFunc compare_func)
-{
+BinomialHeap *binomial_heap_new(BinomialHeapType        heap_type,
+                                BinomialHeapCompareFunc compare_func) {
     BinomialHeap *new_heap;
     /* Allocate a new heap */
     new_heap = (BinomialHeap *)calloc(1, sizeof(BinomialHeap));
@@ -292,8 +284,7 @@ BinomialHeap *binomial_heap_new(BinomialHeapType heap_type,
     return new_heap;
 }
 
-void binomial_heap_free(BinomialHeap *heap)
-{
+void binomial_heap_free(BinomialHeap *heap) {
     unsigned int i;
 
     /* Unreference all trees in the heap.  This should free
@@ -308,13 +299,12 @@ void binomial_heap_free(BinomialHeap *heap)
     free(heap);
 }
 
-int binomial_heap_insert(BinomialHeap *heap, BinomialHeapValue value)
-{
-    BinomialHeap fake_heap;
+int binomial_heap_insert(BinomialHeap *heap, BinomialHeapValue value) {
+    BinomialHeap  fake_heap;
     BinomialTree *new_tree;
-    int result;
+    int           result;
     /* Allocate an order 0 tree for storing the new value */
-    new_tree = (BinomialTree *) malloc(sizeof(BinomialTree));
+    new_tree = (BinomialTree *)malloc(sizeof(BinomialTree));
 
     if (new_tree == NULL) {
         return 0;
@@ -345,12 +335,11 @@ int binomial_heap_insert(BinomialHeap *heap, BinomialHeapValue value)
     return result;
 }
 
-BinomialHeapValue binomial_heap_pop(BinomialHeap *heap)
-{
+BinomialHeapValue binomial_heap_pop(BinomialHeap *heap) {
     BinomialTree *least_tree;
-    BinomialHeap fake_heap;
-    unsigned int i;
-    unsigned int least_index;
+    BinomialHeap  fake_heap;
+    unsigned int  i;
+    unsigned int  least_index;
 
     if (heap->num_values == 0) {
         return BINOMIAL_HEAP_NULL;
@@ -364,10 +353,9 @@ BinomialHeapValue binomial_heap_pop(BinomialHeap *heap)
             continue;
         }
 
-        if (least_index == UINT_MAX
-                || binomial_heap_cmp(heap,
-                                     heap->roots[i]->value,
-                                     heap->roots[least_index]->value) < 0) {
+        if (least_index == UINT_MAX ||
+            binomial_heap_cmp(heap, heap->roots[i]->value,
+                              heap->roots[least_index]->value) < 0) {
             least_index = i;
         }
     }
@@ -400,8 +388,6 @@ BinomialHeapValue binomial_heap_pop(BinomialHeap *heap)
     }
 }
 
-unsigned int binomial_heap_num_entries(BinomialHeap *heap)
-{
+unsigned int binomial_heap_num_entries(BinomialHeap *heap) {
     return heap->num_values;
 }
-

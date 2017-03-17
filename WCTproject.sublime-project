@@ -25,9 +25,27 @@
 					"/usr/include/",
 					"/usr/include/glib-2.0",
 					"/usr/lib/x86_64-linux-gnu/glib-2.0/include",
-					"/opt/gurobi652/linux64/include"
+					"/opt/gurobi652/linux64/include",
+					"/home/daniel/Dropbox/GSBPA/implementation/third_party/TdZDD/src/project_TdZdd/include",
+					"/home/daniel/Dropbox/GSBPA/implementation/third_party/EGlib/src/project_EGlib/include",
+					"/opt/gurobi652/linux64/include",
+					"/usr/include/glib-2.0",
+					"/usr/lib64/glib-2.0/include",
+					"/home/daniel/Dropbox/GSBPA/implementation/include"
 				]
-			}
+			},
+			"gcc": 
+			{
+			            "extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/GSBPA/implementation/include",
+			            "include_dirs": [
+			            	"-I/home/daniel/Dropbox/GSBPA/implementation/third_party/TdZDD/src/project_TdZdd/include",
+			            	"-I/home/daniel/Dropbox/GSBPA/implementation/third_party/EGlib/src/project_EGlib/include",
+			            	"-I/opt/gurobi652/linux64/include",
+			            	"-I/usr/include/glib-2.0",
+			            	"-I/usr/lib64/glib-2.0/include",
+			            	"-I/home/daniel/Dropbox/GSBPA/implementation/include"
+			            ]
+			        }
 		}
 	},
 	"build_systems":
@@ -121,32 +139,10 @@
 				"mac*",
 				"build_arch",
 				"release",
-				"debug"
+				"debug",
+				"third_party/EGlib/"
 			],
 			"path": "."
-		},
-		{
-			"path": "~/tool/libSiPS-1.08p3"
-		},
-		{
-			"file_exclude_patterns":
-			[
-				".*",
-				"Find*"
-			],
-			"folder_exclude_patterns":
-			[
-				"buildlinux",
-				"buildmac",
-				"data",
-				"help",
-				"FindFiles",
-				"scripts",
-				"build_arch",
-				"release",
-				"debug"
-			],
-			"path": "~/Dropbox/NewPMCProject2.0"
 		}
 	],
 	"settings":
@@ -164,17 +160,25 @@
 				"use_only_additional_options": true
 			}
 		},
-
+		"sublimeclang_hide_output_when_empty": true,
 		"sublimeclang_options":
 		[
-		    "-isystem", "/usr/include/*",
-		    "-isystem", "/usr/include/c++/6.3.1/*",
-		    "-Wall"
+			"-isystem",
+			"/usr/include/*",
+			"-isystem",
+			"/usr/include/c++/6.3.1/*",
+			"-Wall",
+			"-I/home/daniel/Dropbox/GSBPA/implementation/third_party/TdZDD/src/project_TdZdd/include",
+			"-I/home/daniel/Dropbox/GSBPA/implementation/third_party/EGlib/src/project_EGlib/include",
+			"-I/opt/gurobi652/linux64/include",
+			"-I/usr/include/glib-2.0",
+			"-I/usr/lib64/glib-2.0/include",
+			"-I/home/daniel/Dropbox/GSBPA/implementation/include"
 		],
 
-		"sublimeclang_options_script": "${project_path}/scripts/cmake_script.py ${project_path}/build_arch",
+		//"sublimeclang_options_script": "${project_path}/scripts/cmake_script.py ${project_path}/build_arch",
 		"sublimeclang_hide_output_when_empty": true,
-		"sublimeclang_reparse_on_activated": true,
+		"sublimeclang_reparse_on_activated": false,
 		"sublimeclang_reparse_on_save": true,
 	}
 }
