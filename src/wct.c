@@ -656,7 +656,7 @@ int preprocess_data(wctproblem *problem) {
     wctdata *pd = (wctdata *)NULL;
 
     /** Initialize jobarray of rootnode */
-    for (unsigned i = 0; i < njobs; ++i) {
+    for (int i = 0; i < njobs; ++i) {
         problem->psum += problem->jobarray[i].processingime;
         problem->pmax =
             CC_MAX(problem->pmax, problem->jobarray[i].processingime);
@@ -677,13 +677,13 @@ int preprocess_data(wctproblem *problem) {
     _ojobarray = CC_SAFE_MALLOC(njobs, Job *);
     CCcheck_NULL_2(_ojobarray, "Failed to allocate memory");
 
-    for (unsigned i = 0; i < njobs; ++i) {
+    for (int i = 0; i < njobs; ++i) {
         _ojobarray[i] = &(problem->jobarray[i]);
     }
 
     qsort((void *)_ojobarray, njobs, sizeof(Job *), _job_compare_edd);
 
-    for (unsigned i = 0; i < problem->njobs; ++i) {
+    for (int i = 0; i < problem->njobs; ++i) {
         _ojobarray[i]->job = i;
     }
 

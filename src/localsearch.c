@@ -180,7 +180,7 @@ int local_search_create_W(solution *sol, local_search_data *data) {
 
     nmachines = data->nmachines;
 
-    for (unsigned i = 0; i < nmachines; ++i) {
+    for (int i = 0; i < nmachines; ++i) {
         if (sol->part[i].used == 0) {
             continue;
         }
@@ -205,17 +205,17 @@ static int local_search_create_processing_list(solution *         sol,
                                                int                l) {
     int val = 0;
 
-    for (unsigned i = 0; i < data->nmachines; ++i) {
+    for (int i = 0; i < data->nmachines; ++i) {
         int        njobs = sol->part[i].machine->len;
         int        C = 0;
         GPtrArray *machine = sol->part[i].machine;
 
-        for (unsigned j = 0; j < l; ++j) {
+        for (int j = 0; j < l; ++j) {
             Job *j1 = (Job *)g_ptr_array_index(machine, j);
             C += j1->processingime;
         }
 
-        for (unsigned j = 0; j < njobs - l; ++j) {
+        for (int j = 0; j < njobs - l; ++j) {
             Job *j1 = (Job *)g_ptr_array_index(machine, j);
             Job *j2 = (Job *)g_ptr_array_index(machine, j + l);
             data->processing_list_1[i][j].pos = j;
@@ -235,17 +235,17 @@ static int local_search_create_processing_list_2(solution *         sol,
                                                  int                l) {
     int val = 0;
 
-    for (unsigned i = 0; i < data->nmachines; ++i) {
+    for (int i = 0; i < data->nmachines; ++i) {
         int        C = 0;
         int        njobs = sol->part[i].machine->len;
         GPtrArray *machine = sol->part[i].machine;
 
-        for (unsigned j = njobs - l; j < njobs; ++j) {
+        for (int j = njobs - l; j < njobs; ++j) {
             Job *j1 = (Job *)g_ptr_array_index(machine, j);
             C += j1->processingime;
         }
 
-        for (unsigned j = njobs - l; j > 0; --j) {
+        for (int j = njobs - l; j > 0; --j) {
             Job *j1 = (Job *)g_ptr_array_index(machine, j - 1);
             Job *j2 = (Job *)g_ptr_array_index(sol->part[i].machine, j + l - 1);
             data->processing_list_2[i][njobs - l - j].pos = j;
@@ -266,7 +266,7 @@ static int local_search_create_processing_list_swap(solution *         sol,
                                                     int                l2) {
     int val = 0;
 
-    for (unsigned i = 0; i < data->nmachines; ++i) {
+    for (int i = 0; i < data->nmachines; ++i) {
         int        njobs = sol->part[i].machine->len;
         int        C = 0;
         GPtrArray *machine = sol->part[i].machine;
@@ -291,12 +291,12 @@ static int local_search_create_processing_list_swap(solution *         sol,
               sizeof(processing_list_data), compare_process_list_b);
         C = 0;
 
-        for (unsigned j = 0; j < l1; ++j) {
+        for (int j = 0; j < l1; ++j) {
             j1 = (Job *)g_ptr_array_index(machine, j);
             C += j1->processingime;
         }
 
-        for (unsigned j = 0; j < njobs - l1 - l2; ++j) {
+        for (int j = 0; j < njobs - l1 - l2; ++j) {
             j1 = (Job *)g_ptr_array_index(machine, j);
             j2 = (Job *)g_ptr_array_index(machine, j + l1);
             data->processing_list_1[i][j].pos = j;
@@ -317,17 +317,17 @@ static int local_search_create_processing_list_insertion_inter(
     solution *sol, local_search_data *data, int l) {
     int val = 0;
 
-    for (unsigned i = 0; i < data->nmachines; ++i) {
+    for (int i = 0; i < data->nmachines; ++i) {
         int        njobs = sol->part[i].machine->len;
         int        C = 0;
         GPtrArray *machine = sol->part[i].machine;
 
-        for (unsigned j = 0; j < l; ++j) {
+        for (int j = 0; j < l; ++j) {
             Job *j1 = (Job *)g_ptr_array_index(machine, j);
             C += j1->processingime;
         }
 
-        for (unsigned j = 0; j < njobs - l; ++j) {
+        for (int j = 0; j < njobs - l; ++j) {
             Job *j1 = (Job *)g_ptr_array_index(machine, j);
             Job *j2 = (Job *)g_ptr_array_index(machine, j + l);
             data->processing_list_1[i][j].pos = j;
@@ -348,7 +348,7 @@ static int local_search_create_processing_list_swap_inter(
     solution *sol, local_search_data *data, int l1, int l2) {
     int val = 0;
 
-    for (unsigned i = 0; i < data->nmachines; ++i) {
+    for (int i = 0; i < data->nmachines; ++i) {
         int        njobs = sol->part[i].machine->len;
         int        C = 0;
         Job *      j1, *j2;
@@ -404,11 +404,11 @@ int local_search_create_g(solution *sol, local_search_data *data) {
     int  tw;
     int  w;
 
-    for (unsigned i = 0; i < nmachines; ++i) {
+    for (int i = 0; i < nmachines; ++i) {
         if (sol->part[i].used == 0) {
             continue;
         } else {
-            for (unsigned j = 0; j < njobs; ++j) {
+            for (int j = 0; j < njobs; ++j) {
                 g_list_free_full(data->g[i][j], destroy_slope_t);
                 data->g[i][j] = (GList *)NULL;
             }
@@ -419,10 +419,10 @@ int local_search_create_g(solution *sol, local_search_data *data) {
         int n_k = sol->part[i].machine->len;
         int P = 0;
 
-        for (unsigned j = 0; j < n_k; ++j) {
+        for (int j = 0; j < n_k; ++j) {
             GPtrArray *lateness_sort = g_ptr_array_new();
 
-            for (unsigned k = j; k < n_k; ++k) {
+            for (int k = j; k < n_k; ++k) {
                 g_ptr_array_add(lateness_sort,
                                 g_ptr_array_index(sol->part[i].machine, k));
             }
@@ -432,7 +432,7 @@ int local_search_create_g(solution *sol, local_search_data *data) {
             tw = 0;
             w = 0;
             t1 = 0;
-            int k;
+            unsigned k;
             int move;
             move = 1;
             tmp = (Job *)g_ptr_array_index(lateness_sort, 0);
@@ -493,7 +493,7 @@ static void local_search_update_insertion(
     sol->part[k_best].c = 0;
     sol->part[k_best].tw = 0;
 
-    for (unsigned i = 0; i < l; ++i) {
+    for (int i = 0; i < l; ++i) {
         tmp = (Job *)g_ptr_array_index(sol->part[k_best].machine, i_best);
         g_ptr_array_remove_index(sol->part[k_best].machine, i_best);
         g_ptr_array_insert(sol->part[k_best].machine, j_best, tmp);
@@ -531,7 +531,7 @@ static void local_search_update_insertion_inter(solution *sol,
     sol->part[kk_best].c = 0;
     sol->part[kk_best].tw = 0;
 
-    for (unsigned i = 0; i < l; ++i) {
+    for (int i = 0; i < l; ++i) {
         tmp = (Job *)g_ptr_array_index(sol->part[k_best].machine, i_best);
         g_ptr_array_remove_index(sol->part[k_best].machine, i_best);
         g_ptr_array_insert(sol->part[kk_best].machine, j_best + i, tmp);
@@ -579,28 +579,28 @@ static void local_search_update_swap(solution *sol,
     part->tw = 0;
 
     if (l1 == l2) {
-        for (unsigned i = 0; i < l1; ++i) {
+        for (int i = 0; i < l1; ++i) {
             CC_SWAP(g_ptr_array_index(part->machine, i_best + i),
                     g_ptr_array_index(part->machine, j_best + i), swap);
         }
     } else if (l1 < l2) {
-        for (unsigned i = 0; i < l1; ++i) {
+        for (int i = 0; i < l1; ++i) {
             CC_SWAP(g_ptr_array_index(part->machine, i_best + i),
                     g_ptr_array_index(part->machine, j_best + i), swap);
         }
 
-        for (unsigned i = l1; i < l2; ++i) {
+        for (int i = l1; i < l2; ++i) {
             tmp = (Job *)g_ptr_array_index(part->machine, j_best + i);
             g_ptr_array_remove_index(part->machine, j_best + i);
             g_ptr_array_insert(part->machine, i_best + i, tmp);
         }
     } else {
-        for (unsigned i = 0; i < l2; ++i) {
+        for (int i = 0; i < l2; ++i) {
             CC_SWAP(g_ptr_array_index(part->machine, i_best + i),
                     g_ptr_array_index(part->machine, j_best + i), swap);
         }
 
-        for (unsigned i = l2; i < l1; ++i) {
+        for (int i = l2; i < l1; ++i) {
             tmp = (Job *)g_ptr_array_index(part->machine, i_best + i);
             g_ptr_array_remove_index(part->machine, i_best + i);
             g_ptr_array_insert(part->machine, j_best + i - 1, tmp);
@@ -642,28 +642,28 @@ static void local_search_update_inter_swap(solution *sol,
     part2->tw = 0;
 
     if (l1 == l2) {
-        for (unsigned i = 0; i < l1; ++i) {
+        for (int i = 0; i < l1; ++i) {
             CC_SWAP(g_ptr_array_index(part1->machine, i_best + i),
                     g_ptr_array_index(part2->machine, j_best + i), swap);
         }
     } else if (l1 < l2) {
-        for (unsigned i = 0; i < l1; ++i) {
+        for (int i = 0; i < l1; ++i) {
             CC_SWAP(g_ptr_array_index(part1->machine, i_best + i),
                     g_ptr_array_index(part2->machine, j_best + i), swap);
         }
 
-        for (unsigned i = l1; i < l2; ++i) {
+        for (int i = l1; i < l2; ++i) {
             tmp = (Job *)g_ptr_array_index(part2->machine, j_best + l1);
             g_ptr_array_remove_index(part2->machine, j_best + l1);
             g_ptr_array_insert(part1->machine, i_best + i, tmp);
         }
     } else {
-        for (unsigned i = 0; i < l2; ++i) {
+        for (int i = 0; i < l2; ++i) {
             CC_SWAP(g_ptr_array_index(part1->machine, i_best + i),
                     g_ptr_array_index(part1->machine, j_best + i), swap);
         }
 
-        for (unsigned i = l2; i < l1; ++i) {
+        for (int i = l2; i < l1; ++i) {
             tmp = (Job *)g_ptr_array_index(part1->machine, i_best + l2);
             g_ptr_array_remove_index(part1->machine, i_best + l2);
             g_ptr_array_insert(part2->machine, j_best + i, tmp);
@@ -709,7 +709,7 @@ void local_search_forward_insertion(solution *         sol,
     gg = CC_SAFE_MALLOC(sol->njobs, int);
     iterators = CC_SAFE_MALLOC(sol->njobs, GList *);
 
-    for (unsigned i = 0; i < sol->njobs; ++i) {
+    for (int i = 0; i < sol->njobs; ++i) {
         g[i] = CC_SAFE_MALLOC(sol->njobs, int);
         h[i] = CC_SAFE_MALLOC(sol->njobs, int);
         hh[i] = CC_SAFE_MALLOC(sol->njobs, int);
@@ -719,16 +719,16 @@ void local_search_forward_insertion(solution *         sol,
     max = 0;
     local_search_create_processing_list(sol, data, l);
 
-    for (unsigned k = 0; k < sol->nmachines; ++k) {
+    for (int k = 0; k < sol->nmachines; ++k) {
         /** compute g */
         int njobs = sol->part[k].machine->len;
 
-        for (unsigned i = 0; i < njobs - l; ++i) {
+        for (int i = 0; i < njobs - l; ++i) {
             pos = data->processing_list_1[k][i].pos;
             p = data->processing_list_1[k][i].p;
             GList *it = data->g[k][pos];
 
-            for (unsigned j = pos + l; j < njobs; ++j) {
+            for (int j = pos + l; j < njobs; ++j) {
                 tmp_j = (Job *)g_ptr_array_index(sol->part[k].machine, j);
                 c = sol->c[tmp_j->job] - p;
                 compute_it(&it, c);
@@ -737,10 +737,10 @@ void local_search_forward_insertion(solution *         sol,
         }
 
         /** compute h */
-        for (unsigned i = 0; i < njobs - l; ++i) {
+        for (int i = 0; i < njobs - l; ++i) {
             GList *it = data->g[k][i + l];
 
-            for (unsigned j = i + l; j < njobs; ++j) {
+            for (int j = i + l; j < njobs; ++j) {
                 tmp_j = (Job *)g_ptr_array_index(sol->part[k].machine, j);
                 c = sol->c[tmp_j->job];
                 compute_it(&it, c);
@@ -749,7 +749,7 @@ void local_search_forward_insertion(solution *         sol,
         }
 
         /** compute gg */
-        for (unsigned i = 0; i < njobs - l; ++i) {
+        for (int i = 0; i < njobs - l; ++i) {
             GList *it = data->g[k][i + l];
 
             if (i != 0) {
@@ -764,17 +764,17 @@ void local_search_forward_insertion(solution *         sol,
         }
 
         /** compute hh */
-        for (unsigned j = l; j < njobs - 1; ++j) {
+        for (int j = l; j < njobs - 1; ++j) {
             iterators[j] = data->g[k][j + 1];
         }
 
         iterators[njobs - 1] = (GList *)NULL;
 
-        for (unsigned i = 0; i < njobs - l; ++i) {
+        for (int i = 0; i < njobs - l; ++i) {
             pos = data->processing_list_1[k][i].pos;
             p = data->processing_list_1[k][i].p;
 
-            for (unsigned j = pos + l; j < njobs; ++j) {
+            for (int j = pos + l; j < njobs; ++j) {
                 if (iterators[j] != (GList *)NULL) {
                     tmp_j = (Job *)g_ptr_array_index(sol->part[k].machine, j);
                     c = sol->c[tmp_j->job] - p;
@@ -786,8 +786,8 @@ void local_search_forward_insertion(solution *         sol,
             }
         }
 
-        for (unsigned i = 0; i < njobs - l; ++i) {
-            for (unsigned j = i + l; j < njobs; ++j) {
+        for (int i = 0; i < njobs - l; ++i) {
+            for (int j = i + l; j < njobs; ++j) {
                 tmp = 0;
 
                 if (i != 0) {
@@ -836,7 +836,7 @@ void local_search_forward_insertion(solution *         sol,
         print_line();
     }
 
-    for (unsigned i = 0; i < sol->njobs; ++i) {
+    for (int i = 0; i < sol->njobs; ++i) {
         CC_IFFREE(g[i], int);
         CC_IFFREE(h[i], int);
         CC_IFFREE(hh[i], int);
@@ -869,7 +869,7 @@ void local_search_backward_insertion(solution *         sol,
     iterators = CC_SAFE_MALLOC(sol->njobs, GList *);
     gg = CC_SAFE_MALLOC(sol->njobs, int);
 
-    for (unsigned i = 0; i < sol->njobs; ++i) {
+    for (int i = 0; i < sol->njobs; ++i) {
         g[i] = CC_SAFE_MALLOC(sol->njobs, int);
         h[i] = CC_SAFE_MALLOC(sol->njobs, int);
         hh[i] = CC_SAFE_MALLOC(sol->njobs, int);
@@ -879,7 +879,7 @@ void local_search_backward_insertion(solution *         sol,
     max = 0;
     local_search_create_processing_list_2(sol, data, l);
 
-    for (unsigned k = 0; k < sol->nmachines; ++k) {
+    for (int k = 0; k < sol->nmachines; ++k) {
         int        njobs = sol->part[k].machine->len;
         int        p;
         GPtrArray *machine = sol->part[k].machine;
@@ -902,13 +902,13 @@ void local_search_backward_insertion(solution *         sol,
         }
 
         /** compute h */
-        for (unsigned j = 0; j < njobs - l; ++j) {
+        for (int j = 0; j < njobs - l; ++j) {
             h[njobs - l][j] = 0;
         }
 
         p = 0;
 
-        for (unsigned i = njobs - l - 1; i < njobs - 1; ++i) {
+        for (int i = njobs - l - 1; i < njobs - 1; ++i) {
             tmp_j = (Job *)g_ptr_array_index(machine, i);
             p += tmp_j->processingime;
         }
@@ -935,7 +935,7 @@ void local_search_backward_insertion(solution *         sol,
         }
 
         /** compute gg */
-        for (unsigned i = njobs - l; i > 0; --i) {
+        for (int i = njobs - l; i > 0; --i) {
             it = data->g[k][i];
             tmp_j = (Job *)g_ptr_array_index(machine, i + l - 1);
             c = sol->c[tmp_j->job];
@@ -944,15 +944,15 @@ void local_search_backward_insertion(solution *         sol,
         }
 
         /** compute hh */
-        for (unsigned j = 0; j < njobs - l; ++j) {
+        for (int j = 0; j < njobs - l; ++j) {
             iterators[j] = data->g[k][j];
         }
 
-        for (unsigned i = njobs - l - 1; i > 0; --i) {
+        for (int i = njobs - l - 1; i > 0; --i) {
             p = data->processing_list_2[k][njobs - l - i].p;
             pos = data->processing_list_2[k][njobs - l - i].pos;
 
-            for (unsigned j = 0; j < pos; ++j) {
+            for (int j = 0; j < pos; ++j) {
                 if (j == 0) {
                     c = p;
                 } else {
@@ -965,7 +965,7 @@ void local_search_backward_insertion(solution *         sol,
             }
         }
 
-        for (unsigned i = njobs - l; i > 0; --i) {
+        for (int i = njobs - l; i > 0; --i) {
             for (int j = i - 1; j >= 0; --j) {
                 t = 0;
 
@@ -1015,7 +1015,7 @@ void local_search_backward_insertion(solution *         sol,
         print_line();
     }
 
-    for (unsigned i = 0; i < sol->njobs; ++i) {
+    for (int i = 0; i < sol->njobs; ++i) {
         CC_IFFREE(g[i], int);
         CC_IFFREE(h[i], int);
         CC_IFFREE(hh[i], int);
@@ -1049,7 +1049,7 @@ void local_search_swap_intra(solution *         sol,
     B4_2 = CC_SAFE_MALLOC(sol->njobs, int *);
     iterators = CC_SAFE_MALLOC(sol->njobs, GList *);
 
-    for (unsigned i = 0; i < sol->njobs; ++i) {
+    for (int i = 0; i < sol->njobs; ++i) {
         B2_1[i] = CC_SAFE_MALLOC(sol->njobs, int);
         B2_2[i] = CC_SAFE_MALLOC(sol->njobs, int);
         B3_1[i] = CC_SAFE_MALLOC(sol->njobs, int);
@@ -1062,17 +1062,17 @@ void local_search_swap_intra(solution *         sol,
     max = 0;
     local_search_create_processing_list_swap(sol, data, l1, l2);
 
-    for (unsigned k = 0; k < sol->nmachines; ++k) {
+    for (int k = 0; k < sol->nmachines; ++k) {
         int        njobs = sol->part[k].machine->len;
         GPtrArray *machine = sol->part[k].machine;
 
         /** compute g */
-        for (unsigned i = 0; i < njobs - l1 - l2 + 1; ++i) {
+        for (int i = 0; i < njobs - l1 - l2 + 1; ++i) {
             pos = data->processing_list_1[k][i].pos;
             p = data->processing_list_1[k][i].p;
             it = data->g[k][pos];
 
-            for (unsigned j = pos + l1; j < njobs - l2 + 1; ++j) {
+            for (int j = pos + l1; j < njobs - l2 + 1; ++j) {
                 tmp_j = (Job *)g_ptr_array_index(machine, j + l2 - 1);
                 c = sol->c[tmp_j->job] - p;
                 compute_it(&it, c);
@@ -1081,10 +1081,10 @@ void local_search_swap_intra(solution *         sol,
         }
 
         /** compute h */
-        for (unsigned i = 0; i < njobs - l1 - l2 + 1; ++i) {
+        for (int i = 0; i < njobs - l1 - l2 + 1; ++i) {
             it = (i + l1 >= njobs) ? NULL : data->g[k][i + l1];
 
-            for (unsigned j = i + l1; j < njobs - l2 + 1; ++j) {
+            for (int j = i + l1; j < njobs - l2 + 1; ++j) {
                 if (it == NULL) {
                     B2_2[i][j] = 0;
                 } else {
@@ -1097,15 +1097,15 @@ void local_search_swap_intra(solution *         sol,
         }
 
         /** compute B3_1 */
-        for (unsigned i = 0; i < njobs - l1 - l2 + 1; ++i) {
+        for (int i = 0; i < njobs - l1 - l2 + 1; ++i) {
             iterators[i] = data->g[k][i + l1];
         }
 
-        for (unsigned j = l1; j < njobs - l2 + 1; ++j) {
+        for (int j = l1; j < njobs - l2 + 1; ++j) {
             pos = data->processing_list_2[k][j - l1].pos;
             p = data->processing_list_2[k][j - l1].p;
 
-            for (unsigned i = 0; i < pos - l1 + 1; ++i) {
+            for (int i = 0; i < pos - l1 + 1; ++i) {
                 if (i + l1 >= njobs) {
                     B3_1[i][pos] = 0;
                 } else {
@@ -1123,15 +1123,15 @@ void local_search_swap_intra(solution *         sol,
         }
 
         /** compute B3_2 */
-        for (unsigned j = l1; j < njobs - l2 + 1; ++j) {
+        for (int j = l1; j < njobs - l2 + 1; ++j) {
             iterators[j] = data->g[k][j];
         }
 
-        for (unsigned i = 0; i < njobs - l1 - l2 + 1; ++i) {
+        for (int i = 0; i < njobs - l1 - l2 + 1; ++i) {
             pos = data->processing_list_1[k][i].pos;
             p = data->processing_list_1[k][i].p;
 
-            for (unsigned j = pos + l1; j < njobs - l2 + 1; ++j) {
+            for (int j = pos + l1; j < njobs - l2 + 1; ++j) {
                 if (i + l1 >= njobs) {
                     B3_2[pos][j] = 0;
                 } else {
@@ -1144,10 +1144,10 @@ void local_search_swap_intra(solution *         sol,
         }
 
         /** compute B4_1 */
-        for (unsigned j = l1; j < njobs - l2 + 1; ++j) {
+        for (int j = l1; j < njobs - l2 + 1; ++j) {
             it = data->g[k][j];
 
-            for (unsigned i = 0; i < j - l1 + 1; ++i) {
+            for (int i = 0; i < j - l1 + 1; ++i) {
                 c = 0;
 
                 if (i != 0) {
@@ -1160,7 +1160,7 @@ void local_search_swap_intra(solution *         sol,
         }
 
         /** compute B4_2 */
-        for (unsigned j = l1; j < njobs - l2 + 1; ++j) {
+        for (int j = l1; j < njobs - l2 + 1; ++j) {
             pos = data->processing_list_2[k][j - l1].pos;
             p = data->processing_list_2[k][j - l1].p;
 
@@ -1170,7 +1170,7 @@ void local_search_swap_intra(solution *         sol,
                 it = data->g[k][pos + l2];
             }
 
-            for (unsigned i = 0; i < pos - l1 + 1; ++i) {
+            for (int i = 0; i < pos - l1 + 1; ++i) {
                 int c = p;
 
                 if (i != 0) {
@@ -1188,8 +1188,8 @@ void local_search_swap_intra(solution *         sol,
             }
         }
 
-        for (unsigned i = 0; i < njobs - l1 - l2 + 1; ++i) {
-            for (unsigned j = i + l1; j < njobs - l2 + 1; ++j) {
+        for (int i = 0; i < njobs - l1 - l2 + 1; ++i) {
+            for (int j = i + l1; j < njobs - l2 + 1; ++j) {
                 t = 0;
 
                 if (i != 0) {
@@ -1239,7 +1239,7 @@ void local_search_swap_intra(solution *         sol,
         print_line();
     }
 
-    for (unsigned i = 0; i < sol->njobs; ++i) {
+    for (int i = 0; i < sol->njobs; ++i) {
         CC_IFFREE(B2_1[i], int);
         CC_IFFREE(B2_2[i], int);
         CC_IFFREE(B3_1[i], int);
@@ -1275,7 +1275,7 @@ void local_search_insertion_inter(solution *         sol,
     B5_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
     iterators = CC_SAFE_MALLOC(sol->njobs, GList *);
 
-    for (unsigned i = 0; i < sol->njobs + 1; ++i) {
+    for (int i = 0; i < sol->njobs + 1; ++i) {
         B2_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
         B2_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
         B5_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
@@ -1285,11 +1285,11 @@ void local_search_insertion_inter(solution *         sol,
     max = 0;
     local_search_create_processing_list_insertion_inter(sol, data, l);
 
-    for (unsigned k1 = 0; k1 < sol->nmachines; ++k1) {
+    for (int k1 = 0; k1 < sol->nmachines; ++k1) {
         int        njobs1 = sol->part[k1].machine->len;
         GPtrArray *machine1 = sol->part[k1].machine;
 
-        for (unsigned k2 = 0; k2 < sol->nmachines; ++k2) {
+        for (int k2 = 0; k2 < sol->nmachines; ++k2) {
             if (k1 == k2) {
                 continue;
             }
@@ -1298,10 +1298,10 @@ void local_search_insertion_inter(solution *         sol,
             GPtrArray *machine2 = sol->part[k2].machine;
 
             /** compute B2_1 */
-            for (unsigned i = 0; i < njobs1 - l + 1; ++i) {
+            for (int i = 0; i < njobs1 - l + 1; ++i) {
                 it = data->g[k1][i];
 
-                for (unsigned j = 0; j < njobs2; ++j) {
+                for (int j = 0; j < njobs2; ++j) {
                     c = 0;
 
                     if (j != 0) {
@@ -1314,12 +1314,12 @@ void local_search_insertion_inter(solution *         sol,
                 }
             }
 
-            for (unsigned i = 0; i < njobs1 - l + 1; ++i) {
+            for (int i = 0; i < njobs1 - l + 1; ++i) {
                 pos = data->processing_list_1[k1][i].pos;
                 p = data->processing_list_1[k1][i].p;
                 it = (pos + l >= njobs1) ? NULL : data->g[k1][pos + l];
 
-                for (unsigned j = 0; j < njobs2; ++j) {
+                for (int j = 0; j < njobs2; ++j) {
                     if (it == NULL) {
                         B2_2[pos][j] = 0;
                     } else {
@@ -1336,7 +1336,7 @@ void local_search_insertion_inter(solution *         sol,
                 }
             }
 
-            for (unsigned i = 0; i < njobs1 - l + 1; ++i) {
+            for (int i = 0; i < njobs1 - l + 1; ++i) {
                 if (i + l >= njobs1) {
                     B3_1[i] = 0;
                 } else {
@@ -1353,14 +1353,14 @@ void local_search_insertion_inter(solution *         sol,
                 }
             }
 
-            for (unsigned j = 0; j < njobs2 - 1; ++j) {
+            for (int j = 0; j < njobs2 - 1; ++j) {
                 iterators[j] = data->g[k2][j];
             }
 
-            for (unsigned j = 0; j < njobs2 - 1; ++j) {
+            for (int j = 0; j < njobs2 - 1; ++j) {
                 it = data->g[k2][j];
 
-                for (unsigned i = 0; i < njobs1 - l + 1; ++i) {
+                for (int i = 0; i < njobs1 - l + 1; ++i) {
                     pos = data->processing_list_1[k1][i].pos;
                     p = data->processing_list_1[k1][i].p;
                     c = p;
@@ -1375,8 +1375,8 @@ void local_search_insertion_inter(solution *         sol,
                 }
             }
 
-            for (unsigned i = 0; i < njobs1 - l + 1; ++i) {
-                for (unsigned j = 0; j < njobs2 - 1; ++j) {
+            for (int i = 0; i < njobs1 - l + 1; ++i) {
+                for (int j = 0; j < njobs2 - 1; ++j) {
                     t = 0;
 
                     if (i != 0) {
@@ -1432,7 +1432,7 @@ void local_search_insertion_inter(solution *         sol,
         print_line();
     }
 
-    for (unsigned i = 0; i < sol->njobs + 1; ++i) {
+    for (int i = 0; i < sol->njobs + 1; ++i) {
         CC_IFFREE(B2_1[i], int);
         CC_IFFREE(B2_2[i], int);
         CC_IFFREE(B5_1[i], int);
@@ -1466,7 +1466,7 @@ void local_search_swap_inter(solution *         sol,
     B6_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
     iterators = CC_SAFE_MALLOC(sol->njobs, GList *);
 
-    for (unsigned i = 0; i < sol->njobs + 1; ++i) {
+    for (int i = 0; i < sol->njobs + 1; ++i) {
         B2_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
         B2_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
         B3_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
@@ -1479,11 +1479,11 @@ void local_search_swap_inter(solution *         sol,
     max = 0;
     local_search_create_processing_list_swap_inter(sol, data, l1, l2);
 
-    for (unsigned k1 = 0; k1 < sol->nmachines; ++k1) {
+    for (int k1 = 0; k1 < sol->nmachines; ++k1) {
         int        njobs1 = sol->part[k1].machine->len;
         GPtrArray *machine1 = sol->part[k1].machine;
 
-        for (unsigned k2 = 0; k2 < sol->nmachines; ++k2) {
+        for (int k2 = 0; k2 < sol->nmachines; ++k2) {
             if (k1 == k2) {
                 continue;
             }
@@ -1492,10 +1492,10 @@ void local_search_swap_inter(solution *         sol,
             GPtrArray *machine2 = sol->part[k2].machine;
 
             /** compute B2_1 */
-            for (unsigned i = 0; i < njobs1 - l1 + 1; ++i) {
+            for (int i = 0; i < njobs1 - l1 + 1; ++i) {
                 it = data->g[k1][i];
 
-                for (unsigned j = 0; j < njobs2 - l2 + 1; ++j) {
+                for (int j = 0; j < njobs2 - l2 + 1; ++j) {
                     c = 0;
 
                     if (j != 0) {
@@ -1508,12 +1508,12 @@ void local_search_swap_inter(solution *         sol,
                 }
             }
 
-            for (unsigned i = 0; i < njobs1 - l1 + 1; ++i) {
+            for (int i = 0; i < njobs1 - l1 + 1; ++i) {
                 pos = data->processing_list_1[k1][i].pos;
                 p = data->processing_list_1[k1][i].p;
                 it = (pos + l1 >= njobs1) ? NULL : data->g[k1][pos + l1];
 
-                for (unsigned j = 0; j < njobs2 - l2 + 1; ++j) {
+                for (int j = 0; j < njobs2 - l2 + 1; ++j) {
                     if (it == NULL) {
                         B2_2[pos][j] = 0;
                     } else {
@@ -1530,15 +1530,15 @@ void local_search_swap_inter(solution *         sol,
                 }
             }
 
-            for (unsigned i = 0; i < njobs1 - l1; ++i) {
+            for (int i = 0; i < njobs1 - l1; ++i) {
                 iterators[i] = data->g[k1][i + l1];
             }
 
-            for (unsigned j = 0; j < njobs2 - l2 + 1; ++j) {
+            for (int j = 0; j < njobs2 - l2 + 1; ++j) {
                 pos = data->processing_list_2[k2][j].pos;
                 p = data->processing_list_2[k2][j].p;
 
-                for (unsigned i = 0; i < njobs1 - l1 + 1; ++i) {
+                for (int i = 0; i < njobs1 - l1 + 1; ++i) {
                     if (i + l1 >= njobs1) {
                         B3_1[i][pos] = 0;
                     } else {
@@ -1555,10 +1555,10 @@ void local_search_swap_inter(solution *         sol,
                 }
             }
 
-            for (unsigned j = 0; j < njobs2 - l2 + 1; ++j) {
+            for (int j = 0; j < njobs2 - l2 + 1; ++j) {
                 it = data->g[k2][j];
 
-                for (unsigned i = 0; i < njobs1 - l1 + 1; ++i) {
+                for (int i = 0; i < njobs1 - l1 + 1; ++i) {
                     c = 0;
 
                     if (i != 0) {
@@ -1571,12 +1571,12 @@ void local_search_swap_inter(solution *         sol,
                 }
             }
 
-            for (unsigned j = 0; j < njobs2 - l2 + 1; ++j) {
+            for (int j = 0; j < njobs2 - l2 + 1; ++j) {
                 pos = data->processing_list_2[k2][j].pos;
                 p = data->processing_list_2[k2][j].p;
                 it = (pos + l2 >= njobs2) ? NULL : data->g[k2][pos + l2];
 
-                for (unsigned i = 0; i < njobs1 - l1 + 1; ++i) {
+                for (int i = 0; i < njobs1 - l1 + 1; ++i) {
                     if (it == NULL) {
                         B5_2[i][pos] = 0;
                     } else {
@@ -1593,15 +1593,15 @@ void local_search_swap_inter(solution *         sol,
                 }
             }
 
-            for (unsigned j = 0; j < njobs2 - l2; ++j) {
+            for (int j = 0; j < njobs2 - l2; ++j) {
                 iterators[j] = data->g[k2][j + l2];
             }
 
-            for (unsigned i = 0; i < njobs1 - l1 + 1; ++i) {
+            for (int i = 0; i < njobs1 - l1 + 1; ++i) {
                 pos = data->processing_list_1[k1][i].pos;
                 p = data->processing_list_1[k1][i].p;
 
-                for (unsigned j = 0; j < njobs2 - l2 + 1; ++j) {
+                for (int j = 0; j < njobs2 - l2 + 1; ++j) {
                     if (j + l2 >= njobs2) {
                         B6_1[pos][j] = 0;
                     } else {
@@ -1618,8 +1618,8 @@ void local_search_swap_inter(solution *         sol,
                 }
             }
 
-            for (unsigned i = 0; i < njobs1 - l1 + 1; ++i) {
-                for (unsigned j = 0; j < njobs2 - l2 + 1; ++j) {
+            for (int i = 0; i < njobs1 - l1 + 1; ++i) {
+                for (int j = 0; j < njobs2 - l2 + 1; ++j) {
                     t = 0;
 
                     if (i != 0) {
@@ -1676,7 +1676,7 @@ void local_search_swap_inter(solution *         sol,
         print_line();
     }
 
-    for (unsigned i = 0; i < sol->njobs + 1; ++i) {
+    for (int i = 0; i < sol->njobs + 1; ++i) {
         CC_IFFREE(B2_1[i], int);
         CC_IFFREE(B2_2[i], int);
         CC_IFFREE(B3_1[i], int);
