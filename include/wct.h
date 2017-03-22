@@ -7,6 +7,14 @@ extern "C" {
 
 #include "defs.h"
 #include "wctprivate.h"
+
+/**
+ * print.c
+ */
+
+int print_to_screen(wctproblem *problem);
+int print_to_csv(wctproblem *problem);
+
 /**
  * greedy.c
  */
