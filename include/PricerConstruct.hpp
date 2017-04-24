@@ -121,7 +121,7 @@ class PricerSpec : public tdzdd::DdSpec<PricerSpec, int, 2> {
 
    private:
     int min_job(int j, int state) const {
-        int i, val = j + 1;
+        int  val = j + 1;
 
         // for (i = j + 1; i < nbjobs; ++i) {
         //     if (state >= jobarray[i].releasetime &&

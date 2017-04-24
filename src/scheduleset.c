@@ -20,17 +20,6 @@ void iterator(gpointer key, gpointer value, gpointer user_data) {
     g_hash_table_insert(new_table, key, value);
 }
 
-/*dst->members = CC_SAFE_MALLOC(dst->count + 1, int);                 \
-CCcheck_NULL_2(dst->members, "Failed to allocate memory");      \
-dst->C = CC_SAFE_MALLOC(dst->count, int); \
-CCcheck_NULL_2(dst->C, "Failed to allocate memory"); \
-memcpy(dst->members, src->members, (dst->count + 1)*sizeof(int));     \
-memcpy(dst->members, src->members, (dst->count)*sizeof(int));\*/
-
-/*dst[x].members = CC_SAFE_MALLOC(dst[x].count + 1, int);             \
-CCcheck_NULL_2(dst[x].members, "Failed to allocate memory");    \
-memcpy(dst[x].members, src[x].members, (dst[x].count + 1)*sizeof(int));\*/
-
 static int copy_Schedulesets(Scheduleset *dst, Scheduleset *src, int nsrc);
 #define copy_sets()                          \
     {                                        \
