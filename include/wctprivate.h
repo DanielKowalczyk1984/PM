@@ -43,45 +43,6 @@ int init_tables(PricerSolver *solver);
 size_t get_numberrows_zdd(PricerSolver *solver);
 size_t get_numberrows_bdd(PricerSolver *solver);
 void set_release_due_time(PricerSolver *solver, Job *jobarray);
-/**
- * scatter search data types
- */
-
-typedef struct _REFSET {
-    int        newsol;
-    GPtrArray *list1;
-    int        nb1;
-    GPtrArray *list2;
-    int        nb2;
-} REFSET;
-
-typedef struct _P {
-    int    PSize;
-    GList *list;
-    int    lenght;
-} P;
-
-typedef enum { init = 0, add = 1, update = 3, opt = 4 } scatter_status;
-
-typedef struct _SS {
-    REFSET *rs;
-    P *     p;
-    int     b1;
-    int     b2;
-
-    Job **jobarray;
-    int   njobs;
-    int   nmachines;
-    int   lowerbound;
-    int   upperbound;
-
-    double timelimit;
-    GRand *random;
-    int    iter;
-    int    combine_method;
-
-    scatter_status status;
-} SS;
 
 /**
  * wct data types nodes of branch and bound tree
