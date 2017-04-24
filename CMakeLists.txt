@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Define a local module path
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-# Find Glib 
+# Find Glib
 find_package(Glib)
 
 # Find Gurobi
