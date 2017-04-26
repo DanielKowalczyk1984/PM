@@ -172,7 +172,7 @@
 			"-std=c++11",
 			"-I/home/daniel/Dropbox/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
 			"-I/home/daniel/Dropbox/PM/implementation/third_party/EGlib/src/project_EGlib/include",
-			"-I/opt/gurobi652/linux64/include",
+			"-I/opt/gurobi702/linux64/include",
 			"-I/usr/include/glib-2.0",
 			"-I/usr/lib64/glib-2.0/include",
 			"-I/home/daniel/Dropbox/PM/implementation/include"
