@@ -1,11 +1,11 @@
-#include <wct.h>
-#include <wctparms.h>
-#include <PricerSolver.hpp>
 #include <iostream>
 #include <vector>
+#include <PricerSolver.hpp>
+#include <wct.h>
+
 
 template <typename T = double, bool reverse = false>
-int construct_sol(Scheduleset **       set,
+int construct_sol(scheduleset **       set,
                   int *                nnewsets,
                   Job *                jobarray,
                   Optimal_Solution<T> &sol,
@@ -14,9 +14,9 @@ int construct_sol(Scheduleset **       set,
     int               nbset = 1;
     int               C = 0;
     std::vector<int> *v = &(sol.jobs);
-    Scheduleset *     newset = CC_SAFE_MALLOC(1, Scheduleset);
+    scheduleset *     newset = CC_SAFE_MALLOC(1, scheduleset);
     CCcheck_NULL_2(newset, "Failed to allocate memory newset");
-    Scheduleset_init(newset);
+    scheduleset_init(newset);
     newset->members = CC_SAFE_MALLOC(sol.jobs.size() + 1, int);
     CCcheck_NULL_2(newset->members, "Failed to allocate memory members");
     newset->C = CC_SAFE_MALLOC(sol.jobs.size(), int);
@@ -46,7 +46,7 @@ int construct_sol(Scheduleset **       set,
 CLEAN:
 
     if (val) {
-        Schedulesets_free(&(newset), &(nbset));
+        schedulesets_free(&(newset), &(nbset));
     }
 
     return val;
@@ -69,37 +69,6 @@ void print_dot_file(PricerSolver *solver, char *name) {
 
 void freeSolver(PricerSolver *src) { delete src; }
 
-int solvedblzdd(wctdata *pd) {
-    int                      val = 0;
-    Optimal_Solution<double> s = pd->solver->solve_duration_zdd_double(pd->pi);
-
-    if (s.obj > 0.00001) {
-        val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
-                            pd->njobs);
-        CCcheck_val_2(val, "Failed in construct_sol_zdd");
-    } else {
-        pd->nnewsets = 0;
-    }
-
-CLEAN:
-    return val;
-}
-
-int solvedblbdd(wctdata *pd) {
-    int                      val = 0;
-    Optimal_Solution<double> s = pd->solver->solve_duration_bdd_double(pd->pi);
-
-    if (s.obj > 0.00001) {
-        val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
-                            pd->njobs);
-        CCcheck_val_2(val, "Failed to construct_sol_bdd");
-    } else {
-        pd->nnewsets = 0;
-    }
-
-CLEAN:
-    return val;
-}
 
 int solve_dynamic_programming_ahv(wctdata *pd) {
     int                      val = 0;

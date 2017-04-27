@@ -471,7 +471,7 @@ void update_bestschedule(wctproblem *problem, solution *new_sol) {
         problem->rel_error = (double)(problem->global_upper_bound -
                                       problem->global_lower_bound) /
                              (problem->global_lower_bound);
-        partlist_to_Scheduleset(new_sol->part, new_sol->nmachines,
+        partlist_to_scheduleset(new_sol->part, new_sol->nmachines,
                                 new_sol->njobs, &(problem->bestschedule),
                                 &(problem->nbestschedule));
     }
@@ -487,11 +487,11 @@ static int add_feasible_solution(wctproblem *problem, solution *new_sol) {
     update_bestschedule(problem, new_sol);
 
     if (root_pd->ccount == 0 && problem->parms.construct != 0) {
-        update_Schedulesets(&root_pd->cclasses, &root_pd->ccount,
+        update_schedulesets(&root_pd->cclasses, &root_pd->ccount,
                             problem->bestschedule, problem->nbestschedule);
         root_pd->gallocated = root_pd->ccount;
     } else if (problem->parms.construct != 0) {
-        partlist_to_Scheduleset(new_sol->part, new_sol->nmachines,
+        partlist_to_scheduleset(new_sol->part, new_sol->nmachines,
                                 new_sol->njobs, &(root_pd->newsets),
                                 &(root_pd->nnewsets));
         add_newsets(root_pd);
