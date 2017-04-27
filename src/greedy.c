@@ -265,7 +265,7 @@ static void perturb_swap(solution *         sol,
                          int                l2,
                          GRand *            rand_uniform) {
     int       m1, m2;
-    unsigned       i1 = 0, i2 = 0;
+    unsigned  i1 = 0, i2 = 0;
     int       nmachines = sol->nmachines;
     Job **    tmp1 = (Job **)NULL;
     Job **    tmp2 = (Job **)NULL;

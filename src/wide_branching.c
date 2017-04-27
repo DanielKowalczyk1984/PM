@@ -1,5 +1,5 @@
-#include <wct.h>
 #include <heap.h>
+#include <wct.h>
 
 /** help functions for wide branching */
 static int create_same_wide(wctproblem *problem,
@@ -17,7 +17,6 @@ static int remove_finished_subtree_wide(wctdata *child);
 
 // extern inline void inodepair_ref_key(int *v1, int *v2, int index);
 // extern inline int nodepair_ref_key(int v1, int v2);
-
 
 static int collect_same_child_wide(wctdata *cd) {
     int rval = 0;
@@ -417,7 +416,6 @@ CLEAN:
 
     return val;
 }
-
 
 static int create_same_wide(wctproblem *problem,
                             wctdata *   parent_pd,

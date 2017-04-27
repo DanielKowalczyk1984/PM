@@ -1,6 +1,5 @@
 #include <wct.h>
 
-static int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b);
 static int collect_same_child_conflict(wctdata *cd);
 static int collect_diff_child_conflict(wctdata *cd);
 static int remove_finished_subtree_conflict(wctdata *child);
@@ -110,11 +109,11 @@ void init_BB_tree(wctproblem *problem) {
 }
 
 int insert_frac_pairs_into_heap(wctdata *    pd,
-                                       const double x[],
-                                       int *        nodepair_refs,
-                                       double *     nodepair_weights,
-                                       int          npairs,
-                                       pmcheap *    heap) {
+                                const double x[],
+                                int *        nodepair_refs,
+                                double *     nodepair_weights,
+                                int          npairs,
+                                pmcheap *    heap) {
     int     val = 0;
     int     i;
     int     ref_key;
@@ -389,7 +388,6 @@ int prune_duplicated_sets(wctdata *pd) {
 
     return val;
 }
-
 
 int skip_wctdata(wctdata *pd, wctproblem *problem) {
     BinomialHeap *br_heap = problem->br_heap_a;

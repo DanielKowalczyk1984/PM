@@ -9,8 +9,8 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#include <scheduleset.h>
 #include <defs.h>
+#include <scheduleset.h>
 #include <util.h>
 
 void iterator(gpointer key, gpointer value, gpointer user_data);

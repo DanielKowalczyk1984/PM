@@ -252,7 +252,6 @@ void make_pi_feasible_farkas_pricing(wctdata *pd) {
     }
 }
 
-
 int compute_objective(wctdata *pd, wctparms *parms) {
     int val = 0;
     int i;

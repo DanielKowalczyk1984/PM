@@ -1,8 +1,7 @@
+#include <wct.h>
+#include <PricerSolver.hpp>
 #include <iostream>
 #include <vector>
-#include <PricerSolver.hpp>
-#include <wct.h>
-
 
 template <typename T = double, bool reverse = false>
 int construct_sol(scheduleset **       set,
@@ -68,7 +67,6 @@ void print_dot_file(PricerSolver *solver, char *name) {
 }
 
 void freeSolver(PricerSolver *src) { delete src; }
-
 
 int solve_dynamic_programming_ahv(wctdata *pd) {
     int                      val = 0;

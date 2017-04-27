@@ -2,7 +2,6 @@
 
 int debug = 0;
 
-
 /*Information about debug*/
 int  dbg_lvl() { return debug; }
 void set_dbg_lvl(int dbglvl) { debug = dbglvl; }
@@ -171,7 +170,6 @@ void wctdata_init(wctdata *pd) {
     pd->same_children_wide = (wctdata **)NULL;
     pd->diff_children_wide = (wctdata **)NULL;
 }
-
 
 void lpwctdata_free(wctdata *pd) {
     if (pd->LP) {

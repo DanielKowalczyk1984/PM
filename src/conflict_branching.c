@@ -6,8 +6,6 @@ static int create_same_conflict(
 static int create_differ_conflict(
     wctproblem *problem, wctdata *parent_pd, wctdata **child, int v1, int v2);
 
-
-
 static int transfer_same_cclasses(wctdata *          pd,
                                   const scheduleset *parent_cclasses,
                                   int                parent_ccount,
@@ -509,7 +507,6 @@ static int find_strongest_children_conflict(int *strongest_v1,
 CLEAN:
     return val;
 }
-
 
 int create_branches_conflict(wctdata *pd, wctproblem *problem) {
     int       val = 0;
