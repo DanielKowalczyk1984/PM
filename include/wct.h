@@ -26,6 +26,8 @@ int calculate_Hmax(Job *jobarray, int nmachines, int njobs);
 int calculate_Hmin(
     int *durations, int nmachines, int njobs, int *perm, double *H);
 int preprocess_data(wctproblem *problem);
+int find_division(wctproblem *problem);
+void g_problem_summary_init(gpointer data, gpointer user_data);
 
 /**
  * greedy.c
