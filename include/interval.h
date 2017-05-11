@@ -8,6 +8,7 @@
 typedef struct _interval{
 	int a;
 	int b;
+	int begin;
 	GPtrArray *sigma;
 } interval;
 
