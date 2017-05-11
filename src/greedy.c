@@ -111,9 +111,7 @@ CLEAN:
 int construct_spt(wctproblem *prob, solution *sol) {
     int val = 0;
 
-    for (int i = 0; i < prob->njobs; ++i) {
-        sol->perm[i] = prob->ojobarray[i];
-    }
+    g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
 
     sol->njobs = prob->njobs;
     sol->nmachines = prob->nmachines;
@@ -127,9 +125,7 @@ CLEAN:
 int construct_edd(wctproblem *prob, solution *sol) {
     int val = 0;
 
-    for (int i = 0; i < prob->njobs; ++i) {
-        sol->perm[i] = prob->ojobarray[i];
-    }
+    g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
 
     sol->njobs = prob->njobs;
     sol->nmachines = prob->nmachines;
@@ -142,10 +138,7 @@ CLEAN:
 int construct_random(wctproblem *prob, solution *sol, GRand *rand_uniform) {
     int val = 0;
 
-    for (int i = 0; i < prob->njobs; ++i) {
-        sol->perm[i] = prob->ojobarray[i];
-    }
-
+    g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
     sol->njobs = prob->njobs;
     sol->nmachines = prob->nmachines;
     permutation_solution(rand_uniform, sol);
@@ -411,6 +404,7 @@ int heuristic_rpup(wctproblem *prob) {
     sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
+    solution_print(sol);
     CCcheck_val_2(val, "Failed construct edd");
     data = local_search_data_init(sol);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
