@@ -31,9 +31,10 @@ int read_problem(wctproblem *problem) {
     int         nbjobs = 0;
     int         curduration, curduedate, curweight, curjob;
     Job *       _jobarray = (Job *)NULL;
+    Job * tmp_j;
     char        buf[256], *p;
     int         bufsize;
-    const char *delim = " \n";
+    const char *delim = " \n\t";
     char *      data = (char *)NULL;
     char *      buf2 = (char *)NULL;
     wctdata *   pd;
@@ -49,13 +50,10 @@ int read_problem(wctproblem *problem) {
         if (fgets(buf, 254, in) != NULL) {
             p = buf;
             data = strtok(p, delim);
-            sscanf(data, " %d", &nbjobs);
+            sscanf(data, "%d", &nbjobs);
             bufsize = 3 * nbjobs * (2 + (int)ceil(log((double)nbjobs + 10)));
             buf2 = (char *)CC_SAFE_MALLOC(bufsize, char);
             CCcheck_NULL_2(buf2, "Failed to allocate buf2");
-            problem->jobarray = CC_SAFE_MALLOC(nbjobs, Job);
-            _jobarray = problem->jobarray;
-            CCcheck_NULL_2(_jobarray, "Failed to allocate memory to _jobarray");
         } else {
             val = 1;
             goto CLEAN;
@@ -69,18 +67,15 @@ int read_problem(wctproblem *problem) {
             sscanf(data, "%d", &curduedate);
             data = strtok(NULL, delim);
             sscanf(data, "%d", &curweight);
-            _jobarray[curjob].weight = curweight;
-            _jobarray[curjob].duetime = curduedate / parms->nmachines;
-            _jobarray[curjob].processingime = curduration;
+            tmp_j = job_alloc(&curduration, &curweight, &curduedate);
+            g_ptr_array_add(problem->g_job_array, tmp_j);
 
-            if (_jobarray[curjob].processingime > _jobarray[curjob].duetime) {
-                problem->off +=
-                    curweight * (curduration - _jobarray[curjob].duetime);
-                _jobarray[curjob].duetime = _jobarray[curjob].processingime;
+            if (tmp_j->processingime > tmp_j->duetime) {
+                problem->off += tmp_j->weight * (tmp_j->processingime - tmp_j->duetime);
+                tmp_j->duetime = tmp_j->processingime;
             }
 
-            _jobarray[curjob].job = curjob;
-            data = strtok(NULL, delim);
+            tmp_j->job = curjob;
             curjob++;
         }
 
