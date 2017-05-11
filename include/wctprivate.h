@@ -43,6 +43,7 @@ struct wctdata {
     int *orig_node_ids;
     // data for meta heuristic
     Job *jobarray;
+    GPtrArray *jobarray2;
     int  H_max;
     int  H_min;
 
@@ -152,8 +153,8 @@ typedef struct wctproblem wctproblem;
 struct wctproblem {
     wctparms parms;
     wctdata  root_pd;
-    /** Job data */
-    Job *jobarray;
+    /** Job data in EDD order */
+    GPtrArray *g_job_array;
     /** Summary of jobs */
     int njobs;
     int psum;
@@ -161,10 +162,10 @@ struct wctproblem {
     int pmin;
     int dmax;
     int dmin;
-    int T;
+    int H_min;
+    int H_max;
     int off;
-    /** EDD order of the jobs */
-    Job **ojobarray;
+    GPtrArray *e;
     /** nmachines */
     int nmachines;
 
