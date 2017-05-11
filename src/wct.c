@@ -9,8 +9,7 @@ void set_dbg_lvl(int dbglvl) { debug = dbglvl; }
 /*Functions for initialization of the problem and freeing the problem*/
 void wctproblem_init(wctproblem *problem) {
     /** Job data */
-    problem->jobarray = (Job *)NULL;
-    problem->ojobarray = (Job **)NULL;
+    problem->g_job_array = g_ptr_array_new_with_free_func(free);
     problem->opt_sol = (solution *)NULL;
     /** Job summary */
     problem->njobs = 0;
@@ -20,6 +19,9 @@ void wctproblem_init(wctproblem *problem) {
     problem->dmax = INT_MIN;
     problem->dmin = INT_MAX;
     problem->off = 0;
+    problem->H_min = 0;
+    problem->H_max = INT_MAX;
+    problem->e = g_ptr_array_new_with_free_func(free);
     /*B&B info*/
     problem->nwctdata = 0;
     problem->global_upper_bound = INT_MAX;
@@ -74,12 +76,12 @@ void wctproblem_free(wctproblem *problem) {
         }
     }
 
+    g_ptr_array_free(problem->g_job_array, TRUE);
+    g_ptr_array_free(problem->e, TRUE);
     g_ptr_array_free(problem->unexplored_states, TRUE);
     g_queue_free(problem->non_empty_level_pqs);
     schedulesets_free(&(problem->initsets), &(problem->gallocated));
     schedulesets_free(&(problem->bestschedule), &(problem->nbestschedule));
-    CC_IFFREE(problem->jobarray, Job);
-    CC_IFFREE(problem->ojobarray, Job *);
     solution_free(&(problem->opt_sol));
 }
 
@@ -97,7 +99,7 @@ void wctdata_init(wctdata *pd) {
     // pd->weights = (int *)NULL;
     // pd->duetime = (int *) NULL;
     // pd->releasetime = (int *) NULL;
-    pd->jobarray = (Job *)NULL;
+    //pd->jobarray = (Job *)NULL;
     pd->H_max = 0;
     pd->H_min = 0;
     pd->upper_bound = INT_MAX;
