@@ -6,6 +6,11 @@ gint comparefunc(const void *a, const void *b, void *data);
 gint compare_func(const void *a, const void *b);
 gint order_weight(gconstpointer a, gconstpointer b, void *data);
 
+void g_print_job(gpointer data, gpointer user_data){
+    Job *a = (Job *) data;
+    printf("%d ", a->job);
+}
+
 void solution_init(solution *sol) {
     if (sol) {
         sol->part = (partlist *)NULL;
@@ -184,4 +189,34 @@ void partlist_permquicksort(int *     perm,
     CC_SWAP(perm[0], perm[j], temp);
     partlist_permquicksort(perm, part, j, (*functionPtr));
     partlist_permquicksort(perm + i, part, nbpart - i, (*functionPtr));
+}
+
+Job *job_alloc(int *p, int *w, int *d){
+    Job *j = CC_SAFE_MALLOC(1, Job);
+    j->processingime = *p;
+    j->duetime = *d;
+    j->weight = *w;
+
+    return j;
+}
+
+void g_set_jobarray_job(gpointer data, gpointer user_data){
+    Job *j = (Job *) data;
+    int *i = (int *) user_data;
+
+    j->job = *i;
+    (*i)++;
+}
+
+void g_print_jobarray(gpointer data, gpointer user_data){
+    Job *j = (Job *) data;
+
+    g_print("Job %d: %d %d %d\n", j->job, j->processingime, j->duetime, j->weight);
+}
+
+void g_set_sol_perm(gpointer data, gpointer user_data){
+    Job *j = (Job *) data;
+    solution *sol = (solution *) user_data;
+
+    sol->perm[j->job] = j;
 }
