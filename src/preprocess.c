@@ -1,8 +1,18 @@
 #include <wct.h>
+#include <interval.h>
 
-static int _job_compare_edd(const void *a, const void *b);
+void g_problem_summary_init(gpointer data, gpointer user_data){
+    Job *j = (Job *) data;
+    wctproblem *prob = (wctproblem*) user_data;
 
-static int _job_compare_edd(const void *a, const void *b) {
+    prob->psum += j->processingime;
+    prob->pmax = CC_MAX(prob->pmax, j->processingime);
+    prob->pmin = CC_MIN(prob->pmin, j->processingime);
+    prob->dmax = CC_MAX(prob->dmax, j->duetime);
+    prob->dmin = CC_MIN(prob->pmin, j->duetime);
+}
+
+gint g_job_compare_edd(const void *a, const void *b, void *data) {
     const Job *x = *((Job * const *)a);
     const Job *y = *((Job * const *)b);
 
@@ -64,53 +74,65 @@ int calculate_Hmin(
 
 int preprocess_data(wctproblem *problem) {
     int      val = 0;
+    int i = 0;
     int      temp = 0;
     double   temp_dbl = 0.0;
-    int      njobs = problem->njobs;
-    Job **   _ojobarray = (Job **)NULL;
     wctdata *pd = (wctdata *)NULL;
 
-    /** Initialize jobarray of rootnode */
-    for (int i = 0; i < njobs; ++i) {
-        problem->psum += problem->jobarray[i].processingime;
-        problem->pmax =
-            CC_MAX(problem->pmax, problem->jobarray[i].processingime);
-        problem->pmin =
-            CC_MIN(problem->pmin, problem->jobarray[i].processingime);
-        problem->dmax = CC_MAX(problem->dmax, problem->jobarray[i].duetime);
-        problem->dmin = CC_MIN(problem->pmin, problem->jobarray[i].duetime);
-    }
+    g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
 
     pd = &(problem->root_pd);
+    pd->njobs = problem->njobs;
+    pd->nmachines = problem->nmachines;
     /** Calculate H_max */
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
     temp_dbl = temp_dbl / problem->nmachines + problem->pmax;
-    problem->T = pd->H_max = (int)ceil(temp_dbl);
-    printf("H_max = %d\n", pd->H_max);
-    /** Create edd ordered array*/
-    _ojobarray = CC_SAFE_MALLOC(njobs, Job *);
-    CCcheck_NULL_2(_ojobarray, "Failed to allocate memory");
+    problem->H_max = pd->H_max = (int)ceil(temp_dbl);
+    printf("H_max = %d\n", problem->H_max);
 
-    for (int i = 0; i < njobs; ++i) {
-        _ojobarray[i] = &(problem->jobarray[i]);
-    }
+    g_ptr_array_sort_with_data(problem->g_job_array, g_job_compare_edd, NULL);
+    g_ptr_array_foreach(problem->g_job_array, g_set_jobarray_job, &i);
 
-    qsort((void *)_ojobarray, njobs, sizeof(Job *), _job_compare_edd);
-
-    for (int i = 0; i < problem->njobs; ++i) {
-        _ojobarray[i]->job = i;
-    }
-
-    pd->njobs = problem->njobs;
-    pd->jobarray = problem->jobarray;
-    pd->nmachines = problem->nmachines;
-    problem->ojobarray = _ojobarray;
+    find_division(problem);
 CLEAN:
 
-    if (val) {
-        CC_IFFREE(_ojobarray, Job *);
+    return val;
+}
+
+
+
+int find_division(wctproblem *problem){
+    int val = 0;
+    int tmp;
+    interval *tmp_interval_ptr;
+    int prev;
+    int njobs = problem->njobs;
+    GPtrArray *tmp_e = g_ptr_array_new_with_free_func(intervals_free);
+    GPtrArray* jobarray = problem->g_job_array;
+
+    /** Find initial partition */
+    prev = 0;
+    for(unsigned i = 0; i < njobs && prev != problem->H_max; ++i) {
+        tmp = CC_MIN(problem->H_max, ((Job *)jobarray->pdata[i])->duetime);
+        if(prev < tmp) {
+            tmp_interval_ptr = interval_alloc(prev, ((Job *)jobarray->pdata[i])->duetime, jobarray, njobs);
+            CCcheck_NULL_2(tmp_interval_ptr, "Failed to allocate memory")
+            prev = ((Job *)jobarray->pdata[i])->duetime;
+            g_ptr_array_add(tmp_e, tmp_interval_ptr);
+        }
     }
 
+    if(prev < problem->H_max) {
+        tmp_interval_ptr = interval_alloc(prev, problem->H_max, jobarray, njobs);
+        g_ptr_array_add(tmp_e, tmp_interval_ptr);
+    }
+
+    g_ptr_array_foreach(tmp_e, g_print_interval, NULL);
+
+
+
+    CLEAN:
+    g_ptr_array_free(tmp_e, TRUE);
     return val;
 }
