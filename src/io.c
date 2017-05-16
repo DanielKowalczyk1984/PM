@@ -67,6 +67,7 @@ int read_problem(wctproblem *problem) {
             sscanf(data, "%d", &curduedate);
             data = strtok(NULL, delim);
             sscanf(data, "%d", &curweight);
+            curduedate = curduedate/parms->nmachines;
             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
             g_ptr_array_add(problem->g_job_array, tmp_j);
 
@@ -79,10 +80,8 @@ int read_problem(wctproblem *problem) {
             curjob++;
         }
 
-        problem->njobs = nbjobs;
-        problem->nmachines = parms->nmachines;
-        pd->njobs = problem->njobs;
-        pd->nmachines = problem->nmachines;
+        problem->njobs = pd->njobs = nbjobs;
+        problem->nmachines = pd->njobs = parms->nmachines;
     } else {
         fprintf(stderr, "Unable to open file %s\n", parms->jobfile);
         val = 1;
