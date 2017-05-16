@@ -74,16 +74,12 @@ int calculate_Hmin(
 
 int preprocess_data(wctproblem *problem) {
     int      val = 0;
-    int i = 0;
     int      temp = 0;
     double   temp_dbl = 0.0;
-    wctdata *pd = (wctdata *)NULL;
+    wctdata *pd = &(problem->root_pd);
 
     g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
 
-    pd = &(problem->root_pd);
-    pd->njobs = problem->njobs;
-    pd->nmachines = problem->nmachines;
     /** Calculate H_max */
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
@@ -92,47 +88,99 @@ int preprocess_data(wctproblem *problem) {
     printf("H_max = %d\n", problem->H_max);
 
     g_ptr_array_sort_with_data(problem->g_job_array, g_job_compare_edd, NULL);
-    g_ptr_array_foreach(problem->g_job_array, g_set_jobarray_job, &i);
 
     find_division(problem);
-CLEAN:
 
     return val;
 }
 
+static int calculate_T(Job *i, Job *j, interval *I){
+    int T = I->a;
+    if (T > I->b - i->processingime) {
+        return T;
+    } else {
+        T = I->a;
 
+        for(int t = I->a; t <= I->b - i->processingime && value_diff_Fij(t, i, j) > 0; t++) {
+            T = t;
+        }
+
+        return T;
+    }
+}
+
+static int check_interval(Job *i, Job *j, interval *I){
+    return (I->a + j->processingime >= I->b || calculate_T(i, j, I) <= I->a);
+}
+
+static int check_interval2(Job *i, Job *j, interval *I){
+    printf("test %d %d %d %d\n",I->a, calculate_T(i, j, I),I->a + j->processingime, I->b);
+    printf("jobs %f %f\n",(double) i->weight/i->processingime, (double) j->weight/j->processingime );
+    return (I->a + j->processingime <= I->b && calculate_T(i, j, I) >= I->a);
+}
 
 int find_division(wctproblem *problem){
     int val = 0;
-    int tmp;
-    interval *tmp_interval_ptr;
-    int prev;
     int njobs = problem->njobs;
-    GPtrArray *tmp_e = g_ptr_array_new_with_free_func(intervals_free);
+    int tmp;
+    int prev;
+    GList *it;
+    GQueue *tmp_queue = g_queue_new();
     GPtrArray* jobarray = problem->g_job_array;
+    Job *tmp_j;
+    Job *j1,*j2;
+    interval *tmp_interval;
 
     /** Find initial partition */
     prev = 0;
-    for(unsigned i = 0; i < njobs && prev != problem->H_max; ++i) {
-        tmp = CC_MIN(problem->H_max, ((Job *)jobarray->pdata[i])->duetime);
+    for(int i = 0; i < njobs && prev < problem->H_max; ++i) {
+        tmp_j = (Job *)g_ptr_array_index(jobarray, i);
+        tmp = CC_MIN(problem->H_max, tmp_j->duetime);
         if(prev < tmp) {
-            tmp_interval_ptr = interval_alloc(prev, ((Job *)jobarray->pdata[i])->duetime, jobarray, njobs);
-            CCcheck_NULL_2(tmp_interval_ptr, "Failed to allocate memory")
-            prev = ((Job *)jobarray->pdata[i])->duetime;
-            g_ptr_array_add(tmp_e, tmp_interval_ptr);
+            tmp_interval = interval_alloc(prev, tmp, jobarray, njobs);
+            g_queue_push_tail(tmp_queue, tmp_interval);
+            CCcheck_NULL_2(tmp_interval, "Failed to allocate memory")
+            prev = tmp_j->duetime;
         }
     }
 
     if(prev < problem->H_max) {
-        tmp_interval_ptr = interval_alloc(prev, problem->H_max, jobarray, njobs);
-        g_ptr_array_add(tmp_e, tmp_interval_ptr);
+        tmp_interval = interval_alloc(prev, problem->H_max, jobarray, njobs);
+        g_queue_push_tail(tmp_queue, tmp_interval);
     }
 
-    g_ptr_array_foreach(tmp_e, g_print_interval, NULL);
+    /** calculate the new intervals */
+    it = tmp_queue->head;
+    do{
+        tmp_interval = (interval *)it->data;
+        int count = 0;
+        for (size_t j = 0; j < tmp_interval->sigma->len - 1; j++) {
+            for (size_t k = j + 1; k < tmp_interval->sigma->len; k++) {
+                j1 = (Job *) g_ptr_array_index(tmp_interval->sigma, j);
+                j2 = (Job *) g_ptr_array_index(tmp_interval->sigma, k);
+                if((double)j1->weight/j1->processingime >= (double)j2->weight/j2->processingime) {
+                    if (!check_interval(j1, j2, tmp_interval)) {
+                        count++;
+                        check_interval2(j1, j2, tmp_interval);
+
+                    }
+                }
+            }
+        }
+        if (count) {
+            printf("count = %d \n", count);
+        }
+
+        //
+        //intervals_free(tmp_interval);
+    }while((it = it->next));
+
+
+
 
 
 
     CLEAN:
-    g_ptr_array_free(tmp_e, TRUE);
+    g_queue_free_full(tmp_queue, intervals_free);
     return val;
 }
