@@ -14,15 +14,15 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data)
     const Job *y = *(Job * const *)b;
     interval *user_data = (interval *)data;
     int        diff = user_data->b - user_data->a;
-    double w_x = (x->duetime >= user_data->b)
-                 ? 0.0
-                 : (double) x->weight / x->processingime;
-    double w_y = (y->duetime >= user_data->b)
-                 ? 0.0
-                 : (double) y->weight / y->processingime;
+    double w_x = (x->duetime <= user_data->a)
+                 ? (double) x->weight / x->processingime
+                 : 0.0;
+    double w_y = (y->duetime <= user_data->a)
+                 ? (double) y->weight / y->processingime
+                 : 0.0;
 
-    if (x->processingime >= diff) {
-        if (y->processingime < diff) {
+    if (x->processingime > diff) {
+        if (y->processingime <= diff) {
             return -1;
         } else {
             if (w_x > w_y) {
@@ -38,7 +38,7 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data)
             return 0;
         }
     } else {
-        if (y->processingime >= diff) {
+        if (y->processingime > diff) {
             return 1;
         } else {
             if (w_x > w_y) {
@@ -101,3 +101,11 @@ void intervals_free(void *p)
         CC_FREE(part, interval);
     }
 }
+
+void interval_pair_free(void *p){
+    if(p != NULL) {
+        interval_pair *tmp = (interval_pair *) p;
+        CC_FREE(tmp, interval_pair);
+    }
+}
+
