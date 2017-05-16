@@ -3,7 +3,7 @@
 void g_print_interval(gpointer data, gpointer user_data)
 {
     interval *a = (interval *)data;
-    printf("%d %d %d: ", a->a, a->b, a->begin);
+    printf("%d %d: ", a->a, a->b);
     g_ptr_array_foreach(a->sigma, g_print_job, NULL);
     printf("\n");
 }
@@ -21,8 +21,8 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data)
                  ? 0.0
                  : (double) y->weight / y->processingime;
 
-    if (x->processingime > diff) {
-        if (y->processingime <= diff) {
+    if (x->processingime >= diff) {
+        if (y->processingime < diff) {
             return -1;
         } else {
             if (w_x > w_y) {
@@ -38,7 +38,7 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data)
             return 0;
         }
     } else {
-        if (y->processingime > diff) {
+        if (y->processingime >= diff) {
             return 1;
         } else {
             if (w_x > w_y) {
@@ -54,8 +54,6 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data)
             return 0;
         }
     }
-
-    return 0;
 }
 
 void interval_init(interval *p, int a, int b, GPtrArray *jobarray, int njobs)
@@ -66,14 +64,14 @@ void interval_init(interval *p, int a, int b, GPtrArray *jobarray, int njobs)
     p->begin = 0;
     Job *j;
 
-    for (unsigned i = 0; i < njobs; ++i) {
+    for (int i = 0; i < njobs; ++i) {
         g_ptr_array_add(p->sigma, g_ptr_array_index(jobarray, i));
     }
 
     g_ptr_array_sort_with_data(p->sigma, compare_interval, p);
 
     j = (Job *) g_ptr_array_index(p->sigma, p->begin);
-    while(p->b - p->a <= j->processingime && p->begin < jobarray->len) {
+    while(p->b - p->a <= j->processingime && p->begin < (int)jobarray->len) {
         j = (Job *) g_ptr_array_index(p->sigma,p->begin);
         p->begin++;
     }
