@@ -43,6 +43,9 @@ void g_set_jobarray_job(gpointer data, gpointer user_data);
 void g_print_jobarray(gpointer data, gpointer user_data);
 void g_set_sol_perm(gpointer data, gpointer user_data);
 
+int value_Fj(int C, Job *j);
+int value_diff_Fij(int C, Job *i, Job *j);
+
 #ifdef __cplusplus
 }
 #endif
