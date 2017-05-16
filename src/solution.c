@@ -211,7 +211,7 @@ void g_set_jobarray_job(gpointer data, gpointer user_data){
 void g_print_jobarray(gpointer data, gpointer user_data){
     Job *j = (Job *) data;
 
-    g_print("Job %d: %d %d %d\n", j->job, j->processingime, j->duetime, j->weight);
+    g_print("Job %d: %d %d %d %f\n", j->job, j->processingime, j->duetime, j->weight, (double)j->weight/j->processingime);
 }
 
 void g_set_sol_perm(gpointer data, gpointer user_data){
@@ -219,4 +219,17 @@ void g_set_sol_perm(gpointer data, gpointer user_data){
     solution *sol = (solution *) user_data;
 
     sol->perm[j->job] = j;
+}
+
+int value_Fj(int C, Job *j){
+    return j->weight*CC_MAX(0, C - j->duetime);
+}
+
+int value_diff_Fij(int C, Job *i, Job *j){
+    int val = value_Fj(C + i->processingime - j->processingime, i);
+    val += value_Fj(C + i->processingime, j);
+    val -= value_Fj(C, j);
+    val -= value_Fj(C + i->processingime, i);
+
+    return val;
 }
