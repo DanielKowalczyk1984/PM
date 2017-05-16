@@ -94,29 +94,39 @@ int preprocess_data(wctproblem *problem) {
     return val;
 }
 
-static int calculate_T(Job *i, Job *j, interval *I){
+static int calculate_T(Job *i, Job *j, int k, GPtrArray *interval_array){
+    interval *I = (interval *) g_ptr_array_index(interval_array, k);
+
     int T = I->a;
     if (T > I->b - i->processingime) {
         return T;
     } else {
         T = I->a;
 
-        for(int t = I->a; t <= I->b - i->processingime && value_diff_Fij(t, i, j) > 0; t++) {
-            T = t;
+        if(value_diff_Fij(T, i, j) <= 0) {
+            return T;
+        }
+        for(int t = k - 1; t >= 0 ; t--) {
+            T = ((interval *) g_ptr_array_index(interval_array, t))->a + j->processingime - i->processingime;
+            if(value_diff_Fij(T, i, j) <= 0 || T == 0) {
+                break;
+            }
         }
 
         return T;
     }
 }
 
-static int check_interval(Job *i, Job *j, interval *I){
-    return (I->a + j->processingime >= I->b || calculate_T(i, j, I) <= I->a);
+static int check_interval(Job *i, Job *j, int k,GPtrArray *interval_array){
+    interval *I = (interval *) g_ptr_array_index(interval_array, k);
+    return (I->a + j->processingime >= I->b || calculate_T(i, j, k, interval_array) <= I->a);
 }
 
-static int check_interval2(Job *i, Job *j, interval *I){
-    printf("test %d %d %d %d\n",I->a, calculate_T(i, j, I),I->a + j->processingime, I->b);
+static int check_interval2(Job *i, Job *j, int k, GPtrArray *interval_array){
+    interval *I = (interval *) g_ptr_array_index(interval_array, k);
+    printf("test %d %d %d %d\n",I->a, calculate_T(i, j, k, interval_array),I->a + j->processingime, I->b);
     printf("jobs %f %f\n",(double) i->weight/i->processingime, (double) j->weight/j->processingime );
-    return (I->a + j->processingime <= I->b && calculate_T(i, j, I) >= I->a);
+    return (I->a + j->processingime <= I->b && calculate_T(i, j, k, interval_array) >= I->a);
 }
 
 int find_division(wctproblem *problem){
@@ -124,8 +134,7 @@ int find_division(wctproblem *problem){
     int njobs = problem->njobs;
     int tmp;
     int prev;
-    GList *it;
-    GQueue *tmp_queue = g_queue_new();
+    GPtrArray *tmp_array = g_ptr_array_new_with_free_func(intervals_free);
     GPtrArray* jobarray = problem->g_job_array;
     Job *tmp_j;
     Job *j1,*j2;
@@ -138,7 +147,7 @@ int find_division(wctproblem *problem){
         tmp = CC_MIN(problem->H_max, tmp_j->duetime);
         if(prev < tmp) {
             tmp_interval = interval_alloc(prev, tmp, jobarray, njobs);
-            g_queue_push_tail(tmp_queue, tmp_interval);
+            g_ptr_array_add(tmp_array, tmp_interval);
             CCcheck_NULL_2(tmp_interval, "Failed to allocate memory")
             prev = tmp_j->duetime;
         }
@@ -146,22 +155,21 @@ int find_division(wctproblem *problem){
 
     if(prev < problem->H_max) {
         tmp_interval = interval_alloc(prev, problem->H_max, jobarray, njobs);
-        g_queue_push_tail(tmp_queue, tmp_interval);
+        g_ptr_array_add(tmp_array, tmp_interval);
     }
 
     /** calculate the new intervals */
-    it = tmp_queue->head;
-    do{
-        tmp_interval = (interval *)it->data;
+    for(unsigned i = 0; i < tmp_array->len; ++i) {
+        tmp_interval = (interval *) g_ptr_array_index(tmp_array, i);
         int count = 0;
         for (size_t j = 0; j < tmp_interval->sigma->len - 1; j++) {
             for (size_t k = j + 1; k < tmp_interval->sigma->len; k++) {
                 j1 = (Job *) g_ptr_array_index(tmp_interval->sigma, j);
                 j2 = (Job *) g_ptr_array_index(tmp_interval->sigma, k);
                 if((double)j1->weight/j1->processingime >= (double)j2->weight/j2->processingime) {
-                    if (!check_interval(j1, j2, tmp_interval)) {
+                    if (!check_interval(j1, j2, i, tmp_array)) {
                         count++;
-                        check_interval2(j1, j2, tmp_interval);
+                        check_interval2(j1, j2, i,tmp_array);
 
                     }
                 }
@@ -170,10 +178,10 @@ int find_division(wctproblem *problem){
         if (count) {
             printf("count = %d \n", count);
         }
+    }
 
         //
         //intervals_free(tmp_interval);
-    }while((it = it->next));
 
 
 
@@ -181,6 +189,6 @@ int find_division(wctproblem *problem){
 
 
     CLEAN:
-    g_queue_free_full(tmp_queue, intervals_free);
+    g_ptr_array_free(tmp_array, TRUE);
     return val;
 }
