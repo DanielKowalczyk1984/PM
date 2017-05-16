@@ -111,9 +111,7 @@ CLEAN:
 int construct_spt(wctproblem *prob, solution *sol) {
     int val = 0;
 
-    for (int i = 0; i < prob->njobs; ++i) {
-        sol->perm[i] = prob->ojobarray[i];
-    }
+    g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
 
     sol->njobs = prob->njobs;
     sol->nmachines = prob->nmachines;
@@ -127,9 +125,7 @@ CLEAN:
 int construct_edd(wctproblem *prob, solution *sol) {
     int val = 0;
 
-    for (int i = 0; i < prob->njobs; ++i) {
-        sol->perm[i] = prob->ojobarray[i];
-    }
+    g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
 
     sol->njobs = prob->njobs;
     sol->nmachines = prob->nmachines;
@@ -142,10 +138,7 @@ CLEAN:
 int construct_random(wctproblem *prob, solution *sol, GRand *rand_uniform) {
     int val = 0;
 
-    for (int i = 0; i < prob->njobs; ++i) {
-        sol->perm[i] = prob->ojobarray[i];
-    }
-
+    g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
     sol->njobs = prob->njobs;
     sol->nmachines = prob->nmachines;
     permutation_solution(rand_uniform, sol);
@@ -265,7 +258,7 @@ static void perturb_swap(solution *         sol,
                          int                l2,
                          GRand *            rand_uniform) {
     int       m1, m2;
-    unsigned       i1 = 0, i2 = 0;
+    unsigned  i1 = 0, i2 = 0;
     int       nmachines = sol->nmachines;
     Job **    tmp1 = (Job **)NULL;
     Job **    tmp2 = (Job **)NULL;
@@ -411,6 +404,7 @@ int heuristic_rpup(wctproblem *prob) {
     sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
+    solution_print(sol);
     CCcheck_val_2(val, "Failed construct edd");
     data = local_search_data_init(sol);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
@@ -471,7 +465,7 @@ void update_bestschedule(wctproblem *problem, solution *new_sol) {
         problem->rel_error = (double)(problem->global_upper_bound -
                                       problem->global_lower_bound) /
                              (problem->global_lower_bound);
-        partlist_to_Scheduleset(new_sol->part, new_sol->nmachines,
+        partlist_to_scheduleset(new_sol->part, new_sol->nmachines,
                                 new_sol->njobs, &(problem->bestschedule),
                                 &(problem->nbestschedule));
     }
@@ -487,11 +481,11 @@ static int add_feasible_solution(wctproblem *problem, solution *new_sol) {
     update_bestschedule(problem, new_sol);
 
     if (root_pd->ccount == 0 && problem->parms.construct != 0) {
-        update_Schedulesets(&root_pd->cclasses, &root_pd->ccount,
+        update_schedulesets(&root_pd->cclasses, &root_pd->ccount,
                             problem->bestschedule, problem->nbestschedule);
         root_pd->gallocated = root_pd->ccount;
     } else if (problem->parms.construct != 0) {
-        partlist_to_Scheduleset(new_sol->part, new_sol->nmachines,
+        partlist_to_scheduleset(new_sol->part, new_sol->nmachines,
                                 new_sol->njobs, &(root_pd->newsets),
                                 &(root_pd->nnewsets));
         add_newsets(root_pd);

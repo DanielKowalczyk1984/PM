@@ -27,6 +27,8 @@ extern "C" {
 
 #define CC_MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CC_MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define CC_MIN_PTR(x, y) (((x) < (y)) ? (&x) : (&y))
+#define CC_MAX_PTR(x, y) (((x) > (y)) ? (&x) : (&y))
 #define CC_OURABS(a) (((a) >= 0) ? (a) : -(a))
 
 #define CCcheck_val_2(val, msg)                                                \

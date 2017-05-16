@@ -25,7 +25,7 @@
 					"/usr/include/",
 					"/usr/include/glib-2.0",
 					"/usr/lib/x86_64-linux-gnu/glib-2.0/include",
-					"/opt/gurobi652/linux64/include",
+					"/opt/gurobi702/linux64/include",
 					"/home/daniel/Dropbox/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
 					"/home/daniel/Dropbox/PM/implementation/third_party/EGlib/src/project_EGlib/include",
 					"/opt/gurobi652/linux64/include",
@@ -34,14 +34,14 @@
 					"/home/daniel/Dropbox/PM/implementation/include"
 				]
 			},
-			"gcc": 
+			"gcc":
 			{
 			            "extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/PM/implementation/include",
 			            "include_dirs":
 			            [
 			            	"/home/daniel/Dropbox/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
 			            	"/home/daniel/Dropbox/PM/implementation/third_party/EGlib/src/project_EGlib/include",
-			            	"/opt/gurobi652/linux64/include",
+			            	"/opt/gurobi702/linux64/include",
 			            	"/usr/include/glib-2.0",
 			            	"/usr/lib64/glib-2.0/include",
 			            	"/home/daniel/Dropbox/PM/implementation/include"
@@ -172,7 +172,7 @@
 			"-std=c++11",
 			"-I/home/daniel/Dropbox/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
 			"-I/home/daniel/Dropbox/PM/implementation/third_party/EGlib/src/project_EGlib/include",
-			"-I/opt/gurobi652/linux64/include",
+			"-I/opt/gurobi702/linux64/include",
 			"-I/usr/include/glib-2.0",
 			"-I/usr/lib64/glib-2.0/include",
 			"-I/home/daniel/Dropbox/PM/implementation/include"

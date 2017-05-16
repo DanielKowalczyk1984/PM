@@ -1,48 +1,17 @@
 #ifndef WCT_PRIVATE_H
 #define WCT_PRIVATE_H
 
-#include <Scheduleset.h>
+#include <scheduleset.h>
 #include <binomial-heap.h>
 #include <lp.h>
 #include <solution.h>
 #include <util.h>
 #include <wctparms.h>
+#include <solver.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * Solver data types
- */
-
-typedef struct PricerSolver PricerSolver;
-PricerSolver *newSolver(Job *jobarray, int nbjobs, int Hmin, int Hmax);
-PricerSolver *newSolverDP(Job *jobarray, int nbjobs, int Hmin, int Hmax);
-PricerSolver *copySolver(PricerSolver *src);
-void freeSolver(PricerSolver *src);
-int calculate_table(PricerSolver *solver, wctparms *parms);
-void deletePricerSolver(PricerSolver *solver);
-int add_conflict_constraints(PricerSolver *solver,
-                             wctparms *    parms,
-                             int *         elist_same,
-                             int           ecount_same,
-                             int *         elist_differ,
-                             int           ecount_differ);
-int free_conflict_constraints(PricerSolver *solver,
-                              wctparms *    parms,
-                              int           ecount_same,
-                              int           ecount_differ);
-void iterate_dd(PricerSolver *solver);
-void iterate_zdd(PricerSolver *solver);
-size_t get_datasize(PricerSolver *solver);
-void copy_solver(PricerSolver **dest, PricerSolver *src);
-int add_one_conflict(
-    PricerSolver *solver, wctparms *parms, int v1, int v2, int same);
-int init_tables(PricerSolver *solver);
-size_t get_numberrows_zdd(PricerSolver *solver);
-size_t get_numberrows_bdd(PricerSolver *solver);
-void set_release_due_time(PricerSolver *solver, Job *jobarray);
 
 /**
  * wct data types nodes of branch and bound tree
@@ -74,6 +43,7 @@ struct wctdata {
     int *orig_node_ids;
     // data for meta heuristic
     Job *jobarray;
+    GPtrArray *jobarray2;
     int  H_max;
     int  H_min;
 
@@ -86,10 +56,10 @@ struct wctdata {
     PricerSolver *solver;
     // Colorset(Assignments)
     int          ccount;
-    Scheduleset *cclasses;
+    scheduleset *cclasses;
     int          dzcount;
     int          gallocated;
-    Scheduleset *newsets;
+    scheduleset *newsets;
     int          nnewsets;
 
     int  kpc_pi_scalef;
@@ -123,11 +93,11 @@ struct wctdata {
     int     update;
 
     // Best Solution
-    Scheduleset *bestcolors;
+    scheduleset *bestcolors;
     int          besttotwct;
     int          nbbest;
 
-    const Scheduleset *debugcolors;
+    const scheduleset *debugcolors;
     int                ndebugcolors;
     int                opt_track;
 
@@ -183,8 +153,8 @@ typedef struct wctproblem wctproblem;
 struct wctproblem {
     wctparms parms;
     wctdata  root_pd;
-    /** Job data */
-    Job *jobarray;
+    /** Job data in EDD order */
+    GPtrArray *g_job_array;
     /** Summary of jobs */
     int njobs;
     int psum;
@@ -192,10 +162,10 @@ struct wctproblem {
     int pmin;
     int dmax;
     int dmin;
-    int T;
+    int H_min;
+    int H_max;
     int off;
-    /** EDD order of the jobs */
-    Job **ojobarray;
+    GPtrArray *e;
     /** nmachines */
     int nmachines;
 
@@ -211,12 +181,12 @@ struct wctproblem {
     problem_status status;
 
     /* All stable sets*/
-    Scheduleset *initsets;
+    scheduleset *initsets;
     int          nbinitsets;
     int          gallocated;
     /* Best Solution*/
     solution *   opt_sol;
-    Scheduleset *bestschedule;
+    scheduleset *bestschedule;
     int          nbestschedule;
     /*heap variables*/
     BinomialHeap *br_heap_a;
@@ -254,7 +224,7 @@ int lp_build(wctdata *pd);
 void lpwctdata_free(wctdata *pd);
 void children_data_free(wctdata *pd);
 void wctdata_free(wctdata *pd);
-void add_all_sets(PricerSolver *solver, wctdata *pd);
+void temporary_data_free(wctdata *pd);
 #ifdef __cplusplus
 }
 #endif

@@ -1,12 +1,12 @@
 #ifndef INCLUDE_PRICERSOLVER_HPP
 #define INCLUDE_PRICERSOLVER_HPP
 
-#include <PricerEvaluate.hpp>
 #include <iostream>
+#include <vector>
+#include <PricerEvaluate.hpp>
+#include <PricerConstruct.hpp>
 #include <tdzdd/DdStructure.hpp>
 #include <tdzdd/op/Lookahead.hpp>
-#include <vector>
-#include "PricerConstruct.hpp"
 
 class PricerSolver {
    public:
