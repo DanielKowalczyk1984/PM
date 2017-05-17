@@ -129,15 +129,6 @@ static int check_interval(interval_pair *pair, int k, GPtrArray *interval_array)
             calculate_T(pair, k, interval_array) <= I->a);
 }
 
-static int check_interval2(interval_pair *pair, int k, GPtrArray *interval_array) {
-    interval *I = (interval *)g_ptr_array_index(interval_array, k);
-    Job *j = pair->b;
-    printf("test %d %d %d %d\n", I->a, calculate_T(pair, k, interval_array),
-           I->a + j->processingime, I->b);
-    return (I->a + j->processingime <= I->b &&
-            calculate_T(pair, k, interval_array) >= I->a);
-}
-
 static GPtrArray *array_time_slots(interval *I, GList *pairs){
     GPtrArray *array = g_ptr_array_new_with_free_func(free);
     interval_pair *tmp;
@@ -153,7 +144,7 @@ static GPtrArray *array_time_slots(interval *I, GList *pairs){
     while(pairs) {
         min = pairs;
         min_data = (interval_pair *) min->data;
-        for(GList * i = min; i; i = g_list_next(i)) {
+        for(GList * i = min->next; i; i = g_list_next(i)) {
             tmp = ((interval_pair *) i->data);
             if(tmp->right < min_data->right) {
                 min = i;
