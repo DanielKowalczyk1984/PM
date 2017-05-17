@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-#include <defs.h>
 #include <wctprivate.h>
+#include <defs.h>
 #include <heap.h>
 
 /**

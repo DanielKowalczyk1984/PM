@@ -8,6 +8,7 @@
 #include <util.h>
 #include <wctparms.h>
 #include <solver.h>
+#include <interval.h>
 
 #ifdef __cplusplus
 extern "C" {
