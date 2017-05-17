@@ -93,7 +93,7 @@ void interval_free(interval *p)
     }
 }
 
-void intervals_free(void *p)
+void g_interval_free(void *p)
 {
     if (p != NULL) {
         interval *part = (interval *)p;
