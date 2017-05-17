@@ -78,7 +78,7 @@ CLEAN:
 
 int build_lp(wctdata *pd, int construct) {
     int  val = 0;
-    int njobs = pd->njobs;
+    int  njobs = pd->njobs;
     int  i, j;
     int  counter = 0;
     int *covered = CC_SAFE_MALLOC(njobs, int);
