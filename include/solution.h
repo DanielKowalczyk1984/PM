@@ -36,6 +36,16 @@ int solution_copy(solution *dest, solution *src);
 int solution_update(solution *dest, solution *src);
 int solution_check(partlist *part, int jcount);
 
+Job *job_alloc(int *p, int *w, int *d);
+void g_print_job(gpointer data, gpointer user_data);
+gint g_job_compare_edd(const void *a, const void *b, void *data);
+void g_set_jobarray_job(gpointer data, gpointer user_data);
+void g_print_jobarray(gpointer data, gpointer user_data);
+void g_set_sol_perm(gpointer data, gpointer user_data);
+
+int value_Fj(int C, Job *j);
+int value_diff_Fij(int C, Job *i, Job *j);
+
 #ifdef __cplusplus
 }
 #endif

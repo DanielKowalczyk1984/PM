@@ -1,5 +1,5 @@
 ### https://raw.github.com/github/gitignore/e27b4277e2cd2f2e91ab343419df65f7192ab4dd/C++.gitignore
-
+test.*
 # Compiled Object files
 *.slo
 *.lo

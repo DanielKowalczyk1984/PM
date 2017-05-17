@@ -34,8 +34,8 @@ void *pmcheap_get_obj(const pmcheap *heap, int href);
 
 void *pmcheap_min(pmcheap *heap), pmcheap_reset(pmcheap *heap),
     pmcheap_reset_free(pmcheap *heap);
-#endif
 
 #ifdef __cplusplus
 }
+#endif
 #endif

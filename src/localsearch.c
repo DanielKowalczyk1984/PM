@@ -433,7 +433,7 @@ int local_search_create_g(solution *sol, local_search_data *data) {
             w = 0;
             t1 = 0;
             unsigned k;
-            int move;
+            int      move;
             move = 1;
             tmp = (Job *)g_ptr_array_index(lateness_sort, 0);
 
