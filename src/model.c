@@ -78,15 +78,16 @@ CLEAN:
 
 int build_lp(wctdata *pd, int construct) {
     int  val = 0;
+    int njobs = pd->njobs;
     int  i, j;
     int  counter = 0;
-    int *covered = CC_SAFE_MALLOC(pd->njobs, int);
+    int *covered = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
-    fill_int(covered, pd->njobs, 0);
+    fill_int(covered, njobs, 0);
     val = wctlp_init(&(pd->LP), NULL);
     CCcheck_val_2(val, "wctlp_init failed");
 
-    for (i = 0; i < pd->njobs; i++) {
+    for (i = 0; i < njobs; i++) {
         val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL,
                            wctlp_GREATER_EQUAL, 1.0, (char *)NULL);
         CCcheck_val_2(val, "Failed wctlp_addrow");
@@ -95,9 +96,9 @@ int build_lp(wctdata *pd, int construct) {
     wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_LESS_EQUAL,
                  (double)pd->nmachines, NULL);
     pd->coef =
-        (double *)CCutil_reallocrus(pd->coef, (pd->njobs + 1) * sizeof(double));
+        (double *)CCutil_reallocrus(pd->coef, (njobs + 1) * sizeof(double));
     CCcheck_NULL_2(pd->coef, "out of memory for coef");
-    fill_dbl(pd->coef, pd->njobs + 1, 1.0);
+    fill_dbl(pd->coef, njobs + 1, 1.0);
 
     /** add constraint about number of machines */
     if (construct) {
@@ -111,7 +112,7 @@ int build_lp(wctdata *pd, int construct) {
                 wctlp_printerrorcode(val);
             }
 
-            for (j = 0; j < pd->cclasses[i].count && counter < pd->njobs; j++) {
+            for (j = 0; j < pd->cclasses[i].count && counter < njobs; j++) {
                 if (!covered[pd->cclasses[i].members[j]]) {
                     covered[pd->cclasses[i].members[j]] = 1;
                     counter++;
@@ -120,9 +121,9 @@ int build_lp(wctdata *pd, int construct) {
         }
     }
 
-    if (counter < pd->njobs) {
+    if (counter < njobs) {
         /** Farkas Pricing */
-        for (i = 0; i < pd->njobs; i++) {
+        for (i = 0; i < njobs; i++) {
             if (!covered[i]) {
                 pd->nnewsets = 1;
                 pd->newsets = CC_SAFE_MALLOC(1, scheduleset);
@@ -139,7 +140,7 @@ int build_lp(wctdata *pd, int construct) {
                                "Failed to allocate memory");
                 pd->newsets[0].count++;
                 pd->newsets[0].members[0] = i;
-                pd->newsets[0].members[1] = pd->njobs;
+                pd->newsets[0].members[1] = njobs;
                 pd->newsets[0].totwct =
                     pd->jobarray[i].weight * pd->jobarray[i].processingime;
                 pd->newsets[0].totweight = pd->jobarray[i].processingime;
@@ -153,13 +154,13 @@ int build_lp(wctdata *pd, int construct) {
                 CCcheck_val_2(val, "Failed in wctlp_addcol");
 
                 if (pd->gallocated == 0 && pd->ccount == 0) {
-                    pd->cclasses = CC_SAFE_MALLOC(pd->njobs, scheduleset);
+                    pd->cclasses = CC_SAFE_MALLOC(njobs, scheduleset);
 
-                    for (j = 0; j < pd->njobs; ++j) {
+                    for (j = 0; j < njobs; ++j) {
                         scheduleset_init(pd->cclasses + i);
                     }
 
-                    pd->gallocated = pd->njobs;
+                    pd->gallocated = njobs;
                 }
 
                 add_newsets(pd);
@@ -167,24 +168,23 @@ int build_lp(wctdata *pd, int construct) {
         }
     }
 
-    pd->pi =
-        (double *)CCutil_reallocrus(pd->pi, (pd->njobs + 1) * sizeof(double));
+    pd->pi = (double *)CCutil_reallocrus(pd->pi, (njobs + 1) * sizeof(double));
     CCcheck_NULL_2(pd->pi, "Failed to allocate memory to pd->pi");
-    pd->pi_in = CC_SAFE_MALLOC(pd->njobs + 1, double);
+    pd->pi_in = CC_SAFE_MALLOC(njobs + 1, double);
     CCcheck_NULL_2(pd->pi_in, "Failed to allocate memory");
-    fill_dbl(pd->pi_in, pd->njobs + 1, 0.0);
+    fill_dbl(pd->pi_in, njobs + 1, 0.0);
     pd->eta_in = 0.0;
-    pd->pi_out = CC_SAFE_MALLOC(pd->njobs + 1, double);
+    pd->pi_out = CC_SAFE_MALLOC(njobs + 1, double);
     CCcheck_NULL_2(pd->pi_out, "Failed to allocate memory");
     pd->eta_out = 0.0;
-    fill_dbl(pd->pi_out, pd->njobs + 1, 0.0);
-    pd->pi_sep = CC_SAFE_MALLOC(pd->njobs + 1, double);
+    fill_dbl(pd->pi_out, njobs + 1, 0.0);
+    pd->pi_sep = CC_SAFE_MALLOC(njobs + 1, double);
     CCcheck_NULL_2(pd->pi_sep, "Failed to allocate memory");
-    pd->subgradient_in = CC_SAFE_MALLOC(pd->njobs + 1, double);
+    pd->subgradient_in = CC_SAFE_MALLOC(njobs + 1, double);
     CCcheck_NULL_2(pd->subgradient_in, "Failed to allocate memory");
-    pd->subgradient = CC_SAFE_MALLOC(pd->njobs + 1, double);
+    pd->subgradient = CC_SAFE_MALLOC(njobs + 1, double);
     CCcheck_NULL_2(pd->subgradient, "Failed to allocate memory");
-    pd->rhs = CC_SAFE_MALLOC(pd->njobs + 1, double);
+    pd->rhs = CC_SAFE_MALLOC(njobs + 1, double);
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
     val = wctlp_get_rhs(pd->LP, pd->rhs);
     CCcheck_val_2(val, "Failed to get RHS");
