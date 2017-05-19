@@ -244,8 +244,6 @@ int find_division(wctproblem *problem) {
         }
     }
 
-    g_ptr_array_foreach(problem->e, g_print_interval, NULL);
-
 CLEAN:
     g_ptr_array_free(tmp_array, TRUE);
     return val;
