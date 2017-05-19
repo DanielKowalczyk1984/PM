@@ -204,7 +204,7 @@ int main(int ac, char **av) {
     CCcheck_val_2(val, "Failed at preprocess_data");
 
     /** Finding heuristic solutions to the problem */
-    //heuristic_rpup(&problem);
+    heuristic_rpup(&problem);
     printf("Reading and preprocessing of the data took %f seconds\n",
            CCutil_zeit() - start_time);
 
