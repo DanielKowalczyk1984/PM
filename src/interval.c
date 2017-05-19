@@ -35,7 +35,7 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data)
                 return 1;
             }
 
-            return 0;
+            return x->job - y->job;
         }
     } else {
         if (y->processingime > diff) {
@@ -51,7 +51,7 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data)
                 return 1;
             }
 
-            return 0;
+            return x->job - y->job;
         }
     }
 }
