@@ -13,6 +13,7 @@ void permutation_solution(GRand *rand_uniform, solution *sol);
 
 int _job_compare_spt(const void *a, const void *b);
 int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b);
+int compare_nb_job(gconstpointer a, gconstpointer b);
 
 /**
  * comparefunctions
@@ -35,6 +36,13 @@ int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
     } else {
         return 1;
     }
+}
+
+int compare_nb_job(gconstpointer a, gconstpointer b){
+    const Job *x = * (Job * const *) a;
+    const Job *y = * (Job *const *) b;
+
+    return (x->job - y ->job);
 }
 
 int _job_compare_spt(const void *a, const void *b) {
@@ -92,8 +100,8 @@ static int solution_set_c(solution *sol) {
         g_ptr_array_add(tmp->machine, j);
         tmp->c += j->processingime;
         sol->c[j->job] = tmp->c;
-        tmp->tw += j->weight * (CC_MAX(0, tmp->c - j->duetime));
-        sol->tw += j->weight * (CC_MAX(0, tmp->c - j->duetime));
+        tmp->tw += value_Fj(tmp->c, j);
+        sol->tw += value_Fj(tmp->c, j);
         sol->b += j->duetime * (sol->njobs - i);
         binomial_heap_insert(heap, tmp);
     }
@@ -275,7 +283,7 @@ static void perturb_swap(solution *         sol,
     part1 = sol->part + m1;
     part2 = sol->part + m2;
 
-    if (part1->machine->len <= l1 || part2->machine->len <= l2) {
+    if (part1->machine->len <= (guint)l1 || part2->machine->len <= (guint)l2) {
         return;
     }
 
@@ -393,7 +401,7 @@ int heuristic_rpup(wctproblem *prob) {
     GRand *rand_uniform = g_rand_new_with_seed(2011);
     g_random_set_seed(1984);
     int          ILS = prob->njobs;
-    int          IR = 10;
+    int          IR = 1;
     solution *   sol;
     solution *   sol1 = (solution *)NULL;
     CCutil_timer test;
@@ -405,6 +413,7 @@ int heuristic_rpup(wctproblem *prob) {
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
     solution_print(sol);
+    solution_canonical_order(sol, prob->e);
     CCcheck_val_2(val, "Failed construct edd");
     data = local_search_data_init(sol);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
@@ -445,6 +454,7 @@ int heuristic_rpup(wctproblem *prob) {
         solution_free(&sol1);
     }
 
+    solution_canonical_order(prob->opt_sol, prob->e);
     solution_print(prob->opt_sol);
 CLEAN:
     solution_free(&sol);
