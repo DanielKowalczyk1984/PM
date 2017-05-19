@@ -267,10 +267,10 @@ static int local_search_create_processing_list_swap(solution *         sol,
     int val = 0;
 
     for (int i = 0; i < data->nmachines; ++i) {
-        int        njobs = sol->part[i].machine->len;
-        int        C = 0;
         GPtrArray *machine = sol->part[i].machine;
         Job *      j1, *j2;
+        int        njobs = sol->part[i].machine->len;
+        int        C = 0;
 
         for (int j = l1; j < l1 + l2; ++j) {
             j1 = (Job *)g_ptr_array_index(machine, j);
@@ -504,8 +504,7 @@ static void local_search_update_insertion(
         tmp->index = i;
         sol->part[k_best].c += tmp->processingime;
         sol->c[tmp->job] = sol->part[k_best].c;
-        sol->part[k_best].tw +=
-            tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->duetime);
+        sol->part[k_best].tw += value_Fj(sol->c[tmp->job], tmp);
     }
 
     sol->tw += sol->part[k_best].tw;
@@ -551,8 +550,7 @@ static void local_search_update_insertion_inter(solution *sol,
         tmp->index = i;
         sol->part[kk_best].c += tmp->processingime;
         sol->c[tmp->job] = sol->part[kk_best].c;
-        sol->part[kk_best].tw +=
-            tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->duetime);
+        sol->part[kk_best].tw += value_Fj(sol->c[tmp->job], tmp);
     }
 
     sol->tw += sol->part[k_best].tw + sol->part[kk_best].tw;
@@ -612,7 +610,7 @@ static void local_search_update_swap(solution *sol,
         tmp->index = i;
         part->c += tmp->processingime;
         sol->c[tmp->job] = part->c;
-        part->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->duetime);
+        part->tw += value_Fj(sol->c[tmp->job], tmp);
     }
 
     sol->tw += part->tw;
@@ -675,7 +673,7 @@ static void local_search_update_inter_swap(solution *sol,
         tmp->index = i;
         part1->c += tmp->processingime;
         sol->c[tmp->job] = part1->c;
-        part1->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->duetime);
+        part1->tw += value_Fj(sol->c[tmp->job], tmp);
     }
 
     for (unsigned i = 0; i < part2->machine->len; ++i) {
@@ -683,7 +681,7 @@ static void local_search_update_inter_swap(solution *sol,
         tmp->index = i;
         part2->c += tmp->processingime;
         sol->c[tmp->job] = part2->c;
-        part2->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->duetime);
+        part2->tw += value_Fj(sol->c[tmp->job], tmp);
     }
 
     sol->tw += part1->tw + part2->tw;
