@@ -135,23 +135,6 @@ int branching_msg_wide(wctdata *pd, wctproblem *problem);
  * solverwrapper.cc
  */
 
-/**
- * Stabilization techniques
- */
-int solve_stab(wctdata *pd, wctparms *parms);
-int solve_stab_dynamic(wctdata *pd, wctparms *parms);
-
-/**
- * solver zdd
- */
-int solve_dynamic_programming_ahv(wctdata *pd);
-int solve_weight_dbl_bdd(wctdata *pd);
-int solve_weight_dbl_zdd(wctdata *pd);
-int solve_pricing(wctdata *pd, wctparms *parms);
-int solve_farkas_dbl(wctdata *pd);
-int solve_farkas_dbl_DP(wctdata *pd);
-void print_dot_file(PricerSolver *solver, char *name);
-
 #ifdef __cplusplus
 }
 #endif

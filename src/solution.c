@@ -334,10 +334,8 @@ static void calculate_partition(solution *sol, GPtrArray *intervals, int m, int 
                 sol->c[j->job] = sol->c[i->job] - i->processingime + j->processingime;
                 sol->c[i->job] = sol->c[j->job] + i->processingime;
                 CC_SWAP(g_ptr_array_index(machine, cur), g_ptr_array_index(machine, cur + 1), tmp);
-                g_qsort_with_data(machine->pdata + cur, count, sizeof(Job *),
-                                  compare_interval, I);
                if(sol->c[j->job] > I->a && sol->c[j->job] <= I->b) {
-                   g_qsort_with_data(machine->pdata + cur, count, sizeof(Job *),
+                   g_qsort_with_data(machine->pdata + cur, count + 1, sizeof(Job *),
                                      compare_interval, I);
                    *last = cur;
                    if(cur >= 0) {
@@ -378,7 +376,6 @@ int solution_canonical_order(solution *sol, GPtrArray *intervals) {
             calculate_partition(sol, intervals, it, &u, &last);
         }
     }
-
 
     return val;
 }

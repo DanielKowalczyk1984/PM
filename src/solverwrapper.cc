@@ -1,4 +1,4 @@
-#include <wct.h>
+#include <wctprivate.h>
 #include <PricerSolver.hpp>
 #include <iostream>
 #include <vector>

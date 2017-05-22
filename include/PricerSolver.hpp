@@ -8,7 +8,7 @@
 #include <tdzdd/DdStructure.hpp>
 #include <tdzdd/op/Lookahead.hpp>
 
-class PricerSolver {
+struct PricerSolver {
    public:
     tdzdd::DdStructure<2> *                   dd;
     tdzdd::DdStructure<2> *                   zdd;

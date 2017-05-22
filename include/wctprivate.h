@@ -226,6 +226,23 @@ void lpwctdata_free(wctdata *pd);
 void children_data_free(wctdata *pd);
 void wctdata_free(wctdata *pd);
 void temporary_data_free(wctdata *pd);
+
+/**
+ * solver zdd
+ */
+int solve_dynamic_programming_ahv(wctdata *pd);
+int solve_weight_dbl_bdd(wctdata *pd);
+int solve_weight_dbl_zdd(wctdata *pd);
+int solve_pricing(wctdata *pd, wctparms *parms);
+int solve_farkas_dbl(wctdata *pd);
+int solve_farkas_dbl_DP(wctdata *pd);
+void print_dot_file(PricerSolver *solver, char *name);
+
+/**
+ * Stabilization techniques
+ */
+int solve_stab(wctdata *pd, wctparms *parms);
+int solve_stab_dynamic(wctdata *pd, wctparms *parms);
 #ifdef __cplusplus
 }
 #endif

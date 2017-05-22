@@ -454,7 +454,16 @@ int heuristic_rpup(wctproblem *prob) {
         solution_free(&sol1);
     }
 
+    solution_print(prob->opt_sol);
     solution_canonical_order(prob->opt_sol, prob->e);
+    for(int i = 0; i < prob->opt_sol->nmachines; ++i) {
+        GPtrArray *machine = prob->opt_sol->part[i].machine;
+        for(unsigned j = 0; j < machine->len; ++j) {
+            Job *tmp = (Job *) g_ptr_array_index(machine, j);
+            printf("%d ", prob->opt_sol->u[tmp->job]);
+        }
+        printf("\n");
+    }
     solution_print(prob->opt_sol);
 CLEAN:
     solution_free(&sol);

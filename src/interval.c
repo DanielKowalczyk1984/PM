@@ -108,4 +108,3 @@ void interval_pair_free(void *p){
         CC_FREE(tmp, interval_pair);
     }
 }
-
