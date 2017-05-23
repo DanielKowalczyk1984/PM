@@ -201,6 +201,8 @@ int wctlp_chgcoef(wctlp *lp, int cnt, int *cind, int *vind, double *cval){
 
     val = GRBchgcoeffs(lp->model, cnt, cind, vind, cval);
     CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
+    val = GRBupdatemodel(lp->model);
+    CHECK_VAL_GRB(val, "Failed to update model", lp->env);
 
     return val;
 }
