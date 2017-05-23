@@ -4,6 +4,7 @@
 extern "C" {
 #endif
 #include <glib.h>
+#include <solution.h>
 
 typedef struct scheduleset {
     int         count;
@@ -12,9 +13,16 @@ typedef struct scheduleset {
     int         totweight;
     int         totwct;
     GHashTable *table;
+    GPtrArray  *partial_machine;
     int *       members;
     int *       C;
-    int         id;
+    int         id_right;
+    int         id_left;
+    int         totwct_right;
+    int         totwct_left;
+    int         c_right;
+    int         c_left;
+    int         nb_interval;
 } scheduleset;
 
 void scheduleset_SWAP(scheduleset *c1, scheduleset *c2, scheduleset *t);
@@ -58,6 +66,11 @@ int update_schedulesets(scheduleset **dst,
 int add_schedulesets(scheduleset **dst, int *ndst, scheduleset *src, int nsrc);
 int scheduleset_less_totweight(scheduleset *c1, scheduleset *c2);
 int scheduleset_more_totweight(scheduleset *c1, scheduleset *c2);
+
+/** new approach for columns */
+void g_scheduleset_free(void *set);
+scheduleset *scheduleset_create(Job **job_array, int nbjobs, GPtrArray *intervals, int u);
+scheduleset *scheduleset_from_solution(Job **job_array, int begin, int end, GPtrArray *intervals, int u);
 
 #ifdef __cplusplus
 }

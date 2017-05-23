@@ -12,6 +12,7 @@
 #include <defs.h>
 #include <scheduleset.h>
 #include <util.h>
+#include <interval.h>
 
 void iterator(gpointer key, gpointer value, gpointer user_data);
 
@@ -71,7 +72,9 @@ void scheduleset_init(scheduleset *set) {
         set->totweight = 0;
         set->totwct = 0;
         set->size = 0;
-        set->id = -1;
+        set->id_left = set->id_right = -1;
+        set->totwct_left = set->totwct_right = 0;
+        set->partial_machine = g_ptr_array_new();
     }
 }
 
@@ -90,6 +93,109 @@ void scheduleset_free(scheduleset *set) {
         set->totwct = 0;
         set->size = 0;
     }
+}
+
+void g_scheduleset_free(void *set) {
+    scheduleset *tmp = (scheduleset *) set;
+    if (tmp) {
+        CC_IFFREE(tmp->members, int);
+        CC_IFFREE(tmp->C, int);
+
+        if (tmp->table) {
+            g_hash_table_destroy(tmp->table);
+        }
+
+        tmp->count = 0;
+        tmp->totweight = 0;
+        tmp->age = 0;
+        tmp->totwct = 0;
+        tmp->size = 0;
+        tmp->id_left = tmp->id_right = -1;
+        tmp->totwct_left = tmp->totwct_right = 0;
+        g_ptr_array_free(tmp->partial_machine, TRUE);
+    }
+}
+
+scheduleset *scheduleset_create(Job **job_array, int nbjobs, GPtrArray *intervals, int u){
+    scheduleset *tmp;
+    Job *j;
+    interval *I = (interval *) g_ptr_array_index(intervals, u);
+    int C = 0;
+    int begin_right = 0;
+    int begin_left = 0;
+
+    tmp = CC_SAFE_MALLOC(1, scheduleset);
+    CCcheck_NULL_3(tmp, "failed to allocate memory")
+
+    scheduleset_init(tmp);
+    for(int i = 0; i < nbjobs; ++i) {
+        j = job_array[i];
+        g_ptr_array_add(tmp->partial_machine, j);
+        C += j->processingime;
+    }
+
+    tmp->totweight = C;
+    tmp->nb_interval = u;
+
+    tmp->c_left = ((Job *)g_ptr_array_index(tmp->partial_machine, 0))->processingime - 1;
+    tmp->c_right = CC_MAX(0, C - (I->b - I->a));
+
+    begin_right = I->a - tmp->c_right;
+    begin_left = I->a - tmp->c_left;
+
+    for(unsigned i = 0; i < tmp->partial_machine->len; ++i) {
+        j = (Job *) g_ptr_array_index(tmp->partial_machine, i);
+        begin_right += j->processingime;
+        begin_left += j->processingime;
+        tmp->totwct_left += value_Fj(begin_left, j);
+        tmp->totwct_right += value_Fj(begin_right, j);
+    }
+
+    assert(begin_right <= I->b && begin_left <= I->b);
+
+    CLEAN:
+    return tmp;
+}
+
+scheduleset *scheduleset_from_solution(Job **job_array, int begin, int end, GPtrArray *intervals, int u){
+    scheduleset *tmp;
+    Job *j;
+    interval *I = (interval *) g_ptr_array_index(intervals, u);
+    int C = 0;
+    int begin_right = 0;
+    int begin_left = 0;
+
+    tmp = CC_SAFE_MALLOC(1, scheduleset);
+    CCcheck_NULL_3(tmp, "failed to allocate memory")
+
+    scheduleset_init(tmp);
+    for(int i = begin; i < end; ++i) {
+        j = job_array[i];
+        g_ptr_array_add(tmp->partial_machine, j);
+        C += j->processingime;
+    }
+
+    tmp->totweight = C;
+    tmp->nb_interval = u;
+
+    tmp->c_left = ((Job *)g_ptr_array_index(tmp->partial_machine, 0))->processingime - 1;
+    tmp->c_right = CC_MAX(0, C - (I->b - I->a));
+
+    begin_right = I->a - tmp->c_right;
+    begin_left = I->a - tmp->c_left;
+
+    for(unsigned i = 0; i < tmp->partial_machine->len; ++i) {
+        j = (Job *) g_ptr_array_index(tmp->partial_machine, i);
+        begin_right += j->processingime;
+        begin_left += j->processingime;
+        tmp->totwct_left += value_Fj(begin_left, j);
+        tmp->totwct_right += value_Fj(begin_right, j);
+    }
+
+    assert(begin_right <= I->b && begin_left <= I->b);
+
+    CLEAN:
+    return tmp;
 }
 
 void schedulesets_free(scheduleset **sets, int *nsets) {
