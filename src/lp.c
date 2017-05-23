@@ -196,6 +196,15 @@ int wctlp_addcol(wctlp * lp,
     return val;
 }
 
+int wctlp_chgcoef(wctlp *lp, int cnt, int *cind, int *vind, double *cval){
+    int val = 0;
+
+    val = GRBchgcoeffs(lp->model, cnt, cind, vind, cval);
+    CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
+
+    return val;
+}
+
 int wctlp_deletecols(wctlp *lp, int first, int last) {
     int  val = 0;
     int  ndel = last - first + 1;
@@ -416,6 +425,13 @@ void wctlp_warmstart_free(wctlp_warmstart **w) {
 int wctlp_get_nb_rows(wctlp *lp, int *nb_rows) {
     int val = 0;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMCONSTRS, nb_rows);
+    CHECK_VAL_GRB(val, "Failed to get the number of variables", lp->env);
+    return val;
+}
+
+int wctlp_get_nb_cols(wctlp *lp, int *nb_cols) {
+    int val = 0;
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS , nb_cols);
     CHECK_VAL_GRB(val, "Failed to get the number of variables", lp->env);
     return val;
 }
