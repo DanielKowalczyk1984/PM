@@ -81,24 +81,36 @@ int build_lp(wctdata *pd, int construct) {
     int  njobs = pd->njobs;
     int  i, j;
     int  counter = 0;
+    GPtrArray *intervals = pd->local_intervals;
+    interval *I;
+    int nb_row = njobs + 2*intervals->len - 1;
     int *covered = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
-    fill_int(covered, njobs, 0);
     val = wctlp_init(&(pd->LP), NULL);
     CCcheck_val_2(val, "wctlp_init failed");
 
-    for (i = 0; i < njobs; i++) {
+    fill_int(covered, njobs, 0);
+    for (int i = 0; i < njobs; i++) {
         val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL,
-                           wctlp_GREATER_EQUAL, 1.0, (char *)NULL);
+                           wctlp_EQUAL, 1.0, (char *)NULL);
         CCcheck_val_2(val, "Failed wctlp_addrow");
     }
 
-    wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_LESS_EQUAL,
-                 (double)pd->nmachines, NULL);
+    for(unsigned i = 0; i < intervals->len - 1; ++i) {
+        I = (interval *) g_ptr_array_index(intervals, i);
+        val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL,
+                           wctlp_EQUAL, (double) pd->nmachines*(I->b - I->a), (char *)NULL);
+    }
+
+    for(unsigned i = 0; i < intervals->len; ++i) {
+        val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL,
+                           wctlp_EQUAL, (double) pd->nmachines, (char *)NULL);
+    }
+
     pd->coef =
-        (double *)CCutil_reallocrus(pd->coef, (njobs + 1) * sizeof(double));
+        (double *)CCutil_reallocrus(pd->coef, (nb_row) * sizeof(double));
     CCcheck_NULL_2(pd->coef, "out of memory for coef");
-    fill_dbl(pd->coef, njobs + 1, 1.0);
+    fill_dbl(pd->coef, nb_row, 1.0);
 
     /** add constraint about number of machines */
     if (construct) {

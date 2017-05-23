@@ -26,7 +26,15 @@ typedef enum {
     finished = 5,
 } data_status;
 
+/**
+ * problem data
+ */
+typedef struct wctproblem wctproblem;
+/**
+ * node data
+ */
 typedef struct wctdata wctdata;
+
 struct wctdata {
     // The id and depth of the node in the B&B tree
     int id;
@@ -34,19 +42,17 @@ struct wctdata {
 
     data_status status;
 
-    // The job information
+    // The instance information
     int njobs;
     int nmachines;
-    // int *duetime;
-    // int *releasetime;
-    // int *duration;
-    // int *weights;
     int *orig_node_ids;
     // data for meta heuristic
     Job *jobarray;
     GPtrArray *jobarray2;
     int  H_max;
     int  H_min;
+    /** data about the intervals */
+    GPtrArray *local_intervals;
 
     // The column generation lp information
     wctlp * LP;
@@ -55,13 +61,19 @@ struct wctdata {
     double *pi;
     // PricerSolver
     PricerSolver *solver;
-    // Colorset(Assignments)
+
+    // Columns
     int          ccount;
     scheduleset *cclasses;
     int          dzcount;
     int          gallocated;
     scheduleset *newsets;
     int          nnewsets;
+    GPtrArray *lpCols;
+    /** Maximum number of artificial columns */
+    int maxArtificials;
+    /** Actual number of artificial columns */
+    int nArtificials;
 
     int  kpc_pi_scalef;
     int  kpc_pi_scalef_heur;
@@ -132,7 +144,16 @@ struct wctdata {
     wctdata **same_children_wide;
     wctdata **diff_children_wide;
 
+
+    /**
+     * ptr to the parent node
+     */
     wctdata *parent;
+
+    /**
+     * ptr to the data overview
+     */
+    wctproblem *problem;
 
     char pname[MAX_PNAME_LEN];
 };
@@ -149,7 +170,6 @@ typedef enum {
     optimal = 4
 } problem_status;
 
-typedef struct wctproblem wctproblem;
 
 struct wctproblem {
     wctparms parms;

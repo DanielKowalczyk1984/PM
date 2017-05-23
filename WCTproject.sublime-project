@@ -144,6 +144,18 @@
 				"third_party/EGlib/"
 			],
 			"path": "."
+		},
+		{
+			"path": "~/tool/rbcp_cvrp060317/bcp_vrp/",
+			"folder_exclude_patterns":
+			[
+				"Bin",
+				"CARP",
+				"CVRPSEP",
+				"STL",
+				"dep",
+				"obj"
+			]
 		}
 	],
 	"settings":
