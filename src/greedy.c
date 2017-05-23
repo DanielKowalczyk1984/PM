@@ -401,9 +401,10 @@ int heuristic_rpup(wctproblem *prob) {
     GRand *rand_uniform = g_rand_new_with_seed(2011);
     g_random_set_seed(1984);
     int          ILS = prob->njobs;
-    int          IR = 1;
+    int          IR = 2;
     solution *   sol;
     solution *   sol1 = (solution *)NULL;
+    GPtrArray *intervals = prob->root_pd.local_intervals;
     CCutil_timer test;
     CCutil_init_timer(&test, (char *)NULL);
     local_search_data *data = (local_search_data *)NULL;
@@ -413,7 +414,7 @@ int heuristic_rpup(wctproblem *prob) {
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
     solution_print(sol);
-    solution_canonical_order(sol, prob->e);
+    solution_canonical_order(sol, intervals);
     CCcheck_val_2(val, "Failed construct edd");
     data = local_search_data_init(sol);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
@@ -454,16 +455,7 @@ int heuristic_rpup(wctproblem *prob) {
         solution_free(&sol1);
     }
 
-    solution_print(prob->opt_sol);
-    solution_canonical_order(prob->opt_sol, prob->e);
-    for(int i = 0; i < prob->opt_sol->nmachines; ++i) {
-        GPtrArray *machine = prob->opt_sol->part[i].machine;
-        for(unsigned j = 0; j < machine->len; ++j) {
-            Job *tmp = (Job *) g_ptr_array_index(machine, j);
-            printf("%d ", prob->opt_sol->u[tmp->job]);
-        }
-        printf("\n");
-    }
+    solution_canonical_order(prob->opt_sol, intervals);
     solution_print(prob->opt_sol);
 CLEAN:
     solution_free(&sol);
