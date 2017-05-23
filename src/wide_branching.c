@@ -235,7 +235,7 @@ static int create_diff_wide(wctproblem *problem,
     wctdata * pd = CC_SAFE_MALLOC(1, wctdata);
     wctparms *parms = &(problem->parms);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
-    wctdata_init(pd);
+    wctdata_init(pd, problem);
     /** Init B&B data */
     pd->parent = parent_pd;
     pd->depth = parent_pd->depth + 1;
@@ -426,7 +426,7 @@ static int create_same_wide(wctproblem *problem,
     wctparms *parms = &(problem->parms);
     wctdata * pd = CC_SAFE_MALLOC(1, wctdata);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
-    wctdata_init(pd);
+    wctdata_init(pd, problem);
     /** Init B&B data */
     pd->depth = parent_pd->depth + 1;
     parent_pd->same_children_wide[parent_pd->nsame++] = pd;

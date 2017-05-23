@@ -38,7 +38,9 @@ void wctproblem_init(wctproblem *problem) {
     problem->initsets = (scheduleset *)NULL;
     problem->br_heap_a = (BinomialHeap *)NULL;
     /*data of the problem*/
-    wctdata_init(&(problem->root_pd));
+    wctdata_init(&(problem->root_pd), problem);
+    set_id_and_name(&(problem->root_pd), 0, "root_node");
+    problem->nwctdata++;
     /*parms of the problem*/
     wctparms_init(&(problem->parms));
     /*heap initialization*/
@@ -57,6 +59,9 @@ void wctproblem_init(wctproblem *problem) {
     CCutil_init_timer(&(problem->tot_lb_lp), "tot_lb_lp");
     CCutil_init_timer(&(problem->tot_lb), "tot_lb");
     CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
+
+    problem->real_time = getRealTime();
+    CCutil_start_timer(&(problem->tot_cputime));
 }
 
 void wctproblem_free(wctproblem *problem) {
@@ -86,22 +91,19 @@ void wctproblem_free(wctproblem *problem) {
 }
 
 /*Functions for initialization and free the data*/
-void wctdata_init(wctdata *pd) {
+void wctdata_init(wctdata *pd, wctproblem *prob) {
     /*Initialization B&B data*/
     pd->id = -1;
     pd->depth = 0;
     pd->status = initialized;
     sprintf(pd->pname, "temporary");
-    /*Initialization graph data*/
+    /*Initialization node instance data*/
     pd->njobs = 0;
     pd->orig_node_ids = (int *)NULL;
-    // pd->duration = (int *)NULL;
-    // pd->weights = (int *)NULL;
-    // pd->duetime = (int *) NULL;
-    // pd->releasetime = (int *) NULL;
-    //pd->jobarray = (Job *)NULL;
     pd->H_max = 0;
     pd->H_min = 0;
+    pd->local_intervals = g_ptr_array_new_with_free_func(g_interval_free);
+    /** Initialization data */
     pd->upper_bound = INT_MAX;
     pd->lower_bound = 0;
     pd->dbl_safe_lower_bound = 0.0;
@@ -171,6 +173,8 @@ void wctdata_init(wctdata *pd) {
     pd->nb_wide = 0;
     pd->same_children_wide = (wctdata **)NULL;
     pd->diff_children_wide = (wctdata **)NULL;
+
+    pd->problem = prob;
 }
 
 void lpwctdata_free(wctdata *pd) {
@@ -235,6 +239,7 @@ void temporary_data_free(wctdata *pd) {
 void wctdata_free(wctdata *pd) {
     schedulesets_free(&(pd->bestcolors), &(pd->nbbest));
     temporary_data_free(pd);
+    g_ptr_array_free(pd->local_intervals, TRUE);
     CC_IFFREE(pd->elist_same, int);
     CC_IFFREE(pd->elist_differ, int);
     CC_IFFREE(pd->v1_wide, int);

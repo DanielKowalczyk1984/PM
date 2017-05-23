@@ -236,7 +236,7 @@ void wctproblem_init(wctproblem *problem);
 void wctproblem_free(wctproblem *problem);
 
 /*Initialize pmc data*/
-void wctdata_init(wctdata *pd);
+void wctdata_init(wctdata *pd, wctproblem *prob);
 int set_id_and_name(wctdata *pd, int id, const char *fname);
 int wctdata_init_unique(wctdata *pd, int id, const char *name);
 int lp_build(wctdata *pd);
