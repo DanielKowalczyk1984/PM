@@ -186,7 +186,6 @@ struct wctproblem {
     int H_min;
     int H_max;
     int off;
-    GPtrArray *e;
     /** nmachines */
     int nmachines;
 
