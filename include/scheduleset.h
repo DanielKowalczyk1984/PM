@@ -71,6 +71,7 @@ int scheduleset_more_totweight(scheduleset *c1, scheduleset *c2);
 void g_scheduleset_free(void *set);
 scheduleset *scheduleset_create(Job **job_array, int nbjobs, GPtrArray *intervals, int u);
 scheduleset *scheduleset_from_solution(Job **job_array, int begin, int end, GPtrArray *intervals, int u);
+scheduleset *scheduleset_create_empty(GPtrArray *intervals, int u);
 
 #ifdef __cplusplus
 }

@@ -116,6 +116,25 @@ void g_scheduleset_free(void *set) {
     }
 }
 
+scheduleset *scheduleset_create_empty(GPtrArray *intervals, int u){
+    scheduleset *tmp;
+    interval *I = (interval *) g_ptr_array_index(intervals, u);
+
+    tmp = CC_SAFE_MALLOC(1, scheduleset);
+    CCcheck_NULL_3(tmp, "Failed to allocate memory");
+
+    scheduleset_init(tmp);
+
+    tmp->nb_interval = u;
+    tmp->totwct_right = tmp->totwct_left = 0;
+    tmp->c_right = 0;
+    tmp->c_left = I->a;
+    tmp->totweight = 0;
+
+    CLEAN:
+    return tmp;
+}
+
 scheduleset *scheduleset_create(Job **job_array, int nbjobs, GPtrArray *intervals, int u){
     scheduleset *tmp;
     Job *j;
