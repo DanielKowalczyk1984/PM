@@ -175,28 +175,16 @@ int main(int ac, char **av) {
     int           val = 0;
     double start_time;
     wctproblem    problem;
-    wctdata *     pd;
-    wctparms *    parms;
-
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header")
     wctproblem_init(&problem);
-    CCutil_start_timer(&(problem.tot_cputime));
     start_time = CCutil_zeit();
-    problem.real_time = getRealTime();
-    problem.nwctdata = 1;
-    pd = &(problem.root_pd);
-    wctdata_init(pd);
-    pd->id = 0;
-    parms = &(problem.parms);
-    val = parseargs(ac, av, parms);
+    val = parseargs(ac, av, &(problem.parms));
     CCcheck_val_2(val, "Failed in parseargs");
-
     if (dbg_lvl() > 1) {
         printf("Debugging turned on\n");
     }
 
-    fflush(stdout);
     /** Reading and preprocessing the data */
     val = read_problem(&problem);
     CCcheck_val_2(val, "read_adjlist failed");
