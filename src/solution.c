@@ -144,8 +144,7 @@ int solution_update(solution *dest, solution *src) {
     dest->off = src->off;
 
     for (int i = 0; i < dest->nmachines; i++) {
-        g_ptr_array_free(dest->part[i].machine, TRUE);
-        dest->part[i].machine = g_ptr_array_new();
+        g_ptr_array_remove_range(dest->part[i].machine, 0, dest->part[i].machine->len);
 
         for (unsigned j = 0; j < src->part[i].machine->len; ++j) {
             g_ptr_array_add(dest->part[i].machine,
