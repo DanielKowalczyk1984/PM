@@ -21,7 +21,6 @@ void wctproblem_init(wctproblem *problem) {
     problem->off = 0;
     problem->H_min = 0;
     problem->H_max = INT_MAX;
-    problem->e = g_ptr_array_new_with_free_func(g_interval_free);
     /*B&B info*/
     problem->nwctdata = 0;
     problem->global_upper_bound = INT_MAX;
@@ -82,7 +81,6 @@ void wctproblem_free(wctproblem *problem) {
     }
 
     g_ptr_array_free(problem->g_job_array, TRUE);
-    g_ptr_array_free(problem->e, TRUE);
     g_ptr_array_free(problem->unexplored_states, TRUE);
     g_queue_free(problem->non_empty_level_pqs);
     schedulesets_free(&(problem->initsets), &(problem->gallocated));

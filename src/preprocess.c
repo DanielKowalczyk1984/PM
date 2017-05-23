@@ -189,6 +189,7 @@ int find_division(wctproblem *problem) {
     int            njobs = problem->njobs;
     int            tmp;
     int            prev;
+    wctdata *root_pd = &(problem->root_pd);
     GPtrArray *    tmp_array = g_ptr_array_new_with_free_func(g_interval_free);
     GPtrArray *    jobarray = problem->g_job_array;
     Job *          tmp_j;
@@ -238,19 +239,19 @@ int find_division(wctproblem *problem) {
             slots = array_time_slots(tmp_interval, pairs);
             for (unsigned j = 1; j < slots->len; ++j) {
                 g_ptr_array_add(
-                    problem->e,
+                    root_pd->local_intervals,
                     interval_alloc(*((int *)slots->pdata[j - 1]),
                                    *((int *)slots->pdata[j]), jobarray, njobs));
             }
             g_ptr_array_free(slots, TRUE);
         } else {
-            g_ptr_array_add(problem->e,
+            g_ptr_array_add(root_pd->local_intervals,
                             interval_alloc(tmp_interval->a, tmp_interval->b,
                                            jobarray, njobs));
         }
     }
 
-    g_ptr_array_foreach(problem->e, g_print_interval, NULL);
+    g_ptr_array_foreach(root_pd->local_intervals, g_print_interval, NULL);
 
 CLEAN:
     g_ptr_array_free(tmp_array, TRUE);
