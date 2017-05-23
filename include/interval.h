@@ -20,8 +20,9 @@ typedef struct _interval_pair {
 } interval_pair;
 
 void interval_init(interval *p, int a, int b, GPtrArray* jobarray, int njobs);
-void interval_free(interval *p);
 interval *interval_alloc(int a, int b, GPtrArray *jobarray, int njobs);
+interval *interval_copy(interval *src);
+void interval_free(interval *p);
 void g_interval_free(void *p);
 
 gint compare_interval(gconstpointer a, gconstpointer b, gpointer data);

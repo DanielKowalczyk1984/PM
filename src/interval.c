@@ -86,6 +86,23 @@ CLEAN:
     return p;
 }
 
+interval *interval_copy(interval *src){
+    interval *ret = CC_SAFE_MALLOC(1, interval);
+    CCcheck_NULL_3(ret, "Failed to allocate memory");
+
+    ret->a = src->a;
+    ret->b = src->b;
+    ret->begin = src->begin;
+
+    g_ptr_array_sized_new(src->sigma->len);
+
+    for(unsigned i = 0; i < src->sigma->len; ++i) {
+        g_ptr_array_add(ret->sigma, g_ptr_array_index(src->sigma, i));
+    }
+    CLEAN:
+    return ret;
+}
+
 void interval_free(interval *p)
 {
     if (p != (interval *)NULL) {
