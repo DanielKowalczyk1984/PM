@@ -99,6 +99,7 @@ int add_newsets(wctdata *pd);
 
 int build_lp(wctdata *pd, int construct);
 int grab_int_sol(wctdata *pd, double *x, double tolerance);
+int addColToLP(scheduleset *set, wctdata *pd);
 
 
 /**
@@ -121,6 +122,7 @@ static inline int nodepair_ref_key(int v1, int v2) {
 }
 
 int compute_schedule(wctproblem *problem);
+int add_solution_to_colpool(solution *sol, wctdata *pd);
 
 
 /**

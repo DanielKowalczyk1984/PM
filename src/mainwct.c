@@ -197,6 +197,7 @@ int main(int ac, char **av) {
            CCutil_zeit() - start_time);
 
     /** Branch-and-Price Algorithm */
+    // build_lp(&(problem.root_pd), 0);
 
 CLEAN:
     wctproblem_free(&problem);

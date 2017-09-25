@@ -9,6 +9,7 @@ typedef struct _interval{
 	int a;
 	int b;
 	int begin;
+    int key;
 	GPtrArray *sigma;
 } interval;
 
@@ -19,8 +20,8 @@ typedef struct _interval_pair {
 	int right;
 } interval_pair;
 
-void interval_init(interval *p, int a, int b, GPtrArray* jobarray, int njobs);
-interval *interval_alloc(int a, int b, GPtrArray *jobarray, int njobs);
+void interval_init(interval *p, int a, int b,int key, GPtrArray* jobarray, int njobs);
+interval *interval_alloc(int a, int b, int key, GPtrArray *jobarray, int njobs);
 interval *interval_copy(interval *src);
 void interval_free(interval *p);
 void g_interval_free(void *p);

@@ -55,7 +55,7 @@ struct wctdata {
     GPtrArray *local_intervals;
 
     // The column generation lp information
-    wctlp * LP;
+    wctlp *LP;
     double *x;
     double *coef;
     double *pi;
@@ -69,11 +69,7 @@ struct wctdata {
     int          gallocated;
     scheduleset *newsets;
     int          nnewsets;
-    GPtrArray *lpCols;
-    /** Maximum number of artificial columns */
-    int maxArtificials;
-    /** Actual number of artificial columns */
-    int nArtificials;
+    GPtrArray *localColPool;
 
     int  kpc_pi_scalef;
     int  kpc_pi_scalef_heur;
@@ -121,9 +117,9 @@ struct wctdata {
     /** Branching strategies */
     int choose;
     /** conflict */
-    int *    elist_same;
+    int     *elist_same;
     int      ecount_same;
-    int *    elist_differ;
+    int     *elist_differ;
     int      ecount_differ;
     wctdata *same_children;
     int      nsame;
@@ -138,8 +134,8 @@ struct wctdata {
     int      branch_job;
     int      completiontime;
     /** wide branching conflict */
-    int *     v1_wide;
-    int *     v2_wide;
+    int      *v1_wide;
+    int      *v2_wide;
     int       nb_wide;
     wctdata **same_children_wide;
     wctdata **diff_children_wide;
@@ -200,22 +196,28 @@ struct wctproblem {
 
     problem_status status;
 
-    /* All stable sets*/
+    /* All partial schedules*/
     scheduleset *initsets;
     int          nbinitsets;
     int          gallocated;
+    GPtrArray *ColPool;
+    /** Maximum number of artificial columns */
+    int maxArtificials;
+    /** Actual number of artificial columns */
+    int nArtificials;
     /* Best Solution*/
-    solution *   opt_sol;
+    solution    *opt_sol;
     scheduleset *bestschedule;
     int          nbestschedule;
     /*heap variables*/
     BinomialHeap *br_heap_a;
-    GPtrArray *   unexplored_states;
-    GQueue *      non_empty_level_pqs;
+    GPtrArray    *unexplored_states;
+    GQueue       *non_empty_level_pqs;
     unsigned int  last_explored;
     int           mult_key;
     int           found;
     int           nb_explored_nodes;
+    int           nb_generated_nodes;
     int           nb_generated_col;
     int           nb_generated_col_root;
     /*Cpu time measurement*/

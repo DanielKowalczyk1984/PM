@@ -58,7 +58,10 @@ void wctproblem_init(wctproblem *problem) {
     CCutil_init_timer(&(problem->tot_lb_lp), "tot_lb_lp");
     CCutil_init_timer(&(problem->tot_lb), "tot_lb");
     CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
-
+    /** initialize colPool */
+    problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+    problem->nArtificials = 0;
+    /** initialize the time */
     problem->real_time = getRealTime();
     CCutil_start_timer(&(problem->tot_cputime));
 }
@@ -82,6 +85,7 @@ void wctproblem_free(wctproblem *problem) {
 
     g_ptr_array_free(problem->g_job_array, TRUE);
     g_ptr_array_free(problem->unexplored_states, TRUE);
+    g_ptr_array_free(problem->ColPool, TRUE);
     g_queue_free(problem->non_empty_level_pqs);
     schedulesets_free(&(problem->initsets), &(problem->gallocated));
     schedulesets_free(&(problem->bestschedule), &(problem->nbestschedule));
@@ -140,6 +144,7 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     pd->debugcolors = (scheduleset *)NULL;
     pd->ndebugcolors = 0;
     pd->opt_track = 0;
+    pd->localColPool = g_ptr_array_new();
     /*Initialization max and retirement age*/
     pd->maxiterations = 1000000;
     pd->retirementage = 1000000;
@@ -232,6 +237,7 @@ void children_data_free(wctdata *pd) {
 void temporary_data_free(wctdata *pd) {
     children_data_free(pd);
     lpwctdata_free(pd);
+    g_ptr_array_free(pd->localColPool, TRUE);
 }
 
 void wctdata_free(wctdata *pd) {
@@ -472,5 +478,38 @@ int compute_schedule(wctproblem *problem) {
 
     children_data_free(&problem->root_pd);
 CLEAN:
+    return val;
+}
+
+int add_solution_to_colpool(solution *sol, wctdata *pd){
+    int val = 0;
+    Job *job;
+    scheduleset *tmp;
+    interval *I;
+    GPtrArray *intervals = pd->local_intervals;
+
+    for(int i = 0; i < sol->nmachines; ++i) {
+        GPtrArray *machine = sol->part[i].machine;
+        for(int end = 0; end < (int) machine->len;) {
+            int begin = end;
+            job = (Job *) g_ptr_array_index(machine, begin);
+            int u = sol->u[job->job];
+
+            do {
+                end++;
+                if(end == (int) machine->len) {
+                    break;
+                }
+                job = (Job *) g_ptr_array_index(machine, end);
+            } while(u == sol->u[job->job]);
+
+            I = (interval *) g_ptr_array_index(intervals, u);
+            tmp = scheduleset_from_solution(machine, begin, end, I);
+            CCcheck_NULL_2(tmp, "Failed to allocate memory");
+            g_ptr_array_add(pd->problem->ColPool, tmp);
+        }
+    }
+
+    CLEAN:
     return val;
 }

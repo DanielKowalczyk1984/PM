@@ -1,6 +1,8 @@
 #include <interval.h>
 #include <wct.h>
 
+static int add_artificial_columns(wctproblem *problem);
+
 void g_problem_summary_init(gpointer data, gpointer user_data) {
     Job *       j = (Job *)data;
     wctproblem *prob = (wctproblem *)user_data;
@@ -89,7 +91,11 @@ int preprocess_data(wctproblem *problem) {
 
     g_ptr_array_sort_with_data(problem->g_job_array, g_job_compare_edd, NULL);
 
+    /** Find the intervals of the instance at the root node */
     find_division(problem);
+
+    /** add the artificial columns to the colPool */
+    add_artificial_columns(problem);
 
     return val;
 }
@@ -186,6 +192,7 @@ static GPtrArray *array_time_slots(interval *I, GList *pairs) {
 
 int find_division(wctproblem *problem) {
     int            val = 0;
+    int counter = 0;
     int            njobs = problem->njobs;
     int            tmp;
     int            prev;
@@ -204,7 +211,7 @@ int find_division(wctproblem *problem) {
         tmp_j = (Job *)g_ptr_array_index(jobarray, i);
         tmp = CC_MIN(problem->H_max, tmp_j->duetime);
         if (prev < tmp) {
-            tmp_interval = interval_alloc(prev, tmp, jobarray, njobs);
+            tmp_interval = interval_alloc(prev, tmp, -1, jobarray, njobs);
             g_ptr_array_add(tmp_array, tmp_interval);
             CCcheck_NULL_2(tmp_interval, "Failed to allocate memory") prev =
                 tmp_j->duetime;
@@ -212,7 +219,7 @@ int find_division(wctproblem *problem) {
     }
 
     if (prev < problem->H_max) {
-        tmp_interval = interval_alloc(prev, problem->H_max, jobarray, njobs);
+        tmp_interval = interval_alloc(prev, problem->H_max, -1, jobarray, njobs);
         g_ptr_array_add(tmp_array, tmp_interval);
     }
 
@@ -241,13 +248,15 @@ int find_division(wctproblem *problem) {
                 g_ptr_array_add(
                     root_pd->local_intervals,
                     interval_alloc(*((int *)slots->pdata[j - 1]),
-                                   *((int *)slots->pdata[j]), jobarray, njobs));
+                                   *((int *)slots->pdata[j]), counter, jobarray, njobs));
+                counter++;
             }
             g_ptr_array_free(slots, TRUE);
         } else {
             g_ptr_array_add(root_pd->local_intervals,
                             interval_alloc(tmp_interval->a, tmp_interval->b,
-                                           jobarray, njobs));
+                                           counter, jobarray, njobs));
+            counter++;
         }
     }
 
@@ -255,5 +264,27 @@ int find_division(wctproblem *problem) {
 
 CLEAN:
     g_ptr_array_free(tmp_array, TRUE);
+    return val;
+}
+
+void g_add_artificial_columns(gpointer data, gpointer user_data){
+    scheduleset *tmp;
+    interval *I = (interval *) data;
+    wctproblem *problem = (wctproblem *) user_data;
+
+    tmp = scheduleset_create_empty(I);
+
+    g_ptr_array_add(problem->ColPool, tmp);
+    problem->nArtificials++;
+}
+
+static int add_artificial_columns(wctproblem *problem){
+    int val = 0;
+    wctdata *root = &(problem->root_pd);
+    GPtrArray *intervals = root->local_intervals;
+
+    g_ptr_array_foreach(intervals, g_add_artificial_columns, problem);
+
+
     return val;
 }

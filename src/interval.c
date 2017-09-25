@@ -56,10 +56,11 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data)
     }
 }
 
-void interval_init(interval *p, int a, int b, GPtrArray *jobarray, int njobs)
+void interval_init(interval *p, int a, int b, int key, GPtrArray *jobarray, int njobs)
 {
     p->a = a;
     p->b = b;
+    p->key = key;
     p->sigma = g_ptr_array_new();
     p->begin = 0;
     Job *j;
@@ -77,11 +78,11 @@ void interval_init(interval *p, int a, int b, GPtrArray *jobarray, int njobs)
     }
 }
 
-interval *interval_alloc(int a, int b, GPtrArray *jobarray, int njobs)
+interval *interval_alloc(int a, int b, int key, GPtrArray *jobarray, int njobs)
 {
     interval *p = CC_SAFE_MALLOC(1, interval);
     CCcheck_NULL_3(p, "Failed to allocate memory")
-    interval_init(p, a, b, jobarray, njobs);
+    interval_init(p, a, b, key, jobarray, njobs);
 CLEAN:
     return p;
 }

@@ -115,6 +115,7 @@ int wctlp_chgcoef(wctlp *lp, int cnt, int *cind, int *vind, double *cval);
 double lp_int_tolerance(void);
 
 int wctlp_get_rhs(wctlp *lp, double *rhs);
+int wctlp_compute_IIS(wctlp *lp);
 
 #ifdef __cplusplus
 }

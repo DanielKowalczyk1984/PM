@@ -98,7 +98,7 @@ gint order_weight(gconstpointer a, gconstpointer b, void *data) {
 
 static void print_machine(gpointer j, gpointer data) {
     Job *tmp = (Job *)j;
-    printf("%2d ", tmp->job);
+    printf("%d ", tmp->job);
 }
 
 void solution_print(solution *sol) {
@@ -366,6 +366,15 @@ int solution_canonical_order(solution *sol, GPtrArray *intervals) {
 
     solution_calculate_partition_all(sol, intervals);
 
+    // for(unsigned i = 0; i < sol->nmachines; ++i) {
+    //     GPtrArray *machine = sol->part[i].machine;
+    //     for(unsigned j = 0; j < machine->len; ++j) {
+    //         Job *job = (Job *) g_ptr_array_index(machine, j);
+    //         printf("%d ", sol->u[job->job]);
+    //     }
+    //     printf("\n");
+    // }
+
     for (int it = 0; it < sol->nmachines; ++it) {
         GPtrArray *machine = sol->part[it].machine;
         int        last = machine->len - 1;
@@ -375,6 +384,15 @@ int solution_canonical_order(solution *sol, GPtrArray *intervals) {
             calculate_partition(sol, intervals, it, &u, &last);
         }
     }
+
+    // for(unsigned i = 0; i < sol->nmachines; ++i) {
+    //     GPtrArray *machine = sol->part[i].machine;
+    //     for(unsigned j = 0; j < machine->len; ++j) {
+    //         Job *job = (Job *) g_ptr_array_index(machine, j);
+    //         printf("%d ", sol->u[job->job]);
+    //     }
+    //     printf("\n");
+    // }
 
     return val;
 }

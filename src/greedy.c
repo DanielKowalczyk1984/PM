@@ -401,7 +401,7 @@ int heuristic_rpup(wctproblem *prob) {
     GRand *rand_uniform = g_rand_new_with_seed(2011);
     g_random_set_seed(1984);
     int          ILS = prob->njobs;
-    int          IR = 2;
+    int          IR = 1;
     solution *   sol;
     solution *   sol1 = (solution *)NULL;
     GPtrArray *intervals = prob->root_pd.local_intervals;
@@ -425,38 +425,39 @@ int heuristic_rpup(wctproblem *prob) {
     CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
     solution_update(prob->opt_sol, sol);
 
-    for (int i = 0; i < IR; ++i) {
-        sol1 = solution_alloc(prob->nmachines, prob->njobs, prob->off);
-        CCcheck_NULL_2(sol1, "Failed to allocate memory");
-        val = construct_random(prob, sol1, rand_uniform);
-        CCcheck_val_2(val, "Failed in construct random solution");
-        data_RS = local_search_data_init(sol1);
-        local_search_create_W(sol1, data_RS);
-        local_search_create_g(sol1, data_RS);
-        solution_update(sol, sol1);
+    // for (int i = 0; i < IR; ++i) {
+    //     sol1 = solution_alloc(prob->nmachines, prob->njobs, prob->off);
+    //     CCcheck_NULL_2(sol1, "Failed to allocate memory");
+    //     val = construct_random(prob, sol1, rand_uniform);
+    //     CCcheck_val_2(val, "Failed in construct random solution");
+    //     data_RS = local_search_data_init(sol1);
+    //     local_search_create_W(sol1, data_RS);
+    //     local_search_create_g(sol1, data_RS);
+    //     solution_update(sol, sol1);
 
-        for (int j = 0; j < ILS; ++j) {
-            RVND(sol1, data_RS);
+    //     for (int j = 0; j < ILS; ++j) {
+    //         RVND(sol1, data_RS);
 
-            if (sol1->tw < sol->tw) {
-                solution_update(sol, sol1);
-                j = 0;
-            }
+    //         if (sol1->tw < sol->tw) {
+    //             solution_update(sol, sol1);
+    //             j = 0;
+    //         }
 
-            solution_update(sol1, sol);
-            Perturb(sol1, data_RS, rand_uniform);
-        }
+    //         solution_update(sol1, sol);
+    //         Perturb(sol1, data_RS, rand_uniform);
+    //     }
 
-        if (sol->tw < prob->opt_sol->tw) {
-            solution_update(prob->opt_sol, sol);
-        }
+    //     if (sol->tw < prob->opt_sol->tw) {
+    //         solution_update(prob->opt_sol, sol);
+    //     }
 
-        local_search_data_free(&data_RS);
-        solution_free(&sol1);
-    }
+    //     local_search_data_free(&data_RS);
+    //     solution_free(&sol1);
+    // }
 
     solution_canonical_order(prob->opt_sol, intervals);
     solution_print(prob->opt_sol);
+    add_solution_to_colpool(prob->opt_sol, &(prob->root_pd));
 CLEAN:
     solution_free(&sol);
     local_search_data_free(&data);

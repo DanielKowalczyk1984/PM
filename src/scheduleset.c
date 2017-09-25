@@ -12,8 +12,6 @@
 #include <defs.h>
 #include <scheduleset.h>
 #include <util.h>
-#include <interval.h>
-
 void iterator(gpointer key, gpointer value, gpointer user_data);
 
 void iterator(gpointer key, gpointer value, gpointer user_data) {
@@ -113,19 +111,19 @@ void g_scheduleset_free(void *set) {
         tmp->id_left = tmp->id_right = -1;
         tmp->totwct_left = tmp->totwct_right = 0;
         g_ptr_array_free(tmp->partial_machine, TRUE);
+        CC_IFFREE(tmp, scheduleset);
     }
 }
 
-scheduleset *scheduleset_create_empty(GPtrArray *intervals, int u){
+scheduleset *scheduleset_create_empty(interval *I){
     scheduleset *tmp;
-    interval *I = (interval *) g_ptr_array_index(intervals, u);
 
     tmp = CC_SAFE_MALLOC(1, scheduleset);
     CCcheck_NULL_3(tmp, "Failed to allocate memory");
 
     scheduleset_init(tmp);
 
-    tmp->nb_interval = u;
+    tmp->nb_interval = I->key;
     tmp->totwct_right = tmp->totwct_left = 0;
     tmp->c_right = 0;
     tmp->c_left = I->a;
@@ -135,10 +133,9 @@ scheduleset *scheduleset_create_empty(GPtrArray *intervals, int u){
     return tmp;
 }
 
-scheduleset *scheduleset_create(Job **job_array, int nbjobs, GPtrArray *intervals, int u){
+scheduleset *scheduleset_create(Job **job_array, int nbjobs, interval *I){
     scheduleset *tmp;
     Job *j;
-    interval *I = (interval *) g_ptr_array_index(intervals, u);
     int C = 0;
     int begin_right = 0;
     int begin_left = 0;
@@ -154,7 +151,7 @@ scheduleset *scheduleset_create(Job **job_array, int nbjobs, GPtrArray *interval
     }
 
     tmp->totweight = C;
-    tmp->nb_interval = u;
+    tmp->nb_interval = I->key;
 
     tmp->c_left = ((Job *)g_ptr_array_index(tmp->partial_machine, 0))->processingime - 1;
     tmp->c_right = CC_MAX(0, C - (I->b - I->a));
@@ -176,10 +173,9 @@ scheduleset *scheduleset_create(Job **job_array, int nbjobs, GPtrArray *interval
     return tmp;
 }
 
-scheduleset *scheduleset_from_solution(Job **job_array, int begin, int end, GPtrArray *intervals, int u){
+scheduleset *scheduleset_from_solution(GPtrArray *machine, int begin, int end, interval *I){
     scheduleset *tmp;
     Job *j;
-    interval *I = (interval *) g_ptr_array_index(intervals, u);
     int C = 0;
     int begin_right = 0;
     int begin_left = 0;
@@ -189,13 +185,13 @@ scheduleset *scheduleset_from_solution(Job **job_array, int begin, int end, GPtr
 
     scheduleset_init(tmp);
     for(int i = begin; i < end; ++i) {
-        j = job_array[i];
+        j = (Job *) g_ptr_array_index(machine, i);
         g_ptr_array_add(tmp->partial_machine, j);
         C += j->processingime;
     }
 
     tmp->totweight = C;
-    tmp->nb_interval = u;
+    tmp->nb_interval = I->key;
 
     tmp->c_left = ((Job *)g_ptr_array_index(tmp->partial_machine, 0))->processingime - 1;
     tmp->c_right = CC_MAX(0, C - (I->b - I->a));
