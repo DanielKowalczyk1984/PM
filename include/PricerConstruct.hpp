@@ -2,6 +2,8 @@
 #include <tdzdd/DdSpec.hpp>
 #include <vector>
 #include "solution.h"
+#include "interval.h"
+#include <glib.h>
 
 class conflict_state {
    public:
@@ -11,6 +13,125 @@ class conflict_state {
     conflict_state(){};
 
     ~conflict_state(){};
+};
+
+class PricerConstruct : public tdzdd::DdSpec<PricerConstruct, int, 2> {
+    GPtrArray *pair_list;
+    int **sum_p;
+    int nlayers;
+
+public:
+    PricerConstruct(GPtrArray *_pair_list, int **_sum_p)
+    : pair_list(_pair_list), sum_p(_sum_p){
+        nlayers = pair_list->len;
+    };
+
+    int getRoot(int &state){
+        state = 0;
+        return nlayers;
+    };
+
+     int getChild(int &state, int level, int value) const {
+         int layer = nlayers - level;
+         int _j;
+         assert(0 <= layer && layer <= nlayers - 1);
+         job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, layer);
+         interval *tmp_interval = tmp_pair->I;
+         Job *tmp_j = (Job *) tmp_pair->j;
+
+         if (level - 1 == 0 && value) {
+             return (state + tmp_j->processingime> tmp_interval->a &&
+                     state + tmp_j->processingime<= tmp_interval->b)
+                        ? -1
+                        : 0;
+         } else if (level - 1 == 0) {
+             return (state <= tmp_interval->b) ? -1 : 0;
+         }
+
+         if (value) {
+             int sum = state + tmp_j->processingime;
+             _j = min_job(layer, sum);
+
+             if(_j < nlayers) {
+                 tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list,_j);
+                 tmp_interval = tmp_pair->I;
+                 tmp_j = tmp_pair->j;
+                 if(sum + sum_p[tmp_interval->key][tmp_j->job] < tmp_interval->b) {
+                     return 0;
+                 }
+             }
+
+             if (!(_j < nlayers)) {
+                tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list,_j - 1);
+                tmp_interval = tmp_pair->I;
+                 if ((sum <= tmp_interval->b)) {
+                     return -1;
+                 }
+
+                 return 0;
+             }
+             state = sum;
+         } else {
+             _j = min_job(layer, state);
+
+             if(_j < nlayers) {
+                tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list,_j);
+                tmp_interval = tmp_pair->I;
+                tmp_j = tmp_pair->j;
+                if(state + sum_p[tmp_interval->key][tmp_j->job] < tmp_interval->b) {
+                    return 0;
+                }
+             }
+
+             if (!(_j < nlayers)) {
+                tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list,_j - 1);
+                tmp_interval = tmp_pair->I;
+                 if (state <= tmp_interval->b) {
+                     return -1;
+                 }
+
+                 return 0;
+             }
+         }
+
+         // if (_j == nbjobs && state >= Hmin && state <= Hmax) {
+         //     return -1;
+         // } else if (_j == nbjobs) {
+         //     return 0;
+         // }
+
+         assert(_j < nlayers);
+         return nlayers - _j;
+     }
+
+    ~PricerConstruct(){};
+
+    private:
+     int min_job(int j, int state) const {
+         int  val = j + 1;
+         job_interval_pair *tmp_pair;
+         interval *tmp_interval;
+         tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, j);
+         Job *cur_job = tmp_pair->j;
+         Job *job;
+
+
+         for (int i = j + 1; i < nlayers; ++i) {
+            tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, i);
+            tmp_interval = tmp_pair->I;
+            job = tmp_pair->j;
+
+             if (state > tmp_interval->a - job->processingime &&
+                 state <= tmp_interval->b - job->processingime && cur_job->job != job->job) {
+                 val = i;
+                 break;
+             }
+         }
+
+         return val;
+     }
+
+
 };
 
 class PricerSpec : public tdzdd::DdSpec<PricerSpec, int, 2> {

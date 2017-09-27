@@ -39,22 +39,6 @@ gint g_job_compare_edd(const void *a, const void *b, void *data) {
     return (0);
 }
 
-int calculate_Hmax(Job *jobarray, int nmachines, int njobs) {
-    int    i, max = jobarray[0].processingime, val = 0;
-    double temp;
-
-    for (i = 0; i < njobs; ++i) {
-        max = CC_MAX(jobarray[i].processingime, max);
-        val += jobarray[i].processingime;
-    }
-
-    val -= max;
-    temp = (double)val;
-    temp = temp / (double)nmachines + max;
-    val = (int)ceil(temp);
-    return val;
-}
-
 int calculate_Hmin(
     int *durations, int nmachines, int njobs, int *perm, double *H) {
     int    i, val = 0;
@@ -74,25 +58,66 @@ int calculate_Hmin(
     return val;
 }
 
-int preprocess_data(wctproblem *problem) {
-    int      val = 0;
+void calculate_Hmax(wctproblem *problem){
     int      temp = 0;
     double   temp_dbl = 0.0;
     wctdata *pd = &(problem->root_pd);
 
-    g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
-
-    /** Calculate H_max */
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
     temp_dbl = temp_dbl / problem->nmachines + problem->pmax;
     problem->H_max = pd->H_max = (int)ceil(temp_dbl);
-    printf("H_max = %d\n", problem->H_max);
+    printf("H_max = %d, pmax = %d, pmin = %d, psum = %d\n", problem->H_max,problem->pmax, problem->pmin, problem->psum);
+}
 
+int calculate_sump(wctproblem *problem){
+    int val = 0;
+    int **tmp = (int **) NULL;
+    interval *tmp_interval = (interval *) NULL;
+    Job *tmp_j = (Job *) NULL;
+    Job *prev_j = (Job *) NULL;
+
+    wctdata *pd = &(problem->root_pd);
+    int m = pd->local_intervals->len;
+    int n = problem->njobs;
+
+    tmp = CC_SAFE_MALLOC(m, int*);
+    CCcheck_NULL(tmp, "Failed to allocate memory")
+    for(unsigned i = 0; i < m; ++i) {
+        tmp_interval = (interval *) g_ptr_array_index(pd->local_intervals,i);
+        tmp[i] = CC_SAFE_MALLOC(n, int);
+        CCcheck_NULL(tmp[i], "Failed to allocate memory");
+        tmp_j = (Job *) g_ptr_array_index(tmp_interval->sigma, n - 1);
+        tmp[i][tmp_j->job] = tmp_j->processingime + problem->pmax;
+        prev_j = tmp_j;
+        for (int  j = n - 2; j >= 0; j--) {
+            tmp_j = (Job *) g_ptr_array_index(tmp_interval->sigma, j);
+            tmp[i][tmp_j->job] = tmp[i][prev_j->job] + tmp_j->processingime;
+            prev_j =tmp_j;
+        }
+    }
+
+    pd->sump = tmp;
+
+    return val;
+}
+
+int preprocess_data(wctproblem *problem) {
+    int      val = 0;
+
+    g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
+
+    /** Calculate H_max */
+    calculate_Hmax(problem);
+
+    /** order the jobarray of problem following edd rule */
     g_ptr_array_sort_with_data(problem->g_job_array, g_job_compare_edd, NULL);
 
     /** Find the intervals of the instance at the root node */
     find_division(problem);
+
+    /** calculate sum_p for every interval */
+    calculate_sump(problem);
 
     /** add the artificial columns to the colPool */
     add_artificial_columns(problem);
@@ -190,6 +215,28 @@ static GPtrArray *array_time_slots(interval *I, GList *pairs) {
     return array;
 }
 
+void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b){
+    int tmp = 0;
+    interval *tmp_interval;
+    Job *tmp_j;
+    job_interval_pair *tmp_pair;
+    GPtrArray *jobarray;
+    for(unsigned i = 0; i < a->len; ++i) {
+        tmp_interval = (interval *) g_ptr_array_index(a,i);
+        jobarray = tmp_interval->sigma;
+        for(unsigned j = 0; j < jobarray->len; ++j) {
+            tmp_j = (Job *) g_ptr_array_index(jobarray,j);
+            if(tmp_j->processingime <= tmp_interval->b || tmp) {
+                tmp = 1;
+                tmp_pair = CC_SAFE_MALLOC(1, job_interval_pair);
+                tmp_pair->j = tmp_j;
+                tmp_pair->I = tmp_interval;
+                g_ptr_array_add(b, tmp_pair);
+            }
+        }
+    }
+}
+
 int find_division(wctproblem *problem) {
     int            val = 0;
     int counter = 0;
@@ -261,6 +308,8 @@ int find_division(wctproblem *problem) {
     }
 
     g_ptr_array_foreach(root_pd->local_intervals, g_print_interval, NULL);
+
+    create_ordered_jobs_array(root_pd->local_intervals, root_pd->ordered_jobs);
 
 CLEAN:
     g_ptr_array_free(tmp_array, TRUE);

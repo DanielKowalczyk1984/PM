@@ -53,6 +53,8 @@ struct wctdata {
     int  H_min;
     /** data about the intervals */
     GPtrArray *local_intervals;
+    GPtrArray *ordered_jobs;
+    int **sump;
 
     // The column generation lp information
     wctlp *LP;

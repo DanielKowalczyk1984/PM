@@ -178,7 +178,6 @@ int main(int ac, char **av) {
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header")
     wctproblem_init(&problem);
-    start_time = CCutil_zeit();
     val = parseargs(ac, av, &(problem.parms));
     CCcheck_val_2(val, "Failed in parseargs");
     if (dbg_lvl() > 1) {
@@ -193,8 +192,11 @@ int main(int ac, char **av) {
 
     /** Finding heuristic solutions to the problem */
     heuristic_rpup(&problem);
+    start_time = CCutil_zeit();
+    problem.root_pd.solver = newSolver(problem.root_pd.ordered_jobs,problem.njobs, problem.root_pd.sump);
     printf("Reading and preprocessing of the data took %f seconds\n",
            CCutil_zeit() - start_time);
+    printf("test %d %d\n", problem.root_pd.ordered_jobs->len,get_numberrows_zdd(problem.root_pd.solver));
 
     /** Branch-and-Price Algorithm */
     // build_lp(&(problem.root_pd), 0);

@@ -105,6 +105,8 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     pd->H_max = 0;
     pd->H_min = 0;
     pd->local_intervals = g_ptr_array_new_with_free_func(g_interval_free);
+    pd->ordered_jobs = g_ptr_array_new_with_free_func(g_free);
+    pd->sump = (int **) NULL;
     /** Initialization data */
     pd->upper_bound = INT_MAX;
     pd->lower_bound = 0;
@@ -243,7 +245,14 @@ void temporary_data_free(wctdata *pd) {
 void wctdata_free(wctdata *pd) {
     schedulesets_free(&(pd->bestcolors), &(pd->nbbest));
     temporary_data_free(pd);
+    if(pd->sump) {
+        for(unsigned i = 0; i < pd->local_intervals->len; ++i) {
+            CC_IFFREE(pd->sump[i], int);
+        }
+        CC_IFFREE(pd->sump, int*)
+    }
     g_ptr_array_free(pd->local_intervals, TRUE);
+    g_ptr_array_free(pd->ordered_jobs,TRUE);
     CC_IFFREE(pd->elist_same, int);
     CC_IFFREE(pd->elist_differ, int);
     CC_IFFREE(pd->v1_wide, int);

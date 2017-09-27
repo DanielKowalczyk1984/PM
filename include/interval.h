@@ -20,6 +20,11 @@ typedef struct _interval_pair {
 	int right;
 } interval_pair;
 
+typedef struct _job_interval_pair {
+    Job *j;
+    interval *I;
+} job_interval_pair;
+
 void interval_init(interval *p, int a, int b,int key, GPtrArray* jobarray, int njobs);
 interval *interval_alloc(int a, int b, int key, GPtrArray *jobarray, int njobs);
 interval *interval_copy(interval *src);

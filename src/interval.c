@@ -3,7 +3,7 @@
 void g_print_interval(gpointer data, gpointer user_data)
 {
     interval *a = (interval *)data;
-    printf("%d %d: ", a->a, a->b);
+    printf("interval %d: (%d %d]: ",a->key, a->a, a->b);
     g_ptr_array_foreach(a->sigma, g_print_job, NULL);
     printf("\n");
 }

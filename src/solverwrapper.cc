@@ -52,12 +52,12 @@ CLEAN:
 }
 
 extern "C" {
-PricerSolver *newSolver(Job *jobarray, int nbjobs, int Hmin, int Hmax) {
-    return new PricerSolver(jobarray, nbjobs, Hmin, Hmax);
+PricerSolver *newSolver(GPtrArray *interval_list, int njobs, int **sum_p) {
+    return new PricerSolver(interval_list, njobs, sum_p);
 }
 
-PricerSolver *newSolverDP(Job *jobarray, int nbjobs, int Hmin, int Hmax) {
-    return new PricerSolver(jobarray, nbjobs, Hmin, Hmax, false);
+PricerSolver *newSolverDP(GPtrArray *interval_list, int njobs, int **sum_p) {
+    return new PricerSolver(interval_list, njobs, sum_p, false);
 }
 
 PricerSolver *copySolver(PricerSolver *src) { return new PricerSolver(*src); }

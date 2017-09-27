@@ -22,7 +22,7 @@ int print_size_to_csv(wctproblem *problem, wctdata *pd);
  * preprocess.c
  */
 
-int calculate_Hmax(Job *jobarray, int nmachines, int njobs);
+void calculate_Hmax(wctproblem *problem);
 int calculate_Hmin(
     int *durations, int nmachines, int njobs, int *perm, double *H);
 int preprocess_data(wctproblem *problem);
