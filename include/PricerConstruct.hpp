@@ -112,7 +112,7 @@ public:
          job_interval_pair *tmp_pair;
          interval *tmp_interval;
          tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, j);
-         Job *cur_job = tmp_pair->j;
+         Job *prev_job = tmp_pair->j;
          Job *job;
 
 
@@ -122,10 +122,11 @@ public:
             job = tmp_pair->j;
 
              if (state > tmp_interval->a - job->processingime &&
-                 state <= tmp_interval->b - job->processingime && cur_job->job != job->job) {
+                 state <= tmp_interval->b - job->processingime && prev_job->job != job->job) {
                  val = i;
                  break;
              }
+             prev_job = job;
          }
 
          return val;
