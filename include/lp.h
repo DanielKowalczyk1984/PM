@@ -64,6 +64,22 @@ typedef struct wctlp_warmstart {
 #define wctlp_UPPER 2
 #define wctlp_FREE 3
 
+#define WCTLP_LOADED          1
+#define WCTLP_OPTIMAL         2
+#define WCTLP_INFEASIBLE      3
+#define WCTLP_INF_OR_UNBD     4
+#define WCTLP_UNBOUNDED       5
+#define WCTLP_CUTOFF          6
+#define WCTLP_ITERATION_LIMIT 7
+#define WCTLP_NODE_LIMIT      8
+#define WCTLP_TIME_LIMIT      9
+#define WCTLP_SOLUTION_LIMIT 10
+#define WCTLP_INTERRUPTED    11
+#define WCTLP_NUMERIC        12
+#define WCTLP_SUBOPTIMAL     13
+#define WCTLP_INPROGRESS     14
+#define WCTLP_USER_OBJ_LIMIT 15
+
 #define wctlp_MIN 1
 #define wctlp_MAX -1
 
