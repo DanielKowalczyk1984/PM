@@ -154,29 +154,6 @@ class Optimal_Solution {
     int              cost;
     int              C_max;
     std::vector<int> jobs;
-    // Optimal_Solution(PricerInfoZDD<T> *node, const int L) {
-    //     int                      it_max = node->get_max(L);
-    //     boost::dynamic_bitset<> *ptr_max = &node->A[it_max];
-    //     size_t                   it = ptr_max->find_first();
-    //     obj = node->obj[it_max];
-    //     cost = node->cost[it_max];
-    //     C_max = 0;
-
-    //     while (it != boost::dynamic_bitset<>::npos) {
-    //         if ((*ptr_max)[it]) {
-    //             jobs.push_back(it);
-    //         }
-
-    //         it = ptr_max->find_next(it);
-    //     }
-    // }
-
-    // Optimal_Solution(PricerInfoBDD<T> *node) : jobs(node->jobs) {
-    //     obj = node->obj;
-    //     // jobs = std::vector<int>(node->jobs.begin(),node->jobs.end());
-    //     cost = node->cost;
-    //     C_max = 0;
-    // }
 
     Optimal_Solution() : obj(0), cost(0), C_max(0) {}
 

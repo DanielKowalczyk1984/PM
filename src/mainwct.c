@@ -191,11 +191,11 @@ int main(int ac, char **av) {
     CCcheck_val_2(val, "Failed at preprocess_data");
 
     /** Finding heuristic solutions to the problem */
-    heuristic_rpup(&problem);
     start_time = CCutil_zeit();
-    problem.root_pd.solver = newSolver(problem.root_pd.ordered_jobs,problem.njobs, problem.root_pd.sump);
+    heuristic_rpup(&problem);
     printf("Reading and preprocessing of the data took %f seconds\n",
            CCutil_zeit() - start_time);
+    // problem.root_pd.solver = newSolver(problem.root_pd.ordered_jobs,problem.njobs, problem.root_pd.sump);
 
     /** Branch-and-Price Algorithm */
     // build_lp(&(problem.root_pd), 0):

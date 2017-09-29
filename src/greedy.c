@@ -400,8 +400,8 @@ int heuristic_rpup(wctproblem *prob) {
     int    val = 0;
     GRand *rand_uniform = g_rand_new_with_seed(2011);
     g_random_set_seed(1984);
-    int          ILS = prob->njobs;
-    int          IR = 1;
+    int          ILS = 2*prob->njobs;
+    int          IR = 3;
     solution *   sol;
     solution *   sol1 = (solution *)NULL;
     GPtrArray *intervals = prob->root_pd.local_intervals;
@@ -413,14 +413,17 @@ int heuristic_rpup(wctproblem *prob) {
     sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
-    solution_print(sol);
-    solution_canonical_order(sol, intervals);
     CCcheck_val_2(val, "Failed construct edd");
+    solution_canonical_order(sol, intervals);
+
     data = local_search_data_init(sol);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
     local_search_create_W(sol, data);
     local_search_create_g(sol, data);
     RVND(sol, data);
+    solution_canonical_order(sol, intervals);
+    solution_print(sol);
+
     prob->opt_sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
     CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
     solution_update(prob->opt_sol, sol);
@@ -443,7 +446,7 @@ int heuristic_rpup(wctproblem *prob) {
                 j = 0;
             }
 
-            solution_update(sol1, sol);
+            // solution_update(sol1, sol);
             Perturb(sol1, data_RS, rand_uniform);
         }
 
