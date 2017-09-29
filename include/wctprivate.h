@@ -71,6 +71,7 @@ struct wctdata {
     int          gallocated;
     scheduleset *newsets;
     int          nnewsets;
+    int *cstat;
     GPtrArray *localColPool;
 
     int  kpc_pi_scalef;

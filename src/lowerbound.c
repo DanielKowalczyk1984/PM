@@ -17,15 +17,16 @@ static void print_ages(wctdata *pd) {
 static int grow_ages(wctdata *pd) {
     int  val = 0;
     int  i;
-    int *cstat;
-    cstat = (int *)CC_SAFE_MALLOC(pd->ccount, int);
-    CCcheck_NULL_2(cstat, "Failed to allocate cstat");
-    val = wctlp_basis_cols(pd->LP, cstat, 0);
+    int nb_cols;
+    wctlp_get_nb_cols(pd->LP, &nb_cols);
+    pd->cstat = (int *)CC_SAFE_REALLOC(pd->cstat, nb_cols, int);
+    CCcheck_NULL_2(pd->cstat, "Failed to allocate cstat");
+    val = wctlp_basis_cols(pd->LP, pd->cstat, 0);
     CCcheck_val_2(val, "Failed in wctlp_basis_cols");
     pd->dzcount = 0;
 
-    for (i = 0; i < pd->ccount; ++i) {
-        if (cstat[i] == wctlp_LOWER || cstat[i] == wctlp_FREE) {
+    for (i = 0; i < pd->localColPool->len; ++i) {
+        if (pd->cstat[i] == wctlp_LOWER || pd->cstat[i] == wctlp_FREE) {
             pd->cclasses[i].age++;
 
             if (pd->cclasses[i].age > pd->retirementage) {
@@ -39,79 +40,73 @@ static int grow_ages(wctdata *pd) {
 /*    printf("%d out of %d are older than %d.\n", pd->dzcount, pd->ccount,  */
 /*           pd->retirementage); */
 CLEAN:
-    CC_IFFREE(cstat, int);
     return val;
 }
 
-MAYBE_UNUSED
+
 static int delete_old_cclasses(wctdata *pd) {
     int val = 0;
-    int i;
+    int it = 0;
     int min_numdel = pd->njobs * min_ndelrow_ratio;
     int first_del = -1;
     int last_del = -1;
+    int nb_col;
+    guint i;
+    guint count = pd->localColPool->len;
+    scheduleset *tmp_schedule;
     /** pd->dzcount can be deprecated! */
     pd->dzcount = 0;
 
-    for (i = 0; i < pd->ccount; ++i) {
-        if (pd->cclasses[i].age > pd->retirementage) {
+    for(i = 0; i < pd->localColPool->len; ++i) {
+        tmp_schedule = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
+        if(tmp_schedule->age > 0) {
             pd->dzcount++;
         }
     }
 
     if (pd->dzcount > min_numdel) {
-        int          new_ccount = 0;
-        scheduleset *new_cclasses = CC_SAFE_MALLOC(pd->gallocated, scheduleset);
-        CCcheck_NULL_2(new_cclasses, "Failed to allocate new_cclasses");
-        assert(pd->gallocated >= pd->ccount);
-
-        for (i = 0; i < pd->gallocated; ++i) {
-            scheduleset_init(new_cclasses + i);
-        }
-
-        for (i = 0; i < pd->ccount; ++i) {
-            if (pd->cclasses[i].age <= pd->retirementage) {
+        for (i = 0; i < count; ++i) {
+            tmp_schedule = (scheduleset *) g_ptr_array_index(pd->localColPool, it);
+            if (tmp_schedule->age <= pd->retirementage) {
                 if (first_del != -1) {
                     /** Delete recently found deletion range.*/
                     val = wctlp_deletecols(pd->LP, first_del, last_del);
                     CCcheck_val_2(val, "Failed in wctlp_deletecols");
+                    g_ptr_array_remove_range(pd->localColPool, first_del, last_del - first_del + 1);
+                    it = it - (last_del - first_del);
                     first_del = last_del = -1;
+                } else{
+                    it++;
                 }
-
-                memcpy(new_cclasses + new_ccount, pd->cclasses + i,
-                       sizeof(scheduleset));
-                new_ccount++;
             } else {
-                scheduleset_free(pd->cclasses + i);
-
                 if (first_del == -1) {
-                    first_del = new_ccount;
+                    first_del = it;
                     last_del = first_del;
                 } else {
                     last_del++;
                 }
+                it++;
             }
         }
 
         if (first_del != -1) {
-            /** Delete the final range. This can occur if the last
-             element is to be deleted, e.g. when no further columns were
-             added in a B&B branch.
-             */
             wctlp_deletecols(pd->LP, first_del, last_del);
             CCcheck_val_2(val, "Failed in wctlp_deletecols");
+            g_ptr_array_remove_range(pd->localColPool, first_del, last_del - first_del + 1);
         }
 
-        assert(pd->dzcount == pd->ccount - new_ccount);
-        CC_IFFREE(pd->cclasses, scheduleset);
-        pd->cclasses = new_cclasses;
-        pd->ccount = new_ccount;
 
         if (dbg_lvl() > 1) {
             printf("Deleted %d out of %d columns with age > %d.\n", pd->dzcount,
-                   pd->dzcount + pd->ccount, pd->retirementage);
+                   count, pd->retirementage);
         }
 
+        wctlp_get_nb_cols(pd->LP, &nb_col);
+        assert(pd->localColPool->len == nb_col);
+        for(i = 0; i < pd->localColPool->len; ++i) {
+            tmp_schedule = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
+            tmp_schedule->id = i;
+        }
         pd->dzcount = 0;
     }
 
@@ -119,13 +114,13 @@ CLEAN:
     return val;
 }
 
-static void reset_ages(scheduleset *cclasses, int cccount) {
-    int i;
+// static void reset_ages(scheduleset *cclasses, int cccount) {
+//     int i;
 
-    for (i = 0; i < cccount; i++) {
-        cclasses[i].age = 0;
-    }
-}
+//     for (i = 0; i < cccount; i++) {
+//         cclasses[i].age = 0;
+//     }
+// }
 
 int add_newsets(wctdata *pd) {
     int          val = 0;
@@ -136,7 +131,7 @@ int add_newsets(wctdata *pd) {
         return val;
     }
 
-    reset_ages(pd->newsets, pd->nnewsets);
+    // reset_ages(pd->newsets, pd->nnewsets);
 
     if (pd->ccount + pd->nnewsets > pd->gallocated) {
         pd->gallocated *= 2;
@@ -359,7 +354,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     }
 
     switch (status) {
-        case GRB_OPTIMAL:
+        case WCTLP_OPTIMAL:
             /** grow ages of the different columns */
             val = grow_ages(pd);
             CCcheck_val_2(val, "Failed in grow_ages");
@@ -373,7 +368,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
             pd->eta_out = pd->LP_lower_bound_dual;
             break;
 
-        case GRB_INFEASIBLE:
+        case WCTLP_INFEASIBLE:
             /** get the dual variables and make them feasible */
             val = wctlp_pi_inf(pd->LP, pd->pi);
             CCcheck_val_2(val, "Failed at wctlp_pi_inf");

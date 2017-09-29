@@ -83,78 +83,38 @@ int addColToLP(scheduleset *set, wctdata *pd){
     int cind;
     int vind;
     double cval;
-    int nb_intervals = (int) pd->local_intervals->len;
-    int u = set->nb_interval;
     int njobs = problem->njobs;
     GPtrArray *members = set->partial_machine;
     wctlp *lp = pd->LP;
     Job *job;
-    interval *I = (interval *) g_ptr_array_index(pd->local_intervals, u);
 
-    val = wctlp_get_nb_cols(lp, &(set->id_right));
+    val = wctlp_get_nb_cols(lp, &(set->id));
     CCcheck_val_2(val, "Failed to get the number of cols");
-    vind = set->id_right;
-    val = wctlp_addcol(lp, 0, NULL, NULL, (double) set->totwct_right, 0.0, GRB_INFINITY, wctlp_CONT, NULL);
+    vind = set->id;
+    val = wctlp_addcol(lp, 0, NULL, NULL, (double) set->totwct, 0.0, GRB_INFINITY, wctlp_CONT, NULL);
     CCcheck_val_2(val, "Failed to add column to lp")
 
     for(unsigned i = 0; i < members->len; ++i) {
         job = (Job *) g_ptr_array_index(members, i);
         cval = 1.0;
-        wctlp_chgcoef(lp, 1, &(job->job), &(set->id_right), &cval);
+        wctlp_chgcoef(lp, 1, &(job->job), &(set->id), &cval);
     }
 
-    if(u == 0) {
-        cind =  njobs + u;
-        cval = (double) -set->totweight + set->c_right + I->b - I->a;
-        wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
-    } else if (u < nb_intervals - 1){
-        int tcind[] = {njobs + u, njobs + u - 1};
-        int tvind[] = {vind, vind};
-        double tcval[] = {(double) -set->totweight + set->c_right + I->b - I->a, -(double) set->c_right};
-        wctlp_chgcoef(lp, 2, tcind, tvind, tcval);
-    } else {
-        cind = njobs + u - 1;
-        cval = -(double) set->c_right;
-        wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
-    }
-
-    cind =  njobs + nb_intervals - 1 + u;
+    cind =  njobs;
     cval = 1.0;
     wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
 
-    if(u != 0) {
-        val = wctlp_get_nb_cols(lp, &(set->id_left));
-        CCcheck_val_2(val, "Failed to get the number of cols");
-        vind = set->id_left;
-        val = wctlp_addcol(lp, 0, NULL, NULL, (double) set->totwct_left, 0.0, GRB_INFINITY, wctlp_CONT, NULL);
-        CCcheck_val_2(val, "Failed to add column to lp")
-
-        for(unsigned i = 0; i < members->len; ++i) {
-            job = (Job *) g_ptr_array_index(members, i);
-            cval = 1.0;
-            wctlp_chgcoef(lp, 1, &(job->job), &(set->id_left), &cval);
-        }
-
-        if (u < nb_intervals - 1){
-            int tcind[] = {njobs + u, njobs + u - 1};
-            int tvind[] = {vind, vind};
-            double tcval[] = {(double) -set->totweight + set->c_left + I->b - I->a, -(double) set->c_left};
-            wctlp_chgcoef(lp, 2, tcind, tvind, tcval);
-        } else {
-            cind = njobs + u - 1;
-            cval = -(double) set->c_left;
-            wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
-        }
-
-        cind = njobs + nb_intervals - 1 + u;
-        cval = 1.0;
-        wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
-    }
 
 
 
     CLEAN:
     return val;
+}
+
+void g_add_col_to_lp(gpointer data, gpointer user_data){
+    scheduleset *tmp = (scheduleset *) data;
+    wctdata *pd = (wctdata *) user_data;
+    addColToLP(tmp, pd);
 }
 
 int build_lp(wctdata *pd, int construct)
@@ -163,17 +123,12 @@ int build_lp(wctdata *pd, int construct)
     wctproblem *problem = pd->problem;
     int  njobs = problem->njobs;
     int nmachines = problem->nmachines;
-    int  counter = 0;
     int nb_row;
-    int *u = CC_SAFE_MALLOC(pd->local_intervals->len, int);
-    fill_int(u, pd->local_intervals->len, 0);
-    GPtrArray *intervals = pd->local_intervals;
-    interval *I;
     int *covered = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
+    fill_int(covered, njobs, 0);
     val = wctlp_init(&(pd->LP), NULL);
     CCcheck_val_2(val, "wctlp_init failed");
-    fill_int(covered, njobs, 0);
 
     for (int i = 0; i < njobs; i++) {
         val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL,
@@ -181,58 +136,18 @@ int build_lp(wctdata *pd, int construct)
         CCcheck_val_2(val, "Failed wctlp_addrow");
     }
 
-    for (unsigned i = 0; i < intervals->len - 1; ++i) {
-        I = (interval *) g_ptr_array_index(intervals, i);
-        val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL,
-                           wctlp_EQUAL, 0.0, (char *)NULL);
-    }
 
-    for (unsigned i = 0; i < intervals->len; ++i) {
-        val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL,
+    val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL,
                            wctlp_EQUAL, (double) nmachines, (char *)NULL);
-    }
 
     wctlp_get_nb_rows(pd->LP, &nb_row);
 
-    for(unsigned i = problem->nArtificials; i < problem->ColPool->len; ++i) {
-        scheduleset *tmp = (scheduleset *) g_ptr_array_index(problem->ColPool, i);
-        u[tmp->nb_interval] = 1;
-    }
 
-    /** add artificial columns */
-    for(int j = 0; j < problem->nArtificials; ++j) {
-        scheduleset *tmp = (scheduleset *) g_ptr_array_index(problem->ColPool, j);
-        addColToLP(tmp, pd);
-        g_ptr_array_add(pd->localColPool, tmp);
-    }
+    /** add columns from localColPool */
+    g_ptr_array_foreach(pd->localColPool, g_add_col_to_lp, pd);
 
-    for(unsigned i = problem->nArtificials; i < problem->ColPool->len; ++i) {
-        scheduleset *tmp = (scheduleset *) g_ptr_array_index(problem->ColPool, i);
-        addColToLP(tmp, pd);
-        g_ptr_array_add(pd->localColPool, tmp);
-    }
+    wctlp_optimize(pd->LP, &nmachines);
 
-    wctlp_optimize(pd->LP, &counter);
-    printf("test off %d\n", problem->off);
-    wctlp_get_nb_cols(pd->LP, &counter);
-    pd->x = CC_SAFE_MALLOC(counter, double);
-    wctlp_x(pd->LP, pd->x, 0);
-
-    for(unsigned i = problem->nArtificials; i < pd->localColPool->len; ++i) {
-        scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool, i);
-        printf("interval %d\n",tmp->nb_interval);
-        if(tmp->nb_interval == 0) {
-            printf("%f w=%d, p= %d, c=%d jobs= ", pd->x[tmp->id_right], tmp->totwct_right, tmp->totweight, tmp->c_right);
-            g_ptr_array_foreach(tmp->partial_machine, g_print_job, NULL);
-            printf("\n");
-        } else {
-            printf("%f w=%d, p= %d, c=%d\n", pd->x[tmp->id_right], tmp->totwct_right, tmp->totweight, tmp->c_right);
-            printf("%f w=%d, p= %d, c=%d jobs= ", pd->x[tmp->id_left], tmp->totwct_left, tmp->totweight, tmp->c_left);
-            g_ptr_array_foreach(tmp->partial_machine, g_print_job, NULL);
-            printf("\n");
-        }
-    }
-    wctlp_write(pd->LP, "test.lp");
 
     /** add constraint about number of machines */
     // if (construct) {
@@ -329,6 +244,5 @@ CLEAN:
     }
 
     CC_IFFREE(covered, int);
-    CC_IFFREE(u, int);
     return val;
 }
