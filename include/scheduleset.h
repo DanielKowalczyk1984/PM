@@ -17,13 +17,8 @@ typedef struct scheduleset {
     GPtrArray  *partial_machine;
     int        *members;
     int        *C;
-    int         id_right;
-    int         id_left;
-    int         totwct_right;
-    int         totwct_left;
-    int         c_right;
-    int         c_left;
-    int         nb_interval;
+    int         id;
+    int         c;
 } scheduleset;
 
 void scheduleset_SWAP(scheduleset *c1, scheduleset *c2, scheduleset *t);
@@ -70,9 +65,8 @@ int scheduleset_more_totweight(scheduleset *c1, scheduleset *c2);
 
 /** new approach for columns */
 void g_scheduleset_free(void *set);
-scheduleset *scheduleset_create(Job **job_array, int nbjobs, interval *I) ;
-scheduleset *scheduleset_from_solution(GPtrArray *machine, int begin, int end, interval *I);
-scheduleset *scheduleset_create_empty(interval *I);
+scheduleset *scheduleset_create(Job **job_array, int nbjobs) ;
+scheduleset *scheduleset_from_solution(GPtrArray *machine);
 
 #ifdef __cplusplus
 }
