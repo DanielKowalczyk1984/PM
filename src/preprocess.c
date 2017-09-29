@@ -1,8 +1,6 @@
 #include <interval.h>
 #include <wct.h>
 
-static int add_artificial_columns(wctproblem *problem);
-
 void g_problem_summary_init(gpointer data, gpointer user_data) {
     Job *       j = (Job *)data;
     wctproblem *prob = (wctproblem *)user_data;
@@ -118,9 +116,6 @@ int preprocess_data(wctproblem *problem) {
 
     /** calculate sum_p for every interval */
     calculate_sump(problem);
-
-    /** add the artificial columns to the colPool */
-    add_artificial_columns(problem);
 
     return val;
 }
@@ -307,33 +302,9 @@ int find_division(wctproblem *problem) {
         }
     }
 
-    g_ptr_array_foreach(root_pd->local_intervals, g_print_interval, NULL);
-
     create_ordered_jobs_array(root_pd->local_intervals, root_pd->ordered_jobs);
 
 CLEAN:
     g_ptr_array_free(tmp_array, TRUE);
-    return val;
-}
-
-void g_add_artificial_columns(gpointer data, gpointer user_data){
-    scheduleset *tmp;
-    interval *I = (interval *) data;
-    wctproblem *problem = (wctproblem *) user_data;
-
-    tmp = scheduleset_create_empty(I);
-
-    g_ptr_array_add(problem->ColPool, tmp);
-    problem->nArtificials++;
-}
-
-static int add_artificial_columns(wctproblem *problem){
-    int val = 0;
-    wctdata *root = &(problem->root_pd);
-    GPtrArray *intervals = root->local_intervals;
-
-    g_ptr_array_foreach(intervals, g_add_artificial_columns, problem);
-
-
     return val;
 }
