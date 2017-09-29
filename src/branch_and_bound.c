@@ -120,9 +120,9 @@ int insert_frac_pairs_into_heap(wctdata *    pd,
     double *mean_error = CC_SAFE_MALLOC(npairs, double);
     int *   mean_counter = CC_SAFE_MALLOC(npairs, int);
 
-    CCcheck_NULL_2(mean_error, "Failed to allocate memory")
-        CCcheck_NULL_2(mean_counter, "Failed to allocate memory")
-            fill_dbl(mean_error, npairs, 0.0);
+    CCcheck_NULL_2(mean_error, "Failed to allocate memory");
+    CCcheck_NULL_2(mean_counter, "Failed to allocate memory");
+    fill_dbl(mean_error, npairs, 0.0);
     fill_int(mean_counter, npairs, 0);
 
     for (i = 0; i < pd->ccount; ++i) {

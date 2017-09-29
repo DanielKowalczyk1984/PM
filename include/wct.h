@@ -70,7 +70,6 @@ void insert_node_for_exploration(wctdata *pd, wctproblem *problem);
 wctdata *get_next_node(wctproblem *problem);
 
 int insert_frac_pairs_into_heap(wctdata *    pd,
-                                       const double x[],
                                        int *        nodepair_refs,
                                        double *     nodepair_weights,
                                        int          npairs,

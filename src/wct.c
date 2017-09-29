@@ -24,9 +24,9 @@ void wctproblem_init(wctproblem *problem) {
     /*B&B info*/
     problem->nwctdata = 0;
     problem->global_upper_bound = INT_MAX;
-    problem->first_lower_bound = 0;
+    problem->root_lower_bound = 0;
     problem->global_lower_bound = 0;
-    problem->first_upper_bound = INT_MAX;
+    problem->root_upper_bound = INT_MAX;
     problem->status = no_sol;
     problem->rel_error = 1.0;
     problem->nbestschedule = 0;
@@ -50,19 +50,27 @@ void wctproblem_init(wctproblem *problem) {
     problem->nb_explored_nodes = 0;
     problem->nb_generated_col = 0;
     /*CPU timer initialisation*/
-    CCutil_init_timer(&(problem->tot_cputime), "tot_cputime");
-    CCutil_init_timer(&(problem->tot_scatter_search), "tot_scatter_search");
-    CCutil_init_timer(&(problem->tot_branch_and_bound), "tot_branch_and_bound");
-    CCutil_init_timer(&(problem->tot_lb_lp_root), "tot_lb_lp_root");
     CCutil_init_timer(&(problem->tot_build_dd), "tot_build_dd");
-    CCutil_init_timer(&(problem->tot_lb_lp), "tot_lb_lp");
+    CCutil_init_timer(&(problem->tot_cputime), "tot_cputime");
+    CCutil_init_timer(&(problem->tot_branch_and_bound), "tot_branch_and_bound");
+    CCutil_init_timer(&(problem->tot_strong_branching), "tot_strong_branching");
+    CCutil_init_timer(&(problem->tot_lb_root), "tot_lb_root");
     CCutil_init_timer(&(problem->tot_lb), "tot_lb");
+    CCutil_init_timer(&(problem->tot_solve_lp), "tot_solve_lp");
     CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
+    CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
     /** initialize colPool */
     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     problem->nArtificials = 0;
     /** initialize the time */
-    problem->real_time = getRealTime();
+    problem->real_time_build_dd = 0.0;
+    problem->real_time_total = 0.0;
+    problem->real_time_branch_and_bound = 0.0;
+    problem->real_time_strong_branching = 0.0;
+    problem->real_time_lb_root = 0.0;
+    problem->real_time_lb = 0.0;
+    problem->real_time_pricing = 0.0;
+    problem->real_time_heuristic= 0.0;
     CCutil_start_timer(&(problem->tot_cputime));
 }
 
@@ -135,12 +143,12 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     pd->solver = (PricerSolver *)NULL;
     pd->nnonimprovements = 0;
     /*Initialization of scheduleset*/
-    pd->ccount = 0;
-    pd->cclasses = (scheduleset *)NULL;
+    // pd->ccount = 0;
+    // pd->cclasses = (scheduleset *)NULL;
     pd->dzcount = 0;
-    pd->gallocated = 0;
-    pd->newsets = (scheduleset *)NULL;
-    pd->nnewsets = 0;
+    // pd->gallocated = 0;
+    // pd->newsets = (scheduleset *)NULL;
+    // pd->nnewsets = 0;
     pd->bestcolors = (scheduleset *)NULL;
     pd->nbbest = 0;
     pd->debugcolors = (scheduleset *)NULL;
@@ -204,10 +212,10 @@ void lpwctdata_free(wctdata *pd) {
         pd->solver = (PricerSolver *)NULL;
     }
 
-    schedulesets_free(&(pd->newsets), &(pd->nnewsets));
-    schedulesets_free(&(pd->cclasses), &(pd->gallocated));
+    // schedulesets_free(&(pd->newsets), &(pd->nnewsets));
+    // schedulesets_free(&(pd->cclasses), &(pd->gallocated));
     CC_IFFREE(pd->cstat, int);
-    pd->ccount = 0;
+    // pd->ccount = 0;
 }
 
 void children_data_free(wctdata *pd) {
@@ -396,9 +404,9 @@ int compute_schedule(wctproblem *problem) {
     wctdata * root_pd = &(problem->root_pd);
     wctparms *parms = &(problem->parms);
     problem->mult_key = 1.0;
-    problem->first_upper_bound = problem->global_upper_bound;
-    problem->first_lower_bound = problem->global_lower_bound;
-    problem->first_rel_error =
+    problem->root_upper_bound = problem->global_upper_bound;
+    problem->root_lower_bound = problem->global_lower_bound;
+    problem->root_rel_error =
         (double)(problem->global_upper_bound - problem->global_lower_bound) /
         ((double)problem->global_lower_bound);
     prune_duplicated_sets(root_pd);
@@ -409,22 +417,22 @@ int compute_schedule(wctproblem *problem) {
         val = prefill_heap(root_pd, problem);
         CCcheck_val(val, "Failed in prefill_heap");
     } else {
-        CCutil_start_timer(&(problem->tot_lb_lp_root));
+        CCutil_start_timer(&(problem->tot_lb_root));
         val = compute_lower_bound(problem, root_pd);
         CCcheck_val_2(val, "Failed in compute_lower_bound");
 
         if (root_pd->lower_bound > problem->global_lower_bound) {
             problem->global_lower_bound = root_pd->lower_bound;
-            problem->first_lower_bound = root_pd->lower_bound;
-            problem->first_rel_error = (double)(problem->first_upper_bound -
-                                                problem->first_lower_bound) /
-                                       ((double)problem->first_lower_bound);
+            problem->root_lower_bound = root_pd->lower_bound;
+            problem->root_rel_error = (double)(problem->root_upper_bound -
+                                                problem->root_lower_bound) /
+                                       ((double)problem->root_lower_bound);
         }
 
         problem->parms.construct = 1;
         CCcheck_val_2(val, "Failed in compute_lower_bound");
         problem->nb_generated_col_root = problem->nb_generated_col;
-        CCutil_stop_timer(&(problem->tot_lb_lp_root), 0);
+        CCutil_stop_timer(&(problem->tot_lb_root), 0);
 
         switch (parms->bb_branch_strategy) {
             case conflict_strategy:

@@ -1,7 +1,7 @@
 #include <localsearch.h>
 #include <wct.h>
 
-static int add_feasible_solution(wctproblem *problem, solution *new_sol);
+// static int add_feasible_solution(wctproblem *problem, solution *new_sol);
 static int solution_set_c(solution *sol);
 static void perturb_swap(solution *         sol,
                          local_search_data *data,
@@ -490,58 +490,43 @@ void update_bestschedule(wctproblem *problem, solution *new_sol) {
     }
 }
 
-static int add_feasible_solution(wctproblem *problem, solution *new_sol) {
-    int      val = 0;
-    wctdata *root_pd = &(problem->root_pd);
-    update_bestschedule(problem, new_sol);
+// static int add_feasible_solution(wctproblem *problem, solution *new_sol) {
+//     int      val = 0;
+//     wctdata *root_pd = &(problem->root_pd);
+//     update_bestschedule(problem, new_sol);
 
-    if (root_pd->ccount == 0 && problem->parms.construct != 0) {
-        update_schedulesets(&root_pd->cclasses, &root_pd->ccount,
-                            problem->bestschedule, problem->nbestschedule);
-        root_pd->gallocated = root_pd->ccount;
-    } else if (problem->parms.construct != 0) {
-        partlist_to_scheduleset(new_sol->part, new_sol->nmachines,
-                                new_sol->njobs, &(root_pd->newsets),
-                                &(root_pd->nnewsets));
-        add_newsets(root_pd);
-    }
+//     if (root_pd->ccount == 0 && problem->parms.construct != 0) {
+//         update_schedulesets(&root_pd->cclasses, &root_pd->ccount,
+//                             problem->bestschedule, problem->nbestschedule);
+//         root_pd->gallocated = root_pd->ccount;
+//     } else if (problem->parms.construct != 0) {
+//         partlist_to_scheduleset(new_sol->part, new_sol->nmachines,
+//                                 new_sol->njobs, &(root_pd->newsets),
+//                                 &(root_pd->nnewsets));
+//         add_newsets(root_pd);
+//     }
 
-    return val;
-}
+//     return val;
+// }
 
 int construct_feasible_solutions(wctproblem *problem) {
     int           val = 0;
     int           iterations = 0;
     wctdata *     pd = &(problem->root_pd);
     wctparms *    parms = &(problem->parms);
-    CCutil_timer *timer = &(problem->tot_scatter_search);
-    GRand *       rand1 = g_rand_new_with_seed(1984);
+    CCutil_timer *timer = &(problem->tot_heuristic);
     GRand *       rand2 = g_rand_new_with_seed(1654651);
     CCutil_start_timer(timer);
-    // while (1) {
     iterations++;
     solution *new_sol = solution_alloc(pd->nmachines, pd->njobs, problem->off);
     CCcheck_NULL(new_sol, "Failed to allocate")
 
-        if (problem->status == no_sol) {}
-    else {
-        if (g_rand_boolean(rand1)) {
-        } else {
-        }
-    }
 
-    val = add_feasible_solution(problem, new_sol);
-    CCcheck_val(val, "Failed in add_feasible_solution");
-    // break;
-    //}
-    CCutil_suspend_timer(timer);
+    CCutil_stop_timer(timer, 0);
     printf("We needed %f seconds to construct %d solutions in %d iterations\n",
            timer->cum_zeit, parms->nb_feas_sol, iterations);
     printf("upperbound = %d, lowerbound = %d\n", problem->global_upper_bound,
            problem->global_lower_bound);
-    CCutil_resume_timer(timer);
-    g_rand_free(rand1);
     g_rand_free(rand2);
-    CCutil_stop_timer(&(problem->tot_scatter_search), 0);
     return val;
 }

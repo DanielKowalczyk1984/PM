@@ -65,12 +65,12 @@ struct wctdata {
     PricerSolver *solver;
 
     // Columns
-    int          ccount;
-    scheduleset *cclasses;
+    // int          ccount;
+    // scheduleset *cclasses;
     int          dzcount;
-    int          gallocated;
-    scheduleset *newsets;
-    int          nnewsets;
+    // int          gallocated;
+    // scheduleset *newsets;
+    // int          nnewsets;
     int *cstat;
     GPtrArray *localColPool;
 
@@ -190,11 +190,11 @@ struct wctproblem {
 
     int    nwctdata;
     int    global_upper_bound;
-    int    first_upper_bound;
     int    global_lower_bound;
-    int    first_lower_bound;
-    double first_rel_error;
     double rel_error;
+    int    root_upper_bound;
+    int    root_lower_bound;
+    double root_rel_error;
     int    maxdepth;
 
     problem_status status;
@@ -227,12 +227,23 @@ struct wctproblem {
     CCutil_timer tot_build_dd;
     CCutil_timer tot_cputime;
     CCutil_timer tot_branch_and_bound;
+    CCutil_timer tot_strong_branching;
+    CCutil_timer tot_lb_root;
     CCutil_timer tot_lb;
-    CCutil_timer tot_lb_lp_root;
-    CCutil_timer tot_lb_lp;
+    CCutil_timer tot_solve_lp;
     CCutil_timer tot_pricing;
-    CCutil_timer tot_scatter_search;
-    double       real_time;
+    CCutil_timer tot_heuristic;
+
+    double real_time_build_dd;
+    double real_time_total;
+    double real_time_branch_and_bound;
+    double real_time_strong_branching;
+    double real_time_lb_root;
+    double real_time_lb;
+    double real_time_solve_lp;
+    double real_time_pricing;
+    double real_time_heuristic;
+    //double       real_time;
 };
 
 /*Initialization and free memory for the problem*/
