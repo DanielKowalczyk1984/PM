@@ -196,10 +196,9 @@ int main(int ac, char **av) {
     problem.root_pd.solver = newSolver(problem.root_pd.ordered_jobs,problem.njobs, problem.root_pd.sump);
     printf("Reading and preprocessing of the data took %f seconds\n",
            CCutil_zeit() - start_time);
-    printf("test %d %d\n", problem.root_pd.ordered_jobs->len,get_numberrows_zdd(problem.root_pd.solver));
 
     /** Branch-and-Price Algorithm */
-    // build_lp(&(problem.root_pd), 0);
+    // build_lp(&(problem.root_pd), 0):
 
 CLEAN:
     wctproblem_free(&problem);
