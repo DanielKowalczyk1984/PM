@@ -49,7 +49,6 @@ enum pricing_solver {
     min_solver = 0,
     bdd_solver = min_solver,
     zdd_solver = 1,
-    DP_solver = 2,
 };
 
 enum construct_solutions {

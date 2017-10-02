@@ -7,39 +7,36 @@ int grab_int_sol(wctdata *pd, double *x, double tolerance)
     double incumbent;
     int    i;
     int    tot_weighted = 0;
-    int   *colored = CC_SAFE_MALLOC(pd->njobs, int);
-    CCcheck_NULL_2(colored, "Failed to allocate colored");
-    fill_int(colored, pd->njobs, 0);
+    int nb_cols;
+    scheduleset *tmp_schedule;
+    Job *tmp_j;
+
     val = wctlp_objval(pd->LP, &incumbent);
     CCcheck_val_2(val, "wctlp_objval failed");
+    val = wctlp_get_nb_cols(pd->LP, &nb_cols);
+    CCcheck_val_2(val, "Failed get nb_cols");
+
     schedulesets_free(&(pd->bestcolors), &(pd->nbbest));
     pd->bestcolors = CC_SAFE_MALLOC(pd->nmachines, scheduleset);
     CCcheck_NULL_2(pd->bestcolors, "Failed to realloc pd->bestcolors");
     pd->nbbest = 0;
 
-    for (i = 0; i < pd->ccount; ++i) {
+    assert(nb_cols == pd->localColPool->len);
+    for (i = 0; i < pd->localColPool->len; ++i) {
+        tmp_schedule = (scheduleset *) g_ptr_array_index(pd->localColPool, i);
         test_incumbent += x[i];
 
         if (x[i] >= 1.0 - tolerance) {
             int j = pd->nbbest;
             int k;
             scheduleset_init(pd->bestcolors + j);
-            pd->bestcolors[j].members =
-                CC_SAFE_MALLOC(pd->cclasses[i].count, int);
-            CCcheck_NULL_2(pd->bestcolors[j].members,
-                           "Failed to realloc pd->bestcolors[j].members");
 
-            for (k = 0; k < pd->cclasses[i].count; ++k) {
-                if (!colored[pd->cclasses[i].members[k]]) {
-                    colored[pd->cclasses[i].members[k]] = 1;
-                    pd->bestcolors[j].members[pd->bestcolors[j].count++] =
-                        pd->cclasses[i].members[k];
-                    pd->bestcolors[j].totweight +=
-                        pd->jobarray[pd->cclasses[i].members[k]].processingime;
-                    pd->bestcolors[j].totwct +=
-                        pd->jobarray[pd->cclasses[i].members[k]].weight *
-                        pd->bestcolors[j].totweight;
-                }
+            g_ptr_array_set_size(pd->bestcolors[j].partial_machine, tmp_schedule->partial_machine->len);
+            for (k = 0; k < tmp_schedule->partial_machine->len; ++k) {
+                tmp_j = (Job *) g_ptr_array_index(tmp_schedule->partial_machine, k);
+                g_ptr_array_add(pd->bestcolors[j].partial_machine, tmp_j);
+                pd->bestcolors[j].totweight += tmp_j->processingime;
+                pd->bestcolors[j].totwct += value_Fj(pd->bestcolors[j].totweight, tmp_j);
             }
 
             pd->nbbest++;
@@ -73,7 +70,6 @@ int grab_int_sol(wctdata *pd, double *x, double tolerance)
     }
 
 CLEAN:
-    CC_IFFREE(colored, int);
     return val;
 }
 
@@ -96,15 +92,17 @@ int addColToLP(scheduleset *set, wctdata *pd){
 
     for(unsigned i = 0; i < members->len; ++i) {
         job = (Job *) g_ptr_array_index(members, i);
-        cval = 1.0;
-        wctlp_chgcoef(lp, 1, &(job->job), &(set->id), &cval);
+        val = wctlp_getcoef(lp,&(job->job), &vind, &cval);
+        CCcheck_val_2(val, "Failed wctlp_getcoef");
+        cval += 1.0;
+        val = wctlp_chgcoef(lp, 1, &(job->job), &vind, &cval);
+        CCcheck_val_2(val, "Failed wctlp_chgcoef");
     }
 
     cind =  njobs;
     cval = 1.0;
-    wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
-
-
+    val = wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
+    CCcheck_val_2(val, "Failed wctlp_chgcoef");
 
 
     CLEAN:

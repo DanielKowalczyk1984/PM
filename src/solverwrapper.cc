@@ -4,15 +4,10 @@
 #include <vector>
 
 template <typename T = double, bool reverse = false>
-int construct_sol(scheduleset **       set,
-                  int *                nnewsets,
-                  Job *                jobarray,
-                  Optimal_Solution<T> &sol,
-                  int                  nbjobs) {
+int construct_sol(wctdata *pd, Optimal_Solution<T> &sol) {
     int               val = 0;
     int               nbset = 1;
     int               C = 0;
-    std::vector<int> *v = &(sol.jobs);
     scheduleset *     newset = CC_SAFE_MALLOC(1, scheduleset);
     CCcheck_NULL_2(newset, "Failed to allocate memory newset");
     scheduleset_init(newset);
@@ -23,25 +18,23 @@ int construct_sol(scheduleset **       set,
     newset->table = g_hash_table_new(g_direct_hash, g_direct_equal);
     CCcheck_NULL_2(newset->table, "Failed to allocate memory");
 
-    if (reverse) {
-        std::copy(v->rbegin(), v->rend(), newset->members);
-    } else {
-        std::copy(v->begin(), v->end(), newset->members);
-    }
+    // if (reverse) {
+    //     std::copy(v->rbegin(), v->rend(), newset->members);
+    // } else {
+    //     std::copy(v->begin(), v->end(), newset->members);
+    // }
 
-    for (size_t i = 0; i < sol.jobs.size(); i++) {
-        C += jobarray[newset->members[i]].processingime;
-        newset->C[i] = C;
-        g_hash_table_insert(newset->table, GINT_TO_POINTER(newset->members[i]),
-                            newset->C + i);
-    }
+    // for (size_t i = 0; i < sol.jobs.size(); i++) {
+    //     C += jobarray[newset->members[i]].processingime;
+    //     newset->C[i] = C;
+    //     g_hash_table_insert(newset->table, GINT_TO_POINTER(newset->members[i]),
+    //                         newset->C + i);
+    // }
 
     newset->totwct = sol.cost;
     newset->totweight = sol.C_max;
     newset->count = sol.jobs.size();
-    newset->members[sol.jobs.size()] = nbjobs;
-    *set = newset;
-    *nnewsets = 1;
+    //newset->members[sol.jobs.size()] = nbjobs;
 CLEAN:
 
     if (val) {
@@ -56,10 +49,6 @@ PricerSolver *newSolver(GPtrArray *interval_list, int njobs, int **sum_p) {
     return new PricerSolver(interval_list, njobs, sum_p);
 }
 
-PricerSolver *newSolverDP(GPtrArray *interval_list, int njobs, int **sum_p) {
-    return new PricerSolver(interval_list, njobs, sum_p, false);
-}
-
 PricerSolver *copySolver(PricerSolver *src) { return new PricerSolver(*src); }
 
 void print_dot_file(PricerSolver *solver, char *name) {
@@ -68,46 +57,14 @@ void print_dot_file(PricerSolver *solver, char *name) {
 
 void freeSolver(PricerSolver *src) { delete src; }
 
-int solve_dynamic_programming_ahv(wctdata *pd) {
-    int                      val = 0;
-    Optimal_Solution<double> s = pd->solver->dynamic_programming_ahv(pd->pi);
-
-    if (s.obj < -0.00001) {
-        val = construct_sol<double, true>(&(pd->newsets), &(pd->nnewsets),
-                                          pd->jobarray, s, pd->njobs);
-        CCcheck_val_2(val, "Failed in constructing sol");
-    } else {
-        pd->nnewsets = 0;
-    }
-
-CLEAN:
-    return val;
-}
 
 int solve_farkas_dbl(wctdata *pd) {
     int                      val = 0;
     Optimal_Solution<double> s = pd->solver->solve_farkas_double(pd->pi);
 
     if (s.obj < -0.00001) {
-        val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
-                            pd->njobs);
-        CCcheck_val_2(val, "Failed in constructing jobs");
-    } else {
-        pd->nnewsets = 0;
-    }
-
-CLEAN:
-    return val;
-}
-
-int solve_farkas_dbl_DP(wctdata *pd) {
-    int                      val = 0;
-    Optimal_Solution<double> s =
-        pd->solver->dynamic_programming_ahv_farkas(pd->pi);
-
-    if (s.obj < -0.00001) {
-        val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
-                            pd->njobs);
+        // val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
+        //                     pd->njobs);
         CCcheck_val_2(val, "Failed in constructing jobs");
     } else {
         pd->nnewsets = 0;
@@ -122,8 +79,8 @@ int solve_weight_dbl_bdd(wctdata *pd) {
     Optimal_Solution<double> s = pd->solver->solve_weight_bdd_double(pd->pi);
 
     if (s.obj > 0.00001) {
-        val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
-                            pd->njobs);
+        // val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
+        //                     pd->njobs);
         CCcheck_val_2(val, "Failed in construction")
     } else {
         pd->nnewsets = 0;
@@ -138,8 +95,8 @@ int solve_weight_dbl_zdd(wctdata *pd) {
     Optimal_Solution<double> s = pd->solver->solve_weight_zdd_double(pd->pi);
 
     if (s.obj > 0.00001) {
-        val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
-                            pd->njobs);
+        // val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
+        //                     pd->njobs);
         CCcheck_val_2(val, "Failed in construction")
     } else {
         pd->nnewsets = 0;
@@ -158,18 +115,7 @@ void deletePricerSolver(PricerSolver *solver) {
 int calculate_table(PricerSolver *solver, wctparms *parms) {
     int val = 0;
 
-    switch (parms->solver) {
-        case bdd_solver:
-            solver->init_bdd_table();
-            break;
-
-        case zdd_solver:
-            solver->init_zdd_table();
-            break;
-
-        case DP_solver:
-            break;
-    }
+    solver->init_zdd_table();
 
     switch (parms->construct) {
         case yes_construct:
@@ -191,25 +137,12 @@ int add_conflict_constraints(PricerSolver *solver,
                              int           ecount_differ) {
     int val = 0;
 
-    switch (parms->solver) {
-        case bdd_solver:
-            solver->init_bdd_conflict_solver(elist_same, ecount_same,
-                                             elist_differ, ecount_differ);
-            break;
 
-        case zdd_solver:
-            solver->init_zdd_conflict_solver(elist_same, ecount_same,
+    solver->init_zdd_conflict_solver(elist_same, ecount_same,
                                              elist_differ, ecount_differ);
-            break;
-
-        case DP_solver:
-            break;
-    }
 
     return val;
 }
-
-void iterate_dd(PricerSolver *solver) { solver->iterate_dd(); }
 
 void iterate_zdd(PricerSolver *solver) { solver->iterate_zdd(); }
 
@@ -219,18 +152,7 @@ int free_conflict_constraints(PricerSolver *solver,
                               int           ecount_differ) {
     int val = 0;
 
-    switch (parms->solver) {
-        case bdd_solver:
-            solver->free_bdd_solver(ecount_same, ecount_differ);
-            break;
-
-        case zdd_solver:
-            solver->free_zdd_solver(ecount_same, ecount_differ);
-            break;
-
-        case DP_solver:
-            break;
-    }
+    solver->free_zdd_solver(ecount_same, ecount_differ);
 
     return val;
 }
@@ -241,26 +163,11 @@ size_t get_numberrows_zdd(PricerSolver *solver) {
     return solver->zdd->root().row();
 }
 
-size_t get_numberrows_bdd(PricerSolver *solver) {
-    return solver->dd->root().row();
-}
-
 int add_one_conflict(
-    PricerSolver *solver, wctparms *parms, int v1, int v2, int same) {
+    PricerSolver *solver, wctparms *parms, Job *v1, Job *v2, int same) {
     int val = 0;
 
-    switch (parms->solver) {
-        case bdd_solver:
-            solver->init_bdd_one_conflict(v1, v2, same);
-            break;
-
-        case zdd_solver:
-            solver->init_zdd_one_conflict(v1, v2, same);
-            break;
-
-        case DP_solver:
-            break;
-    }
+    solver->init_zdd_one_conflict(v1->job, v2->job, same);
 
     return val;
 }
@@ -283,9 +190,9 @@ static void compute_subgradient(Optimal_Solution<double> &sol,
     fill_dbl(sub_gradient, nbjobs, 1.0);
     sub_gradient[nbjobs] = nbmachines;
 
-    for (auto &v : sol.jobs) {
-        sub_gradient[v] -= (double)nbmachines * 1.0;
-    }
+    // for (auto &v : sol.jobs) {
+    //     sub_gradient[v] -= (double)nbmachines * 1.0;
+    // }
 }
 
 static void adjust_alpha(double *pi_out,
@@ -337,9 +244,6 @@ int solve_pricing(wctdata *pd, wctparms *parms) {
             val = solve_weight_dbl_zdd(pd);
             CCcheck_val_2(val, "Failed solve_weight_dbl_zdd") break;
 
-        case DP_solver:
-            val = solve_dynamic_programming_ahv(pd);
-            CCcheck_val_2(val, "Failed in solve_dynamic_programming_ahv") break;
     }
 
 CLEAN:
@@ -354,20 +258,20 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
     double            result = 0;
     double            a = 0.0;
     int               i;
-    std::vector<int> *v = &(sol.jobs);
+    // std::vector<int> *v = &(sol.jobs);
 
-    for (std::vector<int>::iterator it = v->begin(); it != v->end(); ++it) {
-        result += pi[*it];
-    }
+    // for (std::vector<int>::iterator it = v->begin(); it != v->end(); ++it) {
+    //     result += pi[*it];
+    // }
 
-    for (i = 0; i < nbjobs; ++i) {
-        a += rhs[i] * pi[i];
-    }
+    // for (i = 0; i < nbjobs; ++i) {
+    //     a += rhs[i] * pi[i];
+    // }
 
-    // a += rhs[nbjobs] * pi[nbjobs];
-    result = CC_MIN(0.0, sol.cost - result);
-    result = rhs[nbjobs] * result;
-    result += a;
+    // // a += rhs[nbjobs] * pi[nbjobs];
+    // result = CC_MIN(0.0, sol.cost - result);
+    // result = rhs[nbjobs] * result;
+    // result += a;
     return result;
 }
 
@@ -384,9 +288,6 @@ static void compute_sol_stab(PricerSolver *            solver,
             *sol = solver->solve_weight_zdd_double(pi);
             break;
 
-        case DP_solver:
-            *sol = solver->dynamic_programming_ahv(pi);
-            break;
     }
 }
 
@@ -398,16 +299,11 @@ static int construct_sol_stab(wctdata *                 pd,
     switch (parms->solver) {
         case bdd_solver:
         case zdd_solver:
-            val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray,
-                                sol, pd->njobs);
+            // val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray,
+            //                     sol, pd->njobs);
             CCcheck_val_2(val, "Failed in construction of solution");
             break;
 
-        case DP_solver:
-            val = construct_sol<double, true>(&(pd->newsets), &(pd->nnewsets),
-                                              pd->jobarray, sol, pd->njobs);
-            CCcheck_val_2(val, "Failed in construction of solution");
-            break;
     }
 
 CLEAN:

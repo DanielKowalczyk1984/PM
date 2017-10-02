@@ -400,7 +400,7 @@ int heuristic_rpup(wctproblem *prob) {
     int    val = 0;
     GRand *rand_uniform = g_rand_new_with_seed(2011);
     g_random_set_seed(1984);
-    int          ILS = 2*prob->njobs;
+    int          ILS = prob->njobs;
     int          IR = 3;
     solution *   sol;
     solution *   sol1 = (solution *)NULL;
@@ -414,7 +414,11 @@ int heuristic_rpup(wctproblem *prob) {
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
     CCcheck_val_2(val, "Failed construct edd");
+    printf("Solution Constructed with EDD heuristic:\n");
+    solution_print(sol);
     solution_canonical_order(sol, intervals);
+    printf("Solution in canonical order: \n");
+    solution_print(sol);
 
     data = local_search_data_init(sol);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
@@ -422,6 +426,7 @@ int heuristic_rpup(wctproblem *prob) {
     local_search_create_g(sol, data);
     RVND(sol, data);
     solution_canonical_order(sol, intervals);
+    printf("Solution after local search:\n");
     solution_print(sol);
 
     prob->opt_sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
@@ -459,8 +464,8 @@ int heuristic_rpup(wctproblem *prob) {
     }
 
     solution_canonical_order(prob->opt_sol, intervals);
+    printf("Solution after some improvements with Random Variable Search:\n");
     solution_print(prob->opt_sol);
-    add_solution_to_colpool(prob->opt_sol, &(prob->root_pd));
 CLEAN:
     solution_free(&sol);
     local_search_data_free(&data);

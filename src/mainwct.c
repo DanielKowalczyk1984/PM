@@ -185,20 +185,19 @@ int main(int ac, char **av) {
     }
 
     /** Reading and preprocessing the data */
+    start_time = CCutil_zeit();
     val = read_problem(&problem);
     CCcheck_val_2(val, "read_adjlist failed");
     val = preprocess_data(&problem);
     CCcheck_val_2(val, "Failed at preprocess_data");
+    printf("Reading and preprocessing of the data took %f seconds\n", CCutil_zeit() - start_time);
 
     /** Finding heuristic solutions to the problem */
-    start_time = CCutil_zeit();
     heuristic_rpup(&problem);
-    printf("Reading and preprocessing of the data took %f seconds\n",
-           CCutil_zeit() - start_time);
     // problem.root_pd.solver = newSolver(problem.root_pd.ordered_jobs,problem.njobs, problem.root_pd.sump);
 
     /** Branch-and-Price Algorithm */
-    // build_lp(&(problem.root_pd), 0):
+    // build_lp(&(problem.root_pd), 0);
 
 CLEAN:
     wctproblem_free(&problem);

@@ -62,11 +62,14 @@ int update_schedulesets(scheduleset **dst,
 int add_schedulesets(scheduleset **dst, int *ndst, scheduleset *src, int nsrc);
 int scheduleset_less_totweight(scheduleset *c1, scheduleset *c2);
 int scheduleset_more_totweight(scheduleset *c1, scheduleset *c2);
+gint g_scheduleset_less(gconstpointer a,gconstpointer b);
+void g_scheduleset_print(gpointer data, gpointer user_data);
 
 /** new approach for columns */
 void g_scheduleset_free(void *set);
 scheduleset *scheduleset_create(Job **job_array, int nbjobs) ;
 scheduleset *scheduleset_from_solution(GPtrArray *machine);
+scheduleset *scheduleset_alloc(void);
 
 #ifdef __cplusplus
 }

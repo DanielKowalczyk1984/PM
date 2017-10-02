@@ -15,10 +15,10 @@ void g_print_job(gpointer data, gpointer user_data) {
 
 void solution_init(solution *sol) {
     if (sol) {
-        sol->part = (partlist *)NULL;
-        sol->perm = (Job **)NULL;
-        sol->c = (int *)NULL;
-        sol->u = (int *)NULL;
+        sol->part = (partlist *) NULL;
+        sol->perm = (Job **) NULL;
+        sol->c = (int *) NULL;
+        sol->u = (int *) NULL;
         sol->nmachines = 0;
         sol->njobs = 0;
         sol->tw = 0;
@@ -217,6 +217,11 @@ void g_print_jobarray(gpointer data, gpointer user_data) {
     Job *j = (Job *)data;
     g_print("Job %d: %d %d %d %f\n", j->job, j->processingime, j->duetime,
             j->weight, (double)j->weight / j->processingime);
+}
+
+void g_print_machine(gpointer data, gpointer user_data){
+    Job *j = (Job *) data;
+    g_print("%d ", j->job);
 }
 
 void g_set_sol_perm(gpointer data, gpointer user_data) {

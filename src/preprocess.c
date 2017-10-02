@@ -102,6 +102,7 @@ int calculate_sump(wctproblem *problem){
 
 int preprocess_data(wctproblem *problem) {
     int      val = 0;
+    int i =0;
 
     g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
 
@@ -110,6 +111,8 @@ int preprocess_data(wctproblem *problem) {
 
     /** order the jobarray of problem following edd rule */
     g_ptr_array_sort_with_data(problem->g_job_array, g_job_compare_edd, NULL);
+
+    g_ptr_array_foreach(problem->g_job_array, g_set_jobarray_job, &i);
 
     /** Find the intervals of the instance at the root node */
     find_division(problem);

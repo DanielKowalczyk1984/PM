@@ -252,7 +252,7 @@ int print_size_to_csv(wctproblem *problem, wctdata *pd) {
 
             fprintf(file, "%s;%d;%zu;%d;%d;%d;%d;%u/%u/%u\n", root_node->pname,
                     pd->depth, get_datasize(pd->solver), pd->ecount_same,
-                    pd->ecount_differ, pd->v1, pd->v2, date.day, date.month,
+                    pd->ecount_differ, pd->v1->job, pd->v2->job, date.day, date.month,
                     date.year);
             break;
 

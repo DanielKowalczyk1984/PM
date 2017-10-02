@@ -28,6 +28,8 @@ int calculate_Hmin(
 int preprocess_data(wctproblem *problem);
 int find_division(wctproblem *problem);
 void g_problem_summary_init(gpointer data, gpointer user_data);
+int calculate_sump(wctproblem *problem);
+void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b);
 
 /**
  * greedy.c
@@ -92,6 +94,12 @@ void make_pi_feasible_farkas_pricing(wctdata *pd);
 
 int add_newsets(wctdata *pd);
 
+/** Help functions Glib */
+void g_print_ages_col(gpointer data, gpointer user_data);
+void g_grow_ages(gpointer data, gpointer user_data);
+void g_make_pi_feasible(gpointer data, gpointer user_data);
+void g_make_pi_feasible_farkas(gpointer data, gpointer user_data);
+
 /**
  * model.c
  */
@@ -125,14 +133,6 @@ static inline int nodepair_ref_key(int v1, int v2) {
 int compute_schedule(wctproblem *problem);
 int add_solution_to_colpool(solution *sol, wctdata *pd);
 
-
-/**
- * wide_branching.c
- */
-
-int create_branches_wide(wctdata *pd, wctproblem *problem);
-int sequential_branching_wide(wctproblem *problem);
-int branching_msg_wide(wctdata *pd, wctproblem *problem);
 
 /**
  * solverwrapper.cc

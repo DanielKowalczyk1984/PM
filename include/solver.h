@@ -31,7 +31,7 @@ int free_conflict_constraints(PricerSolver *solver,
                               int           ecount_same,
                               int           ecount_differ);
 int add_one_conflict(
-    PricerSolver *solver, wctparms *parms, int v1, int v2, int same);
+    PricerSolver *solver, wctparms *parms, Job *v1, Job *v2, int same);
 
 void iterate_dd(PricerSolver *solver);
 void iterate_zdd(PricerSolver *solver);

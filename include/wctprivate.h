@@ -69,8 +69,8 @@ struct wctdata {
     // scheduleset *cclasses;
     int          dzcount;
     // int          gallocated;
-    // scheduleset *newsets;
-    // int          nnewsets;
+    scheduleset *newsets;
+    int          nnewsets;
     int *cstat;
     GPtrArray *localColPool;
 
@@ -128,7 +128,7 @@ struct wctdata {
     int      nsame;
     wctdata *diff_children;
     int      ndiff;
-    int      v1, v2;
+    Job      *v1, *v2;
     /** ahv branching */
     wctdata *duetime_child;
     int      nduetime;
@@ -265,7 +265,6 @@ void temporary_data_free(wctdata *pd);
 /**
  * solver zdd
  */
-int solve_dynamic_programming_ahv(wctdata *pd);
 int solve_weight_dbl_bdd(wctdata *pd);
 int solve_weight_dbl_zdd(wctdata *pd);
 int solve_pricing(wctdata *pd, wctparms *parms);

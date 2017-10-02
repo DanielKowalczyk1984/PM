@@ -64,7 +64,7 @@ void scheduleset_init(scheduleset *set) {
     if (set) {
         set->members = (int *)NULL;
         set->C = (int *)NULL;
-        set->table = (GHashTable *)NULL;
+        set->table = g_hash_table_new(g_direct_hash, g_direct_equal);
         set->count = 0;
         set->age = 0;
         set->totweight = 0;
@@ -115,6 +115,17 @@ void g_scheduleset_free(void *set) {
     }
 }
 
+
+scheduleset *scheduleset_alloc(){
+    scheduleset *tmp;
+    tmp = CC_SAFE_MALLOC(1, scheduleset);
+    CCcheck_NULL_3(tmp, "Failed to allocate memory")
+    scheduleset_init(tmp);
+
+    CLEAN:
+    return tmp;
+}
+
 scheduleset *scheduleset_create(Job **job_array, int nbjobs){
     scheduleset *tmp;
     Job *j;
@@ -162,7 +173,6 @@ scheduleset *scheduleset_from_solution(GPtrArray *machine){
 
     scheduleset_init(tmp);
     g_ptr_array_foreach(machine, g_sum_processing_time, tmp);
-
 
     CLEAN:
     return tmp;
@@ -290,18 +300,60 @@ void scheduleset_SWAP(scheduleset *c1, scheduleset *c2, scheduleset *t) {
 
 int scheduleset_less(scheduleset *c1, scheduleset *c2) {
     int i;
+    GPtrArray *tmp1 = c1->partial_machine;
+    GPtrArray *tmp2 = c2->partial_machine;
+    Job *tmp_j1;
+    Job *tmp_j2;
 
-    if (c1->count != c2->count) {
-        return c1->count < c2->count;
+    if (tmp1->len != tmp2->len) {
+        return tmp1->len - tmp2->len;
     }
 
-    for (i = 0; i < c1->count; ++i) {
-        if (c1->members[i] != c2->members[i]) {
-            return c1->members[i] < c2->members[i];
+    for (i = 0; i < tmp1->len; ++i) {
+        tmp_j1 = (Job *) g_ptr_array_index(tmp1,i);
+        tmp_j2 = (Job *) g_ptr_array_index(tmp2,i);
+        if (tmp_j1->job != tmp_j2->job) {
+            return tmp_j1->job - tmp_j2->job;
         }
     }
 
     return 0;
+}
+
+gint g_scheduleset_less(gconstpointer a,gconstpointer b){
+    int i;
+    const scheduleset *c1 = *((scheduleset * const *) a);
+    const scheduleset *c2 = *((scheduleset * const *) b);
+    GPtrArray *tmp1 = c1->partial_machine;
+    GPtrArray *tmp2 = c2->partial_machine;
+    Job *tmp_j1;
+    Job *tmp_j2;
+
+    if (tmp1->len != tmp2->len) {
+        return tmp1->len - tmp2->len;
+    }
+
+
+    for (i = 0; i < tmp1->len; ++i) {
+        tmp_j1 = (Job *) g_ptr_array_index(tmp1,i);
+        tmp_j2 = (Job *) g_ptr_array_index(tmp2,i);
+        if (tmp_j1->job != tmp_j2->job) {
+            return tmp_j1->job - tmp_j2->job;
+        }
+    }
+
+    return 0;
+}
+
+void g_scheduleset_print(gpointer data, gpointer user_data){
+    scheduleset *tmp = (scheduleset *) data;
+    GPtrArray *tmp_a = tmp->partial_machine;
+    printf("Machine %d: ", tmp->id);
+
+    g_ptr_array_foreach(tmp_a, g_print_machine, NULL);
+
+    printf("with C = %d, cost = %d and %u jobs\n", tmp->totweight,tmp->totwct,
+           tmp_a->len);
 }
 
 int scheduleset_more(scheduleset *c1, scheduleset *c2) {

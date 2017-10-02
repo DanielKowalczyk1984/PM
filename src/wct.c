@@ -142,13 +142,7 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver *)NULL;
     pd->nnonimprovements = 0;
-    /*Initialization of scheduleset*/
-    // pd->ccount = 0;
-    // pd->cclasses = (scheduleset *)NULL;
     pd->dzcount = 0;
-    // pd->gallocated = 0;
-    // pd->newsets = (scheduleset *)NULL;
-    // pd->nnewsets = 0;
     pd->bestcolors = (scheduleset *)NULL;
     pd->nbbest = 0;
     pd->debugcolors = (scheduleset *)NULL;
@@ -179,8 +173,8 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     pd->nsame = 0;
     pd->diff_children = (wctdata *)NULL;
     pd->ndiff = 0;
-    pd->v1 = -1;
-    pd->v2 = -1;
+    pd->v1 = (Job *) NULL;
+    pd->v2 = (Job *) NULL;
     /** Wide branching */
     pd->v1_wide = (int *)NULL;
     pd->v2_wide = (int *)NULL;

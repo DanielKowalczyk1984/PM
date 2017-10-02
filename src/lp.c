@@ -217,6 +217,14 @@ int wctlp_chgcoef(wctlp *lp, int cnt, int *cind, int *vind, double *cval)
     return val;
 }
 
+int wctlp_getcoef(wctlp *lp, int *cind, int *vind, double *cval){
+    int val;
+    val = GRBgetcoeff(lp->model, *cind, *vind, cval);
+    CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
+
+    return val;
+}
+
 int wctlp_deletecols(wctlp *lp, int first, int last)
 {
     int  val = 0;

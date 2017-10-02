@@ -153,14 +153,17 @@ class Optimal_Solution {
     T                obj;
     int              cost;
     int              C_max;
-    std::vector<int> jobs;
+    GPtrArray *jobs;
 
     Optimal_Solution() : obj(0), cost(0), C_max(0) {}
 
     Optimal_Solution &operator=(const Optimal_Solution &other) {
         obj = other.obj;
         cost = other.cost;
-        jobs = other.jobs;
+        jobs = g_ptr_array_sized_new(other.jobs->len);
+        for(unsigned i = 0; i < other.jobs->len; ++i) {
+            g_ptr_array_add(jobs, g_ptr_array_index(other.jobs,i));
+        }
         C_max = other.C_max;
         return *this;
     }
@@ -169,15 +172,14 @@ class Optimal_Solution {
                                     Optimal_Solution<T> const &o) {
         os << "obj = " << o.obj << "," << std::endl
            << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
-        std::vector<int>::const_iterator it = o.jobs.begin();
 
-        for (; it != o.jobs.end(); ++it) {
-            std::cout << *it << " ";
-        }
-
-        std::cout << std::endl;
+        g_ptr_array_foreach(o.jobs, g_print_machine, NULL);
         return os;
     };
+
+    ~Optimal_Solution(){
+        g_ptr_array_free(jobs, TRUE);
+    }
 };
 
 template <typename E, typename T>
@@ -228,8 +230,7 @@ class WeightBDD
         const tdzdd::NodeId *f) {
         Optimal_Solution<T> sol;
         sol.obj = (*data_table)[f->row()][f->col()].obj;
-        sol.cost = 0;
-        sol.C_max = 0;
+        sol.jobs = g_ptr_array_new();
         tdzdd::NodeId cur_node = *f;
         int j = nlayers - cur_node.row();
         tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
@@ -237,7 +238,7 @@ class WeightBDD
 
         while (cur_node.row() != 0 || cur_node.col() != 0) {
             if ((*data_table)[cur_node.row()][cur_node.col()].take) {
-                sol.jobs.push_back(tmp_j->job);
+                g_ptr_array_add(sol.jobs, tmp_j);
                 sol.C_max += tmp_j->processingime;
                 sol.cost += value_Fj(sol.C_max, tmp_j);
                 cur_node = diagram.privateEntity().child(cur_node, 1);
@@ -252,6 +253,8 @@ class WeightBDD
 
         return sol;
     }
+
+
 };
 
 template <typename E, typename T>
@@ -312,6 +315,7 @@ class WeightZDD
         sol.C_max = 0;
         sol.cost = 0;
         sol.obj = (*data_table)[f->row()][f->col()].list[sol.C_max]->obj;
+        sol.jobs = g_ptr_array_new();
         node<T> *ptr = (*data_table)[f->row()][f->col()].list[sol.C_max];
         int j = ptr->layer;
         job_interval_pair *tmp_pair;
@@ -321,7 +325,7 @@ class WeightZDD
             tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
             tmp_j = tmp_pair->j;
             if (ptr->take) {
-                sol.jobs.push_back(tmp_j->job);
+                g_ptr_array_add(sol.jobs, tmp_j);
                 sol.C_max += tmp_j->processingime;
                 sol.cost += value_Fj(sol.C_max, tmp_j);
                 ptr = ptr->y;
@@ -341,35 +345,37 @@ class WeightZDD
 template <typename E, typename T>
 class FarkasZDD
     : public tdzdd::DdEval<E, PricerFarkasZDD<T>, Optimal_Solution<T>> {
-    T *  pi;
-    Job *jobarray;
-    int  nbjobs;
-    int  H_min;
-    int  H_max;
+        T *  pi;
+        GPtrArray *interval_list;
+        int nlayers;
+        int nbjobs;
+        job_interval_pair *tmp_pair;
+        Job *tmp_j;
+        interval *tmp_interval;
 
    public:
-    FarkasZDD(T *_pi, Job *_jobarray, int _nbjobs, int Hmin, int Hmax)
+    FarkasZDD(T *_pi, GPtrArray *_interval_list, int _nbjobs)
         : pi(_pi),
-          jobarray(_jobarray),
-          nbjobs(_nbjobs),
-          H_min(Hmin),
-          H_max(Hmax){};
+          interval_list(_interval_list),
+          nbjobs(_nbjobs){};
 
     void evalTerminal(PricerFarkasZDD<T> &n) { n.obj = pi[nbjobs]; }
 
     void evalNode(PricerFarkasZDD<T> *n,
                   int                 i,
                   tdzdd::DdValues<PricerFarkasZDD<T>, 2> &values) const {
-        int j = nbjobs - i;
+        int j = nlayers - i;
         assert(j >= 0 && j <= nbjobs - 1);
+        tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list,j);
+        tmp_j = tmp_pair->j;
         PricerFarkasZDD<T> *n0 = values.get_ptr(0);
         PricerFarkasZDD<T> *n1 = values.get_ptr(1);
 
-        if (n0->obj < n1->obj + pi[j]) {
+        if (n0->obj < n1->obj + pi[tmp_j->job]) {
             n->obj = n0->obj;
             n->take = false;
         } else {
-            n->obj = n1->obj + pi[j];
+            n->obj = n1->obj + pi[tmp_j->job];
             n->take = true;
         }
     }
@@ -382,24 +388,20 @@ class FarkasZDD
         const tdzdd::NodeId *                 f) {
         Optimal_Solution<T> sol;
         sol.obj = (*data_table)[f->row()][f->col()].obj;
-        sol.cost = 0;
-        sol.C_max = 0;
+        sol.jobs = g_ptr_array_new();
         tdzdd::NodeId cur_node = *f;
-        int           j = nbjobs - cur_node.row();
+        int           j = nlayers - cur_node.row();
 
         while (cur_node.row() != 0) {
-            if ((*data_table)[cur_node.row()][cur_node.col()].take &&
-                jobarray[j].releasetime <= sol.C_max &&
-                sol.C_max + jobarray[j].processingime <= jobarray[j].duetime) {
-                sol.jobs.push_back(j);
-                sol.C_max += jobarray[j].processingime;
-                sol.cost += jobarray[j].weight * sol.C_max;
+            if ((*data_table)[cur_node.row()][cur_node.col()].take) {
+                g_ptr_array_add(sol.jobs, tmp_j);
+                sol.C_max += tmp_j->processingime;
+                sol.cost += value_Fj(sol.C_max, tmp_j);
                 cur_node = diagram.privateEntity().child(cur_node, 1);
-                j = nbjobs - cur_node.row();
             } else {
                 cur_node = diagram.privateEntity().child(cur_node, 0);
-                j = nbjobs - cur_node.row();
             }
+            j = nlayers - cur_node.row();
         }
 
         return sol;
@@ -418,7 +420,7 @@ struct WeightZDDdouble : WeightZDD<WeightZDDdouble, double> {
 
 struct FarkasZDDdouble : FarkasZDD<FarkasZDDdouble, double> {
     FarkasZDDdouble(
-        double *_pi, Job *_jobarray, int _nbjobs, int Hmin, int Hmax)
+        double *_pi,GPtrArray *_interval_list, int _nbjobs)
         : FarkasZDD<FarkasZDDdouble, double>(
-              _pi, _jobarray, _nbjobs, Hmin, Hmax){};
+              _pi, _interval_list, _nbjobs){};
 };

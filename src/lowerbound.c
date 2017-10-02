@@ -122,43 +122,43 @@ CLEAN:
     return val;
 }
 
-int add_newsets(wctdata *pd) {
-    int          val = 0;
-    scheduleset *tmpsets = (scheduleset *)NULL;
-    int          i;
+// int add_newsets(wctdata *pd) {
+//     int          val = 0;
+//     scheduleset *tmpsets = (scheduleset *)NULL;
+//     int          i;
 
-    if (pd->nnewsets == 0) {
-        return val;
-    }
+//     if (pd->nnewsets == 0) {
+//         return val;
+//     }
 
-    if (pd->ccount + pd->nnewsets > pd->gallocated) {
-        pd->gallocated *= 2;
-        tmpsets = CC_SAFE_MALLOC(pd->gallocated, scheduleset);
-        CCcheck_NULL_2(tmpsets, "Failed to allocate memory to tmpsets");
-        memcpy(tmpsets, pd->cclasses, pd->ccount * sizeof(scheduleset));
-        free(pd->cclasses);
-        pd->cclasses = tmpsets;
-        tmpsets = NULL;
-    }
+//     if (pd->ccount + pd->nnewsets > pd->gallocated) {
+//         pd->gallocated *= 2;
+//         tmpsets = CC_SAFE_MALLOC(pd->gallocated, scheduleset);
+//         CCcheck_NULL_2(tmpsets, "Failed to allocate memory to tmpsets");
+//         memcpy(tmpsets, pd->cclasses, pd->ccount * sizeof(scheduleset));
+//         free(pd->cclasses);
+//         pd->cclasses = tmpsets;
+//         tmpsets = NULL;
+//     }
 
-    memcpy(pd->cclasses + pd->ccount, pd->newsets,
-           pd->nnewsets * sizeof(scheduleset));
-    pd->ccount += pd->nnewsets;
+//     memcpy(pd->cclasses + pd->ccount, pd->newsets,
+//            pd->nnewsets * sizeof(scheduleset));
+//     pd->ccount += pd->nnewsets;
 
-    for (i = pd->ccount; i < pd->gallocated; i++) {
-        scheduleset_init(pd->cclasses + i);
-    }
+//     for (i = pd->ccount; i < pd->gallocated; i++) {
+//         scheduleset_init(pd->cclasses + i);
+//     }
 
-CLEAN:
+// CLEAN:
 
-    if (val) {
-        CC_IFFREE(pd->cclasses, scheduleset);
-    }
+//     if (val) {
+//         CC_IFFREE(pd->cclasses, scheduleset);
+//     }
 
-    CC_IFFREE(pd->newsets, scheduleset);
-    pd->nnewsets = 0;
-    return val;
-}
+//     CC_IFFREE(pd->newsets, scheduleset);
+//     pd->nnewsets = 0;
+//     return val;
+// }
 
 void g_make_pi_feasible(gpointer data, gpointer user_data){
     scheduleset *x = (scheduleset *) data;
@@ -299,6 +299,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     int       break_while_loop = 1;
     int       nnonimprovements = 0;
     int       status = GRB_LOADED;
+    int nb_cols;
     double    real_time_solve_lp;
     double real_time_pricing;
     wctparms *parms = &(problem->parms);
@@ -318,14 +319,24 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     CCutil_start_resume_time(&(problem->tot_lb));
 
     /** Construct solutions if list of columns is empty */
-    if (!pd->ccount && parms->construct) {
+    // if (!pd->ccount && parms->construct) {
+    //     solution *new_sol;
+    //     new_sol = solution_alloc(pd->nmachines, pd->njobs, 0);
+    //     construct_edd(problem, new_sol);
+    //     partlist_to_scheduleset(new_sol->part, pd->nmachines, pd->njobs,
+    //                             &(pd->cclasses), &(pd->ccount));
+    //     solution_free(&new_sol);
+    //     assert(pd->gallocated >= pd->ccount);
+    // }
+
+
+
+    if(pd->localColPool->len == 0 && parms->construct) {
         solution *new_sol;
         new_sol = solution_alloc(pd->nmachines, pd->njobs, 0);
         construct_edd(problem, new_sol);
-        partlist_to_scheduleset(new_sol->part, pd->nmachines, pd->njobs,
-                                &(pd->cclasses), &(pd->ccount));
-        solution_free(&new_sol);
-        assert(pd->gallocated >= pd->ccount);
+        solution_canonical_order(new_sol, pd->local_intervals);
+        add_solution_to_colpool(new_sol, pd);
     }
 
     if (!pd->LP) {
@@ -440,9 +451,6 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                         CCcheck_val_2(val, "Failed in solving farkas");
                         break;
 
-                    case DP_solver:
-                        val = solve_farkas_dbl_DP(pd);
-                        CCcheck_val_2(val, "Failed in solving farkas DP");
                 }
 
                 break;
@@ -453,10 +461,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         problem->real_time_pricing += real_time_pricing;
 
         for (j = 0; j < pd->nnewsets && pd->update; j++) {
-            val = wctlp_addcol(pd->LP, pd->newsets[j].count + 1,
-                               pd->newsets[j].members, pd->coef,
-                               pd->newsets[j].totwct, 0.0, GRB_INFINITY,
-                               wctlp_CONT, NULL);
+            addColToLP(pd->newsets, pd);
             CCcheck_val_2(val, "wctlp_addcol failed");
         }
 
@@ -483,7 +488,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         }
 
         if (pd->update) {
-            add_newsets(pd);
+            g_ptr_array_add(pd->localColPool, pd->newsets);
         } else {
             schedulesets_free(&pd->newsets, &pd->nnewsets);
         }
@@ -559,7 +564,8 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                         pd->id, iterations, pd->opt_track);
                 }
 
-                pd->x = CC_SAFE_MALLOC(pd->ccount, double);
+                wctlp_get_nb_cols(pd->LP, &nb_cols);
+                pd->x = CC_SAFE_MALLOC(nb_cols, double);
                 CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
                 val = wctlp_x(pd->LP, pd->x, 0);
                 CCcheck_val_2(val, "Failed in wctlp_x");

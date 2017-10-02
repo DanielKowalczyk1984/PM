@@ -127,6 +127,7 @@ int wctlp_pi_inf(wctlp *lp, double *pi);
 int wctlp_get_nb_rows(wctlp *lp, int *nb_rows);
 int wctlp_get_nb_cols(wctlp *lp, int *nb_cols);
 int wctlp_chgcoef(wctlp *lp, int cnt, int *cind, int *vind, double *cval);
+int wctlp_getcoef(wctlp *lp, int *cind, int *vind, double *cval);
 
 double lp_int_tolerance(void);
 
