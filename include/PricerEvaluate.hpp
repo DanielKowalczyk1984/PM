@@ -50,49 +50,6 @@ class node {
     };
 };
 
-// /**
-//  * BDD
-//  */
-template <typename T>
-class PricerWeightBDD {
-   public:
-    T    obj;
-    bool take;
-    int  sum_w;
-    int  sum_p;
-    int  cost;
-
-    PricerWeightBDD() : obj(0), take(false), sum_w(0), sum_p(0), cost(0) {}
-
-    PricerWeightBDD &operator=(const PricerWeightBDD &other) {
-        sum_w = other.sum_w;
-        sum_p = other.sum_p;
-        cost = other.cost;
-        obj = other.obj;
-        take = other.take;
-        return *this;
-    };
-
-    friend std::ostream &operator<<(std::ostream &            os,
-                                    PricerWeightBDD<T> const &o) {
-        os << "max = " << o.obj << "," << std::endl
-           << "cost = " << o.cost << std::endl;
-        return os;
-    }
-
-    void init_terminal_node(int one) {
-        obj = one ? 0.0 : -1871286761.0;
-        sum_p = 0;
-        take = false;
-    }
-
-    void init_node(int weight) {
-        obj = 0.0;
-        sum_p = weight;
-        take = false;
-    };
-};
-
 template <typename T>
 using my_iterator = typename std::vector<node<T> *>::iterator;
 
@@ -158,19 +115,49 @@ class Optimal_Solution {
     int              C_max;
     GPtrArray       *jobs;
 
-    Optimal_Solution() : obj(0), cost(0), C_max(0) {
-    jobs = g_ptr_array_new();
-}
 
-    Optimal_Solution &operator=(const Optimal_Solution &other) {
-        obj = other.obj;
-        cost = other.cost;
-        jobs = g_ptr_array_sized_new(other.jobs->len);
+    /** Default constructor */
+    Optimal_Solution() : obj(0), cost(0), C_max(0), jobs(g_ptr_array_new()) {
+    }
+
+    /** Copy constructor */
+    Optimal_Solution (const Optimal_Solution& other) :
+       obj(other.obj),cost(other.cost),C_max(other.C_max),jobs (g_ptr_array_sized_new(other.jobs->len)){
         for(unsigned i = 0; i < other.jobs->len; ++i) {
             g_ptr_array_add(jobs, g_ptr_array_index(other.jobs,i));
         }
-        C_max = other.C_max;
+    }
+
+    /** Move constructor */
+    Optimal_Solution (Optimal_Solution&& other) noexcept : /* noexcept needed to enable optimizations in containers */
+        obj(other.obj),cost(other.cost),C_max(other.C_max), jobs(other.jobs){
+        other.jobs = nullptr;
+    }
+
+    /** Copy assignment operator */
+    Optimal_Solution& operator= (const Optimal_Solution& other){
+        Optimal_Solution tmp(other);         // re-use copy-constructor
+        *this = std::move(tmp); // re-use move-assignment
         return *this;
+    }
+
+    /** Move assignment operator */
+    Optimal_Solution& operator= (Optimal_Solution&& other) noexcept
+    {
+        obj = other.obj;
+        cost = other.cost;
+        C_max = other.C_max;
+        g_ptr_array_free(jobs, TRUE);
+        jobs = other.jobs;
+        other.jobs = nullptr;
+        return *this;
+    }
+
+    /** Destructor */
+    ~Optimal_Solution() noexcept {
+        if(jobs) {
+            g_ptr_array_free(jobs,TRUE);
+        }
     }
 
     friend std::ostream &operator<<(std::ostream &             os,
@@ -181,83 +168,6 @@ class Optimal_Solution {
         g_ptr_array_foreach(o.jobs, g_print_machine, NULL);
         return os;
     };
-
-    ~Optimal_Solution(){
-    }
-};
-
-template <typename E, typename T>
-class WeightBDD
-    : public tdzdd::DdEval<E, PricerWeightBDD<T>, Optimal_Solution<T>> {
-    T *  pi;
-    GPtrArray *interval_list;
-    int nlayers;
-    int nbjobs;
-    job_interval_pair *tmp_pair;
-    Job *tmp_j;
-    interval *tmp_interval;
-
-   public:
-    WeightBDD(T *_pi, GPtrArray *_interval_list, int _nbjobs)
-        : pi(_pi), interval_list(_interval_list), nbjobs(_nbjobs){};
-
-    void evalTerminal(PricerWeightBDD<T> &n) {
-        n.obj = pi[nbjobs];
-        n.cost = 0.0;
-        n.sum_w = 0.0;
-        n.sum_p = 0.0;
-        n.take = false;
-    }
-
-    void evalNode(PricerWeightBDD<T> *n,
-                  int                 i,
-                  tdzdd::DdValues<PricerWeightBDD<T>, 2> &values) const {
-        int j = nlayers - i;
-        assert(j >= 0 && j <= nbjobs - 1);
-        PricerWeightBDD<T> *n0 = values.get_ptr(0);
-        PricerWeightBDD<T> *n1 = values.get_ptr(1);
-        tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
-        tmp_j = tmp_pair->j;
-
-        if (n0->obj >= n1->obj - value_Fj(n->sum_p + tmp_j->processingime, tmp_j) + pi[tmp_j->job]) {
-            n->obj = n0->obj;
-            n->take = false;
-        } else {
-            n->obj = n1->obj - value_Fj(n->sum_p + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
-            n->take = true;
-        }
-    }
-
-    void initializenode(PricerWeightBDD<T> &n) { n.take = false; }
-
-    Optimal_Solution<T> get_objective(tdzdd::NodeTableHandler<2> diagram,tdzdd::DataTable<PricerWeightBDD<T>> *data_table,
-        const tdzdd::NodeId *f) {
-        Optimal_Solution<T> sol;
-        sol.obj = (*data_table)[f->row()][f->col()].obj;
-        sol.jobs = g_ptr_array_new();
-        tdzdd::NodeId cur_node = *f;
-        int j = nlayers - cur_node.row();
-        tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
-        tmp_j = tmp_pair->j;
-
-        while (cur_node.row() != 0 || cur_node.col() != 0) {
-            if ((*data_table)[cur_node.row()][cur_node.col()].take) {
-                g_ptr_array_add(sol.jobs, tmp_j);
-                sol.C_max += tmp_j->processingime;
-                sol.cost += value_Fj(sol.C_max, tmp_j);
-                cur_node = diagram.privateEntity().child(cur_node, 1);
-            } else {
-                cur_node = diagram.privateEntity().child(cur_node, 0);
-            }
-
-            j = nbjobs - cur_node.row();
-            tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
-            tmp_j = tmp_pair->j;
-        }
-
-        return sol;
-    }
-
 
 };
 
@@ -403,11 +313,6 @@ class FarkasZDD
 
         return sol;
     }
-};
-
-struct WeightBDDdouble : WeightBDD<WeightBDDdouble, double> {
-    WeightBDDdouble(double *_pi, GPtrArray *_interval_list, int _nbjobs)
-        : WeightBDD<WeightBDDdouble, double>(_pi, _interval_list, _nbjobs){};
 };
 
 struct WeightZDDdouble : WeightZDD<WeightZDDdouble, double> {
