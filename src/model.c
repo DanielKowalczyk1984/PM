@@ -31,10 +31,10 @@ int grab_int_sol(wctdata *pd, double *x, double tolerance)
             int k;
             scheduleset_init(pd->bestcolors + j);
 
-            g_ptr_array_set_size(pd->bestcolors[j].partial_machine, tmp_schedule->partial_machine->len);
-            for (k = 0; k < tmp_schedule->partial_machine->len; ++k) {
-                tmp_j = (Job *) g_ptr_array_index(tmp_schedule->partial_machine, k);
-                g_ptr_array_add(pd->bestcolors[j].partial_machine, tmp_j);
+            g_ptr_array_set_size(pd->bestcolors[j].jobs, tmp_schedule->jobs->len);
+            for (k = 0; k < tmp_schedule->jobs->len; ++k) {
+                tmp_j = (Job *) g_ptr_array_index(tmp_schedule->jobs, k);
+                g_ptr_array_add(pd->bestcolors[j].jobs, tmp_j);
                 pd->bestcolors[j].totweight += tmp_j->processingime;
                 pd->bestcolors[j].totwct += value_Fj(pd->bestcolors[j].totweight, tmp_j);
             }
@@ -53,8 +53,7 @@ int grab_int_sol(wctdata *pd, double *x, double tolerance)
         }
     }
 
-    val = scheduleset_check(pd->bestcolors, pd->nbbest, pd->njobs);
-    CCcheck_val_2(val, "ERROR: An incorrect coloring was created.");
+/** Write a check function */
     printf("Intermediate schedule:\n");
     print_schedule(pd->bestcolors, pd->nbbest);
     printf("with total weight %d\n", tot_weighted);
@@ -74,13 +73,12 @@ CLEAN:
 }
 
 int addColToLP(scheduleset *set, wctdata *pd){
-    wctproblem *problem = pd->problem;
     int val = 0;
     int cind;
     int vind;
     double cval;
-    int njobs = problem->njobs;
-    GPtrArray *members = set->partial_machine;
+    int njobs = pd->njobs;
+    GPtrArray *members = set->jobs;
     wctlp *lp = pd->LP;
     Job *job;
 
@@ -92,10 +90,12 @@ int addColToLP(scheduleset *set, wctdata *pd){
 
     for(unsigned i = 0; i < members->len; ++i) {
         job = (Job *) g_ptr_array_index(members, i);
-        val = wctlp_getcoef(lp,&(job->job), &vind, &cval);
+        cind = job->job;
+        val = wctlp_getcoef(lp,&cind, &vind, &cval);
         CCcheck_val_2(val, "Failed wctlp_getcoef");
         cval += 1.0;
-        val = wctlp_chgcoef(lp, 1, &(job->job), &vind, &cval);
+        set->nb[job->job] += 1;
+        val = wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
         CCcheck_val_2(val, "Failed wctlp_chgcoef");
     }
 
@@ -242,3 +242,36 @@ CLEAN:
     CC_IFFREE(covered, int);
     return val;
 }
+
+int get_solution_lp_lowerbound(wctdata *pd){
+    int val = 0;
+    int nbcols;
+    scheduleset *tmp;
+    Job *tmp_j;
+
+    val = wctlp_get_nb_cols(pd->LP, &nbcols);
+    CCcheck_val_2(val, "Failed in wctlp_get_nb_cols");
+    pd->x = CC_SAFE_REALLOC(pd->x, nbcols, double);
+    CCcheck_NULL_2(pd->x, "Failed to allocate memory");
+    assert(nbcols == pd->localColPool->len);
+    wctlp_x(pd->LP, pd->x, 0);
+
+    for(unsigned i = 0; i < nbcols; ++i) {
+        tmp = ((scheduleset *) g_ptr_array_index(pd->localColPool,i));
+        if(pd->x[i]) {
+            printf("%f: ", pd->x[i]);
+            g_ptr_array_foreach(tmp->jobs, g_print_machine,NULL);
+            printf("\n");
+            for(unsigned j = 0; j < tmp->jobs->len; ++j) {
+                tmp_j = (Job *) g_ptr_array_index(tmp->jobs, j);
+                printf("%d (%d) ", tmp->nb[tmp_j->job], tmp_j->processingime);
+            }
+            printf("\n");
+        }
+    }
+
+
+    CLEAN:
+    return val;
+}
+

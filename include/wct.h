@@ -109,6 +109,7 @@ void g_add_col_to_lp(gpointer data, gpointer user_data);
 int build_lp(wctdata *pd, int construct);
 int grab_int_sol(wctdata *pd, double *x, double tolerance);
 int addColToLP(scheduleset *set, wctdata *pd);
+int get_solution_lp_lowerbound(wctdata *pd);
 
 
 /**
