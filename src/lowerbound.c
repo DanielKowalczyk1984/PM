@@ -131,8 +131,8 @@ void g_make_pi_feasible(gpointer data, gpointer user_data){
     int    i;
     double colsum = .0;
 
-    for (i = 0; i < x->partial_machine->len; ++i) {
-        tmp_j = (Job *) g_ptr_array_index(x->partial_machine,i);
+    for (i = 0; i < x->jobs->len; ++i) {
+        tmp_j = (Job *) g_ptr_array_index(x->jobs,i);
         if (signbit(pd->pi[tmp_j->job])) {
             pd->pi[tmp_j->job] = 0.0;
         }
@@ -150,8 +150,8 @@ void g_make_pi_feasible(gpointer data, gpointer user_data){
 
     if (colsum > x->totwct) {
         double newcolsum = .0;
-        for (i = 0; i < x->partial_machine->len; ++i) {
-            tmp_j = (Job *) g_ptr_array_index(x->partial_machine, i);
+        for (i = 0; i < x->jobs->len; ++i) {
+            tmp_j = (Job *) g_ptr_array_index(x->jobs, i);
             pd->pi[tmp_j->job] /= colsum;
             pd->pi[tmp_j->job] *= x->totwct;
             newcolsum += pd->pi[tmp_j->job];
@@ -182,8 +182,8 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data){
     int    i;
     double colsum = .0;
 
-    for (i = 0; i < x->partial_machine->len; ++i) {
-        tmp_j = (Job *) g_ptr_array_index(x->partial_machine,i);
+    for (i = 0; i < x->jobs->len; ++i) {
+        tmp_j = (Job *) g_ptr_array_index(x->jobs,i);
         if (signbit(pd->pi[tmp_j->job])) {
             pd->pi[tmp_j->job] = 0.0;
         }
@@ -196,8 +196,8 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data){
 
     if (colsum > x->totwct) {
         double newcolsum = .0;
-        for (i = 0; i < x->partial_machine->len; ++i) {
-            tmp_j = (Job *) g_ptr_array_index(x->partial_machine,i);
+        for (i = 0; i < x->jobs->len; ++i) {
+            tmp_j = (Job *) g_ptr_array_index(x->jobs,i);
             pd->pi[tmp_j->job] /= colsum;
             pd->pi[tmp_j->job] *= x->totwct;
             newcolsum += pd->pi[tmp_j->job];
