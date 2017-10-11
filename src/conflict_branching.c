@@ -25,30 +25,28 @@ static int transfer_same_cclasses(wctdata *pd,GPtrArray *colPool,Job *v1,Job *v2
         if ((v1_in == 1 && v2_in == 0) || (v1_in == 0 && v2_in == 1)) {
             construct = 0;
         } else {
-            tmp = scheduleset_alloc();
+            tmp = scheduleset_alloc(pd->njobs);
             g_ptr_array_add(pd->localColPool, tmp);
         }
 
-        for (j = 0; j < it->partial_machine->len && construct; ++j) {
-            tmp_j = (Job *) g_ptr_array_index(it->partial_machine, j);
+        for (j = 0; j < it->jobs->len && construct; ++j) {
+            tmp_j = (Job *) g_ptr_array_index(it->jobs, j);
             tmp->totweight += tmp_j->processingime;
-            tmp->C[tmp_j->job] = tmp->totweight;
-            g_hash_table_insert(tmp->table,tmp_j,tmp->C + tmp_j->job);
-            g_ptr_array_add(tmp->partial_machine, tmp_j);
-            tmp->totwct +=pd->jobarray[it->members[j]].weight*tmp->totweight;
-            tmp->count++;
+            g_hash_table_insert(tmp->table,tmp_j,NULL);
+            g_ptr_array_add(tmp->jobs, tmp_j);
+            tmp->totwct +=value_Fj(tmp->totweight, tmp_j);
         }
 
 
         if (dbg_lvl() > 1 && construct) {
             printf("PARENT SET SAME ");
 
-            g_ptr_array_foreach(it->partial_machine, g_print_job, NULL);
+            g_ptr_array_foreach(it->jobs, g_print_job, NULL);
 
             printf("\n");
             printf("TRANS SET SAME");
 
-            g_ptr_array_foreach(tmp->partial_machine, g_print_job, NULL);
+            g_ptr_array_foreach(tmp->jobs, g_print_job, NULL);
 
             printf("\n");
         }
@@ -95,7 +93,6 @@ static int create_same_conflict(wctproblem *problem, wctdata *parent_pd, wctdata
         CCutil_start_resume_time(&(problem->tot_build_dd));
         pd->solver = copySolver(pd->parent->solver);
         add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 1);
-        set_release_due_time(pd->solver, pd->jobarray);
 
         if ((size_t)pd->njobs != get_numberrows_zdd(pd->solver)) {
             pd->status = infeasible;
@@ -165,7 +162,6 @@ static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd, wctda
         CCutil_start_resume_time(&(problem->tot_build_dd));
         pd->solver = copySolver(pd->parent->solver);
         add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 0);
-        set_release_due_time(pd->solver, pd->jobarray);
 
         if ((size_t)pd->njobs != get_numberrows_zdd(pd->solver)) {
             pd->status = infeasible;
@@ -198,18 +194,16 @@ static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd, wctda
         int construct = (v1_in && v2_in) ? 0 : 1;
 
         if (construct) {
-            tmp = scheduleset_alloc();
+            tmp = scheduleset_alloc(pd->njobs);
             CCcheck_NULL_3(tmp, "Failed to allocate memory");
             g_ptr_array_add(pd->localColPool, tmp);
 
-            for (j = 0; j < it->partial_machine->len; j++) {
-                tmp_j = (Job *) g_ptr_array_index(it->partial_machine, j);
+            for (j = 0; j < it->jobs->len; j++) {
+                tmp_j = (Job *) g_ptr_array_index(it->jobs, j);
                 tmp->totweight += tmp_j->processingime;
-                tmp->C[tmp_j->job] = tmp->totweight;
-                g_hash_table_insert(tmp->table,tmp_j,tmp->C + tmp_j->job);
-                g_ptr_array_add(tmp->partial_machine, tmp_j);
-                tmp->totwct +=pd->jobarray[it->members[j]].weight*tmp->totweight;
-                tmp->count++;
+                g_hash_table_insert(tmp->table,tmp_j, NULL);
+                g_ptr_array_add(tmp->jobs, tmp_j);
+                tmp->totwct += value_Fj(tmp->totweight, tmp_j);
             }
 
         }
@@ -217,12 +211,12 @@ static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd, wctda
         if (dbg_lvl() > 1 && construct) {
             printf("PARENT SET DIFFER");
 
-            g_ptr_array_foreach(it->partial_machine, g_print_machine, NULL);
+            g_ptr_array_foreach(it->jobs, g_print_machine, NULL);
 
             printf("\n");
             printf("TRANS SET DIFFER");
 
-            g_ptr_array_foreach(tmp->partial_machine, g_print_machine, NULL);
+            g_ptr_array_foreach(tmp->jobs, g_print_machine, NULL);
 
             printf("\n");
         }

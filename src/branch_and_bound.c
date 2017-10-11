@@ -140,16 +140,16 @@ int insert_frac_pairs_into_heap(wctdata *    pd,
         }
         tmp_schedule = (scheduleset *) g_ptr_array_index(pd->localColPool, i);
 
-        for(j = 0; j < tmp_schedule->partial_machine->len; ++j) {
-            tmp_j1 = (Job *) g_ptr_array_index(tmp_schedule->partial_machine,j);
+        for(j = 0; j < tmp_schedule->jobs->len; ++j) {
+            tmp_j1 = (Job *) g_ptr_array_index(tmp_schedule->jobs,j);
             int v1 = tmp_j1->job;
             int k;
             ref_key = nodepair_ref_key(v1, v1);
             nodepair_weights[ref_key] += pd->x[i];
 
-            for (k = j + 1; k < tmp_schedule->partial_machine->len; ++k) {
+            for (k = j + 1; k < tmp_schedule->jobs->len; ++k) {
                 assert(k != j);
-                tmp_j2 = (Job *) g_ptr_array_index(tmp_schedule->partial_machine,k);
+                tmp_j2 = (Job *) g_ptr_array_index(tmp_schedule->jobs,k);
                 int v2 = tmp_j2->job;
                 assert(v1 < v2);
                 ref_key = nodepair_ref_key(v1, v2);
@@ -400,7 +400,7 @@ int prune_duplicated_sets(wctdata *pd) {
     if (dbg_lvl() > 1) {
         for (int i = 0; i < pd->localColPool->len; ++i) {
             tmp = (scheduleset *) g_ptr_array_index(pd->localColPool, i);
-            tmp_a = tmp->partial_machine;
+            tmp_a = tmp->jobs;
 
             printf("TRANSSORT SET ");
 
