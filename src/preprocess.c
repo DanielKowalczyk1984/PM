@@ -97,6 +97,7 @@ int preprocess_data(wctproblem *problem) {
     int      val = 0;
     int i = 0;
 
+    /** Calculate the statistics of the instance */
     g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
 
     /** Calculate H_max */
