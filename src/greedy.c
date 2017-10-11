@@ -401,7 +401,7 @@ int heuristic_rpup(wctproblem *prob) {
     GRand *rand_uniform = g_rand_new_with_seed(2011);
     g_random_set_seed(1984);
     int          ILS = prob->njobs;
-    int          IR = 0;
+    int          IR = 1;
     solution *   sol;
     solution *   sol1 = (solution *)NULL;
     GPtrArray *intervals = prob->root_pd.local_intervals;
@@ -420,14 +420,14 @@ int heuristic_rpup(wctproblem *prob) {
     printf("Solution in canonical order: \n");
     solution_print(sol);
 
-    // data = local_search_data_init(sol);
-    // CCcheck_NULL_2(data, "Failed to allocate memory to data");
-    // local_search_create_W(sol, data);
-    // local_search_create_g(sol, data);
-    // RVND(sol, data);
-    // solution_canonical_order(sol, intervals);
-    // printf("Solution after local search:\n");
-    // solution_print(sol);
+    data = local_search_data_init(sol);
+    CCcheck_NULL_2(data, "Failed to allocate memory to data");
+    local_search_create_W(sol, data);
+    local_search_create_g(sol, data);
+    RVND(sol, data);
+    solution_canonical_order(sol, intervals);
+    printf("Solution after local search:\n");
+    solution_print(sol);
 
     prob->opt_sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
     CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
@@ -475,45 +475,6 @@ CLEAN:
 }
 
 /** Construct feasible solutions */
-
-void update_bestschedule(wctproblem *problem, solution *new_sol) {
-    if (new_sol == NULL) {
-        return;
-    }
-
-    if (new_sol->tw < problem->global_upper_bound) {
-        problem->global_upper_bound = new_sol->tw;
-        problem->rel_error = (double)(problem->global_upper_bound -
-                                      problem->global_lower_bound) /
-                             (problem->global_lower_bound);
-        partlist_to_scheduleset(new_sol->part, new_sol->nmachines,
-                                new_sol->njobs, &(problem->bestschedule),
-                                &(problem->nbestschedule));
-    }
-
-    if (problem->global_upper_bound == problem->global_lower_bound) {
-        problem->status = optimal;
-    }
-}
-
-// static int add_feasible_solution(wctproblem *problem, solution *new_sol) {
-//     int      val = 0;
-//     wctdata *root_pd = &(problem->root_pd);
-//     update_bestschedule(problem, new_sol);
-
-//     if (root_pd->ccount == 0 && problem->parms.construct != 0) {
-//         update_schedulesets(&root_pd->cclasses, &root_pd->ccount,
-//                             problem->bestschedule, problem->nbestschedule);
-//         root_pd->gallocated = root_pd->ccount;
-//     } else if (problem->parms.construct != 0) {
-//         partlist_to_scheduleset(new_sol->part, new_sol->nmachines,
-//                                 new_sol->njobs, &(root_pd->newsets),
-//                                 &(root_pd->nnewsets));
-//         add_newsets(root_pd);
-//     }
-
-//     return val;
-// }
 
 int construct_feasible_solutions(wctproblem *problem) {
     int           val = 0;
