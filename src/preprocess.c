@@ -24,9 +24,9 @@ gint g_job_compare_edd(const void *a, const void *b, void *data) {
         return (1);
     } else if (x->processingime < y->processingime) {
         return (-1);
-    } else if (x->weight > y->weight) {
-        return (1);
     } else if (x->weight < y->weight) {
+        return (1);
+    } else if (x->weight > y->weight) {
         return (-1);
     } else if (x->job > y->job) {
         return (1);
@@ -63,46 +63,39 @@ void calculate_Hmax(wctproblem *problem){
 
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
-    temp_dbl = temp_dbl / problem->nmachines + problem->pmax;
-    problem->H_max = pd->H_max = (int)ceil(temp_dbl);
-    printf("H_max = %d, pmax = %d, pmin = %d, psum = %d\n", problem->H_max,problem->pmax, problem->pmin, problem->psum);
+    temp_dbl = floor(temp_dbl / problem->nmachines);
+    problem->H_max = pd->H_max = (int) temp_dbl + problem->pmax;
+    problem->H_min = (int) ceil(temp_dbl / problem->nmachines) - problem->pmax;
+    printf("H_max = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n", problem->H_max, problem->pmax, problem->pmin, problem->psum,problem->off);
 }
 
-int calculate_sump(wctproblem *problem){
-    int val = 0;
-    int **tmp = (int **) NULL;
-    interval *tmp_interval = (interval *) NULL;
-    Job *tmp_j = (Job *) NULL;
-    Job *prev_j = (Job *) NULL;
+void determine_jobs_order_interval(wctproblem *problem){
+    Job *tmp,*tmp_j;
+    interval *tmp_interval;
 
-    wctdata *pd = &(problem->root_pd);
-    int m = pd->local_intervals->len;
-    int n = problem->njobs;
+    GPtrArray *local_intervals = problem->root_pd.local_intervals;
 
-    tmp = CC_SAFE_MALLOC(m, int*);
-    CCcheck_NULL(tmp, "Failed to allocate memory")
-    for(unsigned i = 0; i < m; ++i) {
-        tmp_interval = (interval *) g_ptr_array_index(pd->local_intervals,i);
-        tmp[i] = CC_SAFE_MALLOC(n, int);
-        CCcheck_NULL(tmp[i], "Failed to allocate memory");
-        tmp_j = (Job *) g_ptr_array_index(tmp_interval->sigma, n - 1);
-        tmp[i][tmp_j->job] = tmp_j->processingime + problem->pmax;
-        prev_j = tmp_j;
-        for (int  j = n - 2; j >= 0; j--) {
-            tmp_j = (Job *) g_ptr_array_index(tmp_interval->sigma, j);
-            tmp[i][tmp_j->job] = tmp[i][prev_j->job] + tmp_j->processingime;
-            prev_j =tmp_j;
+    for(unsigned i = 0; i < problem->g_job_array->len; ++i) {
+        tmp_j = (Job *) g_ptr_array_index(problem->g_job_array, i);
+        tmp_j->pos_interval = CC_SAFE_MALLOC(local_intervals->len, int);
+        for(unsigned j = 0; j < local_intervals->len; ++j) {
+            tmp_interval = (interval *) g_ptr_array_index(local_intervals,j);
+            GPtrArray *sigma = tmp_interval->sigma;
+            for(unsigned k = 0; k < sigma->len; ++k) {
+                tmp = (Job *) g_ptr_array_index(sigma,k);
+                if(tmp == tmp_j) {
+                    tmp_j->pos_interval[j] = k;
+                    break;
+                }
+            }
         }
     }
 
-    pd->sump = tmp;
-
-    return val;
 }
 
 int preprocess_data(wctproblem *problem) {
     int      val = 0;
-    int i =0;
+    int i = 0;
 
     g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
 
@@ -117,8 +110,13 @@ int preprocess_data(wctproblem *problem) {
     /** Find the intervals of the instance at the root node */
     find_division(problem);
 
-    /** calculate sum_p for every interval */
-    calculate_sump(problem);
+    /** Create all node of the ZDD */
+    create_ordered_jobs_array(problem->root_pd.local_intervals, problem->root_pd.ordered_jobs);
+
+    /** Determine the position of each job in the interval */
+    determine_jobs_order_interval(problem);
+
+
 
     return val;
 }
@@ -214,18 +212,16 @@ static GPtrArray *array_time_slots(interval *I, GList *pairs) {
 }
 
 void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b){
-    int tmp = 0;
     interval *tmp_interval;
     Job *tmp_j;
-    job_interval_pair *tmp_pair;
     GPtrArray *jobarray;
+    job_interval_pair *tmp_pair;
     for(unsigned i = 0; i < a->len; ++i) {
         tmp_interval = (interval *) g_ptr_array_index(a,i);
         jobarray = tmp_interval->sigma;
         for(unsigned j = 0; j < jobarray->len; ++j) {
             tmp_j = (Job *) g_ptr_array_index(jobarray,j);
-            if(tmp_j->processingime <= tmp_interval->b || tmp) {
-                tmp = 1;
+            if(tmp_j->processingime <= tmp_interval->b) {
                 tmp_pair = CC_SAFE_MALLOC(1, job_interval_pair);
                 tmp_pair->j = tmp_j;
                 tmp_pair->I = tmp_interval;
@@ -258,8 +254,8 @@ int find_division(wctproblem *problem) {
         if (prev < tmp) {
             tmp_interval = interval_alloc(prev, tmp, -1, jobarray, njobs);
             g_ptr_array_add(tmp_array, tmp_interval);
-            CCcheck_NULL_2(tmp_interval, "Failed to allocate memory") prev =
-                tmp_j->duetime;
+            CCcheck_NULL_2(tmp_interval, "Failed to allocate memory");
+            prev = tmp_j->duetime;
         }
     }
 
@@ -304,8 +300,6 @@ int find_division(wctproblem *problem) {
             counter++;
         }
     }
-
-    create_ordered_jobs_array(root_pd->local_intervals, root_pd->ordered_jobs);
 
 CLEAN:
     g_ptr_array_free(tmp_array, TRUE);

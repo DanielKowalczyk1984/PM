@@ -17,12 +17,11 @@ class conflict_state {
 
 class PricerConstruct : public tdzdd::DdSpec<PricerConstruct, int, 2> {
     GPtrArray *pair_list;
-    int **sum_p;
     int nlayers;
 
 public:
-    PricerConstruct(GPtrArray *_pair_list, int **_sum_p)
-    : pair_list(_pair_list), sum_p(_sum_p){
+    PricerConstruct(GPtrArray *_pair_list)
+    : pair_list(_pair_list){
         nlayers = pair_list->len;
     };
 
@@ -40,65 +39,34 @@ public:
          Job *tmp_j = (Job *) tmp_pair->j;
 
          if (level - 1 == 0 && value) {
-             return (state + tmp_j->processingime> tmp_interval->a &&
-                     state + tmp_j->processingime<= tmp_interval->b)
-                        ? -1
-                        : 0;
+             return (state + tmp_j->processingime <= tmp_interval->b)? -1 : 0;
          } else if (level - 1 == 0) {
-             return (state <= tmp_interval->b) ? -1 : 0;
+             return ( state <= tmp_interval->b) ? -1 : 0;
          }
 
          if (value) {
-             int sum = state + tmp_j->processingime;
-             _j = min_job(layer, sum);
+             state = state + tmp_j->processingime;
+             _j = min_job(layer, state, value);
 
-             if(_j < nlayers) {
-                 tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list,_j);
-                 tmp_interval = tmp_pair->I;
-                 tmp_j = tmp_pair->j;
-                 if(sum + sum_p[tmp_interval->key][tmp_j->job] < tmp_interval->b) {
-                     return 0;
-                 }
-             }
-
-             if (!(_j < nlayers)) {
-                tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list,_j - 1);
-                tmp_interval = tmp_pair->I;
-                 if ((sum <= tmp_interval->b)) {
-                     return -1;
-                 }
-
-                 return 0;
-             }
-             state = sum;
-         } else {
-             _j = min_job(layer, state);
-
-             if(_j < nlayers) {
-                tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list,_j);
-                tmp_interval = tmp_pair->I;
-                tmp_j = tmp_pair->j;
-                if(state + sum_p[tmp_interval->key][tmp_j->job] < tmp_interval->b) {
-                    return 0;
+             if(!(_j < nlayers)) {
+                if( state <= tmp_interval->b) {
+                    if(value_Fj(state, tmp_j) - value_Fj(state + 1, tmp_j) > 0) {
+                        return 0;
+                    }
+                    return -1;
                 }
+                return 0;
              }
+         } else {
+             _j = min_job(layer, state,value);
 
-             if (!(_j < nlayers)) {
-                tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list,_j - 1);
-                tmp_interval = tmp_pair->I;
-                 if (state <= tmp_interval->b) {
-                     return -1;
-                 }
-
-                 return 0;
+             if(!(_j < nlayers)) {
+                if( state <= tmp_interval->b) {
+                    return -1;
+                }
+                return 0;
              }
          }
-
-         // if (_j == nbjobs && state >= Hmin && state <= Hmax) {
-         //     return -1;
-         // } else if (_j == nbjobs) {
-         //     return 0;
-         // }
 
          assert(_j < nlayers);
          return nlayers - _j;
@@ -107,154 +75,50 @@ public:
     ~PricerConstruct(){};
 
     private:
-     int min_job(int j, int state) const {
-         int  val = j + 1;
+     int min_job(int j, int state, int value) const {
+         int  val = nlayers;
          job_interval_pair *tmp_pair;
          interval *tmp_interval;
-         tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, j);
-         Job *prev_job = tmp_pair->j;
-         Job *job;
+         Job *tmp_j;
+         Job * tmp = ((job_interval_pair*) g_ptr_array_index(pair_list,j))->j;
+         int key = ((job_interval_pair*) g_ptr_array_index(pair_list,j))->I->key;
 
+         if(value) {
+             for (int i = j + 1; i < nlayers; ++i) {
+                tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, i);
+                tmp_interval = tmp_pair->I;
+                tmp_j = tmp_pair->j;
 
-         for (int i = j + 1; i < nlayers; ++i) {
-            tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, i);
-            tmp_interval = tmp_pair->I;
-            job = tmp_pair->j;
-
-             if (state > tmp_interval->a - job->processingime &&
-                 state <= tmp_interval->b - job->processingime && prev_job->job != job->job) {
-                 val = i;
-                 break;
+                 if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b ) {
+                     if(diff_obj(tmp, tmp_j, state) >= 0 && key != tmp_interval->key) {
+                         continue;
+                     }
+                     val = i;
+                     break;
+                 }
              }
-             prev_job = job;
+         } else {
+            for (int i = j + 1; i < nlayers; ++i) {
+               tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, i);
+               tmp_interval = tmp_pair->I;
+               tmp_j = tmp_pair->j;
+
+                if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b) {
+                    val = i;
+                    break;
+                }
+            }
          }
 
          return val;
      }
 
+     int diff_obj(Job *i, Job *j, int C) const {
+        return value_Fj(C, i) + value_Fj(C + j->processingime, j) - (value_Fj(C - i->processingime + j->processingime, j) + value_Fj(C + j->processingime, i));
 
-};
+     }
 
-class PricerSpec : public tdzdd::DdSpec<PricerSpec, int, 2> {
-    Job *jobarray;
-    int  nbjobs;
-    int  Hmin;
-    int  Hmax;
 
-   public:
-    int *sum_p;
-    int *min_p;
-    PricerSpec(Job *_jobarray, int _nbjobs, int Hmin, int Hmax)
-        : jobarray(_jobarray), nbjobs(_nbjobs), Hmin(Hmin), Hmax(Hmax) {
-        nbjobs = _nbjobs;
-        sum_p = new int[nbjobs];
-        min_p = new int[nbjobs];
-        int end = nbjobs - 1;
-        sum_p[end] = jobarray[end].processingime;
-        min_p[end] = jobarray[end].processingime;
-
-        for (int i = end - 1; i >= 0; i--) {
-            sum_p[i] = sum_p[i + 1] + jobarray[i].processingime;
-
-            if (jobarray[i].processingime < min_p[i + 1]) {
-                min_p[i] = jobarray[i].processingime;
-            } else {
-                min_p[i] = min_p[i + 1];
-            }
-        }
-    }
-
-    ~PricerSpec() {
-        delete[] min_p;
-        delete[] sum_p;
-    }
-
-    int getRoot(int &state) const {
-        state = 0;
-        return nbjobs;
-    }
-
-    int getChild(int &state, int level, int value) const {
-        int job = nbjobs - level;
-        int _j;
-        assert(0 <= job && job <= nbjobs - 1);
-        int temp_p = jobarray[job].processingime;
-
-        if (level - 1 == 0 && value) {
-            return (state + jobarray[job].processingime >= Hmin &&
-                    state + jobarray[job].processingime <= Hmax)
-                       ? -1
-                       : 0;
-        } else if (level - 1 == 0) {
-            return (state >= Hmin && state <= Hmax) ? -1 : 0;
-        }
-
-        if (value) {
-            int sum = state + temp_p;
-            _j = min_job(job, sum);
-
-            if (_j < nbjobs) {
-                if (state + sum_p[_j] < Hmin) {
-                    return 0;
-                }
-
-                if ((sum >= Hmin && sum <= Hmax) && (sum + min_p[_j] > Hmax)) {
-                    return -1;
-                }
-            } else {
-                if ((sum >= Hmin && sum <= Hmax)) {
-                    return -1;
-                }
-
-                return 0;
-            }
-
-            state = sum;
-        } else {
-            _j = min_job(job, state);
-
-            if (_j < nbjobs) {
-                if (state + sum_p[_j] < Hmin) {
-                    return 0;
-                }
-
-                if ((state >= Hmin && state <= Hmax) &&
-                    (state + min_p[_j] > Hmax)) {
-                    return -1;
-                }
-            } else {
-                if (state >= Hmin && state <= Hmax) {
-                    return -1;
-                }
-
-                return 0;
-            }
-        }
-
-        // if (_j == nbjobs && state >= Hmin && state <= Hmax) {
-        //     return -1;
-        // } else if (_j == nbjobs) {
-        //     return 0;
-        // }
-
-        assert(_j < nbjobs);
-        return nbjobs - _j;
-    }
-
-   private:
-    int min_job(int j, int state) const {
-        int  val = j + 1;
-
-        // for (i = j + 1; i < nbjobs; ++i) {
-        //     if (state >= jobarray[i].releasetime &&
-        //         state <= jobarray[i].duetime - jobarray[i].processingime) {
-        //         val = i;
-        //         break;
-        //     }
-        // }
-
-        return val;
-    }
 };
 
 class ConflictConstraints

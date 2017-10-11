@@ -10,7 +10,6 @@
 
 struct PricerSolver {
    public:
-    //tdzdd::DdStructure<2> *                   dd;
     tdzdd::DdStructure<2> *                   zdd;
     GPtrArray *                               interval_list;
     int                                       njobs;
@@ -20,18 +19,17 @@ struct PricerSolver {
     tdzdd::DataTable<PricerWeightBDD<double>> dd_table;
     tdzdd::DataTable<PricerFarkasZDD<double>> farkas_table;
 
-    PricerSolver(
-        GPtrArray *_interval_list, int &njobs, int **_sum_p)
+    PricerSolver(GPtrArray *_interval_list, int &njobs)
         : interval_list(_interval_list),
-          njobs(njobs),
-          sum_p(_sum_p) {
+          njobs(njobs) {
             nlayers = (int) interval_list->len;
-            PricerConstruct ps(interval_list, sum_p);
+
+            PricerConstruct ps(interval_list);
             zdd = new tdzdd::DdStructure<2>(ps);
+            long tmp_size = zdd->size();
             zdd->zddReduce();
-            printf("size ZDD= %lu\n", zdd->size());
+            printf("size BDD = %lu, size ZDD= %lu\n",tmp_size, zdd->size());
             init_zdd_table();
-            // init_bdd_table();
             // init_table_farkas();
     };
 
@@ -107,10 +105,8 @@ struct PricerSolver {
             Job *job = tmp_pair->j;
 
             for (size_t j = 0; j < m; j++) {
-                tdzdd::NodeId cur_node_0 =
-                    handler.privateEntity().child(i, j, 0);
-                tdzdd::NodeId cur_node_1 =
-                    handler.privateEntity().child(i, j, 1);
+                tdzdd::NodeId cur_node_0 = handler.privateEntity().child(i, j, 0);
+                tdzdd::NodeId cur_node_1 = handler.privateEntity().child(i, j, 1);
 
                 // for (auto &it : zdd_table[i][j].info_node) {
                 //     zdd_table[cur_node_0.row()][cur_node_0.col()].add_weight(it.first);
@@ -120,14 +116,8 @@ struct PricerSolver {
 
                 for (my_iterator<double> it = zdd_table[i][j].list.begin();
                      it != zdd_table[i][j].list.end(); it++) {
-                    (*it)->n = zdd_table[cur_node_0.row()][cur_node_0.col()]
-                                   .add_weight((*it)->weight,
-                                               nlayers - cur_node_0.row());
-                    (*it)->y =
-                        zdd_table[cur_node_1.row()][cur_node_1.col()]
-                            .add_weight(
-                                (*it)->weight + job->processingime,
-                                nlayers - cur_node_1.row());
+                    (*it)->n = zdd_table[cur_node_0.row()][cur_node_0.col()].add_weight((*it)->weight,nlayers - cur_node_0.row());
+                    (*it)->y = zdd_table[cur_node_1.row()][cur_node_1.col()].add_weight((*it)->weight + job->processingime,nlayers - cur_node_1.row());
                 }
             }
         }
@@ -158,7 +148,7 @@ struct PricerSolver {
             elist_differ[1] = v2;
         }
 
-        ConflictConstraints conflict(50000, elist_same, ecount_same,
+        ConflictConstraints conflict(nlayers, elist_same, ecount_same,
                                      elist_differ, ecount_diff);
         zdd->zddSubset(tdzdd::ZddLookahead<ConflictConstraints>(conflict));
         zdd->zddReduce();
@@ -210,7 +200,7 @@ struct PricerSolver {
 
     class Optimal_Solution<double>
     solve_weight_zdd_double(double *pi) {
-        return Optimal_Solution<double>();
+        return zdd->evaluate_weight(WeightZDDdouble(pi, interval_list, njobs), zdd_table);
     }
 
     class Optimal_Solution<double>

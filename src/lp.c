@@ -27,7 +27,7 @@ int wctlp_init(wctlp **lp, const char *name)
         printf("val = %d\n", val);
     }
 
-    val = GRBsetintparam((*lp)->env, GRB_INT_PAR_OUTPUTFLAG, 1);
+    val = GRBsetintparam((*lp)->env, GRB_INT_PAR_OUTPUTFLAG, 0);
     //                     (dbg_lvl() > 1) ? 1 : 0);
     CHECK_VAL_GRB(val, "GRBsetintparam OUTPUTFLAG failed", (*lp)->env);
     val = GRBsetintparam((*lp)->env, GRB_INT_PAR_THREADS, 1);

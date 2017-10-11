@@ -130,7 +130,7 @@ int build_lp(wctdata *pd, int construct)
 
     for (int i = 0; i < njobs; i++) {
         val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL,
-                           wctlp_GREATER_EQUAL, 1.0, (char *)NULL);
+                           wctlp_EQUAL, 1.0, (char *)NULL);
         CCcheck_val_2(val, "Failed wctlp_addrow");
     }
 
@@ -143,8 +143,6 @@ int build_lp(wctdata *pd, int construct)
 
     /** add columns from localColPool */
     g_ptr_array_foreach(pd->localColPool, g_add_col_to_lp, pd);
-
-    wctlp_optimize(pd->LP, &nmachines);
 
 
     /** add constraint about number of machines */

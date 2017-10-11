@@ -9,7 +9,7 @@ void set_dbg_lvl(int dbglvl) { debug = dbglvl; }
 /*Functions for initialization of the problem and freeing the problem*/
 void wctproblem_init(wctproblem *problem) {
     /** Job data */
-    problem->g_job_array = g_ptr_array_new_with_free_func(free);
+    problem->g_job_array = g_ptr_array_new_with_free_func(g_job_free);
     problem->opt_sol = (solution *)NULL;
     /** Job summary */
     problem->njobs = 0;

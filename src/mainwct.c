@@ -194,10 +194,12 @@ int main(int ac, char **av) {
 
     /** Finding heuristic solutions to the problem */
     heuristic_rpup(&problem);
-    // problem.root_pd.solver = newSolver(problem.root_pd.ordered_jobs,problem.njobs, problem.root_pd.sump);
+    problem.root_pd.solver = newSolver(problem.root_pd.ordered_jobs,problem.njobs);
 
     /** Branch-and-Price Algorithm */
-    // build_lp(&(problem.root_pd), 0);
+    build_lp(&(problem.root_pd), 0);
+
+    compute_lower_bound(&problem, &(problem.root_pd));
 
 CLEAN:
     wctproblem_free(&problem);

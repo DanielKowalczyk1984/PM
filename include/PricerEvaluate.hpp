@@ -18,6 +18,7 @@ class node {
     int      weight;
     T        obj;
     bool     take;
+    Job *prev;
     node<T> *y;
     node<T> *n;
 
@@ -26,6 +27,7 @@ class node {
           weight(0),
           obj(0.0),
           take(false),
+          prev(nullptr),
           y(nullptr),
           n(nullptr){
 
@@ -119,6 +121,7 @@ class PricerWeightZDD {
         p->weight = _weight;
         p->obj = 0.0;
         p->take = false;
+        p->prev = nullptr;
         list.push_back(p);
 
         return (list.back());
@@ -126,7 +129,7 @@ class PricerWeightZDD {
 
     void init_terminal_node(int j) {
         for (my_iterator<T> it = list.begin(); it != list.end(); it++) {
-            (*it)->obj = j ? 0.0 : -1871286761.0;
+            (*it)->obj = j ? 0.0 : -DBL_MAX/100.0;
             (*it)->take = false;
         }
     }
@@ -153,9 +156,11 @@ class Optimal_Solution {
     T                obj;
     int              cost;
     int              C_max;
-    GPtrArray *jobs;
+    GPtrArray       *jobs;
 
-    Optimal_Solution() : obj(0), cost(0), C_max(0) {}
+    Optimal_Solution() : obj(0), cost(0), C_max(0) {
+    jobs = g_ptr_array_new();
+}
 
     Optimal_Solution &operator=(const Optimal_Solution &other) {
         obj = other.obj;
@@ -178,7 +183,6 @@ class Optimal_Solution {
     };
 
     ~Optimal_Solution(){
-        g_ptr_array_free(jobs, TRUE);
     }
 };
 
@@ -264,9 +268,6 @@ class WeightZDD
     GPtrArray *interval_list;
     int nlayers;
     int nbjobs;
-    job_interval_pair *tmp_pair;
-    Job *tmp_j;
-    interval *tmp_interval;
 
    public:
     WeightZDD(T *_pi, GPtrArray *_interval_list, int _nbjobs): pi(_pi), interval_list(_interval_list), nbjobs(_nbjobs) {
@@ -282,8 +283,8 @@ class WeightZDD
     void evalNode(PricerWeightZDD<T> *n,int i, tdzdd::DdValues<PricerWeightZDD<T>, 2> &values) const {
         int j = nlayers - i;
         assert(j >= 0 && j <= nlayers - 1);
-        tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
-        tmp_j = tmp_pair->j;
+        job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
+        Job *tmp_j = tmp_pair->j;
 
         for (my_iterator<T> it = n->list.begin(); it != n->list.end(); it++) {
             int      weight = ((*it)->weight);
@@ -292,13 +293,14 @@ class WeightZDD
             T        obj0 = p0->obj;
             T        obj1 = p1->obj;
 
-            if (obj0 >= obj1 - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job]) {
-                (*it)->obj = obj0;
-                (*it)->take = false;
-            } else {
+            if ((obj0 < obj1 - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job])) {
                 (*it)->obj = obj1 - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
                 (*it)->take = true;
-            };
+                // (*it)->prev = tmp_j;
+            } else {
+                (*it)->obj = obj0;
+                (*it)->take = false;
+            }
         }
     }
 
@@ -312,17 +314,13 @@ class WeightZDD
     Optimal_Solution<T> get_objective(tdzdd::NodeTableHandler<2> diagram,tdzdd::DataTable<PricerWeightZDD<T>> *data_table,
         const tdzdd::NodeId *f) {
         Optimal_Solution<T> sol;
-        sol.C_max = 0;
-        sol.cost = 0;
         sol.obj = (*data_table)[f->row()][f->col()].list[sol.C_max]->obj;
-        sol.jobs = g_ptr_array_new();
         node<T> *ptr = (*data_table)[f->row()][f->col()].list[sol.C_max];
-        int j = ptr->layer;
         job_interval_pair *tmp_pair;
         Job *tmp_j;
 
         while (ptr->layer != nlayers) {
-            tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
+            tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, ptr->layer);
             tmp_j = tmp_pair->j;
             if (ptr->take) {
                 g_ptr_array_add(sol.jobs, tmp_j);
@@ -332,7 +330,6 @@ class WeightZDD
             } else {
                 ptr = ptr->n;
             }
-            j = ptr->layer;
         }
 
         return sol;

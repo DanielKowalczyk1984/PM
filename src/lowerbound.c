@@ -36,11 +36,12 @@ static int grow_ages(wctdata *pd) {
     int  val = 0;
     int nb_cols;
     wctlp_get_nb_cols(pd->LP, &nb_cols);
-    pd->cstat = (int *)CC_SAFE_REALLOC(pd->cstat, nb_cols, int);
+    assert(nb_cols == pd->localColPool->len);
+    CC_IFFREE(pd->cstat, int);
+    pd->cstat = (int *)CC_SAFE_MALLOC(nb_cols, int);
     CCcheck_NULL_2(pd->cstat, "Failed to allocate cstat");
     val = wctlp_basis_cols(pd->LP, pd->cstat, 0);
     CCcheck_val_2(val, "Failed in wctlp_basis_cols");
-    assert(nb_cols == pd->localColPool->len);
     pd->dzcount = 0;
 
     g_ptr_array_foreach(pd->localColPool, g_grow_ages, pd);
@@ -121,44 +122,6 @@ static int delete_old_cclasses(wctdata *pd) {
 CLEAN:
     return val;
 }
-
-// int add_newsets(wctdata *pd) {
-//     int          val = 0;
-//     scheduleset *tmpsets = (scheduleset *)NULL;
-//     int          i;
-
-//     if (pd->nnewsets == 0) {
-//         return val;
-//     }
-
-//     if (pd->ccount + pd->nnewsets > pd->gallocated) {
-//         pd->gallocated *= 2;
-//         tmpsets = CC_SAFE_MALLOC(pd->gallocated, scheduleset);
-//         CCcheck_NULL_2(tmpsets, "Failed to allocate memory to tmpsets");
-//         memcpy(tmpsets, pd->cclasses, pd->ccount * sizeof(scheduleset));
-//         free(pd->cclasses);
-//         pd->cclasses = tmpsets;
-//         tmpsets = NULL;
-//     }
-
-//     memcpy(pd->cclasses + pd->ccount, pd->newsets,
-//            pd->nnewsets * sizeof(scheduleset));
-//     pd->ccount += pd->nnewsets;
-
-//     for (i = pd->ccount; i < pd->gallocated; i++) {
-//         scheduleset_init(pd->cclasses + i);
-//     }
-
-// CLEAN:
-
-//     if (val) {
-//         CC_IFFREE(pd->cclasses, scheduleset);
-//     }
-
-//     CC_IFFREE(pd->newsets, scheduleset);
-//     pd->nnewsets = 0;
-//     return val;
-// }
 
 void g_make_pi_feasible(gpointer data, gpointer user_data){
     scheduleset *x = (scheduleset *) data;
@@ -362,10 +325,10 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
 
     /** Compute LP relaxation */
     real_time_solve_lp = getRealTime();
-    CCutil_resume_timer(&(problem->tot_solve_lp));
+    CCutil_start_resume_time(&(problem->tot_solve_lp));
     val = wctlp_optimize(pd->LP, &status);
     CCcheck_val_2(val, "wctlp_optimize failed");
-    CCutil_resume_timer(&(problem->tot_solve_lp));
+    CCutil_suspend_timer(&(problem->tot_solve_lp));
     real_time_solve_lp = getRealTime() - real_time_solve_lp;
     problem->real_time_solve_lp += real_time_solve_lp;
 
@@ -460,9 +423,14 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         real_time_pricing = getRealTime() - real_time_pricing;
         problem->real_time_pricing += real_time_pricing;
 
-        for (j = 0; j < pd->nnewsets && pd->update; j++) {
-            addColToLP(pd->newsets, pd);
-            CCcheck_val_2(val, "wctlp_addcol failed");
+        if(pd->update) {
+            for (j = 0; j < pd->nnewsets; j++) {
+                val = addColToLP(pd->newsets + j, pd);
+                g_ptr_array_add(pd->localColPool, pd->newsets + j);
+                CCcheck_val_2(val, "wctlp_addcol failed");
+            }
+        } else {
+            schedulesets_free(&(pd->newsets), &(pd->nnewsets));
         }
 
         switch (status) {
@@ -470,13 +438,11 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 switch (parms->stab_technique) {
                     case stab_wentgnes:
                     case stab_dynamic:
-                        break_while_loop =
-                            (CC_OURABS(pd->eta_out - pd->eta_in) < 0.00001);
+                        break_while_loop = (CC_OURABS(pd->eta_out - pd->eta_in) < 0.00001);
                         break;
 
                     case no_stab:
-                        break_while_loop =
-                            (pd->nnewsets == 0 || nnonimprovements > 5);
+                        break_while_loop = (pd->nnewsets == 0 || nnonimprovements > 5);
                         break;
                 }
 
@@ -487,15 +453,9 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 break;
         }
 
-        if (pd->update) {
-            g_ptr_array_add(pd->localColPool, pd->newsets);
-        } else {
-            schedulesets_free(&pd->newsets, &pd->nnewsets);
-        }
-
         /** Compute LP relaxation */
         real_time_solve_lp = getRealTime();
-        CCutil_resume_timer(&(problem->tot_solve_lp));
+        CCutil_start_resume_time(&(problem->tot_solve_lp));
         val = wctlp_optimize(pd->LP, &status);
         CCcheck_val_2(val, "wctlp_optimize failed");
         CCutil_suspend_timer(&(problem->tot_solve_lp));
@@ -587,8 +547,9 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         }
     }
 
-    if (dbg_lvl() > 1) {
+    if (dbg_lvl() > -1) {
         printf("iterations = %d\n", iterations);
+        printf("lowerbound %d\n", pd->lower_bound + pd->problem->off);
     }
 
     fflush(stdout);

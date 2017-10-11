@@ -28,8 +28,8 @@ int calculate_Hmin(
 int preprocess_data(wctproblem *problem);
 int find_division(wctproblem *problem);
 void g_problem_summary_init(gpointer data, gpointer user_data);
-int calculate_sump(wctproblem *problem);
 void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b);
+void determine_jobs_order_interval(wctproblem *problem);
 
 /**
  * greedy.c

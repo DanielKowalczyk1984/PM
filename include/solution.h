@@ -14,6 +14,7 @@ typedef struct _Job {
     int releasetime;
     int duetime;
     int index;
+    int *pos_interval;
 } Job;
 
 typedef struct _solution {
@@ -38,6 +39,7 @@ int solution_update(solution *dest, solution *src);
 int solution_check(partlist *part, int jcount);
 
 Job *job_alloc(int *p, int *w, int *d);
+void g_job_free(void *set);
 void g_print_job(gpointer data, gpointer user_data);
 gint g_job_compare_edd(const void *a, const void *b, void *data);
 void g_set_jobarray_job(gpointer data, gpointer user_data);

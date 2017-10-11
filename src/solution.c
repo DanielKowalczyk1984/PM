@@ -41,6 +41,14 @@ void solution_free(solution **sol) {
     }
 }
 
+void g_job_free(void *set) {
+    Job *tmp = (Job *) set;
+    if (tmp) {
+        CC_IFFREE(tmp->pos_interval, int);
+        CC_IFFREE(tmp, Job);
+    }
+}
+
 solution *solution_alloc(int nmachines, int njobs, int off) {
     int       val = 0;
     int       i;
@@ -203,6 +211,7 @@ Job *job_alloc(int *p, int *w, int *d) {
     j->processingime = *p;
     j->duetime = *d;
     j->weight = *w;
+    j->pos_interval = (int *) NULL;
     return j;
 }
 
