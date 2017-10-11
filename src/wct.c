@@ -266,62 +266,6 @@ void wctdata_free(wctdata *pd) {
     CC_IFFREE(pd->v2_wide, int);
 }
 
-int partlist_to_scheduleset(
-    partlist *part, int nbpart, int njobs, scheduleset **classes, int *ccount) {
-    int val = 0;
-    int i, j = 0, k = 0;
-    schedulesets_free(classes, ccount);
-    *ccount = j;
-    scheduleset *temp_sets = CC_SAFE_MALLOC(*ccount, scheduleset);
-    CCcheck_NULL_2(temp_sets, "Failed to allocate memory to temp_sets");
-
-    for (i = 0; i < nbpart; i++) {
-        if (0) {
-            scheduleset_init(temp_sets + k);
-            temp_sets[k].totweight = part[i].c;
-            temp_sets[k].members = CC_SAFE_MALLOC(temp_sets[k].count + 1, int);
-            CCcheck_NULL(temp_sets[k].members,
-                         "Failed to allocate memory to members");
-            temp_sets[k].totwct = 0;
-            temp_sets[k].C = CC_SAFE_MALLOC(temp_sets[k].count, int);
-            CCcheck_NULL(temp_sets[k].C, "Failed to allocate memory to C");
-            temp_sets[k].table =
-                g_hash_table_new(g_direct_hash, g_direct_equal);
-            CCcheck_NULL(temp_sets[k].table, "Failed to construct table");
-            GList *v = (GList *)NULL;
-            j = 0;
-            int completion = 0;
-
-            while (v != NULL) {
-                Job *job = (Job *)v->data;
-                completion += job->processingime;
-                temp_sets[k].C[j] = completion;
-                temp_sets[k].members[j] = job->job;
-                g_hash_table_insert(temp_sets[k].table,
-                                    GINT_TO_POINTER(job->job),
-                                    temp_sets[k].C + j);
-                temp_sets[k].totwct += job->weight * completion;
-                v = g_list_next(v);
-                j++;
-            }
-
-            temp_sets[k].members[j] = njobs;
-            // CCutil_int_array_quicksort( temp_sets[k].members,
-            // temp_sets[k].count );
-            k++;
-        }
-    }
-
-    *classes = temp_sets;
-CLEAN:
-
-    if (val) {
-        schedulesets_free(&temp_sets, ccount);
-    }
-
-    return val;
-}
-
 int set_id_and_name(wctdata *pd, int id, const char *fname) {
     int val = 0;
     int sval = 0;
@@ -500,7 +444,7 @@ int add_solution_to_colpool(solution *sol, wctdata *pd){
 
     for(int i = 0; i < sol->nmachines; ++i) {
         GPtrArray *machine = sol->part[i].machine;
-        tmp = scheduleset_from_solution(machine);
+        tmp = scheduleset_from_solution(machine, pd->njobs);
         CCcheck_NULL_2(tmp, "Failed to allocate memory");
         g_ptr_array_add(pd->localColPool, tmp);
     }
