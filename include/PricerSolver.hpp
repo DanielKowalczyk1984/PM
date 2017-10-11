@@ -16,14 +16,10 @@ struct PricerSolver {
     int **sum_p;
     int nlayers;
     tdzdd::DataTable<PricerWeightZDD<double>> zdd_table;
-    tdzdd::DataTable<PricerWeightBDD<double>> dd_table;
     tdzdd::DataTable<PricerFarkasZDD<double>> farkas_table;
 
-    PricerSolver(GPtrArray *_interval_list, int &njobs)
-        : interval_list(_interval_list),
-          njobs(njobs) {
+    PricerSolver(GPtrArray *_interval_list, int &njobs): interval_list(_interval_list), njobs(njobs) {
             nlayers = (int) interval_list->len;
-
             PricerConstruct ps(interval_list);
             zdd = new tdzdd::DdStructure<2>(ps);
             long tmp_size = zdd->size();
@@ -40,8 +36,25 @@ struct PricerSolver {
         njobs = other.njobs;
         nlayers = other.nlayers;
         zdd_table.init();
-        dd_table.init();
         farkas_table.init();
+    }
+
+    PricerSolver &operator=(PricerSolver const &other) {
+        if (this != &other) {
+            zdd = new tdzdd::DdStructure<2>;
+            *zdd = *(other.zdd);
+            interval_list = other.interval_list;
+            nlayers = other.nlayers;
+            njobs = other.njobs;
+            zdd_table = tdzdd::DataTable<PricerWeightZDD<double>>();
+            farkas_table = tdzdd::DataTable<PricerFarkasZDD<double>>();
+        }
+
+        return *this;
+    }
+
+    ~PricerSolver() noexcept {
+        delete zdd;
     }
 
     void init_tables() {
@@ -49,9 +62,6 @@ struct PricerSolver {
         init_table_farkas();
     }
 
-    ~PricerSolver() {
-        delete zdd;
-    }
 
     void create_dot_zdd(const char *name) {
         std::ofstream file;
@@ -107,12 +117,6 @@ struct PricerSolver {
             for (size_t j = 0; j < m; j++) {
                 tdzdd::NodeId cur_node_0 = handler.privateEntity().child(i, j, 0);
                 tdzdd::NodeId cur_node_1 = handler.privateEntity().child(i, j, 1);
-
-                // for (auto &it : zdd_table[i][j].info_node) {
-                //     zdd_table[cur_node_0.row()][cur_node_0.col()].add_weight(it.first);
-                //     zdd_table[cur_node_1.row()][cur_node_1.col()].add_weight(it.first
-                //     + p[cur_job]);
-                // }
 
                 for (my_iterator<double> it = zdd_table[i][j].list.begin();
                      it != zdd_table[i][j].list.end(); it++) {
@@ -183,20 +187,6 @@ struct PricerSolver {
         farkas_table.init();
     }
 
-    class Optimal_Solution<double>
-    solve_duration_bdd_double(double *pi) {
-        return Optimal_Solution<double>();
-    }
-
-    class Optimal_Solution<double>
-    solve_duration_zdd_double(double *pi) {
-        return Optimal_Solution<double>();
-    }
-
-    class Optimal_Solution<double>
-    solve_weight_bdd_double(double *pi) {
-        return Optimal_Solution<double>();
-    }
 
     class Optimal_Solution<double>
     solve_weight_zdd_double(double *pi) {
@@ -207,24 +197,6 @@ struct PricerSolver {
     solve_farkas_double(double *pi) {
         return Optimal_Solution<double>();
     }
-
-    PricerSolver &
-    operator=(PricerSolver const &other) {
-        if (this != &other) {
-            zdd = new tdzdd::DdStructure<2>;
-            *zdd = *(other.zdd);
-            interval_list = other.interval_list;
-            nlayers = other.nlayers;
-            njobs = other.njobs;
-            zdd_table = tdzdd::DataTable<PricerWeightZDD<double>>();
-            dd_table = tdzdd::DataTable<PricerWeightBDD<double>>();
-            farkas_table = tdzdd::DataTable<PricerFarkasZDD<double>>();
-        }
-
-        return *this;
-    }
-
-    void set_release_due_time(Job *_jobarray) { ; }
 
     void iterate_zdd() {
         tdzdd::DdStructure<2>::const_iterator it = zdd->begin();
