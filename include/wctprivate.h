@@ -58,6 +58,7 @@ struct wctdata {
 
     // The column generation lp information
     wctlp *LP;
+    wctlp *MIP;
     double *x;
     double *coef;
     double *pi;
@@ -101,6 +102,7 @@ struct wctdata {
     double  eta_in;
     double  eta_out;
     double  eta_sep;
+    double reduced_cost;
     double  alpha;
     int     update;
 
@@ -271,6 +273,8 @@ int solve_pricing(wctdata *pd, wctparms *parms);
 int solve_farkas_dbl(wctdata *pd);
 int solve_farkas_dbl_DP(wctdata *pd);
 void print_dot_file(PricerSolver *solver, char *name);
+int evaluate_nodes(wctdata *pd);
+int build_solve_mip(wctdata *pd);
 
 /**
  * Stabilization techniques

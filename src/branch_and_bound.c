@@ -108,20 +108,20 @@ void init_BB_tree(wctproblem *problem) {
     }
 }
 
-int insert_frac_pairs_into_heap(wctdata *    pd,
-                                int *        nodepair_refs,
-                                double *     nodepair_weights,
-                                int          npairs,
-                                pmcheap *    heap) {
-    int     val = 0;
-    int     i;
-    int     ref_key;
-    int nb_cols;
-    double *mean_error = CC_SAFE_MALLOC(npairs, double);
-    int *   mean_counter = CC_SAFE_MALLOC(npairs, int);
+int insert_frac_pairs_into_heap(wctdata *pd,
+                                int *    nodepair_refs,
+                                double * nodepair_weights,
+                                int      npairs,
+                                pmcheap *heap) {
+    int          val = 0;
+    int          i;
+    int          ref_key;
+    int          nb_cols;
+    double *     mean_error = CC_SAFE_MALLOC(npairs, double);
+    int *        mean_counter = CC_SAFE_MALLOC(npairs, int);
     scheduleset *tmp_schedule;
-    Job *tmp_j1;
-    Job *tmp_j2;
+    Job *        tmp_j1;
+    Job *        tmp_j2;
 
     CCcheck_NULL_2(mean_error, "Failed to allocate memory");
     CCcheck_NULL_2(mean_counter, "Failed to allocate memory");
@@ -130,7 +130,6 @@ int insert_frac_pairs_into_heap(wctdata *    pd,
     wctlp_get_nb_cols(pd->LP, &nb_cols);
     assert(nb_cols == pd->localColPool->len);
 
-
     for (i = 0; i < nb_cols; ++i) {
         int j;
 
@@ -138,10 +137,10 @@ int insert_frac_pairs_into_heap(wctdata *    pd,
             pd->x[i] >= 1.0 - lp_int_tolerance()) {
             continue;
         }
-        tmp_schedule = (scheduleset *) g_ptr_array_index(pd->localColPool, i);
+        tmp_schedule = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
 
-        for(j = 0; j < tmp_schedule->jobs->len; ++j) {
-            tmp_j1 = (Job *) g_ptr_array_index(tmp_schedule->jobs,j);
+        for (j = 0; j < tmp_schedule->jobs->len; ++j) {
+            tmp_j1 = (Job *)g_ptr_array_index(tmp_schedule->jobs, j);
             int v1 = tmp_j1->job;
             int k;
             ref_key = nodepair_ref_key(v1, v1);
@@ -149,11 +148,12 @@ int insert_frac_pairs_into_heap(wctdata *    pd,
 
             for (k = j + 1; k < tmp_schedule->jobs->len; ++k) {
                 assert(k != j);
-                tmp_j2 = (Job *) g_ptr_array_index(tmp_schedule->jobs,k);
+                tmp_j2 = (Job *)g_ptr_array_index(tmp_schedule->jobs, k);
                 int v2 = tmp_j2->job;
                 assert(v1 < v2);
                 ref_key = nodepair_ref_key(v1, v2);
-                mean_error[ref_key] += 0.5 - ABS(pd->x[i] - floor(pd->x[i]) - 0.5);
+                mean_error[ref_key] +=
+                    0.5 - ABS(pd->x[i] - floor(pd->x[i]) - 0.5);
                 mean_counter[ref_key]++;
                 nodepair_weights[ref_key] += pd->x[i];
             }
@@ -347,11 +347,11 @@ CLEAN:
 }
 
 static void scheduleset_unify(GPtrArray *array) {
-    int         i;
-    int it = 1;
-    int first_del = -1;
-    int last_del = -1;
-    int nb_col = array->len;
+    int          i;
+    int          it = 1;
+    int          first_del = -1;
+    int          last_del = -1;
+    int          nb_col = array->len;
     scheduleset *temp, *prev;
     g_ptr_array_sort(array, g_scheduleset_less);
 
@@ -359,17 +359,18 @@ static void scheduleset_unify(GPtrArray *array) {
         return;
     }
 
-    prev = (scheduleset *) g_ptr_array_index(array, 0);
+    prev = (scheduleset *)g_ptr_array_index(array, 0);
     /* Find first non-empty set */
     for (i = 1; i < nb_col; ++i) {
-        temp = (scheduleset *) g_ptr_array_index(array, it);
-        if (scheduleset_less(prev,temp)) {
+        temp = (scheduleset *)g_ptr_array_index(array, it);
+        if (scheduleset_less(prev, temp)) {
             if (first_del != -1) {
                 /** Delete recently found deletion range.*/
-                g_ptr_array_remove_range(array, first_del, last_del - first_del + 1);
+                g_ptr_array_remove_range(array, first_del,
+                                         last_del - first_del + 1);
                 it = it - (last_del - first_del);
                 first_del = last_del = -1;
-            } else{
+            } else {
                 it++;
             }
             prev = temp;
@@ -391,21 +392,21 @@ static void scheduleset_unify(GPtrArray *array) {
 }
 
 int prune_duplicated_sets(wctdata *pd) {
-    int val = 0;
+    int          val = 0;
     scheduleset *tmp;
-    GPtrArray *tmp_a;
-    Job *tmp_j;
+    GPtrArray *  tmp_a;
+    Job *        tmp_j;
     scheduleset_unify(pd->localColPool);
 
     if (dbg_lvl() > 1) {
         for (int i = 0; i < pd->localColPool->len; ++i) {
-            tmp = (scheduleset *) g_ptr_array_index(pd->localColPool, i);
+            tmp = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
             tmp_a = tmp->jobs;
 
             printf("TRANSSORT SET ");
 
             for (int j = 0; j < tmp_a->len; ++j) {
-                tmp_j = (Job *) g_ptr_array_index(tmp_a, j);
+                tmp_j = (Job *)g_ptr_array_index(tmp_a, j);
                 printf(" %d", tmp_j->job);
             }
 
@@ -576,8 +577,8 @@ int branching_msg(wctdata *pd, wctproblem *problem) {
             "size= %zu, nb_cols = %u ).\n",
             pd->lower_bound, pd->LP_lower_bound_BB, pd->depth, pd->id,
             problem->tot_cputime.cum_zeit, binomial_heap_num_entries(heap),
-            pd->njobs, problem->global_upper_bound, root->lower_bound, pd->v1->job,
-            pd->v2->job, pd->ecount_differ, pd->ecount_same,
+            pd->njobs, problem->global_upper_bound, root->lower_bound,
+            pd->v1->job, pd->v2->job, pd->ecount_differ, pd->ecount_same,
             get_datasize(pd->solver), pd->localColPool->len);
         CCutil_resume_timer(&problem->tot_cputime);
         problem->nb_explored_nodes++;
@@ -672,9 +673,9 @@ int branching_msg_cbfs(wctdata *pd, wctproblem *problem) {
             "size = %zu, nb_cols = %u ).\n",
             pd->lower_bound, pd->LP_lower_bound, pd->depth, pd->id,
             problem->tot_cputime.cum_zeit, nb_nodes, pd->njobs,
-            problem->global_upper_bound, root->lower_bound, pd->v1->job, pd->v2->job,
-            pd->ecount_differ, pd->ecount_same, get_datasize(pd->solver),
-            pd->localColPool->len);
+            problem->global_upper_bound, root->lower_bound, pd->v1->job,
+            pd->v2->job, pd->ecount_differ, pd->ecount_same,
+            get_datasize(pd->solver), pd->localColPool->len);
         CCutil_resume_timer(&problem->tot_cputime);
         problem->nb_explored_nodes++;
     }

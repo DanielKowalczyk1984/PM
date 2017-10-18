@@ -56,9 +56,10 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURC
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
 file(GLOB SOURCE_FILES  "src/*.c" "src/*.cc")
 
+message(${GUROBI_CXX_LIBRARY})
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${TdZDD_INCLUDE_DIR} ${EGlib_INCLUDE_DIR} ${GUROBI_INCLUDE_DIR} ${GLIB_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${COMMON_INCLUDES})
-target_link_libraries(${PROJECT_NAME} ${EGlib_LIBRARY_DIR} ${GUROBI_LIBRARY} ${GLIB_LIBRARIES} ${Boost_LIBRARIES} -lm -lpthread)
+target_link_libraries(${PROJECT_NAME} ${EGlib_LIBRARY_DIR} ${GUROBI_LIBRARY} ${GUROBI_CXX_LIBRARY} ${GLIB_LIBRARIES} ${Boost_LIBRARIES} -lm -lpthread)
 
 # Include CppCcheck
 include(CppcheckTargets)

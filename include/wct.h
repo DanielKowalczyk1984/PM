@@ -133,6 +133,7 @@ static inline int nodepair_ref_key(int v1, int v2) {
 
 int compute_schedule(wctproblem *problem);
 int add_solution_to_colpool(solution *sol, wctdata *pd);
+int add_solution_to_colpool_and_lp(solution *sol, wctdata *pd);
 
 
 /**

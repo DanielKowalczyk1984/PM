@@ -6,6 +6,7 @@ extern "C" {
 #endif
 #include <glib.h>
 #include <partlist.h>
+#include <util.h>
 
 typedef struct _Job {
     int job;
@@ -47,7 +48,7 @@ void g_print_jobarray(gpointer data, gpointer user_data);
 void g_print_machine(gpointer data, gpointer user_data);
 void g_set_sol_perm(gpointer data, gpointer user_data);
 
-int value_Fj(int C, Job *j);
+inline int value_Fj(int C, Job *j) { return j->weight * CC_MAX(0, C - j->duetime); }
 int value_diff_Fij(int C, Job *i, Job *j);
 
 int solution_canonical_order(solution *sol, GPtrArray *intervals);

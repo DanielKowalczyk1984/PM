@@ -1,26 +1,30 @@
 #include <wct.h>
 
 /** help functions for conflict branching */
-static int create_same_conflict(wctproblem *problem, wctdata *parent_pd, wctdata **child, Job *v1, Job *v2);
-static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd, wctdata **child, Job *v1, Job *v2);
+static int create_same_conflict(
+    wctproblem *problem, wctdata *parent_pd, wctdata **child, Job *v1, Job *v2);
+static int create_differ_conflict(
+    wctproblem *problem, wctdata *parent_pd, wctdata **child, Job *v1, Job *v2);
 
-static int transfer_same_cclasses(wctdata *pd,GPtrArray *colPool,Job *v1,Job *v2) {
-    int val = 0;
-    int i;
+static int transfer_same_cclasses(wctdata *  pd,
+                                  GPtrArray *colPool,
+                                  Job *      v1,
+                                  Job *      v2) {
+    int          val = 0;
+    int          i;
     scheduleset *it, *tmp;
-    Job *tmp_j;
+    Job *        tmp_j;
     /* Transfer independent sets: */
     g_ptr_array_set_size(pd->localColPool, colPool->len);
 
     for (i = 0; i < colPool->len; ++i) {
-        it = (scheduleset *) g_ptr_array_index(colPool, i);
+        it = (scheduleset *)g_ptr_array_index(colPool, i);
         int      j;
         int      construct = 1;
         gboolean v1_in;
         gboolean v2_in;
         v1_in = g_hash_table_contains(it->table, v1);
         v2_in = g_hash_table_contains(it->table, v2);
-
 
         if ((v1_in == 1 && v2_in == 0) || (v1_in == 0 && v2_in == 1)) {
             construct = 0;
@@ -30,13 +34,12 @@ static int transfer_same_cclasses(wctdata *pd,GPtrArray *colPool,Job *v1,Job *v2
         }
 
         for (j = 0; j < it->jobs->len && construct; ++j) {
-            tmp_j = (Job *) g_ptr_array_index(it->jobs, j);
+            tmp_j = (Job *)g_ptr_array_index(it->jobs, j);
             tmp->totweight += tmp_j->processingime;
-            g_hash_table_insert(tmp->table,tmp_j,NULL);
+            g_hash_table_insert(tmp->table, tmp_j, NULL);
             g_ptr_array_add(tmp->jobs, tmp_j);
-            tmp->totwct +=value_Fj(tmp->totweight, tmp_j);
+            tmp->totwct += value_Fj(tmp->totweight, tmp_j);
         }
-
 
         if (dbg_lvl() > 1 && construct) {
             printf("PARENT SET SAME ");
@@ -59,7 +62,11 @@ CLEAN:
     return val;
 }
 
-static int create_same_conflict(wctproblem *problem, wctdata *parent_pd, wctdata **child, Job *v1, Job *v2) {
+static int create_same_conflict(wctproblem *problem,
+                                wctdata *   parent_pd,
+                                wctdata **  child,
+                                Job *       v1,
+                                Job *       v2) {
     int       val = 0;
     wctparms *parms = &(problem->parms);
     wctdata * pd = CC_SAFE_MALLOC(1, wctdata);
@@ -126,15 +133,19 @@ CLEAN:
     return val;
 }
 
-static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd, wctdata **child, Job *v1, Job *v2) {
+static int create_differ_conflict(wctproblem *problem,
+                                  wctdata *   parent_pd,
+                                  wctdata **  child,
+                                  Job *       v1,
+                                  Job *       v2) {
     int       val = 0;
     int       i;
-    int nb_cols;
+    int       nb_cols;
     wctdata * pd = CC_SAFE_MALLOC(1, wctdata);
     wctparms *parms = &(problem->parms);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     scheduleset *it, *tmp;
-    Job *tmp_j;
+    Job *        tmp_j;
     wctdata_init(pd, problem);
     /** Init B&B data */
     pd->parent = parent_pd;
@@ -185,13 +196,12 @@ static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd, wctda
     nb_cols = parent_pd->localColPool->len;
     pd->localColPool = g_ptr_array_sized_new(nb_cols);
 
-
     for (i = 0; i < nb_cols; ++i) {
-        it = (scheduleset *) g_ptr_array_index(parent_pd->localColPool,i);
+        it = (scheduleset *)g_ptr_array_index(parent_pd->localColPool, i);
         int      j;
-        gboolean v1_in = g_hash_table_contains(it->table,v1);
-        gboolean v2_in = g_hash_table_contains(it->table,v2);
-        int construct = (v1_in && v2_in) ? 0 : 1;
+        gboolean v1_in = g_hash_table_contains(it->table, v1);
+        gboolean v2_in = g_hash_table_contains(it->table, v2);
+        int      construct = (v1_in && v2_in) ? 0 : 1;
 
         if (construct) {
             tmp = scheduleset_alloc(pd->njobs);
@@ -199,13 +209,12 @@ static int create_differ_conflict(wctproblem *problem, wctdata *parent_pd, wctda
             g_ptr_array_add(pd->localColPool, tmp);
 
             for (j = 0; j < it->jobs->len; j++) {
-                tmp_j = (Job *) g_ptr_array_index(it->jobs, j);
+                tmp_j = (Job *)g_ptr_array_index(it->jobs, j);
                 tmp->totweight += tmp_j->processingime;
-                g_hash_table_insert(tmp->table,tmp_j, NULL);
+                g_hash_table_insert(tmp->table, tmp_j, NULL);
                 g_ptr_array_add(tmp->jobs, tmp_j);
                 tmp->totwct += value_Fj(tmp->totweight, tmp_j);
             }
-
         }
 
         if (dbg_lvl() > 1 && construct) {
@@ -239,7 +248,7 @@ CLEAN:
     return val;
 }
 
-static int find_strongest_children_conflict(int *strongest_v1,
+static int find_strongest_children_conflict(int *       strongest_v1,
                                             int *       strongest_v2,
                                             wctdata *   pd,
                                             wctproblem *problem,
@@ -276,8 +285,10 @@ static int find_strongest_children_conflict(int *strongest_v1,
                 }
 
                 /* Create DIFFER and SAME */
-                val =
-                    create_same_conflict(problem, pd, &(same_children), (Job *) g_ptr_array_index(problem->g_job_array,v1), (Job *) g_ptr_array_index(problem->g_job_array,v2));
+                val = create_same_conflict(
+                    problem, pd, &(same_children),
+                    (Job *)g_ptr_array_index(problem->g_job_array, v1),
+                    (Job *)g_ptr_array_index(problem->g_job_array, v2));
                 CCcheck_val_2(val, "Failed in create_same");
 
                 if (same_children->status != infeasible) {
@@ -285,7 +296,10 @@ static int find_strongest_children_conflict(int *strongest_v1,
                     compute_lower_bound(problem, same_children);
                 }
 
-                val = create_differ_conflict(problem, pd, &(diff_children), (Job *) g_ptr_array_index(problem->g_job_array,v1), (Job *) g_ptr_array_index(problem->g_job_array,v2));
+                val = create_differ_conflict(
+                    problem, pd, &(diff_children),
+                    (Job *)g_ptr_array_index(problem->g_job_array, v1),
+                    (Job *)g_ptr_array_index(problem->g_job_array, v2));
                 CCcheck_val_2(val, "Failed in create_differ");
 
                 if (diff_children->status != infeasible) {
@@ -367,11 +381,16 @@ static int find_strongest_children_conflict(int *strongest_v1,
                     nodepair_weights[(int)(min_nodepair - nodepair_refs)]);
             }
 
-            val =
-                create_same_conflict(problem, pd, &(pd->same_children), (Job *) g_ptr_array_index(problem->g_job_array,v1), (Job *) g_ptr_array_index(problem->g_job_array,v2));
+            val = create_same_conflict(
+                problem, pd, &(pd->same_children),
+                (Job *)g_ptr_array_index(problem->g_job_array, v1),
+                (Job *)g_ptr_array_index(problem->g_job_array, v2));
             CCcheck_val_2(val, "Failed in create_same");
             pd->nsame = 1;
-            val = create_differ_conflict(problem, pd, &(pd->diff_children), (Job *) g_ptr_array_index(problem->g_job_array,v1), (Job *) g_ptr_array_index(problem->g_job_array,v2));
+            val = create_differ_conflict(
+                problem, pd, &(pd->diff_children),
+                (Job *)g_ptr_array_index(problem->g_job_array, v1),
+                (Job *)g_ptr_array_index(problem->g_job_array, v2));
             CCcheck_val_2(val, "Failed in create_differ");
             pd->ndiff = 1;
             break;
@@ -385,7 +404,7 @@ int create_branches_conflict(wctdata *pd, wctproblem *problem) {
     int       val = 0;
     int       status;
     int       i;
-    int nb_cols;
+    int       nb_cols;
     double *  x = (double *)NULL;
     wctparms *parms = &(problem->parms);
     int       strongest_v1 = -1, strongest_v2 = -1;
@@ -442,8 +461,8 @@ int create_branches_conflict(wctdata *pd, wctproblem *problem) {
     pd->x = CC_SAFE_MALLOC(nb_cols, double);
     CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
     memcpy(pd->x, x, nb_cols * sizeof(double));
-    val = insert_frac_pairs_into_heap(pd, nodepair_refs,
-                                      nodepair_weights, npairs, heap);
+    val = insert_frac_pairs_into_heap(pd, nodepair_refs, nodepair_weights,
+                                      npairs, heap);
     CCcheck_val_2(val, "Failed in insert_frac_pairs_into_heap");
 
     if (pmcheap_size(heap) == 0) {

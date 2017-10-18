@@ -15,10 +15,10 @@ void g_print_job(gpointer data, gpointer user_data) {
 
 void solution_init(solution *sol) {
     if (sol) {
-        sol->part = (partlist *) NULL;
-        sol->perm = (Job **) NULL;
-        sol->c = (int *) NULL;
-        sol->u = (int *) NULL;
+        sol->part = (partlist *)NULL;
+        sol->perm = (Job **)NULL;
+        sol->c = (int *)NULL;
+        sol->u = (int *)NULL;
         sol->nmachines = 0;
         sol->njobs = 0;
         sol->tw = 0;
@@ -42,7 +42,7 @@ void solution_free(solution **sol) {
 }
 
 void g_job_free(void *set) {
-    Job *tmp = (Job *) set;
+    Job *tmp = (Job *)set;
     if (tmp) {
         CC_IFFREE(tmp->pos_interval, int);
         CC_IFFREE(tmp, Job);
@@ -152,7 +152,8 @@ int solution_update(solution *dest, solution *src) {
     dest->off = src->off;
 
     for (int i = 0; i < dest->nmachines; i++) {
-        g_ptr_array_remove_range(dest->part[i].machine, 0, dest->part[i].machine->len);
+        g_ptr_array_remove_range(dest->part[i].machine, 0,
+                                 dest->part[i].machine->len);
 
         for (unsigned j = 0; j < src->part[i].machine->len; ++j) {
             g_ptr_array_add(dest->part[i].machine,
@@ -211,7 +212,7 @@ Job *job_alloc(int *p, int *w, int *d) {
     j->processingime = *p;
     j->duetime = *d;
     j->weight = *w;
-    j->pos_interval = (int *) NULL;
+    j->pos_interval = (int *)NULL;
     return j;
 }
 
@@ -228,8 +229,8 @@ void g_print_jobarray(gpointer data, gpointer user_data) {
             j->weight, (double)j->weight / j->processingime);
 }
 
-void g_print_machine(gpointer data, gpointer user_data){
-    Job *j = (Job *) data;
+void g_print_machine(gpointer data, gpointer user_data) {
+    Job *j = (Job *)data;
     g_print("%d ", j->job);
 }
 
@@ -239,7 +240,7 @@ void g_set_sol_perm(gpointer data, gpointer user_data) {
     sol->perm[j->job] = j;
 }
 
-int value_Fj(int C, Job *j) { return j->weight * CC_MAX(0, C - j->duetime); }
+extern inline int value_Fj(int C, Job *j);
 
 int value_diff_Fij(int C, Job *i, Job *j) {
     int val = value_Fj(C + i->processingime - j->processingime, i);
@@ -303,19 +304,21 @@ void solution_calculate_partition_all(solution *sol, GPtrArray *intervals) {
     }
 }
 
-static void calculate_partition(solution *sol, GPtrArray *intervals, int m, int *u, int *last){
-    int count = 0;
-    int cur = *last;
-    void *tmp;
+static void calculate_partition(
+    solution *sol, GPtrArray *intervals, int m, int *u, int *last) {
+    int        count = 0;
+    int        cur = *last;
+    void *     tmp;
     GPtrArray *machine = sol->part[m].machine;
-    interval *I = (interval *) g_ptr_array_index(intervals, *u);
-    Job *i = (Job *) g_ptr_array_index(machine, cur);
-    Job *j;
+    interval * I = (interval *)g_ptr_array_index(intervals, *u);
+    Job *      i = (Job *)g_ptr_array_index(machine, cur);
+    Job *      j;
 
-    while (sol->c[i->job] - i->processingime >= I->a && sol->c[i->job] <= I->b) {
-        if(cur  > 0) {
+    while (sol->c[i->job] - i->processingime >= I->a &&
+           sol->c[i->job] <= I->b) {
+        if (cur > 0) {
             count++;
-            i = (Job *) g_ptr_array_index(machine, cur - 1);
+            i = (Job *)g_ptr_array_index(machine, cur - 1);
             cur--;
         } else {
             break;
@@ -323,48 +326,50 @@ static void calculate_partition(solution *sol, GPtrArray *intervals, int m, int 
     }
 
     if (count > 1) {
-        if(cur > 0) {
+        if (cur > 0) {
             g_qsort_with_data(machine->pdata + cur + 1, count, sizeof(Job *),
                               compare_interval, I);
         } else {
             g_qsort_with_data(machine->pdata + cur, count + 1, sizeof(Job *),
                               compare_interval, I);
-            i = (Job *) g_ptr_array_index(machine, cur);
+            i = (Job *)g_ptr_array_index(machine, cur);
         }
 
-        j = (Job *) g_ptr_array_index(machine, cur + 1);
-        if(sol->c[i->job] <= I->b) {
-            if(compare_interval(&i, &j, I) < 0) {
+        j = (Job *)g_ptr_array_index(machine, cur + 1);
+        if (sol->c[i->job] <= I->b) {
+            if (compare_interval(&i, &j, I) < 0) {
                 cur--;
                 *last = cur;
-                if(cur >= 0) {
-                    i = (Job *) g_ptr_array_index(machine, cur);
+                if (cur >= 0) {
+                    i = (Job *)g_ptr_array_index(machine, cur);
                     *u = CC_MIN(*u - 1, sol->u[i->job]);
                 } else {
                     *u = -1;
                 }
             } else {
-                sol->c[j->job] = sol->c[i->job] - i->processingime + j->processingime;
+                sol->c[j->job] =
+                    sol->c[i->job] - i->processingime + j->processingime;
                 sol->c[i->job] = sol->c[j->job] + i->processingime;
-                CC_SWAP(g_ptr_array_index(machine, cur), g_ptr_array_index(machine, cur + 1), tmp);
-               if(sol->c[j->job] > I->a && sol->c[j->job] <= I->b) {
-                   g_qsort_with_data(machine->pdata + cur, count + 1, sizeof(Job *),
-                                     compare_interval, I);
-                   *last = cur;
-                   if(cur >= 0) {
-                       i = (Job *) g_ptr_array_index(machine, cur);
-                       *u = CC_MIN(*u - 1, sol->u[i->job]);
-                   } else {
-                       *u = -1;
-                   }
-               }
+                CC_SWAP(g_ptr_array_index(machine, cur),
+                        g_ptr_array_index(machine, cur + 1), tmp);
+                if (sol->c[j->job] > I->a && sol->c[j->job] <= I->b) {
+                    g_qsort_with_data(machine->pdata + cur, count + 1,
+                                      sizeof(Job *), compare_interval, I);
+                    *last = cur;
+                    if (cur >= 0) {
+                        i = (Job *)g_ptr_array_index(machine, cur);
+                        *u = CC_MIN(*u - 1, sol->u[i->job]);
+                    } else {
+                        *u = -1;
+                    }
+                }
             }
         }
     } else {
         cur--;
         *last = cur;
-        if(cur >= 0) {
-            i = (Job *) g_ptr_array_index(machine, cur);
+        if (cur >= 0) {
+            i = (Job *)g_ptr_array_index(machine, cur);
             *u = CC_MIN(*u - 1, sol->u[i->job]);
         } else {
             *u = -1;
@@ -372,19 +377,18 @@ static void calculate_partition(solution *sol, GPtrArray *intervals, int m, int 
     }
 
     solution_calculate_machine(sol, m);
-
 }
 
 int solution_canonical_order(solution *sol, GPtrArray *intervals) {
-    int       val = 0;
+    int val = 0;
 
     solution_calculate_partition_all(sol, intervals);
 
     for (int it = 0; it < sol->nmachines; ++it) {
         GPtrArray *machine = sol->part[it].machine;
         int        last = machine->len - 1;
-        Job *i = (Job *)g_ptr_array_index(machine, last);
-        int u = sol->u[i->job];
+        Job *      i = (Job *)g_ptr_array_index(machine, last);
+        int        u = sol->u[i->job];
         while (u >= 0) {
             calculate_partition(sol, intervals, it, &u, &last);
         }

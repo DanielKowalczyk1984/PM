@@ -262,3 +262,67 @@ class ConflictConstraints
         return val;
     }
 };
+
+class scheduling: public tdzdd::DdSpec<scheduling, int, 2> {
+    Job * job;
+    GPtrArray *list_layers;
+    int nlayers;
+    int order;
+
+
+   public:
+    scheduling(Job *_job, GPtrArray *_list_layers, int _order):job(_job) ,list_layers(_list_layers),order(_order) {
+        nlayers = list_layers->len;
+    };
+
+    ~scheduling() {}
+
+    int getRoot(int &state) const {
+        state = 0;
+        return nlayers;
+    }
+
+    int getChild(int &state, int level, int take) {
+        int j = nlayers - level;
+        job_interval_pair *tmp = (job_interval_pair *) g_ptr_array_index(list_layers, j);
+        Job *tmp_j = tmp->j;
+        assert(0 <= j && j <= nlayers - 1);
+
+
+        if (level - 1 == 0 && take) {
+            if(tmp_j != job) {
+                return -1;
+            } else {
+                if(state == 0) {
+                    return -1;
+                }
+                return 0;
+            }
+        } else if (level - 1 == 0) {
+            return -1;
+        }
+
+        if (take) {
+            if(tmp_j != job) {
+                j++;
+                return nlayers - j;
+            } else {
+                if(state == 0) {
+                    state++;
+                    j++;
+                    return  nlayers - j;
+                }else if (state < order) {
+                    state++;
+                    j++;
+                    return nlayers - j;
+
+                } else {
+                    return 0;
+                }
+            }
+        } else {
+            j++;
+            return nlayers - j;
+        }
+    }
+};

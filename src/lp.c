@@ -13,8 +13,7 @@
 
 const double int_tolerance = 0.00001;
 
-int wctlp_init(wctlp **lp, const char *name)
-{
+int wctlp_init(wctlp **lp, const char *name) {
     int val = 0;
     (*lp) = (wctlp *)CC_SAFE_MALLOC(1, wctlp);
     CCcheck_NULL(lp, "Out of memory for lp");
@@ -44,8 +43,7 @@ int wctlp_init(wctlp **lp, const char *name)
     return val;
 }
 
-void wctlp_free(wctlp **lp)
-{
+void wctlp_free(wctlp **lp) {
     if (*lp) {
         if ((*lp)->model) {
             GRBfreemodel((*lp)->model);
@@ -60,8 +58,7 @@ void wctlp_free(wctlp **lp)
     }
 }
 
-int wctlp_optimize(wctlp *lp, int *status)
-{
+int wctlp_optimize(wctlp *lp, int *status) {
     int val;
     val = GRBoptimize((lp)->model);
     CHECK_VAL_GRB(val, "GRBoptimize failed", lp->env);
@@ -105,24 +102,21 @@ CLEAN:
     return val;
 }
 
-int wctlp_status(wctlp *lp, int *status)
-{
+int wctlp_status(wctlp *lp, int *status) {
     int val = 0;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_STATUS, status);
     CHECK_VAL_GRB(val, "GRBgetintattr failed", lp->env);
     return val;
 }
 
-int wctlp_objval(wctlp *lp, double *obj)
-{
+int wctlp_objval(wctlp *lp, double *obj) {
     int val = 0;
     val = GRBgetdblattr(lp->model, GRB_DBL_ATTR_OBJVAL, obj);
     CHECK_VAL_GRB(val, "GRBgetdblattr OBJVAL failed", lp->env);
     return val;
 }
 
-int wctlp_change_obj(wctlp *lp, int start, int len, double *values)
-{
+int wctlp_change_obj(wctlp *lp, int start, int len, double *values) {
     int val = 0;
     val = GRBsetdblattrarray(lp->model, GRB_DBL_ATTR_OBJ, start, len, values);
     CHECK_VAL_GRB(val, "Failed in GRBsetdblattrarray", lp->env);
@@ -131,14 +125,13 @@ int wctlp_change_obj(wctlp *lp, int start, int len, double *values)
     return val;
 }
 
-int wctlp_addrow(wctlp *lp,
+int wctlp_addrow(wctlp * lp,
                  int     nzcount,
-                 int    *cind,
+                 int *   cind,
                  double *cval,
                  char    sense,
                  double  rhs,
-                 char   *name)
-{
+                 char *  name) {
     int  val = 0;
     char isense;
 
@@ -168,16 +161,15 @@ int wctlp_addrow(wctlp *lp,
     return val;
 }
 
-int wctlp_addcol(wctlp *lp,
+int wctlp_addcol(wctlp * lp,
                  int     nzcount,
-                 int    *cind,
+                 int *   cind,
                  double *cval,
                  double  obj,
                  double  lb,
                  double  ub,
                  char    sense,
-                 char   *name)
-{
+                 char *  name) {
     int  val = 0;
     char isense;
 
@@ -207,8 +199,7 @@ int wctlp_addcol(wctlp *lp,
     return val;
 }
 
-int wctlp_chgcoef(wctlp *lp, int cnt, int *cind, int *vind, double *cval)
-{
+int wctlp_chgcoef(wctlp *lp, int cnt, int *cind, int *vind, double *cval) {
     int val = 0;
     val = GRBchgcoeffs(lp->model, cnt, cind, vind, cval);
     CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
@@ -217,7 +208,7 @@ int wctlp_chgcoef(wctlp *lp, int cnt, int *cind, int *vind, double *cval)
     return val;
 }
 
-int wctlp_getcoef(wctlp *lp, int *cind, int *vind, double *cval){
+int wctlp_getcoef(wctlp *lp, int *cind, int *vind, double *cval) {
     int val;
     val = GRBgetcoeff(lp->model, *cind, *vind, cval);
     CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
@@ -225,8 +216,7 @@ int wctlp_getcoef(wctlp *lp, int *cind, int *vind, double *cval){
     return val;
 }
 
-int wctlp_deletecols(wctlp *lp, int first, int last)
-{
+int wctlp_deletecols(wctlp *lp, int first, int last) {
     int  val = 0;
     int  ndel = last - first + 1;
     int  i;
@@ -246,8 +236,7 @@ CLEAN:
     return val;
 }
 
-int wctlp_pi(wctlp *lp, double *pi)
-{
+int wctlp_pi(wctlp *lp, double *pi) {
     int val = 0;
     int nrows;
     int solstat;
@@ -267,8 +256,7 @@ int wctlp_pi(wctlp *lp, double *pi)
     return val;
 }
 
-int wctlp_pi_inf(wctlp *lp, double *pi)
-{
+int wctlp_pi_inf(wctlp *lp, double *pi) {
     int val = 0;
     int nrows;
     int solstat;
@@ -288,8 +276,7 @@ int wctlp_pi_inf(wctlp *lp, double *pi)
     return val;
 }
 
-int wctlp_x(wctlp *lp, double *x, int first)
-{
+int wctlp_x(wctlp *lp, double *x, int first) {
     int val = 0;
     int ncols;
     int solstat;
@@ -317,8 +304,7 @@ int wctlp_x(wctlp *lp, double *x, int first)
     return val;
 }
 
-int wctlp_basis_cols(wctlp *lp, int *cstat, int first)
-{
+int wctlp_basis_cols(wctlp *lp, int *cstat, int first) {
     int val = 0;
     int ncols, i;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, &ncols);
@@ -355,8 +341,7 @@ int wctlp_basis_cols(wctlp *lp, int *cstat, int first)
     return val;
 }
 
-int wctlp_set_coltypes(wctlp *lp, char sense)
-{
+int wctlp_set_coltypes(wctlp *lp, char sense) {
     int  nvars, i, val = 0;
     char isense;
 
@@ -392,8 +377,7 @@ int wctlp_set_coltypes(wctlp *lp, char sense)
     return val;
 }
 
-int wctlp_get_rhs(wctlp *lp, double *rhs)
-{
+int wctlp_get_rhs(wctlp *lp, double *rhs) {
     int val = 0;
     int nconstr;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMCONSTRS, &nconstr);
@@ -403,8 +387,7 @@ int wctlp_get_rhs(wctlp *lp, double *rhs)
     return val;
 }
 
-int wctlp_setbound(wctlp *lp, int col, char lb_or_ub, double bound)
-{
+int wctlp_setbound(wctlp *lp, int col, char lb_or_ub, double bound) {
     int val = 0;
 
     if (lb_or_ub == 'L') {
@@ -419,24 +402,21 @@ int wctlp_setbound(wctlp *lp, int col, char lb_or_ub, double bound)
     return val;
 }
 
-int wctlp_obj_sense(wctlp *lp, int sense)
-{
+int wctlp_obj_sense(wctlp *lp, int sense) {
     int val = 0;
     val = GRBsetintattr(lp->model, GRB_INT_ATTR_MODELSENSE, sense);
     CHECK_VAL_GRB(val, "Failed to set obj sense", lp->env);
     return val;
 }
 
-int wctlp_write(wctlp *lp, const char *fname)
-{
+int wctlp_write(wctlp *lp, const char *fname) {
     int val = 0;
     val = GRBwrite(lp->model, fname);
     CHECK_VAL_GRB(val, "failed GRBwrite", lp->env);
     return val;
 }
 
-int wctlp_setnodelimit(wctlp *lp, int mip_node_limit)
-{
+int wctlp_setnodelimit(wctlp *lp, int mip_node_limit) {
     int rval = GRBsetdblparam(GRBgetenv(lp->model), GRB_DBL_PAR_NODELIMIT,
                               mip_node_limit);
     CHECK_VAL_GRB2(rval, "GRBsetdblparam NODELIMIT failed", lp->env);
@@ -444,8 +424,7 @@ CLEAN:
     return rval;
 }
 
-void wctlp_warmstart_free(wctlp_warmstart **w)
-{
+void wctlp_warmstart_free(wctlp_warmstart **w) {
     if (*w != (wctlp_warmstart *)NULL) {
         CC_IFFREE((*w)->cstat, int);
         CC_IFFREE((*w)->rstat, int);
@@ -454,24 +433,21 @@ void wctlp_warmstart_free(wctlp_warmstart **w)
     }
 }
 
-int wctlp_get_nb_rows(wctlp *lp, int *nb_rows)
-{
+int wctlp_get_nb_rows(wctlp *lp, int *nb_rows) {
     int val = 0;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMCONSTRS, nb_rows);
     CHECK_VAL_GRB(val, "Failed to get the number of variables", lp->env);
     return val;
 }
 
-int wctlp_get_nb_cols(wctlp *lp, int *nb_cols)
-{
+int wctlp_get_nb_cols(wctlp *lp, int *nb_cols) {
     int val = 0;
-    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS , nb_cols);
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, nb_cols);
     CHECK_VAL_GRB(val, "Failed to get the number of variables", lp->env);
     return val;
 }
 
-void wctlp_printerrorcode(int c)
-{
+void wctlp_printerrorcode(int c) {
     switch (c) {
         case GRB_ERROR_OUT_OF_MEMORY:
             printf("Available memory was exhausted\n");
@@ -552,13 +528,13 @@ void wctlp_printerrorcode(int c)
 
 double lp_int_tolerance() { return int_tolerance; }
 
-int wctlp_compute_IIS(wctlp *lp){
+int wctlp_compute_IIS(wctlp *lp) {
     int val = 0;
     int status;
 
     GRBgetintattr(lp->model, GRB_INT_ATTR_STATUS, &status);
 
-    if(status == GRB_INFEASIBLE) {
+    if (status == GRB_INFEASIBLE) {
         printf("test infeasible\n");
         GRBcomputeIIS(lp->model);
         GRBwrite(lp->model, "test.ilp");

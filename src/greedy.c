@@ -2,7 +2,7 @@
 #include <wct.h>
 
 // static int add_feasible_solution(wctproblem *problem, solution *new_sol);
-static int solution_set_c(solution *sol);
+static int  solution_set_c(solution *sol);
 static void perturb_swap(solution *         sol,
                          local_search_data *data,
                          int                l1,
@@ -38,11 +38,11 @@ int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
     }
 }
 
-int compare_nb_job(gconstpointer a, gconstpointer b){
-    const Job *x = * (Job * const *) a;
-    const Job *y = * (Job *const *) b;
+int compare_nb_job(gconstpointer a, gconstpointer b) {
+    const Job *x = *(Job *const *)a;
+    const Job *y = *(Job *const *)b;
 
-    return (x->job - y ->job);
+    return (x->job - y->job);
 }
 
 int _job_compare_spt(const void *a, const void *b) {
@@ -401,10 +401,10 @@ int heuristic_rpup(wctproblem *prob) {
     GRand *rand_uniform = g_rand_new_with_seed(2011);
     g_random_set_seed(1984);
     int          ILS = prob->njobs;
-    int          IR = 1;
+    int          IR = 10;
     solution *   sol;
     solution *   sol1 = (solution *)NULL;
-    GPtrArray *intervals = prob->root_pd.local_intervals;
+    GPtrArray *  intervals = prob->root_pd.local_intervals;
     CCutil_timer test;
     CCutil_init_timer(&test, (char *)NULL);
     local_search_data *data = (local_search_data *)NULL;
@@ -488,8 +488,7 @@ int construct_feasible_solutions(wctproblem *problem) {
     solution *new_sol = solution_alloc(pd->nmachines, pd->njobs, problem->off);
     CCcheck_NULL(new_sol, "Failed to allocate")
 
-
-    CCutil_stop_timer(timer, 0);
+        CCutil_stop_timer(timer, 0);
     printf("We needed %f seconds to construct %d solutions in %d iterations\n",
            timer->cum_zeit, parms->nb_feas_sol, iterations);
     printf("upperbound = %d, lowerbound = %d\n", problem->global_upper_bound,

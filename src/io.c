@@ -31,7 +31,7 @@ int read_problem(wctproblem *problem) {
     int         nbjobs = 0;
     int         curduration, curduedate, curweight, curjob;
     Job *       _jobarray = (Job *)NULL;
-    Job * tmp_j;
+    Job *       tmp_j;
     char        buf[256], *p;
     int         bufsize;
     const char *delim = " \n\t";
@@ -67,12 +67,13 @@ int read_problem(wctproblem *problem) {
             sscanf(data, "%d", &curduedate);
             data = strtok(NULL, delim);
             sscanf(data, "%d", &curweight);
-            curduedate = curduedate/parms->nmachines;
+            curduedate = curduedate / parms->nmachines;
             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
             g_ptr_array_add(problem->g_job_array, tmp_j);
 
             if (tmp_j->processingime > tmp_j->duetime) {
-                problem->off += tmp_j->weight * (tmp_j->processingime - tmp_j->duetime);
+                problem->off +=
+                    tmp_j->weight * (tmp_j->processingime - tmp_j->duetime);
                 tmp_j->duetime = tmp_j->processingime;
             }
 
@@ -158,12 +159,11 @@ int print_to_csv(wctproblem *problem) {
             pd->pname, problem->real_time_total, problem->tot_cputime.cum_zeit,
             problem->tot_lb.cum_zeit, problem->tot_lb_root.cum_zeit,
             problem->tot_lb.cum_zeit, problem->tot_branch_and_bound.cum_zeit,
-            problem->tot_heuristic.cum_zeit,
-            problem->tot_build_dd.cum_zeit, problem->tot_pricing.cum_zeit,
-            problem->rel_error, problem->status, problem->global_lower_bound,
-            problem->global_upper_bound, problem->root_lower_bound,
-            problem->root_upper_bound, problem->root_rel_error,
-            problem->found, problem->nb_explored_nodes,
+            problem->tot_heuristic.cum_zeit, problem->tot_build_dd.cum_zeit,
+            problem->tot_pricing.cum_zeit, problem->rel_error, problem->status,
+            problem->global_lower_bound, problem->global_upper_bound,
+            problem->root_lower_bound, problem->root_upper_bound,
+            problem->root_rel_error, problem->found, problem->nb_explored_nodes,
             problem->nb_generated_col, problem->nb_generated_col_root, date.day,
             date.month, date.year);
     fclose(file);
@@ -200,10 +200,10 @@ int print_to_screen(wctproblem *problem) {
         "tot_branch_and_bound %f, tot_lb_lp_root %f, tot_lb_lp %f, tot_lb %f, "
         "tot_pricing %f, tot_build_dd %f) and %f seconds in real time\n",
         problem->tot_cputime.cum_zeit, problem->tot_heuristic.cum_zeit,
-        problem->tot_branch_and_bound.cum_zeit,
-        problem->tot_lb_root.cum_zeit, problem->tot_lb.cum_zeit,
-        problem->tot_lb.cum_zeit, problem->tot_pricing.cum_zeit,
-        problem->tot_build_dd.cum_zeit, problem->real_time_total);
+        problem->tot_branch_and_bound.cum_zeit, problem->tot_lb_root.cum_zeit,
+        problem->tot_lb.cum_zeit, problem->tot_lb.cum_zeit,
+        problem->tot_pricing.cum_zeit, problem->tot_build_dd.cum_zeit,
+        problem->real_time_total);
     return val;
 }
 
@@ -252,8 +252,8 @@ int print_size_to_csv(wctproblem *problem, wctdata *pd) {
 
             fprintf(file, "%s;%d;%zu;%d;%d;%d;%d;%u/%u/%u\n", root_node->pname,
                     pd->depth, get_datasize(pd->solver), pd->ecount_same,
-                    pd->ecount_differ, pd->v1->job, pd->v2->job, date.day, date.month,
-                    date.year);
+                    pd->ecount_differ, pd->v1->job, pd->v2->job, date.day,
+                    date.month, date.year);
             break;
 
         case ahv_strategy:

@@ -10,14 +10,22 @@
 #include "tdzdd/dd/NodeTable.hpp"
 #include <solution.h>
 #include <interval.h>
+#include <gurobi_c++.h>
+
 
 template <typename T>
 class node {
-   public:
+public:
+    int id;
     int      layer;
     int      weight;
     T        obj;
-    bool     take;
+    T b;
+    T c;
+    T dist;
+    bool calc;
+    bool calc0;
+    bool take;
     Job *prev;
     node<T> *y;
     node<T> *n;
@@ -26,47 +34,126 @@ class node {
         : layer(0),
           weight(0),
           obj(0.0),
+          b(0.0),
+          c(0.0),
+          calc(true),
+          calc0(true),
           take(false),
           prev(nullptr),
           y(nullptr),
-          n(nullptr){
-
-          };
-
-    friend std::ostream &operator<<(std::ostream &os, node<T> const &o) {
-        os << "layer = " << o.layer << ", weight = " << o.weight
-           << ", obj = " << o.obj << std::endl;
-
-        return os;
+          n(nullptr)
+    {
     };
 
-    node<T>(const node<T> &other) {
+
+    node<T>(const node<T>& other)
+    {
         layer = other.layer;
         weight = other.weight;
         obj = other.obj;
+        b = other.obj;
         take = other.take;
         y = other.y;
         n = other.n;
     };
+
+    ~node(){};
 };
+
+template<typename T>
+class edge {
+private:
+    static int _total;
+
+
+public:
+    int id;
+    T cost;
+    Job *job;
+    node<T> *out;
+    node<T> *in;
+    GRBVar v;
+
+
+
+    /** Default constructor */
+    edge() : id(0), cost(0.0), job (nullptr), out(nullptr), in(nullptr)
+    {
+    }
+
+    edge(T _cost, Job *_job, node<T> *_out, node<T> *_in) : cost(_cost), job(_job), out(_out), in(_in)
+    {
+        id = _total++;
+    }
+
+    /** Copy constructor */
+    edge(const edge& other) :
+        id(other.id), cost(other.cost), job(other.job), out(other.out), in(other.in), v(other.v)
+    {
+    }
+
+    /** Move constructor */
+    edge(edge&& other)
+    noexcept :  /* noexcept needed to enable optimizations in containers */
+        id(other.id), cost(other.cost), job(other.job), out(other.out), in(other.in), v(other.v)
+    {
+        other.job = nullptr;
+        other.out = nullptr;
+        other.in = nullptr;
+    }
+
+    /** Copy assignment operator */
+    edge& operator= (const edge& other)
+    {
+        edge tmp(other);         // re-use copy-constructor
+        *this = std::move(tmp); // re-use move-assignment
+        return *this;
+    }
+
+    /** Move assignment operator */
+    edge& operator= (edge&& other) noexcept
+    {
+        id = other.id;
+        cost = other.cost;
+        out = other.out;
+        in = other.in;
+        job = other.job;
+        v = other.v;
+        other.in = nullptr;
+        other.out = nullptr;
+        other.job = nullptr;
+        return *this;
+    }
+
+    /** Destructor */
+    ~edge() noexcept
+    {
+    }
+
+};
+
+template<typename T>
+int edge<T>::_total = 0;
 
 template <typename T>
 using my_iterator = typename std::vector<node<T> *>::iterator;
 
 template <typename T>
 class PricerWeightZDD {
-   public:
+public:
     std::vector<node<T> *> list;
 
-    PricerWeightZDD(){};
+    PricerWeightZDD() {};
 
-    ~PricerWeightZDD() {
+    ~PricerWeightZDD()
+    {
         for (my_iterator<T> it = list.begin(); it != list.end(); it++) {
             delete *it;
         }
     }
 
-    node<T> *add_weight(int _weight, int layer) {
+    node<T> *add_weight(int _weight, int layer)
+    {
         for (my_iterator<T> it = list.begin(); it != list.end(); it++) {
             if ((*it)->weight == _weight) {
                 return (*it);
@@ -79,14 +166,15 @@ class PricerWeightZDD {
         p->obj = 0.0;
         p->take = false;
         p->prev = nullptr;
+        p->dist = -DBL_MAX;
         list.push_back(p);
-
         return (list.back());
     }
 
-    void init_terminal_node(int j) {
+    void init_terminal_node(int j)
+    {
         for (my_iterator<T> it = list.begin(); it != list.end(); it++) {
-            (*it)->obj = j ? 0.0 : -DBL_MAX/100.0;
+            (*it)->obj = j ? 0.0 : -DBL_MAX / 100.0;
             (*it)->take = false;
         }
     }
@@ -94,13 +182,13 @@ class PricerWeightZDD {
 
 template <typename T>
 class PricerFarkasZDD {
-   public:
+public:
     T    obj;
     bool take;
 
-    PricerFarkasZDD() : obj(0), take(0){};
+    PricerFarkasZDD() : obj(0), take(0) {};
 
-    ~PricerFarkasZDD(){};
+    ~PricerFarkasZDD() {};
 
     void init_terminal_node(int one) { obj = one ? 0.0 : 1871286761.0; }
 
@@ -109,7 +197,7 @@ class PricerFarkasZDD {
 
 template <typename T>
 class Optimal_Solution {
-   public:
+public:
     T                obj;
     int              cost;
     int              C_max;
@@ -117,25 +205,31 @@ class Optimal_Solution {
 
 
     /** Default constructor */
-    Optimal_Solution() : obj(0), cost(0), C_max(0), jobs(g_ptr_array_new()) {
+    Optimal_Solution() : obj(0), cost(0), C_max(0), jobs(g_ptr_array_new())
+    {
     }
 
     /** Copy constructor */
-    Optimal_Solution (const Optimal_Solution& other) :
-       obj(other.obj),cost(other.cost),C_max(other.C_max),jobs (g_ptr_array_sized_new(other.jobs->len)){
-        for(unsigned i = 0; i < other.jobs->len; ++i) {
-            g_ptr_array_add(jobs, g_ptr_array_index(other.jobs,i));
+    Optimal_Solution(const Optimal_Solution& other) :
+        obj(other.obj), cost(other.cost), C_max(other.C_max),
+        jobs(g_ptr_array_sized_new(other.jobs->len))
+    {
+        for (unsigned i = 0; i < other.jobs->len; ++i) {
+            g_ptr_array_add(jobs, g_ptr_array_index(other.jobs, i));
         }
     }
 
     /** Move constructor */
-    Optimal_Solution (Optimal_Solution&& other) noexcept : /* noexcept needed to enable optimizations in containers */
-        obj(other.obj),cost(other.cost),C_max(other.C_max), jobs(other.jobs){
+    Optimal_Solution(Optimal_Solution&& other)
+    noexcept :  /* noexcept needed to enable optimizations in containers */
+        obj(other.obj), cost(other.cost), C_max(other.C_max), jobs(other.jobs)
+    {
         other.jobs = nullptr;
     }
 
     /** Copy assignment operator */
-    Optimal_Solution& operator= (const Optimal_Solution& other){
+    Optimal_Solution& operator= (const Optimal_Solution& other)
+    {
         Optimal_Solution tmp(other);         // re-use copy-constructor
         *this = std::move(tmp); // re-use move-assignment
         return *this;
@@ -154,17 +248,18 @@ class Optimal_Solution {
     }
 
     /** Destructor */
-    ~Optimal_Solution() noexcept {
-        if(jobs) {
-            g_ptr_array_free(jobs,TRUE);
+    ~Optimal_Solution() noexcept
+    {
+        if (jobs) {
+            g_ptr_array_free(jobs, TRUE);
         }
     }
 
-    friend std::ostream &operator<<(std::ostream &             os,
-                                    Optimal_Solution<T> const &o) {
+    friend std::ostream& operator<<(std::ostream&              os,
+                                    Optimal_Solution<T> const& o)
+    {
         os << "obj = " << o.obj << "," << std::endl
            << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
-
         g_ptr_array_foreach(o.jobs, g_print_machine, NULL);
         return os;
     };
@@ -174,27 +269,34 @@ class Optimal_Solution {
 template <typename E, typename T>
 class WeightZDD
     : public tdzdd::DdEval<E, PricerWeightZDD<T>, Optimal_Solution<T>> {
-    T *  pi;
+    T   *pi;
     GPtrArray *interval_list;
     int nlayers;
     int nbjobs;
 
-   public:
-    WeightZDD(T *_pi, GPtrArray *_interval_list, int _nbjobs): pi(_pi), interval_list(_interval_list), nbjobs(_nbjobs) {
-            nlayers = (int) interval_list->len;
+public:
+    WeightZDD(T *_pi, GPtrArray *_interval_list, int _nbjobs): pi(_pi),
+        interval_list(_interval_list), nbjobs(_nbjobs)
+    {
+        nlayers = (int) interval_list->len;
     };
 
-    void evalTerminal(PricerWeightZDD<T> &n) {
+    void evalTerminal(PricerWeightZDD<T>& n)
+    {
         for (my_iterator<T> it = n.list.begin(); it != n.list.end(); it++) {
             (*it)->obj = pi[nbjobs];
         }
     }
 
-    void evalNode(PricerWeightZDD<T> *n,int i, tdzdd::DdValues<PricerWeightZDD<T>, 2> &values) const {
+    void evalNode(PricerWeightZDD<T> *n, int i,
+                  tdzdd::DdValues<PricerWeightZDD<T>, 2>& values) const
+    {
         int j = nlayers - i;
         assert(j >= 0 && j <= nlayers - 1);
-        job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
+        job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
+                                          interval_list, j);
         Job *tmp_j = tmp_pair->j;
+        double result;
 
         for (my_iterator<T> it = n->list.begin(); it != n->list.end(); it++) {
             int      weight = ((*it)->weight);
@@ -202,11 +304,25 @@ class WeightZDD
             node<T> *p1 = (*it)->y;
             T        obj0 = p0->obj;
             T        obj1 = p1->obj;
+            result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
 
-            if ((obj0 < obj1 - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job])) {
-                (*it)->obj = obj1 - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
-                (*it)->take = true;
-                // (*it)->prev = tmp_j;
+            if (((*it)->calc)) {
+                if (obj0 < obj1 + result) {
+                    (*it)->obj = obj1 + result;
+                    (*it)->take = true;
+                    // (*it)->prev = tmp_j;
+                } else {
+                    (*it)->obj = obj0;
+                    (*it)->take = false;
+                }
+
+                if ((*it)->b < obj1 + result) {
+                    (*it)->b = obj1 + result;
+                }
+
+                if((*it)->c < obj0) {
+                    (*it)->c = obj0;
+                }
             } else {
                 (*it)->obj = obj0;
                 (*it)->take = false;
@@ -214,15 +330,21 @@ class WeightZDD
         }
     }
 
-    void initializenode(PricerWeightZDD<T> &n) {
+    void initializenode(PricerWeightZDD<T>& n)
+    {
         for (my_iterator<T> it = n.list.begin(); it != n.list.end(); it++) {
             (*it)->obj = 0.0;
+            (*it)->b = pi[nbjobs];
+            (*it)->c = pi[nbjobs];
+            (*it)->dist = -DBL_MAX;
             (*it)->take = false;
         }
     }
 
-    Optimal_Solution<T> get_objective(tdzdd::NodeTableHandler<2> diagram,tdzdd::DataTable<PricerWeightZDD<T>> *data_table,
-        const tdzdd::NodeId *f) {
+    Optimal_Solution<T> get_objective(tdzdd::NodeTableHandler<2> diagram,
+                                      tdzdd::DataTable<PricerWeightZDD<T>> *data_table,
+                                      const tdzdd::NodeId *f)
+    {
         Optimal_Solution<T> sol;
         sol.obj = (*data_table)[f->row()][f->col()].list[sol.C_max]->obj;
         node<T> *ptr = (*data_table)[f->row()][f->col()].list[sol.C_max];
@@ -232,6 +354,7 @@ class WeightZDD
         while (ptr->layer != nlayers) {
             tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, ptr->layer);
             tmp_j = tmp_pair->j;
+
             if (ptr->take) {
                 g_ptr_array_add(sol.jobs, tmp_j);
                 sol.C_max += tmp_j->processingime;
@@ -252,28 +375,29 @@ class WeightZDD
 template <typename E, typename T>
 class FarkasZDD
     : public tdzdd::DdEval<E, PricerFarkasZDD<T>, Optimal_Solution<T>> {
-        T *  pi;
-        GPtrArray *interval_list;
-        int nlayers;
-        int nbjobs;
-        job_interval_pair *tmp_pair;
-        Job *tmp_j;
-        interval *tmp_interval;
+    T   *pi;
+    GPtrArray *interval_list;
+    int nlayers;
+    int nbjobs;
+    job_interval_pair *tmp_pair;
+    Job *tmp_j;
+    interval *tmp_interval;
 
-   public:
+public:
     FarkasZDD(T *_pi, GPtrArray *_interval_list, int _nbjobs)
         : pi(_pi),
           interval_list(_interval_list),
-          nbjobs(_nbjobs){};
+          nbjobs(_nbjobs) {};
 
-    void evalTerminal(PricerFarkasZDD<T> &n) { n.obj = pi[nbjobs]; }
+    void evalTerminal(PricerFarkasZDD<T>& n) { n.obj = pi[nbjobs]; }
 
     void evalNode(PricerFarkasZDD<T> *n,
                   int                 i,
-                  tdzdd::DdValues<PricerFarkasZDD<T>, 2> &values) const {
+                  tdzdd::DdValues<PricerFarkasZDD<T>, 2>& values) const
+    {
         int j = nlayers - i;
         assert(j >= 0 && j <= nbjobs - 1);
-        tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list,j);
+        tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
         tmp_j = tmp_pair->j;
         PricerFarkasZDD<T> *n0 = values.get_ptr(0);
         PricerFarkasZDD<T> *n1 = values.get_ptr(1);
@@ -287,12 +411,13 @@ class FarkasZDD
         }
     }
 
-    void initializenode(PricerFarkasZDD<T> &n) { n.take = false; }
+    void initializenode(PricerFarkasZDD<T>& n) { n.take = false; }
 
     Optimal_Solution<T> get_objective(
         tdzdd::NodeTableHandler<2>            diagram,
         tdzdd::DataTable<PricerFarkasZDD<T>> *data_table,
-        const tdzdd::NodeId *                 f) {
+        const tdzdd::NodeId                  *f)
+    {
         Optimal_Solution<T> sol;
         sol.obj = (*data_table)[f->row()][f->col()].obj;
         sol.jobs = g_ptr_array_new();
@@ -308,6 +433,7 @@ class FarkasZDD
             } else {
                 cur_node = diagram.privateEntity().child(cur_node, 0);
             }
+
             j = nlayers - cur_node.row();
         }
 
@@ -317,12 +443,11 @@ class FarkasZDD
 
 struct WeightZDDdouble : WeightZDD<WeightZDDdouble, double> {
     WeightZDDdouble(double *_pi, GPtrArray *_interval_list, int _nbjobs)
-        : WeightZDD<WeightZDDdouble, double>(_pi, _interval_list, _nbjobs){};
+        : WeightZDD<WeightZDDdouble, double>(_pi, _interval_list, _nbjobs) {};
 };
 
 struct FarkasZDDdouble : FarkasZDD<FarkasZDDdouble, double> {
     FarkasZDDdouble(
-        double *_pi,GPtrArray *_interval_list, int _nbjobs)
-        : FarkasZDD<FarkasZDDdouble, double>(
-              _pi, _interval_list, _nbjobs){};
+        double *_pi, GPtrArray *_interval_list, int _nbjobs)
+        : FarkasZDD<FarkasZDDdouble, double>(_pi, _interval_list, _nbjobs) {};
 };

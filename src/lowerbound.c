@@ -2,8 +2,8 @@
 
 static const double min_ndelrow_ratio = 0.3;
 
-void g_print_ages_col(gpointer data, gpointer user_data){
-    scheduleset *x = (scheduleset *) data;
+void g_print_ages_col(gpointer data, gpointer user_data) {
+    scheduleset *x = (scheduleset *)data;
 
     printf(" %4d", x->age);
 }
@@ -17,9 +17,9 @@ static void print_ages(wctdata *pd) {
     printf("\n");
 }
 
-void g_grow_ages(gpointer data, gpointer user_data){
-    scheduleset *x = (scheduleset *) data;
-    wctdata *pd = (wctdata *) user_data;
+void g_grow_ages(gpointer data, gpointer user_data) {
+    scheduleset *x = (scheduleset *)data;
+    wctdata *    pd = (wctdata *)user_data;
 
     if (pd->cstat[x->id] == wctlp_LOWER || pd->cstat[x->id] == wctlp_FREE) {
         x->age++;
@@ -33,7 +33,7 @@ void g_grow_ages(gpointer data, gpointer user_data){
 }
 
 static int grow_ages(wctdata *pd) {
-    int  val = 0;
+    int val = 0;
     int nb_cols;
     wctlp_get_nb_cols(pd->LP, &nb_cols);
     assert(nb_cols == pd->localColPool->len);
@@ -52,39 +52,40 @@ CLEAN:
     return val;
 }
 
-
 static int delete_old_cclasses(wctdata *pd) {
-    int val = 0;
-    int it = 0;
-    int min_numdel = pd->njobs * min_ndelrow_ratio;
-    int first_del = -1;
-    int last_del = -1;
-    int nb_col;
-    guint i;
-    guint count = pd->localColPool->len;
+    int          val = 0;
+    int          it = 0;
+    int          min_numdel = pd->njobs * min_ndelrow_ratio;
+    int          first_del = -1;
+    int          last_del = -1;
+    int          nb_col;
+    guint        i;
+    guint        count = pd->localColPool->len;
     scheduleset *tmp_schedule;
     /** pd->dzcount can be deprecated! */
     pd->dzcount = 0;
 
-    for(i = 0; i < pd->localColPool->len; ++i) {
-        tmp_schedule = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
-        if(tmp_schedule->age > 0) {
+    for (i = 0; i < pd->localColPool->len; ++i) {
+        tmp_schedule = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
+        if (tmp_schedule->age > 0) {
             pd->dzcount++;
         }
     }
 
     if (pd->dzcount > min_numdel) {
         for (i = 0; i < count; ++i) {
-            tmp_schedule = (scheduleset *) g_ptr_array_index(pd->localColPool, it);
+            tmp_schedule =
+                (scheduleset *)g_ptr_array_index(pd->localColPool, it);
             if (tmp_schedule->age <= pd->retirementage) {
                 if (first_del != -1) {
                     /** Delete recently found deletion range.*/
                     val = wctlp_deletecols(pd->LP, first_del, last_del);
                     CCcheck_val_2(val, "Failed in wctlp_deletecols");
-                    g_ptr_array_remove_range(pd->localColPool, first_del, last_del - first_del + 1);
+                    g_ptr_array_remove_range(pd->localColPool, first_del,
+                                             last_del - first_del + 1);
                     it = it - (last_del - first_del);
                     first_del = last_del = -1;
-                } else{
+                } else {
                     it++;
                 }
             } else {
@@ -101,9 +102,9 @@ static int delete_old_cclasses(wctdata *pd) {
         if (first_del != -1) {
             wctlp_deletecols(pd->LP, first_del, last_del);
             CCcheck_val_2(val, "Failed in wctlp_deletecols");
-            g_ptr_array_remove_range(pd->localColPool, first_del, last_del - first_del + 1);
+            g_ptr_array_remove_range(pd->localColPool, first_del,
+                                     last_del - first_del + 1);
         }
-
 
         if (dbg_lvl() > 1) {
             printf("Deleted %d out of %d columns with age > %d.\n", pd->dzcount,
@@ -112,8 +113,9 @@ static int delete_old_cclasses(wctdata *pd) {
 
         wctlp_get_nb_cols(pd->LP, &nb_col);
         assert(pd->localColPool->len == nb_col);
-        for(i = 0; i < pd->localColPool->len; ++i) {
-            tmp_schedule = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
+        for (i = 0; i < pd->localColPool->len; ++i) {
+            tmp_schedule =
+                (scheduleset *)g_ptr_array_index(pd->localColPool, i);
             tmp_schedule->id = i;
         }
         pd->dzcount = 0;
@@ -123,16 +125,16 @@ CLEAN:
     return val;
 }
 
-void g_make_pi_feasible(gpointer data, gpointer user_data){
-    scheduleset *x = (scheduleset *) data;
-    wctdata *pd = (wctdata *) user_data;
-    Job *tmp_j;
+void g_make_pi_feasible(gpointer data, gpointer user_data) {
+    scheduleset *x = (scheduleset *)data;
+    wctdata *    pd = (wctdata *)user_data;
+    Job *        tmp_j;
 
     int    i;
     double colsum = .0;
 
     for (i = 0; i < x->jobs->len; ++i) {
-        tmp_j = (Job *) g_ptr_array_index(x->jobs,i);
+        tmp_j = (Job *)g_ptr_array_index(x->jobs, i);
         if (signbit(pd->pi[tmp_j->job])) {
             pd->pi[tmp_j->job] = 0.0;
         }
@@ -151,7 +153,7 @@ void g_make_pi_feasible(gpointer data, gpointer user_data){
     if (colsum > x->totwct) {
         double newcolsum = .0;
         for (i = 0; i < x->jobs->len; ++i) {
-            tmp_j = (Job *) g_ptr_array_index(x->jobs, i);
+            tmp_j = (Job *)g_ptr_array_index(x->jobs, i);
             pd->pi[tmp_j->job] /= colsum;
             pd->pi[tmp_j->job] *= x->totwct;
             newcolsum += pd->pi[tmp_j->job];
@@ -162,9 +164,8 @@ void g_make_pi_feasible(gpointer data, gpointer user_data){
         newcolsum += pd->pi[pd->njobs];
 
         if (dbg_lvl() > 1) {
-            printf(
-                "Decreased column sum of %5d from  %30.20f to  %30.20f\n",
-                x->id, colsum, newcolsum);
+            printf("Decreased column sum of %5d from  %30.20f to  %30.20f\n",
+                   x->id, colsum, newcolsum);
         }
     }
 }
@@ -174,16 +175,16 @@ void make_pi_feasible(wctdata *pd) {
     g_ptr_array_foreach(pd->localColPool, g_make_pi_feasible, pd);
 }
 
-void g_make_pi_feasible_farkas(gpointer data, gpointer user_data){
-    scheduleset *x = (scheduleset *) data;
-    wctdata *pd = (wctdata *) user_data;
-    Job *tmp_j;
+void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
+    scheduleset *x = (scheduleset *)data;
+    wctdata *    pd = (wctdata *)user_data;
+    Job *        tmp_j;
 
     int    i;
     double colsum = .0;
 
     for (i = 0; i < x->jobs->len; ++i) {
-        tmp_j = (Job *) g_ptr_array_index(x->jobs,i);
+        tmp_j = (Job *)g_ptr_array_index(x->jobs, i);
         if (signbit(pd->pi[tmp_j->job])) {
             pd->pi[tmp_j->job] = 0.0;
         }
@@ -197,7 +198,7 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data){
     if (colsum > x->totwct) {
         double newcolsum = .0;
         for (i = 0; i < x->jobs->len; ++i) {
-            tmp_j = (Job *) g_ptr_array_index(x->jobs,i);
+            tmp_j = (Job *)g_ptr_array_index(x->jobs, i);
             pd->pi[tmp_j->job] /= colsum;
             pd->pi[tmp_j->job] *= x->totwct;
             newcolsum += pd->pi[tmp_j->job];
@@ -208,9 +209,8 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data){
         newcolsum += pd->pi[pd->njobs];
 
         if (dbg_lvl() > 1) {
-            printf(
-                "Decreased column sum of %5d from  %30.20f to  %30.20f\n",
-                x->id, colsum, newcolsum);
+            printf("Decreased column sum of %5d from  %30.20f to  %30.20f\n",
+                   x->id, colsum, newcolsum);
         }
     }
 }
@@ -262,9 +262,9 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     int       break_while_loop = 1;
     int       nnonimprovements = 0;
     int       status = GRB_LOADED;
-    int nb_cols;
+    int       nb_cols;
     double    real_time_solve_lp;
-    double real_time_pricing;
+    double    real_time_pricing;
     wctparms *parms = &(problem->parms);
 
     if (pd->status == infeasible) {
@@ -292,9 +292,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     //     assert(pd->gallocated >= pd->ccount);
     // }
 
-
-
-    if(pd->localColPool->len == 0 && parms->construct) {
+    if (pd->localColPool->len == 0 && parms->construct) {
         solution *new_sol;
         new_sol = solution_alloc(pd->nmachines, pd->njobs, 0);
         construct_edd(problem, new_sol);
@@ -413,7 +411,6 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                         val = solve_farkas_dbl(pd);
                         CCcheck_val_2(val, "Failed in solving farkas");
                         break;
-
                 }
 
                 break;
@@ -423,7 +420,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         real_time_pricing = getRealTime() - real_time_pricing;
         problem->real_time_pricing += real_time_pricing;
 
-        if(pd->update) {
+        if (pd->update) {
             for (j = 0; j < pd->nnewsets; j++) {
                 val = addColToLP(pd->newsets + j, pd);
                 g_ptr_array_add(pd->localColPool, pd->newsets + j);
@@ -438,11 +435,13 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 switch (parms->stab_technique) {
                     case stab_wentgnes:
                     case stab_dynamic:
-                        break_while_loop = (CC_OURABS(pd->eta_out - pd->eta_in) < 0.00001);
+                        break_while_loop =
+                            (CC_OURABS(pd->eta_out - pd->eta_in) < 0.00001);
                         break;
 
                     case no_stab:
-                        break_while_loop = (pd->nnewsets == 0 || nnonimprovements > 5);
+                        break_while_loop =
+                            (pd->nnewsets == 0 || nnonimprovements > 5);
                         break;
                 }
 
@@ -552,9 +551,13 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         printf("lowerbound %d\n", pd->lower_bound + pd->problem->off);
     }
 
+    evaluate_nodes(pd);
+    // build_solve_mip(pd);
+
     fflush(stdout);
     problem->nb_generated_col += iterations;
     CCutil_suspend_timer(&(problem->tot_lb));
+
 CLEAN:
     return val;
 }

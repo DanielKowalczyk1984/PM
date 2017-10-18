@@ -65,8 +65,8 @@ int local_search_compare_lateness(gconstpointer a,
                                   gconstpointer b,
                                   gpointer      data) {
     int *data_x = (int *)data;
-    Job *x = *(Job * const *)a;
-    Job *y = *(Job * const *)b;
+    Job *x = *(Job *const *)a;
+    Job *y = *(Job *const *)b;
 
     if (data_x[x->job] - x->duetime < data_x[y->job] - y->duetime) {
         return 1;

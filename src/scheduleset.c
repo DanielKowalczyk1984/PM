@@ -19,10 +19,9 @@ void iterator(gpointer key, gpointer value, gpointer user_data) {
     g_hash_table_insert(new_table, key, value);
 }
 
-
 void scheduleset_init(scheduleset *set) {
     if (set) {
-        set->nb = (int *) NULL;
+        set->nb = (int *)NULL;
         set->age = 0;
         set->totweight = 0;
         set->totwct = 0;
@@ -39,7 +38,6 @@ void scheduleset_free(scheduleset *set) {
         g_ptr_array_free(set->jobs, TRUE);
         g_hash_table_destroy(set->table);
 
-
         set->totweight = 0;
         set->age = 0;
         set->totwct = 0;
@@ -47,7 +45,7 @@ void scheduleset_free(scheduleset *set) {
 }
 
 void g_scheduleset_free(void *set) {
-    scheduleset *tmp = (scheduleset *) set;
+    scheduleset *tmp = (scheduleset *)set;
     if (tmp) {
         CC_IFFREE(tmp->nb, int);
 
@@ -62,22 +60,20 @@ void g_scheduleset_free(void *set) {
     }
 }
 
-
-scheduleset *scheduleset_alloc(int nbjobs){
+scheduleset *scheduleset_alloc(int nbjobs) {
     scheduleset *tmp;
     tmp = CC_SAFE_MALLOC(1, scheduleset);
-    CCcheck_NULL_3(tmp, "Failed to allocate memory")
-    scheduleset_init(tmp);
+    CCcheck_NULL_3(tmp, "Failed to allocate memory") scheduleset_init(tmp);
     tmp->nb = CC_SAFE_MALLOC(nbjobs, int);
     fill_int(tmp->nb, nbjobs, 0);
 
-    CLEAN:
+CLEAN:
     return tmp;
 }
 
-void g_sum_processing_time(gpointer data, gpointer user_data){
-    Job *j = (Job *) data;
-    scheduleset *set = (scheduleset *) user_data;
+void g_sum_processing_time(gpointer data, gpointer user_data) {
+    Job *        j = (Job *)data;
+    scheduleset *set = (scheduleset *)user_data;
 
     set->totweight += j->processingime;
     set->totwct += value_Fj(set->totweight, j);
@@ -85,19 +81,19 @@ void g_sum_processing_time(gpointer data, gpointer user_data){
     g_ptr_array_add(set->jobs, j);
 }
 
-scheduleset *scheduleset_from_solution(GPtrArray *machine, int nbjobs){
+scheduleset *scheduleset_from_solution(GPtrArray *machine, int nbjobs) {
     scheduleset *tmp;
 
     tmp = CC_SAFE_MALLOC(1, scheduleset);
     CCcheck_NULL_3(tmp, "failed to allocate memory")
 
-    scheduleset_init(tmp);
-    tmp->nb =  CC_SAFE_MALLOC(nbjobs, int);
+        scheduleset_init(tmp);
+    tmp->nb = CC_SAFE_MALLOC(nbjobs, int);
     CCcheck_NULL(tmp->nb, "Failed to allocate memory")
-    fill_int(tmp->nb, nbjobs, 0);
+        fill_int(tmp->nb, nbjobs, 0);
     g_ptr_array_foreach(machine, g_sum_processing_time, tmp);
 
-    CLEAN:
+CLEAN:
     return tmp;
 }
 
@@ -122,19 +118,19 @@ void scheduleset_SWAP(scheduleset *c1, scheduleset *c2, scheduleset *t) {
 }
 
 int scheduleset_less(scheduleset *c1, scheduleset *c2) {
-    int i;
+    int        i;
     GPtrArray *tmp1 = c1->jobs;
     GPtrArray *tmp2 = c2->jobs;
-    Job *tmp_j1;
-    Job *tmp_j2;
+    Job *      tmp_j1;
+    Job *      tmp_j2;
 
     if (tmp1->len != tmp2->len) {
         return tmp1->len - tmp2->len;
     }
 
     for (i = 0; i < tmp1->len; ++i) {
-        tmp_j1 = (Job *) g_ptr_array_index(tmp1,i);
-        tmp_j2 = (Job *) g_ptr_array_index(tmp2,i);
+        tmp_j1 = (Job *)g_ptr_array_index(tmp1, i);
+        tmp_j2 = (Job *)g_ptr_array_index(tmp2, i);
         if (tmp_j1->job != tmp_j2->job) {
             return tmp_j1->job - tmp_j2->job;
         }
@@ -143,23 +139,22 @@ int scheduleset_less(scheduleset *c1, scheduleset *c2) {
     return 0;
 }
 
-gint g_scheduleset_less(gconstpointer a,gconstpointer b){
-    int i;
-    const scheduleset *c1 = *((scheduleset * const *) a);
-    const scheduleset *c2 = *((scheduleset * const *) b);
-    GPtrArray *tmp1 = c1->jobs;
-    GPtrArray *tmp2 = c2->jobs;
-    Job *tmp_j1;
-    Job *tmp_j2;
+gint g_scheduleset_less(gconstpointer a, gconstpointer b) {
+    int                i;
+    const scheduleset *c1 = *((scheduleset *const *)a);
+    const scheduleset *c2 = *((scheduleset *const *)b);
+    GPtrArray *        tmp1 = c1->jobs;
+    GPtrArray *        tmp2 = c2->jobs;
+    Job *              tmp_j1;
+    Job *              tmp_j2;
 
     if (tmp1->len != tmp2->len) {
         return tmp1->len - tmp2->len;
     }
 
-
     for (i = 0; i < tmp1->len; ++i) {
-        tmp_j1 = (Job *) g_ptr_array_index(tmp1,i);
-        tmp_j2 = (Job *) g_ptr_array_index(tmp2,i);
+        tmp_j1 = (Job *)g_ptr_array_index(tmp1, i);
+        tmp_j2 = (Job *)g_ptr_array_index(tmp2, i);
         if (tmp_j1->job != tmp_j2->job) {
             return tmp_j1->job - tmp_j2->job;
         }
@@ -168,14 +163,14 @@ gint g_scheduleset_less(gconstpointer a,gconstpointer b){
     return 0;
 }
 
-void g_scheduleset_print(gpointer data, gpointer user_data){
-    scheduleset *tmp = (scheduleset *) data;
-    GPtrArray *tmp_a = tmp->jobs;
+void g_scheduleset_print(gpointer data, gpointer user_data) {
+    scheduleset *tmp = (scheduleset *)data;
+    GPtrArray *  tmp_a = tmp->jobs;
     printf("Machine %d: ", tmp->id);
 
     g_ptr_array_foreach(tmp_a, g_print_machine, NULL);
 
-    printf("with C = %d, cost = %d and %u jobs\n", tmp->totweight,tmp->totwct,
+    printf("with C = %d, cost = %d and %u jobs\n", tmp->totweight, tmp->totwct,
            tmp_a->len);
 }
 
@@ -188,7 +183,8 @@ int print_schedule(scheduleset *cclasses, int ccount) {
 
         g_ptr_array_foreach(cclasses[i].jobs, g_print_machine, NULL);
 
-        printf(" with totweight %d and %d jobs\n", cclasses[i].totweight,cclasses[i].jobs->len);
+        printf(" with totweight %d and %d jobs\n", cclasses[i].totweight,
+               cclasses[i].jobs->len);
         sum += cclasses[i].jobs->len;
     }
 

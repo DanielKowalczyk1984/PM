@@ -172,12 +172,11 @@ CLEAN:
 }
 
 int main(int ac, char **av) {
-    int           val = 0;
-    double start_time;
-    wctproblem    problem;
+    int        val = 0;
+    double     start_time;
+    wctproblem problem;
     val = program_header(ac, av);
-    CCcheck_val_2(val, "Failed in program_header")
-    wctproblem_init(&problem);
+    CCcheck_val_2(val, "Failed in program_header") wctproblem_init(&problem);
     val = parseargs(ac, av, &(problem.parms));
     CCcheck_val_2(val, "Failed in parseargs");
     if (dbg_lvl() > 1) {
@@ -190,16 +189,18 @@ int main(int ac, char **av) {
     CCcheck_val_2(val, "read_adjlist failed");
     val = preprocess_data(&problem);
     CCcheck_val_2(val, "Failed at preprocess_data");
-    printf("Reading and preprocessing of the data took %f seconds\n", CCutil_zeit() - start_time);
 
     /** Finding heuristic solutions to the problem */
     heuristic_rpup(&problem);
-    problem.root_pd.solver = newSolver(problem.root_pd.ordered_jobs,problem.njobs);
+    problem.root_pd.solver =
+        newSolver(problem.root_pd.ordered_jobs, problem.g_job_array);
 
     /** Branch-and-Price Algorithm */
     build_lp(&(problem.root_pd), 0);
 
     compute_lower_bound(&problem, &(problem.root_pd));
+    printf("Reading and preprocessing of the data took %f seconds\n",
+           CCutil_zeit() - start_time);
 
 CLEAN:
     wctproblem_free(&problem);

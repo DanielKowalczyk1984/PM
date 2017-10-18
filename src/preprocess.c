@@ -13,8 +13,8 @@ void g_problem_summary_init(gpointer data, gpointer user_data) {
 }
 
 gint g_job_compare_edd(const void *a, const void *b, void *data) {
-    const Job *x = *((Job * const *)a);
-    const Job *y = *((Job * const *)b);
+    const Job *x = *((Job *const *)a);
+    const Job *y = *((Job *const *)b);
 
     if (x->duetime > y->duetime) {
         return (1);
@@ -56,7 +56,7 @@ int calculate_Hmin(
     return val;
 }
 
-void calculate_Hmax(wctproblem *problem){
+void calculate_Hmax(wctproblem *problem) {
     int      temp = 0;
     double   temp_dbl = 0.0;
     wctdata *pd = &(problem->root_pd);
@@ -64,37 +64,38 @@ void calculate_Hmax(wctproblem *problem){
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
     temp_dbl = floor(temp_dbl / problem->nmachines);
-    problem->H_max = pd->H_max = (int) temp_dbl + problem->pmax;
-    problem->H_min = (int) ceil(temp_dbl / problem->nmachines) - problem->pmax;
-    printf("H_max = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n", problem->H_max, problem->pmax, problem->pmin, problem->psum,problem->off);
+    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax;
+    problem->H_min = (int)ceil(temp_dbl / problem->nmachines) - problem->pmax;
+    printf("H_max = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
+           problem->H_max, problem->pmax, problem->pmin, problem->psum,
+           problem->off);
 }
 
-void determine_jobs_order_interval(wctproblem *problem){
-    Job *tmp,*tmp_j;
+void determine_jobs_order_interval(wctproblem *problem) {
+    Job *     tmp, *tmp_j;
     interval *tmp_interval;
 
     GPtrArray *local_intervals = problem->root_pd.local_intervals;
 
-    for(unsigned i = 0; i < problem->g_job_array->len; ++i) {
-        tmp_j = (Job *) g_ptr_array_index(problem->g_job_array, i);
+    for (unsigned i = 0; i < problem->g_job_array->len; ++i) {
+        tmp_j = (Job *)g_ptr_array_index(problem->g_job_array, i);
         tmp_j->pos_interval = CC_SAFE_MALLOC(local_intervals->len, int);
-        for(unsigned j = 0; j < local_intervals->len; ++j) {
-            tmp_interval = (interval *) g_ptr_array_index(local_intervals,j);
+        for (unsigned j = 0; j < local_intervals->len; ++j) {
+            tmp_interval = (interval *)g_ptr_array_index(local_intervals, j);
             GPtrArray *sigma = tmp_interval->sigma;
-            for(unsigned k = 0; k < sigma->len; ++k) {
-                tmp = (Job *) g_ptr_array_index(sigma,k);
-                if(tmp == tmp_j) {
+            for (unsigned k = 0; k < sigma->len; ++k) {
+                tmp = (Job *)g_ptr_array_index(sigma, k);
+                if (tmp == tmp_j) {
                     tmp_j->pos_interval[j] = k;
                     break;
                 }
             }
         }
     }
-
 }
 
 int preprocess_data(wctproblem *problem) {
-    int      val = 0;
+    int val = 0;
     int i = 0;
 
     /** Calculate the statistics of the instance */
@@ -112,12 +113,11 @@ int preprocess_data(wctproblem *problem) {
     find_division(problem);
 
     /** Create all node of the ZDD */
-    create_ordered_jobs_array(problem->root_pd.local_intervals, problem->root_pd.ordered_jobs);
+    create_ordered_jobs_array(problem->root_pd.local_intervals,
+                              problem->root_pd.ordered_jobs);
 
     /** Determine the position of each job in the interval */
     determine_jobs_order_interval(problem);
-
-
 
     return val;
 }
@@ -212,17 +212,17 @@ static GPtrArray *array_time_slots(interval *I, GList *pairs) {
     return array;
 }
 
-void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b){
-    interval *tmp_interval;
-    Job *tmp_j;
-    GPtrArray *jobarray;
+void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b) {
+    interval *         tmp_interval;
+    Job *              tmp_j;
+    GPtrArray *        jobarray;
     job_interval_pair *tmp_pair;
-    for(unsigned i = 0; i < a->len; ++i) {
-        tmp_interval = (interval *) g_ptr_array_index(a,i);
+    for (unsigned i = 0; i < a->len; ++i) {
+        tmp_interval = (interval *)g_ptr_array_index(a, i);
         jobarray = tmp_interval->sigma;
-        for(unsigned j = 0; j < jobarray->len; ++j) {
-            tmp_j = (Job *) g_ptr_array_index(jobarray,j);
-            if(tmp_j->processingime <= tmp_interval->b) {
+        for (unsigned j = 0; j < jobarray->len; ++j) {
+            tmp_j = (Job *)g_ptr_array_index(jobarray, j);
+            if (tmp_j->processingime <= tmp_interval->b) {
                 tmp_pair = CC_SAFE_MALLOC(1, job_interval_pair);
                 tmp_pair->j = tmp_j;
                 tmp_pair->I = tmp_interval;
@@ -234,11 +234,11 @@ void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b){
 
 int find_division(wctproblem *problem) {
     int            val = 0;
-    int counter = 0;
+    int            counter = 0;
     int            njobs = problem->njobs;
     int            tmp;
     int            prev;
-    wctdata *root_pd = &(problem->root_pd);
+    wctdata *      root_pd = &(problem->root_pd);
     GPtrArray *    tmp_array = g_ptr_array_new_with_free_func(g_interval_free);
     GPtrArray *    jobarray = problem->g_job_array;
     Job *          tmp_j;
@@ -261,7 +261,8 @@ int find_division(wctproblem *problem) {
     }
 
     if (prev < problem->H_max) {
-        tmp_interval = interval_alloc(prev, problem->H_max, -1, jobarray, njobs);
+        tmp_interval =
+            interval_alloc(prev, problem->H_max, -1, jobarray, njobs);
         g_ptr_array_add(tmp_array, tmp_interval);
     }
 
@@ -287,10 +288,10 @@ int find_division(wctproblem *problem) {
             GPtrArray *slots;
             slots = array_time_slots(tmp_interval, pairs);
             for (unsigned j = 1; j < slots->len; ++j) {
-                g_ptr_array_add(
-                    root_pd->local_intervals,
-                    interval_alloc(*((int *)slots->pdata[j - 1]),
-                                   *((int *)slots->pdata[j]), counter, jobarray, njobs));
+                g_ptr_array_add(root_pd->local_intervals,
+                                interval_alloc(*((int *)slots->pdata[j - 1]),
+                                               *((int *)slots->pdata[j]),
+                                               counter, jobarray, njobs));
                 counter++;
             }
             g_ptr_array_free(slots, TRUE);
