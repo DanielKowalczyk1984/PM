@@ -25,10 +25,12 @@ public:
     T dist;
     bool calc;
     bool calc0;
+    bool remove_node;
     bool take;
     Job *prev;
     node<T> *y;
     node<T> *n;
+    boost::dynamic_bitset<> x;
 
     node()
         : layer(0),
@@ -38,6 +40,7 @@ public:
           c(0.0),
           calc(true),
           calc0(true),
+          remove_node(false),
           take(false),
           prev(nullptr),
           y(nullptr),
@@ -152,7 +155,7 @@ public:
         }
     }
 
-    node<T> *add_weight(int _weight, int layer)
+    node<T> *add_weight(int _weight, int layer, int njobs)
     {
         for (my_iterator<T> it = list.begin(); it != list.end(); it++) {
             if ((*it)->weight == _weight) {
@@ -167,15 +170,18 @@ public:
         p->take = false;
         p->prev = nullptr;
         p->dist = -DBL_MAX;
+        p->x.resize(njobs);
         list.push_back(p);
         return (list.back());
     }
 
-    void init_terminal_node(int j)
+    void init_terminal_node(int j, int njobs)
     {
         for (my_iterator<T> it = list.begin(); it != list.end(); it++) {
             (*it)->obj = j ? 0.0 : -DBL_MAX / 100.0;
             (*it)->take = false;
+            (*it)->prev = nullptr;
+            (*it)->x.resize(njobs);
         }
     }
 };
@@ -285,6 +291,7 @@ public:
     {
         for (my_iterator<T> it = n.list.begin(); it != n.list.end(); it++) {
             (*it)->obj = pi[nbjobs];
+            (*it)->prev = nullptr;
         }
     }
 
@@ -307,13 +314,24 @@ public:
             result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
 
             if (((*it)->calc)) {
-                if (obj0 < obj1 + result) {
-                    (*it)->obj = obj1 + result;
-                    (*it)->take = true;
-                    // (*it)->prev = tmp_j;
+                if (obj0 <= obj1 + result) {
+                    if(1 != p1->x[tmp_j->job]) {
+                        (*it)->obj = obj1 + result;
+                        (*it)->take = true;
+                        (*it)->prev = tmp_j;
+                        (*it)->x = p1->x;
+                        (*it)->x[tmp_j->job] = 1;
+                    } else {
+                        (*it)->obj = obj0;
+                        (*it)->take = false;
+                        (*it)->prev = p0->prev;
+                        (*it)->x = p0->x;
+                    }
                 } else {
                     (*it)->obj = obj0;
                     (*it)->take = false;
+                    (*it)->prev = p0->prev;
+                    (*it)->x = p0->x;
                 }
 
                 if ((*it)->b < obj1 + result) {
@@ -326,6 +344,8 @@ public:
             } else {
                 (*it)->obj = obj0;
                 (*it)->take = false;
+                (*it)->prev = p0->prev;
+                (*it)->x = p0->x;
             }
         }
     }

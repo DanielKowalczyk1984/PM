@@ -50,9 +50,9 @@ public:
 
              if(!(_j < nlayers)) {
                 if( state <= tmp_interval->b) {
-                    if(value_Fj(state, tmp_j) - value_Fj(state + 1, tmp_j) > 0) {
-                        return 0;
-                    }
+                    // if(value_Fj(state, tmp_j) - value_Fj(state + 1, tmp_j) > 0) {
+                    //     return 0;
+                    // }
                     return -1;
                 }
                 return 0;

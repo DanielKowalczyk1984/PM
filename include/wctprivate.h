@@ -47,8 +47,7 @@ struct wctdata {
     int nmachines;
     int *orig_node_ids;
     // data for meta heuristic
-    Job *jobarray;
-    GPtrArray *jobarray2;
+    GPtrArray *jobarray;
     int  H_max;
     int  H_min;
     /** data about the intervals */
@@ -93,6 +92,7 @@ struct wctdata {
     double  LP_lower_bound_BB;
     double *rhs;
     int     nnonimprovements;
+    int iterations;
     /** Wentges smoothing technique */
     double *pi_in;
     double *pi_out;
@@ -269,12 +269,14 @@ void temporary_data_free(wctdata *pd);
  */
 int solve_weight_dbl_bdd(wctdata *pd);
 int solve_weight_dbl_zdd(wctdata *pd);
-int solve_pricing(wctdata *pd, wctparms *parms);
+int solve_pricing(wctdata *pd, wctparms *parms, int evaluate);
 int solve_farkas_dbl(wctdata *pd);
 int solve_farkas_dbl_DP(wctdata *pd);
 void print_dot_file(PricerSolver *solver, char *name);
 int evaluate_nodes(wctdata *pd);
+int calculate_new_ordered_jobs(wctdata *pd);
 int build_solve_mip(wctdata *pd);
+void print_number_nodes_edges(wctdata *pd);
 
 /**
  * Stabilization techniques

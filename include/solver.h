@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 typedef struct PricerSolver PricerSolver;
-PricerSolver *newSolver(GPtrArray *interval_list, GPtrArray *jobs);
+PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, int nmachines, int ub);
 PricerSolver *newSolverDP(GPtrArray *interval_list, int njobs, int **sum_p);
 PricerSolver *copySolver(PricerSolver *src);
 int init_tables(PricerSolver *solver);

@@ -23,43 +23,15 @@ enum BBNodeSelection {
     max_strategy = 3,
 };
 
-enum CombineMethod {
-    min_combine_method = 0,
-    pm_combine_method = min_combine_method,
-    path_combine_method = 1,
-};
-
 enum BranchandBound {
     no = 0,
     yes = 1,
-};
-
-enum dualvariablesType {
-    Dbl = 0,
-    Int = 1,
 };
 
 enum stab_techniques {
     no_stab = 0,
     stab_wentgnes = 1,
     stab_dynamic = 2,
-};
-
-enum pricing_solver {
-    min_solver = 0,
-    bdd_solver = min_solver,
-    zdd_solver = 1,
-};
-
-enum construct_solutions {
-    min_construct_solutions = 1,
-    yes_construct = min_construct_solutions,
-    no_construct = 0,
-};
-
-enum test_ahv {
-    min_use_test = 0,
-    use_test = 1,
 };
 
 enum print {
@@ -89,8 +61,7 @@ typedef struct wctparms {
     int    bb_search_strategy;
     int    bb_branch_strategy;
     int    strong_branching;
-    int    parallel_branching;
-    int    nb_feas_sol;
+    int    nb_iterations_rvnd;
     double branching_cpu_limit;
     /**
      * scatter search
@@ -102,11 +73,7 @@ typedef struct wctparms {
      * column generation
      */
     int branchandbound;
-    int dual_var_type;
     int stab_technique;
-    int solver;
-    int construct;
-    int test_ahv;
     int print;
 
     int delete_elists;
@@ -129,22 +96,17 @@ void wctparms_free(wctparms *parms);
 
 /*Functions for setting some parameters*/
 int wctparms_set_init_upper_bound(wctparms *parms, int bound);
-int wctparms_set_parallel(wctparms *parms, int parallel);
 int wctparms_set_branching_cpu_limit(wctparms *parms, double limit);
 int wctparms_set_search_strategy(wctparms *parms, int strategy);
 int wctparms_set_branching_strategy(wctparms *parms, int strategy);
 int wctparms_set_strong_branching(wctparms *parms, int strong);
-int wctparms_set_nb_feas_sol(wctparms *parms, int nb_sol);
+int wctparms_set_nb_iterations_rvnd(wctparms *parms, int nb_sol);
 
 /**
  * column generation
  */
 int wctparms_set_branchandbound(wctparms *parms, int bound);
-int wctparms_set_dual_var_type(wctparms *parms, int);
 int wctparms_set_stab_technique(wctparms *parms, int stab_technique);
-int wctparms_set_solver(wctparms *parms, int solver);
-int wctparms_set_construct(wctparms *parms, int construct);
-int wctparms_set_test_ahv(wctparms *parms, int use);
 int wctparms_set_print(wctparms *parms, int print);
 
 /**
@@ -158,9 +120,6 @@ int wctparms_set_scatter_search_cpu_limit(wctparms *parms, double limit);
 int wctparms_set_outfile(wctparms *parms, const char *fname);
 int wctparms_set_file(wctparms *parms, const char *fname);
 int wctparms_set_backupdir(wctparms *parms, const char *fname);
-int wctparms_set_cclasses_infile(wctparms *parms, const char *fname);
-int wctparms_set_cclasses_outfile(wctparms *parms, const char *fname);
-int wctparms_set_color_infile(wctparms *parms, const char *fname);
 int wctparms_set_nmachines(wctparms *parms, int nmachines);
 
 #ifdef __cplusplus
