@@ -64,7 +64,7 @@ void calculate_Hmax(wctproblem *problem) {
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
     temp_dbl = floor(temp_dbl / problem->nmachines);
-    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax;
+    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax + 2;
     problem->H_min = (int)ceil(temp_dbl / problem->nmachines) - problem->pmax;
     printf("H_max = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
            problem->H_max, problem->pmax, problem->pmin, problem->psum,
@@ -97,6 +97,7 @@ void determine_jobs_order_interval(wctproblem *problem) {
 int preprocess_data(wctproblem *problem) {
     int val = 0;
     int i = 0;
+    wctdata *root = &(problem->root_pd);
 
     /** Calculate the statistics of the instance */
     g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
@@ -108,13 +109,13 @@ int preprocess_data(wctproblem *problem) {
     g_ptr_array_sort_with_data(problem->g_job_array, g_job_compare_edd, NULL);
 
     g_ptr_array_foreach(problem->g_job_array, g_set_jobarray_job, &i);
+    root->jobarray = problem->g_job_array;
 
     /** Find the intervals of the instance at the root node */
     find_division(problem);
 
     /** Create all node of the ZDD */
-    create_ordered_jobs_array(problem->root_pd.local_intervals,
-                              problem->root_pd.ordered_jobs);
+    create_ordered_jobs_array(root->local_intervals, root->ordered_jobs);
 
     /** Determine the position of each job in the interval */
     determine_jobs_order_interval(problem);
@@ -226,10 +227,13 @@ void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b) {
                 tmp_pair = CC_SAFE_MALLOC(1, job_interval_pair);
                 tmp_pair->j = tmp_j;
                 tmp_pair->I = tmp_interval;
+                tmp_pair->take = 0;
                 g_ptr_array_add(b, tmp_pair);
             }
         }
     }
+
+    printf("There are %u layers\n", b->len);
 }
 
 int find_division(wctproblem *problem) {

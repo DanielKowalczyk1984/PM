@@ -436,7 +436,7 @@ int create_branches_conflict(wctdata *pd, wctproblem *problem) {
     }
 
     if (!pd->LP) {
-        val = build_lp(pd, parms->construct);
+        val = build_lp(pd, 0);
         CCcheck_val_2(val, "Failed at build_lp");
     }
 

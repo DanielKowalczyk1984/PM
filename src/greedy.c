@@ -399,14 +399,13 @@ void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform) {
 int heuristic_rpup(wctproblem *prob) {
     int    val = 0;
     GRand *rand_uniform = g_rand_new_with_seed(2011);
+    wctparms *parms = &(prob->parms);
     g_random_set_seed(1984);
-    int          ILS = prob->njobs;
-    int          IR = 10;
+    int          ILS = prob->njobs/2 ;
+    int          IR  = parms->nb_iterations_rvnd;
     solution *   sol;
     solution *   sol1 = (solution *)NULL;
     GPtrArray *  intervals = prob->root_pd.local_intervals;
-    CCutil_timer test;
-    CCutil_init_timer(&test, (char *)NULL);
     local_search_data *data = (local_search_data *)NULL;
     local_search_data *data_RS = (local_search_data *)NULL;
 
@@ -448,10 +447,11 @@ int heuristic_rpup(wctproblem *prob) {
 
             if (sol1->tw < sol->tw) {
                 solution_update(sol, sol1);
-                j = 0;
+                solution_canonical_order(sol, intervals);
+                add_solution_to_colpool(sol, &(prob->root_pd));
+                j /= 2;
             }
 
-            // solution_update(sol1, sol);
             Perturb(sol1, data_RS, rand_uniform);
         }
 
@@ -467,32 +467,10 @@ int heuristic_rpup(wctproblem *prob) {
     printf("Solution after some improvements with Random Variable Search:\n");
     solution_print(prob->opt_sol);
     add_solution_to_colpool(prob->opt_sol, &(prob->root_pd));
+    prune_duplicated_sets(&(prob->root_pd));
 CLEAN:
     solution_free(&sol);
     local_search_data_free(&data);
     g_rand_free(rand_uniform);
-    return val;
-}
-
-/** Construct feasible solutions */
-
-int construct_feasible_solutions(wctproblem *problem) {
-    int           val = 0;
-    int           iterations = 0;
-    wctdata *     pd = &(problem->root_pd);
-    wctparms *    parms = &(problem->parms);
-    CCutil_timer *timer = &(problem->tot_heuristic);
-    GRand *       rand2 = g_rand_new_with_seed(1654651);
-    CCutil_start_timer(timer);
-    iterations++;
-    solution *new_sol = solution_alloc(pd->nmachines, pd->njobs, problem->off);
-    CCcheck_NULL(new_sol, "Failed to allocate")
-
-        CCutil_stop_timer(timer, 0);
-    printf("We needed %f seconds to construct %d solutions in %d iterations\n",
-           timer->cum_zeit, parms->nb_feas_sol, iterations);
-    printf("upperbound = %d, lowerbound = %d\n", problem->global_upper_bound,
-           problem->global_lower_bound);
-    g_rand_free(rand2);
     return val;
 }

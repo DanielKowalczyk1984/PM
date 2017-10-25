@@ -114,6 +114,7 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     pd->H_min = 0;
     pd->local_intervals = g_ptr_array_new_with_free_func(g_interval_free);
     pd->ordered_jobs = g_ptr_array_new_with_free_func(g_free);
+    pd->jobarray = (GPtrArray *) NULL;
     pd->sump = (int **)NULL;
     /** Initialization data */
     pd->upper_bound = INT_MAX;
@@ -141,6 +142,7 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     pd->reduced_cost = 0.0;
     pd->alpha = 0.8;
     pd->update = 1;
+    pd->iterations = 0;
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver *)NULL;
     pd->nnonimprovements = 0;
@@ -207,12 +209,6 @@ void lpwctdata_free(wctdata *pd) {
     // schedulesets_free(&(pd->cclasses), &(pd->gallocated));
     CC_IFFREE(pd->cstat, int);
     // pd->ccount = 0;
-}
-
-void mipwctdata_free(wctdata *pd) {
-    if (pd->MIP) {
-        wctlp_free(&(pd->MIP));
-    }
 }
 
 void children_data_free(wctdata *pd) {
@@ -375,7 +371,6 @@ int compute_schedule(wctproblem *problem) {
                                       ((double)problem->root_lower_bound);
         }
 
-        problem->parms.construct = 1;
         CCcheck_val_2(val, "Failed in compute_lower_bound");
         problem->nb_generated_col_root = problem->nb_generated_col;
         CCutil_stop_timer(&(problem->tot_lb_root), 0);

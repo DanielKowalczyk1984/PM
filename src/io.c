@@ -82,7 +82,7 @@ int read_problem(wctproblem *problem) {
         }
 
         problem->njobs = pd->njobs = nbjobs;
-        problem->nmachines = parms->nmachines;
+        problem->nmachines = pd->nmachines = parms->nmachines;
     } else {
         fprintf(stderr, "Unable to open file %s\n", parms->jobfile);
         val = 1;

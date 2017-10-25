@@ -105,10 +105,8 @@ local_search_data *local_search_data_init(solution *sol) {
     for (i = 0; i < nmachines; ++i) {
         data->W[i] = CC_SAFE_MALLOC(njobs, int);
         data->g[i] = CC_SAFE_MALLOC(njobs, GList *);
-        data->processing_list_1[i] =
-            CC_SAFE_MALLOC(njobs, processing_list_data);
-        data->processing_list_2[i] =
-            CC_SAFE_MALLOC(njobs, processing_list_data);
+        data->processing_list_1[i] = CC_SAFE_MALLOC(njobs, processing_list_data);
+        data->processing_list_2[i] = CC_SAFE_MALLOC(njobs, processing_list_data);
 
         for (j = 0; j < njobs; ++j) {
             data->g[i][j] = (GList *)NULL;

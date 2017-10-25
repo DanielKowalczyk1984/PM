@@ -46,8 +46,6 @@ static int grow_ages(wctdata *pd) {
 
     g_ptr_array_foreach(pd->localColPool, g_grow_ages, pd);
 
-/*    printf("%d out of %d are older than %d.\n", pd->dzcount, pd->ccount,  */
-/*           pd->retirementage); */
 CLEAN:
     return val;
 }
@@ -74,15 +72,13 @@ static int delete_old_cclasses(wctdata *pd) {
 
     if (pd->dzcount > min_numdel) {
         for (i = 0; i < count; ++i) {
-            tmp_schedule =
-                (scheduleset *)g_ptr_array_index(pd->localColPool, it);
+            tmp_schedule = (scheduleset *)g_ptr_array_index(pd->localColPool, it);
             if (tmp_schedule->age <= pd->retirementage) {
                 if (first_del != -1) {
                     /** Delete recently found deletion range.*/
                     val = wctlp_deletecols(pd->LP, first_del, last_del);
                     CCcheck_val_2(val, "Failed in wctlp_deletecols");
-                    g_ptr_array_remove_range(pd->localColPool, first_del,
-                                             last_del - first_del + 1);
+                    g_ptr_array_remove_range(pd->localColPool, first_del, last_del - first_del + 1);
                     it = it - (last_del - first_del);
                     first_del = last_del = -1;
                 } else {
@@ -102,20 +98,17 @@ static int delete_old_cclasses(wctdata *pd) {
         if (first_del != -1) {
             wctlp_deletecols(pd->LP, first_del, last_del);
             CCcheck_val_2(val, "Failed in wctlp_deletecols");
-            g_ptr_array_remove_range(pd->localColPool, first_del,
-                                     last_del - first_del + 1);
+            g_ptr_array_remove_range(pd->localColPool, first_del, last_del - first_del + 1);
         }
 
         if (dbg_lvl() > 1) {
-            printf("Deleted %d out of %d columns with age > %d.\n", pd->dzcount,
-                   count, pd->retirementage);
+            printf("Deleted %d out of %d columns with age > %d.\n", pd->dzcount, count, pd->retirementage);
         }
 
         wctlp_get_nb_cols(pd->LP, &nb_col);
         assert(pd->localColPool->len == nb_col);
         for (i = 0; i < pd->localColPool->len; ++i) {
-            tmp_schedule =
-                (scheduleset *)g_ptr_array_index(pd->localColPool, i);
+            tmp_schedule = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
             tmp_schedule->id = i;
         }
         pd->dzcount = 0;
@@ -229,27 +222,22 @@ int compute_objective(wctdata *pd, wctparms *parms) {
     for (i = 0; i < pd->njobs + 1; i++) {
         pd->LP_lower_bound_dual += (double)pd->pi[i] * pd->rhs[i];
     }
+    pd->LP_lower_bound_dual -= 0.0001;
 
     /** Get the LP lower bound and compute the lower bound of WCT */
     val = wctlp_objval(pd->LP, &(pd->LP_lower_bound));
+    pd->LP_lower_bound -= 0.0001;
     CCcheck_val_2(val, "wctlp_objval failed");
-    pd->lower_bound =
-        ((int)ceil(pd->LP_lower_bound_dual) < (int)ceil(pd->LP_lower_bound))
+    pd->lower_bound = ((int)ceil(pd->LP_lower_bound_dual) < (int)ceil(pd->LP_lower_bound))
             ? (int)ceil(pd->LP_lower_bound_dual)
             : (int)ceil(pd->LP_lower_bound);
     pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound, pd->LP_lower_bound_dual);
 
-    if (parms->stab_technique == stab_wentgnes ||
-        parms->stab_technique == stab_dynamic) {
-        pd->lower_bound = (int)ceil(pd->eta_in - 0.001);
-        pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound_BB, pd->eta_in);
-    }
-
-    if (dbg_lvl() > 0) {
+    if (pd->iterations%pd->njobs == 0) {
         printf(
             "Current primal LP objective: %19.16f  (LP_dual-bound %19.16f, "
-            "lowerbound = %d).\n",
-            pd->LP_lower_bound, pd->LP_lower_bound_dual, pd->lower_bound);
+            "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
+            pd->LP_lower_bound, pd->LP_lower_bound_dual, pd->lower_bound, pd->eta_in, pd->eta_out);
     }
 
 CLEAN:
@@ -258,7 +246,6 @@ CLEAN:
 
 int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     int       j, val = 0;
-    int       iterations = 0;
     int       break_while_loop = 1;
     int       nnonimprovements = 0;
     int       status = GRB_LOADED;
@@ -292,7 +279,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     //     assert(pd->gallocated >= pd->ccount);
     // }
 
-    if (pd->localColPool->len == 0 && parms->construct) {
+    if (pd->localColPool->len == 0) {
         solution *new_sol;
         new_sol = solution_alloc(pd->nmachines, pd->njobs, 0);
         construct_edd(problem, new_sol);
@@ -301,7 +288,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     }
 
     if (!pd->LP) {
-        val = build_lp(pd, parms->construct);
+        val = build_lp(pd, 0);
         CCcheck_val(val, "build_lp failed");
     }
 
@@ -365,12 +352,9 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     CCutil_suspend_timer(&(problem->tot_cputime));
     CCutil_resume_timer(&(problem->tot_cputime));
 
-    while ((iterations < pd->maxiterations) && !break_while_loop &&
-           problem->tot_cputime.cum_zeit <=
-               problem->parms.branching_cpu_limit) {
+    while ((pd->iterations < pd->maxiterations) && !break_while_loop && problem->tot_cputime.cum_zeit <= problem->parms.branching_cpu_limit) {
         /** delete old columns */
-        if (pd->dzcount > pd->njobs * min_ndelrow_ratio &&
-            status == GRB_OPTIMAL) {
+        if (pd->dzcount > pd->njobs * min_ndelrow_ratio && status == GRB_OPTIMAL) {
             val = delete_old_cclasses(pd);
         }
 
@@ -380,14 +364,19 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
 
         switch (status) {
             case GRB_OPTIMAL:
-                iterations++;
+                pd->iterations++;
                 pd->status = infeasible;
 
-                if (iterations < pd->maxiterations) {
+                if (pd->iterations < pd->maxiterations) {
                     switch (parms->stab_technique) {
                         case stab_wentgnes:
-                            val = solve_stab(pd, parms);
-                            CCcheck_val_2(val, "Failed in solve_stab");
+                            if(pd->iterations%5 == 0) {
+                                val = solve_pricing(pd, parms,0);
+                                CCcheck_val_2(val, "Failed in solving pricing");
+                            } else {
+                                val = solve_stab(pd, parms);
+                                CCcheck_val_2(val, "Failed in solve_stab");
+                            }
                             break;
 
                         case stab_dynamic:
@@ -396,7 +385,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                             break;
 
                         case no_stab:
-                            val = solve_pricing(pd, parms);
+                            val = solve_pricing(pd, parms, 0);
                             CCcheck_val_2(val, "Failed in solving pricing");
                             break;
                     }
@@ -405,13 +394,9 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 break;
 
             case GRB_INFEASIBLE:
-                switch (parms->solver) {
-                    case bdd_solver:
-                    case zdd_solver:
-                        val = solve_farkas_dbl(pd);
-                        CCcheck_val_2(val, "Failed in solving farkas");
-                        break;
-                }
+                    val = solve_farkas_dbl(pd);
+                    CCcheck_val_2(val, "Failed in solving farkas");
+                    break;
 
                 break;
         }
@@ -426,8 +411,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 g_ptr_array_add(pd->localColPool, pd->newsets + j);
                 CCcheck_val_2(val, "wctlp_addcol failed");
             }
-        } else {
-            schedulesets_free(&(pd->newsets), &(pd->nnewsets));
+            pd->newsets = NULL;
         }
 
         switch (status) {
@@ -436,7 +420,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                     case stab_wentgnes:
                     case stab_dynamic:
                         break_while_loop =
-                            (CC_OURABS(pd->eta_out - pd->eta_in) < 0.00001);
+                            (CC_OURABS(pd->eta_out - pd->eta_in) < 0.0001) || ceil(pd->eta_in) >= ceil(pd->LP_lower_bound_BB);
                         break;
 
                     case no_stab:
@@ -484,8 +468,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                     CCcheck_val_2(val, "wctlp_pi failed");
                     val = compute_objective(pd, parms);
                     CCcheck_val_2(val, "Failed in compute_objective");
-                    memcpy(pd->pi_out, pd->pi,
-                           sizeof(double) * (pd->njobs + 1));
+                    memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
                     pd->eta_out = pd->LP_lower_bound_dual < pd->LP_lower_bound
                                       ? pd->LP_lower_bound
                                       : pd->LP_lower_bound_dual;
@@ -504,7 +487,11 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         CCutil_resume_timer(&(problem->tot_cputime));
     }
 
-    if (iterations < pd->maxiterations &&
+    evaluate_nodes(pd);
+    calculate_new_ordered_jobs(pd);
+
+
+    if (pd->iterations < pd->maxiterations &&
         problem->tot_cputime.cum_zeit <= problem->parms.branching_cpu_limit) {
         switch (status) {
             case GRB_OPTIMAL:
@@ -520,7 +507,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                         "iterations = "
                         "%d,opt_track = %d).\n",
                         pd->lower_bound, pd->LP_lower_bound, pd->upper_bound,
-                        pd->id, iterations, pd->opt_track);
+                        pd->id, pd->iterations, pd->opt_track);
                 }
 
                 wctlp_get_nb_cols(pd->LP, &nb_cols);
@@ -529,6 +516,14 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 val = wctlp_x(pd->LP, pd->x, 0);
                 CCcheck_val_2(val, "Failed in wctlp_x");
                 pd->status = LP_bound_computed;
+                val = wctlp_pi(pd->LP, pd->pi);
+                CCcheck_val_2(val, "wctlp_pi failed");
+                solve_pricing(pd, parms, 1);
+                /** Compute the objective function */
+                val = compute_objective(pd, parms);
+                CCcheck_val_2(val, "Failed in compute_objective");
+                memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
+                pd->eta_out = pd->LP_lower_bound_dual;
                 break;
 
             case GRB_INFEASIBLE:
@@ -547,15 +542,12 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     }
 
     if (dbg_lvl() > -1) {
-        printf("iterations = %d\n", iterations);
+        printf("iterations = %d\n", pd->iterations);
         printf("lowerbound %d\n", pd->lower_bound + pd->problem->off);
     }
 
-    evaluate_nodes(pd);
-    // build_solve_mip(pd);
-
     fflush(stdout);
-    problem->nb_generated_col += iterations;
+    problem->nb_generated_col += pd->iterations;
     CCutil_suspend_timer(&(problem->tot_lb));
 
 CLEAN:
