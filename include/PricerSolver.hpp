@@ -22,7 +22,7 @@ private:
     tdzdd::DdStructure<2>                    *zdd;
     tdzdd::DataTable<PricerWeightZDD<double>> zdd_table;
     tdzdd::DataTable<PricerFarkasZDD<double>> farkas_table;
-    std::vector<edge<double>> edges;
+    std::vector<shared_ptr<edge<double>>> edges;
     int nb_removed_edges;
     int nb_removed_nodes;
     size_t nb_nodes_bdd;
@@ -34,12 +34,13 @@ private:
 public:
 
     /** Default Constructor */
-    PricerSolver(GPtrArray *_jobs, GPtrArray *_ordered_jobs, int _nmachines, int _ub): nmachines(_nmachines), ub(_ub), njobs((int)_jobs->len), nlayers((int)_ordered_jobs->len), jobs(_jobs), ordered_jobs(_ordered_jobs)  {
+    PricerSolver(GPtrArray *_jobs, GPtrArray *_ordered_jobs, int _nmachines,
+                 int _ub): nmachines(_nmachines), ub(_ub), njobs((int)_jobs->len),
+        nlayers((int)_ordered_jobs->len), jobs(_jobs), ordered_jobs(_ordered_jobs)
+    {
         /** Initialize some variables */
         nb_removed_edges = 0;
         nb_removed_nodes = 0;
-
-
         /** Construct the ZDD and the tables associated to it */
         PricerConstruct ps(ordered_jobs);
         zdd = new tdzdd::DdStructure<2>(ps);
@@ -48,63 +49,75 @@ public:
         nb_nodes_zdd = zdd->size();
         init_zdd_table();
         printf("size BDD = %lu, size ZDD= %lu\n", nb_nodes_bdd, nb_nodes_zdd);
-
+        edges.reserve(nb_nodes_bdd);
         /** Initialize Gurobi Model */
         env = new GRBEnv();
         model = new GRBModel(*env);
     };
 
     /** Copy constructor */
-    PricerSolver(const PricerSolver &other):nmachines(other.nmachines), ub(other.ub),njobs(other.njobs), nlayers(other.nlayers), jobs(other.jobs), ordered_jobs(other.ordered_jobs), zdd(new tdzdd::DdStructure<2>), zdd_table(other.zdd_table), farkas_table(other.farkas_table), edges(other.edges), nb_removed_edges(other.nb_removed_edges),nb_removed_nodes(other.nb_removed_nodes), nb_nodes_bdd(other.nb_nodes_bdd), nb_nodes_zdd(other.nb_nodes_zdd), env(new GRBEnv()), model(new GRBModel(*env)){
-
+    PricerSolver(const PricerSolver& other): nmachines(other.nmachines), ub(other.ub),
+        njobs(other.njobs), nlayers(other.nlayers), jobs(other.jobs),
+        ordered_jobs(other.ordered_jobs), zdd(new tdzdd::DdStructure<2>),
+        zdd_table(other.zdd_table), farkas_table(other.farkas_table), edges(other.edges),
+        nb_removed_edges(other.nb_removed_edges),
+        nb_removed_nodes(other.nb_removed_nodes), nb_nodes_bdd(other.nb_nodes_bdd),
+        nb_nodes_zdd(other.nb_nodes_zdd), env(new GRBEnv()), model(new GRBModel(*env))
+    {
         zdd = other.zdd;
         env = other.env;
         model = other.model;
     }
 
     /** Move Constructor */
-    PricerSolver(PricerSolver &&other) noexcept:nmachines(other.nmachines), ub(other.ub),njobs(other.njobs), nlayers(other.nlayers), jobs(other.jobs), ordered_jobs(other.ordered_jobs), zdd(other.zdd), zdd_table(other.zdd_table), farkas_table(other.farkas_table), edges(other.edges), nb_removed_edges(other.nb_removed_edges),nb_removed_nodes(other.nb_removed_nodes), nb_nodes_bdd(other.nb_nodes_bdd), nb_nodes_zdd(other.nb_nodes_zdd), env(other.env), model(other.model){
+    PricerSolver(PricerSolver&& other) noexcept: nmachines(other.nmachines),
+        ub(other.ub), njobs(other.njobs), nlayers(other.nlayers), jobs(other.jobs),
+        ordered_jobs(other.ordered_jobs), zdd(other.zdd), zdd_table(other.zdd_table),
+        farkas_table(other.farkas_table), edges(other.edges),
+        nb_removed_edges(other.nb_removed_edges),
+        nb_removed_nodes(other.nb_removed_nodes), nb_nodes_bdd(other.nb_nodes_bdd),
+        nb_nodes_zdd(other.nb_nodes_zdd), env(other.env), model(other.model)
+    {
         other.zdd = nullptr;
         other.env = nullptr;
         other.model = nullptr;
     }
 
     /** Move Constructor */
-    PricerSolver& operator=(const PricerSolver& other){
+    PricerSolver& operator=(const PricerSolver& other)
+    {
         PricerSolver tmp(other);
         *this = std::move(tmp);
         return *this;
     }
 
     /** Move assignment operator */
-    PricerSolver& operator=(PricerSolver&& other) noexcept{
+    PricerSolver& operator=(PricerSolver&& other) noexcept
+    {
         nmachines = other.nmachines;
-         ub = other.ub;
-         njobs = other.njobs;
-         nlayers = other.nlayers;
-         jobs = other.jobs;
-         ordered_jobs = other.ordered_jobs;
-
-         delete zdd;
-         zdd = other.zdd;
-         other.zdd = nullptr;
-
-         zdd_table = other.zdd_table;
-         farkas_table = other.farkas_table;
-         edges = other.edges;
-         nb_removed_edges = other.nb_removed_edges;
-         nb_removed_nodes = other.nb_removed_nodes;
-         nb_nodes_bdd = other.nb_nodes_bdd;
-         nb_nodes_zdd = other.nb_nodes_zdd;
-
-         /** Delete memory of Gurobi */
-         delete model;
-         delete env;
-         env = other.env;
-         model = other.model;
-         other.env = nullptr;
-         other.model = nullptr;
-         return *this;
+        ub = other.ub;
+        njobs = other.njobs;
+        nlayers = other.nlayers;
+        jobs = other.jobs;
+        ordered_jobs = other.ordered_jobs;
+        delete zdd;
+        zdd = other.zdd;
+        other.zdd = nullptr;
+        zdd_table = other.zdd_table;
+        farkas_table = other.farkas_table;
+        edges = other.edges;
+        nb_removed_edges = other.nb_removed_edges;
+        nb_removed_nodes = other.nb_removed_nodes;
+        nb_nodes_bdd = other.nb_nodes_bdd;
+        nb_nodes_zdd = other.nb_nodes_zdd;
+        /** Delete memory of Gurobi */
+        delete model;
+        delete env;
+        env = other.env;
+        model = other.model;
+        other.env = nullptr;
+        other.model = nullptr;
+        return *this;
     }
 
     /** Destructor */
@@ -118,9 +131,6 @@ public:
     void build_mip()
     {
         try {
-            /** Initialize MIP model builded with BDD */
-            std::vector<edge<double>> e;
-
             printf("Building Mip model for the extented formulation:\n");
             model->set(GRB_IntParam_Method, GRB_METHOD_DUAL);
             model->set(GRB_IntParam_Threads, 1);
@@ -131,45 +141,38 @@ public:
             // model->set(GRB_IntParam_VarBranch, 3);
 
             /** adding variables */
-            for (auto i = edges.begin(); i != edges.end(); ++i) {
+            for (auto& i : edges) {
                 if (i->job) {
-                    if(i->out->calc) {
+                    if (i->out->calc) {
                         i->v = model->addVar(0.0, 1.0, i->cost, GRB_BINARY);
                     } else {
                         i->v = model->addVar(0.0, 0.0, i->cost, GRB_CONTINUOUS);
                     }
                 } else {
-                    // if(i->out->calc0) {
-                        i->v = model->addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
-                    // } else {
-                    //     i->v = model->addVar(0.0, 0.0, i->cost, GRB_CONTINUOUS);
-                    //     e.push_back(*i);
-                    // }
+                    i->v = model->addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
                 }
             }
 
             model->update();
-
             GRBLinExpr obj = 0;
-            for (auto i = edges.begin(); i != edges.end(); ++i) {
+
+            for (auto& i : edges) {
                 if (i->job && i->out->calc) {
-                      obj +=  i->cost*i->v;
+                    obj +=  i->cost * i->v;
                 }
             }
 
             model->addConstr(obj, GRB_LESS_EQUAL, (double) ub - 1.0);
-
             model->update();
-
             Job *job;
-
             /** assign the jobs to some path */
             printf("Adding assignment constraints:\n");
+
             for (unsigned i = 0; i < jobs->len; ++i) {
                 job = (Job *) g_ptr_array_index(jobs, i);
                 GRBLinExpr assignment = 0;
 
-                for (auto i = edges.begin(); i != edges.end(); ++i) {
+                for (const auto& i : edges) {
                     if (i->job == job) {
                         assignment += i->v;
                     }
@@ -179,22 +182,22 @@ public:
             }
 
             tdzdd::NodeId&              root = zdd->root();
-
             /** Calculate the distance from  the origin to the given node */
             printf("Adding flow constraints:\n");
+
             for (int i = root.row() - 1; i > 0; i--) {
                 size_t const m = zdd_table[i].size();
 
                 for (size_t j = 0; j < m; j++) {
-                    for (auto it = zdd_table[i][j].list.begin(); it != zdd_table[i][j].list.end(); it++) {
+                    for (auto& it : zdd_table[i][j].list) {
                         GRBLinExpr expr = 0;
 
-                        for (auto v = edges.begin(); v != edges.end(); ++v) {
-                            if (v->out == *it) {
+                        for (const auto& v : edges) {
+                            if (v->out == it) {
                                 expr -= v->v;
                             }
 
-                            if (v->in == *it) {
+                            if (v->in == it) {
                                 expr += v->v;
                             }
                         }
@@ -206,26 +209,24 @@ public:
 
             printf("Adding convex constraint:\n");
             GRBLinExpr expr = 0;
-            for (auto it = zdd_table[0][1].list.begin(); it != zdd_table[0][1].list.end(); it++) {
-                for (auto v = edges.begin(); v != edges.end(); v++) {
-                    if (v->in == *it) {
+
+            for (auto& it : zdd_table[0][1].list) {
+                for (const auto& v : edges) {
+                    if (v->in == it) {
                         expr += v->v;
                     }
                 }
             }
 
             model->addConstr(expr, GRB_EQUAL, (double) nmachines);
-            printf("Begin solving \n");
+            printf("Begin solving:\n");
             model->optimize();
-            // model->computeIIS();
         } catch (GRBException e) {
             cout << "Error code = " << e.getErrorCode() << endl;
             cout << e.getMessage() << endl;
         } catch (...) {
             cout << "Exception during optimization" << endl;
         }
-
-
     }
 
     void init_tables()
@@ -248,11 +249,13 @@ public:
         return nb_removed_nodes;
     }
 
-    size_t get_datasize(){
+    size_t get_datasize()
+    {
         return zdd->size();
     }
 
-    size_t get_numberrows_zdd(){
+    size_t get_numberrows_zdd()
+    {
         return zdd->root().row();
     }
 
@@ -279,7 +282,8 @@ public:
         }
     }
 
-    void calculate_new_ordered_jobs(){
+    void calculate_new_ordered_jobs()
+    {
         tdzdd::NodeId&              root = zdd->root();
         int          first_del = -1;
         int          last_del = -1;
@@ -289,10 +293,9 @@ public:
             size_t const m = zdd_table[i].size();
             bool remove = true;
 
-
             for (size_t j = 0; j < m && remove; j++) {
-                for (my_iterator<double> iter = zdd_table[i][j].list.begin(); iter != zdd_table[i][j].list.end() && remove; iter++) {
-                    if((*iter)->calc) {
+                for (const auto& iter : zdd_table[i][j].list) {
+                    if (iter->calc) {
                         remove = false;
                     }
                 }
@@ -300,7 +303,6 @@ public:
 
             if (!remove) {
                 if (first_del != -1) {
-                    /** Delete recently found deletion range.*/
                     g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
                     it = it - (last_del - first_del);
                     first_del = last_del = -1;
@@ -314,9 +316,9 @@ public:
                 } else {
                     last_del++;
                 }
+
                 it++;
             }
-
         }
 
         if (first_del != -1) {
@@ -331,37 +333,39 @@ public:
         nb_nodes_bdd = zdd->size();
         zdd->zddReduce();
         nb_nodes_zdd = zdd->size();
-        // init_zdd_table();
         printf("size BDD = %lu, size ZDD= %lu\n", nb_nodes_bdd, nb_nodes_zdd);
         zdd_table.init();
+        edges.clear();
         init_zdd_table();
     }
 
-    void evaluate_nodes(double *pi, int UB, double LB, int nmachines, double reduced_cost){
+    void evaluate_nodes(double *pi, int UB, double LB, int nmachines,
+                        double reduced_cost)
+    {
         tdzdd::NodeId&              root = zdd->root();
+        double value;
 
         /** Calculate the distance from  the origin to the given node */
         for (int i = root.row(); i > 0; i--) {
             size_t const m = zdd_table[i].size();
             int          layer = nlayers - i;
-            job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(ordered_jobs, layer);
+            job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
+                                              ordered_jobs, layer);
             Job *job = tmp_pair->j;
 
             for (size_t j = 0; j < m; j++) {
-                for (my_iterator<double> it = zdd_table[i][j].list.begin();
-                        it != zdd_table[i][j].list.end(); it++) {
+                for (auto& it : zdd_table[i][j].list) {
                     if (i == root.row()) {
-                        (*it)->dist = 0;
+                        it->dist = 0;
                     }
 
-                    if ((*it)->y->dist < (*it)->dist + pi[job->job] - value_Fj((
-                                *it)->weight + job->processingime, job)) {
-                        (*it)->y->dist = (*it)->dist + pi[job->job] - value_Fj((*it)->weight +
-                                         job->processingime, job);
+                    value = pi[job->job] - value_Fj(it->weight +job->processingime, job);
+                    if (it->y->dist < it->dist + value ) {
+                        it->y->dist = it->dist + value;
                     }
 
-                    if ((*it)->n->dist < (*it)->dist) {
-                        (*it)->n->dist  = (*it)->dist;
+                    if (it->n->dist < it->dist) {
+                        it->n->dist  = it->dist;
                     }
                 }
             }
@@ -372,33 +376,32 @@ public:
             size_t const m = zdd_table[i].size();
 
             for (size_t j = 0; j < m; j++) {
-                for (my_iterator<double> it = zdd_table[i][j].list.begin();
-                        it != zdd_table[i][j].list.end(); it++) {
-                    if (LB - (double)(nmachines - 1)*reduced_cost - ((*it)->dist +
-                            (*it)->b) > UB - 1 + 0.0001 && ((*it)->calc)) {
-                        (*it)->calc = false;
+                for (auto& it : zdd_table[i][j].list) {
+                    if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->b) > UB - 1 +
+                            0.0001 && (it->calc)) {
+                        it->calc = false;
                         nb_removed_edges++;
                     }
 
-                    if(LB - (double)(nmachines - 1)*reduced_cost - ((*it)->dist +
-                            (*it)->c) > UB - 1 && ((*it)->calc0)) {
-                        (*it)->calc0 = false;
+                    if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->c) > UB - 1
+                            && (it->calc0)) {
+                        it->calc0 = false;
                         nb_removed_edges++;
                     }
 
-                    if((*it)->calc0 == false && (*it)->calc == false && (*it)->remove_node == false) {
+                    if (it->calc0 == false && it->calc == false && it->remove_node == false) {
                         nb_removed_nodes++;
-                        (*it)->remove_node = true;
+                        it->remove_node = true;
                     }
                 }
             }
         }
-
-
     }
 
-    void print_number_nodes_edges(){
-        printf("removed edges = %d, removed nodes = %d\n", nb_removed_edges, nb_removed_nodes);
+    void print_number_nodes_edges()
+    {
+        printf("removed edges = %d, removed nodes = %d\n", nb_removed_edges,
+               nb_removed_nodes);
     }
 
     void init_zdd_table()
@@ -420,20 +423,33 @@ public:
         for (int i = root.row(); i > 0; i--) {
             size_t const m = zdd_table[i].size();
             int          layer = nlayers - i;
-            job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(ordered_jobs, layer);
+            job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
+                                              ordered_jobs, layer);
             Job *job = tmp_pair->j;
 
             for (size_t j = 0; j < m; j++) {
                 tdzdd::NodeId cur_node_0 = handler.privateEntity().child(i, j, 0);
                 tdzdd::NodeId cur_node_1 = handler.privateEntity().child(i, j, 1);
 
-                for (my_iterator<double> it = zdd_table[i][j].list.begin();
-                        it != zdd_table[i][j].list.end(); it++) {
-                    (*it)->y = zdd_table[cur_node_1.row()][cur_node_1.col()].add_weight((
-                                   *it)->weight + job->processingime, nlayers - cur_node_1.row(),njobs);
+                for (auto& it : zdd_table[i][j].list) {
+                    it->y = zdd_table[cur_node_1.row()][cur_node_1.col()].add_weight((
+                                it)->weight + job->processingime, nlayers - cur_node_1.row(), njobs);
 
-                    (*it)->n = zdd_table[cur_node_0.row()][cur_node_0.col()].add_weight((*it)->weight,
-                               nlayers - cur_node_0.row(),njobs);
+                    if ((cur_node_1.row() > 0) || (cur_node_1.row() == 0 && cur_node_1.col() == 1U)) {
+                        edges.push_back(std::make_shared<edge<double>>(value_Fj(it->weight +
+                                        job->processingime, job), job, it, it->y));
+                    }
+                    it->out_edge.push_back(edges.back());
+                    it->y->in_edge.push_back(edges.back());
+
+                    it->n = zdd_table[cur_node_0.row()][cur_node_0.col()].add_weight(it->weight,
+                            nlayers - cur_node_0.row(), njobs);
+
+                    if ((cur_node_0.row() > 0) || (cur_node_0.row() == 0 && cur_node_0.col() == 1U)) {
+                        edges.push_back(make_shared<edge<double>>(0.0, nullptr, it, it->y));
+                    }
+                    it->out_edge.push_back(edges.back());
+                    it->n->in_edge.push_back(edges.back());
                 }
             }
         }
@@ -504,11 +520,13 @@ public:
     }
 
 
-    class Optimal_Solution<double> solve_weight_zdd_double(double *pi){
+    class Optimal_Solution<double> solve_weight_zdd_double(double *pi)
+    {
         return zdd->evaluate_weight(WeightZDDdouble(pi, ordered_jobs, njobs), zdd_table);
     }
 
-    class Optimal_Solution<double> solve_farkas_double(double *pi){
+    class Optimal_Solution<double> solve_farkas_double(double *pi)
+    {
         return Optimal_Solution<double>();
     }
 

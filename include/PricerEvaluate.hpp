@@ -12,14 +12,16 @@
 #include <interval.h>
 #include <gurobi_c++.h>
 
+template<typename T>
+class edge;
 
+using namespace std;
 template <typename T>
 class node {
 public:
-    int id;
     int      layer;
     int      weight;
-    T        obj;
+    T obj;
     T b;
     T c;
     T dist;
@@ -28,16 +30,20 @@ public:
     bool remove_node;
     bool take;
     Job *prev;
-    node<T> *y;
-    node<T> *n;
+    shared_ptr<node<T>> y;
+    shared_ptr<node<T>> n;
     boost::dynamic_bitset<> x;
+    vector<shared_ptr<edge<T>>> out_edge;
+    vector<shared_ptr<edge<T>>> in_edge;
 
+    /** Default Constructor */
     node()
         : layer(0),
           weight(0),
           obj(0.0),
           b(0.0),
           c(0.0),
+          dist(-DBL_MAX),
           calc(true),
           calc0(true),
           remove_node(false),
@@ -46,8 +52,9 @@ public:
           y(nullptr),
           n(nullptr)
     {
+        out_edge.reserve(2);
+        in_edge.reserve(2);
     };
-
 
     node<T>(const node<T>& other)
     {
@@ -73,8 +80,8 @@ public:
     int id;
     T cost;
     Job *job;
-    node<T> *out;
-    node<T> *in;
+    shared_ptr<node<T>> out;
+    shared_ptr<node<T>> in;
     GRBVar v;
 
 
@@ -84,7 +91,7 @@ public:
     {
     }
 
-    edge(T _cost, Job *_job, node<T> *_out, node<T> *_in) : cost(_cost), job(_job), out(_out), in(_in)
+    edge(T _cost, Job *_job, shared_ptr<node<T>> _out, shared_ptr<node<T>> _in) : cost(_cost), job(_job), out(_out), in(_in)
     {
         id = _total++;
     }
@@ -109,7 +116,7 @@ public:
     edge& operator= (const edge& other)
     {
         edge tmp(other);         // re-use copy-constructor
-        *this = std::move(tmp); // re-use move-assignment
+        *this = move(tmp); // re-use move-assignment
         return *this;
     }
 
@@ -138,38 +145,30 @@ public:
 template<typename T>
 int edge<T>::_total = 0;
 
-template <typename T>
-using my_iterator = typename std::vector<node<T> *>::iterator;
+// template <typename T>
+// using my_iterator = typename vector<shared_ptr<node<T>>>::iterator;
 
 template <typename T>
 class PricerWeightZDD {
 public:
-    std::vector<node<T> *> list;
+    vector<shared_ptr<node<T>>> list;
 
     PricerWeightZDD() {};
 
-    ~PricerWeightZDD()
-    {
-        for (my_iterator<T> it = list.begin(); it != list.end(); it++) {
-            delete *it;
-        }
+    ~PricerWeightZDD(){
     }
 
-    node<T> *add_weight(int _weight, int layer, int njobs)
+    shared_ptr<node<T>> add_weight(int _weight, int layer, int njobs)
     {
-        for (my_iterator<T> it = list.begin(); it != list.end(); it++) {
-            if ((*it)->weight == _weight) {
-                return (*it);
+        for (auto& it : list) {
+            if (it->weight == _weight) {
+                return it;
             }
         }
 
-        node<T> *p = new node<T>();
+        shared_ptr<node<T>> p = make_shared<node<T>>();
         p->layer = layer;
         p->weight = _weight;
-        p->obj = 0.0;
-        p->take = false;
-        p->prev = nullptr;
-        p->dist = -DBL_MAX;
         p->x.resize(njobs);
         list.push_back(p);
         return (list.back());
@@ -177,11 +176,11 @@ public:
 
     void init_terminal_node(int j, int njobs)
     {
-        for (my_iterator<T> it = list.begin(); it != list.end(); it++) {
-            (*it)->obj = j ? 0.0 : -DBL_MAX / 100.0;
-            (*it)->take = false;
-            (*it)->prev = nullptr;
-            (*it)->x.resize(njobs);
+        for (auto& it : list) {
+            it->obj = j ? 0.0 : -DBL_MAX / 100.0;
+            it->take = false;
+            it->prev = nullptr;
+            it->x.resize(njobs);
         }
     }
 };
@@ -237,7 +236,7 @@ public:
     Optimal_Solution& operator= (const Optimal_Solution& other)
     {
         Optimal_Solution tmp(other);         // re-use copy-constructor
-        *this = std::move(tmp); // re-use move-assignment
+        *this = move(tmp); // re-use move-assignment
         return *this;
     }
 
@@ -261,11 +260,11 @@ public:
         }
     }
 
-    friend std::ostream& operator<<(std::ostream&              os,
+    friend ostream& operator<<(ostream&              os,
                                     Optimal_Solution<T> const& o)
     {
-        os << "obj = " << o.obj << "," << std::endl
-           << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
+        os << "obj = " << o.obj << "," << endl
+           << "cost = " << o.cost << " C_max = " << o.C_max << endl;
         g_ptr_array_foreach(o.jobs, g_print_machine, NULL);
         return os;
     };
@@ -289,9 +288,9 @@ public:
 
     void evalTerminal(PricerWeightZDD<T>& n)
     {
-        for (my_iterator<T> it = n.list.begin(); it != n.list.end(); it++) {
-            (*it)->obj = pi[nbjobs];
-            (*it)->prev = nullptr;
+        for (auto &it : n.list) {
+            it->obj = pi[nbjobs];
+            it->prev = nullptr;
         }
     }
 
@@ -305,59 +304,59 @@ public:
         Job *tmp_j = tmp_pair->j;
         double result;
 
-        for (my_iterator<T> it = n->list.begin(); it != n->list.end(); it++) {
-            int      weight = ((*it)->weight);
-            node<T> *p0 = (*it)->n;
-            node<T> *p1 = (*it)->y;
+        for (auto& it : n->list) {
+            int      weight = it->weight;
+            shared_ptr<node<T>> p0 = it->n;
+            shared_ptr<node<T>> p1 = it->y;
             T        obj0 = p0->obj;
             T        obj1 = p1->obj;
             result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
 
-            if (((*it)->calc)) {
+            if ((it->calc)) {
                 if (obj0 <= obj1 + result) {
                     if(1 != p1->x[tmp_j->job]) {
-                        (*it)->obj = obj1 + result;
-                        (*it)->take = true;
-                        (*it)->prev = tmp_j;
-                        (*it)->x = p1->x;
-                        (*it)->x[tmp_j->job] = 1;
+                        it->obj = obj1 + result;
+                        it->take = true;
+                        it->prev = tmp_j;
+                        it->x = p1->x;
+                        it->x[tmp_j->job] = 1;
                     } else {
-                        (*it)->obj = obj0;
-                        (*it)->take = false;
-                        (*it)->prev = p0->prev;
-                        (*it)->x = p0->x;
+                        it->obj = obj0;
+                        it->take = false;
+                        it->prev = p0->prev;
+                        it->x = p0->x;
                     }
                 } else {
-                    (*it)->obj = obj0;
-                    (*it)->take = false;
-                    (*it)->prev = p0->prev;
-                    (*it)->x = p0->x;
+                    it->obj = obj0;
+                    it->take = false;
+                    it->prev = p0->prev;
+                    it->x = p0->x;
                 }
 
-                if ((*it)->b < obj1 + result) {
-                    (*it)->b = obj1 + result;
+                if (it->b < obj1 + result) {
+                    it->b = obj1 + result;
                 }
 
-                if((*it)->c < obj0) {
-                    (*it)->c = obj0;
+                if(it->c < obj0) {
+                    it->c = obj0;
                 }
             } else {
-                (*it)->obj = obj0;
-                (*it)->take = false;
-                (*it)->prev = p0->prev;
-                (*it)->x = p0->x;
+                it->obj = obj0;
+                it->take = false;
+                it->prev = p0->prev;
+                it->x = p0->x;
             }
         }
     }
 
     void initializenode(PricerWeightZDD<T>& n)
     {
-        for (my_iterator<T> it = n.list.begin(); it != n.list.end(); it++) {
-            (*it)->obj = 0.0;
-            (*it)->b = pi[nbjobs];
-            (*it)->c = pi[nbjobs];
-            (*it)->dist = -DBL_MAX;
-            (*it)->take = false;
+        for (auto& it : n.list) {
+            it->obj = 0.0;
+            it->b = pi[nbjobs];
+            it->c = pi[nbjobs];
+            it->dist = -DBL_MAX;
+            it->take = false;
         }
     }
 
@@ -367,7 +366,7 @@ public:
     {
         Optimal_Solution<T> sol;
         sol.obj = (*data_table)[f->row()][f->col()].list[sol.C_max]->obj;
-        node<T> *ptr = (*data_table)[f->row()][f->col()].list[sol.C_max];
+        shared_ptr<node<T>> ptr = (*data_table)[f->row()][f->col()].list[sol.C_max];
         job_interval_pair *tmp_pair;
         Job *tmp_j;
 
