@@ -135,10 +135,8 @@ public:
             model->set(GRB_IntParam_Method, GRB_METHOD_DUAL);
             model->set(GRB_IntParam_Threads, 1);
             model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-            model->set(GRB_IntParam_Presolve, 1);
-            model->set(GRB_IntParam_MIPFocus, 2);
-            model->set(GRB_IntParam_Cuts, 2);
-            // model->set(GRB_IntParam_VarBranch, 3);
+            model->set(GRB_IntParam_Presolve, 2);
+            model->set(GRB_IntParam_VarBranch, 3);
 
             /** adding variables */
             for (auto& i : edges) {
@@ -164,42 +162,44 @@ public:
 
             model->addConstr(obj, GRB_LESS_EQUAL, (double) ub - 1.0);
             model->update();
-            Job *job;
             /** assign the jobs to some path */
             printf("Adding assignment constraints:\n");
 
+            GRBLinExpr *assignment = new GRBLinExpr[njobs];
+
             for (unsigned i = 0; i < jobs->len; ++i) {
-                job = (Job *) g_ptr_array_index(jobs, i);
-                GRBLinExpr assignment = 0;
-
-                for (const auto& i : edges) {
-                    if (i->job == job) {
-                        assignment += i->v;
-                    }
-                }
-
-                model->addConstr(assignment, GRB_EQUAL, 1.0);
+                assignment[i] = 0;
             }
+
+            for (const auto& i : edges) {
+                if (i->job) {
+                    assignment[i->job->job] += i->v;
+                }
+            }
+
+            for (unsigned i = 0; i < jobs->len; ++i) {
+                model->addConstr(assignment[i], GRB_EQUAL, 1.0);
+            }
+
+            delete[] assignment;
+
+            model->update();
 
             tdzdd::NodeId&              root = zdd->root();
             /** Calculate the distance from  the origin to the given node */
             printf("Adding flow constraints:\n");
-
             for (int i = root.row() - 1; i > 0; i--) {
                 size_t const m = zdd_table[i].size();
-
                 for (size_t j = 0; j < m; j++) {
                     for (auto& it : zdd_table[i][j].list) {
                         GRBLinExpr expr = 0;
 
-                        for (const auto& v : edges) {
-                            if (v->out == it) {
+                        for (const auto& v : it->out_edge) {
                                 expr -= v->v;
-                            }
+                        }
 
-                            if (v->in == it) {
-                                expr += v->v;
-                            }
+                        for(const auto& v : it->in_edge) {
+                            expr += v->v;
                         }
 
                         model->addConstr(expr, GRB_EQUAL, 0.0);
@@ -211,14 +211,13 @@ public:
             GRBLinExpr expr = 0;
 
             for (auto& it : zdd_table[0][1].list) {
-                for (const auto& v : edges) {
-                    if (v->in == it) {
-                        expr += v->v;
-                    }
+                for (const auto& v : it->in_edge) {
+                    expr += v->v;
                 }
             }
 
             model->addConstr(expr, GRB_EQUAL, (double) nmachines);
+            model->update();
             printf("Begin solving:\n");
             model->optimize();
         } catch (GRBException e) {
@@ -446,7 +445,7 @@ public:
                             nlayers - cur_node_0.row(), njobs);
 
                     if ((cur_node_0.row() > 0) || (cur_node_0.row() == 0 && cur_node_0.col() == 1U)) {
-                        edges.push_back(make_shared<edge<double>>(0.0, nullptr, it, it->y));
+                        edges.push_back(make_shared<edge<double>>(0.0, nullptr, it, it->n));
                     }
                     it->out_edge.push_back(edges.back());
                     it->n->in_edge.push_back(edges.back());

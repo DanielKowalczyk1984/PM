@@ -545,6 +545,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         printf("iterations = %d\n", pd->iterations);
         printf("lowerbound %d\n", pd->lower_bound + pd->problem->off);
     }
+    build_solve_mip(pd);
 
     fflush(stdout);
     problem->nb_generated_col += pd->iterations;
