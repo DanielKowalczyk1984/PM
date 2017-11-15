@@ -35,6 +35,7 @@ int add_one_conflict(
 
 void iterate_dd(PricerSolver *solver);
 void iterate_zdd(PricerSolver *solver);
+void print_number_paths(PricerSolver *solver);
 
 void set_release_due_time(PricerSolver *solver, Job *jobarray);
 
