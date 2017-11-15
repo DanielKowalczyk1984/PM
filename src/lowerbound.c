@@ -1,7 +1,7 @@
 #include <wct.h>
 #include <solver.h>
 
-static const double min_ndelrow_ratio = 0.3;
+static const double min_ndelrow_ratio = 0.9;
 
 void g_print_ages_col(gpointer data, gpointer user_data) {
     scheduleset *x = (scheduleset *)data;
@@ -335,7 +335,6 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
             /** get the dual variables and make them feasible */
             val = wctlp_pi(pd->LP, pd->pi);
             CCcheck_val_2(val, "wctlp_pi failed");
-            make_pi_feasible(pd);
             /** Compute the objective function */
             val = compute_objective(pd, parms);
             CCcheck_val_2(val, "Failed in compute_objective");
@@ -468,7 +467,6 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 if (pd->update) {
                     val = wctlp_pi(pd->LP, pd->pi);
                     CCcheck_val_2(val, "wctlp_pi failed");
-                    make_pi_feasible(pd);
                     val = compute_objective(pd, parms);
                     CCcheck_val_2(val, "Failed in compute_objective");
                     memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
