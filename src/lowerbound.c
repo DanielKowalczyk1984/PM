@@ -1,4 +1,5 @@
 #include <wct.h>
+#include <solver.h>
 
 static const double min_ndelrow_ratio = 0.3;
 
@@ -334,6 +335,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
             /** get the dual variables and make them feasible */
             val = wctlp_pi(pd->LP, pd->pi);
             CCcheck_val_2(val, "wctlp_pi failed");
+            make_pi_feasible(pd);
             /** Compute the objective function */
             val = compute_objective(pd, parms);
             CCcheck_val_2(val, "Failed in compute_objective");
@@ -420,7 +422,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                     case stab_wentgnes:
                     case stab_dynamic:
                         break_while_loop =
-                            (CC_OURABS(pd->eta_out - pd->eta_in) < 0.0001) || ceil(pd->eta_in) >= ceil(pd->LP_lower_bound_BB);
+                            (CC_OURABS(pd->eta_out - pd->eta_in) < 0.0001) || (ceil(pd->eta_in - 0.0001) >= pd->eta_out);
                         break;
 
                     case no_stab:
@@ -466,6 +468,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 if (pd->update) {
                     val = wctlp_pi(pd->LP, pd->pi);
                     CCcheck_val_2(val, "wctlp_pi failed");
+                    make_pi_feasible(pd);
                     val = compute_objective(pd, parms);
                     CCcheck_val_2(val, "Failed in compute_objective");
                     memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
@@ -487,10 +490,6 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         CCutil_resume_timer(&(problem->tot_cputime));
     }
 
-    evaluate_nodes(pd);
-    calculate_new_ordered_jobs(pd);
-
-
     if (pd->iterations < pd->maxiterations &&
         problem->tot_cputime.cum_zeit <= problem->parms.branching_cpu_limit) {
         switch (status) {
@@ -511,7 +510,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 }
 
                 wctlp_get_nb_cols(pd->LP, &nb_cols);
-                pd->x = CC_SAFE_MALLOC(nb_cols, double);
+                pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
                 CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
                 val = wctlp_x(pd->LP, pd->x, 0);
                 CCcheck_val_2(val, "Failed in wctlp_x");
@@ -524,6 +523,8 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 CCcheck_val_2(val, "Failed in compute_objective");
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
                 pd->eta_out = pd->LP_lower_bound_dual;
+                evaluate_nodes(pd);
+                calculate_new_ordered_jobs(pd);
                 break;
 
             case GRB_INFEASIBLE:
@@ -545,12 +546,38 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         printf("iterations = %d\n", pd->iterations);
         printf("lowerbound %d\n", pd->lower_bound + pd->problem->off);
     }
-    build_solve_mip(pd);
 
     fflush(stdout);
     problem->nb_generated_col += pd->iterations;
     CCutil_suspend_timer(&(problem->tot_lb));
 
 CLEAN:
+    return val;
+}
+
+int print_x(wctdata *pd){
+    int val = 0;
+    int nb_cols;
+    int status;
+
+    wctlp_get_nb_cols(pd->LP, &nb_cols);
+    pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
+    CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
+    val = wctlp_x(pd->LP, pd->x, 0);
+    CCcheck_val_2(val, "Failed in wctlp_x");
+    wctlp_status(pd->LP, &status);
+    switch(status){
+        case GRB_OPTIMAL:
+            for(unsigned i = 0; i < nb_cols; ++i) {
+                if(pd->x[i] > 0.0001) {
+                    printf("x = %f\n", pd->x[i]);
+                    scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
+                    g_ptr_array_foreach(tmp->jobs, g_print_machine, NULL);
+                    printf("\n");
+                }
+            }
+        break;
+    }
+    CLEAN:
     return val;
 }
