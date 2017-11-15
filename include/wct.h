@@ -88,6 +88,7 @@ int create_branches_conflict(wctdata *pd, wctproblem *problem);
 
 int compute_lower_bound(wctproblem *problem, wctdata *pd);
 int compute_objective(wctdata *pd, wctparms *parms);
+int print_x(wctdata *pd);
 
 void make_pi_feasible(wctdata *pd);
 void make_pi_feasible_farkas_pricing(wctdata *pd);
