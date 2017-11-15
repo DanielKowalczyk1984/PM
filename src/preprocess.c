@@ -259,7 +259,6 @@ int find_division(wctproblem *problem) {
         tmp_j = (Job *)g_ptr_array_index(jobarray, i);
         tmp = CC_MIN(problem->H_max, tmp_j->duetime);
         if (prev < tmp) {
-            printf("test %d %d\n", prev, tmp);
             tmp_interval = interval_alloc(prev, tmp, -1, jobarray, njobs);
             g_ptr_array_add(tmp_array, tmp_interval);
             CCcheck_NULL_2(tmp_interval, "Failed to allocate memory");
