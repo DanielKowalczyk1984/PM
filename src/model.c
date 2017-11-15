@@ -129,12 +129,12 @@ int build_lp(wctdata *pd, int construct) {
     CCcheck_val_2(val, "wctlp_init failed");
 
     for (int i = 0; i < njobs; i++) {
-        val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_EQUAL,
+        val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_GREATER_EQUAL,
                            1.0, (char *)NULL);
         CCcheck_val_2(val, "Failed wctlp_addrow");
     }
 
-    val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_EQUAL,
+    val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_LESS_EQUAL,
                        (double)nmachines, (char *)NULL);
 
     wctlp_get_nb_rows(pd->LP, &nb_row);
