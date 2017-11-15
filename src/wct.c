@@ -9,7 +9,7 @@ void set_dbg_lvl(int dbglvl) { debug = dbglvl; }
 /*Functions for initialization of the problem and freeing the problem*/
 void wctproblem_init(wctproblem *problem) {
     /** Job data */
-    problem->g_job_array = g_ptr_array_new_with_free_func(free);
+    problem->g_job_array = g_ptr_array_new_with_free_func(g_job_free);
     problem->opt_sol = (solution *)NULL;
     /** Job summary */
     problem->njobs = 0;
@@ -21,13 +21,12 @@ void wctproblem_init(wctproblem *problem) {
     problem->off = 0;
     problem->H_min = 0;
     problem->H_max = INT_MAX;
-    problem->e = g_ptr_array_new_with_free_func(g_interval_free);
     /*B&B info*/
     problem->nwctdata = 0;
     problem->global_upper_bound = INT_MAX;
-    problem->first_lower_bound = 0;
+    problem->root_lower_bound = 0;
     problem->global_lower_bound = 0;
-    problem->first_upper_bound = INT_MAX;
+    problem->root_upper_bound = INT_MAX;
     problem->status = no_sol;
     problem->rel_error = 1.0;
     problem->nbestschedule = 0;
@@ -38,7 +37,9 @@ void wctproblem_init(wctproblem *problem) {
     problem->initsets = (scheduleset *)NULL;
     problem->br_heap_a = (BinomialHeap *)NULL;
     /*data of the problem*/
-    wctdata_init(&(problem->root_pd));
+    wctdata_init(&(problem->root_pd), problem);
+    set_id_and_name(&(problem->root_pd), 0, "root_node");
+    problem->nwctdata++;
     /*parms of the problem*/
     wctparms_init(&(problem->parms));
     /*heap initialization*/
@@ -49,14 +50,28 @@ void wctproblem_init(wctproblem *problem) {
     problem->nb_explored_nodes = 0;
     problem->nb_generated_col = 0;
     /*CPU timer initialisation*/
-    CCutil_init_timer(&(problem->tot_cputime), "tot_cputime");
-    CCutil_init_timer(&(problem->tot_scatter_search), "tot_scatter_search");
-    CCutil_init_timer(&(problem->tot_branch_and_bound), "tot_branch_and_bound");
-    CCutil_init_timer(&(problem->tot_lb_lp_root), "tot_lb_lp_root");
     CCutil_init_timer(&(problem->tot_build_dd), "tot_build_dd");
-    CCutil_init_timer(&(problem->tot_lb_lp), "tot_lb_lp");
+    CCutil_init_timer(&(problem->tot_cputime), "tot_cputime");
+    CCutil_init_timer(&(problem->tot_branch_and_bound), "tot_branch_and_bound");
+    CCutil_init_timer(&(problem->tot_strong_branching), "tot_strong_branching");
+    CCutil_init_timer(&(problem->tot_lb_root), "tot_lb_root");
     CCutil_init_timer(&(problem->tot_lb), "tot_lb");
+    CCutil_init_timer(&(problem->tot_solve_lp), "tot_solve_lp");
     CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
+    CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
+    /** initialize colPool */
+    problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+    problem->nArtificials = 0;
+    /** initialize the time */
+    problem->real_time_build_dd = 0.0;
+    problem->real_time_total = 0.0;
+    problem->real_time_branch_and_bound = 0.0;
+    problem->real_time_strong_branching = 0.0;
+    problem->real_time_lb_root = 0.0;
+    problem->real_time_lb = 0.0;
+    problem->real_time_pricing = 0.0;
+    problem->real_time_heuristic = 0.0;
+    CCutil_start_timer(&(problem->tot_cputime));
 }
 
 void wctproblem_free(wctproblem *problem) {
@@ -77,8 +92,8 @@ void wctproblem_free(wctproblem *problem) {
     }
 
     g_ptr_array_free(problem->g_job_array, TRUE);
-    g_ptr_array_free(problem->e, TRUE);
     g_ptr_array_free(problem->unexplored_states, TRUE);
+    g_ptr_array_free(problem->ColPool, TRUE);
     g_queue_free(problem->non_empty_level_pqs);
     schedulesets_free(&(problem->initsets), &(problem->gallocated));
     schedulesets_free(&(problem->bestschedule), &(problem->nbestschedule));
@@ -86,22 +101,22 @@ void wctproblem_free(wctproblem *problem) {
 }
 
 /*Functions for initialization and free the data*/
-void wctdata_init(wctdata *pd) {
+void wctdata_init(wctdata *pd, wctproblem *prob) {
     /*Initialization B&B data*/
     pd->id = -1;
     pd->depth = 0;
     pd->status = initialized;
     sprintf(pd->pname, "temporary");
-    /*Initialization graph data*/
+    /*Initialization node instance data*/
     pd->njobs = 0;
     pd->orig_node_ids = (int *)NULL;
-    // pd->duration = (int *)NULL;
-    // pd->weights = (int *)NULL;
-    // pd->duetime = (int *) NULL;
-    // pd->releasetime = (int *) NULL;
-    //pd->jobarray = (Job *)NULL;
     pd->H_max = 0;
     pd->H_min = 0;
+    pd->local_intervals = g_ptr_array_new_with_free_func(g_interval_free);
+    pd->ordered_jobs = g_ptr_array_new_with_free_func(g_free);
+    pd->jobarray = (GPtrArray *) NULL;
+    pd->sump = (int **)NULL;
+    /** Initialization data */
     pd->upper_bound = INT_MAX;
     pd->lower_bound = 0;
     pd->dbl_safe_lower_bound = 0.0;
@@ -113,6 +128,7 @@ void wctdata_init(wctdata *pd) {
     pd->rhs = (double *)NULL;
     /*Initialization  of the LP*/
     pd->LP = (wctlp *)NULL;
+    pd->MIP = (wctlp *)NULL;
     pd->x = (double *)NULL;
     pd->coef = (double *)NULL;
     pd->pi = (double *)NULL;
@@ -123,23 +139,21 @@ void wctdata_init(wctdata *pd) {
     pd->pi_sep = (double *)NULL;
     pd->subgradient = (double *)NULL;
     pd->subgradient_in = (double *)NULL;
+    pd->reduced_cost = 0.0;
     pd->alpha = 0.8;
     pd->update = 1;
+    pd->iterations = 0;
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver *)NULL;
     pd->nnonimprovements = 0;
-    /*Initialization of scheduleset*/
-    pd->ccount = 0;
-    pd->cclasses = (scheduleset *)NULL;
     pd->dzcount = 0;
-    pd->gallocated = 0;
-    pd->newsets = (scheduleset *)NULL;
-    pd->nnewsets = 0;
     pd->bestcolors = (scheduleset *)NULL;
     pd->nbbest = 0;
     pd->debugcolors = (scheduleset *)NULL;
     pd->ndebugcolors = 0;
     pd->opt_track = 0;
+    pd->localColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+    pd->cstat = (int *)NULL;
     /*Initialization max and retirement age*/
     pd->maxiterations = 1000000;
     pd->retirementage = 1000000;
@@ -163,14 +177,16 @@ void wctdata_init(wctdata *pd) {
     pd->nsame = 0;
     pd->diff_children = (wctdata *)NULL;
     pd->ndiff = 0;
-    pd->v1 = -1;
-    pd->v2 = -1;
+    pd->v1 = (Job *)NULL;
+    pd->v2 = (Job *)NULL;
     /** Wide branching */
     pd->v1_wide = (int *)NULL;
     pd->v2_wide = (int *)NULL;
     pd->nb_wide = 0;
     pd->same_children_wide = (wctdata **)NULL;
     pd->diff_children_wide = (wctdata **)NULL;
+
+    pd->problem = prob;
 }
 
 void lpwctdata_free(wctdata *pd) {
@@ -189,14 +205,10 @@ void lpwctdata_free(wctdata *pd) {
     CC_IFFREE(pd->subgradient_in, double);
     CC_IFFREE(pd->rhs, double);
 
-    if (pd->solver) {
-        freeSolver(pd->solver);
-        pd->solver = (PricerSolver *)NULL;
-    }
-
-    schedulesets_free(&(pd->newsets), &(pd->nnewsets));
-    schedulesets_free(&(pd->cclasses), &(pd->gallocated));
-    pd->ccount = 0;
+    // schedulesets_free(&(pd->newsets), &(pd->nnewsets));
+    // schedulesets_free(&(pd->cclasses), &(pd->gallocated));
+    CC_IFFREE(pd->cstat, int);
+    // pd->ccount = 0;
 }
 
 void children_data_free(wctdata *pd) {
@@ -230,11 +242,25 @@ void children_data_free(wctdata *pd) {
 void temporary_data_free(wctdata *pd) {
     children_data_free(pd);
     lpwctdata_free(pd);
+    g_ptr_array_free(pd->localColPool, TRUE);
+    if (pd->solver) {
+        freeSolver(pd->solver);
+        pd->solver = (PricerSolver *)NULL;
+    }
 }
 
 void wctdata_free(wctdata *pd) {
     schedulesets_free(&(pd->bestcolors), &(pd->nbbest));
     temporary_data_free(pd);
+    if (pd->sump) {
+        for (unsigned i = 0; i < pd->local_intervals->len; ++i) {
+            CC_IFFREE(pd->sump[i], int);
+        }
+        CC_IFFREE(pd->sump, int *)
+    }
+
+    g_ptr_array_free(pd->local_intervals, TRUE);
+    g_ptr_array_free(pd->ordered_jobs, TRUE);
     CC_IFFREE(pd->elist_same, int);
     CC_IFFREE(pd->elist_differ, int);
     CC_IFFREE(pd->v1_wide, int);
@@ -242,62 +268,6 @@ void wctdata_free(wctdata *pd) {
     CC_IFFREE(pd->orig_node_ids, int);
     CC_IFFREE(pd->v1_wide, int);
     CC_IFFREE(pd->v2_wide, int);
-}
-
-int partlist_to_scheduleset(
-    partlist *part, int nbpart, int njobs, scheduleset **classes, int *ccount) {
-    int val = 0;
-    int i, j = 0, k = 0;
-    schedulesets_free(classes, ccount);
-    *ccount = j;
-    scheduleset *temp_sets = CC_SAFE_MALLOC(*ccount, scheduleset);
-    CCcheck_NULL_2(temp_sets, "Failed to allocate memory to temp_sets");
-
-    for (i = 0; i < nbpart; i++) {
-        if (0) {
-            scheduleset_init(temp_sets + k);
-            temp_sets[k].totweight = part[i].c;
-            temp_sets[k].members = CC_SAFE_MALLOC(temp_sets[k].count + 1, int);
-            CCcheck_NULL(temp_sets[k].members,
-                         "Failed to allocate memory to members");
-            temp_sets[k].totwct = 0;
-            temp_sets[k].C = CC_SAFE_MALLOC(temp_sets[k].count, int);
-            CCcheck_NULL(temp_sets[k].C, "Failed to allocate memory to C");
-            temp_sets[k].table =
-                g_hash_table_new(g_direct_hash, g_direct_equal);
-            CCcheck_NULL(temp_sets[k].table, "Failed to construct table");
-            GList *v = (GList *)NULL;
-            j = 0;
-            int completion = 0;
-
-            while (v != NULL) {
-                Job *job = (Job *)v->data;
-                completion += job->processingime;
-                temp_sets[k].C[j] = completion;
-                temp_sets[k].members[j] = job->job;
-                g_hash_table_insert(temp_sets[k].table,
-                                    GINT_TO_POINTER(job->job),
-                                    temp_sets[k].C + j);
-                temp_sets[k].totwct += job->weight * completion;
-                v = g_list_next(v);
-                j++;
-            }
-
-            temp_sets[k].members[j] = njobs;
-            // CCutil_int_array_quicksort( temp_sets[k].members,
-            // temp_sets[k].count );
-            k++;
-        }
-    }
-
-    *classes = temp_sets;
-CLEAN:
-
-    if (val) {
-        schedulesets_free(&temp_sets, ccount);
-    }
-
-    return val;
 }
 
 int set_id_and_name(wctdata *pd, int id, const char *fname) {
@@ -376,9 +346,9 @@ int compute_schedule(wctproblem *problem) {
     wctdata * root_pd = &(problem->root_pd);
     wctparms *parms = &(problem->parms);
     problem->mult_key = 1.0;
-    problem->first_upper_bound = problem->global_upper_bound;
-    problem->first_lower_bound = problem->global_lower_bound;
-    problem->first_rel_error =
+    problem->root_upper_bound = problem->global_upper_bound;
+    problem->root_lower_bound = problem->global_lower_bound;
+    problem->root_rel_error =
         (double)(problem->global_upper_bound - problem->global_lower_bound) /
         ((double)problem->global_lower_bound);
     prune_duplicated_sets(root_pd);
@@ -389,22 +359,21 @@ int compute_schedule(wctproblem *problem) {
         val = prefill_heap(root_pd, problem);
         CCcheck_val(val, "Failed in prefill_heap");
     } else {
-        CCutil_start_timer(&(problem->tot_lb_lp_root));
+        CCutil_start_timer(&(problem->tot_lb_root));
         val = compute_lower_bound(problem, root_pd);
         CCcheck_val_2(val, "Failed in compute_lower_bound");
 
         if (root_pd->lower_bound > problem->global_lower_bound) {
             problem->global_lower_bound = root_pd->lower_bound;
-            problem->first_lower_bound = root_pd->lower_bound;
-            problem->first_rel_error = (double)(problem->first_upper_bound -
-                                                problem->first_lower_bound) /
-                                       ((double)problem->first_lower_bound);
+            problem->root_lower_bound = root_pd->lower_bound;
+            problem->root_rel_error = (double)(problem->root_upper_bound -
+                                               problem->root_lower_bound) /
+                                      ((double)problem->root_lower_bound);
         }
 
-        problem->parms.construct = 1;
         CCcheck_val_2(val, "Failed in compute_lower_bound");
         problem->nb_generated_col_root = problem->nb_generated_col;
-        CCutil_stop_timer(&(problem->tot_lb_lp_root), 0);
+        CCutil_stop_timer(&(problem->tot_lb_root), 0);
 
         switch (parms->bb_branch_strategy) {
             case conflict_strategy:
@@ -468,6 +437,41 @@ int compute_schedule(wctproblem *problem) {
     }
 
     children_data_free(&problem->root_pd);
+CLEAN:
+    return val;
+}
+
+int add_solution_to_colpool(solution *sol, wctdata *pd) {
+    int          val = 0;
+    scheduleset *tmp;
+
+    for (int i = 0; i < sol->nmachines; ++i) {
+        GPtrArray *machine = sol->part[i].machine;
+        tmp = scheduleset_from_solution(machine, pd->njobs);
+        CCcheck_NULL_2(tmp, "Failed to allocate memory");
+        g_ptr_array_add(pd->localColPool, tmp);
+    }
+
+CLEAN:
+    return val;
+}
+
+int add_solution_to_colpool_and_lp(solution *sol, wctdata *pd) {
+    int          val = 0;
+    scheduleset *tmp;
+
+    for (int i = 0; i < sol->nmachines; ++i) {
+        GPtrArray *machine = sol->part[i].machine;
+        tmp = scheduleset_from_solution(machine, pd->njobs);
+        CCcheck_NULL_2(tmp, "Failed to allocate memory");
+        g_ptr_array_add(pd->localColPool, tmp);
+    }
+
+    for (unsigned i = 0; i < pd->localColPool->len; ++i) {
+        tmp = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
+        addColToLP(tmp, pd);
+    }
+
 CLEAN:
     return val;
 }

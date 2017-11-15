@@ -64,6 +64,22 @@ typedef struct wctlp_warmstart {
 #define wctlp_UPPER 2
 #define wctlp_FREE 3
 
+#define WCTLP_LOADED          1
+#define WCTLP_OPTIMAL         2
+#define WCTLP_INFEASIBLE      3
+#define WCTLP_INF_OR_UNBD     4
+#define WCTLP_UNBOUNDED       5
+#define WCTLP_CUTOFF          6
+#define WCTLP_ITERATION_LIMIT 7
+#define WCTLP_NODE_LIMIT      8
+#define WCTLP_TIME_LIMIT      9
+#define WCTLP_SOLUTION_LIMIT 10
+#define WCTLP_INTERRUPTED    11
+#define WCTLP_NUMERIC        12
+#define WCTLP_SUBOPTIMAL     13
+#define WCTLP_INPROGRESS     14
+#define WCTLP_USER_OBJ_LIMIT 15
+
 #define wctlp_MIN 1
 #define wctlp_MAX -1
 
@@ -109,10 +125,14 @@ int wctlp_status(wctlp *lp, int *status);
 int wctlp_chg_lb_var(wctlp *lp, int var, double lb);
 int wctlp_pi_inf(wctlp *lp, double *pi);
 int wctlp_get_nb_rows(wctlp *lp, int *nb_rows);
+int wctlp_get_nb_cols(wctlp *lp, int *nb_cols);
+int wctlp_chgcoef(wctlp *lp, int cnt, int *cind, int *vind, double *cval);
+int wctlp_getcoef(wctlp *lp, int *cind, int *vind, double *cval);
 
 double lp_int_tolerance(void);
 
 int wctlp_get_rhs(wctlp *lp, double *rhs);
+int wctlp_compute_IIS(wctlp *lp);
 
 #ifdef __cplusplus
 }

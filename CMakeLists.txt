@@ -48,9 +48,9 @@ set(TdZDD_INCLUDE_DIR ${source_dir}/include)
 
 # Set the flags for compiling
 add_definitions(-Wall -Wno-deprecated -pedantic -Wmissing-declarations -Wpointer-arith  -Wcast-qual -Wcast-align -Wwrite-strings)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -m64")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++14 -m64")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11 -O0 -m64")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++14 -O0 -m64")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes")
 
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
@@ -58,7 +58,7 @@ file(GLOB SOURCE_FILES  "src/*.c" "src/*.cc")
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${TdZDD_INCLUDE_DIR} ${EGlib_INCLUDE_DIR} ${GUROBI_INCLUDE_DIR} ${GLIB_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${COMMON_INCLUDES})
-target_link_libraries(${PROJECT_NAME} ${EGlib_LIBRARY_DIR} ${GUROBI_LIBRARY} ${GLIB_LIBRARIES} ${Boost_LIBRARIES} -lm -lpthread)
+target_link_libraries(${PROJECT_NAME} ${EGlib_LIBRARY_DIR} ${GUROBI_LIBRARY} ${GUROBI_CXX_LIBRARY} ${GLIB_LIBRARIES} ${Boost_LIBRARIES} -lm -lpthread)
 
 # Include CppCcheck
 include(CppcheckTargets)

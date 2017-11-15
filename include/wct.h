@@ -22,12 +22,14 @@ int print_size_to_csv(wctproblem *problem, wctdata *pd);
  * preprocess.c
  */
 
-int calculate_Hmax(Job *jobarray, int nmachines, int njobs);
+void calculate_Hmax(wctproblem *problem);
 int calculate_Hmin(
     int *durations, int nmachines, int njobs, int *perm, double *H);
 int preprocess_data(wctproblem *problem);
 int find_division(wctproblem *problem);
 void g_problem_summary_init(gpointer data, gpointer user_data);
+void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b);
+void determine_jobs_order_interval(wctproblem *problem);
 
 /**
  * greedy.c
@@ -70,7 +72,6 @@ void insert_node_for_exploration(wctdata *pd, wctproblem *problem);
 wctdata *get_next_node(wctproblem *problem);
 
 int insert_frac_pairs_into_heap(wctdata *    pd,
-                                       const double x[],
                                        int *        nodepair_refs,
                                        double *     nodepair_weights,
                                        int          npairs,
@@ -87,18 +88,29 @@ int create_branches_conflict(wctdata *pd, wctproblem *problem);
 
 int compute_lower_bound(wctproblem *problem, wctdata *pd);
 int compute_objective(wctdata *pd, wctparms *parms);
+int print_x(wctdata *pd);
 
 void make_pi_feasible(wctdata *pd);
 void make_pi_feasible_farkas_pricing(wctdata *pd);
 
 int add_newsets(wctdata *pd);
 
+/** Help functions Glib */
+void g_print_ages_col(gpointer data, gpointer user_data);
+void g_grow_ages(gpointer data, gpointer user_data);
+void g_make_pi_feasible(gpointer data, gpointer user_data);
+void g_make_pi_feasible_farkas(gpointer data, gpointer user_data);
+
 /**
  * model.c
  */
 
+void g_add_col_to_lp(gpointer data, gpointer user_data);
+
 int build_lp(wctdata *pd, int construct);
 int grab_int_sol(wctdata *pd, double *x, double tolerance);
+int addColToLP(scheduleset *set, wctdata *pd);
+int get_solution_lp_lowerbound(wctdata *pd);
 
 
 /**
@@ -121,36 +133,13 @@ static inline int nodepair_ref_key(int v1, int v2) {
 }
 
 int compute_schedule(wctproblem *problem);
+int add_solution_to_colpool(solution *sol, wctdata *pd);
+int add_solution_to_colpool_and_lp(solution *sol, wctdata *pd);
 
-
-/**
- * wide_branching.c
- */
-
-int create_branches_wide(wctdata *pd, wctproblem *problem);
-int sequential_branching_wide(wctproblem *problem);
-int branching_msg_wide(wctdata *pd, wctproblem *problem);
 
 /**
  * solverwrapper.cc
  */
-
-/**
- * Stabilization techniques
- */
-int solve_stab(wctdata *pd, wctparms *parms);
-int solve_stab_dynamic(wctdata *pd, wctparms *parms);
-
-/**
- * solver zdd
- */
-int solve_dynamic_programming_ahv(wctdata *pd);
-int solve_weight_dbl_bdd(wctdata *pd);
-int solve_weight_dbl_zdd(wctdata *pd);
-int solve_pricing(wctdata *pd, wctparms *parms);
-int solve_farkas_dbl(wctdata *pd);
-int solve_farkas_dbl_DP(wctdata *pd);
-void print_dot_file(PricerSolver *solver, char *name);
 
 #ifdef __cplusplus
 }
