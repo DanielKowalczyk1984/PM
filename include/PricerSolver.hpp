@@ -583,11 +583,6 @@ public:
         return dd->evaluate_duration(DurationBDDdouble(pi, ordered_jobs, njobs), dd_table);
     }
 
-    class Optimal_Solution<double> solve_weight_zdd_double_heuristic(double *pi)
-    {
-        return zdd->evaluate_weight(WeightZDDdoubleheuristic(pi, ordered_jobs, njobs), zdd_table);
-    }
-
     class Optimal_Solution<double> solve_weight_zdd_double(double *pi)
     {
         return zdd->evaluate_weight(WeightZDDdouble(pi, ordered_jobs, njobs), zdd_table);
