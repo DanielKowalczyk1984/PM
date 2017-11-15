@@ -166,6 +166,8 @@ int add_conflict_constraints(PricerSolver *solver,
 
 void iterate_zdd(PricerSolver *solver) { solver->iterate_zdd(); }
 
+void print_number_paths(PricerSolver *solver){ solver->print_number_paths(); }
+
 int free_conflict_constraints(PricerSolver *solver,
                               wctparms *    parms,
                               int           ecount_same,
@@ -250,18 +252,18 @@ static void compute_pi_eta_sep(int     vcount,
 int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
     int val = 0;
 
-    Optimal_Solution<double> s = pd->solver->solve_weight_zdd_double(pd->pi);
 
-    if (s.obj > 0.00001) {
-        val = construct_sol(pd, s);
-        CCcheck_val_2(val, "Failed in construction")
+    Optimal_Solution<double> sol = pd->solver->solve_weight_zdd_double(pd->pi);
+    if(sol.obj > 0.000001) {
+       val = construct_sol(pd, sol);
+       CCcheck_val_2(val, "Failed in construction")
     } else {
         pd->nnewsets = 0;
     }
 
     if(pd->iterations%5 == 0 || evaluate) {
-        pd->reduced_cost = compute_reduced_cost(s, pd->pi, pd->njobs);
-        pd->solver->evaluate_nodes(pd->pi, pd->problem->opt_sol->tw, pd->lower_bound, pd->problem->nmachines, pd->reduced_cost);
+        pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
+        pd->solver->evaluate_nodes(pd->pi, pd->problem->opt_sol->tw, pd->LP_lower_bound_BB , pd->problem->nmachines, pd->reduced_cost);
     }
 
     if(pd->iterations%pd->njobs == 0) {
@@ -281,35 +283,47 @@ int solve_stab(wctdata *pd, wctparms *parms) {
         bool   mispricing = false;
         double result_sep;
 
-    do {
-        k += 1.0;
-        alpha = CC_MAX(0, 1.0 - k * (1.0 - pd->alpha));
-        compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
-                           pd->pi_in, &(pd->eta_in), pd->pi_out,
-                           &(pd->eta_out));
-        Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_sep);
-        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
-
-        if (pd->reduced_cost >= 0.000001) {
+    if((pd->LP_lower_bound_BB - pd->eta_in)/(pd->LP_lower_bound_BB) > 0.5) {
+        Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_out);
+        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_out, pd->njobs);
+        pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
+        if(pd->reduced_cost >= 0.00001) {
             val = construct_sol(pd, sol);
             CCcheck_val_2(val, "Failed in construct_sol_stab");
             pd->update = 1;
-            mispricing = false;
-        } else {
-            pd->reduced_cost =compute_reduced_cost(sol, pd->pi_out, pd->njobs);;
-
-            if (pd->reduced_cost < 0.000001) {
-                CCcheck_val_2(val, "Failed in construct_sol_stab");
-                mispricing = true;
-                pd->update = 0;
-            } else {
-                val = construct_sol(pd, sol);
-                mispricing = false;
-                pd->update = 1;
-            }
         }
-    } while (mispricing && alpha > 0); /** mispricing check */
+    } else {
+        do {
+            k += 1.0;
+            alpha = CC_MAX(0, 1.0 - k * (1.0 - pd->alpha));
+            compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
+                               pd->pi_in, &(pd->eta_in), pd->pi_out,
+                               &(pd->eta_out));
+            Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_sep);
+            result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
+            pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
+
+            if (pd->reduced_cost >= 0.00001) {
+                val = construct_sol(pd, sol);
+                CCcheck_val_2(val, "Failed in construct_sol_stab");
+                pd->update = 1;
+                mispricing = false;
+            } else {
+                pd->reduced_cost =compute_reduced_cost(sol, pd->pi_out, pd->njobs);
+
+                if (pd->reduced_cost < 0.000001) {
+                    CCcheck_val_2(val, "Failed in construct_sol_stab");
+                    mispricing = true;
+                    pd->update = 0;
+                } else {
+                    val = construct_sol(pd, sol);
+                    mispricing = false;
+                    pd->update = 1;
+                }
+            }
+        } while (mispricing && alpha > 0); /** mispricing check */
+    }
+
 
     if (result_sep > pd->eta_in) {
         pd->eta_in = result_sep;
