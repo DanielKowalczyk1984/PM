@@ -1,14 +1,9 @@
 #ifndef INCLUDE_PRICERSOLVER_HPP
 #define INCLUDE_PRICERSOLVER_HPP
 
-#include <iostream>
-#include <vector>
-#include <unordered_map>
 #include <PricerEvaluate.hpp>
 #include <PricerConstruct.hpp>
 #include <tdzdd/DdStructure.hpp>
-#include <tdzdd/op/Lookahead.hpp>
-#include <gurobi_c++.h>
 using namespace std;
 
 struct PricerSolver {
@@ -20,8 +15,10 @@ private:
     GPtrArray *jobs;
     GPtrArray *ordered_jobs;
     tdzdd::DdStructure<2>                    *zdd;
+    tdzdd::DdStructure<2>                    *dd;
     tdzdd::DataTable<PricerWeightZDD<double>> zdd_table;
     tdzdd::DataTable<PricerFarkasZDD<double>> farkas_table;
+    tdzdd::DataTable<PricerInfoBDD<double> > dd_table;
     std::vector<shared_ptr<edge<double>>> edges;
     int nb_removed_edges;
     int nb_removed_nodes;
@@ -43,13 +40,16 @@ public:
         nb_removed_nodes = 0;
         /** Construct the ZDD and the tables associated to it */
         PricerConstruct ps(ordered_jobs);
-        zdd = new tdzdd::DdStructure<2>(ps);
-        nb_nodes_bdd = zdd->size();
+        dd = new tdzdd::DdStructure<2>(ps);
+        nb_nodes_bdd = dd->size();
+        zdd = new tdzdd::DdStructure<2>;
+        *zdd = *dd;
         zdd->zddReduce();
         nb_nodes_zdd = zdd->size();
         init_zdd_table();
+        init_bdd_table();
         printf("size BDD = %lu, size ZDD= %lu\n", nb_nodes_bdd, nb_nodes_zdd);
-        edges.reserve(nb_nodes_bdd);
+        edges.reserve(2*nb_nodes_bdd);
         /** Initialize Gurobi Model */
         env = new GRBEnv();
         model = new GRBModel(*env);
@@ -58,12 +58,13 @@ public:
     /** Copy constructor */
     PricerSolver(const PricerSolver& other): nmachines(other.nmachines), ub(other.ub),
         njobs(other.njobs), nlayers(other.nlayers), jobs(other.jobs),
-        ordered_jobs(other.ordered_jobs), zdd(new tdzdd::DdStructure<2>),
+        ordered_jobs(other.ordered_jobs), zdd(new tdzdd::DdStructure<2>), dd(new tdzdd::DdStructure<2>),
         zdd_table(other.zdd_table), farkas_table(other.farkas_table), edges(other.edges),
         nb_removed_edges(other.nb_removed_edges),
         nb_removed_nodes(other.nb_removed_nodes), nb_nodes_bdd(other.nb_nodes_bdd),
         nb_nodes_zdd(other.nb_nodes_zdd), env(new GRBEnv()), model(new GRBModel(*env))
     {
+        dd = other.dd;
         zdd = other.zdd;
         env = other.env;
         model = other.model;
@@ -72,12 +73,13 @@ public:
     /** Move Constructor */
     PricerSolver(PricerSolver&& other) noexcept: nmachines(other.nmachines),
         ub(other.ub), njobs(other.njobs), nlayers(other.nlayers), jobs(other.jobs),
-        ordered_jobs(other.ordered_jobs), zdd(other.zdd), zdd_table(other.zdd_table),
+        ordered_jobs(other.ordered_jobs), zdd(other.zdd), dd(other.dd), zdd_table(other.zdd_table),
         farkas_table(other.farkas_table), edges(other.edges),
         nb_removed_edges(other.nb_removed_edges),
         nb_removed_nodes(other.nb_removed_nodes), nb_nodes_bdd(other.nb_nodes_bdd),
         nb_nodes_zdd(other.nb_nodes_zdd), env(other.env), model(other.model)
     {
+        other.dd = nullptr;
         other.zdd = nullptr;
         other.env = nullptr;
         other.model = nullptr;
@@ -94,35 +96,40 @@ public:
     /** Move assignment operator */
     PricerSolver& operator=(PricerSolver&& other) noexcept
     {
-        nmachines = other.nmachines;
-        ub = other.ub;
-        njobs = other.njobs;
-        nlayers = other.nlayers;
-        jobs = other.jobs;
-        ordered_jobs = other.ordered_jobs;
-        delete zdd;
-        zdd = other.zdd;
-        other.zdd = nullptr;
-        zdd_table = other.zdd_table;
-        farkas_table = other.farkas_table;
-        edges = other.edges;
-        nb_removed_edges = other.nb_removed_edges;
-        nb_removed_nodes = other.nb_removed_nodes;
-        nb_nodes_bdd = other.nb_nodes_bdd;
-        nb_nodes_zdd = other.nb_nodes_zdd;
-        /** Delete memory of Gurobi */
-        delete model;
-        delete env;
-        env = other.env;
-        model = other.model;
-        other.env = nullptr;
-        other.model = nullptr;
+        if(this != &other) {
+            nmachines = other.nmachines;
+            ub = other.ub;
+            njobs = other.njobs;
+            nlayers = other.nlayers;
+            jobs = other.jobs;
+            ordered_jobs = other.ordered_jobs;
+            delete zdd;
+            zdd = other.zdd;
+            delete dd;
+            dd = other.dd;
+            other.zdd = nullptr;
+            zdd_table = other.zdd_table;
+            farkas_table = other.farkas_table;
+            edges = other.edges;
+            nb_removed_edges = other.nb_removed_edges;
+            nb_removed_nodes = other.nb_removed_nodes;
+            nb_nodes_bdd = other.nb_nodes_bdd;
+            nb_nodes_zdd = other.nb_nodes_zdd;
+            /** Delete memory of Gurobi */
+            delete model;
+            delete env;
+            env = other.env;
+            model = other.model;
+            other.env = nullptr;
+            other.model = nullptr;
+        }
         return *this;
     }
 
     /** Destructor */
     ~PricerSolver() noexcept
     {
+        delete dd;
         delete zdd;
         delete model;
         delete env;
@@ -195,11 +202,13 @@ public:
                         GRBLinExpr expr = 0;
 
                         for (const auto& v : it->out_edge) {
-                                expr -= v->v;
+                                auto p = v.lock();
+                                expr -= p->v;
                         }
 
                         for(const auto& v : it->in_edge) {
-                            expr += v->v;
+                            auto p = v.lock();
+                            expr += p->v;
                         }
 
                         model->addConstr(expr, GRB_EQUAL, 0.0);
@@ -212,7 +221,8 @@ public:
 
             for (auto& it : zdd_table[0][1].list) {
                 for (const auto& v : it->in_edge) {
-                    expr += v->v;
+                    auto p = v.lock();
+                    expr += p->v;
                 }
             }
 
@@ -288,6 +298,7 @@ public:
         int          last_del = -1;
         int it = 0;
 
+        /** remove the unnecessary edges of the zdd */
         for (int i = root.row(); i > 0; i--) {
             size_t const m = zdd_table[i].size();
             bool remove = true;
@@ -324,6 +335,7 @@ public:
             g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
         }
 
+        /** Construct the new zdd */
         printf("The new number of layers = %u\n", ordered_jobs->len);
         delete zdd;
         nlayers = ordered_jobs->len;
@@ -332,7 +344,9 @@ public:
         nb_nodes_bdd = zdd->size();
         zdd->zddReduce();
         nb_nodes_zdd = zdd->size();
-        printf("size BDD = %lu, size ZDD= %lu\n", nb_nodes_bdd, nb_nodes_zdd);
+        printf("new size BDD = %lu, size ZDD= %lu\n", nb_nodes_bdd, nb_nodes_zdd);
+
+        /** calculate the new table */
         zdd_table.init();
         edges.clear();
         init_zdd_table();
@@ -383,7 +397,7 @@ public:
                     }
 
                     if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->c) > UB - 1
-                            && (it->calc0)) {
+                            + 0.0001 && (it->calc0)) {
                         it->calc0 = false;
                         nb_removed_edges++;
                     }
@@ -408,6 +422,7 @@ public:
         tdzdd::NodeTableHandler<2>& handler = zdd->getDiagram();
         tdzdd::NodeId&              root = zdd->root();
         zdd_table.init(root.row() + 1);
+        reset_total();
 
         /** init table */
         for (int i = root.row(); i >= 0; i--) {
@@ -418,6 +433,12 @@ public:
 
         /** init root */
         zdd_table[root.row()][root.col()].add_weight(0, 0, njobs);
+
+        /** init terminal nodes */
+        size_t const mm = zdd_table[0].size();
+        for(unsigned i = 0; i < mm; ++i) {
+            zdd_table[0][i].add_terminal_node(i, nlayers, njobs);
+        }
 
         for (int i = root.row(); i > 0; i--) {
             size_t const m = zdd_table[i].size();
@@ -452,12 +473,51 @@ public:
                 }
             }
         }
+    }
+
+    void init_bdd_table() {
+        tdzdd::NodeTableHandler<2> &handler = dd->getDiagram();
+        tdzdd::NodeId &root = dd->root();
+        dd_table.init(root.row() + 1);
+
+        /** init table */
+        for (int i = root.row(); i >= 0 ; i--) {
+            tdzdd::MyVector<tdzdd::Node<2>> const &node = handler.privateEntity()[i];
+            size_t const m = node.size();
+            dd_table[i].resize(m);
+        }
+
+        /** init root */
+        dd_table[root.row()][root.col()].init_node(0, njobs);
+
+        for (size_t i = root.row(); i > 0 ; i--) {
+            size_t const m = dd_table[i].size();
+            int layer = nlayers - i;
+            job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
+                                              ordered_jobs, layer);
+            Job *job = tmp_pair->j;
+
+            for (size_t j = 0; j < m; j++) {
+                int sum_p = dd_table[i][j].sum_p;
+                tdzdd::NodeId cur_node = handler.privateEntity().child(i, j, 0);
+
+                if (cur_node.row() != 0) {
+                    dd_table[cur_node.row()][cur_node.col()].init_node(sum_p, njobs);
+                }
+
+                cur_node = handler.privateEntity().child(i, j, 1);
+
+                if (cur_node.row() != 0) {
+                    dd_table[cur_node.row()][cur_node.col()].init_node(sum_p + job->processingime,njobs);
+                }
+            }
+        }
 
         /** init terminal nodes */
         size_t const mm = handler.privateEntity()[0].size();
 
-        for (size_t j = 0; j < mm; j++) {
-            zdd_table[0][j].init_terminal_node(j, njobs);
+        for (size_t j  = 0; j < mm; j++) {
+            dd_table[0][j].init_terminal_node(j);
         }
     }
 
@@ -518,6 +578,15 @@ public:
         farkas_table.init();
     }
 
+    class Optimal_Solution<double> solve_duration_bdd_double(double *pi)
+    {
+        return dd->evaluate_duration(DurationBDDdouble(pi, ordered_jobs, njobs), dd_table);
+    }
+
+    class Optimal_Solution<double> solve_weight_zdd_double_heuristic(double *pi)
+    {
+        return zdd->evaluate_weight(WeightZDDdoubleheuristic(pi, ordered_jobs, njobs), zdd_table);
+    }
 
     class Optimal_Solution<double> solve_weight_zdd_double(double *pi)
     {
@@ -537,11 +606,16 @@ public:
             std::set<int>::const_iterator i = (*it).begin();
 
             for (; i != (*it).end(); ++i) {
-                std::cout << njobs - *i << " ";
+                std::cout << nlayers - *i << " ";
             }
 
             std::cout << std::endl;
         }
+    }
+
+    void print_number_paths(){
+
+        cout << "Number of paths: " << zdd->evaluate(tdzdd::ZddCardinality<>()) << "\n";
     }
 };
 
