@@ -5,19 +5,13 @@
 
 void wctparms_init(wctparms *parms) {
     parms->init_upper_bound = INT_MAX;
-    parms->parallel_branching = 0;
     parms->bb_branch_strategy = min_bb_strategy;
     parms->bb_search_strategy = min_search_strategy;
     parms->strong_branching = min_strong_branching;
-    parms->nb_feas_sol = 10;
-    parms->combine_method = min_combine_method;
+    parms->nb_iterations_rvnd = 3;
     parms->scatter_search = 0;
     parms->branchandbound = no;
-    parms->dual_var_type = Dbl;
     parms->stab_technique = no_stab;
-    parms->solver = min_solver;
-    parms->construct = min_construct_solutions;
-    parms->test_ahv = min_use_test;
     parms->print = min_print_size;
     parms->delete_elists = 1;
     parms->delete_cclasses = 0;
@@ -60,26 +54,13 @@ int wctparms_set_outfile(wctparms *parms, const char *fname) {
 int wctparms_set_file(wctparms *parms, const char *fname) {
     return copy_string(&(parms->jobfile), fname);
 }
-int wctparms_set_cclasses_infile(wctparms *parms, const char *fname) {
-    return copy_string(&(parms->cclasses_infile), fname);
-}
-int wctparms_set_cclasses_outfile(wctparms *parms, const char *fname) {
-    return copy_string(&(parms->cclasses_outfile), fname);
-}
 int wctparms_set_backupdir(wctparms *parms, const char *fname) {
     return copy_string(&(parms->backupdir), fname);
-}
-int wctparms_set_color_infile(wctparms *parms, const char *fname) {
-    return copy_string(&(parms->color_infile), fname);
 }
 
 /*Functions for setting the branching parameters*/
 int wctparms_set_init_upper_bound(wctparms *parms, int bound) {
     parms->init_upper_bound = bound;
-    return 0;
-}
-int wctparms_set_parallel(wctparms *parms, int parallel) {
-    parms->parallel_branching = parallel;
     return 0;
 }
 int wctparms_set_branching_cpu_limit(wctparms *parms, double limit) {
@@ -106,8 +87,8 @@ int wctparms_set_nmachines(wctparms *parms, int nmachines) {
     return 0;
 }
 
-int wctparms_set_nb_feas_sol(wctparms *parms, int nb_sol) {
-    parms->nb_feas_sol = nb_sol;
+int wctparms_set_nb_iterations_rvnd (wctparms *parms, int nb_iterations) {
+    parms->nb_iterations_rvnd = nb_iterations;
     return 0;
 }
 
@@ -131,28 +112,8 @@ int wctparms_set_scatter_search_cpu_limit(wctparms *parms, double limit) {
     return 0;
 }
 
-int wctparms_set_dual_var_type(wctparms *parms, int type) {
-    parms->dual_var_type = type;
-    return 0;
-}
-
 int wctparms_set_stab_technique(wctparms *parms, int stab_technique) {
     parms->stab_technique = stab_technique;
-    return 0;
-}
-
-int wctparms_set_solver(wctparms *parms, int solver) {
-    parms->solver = solver;
-    return 0;
-}
-
-int wctparms_set_construct(wctparms *parms, int construct) {
-    parms->construct = construct;
-    return 0;
-}
-
-int wctparms_set_test_ahv(wctparms *parms, int use) {
-    parms->test_ahv = use;
     return 0;
 }
 

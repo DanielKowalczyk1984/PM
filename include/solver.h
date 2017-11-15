@@ -9,8 +9,8 @@ extern "C" {
 #endif
 
 typedef struct PricerSolver PricerSolver;
-PricerSolver *newSolver(Job *jobarray, int nbjobs, int Hmin, int Hmax);
-PricerSolver *newSolverDP(Job *jobarray, int nbjobs, int Hmin, int Hmax);
+PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, int nmachines, int ub);
+PricerSolver *newSolverDP(GPtrArray *interval_list, int njobs, int **sum_p);
 PricerSolver *copySolver(PricerSolver *src);
 int init_tables(PricerSolver *solver);
 int calculate_table(PricerSolver *solver, wctparms *parms);
@@ -31,10 +31,11 @@ int free_conflict_constraints(PricerSolver *solver,
                               int           ecount_same,
                               int           ecount_differ);
 int add_one_conflict(
-    PricerSolver *solver, wctparms *parms, int v1, int v2, int same);
+    PricerSolver *solver, wctparms *parms, Job *v1, Job *v2, int same);
 
 void iterate_dd(PricerSolver *solver);
 void iterate_zdd(PricerSolver *solver);
+void print_number_paths(PricerSolver *solver);
 
 void set_release_due_time(PricerSolver *solver, Job *jobarray);
 

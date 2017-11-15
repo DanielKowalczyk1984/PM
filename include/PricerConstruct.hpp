@@ -1,7 +1,8 @@
 #include <boost/dynamic_bitset.hpp>
 #include <tdzdd/DdSpec.hpp>
-#include <vector>
-#include "solution.h"
+#include <solution.h>
+#include <interval.h>
+#include <glib.h>
 
 class conflict_state {
    public:
@@ -13,126 +14,110 @@ class conflict_state {
     ~conflict_state(){};
 };
 
-class PricerSpec : public tdzdd::DdSpec<PricerSpec, int, 2> {
-    Job *jobarray;
-    int  nbjobs;
-    int  Hmin;
-    int  Hmax;
+class PricerConstruct : public tdzdd::DdSpec<PricerConstruct, int, 2> {
+    GPtrArray *pair_list;
+    int nlayers;
 
-   public:
-    int *sum_p;
-    int *min_p;
-    PricerSpec(Job *_jobarray, int _nbjobs, int Hmin, int Hmax)
-        : jobarray(_jobarray), nbjobs(_nbjobs), Hmin(Hmin), Hmax(Hmax) {
-        nbjobs = _nbjobs;
-        sum_p = new int[nbjobs];
-        min_p = new int[nbjobs];
-        int end = nbjobs - 1;
-        sum_p[end] = jobarray[end].processingime;
-        min_p[end] = jobarray[end].processingime;
+public:
+    PricerConstruct(GPtrArray *_pair_list)
+    : pair_list(_pair_list){
+        nlayers = pair_list->len;
+    };
 
-        for (int i = end - 1; i >= 0; i--) {
-            sum_p[i] = sum_p[i + 1] + jobarray[i].processingime;
-
-            if (jobarray[i].processingime < min_p[i + 1]) {
-                min_p[i] = jobarray[i].processingime;
-            } else {
-                min_p[i] = min_p[i + 1];
-            }
-        }
-    }
-
-    ~PricerSpec() {
-        delete[] min_p;
-        delete[] sum_p;
-    }
-
-    int getRoot(int &state) const {
+    int getRoot(int &state){
         state = 0;
-        return nbjobs;
-    }
+        return nlayers;
+    };
 
-    int getChild(int &state, int level, int value) const {
-        int job = nbjobs - level;
-        int _j;
-        assert(0 <= job && job <= nbjobs - 1);
-        int temp_p = jobarray[job].processingime;
+     int getChild(int &state, int level, int value) const {
+         int layer = nlayers - level;
+         int _j;
+         assert(0 <= layer && layer <= nlayers - 1);
+         job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, layer);
+         interval *tmp_interval = tmp_pair->I;
+         Job *tmp_j = (Job *) tmp_pair->j;
 
-        if (level - 1 == 0 && value) {
-            return (state + jobarray[job].processingime >= Hmin &&
-                    state + jobarray[job].processingime <= Hmax)
-                       ? -1
-                       : 0;
-        } else if (level - 1 == 0) {
-            return (state >= Hmin && state <= Hmax) ? -1 : 0;
-        }
+         if (level - 1 == 0 && value) {
+             return (state + tmp_j->processingime <= tmp_interval->b)? -1 : 0;
+         } else if (level - 1 == 0) {
+             return ( state <= tmp_interval->b) ? -1 : 0;
+         }
 
-        if (value) {
-            int sum = state + temp_p;
-            _j = min_job(job, sum);
+         if (value) {
+             state = state + tmp_j->processingime;
+             _j = min_job(layer, state, value);
 
-            if (_j < nbjobs) {
-                if (state + sum_p[_j] < Hmin) {
-                    return 0;
-                }
-
-                if ((sum >= Hmin && sum <= Hmax) && (sum + min_p[_j] > Hmax)) {
+             if(!(_j < nlayers)) {
+                if( state <= tmp_interval->b) {
+                    // if(value_Fj(state, tmp_j) - value_Fj(state + 1, tmp_j) > 0) {
+                    //     return 0;
+                    // }
                     return -1;
                 }
-            } else {
-                if ((sum >= Hmin && sum <= Hmax)) {
-                    return -1;
-                }
-
                 return 0;
-            }
+             }
+         } else {
+             _j = min_job(layer, state,value);
 
-            state = sum;
-        } else {
-            _j = min_job(job, state);
-
-            if (_j < nbjobs) {
-                if (state + sum_p[_j] < Hmin) {
-                    return 0;
-                }
-
-                if ((state >= Hmin && state <= Hmax) &&
-                    (state + min_p[_j] > Hmax)) {
+             if(!(_j < nlayers)) {
+                if( state <= tmp_interval->b) {
                     return -1;
                 }
-            } else {
-                if (state >= Hmin && state <= Hmax) {
-                    return -1;
-                }
-
                 return 0;
+             }
+         }
+
+         assert(_j < nlayers);
+         return nlayers - _j;
+     }
+
+    ~PricerConstruct(){};
+
+    private:
+     int min_job(int j, int state, int value) const {
+         int  val = nlayers;
+         job_interval_pair *tmp_pair;
+         interval *tmp_interval;
+         Job *tmp_j;
+         Job * tmp = ((job_interval_pair*) g_ptr_array_index(pair_list,j))->j;
+         int key = ((job_interval_pair*) g_ptr_array_index(pair_list,j))->I->key;
+
+         if(value) {
+             for (int i = j + 1; i < nlayers; ++i) {
+                tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, i);
+                tmp_interval = tmp_pair->I;
+                tmp_j = tmp_pair->j;
+
+                 if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b ) {
+                     if(diff_obj(tmp, tmp_j, state) >= 0 && key != tmp_interval->key) {
+                         continue;
+                     }
+                     val = i;
+                     break;
+                 }
+             }
+         } else {
+            for (int i = j + 1; i < nlayers; ++i) {
+               tmp_pair = (job_interval_pair *) g_ptr_array_index(pair_list, i);
+               tmp_interval = tmp_pair->I;
+               tmp_j = tmp_pair->j;
+
+                if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b) {
+                    val = i;
+                    break;
+                }
             }
-        }
+         }
 
-        // if (_j == nbjobs && state >= Hmin && state <= Hmax) {
-        //     return -1;
-        // } else if (_j == nbjobs) {
-        //     return 0;
-        // }
+         return val;
+     }
 
-        assert(_j < nbjobs);
-        return nbjobs - _j;
-    }
+     int diff_obj(Job *i, Job *j, int C) const {
+        return value_Fj(C, i) + value_Fj(C + j->processingime, j) - (value_Fj(C - i->processingime + j->processingime, j) + value_Fj(C + j->processingime, i));
 
-   private:
-    int min_job(int j, int state) const {
-        int  val = j + 1;
+     }
 
-        // for (i = j + 1; i < nbjobs; ++i) {
-        //     if (state >= jobarray[i].releasetime &&
-        //         state <= jobarray[i].duetime - jobarray[i].processingime) {
-        //         val = i;
-        //         break;
-        //     }
-        // }
 
-        return val;
-    }
 };
 
 class ConflictConstraints
@@ -274,5 +259,69 @@ class ConflictConstraints
         }
 
         return val;
+    }
+};
+
+class scheduling: public tdzdd::DdSpec<scheduling, int, 2> {
+    Job * job;
+    GPtrArray *list_layers;
+    int nlayers;
+    int order;
+
+
+   public:
+    scheduling(Job *_job, GPtrArray *_list_layers, int _order):job(_job) ,list_layers(_list_layers),order(_order) {
+        nlayers = list_layers->len;
+    };
+
+    ~scheduling() {}
+
+    int getRoot(int &state) const {
+        state = 0;
+        return nlayers;
+    }
+
+    int getChild(int &state, int level, int take) {
+        int j = nlayers - level;
+        job_interval_pair *tmp = (job_interval_pair *) g_ptr_array_index(list_layers, j);
+        Job *tmp_j = tmp->j;
+        assert(0 <= j && j <= nlayers - 1);
+
+
+        if (level - 1 == 0 && take) {
+            if(tmp_j != job) {
+                return -1;
+            } else {
+                if(state == 0) {
+                    return -1;
+                }
+                return 0;
+            }
+        } else if (level - 1 == 0) {
+            return -1;
+        }
+
+        if (take) {
+            if(tmp_j != job) {
+                j++;
+                return nlayers - j;
+            } else {
+                if(state == 0) {
+                    state++;
+                    j++;
+                    return  nlayers - j;
+                }else if (state < order) {
+                    state++;
+                    j++;
+                    return nlayers - j;
+
+                } else {
+                    return 0;
+                }
+            }
+        } else {
+            j++;
+            return nlayers - j;
+        }
     }
 };

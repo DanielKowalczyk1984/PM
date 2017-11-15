@@ -1,8 +1,8 @@
 #include <localsearch.h>
 #include <wct.h>
 
-static int add_feasible_solution(wctproblem *problem, solution *new_sol);
-static int solution_set_c(solution *sol);
+// static int add_feasible_solution(wctproblem *problem, solution *new_sol);
+static int  solution_set_c(solution *sol);
 static void perturb_swap(solution *         sol,
                          local_search_data *data,
                          int                l1,
@@ -13,6 +13,7 @@ void permutation_solution(GRand *rand_uniform, solution *sol);
 
 int _job_compare_spt(const void *a, const void *b);
 int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b);
+int compare_nb_job(gconstpointer a, gconstpointer b);
 
 /**
  * comparefunctions
@@ -35,6 +36,13 @@ int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
     } else {
         return 1;
     }
+}
+
+int compare_nb_job(gconstpointer a, gconstpointer b) {
+    const Job *x = *(Job *const *)a;
+    const Job *y = *(Job *const *)b;
+
+    return (x->job - y->job);
 }
 
 int _job_compare_spt(const void *a, const void *b) {
@@ -92,8 +100,8 @@ static int solution_set_c(solution *sol) {
         g_ptr_array_add(tmp->machine, j);
         tmp->c += j->processingime;
         sol->c[j->job] = tmp->c;
-        tmp->tw += j->weight * (CC_MAX(0, tmp->c - j->duetime));
-        sol->tw += j->weight * (CC_MAX(0, tmp->c - j->duetime));
+        tmp->tw += value_Fj(tmp->c, j);
+        sol->tw += value_Fj(tmp->c, j);
         sol->b += j->duetime * (sol->njobs - i);
         binomial_heap_insert(heap, tmp);
     }
@@ -275,7 +283,7 @@ static void perturb_swap(solution *         sol,
     part1 = sol->part + m1;
     part2 = sol->part + m2;
 
-    if (part1->machine->len <= l1 || part2->machine->len <= l2) {
+    if (part1->machine->len <= (guint)l1 || part2->machine->len <= (guint)l2) {
         return;
     }
 
@@ -391,26 +399,35 @@ void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform) {
 int heuristic_rpup(wctproblem *prob) {
     int    val = 0;
     GRand *rand_uniform = g_rand_new_with_seed(2011);
+    wctparms *parms = &(prob->parms);
     g_random_set_seed(1984);
-    int          ILS = prob->njobs;
-    int          IR = 10;
+    int          ILS = prob->njobs/2 ;
+    int          IR  = parms->nb_iterations_rvnd;
     solution *   sol;
     solution *   sol1 = (solution *)NULL;
-    CCutil_timer test;
-    CCutil_init_timer(&test, (char *)NULL);
+    GPtrArray *  intervals = prob->root_pd.local_intervals;
     local_search_data *data = (local_search_data *)NULL;
     local_search_data *data_RS = (local_search_data *)NULL;
 
     sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
-    solution_print(sol);
     CCcheck_val_2(val, "Failed construct edd");
+    printf("Solution Constructed with EDD heuristic:\n");
+    solution_print(sol);
+    solution_canonical_order(sol, intervals);
+    printf("Solution in canonical order: \n");
+    solution_print(sol);
+
     data = local_search_data_init(sol);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
     local_search_create_W(sol, data);
     local_search_create_g(sol, data);
     RVND(sol, data);
+    solution_canonical_order(sol, intervals);
+    printf("Solution after local search:\n");
+    solution_print(sol);
+
     prob->opt_sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
     CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
     solution_update(prob->opt_sol, sol);
@@ -430,10 +447,11 @@ int heuristic_rpup(wctproblem *prob) {
 
             if (sol1->tw < sol->tw) {
                 solution_update(sol, sol1);
-                j = 0;
+                solution_canonical_order(sol, intervals);
+                add_solution_to_colpool(sol, &(prob->root_pd));
+                j /= 2;
             }
 
-            solution_update(sol1, sol);
             Perturb(sol1, data_RS, rand_uniform);
         }
 
@@ -445,88 +463,14 @@ int heuristic_rpup(wctproblem *prob) {
         solution_free(&sol1);
     }
 
+    solution_canonical_order(prob->opt_sol, intervals);
+    printf("Solution after some improvements with Random Variable Search:\n");
     solution_print(prob->opt_sol);
+    add_solution_to_colpool(prob->opt_sol, &(prob->root_pd));
+    prune_duplicated_sets(&(prob->root_pd));
 CLEAN:
     solution_free(&sol);
     local_search_data_free(&data);
     g_rand_free(rand_uniform);
-    return val;
-}
-
-/** Construct feasible solutions */
-
-void update_bestschedule(wctproblem *problem, solution *new_sol) {
-    if (new_sol == NULL) {
-        return;
-    }
-
-    if (new_sol->tw < problem->global_upper_bound) {
-        problem->global_upper_bound = new_sol->tw;
-        problem->rel_error = (double)(problem->global_upper_bound -
-                                      problem->global_lower_bound) /
-                             (problem->global_lower_bound);
-        partlist_to_scheduleset(new_sol->part, new_sol->nmachines,
-                                new_sol->njobs, &(problem->bestschedule),
-                                &(problem->nbestschedule));
-    }
-
-    if (problem->global_upper_bound == problem->global_lower_bound) {
-        problem->status = optimal;
-    }
-}
-
-static int add_feasible_solution(wctproblem *problem, solution *new_sol) {
-    int      val = 0;
-    wctdata *root_pd = &(problem->root_pd);
-    update_bestschedule(problem, new_sol);
-
-    if (root_pd->ccount == 0 && problem->parms.construct != 0) {
-        update_schedulesets(&root_pd->cclasses, &root_pd->ccount,
-                            problem->bestschedule, problem->nbestschedule);
-        root_pd->gallocated = root_pd->ccount;
-    } else if (problem->parms.construct != 0) {
-        partlist_to_scheduleset(new_sol->part, new_sol->nmachines,
-                                new_sol->njobs, &(root_pd->newsets),
-                                &(root_pd->nnewsets));
-        add_newsets(root_pd);
-    }
-
-    return val;
-}
-
-int construct_feasible_solutions(wctproblem *problem) {
-    int           val = 0;
-    int           iterations = 0;
-    wctdata *     pd = &(problem->root_pd);
-    wctparms *    parms = &(problem->parms);
-    CCutil_timer *timer = &(problem->tot_scatter_search);
-    GRand *       rand1 = g_rand_new_with_seed(1984);
-    GRand *       rand2 = g_rand_new_with_seed(1654651);
-    CCutil_start_timer(timer);
-    // while (1) {
-    iterations++;
-    solution *new_sol = solution_alloc(pd->nmachines, pd->njobs, problem->off);
-    CCcheck_NULL(new_sol, "Failed to allocate")
-
-        if (problem->status == no_sol) {}
-    else {
-        if (g_rand_boolean(rand1)) {
-        } else {
-        }
-    }
-
-    val = add_feasible_solution(problem, new_sol);
-    CCcheck_val(val, "Failed in add_feasible_solution");
-    // break;
-    //}
-    CCutil_suspend_timer(timer);
-    printf("We needed %f seconds to construct %d solutions in %d iterations\n",
-           timer->cum_zeit, parms->nb_feas_sol, iterations);
-    printf("upperbound = %d, lowerbound = %d\n", problem->global_upper_bound,
-           problem->global_lower_bound);
-    CCutil_resume_timer(timer);
-    g_rand_free(rand1);
-    g_rand_free(rand2);
-    CCutil_stop_timer(&(problem->tot_scatter_search), 0);
     return val;
 }

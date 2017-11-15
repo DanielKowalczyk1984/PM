@@ -15,22 +15,23 @@ const double int_tolerance = 0.00001;
 
 int wctlp_init(wctlp **lp, const char *name) {
     int val = 0;
+    (*lp) = (wctlp *)CC_SAFE_MALLOC(1, wctlp);
+    CCcheck_NULL(lp, "Out of memory for lp");
     (*lp)->env = (GRBenv *)NULL;
     (*lp)->model = (GRBmodel *)NULL;
     val = GRBloadenv(&((*lp)->env), NULL);
     CCcheck_val(val, "GRBloadenv failed");
-    (*lp) = (wctlp *)CC_SAFE_MALLOC(1, wctlp);
-    CCcheck_NULL(lp, "Out of memory for lp");
 
     if (val) {
         printf("val = %d\n", val);
     }
 
-    val = GRBsetintparam((*lp)->env, GRB_INT_PAR_OUTPUTFLAG,
-                         (dbg_lvl() > 1) ? 1 : 0);
+    val = GRBsetintparam((*lp)->env, GRB_INT_PAR_OUTPUTFLAG, (dbg_lvl() > 1) ? 1 : 0);
     CHECK_VAL_GRB(val, "GRBsetintparam OUTPUTFLAG failed", (*lp)->env);
     val = GRBsetintparam((*lp)->env, GRB_INT_PAR_THREADS, 1);
     CHECK_VAL_GRB(val, "GRBsetintparam TREADS failed", (*lp)->env);
+    val = GRBsetdblparam((*lp)->env, GRB_DBL_PAR_FEASIBILITYTOL , 1e-9);
+    CHECK_VAL_GRB(val, "GRBsetdblparam FEASIBILITYTOL failed", (*lp)->env);
     val = GRBsetintparam((*lp)->env, GRB_INT_PAR_METHOD, GRB_METHOD_PRIMAL);
     CHECK_VAL_GRB(val, "GRBsetintparam LPMETHOD failed", (*lp)->env);
     val = GRBsetintparam((*lp)->env, GRB_INT_PAR_INFUNBDINFO, 1);
@@ -94,6 +95,8 @@ int wctlp_optimize(wctlp *lp, int *status) {
         if (val) {
             goto CLEAN;
         }
+    } else if (*status == GRB_INFEASIBLE) {
+        printf("infeasible\n");
     }
 
 CLEAN:
@@ -158,6 +161,7 @@ int wctlp_addrow(wctlp * lp,
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
     return val;
 }
+
 int wctlp_addcol(wctlp * lp,
                  int     nzcount,
                  int *   cind,
@@ -193,6 +197,23 @@ int wctlp_addcol(wctlp * lp,
     CHECK_VAL_GRB(val, "Failed adding GRBaddvar", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
+    return val;
+}
+
+int wctlp_chgcoef(wctlp *lp, int cnt, int *cind, int *vind, double *cval) {
+    int val = 0;
+    val = GRBchgcoeffs(lp->model, cnt, cind, vind, cval);
+    CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
+    val = GRBupdatemodel(lp->model);
+    CHECK_VAL_GRB(val, "Failed to update model", lp->env);
+    return val;
+}
+
+int wctlp_getcoef(wctlp *lp, int *cind, int *vind, double *cval) {
+    int val;
+    val = GRBgetcoeff(lp->model, *cind, *vind, cval);
+    CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
+
     return val;
 }
 
@@ -420,6 +441,13 @@ int wctlp_get_nb_rows(wctlp *lp, int *nb_rows) {
     return val;
 }
 
+int wctlp_get_nb_cols(wctlp *lp, int *nb_cols) {
+    int val = 0;
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, nb_cols);
+    CHECK_VAL_GRB(val, "Failed to get the number of variables", lp->env);
+    return val;
+}
+
 void wctlp_printerrorcode(int c) {
     switch (c) {
         case GRB_ERROR_OUT_OF_MEMORY:
@@ -500,3 +528,18 @@ void wctlp_printerrorcode(int c) {
 }
 
 double lp_int_tolerance() { return int_tolerance; }
+
+int wctlp_compute_IIS(wctlp *lp) {
+    int val = 0;
+    int status;
+
+    GRBgetintattr(lp->model, GRB_INT_ATTR_STATUS, &status);
+
+    if (status == GRB_INFEASIBLE) {
+        printf("test infeasible\n");
+        GRBcomputeIIS(lp->model);
+        GRBwrite(lp->model, "test.ilp");
+    }
+
+    return val;
+}
