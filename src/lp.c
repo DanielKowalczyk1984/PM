@@ -26,11 +26,12 @@ int wctlp_init(wctlp **lp, const char *name) {
         printf("val = %d\n", val);
     }
 
-    val = GRBsetintparam((*lp)->env, GRB_INT_PAR_OUTPUTFLAG, 0);
-    //                     (dbg_lvl() > 1) ? 1 : 0);
+    val = GRBsetintparam((*lp)->env, GRB_INT_PAR_OUTPUTFLAG, (dbg_lvl() > 1) ? 1 : 0);
     CHECK_VAL_GRB(val, "GRBsetintparam OUTPUTFLAG failed", (*lp)->env);
     val = GRBsetintparam((*lp)->env, GRB_INT_PAR_THREADS, 1);
     CHECK_VAL_GRB(val, "GRBsetintparam TREADS failed", (*lp)->env);
+    val = GRBsetdblparam((*lp)->env, GRB_DBL_PAR_FEASIBILITYTOL , 1e-9);
+    CHECK_VAL_GRB(val, "GRBsetdblparam FEASIBILITYTOL failed", (*lp)->env);
     val = GRBsetintparam((*lp)->env, GRB_INT_PAR_METHOD, GRB_METHOD_PRIMAL);
     CHECK_VAL_GRB(val, "GRBsetintparam LPMETHOD failed", (*lp)->env);
     val = GRBsetintparam((*lp)->env, GRB_INT_PAR_INFUNBDINFO, 1);
