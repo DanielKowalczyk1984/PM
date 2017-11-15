@@ -1,8 +1,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <tdzdd/DdSpec.hpp>
-#include <vector>
-#include "solution.h"
-#include "interval.h"
+#include <solution.h>
+#include <interval.h>
 #include <glib.h>
 
 class conflict_state {
