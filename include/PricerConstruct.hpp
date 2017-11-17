@@ -80,7 +80,6 @@ public:
          interval *tmp_interval;
          Job *tmp_j;
          Job * tmp = ((job_interval_pair*) g_ptr_array_index(pair_list,j))->j;
-         int key = ((job_interval_pair*) g_ptr_array_index(pair_list,j))->I->key;
 
          if(value) {
              for (int i = j + 1; i < nlayers; ++i) {
@@ -89,7 +88,7 @@ public:
                 tmp_j = tmp_pair->j;
 
                  if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b ) {
-                     if(diff_obj(tmp, tmp_j, state) >= 0 && key != tmp_interval->key) {
+                     if(tmp == tmp_j) {
                          continue;
                      }
                      val = i;
