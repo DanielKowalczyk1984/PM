@@ -449,7 +449,7 @@ int heuristic_rpup(wctproblem *prob) {
                 solution_update(sol, sol1);
                 solution_canonical_order(sol, intervals);
                 add_solution_to_colpool(sol, &(prob->root_pd));
-                j /= 2;
+                j = 0;
             }
 
             Perturb(sol1, data_RS, rand_uniform);
