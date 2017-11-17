@@ -59,6 +59,7 @@ struct wctdata {
     wctlp *LP;
     wctlp *MIP;
     double *x;
+    double *x_e;
     double *coef;
     double *pi;
     // PricerSolver
@@ -277,6 +278,9 @@ int evaluate_nodes(wctdata *pd);
 int calculate_new_ordered_jobs(wctdata *pd);
 int build_solve_mip(wctdata *pd);
 void print_number_nodes_edges(wctdata *pd);
+double get_edge_cost(PricerSolver *solver, int idx);
+void calculate_edges(PricerSolver *solver, scheduleset *set);
+void g_calculate_edges(gpointer data, gpointer user_data);
 
 /**
  * Stabilization techniques
