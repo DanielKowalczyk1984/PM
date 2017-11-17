@@ -142,6 +142,7 @@ int main(int ac, char **av) {
     /** Finding heuristic solutions to the problem */
     heuristic_rpup(&problem);
     root->solver = newSolver(root->jobarray, root->ordered_jobs, root->nmachines, problem.opt_sol->tw);
+    g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
 
     /** Branch-and-Price Algorithm */
     build_lp(&(problem.root_pd), 0);
