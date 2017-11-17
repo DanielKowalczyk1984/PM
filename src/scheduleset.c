@@ -28,6 +28,21 @@ void scheduleset_init(scheduleset *set) {
         set->id = -1;
         set->totwct = 0;
         set->jobs = g_ptr_array_new();
+        set->e_list = g_ptr_array_new();
+        set->table = g_hash_table_new(g_direct_hash, g_direct_equal);
+    }
+}
+
+void scheduleset_init_bis(scheduleset *set) {
+    if (set) {
+        set->nb = (int *)NULL;
+        set->age = 0;
+        set->totweight = 0;
+        set->totwct = 0;
+        set->id = -1;
+        set->totwct = 0;
+        set->jobs = NULL;
+        set->e_list = NULL;
         set->table = g_hash_table_new(g_direct_hash, g_direct_equal);
     }
 }
@@ -35,7 +50,12 @@ void scheduleset_init(scheduleset *set) {
 void scheduleset_free(scheduleset *set) {
     if (set) {
         CC_IFFREE(set->nb, int);
-        g_ptr_array_free(set->jobs, TRUE);
+        if(set->jobs) {
+            g_ptr_array_free(set->jobs, TRUE);
+        }
+        if(set->e_list) {
+            g_ptr_array_free(set->e_list, TRUE);
+        }
         g_hash_table_destroy(set->table);
 
         set->totweight = 0;
@@ -54,7 +74,12 @@ void g_scheduleset_free(void *set) {
         tmp->totwct = 0;
         tmp->id = -1;
         tmp->totwct = 0;
-        g_ptr_array_free(tmp->jobs, TRUE);
+        if(tmp->jobs) {
+            g_ptr_array_free(tmp->jobs, TRUE);
+        }
+        if(tmp->e_list) {
+            g_ptr_array_free(tmp->e_list, TRUE);
+        }
         g_hash_table_destroy(tmp->table);
         CC_IFFREE(tmp, scheduleset);
     }
@@ -64,6 +89,17 @@ scheduleset *scheduleset_alloc(int nbjobs) {
     scheduleset *tmp;
     tmp = CC_SAFE_MALLOC(1, scheduleset);
     CCcheck_NULL_3(tmp, "Failed to allocate memory") scheduleset_init(tmp);
+    tmp->nb = CC_SAFE_MALLOC(nbjobs, int);
+    fill_int(tmp->nb, nbjobs, 0);
+
+CLEAN:
+    return tmp;
+}
+
+scheduleset *scheduleset_alloc_bis(int nbjobs) {
+    scheduleset *tmp;
+    tmp = CC_SAFE_MALLOC(1, scheduleset);
+    CCcheck_NULL_3(tmp, "Failed to allocate memory") scheduleset_init_bis(tmp);
     tmp->nb = CC_SAFE_MALLOC(nbjobs, int);
     fill_int(tmp->nb, nbjobs, 0);
 
@@ -87,10 +123,10 @@ scheduleset *scheduleset_from_solution(GPtrArray *machine, int nbjobs) {
     tmp = CC_SAFE_MALLOC(1, scheduleset);
     CCcheck_NULL_3(tmp, "failed to allocate memory")
 
-        scheduleset_init(tmp);
+    scheduleset_init(tmp);
     tmp->nb = CC_SAFE_MALLOC(nbjobs, int);
     CCcheck_NULL(tmp->nb, "Failed to allocate memory")
-        fill_int(tmp->nb, nbjobs, 0);
+    fill_int(tmp->nb, nbjobs, 0);
     g_ptr_array_foreach(machine, g_sum_processing_time, tmp);
 
 CLEAN:

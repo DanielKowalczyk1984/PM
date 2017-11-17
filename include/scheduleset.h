@@ -13,11 +13,14 @@ typedef struct scheduleset {
     int         totwct;
     GHashTable *table;
     GPtrArray  *jobs;
+    GPtrArray *e_list;
     int        *nb;
     int         id;
 } scheduleset;
 
 void scheduleset_SWAP(scheduleset *c1, scheduleset *c2, scheduleset *t);
+scheduleset *scheduleset_alloc_bis(int nbjobs) ;
+void scheduleset_init_bis(scheduleset *set);
 
 /*Initialization and free memory for the colorset*/
 void scheduleset_init(scheduleset *set);
