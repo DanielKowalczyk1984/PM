@@ -348,29 +348,36 @@ public:
     int              cost;
     int              C_max;
     GPtrArray       *jobs;
+    GPtrArray       *e_list;
 
 
     /** Default constructor */
-    Optimal_Solution() : obj(0), cost(0), C_max(0), jobs(g_ptr_array_new())
+    Optimal_Solution() : obj(0), cost(0), C_max(0), jobs(g_ptr_array_new()), e_list(g_ptr_array_new())
     {
     }
 
     /** Copy constructor */
     Optimal_Solution(const Optimal_Solution& other) :
         obj(other.obj), cost(other.cost), C_max(other.C_max),
-        jobs(g_ptr_array_sized_new(other.jobs->len))
+        jobs(g_ptr_array_sized_new(other.jobs->len)),
+        e_list(g_ptr_array_sized_new(other.e_list->len))
     {
         for (unsigned i = 0; i < other.jobs->len; ++i) {
             g_ptr_array_add(jobs, g_ptr_array_index(other.jobs, i));
+        }
+
+        for (unsigned i = 0; i < other.edges->len; ++i) {
+            g_ptr_array_add(jobs, g_ptr_array_index(other.edges, i));
         }
     }
 
     /** Move constructor */
     Optimal_Solution(Optimal_Solution&& other)
     noexcept :  /* noexcept needed to enable optimizations in containers */
-        obj(other.obj), cost(other.cost), C_max(other.C_max), jobs(other.jobs)
+        obj(other.obj), cost(other.cost), C_max(other.C_max), jobs(other.jobs), e_list(other.e_list)
     {
         other.jobs = nullptr;
+        other.e_list = nullptr;
     }
 
     /** Copy assignment operator */
@@ -390,6 +397,9 @@ public:
         g_ptr_array_free(jobs, TRUE);
         jobs = other.jobs;
         other.jobs = nullptr;
+        g_ptr_array_free(e_list, TRUE);
+        e_list = other.e_list;
+        other.e_list = nullptr;
         return *this;
     }
 
@@ -410,6 +420,10 @@ public:
     {
         if (jobs) {
             g_ptr_array_free(jobs, TRUE);
+        }
+
+        if(e_list) {
+            g_ptr_array_free(e_list, TRUE);
         }
     }
 
@@ -595,10 +609,14 @@ public:
 
             if (ptr->obj == ptr->obj1) {
                 g_ptr_array_add(sol.jobs, tmp_j);
+                auto e = ptr->out_edge[0].lock();
+                g_ptr_array_add(sol.e_list, &(e->id));
                 sol.C_max += tmp_j->processingime;
                 sol.cost += value_Fj(sol.C_max, tmp_j);
                 ptr = ptr->y;
             } else {
+                auto e = ptr->out_edge[1].lock();
+                g_ptr_array_add(sol.e_list, &(e->id));
                 ptr = ptr->n;
             }
         }
