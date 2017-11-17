@@ -4,6 +4,7 @@
 #include <PricerEvaluate.hpp>
 #include <PricerConstruct.hpp>
 #include <tdzdd/DdStructure.hpp>
+#include <scheduleset.h>
 using namespace std;
 
 struct PricerSolver {
@@ -135,11 +136,11 @@ public:
         delete env;
     }
 
-    void build_mip()
+    void build_mip(double *x_e)
     {
         try {
             printf("Building Mip model for the extented formulation:\n");
-            model->set(GRB_IntParam_Method, GRB_METHOD_DUAL);
+            model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
             model->set(GRB_IntParam_Threads, 1);
             model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
             model->set(GRB_IntParam_Presolve, 2);
@@ -260,12 +261,44 @@ public:
 
     size_t get_datasize()
     {
-        return zdd->size();
+        return dd->size();
     }
 
     size_t get_numberrows_zdd()
     {
         return zdd->root().row();
+    }
+
+    double get_cost_edge(int idx){
+        return edges[idx]->cost;
+    }
+
+    void calculate_edges(scheduleset *set){
+        shared_ptr<node<double>> ptr = zdd_table[zdd->root().row()][zdd->root().col()].list[0];
+        size_t count = 0;
+        if(set->jobs == NULL) {
+            return;
+        } else if(!(set->jobs->len)) {
+            return;
+        }
+        Job *tmp_j = (Job *) g_ptr_array_index(set->jobs,count);
+        while(ptr->layer != nlayers){
+            job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(ordered_jobs, ptr->layer);
+            Job *job = tmp_pair->j;
+            if(tmp_j == job) {
+                auto e = ptr->out_edge[0].lock();
+                g_ptr_array_add(set->e_list, &(e->id));
+                count++;
+                if(count < set->jobs->len) {
+                    tmp_j = (Job *) g_ptr_array_index(set->jobs,count);
+                }
+                ptr = ptr->y;
+            } else {
+                auto e = ptr->out_edge[1].lock();
+                g_ptr_array_add(set->e_list, &(e->id));
+                ptr = ptr->n;
+            }
+        }
     }
 
     void init_table_farkas()
@@ -458,18 +491,18 @@ public:
                     if ((cur_node_1.row() > 0) || (cur_node_1.row() == 0 && cur_node_1.col() == 1U)) {
                         edges.push_back(std::make_shared<edge<double>>(value_Fj(it->weight +
                                         job->processingime, job), job, it, it->y));
+                        it->out_edge.push_back(edges.back());
+                        it->y->in_edge.push_back(edges.back());
                     }
-                    it->out_edge.push_back(edges.back());
-                    it->y->in_edge.push_back(edges.back());
 
                     it->n = zdd_table[cur_node_0.row()][cur_node_0.col()].add_weight(it->weight,
                             nlayers - cur_node_0.row(), njobs);
 
                     if ((cur_node_0.row() > 0) || (cur_node_0.row() == 0 && cur_node_0.col() == 1U)) {
                         edges.push_back(make_shared<edge<double>>(0.0, nullptr, it, it->n));
+                        it->out_edge.push_back(edges.back());
+                        it->n->in_edge.push_back(edges.back());
                     }
-                    it->out_edge.push_back(edges.back());
-                    it->n->in_edge.push_back(edges.back());
                 }
             }
         }
