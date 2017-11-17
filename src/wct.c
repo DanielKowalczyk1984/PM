@@ -130,6 +130,7 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     pd->LP = (wctlp *)NULL;
     pd->MIP = (wctlp *)NULL;
     pd->x = (double *)NULL;
+    pd->x_e = (double *) NULL;
     pd->coef = (double *)NULL;
     pd->pi = (double *)NULL;
     pd->kpc_pi = (int *)NULL;
@@ -197,6 +198,7 @@ void lpwctdata_free(wctdata *pd) {
     CC_IFFREE(pd->coef, double);
     CC_IFFREE(pd->pi, double);
     CC_IFFREE(pd->x, double);
+    CC_IFFREE(pd->x_e, double);
     CC_IFFREE(pd->kpc_pi, int);
     CC_IFFREE(pd->pi_out, double);
     CC_IFFREE(pd->pi_in, double);
