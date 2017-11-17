@@ -64,7 +64,7 @@ void calculate_Hmax(wctproblem *problem) {
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
     temp_dbl = floor(temp_dbl / problem->nmachines);
-    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax + 10;
+    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax + 15;
     problem->H_min = (int)ceil(temp_dbl / problem->nmachines) - problem->pmax;
     printf("H_max = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
            problem->H_max, problem->pmax, problem->pmin, problem->psum,
@@ -119,8 +119,6 @@ int preprocess_data(wctproblem *problem) {
 
     /** Determine the position of each job in the interval */
     determine_jobs_order_interval(problem);
-
-    g_ptr_array_foreach(root->local_intervals, g_print_interval, NULL);
 
     return val;
 }
