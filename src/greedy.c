@@ -398,6 +398,8 @@ void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform) {
 
 int heuristic_rpup(wctproblem *prob) {
     int    val = 0;
+    int njobs = prob->njobs;
+    int nmachines = prob->nmachines;
     GRand *rand_uniform = g_rand_new_with_seed(2011);
     wctparms *parms = &(prob->parms);
     g_random_set_seed(1984);
@@ -409,7 +411,7 @@ int heuristic_rpup(wctproblem *prob) {
     local_search_data *data = (local_search_data *)NULL;
     local_search_data *data_RS = (local_search_data *)NULL;
 
-    sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
+    sol = solution_alloc(nmachines, njobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
     CCcheck_val_2(val, "Failed construct edd");
@@ -419,7 +421,7 @@ int heuristic_rpup(wctproblem *prob) {
     printf("Solution in canonical order: \n");
     solution_print(sol);
 
-    data = local_search_data_init(sol);
+    data = local_search_data_init(njobs,  nmachines);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
     local_search_create_W(sol, data);
     local_search_create_g(sol, data);
@@ -428,16 +430,16 @@ int heuristic_rpup(wctproblem *prob) {
     printf("Solution after local search:\n");
     solution_print(sol);
 
-    prob->opt_sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
+    prob->opt_sol = solution_alloc(nmachines, njobs, prob->off);
     CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
     solution_update(prob->opt_sol, sol);
 
     for (int i = 0; i < IR; ++i) {
-        sol1 = solution_alloc(prob->nmachines, prob->njobs, prob->off);
+        sol1 = solution_alloc(nmachines, njobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
         CCcheck_val_2(val, "Failed in construct random solution");
-        data_RS = local_search_data_init(sol1);
+        data_RS = local_search_data_init(njobs, nmachines);
         local_search_create_W(sol1, data_RS);
         local_search_create_g(sol1, data_RS);
         solution_update(sol, sol1);

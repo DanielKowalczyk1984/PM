@@ -12,12 +12,12 @@ static void destroy_slope_t(gpointer data) {
     CC_IFFREE(tmp, slope_t);
 }
 
-static int compute_g(GList **it, int t) {
+inline int compute_g(GList **it, int t) {
     slope_t *x = (slope_t *)(*it)->data;
     return x->c + x->alpha * (t - x->b1);
 }
 
-static void compute_it(GList **it, int c) {
+inline void compute_it(GList **it, int c) {
     if ((*it) != NULL) {
         slope_t *tmp = (slope_t *)(*it)->data;
         int      move = !(tmp->b1 <= c && tmp->b2 >= c);
@@ -77,7 +77,7 @@ int local_search_compare_lateness(gconstpointer a,
     return 0;
 }
 
-static void local_search_add_slope_t(
+inline void local_search_add_slope_t(
     local_search_data *data, int b1, int b2, int c, int alpha, int i, int j) {
     slope_t *tmp = CC_SAFE_MALLOC(1, slope_t);
     tmp->alpha = alpha;
@@ -87,11 +87,9 @@ static void local_search_add_slope_t(
     data->g[i][j] = g_list_append(data->g[i][j], tmp);
 }
 
-local_search_data *local_search_data_init(solution *sol) {
+local_search_data *local_search_data_init(int njobs, int nmachines) {
     int                val = 0;
-    int                njobs = sol->njobs;
     local_search_data *data;
-    int                nmachines = sol->nmachines;
     int                i, j;
     data = CC_SAFE_MALLOC(1, local_search_data);
     CCcheck_NULL_2(data, "Failed to allocate memory");
@@ -100,7 +98,7 @@ local_search_data *local_search_data_init(solution *sol) {
     data->g = CC_SAFE_MALLOC(nmachines, GList **);
     data->processing_list_1 = CC_SAFE_MALLOC(nmachines, processing_list_data *);
     data->processing_list_2 = CC_SAFE_MALLOC(nmachines, processing_list_data *);
-    data->njobs = sol->njobs;
+    data->njobs = njobs;
 
     for (i = 0; i < nmachines; ++i) {
         data->W[i] = CC_SAFE_MALLOC(njobs, int);
@@ -117,7 +115,7 @@ CLEAN:
 
     if (val) {
         for (i = 0; i < nmachines; ++i) {
-            for (j = 0; j < sol->njobs; ++j) {
+            for (j = 0; j < njobs; ++j) {
                 g_list_free_full(data->g[i][j], destroy_slope_t);
             }
 
@@ -184,14 +182,11 @@ int local_search_create_W(solution *sol, local_search_data *data) {
         }
 
         tmp = (Job *)g_ptr_array_index(sol->part[i].machine, 0);
-        data->W[i][0] =
-            tmp->weight * CC_MAX(sol->c[tmp->job] - tmp->duetime, 0);
+        data->W[i][0] = value_Fj(sol->c[tmp->job], tmp);
 
         for (unsigned j = 1; j < sol->part[i].machine->len; j++) {
             tmp = (Job *)g_ptr_array_index(sol->part[i].machine, j);
-            data->W[i][j] =
-                data->W[i][j - 1] +
-                tmp->weight * CC_MAX(sol->c[tmp->job] - tmp->duetime, 0);
+            data->W[i][j] = data->W[i][j - 1] + value_Fj(sol->c[tmp->job], tmp);
         }
     }
 

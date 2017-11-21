@@ -29,7 +29,7 @@ typedef struct _local_search_data {
     int                    updated;
 } local_search_data;
 
-local_search_data *local_search_data_init(solution *sol);
+local_search_data *local_search_data_init(int njobs, int nmachines);
 void local_search_data_free(local_search_data **data);
 
 /** Preperation of the data */
