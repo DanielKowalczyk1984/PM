@@ -12,12 +12,12 @@ static void destroy_slope_t(gpointer data) {
     CC_IFFREE(tmp, slope_t);
 }
 
-inline int compute_g(GList **it, int t) {
+static int compute_g(GList **it, int t) {
     slope_t *x = (slope_t *)(*it)->data;
     return x->c + x->alpha * (t - x->b1);
 }
 
-inline void compute_it(GList **it, int c) {
+static void compute_it(GList **it, int c) {
     if ((*it) != NULL) {
         slope_t *tmp = (slope_t *)(*it)->data;
         int      move = !(tmp->b1 <= c && tmp->b2 >= c);
@@ -77,7 +77,7 @@ int local_search_compare_lateness(gconstpointer a,
     return 0;
 }
 
-inline void local_search_add_slope_t(
+static void local_search_add_slope_t(
     local_search_data *data, int b1, int b2, int c, int alpha, int i, int j) {
     slope_t *tmp = CC_SAFE_MALLOC(1, slope_t);
     tmp->alpha = alpha;
