@@ -1,10 +1,6 @@
 #ifndef WEIGHT_ZDD_HPP
 #define WEIGHT_ZDD_HPP
 #include <tdzdd/DdEval.hpp>
-#include <cfloat>
-#include <vector>
-#include <iostream>
-#include <memory>
 #include <tdzdd/dd/NodeTable.hpp>
 
 #include <node.hpp>
@@ -13,7 +9,7 @@
 template <typename T>
 class PricerWeightZDD {
 public:
-    vector<shared_ptr<node<T>>> list;
+    std::vector<std::shared_ptr<node<T>>> list;
 
     PricerWeightZDD() {};
 
@@ -21,7 +17,7 @@ public:
         list.clear();
     }
 
-    shared_ptr<node<T>>& add_weight(int _weight, int layer, int njobs)
+    std::shared_ptr<node<T>>& add_weight(int _weight, int layer, int njobs)
     {
         for (auto& it : list) {
             if (it->weight == _weight || it->terminal) {
@@ -29,7 +25,7 @@ public:
             }
         }
 
-        shared_ptr<node<T>> p = make_shared<node<T>>();
+        std::shared_ptr<node<T>> p = std::make_shared<node<T>>();
         p->layer = layer;
         p->weight = _weight;
         list.push_back(p);
@@ -37,7 +33,7 @@ public:
     }
 
     void add_terminal_node(int j, int layer, int njobs){
-        shared_ptr<node<T>> p = make_shared<node<T>>();
+        std::shared_ptr<node<T>> p = std::make_shared<node<T>>();
         if(j == 0){
             p->obj = -DBL_MAX;
         } else {
@@ -99,9 +95,9 @@ public:
 
         for (auto& it : n->list) {
             int      weight = it->weight;
-            shared_ptr<node<T>> p0 = it->n;
-            shared_ptr<node<T>> p1 = it->y;
-            shared_ptr<node<T>> aux;
+            std::shared_ptr<node<T>> p0 = it->n;
+            std::shared_ptr<node<T>> p1 = it->y;
+            std::shared_ptr<node<T>> aux;
             T        obj0 = p0->obj;
             T        obj1 = p1->obj;
             result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
@@ -152,7 +148,7 @@ public:
     {
         Optimal_Solution<T> sol;
         sol.obj = (*data_table)[f->row()][f->col()].list[sol.C_max]->obj;
-        shared_ptr<node<T>> ptr = (*data_table)[f->row()][f->col()].list[sol.C_max];
+        std::shared_ptr<node<T>> ptr = (*data_table)[f->row()][f->col()].list[sol.C_max];
         job_interval_pair *tmp_pair;
         Job *tmp_j;
 

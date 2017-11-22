@@ -9,7 +9,6 @@ void reset_total();
 template<typename T>
 class edge;
 
-using namespace std;
 template <typename T>
 class node {
 public:
@@ -24,12 +23,12 @@ public:
     bool remove_node;
     bool take;
     Job *prev_job;
-    shared_ptr<node<T>> prev_node;
+    std::shared_ptr<node<T>> prev_node;
     bool terminal;
-    shared_ptr<node<T>> y;
-    shared_ptr<node<T>> n;
-    vector<weak_ptr<edge<T>>> out_edge;
-    vector<weak_ptr<edge<T>>> in_edge;
+    std::shared_ptr<node<T>> y;
+    std::shared_ptr<node<T>> n;
+    std::vector<std::weak_ptr<edge<T>>> out_edge;
+    std::vector<std::weak_ptr<edge<T>>> in_edge;
 
     /** Default Constructor */
     node()
@@ -158,8 +157,8 @@ public:
     int id;
     T cost;
     Job *job;
-    shared_ptr<node<T>> out;
-    shared_ptr<node<T>> in;
+    std::shared_ptr<node<T>> out;
+    std::shared_ptr<node<T>> in;
     GRBVar v;
 
 
@@ -169,7 +168,7 @@ public:
     {
     }
 
-    edge(T _cost, Job *_job, shared_ptr<node<T>>& _out, shared_ptr<node<T>>& _in) : cost(_cost), job(_job), out(_out), in(_in)
+    edge(T _cost, Job *_job, std::shared_ptr<node<T>>& _out, std::shared_ptr<node<T>>& _in) : cost(_cost), job(_job), out(_out), in(_in)
     {
         id = _total++;
     }
@@ -219,7 +218,7 @@ public:
     ~edge() noexcept{
     }
 
-    friend ostream& operator<<(ostream&              os,
+    friend std::ostream& operator<<(std::ostream&              os,
                                     edge<T> const& o)
     {
         os << "id = " << o.id << "\n";

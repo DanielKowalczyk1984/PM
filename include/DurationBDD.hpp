@@ -8,13 +8,11 @@
 #include <OptimalSolution.hpp>
 
 
-using namespace std;
-
 template<typename T>
 class PricerInfoBDD {
   public:
     T obj;
-    vector<StateNode<T>> bucket;
+    std::vector<StateNode<T>> bucket;
     std::vector<Job*> jobs;
     int sum_w;
     int sum_p;

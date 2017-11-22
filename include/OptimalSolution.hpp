@@ -4,9 +4,6 @@
 #include <interval.h>
 #include <iostream>
 
-using namespace std;
-
-
 template <typename T>
 class Optimal_Solution {
 public:
@@ -80,11 +77,11 @@ public:
         }
     }
 
-    friend ostream& operator<<(ostream&              os,
+    friend std::ostream& operator<<(std::ostream&              os,
                                     Optimal_Solution<T> const& o)
     {
-        os << "obj = " << o.obj << "," << endl
-           << "cost = " << o.cost << " C_max = " << o.C_max << endl;
+        os << "obj = " << o.obj << "," << std::endl
+           << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
         g_ptr_array_foreach(o.jobs, g_print_machine, NULL);
         return os;
     };
