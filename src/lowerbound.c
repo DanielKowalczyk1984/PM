@@ -288,6 +288,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         solution_canonical_order(new_sol, pd->local_intervals);
         add_solution_to_colpool(new_sol, pd);
     }
+    reset_nblayers(pd->jobarray);
 
     if (!pd->LP) {
         val = build_lp(pd, 0);
@@ -299,7 +300,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     /** Init alpha */
     switch (parms->stab_technique) {
         case stab_wentgnes:
-            pd->alpha = 0.8;
+            pd->alpha = parms->alpha;
             break;
 
         case stab_dynamic:
@@ -510,6 +511,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
                 val = wctlp_x(pd->LP, pd->x, 0);
                 CCcheck_val_2(val, "Failed in wctlp_x");
+                calculate_nblayers(pd);
                 val = calculate_x_e(pd);
                 CCcheck_val_2(val, "Failed in calculate_x_e");
                 pd->status = LP_bound_computed;
@@ -523,8 +525,8 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
-                evaluate_nodes(pd);
-                calculate_new_ordered_jobs(pd);
+                // evaluate_nodes(pd);
+                // calculate_new_ordered_jobs(pd);
                 break;
 
             case GRB_INFEASIBLE:
@@ -546,6 +548,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         printf("iterations = %d\n", pd->iterations);
         printf("lowerbound %d\n", pd->lower_bound + pd->problem->off);
     }
+    problem->global_lower_bound = CC_MAX(pd->lower_bound + pd->problem->off, problem->global_lower_bound);
 
     fflush(stdout);
     problem->nb_generated_col += pd->iterations;
@@ -574,6 +577,32 @@ int print_x(wctdata *pd){
                     scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
                     g_ptr_array_foreach(tmp->jobs, g_print_machine, NULL);
                     printf("\n");
+                }
+            }
+        break;
+    }
+    CLEAN:
+    return val;
+}
+
+int calculate_nblayers(wctdata *pd){
+    int val = 0;
+    int nb_cols;
+    int status;
+
+    wctlp_get_nb_cols(pd->LP, &nb_cols);
+    pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
+    reset_nblayers(pd->jobarray);
+    CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
+    val = wctlp_x(pd->LP, pd->x, 0);
+    CCcheck_val_2(val, "Failed in wctlp_x");
+    wctlp_status(pd->LP, &status);
+    switch(status){
+        case GRB_OPTIMAL:
+            for(unsigned i = 0; i < nb_cols; ++i) {
+                if(pd->x[i] > 0.0001) {
+                    scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
+                    g_ptr_array_foreach(tmp->jobs, g_compute_nblayers_schedule, tmp);
                 }
             }
         break;
