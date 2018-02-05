@@ -290,16 +290,16 @@ int solve_stab(wctdata *pd, wctparms *parms) {
         bool   mispricing = false;
         double result_sep;
 
-    if((pd->LP_lower_bound_BB - pd->eta_in)/(pd->LP_lower_bound_BB) > 0.5) {
-        Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_out);
-        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_out, pd->njobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
-        if(pd->reduced_cost >= 0.00001) {
-            val = construct_sol(pd, sol);
-            CCcheck_val_2(val, "Failed in construct_sol_stab");
-            pd->update = 1;
-        }
-    } else {
+    // if((pd->LP_lower_bound_BB - pd->eta_in)/(pd->LP_lower_bound_BB) > 0.5) {
+    //     Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_out);
+    //     result_sep = compute_lagrange(sol, pd->rhs, pd->pi_out, pd->njobs);
+    //     pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
+    //     if(pd->reduced_cost >= 0.00001) {
+    //         val = construct_sol(pd, sol);
+    //         CCcheck_val_2(val, "Failed in construct_sol_stab");
+    //         pd->update = 1;
+    //     }
+    // } else {
         do {
             k += 1.0;
             alpha = CC_MAX(0, 1.0 - k * (1.0 - pd->alpha));
@@ -329,7 +329,7 @@ int solve_stab(wctdata *pd, wctparms *parms) {
                 }
             }
         } while (mispricing && alpha > 0); /** mispricing check */
-    }
+    // }
 
 
     if (result_sep > pd->eta_in) {
