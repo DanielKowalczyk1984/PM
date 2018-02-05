@@ -37,6 +37,7 @@ void g_scheduleset_print(gpointer data, gpointer user_data);
 /** new approach for columns */
 void g_scheduleset_free(void *set);
 void g_sum_processing_time(gpointer data, gpointer user_data);
+void g_compute_nblayers_schedule(gpointer data, gpointer user_data);
 scheduleset *scheduleset_from_solution(GPtrArray *machine, int nbjobs);
 scheduleset *scheduleset_alloc(int nbjobs);
 

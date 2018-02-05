@@ -61,6 +61,7 @@ void scheduleset_free(scheduleset *set) {
         set->totweight = 0;
         set->age = 0;
         set->totwct = 0;
+        CC_IFFREE(set->nb, int);
     }
 }
 
@@ -208,6 +209,14 @@ void g_scheduleset_print(gpointer data, gpointer user_data) {
 
     printf("with C = %d, cost = %d and %u jobs\n", tmp->totweight, tmp->totwct,
            tmp_a->len);
+}
+
+void g_compute_nblayers_schedule(gpointer data, gpointer user_data){
+    Job *j = (Job *) data;
+    scheduleset *tmp = (scheduleset *) user_data;
+    if(tmp->nb[j->job] > 1) {
+        j->nb_layers = 1;
+    }
 }
 
 int print_schedule(scheduleset *cclasses, int ccount) {
