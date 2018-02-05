@@ -116,17 +116,17 @@ int print_to_csv(wctproblem *problem) {
     problem->real_time_total = getRealTime() - problem->real_time_total;
     CCutil_stop_timer(&(problem->tot_cputime), 0);
 
-    switch (parms->bb_branch_strategy) {
-        case conflict_strategy:
-        case cbfs_conflict_strategy:
-            sprintf(filenm, "WCT_CONFLICT_%d_%d.csv", pd->nmachines, pd->njobs);
-            break;
+    // switch (parms->bb_branch_strategy) {
+    //     case conflict_strategy:
+    //     case cbfs_conflict_strategy:
+    //         break;
 
-        case ahv_strategy:
-        case cbfs_ahv_strategy:
-            sprintf(filenm, "WCT_AHV_%d_%d.csv", pd->nmachines, pd->njobs);
-            break;
-    }
+    //     case ahv_strategy:
+    //     case cbfs_ahv_strategy:
+    //         sprintf(filenm, "WCT_AHV_%d_%d.csv", pd->nmachines, pd->njobs);
+    //         break;
+    // }
+    sprintf(filenm, "PM_%d_%d.csv", pd->nmachines, pd->njobs);
 
     file = fopen(filenm, "a+");
 
@@ -142,30 +142,27 @@ int print_to_csv(wctproblem *problem) {
 
     if (size == 0) {
         fprintf(file,
-                "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%"
-                "s,%s\n",
+                "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                 "NameInstance", "tot_real_time", "tot_cputime", "tot_lb",
-                "tot_lb_root", "tot_lb_lp", "tot_branch_and_bound",
-                "tot_scatter_search", "tot_build_dd", "tot_pricing",
-                "rel_error", "status", "global_lower_bound",
-                "global_upper_bound", "first_lower_bound", "first_upper_bound",
-                "first_rel_error", "solved_at_root", "nb_explored_nodes",
-                "nb_generated_col", "nb_generated_col_root", "date");
+                "tot_lb_root", 
+                "tot_heuristic", "tot_build_dd", "tot_pricing",
+                "rel_error", "global_lower_bound",
+                "global_upper_bound",
+                "first_rel_error",
+                "nb_generated_col", "date","nb_iterations_rvnd", "stabilization","alpha");
     }
 
     fprintf(file,
-            "%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,%d,%f,%d,%d,%d,%d,%u/"
-            "%u/%u\n",
+            "%s,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
+            "%u/%u,%d,%d,%f\n",
             pd->pname, problem->real_time_total, problem->tot_cputime.cum_zeit,
             problem->tot_lb.cum_zeit, problem->tot_lb_root.cum_zeit,
-            problem->tot_lb.cum_zeit, problem->tot_branch_and_bound.cum_zeit,
             problem->tot_heuristic.cum_zeit, problem->tot_build_dd.cum_zeit,
-            problem->tot_pricing.cum_zeit, problem->rel_error, problem->status,
+            problem->tot_pricing.cum_zeit, problem->rel_error,
             problem->global_lower_bound, problem->global_upper_bound,
-            problem->root_lower_bound, problem->root_upper_bound,
-            problem->root_rel_error, problem->found, problem->nb_explored_nodes,
-            problem->nb_generated_col, problem->nb_generated_col_root, date.day,
-            date.month, date.year);
+            problem->root_rel_error,
+            problem->nb_generated_col, date.day,
+            date.month, date.year, parms->nb_iterations_rvnd, parms->stab_technique,parms->alpha);
     fclose(file);
 CLEAN:
     return val;
@@ -221,7 +218,7 @@ int print_size_to_csv(wctproblem *problem, wctdata *pd) {
     switch (parms->bb_branch_strategy) {
         case conflict_strategy:
         case cbfs_conflict_strategy:
-            sprintf(filenm, "CONFLICT_%d_%d.csv", pd->nmachines, pd->njobs);
+            sprintf(filenm, "SIZE_%d_%d.csv", pd->nmachines, pd->njobs);
             break;
 
         case ahv_strategy:
@@ -245,15 +242,11 @@ int print_size_to_csv(wctproblem *problem, wctdata *pd) {
     switch (parms->bb_branch_strategy) {
         case conflict_strategy:
             if (size == 0) {
-                fprintf(file, "%s;%s;%s;%s;%s;%s;%s;%s\n", "NameInstance",
-                        "depth", "size", "nb_same", "nb_diff", "v1", "v2",
-                        "date");
+                fprintf(file, "%s,%s,%s,%s\n", "NameInstance","size","date","sizearc");
             }
 
-            fprintf(file, "%s;%d;%zu;%d;%d;%d;%d;%u/%u/%u\n", root_node->pname,
-                    pd->depth, get_datasize(pd->solver), pd->ecount_same,
-                    pd->ecount_differ, pd->v1->job, pd->v2->job, date.day,
-                    date.month, date.year);
+            fprintf(file, "%s,%zu,%u/%u/%u,%d\n",pd->pname,get_datasize(pd->solver), date.day,
+                    date.month, date.year,pd->njobs*pd->njobs*problem->H_max);
             break;
 
         case ahv_strategy:
