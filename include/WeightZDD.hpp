@@ -159,14 +159,14 @@ public:
 
             if (ptr->obj == ptr->obj1) {
                 g_ptr_array_add(sol.jobs, tmp_j);
-                auto e = ptr->out_edge[0].lock();
-                g_ptr_array_add(sol.e_list, &(e->id));
+                // auto e = ptr->out_edge[0].lock();
+                // g_ptr_array_add(sol.e_list, &(e->id));
                 sol.C_max += tmp_j->processingime;
                 sol.cost += value_Fj(sol.C_max, tmp_j);
                 ptr = ptr->y;
             } else {
-                auto e = ptr->out_edge[1].lock();
-                g_ptr_array_add(sol.e_list, &(e->id));
+                // auto e = ptr->out_edge[1].lock();
+                // g_ptr_array_add(sol.e_list, &(e->id));
                 ptr = ptr->n;
             }
         }
