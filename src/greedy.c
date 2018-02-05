@@ -411,6 +411,7 @@ int heuristic_rpup(wctproblem *prob) {
     local_search_data *data = (local_search_data *)NULL;
     local_search_data *data_RS = (local_search_data *)NULL;
 
+    CCutil_start_resume_time(&(prob->tot_heuristic));
     sol = solution_alloc(nmachines, njobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
@@ -434,7 +435,7 @@ int heuristic_rpup(wctproblem *prob) {
     CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
     solution_update(prob->opt_sol, sol);
 
-    for (int i = 0; i < IR; ++i) {
+    for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0; ++i) {
         sol1 = solution_alloc(nmachines, njobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
@@ -468,7 +469,8 @@ int heuristic_rpup(wctproblem *prob) {
     solution_canonical_order(prob->opt_sol, intervals);
     printf("Solution after some improvements with Random Variable Search:\n");
     solution_print(prob->opt_sol);
-    add_solution_to_colpool(prob->opt_sol, &(prob->root_pd));
+    prob->global_upper_bound = prob->opt_sol->tw + prob->off;
+    CCutil_stop_timer(&(prob->tot_heuristic), 0);
     prune_duplicated_sets(&(prob->root_pd));
 CLEAN:
     solution_free(&sol);
