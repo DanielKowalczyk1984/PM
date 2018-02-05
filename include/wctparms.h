@@ -63,6 +63,7 @@ typedef struct wctparms {
     int    strong_branching;
     int    nb_iterations_rvnd;
     double branching_cpu_limit;
+    double alpha;
     /**
      * scatter search
      */
@@ -97,6 +98,7 @@ void wctparms_free(wctparms *parms);
 /*Functions for setting some parameters*/
 int wctparms_set_init_upper_bound(wctparms *parms, int bound);
 int wctparms_set_branching_cpu_limit(wctparms *parms, double limit);
+int wctparms_set_alpha(wctparms *parms, double alpha);
 int wctparms_set_search_strategy(wctparms *parms, int strategy);
 int wctparms_set_branching_strategy(wctparms *parms, int strategy);
 int wctparms_set_strong_branching(wctparms *parms, int strong);
