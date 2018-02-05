@@ -90,6 +90,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd);
 int compute_objective(wctdata *pd, wctparms *parms);
 int print_x(wctdata *pd);
 int calculate_x_e(wctdata *pd);
+int calculate_nblayers(wctdata *pd);
 
 void make_pi_feasible(wctdata *pd);
 void make_pi_feasible_farkas_pricing(wctdata *pd);
