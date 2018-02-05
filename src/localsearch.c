@@ -879,13 +879,10 @@ void local_search_backward_insertion(solution *         sol,
         for (int i = njobs - l; i > 0; --i) {
             it = data->g[k][i];
 
-            for (int j = 0; j < i; ++j) {
-                if (j == 0) {
-                    c = 0;
-                } else {
-                    tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
-                    c = sol->c[tmp_j->job];
-                }
+            c = 0;
+            for (int j = 1; j < i; ++j) {
+                tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
+                c = sol->c[tmp_j->job];
 
                 compute_it(&it, c);
                 g[i][j] = compute_g(&it, c);
@@ -907,13 +904,10 @@ void local_search_backward_insertion(solution *         sol,
         for (int i = njobs - l - 1; i > 0; --i) {
             it = data->g[k][i + l];
 
-            for (int j = 0; j < i; ++j) {
-                if (j == 0) {
-                    c = p;
-                } else {
-                    tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
-                    c = p + sol->c[tmp_j->job];
-                }
+            c = p;
+            for (int j = 1; j < i; ++j) {
+                tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
+                c = p + sol->c[tmp_j->job];
 
                 compute_it(&it, c);
                 h[i][j] = compute_g(&it, c);
@@ -943,13 +937,11 @@ void local_search_backward_insertion(solution *         sol,
             p = data->processing_list_2[k][njobs - l - i].p;
             pos = data->processing_list_2[k][njobs - l - i].pos;
 
-            for (int j = 0; j < pos; ++j) {
-                if (j == 0) {
-                    c = p;
-                } else {
-                    tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
-                    c = p + sol->c[tmp_j->job];
-                }
+            c = p;
+            for (int j = 1; j < pos; ++j) {
+
+                tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
+                c = p + sol->c[tmp_j->job];
 
                 compute_it(&iterators[j], c);
                 hh[pos][j] = compute_g(&iterators[j], c);
@@ -960,9 +952,9 @@ void local_search_backward_insertion(solution *         sol,
             for (int j = i - 1; j >= 0; --j) {
                 t = 0;
 
-                if (j != 0) {
-                    t += data->W[k][j - 1];
-                }
+                // if (j != 0) {
+                    t += j!= 0 ? data->W[k][j - 1]:0;
+                // }
 
                 t += g[i][j] - h[i][j];
                 t += hh[i][j] - gg[i];
