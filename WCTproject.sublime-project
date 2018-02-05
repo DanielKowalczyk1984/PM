@@ -5,7 +5,7 @@
 		{
 			"clang":
 			{
-				"extra_flags": "--std=c++11 -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wnested-externs -Wundef -Wcast-qual -Wcast-align -Wwrite-strings",
+				"extra_flags": "--std=c++11 -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wnested-externs -Wundef -Wcast-qual -Wcast-align -Wwrite-strings -w",
 				"include_dirs":
 				[
 					"/usr/include/*",
@@ -20,16 +20,16 @@
 			},
 			"gcc":
 			{
-			            "extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/PM/implementation/include",
-			            "include_dirs":
-			            [
-			            	"/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
-			            	"/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/EGlib/src/project_EGlib/include",
-			            	"/opt/gurobi702/linux64/include",
-			            	"/usr/include/glib-2.0",
-			            	"/usr/lib64/glib-2.0/include",
-			            	"/home/daniel/Dropbox/PapersOR/PM/implementation/include"
-			            ]
+				"extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/PM/implementation/include -w",
+				"include_dirs":
+				[
+					"/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
+					"/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/EGlib/src/project_EGlib/include",
+					"/opt/gurobi702/linux64/include",
+					"/usr/include/glib-2.0",
+					"/usr/lib64/glib-2.0/include",
+					"/home/daniel/Dropbox/PapersOR/PM/implementation/include"
+				]
 			}
 		}
 	},
@@ -104,7 +104,7 @@
 			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
 			"name": "Anaconda Python Builder",
 			"selector": "source.python",
-			"shell_cmd": "\"python2.7\" -u \"$file\""
+			"shell_cmd": "\"python\" -u \"$file\""
 		}
 	],
 	"folders":
@@ -130,7 +130,6 @@
 			"path": "."
 		},
 		{
-			"path": "~/tool/rbcp_cvrp060317/bcp_vrp/",
 			"folder_exclude_patterns":
 			[
 				"Bin",
@@ -138,7 +137,8 @@
 				"STL",
 				"dep",
 				"obj"
-			]
+			],
+			"path": "~/tool/bcp_vrp/"
 		}
 	],
 	"settings":
@@ -168,13 +168,12 @@
 			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/EGlib/src/project_EGlib/include",
 			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/include",
 			"-I/opt/gurobi751/linux64/include",
+			"-I/opt/gurobi752/linux64/include",
 			"-I/usr/include/glib-2.0",
-			"-I/usr/lib64/glib-2.0/include"
+			"-I/usr/lib64/glib-2.0/include",
+			"-I/usr/lib/x86_64-linux-gnu/glib-2.0/include"
 		],
-
-		//"sublimeclang_options_script": "${project_path}/scripts/cmake_script.py ${project_path}/build_arch",
-		"sublimeclang_hide_output_when_empty": true,
 		"sublimeclang_reparse_on_activated": false,
-		"sublimeclang_reparse_on_save": true,
+		"sublimeclang_reparse_on_save": true
 	}
 }
