@@ -27,7 +27,7 @@ static int get_problem_name(char *pname, const char *efname) {
 }
 
 int read_problem(wctproblem *problem) {
-    int         val = 0;
+    int         a,val = 0;
     int         nbjobs = 0;
     int         curduration, curduedate, curweight, curjob;
     Job *       _jobarray = (Job *)NULL;
@@ -60,13 +60,12 @@ int read_problem(wctproblem *problem) {
         }
 
         while (fgets(buf2, bufsize, in) != (char *)NULL) {
-            p = buf2;
-            data = strtok(p, delim);
-            sscanf(data, "%d", &curduration);
-            data = strtok(NULL, delim);
-            sscanf(data, "%d", &curduedate);
-            data = strtok(NULL, delim);
-            sscanf(data, "%d", &curweight);
+            a = sscanf(p, "%d %d %d", &curduration, &curduedate, &curweight);
+            if(!a) {
+                fprintf(stderr, "wrong number of parameters\n");
+                val = 1;
+                goto CLEAN;
+            }
             curduedate = curduedate / parms->nmachines;
             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
             g_ptr_array_add(problem->g_job_array, tmp_j);
