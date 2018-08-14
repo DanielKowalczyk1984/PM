@@ -23,6 +23,12 @@ enum BBNodeSelection {
     max_strategy = 3,
 };
 
+enum PricingSolver {
+    min_pricing_solver = 0,
+    bdd_solver = min_pricing_solver,
+    dp_solver = 1
+};
+
 enum BranchandBound {
     no = 0,
     yes = 1,
@@ -64,6 +70,7 @@ typedef struct wctparms {
     int    nb_iterations_rvnd;
     double branching_cpu_limit;
     double alpha;
+    int pricing_solver;
     /**
      * scatter search
      */
@@ -110,6 +117,7 @@ int wctparms_set_nb_iterations_rvnd(wctparms *parms, int nb_sol);
 int wctparms_set_branchandbound(wctparms *parms, int bound);
 int wctparms_set_stab_technique(wctparms *parms, int stab_technique);
 int wctparms_set_print(wctparms *parms, int print);
+int wctparms_set_pricing_solver(wctparms *parms, int solver);
 
 /**
  * scatter search
