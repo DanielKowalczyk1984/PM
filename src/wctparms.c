@@ -25,6 +25,7 @@ void wctparms_init(wctparms *parms) {
     parms->branching_cpu_limit = 3600.0;
     parms->scatter_search_cpu_limit = 40.0;
     parms->alpha = 0.8;
+    parms->pricing_solver = min_pricing_solver;
 }
 
 void wctparms_free(wctparms *parms) {
@@ -126,5 +127,10 @@ int wctparms_set_stab_technique(wctparms *parms, int stab_technique) {
 
 int wctparms_set_print(wctparms *parms, int print) {
     parms->print = print;
+    return 0;
+}
+
+int wctparms_set_pricing_solver(wctparms *parms, int solver){
+    parms->pricing_solver = solver;
     return 0;
 }
