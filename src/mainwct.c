@@ -25,6 +25,7 @@ static void usage(char *f) {
     fprintf(stderr, "   -p int  Print csv-files: 0 = no(default), 1 = yes\n");
     fprintf(stderr, "   -b int  Branching strategy: 0 = conflict(default), 1 = ahv\n");
     fprintf(stderr, "   -Z int  Use strong branching: 0 = use strong branching(default), 1 = no strong branching\n");
+    fprintf(stderr, "   -a int  Set solver: 0 = bdd solver(default), 1 = dp solver\n");
 }
 
 static int parseargs(int ac, char **av, wctparms *parms) {
@@ -81,7 +82,7 @@ static int parseargs(int ac, char **av, wctparms *parms) {
                 CCcheck_val(val, "Failed in set branching strategy");
                 break;
             case 'a':
-                val = wctparms_set_alpha(parms,atof(optarg));
+                val = wctparms_set_pricing_solver(parms, atoi(optarg));
                 CCcheck_val(val, "Failed in set alpha");
                 break;
 
@@ -146,7 +147,7 @@ int main(int ac, char **av) {
     /** Finding heuristic solutions to the problem */
     heuristic_rpup(&problem);
     CCutil_start_timer(&(problem.tot_build_dd));
-    root->solver = newSolver(root->jobarray, root->ordered_jobs, root->nmachines, 0);
+    root->solver = newSolver(root->jobarray, root->ordered_jobs, root->nmachines, 0, problem.H_max);
     CCutil_stop_timer(&(problem.tot_build_dd), 0);
     g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
     print_size_to_csv(&problem, root);
