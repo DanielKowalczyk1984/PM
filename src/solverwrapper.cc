@@ -8,14 +8,17 @@ int construct_sol(wctdata *pd, Optimal_Solution<T> &sol) {
     int          val = 0;
     int          nbset = 1;
     Job *        tmp_j;
-    scheduleset *newset = scheduleset_alloc(pd->njobs);
+    scheduleset *newset = scheduleset_alloc_bis(pd->njobs);
     CCcheck_NULL_3(newset, "Failed to allocate memory newset");
 
     for (unsigned i = 0; i < sol.jobs->len; ++i) {
         tmp_j = (Job *)g_ptr_array_index(sol.jobs, i);
-        g_ptr_array_add(newset->jobs, tmp_j);
         g_hash_table_add(newset->table, tmp_j);
     }
+    newset->jobs = sol.jobs;
+    sol.jobs = nullptr;
+    newset->e_list = sol.e_list;
+    sol.e_list = nullptr;
 
     newset->totwct = sol.cost;
     newset->totweight = sol.C_max;
@@ -37,8 +40,8 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
                                double *                  pi,
                                int                       nbjobs);
 
-PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, int nmachines, int ub) {
-    return new PricerSolver(jobs, ordered_jobs, nmachines, ub);
+PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, int nmachines, int ub, int Hmax) {
+    return new PricerSolver(jobs, ordered_jobs, nmachines, ub, Hmax);
 }
 
 PricerSolver *copySolver(PricerSolver *src) { return new PricerSolver(*src); }
@@ -126,7 +129,7 @@ int calculate_new_ordered_jobs(wctdata *pd){
 int build_solve_mip(wctdata *pd) {
     int val = 0;
 
-    pd->solver->build_mip();
+    pd->solver->build_mip(pd->x_e);
 
     return val;
 }
@@ -184,6 +187,8 @@ size_t get_datasize(PricerSolver *solver) { return solver->get_datasize(); }
 size_t get_numberrows_zdd(PricerSolver *solver) {
     return solver->get_numberrows_zdd();
 }
+
+double get_edge_cost(PricerSolver *solver, int idx) {return solver->get_cost_edge(idx);}
 
 int add_one_conflict(
     PricerSolver *solver, wctparms *parms, Job *v1, Job *v2, int same) {
@@ -254,6 +259,12 @@ int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
 
 
     Optimal_Solution<double> sol = pd->solver->solve_weight_zdd_double(pd->pi);
+
+    if(pd->iterations%5 == 0 || evaluate) {
+        pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
+        pd->solver->evaluate_nodes(pd->pi, pd->problem->opt_sol->tw, pd->LP_lower_bound_BB , pd->problem->nmachines, pd->reduced_cost);
+    }
+
     if(sol.obj > 0.000001) {
        val = construct_sol(pd, sol);
        CCcheck_val_2(val, "Failed in construction")
@@ -261,14 +272,26 @@ int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
         pd->nnewsets = 0;
     }
 
-    if(pd->iterations%5 == 0 || evaluate) {
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
-        pd->solver->evaluate_nodes(pd->pi, pd->problem->opt_sol->tw, pd->LP_lower_bound_BB , pd->problem->nmachines, pd->reduced_cost);
-    }
 
     if(pd->iterations%pd->njobs == 0) {
         print_number_nodes_edges(pd);
     }
+
+CLEAN:
+    return val;
+}
+
+int solve_pricing_ti(wctdata *pd, wctparms *parms){
+    int val = 0;
+    Optimal_Solution<double> sol = pd->solver->dynamic_programming_ti(pd->pi);
+
+    if(sol.obj > 0.000001) {
+        val = construct_sol(pd, sol);
+        CCcheck_val_2(val, "Failed in construction");
+    } else {
+        pd->nnewsets = 0;
+    }
+
 
 CLEAN:
     return val;
@@ -283,23 +306,28 @@ int solve_stab(wctdata *pd, wctparms *parms) {
         bool   mispricing = false;
         double result_sep;
 
-    if((pd->LP_lower_bound_BB - pd->eta_in)/(pd->LP_lower_bound_BB) > 0.5) {
-        Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_out);
-        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_out, pd->njobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
-        if(pd->reduced_cost >= 0.00001) {
-            val = construct_sol(pd, sol);
-            CCcheck_val_2(val, "Failed in construct_sol_stab");
-            pd->update = 1;
-        }
-    } else {
+    // if((pd->LP_lower_bound_BB - pd->eta_in)/(pd->LP_lower_bound_BB) > 0.5) {
+    //     Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_out);
+    //     result_sep = compute_lagrange(sol, pd->rhs, pd->pi_out, pd->njobs);
+    //     pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
+    //     if(pd->reduced_cost >= 0.00001) {
+    //         val = construct_sol(pd, sol);
+    //         CCcheck_val_2(val, "Failed in construct_sol_stab");
+    //         pd->update = 1;
+    //     }
+    // } else {
         do {
             k += 1.0;
             alpha = CC_MAX(0, 1.0 - k * (1.0 - pd->alpha));
             compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
                                pd->pi_in, &(pd->eta_in), pd->pi_out,
                                &(pd->eta_out));
-            Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_sep);
+            Optimal_Solution<double> sol;
+            if(parms->pricing_solver == bdd_solver) {
+                sol = solver->solve_weight_zdd_double(pd->pi_sep);
+            } else if (parms->pricing_solver == dp_solver){
+                sol = solver->dynamic_programming_ti(pd->pi_sep);
+            }
             result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
             pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
@@ -322,7 +350,7 @@ int solve_stab(wctdata *pd, wctparms *parms) {
                 }
             }
         } while (mispricing && alpha > 0); /** mispricing check */
-    }
+    // }
 
 
     if (result_sep > pd->eta_in) {
@@ -398,5 +426,17 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
 
 CLEAN:
     return val;
+}
+
+void calculate_edges(PricerSolver *solver, scheduleset *set){
+    solver->calculate_edges(set);
+}
+
+void g_calculate_edges(gpointer data, gpointer user_data){
+    scheduleset *tmp = (scheduleset *) data;
+    PricerSolver *solver = (PricerSolver *) user_data;
+
+    solver->calculate_edges(tmp);
+
 }
 }

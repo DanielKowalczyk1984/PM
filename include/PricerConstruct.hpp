@@ -37,36 +37,24 @@ public:
          interval *tmp_interval = tmp_pair->I;
          Job *tmp_j = (Job *) tmp_pair->j;
 
-         if (level - 1 == 0 && value) {
-             return (state + tmp_j->processingime <= tmp_interval->b)? -1 : 0;
-         } else if (level - 1 == 0) {
-             return ( state <= tmp_interval->b) ? -1 : 0;
-         }
+         // if (level - 1 == 0 && value) {
+         //     return (state + tmp_j->processingime <= tmp_interval->b)? -1 : 0;
+         // } else if (level - 1 == 0) {
+         //     return ( state <= tmp_interval->b) ? -1 : 0;
+         // }
 
          if (value) {
              state = state + tmp_j->processingime;
-             _j = min_job(layer, state, value);
-
-             if(!(_j < nlayers)) {
-                if( state <= tmp_interval->b) {
-                    // if(value_Fj(state, tmp_j) - value_Fj(state + 1, tmp_j) > 0) {
-                    //     return 0;
-                    // }
-                    return -1;
-                }
-                return 0;
-             }
-         } else {
-             _j = min_job(layer, state,value);
-
-             if(!(_j < nlayers)) {
-                if( state <= tmp_interval->b) {
-                    return -1;
-                }
-                return 0;
-             }
          }
 
+         _j = min_job(layer, state,value);
+
+         if(!(_j < nlayers)) {
+            if( state <= tmp_interval->b) {
+                return -1;
+            }
+            return 0;
+         }
          assert(_j < nlayers);
          return nlayers - _j;
      }
@@ -80,7 +68,6 @@ public:
          interval *tmp_interval;
          Job *tmp_j;
          Job * tmp = ((job_interval_pair*) g_ptr_array_index(pair_list,j))->j;
-         int key = ((job_interval_pair*) g_ptr_array_index(pair_list,j))->I->key;
 
          if(value) {
              for (int i = j + 1; i < nlayers; ++i) {
@@ -89,7 +76,7 @@ public:
                 tmp_j = tmp_pair->j;
 
                  if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b ) {
-                     if(diff_obj(tmp, tmp_j, state) >= 0 && key != tmp_interval->key) {
+                     if(tmp == tmp_j) {
                          continue;
                      }
                      val = i;
@@ -310,8 +297,8 @@ class scheduling: public tdzdd::DdSpec<scheduling, int, 2> {
                     state++;
                     j++;
                     return  nlayers - j;
-                }else if (state < order) {
-                    state++;
+                }else if (state >= order) {
+                    state = 0;
                     j++;
                     return nlayers - j;
 

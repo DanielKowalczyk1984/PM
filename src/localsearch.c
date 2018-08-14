@@ -87,11 +87,9 @@ static void local_search_add_slope_t(
     data->g[i][j] = g_list_append(data->g[i][j], tmp);
 }
 
-local_search_data *local_search_data_init(solution *sol) {
+local_search_data *local_search_data_init(int njobs, int nmachines) {
     int                val = 0;
-    int                njobs = sol->njobs;
     local_search_data *data;
-    int                nmachines = sol->nmachines;
     int                i, j;
     data = CC_SAFE_MALLOC(1, local_search_data);
     CCcheck_NULL_2(data, "Failed to allocate memory");
@@ -100,7 +98,7 @@ local_search_data *local_search_data_init(solution *sol) {
     data->g = CC_SAFE_MALLOC(nmachines, GList **);
     data->processing_list_1 = CC_SAFE_MALLOC(nmachines, processing_list_data *);
     data->processing_list_2 = CC_SAFE_MALLOC(nmachines, processing_list_data *);
-    data->njobs = sol->njobs;
+    data->njobs = njobs;
 
     for (i = 0; i < nmachines; ++i) {
         data->W[i] = CC_SAFE_MALLOC(njobs, int);
@@ -117,7 +115,7 @@ CLEAN:
 
     if (val) {
         for (i = 0; i < nmachines; ++i) {
-            for (j = 0; j < sol->njobs; ++j) {
+            for (j = 0; j < njobs; ++j) {
                 g_list_free_full(data->g[i][j], destroy_slope_t);
             }
 
@@ -184,14 +182,11 @@ int local_search_create_W(solution *sol, local_search_data *data) {
         }
 
         tmp = (Job *)g_ptr_array_index(sol->part[i].machine, 0);
-        data->W[i][0] =
-            tmp->weight * CC_MAX(sol->c[tmp->job] - tmp->duetime, 0);
+        data->W[i][0] = value_Fj(sol->c[tmp->job], tmp);
 
         for (unsigned j = 1; j < sol->part[i].machine->len; j++) {
             tmp = (Job *)g_ptr_array_index(sol->part[i].machine, j);
-            data->W[i][j] =
-                data->W[i][j - 1] +
-                tmp->weight * CC_MAX(sol->c[tmp->job] - tmp->duetime, 0);
+            data->W[i][j] = data->W[i][j - 1] + value_Fj(sol->c[tmp->job], tmp);
         }
     }
 
@@ -884,13 +879,10 @@ void local_search_backward_insertion(solution *         sol,
         for (int i = njobs - l; i > 0; --i) {
             it = data->g[k][i];
 
-            for (int j = 0; j < i; ++j) {
-                if (j == 0) {
-                    c = 0;
-                } else {
-                    tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
-                    c = sol->c[tmp_j->job];
-                }
+            c = 0;
+            for (int j = 1; j < i; ++j) {
+                tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
+                c = sol->c[tmp_j->job];
 
                 compute_it(&it, c);
                 g[i][j] = compute_g(&it, c);
@@ -912,13 +904,10 @@ void local_search_backward_insertion(solution *         sol,
         for (int i = njobs - l - 1; i > 0; --i) {
             it = data->g[k][i + l];
 
-            for (int j = 0; j < i; ++j) {
-                if (j == 0) {
-                    c = p;
-                } else {
-                    tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
-                    c = p + sol->c[tmp_j->job];
-                }
+            c = p;
+            for (int j = 1; j < i; ++j) {
+                tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
+                c = p + sol->c[tmp_j->job];
 
                 compute_it(&it, c);
                 h[i][j] = compute_g(&it, c);
@@ -948,13 +937,11 @@ void local_search_backward_insertion(solution *         sol,
             p = data->processing_list_2[k][njobs - l - i].p;
             pos = data->processing_list_2[k][njobs - l - i].pos;
 
-            for (int j = 0; j < pos; ++j) {
-                if (j == 0) {
-                    c = p;
-                } else {
-                    tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
-                    c = p + sol->c[tmp_j->job];
-                }
+            c = p;
+            for (int j = 1; j < pos; ++j) {
+
+                tmp_j = (Job *)g_ptr_array_index(machine, j - 1);
+                c = p + sol->c[tmp_j->job];
 
                 compute_it(&iterators[j], c);
                 hh[pos][j] = compute_g(&iterators[j], c);
@@ -965,9 +952,9 @@ void local_search_backward_insertion(solution *         sol,
             for (int j = i - 1; j >= 0; --j) {
                 t = 0;
 
-                if (j != 0) {
-                    t += data->W[k][j - 1];
-                }
+                // if (j != 0) {
+                    t += j!= 0 ? data->W[k][j - 1]:0;
+                // }
 
                 t += g[i][j] - h[i][j];
                 t += hh[i][j] - gg[i];

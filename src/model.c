@@ -215,10 +215,13 @@ int build_lp(wctdata *pd, int construct) {
     fill_dbl(pd->pi_out, nb_row, 0.0);
     pd->pi_sep = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->pi_sep, "Failed to allocate memory");
+    fill_dbl(pd->pi_sep, nb_row, 0.0);
     pd->subgradient_in = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->subgradient_in, "Failed to allocate memory");
     pd->subgradient = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->subgradient, "Failed to allocate memory");
+    pd->x_e = CC_SAFE_MALLOC(2*get_datasize(pd->solver), double);
+    CCcheck_NULL_2(pd->x_e, "Failed to allocate memory x_e");
     pd->rhs = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
     val = wctlp_get_rhs(pd->LP, pd->rhs);

@@ -25,6 +25,7 @@ static void usage(char *f) {
     fprintf(stderr, "   -p int  Print csv-files: 0 = no(default), 1 = yes\n");
     fprintf(stderr, "   -b int  Branching strategy: 0 = conflict(default), 1 = ahv\n");
     fprintf(stderr, "   -Z int  Use strong branching: 0 = use strong branching(default), 1 = no strong branching\n");
+    fprintf(stderr, "   -a int  Set solver: 0 = bdd solver(default), 1 = dp solver\n");
 }
 
 static int parseargs(int ac, char **av, wctparms *parms) {
@@ -32,7 +33,7 @@ static int parseargs(int ac, char **av, wctparms *parms) {
     int val = 0;
     int debug = dbg_lvl();
 
-    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:")) != EOF) {
+    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:")) != EOF) {
         switch (c) {
             case 'd':
                 ++(debug);
@@ -79,6 +80,10 @@ static int parseargs(int ac, char **av, wctparms *parms) {
             case 'b':
                 val = wctparms_set_branching_strategy(parms, atoi(optarg));
                 CCcheck_val(val, "Failed in set branching strategy");
+                break;
+            case 'a':
+                val = wctparms_set_pricing_solver(parms, atoi(optarg));
+                CCcheck_val(val, "Failed in set alpha");
                 break;
 
             case 'Z':
@@ -141,13 +146,23 @@ int main(int ac, char **av) {
 
     /** Finding heuristic solutions to the problem */
     heuristic_rpup(&problem);
-    root->solver = newSolver(root->jobarray, root->ordered_jobs, root->nmachines, problem.opt_sol->tw);
+    CCutil_start_timer(&(problem.tot_build_dd));
+    root->solver = newSolver(root->jobarray, root->ordered_jobs, root->nmachines, 0, problem.H_max);
+    CCutil_stop_timer(&(problem.tot_build_dd), 0);
+    g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
+    print_size_to_csv(&problem, root);
 
     /** Branch-and-Price Algorithm */
-    build_lp(&(problem.root_pd), 0);
+    if(problem.opt_sol->tw + problem.opt_sol->off != 0) {
+        build_lp(&(problem.root_pd), 0);
+        CCutil_start_timer(&(problem.tot_lb_root));
+        compute_lower_bound(&problem, &(problem.root_pd));
+        problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
+        CCutil_stop_timer(&(problem.tot_lb_root), 0);
+    }
 
-    compute_lower_bound(&problem, &(problem.root_pd));
     printf("Reading and preprocessing of the data took %f seconds\n", CCutil_zeit() - start_time);
+    print_to_csv(&problem);
 
 CLEAN:
     wctproblem_free(&problem);

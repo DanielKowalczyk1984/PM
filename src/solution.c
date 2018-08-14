@@ -212,6 +212,7 @@ Job *job_alloc(int *p, int *w, int *d) {
     j->processingime = *p;
     j->duetime = *d;
     j->weight = *w;
+    j->nb_layers = 0;
     j->pos_interval = (int *)NULL;
     return j;
 }
@@ -220,6 +221,7 @@ void g_set_jobarray_job(gpointer data, gpointer user_data) {
     Job *j = (Job *)data;
     int *i = (int *)user_data;
     j->job = *i;
+    j->nb_layers = 0;
     (*i)++;
 }
 
@@ -232,6 +234,15 @@ void g_print_jobarray(gpointer data, gpointer user_data) {
 void g_print_machine(gpointer data, gpointer user_data) {
     Job *j = (Job *)data;
     g_print("%d ", j->job);
+}
+
+void g_reset_nb_layers(gpointer data, gpointer user_data){
+    Job *j = (Job *) data;
+    j->nb_layers = 0;
+}
+
+void reset_nblayers(GPtrArray *jobs){
+    g_ptr_array_foreach(jobs, g_reset_nb_layers, NULL);
 }
 
 void g_set_sol_perm(gpointer data, gpointer user_data) {

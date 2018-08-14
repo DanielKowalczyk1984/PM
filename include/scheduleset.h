@@ -13,11 +13,14 @@ typedef struct scheduleset {
     int         totwct;
     GHashTable *table;
     GPtrArray  *jobs;
+    GPtrArray *e_list;
     int        *nb;
     int         id;
 } scheduleset;
 
 void scheduleset_SWAP(scheduleset *c1, scheduleset *c2, scheduleset *t);
+scheduleset *scheduleset_alloc_bis(int nbjobs) ;
+void scheduleset_init_bis(scheduleset *set);
 
 /*Initialization and free memory for the colorset*/
 void scheduleset_init(scheduleset *set);
@@ -34,6 +37,7 @@ void g_scheduleset_print(gpointer data, gpointer user_data);
 /** new approach for columns */
 void g_scheduleset_free(void *set);
 void g_sum_processing_time(gpointer data, gpointer user_data);
+void g_compute_nblayers_schedule(gpointer data, gpointer user_data);
 scheduleset *scheduleset_from_solution(GPtrArray *machine, int nbjobs);
 scheduleset *scheduleset_alloc(int nbjobs);
 
