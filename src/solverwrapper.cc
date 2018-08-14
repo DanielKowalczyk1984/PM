@@ -40,8 +40,8 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
                                double *                  pi,
                                int                       nbjobs);
 
-PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, int nmachines, int ub) {
-    return new PricerSolver(jobs, ordered_jobs, nmachines, ub);
+PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, int nmachines, int ub, int Hmax) {
+    return new PricerSolver(jobs, ordered_jobs, nmachines, ub, Hmax);
 }
 
 PricerSolver *copySolver(PricerSolver *src) { return new PricerSolver(*src); }
@@ -281,6 +281,22 @@ CLEAN:
     return val;
 }
 
+int solve_pricing_ti(wctdata *pd, wctparms *parms){
+    int val = 0;
+    Optimal_Solution<double> sol = pd->solver->dynamic_programming_ti(pd->pi);
+
+    if(sol.obj > 0.000001) {
+        val = construct_sol(pd, sol);
+        CCcheck_val_2(val, "Failed in construction");
+    } else {
+        pd->nnewsets = 0;
+    }
+
+
+CLEAN:
+    return val;
+}
+
 
 int solve_stab(wctdata *pd, wctparms *parms) {
     int           val = 0;
@@ -306,7 +322,12 @@ int solve_stab(wctdata *pd, wctparms *parms) {
             compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
                                pd->pi_in, &(pd->eta_in), pd->pi_out,
                                &(pd->eta_out));
-            Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_sep);
+            Optimal_Solution<double> sol;
+            if(parms->pricing_solver == bdd_solver) {
+                sol = solver->solve_weight_zdd_double(pd->pi_sep);
+            } else if (parms->pricing_solver == dp_solver){
+                sol = solver->dynamic_programming_ti(pd->pi_sep);
+            }
             result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
             pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
