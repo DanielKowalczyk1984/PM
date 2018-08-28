@@ -11,8 +11,7 @@ struct WeightZDDdouble : WeightZDD<WeightZDDdouble, double> {
 };
 
 struct FarkasZDDdouble : FarkasZDD<FarkasZDDdouble, double> {
-    FarkasZDDdouble(
-        double *_pi, GPtrArray *_interval_list, int _nbjobs)
+    FarkasZDDdouble(double *_pi, GPtrArray *_interval_list, int _nbjobs)
         : FarkasZDD<FarkasZDDdouble, double>(_pi, _interval_list, _nbjobs) {};
 };
 
