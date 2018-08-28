@@ -1,4 +1,13 @@
 {
+	"build_systems":
+	[
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "Anaconda Python Builder",
+			"selector": "source.python",
+			"shell_cmd": "\"python\" -u \"$file\""
+		}
+	],
 	"folders":
 	[
 		{
@@ -36,19 +45,46 @@
 			"path": "/home/daniel/tool/bcp_vrp/"
 		}
 	],
-	"settings":{
-		"AStyleFormatter":{
-			"options_c":{
+	"settings":
+	{
+		"AStyleFormatter":
+		{
+			"options_c":
+			{
 				"additional_options_file": "/home/daniel/.astylerc",
 				"use_only_additional_options": true
 			},
-			"options_c++":{
+			"options_c++":
+			{
 				"additional_options_file": "/home/daniel/.astylerc",
 				"use_only_additional_options": true
 			}
 		},
+		"SublimeLinter.linters.clang.extra_flags": "--std=c++11 -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wnested-externs -Wundef -Wcast-qual -Wcast-align -Wwrite-strings -w",
+		"SublimeLinter.linters.clang.include_dirs":
+		[
+			"/usr/include/*",
+			"/usr/include/c++/7.2.0/*",
+			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
+			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/EGlib/src/project_EGlib/include",
+			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/include",
+			"-I/opt/gurobi751/linux64/include",
+			"-I/usr/include/glib-2.0",
+			"-I/usr/lib64/glib-2.0/include"
+		],
+		"SublimeLinter.linters.gcc.extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/PM/implementation/include -w",
+		"SublimeLinter.linters.gcc.include_dirs":
+		[
+			"/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
+			"/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/EGlib/src/project_EGlib/include",
+			"/opt/gurobi702/linux64/include",
+			"/usr/include/glib-2.0",
+			"/usr/lib64/glib-2.0/include",
+			"/home/daniel/Dropbox/PapersOR/PM/implementation/include"
+		],
 		"sublimeclang_hide_output_when_empty": true,
-		"sublimeclang_options":[
+		"sublimeclang_options":
+		[
 			"-isystem",
 			"/usr/include/*",
 			"-isystem",
@@ -64,26 +100,6 @@
 			"-I/usr/lib/x86_64-linux-gnu/glib-2.0/include"
 		],
 		"sublimeclang_reparse_on_activated": false,
-		"sublimeclang_reparse_on_save": true,
-		"SublimeLinter.linters.clang.extra_flags": "--std=c++11 -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wnested-externs -Wundef -Wcast-qual -Wcast-align -Wwrite-strings -w", 
-        "SublimeLinter.linters.clang.include_dirs": [
-            "/usr/include/*", 
-            "/usr/include/c++/7.2.0/*", 
-            "-I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include", 
-            "-I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/EGlib/src/project_EGlib/include", 
-            "-I/home/daniel/Dropbox/PapersOR/PM/implementation/include", 
-            "-I/opt/gurobi751/linux64/include", 
-            "-I/usr/include/glib-2.0", 
-            "-I/usr/lib64/glib-2.0/include"
-        ], 
-        "SublimeLinter.linters.gcc.extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/PM/implementation/include -w", 
-        "SublimeLinter.linters.gcc.include_dirs": [
-            "/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include", 
-            "/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/EGlib/src/project_EGlib/include", 
-            "/opt/gurobi702/linux64/include", 
-            "/usr/include/glib-2.0", 
-            "/usr/lib64/glib-2.0/include", 
-            "/home/daniel/Dropbox/PapersOR/PM/implementation/include"
-        ]
+		"sublimeclang_reparse_on_save": true
 	}
 }
