@@ -1,6 +1,5 @@
 #!/usr/bin/env python3.5
 import sys      # imports the sys module
-import re
 import os
 import argparse
 import pandas as pd
@@ -21,7 +20,7 @@ def diff_global(x):
     return a - b
 
 
-class DataParser(argparse.ArgumentParser): 
+class DataParser(argparse.ArgumentParser):
 
     def __init__(self):
         super(DataParser, self).__init__()
@@ -101,7 +100,7 @@ class Summary(object):
             self.maxlst[it] = tmp_df['size'].max()
             self.count[it] = tmp_df['NameInstance'].count()
 
-        df_filter = df_comp[df_comp.depth%2 == 0]
+        df_filter = df_comp[df_comp.depth % 2 == 0]
         df_filter.boxplot(by='depth', column='rel', whis='range')
         plt.show()
 
@@ -169,6 +168,7 @@ def main():
                 else:
                     inst.compute()
                     inst.print_to_screen()
+
 
 if __name__ == '__main__':
     main()
