@@ -30,7 +30,9 @@ static void usage(char *f) {
 
 static int parseargs(int ac, char **av, wctparms *parms) {
     int c;
+    double f;
     int val = 0;
+    char* ptr;
     int debug = dbg_lvl();
 
     while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:")) != EOF) {
@@ -41,53 +43,62 @@ static int parseargs(int ac, char **av, wctparms *parms) {
                 break;
 
             case 'f':
-                val = wctparms_set_nb_iterations_rvnd(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_nb_iterations_rvnd(parms, c);
                 CCcheck_val(val, "Failed number feasible solutions");
                 break;
 
             case 's':
-                val = wctparms_set_search_strategy(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_search_strategy(parms, c);
                 CCcheck_val(val, "Failed set_branching_strategy");
                 break;
 
             case 'l':
-                val = wctparms_set_branching_cpu_limit(parms, atof(optarg));
+                f = strtod(optarg, &ptr);
+                val = wctparms_set_branching_cpu_limit(parms, f);
                 CCcheck_val(val, "Failed wctparms_set_branching_cpu_limit");
                 break;
 
             case 'L':
-                val =
-                    wctparms_set_scatter_search_cpu_limit(parms, atof(optarg));
+                f = strtod(optarg, &ptr);
+                val = wctparms_set_scatter_search_cpu_limit(parms, f);
                 CCcheck_val(val,
                             "Failed wctparms_set_scatter_search_cpu_limit");
                 break;
 
             case 'B':
-                val = wctparms_set_branchandbound(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_branchandbound(parms, c);
                 CCcheck_val(val, "Failed wctparms_set_branchandbound");
                 break;
 
             case 'S':
-                val = wctparms_set_stab_technique(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_stab_technique(parms, c);
                 CCcheck_val(val, "Failed in wctparms_set_stab_technique");
                 break;
 
             case 'p':
-                val = wctparms_set_print(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_print(parms, c);
                 CCcheck_val(val, "Failed in print");
                 break;
 
             case 'b':
-                val = wctparms_set_branching_strategy(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_branching_strategy(parms, c);
                 CCcheck_val(val, "Failed in set branching strategy");
                 break;
             case 'a':
-                val = wctparms_set_pricing_solver(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_pricing_solver(parms, c);
                 CCcheck_val(val, "Failed in set alpha");
                 break;
 
             case 'Z':
-                val = wctparms_set_strong_branching(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_strong_branching(parms, c);
                 CCcheck_val(val, "Failed in set strong branching");
                 break;
 
@@ -109,8 +120,8 @@ static int parseargs(int ac, char **av, wctparms *parms) {
             val = 1;
             goto CLEAN;
         }
-
-        val = wctparms_set_nmachines(parms, atoi(av[optind++]));
+        c = strtol(av[optind++], &ptr, 10);
+        val = wctparms_set_nmachines(parms, c);
         CCcheck_val(val, "Failed in wctparms_set_nmachines");
     }
 
