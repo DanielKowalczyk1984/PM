@@ -138,7 +138,6 @@ int main(int ac, char **av) {
     int        val = 0;
     double     start_time;
     wctproblem problem;
-    start_time = CCutil_zeit();
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header");
     wctproblem_init(&problem);
@@ -152,10 +151,12 @@ int main(int ac, char **av) {
     /**
      * Reading and preprocessing the data
      */
+    start_time = CCutil_zeit();
     val = read_problem(&problem);
     CCcheck_val_2(val, "read_adjlist failed");
     val = preprocess_data(&problem);
     CCcheck_val_2(val, "Failed at preprocess_data");
+    printf("Reading and preprocessing of the data took %f seconds\n", CCutil_zeit() - start_time);
 
     /**
      * Finding heuristic solutions to the problem
@@ -182,7 +183,6 @@ int main(int ac, char **av) {
         CCutil_stop_timer(&(problem.tot_lb_root), 0);
     }
 
-    printf("Reading and preprocessing of the data took %f seconds\n", CCutil_zeit() - start_time);
     print_to_csv(&problem);
 
 CLEAN:

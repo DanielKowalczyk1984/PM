@@ -450,16 +450,16 @@ public:
         zdd = new tdzdd::DdStructure<2>(ps);
         nb_nodes_bdd = zdd->size();
         zdd->zddReduce();
-        // int count = 0;
-        // for (int i = njobs  - 1; i >= 0 && count <  8; --i){
-        //     Job *tmp_j = (Job *) g_ptr_array_index(jobs, i);
-        //     if(tmp_j->nb_layers == 1) {
-        //         printf("test %d\n", tmp_j->nb_layers);
-        //         zdd->zddSubset(scheduling(tmp_j,ordered_jobs,2));
-        //         zdd->zddReduce();
-        //         count++;
-        //     }
-        // }
+        int count = 0;
+        for (int i = njobs  - 1; i >= 0 && count <  8; --i){
+            Job *tmp_j = (Job *) g_ptr_array_index(jobs, i);
+            if(tmp_j->nb_layers == 1) {
+                printf("test %d\n", tmp_j->nb_layers);
+                zdd->zddSubset(scheduling(tmp_j,ordered_jobs,2));
+                zdd->zddReduce();
+                count++;
+            }
+        }
 
         nb_nodes_zdd = zdd->size();
         printf("new size BDD = %lu, size ZDD= %lu\n", nb_nodes_bdd, nb_nodes_zdd);
