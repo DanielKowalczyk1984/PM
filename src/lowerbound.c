@@ -411,8 +411,8 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
         if (pd->update) {
             for (j = 0; j < pd->nnewsets; j++) {
                 val = addColToLP(pd->newsets + j, pd);
-                g_ptr_array_add(pd->localColPool, pd->newsets + j);
                 CCcheck_val_2(val, "wctlp_addcol failed");
+                g_ptr_array_add(pd->localColPool, pd->newsets + j);
             }
             pd->newsets = NULL;
         }
@@ -525,8 +525,8 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
-                // evaluate_nodes(pd);
-                // calculate_new_ordered_jobs(pd);
+                evaluate_nodes(pd);
+                calculate_new_ordered_jobs(pd);
                 break;
 
             case GRB_INFEASIBLE:
