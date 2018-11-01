@@ -149,21 +149,31 @@ int main(int ac, char **av) {
         printf("Debugging turned on\n");
     }
 
-    /** Reading and preprocessing the data */
+    /**
+     * Reading and preprocessing the data
+     */
     val = read_problem(&problem);
     CCcheck_val_2(val, "read_adjlist failed");
     val = preprocess_data(&problem);
     CCcheck_val_2(val, "Failed at preprocess_data");
 
-    /** Finding heuristic solutions to the problem */
+    /**
+     * Finding heuristic solutions to the problem
+     */
     heuristic_rpup(&problem);
+
+    /**
+     * Build DD at the root node
+     */
     CCutil_start_timer(&(problem.tot_build_dd));
     root->solver = newSolver(root->jobarray, root->ordered_jobs, root->nmachines, 0, problem.H_max);
     CCutil_stop_timer(&(problem.tot_build_dd), 0);
     g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
     print_size_to_csv(&problem, root);
 
-    /** Branch-and-Price Algorithm */
+    /**
+     * Calculation of LB at the root node with column generation
+     */
     if(problem.opt_sol->tw + problem.opt_sol->off != 0) {
         build_lp(&(problem.root_pd), 0);
         CCutil_start_timer(&(problem.tot_lb_root));
