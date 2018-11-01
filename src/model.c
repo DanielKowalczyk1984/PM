@@ -86,11 +86,10 @@ int addColToLP(scheduleset *set, wctdata *pd) {
     val = wctlp_get_nb_cols(lp, &(set->id));
     CCcheck_val_2(val, "Failed to get the number of cols");
     vind = set->id;
-    val = wctlp_addcol(lp, 0, NULL, NULL, (double)set->totwct, 0.0,
-                       GRB_INFINITY, wctlp_CONT, NULL);
+    val = wctlp_addcol(lp, 0, NULL, NULL, (double)set->totwct, 0.0, GRB_INFINITY, wctlp_CONT, NULL);
     CCcheck_val_2(val, "Failed to add column to lp")
 
-        for (unsigned i = 0; i < members->len; ++i) {
+    for (unsigned i = 0; i < members->len; ++i) {
         job = (Job *)g_ptr_array_index(members, i);
         cind = job->job;
         val = wctlp_getcoef(lp, &cind, &vind, &cval);
@@ -128,12 +127,18 @@ int build_lp(wctdata *pd, int construct) {
     val = wctlp_init(&(pd->LP), NULL);
     CCcheck_val_2(val, "wctlp_init failed");
 
+    /**
+     * add assignment constraints
+     */
     for (int i = 0; i < njobs; i++) {
         val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_GREATER_EQUAL,
                            1.0, (char *)NULL);
         CCcheck_val_2(val, "Failed wctlp_addrow");
     }
 
+    /**
+     * add number of machines constraint (convexfication)
+     */
     val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_LESS_EQUAL,
                        (double)nmachines, (char *)NULL);
 
@@ -142,69 +147,11 @@ int build_lp(wctdata *pd, int construct) {
     /** add columns from localColPool */
     g_ptr_array_foreach(pd->localColPool, g_add_col_to_lp, pd);
 
-    /** add constraint about number of machines */
-    // if (construct) {
-    //     for (i = 0; i < pd->ccount; i++) {
-    //         val = wctlp_addcol(pd->LP, pd->cclasses[i].count + 1,
-    //                            pd->cclasses[i].members, pd->coef,
-    //                            pd->cclasses[i].totwct, 0.0, GRB_INFINITY,
-    //                            wctlp_CONT, NULL);
-    //         if (val) {
-    //             wctlp_printerrorcode(val);
-    //         }
-    //         for (j = 0; j < pd->cclasses[i].count && counter < njobs; j++) {
-    //             if (!covered[pd->cclasses[i].members[j]]) {
-    //                 covered[pd->cclasses[i].members[j]] = 1;
-    //                 counter++;
-    //             }
-    //         }
-    //     }
-    // }
-    // if (counter < njobs) {
-    //     /** Farkas Pricing */
-    //     for (i = 0; i < njobs; i++) {
-    //         if (!covered[i]) {
-    //             pd->nnewsets = 1;
-    //             pd->newsets = CC_SAFE_MALLOC(1, scheduleset);
-    //             scheduleset_init(pd->newsets);
-    //             pd->newsets[0].members = CC_SAFE_MALLOC(2, int);
-    //             CCcheck_NULL_2(
-    //                 pd->newsets[0].members,
-    //                 "Failed to allocate memory to pd->newsets->members");
-    //             pd->newsets[0].C = CC_SAFE_MALLOC(1, int);
-    //             CCcheck_NULL_2(pd->newsets[0].C, "Failed to allocate
-    //             memory"); pd->newsets[0].table =
-    //                 g_hash_table_new(g_direct_hash, g_direct_equal);
-    //             CCcheck_NULL_2(pd->newsets[0].table,
-    //                            "Failed to allocate memory");
-    //             pd->newsets[0].count++;
-    //             pd->newsets[0].members[0] = i;
-    //             pd->newsets[0].members[1] = njobs;
-    //             pd->newsets[0].totwct =
-    //                 pd->jobarray[i].weight * pd->jobarray[i].processingime;
-    //             pd->newsets[0].totweight = pd->jobarray[i].processingime;
-    //             pd->newsets[0].C[0] = pd->jobarray[i].processingime;
-    //             g_hash_table_insert(pd->newsets[0].table, GINT_TO_POINTER(i),
-    //                                 pd->newsets[0].C);
-    //             pd->newsets->age = 0;
-    //             val = wctlp_addcol(pd->LP, 2, pd->newsets[0].members,
-    //             pd->coef,
-    //                                pd->newsets[0].totwct, 0.0, GRB_INFINITY,
-    //                                wctlp_CONT, NULL);
-    //             CCcheck_val_2(val, "Failed in wctlp_addcol");
-    //             if (pd->gallocated == 0 && pd->ccount == 0) {
-    //                 pd->cclasses = CC_SAFE_MALLOC(njobs, scheduleset);
-    //                 for (j = 0; j < njobs; ++j) {
-    //                     scheduleset_init(pd->cclasses + i);
-    //                 }
-    //                 pd->gallocated = njobs;
-    //             }
-    //             add_newsets(pd);
-    //         }
-    //     }
-    // }
+    /**
+     * Some aux variables for column generation
+     */
     pd->pi = (double *)CCutil_reallocrus(pd->pi, nb_row * sizeof(double));
-    CCcheck_NULL_2(pd->pi, "Failed to allocate memory to pd->pi");
+    CCcheck_NULL_2(pd->pi, "Failed to allocate memory");
     pd->pi_in = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->pi_in, "Failed to allocate memory");
     fill_dbl(pd->pi_in, nb_row, 0.0);
@@ -221,7 +168,7 @@ int build_lp(wctdata *pd, int construct) {
     pd->subgradient = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->subgradient, "Failed to allocate memory");
     pd->x_e = CC_SAFE_MALLOC(2*get_datasize(pd->solver), double);
-    CCcheck_NULL_2(pd->x_e, "Failed to allocate memory x_e");
+    CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
     pd->rhs = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
     val = wctlp_get_rhs(pd->LP, pd->rhs);
