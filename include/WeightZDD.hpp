@@ -97,7 +97,6 @@ public:
             int      weight = it->weight;
             std::shared_ptr<node<T>> p0 = it->n;
             std::shared_ptr<node<T>> p1 = it->y;
-            std::shared_ptr<node<T>> aux;
             T        obj0 = p0->obj;
             T        obj1 = p1->obj;
             result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
