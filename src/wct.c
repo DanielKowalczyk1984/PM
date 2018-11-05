@@ -191,10 +191,16 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
 }
 
 void lpwctdata_free(wctdata *pd) {
+    /**
+     * free all the gurobi data associated with the LP relaxation
+     */
     if (pd->LP) {
         wctlp_free(&(pd->LP));
     }
 
+    /**
+     * free all the data associated with the LP
+     */
     CC_IFFREE(pd->coef, double);
     CC_IFFREE(pd->pi, double);
     CC_IFFREE(pd->x, double);
@@ -206,12 +212,12 @@ void lpwctdata_free(wctdata *pd) {
     CC_IFFREE(pd->subgradient, double);
     CC_IFFREE(pd->subgradient_in, double);
     CC_IFFREE(pd->rhs, double);
-
-    // schedulesets_free(&(pd->newsets), &(pd->nnewsets));
-    // schedulesets_free(&(pd->cclasses), &(pd->gallocated));
     CC_IFFREE(pd->cstat, int);
+
+    /**
+     * free all the schedules from the localColPool
+     */
     g_ptr_array_free(pd->localColPool,TRUE);
-    // pd->ccount = 0;
 }
 
 void children_data_free(wctdata *pd) {
