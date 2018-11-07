@@ -31,10 +31,19 @@ typedef struct _solution {
     int       off;
 } solution;
 
+/**
+ * Initialization of a solution type
+ */
 void solution_init(solution *sol);
+/**
+ * free all dynamic allocated memory of solution type
+ */
 void solution_free(solution **sol);
 solution *solution_alloc(int nmachines, int njobs, int off);
 
+/**
+ * functions to work on solution type data
+ */
 void solution_print(solution *sol);
 int solution_copy(solution *dest, solution *src);
 int solution_update(solution *dest, solution *src);
