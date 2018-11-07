@@ -6,8 +6,7 @@
 #include <node.hpp>
 #include <OptimalSolution.hpp>
 
-template <typename T>
-class PricerWeightZDD {
+template <typename T> class PricerWeightZDD {
 public:
     std::vector<std::shared_ptr<node<T>>> list;
 
@@ -58,8 +57,7 @@ public:
 
 
 template <typename E, typename T>
-class WeightZDD
-    : public tdzdd::DdEval<E, PricerWeightZDD<T>, Optimal_Solution<T>> {
+class WeightZDD : public tdzdd::DdEval<E, PricerWeightZDD<T>, Optimal_Solution<T>> {
     T   *pi;
     GPtrArray *interval_list;
     int nlayers;
