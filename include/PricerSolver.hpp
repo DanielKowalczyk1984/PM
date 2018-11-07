@@ -444,8 +444,6 @@ public:
         printf("The new number of layers = %u\n", ordered_jobs->len);
         delete zdd;
         nlayers = ordered_jobs->len;
-        // zdd->zddReduce();
-        // printf("test %d %d\n", zdd->topLevel(), nlayers);
         PricerConstruct ps(ordered_jobs);
         zdd = new tdzdd::DdStructure<2>(ps);
         nb_nodes_bdd = zdd->size();
@@ -454,7 +452,6 @@ public:
         for (int i = njobs  - 1; i >= 0 && count <  8; --i){
             Job *tmp_j = (Job *) g_ptr_array_index(jobs, i);
             if(tmp_j->nb_layers == 1) {
-                printf("test %d\n", tmp_j->nb_layers);
                 zdd->zddSubset(scheduling(tmp_j,ordered_jobs,2));
                 zdd->zddReduce();
                 count++;
