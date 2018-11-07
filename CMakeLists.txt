@@ -17,22 +17,6 @@ find_package(Gurobi)
 # Find Boost
 find_package(Boost)
 
-
-# Include EGlib
-ExternalProject_Add(project_EGlib
-	URL http://www.dii.uchile.cl/~daespino/SOurce/EGlib.tar.bz2
-	PREFIX ${CMAKE_SOURCE_DIR}/third_party/EGlib
-	CONFIGURE_COMMAND autoheader -v  && autoconf -v  && ./configure && sed -i "s/^MAINOPT.*//" Makefile.common && sed -i "s/\(MAINOPT\)//g" Makefile.common
-	BUILD_IN_SOURCE 1
-	BUILD_COMMAND make library
-	INSTALL_COMMAND ""
-)
-
-ExternalProject_Get_Property(project_EGlib source_dir)
-set_target_properties(project_EGlib PROPERTIES EXCLUDE_FROM_ALL TRUE)
-set(EGlib_INCLUDE_DIR ${source_dir}/include)
-set(EGlib_LIBRARY_DIR ${source_dir}/lib/libEGlib.a)
-
 ExternalProject_Add(project_TdZdd
     GIT_REPOSITORY https://github.com/DanielKowalczyk1984/TdZdd.git
     GIT_TAG "master"
