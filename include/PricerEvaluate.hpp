@@ -1,6 +1,7 @@
 #include <WeightZDD.hpp>
 #include <FarkasZDD.hpp>
 #include <DurationBDD.hpp>
+#include <DurationZDD.hpp>
 
 
 
@@ -18,5 +19,10 @@ struct FarkasZDDdouble : FarkasZDD<FarkasZDDdouble, double> {
 struct DurationBDDdouble : DurationBDD<DurationBDDdouble, double> {
     DurationBDDdouble(double *_pi, GPtrArray *_interval_list, int _nbjobs)
         : DurationBDD<DurationBDDdouble, double>(_pi, _interval_list, _nbjobs) {};
+};
+
+struct DurationZDDdouble : DurationZDD<DurationZDDdouble, double> {
+    DurationZDDdouble(double *_pi, GPtrArray *_interval_list, int _num_jobs)
+    : DurationZDD<DurationZDDdouble, double>(_pi, _interval_list, _num_jobs) {};
 };
 
