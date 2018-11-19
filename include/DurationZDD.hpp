@@ -151,7 +151,7 @@ template<typename E, typename T> class DurationZDD : public
         sol.cost = 0;
         sol.C_max = 0;
         typename std::vector<NodeDuration<T>>::iterator m =  std::max_element(n->list.begin(), n->list.end());
-        max
+        
         return sol;
     }
 };
