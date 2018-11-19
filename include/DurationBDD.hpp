@@ -67,15 +67,14 @@ class DurationBDD: public
     //     n.x.resize(0);
     // }
 
-    void evalNode(PricerInfoBDD<T> &n, int i,
-                  tdzdd::DdValues<PricerInfoBDD<T>, 2>    &values) const {
+    void evalNode(PricerInfoBDD<T> &n, int i) const {
         int j = nlayers - i;
         assert(j >= 0 && j <= nlayers - 1);
         job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
                                           interval_list, j);
         Job *tmp_j = tmp_pair->j;
-        PricerInfoBDD<T> *n0 = values.get_ptr(0);
-        PricerInfoBDD<T> *n1 = values.get_ptr(1);
+        PricerInfoBDD<T> *n0 ;
+        PricerInfoBDD<T> *n1 ;
 
 
         if (n0->obj < n.obj) {
