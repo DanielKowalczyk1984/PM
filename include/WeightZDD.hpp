@@ -81,8 +81,7 @@ public:
         }
     }
 
-    void evalNode(PricerWeightZDD<T> *n, int i,
-                  tdzdd::DdValues<PricerWeightZDD<T>, 2>& values) const
+    void evalNode(PricerWeightZDD<T> *n, int i) const
     {
         int j = nlayers - i;
         assert(j >= 0 && j <= nlayers - 1);
