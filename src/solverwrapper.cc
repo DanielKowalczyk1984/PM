@@ -153,34 +153,9 @@ int calculate_table(PricerSolver *solver, wctparms *parms) {
     return val = 0;
 }
 
-int add_conflict_constraints(PricerSolver *solver,
-                             wctparms *    parms,
-                             int *         elist_same,
-                             int           ecount_same,
-                             int *         elist_differ,
-                             int           ecount_differ) {
-    int val = 0;
-
-    solver->init_zdd_conflict_solver(elist_same, ecount_same, elist_differ,
-                                     ecount_differ);
-
-    return val;
-}
-
 void iterate_zdd(PricerSolver *solver) { solver->iterate_zdd(); }
 
 void print_number_paths(PricerSolver *solver){ solver->print_number_paths(); }
-
-int free_conflict_constraints(PricerSolver *solver,
-                              wctparms *    parms,
-                              int           ecount_same,
-                              int           ecount_differ) {
-    int val = 0;
-
-    solver->free_zdd_solver(ecount_same, ecount_differ);
-
-    return val;
-}
 
 size_t get_datasize(PricerSolver *solver) { return solver->get_datasize(); }
 
@@ -189,15 +164,6 @@ size_t get_numberrows_zdd(PricerSolver *solver) {
 }
 
 double get_edge_cost(PricerSolver *solver, int idx) {return solver->get_cost_edge(idx);}
-
-int add_one_conflict(
-    PricerSolver *solver, wctparms *parms, Job *v1, Job *v2, int same) {
-    int val = 0;
-
-    solver->init_zdd_one_conflict(v1->job, v2->job, same);
-
-    return val;
-}
 
 int init_tables(PricerSolver *solver) {
     int val = 0;
