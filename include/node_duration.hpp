@@ -24,7 +24,10 @@ class PrevNode {
 
     };
     PrevNode(){
-
+      prev = nullptr;
+      high = false;
+      head_node = nullptr;
+      f = -DBL_MAX;
     };
 
     /**
@@ -68,12 +71,12 @@ class PrevNode {
       f = src.f;
       prev = src.prev;
       high = src.high;
-      head_node = src.node;
+      head_node = src.head_node;
 
       return *this;
     }
 
-    void SetPrev(PrevNode<T> * _prev) {
+    void SetPrev(PrevNode<T> * &&_prev) {
         prev = _prev;
     }
 
@@ -81,7 +84,7 @@ class PrevNode {
         f = _f;
     }
 
-    void SetHigh(bool _high) {
+    void SetHigh(bool &&_high) {
         high = _high;
     }
 
@@ -103,7 +106,7 @@ class PrevNode {
         return prev;
     }
 
-    bool& GetHigh() {
+    bool GetHigh() {
         return high;
     }
 
@@ -111,7 +114,27 @@ class PrevNode {
         return head_node->GetJob();
     }
 
-    int& GetWeight(){
+    Job* GetPrevJob() {
+      return GetPrev() == nullptr ? nullptr : GetPrev()->GetJob();
+    }
+
+    void UpdateSolution(T _f, PrevNode<T>* && _prev, bool &&_high){
+      f = _f;
+      prev = _prev;
+      high = _high;
+    }
+
+    void UpdateSolution(PrevNode<T> &_node){
+      f = _node.f;
+      prev = _node.prev;
+      high = _node.high;
+    }
+
+    NodeDuration<T> *GetNode() const {
+      return head_node;
+    }
+
+    int GetWeight(){
       return head_node->GetWeight();
     }
 };
@@ -128,11 +151,12 @@ class NodeDuration {
     Job *job;
 
   public:
+    int count;
     PrevNode<T> prev1;
     PrevNode<T> prev2;
 
-    NodeDuration<T>* y;
-    NodeDuration<T>* n;
+    std::shared_ptr<NodeDuration<T>> y;
+    std::shared_ptr<NodeDuration<T>> n;
     
     /**
      * Constructor
@@ -141,14 +165,20 @@ class NodeDuration {
         : num_layer(0),
           weight(0),
           root_node(false),
-          terminal_node(false) {
-
+          terminal_node(false),
+          job(nullptr) {
+        prev1 = PrevNode<T>();
+        prev2 = PrevNode<T>();
+        y = nullptr;
+        n = nullptr;
     };
 
     NodeDuration(int &_weight, int &_num_layer, bool &_root_node,bool &_terminal_node):
          weight(_weight), num_layer(_num_layer), root_node(_root_node),terminal_node(_terminal_node) {
-          prev1.Reset();
-          prev2.Reset();
+          y = nullptr;
+          n = nullptr;
+          prev1 = PrevNode<T>();
+          prev2 = PrevNode<T>();
     }
 
     /**
@@ -160,6 +190,7 @@ class NodeDuration {
       root_node = src.root_node;
       terminal_node = src.terminal_node;
       job = src.job;
+      count - src.count;
 
       y = src.y;
       n = src.n;
@@ -178,8 +209,8 @@ class NodeDuration {
       terminal_node = src.terminal_node;
       job = src.job;
 
-      y = src.y;
-      n = src.n;
+      y = std::move(src.y);
+      n = std::move(src.n);
 
       prev1 = src.prev1;
       prev2 = src.prev2;
@@ -222,8 +253,8 @@ class NodeDuration {
       terminal_node = src.node;
       job = src.job;
 
-      y = src.y;
-      n = src.n;
+      y = std::move(src.y);
+      n = std::move(src.n);
 
       prev1 = src.prev1;
       prev2 = src.prev2;
@@ -241,6 +272,10 @@ class NodeDuration {
       return weight;
     }
 
+    int GetLayerNum() {
+      return num_layer;
+    }
+
     bool GetTerminalNode(){
       return terminal_node;
     }
@@ -250,7 +285,7 @@ class NodeDuration {
     }
 
     friend bool operator<(const NodeDuration<T> &lhs, const NodeDuration<T> &rhs) {
-        return lhs.prev1.GetF() < rhs.prev1.GetF();
+        return lhs.prev1.f < rhs.prev1.f;
     }
 
     friend bool operator> (const NodeDuration<T> lhs, const NodeDuration<T> rhs){ return rhs < lhs; }
