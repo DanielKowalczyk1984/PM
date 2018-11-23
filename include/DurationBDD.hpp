@@ -107,13 +107,13 @@ class DurationBDD: public
         n.jobs.reserve(nbjobs);
     }
 
-    Optimal_Solution<T> get_objective(PricerInfoBDD<T> *n) {
+    Optimal_Solution<T> get_objective(PricerInfoBDD<T> &n) {
         Optimal_Solution<T> sol;
         sol.cost = 0;
-        sol.obj = n->obj;
+        sol.obj = n.obj;
         sol.C_max = 0;
-        sol.jobs = g_ptr_array_sized_new(n->jobs.size());
-        for(const auto& it: n->jobs){
+        sol.jobs = g_ptr_array_sized_new(n.jobs.size());
+        for(const auto& it: n.jobs){
             g_ptr_array_add(sol.jobs, it);
             sol.C_max += ((Job *) it)->processingime;
             sol.cost += value_Fj(sol.C_max, it);
