@@ -511,7 +511,7 @@ void PricerSolver::init_zdd_duration_table() {
     }
 
     /** init root */
-    zdd_duration_table[zdd->topLevel()][0].add_weight(0, 0,true, false);
+    zdd_duration_table[zdd->topLevel()][0].add_weight(0, 0, true, false);
 
     for (int i = zdd->topLevel(); i > 0; i--) {
         size_t const m = zdd_duration_table[i].size();
@@ -524,19 +524,19 @@ void PricerSolver::init_zdd_duration_table() {
             tdzdd::NodeId cur_node_0 = handler.privateEntity().child(i, j, 0);
             tdzdd::NodeId cur_node_1 = handler.privateEntity().child(i, j, 1);
 
-            for (NodeDuration<double> &it : zdd_duration_table[i][j].list) {
+            for (auto &it : zdd_duration_table[i][j].list) {
                 if(cur_node_1.row() != 0) {
-                    it.y = zdd_duration_table[cur_node_1.row()][cur_node_1.col()].add_weight(it.GetWeight() + job->processingime, nlayers - cur_node_1.row());
-                } else if (cur_node_1.col() == 1) {
-                    it.y = zdd_duration_table[cur_node_1.row()][cur_node_1.col()].add_weight(it.GetWeight() + job->processingime, nlayers, false, true); 
+                    it->y = zdd_duration_table[cur_node_1.row()][cur_node_1.col()].add_weight(it->GetWeight() + job->processingime, nlayers - cur_node_1.row());
+                } else  {
+                    it->y = zdd_duration_table[cur_node_1.row()][cur_node_1.col()].add_weight(it->GetWeight() + job->processingime, nlayers, false, true); 
                 }
 
                 if(cur_node_0.row() != 0) {
-                    it.n = zdd_duration_table[cur_node_0.row()][cur_node_0.col()].add_weight(it.GetWeight(), nlayers - cur_node_0.row());
-                } else if (cur_node_0.code() == 1) {
-                    it.n = zdd_duration_table[cur_node_0.row()][cur_node_0.col()].add_weight(it.GetWeight(), nlayers, false, true);
+                    it->n = zdd_duration_table[cur_node_0.row()][cur_node_0.col()].add_weight(it->GetWeight(), nlayers - cur_node_0.row());
+                } else   {
+                    it->n = zdd_duration_table[cur_node_0.row()][cur_node_0.col()].add_weight(it->GetWeight(), nlayers, false, true);
                 }
-                it.SetJob(job);
+                it->SetJob(job);
             }
         }
     }
