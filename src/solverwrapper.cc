@@ -104,7 +104,7 @@ static double compute_reduced_cost(Optimal_Solution<double> &sol,
         result += pi[tmp_j->job] - value_Fj(C, tmp_j);
     }
 
-    return result;
+    return sol.obj;
 }
 
 int evaluate_nodes(wctdata *pd) {
@@ -224,12 +224,12 @@ int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
     int val = 0;
 
 
-    Optimal_Solution<double> sol = pd->solver->solve_weight_zdd_double(pd->pi);
+    Optimal_Solution<double> sol = pd->solver->solve_duration_zdd_double(pd->pi);
 
-    if(pd->iterations%5 == 0 || evaluate) {
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
-        pd->solver->evaluate_nodes(pd->pi, pd->problem->opt_sol->tw, pd->LP_lower_bound_BB , pd->problem->nmachines, pd->reduced_cost);
-    }
+    // if(pd->iterations%5 == 0 || evaluate) {
+    //     pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
+    //     pd->solver->evaluate_nodes(pd->pi, pd->problem->opt_sol->tw, pd->LP_lower_bound_BB , pd->problem->nmachines, pd->reduced_cost);
+    // }
 
     if(sol.obj > 0.000001) {
        val = construct_sol(pd, sol);
@@ -290,7 +290,7 @@ int solve_stab(wctdata *pd, wctparms *parms) {
                                &(pd->eta_out));
             Optimal_Solution<double> sol;
             if(parms->pricing_solver == bdd_solver) {
-                sol = solver->solve_weight_zdd_double(pd->pi_sep);
+                sol = solver->solve_duration_zdd_double(pd->pi_sep);
             } else if (parms->pricing_solver == dp_solver){
                 sol = solver->dynamic_programming_ti(pd->pi_sep);
             }
