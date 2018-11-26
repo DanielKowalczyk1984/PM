@@ -67,8 +67,8 @@ class DurationBDD: public
     //     n.x.resize(0);
     // }
 
-    void evalNode(PricerInfoBDD<T> &n, int i) const {
-        int j = nlayers - i;
+    void evalNode(PricerInfoBDD<T> &n) const {
+        int j = nlayers ;
         assert(j >= 0 && j <= nlayers - 1);
         job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
                                           interval_list, j);
