@@ -12,9 +12,8 @@ class edge;
 template <typename T>
 class node {
 public:
-    int      layer;
     int      weight;
-    T obj, obj0, obj1;
+    T obj;
     T b;
     T c;
     T dist;
@@ -22,21 +21,17 @@ public:
     bool calc0;
     bool remove_node;
     bool take;
-    Job *prev_job;
-    std::shared_ptr<node<T>> prev_node;
     bool terminal;
     std::shared_ptr<node<T>> y;
     std::shared_ptr<node<T>> n;
     std::vector<std::weak_ptr<edge<T>>> out_edge;
     std::vector<std::weak_ptr<edge<T>>> in_edge;
+    Job *job;
 
     /** Default Constructor */
     node()
-        : layer(0),
-          weight(0),
+        : weight(0),
           obj(0.0),
-          obj0(0.0),
-          obj1(0.0),
           b(0.0),
           c(0.0),
           dist(-DBL_MAX),
@@ -44,11 +39,10 @@ public:
           calc0(true),
           remove_node(false),
           take(false),
-          prev_job(nullptr),
-          prev_node(nullptr),
           terminal(false),
           y(nullptr),
-          n(nullptr)
+          n(nullptr),
+          job(nullptr)
     {
         // out_edge.reserve(2);
         // in_edge.reserve(2);
@@ -56,11 +50,8 @@ public:
 
     /** copy constructor */
     node<T>(const node<T>& other) :
-          layer(other.layer),
           weight(other.weight),
           obj(other.obj),
-          obj0(other.obj0),
-          obj1(other.obj1),
           b(other.b),
           c(other.c),
           dist(other.dist),
@@ -68,23 +59,19 @@ public:
           calc0(other.calc0),
           remove_node(other.remove_node),
           take(other.take),
-          prev_job(other.prev_job),
-          prev_node(other.prev_job),
           terminal(other.terminal),
           y(other.y),
           n(other.n),
           out_edge(other.out_edge),
-          in_edge(other.in_edge) {
+          in_edge(other.in_edge),
+          job(other.job) {
 
     }
 
     /** move constructor */
     node<T>(node<T>&& other) noexcept:
-    layer(other.layer),
     weight(other.weight),
     obj(other.obj),
-    obj0(other.obj0),
-    obj1(other.obj1),
     b(other.b),
     c(other.c),
     dist(other.dist),
@@ -92,13 +79,12 @@ public:
     calc0(other.calc0),
     remove_node(other.remove_node),
     take(other.take),
-    prev_job(other.prev_job),
-    prev_node(other.prev_job),
     terminal(other.terminal),
     y(other.y),
     n(other.n),
     out_edge(other.out_edge),
-    in_edge(other.in_edge){
+    in_edge(other.in_edge),
+    job(other.job){
         other.y.reset();
         other.n.reset();
         other.prev_node.reset();
@@ -117,11 +103,8 @@ public:
     /** move assignment */
     node<T>& operator= (node<T>&& other) noexcept{
         if(this != &other) {
-            layer =other.layer;
                 weight =other.weight;
                 obj =other.obj;
-                obj0 =other.obj0;
-                obj1 =other.obj1;
                 b =other.b;
                 c =other.c;
                 dist =other.dist;
@@ -129,11 +112,10 @@ public:
                 calc0 =other.calc0;
                 remove_node =other.remove_node;
                 take =other.take;
-                prev_job =other.prev_job;
-                prev_node =other.prev_job;
                 terminal =other.terminal;
                 y =other.y;
                 n =other.n;
+                job = other.job;
                 other.y = nullptr;
                 other.n = nullptr;
                 other.prev_node = nullptr;
