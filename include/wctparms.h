@@ -26,7 +26,8 @@ enum BBNodeSelection {
 enum PricingSolver {
     min_pricing_solver = 0,
     bdd_solver = min_pricing_solver,
-    dp_solver = 1
+    zdd_solver = 1,
+    dp_solver = 2
 };
 
 enum BranchandBound {
