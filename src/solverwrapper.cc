@@ -223,8 +223,19 @@ static void compute_pi_eta_sep(int     vcount,
 int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
     int val = 0;
 
+    Optimal_Solution<double> sol;
 
-    Optimal_Solution<double> sol = pd->solver->solve_duration_zdd_double(pd->pi);
+    switch(parms->pricing_solver){
+        case bdd_solver:
+            sol = pd->solver->solve_weight_zdd_double(pd->pi);
+        break;
+        case zdd_solver:
+            sol = pd->solver->solve_duration_zdd_double(pd->pi);
+        break;
+        case dp_solver:
+            sol = pd->solver->dynamic_programming_ti(pd->pi);
+        break;
+    }
 
     // if(pd->iterations%5 == 0 || evaluate) {
     //     pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
@@ -289,11 +300,18 @@ int solve_stab(wctdata *pd, wctparms *parms) {
                                pd->pi_in, &(pd->eta_in), pd->pi_out,
                                &(pd->eta_out));
             Optimal_Solution<double> sol;
-            if(parms->pricing_solver == bdd_solver) {
-                sol = solver->solve_duration_zdd_double(pd->pi_sep);
-            } else if (parms->pricing_solver == dp_solver){
-                sol = solver->dynamic_programming_ti(pd->pi_sep);
+            switch (parms->pricing_solver) {
+                case bdd_solver:
+                    sol = solver->solve_weight_zdd_double(pd->pi_sep);
+                break;
+                case zdd_solver:
+                    sol = solver->solve_duration_zdd_double(pd->pi_sep);
+                break;
+                case dp_solver:
+                    sol = solver->dynamic_programming_ti(pd->pi_sep);
+                break;
             }
+
             result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
             pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
