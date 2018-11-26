@@ -12,6 +12,8 @@ using namespace std;
 template<typename T>
 class PricerDurationZDD {
   public:
+    std::vector<std::shared_ptr<NodeDuration<T>>>  list;
+    Job *job;
 
     PricerDurationZDD() {}
 
@@ -19,7 +21,6 @@ class PricerDurationZDD {
         list.clear();
     }
 
-    std::vector<std::shared_ptr<NodeDuration<T>>>  list;
 
     std::shared_ptr<NodeDuration<T>> add_weight(int _weight, int _layer, bool _rootnode = false, bool _terminal_node = false){
         for (auto &it : list) {
@@ -29,10 +30,17 @@ class PricerDurationZDD {
         }
 
         std::shared_ptr<NodeDuration<T>> node = std::make_shared<NodeDuration<T>>(_weight, _layer, _rootnode, _terminal_node);
-
-
+        node->set_job(job);
         list.push_back(std::move(node));
         return list.back();
+    }
+
+    void set_job(Job *_job){
+        job = _job;
+    }
+
+    Job* get_job(){
+        return job;
     }
 };
 
@@ -45,28 +53,34 @@ template<typename E, typename T> class DurationZDD : public
     tdzdd::DdEval<E, PricerDurationZDD<T>, Optimal_Solution<T>> {
   private:
     T *pi;
-    GPtrArray *interval_list;
-    int num_layers;
     int num_jobs;
   public:
-    DurationZDD(T *_pi, GPtrArray *_interval_list, int _num_jobs): pi(_pi),
-        interval_list(_interval_list), num_jobs(_num_jobs) {
-        num_layers = interval_list->len;
+    DurationZDD(T *_pi, int _num_jobs): pi(_pi), num_jobs(_num_jobs) {
+    }
+
+    DurationZDD(int _num_jobs)
+    :  num_jobs(_num_jobs){
+    }
+
+    DurationZDD(){
+        pi = nullptr;
+        num_jobs = 0;
+    }
+
+    DurationZDD(const DurationZDD<E, T> &src) {
+        pi = src.pi;
+        num_jobs = src.num_jobs;
     }
 
     void initializenode(PricerDurationZDD<T>& n){
-        for (std::shared_ptr<NodeDuration<T>> &it: n.list) {
+        for (auto &it: n.list) {
             if(it->GetWeight() == 0) {
-                it->prev1.f = pi[num_jobs];
-                it->prev2.f = pi[num_jobs];
+                it->prev1.UpdateSolution(pi[num_jobs], nullptr, false);
+                it->prev2.UpdateSolution(pi[num_jobs], nullptr, false);
             } else {
-                it->prev1.f = -DBL_MAX/2;
-                it->prev2.f = -DBL_MAX/2;
+                it->prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
             }
-            it->prev1.SetPrev(nullptr);
-            it->prev2.SetPrev(nullptr);
-            it->prev1.SetHigh(false);
-            it->prev2.SetHigh(false);
         }
     }
 
@@ -77,13 +91,14 @@ template<typename E, typename T> class DurationZDD : public
         }
     }
 
-    void evalNode(PricerDurationZDD<T> &n, int i) const
+    void initializepi(T *_pi){
+        pi = _pi;
+    }
+
+    void evalNode(PricerDurationZDD<T> &n) const
     {
-        int j = num_layers - i;
-        assert(j >= 0 && j <= num_layers - 1);
-        job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
-                                          interval_list, j);
-        Job *tmp_j = tmp_pair->j;
+        Job *tmp_j = n.get_job();
+        assert(tmp_j != nullptr);
         double result;
 
         for (auto &it : n.list) {
@@ -108,7 +123,6 @@ template<typename E, typename T> class DurationZDD : public
                 } else if ((g >= p1->prev2.GetF()) && (aux1 != tmp_j)) {
                     p1->prev2.UpdateSolution(g, &(it->prev1), true);
                 }
-
             } else  {
                 g = it->prev2.GetF() + result;
                 if(g >= p1->prev1.GetF()) {
@@ -124,7 +138,7 @@ template<typename E, typename T> class DurationZDD : public
             /**
              * Low edge calculation
              */
-            aux1 = p0->prev1.GetPrev() == nullptr ? nullptr : p0->prev1.GetPrev()-> GetJob();
+            aux1 = p0->prev1.GetPrevJob();
             if(it->prev1.GetF() >= p0->prev1.GetF()) {
                 if(prev != aux1) {
                     p0->prev2.UpdateSolution(p0->prev1);
@@ -170,12 +184,12 @@ template<typename E, typename T> class DurationZDD : public
         }
 
         assert(sol.C_max == weight);
-        printf("test cost %f %f\n", sol.obj, (*m)->prev1.GetF());
-        for(int i = 0; i < sol.jobs->len; i++){
-            Job *tmp_job = (Job *) g_ptr_array_index(sol.jobs, i);
-            printf("%d ", tmp_job->job);
-        }
-        printf("\n");
+        // printf("test cost %f %f\n", sol.obj, (*m)->prev1.GetF());
+        // for(int i = 0; i < sol.jobs->len; i++){
+        //     Job *tmp_job = (Job *) g_ptr_array_index(sol.jobs, i);
+        //     printf("%d ", tmp_job->job);
+        // }
+        // printf("\n");
 
         return sol;
     }
