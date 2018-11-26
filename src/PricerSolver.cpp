@@ -22,7 +22,8 @@ PricerSolver::PricerSolver(GPtrArray *_jobs, GPtrArray *_ordered_jobs,
     init_zdd_table();
     init_bdd_table();
     init_zdd_duration_table();
-    evaluator = DurationZDDdouble(_ordered_jobs, njobs);
+    evaluator_weight = WeightZDDdouble(njobs);
+    evaluator = DurationZDDdouble(njobs);
     printf("The size of BDD = %lu and size ZDD= %lu\n", nb_nodes_bdd, nb_nodes_zdd);
     edges.reserve(2 * nb_nodes_bdd);
     /** Initialize Gurobi Model */
@@ -381,10 +382,20 @@ void PricerSolver::init_zdd_table() {
         tdzdd::MyVector<tdzdd::Node<2>> const &layer = handler.privateEntity()[i];
         size_t const m = layer.size();
         zdd_table[i].resize(m);
+        for(auto &it: zdd_table[i]){
+            if(i != 0) {
+                int          layer = nlayers - i;
+                job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
+                                                  ordered_jobs, layer);
+                it.set_job(tmp_pair->j);
+            } else {
+                it.set_job(nullptr);
+            }
+        }
     }
 
     /** init root */
-    zdd_table[zdd->topLevel()][0].add_weight(0, 0, njobs);
+    zdd_table[zdd->topLevel()][0].add_weight(0, 0);
 
     /** init terminal nodes */
     // size_t const mm = zdd_table[0].size();
@@ -396,21 +407,17 @@ void PricerSolver::init_zdd_table() {
     for (int i = zdd->topLevel(); i > 0; i--) {
         size_t const m = zdd_table[i].size();
 
-        int          layer = nlayers - i;
-        job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
-                                          ordered_jobs, layer);
-        Job *job = tmp_pair->j;
-
         for (size_t j = 0; j < m; j++) {
+            Job *job = zdd_table[i][j].get_job();
             tdzdd::NodeId cur_node_0 = handler.privateEntity().child(i, j, 0);
             tdzdd::NodeId cur_node_1 = handler.privateEntity().child(i, j, 1);
 
             for (auto &it : zdd_table[i][j].list) {
                 it->y = zdd_table[cur_node_1.row()][cur_node_1.col()].add_weight((
-                            it)->weight + job->processingime, nlayers - cur_node_1.row(), njobs);
+                            it)->weight + job->processingime, nlayers - cur_node_1.row());
                 
                 it->n = zdd_table[cur_node_0.row()][cur_node_0.col()].add_weight(it->weight,
-                        nlayers - cur_node_0.row(), njobs);
+                        nlayers - cur_node_0.row());
 
                 if ((cur_node_1.row() > 0) || (cur_node_1.row() == 0 &&
                                                cur_node_1.col() == 1U)) {
@@ -509,6 +516,16 @@ void PricerSolver::init_zdd_duration_table() {
         tdzdd::MyVector<tdzdd::Node<2>> const &layer = handler.privateEntity()[i];
         size_t const m = layer.size();
         zdd_duration_table[i].resize(m);
+        for(auto &it: zdd_duration_table[i]){
+            if(i != 0) {
+                int          layer = nlayers - i;
+                job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
+                                                  ordered_jobs, layer);
+                it.set_job(tmp_pair->j);
+            } else {
+                it.set_job(nullptr);
+            }
+        }
     }
 
     /** init root */
@@ -517,18 +534,14 @@ void PricerSolver::init_zdd_duration_table() {
     for (int i = zdd->topLevel(); i > 0; i--) {
         size_t const m = zdd_duration_table[i].size();
 
-        int          layer = nlayers - i;
-        job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(ordered_jobs, layer);
-        Job *job = tmp_pair->j;
-
         for (size_t j = 0; j < m; j++) {
+            Job *job = zdd_duration_table[i][j].get_job();
             tdzdd::NodeId cur_node_0 = handler.privateEntity().child(i, j, 0);
             tdzdd::NodeId cur_node_1 = handler.privateEntity().child(i, j, 1);
 
             for (auto &it : zdd_duration_table[i][j].list) {
                 it->y = zdd_duration_table[cur_node_1.row()][cur_node_1.col()].add_weight(it->GetWeight() + job->processingime, nlayers - cur_node_1.row(),!(cur_node_1.row() != 0));
                 it->n = zdd_duration_table[cur_node_0.row()][cur_node_0.col()].add_weight(it->GetWeight(), nlayers - cur_node_0.row(), !(cur_node_0.row() != 0));
-                it->SetJob(job);
             }
         }
     }
@@ -577,10 +590,8 @@ void PricerSolver::calculate_edges(scheduleset *set) {
 
     Job *tmp_j = (Job *) g_ptr_array_index(set->jobs, count);
 
-    while (ptr->layer != nlayers) {
-        job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
-                                          ordered_jobs, ptr->layer);
-        Job *job = tmp_pair->j;
+    do {
+        Job *job = ptr->job;
 
         if (tmp_j == job) {
             auto e = ptr->out_edge[0].lock();
@@ -597,7 +608,7 @@ void PricerSolver::calculate_edges(scheduleset *set) {
             g_ptr_array_add(set->e_list, &(e->id));
             ptr = ptr->n;
         }
-    }
+    } while(ptr->job);
 }
 
 Optimal_Solution<double> PricerSolver::dynamic_programming_ti(double *pi) {
@@ -675,7 +686,8 @@ Optimal_Solution<double> PricerSolver::solve_duration_bdd_double(double *pi) {
 }
 
 Optimal_Solution<double> PricerSolver::solve_weight_zdd_double(double *pi) {
-    return zdd->evaluate_weight(WeightZDDdouble(pi, ordered_jobs, njobs), zdd_table);
+    evaluator_weight.initializepi(pi);
+    return zdd->evaluate_weight(evaluator_weight, zdd_table);
 }
 
 Optimal_Solution<double> PricerSolver::solve_farkas_double(double *pi) {
