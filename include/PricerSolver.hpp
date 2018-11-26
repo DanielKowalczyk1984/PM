@@ -24,6 +24,8 @@ struct PricerSolver {
     tdzdd::DataTable<PricerFarkasZDD<double>> farkas_table;
     tdzdd::DataTable<PricerInfoBDD<double> > dd_table;
     std::vector<shared_ptr<edge<double>>> edges;
+    WeightZDDdouble evaluator_weight;
+    DurationZDDdouble evaluator;
     int nb_removed_edges;
     int nb_removed_nodes;
     size_t nb_nodes_bdd;
