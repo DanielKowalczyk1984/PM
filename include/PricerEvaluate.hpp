@@ -7,8 +7,13 @@
 
 
 struct WeightZDDdouble : WeightZDD<WeightZDDdouble, double> {
-    WeightZDDdouble(double *_pi, GPtrArray *_interval_list, int _nbjobs)
-        : WeightZDD<WeightZDDdouble, double>(_pi, _interval_list, _nbjobs) {};
+    WeightZDDdouble(double *_pi, int _nbjobs)
+        : WeightZDD<WeightZDDdouble, double>(_pi, _nbjobs) {};
+    WeightZDDdouble(int _nbjobs)
+        : WeightZDD<WeightZDDdouble, double>(_nbjobs) {};
+    WeightZDDdouble()
+        : WeightZDD<WeightZDDdouble,double>() {};
+
 };
 
 struct FarkasZDDdouble : FarkasZDD<FarkasZDDdouble, double> {
@@ -22,7 +27,10 @@ struct DurationBDDdouble : DurationBDD<DurationBDDdouble, double> {
 };
 
 struct DurationZDDdouble : DurationZDD<DurationZDDdouble, double> {
-    DurationZDDdouble(double *_pi, GPtrArray *_interval_list, int _num_jobs)
-    : DurationZDD<DurationZDDdouble, double>(_pi, _interval_list, _num_jobs) {};
+    DurationZDDdouble(double *_pi, int _num_jobs)
+    : DurationZDD<DurationZDDdouble, double>(_pi, _num_jobs) {};
+    DurationZDDdouble(int _num_jobs)
+    : DurationZDD<DurationZDDdouble, double> (_num_jobs) {};
+    DurationZDDdouble() : DurationZDD<DurationZDDdouble, double>() {};
 };
 
