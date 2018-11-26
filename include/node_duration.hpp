@@ -171,6 +171,8 @@ class NodeDuration {
         prev2 = PrevNode<T>();
         y = nullptr;
         n = nullptr;
+        prev1.SetHeadNode(this);
+        prev2.SetHeadNode(this);
     };
 
     NodeDuration(int &_weight, int &_num_layer, bool &_root_node,bool &_terminal_node):
@@ -179,6 +181,8 @@ class NodeDuration {
           n = nullptr;
           prev1 = PrevNode<T>();
           prev2 = PrevNode<T>();
+          prev1.SetHeadNode(this);
+          prev2.SetHeadNode(this);
     }
 
     /**
@@ -262,10 +266,14 @@ class NodeDuration {
       return *this;
     }
 
-    void SetJob(Job* &_job){
+    // void SetJob(Job* &_job){
+    //   job = _job;
+    //   prev1.SetHeadNode(this);
+    //   prev2.SetHeadNode(this);
+    // }
+
+    void set_job(Job *_job){
       job = _job;
-      prev1.SetHeadNode(this);
-      prev2.SetHeadNode(this);
     }
 
     int GetWeight(){
