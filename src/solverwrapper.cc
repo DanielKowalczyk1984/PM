@@ -104,7 +104,7 @@ static double compute_reduced_cost(Optimal_Solution<double> &sol,
         result += pi[tmp_j->job] - value_Fj(C, tmp_j);
     }
 
-    return sol.obj;
+    return result;
 }
 
 int evaluate_nodes(wctdata *pd) {

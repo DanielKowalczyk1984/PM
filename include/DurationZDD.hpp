@@ -76,7 +76,7 @@ template<typename E, typename T> class DurationZDD : public
         for (auto &it: n.list) {
             if(it->GetWeight() == 0) {
                 it->prev1.UpdateSolution(pi[num_jobs], nullptr, false);
-                it->prev2.UpdateSolution(pi[num_jobs], nullptr, false);
+                it->prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
             } else {
                 it->prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
                 it->prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
@@ -115,17 +115,17 @@ template<typename E, typename T> class DurationZDD : public
             Job *aux1 = p1->prev1.GetPrevJob();
             if(prev != tmp_j ) {
                 g = it->prev1.GetF() + result;
-                if(g >= p1->prev1.GetF()) {
+                if(g > p1->prev1.GetF()) {
                     if(aux1 != tmp_j) {
                         p1->prev2.UpdateSolution(p1->prev1);
                     }
                     p1->prev1.UpdateSolution(g, &(it->prev1), true);
-                } else if ((g >= p1->prev2.GetF()) && (aux1 != tmp_j)) {
+                } else if ((g > p1->prev2.GetF()) && (aux1 != tmp_j)) {
                     p1->prev2.UpdateSolution(g, &(it->prev1), true);
                 }
             } else  {
                 g = it->prev2.GetF() + result;
-                if(g >= p1->prev1.GetF()) {
+                if(g > p1->prev1.GetF()) {
                     if(aux1 != tmp_j) {
                         p1->prev2.UpdateSolution(p1->prev1);
                     }
@@ -139,12 +139,12 @@ template<typename E, typename T> class DurationZDD : public
              * Low edge calculation
              */
             aux1 = p0->prev1.GetPrevJob();
-            if(it->prev1.GetF() >= p0->prev1.GetF()) {
+            if(it->prev1.GetF() > p0->prev1.GetF()) {
                 if(prev != aux1) {
                     p0->prev2.UpdateSolution(p0->prev1);
                 }
                 p0->prev1.UpdateSolution(it->prev1);
-            } else if ((it->prev1.GetF() >= p0->prev2.GetF()) && (aux1 != prev)){
+            } else if ((it->prev1.GetF() > p0->prev2.GetF()) && (aux1 != prev)){
                 p0->prev2.UpdateSolution(it->prev1);
             }
         }
@@ -178,7 +178,8 @@ template<typename E, typename T> class DurationZDD : public
                     sol.cost = sol.cost + value_Fj(weight, aux_job);
                     sol.obj += pi[aux_job->job] - value_Fj(weight, aux_job);
                 }
-                g_ptr_array_add(sol.jobs, aux_job);
+                g_ptr_array_insert(sol.jobs, 0, aux_job);
+                // g_ptr_array_add(sol.jobs, aux_job);
             }
             ptr_node = aux_prev_node;
         }
