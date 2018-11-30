@@ -100,6 +100,7 @@ template<typename E, typename T> class DurationZDD : public
         Job *tmp_j = n.get_job();
         assert(tmp_j != nullptr);
         double result;
+        bool diff;
 
         for (auto &it : n.list) {
             int      weight = it->GetWeight();
@@ -113,7 +114,9 @@ template<typename E, typename T> class DurationZDD : public
              */
             Job *prev = it->prev1.GetPrevJob();
             Job *aux1 = p1->prev1.GetPrevJob();
-            if(prev != tmp_j ) {
+            diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
+
+            if(prev != tmp_j && diff) {
                 g = it->prev1.GetF() + result;
                 if(g > p1->prev1.GetF()) {
                     if(aux1 != tmp_j) {
