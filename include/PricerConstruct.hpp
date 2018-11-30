@@ -76,7 +76,7 @@ public:
                 tmp_j = tmp_pair->j;
 
                  if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b ) {
-                     if(tmp == tmp_j) {
+                     if(tmp == tmp_j || value_diff_Fij(state, tmp_j, tmp) < 0) {
                          continue;
                      }
                      val = i;
