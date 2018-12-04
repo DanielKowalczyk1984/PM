@@ -6,103 +6,146 @@
 #include <tdzdd/DdStructure.hpp>
 #include <scheduleset.h>
 #include <DurationZDD.hpp>
+#include <DurationBDD.hpp>
 using namespace std;
 
-struct PricerSolver {
-  private:
-    int nmachines;
-    int ub;
-    int Hmax;
-    int njobs;
-    int nlayers;
+struct PricerSolverBase {
+protected:
     GPtrArray *jobs;
+    int njobs;
     GPtrArray *ordered_jobs;
-    tdzdd::DdStructure<2>                    *zdd;
-    tdzdd::DdStructure<2>                    *dd;
-    tdzdd::DataTable<PricerWeightZDD<double>> zdd_table;
-    tdzdd::DataTable<PricerDurationZDD<double>> zdd_duration_table;
-    tdzdd::DataTable<PricerFarkasZDD<double>> farkas_table;
-    tdzdd::DataTable<PricerInfoBDD<double> > dd_table;
-    std::vector<shared_ptr<edge<double>>> edges;
-    WeightZDDdouble evaluator_weight;
-    DurationZDDdouble evaluator;
-    int nb_removed_edges;
-    int nb_removed_nodes;
+    int nlayers;
+
+    tdzdd::DdStructure<2> *zdd;
+    tdzdd::DdStructure<2> *dd;
+
     size_t nb_nodes_bdd;
     size_t nb_nodes_zdd;
-    GRBEnv *env;
-    GRBModel *model;
 
-
-  public:
-
-    /** Default Constructor */
-    PricerSolver(GPtrArray *_jobs, GPtrArray *_ordered_jobs, int _nmachines,
-                 int _ub, int _Hmax);
-
-    /** Copy constructor */
-    PricerSolver(const PricerSolver &other);
-
-    /** Move Constructor */
-    PricerSolver(PricerSolver &&other) noexcept;
-
-    /** Move Constructor */
-    PricerSolver &operator=(const PricerSolver &other);
-
-    /** Move assignment operator */
-    PricerSolver &operator=(PricerSolver &&other) noexcept;
-
-    /** Destructor */
-    ~PricerSolver() noexcept;
-
-    int get_remove();
-    size_t get_datasize();
-    size_t get_numberrows_zdd();
-    double get_cost_edge(int idx);
-
-    
+    int nb_removed_edges;
+    int nb_removed_nodes;
+public:
     /**
-     * Reduce the number of nodes and edges in the decision diagram
+     * Default constructor
      */
-    void calculate_new_ordered_jobs();
-    void calculate_edges(scheduleset *set);
-    void evaluate_nodes(double *pi, int UB, double LB, int nmachines,
-                        double reduced_cost);
+    PricerSolverBase(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    /**
+     * Copy constructor
+     */
+    PricerSolverBase(const PricerSolverBase &other);
 
     /**
-     * Some printing functions
+     * Move Constructor
      */
-    void create_dot_zdd(const char *name);
-    void print_number_nodes_edges();
+    PricerSolverBase(PricerSolverBase &&other) noexcept;
 
     /**
-     * Init tables 
+     * Move Constructor
      */
-    void init_zdd_table();
-    void init_bdd_table();
-    void init_table_farkas();
-    void init_zdd_duration_table();
-    void init_tables();
+    PricerSolverBase &operator=(const PricerSolverBase &other);
 
     /**
-     * Iteration of all paths
+     * Move assignment operator
      */
-    void iterate_zdd();
-    void print_number_paths();
+    PricerSolverBase &operator=(PricerSolverBase &&other) noexcept;
 
     /**
-     * Pricing Algorithms
+     * Destructor
      */
-    Optimal_Solution<double> dynamic_programming_ti(double *pi);
-    Optimal_Solution<double> solve_duration_bdd_double(double *pi);
-    Optimal_Solution<double> solve_weight_zdd_double(double *pi);
-    Optimal_Solution<double> solve_farkas_double(double *pi);
-    Optimal_Solution<double> solve_duration_zdd_double(double *pi);
-    
+    virtual ~PricerSolverBase();
+
     /**
-     * build the reduced extented formulation   
+     * InitTable
      */
-    void build_mip(double *x_e);
+    virtual void InitTable() = 0;
+
+    /**
+     * Pricing Algorithm
+     */
+     virtual Optimal_Solution<double> pricing_algorithm(double *_pi) = 0;
+
+     /**
+      * Reduced cost fixing
+      */
+     void calculate_new_ordered_jobs();
+     void calculate_edges(scheduleset *set);
+     void evaluate_nodes(double *pi, int UB, double LB, int nmachines,
+                         double reduced_cost);
+
+     /**
+      * Some getters
+      */
+     void IterateZdd();
+     void PrintNumberPaths();
+
+     int get_remove();
+     size_t get_datasize();
+     size_t get_numberrows_zdd();
+     double get_cost_edge(int idx);
+
+     /**
+      * Some printing functions
+      */
+     void create_dot_zdd(const char *name);
+     void print_number_nodes_edges();
+};
+
+class PricerSolverBdd : public PricerSolverBase {
+protected:
+    tdzdd::DataTable<Node<double>> table;
+public:
+    PricerSolverBdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    void InitTable();
+};
+
+class PricerSolverBddSimple : public PricerSolverBdd {
+private:
+    ForwardBddSimpleDouble evaluator;
+public:
+    PricerSolverBddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    Optimal_Solution<double> pricing_algorithm(double *_pi);
+};
+
+class PricerSolverBddCycle : public PricerSolverBdd {
+private:
+    ForwardBddCycleDouble evaluator;
+public:
+    PricerSolverBddCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    Optimal_Solution<double> pricing_algorithm(double *_pi);
+};
+
+
+class PricerSolverZdd : public PricerSolverBase {
+protected:
+    tdzdd::DataTable<ForwardZddNode<double>> table;
+public:
+    PricerSolverZdd(GPtrArray *_jobs, GPtrArray *ordered_jobs);
+    void InitTable();
+};
+
+class PricerSolverZddSimple : public PricerSolverZdd {
+private:
+    ForwardZddSimpleDouble evaluator;
+public:
+    PricerSolverZddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+
+    /**
+     * Pricing Algorithm
+     */
+    Optimal_Solution<double> pricing_algorithm(double * _pi);
+};
+
+class PricerSolverCycle : public PricerSolverZdd {
+private:
+    ForwardZddCycleDouble evaluator;
+public:
+    PricerSolverCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+
+    /**
+     * Pricing Algorithm
+     */
+    Optimal_Solution<double> pricing_algorithm(double * _pi);
+
 };
 
 #endif  // INCLUDE_PRICERSOLVER_HPP
