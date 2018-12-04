@@ -5,8 +5,6 @@
 #include <PricerConstruct.hpp>
 #include <tdzdd/DdStructure.hpp>
 #include <scheduleset.h>
-#include <DurationZDD.hpp>
-#include <DurationBDD.hpp>
 using namespace std;
 
 struct PricerSolverBase {

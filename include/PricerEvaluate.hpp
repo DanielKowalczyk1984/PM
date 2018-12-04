@@ -1,5 +1,5 @@
-#include <DurationBDD.hpp>
-#include <DurationZDD.hpp>
+#include <ForwardBDD.hpp>
+#include <ForwardZDD.hpp>
 
 struct ForwardZddCycleDouble : ForwardZddCycle<ForwardZddCycleDouble, double> {
     ForwardZddCycleDouble(double *_pi, int _num_jobs)
