@@ -4,14 +4,14 @@
 #include <OptimalSolution.hpp>
 
 template<typename T>
-class NodeDuration;
+class Node;
 
 template<typename T>
 class PrevNode {
   private:
     PrevNode<T> *prev;
     bool high;
-    NodeDuration<T>* head_node;
+    Node<T>* head_node;
 
   public:
     T f;
@@ -88,7 +88,7 @@ class PrevNode {
         high = _high;
     }
 
-    void SetHeadNode(NodeDuration<T>* _head){
+    void SetHeadNode(Node<T>* _head){
       head_node = _head;
     }
 
@@ -130,7 +130,7 @@ class PrevNode {
       high = _node.high;
     }
 
-    NodeDuration<T> *GetNode() const {
+    Node<T> *GetNode() const {
       return head_node;
     }
 
@@ -140,7 +140,7 @@ class PrevNode {
 };
 
 template<typename T>
-class NodeDuration {
+class Node {
   private:
     int weight;
     int num_layer;
@@ -155,15 +155,17 @@ class NodeDuration {
     PrevNode<T> prev1;
     PrevNode<T> prev2;
 
-    std::shared_ptr<NodeDuration<T>> y;
-    std::shared_ptr<NodeDuration<T>> n;
+    std::shared_ptr<Node<T>> y;
+    std::shared_ptr<Node<T>> n;
+
+    Node<T>* child[2];
     
     /**
      * Constructor
      */
-    NodeDuration()
-        : num_layer(0),
-          weight(0),
+    Node()
+          :weight(0),
+           num_layer(0),
           root_node(false),
           terminal_node(false),
           job(nullptr) {
@@ -171,11 +173,13 @@ class NodeDuration {
         prev2 = PrevNode<T>();
         y = nullptr;
         n = nullptr;
+        child[0] = nullptr;
+        child[1] = nullptr;
         prev1.SetHeadNode(this);
         prev2.SetHeadNode(this);
     };
 
-    NodeDuration(int &_weight, int &_num_layer, bool &_root_node,bool &_terminal_node):
+    Node(int &_weight, int &_num_layer, bool &_root_node,bool &_terminal_node):
          weight(_weight), num_layer(_num_layer), root_node(_root_node),terminal_node(_terminal_node) {
           y = nullptr;
           n = nullptr;
@@ -183,30 +187,35 @@ class NodeDuration {
           prev2 = PrevNode<T>();
           prev1.SetHeadNode(this);
           prev2.SetHeadNode(this);
+          child[0] = nullptr;
+          child[1] = nullptr;
     }
 
     /**
      * Copy Constructor
      */
-    NodeDuration<T>(const NodeDuration<T> &src) {
+    Node<T>(const Node<T> &src) {
       weight = src.weight;
       num_layer = src.num_layer;
       root_node = src.root_node;
       terminal_node = src.terminal_node;
       job = src.job;
-      count - src.count;
+      count = src.count;
 
       y = src.y;
       n = src.n;
 
       prev1 = src.prev1;
       prev2 = src.prev2;
+
+      child[0] = src.child[0];
+      child[1] = src.child[1]; 
     }
 
     /**
      * Move Constructor
      */
-    NodeDuration<T>(NodeDuration<T> &&src) {
+    Node<T>(Node<T> &&src) {
       weight = src.weight;
       num_layer = src.num_layer;
       root_node = src.root_node;
@@ -218,12 +227,15 @@ class NodeDuration {
 
       prev1 = src.prev1;
       prev2 = src.prev2;
+
+      child[0] = src.child[0];
+      child[1] = src.child[1];
     }
 
     /**
      * Copy Operator
      */
-    NodeDuration<T>& operator=(const NodeDuration<T> &src){
+    Node<T>& operator=(const Node<T> &src){
       if(&src == this) {
         return *this;
       }
@@ -239,6 +251,9 @@ class NodeDuration {
 
       prev1 = src.prev1;
       prev2 = src.prev2;
+
+      child[0] = src.child[0];
+      child[1] = src.child[1];
 
       return *this;
     }
@@ -246,7 +261,7 @@ class NodeDuration {
     /**
      * Move Operator
      */
-    NodeDuration<T>& operator=(NodeDuration<T> &&src){
+    Node<T>& operator=(Node<T> &&src){
       if(&src == this) {
         return *this;
       }
@@ -262,6 +277,9 @@ class NodeDuration {
 
       prev1 = src.prev1;
       prev2 = src.prev2;
+
+      child[0] = src.child[0];
+      child[1] = src.child[1];
 
       return *this;
     }
@@ -272,8 +290,13 @@ class NodeDuration {
     //   prev2.SetHeadNode(this);
     // }
 
-    void set_job(Job *_job){
+    void set_job(Job *_job, bool _terminal_node = false){
       job = _job;
+      terminal_node = _terminal_node;
+    }
+
+    void set_weight(int _weight){
+      weight = _weight;
     }
 
     int GetWeight(){
@@ -292,13 +315,26 @@ class NodeDuration {
       return job;
     }
 
-    friend bool operator<(const NodeDuration<T> &lhs, const NodeDuration<T> &rhs) {
+    Node<T>* InitNode(int _weight, bool _root_node = false, bool _terminal_node = false){
+      if(!terminal_node) {
+        weight = _weight;
+        root_node = _root_node;
+      } else {
+        job = nullptr;
+        weight = -1;
+        root_node = _root_node;
+        terminal_node = _terminal_node;
+      }
+      return this;
+    }
+
+    friend bool operator<(const Node<T> &lhs, const Node<T> &rhs) {
         return lhs.prev1.f < rhs.prev1.f;
     }
 
-    friend bool operator> (const NodeDuration<T> lhs, const NodeDuration<T> rhs){ return rhs < lhs; }
-    friend bool operator<=(const NodeDuration<T> lhs, const NodeDuration<T> rhs){ return !(lhs > rhs); }
-    friend bool operator>=(const NodeDuration<T> lhs, const NodeDuration<T> rhs){ return !(lhs < rhs); }
+    friend bool operator> (const Node<T> lhs, const Node<T> rhs){ return rhs < lhs; }
+    friend bool operator<=(const Node<T> lhs, const Node<T> rhs){ return !(lhs > rhs); }
+    friend bool operator>=(const Node<T> lhs, const Node<T> rhs){ return !(lhs < rhs); }
 };
 
 
