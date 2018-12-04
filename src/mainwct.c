@@ -142,6 +142,7 @@ int main(int ac, char **av) {
     CCcheck_val_2(val, "Failed in program_header");
     wctproblem_init(&problem);
     wctdata *root = &(problem.root_pd);
+    wctparms *parms = &(problem.parms);
     val = parseargs(ac, av, &(problem.parms));
     CCcheck_val_2(val, "Failed in parseargs");
     if (dbg_lvl() > 1) {
@@ -166,11 +167,15 @@ int main(int ac, char **av) {
     /**
      * Build DD at the root node
      */
-    CCutil_start_timer(&(problem.tot_build_dd));
-    root->solver = newSolver(root->jobarray, root->ordered_jobs, &(problem.parms));
-    CCutil_stop_timer(&(problem.tot_build_dd), 0);
+    if(parms->pricing_solver <= zdd_solver_cycle) {
+        CCutil_start_timer(&(problem.tot_build_dd));
+        root->solver = newSolver(root->jobarray, root->ordered_jobs, &(problem.parms));
+        CCutil_stop_timer(&(problem.tot_build_dd), 0);
+        print_size_to_csv(&problem, root);
+    } else {
+        root->solver = newSolverDp(root->jobarray, root->H_max, parms);
+    }
     g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
-    print_size_to_csv(&problem, root);
 
     /**
      * Calculation of LB at the root node with column generation
