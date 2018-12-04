@@ -42,7 +42,7 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
 
 PricerSolverBase* newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, wctparms *parms) {
     // return new PricerSolver(jobs, ordered_jobs, nmachines, ub, Hmax);
-    switch(parms->pricing_solver){
+    switch(parms->pricing_solver) {
         case bdd_solver_simple:
             return new PricerSolverBddSimple(jobs, ordered_jobs);
         break;
@@ -58,7 +58,17 @@ PricerSolverBase* newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, wctparms *
         default:
             return new PricerSolverCycle(jobs, ordered_jobs);
     }
+}
 
+PricerSolverBase* newSolverDp(GPtrArray *_jobs, int _Hmax, wctparms *parms) {
+    switch (parms->pricing_solver) {
+        case dp_solver:
+            return new PricerSolverSimpleDp(_jobs, _Hmax);
+        break;
+        default:
+            return new PricerSolverSimpleDp(_jobs, _Hmax);
+        break;
+    }
 }
 
 // PricerSolver *copySolver(PricerSolver *src) { return new PricerSolver(*src); }
