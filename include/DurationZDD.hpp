@@ -13,7 +13,7 @@ class ForwardZddNode {
     std::vector<std::shared_ptr<Node<T>>>  list;
     Job *job;
 
-    ForwardZddNode() {}
+    ForwardZddNode() : job(nullptr) {}
 
     ~ForwardZddNode() {
         list.clear();
@@ -57,7 +57,7 @@ public:
     }
 
     ForwardZddBase(int _num_jobs)
-    :  num_jobs(_num_jobs){
+    :  pi(nullptr), num_jobs(_num_jobs){
     }
 
     ForwardZddBase(){
@@ -84,7 +84,6 @@ public:
 
     Optimal_Solution<T> get_objective(ForwardZddNode<T> &n) const {
         Optimal_Solution<T> sol;
-        Job *aux_job;
 
         sol.cost = 0;
         sol.C_max = 0;
@@ -99,7 +98,7 @@ public:
 
         while(ptr_node->GetPrev() != nullptr) {
             PrevNode<T> *aux_prev_node = ptr_node->GetPrev();
-            aux_job = aux_prev_node->GetJob();
+            Job *aux_job = aux_prev_node->GetJob();
             if(ptr_node->GetHigh()) {
                 sol.C_max += aux_job->processingime;
                 if(ptr_node->GetNode()) {
@@ -142,7 +141,7 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
         num_jobs = src.num_jobs;
     }
 
-    void initializenode(ForwardZddNode<T>& n) const {
+    void initializenode(ForwardZddNode<T>& n) const override {
         for (auto &it: n.list) {
             if(it->GetWeight() == 0) {
                 it->prev1.UpdateSolution(pi[num_jobs], nullptr, false);
@@ -154,33 +153,31 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
         }
     }
 
-    void initializerootnode(ForwardZddNode<T> &n) const {
+    void initializerootnode(ForwardZddNode<T> &n) const override {
         for(auto &it: n.list){
             it->prev1.f = pi[num_jobs];
             it->prev2.SetF(-DBL_MAX/2);
         }
     }
 
-    void evalNode(ForwardZddNode<T> &n) const
+    void evalNode(ForwardZddNode<T> &n) const override
     {
         Job *tmp_j = n.get_job();
         assert(tmp_j != nullptr);
-        double result;
-        bool diff;
 
         for (auto &it : n.list) {
             int      weight = it->GetWeight();
             T g;
             std::shared_ptr<Node<T>> p0 = it->n;
             std::shared_ptr<Node<T>> p1 = it->y;
-            result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
+            double result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
 
             /**
              * High edge calculation
              */
             Job *prev = it->prev1.GetPrevJob();
             Job *aux1 = p1->prev1.GetPrevJob();
-            diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
+            double diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
 
             if(prev != tmp_j && diff) {
                 g = it->prev1.GetF() + result;
@@ -247,7 +244,7 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
         num_jobs = src.num_jobs;
     }
 
-    void initializenode(ForwardZddNode<T>& n) const {
+    void initializenode(ForwardZddNode<T>& n) const override {
         for (auto &it: n.list) {
             if(it->GetWeight() == 0) {
                 it->prev1.UpdateSolution(pi[num_jobs], nullptr, false);
@@ -257,7 +254,7 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
         }
     }
 
-    void initializerootnode(ForwardZddNode<T> &n) const {
+    void initializerootnode(ForwardZddNode<T> &n) const override {
         for(auto &it: n.list){
             it->prev1.f = pi[num_jobs];
         }
@@ -267,17 +264,16 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
         pi = _pi;
     }
 
-    void evalNode(ForwardZddNode<T> &n) const {
+    void evalNode(ForwardZddNode<T> &n) const override {
         Job *tmp_j = n.get_job();
         assert(tmp_j != nullptr);
-        double result;
 
         for (auto &it : n.list) {
             int      weight = it->GetWeight();
             T g;
             std::shared_ptr<Node<T>> p0 = it->n;
             std::shared_ptr<Node<T>> p1 = it->y;
-            result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
+            double result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
 
             /**
              * High edge calculation
