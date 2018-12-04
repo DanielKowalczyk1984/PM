@@ -1,127 +1,245 @@
 #ifndef DURATION_BDD_HPP
 #define DURATION_BDD_HPP
 #include <tdzdd/DdEval.hpp>
-#include <cfloat>
-#include <vector>
-#include <iostream>
-#include <StateNode.hpp>
 #include <OptimalSolution.hpp>
+#include <node_duration.hpp>
 
 
-template<typename T>
-class PricerInfoBDD {
-  public:
-    T obj;
-    std::vector<StateNode<T>> bucket;
-    std::vector<Job*> jobs;
-    int sum_w;
-    int sum_p;
-    int cost;
-
-    PricerInfoBDD &operator=(const PricerInfoBDD &other) {
-        sum_w = other.sum_w;
-        sum_p = other.sum_p;
-        cost = other.cost;
-        obj = other.obj;
-        return *this;
-    };
-
-    friend std::ostream &operator<<(std::ostream &os, PricerInfoBDD<T> const &o) {
-        os << "max = " << o.obj << "," << std::endl << "cost = " << o.cost << std::endl;
-        return os;
-    };
-
-    void init_terminal_node(int one) {
-        obj = one ? -DBL_MAX : -DBL_MAX;
-        jobs.reserve(40);
-        sum_p = 0;
+template<typename E, typename T> class ForwardBddBase : public 
+    tdzdd::DdEval<E, Node<T>, Optimal_Solution<T>> {
+protected:
+    T *pi;
+    int num_jobs;
+public:
+    ForwardBddBase(T *_pi, int _num_jobs): pi(_pi), num_jobs(_num_jobs) {
     }
 
-    void init_node(int weight, int njobs) {
-        obj = -DBL_MAX;
-        jobs.reserve(njobs);
-        sum_p = weight;
-    };
+    ForwardBddBase(int _num_jobs)
+    :  num_jobs(_num_jobs){
+    }
+
+    ForwardBddBase(){
+        pi = nullptr;
+        num_jobs = 0;
+    }
+
+    ForwardBddBase(const ForwardBddBase<E, T> &src) {
+        pi = src.pi;
+        num_jobs = src.num_jobs;
+    }
+
+    void initializepi(T *_pi){
+        pi = _pi;
+    }
+
+    virtual void initializenode(Node<T>& n) const  = 0;
+
+    virtual void initializerootnode(Node<T>& n) const  = 0;
+
+    virtual void evalNode(Node<T>& n) const = 0;
+
+    Optimal_Solution<T> get_objective(Node<T> &n) const {
+        Optimal_Solution<T> sol;
+        Job *aux_job;
+
+        sol.cost = 0;
+        sol.C_max = 0;
+        sol.obj = pi[num_jobs];
+        int weight;
+
+
+        PrevNode<T> *ptr_node = &(n.prev1);
+
+        while(ptr_node->GetPrev() != nullptr) {
+            PrevNode<T> *aux_prev_node = ptr_node->GetPrev();
+            aux_job = aux_prev_node->GetJob();
+            if(ptr_node->GetHigh()) {
+                sol.C_max += aux_job->processingime;
+                g_ptr_array_insert(sol.jobs, 0, aux_job);
+            }
+            ptr_node = aux_prev_node;
+        }
+
+        weight = 0;
+        for(size_t i = 0; i < sol.jobs->len; i++){
+            aux_job = (Job *) g_ptr_array_index(sol.jobs, i);
+            weight += aux_job->processingime;
+            sol.cost +=  value_Fj(weight, aux_job);
+            sol.obj += pi[aux_job->job] - value_Fj(weight, aux_job);
+        }
+
+        return sol;
+    }
 };
 
 
-template<typename E, typename T>
-class DurationBDD: public
-    tdzdd::DdEval<E, PricerInfoBDD<T>, Optimal_Solution<T> > {
-    T *pi;
-    GPtrArray *interval_list;
-    int nlayers;
-    int nbjobs;
-
-
+template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E, T> {
   public:
-    DurationBDD(T *_pi, GPtrArray *_interval_list, int _nbjobs)
-        : pi(_pi), interval_list(_interval_list), nbjobs(_nbjobs) {
-            nlayers = interval_list->len;
-    };
+    using ForwardBddBase<E, T>::pi;
+    using ForwardBddBase<E, T>::num_jobs;
+    ForwardBddCycle(T *_pi, int _num_jobs): ForwardBddBase<E, T>(_pi, _num_jobs) {
+    }
 
-    // void evalTerminal(PricerInfoBDD<T> &n, bool one) {
-    //     n.obj = one ? 0 : -1871286761.0;
-    //     n.cost = 0;
-    //     n.sum_p = 0;
-    //     n.x.resize(0);
-    // }
+    ForwardBddCycle(int _num_jobs) : ForwardBddBase<E, T>(_num_jobs){
+    }
 
-    void evalNode(PricerInfoBDD<T> &n) const {
-        int j = nlayers ;
-        assert(j >= 0 && j <= nlayers - 1);
-        job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
-                                          interval_list, j);
-        Job *tmp_j = tmp_pair->j;
-        PricerInfoBDD<T> *n0 ;
-        PricerInfoBDD<T> *n1 ;
+    ForwardBddCycle(): ForwardBddBase<E, T>(){
+        pi = nullptr;
+        num_jobs = 0;
+    }
 
+    ForwardBddCycle(const ForwardBddCycle<E, T> &src) {
+        pi = src.pi;
+        num_jobs = src.num_jobs;
+    }
 
-        if (n0->obj < n.obj) {
-            n0->obj = n.obj;
-            n0->cost = n.cost;
-            n0->sum_p = n.sum_p;
-            n0->jobs = n.jobs;
-        }
-
-        if (n1->obj < n.obj - (T) value_Fj(n.sum_p + tmp_j->processingime, tmp_j) +  pi[tmp_j->job] ) {
-            n1->obj = n.obj - (T) value_Fj(n.sum_p + tmp_j->processingime, tmp_j) +  pi[tmp_j->job];
-            n1->cost = n.cost + value_Fj(n.sum_p + tmp_j->processingime, tmp_j);
-            n1->sum_p = n.sum_p + tmp_j->processingime;
-            n1->jobs = n.jobs;
-            n1->jobs.push_back(tmp_j);
+    void initializenode(Node<T>& n) const {
+        if(n.GetWeight() == 0) {
+            n.prev1.UpdateSolution(pi[num_jobs], nullptr, false);
+            n.prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
+        } else {
+            n.prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
+            n.prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
         }
     }
 
-    void initializenode(PricerInfoBDD<T> &n) {
-        n.obj = -DBL_MAX;
-        n.cost = 0;
-        n.jobs.clear();
-        n.jobs.reserve(nbjobs);
+    void initializerootnode(Node<T> &n) const {
+        n.prev1.f = pi[num_jobs];
+        n.prev2.SetF(-DBL_MAX/2);
     }
 
-    void initializerootnode(PricerInfoBDD<T> &n) {
-        n.obj = pi[nbjobs];
-        n.cost = 0;
-        n.jobs.clear();
-        n.jobs.reserve(nbjobs);
+    void evalNode(Node<T> &n) const
+    {
+        Job *tmp_j = n.GetJob();
+        assert(tmp_j != nullptr);
+        double result;
+        bool diff;
+
+        int      weight = n.GetWeight();
+        T g;
+        Node<T>* p0 = n.child[0];
+        Node<T>* p1 = n.child[1];
+        result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
+
+        /**
+         * High edge calculation
+         */
+        Job *prev = n.prev1.GetPrevJob();
+        Job *aux1 = p1->prev1.GetPrevJob();
+        diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
+
+        if(prev != tmp_j && diff) {
+            g = n.prev1.GetF() + result;
+            if(g > p1->prev1.GetF()) {
+                if(aux1 != tmp_j) {
+                    p1->prev2.UpdateSolution(p1->prev1);
+                }
+                p1->prev1.UpdateSolution(g, &(n.prev1), true);
+            } else if ((g > p1->prev2.GetF()) && (aux1 != tmp_j)) {
+                p1->prev2.UpdateSolution(g, &(n.prev1), true);
+            }
+        } else  {
+            g = n.prev2.GetF() + result;
+            if(g > p1->prev1.GetF()) {
+                if(aux1 != tmp_j) {
+                    p1->prev2.UpdateSolution(p1->prev1);
+                }
+                p1->prev1.UpdateSolution(g, &(n.prev2), true);
+            } else if ((g >= p1->prev2.GetF()) && (aux1 != tmp_j)) {
+                p1->prev2.UpdateSolution(g, &(n.prev2), true);
+            }
+        }
+
+        /**
+         * Low edge calculation
+         */
+        aux1 = p0->prev1.GetPrevJob();
+        if(n.prev1.GetF() > p0->prev1.GetF()) {
+            if(prev != aux1) {
+                p0->prev2.UpdateSolution(p0->prev1);
+            }
+            p0->prev1.UpdateSolution(n.prev1);
+        } else if ((n.prev1.GetF() > p0->prev2.GetF()) && (aux1 != prev)){
+            p0->prev2.UpdateSolution(n.prev1);
+        }
     }
 
-    Optimal_Solution<T> get_objective(PricerInfoBDD<T> &n) {
+    Optimal_Solution<T> getValue(Node<T> const &n){
         Optimal_Solution<T> sol;
-        sol.cost = 0;
-        sol.obj = n.obj;
-        sol.C_max = 0;
-        sol.jobs = g_ptr_array_sized_new(n.jobs.size());
-        for(const auto& it: n.jobs){
-            g_ptr_array_add(sol.jobs, it);
-            sol.C_max += ((Job *) it)->processingime;
-            sol.cost += value_Fj(sol.C_max, it);
-        }
+
         return sol;
     }
+};
 
 
+template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<E, T> {
+  public:
+    using ForwardBddBase<E, T>::pi;
+    using ForwardBddBase<E, T>::num_jobs;
+    ForwardBddSimple(T *_pi, int _num_jobs): ForwardBddBase<E, T>(_pi, _num_jobs) {
+    }
+
+    ForwardBddSimple(int _num_jobs)
+    :  ForwardBddBase<E, T>(_num_jobs){
+    }
+
+    ForwardBddSimple(){
+        pi = nullptr;
+        num_jobs = 0;
+    }
+
+    ForwardBddSimple(const ForwardBddSimple<E, T> &src) {
+        pi = src.pi;
+        num_jobs = src.num_jobs;
+    }
+
+    void initializenode(Node<T>& n) const {
+        if(n.GetWeight() == 0) {
+            n.prev1.UpdateSolution(pi[num_jobs], nullptr, false);
+        } else {
+            n.prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
+        }
+    }
+
+    void initializerootnode(Node<T> &n) const {
+        n.prev1.f = pi[num_jobs];
+    }
+
+    void initializepi(T *_pi){
+        pi = _pi;
+    }
+
+    void evalNode(Node<T> &n) const {
+        Job *tmp_j = n.GetJob();
+        assert(tmp_j != nullptr);
+        double result;
+
+        int      weight = n.GetWeight();
+        T g;
+        Node<T>* p0 = n.child[0];
+        Node<T>* p1 =  n.child[1];
+        result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
+
+        /**
+         * High edge calculation
+         */
+        g = n.prev1.GetF() + result;
+        if(g > p1->prev1.GetF()) {
+            p1->prev1.UpdateSolution(g, &(n.prev1), true);
+        }
+
+        /**
+         * Low edge calculation
+         */
+        if(n.prev1.GetF() > p0->prev1.GetF()) {
+            p0->prev1.UpdateSolution(n.prev1);
+        }
+    }
+
+    Optimal_Solution<T> getValue(Node<T> const &n){
+        Optimal_Solution<T> sol;
+        return sol;
+    }
 };
 
 
