@@ -1,7 +1,7 @@
 #ifndef WEIGHT_ZDD_HPP
 #define WEIGHT_ZDD_HPP
 #include <tdzdd/DdEval.hpp>
-#include <tdzdd/dd/NodeTable.hpp>
+// #include <tdzdd/dd/NodeTable.hpp>
 
 #include <node.hpp>
 #include <OptimalSolution.hpp>
@@ -118,7 +118,11 @@ public:
         }
     }
 
-    void initializenode(PricerWeightZDD<T>& n)
+    void evalNode(PricerWeightZDD<T> &n) const {
+
+    }
+
+    void initializenode(PricerWeightZDD<T>& n) const
     {
         for (auto& it : n.list) {
             it->obj = -DBL_MAX;
@@ -130,7 +134,17 @@ public:
         }
     }
 
-    Optimal_Solution<T> get_objective(PricerWeightZDD<T> &n)
+    void initializerootnode(PricerWeightZDD<T> &n) const {
+
+    }
+
+    Optimal_Solution<T> get_objective(PricerWeightZDD<T> &n) const {
+        Optimal_Solution<T> sol;
+
+        return sol;
+    } 
+
+    Optimal_Solution<T> get_objective(const PricerWeightZDD<T> &n) const 
     {
         Optimal_Solution<T> sol;
         std::shared_ptr<node<T>> ptr = n.list.front();
@@ -153,6 +167,11 @@ public:
             }
         }while (ptr->job);
 
+        return sol;
+    }
+
+    Optimal_Solution<T> getValue(PricerWeightZDD<T> const &n){
+        Optimal_Solution<T> sol;
         return sol;
     }
 };
