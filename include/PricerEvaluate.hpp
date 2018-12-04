@@ -1,36 +1,35 @@
-#include <WeightZDD.hpp>
-#include <FarkasZDD.hpp>
 #include <DurationBDD.hpp>
 #include <DurationZDD.hpp>
 
-
-
-
-struct WeightZDDdouble : WeightZDD<WeightZDDdouble, double> {
-    WeightZDDdouble(double *_pi, int _nbjobs)
-        : WeightZDD<WeightZDDdouble, double>(_pi, _nbjobs) {};
-    WeightZDDdouble(int _nbjobs)
-        : WeightZDD<WeightZDDdouble, double>(_nbjobs) {};
-    WeightZDDdouble()
-        : WeightZDD<WeightZDDdouble,double>() {};
-
+struct ForwardZddCycleDouble : ForwardZddCycle<ForwardZddCycleDouble, double> {
+    ForwardZddCycleDouble(double *_pi, int _num_jobs)
+    : ForwardZddCycle<ForwardZddCycleDouble, double>(_pi, _num_jobs) {};
+    ForwardZddCycleDouble(int _num_jobs)
+    : ForwardZddCycle<ForwardZddCycleDouble, double> (_num_jobs) {};
+    ForwardZddCycleDouble() : ForwardZddCycle<ForwardZddCycleDouble, double>() {};
 };
 
-struct FarkasZDDdouble : FarkasZDD<FarkasZDDdouble, double> {
-    FarkasZDDdouble(double *_pi, GPtrArray *_interval_list, int _nbjobs)
-        : FarkasZDD<FarkasZDDdouble, double>(_pi, _interval_list, _nbjobs) {};
+struct ForwardZddSimpleDouble : ForwardZddSimple<ForwardZddSimpleDouble, double> {
+    ForwardZddSimpleDouble(double *_pi, int _num_jobs)
+    : ForwardZddSimple<ForwardZddSimpleDouble, double>(_pi, _num_jobs) {};
+    ForwardZddSimpleDouble(int _num_jobs)
+    : ForwardZddSimple<ForwardZddSimpleDouble, double> (_num_jobs) {};
+    ForwardZddSimpleDouble() : ForwardZddSimple<ForwardZddSimpleDouble, double>() {};
 };
 
-struct DurationBDDdouble : DurationBDD<DurationBDDdouble, double> {
-    DurationBDDdouble(double *_pi, GPtrArray *_interval_list, int _nbjobs)
-        : DurationBDD<DurationBDDdouble, double>(_pi, _interval_list, _nbjobs) {};
+struct ForwardBddSimpleDouble : ForwardBddSimple<ForwardBddSimpleDouble, double> {
+    ForwardBddSimpleDouble(double *_pi, int _num_jobs)
+    : ForwardBddSimple<ForwardBddSimpleDouble, double>(_pi, _num_jobs) {};
+    ForwardBddSimpleDouble(int _num_jobs)
+    : ForwardBddSimple<ForwardBddSimpleDouble, double> (_num_jobs) {};
+    ForwardBddSimpleDouble() : ForwardBddSimple<ForwardBddSimpleDouble, double>() {};
 };
 
-struct DurationZDDdouble : DurationZDD<DurationZDDdouble, double> {
-    DurationZDDdouble(double *_pi, int _num_jobs)
-    : DurationZDD<DurationZDDdouble, double>(_pi, _num_jobs) {};
-    DurationZDDdouble(int _num_jobs)
-    : DurationZDD<DurationZDDdouble, double> (_num_jobs) {};
-    DurationZDDdouble() : DurationZDD<DurationZDDdouble, double>() {};
+struct ForwardBddCycleDouble : ForwardBddCycle<ForwardBddCycleDouble, double> {
+    ForwardBddCycleDouble(double *_pi, int _num_jobs)
+    : ForwardBddCycle<ForwardBddCycleDouble, double>(_pi, _num_jobs) {};
+    ForwardBddCycleDouble(int _num_jobs)
+    : ForwardBddCycle<ForwardBddCycleDouble, double> (_num_jobs) {};
+    ForwardBddCycleDouble() : ForwardBddCycle<ForwardBddCycleDouble, double>() {};
 };
 
