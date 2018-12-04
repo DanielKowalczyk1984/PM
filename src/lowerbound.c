@@ -501,10 +501,11 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                         pd->id, pd->iterations, pd->opt_track);
                 }
 
-                calculate_nblayers(pd);
-
-                val = calculate_x_e(pd);
-                CCcheck_val_2(val, "Failed in calculate_x_e");
+                if(parms->pricing_solver < dp_solver) {
+                    calculate_nblayers(pd);
+                    val = calculate_x_e(pd);
+                    CCcheck_val_2(val, "Failed in calculate_x_e");
+                }
                 pd->status = LP_bound_computed;
                 val = wctlp_pi(pd->LP, pd->pi);
                 CCcheck_val_2(val, "wctlp_pi failed");
@@ -520,8 +521,10 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
-                evaluate_nodes(pd);
-                calculate_new_ordered_jobs(pd);
+                if(parms->pricing_solver < dp_solver) {
+                    evaluate_nodes(pd);
+                    calculate_new_ordered_jobs(pd);
+                }
                 break;
 
             case GRB_INFEASIBLE:

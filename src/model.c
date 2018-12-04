@@ -120,6 +120,7 @@ int build_lp(wctdata *pd, int construct) {
     wctproblem *problem = pd->problem;
     int         njobs = problem->njobs;
     int         nmachines = problem->nmachines;
+    wctparms *parms = &(problem->parms);
     int         nb_row;
     int *       covered = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
@@ -167,8 +168,10 @@ int build_lp(wctdata *pd, int construct) {
     CCcheck_NULL_2(pd->subgradient_in, "Failed to allocate memory");
     pd->subgradient = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->subgradient, "Failed to allocate memory");
-    pd->x_e = CC_SAFE_MALLOC(2*get_datasize(pd->solver), double);
-    CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
+    if(parms->pricing_solver < dp_solver) {
+        pd->x_e = CC_SAFE_MALLOC(2*get_datasize(pd->solver), double);
+        CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
+    }
     pd->rhs = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
     val = wctlp_get_rhs(pd->LP, pd->rhs);
