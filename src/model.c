@@ -197,7 +197,6 @@ CLEAN:
 int get_solution_lp_lowerbound(wctdata *pd) {
     int          val = 0;
     int          nbcols;
-    scheduleset *tmp;
     Job *        tmp_j;
 
     val = wctlp_get_nb_cols(pd->LP, &nbcols);
@@ -208,7 +207,7 @@ int get_solution_lp_lowerbound(wctdata *pd) {
     wctlp_x(pd->LP, pd->x, 0);
 
     for (unsigned i = 0; i < nbcols; ++i) {
-        tmp = ((scheduleset *)g_ptr_array_index(pd->localColPool, i));
+        scheduleset *tmp = ((scheduleset *)g_ptr_array_index(pd->localColPool, i));
         if (pd->x[i]) {
             printf("%f: ", pd->x[i]);
             g_ptr_array_foreach(tmp->jobs, g_print_machine, NULL);

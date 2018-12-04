@@ -138,11 +138,11 @@ int main(int ac, char **av) {
     int        val = 0;
     double     start_time;
     wctproblem problem;
+    wctdata *root = &(problem.root_pd);
+    wctparms *parms = &(problem.parms);
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header");
     wctproblem_init(&problem);
-    wctdata *root = &(problem.root_pd);
-    wctparms *parms = &(problem.parms);
     val = parseargs(ac, av, &(problem.parms));
     CCcheck_val_2(val, "Failed in parseargs");
     if (dbg_lvl() > 1) {

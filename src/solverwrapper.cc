@@ -7,12 +7,11 @@ template <typename T = double, bool reverse = false>
 int construct_sol(wctdata *pd, Optimal_Solution<T> &sol) {
     int          val = 0;
     int          nbset = 1;
-    Job *        tmp_j;
     scheduleset *newset = scheduleset_alloc_bis(pd->njobs);
     CCcheck_NULL_3(newset, "Failed to allocate memory newset");
 
     for (unsigned i = 0; i < sol.jobs->len; ++i) {
-        tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
+        Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
         g_hash_table_add(newset->table, tmp_j);
     }
     newset->jobs = sol.jobs;
@@ -100,10 +99,9 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
                                int                       nbjobs) {
     double result = 0.0;
     double a = 0.0;
-    Job *  tmp_j;
 
     for (unsigned i = 0; i < sol.jobs->len; ++i) {
-        tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
+        Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
         result += pi[tmp_j->job];
     }
 
@@ -121,11 +119,10 @@ static double compute_reduced_cost(Optimal_Solution<double> &sol,
                                double *                  pi,
                                int                       nbjobs) {
     double result = pi[nbjobs];
-    Job *  tmp_j;
     int C = 0;
 
     for (unsigned i = 0; i < sol.jobs->len; ++i) {
-        tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
+        Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
         C += tmp_j->processingime;
         result += pi[tmp_j->job] - value_Fj(C, tmp_j);
     }

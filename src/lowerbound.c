@@ -53,10 +53,7 @@ CLEAN:
 
 static int delete_old_cclasses(wctdata *pd) {
     int          val = 0;
-    int          it = 0;
     int          min_numdel = pd->njobs * min_ndelrow_ratio;
-    int          first_del = -1;
-    int          last_del = -1;
     int          nb_col;
     guint        i;
     guint        count = pd->localColPool->len;
@@ -72,6 +69,9 @@ static int delete_old_cclasses(wctdata *pd) {
     }
 
     if (pd->dzcount > min_numdel) {
+        int          it = 0;
+        int          first_del = -1;
+        int          last_del = -1;
         for (i = 0; i < count; ++i) {
             tmp_schedule = (scheduleset *)g_ptr_array_index(pd->localColPool, it);
             if (tmp_schedule->age <= pd->retirementage) {

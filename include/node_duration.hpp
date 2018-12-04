@@ -23,24 +23,23 @@ class PrevNode {
         high(_high){
 
     };
-    PrevNode(){
+    PrevNode() : f(-DBL_MAX){
       prev = nullptr;
       high = false;
       head_node = nullptr;
-      f = -DBL_MAX;
     };
 
     /**
      * Copy Constructor
      */
-    PrevNode<T>(PrevNode<T> &src): f(src.f), prev(src.prev), high(src.high), head_node(src.head_node){
+    PrevNode<T>(const PrevNode<T> &src): prev(src.prev), high(src.high), head_node(src.head_node), f(src.f) {
       
     }
 
     /**
      * Move Constructor
      */
-    PrevNode<T>(PrevNode<T> &&src): f(src.f), prev(src.prev), high (src.high), head_node (src.head_node){
+    PrevNode<T>(const PrevNode<T> &&src): prev(src.prev), high (src.high), head_node (src.head_node), f(src.f) {
       
     }
 
@@ -151,7 +150,6 @@ class Node {
     Job *job;
 
   public:
-    int count;
     PrevNode<T> prev1;
     PrevNode<T> prev2;
 
@@ -163,16 +161,15 @@ class Node {
     /**
      * Constructor
      */
-    Node()
-          :weight(0),
-           num_layer(0),
+    Node():weight(0),
+          num_layer(0),
           root_node(false),
           terminal_node(false),
-          job(nullptr) {
-        prev1 = PrevNode<T>();
-        prev2 = PrevNode<T>();
-        y = nullptr;
-        n = nullptr;
+          job(nullptr),
+          prev1(),
+          prev2(),
+          y(nullptr),
+          n(nullptr) {
         child[0] = nullptr;
         child[1] = nullptr;
         prev1.SetHeadNode(this);
@@ -180,11 +177,14 @@ class Node {
     };
 
     Node(int &_weight, int &_num_layer, bool &_root_node,bool &_terminal_node):
-         weight(_weight), num_layer(_num_layer), root_node(_root_node),terminal_node(_terminal_node) {
-          y = nullptr;
-          n = nullptr;
-          prev1 = PrevNode<T>();
-          prev2 = PrevNode<T>();
+         weight(_weight),
+         num_layer(_num_layer),
+         root_node(_root_node),
+         terminal_node(_terminal_node),
+         prev1(),
+         prev2(),
+         y(nullptr),
+         n(nullptr) {
           prev1.SetHeadNode(this);
           prev2.SetHeadNode(this);
           child[0] = nullptr;
@@ -194,42 +194,38 @@ class Node {
     /**
      * Copy Constructor
      */
-    Node<T>(const Node<T> &src) {
-      weight = src.weight;
-      num_layer = src.num_layer;
-      root_node = src.root_node;
-      terminal_node = src.terminal_node;
-      job = src.job;
-      count = src.count;
-
-      y = src.y;
-      n = src.n;
-
-      prev1 = src.prev1;
-      prev2 = src.prev2;
-
-      child[0] = src.child[0];
-      child[1] = src.child[1]; 
+    Node<T>(const Node<T> &src):
+        weight(src.weight),
+        num_layer(src.num_layer),
+        root_node(src.root_node),
+        terminal_node(src.terminal_node),
+        job(src.job),
+        prev1(src.prev1),
+        prev2(src.prev2),
+        y(src.y),
+        n(src.n),
+        child{src.child[0], src.child[1]} {
+      // child[0] = src.child[0];
+      // child[1] = src.child[1]; 
+      // child = {src.child[0], src.child[1]};
     }
 
     /**
      * Move Constructor
      */
-    Node<T>(Node<T> &&src) {
-      weight = src.weight;
-      num_layer = src.num_layer;
-      root_node = src.root_node;
-      terminal_node = src.terminal_node;
-      job = src.job;
-
-      y = std::move(src.y);
-      n = std::move(src.n);
-
-      prev1 = src.prev1;
-      prev2 = src.prev2;
-
-      child[0] = src.child[0];
-      child[1] = src.child[1];
+    Node<T>(Node<T> &&src):
+        weight(src.weight),
+        num_layer(src.num_layer),
+        root_node(src.root_node),
+        terminal_node(src.terminal_node),
+        job(src.job),
+        prev1(src.prev1),
+        prev2(src.prev2), 
+        y(std::move(src.y)),
+        n(std::move(src.n)){
+        child = {src.child[0], src.child[1]};
+      // child[0] = src.child[0];
+      // child[1] = src.child[1];
     }
 
     /**
@@ -252,8 +248,7 @@ class Node {
       prev1 = src.prev1;
       prev2 = src.prev2;
 
-      child[0] = src.child[0];
-      child[1] = src.child[1];
+      child = {src.child[0], src.child[1]};
 
       return *this;
     }
@@ -278,8 +273,7 @@ class Node {
       prev1 = src.prev1;
       prev2 = src.prev2;
 
-      child[0] = src.child[0];
-      child[1] = src.child[1];
+      child = {src.child[0], src.child[1]};
 
       return *this;
     }
@@ -332,9 +326,9 @@ class Node {
         return lhs.prev1.f < rhs.prev1.f;
     }
 
-    friend bool operator> (const Node<T> lhs, const Node<T> rhs){ return rhs < lhs; }
-    friend bool operator<=(const Node<T> lhs, const Node<T> rhs){ return !(lhs > rhs); }
-    friend bool operator>=(const Node<T> lhs, const Node<T> rhs){ return !(lhs < rhs); }
+    friend bool operator> (const Node<T> &lhs, const Node<T> &rhs){ return rhs < lhs; }
+    friend bool operator<=(const Node<T> &lhs, const Node<T> &rhs){ return !(lhs > rhs); }
+    friend bool operator>=(const Node<T> &lhs, const Node<T> &rhs){ return !(lhs < rhs); }
 };
 
 

@@ -15,7 +15,7 @@ public:
     }
 
     ForwardBddBase(int _num_jobs)
-    :  num_jobs(_num_jobs){
+    :  pi(nullptr), num_jobs(_num_jobs){
     }
 
     ForwardBddBase(){
@@ -77,6 +77,7 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
   public:
     using ForwardBddBase<E, T>::pi;
     using ForwardBddBase<E, T>::num_jobs;
+
     ForwardBddCycle(T *_pi, int _num_jobs): ForwardBddBase<E, T>(_pi, _num_jobs) {
     }
 
@@ -93,7 +94,7 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
         num_jobs = src.num_jobs;
     }
 
-    void initializenode(Node<T>& n) const {
+    void initializenode(Node<T>& n) const override {
         if(n.GetWeight() == 0) {
             n.prev1.UpdateSolution(pi[num_jobs], nullptr, false);
             n.prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
@@ -103,12 +104,12 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
         }
     }
 
-    void initializerootnode(Node<T> &n) const {
+    void initializerootnode(Node<T> &n) const override {
         n.prev1.f = pi[num_jobs];
         n.prev2.SetF(-DBL_MAX/2);
     }
 
-    void evalNode(Node<T> &n) const
+    void evalNode(Node<T> &n) const override
     {
         Job *tmp_j = n.GetJob();
         assert(tmp_j != nullptr);
@@ -193,7 +194,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         num_jobs = src.num_jobs;
     }
 
-    void initializenode(Node<T>& n) const {
+    void initializenode(Node<T>& n) const override {
         if(n.GetWeight() == 0) {
             n.prev1.UpdateSolution(pi[num_jobs], nullptr, false);
         } else {
@@ -201,7 +202,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         }
     }
 
-    void initializerootnode(Node<T> &n) const {
+    void initializerootnode(Node<T> &n) const override {
         n.prev1.f = pi[num_jobs];
     }
 
@@ -209,7 +210,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         pi = _pi;
     }
 
-    void evalNode(Node<T> &n) const {
+    void evalNode(Node<T> &n) const override {
         Job *tmp_j = n.GetJob();
         assert(tmp_j != nullptr);
         double result;
