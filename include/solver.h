@@ -8,10 +8,10 @@
 extern "C" {
 #endif
 
-typedef struct PricerSolver PricerSolver;
-PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, int nmachines, int ub, int Hmax);
+typedef struct PricerSolverBase PricerSolver;
+PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, wctparms *parms);
 PricerSolver *newSolverDP(GPtrArray *interval_list, int njobs, int **sum_p);
-PricerSolver *copySolver(PricerSolver *src);
+// PricerSolver *copySolver(PricerSolver *src);
 int init_tables(PricerSolver *solver);
 int calculate_table(PricerSolver *solver, wctparms *parms);
 
