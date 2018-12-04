@@ -12,7 +12,7 @@ int construct_sol(wctdata *pd, Optimal_Solution<T> &sol) {
     CCcheck_NULL_3(newset, "Failed to allocate memory newset");
 
     for (unsigned i = 0; i < sol.jobs->len; ++i) {
-        tmp_j = (Job *)g_ptr_array_index(sol.jobs, i);
+        tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
         g_hash_table_add(newset->table, tmp_j);
     }
     newset->jobs = sol.jobs;
@@ -41,8 +41,7 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
                                int                       nbjobs);
 
 PricerSolverBase* newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, wctparms *parms) {
-    // return new PricerSolver(jobs, ordered_jobs, nmachines, ub, Hmax);
-    switch(parms->pricing_solver) {
+    switch (parms->pricing_solver) {
         case bdd_solver_simple:
             return new PricerSolverBddSimple(jobs, ordered_jobs);
         break;
@@ -71,7 +70,7 @@ PricerSolverBase* newSolverDp(GPtrArray *_jobs, int _Hmax, wctparms *parms) {
     }
 }
 
-// PricerSolver *copySolver(PricerSolver *src) { return new PricerSolver(*src); }
+//  PricerSolver *copySolver(PricerSolver *src) { return new PricerSolver(*src); }
 
 void print_dot_file(PricerSolver *solver, char *name) {
     solver->create_dot_zdd(name);
@@ -104,7 +103,7 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
     Job *  tmp_j;
 
     for (unsigned i = 0; i < sol.jobs->len; ++i) {
-        tmp_j = (Job *)g_ptr_array_index(sol.jobs, i);
+        tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
         result += pi[tmp_j->job];
     }
 
@@ -126,7 +125,7 @@ static double compute_reduced_cost(Optimal_Solution<double> &sol,
     int C = 0;
 
     for (unsigned i = 0; i < sol.jobs->len; ++i) {
-        tmp_j = (Job *)g_ptr_array_index(sol.jobs, i);
+        tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
         C += tmp_j->processingime;
         result += pi[tmp_j->job] - value_Fj(C, tmp_j);
     }
@@ -145,7 +144,7 @@ int evaluate_nodes(wctdata *pd) {
     return val;
 }
 
-int calculate_new_ordered_jobs(wctdata *pd){
+int calculate_new_ordered_jobs(wctdata *pd) {
     int val = 0;
 
     pd->solver->calculate_new_ordered_jobs();
@@ -161,7 +160,7 @@ int build_solve_mip(wctdata *pd) {
     return val;
 }
 
-void print_number_nodes_edges(wctdata *pd){
+void print_number_nodes_edges(wctdata *pd) {
     pd->solver->print_number_nodes_edges();
 }
 
@@ -182,7 +181,7 @@ int calculate_table(PricerSolver *solver, wctparms *parms) {
 
 void iterate_zdd(PricerSolver *solver) { solver->IterateZdd(); }
 
-void print_number_paths(PricerSolver *solver){ solver->PrintNumberPaths(); }
+void print_number_paths(PricerSolver *solver) { solver->PrintNumberPaths(); }
 
 size_t get_datasize(PricerSolver *solver) { return solver->get_datasize(); }
 
@@ -259,7 +258,7 @@ int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
     //     pd->solver->evaluate_nodes(pd->pi, pd->problem->opt_sol->tw, pd->LP_lower_bound_BB , pd->problem->nmachines, pd->reduced_cost);
     // }
 
-    if(sol.obj > 0.000001) {
+    if (sol.obj > 0.000001) {
        val = construct_sol(pd, sol);
        CCcheck_val_2(val, "Failed in construction")
     } else {
@@ -267,7 +266,7 @@ int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
     }
 
 
-    if(pd->iterations%pd->njobs == 0) {
+    if (pd->iterations%pd->njobs == 0) {
         print_number_nodes_edges(pd);
     }
 
@@ -275,11 +274,11 @@ CLEAN:
     return val;
 }
 
-int solve_pricing_ti(wctdata *pd, wctparms *parms){
+int solve_pricing_ti(wctdata *pd, wctparms *parms) {
     int val = 0;
     Optimal_Solution<double> sol = pd->solver->pricing_algorithm(pd->pi);
 
-    if(sol.obj > 0.000001) {
+    if (sol.obj > 0.000001) {
         val = construct_sol(pd, sol);
         CCcheck_val_2(val, "Failed in construction");
     } else {
@@ -328,7 +327,7 @@ int solve_stab(wctdata *pd, wctparms *parms) {
                 pd->update = 1;
                 mispricing = false;
             } else {
-                pd->reduced_cost =compute_reduced_cost(sol, pd->pi_out, pd->njobs);
+                pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
                 if (pd->reduced_cost < 0.000001) {
                     CCcheck_val_2(val, "Failed in construct_sol_stab");
@@ -419,15 +418,14 @@ CLEAN:
     return val;
 }
 
-void calculate_edges(PricerSolver *solver, scheduleset *set){
+void calculate_edges(PricerSolver *solver, scheduleset *set) {
     solver->calculate_edges(set);
 }
 
-void g_calculate_edges(gpointer data, gpointer user_data){
+void g_calculate_edges(gpointer data, gpointer user_data) {
     scheduleset *tmp = (scheduleset *) data;
     PricerSolver *solver = (PricerSolver *) user_data;
 
     solver->calculate_edges(tmp);
-
 }
 }

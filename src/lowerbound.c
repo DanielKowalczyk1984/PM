@@ -608,8 +608,8 @@ int calculate_nblayers(wctdata *pd){
                     scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
                     for(unsigned i = 0; i < tmp->jobs->len - 1; ++i) {
                         Job *j1, *j2;
-                        j1 = g_ptr_array_index(tmp->jobs, i);
-                        j2 = g_ptr_array_index(tmp->jobs, i + 1);
+                        j1 = (Job*) g_ptr_array_index(tmp->jobs, i);
+                        j2 = (Job*) g_ptr_array_index(tmp->jobs, i + 1);
                         if(j1 == j2) {
                             j1->nb_layers = 1;
                         }

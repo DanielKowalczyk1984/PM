@@ -343,7 +343,7 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
     std::vector<Job *>::reverse_iterator it = v.rbegin();
 
     for (; it != v.rend(); ++it) {
-        g_ptr_array_add(opt_sol.jobs, *it) ;
+        g_ptr_array_add(opt_sol.jobs, *it);
     }
 
     /** Free the memory */

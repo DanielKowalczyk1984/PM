@@ -8,8 +8,8 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#ifndef __WCTPARMS_H
-#define __WCTPARMS_H
+#ifndef INCLUDE_WCTPARMS_H_
+#define INCLUDE_WCTPARMS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -137,4 +137,4 @@ int wctparms_set_nmachines(wctparms *parms, int nmachines);
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif  // INCLUDE_WCTPARMS_H_
