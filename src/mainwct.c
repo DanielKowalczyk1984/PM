@@ -167,7 +167,7 @@ int main(int ac, char **av) {
      * Build DD at the root node
      */
     CCutil_start_timer(&(problem.tot_build_dd));
-    root->solver = newSolver(root->jobarray, root->ordered_jobs, root->nmachines, 0, problem.H_max);
+    root->solver = newSolver(root->jobarray, root->ordered_jobs, &(problem.parms));
     CCutil_stop_timer(&(problem.tot_build_dd), 0);
     g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
     print_size_to_csv(&problem, root);
