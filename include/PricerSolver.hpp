@@ -26,8 +26,9 @@ protected:
     int nb_removed_nodes;
 public:
     /**
-     * Default constructor
+     * Default constructors
      */
+    PricerSolverBase(GPtrArray *_jobs);
     PricerSolverBase(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
     /**
      * Copy constructor
@@ -146,6 +147,16 @@ public:
      */
     Optimal_Solution<double> pricing_algorithm(double * _pi);
 
+};
+
+class PricerSolverSimpleDp : public PricerSolverBase {
+private:
+    int Hmax;
+public:
+    PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax);
+    void InitTable();
+
+    Optimal_Solution<double> pricing_algorithm(double *_pi);
 };
 
 #endif  // INCLUDE_PRICERSOLVER_HPP
