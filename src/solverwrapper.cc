@@ -40,11 +40,28 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
                                double *                  pi,
                                int                       nbjobs);
 
-PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, int nmachines, int ub, int Hmax) {
-    return new PricerSolver(jobs, ordered_jobs, nmachines, ub, Hmax);
+PricerSolverBase* newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, wctparms *parms) {
+    // return new PricerSolver(jobs, ordered_jobs, nmachines, ub, Hmax);
+    switch(parms->pricing_solver){
+        case bdd_solver_simple:
+            return new PricerSolverBddSimple(jobs, ordered_jobs);
+        break;
+        case bdd_solver_cycle:
+            return new PricerSolverBddCycle(jobs, ordered_jobs);
+        break;
+        case zdd_solver_cycle:
+            return new PricerSolverCycle(jobs, ordered_jobs);
+        break;
+        case zdd_solver_simple:
+            return new PricerSolverZddSimple(jobs, ordered_jobs);
+        break;
+        default:
+            return new PricerSolverCycle(jobs, ordered_jobs);
+    }
+
 }
 
-PricerSolver *copySolver(PricerSolver *src) { return new PricerSolver(*src); }
+// PricerSolver *copySolver(PricerSolver *src) { return new PricerSolver(*src); }
 
 void print_dot_file(PricerSolver *solver, char *name) {
     solver->create_dot_zdd(name);
@@ -54,7 +71,7 @@ void freeSolver(PricerSolver *src) { delete src; }
 
 int solve_farkas_dbl(wctdata *pd) {
     int                      val = 0;
-    Optimal_Solution<double> s = pd->solver->solve_farkas_double(pd->pi);
+    Optimal_Solution<double> s = pd->solver->pricing_algorithm(pd->pi);
 
     if (s.obj < -0.00001) {
         // val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
@@ -129,7 +146,7 @@ int calculate_new_ordered_jobs(wctdata *pd){
 int build_solve_mip(wctdata *pd) {
     int val = 0;
 
-    pd->solver->build_mip(pd->x_e);
+    // pd->solver->build_mip(pd->x_e);
 
     return val;
 }
@@ -147,15 +164,15 @@ void deletePricerSolver(PricerSolver *solver) {
 int calculate_table(PricerSolver *solver, wctparms *parms) {
     int val = 0;
 
-    solver->init_zdd_table();
-    solver->init_table_farkas();
+    // solver->init_zdd_table();
+    // solver->init_table_farkas();
 
     return val = 0;
 }
 
-void iterate_zdd(PricerSolver *solver) { solver->iterate_zdd(); }
+void iterate_zdd(PricerSolver *solver) { solver->IterateZdd(); }
 
-void print_number_paths(PricerSolver *solver){ solver->print_number_paths(); }
+void print_number_paths(PricerSolver *solver){ solver->PrintNumberPaths(); }
 
 size_t get_datasize(PricerSolver *solver) { return solver->get_datasize(); }
 
@@ -167,7 +184,7 @@ double get_edge_cost(PricerSolver *solver, int idx) {return solver->get_cost_edg
 
 int init_tables(PricerSolver *solver) {
     int val = 0;
-    solver->init_tables();
+    // solver->init_tables();
     return val;
 }
 
@@ -225,17 +242,7 @@ int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
 
     Optimal_Solution<double> sol;
 
-    switch(parms->pricing_solver){
-        case bdd_solver:
-            sol = pd->solver->solve_weight_zdd_double(pd->pi);
-        break;
-        case zdd_solver:
-            sol = pd->solver->solve_duration_zdd_double(pd->pi);
-        break;
-        case dp_solver:
-            sol = pd->solver->dynamic_programming_ti(pd->pi);
-        break;
-    }
+    sol = pd->solver->pricing_algorithm(pd->pi);
 
     // if(pd->iterations%5 == 0 || evaluate) {
     //     pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
@@ -260,7 +267,7 @@ CLEAN:
 
 int solve_pricing_ti(wctdata *pd, wctparms *parms){
     int val = 0;
-    Optimal_Solution<double> sol = pd->solver->dynamic_programming_ti(pd->pi);
+    Optimal_Solution<double> sol = pd->solver->pricing_algorithm(pd->pi);
 
     if(sol.obj > 0.000001) {
         val = construct_sol(pd, sol);
@@ -300,17 +307,7 @@ int solve_stab(wctdata *pd, wctparms *parms) {
                                pd->pi_in, &(pd->eta_in), pd->pi_out,
                                &(pd->eta_out));
             Optimal_Solution<double> sol;
-            switch (parms->pricing_solver) {
-                case bdd_solver:
-                    sol = solver->solve_weight_zdd_double(pd->pi_sep);
-                break;
-                case zdd_solver:
-                    sol = solver->solve_duration_zdd_double(pd->pi_sep);
-                break;
-                case dp_solver:
-                    sol = solver->dynamic_programming_ti(pd->pi_sep);
-                break;
-            }
+            sol = solver->pricing_algorithm(pd->pi_sep);
 
             result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
             pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
@@ -369,7 +366,7 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
                            pd->pi_in, &(pd->eta_in), pd->pi_out,
                            &(pd->eta_out));
         Optimal_Solution<double> sol =
-            solver->solve_weight_zdd_double(pd->pi_sep);
+            solver->pricing_algorithm(pd->pi_sep);
         result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
 
         if (result_sep < pd->eta_sep) {
