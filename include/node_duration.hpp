@@ -15,33 +15,43 @@ class PrevNode {
 
   public:
     T f;
+    Job *prev_job;
     /**
      * Constructor
      */
-    PrevNode(T &_f, PrevNode<T> *&_prev, bool &_high): f(_f),
-        prev(_prev),
-        high(_high){
+    PrevNode(T &_f, PrevNode<T> *&_prev, bool &_high) :
+      prev(_prev),
+      high(_high),
+      head_node(nullptr),
+      f(_f),
+      prev_job(nullptr){};
 
-    };
-    PrevNode() : f(-DBL_MAX){
-      prev = nullptr;
-      high = false;
-      head_node = nullptr;
-    };
+    PrevNode() :
+      prev(nullptr),
+      high(false),
+      head_node(nullptr),
+      f(-DBL_MAX),
+      prev_job(nullptr){};
 
     /**
      * Copy Constructor
      */
-    PrevNode<T>(const PrevNode<T> &src): prev(src.prev), high(src.high), head_node(src.head_node), f(src.f) {
-      
-    }
+    PrevNode<T>(const PrevNode<T> &src) :
+      prev(src.prev),
+      high(src.high),
+      head_node(src.head_node),
+      f(src.f),
+      prev_job(src.prev_job) {}
 
     /**
      * Move Constructor
      */
-    PrevNode<T>(const PrevNode<T> &&src): prev(src.prev), high (src.high), head_node (src.head_node), f(src.f) {
-      
-    }
+    PrevNode<T>(const PrevNode<T> &&src) :
+      prev(src.prev),
+      high (src.high),
+      head_node(src.head_node),
+      f(src.f),
+      prev_job(src.prev_job) {}
 
     /**
      * Copy Assignment
@@ -51,10 +61,11 @@ class PrevNode {
         return *this;
       }
 
-      f = src.f;
       prev = src.prev;
       high = src.high;
       head_node = src.head_node;
+      f = src.f;
+      prev_job = src.prev_job;
 
       return *this;
     }
@@ -71,6 +82,7 @@ class PrevNode {
       prev = src.prev;
       high = src.high;
       head_node = src.head_node;
+      prev_job = src.prev_job;
 
       return *this;
     }
@@ -117,13 +129,13 @@ class PrevNode {
       return GetPrev() == nullptr ? nullptr : GetPrev()->GetJob();
     }
 
-    void UpdateSolution(T _f, PrevNode<T>* && _prev, bool &&_high){
+    void UpdateSolution(T _f, PrevNode<T>* && _prev, bool &&_high) {
       f = _f;
       prev = _prev;
       high = _high;
     }
 
-    void UpdateSolution(PrevNode<T> &_node){
+    void UpdateSolution(PrevNode<T> &_node) {
       f = _node.f;
       prev = _node.prev;
       high = _node.high;
@@ -135,6 +147,23 @@ class PrevNode {
 
     int GetWeight(){
       return head_node->GetWeight();
+    }
+
+    void UpdateNode(PrevNode<T> &_n){
+      f = _n.f;
+      high = _n.high;
+      prev = _n.prev;
+      prev_job = _n.prev_job;
+    }
+
+    void UpdateNode(T _f, Job *_job, bool &&_high) {
+      f = _f;
+      high = _high;
+      prev_job = _job;
+    }
+
+    Job* get_prev_job() {
+      return prev_job;
     }
 };
 
