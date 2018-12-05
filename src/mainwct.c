@@ -167,7 +167,7 @@ int main(int ac, char **av) {
     /**
      * Build DD at the root node
      */
-    if(parms->pricing_solver <= zdd_solver_cycle) {
+    if(parms->pricing_solver < dp_solver) {
         CCutil_start_timer(&(problem.tot_build_dd));
         root->solver = newSolver(root->jobarray, root->ordered_jobs, &(problem.parms));
         CCutil_stop_timer(&(problem.tot_build_dd), 0);
@@ -185,7 +185,7 @@ int main(int ac, char **av) {
         CCutil_start_timer(&(problem.tot_lb_root));
         compute_lower_bound(&problem, &(problem.root_pd));
         problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
-        CCutil_stop_timer(&(problem.tot_lb_root), 0);
+        CCutil_stop_timer(&(problem.tot_lb_root), 1);
     }
 
 CLEAN:
