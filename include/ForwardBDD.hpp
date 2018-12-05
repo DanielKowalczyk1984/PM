@@ -1,5 +1,5 @@
-#ifndef DURATION_BDD_HPP
-#define DURATION_BDD_HPP
+#ifndef FORWARD_BDD_HPP
+#define FORWARD_BDD_HPP
 #include <tdzdd/DdEval.hpp>
 #include <OptimalSolution.hpp>
 #include <node_duration.hpp>
@@ -78,11 +78,9 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
     using ForwardBddBase<E, T>::pi;
     using ForwardBddBase<E, T>::num_jobs;
 
-    ForwardBddCycle(T *_pi, int _num_jobs): ForwardBddBase<E, T>(_pi, _num_jobs) {
-    }
+    ForwardBddCycle(T *_pi, int _num_jobs) : ForwardBddBase<E, T>(_pi, _num_jobs) {}
 
-    ForwardBddCycle(int _num_jobs) : ForwardBddBase<E, T>(_num_jobs){
-    }
+    explicit ForwardBddCycle(int _num_jobs) : ForwardBddBase<E, T>(_num_jobs) {}
 
     ForwardBddCycle(): ForwardBddBase<E, T>(){
         pi = nullptr;
@@ -180,7 +178,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
     ForwardBddSimple(T *_pi, int _num_jobs): ForwardBddBase<E, T>(_pi, _num_jobs) {
     }
 
-    ForwardBddSimple(int _num_jobs)
+    explicit ForwardBddSimple(int _num_jobs)
     :  ForwardBddBase<E, T>(_num_jobs){
     }
 
@@ -213,12 +211,12 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
     void evalNode(Node<T> &n) const override {
         Job *tmp_j = n.GetJob();
         assert(tmp_j != nullptr);
-        double result;
+        T result;
 
         int      weight = n.GetWeight();
         T g;
         Node<T>* p0 = n.child[0];
-        Node<T>* p1 =  n.child[1];
+        Node<T>* p1 = n.child[1];
         result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
 
         /**
@@ -243,7 +241,4 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
     }
 };
 
-
-#endif // DURATION_BDD_HPP
-
-
+#endif // FORWARD_BDD_HPP
