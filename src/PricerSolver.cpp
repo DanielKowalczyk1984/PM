@@ -1,4 +1,5 @@
 #include <PricerSolver.hpp>
+#include <PricerConstruct.hpp>
 #include <set>
 #include <vector>
 
@@ -350,6 +351,26 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
     delete[] A;
     delete[] F;
     return opt_sol;
+}
+
+PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs) : 
+    PricerSolverBdd(_jobs, _ordered_jobs) {
+    evaluator = BackwardBddSimpleDouble(njobs);
+}
+
+Optimal_Solution<double> PricerSolverBddBackwardSimple::pricing_algorithm(double *_pi) {
+    evaluator.initializepi(_pi);
+    return dd->evaluate_backward(evaluator, table);
+}
+
+PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs) : 
+    PricerSolverBdd(_jobs, _ordered_jobs) {
+    evaluator = BackwardBddCycleDouble(njobs);
+}
+
+Optimal_Solution<double> PricerSolverBddBackwardCycle::pricing_algorithm(double *_pi) {
+    evaluator.initializepi(_pi);
+    return dd->evaluate_backward(evaluator, table);
 }
 
 /**
