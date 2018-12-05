@@ -1,9 +1,8 @@
 #ifndef INCLUDE_PRICERSOLVER_HPP
 #define INCLUDE_PRICERSOLVER_HPP
 
-#include <PricerEvaluate.hpp>
-#include <PricerConstruct.hpp>
 #include <tdzdd/DdStructure.hpp>
+#include <PricerEvaluate.hpp>
 #include <scheduleset.h>
 using namespace std;
 
@@ -155,6 +154,26 @@ public:
     void InitTable();
 
     Optimal_Solution<double> pricing_algorithm(double *_pi);
+};
+
+class PricerSolverBddBackwardSimple : public PricerSolverBdd {
+private:
+    BackwardBddSimpleDouble evaluator;
+public:
+    PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+
+    Optimal_Solution<double> pricing_algorithm(double *_pi);
+
+};
+
+class PricerSolverBddBackwardCycle : public PricerSolverBdd {
+private:
+    BackwardBddCycleDouble evaluator;
+public:
+    PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+
+    Optimal_Solution<double> pricing_algorithm(double *_pi);
+
 };
 
 #endif  // INCLUDE_PRICERSOLVER_HPP
