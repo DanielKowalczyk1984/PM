@@ -55,6 +55,8 @@ PricerSolverBase* newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, wctparms *
         break;
         case bdd_solver_backward_simple:
             return new PricerSolverBddBackwardSimple(jobs, ordered_jobs);
+        case bdd_solver_backward_cycle:
+            return new PricerSolverBddBackwardCycle (jobs, ordered_jobs);
         default:
             return new PricerSolverCycle(jobs, ordered_jobs);
     }
