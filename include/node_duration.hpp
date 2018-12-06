@@ -149,17 +149,16 @@ class PrevNode {
       return head_node->GetWeight();
     }
 
-    void UpdateNode(PrevNode<T> &_n){
-      f = _n.f;
-      high = _n.high;
-      prev = _n.prev;
-      prev_job = _n.prev_job;
-    }
-
-    void UpdateNode(T _f, Job *_job, bool &&_high) {
-      f = _f;
+    void UpdateNode(T _f, bool _high, PrevNode<T> *_n){
+      if(_high) {
+        f = _f;
+        prev_job = GetJob();
+      } else {
+        f = _n->f;
+        prev_job = _n->prev_job;
+      }
       high = _high;
-      prev_job = _job;
+      prev = _n;
     }
 
     Job* get_prev_job() {
