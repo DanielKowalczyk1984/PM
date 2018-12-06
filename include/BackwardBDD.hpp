@@ -113,30 +113,30 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
             T obj1 = p1->prev1.GetF() + result;
 
             if(obj0 < obj1) {
-                n.prev1.UpdateNode(obj1, tmp_j, true);
+                n.prev1.UpdateNode(obj1, true, &(p1->prev1));
 
                 prev_job = p0->prev1.get_prev_job();
 
                 if(prev_job != tmp_j) {
-                    n.prev2.UpdateNode(p0->prev1);
+                    n.prev2.UpdateNode(0.0, false, &(p0->prev1));
                 } else {
-                    n.prev2.UpdateNode(p0->prev2);
+                    n.prev2.UpdateNode(0.0, false, &(p0->prev2));
                 }
             } else {
-                n.prev1.UpdateNode(p0->prev1);
+                n.prev1.UpdateNode(0.0, false, &(p0->prev1));
                 obj0 = p0->prev2.GetF();
 
                 if(obj0 >= obj1) {
-                    n.prev2.UpdateNode(p0->prev2);
+                    n.prev2.UpdateNode(0.0, false, &(p0->prev2));
                 } else {
                     if(tmp_j != n.prev1.get_prev_job()) {
-                        n.prev2.UpdateNode(obj1, tmp_j, true);
+                        n.prev2.UpdateNode(obj1, true, &(p1->prev1));
                     } else {
                         obj1 = p1->prev2.GetF() + result;
                         if(obj0 >= obj1) {
-                            n.prev2.UpdateNode(p0->prev2);
+                            n.prev2.UpdateNode(0.0, false, &(p0->prev2));
                         } else {
-                            n.prev2.UpdateNode(obj1, tmp_j, true);
+                            n.prev2.UpdateNode(obj1, true, &(p1->prev2));
                         }
                     }
                 }
@@ -146,16 +146,16 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
             T obj1 = p1->prev2.GetF() + result;
 
             if(obj0 < obj1) {
-                n.prev1.UpdateNode(obj1, tmp_j, true);
+                n.prev1.UpdateNode(obj1, true, &(p1->prev2));
                 prev_job = p0->prev1.get_prev_job();
                 if(prev_job != tmp_j) {
-                    n.prev2.UpdateNode(p0->prev1);
+                    n.prev2.UpdateNode(0.0, false, &(p0->prev1));
                 } else {
-                    n.prev2.UpdateNode(p0->prev2);
+                    n.prev2.UpdateNode(0.0, false, &(p0->prev2));
                 }
             } else {
-                n.prev1.UpdateNode(p0->prev1);
-                n.prev2.UpdateNode(p0->prev2);
+                n.prev1.UpdateNode(0.0 , false, &(p0->prev1));
+                n.prev2.UpdateNode(0.0 , false, &(p0->prev2));
             }
         }
     }
@@ -171,20 +171,20 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
     Optimal_Solution<T> get_objective(Node<T> &n) const {
         Optimal_Solution<T> sol(pi[num_jobs]);
 
-        // Node<T> *aux_node = &n;
-        // Job *aux_job =  n.GetJob();
+        PrevNode<T> *aux_node = &n.prev1;
+        Job *aux_job =  aux_node->GetJob();
 
-        // while (aux_job) {
-        //     if (aux_node->prev1.GetHigh()) {
-        //         sol.push_job_back(aux_job, pi[aux_job->job]);
-        //         aux_node = aux_node->child[1];
-        //         aux_job = aux_node->GetJob();
-        //     } else {
-        //         aux_node = aux_node->child[0];
-        //         aux_job = aux_node->GetJob();
-        //     }
+        while (aux_job) {
+            if (aux_node->GetHigh()) {
+                sol.push_job_back(aux_job, pi[aux_job->job]);
+                aux_node = aux_node->GetPrev();
+                aux_job = aux_node->GetJob();
+            } else {
+                aux_node = aux_node->GetPrev();
+                aux_job = aux_node->GetJob();
+            }
 
-        // }
+        }
 
         return sol;
     }
