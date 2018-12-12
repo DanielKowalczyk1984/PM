@@ -121,14 +121,23 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
 
 static double compute_reduced_cost(Optimal_Solution<double> &sol,
                                double *                  pi,
-                               int                       nbjobs) {
+                               int                       nbjobs,
+                               wctparms *parms) {
     double result = pi[nbjobs];
     int C = 0;
 
-    for (unsigned i = 0; i < sol.jobs->len; ++i) {
-        Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-        C += tmp_j->processingime;
-        result += pi[tmp_j->job] - value_Fj(C, tmp_j);
+    if (parms->pricing_solver >= bdd_solver_backward_simple) {
+        for (guint i = 0; i < sol.jobs->len; ++i) {
+            Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
+            C += tmp_j->processingime;
+            result += pi[tmp_j->job] - value_Fj(C, tmp_j);
+        }
+    } else {
+        for (int i = sol.jobs->len - 1; i >= 0; --i) {
+            Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
+            C += tmp_j->processingime;
+            result += pi[tmp_j->job] - value_Fj(C, tmp_j);
+        }
     }
 
     return result;
@@ -275,30 +284,15 @@ CLEAN:
     return val;
 }
 
-int solve_pricing_ti(wctdata *pd, wctparms *parms) {
-    int val = 0;
-    Optimal_Solution<double> sol = pd->solver->pricing_algorithm(pd->pi);
-
-    if (sol.obj > 0.000001) {
-        val = construct_sol(pd, sol);
-        CCcheck_val_2(val, "Failed in construction");
-    } else {
-        pd->nnewsets = 0;
-    }
-
-
-CLEAN:
-    return val;
-}
-
 
 int solve_stab(wctdata *pd, wctparms *parms) {
     int           val = 0;
     PricerSolver *solver = pd->solver;
         double k = 0.0;
         double alpha;
-        bool   mispricing = false;
+        bool   mispricing = true;
         double result_sep;
+        pd->update = 0;
 
     // if((pd->LP_lower_bound_BB - pd->eta_in)/(pd->LP_lower_bound_BB) > 0.5) {
     //     Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_out);
@@ -310,38 +304,26 @@ int solve_stab(wctdata *pd, wctparms *parms) {
     //         pd->update = 1;
     //     }
     // } else {
-        do {
-            k += 1.0;
-            alpha = CC_MAX(0, 1.0 - k * (1.0 - pd->alpha));
-            compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
-                               pd->pi_in, &(pd->eta_in), pd->pi_out,
-                               &(pd->eta_out));
-            Optimal_Solution<double> sol;
-            sol = solver->pricing_algorithm(pd->pi_sep);
+    do {
+        k += 1.0;
+        alpha = CC_MAX(0, 1.0 - k * (1.0 - pd->alpha));
+        compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
+                           pd->pi_in, &(pd->eta_in), pd->pi_out,
+                           &(pd->eta_out));
+        Optimal_Solution<double> sol;
+        sol = solver->pricing_algorithm(pd->pi_sep);
 
-            result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
-            pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
+        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
+        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs, parms);
 
-            if (pd->reduced_cost >= 0.00001) {
-                val = construct_sol(pd, sol);
-                CCcheck_val_2(val, "Failed in construct_sol_stab");
-                pd->update = 1;
-                mispricing = false;
-            } else {
-                pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
+        if (pd->reduced_cost >= 0.00001) {
+            val = construct_sol(pd, sol);
+            CCcheck_val_2(val, "Failed in construct_sol_stab");
+            pd->update = 1;
+            mispricing = false;
+        }
+    } while (mispricing && alpha > 0); /** mispricing check */
 
-                if (pd->reduced_cost < 0.000001) {
-                    CCcheck_val_2(val, "Failed in construct_sol_stab");
-                    mispricing = true;
-                    pd->update = 0;
-                } else {
-                    val = construct_sol(pd, sol);
-                    mispricing = false;
-                    pd->update = 1;
-                }
-            }
-        } while (mispricing && alpha > 0); /** mispricing check */
-    // }
 
 
     if (result_sep > pd->eta_in) {
