@@ -144,7 +144,7 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
     void initializenode(ForwardZddNode<T>& n) const override {
         for (auto &it: n.list) {
             if(it->GetWeight() == 0) {
-                it->prev1.UpdateSolution(pi[num_jobs], nullptr, false);
+                it->prev1.UpdateSolution(-pi[num_jobs], nullptr, false);
                 it->prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
             } else {
                 it->prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
@@ -155,7 +155,7 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
 
     void initializerootnode(ForwardZddNode<T> &n) const override {
         for(auto &it: n.list){
-            it->prev1.f = pi[num_jobs];
+            it->prev1.f = -pi[num_jobs];
             it->prev2.SetF(-DBL_MAX/2);
         }
     }
@@ -247,7 +247,7 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
     void initializenode(ForwardZddNode<T>& n) const override {
         for (auto &it: n.list) {
             if(it->GetWeight() == 0) {
-                it->prev1.UpdateSolution(pi[num_jobs], nullptr, false);
+                it->prev1.UpdateSolution(-pi[num_jobs], nullptr, false);
             } else {
                 it->prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
             }
@@ -256,7 +256,7 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
 
     void initializerootnode(ForwardZddNode<T> &n) const override {
         for(auto &it: n.list){
-            it->prev1.f = pi[num_jobs];
+            it->prev1.f = -pi[num_jobs];
         }
     }
 

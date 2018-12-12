@@ -297,7 +297,7 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
 
 
     /** Initialisation */
-    F[0] = _pi[njobs];
+    F[0] = -_pi[njobs];
     A[0] = nullptr;
 
     for (int t = 1; t < Hmax + 1; t++) {

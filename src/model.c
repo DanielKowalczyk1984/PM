@@ -101,7 +101,7 @@ int addColToLP(scheduleset *set, wctdata *pd) {
     }
 
     cind = njobs;
-    cval = 1.0;
+    cval = -1.0;
     val = wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
     CCcheck_val_2(val, "Failed wctlp_chgcoef");
 
@@ -140,8 +140,8 @@ int build_lp(wctdata *pd, int construct) {
     /**
      * add number of machines constraint (convexfication)
      */
-    val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_LESS_EQUAL,
-                       (double)nmachines, (char *)NULL);
+    val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_GREATER_EQUAL,
+                       -(double)nmachines, (char *)NULL);
 
     wctlp_get_nb_rows(pd->LP, &nb_row);
 

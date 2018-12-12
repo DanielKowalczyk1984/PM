@@ -64,7 +64,7 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.prev1.f = pi[num_jobs];
+        n.prev1.f = -pi[num_jobs];
     }
 
     Optimal_Solution<T> get_objective(Node<T> &n) const {
@@ -149,7 +149,7 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.prev1.f = pi[num_jobs];
+        n.prev1.f = -pi[num_jobs];
     }
 
     Optimal_Solution<T> get_objective(Node<T> &n) const {

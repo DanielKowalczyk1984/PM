@@ -94,7 +94,7 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
 
     void initializenode(Node<T>& n) const override {
         if(n.GetWeight() == 0) {
-            n.prev1.UpdateSolution(pi[num_jobs], nullptr, false);
+            n.prev1.UpdateSolution(-pi[num_jobs], nullptr, false);
             n.prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
         } else {
             n.prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
@@ -194,7 +194,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
 
     void initializenode(Node<T>& n) const override {
         if(n.GetWeight() == 0) {
-            n.prev1.UpdateSolution(pi[num_jobs], nullptr, false);
+            n.prev1.UpdateSolution(-pi[num_jobs], nullptr, false);
         } else {
             n.prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
         }
