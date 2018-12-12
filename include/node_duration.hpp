@@ -99,7 +99,7 @@ class PrevNode {
         high = _high;
     }
 
-    void SetHeadNode(Node<T>* _head){
+    void SetHeadNode(Node<T>* _head) {
       head_node = _head;
     }
 
@@ -149,7 +149,7 @@ class PrevNode {
       return head_node->GetWeight();
     }
 
-    void UpdateNode(T _f, bool _high, PrevNode<T> *_n){
+    void UpdateNode(PrevNode<T> *_n, T _f = 0, bool _high = false){
       if(_high) {
         f = _f;
         prev_job = GetJob();
