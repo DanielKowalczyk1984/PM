@@ -87,7 +87,10 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
 
         return sol;
     }
+
 };
+
+
 
 template<typename E, typename T>
 class BackwardBddCycle : public BackwardBddBase<E, T> {
@@ -101,61 +104,42 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
 
     void evalNode(Node<T> &n) const override {
         Job *tmp_j = n.GetJob();
-        int      weight = n.GetWeight();
-        Node<T> *p0 = n.child[0];
-        Node<T> *p1 = n.child[1];
-        T result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
+        int      weight{n.GetWeight()};
+        Node<T> *p0  {n.child[0]};
+        Node<T> *p1  {n.child[1]};
+        T result {- value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job]};
 
-        Job *prev_job = p1->prev1.get_prev_job();
+        Job *prev_job{p1->prev1.get_prev_job()};
 
-        if(prev_job != tmp_j) {
-            T obj0 = p0->prev1.GetF();
-            T obj1 = p1->prev1.GetF() + result;
+        n.prev1.UpdateNode(&(p0->prev1));
+        n.prev2.UpdateNode(&(p0->prev2));
+        bool diff =  bool_diff_Fij(weight, prev_job, tmp_j);
+        bool diff1 = bool_diff_Fij(weight, p1->prev1.get_prev_job(), tmp_j); 
+        bool diff2 = bool_diff_Fij(weight, p1->prev2.get_prev_job(), tmp_j); 
 
-            if(obj0 < obj1) {
-                n.prev1.UpdateNode(obj1, true, &(p1->prev1));
+        if(prev_job != tmp_j ) {
+            T obj1 {p1->prev1.GetF() + result};
+            T obj2 {p1->prev2.GetF() + result};
 
-                prev_job = p0->prev1.get_prev_job();
-
-                if(prev_job != tmp_j) {
-                    n.prev2.UpdateNode(0.0, false, &(p0->prev1));
-                } else {
-                    n.prev2.UpdateNode(0.0, false, &(p0->prev2));
+            if(obj1 > n.prev1.GetF()) {
+                if(tmp_j != n.prev1.get_prev_job()) {
+                    n.prev2.UpdateNode(&(p0->prev1));
                 }
-            } else {
-                n.prev1.UpdateNode(0.0, false, &(p0->prev1));
-                obj0 = p0->prev2.GetF();
-
-                if(obj0 >= obj1) {
-                    n.prev2.UpdateNode(0.0, false, &(p0->prev2));
-                } else {
-                    if(tmp_j != n.prev1.get_prev_job()) {
-                        n.prev2.UpdateNode(obj1, true, &(p1->prev1));
-                    } else {
-                        obj1 = p1->prev2.GetF() + result;
-                        if(obj0 >= obj1) {
-                            n.prev2.UpdateNode(0.0, false, &(p0->prev2));
-                        } else {
-                            n.prev2.UpdateNode(obj1, true, &(p1->prev2));
-                        }
-                    }
-                }
+                n.prev1.UpdateNode(&(p1->prev1), obj1, true);
+            } else if (obj1 > n.prev2.GetF() && tmp_j != n.prev1.get_prev_job() && diff1){
+                n.prev2.UpdateNode(&(p1->prev1), obj1, true);
+            } else if (obj2 > n.prev2.GetF() && tmp_j != n.prev1.get_prev_job() && diff2) {
+                n.prev2.UpdateNode(&(p1->prev2), obj2, true);
             }
         } else {
-            T obj0 = p0->prev1.GetF();
             T obj1 = p1->prev2.GetF() + result;
-
-            if(obj0 < obj1) {
-                n.prev1.UpdateNode(obj1, true, &(p1->prev2));
-                prev_job = p0->prev1.get_prev_job();
-                if(prev_job != tmp_j) {
-                    n.prev2.UpdateNode(0.0, false, &(p0->prev1));
-                } else {
-                    n.prev2.UpdateNode(0.0, false, &(p0->prev2));
+            if(obj1 > n.prev1.GetF()) {
+                if(tmp_j != n.prev1.get_prev_job()) {
+                    n.prev2.UpdateNode(&(p0->prev1));
                 }
-            } else {
-                n.prev1.UpdateNode(0.0 , false, &(p0->prev1));
-                n.prev2.UpdateNode(0.0 , false, &(p0->prev2));
+                n.prev1.UpdateNode(&(p1->prev2), obj1, true);
+            } else if (obj1 > n.prev2.GetF() && tmp_j != n.prev1.get_prev_job()){
+                n.prev2.UpdateNode(&(p1->prev2), obj1, true);
             }
         }
     }
