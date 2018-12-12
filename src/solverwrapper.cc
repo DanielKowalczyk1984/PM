@@ -4,23 +4,23 @@
 #include <vector>
 
 template <typename T = double, bool reverse = false>
-int construct_sol(wctdata *pd, Optimal_Solution<T> &sol) {
+int construct_sol(wctdata *pd, Optimal_Solution<T> *sol) {
     int          val = 0;
     int          nbset = 1;
     scheduleset *newset = scheduleset_alloc_bis(pd->njobs);
     CCcheck_NULL_3(newset, "Failed to allocate memory newset");
 
-    for (unsigned i = 0; i < sol.jobs->len; ++i) {
-        Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
+    for (unsigned i = 0; i < sol->jobs->len; ++i) {
+        Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol->jobs, i));
         g_hash_table_add(newset->table, tmp_j);
     }
-    newset->jobs = sol.jobs;
-    sol.jobs = nullptr;
-    newset->e_list = sol.e_list;
-    sol.e_list = nullptr;
+    newset->jobs = sol->jobs;
+    sol->jobs = nullptr;
+    newset->e_list = sol->e_list;
+    sol->e_list = nullptr;
 
-    newset->totwct = sol.cost;
-    newset->totweight = sol.C_max;
+    newset->totwct = sol->cost;
+    newset->totweight = sol->C_max;
     pd->newsets = newset;
     pd->nnewsets = 1;
 CLEAN:
@@ -39,7 +39,9 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
                                double *                  pi,
                                int                       nbjobs);
 
-PricerSolverBase* newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, wctparms *parms) {
+PricerSolverBase* newSolver(GPtrArray *jobs,
+                            GPtrArray *ordered_jobs,
+                            wctparms *parms) {
     switch (parms->pricing_solver) {
         case bdd_solver_simple:
             return new PricerSolverBddSimple(jobs, ordered_jobs);
@@ -72,8 +74,6 @@ PricerSolverBase* newSolverDp(GPtrArray *_jobs, int _Hmax, wctparms *parms) {
         break;
     }
 }
-
-//  PricerSolver *copySolver(PricerSolver *src) { return new PricerSolver(*src); }
 
 void print_dot_file(PricerSolver *solver, char *name) {
     solver->create_dot_zdd(name);
@@ -114,8 +114,26 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
     }
 
     result = CC_MIN(0.0, sol.cost - result);
-    result = rhs[nbjobs] * result;
+    result = -rhs[nbjobs] * result;
     result += a;
+    // printf("result = %f\n", result);
+
+    // result = 0.0;
+    // for(int i = 0; i <= nbjobs; ++i)
+    // {
+    //     result += rhs[i]*pi[i];
+    // }
+
+    // int C = 0;
+    // for(int i = 0; i < sol.jobs->len; ++i)
+    // {
+    //     Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
+    //     C += tmp_j->processingime;
+    //     result -= pi[tmp_j->job] - value_Fj(C, tmp_j);
+    // }
+    // result -= pi[nbjobs];
+    // printf("result2 = %f\n", result);
+
     return result;
 }
 
@@ -123,7 +141,7 @@ static double compute_reduced_cost(Optimal_Solution<double> &sol,
                                double *                  pi,
                                int                       nbjobs,
                                wctparms *parms) {
-    double result = pi[nbjobs];
+    double result = -pi[nbjobs];
     int C = 0;
 
     if (parms->pricing_solver >= bdd_solver_backward_simple) {
@@ -139,6 +157,8 @@ static double compute_reduced_cost(Optimal_Solution<double> &sol,
             result += pi[tmp_j->job] - value_Fj(C, tmp_j);
         }
     }
+
+    sol.obj = result;
 
     return result;
 }
@@ -199,7 +219,9 @@ size_t get_numberrows_zdd(PricerSolver *solver) {
     return solver->get_numberrows_zdd();
 }
 
-double get_edge_cost(PricerSolver *solver, int idx) {return solver->get_cost_edge(idx);}
+double get_edge_cost(PricerSolver *solver, int idx) {
+    return solver->get_cost_edge(idx);
+}
 
 int init_tables(PricerSolver *solver) {
     int val = 0;
@@ -213,11 +235,12 @@ static void compute_subgradient(Optimal_Solution<double> &sol,
                                 int                       nbjobs,
                                 int                       nbmachines) {
     fill_dbl(sub_gradient, nbjobs, 1.0);
-    sub_gradient[nbjobs] = nbmachines;
+    sub_gradient[nbjobs] = -rhs[nbjobs] + 1;
 
-    // for (auto &v : sol.jobs) {
-    //     sub_gradient[v] -= (double)nbmachines * 1.0;
-    // }
+    for (int i = 0; i < sol.jobs->len; i++) {
+        Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
+        sub_gradient[tmp_j->job] -= 1.0;
+    }
 }
 
 static void adjust_alpha(double *pi_out,
@@ -262,23 +285,18 @@ int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
     Optimal_Solution<double> sol;
 
     sol = pd->solver->pricing_algorithm(pd->pi);
+    pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs, parms);
 
-    // if(pd->iterations%5 == 0 || evaluate) {
-    //     pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
-    //     pd->solver->evaluate_nodes(pd->pi, pd->problem->opt_sol->tw, pd->LP_lower_bound_BB , pd->problem->nmachines, pd->reduced_cost);
-    // }
-
-    if (sol.obj > 0.000001) {
-       val = construct_sol(pd, sol);
+    if (pd->reduced_cost > 0.000001) {
+       val = construct_sol(pd, &sol);
        CCcheck_val_2(val, "Failed in construction")
     } else {
         pd->nnewsets = 0;
     }
 
-
-    if (pd->iterations%pd->njobs == 0) {
-        print_number_nodes_edges(pd);
-    }
+    // if (pd->iterations%pd->njobs == 0) {
+    //     print_number_nodes_edges(pd);
+    // }
 
 CLEAN:
     return val;
@@ -294,16 +312,6 @@ int solve_stab(wctdata *pd, wctparms *parms) {
         double result_sep;
         pd->update = 0;
 
-    // if((pd->LP_lower_bound_BB - pd->eta_in)/(pd->LP_lower_bound_BB) > 0.5) {
-    //     Optimal_Solution<double> sol = solver->solve_weight_zdd_double(pd->pi_out);
-    //     result_sep = compute_lagrange(sol, pd->rhs, pd->pi_out, pd->njobs);
-    //     pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
-    //     if(pd->reduced_cost >= 0.00001) {
-    //         val = construct_sol(pd, sol);
-    //         CCcheck_val_2(val, "Failed in construct_sol_stab");
-    //         pd->update = 1;
-    //     }
-    // } else {
     do {
         k += 1.0;
         alpha = CC_MAX(0, 1.0 - k * (1.0 - pd->alpha));
@@ -314,10 +322,11 @@ int solve_stab(wctdata *pd, wctparms *parms) {
         sol = solver->pricing_algorithm(pd->pi_sep);
 
         result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs, parms);
+        pd->reduced_cost =
+            compute_reduced_cost(sol, pd->pi_out, pd->njobs, parms);
 
         if (pd->reduced_cost >= 0.00001) {
-            val = construct_sol(pd, sol);
+            val = construct_sol(pd, &sol);
             CCcheck_val_2(val, "Failed in construct_sol_stab");
             pd->update = 1;
             mispricing = false;
@@ -348,8 +357,8 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
     double        k = 0.0;
     double        alpha;
     double        result_sep;
-    double        result_out;
-    bool          mispricing = false;
+    bool          mispricing = true;
+    pd->update = 0;
 
     do {
         k += 1.0;
@@ -357,31 +366,22 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
         compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
                            pd->pi_in, &(pd->eta_in), pd->pi_out,
                            &(pd->eta_out));
-        Optimal_Solution<double> sol =
-            solver->pricing_algorithm(pd->pi_sep);
+        Optimal_Solution<double> sol;
+        sol = solver->pricing_algorithm(pd->pi_sep);
         result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
+        pd->reduced_cost =
+            compute_reduced_cost(sol, pd->pi_out, pd->njobs, parms);
 
-        if (result_sep < pd->eta_sep) {
-            val = construct_sol(pd, sol);
-            CCcheck_val_2(val, "Failed in construct_sol_stab");
+        if (pd->reduced_cost >= 0.00001) {
             compute_subgradient(sol, pd->subgradient, pd->rhs, pd->njobs,
                                 pd->nmachines);
             adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient, pd->njobs,
                          alpha);
+            val = construct_sol(pd, &sol);
+            CCcheck_val_2(val, "Failed in construct_sol_stab");
             pd->alpha = alpha;
             pd->update = 1;
             mispricing = false;
-        } else {
-            result_out = compute_lagrange(sol, pd->rhs, pd->pi_out, pd->njobs);
-
-            if (result_out < pd->eta_out) {
-                val = construct_sol(pd, sol);
-                CCcheck_val_2(val, "Failed in construct_sol_stab");
-                mispricing = false;
-                pd->update = 0;
-            } else {
-                mispricing = true;
-            }
         }
     } while (mispricing && alpha > 0.0);
 
@@ -390,7 +390,7 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
         memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->njobs + 1));
     }
 
-    if (dbg_lvl() > 0) {
+    if (pd->iterations%pd->njobs == 0) {
         printf(
             " alpha = %f, result of primal bound and Lagragian bound: out =%f, "
             "in = %f\n",
