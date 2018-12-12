@@ -62,6 +62,7 @@ void g_reset_nb_layers(gpointer data, gpointer user_data);
 
 inline int value_Fj(int C, Job *j) { return j->weight * CC_MAX(0, C - j->duetime); }
 int value_diff_Fij(int C, Job *i, Job *j);
+int bool_diff_Fij(int , Job *, Job *);
 
 int solution_canonical_order(solution *sol, GPtrArray *intervals);
 void solution_calculate_all(solution *sol);
