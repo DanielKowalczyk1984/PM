@@ -55,13 +55,13 @@ public:
             aux_job = aux_prev_node->GetJob();
             if(ptr_node->GetHigh()) {
                 sol.C_max += aux_job->processingime;
-                g_ptr_array_insert(sol.jobs, 0, aux_job);
+                g_ptr_array_add(sol.jobs, aux_job);
             }
             ptr_node = aux_prev_node;
         }
 
         weight = 0;
-        for(size_t i = 0; i < sol.jobs->len; i++){
+        for(int i = sol.jobs->len - 1; i >= 0; i--){
             aux_job = (Job *) g_ptr_array_index(sol.jobs, i);
             weight += aux_job->processingime;
             sol.cost +=  value_Fj(weight, aux_job);

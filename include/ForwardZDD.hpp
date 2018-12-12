@@ -108,7 +108,7 @@ public:
                     sol.cost = sol.cost + value_Fj(weight, aux_job);
                     sol.obj += pi[aux_job->job] - value_Fj(weight, aux_job);
                 }
-                g_ptr_array_insert(sol.jobs, 0, aux_job);
+                g_ptr_array_add(sol.jobs, aux_job);
             }
             ptr_node = aux_prev_node;
         }
@@ -128,7 +128,7 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
     ForwardZddCycle(T *_pi, int _num_jobs): ForwardZddBase<E, T>(_pi, _num_jobs) {
     }
 
-    ForwardZddCycle(int _num_jobs) : ForwardZddBase<E, T>(_num_jobs){
+    explicit ForwardZddCycle(int _num_jobs) : ForwardZddBase<E, T>(_num_jobs){
     }
 
     ForwardZddCycle(): ForwardZddBase<E, T>(){
@@ -230,7 +230,7 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
     ForwardZddSimple(T *_pi, int _num_jobs): ForwardZddBase<E, T>(_pi, _num_jobs) {
     }
 
-    ForwardZddSimple(int _num_jobs)
+    explicit ForwardZddSimple(int _num_jobs)
     :  ForwardZddBase<E, T> (_num_jobs){
     }
 
