@@ -31,6 +31,11 @@ extern "C" {
 #define CC_MAX_PTR(x, y) (((x) > (y)) ? (&x) : (&y))
 #define CC_OURABS(a) (((a) >= 0) ? (a) : -(a))
 
+#ifndef SQR
+#define SQR(x)        ((x)*(x))
+#define SQRT(x)       (sqrt(x))
+#endif
+
 #define CCcheck_val_2(val, msg)                                                \
     {                                                                          \
         if ((val)) {                                                           \
