@@ -109,6 +109,67 @@ void PricerSolverBase::calculate_edges(scheduleset *set) {
     return;
 }
 
+// void PricerSolverBase::evaluate_nodes(double *pi,
+//     int UB,
+//     double LB,
+//     int nmachines,
+//     double reduced_cost) {
+//     double value;
+
+//     /** Calculate the distance from  the origin to the given node */
+//     for (int i = zdd->topLevel(); i > 0; i--) {
+//         size_t const m = zdd_table[i].size();
+//         int          layer = nlayers - i;
+//         job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
+//                                           ordered_jobs, layer);
+//         Job *job = tmp_pair->j;
+
+//         for (size_t j = 0; j < m; j++) {
+//             for (auto &it : zdd_table[i][j].list) {
+//                 if (i == zdd->topLevel()) {
+//                     it->dist = 0;
+//                 }
+
+//                 value = pi[job->job] - value_Fj(it->weight + job->processingime, job);
+
+//                 if (it->y->dist < it->dist + value) {
+//                     it->y->dist = it->dist + value;
+//                 }
+
+//                 if (it->n->dist < it->dist) {
+//                     it->n->dist  = it->dist;
+//                 }
+//             }
+//         }
+//     }
+
+//     /** check for each node the Lagrangian dual */
+//     for (int i = zdd->topLevel(); i > 0; i--) {
+//         size_t const m = zdd_table[i].size();
+
+//         for (size_t j = 0; j < m; j++) {
+//             for (auto &it : zdd_table[i][j].list) {
+//                 if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->b) > UB - 1 +
+//                         0.0001 && (it->calc)) {
+//                     it->calc = false;
+//                     nb_removed_edges++;
+//                 }
+
+//                 if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->c) > UB - 1
+//                         + 0.0001 && (it->calc0)) {
+//                     it->calc0 = false;
+//                     nb_removed_edges++;
+//                 }
+
+//                 if (it->calc0 == false && it->calc == false && it->remove_node == false) {
+//                     nb_removed_nodes++;
+//                     it->remove_node = true;
+//                 }
+//             }
+//         }
+//     }
+// }
+
 /**
  * PricerSolverBdd constructor
  */
@@ -584,64 +645,5 @@ Optimal_Solution<double> PricerSolverBddBackwardCycle::pricing_algorithm(
 //         }
 
 //         std::cout << std::endl;
-//     }
-// }
-
-
-// void PricerSolver::evaluate_nodes(double *pi, int UB, double LB, int nmachines,
-//                                   double reduced_cost) {
-//     double value;
-
-//     /** Calculate the distance from  the origin to the given node */
-//     for (int i = zdd->topLevel(); i > 0; i--) {
-//         size_t const m = zdd_table[i].size();
-//         int          layer = nlayers - i;
-//         job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
-//                                           ordered_jobs, layer);
-//         Job *job = tmp_pair->j;
-
-//         for (size_t j = 0; j < m; j++) {
-//             for (auto &it : zdd_table[i][j].list) {
-//                 if (i == zdd->topLevel()) {
-//                     it->dist = 0;
-//                 }
-
-//                 value = pi[job->job] - value_Fj(it->weight + job->processingime, job);
-
-//                 if (it->y->dist < it->dist + value) {
-//                     it->y->dist = it->dist + value;
-//                 }
-
-//                 if (it->n->dist < it->dist) {
-//                     it->n->dist  = it->dist;
-//                 }
-//             }
-//         }
-//     }
-
-//     /** check for each node the Lagrangian dual */
-//     for (int i = zdd->topLevel(); i > 0; i--) {
-//         size_t const m = zdd_table[i].size();
-
-//         for (size_t j = 0; j < m; j++) {
-//             for (auto &it : zdd_table[i][j].list) {
-//                 if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->b) > UB - 1 +
-//                         0.0001 && (it->calc)) {
-//                     it->calc = false;
-//                     nb_removed_edges++;
-//                 }
-
-//                 if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->c) > UB - 1
-//                         + 0.0001 && (it->calc0)) {
-//                     it->calc0 = false;
-//                     nb_removed_edges++;
-//                 }
-
-//                 if (it->calc0 == false && it->calc == false && it->remove_node == false) {
-//                     nb_removed_nodes++;
-//                     it->remove_node = true;
-//                 }
-//             }
-//         }
 //     }
 // }
