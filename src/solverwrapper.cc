@@ -2,6 +2,7 @@
 #include <PricerSolver.hpp>
 #include <iostream>
 #include <vector>
+#include <defs.h>
 
 template <typename T = double, bool reverse = false>
 int construct_sol(wctdata *pd, Optimal_Solution<T> *sol) {
@@ -24,7 +25,6 @@ int construct_sol(wctdata *pd, Optimal_Solution<T> *sol) {
     pd->newsets = newset;
     pd->nnewsets = 1;
 CLEAN:
-
     if (val) {
         schedulesets_free(&(newset), &(nbset));
     }
@@ -57,8 +57,10 @@ PricerSolverBase* newSolver(GPtrArray *jobs,
         break;
         case bdd_solver_backward_simple:
             return new PricerSolverBddBackwardSimple(jobs, ordered_jobs);
+        break;
         case bdd_solver_backward_cycle:
             return new PricerSolverBddBackwardCycle (jobs, ordered_jobs);
+        break;
         default:
             return new PricerSolverCycle(jobs, ordered_jobs);
     }
@@ -234,12 +236,12 @@ static void compute_subgradient(Optimal_Solution<double> &sol,
                                 double *                  rhs,
                                 int                       nbjobs,
                                 int                       nbmachines) {
-    fill_dbl(sub_gradient, nbjobs, 1.0);
+    fill_dbl(sub_gradient, nbjobs, -1.0);
     sub_gradient[nbjobs] = -rhs[nbjobs] + 1;
 
-    for (int i = 0; i < sol.jobs->len; i++) {
+    for (guint i = 0; i < sol.jobs->len; i++) {
         Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-        sub_gradient[tmp_j->job] -= 1.0;
+        sub_gradient[tmp_j->job] -= rhs[nbjobs]*1.0;
     }
 }
 
@@ -250,14 +252,14 @@ static void adjust_alpha(double *pi_out,
                          double &alpha) {
     double sum = 0.0;
 
-    for (int i = 0; i <= nbjobs; ++i) {
+    for (int i = 0; i < nbjobs; ++i) {
         sum += subgradient[i] * (pi_out[i] - pi_in[i]);
     }
 
     if (sum > 0) {
-        alpha = alpha + (1 - alpha) * 0.05;
+        alpha = CC_MIN(0.9, alpha + (1 - alpha) * 0.05);
     } else {
-        alpha = CC_MAX(0, alpha - 0.05);
+        alpha = CC_MAX(0, alpha - 0.1);
     }
 }
 
@@ -306,15 +308,16 @@ CLEAN:
 int solve_stab(wctdata *pd, wctparms *parms) {
     int           val = 0;
     PricerSolver *solver = pd->solver;
-        double k = 0.0;
-        double alpha;
-        bool   mispricing = true;
-        double result_sep;
-        pd->update = 0;
+    double k = 0.0;
+    double alpha;
+    bool   mispricing = true;
+    double result_sep;
+    pd->update = 0;
 
     do {
         k += 1.0;
-        alpha = CC_MAX(0, 1.0 - k * (1.0 - pd->alpha));
+        alpha = pd->hasstabcenter ?
+            CC_MAX(0, 1.0 - k * (1.0 - pd->alpha)) : 0.0;
         compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
                            pd->pi_in, &(pd->eta_in), pd->pi_out,
                            &(pd->eta_out));
@@ -336,6 +339,7 @@ int solve_stab(wctdata *pd, wctparms *parms) {
 
 
     if (result_sep > pd->eta_in) {
+        pd->hasstabcenter = 1;
         pd->eta_in = result_sep;
         memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->njobs + 1));
     }
@@ -362,7 +366,7 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
 
     do {
         k += 1.0;
-        alpha = CC_MAX(0.0, 1.0 - k * (1 - pd->alpha));
+        alpha = pd->hasstabcenter ? CC_MAX(0.0, 1.0 - k * (1 - pd->alpha)) : 0.0;
         compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
                            pd->pi_in, &(pd->eta_in), pd->pi_out,
                            &(pd->eta_out));
@@ -376,7 +380,7 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
             compute_subgradient(sol, pd->subgradient, pd->rhs, pd->njobs,
                                 pd->nmachines);
             adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient, pd->njobs,
-                         alpha);
+                        alpha);
             val = construct_sol(pd, &sol);
             CCcheck_val_2(val, "Failed in construct_sol_stab");
             pd->alpha = alpha;
@@ -386,6 +390,7 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
     } while (mispricing && alpha > 0.0);
 
     if (result_sep > pd->eta_in) {
+        pd->hasstabcenter = 1;
         pd->eta_in = result_sep;
         memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->njobs + 1));
     }
@@ -400,6 +405,101 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
 CLEAN:
     return val;
 }
+
+int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
+    int           val = 0;
+    PricerSolver *solver = pd->solver;
+    double        k = 0.0;
+    double        alpha;
+    double beta;
+    double        result_sep;
+    bool          inmispricing = false;
+    pd->update = 0;
+
+    do {
+        k += 1.0;
+        if(inmispricing) {
+            alpha = CC_MAX(0.0, 1.0 - k * (1 - pd->alpha));
+            beta = 0;
+        } else if (pd->hasstabcenter && pd->alpha > 0.0) {
+            double aux_double = 0.0;
+            double aux_norm = 0.0;
+            pd->dualdiffnorm = 0.0;
+            pd->beta = 0.0;
+
+            for (int i = 0; i < pd->njobs; ++i) {
+                pd->dualdiffnorm += SQR(pd->pi_in[i] - pd->pi_out[i]);
+            }
+
+            pd->dualdiffnorm = SQRT(pd->dualdiffnorm);
+            
+            for (int i = 0; i < pd->njobs; ++i) {
+
+                pd->beta += ABS(pd->pi_out[i] - pd->pi_in[i])*ABS(pd->pi_in[i]);
+            }
+
+            pd->beta = pd->beta/(pd->subgradientnorm * pd->dualdiffnorm);
+
+            for (int i = 0; i < pd->njobs; ++i) {
+                double aux_double = SQR((pd->beta - 1.0) * (pd->pi_in[i] - pd->pi_out[i]) + pd->beta * (pd->subgradient[i]*pd->dualdiffnorm/pd->subgradientnorm));
+                aux_norm += aux_double; 
+            }
+
+            aux_norm = SQRT(aux_norm);
+
+            pd->hybridfactor = ((1 - pd->alpha) * pd->dualdiffnorm)/aux_norm;
+
+
+        }
+        if(pd->hasstabcenter && (pd->beta == 0.0 || pd->alpha == 0.0)) {
+            alpha = pd->hasstabcenter ? CC_MAX(0.0, 1.0 - k * (1 - pd->alpha)) : 0.0;
+            compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
+                               pd->pi_in, &(pd->eta_in), pd->pi_out,
+                               &(pd->eta_out));
+        } else if (pd->hasstabcenter && pd->beta > 0) {
+            for (int i = 0; i <= pd->njobs ; ++i) {
+                pd->pi_sep[i] = pd->pi_in[i] + pd->hybridfactor * (beta * (pd->pi_in[i] + pd->subgradient[i] * pd->dualdiffnorm / pd->subgradientnorm) + (1.0 - beta) * pd->pi_out[i] - pd->pi_in[i]);
+            }
+        } else {
+            memcpy(pd->pi_sep, pd->pi_in, (pd->njobs + 1) * sizeof(double));
+        }
+        Optimal_Solution<double> sol;
+        sol = solver->pricing_algorithm(pd->pi_sep);
+        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
+        pd->reduced_cost =
+            compute_reduced_cost(sol, pd->pi_out, pd->njobs, parms);
+
+        if (pd->reduced_cost >= 0.00001) {
+            compute_subgradient(sol, pd->subgradient, pd->rhs, pd->njobs,
+                                pd->nmachines);
+            adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient, pd->njobs,
+                        alpha);
+            val = construct_sol(pd, &sol);
+            CCcheck_val_2(val, "Failed in construct_sol_stab");
+            pd->alpha = alpha;
+            pd->update = 1;
+        } else {
+            inmispricing = true;
+        }
+    } while (inmispricing && alpha > 0.0);
+
+    if (result_sep > pd->eta_in) {
+        pd->hasstabcenter = 1;
+        pd->eta_in = result_sep;
+        memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->njobs + 1));
+    }
+
+    if (pd->iterations%pd->njobs == 0) {
+        printf(
+            " alpha = %f, result of primal bound and Lagragian bound: out =%f, "
+            "in = %f\n",
+            pd->alpha, pd->eta_out, pd->eta_in);
+    }
+
+CLEAN:
+    return val;
+}
+
 
 void calculate_edges(PricerSolver *solver, scheduleset *set) {
     solver->calculate_edges(set);
