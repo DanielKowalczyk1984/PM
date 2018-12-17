@@ -93,7 +93,7 @@ protected:
     tdzdd::DataTable<Node<double>> table;
 public:
     PricerSolverBdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-    void InitTable();
+    void InitTable() override;
 };
 
 class PricerSolverBddSimple : public PricerSolverBdd {
@@ -101,7 +101,7 @@ private:
     ForwardBddSimpleDouble evaluator;
 public:
     PricerSolverBddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-    Optimal_Solution<double> pricing_algorithm(double *_pi);
+    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
 };
 
 class PricerSolverBddCycle : public PricerSolverBdd {
@@ -109,7 +109,7 @@ private:
     ForwardBddCycleDouble evaluator;
 public:
     PricerSolverBddCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-    Optimal_Solution<double> pricing_algorithm(double *_pi);
+    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
 };
 
 
@@ -118,7 +118,7 @@ protected:
     tdzdd::DataTable<ForwardZddNode<double>> table;
 public:
     PricerSolverZdd(GPtrArray *_jobs, GPtrArray *ordered_jobs);
-    void InitTable();
+    void InitTable() override;
 };
 
 class PricerSolverZddSimple : public PricerSolverZdd {
@@ -130,7 +130,7 @@ public:
     /**
      * Pricing Algorithm
      */
-    Optimal_Solution<double> pricing_algorithm(double * _pi);
+    Optimal_Solution<double> pricing_algorithm(double * _pi) override;
 };
 
 class PricerSolverCycle : public PricerSolverZdd {
@@ -142,7 +142,7 @@ public:
     /**
      * Pricing Algorithm
      */
-    Optimal_Solution<double> pricing_algorithm(double * _pi);
+    Optimal_Solution<double> pricing_algorithm(double * _pi) override;
 
 };
 
@@ -151,9 +151,9 @@ private:
     int Hmax;
 public:
     PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax);
-    void InitTable();
+    void InitTable() override;
 
-    Optimal_Solution<double> pricing_algorithm(double *_pi);
+    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
 };
 
 class PricerSolverBddBackwardSimple : public PricerSolverBdd {
@@ -162,7 +162,7 @@ private:
 public:
     PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
 
-    Optimal_Solution<double> pricing_algorithm(double *_pi);
+    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
 
 };
 
@@ -172,7 +172,7 @@ private:
 public:
     PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
 
-    Optimal_Solution<double> pricing_algorithm(double *_pi);
+    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
 
 };
 
