@@ -106,6 +106,11 @@ struct wctdata {
     double reduced_cost;
     double  alpha;
     int     update;
+    double beta;
+    int     hasstabcenter;
+    double hybridfactor;
+    double dualdiffnorm;
+    double subgradientnorm;
 
     // Best Solution
     scheduleset *bestcolors;
