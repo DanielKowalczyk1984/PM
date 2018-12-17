@@ -144,6 +144,8 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     pd->alpha = 0.8;
     pd->update = 1;
     pd->iterations = 0;
+    pd->hasstabcenter = 0;
+    pd->beta = 0.0;
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver *)NULL;
     pd->nnonimprovements = 0;
@@ -452,11 +454,10 @@ CLEAN:
 
 int add_solution_to_colpool(solution *sol, wctdata *pd) {
     int          val = 0;
-    scheduleset *tmp;
 
     for (int i = 0; i < sol->nmachines; ++i) {
         GPtrArray *machine = sol->part[i].machine;
-        tmp = scheduleset_from_solution(machine, pd->njobs);
+        scheduleset *tmp = scheduleset_from_solution(machine, pd->njobs);
         CCcheck_NULL_2(tmp, "Failed to allocate memory");
         g_ptr_array_add(pd->localColPool, tmp);
     }
