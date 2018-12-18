@@ -68,7 +68,7 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
     }
 
     Optimal_Solution<T> get_objective(Node<T> &n) const {
-        Optimal_Solution<T> sol(pi[num_jobs]);
+        Optimal_Solution<T> sol(-pi[num_jobs]);
 
         Node<T> *aux_node = &n;
         Job *aux_job =  n.GetJob();
@@ -117,7 +117,7 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         bool diff1 = bool_diff_Fij(weight, p1->prev1.get_prev_job(), tmp_j); 
         bool diff2 = bool_diff_Fij(weight, p1->prev2.get_prev_job(), tmp_j); 
 
-        if(prev_job != tmp_j ) {
+        if(prev_job != tmp_j && diff) {
             T obj1 {p1->prev1.GetF() + result};
             T obj2 {p1->prev2.GetF() + result};
 
@@ -153,7 +153,7 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
     }
 
     Optimal_Solution<T> get_objective(Node<T> &n) const {
-        Optimal_Solution<T> sol(pi[num_jobs]);
+        Optimal_Solution<T> sol(-pi[num_jobs]);
 
         PrevNode<T> *aux_node = &n.prev1;
         Job *aux_job =  aux_node->GetJob();

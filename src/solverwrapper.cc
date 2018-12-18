@@ -141,28 +141,15 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
 
 static double compute_reduced_cost(Optimal_Solution<double> &sol,
                                double *                  pi,
-                               int                       nbjobs,
-                               wctparms *parms) {
+                               int                       nbjobs) {
     double result = -pi[nbjobs];
-    int C = 0;
 
-    if (parms->pricing_solver >= bdd_solver_backward_simple) {
-        for (guint i = 0; i < sol.jobs->len; ++i) {
-            Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-            C += tmp_j->processingime;
-            result += pi[tmp_j->job] - value_Fj(C, tmp_j);
-        }
-    } else {
-        for (int i = sol.jobs->len - 1; i >= 0; --i) {
-            Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-            C += tmp_j->processingime;
-            result += pi[tmp_j->job] - value_Fj(C, tmp_j);
-        }
+    for (guint i = 0; i < sol.jobs->len; ++i) {
+        Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
+        result += pi[tmp_j->job] ;
     }
 
-    sol.obj = result;
-
-    return result;
+    return result - sol.cost;
 }
 
 int evaluate_nodes(wctdata *pd) {
@@ -287,7 +274,7 @@ int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
     Optimal_Solution<double> sol;
 
     sol = pd->solver->pricing_algorithm(pd->pi);
-    pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs, parms);
+    pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
 
     if (pd->reduced_cost > 0.000001) {
        val = construct_sol(pd, &sol);
@@ -326,7 +313,7 @@ int solve_stab(wctdata *pd, wctparms *parms) {
 
         result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
         pd->reduced_cost =
-            compute_reduced_cost(sol, pd->pi_out, pd->njobs, parms);
+            compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
         if (pd->reduced_cost >= 0.00001) {
             val = construct_sol(pd, &sol);
@@ -335,8 +322,6 @@ int solve_stab(wctdata *pd, wctparms *parms) {
             mispricing = false;
         }
     } while (mispricing && alpha > 0); /** mispricing check */
-
-
 
     if (result_sep > pd->eta_in) {
         pd->hasstabcenter = 1;
@@ -374,7 +359,7 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
         sol = solver->pricing_algorithm(pd->pi_sep);
         result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
         pd->reduced_cost =
-            compute_reduced_cost(sol, pd->pi_out, pd->njobs, parms);
+            compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
         if (pd->reduced_cost >= 0.00001) {
             compute_subgradient(sol, pd->subgradient, pd->rhs, pd->njobs,
@@ -467,7 +452,7 @@ int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
         sol = solver->pricing_algorithm(pd->pi_sep);
         result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
         pd->reduced_cost =
-            compute_reduced_cost(sol, pd->pi_out, pd->njobs, parms);
+            compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
         if (pd->reduced_cost >= 0.00001) {
             compute_subgradient(sol, pd->subgradient, pd->rhs, pd->njobs,

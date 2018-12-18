@@ -97,6 +97,12 @@ public:
         obj += _pi - value_Fj(C_max, _job);
     }
 
+    inline void push_job_back(Job *_job, int C, double _pi) {
+        g_ptr_array_add(jobs, _job);
+        cost += value_Fj(C + _job->processingime, _job);
+        obj += _pi - value_Fj(C + _job->processingime, _job);
+    }
+
 };
 
 

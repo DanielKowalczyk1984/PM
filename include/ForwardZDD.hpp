@@ -83,11 +83,8 @@ public:
     // virtual Optimal_Solution<double> get_objective(ForwardZddNode<T>& n) const = 0;
 
     Optimal_Solution<T> get_objective(ForwardZddNode<T> &n) const {
-        Optimal_Solution<T> sol;
+        Optimal_Solution<T> sol(-pi[num_jobs]);
 
-        sol.cost = 0;
-        sol.C_max = 0;
-        sol.obj = pi[num_jobs];
         int weight;
 
 

@@ -39,34 +39,28 @@ public:
     virtual void evalNode(Node<T>& n) const = 0;
 
     Optimal_Solution<T> get_objective(Node<T> &n) const {
-        Optimal_Solution<T> sol;
-        Job *aux_job;
-
-        sol.cost = 0;
-        sol.C_max = 0;
-        sol.obj = pi[num_jobs];
-        int weight;
-
+        Optimal_Solution<T> sol(-pi[num_jobs]);
 
         PrevNode<T> *ptr_node = &(n.prev1);
 
         while(ptr_node->GetPrev() != nullptr) {
             PrevNode<T> *aux_prev_node = ptr_node->GetPrev();
-            aux_job = aux_prev_node->GetJob();
+            Job *aux_job = aux_prev_node->GetJob();
             if(ptr_node->GetHigh()) {
                 sol.C_max += aux_job->processingime;
-                g_ptr_array_add(sol.jobs, aux_job);
+                sol.push_job_back(aux_job, aux_prev_node->GetWeight(), pi[aux_job->job]);
             }
             ptr_node = aux_prev_node;
         }
 
-        weight = 0;
-        for(int i = sol.jobs->len - 1; i >= 0; i--){
-            aux_job = (Job *) g_ptr_array_index(sol.jobs, i);
-            weight += aux_job->processingime;
-            sol.cost +=  value_Fj(weight, aux_job);
-            sol.obj += pi[aux_job->job] - value_Fj(weight, aux_job);
-        }
+        // weight = 0;
+        // for(int i = sol.jobs->len - 1; i >= 0; i--){
+        //     aux_job = (Job *) g_ptr_array_index(sol.jobs, i);
+        //     weight += aux_job->processingime;
+        //     sol.cost +=  value_Fj(weight, aux_job);
+        //     sol.obj += pi[aux_job->job] - value_Fj(weight, aux_job);
+        // }
+        // printf("test weight 2 = %d\n", weight);
 
         return sol;
     }
