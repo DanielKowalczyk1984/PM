@@ -101,7 +101,7 @@ int addColToLP(scheduleset *set, wctdata *pd) {
     }
 
     cind = njobs;
-    cval = 1.0;
+    cval = -1.0;
     val = wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
     CCcheck_val_2(val, "Failed wctlp_chgcoef");
 
@@ -120,6 +120,7 @@ int build_lp(wctdata *pd, int construct) {
     wctproblem *problem = pd->problem;
     int         njobs = problem->njobs;
     int         nmachines = problem->nmachines;
+    wctparms *parms = &(problem->parms);
     int         nb_row;
     int *       covered = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
@@ -139,8 +140,8 @@ int build_lp(wctdata *pd, int construct) {
     /**
      * add number of machines constraint (convexfication)
      */
-    val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_LESS_EQUAL,
-                       (double)nmachines, (char *)NULL);
+    val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_GREATER_EQUAL,
+                       -(double)nmachines, (char *)NULL);
 
     wctlp_get_nb_rows(pd->LP, &nb_row);
 
@@ -167,8 +168,10 @@ int build_lp(wctdata *pd, int construct) {
     CCcheck_NULL_2(pd->subgradient_in, "Failed to allocate memory");
     pd->subgradient = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->subgradient, "Failed to allocate memory");
-    pd->x_e = CC_SAFE_MALLOC(2*get_datasize(pd->solver), double);
-    CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
+    if(parms->pricing_solver < dp_solver) {
+        pd->x_e = CC_SAFE_MALLOC(2*get_datasize(pd->solver), double);
+        CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
+    }
     pd->rhs = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
     val = wctlp_get_rhs(pd->LP, pd->rhs);
@@ -194,7 +197,6 @@ CLEAN:
 int get_solution_lp_lowerbound(wctdata *pd) {
     int          val = 0;
     int          nbcols;
-    scheduleset *tmp;
     Job *        tmp_j;
 
     val = wctlp_get_nb_cols(pd->LP, &nbcols);
@@ -205,7 +207,7 @@ int get_solution_lp_lowerbound(wctdata *pd) {
     wctlp_x(pd->LP, pd->x, 0);
 
     for (unsigned i = 0; i < nbcols; ++i) {
-        tmp = ((scheduleset *)g_ptr_array_index(pd->localColPool, i));
+        scheduleset *tmp = ((scheduleset *)g_ptr_array_index(pd->localColPool, i));
         if (pd->x[i]) {
             printf("%f: ", pd->x[i]);
             g_ptr_array_foreach(tmp->jobs, g_print_machine, NULL);

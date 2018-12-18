@@ -31,10 +31,19 @@ typedef struct _solution {
     int       off;
 } solution;
 
+/**
+ * Initialization of a solution type
+ */
 void solution_init(solution *sol);
+/**
+ * free all dynamic allocated memory of solution type
+ */
 void solution_free(solution **sol);
 solution *solution_alloc(int nmachines, int njobs, int off);
 
+/**
+ * functions to work on solution type data
+ */
 void solution_print(solution *sol);
 int solution_copy(solution *dest, solution *src);
 int solution_update(solution *dest, solution *src);
@@ -49,9 +58,11 @@ void g_set_jobarray_job(gpointer data, gpointer user_data);
 void g_print_jobarray(gpointer data, gpointer user_data);
 void g_print_machine(gpointer data, gpointer user_data);
 void g_set_sol_perm(gpointer data, gpointer user_data);
+void g_reset_nb_layers(gpointer data, gpointer user_data);
 
 inline int value_Fj(int C, Job *j) { return j->weight * CC_MAX(0, C - j->duetime); }
 int value_diff_Fij(int C, Job *i, Job *j);
+int bool_diff_Fij(int , Job *, Job *);
 
 int solution_canonical_order(solution *sol, GPtrArray *intervals);
 void solution_calculate_all(solution *sol);

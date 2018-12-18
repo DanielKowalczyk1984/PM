@@ -18,6 +18,10 @@ public:
     {
     }
 
+    explicit Optimal_Solution(T _obj) : obj(_obj), cost(0), C_max(0), jobs(g_ptr_array_new()), e_list(g_ptr_array_new())
+    {
+    }
+
     /** Copy constructor */
     Optimal_Solution(const Optimal_Solution& other) :
         obj(other.obj), cost(other.cost), C_max(other.C_max),
@@ -85,6 +89,19 @@ public:
         g_ptr_array_foreach(o.jobs, g_print_machine, NULL);
         return os;
     };
+
+    inline void push_job_back(Job *_job, double _pi) {
+        g_ptr_array_add(jobs, _job);
+        C_max += _job->processingime;
+        cost += value_Fj(C_max, _job);
+        obj += _pi - value_Fj(C_max, _job);
+    }
+
+    inline void push_job_back(Job *_job, int C, double _pi) {
+        g_ptr_array_add(jobs, _job);
+        cost += value_Fj(C + _job->processingime, _job);
+        obj += _pi - value_Fj(C + _job->processingime, _job);
+    }
 
 };
 

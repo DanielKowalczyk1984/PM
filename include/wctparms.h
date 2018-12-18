@@ -8,8 +8,8 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#ifndef __WCTPARMS_H
-#define __WCTPARMS_H
+#ifndef INCLUDE_WCTPARMS_H_
+#define INCLUDE_WCTPARMS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,9 +24,13 @@ enum BBNodeSelection {
 };
 
 enum PricingSolver {
-    min_pricing_solver = 0,
-    bdd_solver = min_pricing_solver,
-    dp_solver = 1
+    bdd_solver_simple = 1,
+    bdd_solver_cycle = 2,
+    zdd_solver_simple = 3,
+    zdd_solver_cycle = 4,
+    bdd_solver_backward_simple = 5,
+    bdd_solver_backward_cycle = 6,
+    dp_solver = 7
 };
 
 enum BranchandBound {
@@ -135,4 +139,4 @@ int wctparms_set_nmachines(wctparms *parms, int nmachines);
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif  // INCLUDE_WCTPARMS_H_

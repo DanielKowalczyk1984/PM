@@ -144,6 +144,8 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     pd->alpha = 0.8;
     pd->update = 1;
     pd->iterations = 0;
+    pd->hasstabcenter = 0;
+    pd->beta = 0.0;
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver *)NULL;
     pd->nnonimprovements = 0;
@@ -191,10 +193,16 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
 }
 
 void lpwctdata_free(wctdata *pd) {
+    /**
+     * free all the gurobi data associated with the LP relaxation
+     */
     if (pd->LP) {
         wctlp_free(&(pd->LP));
     }
 
+    /**
+     * free all the data associated with the LP
+     */
     CC_IFFREE(pd->coef, double);
     CC_IFFREE(pd->pi, double);
     CC_IFFREE(pd->x, double);
@@ -206,12 +214,12 @@ void lpwctdata_free(wctdata *pd) {
     CC_IFFREE(pd->subgradient, double);
     CC_IFFREE(pd->subgradient_in, double);
     CC_IFFREE(pd->rhs, double);
-
-    // schedulesets_free(&(pd->newsets), &(pd->nnewsets));
-    // schedulesets_free(&(pd->cclasses), &(pd->gallocated));
     CC_IFFREE(pd->cstat, int);
+
+    /**
+     * free all the schedules from the localColPool
+     */
     g_ptr_array_free(pd->localColPool,TRUE);
-    // pd->ccount = 0;
 }
 
 void children_data_free(wctdata *pd) {
@@ -446,11 +454,10 @@ CLEAN:
 
 int add_solution_to_colpool(solution *sol, wctdata *pd) {
     int          val = 0;
-    scheduleset *tmp;
 
     for (int i = 0; i < sol->nmachines; ++i) {
         GPtrArray *machine = sol->part[i].machine;
-        tmp = scheduleset_from_solution(machine, pd->njobs);
+        scheduleset *tmp = scheduleset_from_solution(machine, pd->njobs);
         CCcheck_NULL_2(tmp, "Failed to allocate memory");
         g_ptr_array_add(pd->localColPool, tmp);
     }

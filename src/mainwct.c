@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////
 
 #include <defs.h>
-#include <wct.h>
+#include <wct.h> 
 
 #include <unistd.h>
 
@@ -138,10 +138,11 @@ int main(int ac, char **av) {
     int        val = 0;
     double     start_time;
     wctproblem problem;
+    wctdata *root = &(problem.root_pd);
+    wctparms *parms = &(problem.parms);
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header");
     wctproblem_init(&problem);
-    wctdata *root = &(problem.root_pd);
     val = parseargs(ac, av, &(problem.parms));
     CCcheck_val_2(val, "Failed in parseargs");
     if (dbg_lvl() > 1) {
@@ -166,11 +167,15 @@ int main(int ac, char **av) {
     /**
      * Build DD at the root node
      */
-    CCutil_start_timer(&(problem.tot_build_dd));
-    root->solver = newSolver(root->jobarray, root->ordered_jobs, root->nmachines, 0, problem.H_max);
-    CCutil_stop_timer(&(problem.tot_build_dd), 0);
+    if(parms->pricing_solver < dp_solver) {
+        CCutil_start_timer(&(problem.tot_build_dd));
+        root->solver = newSolver(root->jobarray, root->ordered_jobs, &(problem.parms));
+        CCutil_stop_timer(&(problem.tot_build_dd), 0);
+        print_size_to_csv(&problem, root);
+    } else {
+        root->solver = newSolverDp(root->jobarray, root->H_max, parms);
+    }
     g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
-    print_size_to_csv(&problem, root);
 
     /**
      * Calculation of LB at the root node with column generation
@@ -180,10 +185,8 @@ int main(int ac, char **av) {
         CCutil_start_timer(&(problem.tot_lb_root));
         compute_lower_bound(&problem, &(problem.root_pd));
         problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
-        CCutil_stop_timer(&(problem.tot_lb_root), 0);
+        CCutil_stop_timer(&(problem.tot_lb_root), 1);
     }
-
-    print_to_csv(&problem);
 
 CLEAN:
     wctproblem_free(&problem);

@@ -106,6 +106,11 @@ struct wctdata {
     double reduced_cost;
     double  alpha;
     int     update;
+    double beta;
+    int     hasstabcenter;
+    double hybridfactor;
+    double dualdiffnorm;
+    double subgradientnorm;
 
     // Best Solution
     scheduleset *bestcolors;
@@ -287,7 +292,6 @@ void g_calculate_edges(gpointer data, gpointer user_data);
  */
 int solve_stab(wctdata *pd, wctparms *parms);
 int solve_stab_dynamic(wctdata *pd, wctparms *parms);
-int solve_pricing_ti(wctdata *pd, wctparms *parms);
 #ifdef __cplusplus
 }
 #endif
