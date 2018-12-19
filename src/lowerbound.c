@@ -378,6 +378,11 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                             CCcheck_val_2(val, "Failed in solve_stab");
                             break;
 
+                        case stab_hybrid:
+                            val = solve_stab_hybrid(pd, parms);
+                            CCcheck_val_2(val, "Failed in solve_stab_hybrid");
+                            break;
+
                         case no_stab:
                             val = solve_pricing(pd, parms, 0);
                             CCcheck_val_2(val, "Failed in solving pricing");
@@ -413,6 +418,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 switch (parms->stab_technique) {
                     case stab_wentgnes:
                     case stab_dynamic:
+                    case stab_hybrid:
                         break_while_loop =
                             (CC_OURABS(pd->eta_out - pd->eta_in) < 0.0001) || (ceil(pd->eta_in - 0.0001) >= pd->eta_out);
                         break;
