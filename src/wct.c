@@ -146,6 +146,11 @@ void wctdata_init(wctdata *pd, wctproblem *prob) {
     pd->iterations = 0;
     pd->hasstabcenter = 0;
     pd->beta = 0.0;
+    pd->node_stab = -1;
+    pd->subgradientnorm = 0.0;
+    pd->dualdiffnorm = 0.0;
+    pd->hybridfactor = 0.0;
+    pd->subgradientproduct = 0.0;
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver *)NULL;
     pd->nnonimprovements = 0;
