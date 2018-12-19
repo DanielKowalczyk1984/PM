@@ -42,6 +42,7 @@ enum stab_techniques {
     no_stab = 0,
     stab_wentgnes = 1,
     stab_dynamic = 2,
+    stab_hybrid = 3,
 };
 
 enum print {

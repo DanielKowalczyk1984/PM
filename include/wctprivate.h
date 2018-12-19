@@ -96,21 +96,26 @@ struct wctdata {
     int iterations;
     /** Wentges smoothing technique */
     double *pi_in;
+    double dualdiffnorm;
+    double *subgradient;
+    double hybridfactor;
+    double subgradientnorm;
+    double  alpha;
+    double alphabar;
+    double beta;
+    int k;
+    int node_stab;
+    int     hasstabcenter;
+    double  eta_in;
+    int inmispricingschedule;
+    double subgradientproduct;
     double *pi_out;
     double *pi_sep;
-    double *subgradient;
     double *subgradient_in;
-    double  eta_in;
     double  eta_out;
     double  eta_sep;
     double reduced_cost;
-    double  alpha;
     int     update;
-    double beta;
-    int     hasstabcenter;
-    double hybridfactor;
-    double dualdiffnorm;
-    double subgradientnorm;
 
     // Best Solution
     scheduleset *bestcolors;
@@ -292,6 +297,7 @@ void g_calculate_edges(gpointer data, gpointer user_data);
  */
 int solve_stab(wctdata *pd, wctparms *parms);
 int solve_stab_dynamic(wctdata *pd, wctparms *parms);
+int solve_stab_hybrid(wctdata *pd, wctparms *parms);
 #ifdef __cplusplus
 }
 #endif
