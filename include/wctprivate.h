@@ -59,6 +59,7 @@ struct wctdata {
     wctlp *LP;
     wctlp *MIP;
     double *x;
+    double *x_e;
     double *coef;
     double *pi;
     // PricerSolver
@@ -95,15 +96,25 @@ struct wctdata {
     int iterations;
     /** Wentges smoothing technique */
     double *pi_in;
+    double dualdiffnorm;
+    double *subgradient;
+    double hybridfactor;
+    double subgradientnorm;
+    double  alpha;
+    double alphabar;
+    double beta;
+    int k;
+    int node_stab;
+    int     hasstabcenter;
+    double  eta_in;
+    int inmispricingschedule;
+    double subgradientproduct;
     double *pi_out;
     double *pi_sep;
-    double *subgradient;
     double *subgradient_in;
-    double  eta_in;
     double  eta_out;
     double  eta_sep;
     double reduced_cost;
-    double  alpha;
     int     update;
 
     // Best Solution
@@ -277,12 +288,16 @@ int evaluate_nodes(wctdata *pd);
 int calculate_new_ordered_jobs(wctdata *pd);
 int build_solve_mip(wctdata *pd);
 void print_number_nodes_edges(wctdata *pd);
+double get_edge_cost(PricerSolver *solver, int idx);
+void calculate_edges(PricerSolver *solver, scheduleset *set);
+void g_calculate_edges(gpointer data, gpointer user_data);
 
 /**
  * Stabilization techniques
  */
 int solve_stab(wctdata *pd, wctparms *parms);
 int solve_stab_dynamic(wctdata *pd, wctparms *parms);
+int solve_stab_hybrid(wctdata *pd, wctparms *parms);
 #ifdef __cplusplus
 }
 #endif

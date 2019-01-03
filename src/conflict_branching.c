@@ -98,8 +98,8 @@ static int create_same_conflict(wctproblem *problem,
     /* Construction of solver*/
     if (pd->parent) {
         CCutil_start_resume_time(&(problem->tot_build_dd));
-        pd->solver = copySolver(pd->parent->solver);
-        add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 1);
+        // pd->solver = copySolver(pd->parent->solver);
+        // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 1);
 
         if ((size_t)pd->njobs != get_numberrows_zdd(pd->solver)) {
             pd->status = infeasible;
@@ -171,8 +171,8 @@ static int create_differ_conflict(wctproblem *problem,
     /* Construction of solver*/
     if (pd->parent) {
         CCutil_start_resume_time(&(problem->tot_build_dd));
-        pd->solver = copySolver(pd->parent->solver);
-        add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 0);
+        // pd->solver = copySolver(pd->parent->solver);
+        // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 0);
 
         if ((size_t)pd->njobs != get_numberrows_zdd(pd->solver)) {
             pd->status = infeasible;

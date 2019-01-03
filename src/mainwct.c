@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////
 
 #include <defs.h>
-#include <wct.h>
+#include <wct.h> 
 
 #include <unistd.h>
 
@@ -25,14 +25,17 @@ static void usage(char *f) {
     fprintf(stderr, "   -p int  Print csv-files: 0 = no(default), 1 = yes\n");
     fprintf(stderr, "   -b int  Branching strategy: 0 = conflict(default), 1 = ahv\n");
     fprintf(stderr, "   -Z int  Use strong branching: 0 = use strong branching(default), 1 = no strong branching\n");
+    fprintf(stderr, "   -a int  Set solver: 0 = bdd solver(default), 1 = dp solver\n");
 }
 
 static int parseargs(int ac, char **av, wctparms *parms) {
     int c;
+    double f;
     int val = 0;
+    char* ptr;
     int debug = dbg_lvl();
 
-    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:")) != EOF) {
+    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:")) != EOF) {
         switch (c) {
             case 'd':
                 ++(debug);
@@ -40,49 +43,62 @@ static int parseargs(int ac, char **av, wctparms *parms) {
                 break;
 
             case 'f':
-                val = wctparms_set_nb_iterations_rvnd(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_nb_iterations_rvnd(parms, c);
                 CCcheck_val(val, "Failed number feasible solutions");
                 break;
 
             case 's':
-                val = wctparms_set_search_strategy(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_search_strategy(parms, c);
                 CCcheck_val(val, "Failed set_branching_strategy");
                 break;
 
             case 'l':
-                val = wctparms_set_branching_cpu_limit(parms, atof(optarg));
+                f = strtod(optarg, &ptr);
+                val = wctparms_set_branching_cpu_limit(parms, f);
                 CCcheck_val(val, "Failed wctparms_set_branching_cpu_limit");
                 break;
 
             case 'L':
-                val =
-                    wctparms_set_scatter_search_cpu_limit(parms, atof(optarg));
+                f = strtod(optarg, &ptr);
+                val = wctparms_set_scatter_search_cpu_limit(parms, f);
                 CCcheck_val(val,
                             "Failed wctparms_set_scatter_search_cpu_limit");
                 break;
 
             case 'B':
-                val = wctparms_set_branchandbound(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_branchandbound(parms, c);
                 CCcheck_val(val, "Failed wctparms_set_branchandbound");
                 break;
 
             case 'S':
-                val = wctparms_set_stab_technique(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_stab_technique(parms, c);
                 CCcheck_val(val, "Failed in wctparms_set_stab_technique");
                 break;
 
             case 'p':
-                val = wctparms_set_print(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_print(parms, c);
                 CCcheck_val(val, "Failed in print");
                 break;
 
             case 'b':
-                val = wctparms_set_branching_strategy(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_branching_strategy(parms, c);
                 CCcheck_val(val, "Failed in set branching strategy");
+                break;
+            case 'a':
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_pricing_solver(parms, c);
+                CCcheck_val(val, "Failed in set alpha");
                 break;
 
             case 'Z':
-                val = wctparms_set_strong_branching(parms, atoi(optarg));
+                c = strtol(optarg, &ptr ,10);
+                val = wctparms_set_strong_branching(parms, c);
                 CCcheck_val(val, "Failed in set strong branching");
                 break;
 
@@ -104,8 +120,8 @@ static int parseargs(int ac, char **av, wctparms *parms) {
             val = 1;
             goto CLEAN;
         }
-
-        val = wctparms_set_nmachines(parms, atoi(av[optind++]));
+        c = strtol(av[optind++], &ptr, 10);
+        val = wctparms_set_nmachines(parms, c);
         CCcheck_val(val, "Failed in wctparms_set_nmachines");
     }
 
@@ -122,32 +138,55 @@ int main(int ac, char **av) {
     int        val = 0;
     double     start_time;
     wctproblem problem;
-    start_time = CCutil_zeit();
+    wctdata *root = &(problem.root_pd);
+    wctparms *parms = &(problem.parms);
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header");
     wctproblem_init(&problem);
-    wctdata *root = &(problem.root_pd);
     val = parseargs(ac, av, &(problem.parms));
     CCcheck_val_2(val, "Failed in parseargs");
     if (dbg_lvl() > 1) {
         printf("Debugging turned on\n");
     }
 
-    /** Reading and preprocessing the data */
+    /**
+     * Reading and preprocessing the data
+     */
+    start_time = CCutil_zeit();
     val = read_problem(&problem);
     CCcheck_val_2(val, "read_adjlist failed");
     val = preprocess_data(&problem);
     CCcheck_val_2(val, "Failed at preprocess_data");
-
-    /** Finding heuristic solutions to the problem */
-    heuristic_rpup(&problem);
-    root->solver = newSolver(root->jobarray, root->ordered_jobs, root->nmachines, problem.opt_sol->tw);
-
-    /** Branch-and-Price Algorithm */
-    build_lp(&(problem.root_pd), 0);
-
-    compute_lower_bound(&problem, &(problem.root_pd));
     printf("Reading and preprocessing of the data took %f seconds\n", CCutil_zeit() - start_time);
+
+    /**
+     * Finding heuristic solutions to the problem
+     */
+    heuristic_rpup(&problem);
+
+    /**
+     * Build DD at the root node
+     */
+    if(parms->pricing_solver < dp_solver) {
+        CCutil_start_timer(&(problem.tot_build_dd));
+        root->solver = newSolver(root->jobarray, root->ordered_jobs, &(problem.parms));
+        CCutil_stop_timer(&(problem.tot_build_dd), 0);
+        print_size_to_csv(&problem, root);
+    } else {
+        root->solver = newSolverDp(root->jobarray, root->H_max, parms);
+    }
+    g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
+
+    /**
+     * Calculation of LB at the root node with column generation
+     */
+    if(problem.opt_sol->tw + problem.opt_sol->off != 0) {
+        build_lp(&(problem.root_pd), 0);
+        CCutil_start_timer(&(problem.tot_lb_root));
+        compute_lower_bound(&problem, &(problem.root_pd));
+        problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
+        CCutil_stop_timer(&(problem.tot_lb_root), 1);
+    }
 
 CLEAN:
     wctproblem_free(&problem);

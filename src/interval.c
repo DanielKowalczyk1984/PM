@@ -122,3 +122,27 @@ void interval_pair_free(void *p) {
         CC_FREE(tmp, interval_pair);
     }
 }
+
+void print_interval_pair(GPtrArray *ordered_jobs){
+    interval *cur = (interval *) NULL;
+    job_interval_pair *tmp_p;
+
+    for(size_t i = 0; i < ordered_jobs->len;i++){
+        tmp_p = g_ptr_array_index(ordered_jobs, i);
+        if(tmp_p->I != cur) {
+            cur = tmp_p->I;
+            printf("\n");
+            printf("Interval %d (%d,%d]: ", cur->key, cur->a, cur->b);
+        }
+        printf("%d (%d, %d) ", tmp_p->j->job, tmp_p->j->processingime, tmp_p->j->weight);
+    }
+}
+
+void count_jobs_interval_pair(GPtrArray *ordered_jobs){
+    job_interval_pair *tmp_p;
+
+    for(size_t i = 0; i < ordered_jobs->len;i++){
+        tmp_p = g_ptr_array_index(ordered_jobs, i);
+        tmp_p->j->nb_layers++;
+    }
+}

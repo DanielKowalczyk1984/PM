@@ -7,11 +7,14 @@ else (GUROBI_INCLUDE_DIR)
 find_path(GUROBI_INCLUDE_DIR
           NAMES  gurobi_c++.h gurobi_c.h
           PATHS
+          "$ENV{GUROBI_HOME}/include"
+          "/opt/gurobi8*/linux64/include"
+          "/opt/gurobi801/linux64/include"
+          "/opt/gurobi752/linux64/include"
           "/opt/gurobi751/linux64/include"
           "/opt/gurobi702/linux64/include"
           "/opt/gurobi652/linux64/include"
           "/opt/gurobi650/linux64/include"
-          "$ENV{GUROBI_HOME}/include"
           "/Library/gurobi502/mac64/include"
           "/Library/gurobi650/mac64/include"
           "/Library/gurobi604/mac64/include"
@@ -21,6 +24,8 @@ find_path(GUROBI_INCLUDE_DIR
 
 find_library( GUROBI_LIBRARY
               NAMES
+              gurobi81
+              gurobi80
               gurobi75
               gurobi65
               gurobi60
@@ -35,13 +40,16 @@ find_library( GUROBI_LIBRARY
               gurobi60
               gurobi563
               PATHS
+              "$ENV{GUROBI_HOME}/lib"
+              "/opt/gurobi810/linux64/lib/"
+              "/opt/gurobi801/linux64/lib/"
+              "/opt/gurobi752/linux64/lib/"
               "/opt/gurobi751/linux64/lib/"
               "/opt/gurobi702/linux64/lib/"
               "/opt/gurobi652/linux64/lib/"
               "/opt/gurobi650/linux64/lib/"
               "/Library/gurobi604/mac64/lib/"
               "/opt/gurobi600/linux64/lib/"
-              "$ENV{GUROBI_HOME}/lib"
               "/Library/gurobi650/mac64/lib"
               "/Library/gurobi502/mac64/lib"
               "C:\\libs\\gurobi502\\lib"
@@ -56,12 +64,14 @@ find_library( GUROBI_CXX_LIBRARY
               libgurobi
 
               PATHS
-
+              "$ENV{GUROBI_HOME}/lib"
+              "/opt/gurobi810/linux64/lib/"
+              "/opt/gurobi801/linux64/lib/"
+              "/opt/gurobi752/linux64/lib/"
               "/opt/gurobi751/linux64/lib/"
               "/opt/gurobi702/linux64/lib/"
               "/opt/gurobi652/linux64/lib/"
               "/opt/gurobi650/linux64/lib/"
-              "$ENV{GUROBI_HOME}/lib"
               "/Library/gurobi650/mac64/lib"
               "/Library/gurobi604/mac64/lib"
               "/Library/gurobi502/mac64/lib"

@@ -78,3 +78,7 @@ debug/*
 release/*
 build/*
 third_party
+build_ubuntu
+solutions
+*.log
+compile_commands.json

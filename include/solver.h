@@ -1,5 +1,5 @@
-#ifndef SOLVER_H
-#define SOLVER_H
+#ifndef INCLUDE_SOLVER_H_
+#define INCLUDE_SOLVER_H_
 
 #include <wctparms.h>
 #include <solution.h>
@@ -8,10 +8,11 @@
 extern "C" {
 #endif
 
-typedef struct PricerSolver PricerSolver;
-PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, int nmachines, int ub);
+typedef struct PricerSolverBase PricerSolver;
+PricerSolver *newSolver(GPtrArray *jobs, GPtrArray *ordered_jobs, wctparms *parms);
+PricerSolver *newSolverDp(GPtrArray *_jobs, int _Hmax, wctparms *parms);
 PricerSolver *newSolverDP(GPtrArray *interval_list, int njobs, int **sum_p);
-PricerSolver *copySolver(PricerSolver *src);
+// PricerSolver *copySolver(PricerSolver *src);
 int init_tables(PricerSolver *solver);
 int calculate_table(PricerSolver *solver, wctparms *parms);
 
@@ -46,5 +47,4 @@ size_t get_numberrows_bdd(PricerSolver *solver);
 #ifdef __cplusplus
 }
 #endif
-
-#endif // SOLVER_H
+#endif  // INCLUDE_SOLVER_H_

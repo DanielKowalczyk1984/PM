@@ -398,6 +398,8 @@ void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform) {
 
 int heuristic_rpup(wctproblem *prob) {
     int    val = 0;
+    int njobs = prob->njobs;
+    int nmachines = prob->nmachines;
     GRand *rand_uniform = g_rand_new_with_seed(2011);
     wctparms *parms = &(prob->parms);
     g_random_set_seed(1984);
@@ -409,7 +411,8 @@ int heuristic_rpup(wctproblem *prob) {
     local_search_data *data = (local_search_data *)NULL;
     local_search_data *data_RS = (local_search_data *)NULL;
 
-    sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
+    CCutil_start_resume_time(&(prob->tot_heuristic));
+    sol = solution_alloc(nmachines, njobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
     CCcheck_val_2(val, "Failed construct edd");
@@ -419,7 +422,7 @@ int heuristic_rpup(wctproblem *prob) {
     printf("Solution in canonical order: \n");
     solution_print(sol);
 
-    data = local_search_data_init(sol);
+    data = local_search_data_init(njobs,  nmachines);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
     local_search_create_W(sol, data);
     local_search_create_g(sol, data);
@@ -428,16 +431,16 @@ int heuristic_rpup(wctproblem *prob) {
     printf("Solution after local search:\n");
     solution_print(sol);
 
-    prob->opt_sol = solution_alloc(prob->nmachines, prob->njobs, prob->off);
+    prob->opt_sol = solution_alloc(nmachines, njobs, prob->off);
     CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
     solution_update(prob->opt_sol, sol);
 
-    for (int i = 0; i < IR; ++i) {
-        sol1 = solution_alloc(prob->nmachines, prob->njobs, prob->off);
+    for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0; ++i) {
+        sol1 = solution_alloc(nmachines, njobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
         CCcheck_val_2(val, "Failed in construct random solution");
-        data_RS = local_search_data_init(sol1);
+        data_RS = local_search_data_init(njobs, nmachines);
         local_search_create_W(sol1, data_RS);
         local_search_create_g(sol1, data_RS);
         solution_update(sol, sol1);
@@ -449,7 +452,7 @@ int heuristic_rpup(wctproblem *prob) {
                 solution_update(sol, sol1);
                 solution_canonical_order(sol, intervals);
                 add_solution_to_colpool(sol, &(prob->root_pd));
-                j /= 2;
+                j = 0;
             }
 
             Perturb(sol1, data_RS, rand_uniform);
@@ -466,7 +469,8 @@ int heuristic_rpup(wctproblem *prob) {
     solution_canonical_order(prob->opt_sol, intervals);
     printf("Solution after some improvements with Random Variable Search:\n");
     solution_print(prob->opt_sol);
-    add_solution_to_colpool(prob->opt_sol, &(prob->root_pd));
+    prob->global_upper_bound = prob->opt_sol->tw + prob->off;
+    CCutil_stop_timer(&(prob->tot_heuristic), 0);
     prune_duplicated_sets(&(prob->root_pd));
 CLEAN:
     solution_free(&sol);

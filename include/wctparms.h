@@ -8,8 +8,8 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#ifndef __WCTPARMS_H
-#define __WCTPARMS_H
+#ifndef INCLUDE_WCTPARMS_H_
+#define INCLUDE_WCTPARMS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,6 +23,16 @@ enum BBNodeSelection {
     max_strategy = 3,
 };
 
+enum PricingSolver {
+    bdd_solver_simple = 1,
+    bdd_solver_cycle = 2,
+    zdd_solver_simple = 3,
+    zdd_solver_cycle = 4,
+    bdd_solver_backward_simple = 5,
+    bdd_solver_backward_cycle = 6,
+    dp_solver = 7
+};
+
 enum BranchandBound {
     no = 0,
     yes = 1,
@@ -32,6 +42,7 @@ enum stab_techniques {
     no_stab = 0,
     stab_wentgnes = 1,
     stab_dynamic = 2,
+    stab_hybrid = 3,
 };
 
 enum print {
@@ -63,6 +74,8 @@ typedef struct wctparms {
     int    strong_branching;
     int    nb_iterations_rvnd;
     double branching_cpu_limit;
+    double alpha;
+    int pricing_solver;
     /**
      * scatter search
      */
@@ -97,6 +110,7 @@ void wctparms_free(wctparms *parms);
 /*Functions for setting some parameters*/
 int wctparms_set_init_upper_bound(wctparms *parms, int bound);
 int wctparms_set_branching_cpu_limit(wctparms *parms, double limit);
+int wctparms_set_alpha(wctparms *parms, double alpha);
 int wctparms_set_search_strategy(wctparms *parms, int strategy);
 int wctparms_set_branching_strategy(wctparms *parms, int strategy);
 int wctparms_set_strong_branching(wctparms *parms, int strong);
@@ -108,6 +122,7 @@ int wctparms_set_nb_iterations_rvnd(wctparms *parms, int nb_sol);
 int wctparms_set_branchandbound(wctparms *parms, int bound);
 int wctparms_set_stab_technique(wctparms *parms, int stab_technique);
 int wctparms_set_print(wctparms *parms, int print);
+int wctparms_set_pricing_solver(wctparms *parms, int solver);
 
 /**
  * scatter search
@@ -125,4 +140,4 @@ int wctparms_set_nmachines(wctparms *parms, int nmachines);
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif  // INCLUDE_WCTPARMS_H_
