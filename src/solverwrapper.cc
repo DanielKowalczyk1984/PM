@@ -38,6 +38,21 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
                                double *                  rhs,
                                double *                  pi,
                                int                       nbjobs);
+void update_alpha(wctdata *pd);
+void update_alpha_misprice(wctdata *pd);
+void update_alpha_misprice(wctdata *pd);
+int is_stabilized(wctdata *pd);
+int get_dual_row(wctdata *pd, int i);
+int calculate_dualdiffnorm(wctdata *pd);
+int calculate_dualdiffnorm(wctdata *pd);
+int calculate_beta(wctdata *pd);
+int calculate_hybridfactor(wctdata *pd);
+int update_hybrid(wctdata *pd);
+int update_node(wctdata *pd);
+double compute_dual(wctdata *pd, int i);
+int row_getDual(wctdata *pd, int i);
+int update_subgradientproduct(wctdata *pd);
+int update_stabcenter(const Optimal_Solution<double> & sol, wctdata *pd);
 
 PricerSolverBase* newSolver(GPtrArray *jobs,
                             GPtrArray *ordered_jobs,
@@ -367,7 +382,7 @@ static void compute_subgradient(const Optimal_Solution<double> &sol, wctdata *pd
 
     pd->subgradientnorm = 0.0;
 
-    for(unsigned i = 0; i < pd->njobs; ++i) {
+    for(int i = 0; i < pd->njobs; ++i) {
         double sqr = SQR(pd->subgradient_in[i]);
 
         if(sqr > 0.00001) {
@@ -382,7 +397,7 @@ int update_subgradientproduct(wctdata *pd) {
     int val = 0;
 
     pd->subgradientproduct = 0.0;
-    for(unsigned i = 0; i < pd->njobs; ++i) {
+    for(int i = 0; i < pd->njobs; ++i) {
         pd->subgradientproduct -= (pd->pi_out[i] - pd->pi_in[i]) * pd->subgradient_in[i];
     }
     printf("subgradientproduct %f\n", pd->subgradientproduct);
@@ -573,7 +588,7 @@ int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
 
         stabilized = is_stabilized(pd);
 
-        for(unsigned i = 0; i <= pd->njobs; ++i) {
+        for(int i = 0; i <= pd->njobs; ++i) {
             pd->pi_sep[i] = compute_dual(pd, i);
         }
 
