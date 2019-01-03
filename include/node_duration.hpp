@@ -338,7 +338,7 @@ class Node {
     }
 
     Node<T>* InitNode(int _weight, bool _root_node = false, bool _terminal_node = false){
-      if(!terminal_node) {
+      if(!_terminal_node) {
         weight = _weight;
         root_node = _root_node;
       } else {

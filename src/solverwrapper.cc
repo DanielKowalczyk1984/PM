@@ -38,6 +38,21 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
                                double *                  rhs,
                                double *                  pi,
                                int                       nbjobs);
+void update_alpha(wctdata *pd);
+void update_alpha_misprice(wctdata *pd);
+void update_alpha_misprice(wctdata *pd);
+int is_stabilized(wctdata *pd);
+int get_dual_row(wctdata *pd, int i);
+int calculate_dualdiffnorm(wctdata *pd);
+int calculate_dualdiffnorm(wctdata *pd);
+int calculate_beta(wctdata *pd);
+int calculate_hybridfactor(wctdata *pd);
+int update_hybrid(wctdata *pd);
+int update_node(wctdata *pd);
+double compute_dual(wctdata *pd, int i);
+int row_getDual(wctdata *pd, int i);
+int update_subgradientproduct(wctdata *pd);
+int update_stabcenter(const Optimal_Solution<double> & sol, wctdata *pd);
 
 PricerSolverBase* newSolver(GPtrArray *jobs,
                             GPtrArray *ordered_jobs,
@@ -218,18 +233,189 @@ int init_tables(PricerSolver *solver) {
     return val;
 }
 
-static void compute_subgradient(Optimal_Solution<double> &sol,
-                                double *                  sub_gradient,
-                                double *                  rhs,
-                                int                       nbjobs,
-                                int                       nbmachines) {
-    fill_dbl(sub_gradient, nbjobs, -1.0);
-    sub_gradient[nbjobs] = -rhs[nbjobs] + 1;
+void update_alpha(wctdata *pd) {
+    if (pd->subgradientproduct > 0.0) {
+        pd->alpha = CC_MAX(0, pd->alpha - 0.1);
+    } else {
+        pd->alpha = CC_MIN(0.99, pd->alpha + (1 - pd->alpha) * 0.1);
+    }
+}
+
+void update_alpha_misprice(wctdata *pd) {
+    pd->k++;
+    pd->alphabar = CC_MAX(0.0, 1 - pd->k*(1.0 - pd->alpha));
+}
+
+int is_stabilized(wctdata *pd) {
+    if(pd->inmispricingschedule) {
+        return pd->alphabar > 0.0;
+    }
+    return pd->alpha > 0.0;
+}
+
+int get_dual_row(wctdata *pd, int i) {
+    int val = 0;
+
+    return val;
+}
+
+int calculate_dualdiffnorm(wctdata *pd) {
+    int val = 0;
+
+    pd->dualdiffnorm = 0.0;
+
+    for (int i = 0; i <= pd->njobs; ++i) {
+        double dualdiff = SQR(pd->pi_in[i] - pd->pi_out[i]);
+        if(dualdiff > 0.00001) {
+            pd->dualdiffnorm += dualdiff;
+        }
+    }
+
+    pd->dualdiffnorm = SQRT(pd->dualdiffnorm);
+
+    return val;
+}
+
+int calculate_beta(wctdata *pd) {
+    int val = 0;
+
+    pd->beta = 0.0;
+    for (int i = 0; i <= pd->njobs; ++i) {
+        double dualdiff = ABS(pd->pi_out[i] - pd->pi_in[i]);
+        double product = dualdiff * ABS(pd->subgradient_in[i]);
+
+        if(product > 0.000001) {
+            pd->beta += product;
+        }
+    }
+
+    if(pd->subgradientnorm > 0.00001) {
+        pd->beta = pd->beta/(pd->subgradientnorm * pd->dualdiffnorm);
+    }
+
+    return val;
+}
+
+int calculate_hybridfactor(wctdata *pd) {
+    int val = 0;
+
+    double aux_norm = 0.0;
+    for (int i = 0; i <= pd->njobs; ++i) {
+        double aux_double = SQR((pd->beta - 1.0) * (pd->pi_out[i] - pd->pi_in[i]) + pd->beta * (pd->subgradient_in[i]*pd->dualdiffnorm/pd->subgradientnorm));
+        if(aux_double > 0.00001) {
+            aux_norm += aux_double; 
+        }
+    }
+    aux_norm = SQRT(aux_norm);
+
+    pd->hybridfactor = ((1 - pd->alpha) * pd->dualdiffnorm)/aux_norm;
+
+    return val;
+}
+
+int update_hybrid(wctdata *pd) {
+    int val = 0;
+
+    if(pd->hasstabcenter && !pd->inmispricingschedule && pd->alpha > 0.0) {
+        calculate_dualdiffnorm(pd);
+        calculate_beta(pd);
+        calculate_hybridfactor(pd);
+    }
+
+    return val;
+}
+
+
+int update_node(wctdata *pd) {
+    int val = 0;
+    if(pd->node_stab != pd->id) {
+        pd->node_stab = pd->id;
+        pd->k = 0;
+        pd->alpha = 0.0;
+        pd->hasstabcenter = 0;
+        pd->eta_in = 0.0;
+        pd->inmispricingschedule = 0;
+    }
+
+    return val;
+}
+
+double compute_dual(wctdata *pd, int i) {
+    double usedalpha = pd->alpha;
+    double usedbeta = pd->beta;
+
+    if(pd->inmispricingschedule) {
+        usedalpha = pd->alphabar;
+        usedbeta = 0.0;
+    }
+
+    if(pd->hasstabcenter && (usedbeta == 0.0 || usedalpha == 0.0)) {
+        return usedalpha*pd->pi_in[i] + (1.0 - usedalpha) * pd->pi_out[i];
+    } else if (pd->hasstabcenter && usedbeta > 0.0) {
+        double dual = pd->pi_in[i] + pd->hybridfactor * (pd->beta * (pd->pi_in[i] + pd->subgradient_in[i] * pd->dualdiffnorm / pd->subgradientnorm) + (1.0 - pd->beta) * pd->pi_out[i] - pd->pi_in[i]);
+        return CC_MAX(dual, 0.0);
+    } 
+
+    return pd->pi_out[i];
+}
+
+int row_getDual(wctdata *pd, int i) {
+    int val = 0;
+    assert(i <= pd->njobs);
+
+
+    pd->pi_sep[i] = compute_dual(pd, i);
+
+    return val;
+}
+
+
+
+static void compute_subgradient(const Optimal_Solution<double> &sol, wctdata *pd) {
+    fill_dbl(pd->subgradient_in, pd->njobs, 1.0);
+    pd->subgradient_in[pd->njobs] = 0.0;
 
     for (guint i = 0; i < sol.jobs->len; i++) {
         Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-        sub_gradient[tmp_j->job] -= rhs[nbjobs]*1.0;
+        pd->subgradient_in[tmp_j->job] += pd->rhs[pd->njobs]*1.0;
     }
+
+    pd->subgradientnorm = 0.0;
+
+    for(int i = 0; i < pd->njobs; ++i) {
+        double sqr = SQR(pd->subgradient_in[i]);
+
+        if(sqr > 0.00001) {
+            pd->subgradientnorm += sqr;
+        }
+    }
+
+    pd->subgradientnorm = SQRT(pd->subgradientnorm);
+}
+
+int update_subgradientproduct(wctdata *pd) {
+    int val = 0;
+
+    pd->subgradientproduct = 0.0;
+    for(int i = 0; i < pd->njobs; ++i) {
+        pd->subgradientproduct -= (pd->pi_out[i] - pd->pi_in[i]) * pd->subgradient_in[i];
+    }
+    printf("subgradientproduct %f\n", pd->subgradientproduct);
+
+    return val;
+}
+
+int update_stabcenter(const Optimal_Solution<double> & sol, wctdata *pd) {
+    int val = 0;
+
+    if(pd->eta_sep > pd->eta_in) {
+        memcpy(pd->pi_in, pd->pi_sep, (pd->njobs + 1) *sizeof(double));
+        compute_subgradient(sol, pd);
+        pd->eta_in = pd->eta_sep;
+        pd->hasstabcenter = 1;
+    }
+
+    return val;
 }
 
 static void adjust_alpha(double *pi_out,
@@ -244,9 +430,9 @@ static void adjust_alpha(double *pi_out,
     }
 
     if (sum > 0) {
-        alpha = CC_MIN(0.9, alpha + (1 - alpha) * 0.05);
-    } else {
         alpha = CC_MAX(0, alpha - 0.1);
+    } else {
+        alpha = CC_MIN(0.9, alpha + (1 - alpha) * 0.05);
     }
 }
 
@@ -362,9 +548,8 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
             compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
         if (pd->reduced_cost >= 0.00001) {
-            compute_subgradient(sol, pd->subgradient, pd->rhs, pd->njobs,
-                                pd->nmachines);
-            adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient, pd->njobs,
+            compute_subgradient(sol, pd);
+            adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient_in, pd->njobs,
                         alpha);
             val = construct_sol(pd, &sol);
             CCcheck_val_2(val, "Failed in construct_sol_stab");
@@ -394,94 +579,52 @@ CLEAN:
 int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
     int           val = 0;
     PricerSolver *solver = pd->solver;
-    double        k = 0.0;
-    double        alpha;
-    double beta;
-    double        result_sep;
-    bool          inmispricing = false;
     pd->update = 0;
+    bool stabilized = false;
 
     do {
-        k += 1.0;
-        if(inmispricing) {
-            alpha = CC_MAX(0.0, 1.0 - k * (1 - pd->alpha));
-            beta = 0;
-        } else if (pd->hasstabcenter && pd->alpha > 0.0) {
-            double aux_double = 0.0;
-            double aux_norm = 0.0;
-            pd->dualdiffnorm = 0.0;
-            pd->beta = 0.0;
+        update_node(pd);
+        update_hybrid(pd);
 
-            for (int i = 0; i < pd->njobs; ++i) {
-                pd->dualdiffnorm += SQR(pd->pi_in[i] - pd->pi_out[i]);
-            }
+        stabilized = is_stabilized(pd);
 
-            pd->dualdiffnorm = SQRT(pd->dualdiffnorm);
-            
-            for (int i = 0; i < pd->njobs; ++i) {
-
-                pd->beta += ABS(pd->pi_out[i] - pd->pi_in[i])*ABS(pd->pi_in[i]);
-            }
-
-            pd->beta = pd->beta/(pd->subgradientnorm * pd->dualdiffnorm);
-
-            for (int i = 0; i < pd->njobs; ++i) {
-                double aux_double = SQR((pd->beta - 1.0) * (pd->pi_in[i] - pd->pi_out[i]) + pd->beta * (pd->subgradient[i]*pd->dualdiffnorm/pd->subgradientnorm));
-                aux_norm += aux_double; 
-            }
-
-            aux_norm = SQRT(aux_norm);
-
-            pd->hybridfactor = ((1 - pd->alpha) * pd->dualdiffnorm)/aux_norm;
-
-
+        for(int i = 0; i <= pd->njobs; ++i) {
+            pd->pi_sep[i] = compute_dual(pd, i);
         }
-        if(pd->hasstabcenter && (pd->beta == 0.0 || pd->alpha == 0.0)) {
-            alpha = pd->hasstabcenter ? CC_MAX(0.0, 1.0 - k * (1 - pd->alpha)) : 0.0;
-            compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
-                               pd->pi_in, &(pd->eta_in), pd->pi_out,
-                               &(pd->eta_out));
-        } else if (pd->hasstabcenter && pd->beta > 0) {
-            for (int i = 0; i <= pd->njobs ; ++i) {
-                pd->pi_sep[i] = pd->pi_in[i] + pd->hybridfactor * (beta * (pd->pi_in[i] + pd->subgradient[i] * pd->dualdiffnorm / pd->subgradientnorm) + (1.0 - beta) * pd->pi_out[i] - pd->pi_in[i]);
-            }
-        } else {
-            memcpy(pd->pi_sep, pd->pi_in, (pd->njobs + 1) * sizeof(double));
-        }
+
         Optimal_Solution<double> sol;
         sol = solver->pricing_algorithm(pd->pi_sep);
-        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
-        pd->reduced_cost =
-            compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
-        if (pd->reduced_cost >= 0.00001) {
-            compute_subgradient(sol, pd->subgradient, pd->rhs, pd->njobs,
-                                pd->nmachines);
-            adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient, pd->njobs,
-                        alpha);
-            val = construct_sol(pd, &sol);
-            CCcheck_val_2(val, "Failed in construct_sol_stab");
-            pd->alpha = alpha;
+        pd->eta_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
+        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
+
+        update_stabcenter(sol, pd);
+
+        if(pd->reduced_cost > 0.00001) {
+            if(pd->inmispricingschedule) {
+                pd->inmispricingschedule = 0;
+            }
+            update_subgradientproduct(pd);
+            update_alpha(pd);
+            construct_sol(pd, &sol);
             pd->update = 1;
         } else {
-            inmispricing = true;
+            if(stabilized) {
+                pd->inmispricingschedule = 1;
+                update_alpha_misprice(pd);
+            } else {
+                pd->inmispricingschedule = 0;
+            }
         }
-    } while (inmispricing && alpha > 0.0);
+    } while (pd->inmispricingschedule && stabilized);
 
-    if (result_sep > pd->eta_in) {
-        pd->hasstabcenter = 1;
-        pd->eta_in = result_sep;
-        memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->njobs + 1));
-    }
-
-    if (pd->iterations%pd->njobs == 0) {
+    // if (pd->iterations%pd->njobs == 0) {
         printf(
             " alpha = %f, result of primal bound and Lagragian bound: out =%f, "
             "in = %f\n",
             pd->alpha, pd->eta_out, pd->eta_in);
-    }
+    // }
 
-CLEAN:
     return val;
 }
 
