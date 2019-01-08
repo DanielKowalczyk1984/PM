@@ -7,9 +7,9 @@ template<typename T>
 class Node;
 
 template<typename T>
-class PrevNode {
+class Label {
   private:
-    PrevNode<T> *prev;
+    Label<T> *prev;
     bool high;
     Node<T>* head_node;
 
@@ -19,14 +19,14 @@ class PrevNode {
     /**
      * Constructor
      */
-    PrevNode(T &_f, PrevNode<T> *&_prev, bool &_high) :
+    Label(T &_f, Label<T> *&_prev, bool &_high) :
       prev(_prev),
       high(_high),
       head_node(nullptr),
       f(_f),
       prev_job(nullptr){};
 
-    PrevNode() :
+    Label() :
       prev(nullptr),
       high(false),
       head_node(nullptr),
@@ -36,7 +36,7 @@ class PrevNode {
     /**
      * Copy Constructor
      */
-    PrevNode<T>(const PrevNode<T> &src) :
+    Label<T>(const Label<T> &src) :
       prev(src.prev),
       high(src.high),
       head_node(src.head_node),
@@ -46,7 +46,7 @@ class PrevNode {
     /**
      * Move Constructor
      */
-    PrevNode<T>(const PrevNode<T> &&src) :
+    Label<T>(const Label<T> &&src) :
       prev(src.prev),
       high (src.high),
       head_node(src.head_node),
@@ -56,7 +56,7 @@ class PrevNode {
     /**
      * Copy Assignment
      */
-    PrevNode<T>& operator=(const PrevNode<T> &src){
+    Label<T>& operator=(const Label<T> &src){
       if(&src == this) {
         return *this;
       }
@@ -73,7 +73,7 @@ class PrevNode {
     /**
      * Move Assignment
      */
-    PrevNode<T>& operator=(const PrevNode<T> &&src){
+    Label<T>& operator=(const Label<T> &&src){
       if(&src == this) {
         return *this;
       }
@@ -87,7 +87,7 @@ class PrevNode {
       return *this;
     }
 
-    void SetPrev(PrevNode<T> * &&_prev) {
+    void SetPrev(Label<T> * &&_prev) {
         prev = _prev;
     }
 
@@ -113,7 +113,7 @@ class PrevNode {
         return f;
     }
 
-    PrevNode<T>* GetPrev() {
+    Label<T>* GetPrev() {
         return prev;
     }
 
@@ -129,13 +129,13 @@ class PrevNode {
       return GetPrev() == nullptr ? nullptr : GetPrev()->GetJob();
     }
 
-    void UpdateSolution(T _f, PrevNode<T>* && _prev, bool &&_high) {
+    void UpdateSolution(T _f, Label<T>* && _prev, bool &&_high) {
       f = _f;
       prev = _prev;
       high = _high;
     }
 
-    void UpdateSolution(PrevNode<T> &_node) {
+    void UpdateSolution(Label<T> &_node) {
       f = _node.f;
       prev = _node.prev;
       high = _node.high;
@@ -149,7 +149,7 @@ class PrevNode {
       return head_node->GetWeight();
     }
 
-    void UpdateNode(PrevNode<T> *_n, T _f = 0, bool _high = false){
+    void UpdateNode(Label<T> *_n, T _f = 0, bool _high = false){
       if(_high) {
         f = _f;
         prev_job = GetJob();
@@ -178,8 +178,8 @@ class Node {
     Job *job;
 
   public:
-    PrevNode<T> prev1;
-    PrevNode<T> prev2;
+    Label<T> state1;
+    Label<T> state2;
 
     std::shared_ptr<Node<T>> y;
     std::shared_ptr<Node<T>> n;
@@ -194,14 +194,14 @@ class Node {
           root_node(false),
           terminal_node(false),
           job(nullptr),
-          prev1(),
-          prev2(),
+          state1(),
+          state2(),
           y(nullptr),
           n(nullptr) {
         child[0] = nullptr;
         child[1] = nullptr;
-        prev1.SetHeadNode(this);
-        prev2.SetHeadNode(this);
+        state1.SetHeadNode(this);
+        state2.SetHeadNode(this);
     };
 
     Node(int &_weight, int &_num_layer, bool &_root_node,bool &_terminal_node):
@@ -209,12 +209,12 @@ class Node {
          num_layer(_num_layer),
          root_node(_root_node),
          terminal_node(_terminal_node),
-         prev1(),
-         prev2(),
+         state1(),
+         state2(),
          y(nullptr),
          n(nullptr) {
-          prev1.SetHeadNode(this);
-          prev2.SetHeadNode(this);
+          state1.SetHeadNode(this);
+          state2.SetHeadNode(this);
           child[0] = nullptr;
           child[1] = nullptr;
     }
@@ -228,8 +228,8 @@ class Node {
         root_node(src.root_node),
         terminal_node(src.terminal_node),
         job(src.job),
-        prev1(src.prev1),
-        prev2(src.prev2),
+        state1(src.state1),
+        state2(src.state2),
         y(src.y),
         n(src.n),
         child{src.child[0], src.child[1]} {
@@ -247,8 +247,8 @@ class Node {
         root_node(src.root_node),
         terminal_node(src.terminal_node),
         job(src.job),
-        prev1(src.prev1),
-        prev2(src.prev2), 
+        state1(src.state1),
+        state2(src.state2), 
         y(std::move(src.y)),
         n(std::move(src.n)){
         child = {src.child[0], src.child[1]};
@@ -273,8 +273,8 @@ class Node {
       y = src.y;
       n = src.n;
 
-      prev1 = src.prev1;
-      prev2 = src.prev2;
+      state1 = src.state1;
+      state2 = src.state2;
 
       child = {src.child[0], src.child[1]};
 
@@ -298,8 +298,8 @@ class Node {
       y = std::move(src.y);
       n = std::move(src.n);
 
-      prev1 = src.prev1;
-      prev2 = src.prev2;
+      state1 = src.state1;
+      state2 = src.state2;
 
       child = {src.child[0], src.child[1]};
 
@@ -308,8 +308,8 @@ class Node {
 
     // void SetJob(Job* &_job){
     //   job = _job;
-    //   prev1.SetHeadNode(this);
-    //   prev2.SetHeadNode(this);
+    //   state1.SetHeadNode(this);
+    //   state2.SetHeadNode(this);
     // }
 
     void set_job(Job *_job, bool _terminal_node = false){
@@ -351,7 +351,7 @@ class Node {
     }
 
     friend bool operator<(const Node<T> &lhs, const Node<T> &rhs) {
-        return lhs.prev1.f < rhs.prev1.f;
+        return lhs.state1.f < rhs.state1.f;
     }
 
     friend bool operator> (const Node<T> &lhs, const Node<T> &rhs){ return rhs < lhs; }

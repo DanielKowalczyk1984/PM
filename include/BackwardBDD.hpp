@@ -49,22 +49,22 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
         Node<T> *p1 = n.child[1];
         T result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
 
-        T obj0 = p0->prev1.GetF();
-        T obj1 = p1->prev1.GetF() + result;
+        T obj0 = p0->state1.GetF();
+        T obj1 = p1->state1.GetF() + result;
 
         if (obj0 < obj1) {
-            n.prev1.UpdateSolution(obj1, nullptr, true);
+            n.state1.UpdateSolution(obj1, nullptr, true);
         } else {
-            n.prev1.UpdateSolution(obj0, nullptr, false);
+            n.state1.UpdateSolution(obj0, nullptr, false);
         }
     }
 
     void initializenode(Node<T> &n) const override {
-        n.prev1.UpdateSolution(-DBL_MAX / 2, nullptr, false);
+        n.state1.UpdateSolution(-DBL_MAX / 2, nullptr, false);
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.prev1.f = -pi[num_jobs];
+        n.state1.f = -pi[num_jobs];
     }
 
     Optimal_Solution<T> get_objective(Node<T> &n) const {
@@ -74,7 +74,7 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
         Job *aux_job =  n.GetJob();
 
         while (aux_job) {
-            if (aux_node->prev1.GetHigh()) {
+            if (aux_node->state1.GetHigh()) {
                 sol.push_job_back(aux_job, pi[aux_job->job]);
                 aux_node = aux_node->child[1];
                 aux_job = aux_node->GetJob();
@@ -109,53 +109,53 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         Node<T> *p1  {n.child[1]};
         T result {- value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job]};
 
-        Job *prev_job{p1->prev1.get_prev_job()};
+        Job *prev_job{p1->state1.get_prev_job()};
 
-        n.prev1.UpdateNode(&(p0->prev1));
-        n.prev2.UpdateNode(&(p0->prev2));
+        n.state1.UpdateNode(&(p0->state1));
+        n.state2.UpdateNode(&(p0->state2));
         bool diff =  bool_diff_Fij(weight, prev_job, tmp_j);
-        bool diff1 = bool_diff_Fij(weight, p1->prev1.get_prev_job(), tmp_j); 
-        bool diff2 = bool_diff_Fij(weight, p1->prev2.get_prev_job(), tmp_j); 
+        bool diff1 = bool_diff_Fij(weight, p1->state1.get_prev_job(), tmp_j); 
+        bool diff2 = bool_diff_Fij(weight, p1->state2.get_prev_job(), tmp_j); 
 
         if(prev_job != tmp_j && diff) {
-            T obj1 {p1->prev1.GetF() + result};
-            T obj2 {p1->prev2.GetF() + result};
+            T obj1 {p1->state1.GetF() + result};
+            T obj2 {p1->state2.GetF() + result};
 
-            if(obj1 > n.prev1.GetF()) {
-                if(tmp_j != n.prev1.get_prev_job()) {
-                    n.prev2.UpdateNode(&(p0->prev1));
+            if(obj1 > n.state1.GetF()) {
+                if(tmp_j != n.state1.get_prev_job()) {
+                    n.state2.UpdateNode(&(p0->state1));
                 }
-                n.prev1.UpdateNode(&(p1->prev1), obj1, true);
-            } else if (obj1 > n.prev2.GetF() && tmp_j != n.prev1.get_prev_job() && diff1){
-                n.prev2.UpdateNode(&(p1->prev1), obj1, true);
-            } else if (obj2 > n.prev2.GetF() && tmp_j != n.prev1.get_prev_job() && diff2) {
-                n.prev2.UpdateNode(&(p1->prev2), obj2, true);
+                n.state1.UpdateNode(&(p1->state1), obj1, true);
+            } else if (obj1 > n.state2.GetF() && tmp_j != n.state1.get_prev_job() && diff1){
+                n.state2.UpdateNode(&(p1->state1), obj1, true);
+            } else if (obj2 > n.state2.GetF() && tmp_j != n.state1.get_prev_job() && diff2) {
+                n.state2.UpdateNode(&(p1->state2), obj2, true);
             }
         } else {
-            T obj1 = p1->prev2.GetF() + result;
-            if(obj1 > n.prev1.GetF()) {
-                if(tmp_j != n.prev1.get_prev_job()) {
-                    n.prev2.UpdateNode(&(p0->prev1));
+            T obj1 = p1->state2.GetF() + result;
+            if(obj1 > n.state1.GetF()) {
+                if(tmp_j != n.state1.get_prev_job()) {
+                    n.state2.UpdateNode(&(p0->state1));
                 }
-                n.prev1.UpdateNode(&(p1->prev2), obj1, true);
-            } else if (obj1 > n.prev2.GetF() && tmp_j != n.prev1.get_prev_job()){
-                n.prev2.UpdateNode(&(p1->prev2), obj1, true);
+                n.state1.UpdateNode(&(p1->state2), obj1, true);
+            } else if (obj1 > n.state2.GetF() && tmp_j != n.state1.get_prev_job()){
+                n.state2.UpdateNode(&(p1->state2), obj1, true);
             }
         }
     }
 
     void initializenode(Node<T> &n) const override {
-        n.prev1.UpdateSolution(-DBL_MAX / 2, nullptr, false);
+        n.state1.UpdateSolution(-DBL_MAX / 2, nullptr, false);
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.prev1.f = -pi[num_jobs];
+        n.state1.f = -pi[num_jobs];
     }
 
     Optimal_Solution<T> get_objective(Node<T> &n) const {
         Optimal_Solution<T> sol(-pi[num_jobs]);
 
-        PrevNode<T> *aux_node = &n.prev1;
+        Label<T> *aux_node = &n.state1;
         Job *aux_job =  aux_node->GetJob();
 
         while (aux_job) {
