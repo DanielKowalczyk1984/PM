@@ -32,6 +32,7 @@ PricerSolverBase::PricerSolverBase(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     *zdd = *dd;
     zdd->zddReduce();
     nb_nodes_zdd = zdd->size();
+    printf("size BDD = %lu and size ZDD = %lu\n", nb_nodes_bdd, nb_nodes_zdd);
 }
 
 PricerSolverBase::~PricerSolverBase() {
