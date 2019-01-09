@@ -551,6 +551,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     if (dbg_lvl() > -1) {
         printf("iterations = %d\n", pd->iterations);
         printf("lowerbound %d\n", pd->lower_bound + pd->problem->off);
+        printf("LP value = %f \n", pd->LP_lower_bound + pd->problem->off);
     }
     problem->global_lower_bound = CC_MAX(pd->lower_bound + pd->problem->off, problem->global_lower_bound);
 

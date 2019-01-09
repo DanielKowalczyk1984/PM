@@ -91,10 +91,10 @@ public:
         auto m =  std::max_element(n.list.begin(), n.list.end(),my_compare<T>);
         weight = (*m)->GetWeight();
 
-        PrevNode<T> *ptr_node = &((*m)->prev1);
+        Label<T> *ptr_node = &((*m)->state1);
 
         while(ptr_node->GetPrev() != nullptr) {
-            PrevNode<T> *aux_prev_node = ptr_node->GetPrev();
+            Label<T> *aux_prev_node = ptr_node->GetPrev();
             Job *aux_job = aux_prev_node->GetJob();
             if(ptr_node->GetHigh()) {
                 sol.C_max += aux_job->processingime;
@@ -141,19 +141,19 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
     void initializenode(ForwardZddNode<T>& n) const override {
         for (auto &it: n.list) {
             if(it->GetWeight() == 0) {
-                it->prev1.UpdateSolution(-pi[num_jobs], nullptr, false);
-                it->prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->state1.UpdateSolution(-pi[num_jobs], nullptr, false);
+                it->state2.UpdateSolution(-DBL_MAX/2, nullptr, false);
             } else {
-                it->prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
-                it->prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->state1.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->state2.UpdateSolution(-DBL_MAX/2, nullptr, false);
             }
         }
     }
 
     void initializerootnode(ForwardZddNode<T> &n) const override {
         for(auto &it: n.list){
-            it->prev1.f = -pi[num_jobs];
-            it->prev2.SetF(-DBL_MAX/2);
+            it->state1.f = -pi[num_jobs];
+            it->state2.SetF(-DBL_MAX/2);
         }
     }
 
@@ -172,43 +172,43 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
             /**
              * High edge calculation
              */
-            Job *prev = it->prev1.GetPrevJob();
-            Job *aux1 = p1->prev1.GetPrevJob();
+            Job *prev = it->state1.GetPrevJob();
+            Job *aux1 = p1->state1.GetPrevJob();
             double diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
 
             if(prev != tmp_j && diff) {
-                g = it->prev1.GetF() + result;
-                if(g > p1->prev1.GetF()) {
+                g = it->state1.GetF() + result;
+                if(g > p1->state1.GetF()) {
                     if(aux1 != tmp_j) {
-                        p1->prev2.UpdateSolution(p1->prev1);
+                        p1->state2.UpdateSolution(p1->state1);
                     }
-                    p1->prev1.UpdateSolution(g, &(it->prev1), true);
-                } else if ((g > p1->prev2.GetF()) && (aux1 != tmp_j)) {
-                    p1->prev2.UpdateSolution(g, &(it->prev1), true);
+                    p1->state1.UpdateSolution(g, &(it->state1), true);
+                } else if ((g > p1->state2.GetF()) && (aux1 != tmp_j)) {
+                    p1->state2.UpdateSolution(g, &(it->state1), true);
                 }
             } else  {
-                g = it->prev2.GetF() + result;
-                if(g > p1->prev1.GetF()) {
+                g = it->state2.GetF() + result;
+                if(g > p1->state1.GetF()) {
                     if(aux1 != tmp_j) {
-                        p1->prev2.UpdateSolution(p1->prev1);
+                        p1->state2.UpdateSolution(p1->state1);
                     }
-                    p1->prev1.UpdateSolution(g, &(it->prev2), true);
-                } else if ((g >= p1->prev2.GetF()) && (aux1 != tmp_j)) {
-                    p1->prev2.UpdateSolution(g, &(it->prev2), true);
+                    p1->state1.UpdateSolution(g, &(it->state2), true);
+                } else if ((g >= p1->state2.GetF()) && (aux1 != tmp_j)) {
+                    p1->state2.UpdateSolution(g, &(it->state2), true);
                 }
             }
 
             /**
              * Low edge calculation
              */
-            aux1 = p0->prev1.GetPrevJob();
-            if(it->prev1.GetF() > p0->prev1.GetF()) {
+            aux1 = p0->state1.GetPrevJob();
+            if(it->state1.GetF() > p0->state1.GetF()) {
                 if(prev != aux1) {
-                    p0->prev2.UpdateSolution(p0->prev1);
+                    p0->state2.UpdateSolution(p0->state1);
                 }
-                p0->prev1.UpdateSolution(it->prev1);
-            } else if ((it->prev1.GetF() > p0->prev2.GetF()) && (aux1 != prev)){
-                p0->prev2.UpdateSolution(it->prev1);
+                p0->state1.UpdateSolution(it->state1);
+            } else if ((it->state1.GetF() > p0->state2.GetF()) && (aux1 != prev)){
+                p0->state2.UpdateSolution(it->state1);
             }
         }
     }
@@ -244,16 +244,16 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
     void initializenode(ForwardZddNode<T>& n) const override {
         for (auto &it: n.list) {
             if(it->GetWeight() == 0) {
-                it->prev1.UpdateSolution(-pi[num_jobs], nullptr, false);
+                it->state1.UpdateSolution(-pi[num_jobs], nullptr, false);
             } else {
-                it->prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->state1.UpdateSolution(-DBL_MAX/2, nullptr, false);
             }
         }
     }
 
     void initializerootnode(ForwardZddNode<T> &n) const override {
         for(auto &it: n.list){
-            it->prev1.f = -pi[num_jobs];
+            it->state1.f = -pi[num_jobs];
         }
     }
 
@@ -275,16 +275,16 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
             /**
              * High edge calculation
              */
-            g = it->prev1.GetF() + result;
-            if(g > p1->prev1.GetF()) {
-                p1->prev1.UpdateSolution(g, &(it->prev1), true);
+            g = it->state1.GetF() + result;
+            if(g > p1->state1.GetF()) {
+                p1->state1.UpdateSolution(g, &(it->state1), true);
             }
 
             /**
              * Low edge calculation
              */
-            if(it->prev1.GetF() > p0->prev1.GetF()) {
-                p0->prev1.UpdateSolution(it->prev1);
+            if(it->state1.GetF() > p0->state1.GetF()) {
+                p0->state1.UpdateSolution(it->state1);
             }
         }
     }

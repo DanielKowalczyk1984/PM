@@ -41,10 +41,10 @@ public:
     Optimal_Solution<T> get_objective(Node<T> &n) const {
         Optimal_Solution<T> sol(-pi[num_jobs]);
 
-        PrevNode<T> *ptr_node = &(n.prev1);
+        Label<T> *ptr_node = &(n.state1);
 
         while(ptr_node->GetPrev() != nullptr) {
-            PrevNode<T> *aux_prev_node = ptr_node->GetPrev();
+            Label<T> *aux_prev_node = ptr_node->GetPrev();
             Job *aux_job = aux_prev_node->GetJob();
             if(ptr_node->GetHigh()) {
                 sol.C_max += aux_job->processingime;
@@ -88,17 +88,17 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
 
     void initializenode(Node<T>& n) const override {
         if(n.GetWeight() == 0) {
-            n.prev1.UpdateSolution(-pi[num_jobs], nullptr, false);
-            n.prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
+            n.state1.UpdateSolution(-pi[num_jobs], nullptr, false);
+            n.state2.UpdateSolution(-DBL_MAX/2, nullptr, false);
         } else {
-            n.prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
-            n.prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
+            n.state1.UpdateSolution(-DBL_MAX/2, nullptr, false);
+            n.state2.UpdateSolution(-DBL_MAX/2, nullptr, false);
         }
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.prev1.f = pi[num_jobs];
-        n.prev2.SetF(-DBL_MAX/2);
+        n.state1.f = pi[num_jobs];
+        n.state2.SetF(-DBL_MAX/2);
     }
 
     void evalNode(Node<T> &n) const override
@@ -117,43 +117,43 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
         /**
          * High edge calculation
          */
-        Job *prev = n.prev1.GetPrevJob();
-        Job *aux1 = p1->prev1.GetPrevJob();
+        Job *prev = n.state1.GetPrevJob();
+        Job *aux1 = p1->state1.GetPrevJob();
         diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
 
         if(prev != tmp_j && diff) {
-            g = n.prev1.GetF() + result;
-            if(g > p1->prev1.GetF()) {
+            g = n.state1.GetF() + result;
+            if(g > p1->state1.GetF()) {
                 if(aux1 != tmp_j) {
-                    p1->prev2.UpdateSolution(p1->prev1);
+                    p1->state2.UpdateSolution(p1->state1);
                 }
-                p1->prev1.UpdateSolution(g, &(n.prev1), true);
-            } else if ((g > p1->prev2.GetF()) && (aux1 != tmp_j)) {
-                p1->prev2.UpdateSolution(g, &(n.prev1), true);
+                p1->state1.UpdateSolution(g, &(n.state1), true);
+            } else if ((g > p1->state2.GetF()) && (aux1 != tmp_j)) {
+                p1->state2.UpdateSolution(g, &(n.state1), true);
             }
         } else  {
-            g = n.prev2.GetF() + result;
-            if(g > p1->prev1.GetF()) {
+            g = n.state2.GetF() + result;
+            if(g > p1->state1.GetF()) {
                 if(aux1 != tmp_j) {
-                    p1->prev2.UpdateSolution(p1->prev1);
+                    p1->state2.UpdateSolution(p1->state1);
                 }
-                p1->prev1.UpdateSolution(g, &(n.prev2), true);
-            } else if ((g >= p1->prev2.GetF()) && (aux1 != tmp_j)) {
-                p1->prev2.UpdateSolution(g, &(n.prev2), true);
+                p1->state1.UpdateSolution(g, &(n.state2), true);
+            } else if ((g >= p1->state2.GetF()) && (aux1 != tmp_j)) {
+                p1->state2.UpdateSolution(g, &(n.state2), true);
             }
         }
 
         /**
          * Low edge calculation
          */
-        aux1 = p0->prev1.GetPrevJob();
-        if(n.prev1.GetF() > p0->prev1.GetF()) {
+        aux1 = p0->state1.GetPrevJob();
+        if(n.state1.GetF() > p0->state1.GetF()) {
             if(prev != aux1) {
-                p0->prev2.UpdateSolution(p0->prev1);
+                p0->state2.UpdateSolution(p0->state1);
             }
-            p0->prev1.UpdateSolution(n.prev1);
-        } else if ((n.prev1.GetF() > p0->prev2.GetF()) && (aux1 != prev)){
-            p0->prev2.UpdateSolution(n.prev1);
+            p0->state1.UpdateSolution(n.state1);
+        } else if ((n.state1.GetF() > p0->state2.GetF()) && (aux1 != prev)){
+            p0->state2.UpdateSolution(n.state1);
         }
     }
 
@@ -188,14 +188,14 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
 
     void initializenode(Node<T>& n) const override {
         if(n.GetWeight() == 0) {
-            n.prev1.UpdateSolution(-pi[num_jobs], nullptr, false);
+            n.state1.UpdateSolution(-pi[num_jobs], nullptr, false);
         } else {
-            n.prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
+            n.state1.UpdateSolution(-DBL_MAX/2, nullptr, false);
         }
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.prev1.f = pi[num_jobs];
+        n.state1.f = pi[num_jobs];
     }
 
     void initializepi(T *_pi){
@@ -216,16 +216,16 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         /**
          * High edge calculation
          */
-        g = n.prev1.GetF() + result;
-        if(g > p1->prev1.GetF()) {
-            p1->prev1.UpdateSolution(g, &(n.prev1), true);
+        g = n.state1.GetF() + result;
+        if(g > p1->state1.GetF()) {
+            p1->state1.UpdateSolution(g, &(n.state1), true);
         }
 
         /**
          * Low edge calculation
          */
-        if(n.prev1.GetF() > p0->prev1.GetF()) {
-            p0->prev1.UpdateSolution(n.prev1);
+        if(n.state1.GetF() > p0->state1.GetF()) {
+            p0->state1.UpdateSolution(n.state1);
         }
     }
 

@@ -12,6 +12,8 @@ PricerSolverBase::PricerSolverBase(GPtrArray *_jobs):
     zdd = nullptr;
     nb_nodes_bdd = 0;
     nb_nodes_zdd = 0;
+    nb_removed_nodes = 0;
+    nb_removed_edges = 0;
 }
 
 
@@ -32,6 +34,9 @@ PricerSolverBase::PricerSolverBase(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     *zdd = *dd;
     zdd->zddReduce();
     nb_nodes_zdd = zdd->size();
+    printf("size BDD = %lu and size ZDD = %lu\n", nb_nodes_bdd, nb_nodes_zdd);
+    nb_removed_nodes = 0;
+    nb_removed_edges = 0;
 }
 
 PricerSolverBase::~PricerSolverBase() {
@@ -114,60 +119,60 @@ void PricerSolverBase::calculate_edges(scheduleset *set) {
 //     double LB,
 //     int nmachines,
 //     double reduced_cost) {
-//     double value;
+    // double value;
 
-//     /** Calculate the distance from  the origin to the given node */
-//     for (int i = zdd->topLevel(); i > 0; i--) {
-//         size_t const m = zdd_table[i].size();
-//         int          layer = nlayers - i;
-//         job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
-//                                           ordered_jobs, layer);
-//         Job *job = tmp_pair->j;
+    // /** Calculate the distance from  the origin to the given node */
+    // for (int i = zdd->topLevel(); i > 0; i--) {
+    //     size_t const m = zdd_table[i].size();
+    //     int          layer = nlayers - i;
+    //     job_interval_pair *tmp_pair = (job_interval_pair *) g_ptr_array_index(
+    //                                       ordered_jobs, layer);
+    //     Job *job = tmp_pair->j;
 
-//         for (size_t j = 0; j < m; j++) {
-//             for (auto &it : zdd_table[i][j].list) {
-//                 if (i == zdd->topLevel()) {
-//                     it->dist = 0;
-//                 }
+    //     for (size_t j = 0; j < m; j++) {
+    //         for (auto &it : zdd_table[i][j].list) {
+    //             if (i == zdd->topLevel()) {
+    //                 it->dist = 0;
+    //             }
 
-//                 value = pi[job->job] - value_Fj(it->weight + job->processingime, job);
+    //             value = pi[job->job] - value_Fj(it->weight + job->processingime, job);
 
-//                 if (it->y->dist < it->dist + value) {
-//                     it->y->dist = it->dist + value;
-//                 }
+    //             if (it->y->dist < it->dist + value) {
+    //                 it->y->dist = it->dist + value;
+    //             }
 
-//                 if (it->n->dist < it->dist) {
-//                     it->n->dist  = it->dist;
-//                 }
-//             }
-//         }
-//     }
+    //             if (it->n->dist < it->dist) {
+    //                 it->n->dist  = it->dist;
+    //             }
+    //         }
+    //     }
+    // }
 
-//     /** check for each node the Lagrangian dual */
-//     for (int i = zdd->topLevel(); i > 0; i--) {
-//         size_t const m = zdd_table[i].size();
+    // /** check for each node the Lagrangian dual */
+    // for (int i = zdd->topLevel(); i > 0; i--) {
+    //     size_t const m = zdd_table[i].size();
 
-//         for (size_t j = 0; j < m; j++) {
-//             for (auto &it : zdd_table[i][j].list) {
-//                 if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->b) > UB - 1 +
-//                         0.0001 && (it->calc)) {
-//                     it->calc = false;
-//                     nb_removed_edges++;
-//                 }
+    //     for (size_t j = 0; j < m; j++) {
+    //         for (auto &it : zdd_table[i][j].list) {
+    //             if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->b) > UB - 1 +
+    //                     0.0001 && (it->calc)) {
+    //                 it->calc = false;
+    //                 nb_removed_edges++;
+    //             }
 
-//                 if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->c) > UB - 1
-//                         + 0.0001 && (it->calc0)) {
-//                     it->calc0 = false;
-//                     nb_removed_edges++;
-//                 }
+    //             if (LB - (double)(nmachines - 1)*reduced_cost - (it->dist + it->c) > UB - 1
+    //                     + 0.0001 && (it->calc0)) {
+    //                 it->calc0 = false;
+    //                 nb_removed_edges++;
+    //             }
 
-//                 if (it->calc0 == false && it->calc == false && it->remove_node == false) {
-//                     nb_removed_nodes++;
-//                     it->remove_node = true;
-//                 }
-//             }
-//         }
-//     }
+    //             if (it->calc0 == false && it->calc == false && it->remove_node == false) {
+    //                 nb_removed_nodes++;
+    //                 it->remove_node = true;
+    //             }
+    //         }
+    //     }
+    // }
 // }
 
 /**
@@ -236,6 +241,59 @@ void PricerSolverBdd::InitTable() {
             // }
         }
     }
+}
+
+void PricerSolverBdd::evaluate_nodes(double *pi, int UB, double LB, int nmachines, double reduced_cost) {
+    double value;
+
+    /** Calculate the distance from  the origin to the given node */
+    for (int i = zdd->topLevel(); i > 0; i--) {
+        for (auto &it: table[i]) {
+            if (i == dd->topLevel()) {
+                it.dist_root_node = 0;
+            }
+            Job *job = it.GetJob();
+
+            value = pi[job->job] - value_Fj( it.GetWeight() + job->processingime, job);
+
+            if (it.child[1]->dist_root_node < it.dist_root_node + value) {
+                it.child[1]->dist_root_node = it.dist_root_node + value;
+            }
+
+            if (it.child[0]->dist_root_node < it.dist_root_node) {
+                it.child[0]->dist_root_node  = it.dist_root_node;
+            }
+        }
+    }
+
+    /** check for each node the Lagrangian dual */
+    for (int i = zdd->topLevel(); i > 0; i--) {
+        size_t const m = table[i].size();
+
+        for (size_t j = 0; j < m; j++) {
+            Node<double> *n = &table[i][j];
+            // printf("%f %f \n",  -(double)(nmachines - 1)*reduced_cost - (n->dist_root_node + n->dist_terminal_yes), UB - LB);
+                if (LB - (double)(nmachines - 1)*reduced_cost - (n->dist_root_node + n->dist_terminal_yes) > UB - 1 +
+                        0.0001 && (n->calc_yes)) {
+                    n->calc_yes = false;
+                    nb_removed_edges++;
+                }
+
+                if (LB - (double)(nmachines - 1)*reduced_cost - (n->dist_root_node + n->dist_terminal_no) > UB - 1
+                        + 0.0001 && (n->calc_no)) {
+                    n->calc_no = false;
+                    nb_removed_edges++;
+                }
+
+                if (n->calc_no == false && n->calc_yes == false && n->remove_node == false) {
+                    nb_removed_nodes++;
+                    n->remove_node = true;
+                }
+        }
+    }
+
+    printf("removed nodes = %d\n", nb_removed_nodes );
+
 }
 
 PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
