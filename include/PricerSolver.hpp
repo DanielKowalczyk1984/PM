@@ -67,8 +67,7 @@ public:
       */
      void calculate_new_ordered_jobs();
      void calculate_edges(scheduleset *set);
-     void evaluate_nodes(double *pi, int UB, double LB, int nmachines,
-                         double reduced_cost);
+     virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines, double reduced_cost);
 
      /**
       * Some getters
@@ -94,6 +93,7 @@ protected:
 public:
     PricerSolverBdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
     void InitTable() override;
+    void evaluate_nodes(double *pi, int UB, double LB, int nmachines, double reduced_cost) override;
 };
 
 class PricerSolverBddSimple : public PricerSolverBdd {
