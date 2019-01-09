@@ -60,7 +60,7 @@
 				"use_only_additional_options": true
 			}
 		},
-		"ecc_show_errors": false,
+		"ecc_show_errors": true,
 		"ecc_show_type_body": false,
 		"ecc_show_type_info": false,
 		"SublimeLinter.linters.cpplint.linelenght": 90,
