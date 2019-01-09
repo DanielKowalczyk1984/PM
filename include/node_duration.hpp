@@ -185,6 +185,14 @@ class Node {
     std::shared_ptr<Node<T>> n;
 
     Node<T>* child[2];
+
+    T dist_root_node;
+    T dist_terminal_yes;
+    T dist_terminal_no;
+
+    bool calc_yes;
+    bool calc_no;
+    bool remove_node;
     
     /**
      * Constructor
@@ -197,7 +205,10 @@ class Node {
           state1(),
           state2(),
           y(nullptr),
-          n(nullptr) {
+          n(nullptr),
+          calc_yes(true),
+          calc_no(true),
+          remove_node(false) {
         child[0] = nullptr;
         child[1] = nullptr;
         state1.SetHeadNode(this);
@@ -212,7 +223,10 @@ class Node {
          state1(),
          state2(),
          y(nullptr),
-         n(nullptr) {
+         n(nullptr),
+         calc_yes(true),
+         calc_no(true),
+         remove_node(false) {
           state1.SetHeadNode(this);
           state2.SetHeadNode(this);
           child[0] = nullptr;
@@ -232,7 +246,10 @@ class Node {
         state2(src.state2),
         y(src.y),
         n(src.n),
-        child{src.child[0], src.child[1]} {
+        child{src.child[0], src.child[1]},
+        calc_yes(src.calc_yes),
+        calc_no(src.calc_no),
+        remove_node(src.remove_node) {
       // child[0] = src.child[0];
       // child[1] = src.child[1]; 
       // child = {src.child[0], src.child[1]};
@@ -250,7 +267,10 @@ class Node {
         state1(src.state1),
         state2(src.state2), 
         y(std::move(src.y)),
-        n(std::move(src.n)){
+        n(std::move(src.n)),
+        calc_yes(src.calc_yes),
+        calc_no(src.calc_no),
+        remove_node(src.remove_node){
         child = {src.child[0], src.child[1]};
       // child[0] = src.child[0];
       // child[1] = src.child[1];
@@ -278,6 +298,14 @@ class Node {
 
       child = {src.child[0], src.child[1]};
 
+      dist_root_node = src.dist_root_node;
+      dist_terminal_yes = src.dist_terminal_yes;
+      dist_terminal_no = src.dist_terminal_no;
+
+      calc_no = src.calc_no;
+      calc_yes = src.calc_yes;
+      remove_node = src.remove_node;
+
       return *this;
     }
 
@@ -302,7 +330,13 @@ class Node {
       state2 = src.state2;
 
       child = {src.child[0], src.child[1]};
+      dist_root_node = src.dist_root_node;
+      dist_terminal_yes = src.dist_terminal_yes;
+      dist_terminal_no = src.dist_terminal_no;
 
+      calc_no = src.calc_no;
+      calc_yes = src.calc_yes;
+      remove_node = src.remove_node;
       return *this;
     }
 
