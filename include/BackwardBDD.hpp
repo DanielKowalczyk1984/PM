@@ -57,10 +57,15 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
         } else {
             n.state1.UpdateSolution(obj0, nullptr, false);
         }
+
+        n.dist_terminal_no = obj0;
+        n.dist_terminal_yes = obj1;
     }
 
     void initializenode(Node<T> &n) const override {
         n.state1.UpdateSolution(-DBL_MAX / 2, nullptr, false);
+        n.dist_terminal_yes = -DBL_MAX / 2;
+        n.dist_terminal_no = -DBL_MAX / 2;
     }
 
     void initializerootnode(Node<T> &n) const override {
@@ -115,7 +120,8 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         n.state2.UpdateNode(&(p0->state2));
         bool diff =  bool_diff_Fij(weight, prev_job, tmp_j);
         bool diff1 = bool_diff_Fij(weight, p1->state1.get_prev_job(), tmp_j); 
-        bool diff2 = bool_diff_Fij(weight, p1->state2.get_prev_job(), tmp_j); 
+        bool diff2 = bool_diff_Fij(weight, p1->state2.get_prev_job(), tmp_j);
+        n.dist_terminal_no = n.state1.GetF();
 
         if(prev_job != tmp_j && diff) {
             T obj1 {p1->state1.GetF() + result};
@@ -126,10 +132,13 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
                     n.state2.UpdateNode(&(p0->state1));
                 }
                 n.state1.UpdateNode(&(p1->state1), obj1, true);
+                n.dist_terminal_yes = obj1;
             } else if (obj1 > n.state2.GetF() && tmp_j != n.state1.get_prev_job() && diff1){
                 n.state2.UpdateNode(&(p1->state1), obj1, true);
+                n.dist_terminal_yes = obj1;
             } else if (obj2 > n.state2.GetF() && tmp_j != n.state1.get_prev_job() && diff2) {
                 n.state2.UpdateNode(&(p1->state2), obj2, true);
+                n.dist_terminal_yes = obj2;
             }
         } else {
             T obj1 = p1->state2.GetF() + result;
@@ -141,6 +150,7 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
             } else if (obj1 > n.state2.GetF() && tmp_j != n.state1.get_prev_job()){
                 n.state2.UpdateNode(&(p1->state2), obj1, true);
             }
+            n.dist_terminal_yes = obj1;
         }
     }
 
