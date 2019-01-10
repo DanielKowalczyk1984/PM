@@ -40,10 +40,8 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
                                int                       nbjobs);
 void update_alpha(wctdata *pd);
 void update_alpha_misprice(wctdata *pd);
-void update_alpha_misprice(wctdata *pd);
 int is_stabilized(wctdata *pd);
 int get_dual_row(wctdata *pd, int i);
-int calculate_dualdiffnorm(wctdata *pd);
 int calculate_dualdiffnorm(wctdata *pd);
 int calculate_beta(wctdata *pd);
 int calculate_hybridfactor(wctdata *pd);
