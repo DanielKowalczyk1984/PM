@@ -174,7 +174,7 @@ void PricerSolverBase::calculate_edges(scheduleset *set) {
     //     }
     // }
 // }
-
+    
 /**
  * PricerSolverBdd constructor
  */
@@ -200,8 +200,10 @@ void PricerSolverBdd::InitTable() {
                     reinterpret_cast<job_interval_pair *>
                     (g_ptr_array_index(ordered_jobs, layer));
                 it.set_job(tmp_pair->j);
+                it.set_layer(layer);
             } else {
                 it.set_job(nullptr, true);
+                it.set_layer(nlayers);
             }
         }
     }
