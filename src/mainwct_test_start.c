@@ -187,6 +187,10 @@ int main(int ac, char **av) {
         print_size_to_csv(&problem, root);
     } else {
         root->solver = newSolverDp(root->jobarray, root->H_max, parms);
+    int (*heuristics[])(wctproblem*) = {heuristic_rpup, heuristic_rpup};
+    int n_heuristics = 2;
+    for (int i = 0; i < n_heuristics; ++i) {
+        print_timing_to_stderr(heuristics[i], &problem);
     }
     g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
 
