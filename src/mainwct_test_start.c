@@ -175,35 +175,13 @@ int main(int ac, char **av) {
     /**
      * Finding heuristic solutions to the problem
      */
-    heuristic_rpup(&problem);
 
-    /**
-     * Build DD at the root node
-     */
-    if(parms->pricing_solver < dp_solver) {
-        CCutil_start_timer(&(problem.tot_build_dd));
-        root->solver = newSolver(root->jobarray, root->ordered_jobs, &(problem.parms));
-        CCutil_stop_timer(&(problem.tot_build_dd), 0);
-        print_size_to_csv(&problem, root);
-    } else {
-        root->solver = newSolverDp(root->jobarray, root->H_max, parms);
     int (*heuristics[])(wctproblem*) = {heuristic_rpup, heuristic_rpup};
     int n_heuristics = 2;
     for (int i = 0; i < n_heuristics; ++i) {
         print_timing_to_stderr(heuristics[i], &problem);
     }
-    g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
 
-    /**
-     * Calculation of LB at the root node with column generation
-     */
-    if(problem.opt_sol->tw + problem.opt_sol->off != 0) {
-        build_lp(&(problem.root_pd), 0);
-        CCutil_start_timer(&(problem.tot_lb_root));
-        compute_lower_bound(&problem, &(problem.root_pd));
-        problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
-        CCutil_stop_timer(&(problem.tot_lb_root), 1);
-    }
 
 CLEAN:
     wctproblem_free(&problem);
