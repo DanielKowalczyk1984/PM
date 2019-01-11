@@ -7,6 +7,7 @@
 //  Copyright (c) 2014 Daniel Kowalczyk. All rights reserved. //
 //                                                            //
 ////////////////////////////////////////////////////////////////
+#include <time.h>
 
 #include <defs.h>
 #include <wct.h> 
@@ -134,6 +135,8 @@ CLEAN:
     return val;
 }
 
+    clock_t start = clock();
+    clock_t stop = clock();
 int main(int ac, char **av) {
     int        val = 0;
     double     start_time;
