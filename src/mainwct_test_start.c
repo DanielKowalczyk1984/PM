@@ -10,7 +10,7 @@
 #include <time.h>
 
 #include <defs.h>
-#include <wct.h> 
+#include <wct.h>
 
 #include <unistd.h>
 
