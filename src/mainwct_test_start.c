@@ -137,6 +137,9 @@ CLEAN:
 
     clock_t start = clock();
     clock_t stop = clock();
+    double diff = ( double )(stop - start)/CLOCKS_PER_SEC;
+    solution* sol = prob->opt_sol;
+    int obj = sol->tw + sol->off;
     fprintf(stderr, "time %f\t %d\n", diff, obj);
 int main(int ac, char **av) {
     int        val = 0;
