@@ -137,6 +137,7 @@ CLEAN:
 
     clock_t start = clock();
     clock_t stop = clock();
+    fprintf(stderr, "time %f\t %d\n", diff, obj);
 int main(int ac, char **av) {
     int        val = 0;
     double     start_time;
