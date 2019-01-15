@@ -283,12 +283,10 @@ class Node {
         backward_label2(src.backward_label2), 
         y(std::move(src.y)),
         n(std::move(src.n)),
+        child{src.child[0], src.child[1]},
         calc_yes(src.calc_yes),
         calc_no(src.calc_no),
         remove_node(src.remove_node){
-        child = {src.child[0], src.child[1]};
-      // child[0] = src.child[0];
-      // child[1] = src.child[1];
     }
 
     /**
