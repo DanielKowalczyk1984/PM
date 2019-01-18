@@ -142,12 +142,12 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
             }
         } else {
             T obj1 = p1->backward_label2.GetF() + result;
-            if(obj1 > n.backward_label1.GetF()) {
+            if(obj1 > n.backward_label1.GetF() && diff2) {
                 if(tmp_j != n.backward_label1.get_prev_job()) {
                     n.backward_label2.UpdateNode(&(p0->backward_label1));
                 }
                 n.backward_label1.UpdateNode(&(p1->backward_label2), obj1, true);
-            } else if (obj1 > n.backward_label2.GetF() && tmp_j != n.backward_label1.get_prev_job()){
+            } else if (obj1 > n.backward_label2.GetF() && tmp_j != n.backward_label1.get_prev_job() && diff2){
                 n.backward_label2.UpdateNode(&(p1->backward_label2), obj1, true);
             }
             n.dist_terminal_yes = obj1;
@@ -165,19 +165,16 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
     Optimal_Solution<T> get_objective(Node<T> &n) const {
         Optimal_Solution<T> sol(-pi[num_jobs]);
 
-        Label<T> *aux_node = &n.backward_label1;
-        Job *aux_job =  aux_node->GetJob();
+        Label<T> *aux_label = &n.backward_label1;
+        Job *aux_job =  aux_label->GetJob();
 
         while (aux_job) {
-            if (aux_node->GetHigh()) {
+            if (aux_label->GetHigh()) {
                 sol.push_job_back(aux_job, pi[aux_job->job]);
-                aux_node = aux_node->GetPrev();
-                aux_job = aux_node->GetJob();
-            } else {
-                aux_node = aux_node->GetPrev();
-                aux_job = aux_node->GetJob();
             }
 
+            aux_label = aux_label->GetPrev();
+            aux_job = aux_label->GetJob();
         }
 
         return sol;
