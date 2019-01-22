@@ -578,7 +578,90 @@ CLEAN:
     g_rand_free(rand_uniform);
     return val;
 }
+
+int heuristic_rpup_update_1(wctproblem *prob) {
+    int    val = 0;
+    int njobs = prob->njobs;
+    int nmachines = prob->nmachines;
+    GRand *rand_uniform = g_rand_new_with_seed(2011);
+    wctparms *parms = &(prob->parms);
+    g_random_set_seed(1984);
+    int          ILS = prob->njobs/2 ;
+    int          IR  = parms->nb_iterations_rvnd;
+    solution *   sol;
+    solution *   sol1 = (solution *)NULL;
+    GPtrArray *  intervals = prob->root_pd.local_intervals;
+    local_search_data *data = (local_search_data *)NULL;
+    local_search_data *data_RS = (local_search_data *)NULL;
+
+    CCutil_start_resume_time(&(prob->tot_heuristic));
+    sol = solution_alloc(nmachines, njobs, prob->off);
+    CCcheck_NULL_2(sol, "Failed to allocate memory");
+    val = construct_edd(prob, sol);
+    CCcheck_val_2(val, "Failed construct edd");
+    printf("Solution Constructed with EDD heuristic:\n");
+    solution_print(sol);
+    solution_canonical_order(sol, intervals);
+    printf("Solution in canonical order: \n");
+    solution_print(sol);
+
+    data = local_search_data_init(njobs,  nmachines);
+    CCcheck_NULL_2(data, "Failed to allocate memory to data");
+    local_search_create_W(sol, data);
+    local_search_create_g(sol, data);
+    RVND_update_1(sol, data);
+    solution_canonical_order(sol, intervals);
+    printf("Solution after local search:\n");
+    solution_print(sol);
+
+    prob->opt_sol = solution_alloc(nmachines, njobs, prob->off);
+    CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
+    solution_update(prob->opt_sol, sol);
+    for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0; ++i) {
+        fprintf(stderr, "iteration %d\n", i);
+        sol1 = solution_alloc(nmachines, njobs, prob->off);
+        CCcheck_NULL_2(sol1, "Failed to allocate memory");
+        val = construct_random(prob, sol1, rand_uniform);
+        CCcheck_val_2(val, "Failed in construct random solution");
+        data_RS = local_search_data_init(njobs, nmachines);
+        local_search_create_W(sol1, data_RS);
+        local_search_create_g(sol1, data_RS);
+        solution_update(sol, sol1);
+
+        for (int j = 0; j < ILS; ++j) {
+            fprintf(stderr, "\tsub iteration %d\n", j);
+            RVND(sol1, data_RS);
+
+            if (sol1->tw < sol->tw) {
                 fprintf(stderr, "solution_update(sol, sol1);\n");
+                solution_update(sol, sol1);
                 fprintf(stderr , "solution_canonical_order(sol, intervals);\n");
+                solution_canonical_order(sol, intervals);
                 fprintf(stderr , "add_solution_to_colpool(sol, &(prob->root_pd));\n");
+                add_solution_to_colpool(sol, &(prob->root_pd));
+                j = 0;
+            }
+
+            Perturb(sol1, data_RS, rand_uniform);
+        }
+
+        if (sol->tw < prob->opt_sol->tw) {
+            solution_update(prob->opt_sol, sol);
+        }
+
+        local_search_data_free(&data_RS);
+        solution_free(&sol1);
+    }
+
+    solution_canonical_order(prob->opt_sol, intervals);
     printf("Solution after some improvements with Random Variable Search:\n");
+    solution_print(prob->opt_sol);
+    prob->global_upper_bound = prob->opt_sol->tw + prob->off;
+    CCutil_stop_timer(&(prob->tot_heuristic), 0);
+    prune_duplicated_sets(&(prob->root_pd));
+CLEAN:
+    solution_free(&sol);
+    local_search_data_free(&data);
+    g_rand_free(rand_uniform);
+    return val;
+}
