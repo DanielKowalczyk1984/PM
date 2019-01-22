@@ -531,7 +531,7 @@ int heuristic_rpup(wctproblem *prob) {
     solution_update(prob->opt_sol, sol);
 
     for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0; ++i) {
-        fprintf(stderr, "iteration %d\n", i);
+        //fprintf(stderr, "iteration %d\n", i);
         sol1 = solution_alloc(nmachines, njobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
@@ -542,15 +542,15 @@ int heuristic_rpup(wctproblem *prob) {
         solution_update(sol, sol1);
 
         for (int j = 0; j < ILS; ++j) {
-            fprintf(stderr, "\tsub iteration %d\n", j);
+            //fprintf(stderr, "\tsub iteration %d\n", j);
             RVND(sol1, data_RS);
 
             if (sol1->tw < sol->tw) {
-                fprintf(stderr, "solution_update(sol, sol1);\n");
+                //fprintf(stderr, "solution_update(sol, sol1);\n");
                 solution_update(sol, sol1);
-                fprintf(stderr , "solution_canonical_order(sol, intervals);\n");
+                //fprintf(stderr , "solution_canonical_order(sol, intervals);\n");
                 solution_canonical_order(sol, intervals);
-                fprintf(stderr , "add_solution_to_colpool(sol, &(prob->root_pd));\n");
+                //fprintf(stderr , "add_solution_to_colpool(sol, &(prob->root_pd));\n");
                 add_solution_to_colpool(sol, &(prob->root_pd));
                 j = 0;
             }
@@ -617,8 +617,9 @@ int heuristic_rpup_update_1(wctproblem *prob) {
     prob->opt_sol = solution_alloc(nmachines, njobs, prob->off);
     CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
     solution_update(prob->opt_sol, sol);
+
     for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0; ++i) {
-        fprintf(stderr, "iteration %d\n", i);
+        //fprintf(stderr, "iteration %d\n", i);
         sol1 = solution_alloc(nmachines, njobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
@@ -629,15 +630,15 @@ int heuristic_rpup_update_1(wctproblem *prob) {
         solution_update(sol, sol1);
 
         for (int j = 0; j < ILS; ++j) {
-            fprintf(stderr, "\tsub iteration %d\n", j);
+            //fprintf(stderr, "\tsub iteration %d\n", j);
             RVND(sol1, data_RS);
 
             if (sol1->tw < sol->tw) {
-                fprintf(stderr, "solution_update(sol, sol1);\n");
+                //fprintf(stderr, "solution_update(sol, sol1);\n");
                 solution_update(sol, sol1);
-                fprintf(stderr , "solution_canonical_order(sol, intervals);\n");
+                //fprintf(stderr , "solution_canonical_order(sol, intervals);\n");
                 solution_canonical_order(sol, intervals);
-                fprintf(stderr , "add_solution_to_colpool(sol, &(prob->root_pd));\n");
+                //fprintf(stderr , "add_solution_to_colpool(sol, &(prob->root_pd));\n");
                 add_solution_to_colpool(sol, &(prob->root_pd));
                 j = 0;
             }
