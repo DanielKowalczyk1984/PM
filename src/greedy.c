@@ -166,6 +166,101 @@ void permutation_solution(GRand *rand_uniform, solution *sol) {
     }
 }
 
+void RVND_update_1(solution *sol, local_search_data *data) {
+    do {
+        local_search_forward_insertion(sol, data, 1);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_intra(sol, data, 0, 1);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_forward_insertion(sol, data, 2);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_intra(sol, data, 0, 2);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_intra(sol, data, 1, 1);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_insertion_inter(sol, data, 1);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_insertion_inter(sol, data, 2);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_inter(sol, data, 1, 1);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_inter(sol, data, 1, 2);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_inter(sol, data, 1, 3);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_inter(sol, data, 2, 2);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_inter(sol, data, 2, 3);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_inter(sol, data, 3, 3);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_inter(sol, data, 3, 4);
+
+        if (data->updated) {
+            continue;
+        }
+
+        local_search_swap_inter(sol, data, 4, 4);
+
+        if (data->updated) {
+            continue;
+        }
+    } while (data->updated);
+}
+
+
 void RVND(solution *sol, local_search_data *data) {
     do {
         local_search_forward_insertion(sol, data, 1);
