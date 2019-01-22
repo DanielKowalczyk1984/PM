@@ -176,7 +176,7 @@ int main(int ac, char **av) {
      * Finding heuristic solutions to the problem
      */
 
-    int (*heuristics[])(wctproblem*) = {heuristic_rpup, heuristic_rpup_update1};
+    int (*heuristics[])(wctproblem*) = {heuristic_rpup, heuristic_rpup_update_1};
     int n_heuristics = 2;
     for (int i = 0; i < n_heuristics; ++i) {
         print_timing_to_stderr(heuristics[i], &problem);
