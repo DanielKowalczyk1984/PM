@@ -1310,7 +1310,7 @@ void local_search_insertion_inter(solution *         sol,
 
             for (int i = 0; i < njobs1 - l + 1; ++i) {
                 if (i + l >= njobs1) {
-                    B3_1[i] = 0;
+                    B3_1_[i] = 0;
                 } else {
                     it = data->g[k1][i];
                     c = 0;
@@ -1321,7 +1321,7 @@ void local_search_insertion_inter(solution *         sol,
                     }
 
                     compute_it(&it, c);
-                    B3_1[i] = compute_g(&it, c);
+                    B3_1_[i] = compute_g(&it, c);
                 }
             }
 
@@ -1356,7 +1356,7 @@ void local_search_insertion_inter(solution *         sol,
                     }
 
                     t += B2_1[i][j] - B2_2[i][j];
-                    t += B3_1[i];
+                    t += B3_1_[i];
                     t += B5_1[i][j];
 
                     if (j != 0) {
