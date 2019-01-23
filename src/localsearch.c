@@ -6,6 +6,9 @@ int **g, **h, *gg, **hh;
 GList **iterators;
 
 
+int **B2_1 , **B2_2 , **B3_1 , **B3_2 , **B4_1 , **B4_2 , **B5_1 , **B5_2 , **B6_1;
+int *B3_1_;
+
 void alloc_all(solution* sol){
 
     g = CC_SAFE_MALLOC(sol->njobs, int *);
@@ -19,7 +22,28 @@ void alloc_all(solution* sol){
         h[i] = CC_SAFE_MALLOC(sol->njobs, int);
         hh[i] = CC_SAFE_MALLOC(sol->njobs, int);
     }
+    B2_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
+    B2_2 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
+    B3_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
+    B3_2 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
+    B4_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
+    B4_2 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
+    B5_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
+    B5_2 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
+    B6_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
+    B3_1_ = CC_SAFE_MALLOC(sol->njobs + 1, int);
 
+    for (int i = 0; i < sol->njobs + 1; ++i) {
+        B2_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
+        B2_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
+        B3_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
+        B3_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
+        B4_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
+        B4_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
+        B5_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
+        B5_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
+        B6_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
+    }
 }
 
 void free_all(solution* sol){
@@ -36,7 +60,32 @@ void free_all(solution* sol){
     CC_IFFREE(hh, int *);
     CC_IFFREE(iterators, GList *);
 
+    for (int i = 0; i < sol->njobs + 1; ++i) {
+        CC_IFFREE(B2_1[i], int);
+        CC_IFFREE(B2_2[i], int);
+        CC_IFFREE(B3_1[i], int);
+        CC_IFFREE(B3_2[i], int);
+        CC_IFFREE(B4_1[i], int);
+        CC_IFFREE(B4_2[i], int);
+        CC_IFFREE(B5_1[i], int);
+        CC_IFFREE(B5_2[i], int);
+        CC_IFFREE(B6_1[i], int);
+    }
+
+    CC_IFFREE(B2_1, int*);
+    CC_IFFREE(B2_2, int*);
+    CC_IFFREE(B3_1, int*);
+    CC_IFFREE(B3_2, int*);
+    CC_IFFREE(B4_1, int*);
+    CC_IFFREE(B4_2, int*);
+    CC_IFFREE(B5_1, int*);
+    CC_IFFREE(B5_2, int*);
+    CC_IFFREE(B6_1, int*);
+
+    CC_IFFREE(B3_1_, int);
 }
+
+
 
 int compare_process_list(gconstpointer a, gconstpointer b);
 int compare_process_list_b(gconstpointer a, gconstpointer b);
@@ -860,7 +909,6 @@ void local_search_backward_insertion(solution *         sol,
     int     pos;
     int     t;
     int     update;
-    GList **iterators;
     GList * it;
     Job *   tmp_j;
     int     max;
@@ -1005,30 +1053,12 @@ void local_search_swap_intra(solution *         sol,
                              int                l1,
                              int                l2) {
     int     pos, p, c, t;
-    int **  B2_1, **B2_2, **B3_1, **B3_2, **B4_1, **B4_2;
     int     update;
-    GList **iterators;
     GList * it;
     Job *   tmp_j;
     int     max;
     int     i_best = -1, j_best = -1, k_best = -1;
     double  runningtime = CCutil_zeit();
-    B2_1 = CC_SAFE_MALLOC(sol->njobs, int *);
-    B2_2 = CC_SAFE_MALLOC(sol->njobs, int *);
-    B3_1 = CC_SAFE_MALLOC(sol->njobs, int *);
-    B3_2 = CC_SAFE_MALLOC(sol->njobs, int *);
-    B4_1 = CC_SAFE_MALLOC(sol->njobs, int *);
-    B4_2 = CC_SAFE_MALLOC(sol->njobs, int *);
-    iterators = CC_SAFE_MALLOC(sol->njobs, GList *);
-
-    for (int i = 0; i < sol->njobs; ++i) {
-        B2_1[i] = CC_SAFE_MALLOC(sol->njobs, int);
-        B2_2[i] = CC_SAFE_MALLOC(sol->njobs, int);
-        B3_1[i] = CC_SAFE_MALLOC(sol->njobs, int);
-        B3_2[i] = CC_SAFE_MALLOC(sol->njobs, int);
-        B4_1[i] = CC_SAFE_MALLOC(sol->njobs, int);
-        B4_2[i] = CC_SAFE_MALLOC(sol->njobs, int);
-    }
 
     update = 0;
     max = 0;
@@ -1210,48 +1240,18 @@ void local_search_swap_intra(solution *         sol,
             l1, l2, CCutil_zeit() - runningtime, max, k_best, i_best, j_best);
         print_line();
     }
-
-    for (int i = 0; i < sol->njobs; ++i) {
-        CC_IFFREE(B2_1[i], int);
-        CC_IFFREE(B2_2[i], int);
-        CC_IFFREE(B3_1[i], int);
-        CC_IFFREE(B3_2[i], int);
-        CC_IFFREE(B4_1[i], int);
-        CC_IFFREE(B4_2[i], int);
-    }
-
-    CC_IFFREE(B2_1, int *);
-    CC_IFFREE(B2_2, int *);
-    CC_IFFREE(B3_1, int *);
-    CC_IFFREE(B3_2, int *);
-    CC_IFFREE(B4_1, int *);
-    CC_IFFREE(B4_2, int *);
-    CC_IFFREE(iterators, GList *);
 }
 
 void local_search_insertion_inter(solution *         sol,
                                   local_search_data *data,
                                   int                l) {
     int     pos, p, c, t;
-    int **  B2_1, **B2_2, *B3_1, **B5_1;
     int     update;
-    GList **iterators;
     GList * it;
     Job *   tmp_j;
     int     max;
     int     i_best = -1, j_best = -1, k_best = -1, kk_best = -1;
     double  runningtime = CCutil_zeit();
-    B2_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
-    B2_2 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
-    B3_1 = CC_SAFE_MALLOC(sol->njobs + 1, int);
-    B5_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
-    iterators = CC_SAFE_MALLOC(sol->njobs, GList *);
-
-    for (int i = 0; i < sol->njobs + 1; ++i) {
-        B2_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B2_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B5_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-    }
 
     update = 0;
     max = 0;
@@ -1404,17 +1404,6 @@ void local_search_insertion_inter(solution *         sol,
         print_line();
     }
 
-    for (int i = 0; i < sol->njobs + 1; ++i) {
-        CC_IFFREE(B2_1[i], int);
-        CC_IFFREE(B2_2[i], int);
-        CC_IFFREE(B5_1[i], int);
-    }
-
-    CC_IFFREE(B2_1, int *);
-    CC_IFFREE(B2_2, int *);
-    CC_FREE(B3_1, int);
-    CC_IFFREE(B5_1, int *);
-    CC_IFFREE(iterators, GList *);
 }
 
 void local_search_swap_inter(solution *         sol,
@@ -1422,30 +1411,12 @@ void local_search_swap_inter(solution *         sol,
                              int                l1,
                              int                l2) {
     int     pos, p, c, t;
-    int **  B2_1, **B2_2, **B3_1, **B5_1, **B5_2, **B6_1;
     int     update;
-    GList **iterators;
     GList * it;
     Job *   tmp_j;
     int     max;
     int     i_best = -1, j_best = -1, k_best = -1, kk_best = -1;
     double  runningtime = CCutil_zeit();
-    B2_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
-    B2_2 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
-    B3_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
-    B5_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
-    B5_2 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
-    B6_1 = CC_SAFE_MALLOC(sol->njobs + 1, int *);
-    iterators = CC_SAFE_MALLOC(sol->njobs, GList *);
-
-    for (int i = 0; i < sol->njobs + 1; ++i) {
-        B2_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B2_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B3_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B5_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B5_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B6_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-    }
 
     update = 0;
     max = 0;
@@ -1648,19 +1619,4 @@ void local_search_swap_inter(solution *         sol,
         print_line();
     }
 
-    for (int i = 0; i < sol->njobs + 1; ++i) {
-        CC_IFFREE(B2_1[i], int);
-        CC_IFFREE(B2_2[i], int);
-        CC_IFFREE(B3_1[i], int);
-        CC_IFFREE(B5_1[i], int);
-        CC_IFFREE(B5_2[i], int);
-        CC_IFFREE(B6_1[i], int);
-    }
-
-    CC_IFFREE(B2_1, int *);
-    CC_IFFREE(B2_2, int *);
-    CC_IFFREE(B3_1, int *);
-    CC_IFFREE(B5_1, int *);
-    CC_IFFREE(B5_2, int *);
-    CC_IFFREE(B6_1, int *);
 }
