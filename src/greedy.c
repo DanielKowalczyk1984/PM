@@ -167,6 +167,9 @@ void permutation_solution(GRand *rand_uniform, solution *sol) {
 }
 
 void RVND(solution *sol, local_search_data *data) {
+
+    alloc_all(sol);
+
     do {
         local_search_forward_insertion(sol, data, 1);
 
@@ -258,6 +261,8 @@ void RVND(solution *sol, local_search_data *data) {
             continue;
         }
     } while (data->updated);
+
+    free_all(sol);
 }
 
 static void perturb_swap(solution *         sol,
