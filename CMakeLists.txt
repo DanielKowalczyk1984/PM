@@ -20,7 +20,7 @@ find_package(Boost)
 FetchContent_Declare(
     project_TdZdd
     GIT_REPOSITORY https://github.com/DanielKowalczyk1984/TdZdd.git
-    GIT_TAG "master"
+    GIT_TAG "master" 
 )
 
 FetchContent_GetProperties(project_TdZdd)
@@ -38,8 +38,6 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURC
 
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
 file(GLOB SOURCE_FILES "src/*.cc" "src/*.cpp" "src/*.c" )
-
-list(REMOVE_ITEM SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/mainwct.c")
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${TdZDD_INCLUDE_DIR} ${GUROBI_INCLUDE_DIR} ${GLIB_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${COMMON_INCLUDES})

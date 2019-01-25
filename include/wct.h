@@ -44,7 +44,6 @@ int construct_spt(wctproblem *prob, solution *sol);
 int construct_random(wctproblem *prob, solution *sol, GRand *rand_uniform);
 
 int heuristic_rpup(wctproblem *prob);
-int heuristic_rpup_update_1(wctproblem *prob);
 int partlist_to_scheduleset(
     partlist *part, int nbpart, int njobs, scheduleset **classes, int *ccount);
 
