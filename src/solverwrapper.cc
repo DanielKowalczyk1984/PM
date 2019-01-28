@@ -84,6 +84,8 @@ PricerSolverBase* newSolverDp(GPtrArray *_jobs, int _Hmax, wctparms *parms) {
         case dp_solver:
             return new PricerSolverSimpleDp(_jobs, _Hmax);
         break;
+        case ati_solver:
+            return new PricerSolverArcTimeDp(_jobs, _Hmax);
         default:
             return new PricerSolverSimpleDp(_jobs, _Hmax);
         break;
@@ -499,7 +501,7 @@ int solve_stab(wctdata *pd, wctparms *parms) {
         pd->reduced_cost =
             compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
-        if (pd->reduced_cost >= 0.00001) {
+        if (pd->reduced_cost >= 0.000001) {
             val = construct_sol(pd, &sol);
             CCcheck_val_2(val, "Failed in construct_sol_stab");
             pd->update = 1;
@@ -545,7 +547,7 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
         pd->reduced_cost =
             compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
-        if (pd->reduced_cost >= 0.00001) {
+        if (pd->reduced_cost >= 0.000001) {
             compute_subgradient(sol, pd);
             adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient_in, pd->njobs,
                         alpha);
