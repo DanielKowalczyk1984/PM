@@ -188,13 +188,17 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
                 }
             } else  {
                 g = it->forward_label2.GetF() + result;
-                if(g > p1->forward_label1.GetF()) {
-                    if(aux1 != tmp_j) {
-                        p1->forward_label2.UpdateSolution(p1->forward_label1);
+                prev = it->forward_label2.GetPrevJob();
+                diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
+                if(diff) {
+                    if(g > p1->forward_label1.GetF()) {
+                        if(aux1 != tmp_j) {
+                            p1->forward_label2.UpdateSolution(p1->forward_label1);
+                        }
+                        p1->forward_label1.UpdateSolution(g, &(it->forward_label2), true);
+                    } else if ((g > p1->forward_label2.GetF()) && (aux1 != tmp_j)) {
+                        p1->forward_label2.UpdateSolution(g, &(it->forward_label2), true);
                     }
-                    p1->forward_label1.UpdateSolution(g, &(it->forward_label2), true);
-                } else if ((g >= p1->forward_label2.GetF()) && (aux1 != tmp_j)) {
-                    p1->forward_label2.UpdateSolution(g, &(it->forward_label2), true);
                 }
             }
 
@@ -207,8 +211,13 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
                     p0->forward_label2.UpdateSolution(p0->forward_label1);
                 }
                 p0->forward_label1.UpdateSolution(it->forward_label1);
+                if(it->forward_label2.GetF() > p0->forward_label2.GetF()) {
+                    p0->forward_label2.UpdateSolution(it->forward_label2);
+                }
             } else if ((it->forward_label1.GetF() > p0->forward_label2.GetF()) && (aux1 != prev)){
                 p0->forward_label2.UpdateSolution(it->forward_label1);
+            } else if ((it->forward_label2.GetF() > p0->forward_label2.GetF())) {
+                p0->forward_label2.UpdateSolution(it->forward_label2);
             }
         }
     }
