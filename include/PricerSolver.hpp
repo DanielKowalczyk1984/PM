@@ -4,6 +4,7 @@
 #include <tdzdd/DdStructure.hpp>
 #include <PricerEvaluate.hpp>
 #include <scheduleset.h>
+#include <boost/unordered_set.hpp>
 using namespace std;
 
 struct PricerSolverBase {
@@ -156,9 +157,49 @@ public:
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
 };
 
+class PricerSolverArcTimeDp : public PricerSolverBase {
+private:
+    int Hmax;
+    int n;
+    boost::unordered_set <Job*> **graph;
+    std::vector<Job*> vector_jobs;
+    Job j0;
+    double **F;
+    Job ***A;
+    int **B;
+    int **p_matrix;
+
+    typedef boost::unordered_set<Job*>::iterator job_iterator;
+public:
+    PricerSolverArcTimeDp(GPtrArray *_jobs, int _Hmax);
+    ~PricerSolverArcTimeDp();
+    void InitTable() override;
+
+    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    int delta1(const int &i,const int &j, const int &t) {
+        Job *tmp_i = vector_jobs[i];
+        Job *tmp_j = vector_jobs[j];
+        return (value_Fj(t, tmp_i) + value_Fj(t + tmp_j->processingime, tmp_j))
+            - (value_Fj(t + tmp_j->processingime - tmp_i->processingime, tmp_j)
+                + value_Fj(t + tmp_j->processingime, tmp_i) );
+    }
+
+    void remove_arc(const int &i, const int &j, const int &t) {
+        Job *tmp_i = vector_jobs[i];
+        // auto it = graph[j][t].find(tmp_i);
+        graph[j][t].erase(tmp_i) ;
+    }
+
+    int delta2(const int &j, const int &t) {
+        Job *tmp_j = vector_jobs[j];
+        return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
+    }
+};
+
 class PricerSolverBddBackwardSimple : public PricerSolverBdd {
 private:
     BackwardBddSimpleDouble evaluator;
+
 public:
     PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
 

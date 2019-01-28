@@ -386,7 +386,8 @@ Optimal_Solution<double> PricerSolverCycle::pricing_algorithm(double *_pi) {
     return zdd->evaluate_forward(evaluator, table);
 }
 
-PricerSolverZddSimple::PricerSolverZddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
+PricerSolverZddSimple::PricerSolverZddSimple(GPtrArray *_jobs,
+    GPtrArray *_ordered_jobs) :
     PricerSolverZdd(_jobs, _ordered_jobs) {
     evaluator = ForwardZddSimpleDouble(njobs);
 }
@@ -394,6 +395,212 @@ PricerSolverZddSimple::PricerSolverZddSimple(GPtrArray *_jobs, GPtrArray *_order
 Optimal_Solution<double> PricerSolverZddSimple::pricing_algorithm(double *_pi) {
     evaluator.initializepi(_pi);
     return zdd->evaluate_forward(evaluator, table);
+}
+
+PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray *_jobs, int _Hmax) :
+    PricerSolverBase(_jobs),
+    Hmax(_Hmax),
+    n(_jobs->len),
+    vector_jobs() {
+        for (int i = 0; i < n; ++i) {
+            vector_jobs.push_back(reinterpret_cast<Job*>(g_ptr_array_index(jobs, i)));
+        }
+        job_init(&j0, 0, 0, 0);
+        j0.job = n;
+        vector_jobs.push_back(&j0);
+
+        InitTable();
+}
+
+
+void PricerSolverArcTimeDp::InitTable() {
+    graph = new boost::unordered_set<Job *>*[n + 1];
+    int count = 0;
+
+    F = new double*[jobs->len + 1];
+    for (unsigned i = 0; i < jobs->len + 1; ++i) {
+        F[i] = new double[Hmax + 1]{};
+    }
+
+    A = new Job**[jobs->len + 1];
+    for (unsigned i = 0; i < jobs->len + 1; ++i) {
+        A[i] = new Job*[Hmax + 1];
+    }
+
+    B = new int*[jobs->len + 1];
+    for (unsigned i = 0; i < jobs->len + 1; ++i) {
+        B[i] = new int[Hmax + 1];
+    }
+
+    p_matrix = new int*[n + 1];
+    for (unsigned i = 0; i < jobs->len + 1; ++i) {
+        p_matrix[i] = new int[n + 1];
+    }
+
+    for (int i = 0; i < n; ++i) {
+        int p = vector_jobs[i]->processingime;
+        for (int j = 0; j < n + 1; ++j) {
+            p_matrix[i][j] = p;
+        }
+    }
+
+    for (int j = 0; j < n + 1; ++j) {
+        p_matrix[n][j] = (j == n) ? 1 : 0;
+    }
+
+    for (int j = 0; j < n; ++j) {
+        graph[j] = new boost::unordered_set<Job *>[Hmax + 1];
+        Job* tmp = reinterpret_cast<Job*>(g_ptr_array_index(jobs, j));
+        for (int t = 0; t < Hmax + 1; t++) {
+            for (auto &it : vector_jobs) {
+                if (it != tmp
+                    && t - p_matrix[it->job][j] >= 0
+                    && t <= Hmax - tmp->processingime ) {
+                    graph[j][t].insert(it);
+                    count++;
+                }
+            }
+        }
+    }
+
+    graph[n] = new boost::unordered_set<Job *>[Hmax + 1];
+    for (int t = 1; t < Hmax + 1; t++) {
+        for (auto &it : vector_jobs) {
+            if(t >= it->processingime) {
+                graph[n][t].insert(it);
+                count++;
+            }
+        }
+    }
+
+    /**
+     * Remove all not needed arcs from the sets
+     */
+    for (int i = 0; i < n - 1; ++i) {
+        Job *tmp_i = vector_jobs[i];
+        for (int j = i + 1; j < n; ++j) {
+            Job *tmp_j = vector_jobs[j];
+            for (int t = tmp_i->processingime; t <= Hmax - tmp_j->processingime ; ++t) {
+                if (delta1(i, j, t) >= 0) {
+                    remove_arc(i, j, t);
+                    count--;
+                } else {
+                    remove_arc(j, i, t - tmp_i->processingime + tmp_j->processingime);
+                    count--;
+                }
+            }
+        }
+    }
+
+    for (int j = 0; j < n; ++j) {
+        Job *tmp_j = vector_jobs[j];
+        for (int t = tmp_j->processingime; t < Hmax; ++t) {
+            if (delta2(j, t) <= 0) {
+                remove_arc(n, j, t - tmp_j->processingime + 1);
+                count--;
+            } else {
+                remove_arc(j, n, t);
+                count--;
+            }
+        }
+    }
+
+    for (int j = 0; j < n + 1; ++j) {
+        Job* tmp = vector_jobs[j];
+        for (int t = 0; t <= Hmax - tmp->processingime; ++t) {
+            if (graph[j][t].empty()) {
+                F[j][t] = DBL_MAX/2;
+            }
+        }
+    }
+    std::cout << "count = " << count << std::endl;
+}
+
+PricerSolverArcTimeDp::~PricerSolverArcTimeDp() {
+    for (int i = 0; i < n + 1; ++i) {
+        delete[] graph[i];
+    }
+    delete[] graph;
+
+    for (int i = 0; i < n + 1; ++i) {
+        delete[] F[i];
+    }
+    delete F;
+
+    for (int i = 0; i < n + 1; ++i) {
+        delete [] A[i];
+    }
+    delete A;
+
+    for (int i = 0; i < n + 1; ++i) {
+        delete [] B[i];
+    }
+    delete B;
+
+    for (int i = 0; i < n + 1; ++i) {
+        delete [] p_matrix[i];
+    }
+    delete p_matrix;
+}
+
+Optimal_Solution<double> PricerSolverArcTimeDp::pricing_algorithm(double *_pi) {
+    Optimal_Solution<double> sol(-_pi[n]);
+    std::vector<Job*> v;
+
+    F[n][0] = _pi[n];
+    double sigma = _pi[n];
+     _pi[n] = 0;
+
+    for (int t = 0; t < Hmax + 1; ++t) {
+        for (int j = 0; j <= n; ++j) {
+            Job *tmp = vector_jobs[j];
+            A[j][t] = nullptr;
+            B[j][t] = -1;
+            F[j][t] = DBL_MAX/2;
+            job_iterator it = graph[j][t].begin();
+            if (!graph[j][t].empty() && t <= Hmax - tmp->processingime ) {
+                F[j][t] = F[(*it)->job][t - p_matrix[(*it)->job][j]] + value_Fj(t + tmp->processingime, tmp) - _pi[j];
+                A[j][t] = (*it);
+                B[j][t] = t - p_matrix[(*it)->job][j];
+                it++;
+                while(it != graph[j][t].end()) {
+                    double result = F[(*it)->job][t - p_matrix[(*it)->job][j]] + value_Fj(t + tmp->processingime, tmp) - _pi[j];
+                    if (F[j][t] >= result) {
+                        F[j][t] = result;
+                        A[j][t] = (*it);
+                        B[j][t] = t - p_matrix[(*it)->job][j];
+                    }
+                    it++;
+                }
+            }
+        }
+    }
+
+    int job = n;
+    int T = Hmax;
+
+    while (T > 0) {
+        int aux_job = A[job][T]->job;
+        int aux_T = B[job][T];
+        if (aux_job != n) {
+            v.push_back(vector_jobs[aux_job]);
+            sol.C_max += vector_jobs[aux_job]->processingime;
+            sol.cost += value_Fj(aux_T + vector_jobs[aux_job]->processingime, vector_jobs[aux_job]);
+            sol.obj += _pi[aux_job] - value_Fj(aux_T + vector_jobs[aux_job]->processingime, vector_jobs[aux_job]);
+        }
+        job = aux_job;
+        T = aux_T;
+    }
+
+
+    sol.C_max = 0;
+    for (auto &it : v) {
+        g_ptr_array_add(sol.jobs, it);
+    }
+    _pi[n] = sigma;
+
+
+    return sol;
 }
 
 PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax):
@@ -450,6 +657,7 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
             opt_sol.obj = F[i];
         }
     }
+    // std::cout << "reduced cost = " << opt_sol.obj << std::endl;
 
     t_min = opt_sol.C_max;
 
