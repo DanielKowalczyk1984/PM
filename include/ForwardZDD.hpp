@@ -91,10 +91,10 @@ public:
         auto m =  std::max_element(n.list.begin(), n.list.end(),my_compare<T>);
         weight = (*m)->GetWeight();
 
-        PrevNode<T> *ptr_node = &((*m)->prev1);
+        Label<T> *ptr_node = &((*m)->forward_label1);
 
         while(ptr_node->GetPrev() != nullptr) {
-            PrevNode<T> *aux_prev_node = ptr_node->GetPrev();
+            Label<T> *aux_prev_node = ptr_node->GetPrev();
             Job *aux_job = aux_prev_node->GetJob();
             if(ptr_node->GetHigh()) {
                 sol.C_max += aux_job->processingime;
@@ -141,19 +141,19 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
     void initializenode(ForwardZddNode<T>& n) const override {
         for (auto &it: n.list) {
             if(it->GetWeight() == 0) {
-                it->prev1.UpdateSolution(-pi[num_jobs], nullptr, false);
-                it->prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->forward_label1.UpdateSolution(-pi[num_jobs], nullptr, false);
+                it->forward_label2.UpdateSolution(-DBL_MAX/2, nullptr, false);
             } else {
-                it->prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
-                it->prev2.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->forward_label1.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->forward_label2.UpdateSolution(-DBL_MAX/2, nullptr, false);
             }
         }
     }
 
     void initializerootnode(ForwardZddNode<T> &n) const override {
         for(auto &it: n.list){
-            it->prev1.f = -pi[num_jobs];
-            it->prev2.SetF(-DBL_MAX/2);
+            it->forward_label1.f = -pi[num_jobs];
+            it->forward_label2.SetF(-DBL_MAX/2);
         }
     }
 
@@ -172,43 +172,52 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
             /**
              * High edge calculation
              */
-            Job *prev = it->prev1.GetPrevJob();
-            Job *aux1 = p1->prev1.GetPrevJob();
+            Job *prev = it->forward_label1.GetPrevJob();
+            Job *aux1 = p1->forward_label1.GetPrevJob();
             double diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
 
             if(prev != tmp_j && diff) {
-                g = it->prev1.GetF() + result;
-                if(g > p1->prev1.GetF()) {
+                g = it->forward_label1.GetF() + result;
+                if(g > p1->forward_label1.GetF()) {
                     if(aux1 != tmp_j) {
-                        p1->prev2.UpdateSolution(p1->prev1);
+                        p1->forward_label2.UpdateSolution(p1->forward_label1);
                     }
-                    p1->prev1.UpdateSolution(g, &(it->prev1), true);
-                } else if ((g > p1->prev2.GetF()) && (aux1 != tmp_j)) {
-                    p1->prev2.UpdateSolution(g, &(it->prev1), true);
+                    p1->forward_label1.UpdateSolution(g, &(it->forward_label1), true);
+                } else if ((g > p1->forward_label2.GetF()) && (aux1 != tmp_j)) {
+                    p1->forward_label2.UpdateSolution(g, &(it->forward_label1), true);
                 }
             } else  {
-                g = it->prev2.GetF() + result;
-                if(g > p1->prev1.GetF()) {
-                    if(aux1 != tmp_j) {
-                        p1->prev2.UpdateSolution(p1->prev1);
+                g = it->forward_label2.GetF() + result;
+                prev = it->forward_label2.GetPrevJob();
+                diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
+                if(diff) {
+                    if(g > p1->forward_label1.GetF()) {
+                        if(aux1 != tmp_j) {
+                            p1->forward_label2.UpdateSolution(p1->forward_label1);
+                        }
+                        p1->forward_label1.UpdateSolution(g, &(it->forward_label2), true);
+                    } else if ((g > p1->forward_label2.GetF()) && (aux1 != tmp_j)) {
+                        p1->forward_label2.UpdateSolution(g, &(it->forward_label2), true);
                     }
-                    p1->prev1.UpdateSolution(g, &(it->prev2), true);
-                } else if ((g >= p1->prev2.GetF()) && (aux1 != tmp_j)) {
-                    p1->prev2.UpdateSolution(g, &(it->prev2), true);
                 }
             }
 
             /**
              * Low edge calculation
              */
-            aux1 = p0->prev1.GetPrevJob();
-            if(it->prev1.GetF() > p0->prev1.GetF()) {
+            aux1 = p0->forward_label1.GetPrevJob();
+            if(it->forward_label1.GetF() > p0->forward_label1.GetF()) {
                 if(prev != aux1) {
-                    p0->prev2.UpdateSolution(p0->prev1);
+                    p0->forward_label2.UpdateSolution(p0->forward_label1);
                 }
-                p0->prev1.UpdateSolution(it->prev1);
-            } else if ((it->prev1.GetF() > p0->prev2.GetF()) && (aux1 != prev)){
-                p0->prev2.UpdateSolution(it->prev1);
+                p0->forward_label1.UpdateSolution(it->forward_label1);
+                if(it->forward_label2.GetF() > p0->forward_label2.GetF()) {
+                    p0->forward_label2.UpdateSolution(it->forward_label2);
+                }
+            } else if ((it->forward_label1.GetF() > p0->forward_label2.GetF()) && (aux1 != prev)){
+                p0->forward_label2.UpdateSolution(it->forward_label1);
+            } else if ((it->forward_label2.GetF() > p0->forward_label2.GetF())) {
+                p0->forward_label2.UpdateSolution(it->forward_label2);
             }
         }
     }
@@ -244,16 +253,16 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
     void initializenode(ForwardZddNode<T>& n) const override {
         for (auto &it: n.list) {
             if(it->GetWeight() == 0) {
-                it->prev1.UpdateSolution(-pi[num_jobs], nullptr, false);
+                it->forward_label1.UpdateSolution(-pi[num_jobs], nullptr, false);
             } else {
-                it->prev1.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->forward_label1.UpdateSolution(-DBL_MAX/2, nullptr, false);
             }
         }
     }
 
     void initializerootnode(ForwardZddNode<T> &n) const override {
         for(auto &it: n.list){
-            it->prev1.f = -pi[num_jobs];
+            it->forward_label1.f = -pi[num_jobs];
         }
     }
 
@@ -275,16 +284,16 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
             /**
              * High edge calculation
              */
-            g = it->prev1.GetF() + result;
-            if(g > p1->prev1.GetF()) {
-                p1->prev1.UpdateSolution(g, &(it->prev1), true);
+            g = it->forward_label1.GetF() + result;
+            if(g > p1->forward_label1.GetF()) {
+                p1->forward_label1.UpdateSolution(g, &(it->forward_label1), true);
             }
 
             /**
              * Low edge calculation
              */
-            if(it->prev1.GetF() > p0->prev1.GetF()) {
-                p0->prev1.UpdateSolution(it->prev1);
+            if(it->forward_label1.GetF() > p0->forward_label1.GetF()) {
+                p0->forward_label1.UpdateSolution(it->forward_label1);
             }
         }
     }

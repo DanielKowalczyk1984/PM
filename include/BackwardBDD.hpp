@@ -49,22 +49,27 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
         Node<T> *p1 = n.child[1];
         T result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
 
-        T obj0 = p0->prev1.GetF();
-        T obj1 = p1->prev1.GetF() + result;
+        T obj0 = p0->backward_label1.GetF();
+        T obj1 = p1->backward_label1.GetF() + result;
 
         if (obj0 < obj1) {
-            n.prev1.UpdateSolution(obj1, nullptr, true);
+            n.backward_label1.UpdateSolution(obj1, nullptr, true);
         } else {
-            n.prev1.UpdateSolution(obj0, nullptr, false);
+            n.backward_label1.UpdateSolution(obj0, nullptr, false);
         }
+
+        n.dist_terminal_no = obj0;
+        n.dist_terminal_yes = obj1;
     }
 
     void initializenode(Node<T> &n) const override {
-        n.prev1.UpdateSolution(-DBL_MAX / 2, nullptr, false);
+        n.backward_label1.UpdateSolution(-DBL_MAX / 2, nullptr, false);
+        n.dist_terminal_yes = -DBL_MAX / 2;
+        n.dist_terminal_no = -DBL_MAX / 2;
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.prev1.f = -pi[num_jobs];
+        n.backward_label1.f = -pi[num_jobs];
     }
 
     Optimal_Solution<T> get_objective(Node<T> &n) const {
@@ -74,7 +79,7 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
         Job *aux_job =  n.GetJob();
 
         while (aux_job) {
-            if (aux_node->prev1.GetHigh()) {
+            if (aux_node->backward_label1.GetHigh()) {
                 sol.push_job_back(aux_job, pi[aux_job->job]);
                 aux_node = aux_node->child[1];
                 aux_job = aux_node->GetJob();
@@ -109,65 +114,67 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         Node<T> *p1  {n.child[1]};
         T result {- value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job]};
 
-        Job *prev_job{p1->prev1.get_prev_job()};
+        Job *prev_job{p1->backward_label1.get_prev_job()};
 
-        n.prev1.UpdateNode(&(p0->prev1));
-        n.prev2.UpdateNode(&(p0->prev2));
+        n.backward_label1.UpdateNode(&(p0->backward_label1));
+        n.backward_label2.UpdateNode(&(p0->backward_label2));
         bool diff =  bool_diff_Fij(weight, prev_job, tmp_j);
-        bool diff1 = bool_diff_Fij(weight, p1->prev1.get_prev_job(), tmp_j); 
-        bool diff2 = bool_diff_Fij(weight, p1->prev2.get_prev_job(), tmp_j); 
+        bool diff1 = bool_diff_Fij(weight, p1->backward_label1.get_prev_job(), tmp_j); 
+        bool diff2 = bool_diff_Fij(weight, p1->backward_label2.get_prev_job(), tmp_j);
+        n.dist_terminal_no = n.backward_label1.GetF();
 
         if(prev_job != tmp_j && diff) {
-            T obj1 {p1->prev1.GetF() + result};
-            T obj2 {p1->prev2.GetF() + result};
+            T obj1 {p1->backward_label1.GetF() + result};
+            T obj2 {p1->backward_label2.GetF() + result};
 
-            if(obj1 > n.prev1.GetF()) {
-                if(tmp_j != n.prev1.get_prev_job()) {
-                    n.prev2.UpdateNode(&(p0->prev1));
+            if(obj1 > n.backward_label1.GetF()) {
+                if(tmp_j != n.backward_label1.get_prev_job()) {
+                    n.backward_label2.UpdateNode(&(p0->backward_label1));
                 }
-                n.prev1.UpdateNode(&(p1->prev1), obj1, true);
-            } else if (obj1 > n.prev2.GetF() && tmp_j != n.prev1.get_prev_job() && diff1){
-                n.prev2.UpdateNode(&(p1->prev1), obj1, true);
-            } else if (obj2 > n.prev2.GetF() && tmp_j != n.prev1.get_prev_job() && diff2) {
-                n.prev2.UpdateNode(&(p1->prev2), obj2, true);
+                n.backward_label1.UpdateNode(&(p1->backward_label1), obj1, true);
+                n.dist_terminal_yes = obj1;
+            } else if (obj1 > n.backward_label2.GetF() && tmp_j != n.backward_label1.get_prev_job() && diff1){
+                n.backward_label2.UpdateNode(&(p1->backward_label1), obj1, true);
+                n.dist_terminal_yes = obj1;
+            } else if (obj2 > n.backward_label2.GetF() && tmp_j != n.backward_label1.get_prev_job() && diff2) {
+                n.backward_label2.UpdateNode(&(p1->backward_label2), obj2, true);
+                n.dist_terminal_yes = obj2;
             }
         } else {
-            T obj1 = p1->prev2.GetF() + result;
-            if(obj1 > n.prev1.GetF()) {
-                if(tmp_j != n.prev1.get_prev_job()) {
-                    n.prev2.UpdateNode(&(p0->prev1));
+            T obj1 = p1->backward_label2.GetF() + result;
+            if(obj1 > n.backward_label1.GetF() && diff2) {
+                if(tmp_j != n.backward_label1.get_prev_job()) {
+                    n.backward_label2.UpdateNode(&(p0->backward_label1));
                 }
-                n.prev1.UpdateNode(&(p1->prev2), obj1, true);
-            } else if (obj1 > n.prev2.GetF() && tmp_j != n.prev1.get_prev_job()){
-                n.prev2.UpdateNode(&(p1->prev2), obj1, true);
+                n.backward_label1.UpdateNode(&(p1->backward_label2), obj1, true);
+            } else if (obj1 > n.backward_label2.GetF() && tmp_j != n.backward_label1.get_prev_job() && diff2){
+                n.backward_label2.UpdateNode(&(p1->backward_label2), obj1, true);
             }
+            n.dist_terminal_yes = obj1;
         }
     }
 
     void initializenode(Node<T> &n) const override {
-        n.prev1.UpdateSolution(-DBL_MAX / 2, nullptr, false);
+        n.backward_label1.UpdateSolution(-DBL_MAX / 2, nullptr, false);
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.prev1.f = -pi[num_jobs];
+        n.backward_label1.f = -pi[num_jobs];
     }
 
     Optimal_Solution<T> get_objective(Node<T> &n) const {
         Optimal_Solution<T> sol(-pi[num_jobs]);
 
-        PrevNode<T> *aux_node = &n.prev1;
-        Job *aux_job =  aux_node->GetJob();
+        Label<T> *aux_label = &n.backward_label1;
+        Job *aux_job =  aux_label->GetJob();
 
         while (aux_job) {
-            if (aux_node->GetHigh()) {
+            if (aux_label->GetHigh()) {
                 sol.push_job_back(aux_job, pi[aux_job->job]);
-                aux_node = aux_node->GetPrev();
-                aux_job = aux_node->GetJob();
-            } else {
-                aux_node = aux_node->GetPrev();
-                aux_job = aux_node->GetJob();
             }
 
+            aux_label = aux_label->GetPrev();
+            aux_job = aux_label->GetJob();
         }
 
         return sol;

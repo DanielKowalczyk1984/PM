@@ -30,7 +30,8 @@ enum PricingSolver {
     zdd_solver_cycle = 4,
     bdd_solver_backward_simple = 5,
     bdd_solver_backward_cycle = 6,
-    dp_solver = 7
+    dp_solver = 7,
+    ati_solver = 8
 };
 
 enum BranchandBound {
