@@ -525,22 +525,22 @@ PricerSolverArcTimeDp::~PricerSolverArcTimeDp() {
     for (int i = 0; i < n + 1; ++i) {
         delete[] F[i];
     }
-    delete F;
+    delete[] F;
 
     for (int i = 0; i < n + 1; ++i) {
         delete [] A[i];
     }
-    delete A;
+    delete[] A;
 
     for (int i = 0; i < n + 1; ++i) {
         delete [] B[i];
     }
-    delete B;
+    delete[] B;
 
     for (int i = 0; i < n + 1; ++i) {
         delete [] p_matrix[i];
     }
-    delete p_matrix;
+    delete[] p_matrix;
 }
 
 Optimal_Solution<double> PricerSolverArcTimeDp::pricing_algorithm(double *_pi) {
