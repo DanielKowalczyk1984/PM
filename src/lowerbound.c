@@ -556,6 +556,13 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     }
     problem->global_lower_bound = CC_MAX(pd->lower_bound + pd->problem->off, problem->global_lower_bound);
 
+    if(pd->depth == 0) {
+        problem->root_lower_bound = problem->global_lower_bound;
+        problem->root_upper_bound = problem->global_upper_bound;
+        problem->root_rel_error = (double)(problem->global_upper_bound - problem->global_lower_bound) /
+                    ((double)problem->global_lower_bound);
+    }
+
     fflush(stdout);
     problem->nb_generated_col += pd->iterations;
     CCutil_suspend_timer(&(problem->tot_lb));

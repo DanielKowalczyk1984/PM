@@ -167,6 +167,9 @@ void permutation_solution(GRand *rand_uniform, solution *sol) {
 }
 
 void RVND(solution *sol, local_search_data *data) {
+
+    alloc_all(sol);
+
     do {
         local_search_forward_insertion(sol, data, 1);
 
@@ -258,6 +261,8 @@ void RVND(solution *sol, local_search_data *data) {
             continue;
         }
     } while (data->updated);
+
+    free_all(sol);
 }
 
 static void perturb_swap(solution *         sol,
@@ -436,6 +441,7 @@ int heuristic_rpup(wctproblem *prob) {
     solution_update(prob->opt_sol, sol);
 
     for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0; ++i) {
+        //fprintf(stderr, "iteration %d\n", i);
         sol1 = solution_alloc(nmachines, njobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
@@ -446,11 +452,15 @@ int heuristic_rpup(wctproblem *prob) {
         solution_update(sol, sol1);
 
         for (int j = 0; j < ILS; ++j) {
+            //fprintf(stderr, "\tsub iteration %d\n", j);
             RVND(sol1, data_RS);
 
             if (sol1->tw < sol->tw) {
+                //fprintf(stderr, "solution_update(sol, sol1);\n");
                 solution_update(sol, sol1);
+                //fprintf(stderr , "solution_canonical_order(sol, intervals);\n");
                 solution_canonical_order(sol, intervals);
+                //fprintf(stderr , "add_solution_to_colpool(sol, &(prob->root_pd));\n");
                 add_solution_to_colpool(sol, &(prob->root_pd));
                 j = 0;
             }
@@ -478,3 +488,4 @@ CLEAN:
     g_rand_free(rand_uniform);
     return val;
 }
+
