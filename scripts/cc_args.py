@@ -5,6 +5,7 @@ import sys
 
 CONFIG_NAME = ".clang_complete"
 
+
 def readConfiguration():
   try:
     f = open(CONFIG_NAME, "r")
@@ -18,6 +19,7 @@ def readConfiguration():
       result.append(strippedLine)
   f.close()
   return result
+
 
 def writeConfiguration(lines):
   f = open(CONFIG_NAME, "w")
@@ -79,12 +81,14 @@ def parseArguments(arguments):
 
   return result
 
+
 def mergeLists(base, new):
   result = list(base)
   for newLine in new:
     if newLine not in result:
       result.append(newLine)
   return result
+
 
 configuration = readConfiguration()
 args = parseArguments(sys.argv)

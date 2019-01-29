@@ -178,8 +178,11 @@ class Node {
     Job *job;
 
   public:
-    Label<T> state1;
-    Label<T> state2;
+    Label<T> forward_label1;
+    Label<T> forward_label2;
+
+    Label<T> backward_label1;
+    Label<T> backward_label2;
 
     std::shared_ptr<Node<T>> y;
     std::shared_ptr<Node<T>> n;
@@ -202,8 +205,10 @@ class Node {
           root_node(false),
           terminal_node(false),
           job(nullptr),
-          state1(),
-          state2(),
+          forward_label1(),
+          forward_label2(),
+          backward_label1(),
+          backward_label2(),
           y(nullptr),
           n(nullptr),
           calc_yes(true),
@@ -211,8 +216,10 @@ class Node {
           remove_node(false) {
         child[0] = nullptr;
         child[1] = nullptr;
-        state1.SetHeadNode(this);
-        state2.SetHeadNode(this);
+        backward_label1.SetHeadNode(this);
+        backward_label2.SetHeadNode(this);
+        forward_label1.SetHeadNode(this);
+        forward_label2.SetHeadNode(this);
     };
 
     Node(int &_weight, int &_num_layer, bool &_root_node,bool &_terminal_node):
@@ -220,15 +227,19 @@ class Node {
          num_layer(_num_layer),
          root_node(_root_node),
          terminal_node(_terminal_node),
-         state1(),
-         state2(),
+         forward_label1(),
+         forward_label2(),
+         backward_label1(),
+         backward_label2(),
          y(nullptr),
          n(nullptr),
          calc_yes(true),
          calc_no(true),
          remove_node(false) {
-          state1.SetHeadNode(this);
-          state2.SetHeadNode(this);
+          forward_label1.SetHeadNode(this);
+          forward_label2.SetHeadNode(this);
+          backward_label1.SetHeadNode(this);
+          backward_label2.SetHeadNode(this);
           child[0] = nullptr;
           child[1] = nullptr;
     }
@@ -242,8 +253,10 @@ class Node {
         root_node(src.root_node),
         terminal_node(src.terminal_node),
         job(src.job),
-        state1(src.state1),
-        state2(src.state2),
+        forward_label1(src.forward_label1),
+        forward_label2(src.forward_label2),
+        backward_label1(src.backward_label1),
+        backward_label2(src.backward_label2),
         y(src.y),
         n(src.n),
         child{src.child[0], src.child[1]},
@@ -264,16 +277,16 @@ class Node {
         root_node(src.root_node),
         terminal_node(src.terminal_node),
         job(src.job),
-        state1(src.state1),
-        state2(src.state2), 
+        forward_label1(src.forward_label1),
+        forward_label2(src.forward_label2),
+        backward_label1(src.backward_label1),
+        backward_label2(src.backward_label2), 
         y(std::move(src.y)),
         n(std::move(src.n)),
+        child{src.child[0], src.child[1]},
         calc_yes(src.calc_yes),
         calc_no(src.calc_no),
         remove_node(src.remove_node){
-        child = {src.child[0], src.child[1]};
-      // child[0] = src.child[0];
-      // child[1] = src.child[1];
     }
 
     /**
@@ -293,8 +306,11 @@ class Node {
       y = src.y;
       n = src.n;
 
-      state1 = src.state1;
-      state2 = src.state2;
+      forward_label1 = src.forward_label1;
+      forward_label2 = src.forward_label2;
+
+      backward_label1 = src.backward_label1;
+      backward_label2 = src.backward_label2;
 
       child = {src.child[0], src.child[1]};
 
@@ -326,8 +342,11 @@ class Node {
       y = std::move(src.y);
       n = std::move(src.n);
 
-      state1 = src.state1;
-      state2 = src.state2;
+      forward_label1 = src.forward_label1;
+      forward_label2 = src.forward_label2;
+
+      backward_label1 = src.backward_label1;
+      backward_label2 = src.backward_label2;
 
       child = {src.child[0], src.child[1]};
       dist_root_node = src.dist_root_node;
@@ -353,6 +372,10 @@ class Node {
 
     void set_weight(int _weight){
       weight = _weight;
+    }
+
+    void set_layer(int _num_layer) {
+      num_layer = _num_layer;
     }
 
     int GetWeight(){
@@ -385,7 +408,7 @@ class Node {
     }
 
     friend bool operator<(const Node<T> &lhs, const Node<T> &rhs) {
-        return lhs.state1.f < rhs.state1.f;
+        return lhs.forward_label1.f < rhs.forward_label1.f;
     }
 
     friend bool operator> (const Node<T> &lhs, const Node<T> &rhs){ return rhs < lhs; }

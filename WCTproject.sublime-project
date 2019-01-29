@@ -63,7 +63,7 @@
 		"ecc_show_errors": true,
 		"ecc_show_type_body": false,
 		"ecc_show_type_info": false,
-		"SublimeLinter.linters.cpplint.linelenght": 90,
+		"SublimeLinter.linters.cpplint.line_lenght": 90,
 		"SublimeLinter.linters.clang.extra_flags": "--std=c++11 -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wnested-externs -Wundef -Wcast-qual -Wcast-align -Wwrite-strings -w",
 		"SublimeLinter.linters.clang.include_dirs":
 		[
@@ -72,9 +72,10 @@
 			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/include",
 			"-I/opt/gurobi810/linux64/include",
 			"-I/usr/include/glib-2.0",
-			"-I/usr/lib64/glib-2.0/include"
+			"-I/usr/lib64/glib-2.0/include",
+			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/build/_deps/project_tdzdd-src/include"
 		],
-		"SublimeLinter.linters.gcc.extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/PM/implementation/include -w",
+		"SublimeLinter.linters.gcc.extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/PM/implementation/include -I/home/daniel/Dropbox/PapersOR/PM/implementation/build/_deps/project_tdzdd-src/include -w ",
 		"SublimeLinter.linters.gcc.include_dirs":
 		[
 			"/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
