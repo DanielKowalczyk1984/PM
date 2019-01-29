@@ -126,9 +126,9 @@ int print_to_csv(wctproblem *problem) {
     //         sprintf(filenm, "WCT_AHV_%d_%d.csv", pd->nmachines, pd->njobs);
     //         break;
     // }
-    sprintf(filenm, "PM_%d_%d.csv", pd->nmachines, pd->njobs);
+    // sprintf(filenm, "PM_%d_%d.csv", pd->nmachines, pd->njobs);
 
-    file = fopen(filenm, "a+");
+    file = fopen("overall.csv", "a+");
 
     if (file == NULL) {
         printf("We couldn't open %s in %s at line %d\n", filenm, __FILE__,
@@ -142,19 +142,19 @@ int print_to_csv(wctproblem *problem) {
 
     if (size == 0) {
         fprintf(file,
-                "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                 "NameInstance", "tot_real_time", "tot_cputime", "tot_lb",
                 "tot_lb_root", 
                 "tot_heuristic", "tot_build_dd", "tot_pricing",
                 "rel_error", "global_lower_bound",
                 "global_upper_bound",
                 "first_rel_error",
-                "nb_generated_col", "date","nb_iterations_rvnd", "stabilization","alpha");
+                "nb_generated_col", "date","nb_iterations_rvnd", "stabilization","alpha", "pricing_solver", "n", "m");
     }
 
     fprintf(file,
             "%s,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
-            "%u/%u,%d,%d,%f\n",
+            "%u/%u,%d,%d,%f,%d,%d,%d\n",
             pd->pname, problem->real_time_total, problem->tot_cputime.cum_zeit,
             problem->tot_lb.cum_zeit, problem->tot_lb_root.cum_zeit,
             problem->tot_heuristic.cum_zeit, problem->tot_build_dd.cum_zeit,
@@ -162,7 +162,7 @@ int print_to_csv(wctproblem *problem) {
             problem->global_lower_bound, problem->global_upper_bound,
             problem->root_rel_error,
             problem->nb_generated_col, date.day,
-            date.month, date.year, parms->nb_iterations_rvnd, parms->stab_technique,parms->alpha);
+            date.month, date.year, parms->nb_iterations_rvnd, parms->stab_technique,parms->alpha,parms->pricing_solver,problem->njobs, problem->nmachines);
     fclose(file);
 CLEAN:
     return val;

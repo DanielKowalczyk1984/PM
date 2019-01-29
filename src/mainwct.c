@@ -187,6 +187,7 @@ int main(int ac, char **av) {
         problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
     }
+    print_to_csv(&problem);
 
 CLEAN:
     wctproblem_free(&problem);

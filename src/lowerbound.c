@@ -420,7 +420,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                     case stab_dynamic:
                     case stab_hybrid:
                         break_while_loop =
-                            (CC_OURABS(pd->eta_out - pd->eta_in) < 0.0001) || (ceil(pd->eta_in - 0.0001) >= pd->eta_out);
+                            (CC_OURABS(pd->eta_out - pd->eta_in) < 0.00001) || (ceil(pd->eta_in - 0.00001) >= pd->eta_out);
                         break;
 
                     case no_stab:
@@ -527,6 +527,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
+                // print_x(pd);
                 if(parms->pricing_solver < dp_solver) {
                     evaluate_nodes(pd);
                     calculate_new_ordered_jobs(pd);
@@ -551,6 +552,7 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
     if (dbg_lvl() > -1) {
         printf("iterations = %d\n", pd->iterations);
         printf("lowerbound %d\n", pd->lower_bound + pd->problem->off);
+        printf("LP value = %f \n", pd->LP_lower_bound + pd->problem->off);
     }
     problem->global_lower_bound = CC_MAX(pd->lower_bound + pd->problem->off, problem->global_lower_bound);
 
@@ -581,6 +583,23 @@ int print_x(wctdata *pd){
                 if(pd->x[i] > 0.00001) {
                     printf("x = %f\n", pd->x[i]);
                     scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
+                    // int C = 0;
+                    // for (int i = 0; i < tmp->jobs->len; ++i)
+                    // {
+                    //     Job *j1 = (Job *) g_ptr_array_index(tmp->jobs, i);
+                        
+                    //     if(i  < tmp->jobs->len - 1) {
+                    //         Job *j2 = (Job *) g_ptr_array_index(tmp->jobs, i + 1);
+                    //         if(! bool_diff_Fij(C, j2, j1)) {
+                    //             /* code */
+                    //         printf("%d ", bool_diff_Fij(C, j2, j1));
+                    //         printf("test test\n");
+                    //         getchar();
+                    //         }
+                    //     }
+                    //     C += j1->processingime;
+                    // }
+                    // printf("\n");
                     g_ptr_array_foreach(tmp->jobs, g_print_machine, NULL);
                     printf("\n");
                 }

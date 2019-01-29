@@ -217,6 +217,12 @@ Job *job_alloc(int *p, int *w, int *d) {
     return j;
 }
 
+void job_init(Job *job, int p, int w, int d) {
+    job->processingime = p;
+    job->weight = w;
+    job->duetime = d;
+}
+
 void g_set_jobarray_job(gpointer data, gpointer user_data) {
     Job *j = (Job *)data;
     int *i = (int *)user_data;

@@ -1,8 +1,8 @@
+#include <defs.h>
 #include <wctprivate.h>
 #include <PricerSolver.hpp>
 #include <iostream>
 #include <vector>
-#include <defs.h>
 
 template <typename T = double, bool reverse = false>
 int construct_sol(wctdata *pd, Optimal_Solution<T> *sol) {
@@ -40,10 +40,8 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
                                int                       nbjobs);
 void update_alpha(wctdata *pd);
 void update_alpha_misprice(wctdata *pd);
-void update_alpha_misprice(wctdata *pd);
 int is_stabilized(wctdata *pd);
 int get_dual_row(wctdata *pd, int i);
-int calculate_dualdiffnorm(wctdata *pd);
 int calculate_dualdiffnorm(wctdata *pd);
 int calculate_beta(wctdata *pd);
 int calculate_hybridfactor(wctdata *pd);
@@ -86,6 +84,8 @@ PricerSolverBase* newSolverDp(GPtrArray *_jobs, int _Hmax, wctparms *parms) {
         case dp_solver:
             return new PricerSolverSimpleDp(_jobs, _Hmax);
         break;
+        case ati_solver:
+            return new PricerSolverArcTimeDp(_jobs, _Hmax);
         default:
             return new PricerSolverSimpleDp(_jobs, _Hmax);
         break;
@@ -161,7 +161,7 @@ static double compute_reduced_cost(Optimal_Solution<double> &sol,
 
     for (guint i = 0; i < sol.jobs->len; ++i) {
         Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-        result += pi[tmp_j->job] ;
+        result += pi[tmp_j->job];
     }
 
     return result - sol.cost;
@@ -247,7 +247,7 @@ void update_alpha_misprice(wctdata *pd) {
 }
 
 int is_stabilized(wctdata *pd) {
-    if(pd->inmispricingschedule) {
+    if (pd->inmispricingschedule) {
         return pd->alphabar > 0.0;
     }
     return pd->alpha > 0.0;
@@ -266,7 +266,7 @@ int calculate_dualdiffnorm(wctdata *pd) {
 
     for (int i = 0; i <= pd->njobs; ++i) {
         double dualdiff = SQR(pd->pi_in[i] - pd->pi_out[i]);
-        if(dualdiff > 0.00001) {
+        if (dualdiff > 0.00001) {
             pd->dualdiffnorm += dualdiff;
         }
     }
@@ -284,12 +284,12 @@ int calculate_beta(wctdata *pd) {
         double dualdiff = ABS(pd->pi_out[i] - pd->pi_in[i]);
         double product = dualdiff * ABS(pd->subgradient_in[i]);
 
-        if(product > 0.000001) {
+        if (product > 0.000001) {
             pd->beta += product;
         }
     }
 
-    if(pd->subgradientnorm > 0.00001) {
+    if (pd->subgradientnorm > 0.00001) {
         pd->beta = pd->beta/(pd->subgradientnorm * pd->dualdiffnorm);
     }
 
@@ -302,8 +302,8 @@ int calculate_hybridfactor(wctdata *pd) {
     double aux_norm = 0.0;
     for (int i = 0; i <= pd->njobs; ++i) {
         double aux_double = SQR((pd->beta - 1.0) * (pd->pi_out[i] - pd->pi_in[i]) + pd->beta * (pd->subgradient_in[i]*pd->dualdiffnorm/pd->subgradientnorm));
-        if(aux_double > 0.00001) {
-            aux_norm += aux_double; 
+        if (aux_double > 0.00001) {
+            aux_norm += aux_double;
         }
     }
     aux_norm = SQRT(aux_norm);
@@ -316,7 +316,7 @@ int calculate_hybridfactor(wctdata *pd) {
 int update_hybrid(wctdata *pd) {
     int val = 0;
 
-    if(pd->hasstabcenter && !pd->inmispricingschedule && pd->alpha > 0.0) {
+    if (pd->hasstabcenter && !pd->inmispricingschedule && pd->alpha > 0.0) {
         calculate_dualdiffnorm(pd);
         calculate_beta(pd);
         calculate_hybridfactor(pd);
@@ -328,7 +328,7 @@ int update_hybrid(wctdata *pd) {
 
 int update_node(wctdata *pd) {
     int val = 0;
-    if(pd->node_stab != pd->id) {
+    if (pd->node_stab != pd->id) {
         pd->node_stab = pd->id;
         pd->k = 0;
         pd->alpha = 0.0;
@@ -344,17 +344,17 @@ double compute_dual(wctdata *pd, int i) {
     double usedalpha = pd->alpha;
     double usedbeta = pd->beta;
 
-    if(pd->inmispricingschedule) {
+    if (pd->inmispricingschedule) {
         usedalpha = pd->alphabar;
         usedbeta = 0.0;
     }
 
-    if(pd->hasstabcenter && (usedbeta == 0.0 || usedalpha == 0.0)) {
+    if (pd->hasstabcenter && (usedbeta == 0.0 || usedalpha == 0.0)) {
         return usedalpha*pd->pi_in[i] + (1.0 - usedalpha) * pd->pi_out[i];
     } else if (pd->hasstabcenter && usedbeta > 0.0) {
         double dual = pd->pi_in[i] + pd->hybridfactor * (pd->beta * (pd->pi_in[i] + pd->subgradient_in[i] * pd->dualdiffnorm / pd->subgradientnorm) + (1.0 - pd->beta) * pd->pi_out[i] - pd->pi_in[i]);
         return CC_MAX(dual, 0.0);
-    } 
+    }
 
     return pd->pi_out[i];
 }
@@ -382,10 +382,10 @@ static void compute_subgradient(const Optimal_Solution<double> &sol, wctdata *pd
 
     pd->subgradientnorm = 0.0;
 
-    for(int i = 0; i < pd->njobs; ++i) {
+    for (int i = 0; i < pd->njobs; ++i) {
         double sqr = SQR(pd->subgradient_in[i]);
 
-        if(sqr > 0.00001) {
+        if (sqr > 0.00001) {
             pd->subgradientnorm += sqr;
         }
     }
@@ -397,7 +397,7 @@ int update_subgradientproduct(wctdata *pd) {
     int val = 0;
 
     pd->subgradientproduct = 0.0;
-    for(int i = 0; i < pd->njobs; ++i) {
+    for (int i = 0; i < pd->njobs; ++i) {
         pd->subgradientproduct -= (pd->pi_out[i] - pd->pi_in[i]) * pd->subgradient_in[i];
     }
     printf("subgradientproduct %f\n", pd->subgradientproduct);
@@ -408,7 +408,7 @@ int update_subgradientproduct(wctdata *pd) {
 int update_stabcenter(const Optimal_Solution<double> & sol, wctdata *pd) {
     int val = 0;
 
-    if(pd->eta_sep > pd->eta_in) {
+    if (pd->eta_sep > pd->eta_in) {
         memcpy(pd->pi_in, pd->pi_sep, (pd->njobs + 1) *sizeof(double));
         compute_subgradient(sol, pd);
         pd->eta_in = pd->eta_sep;
@@ -501,7 +501,7 @@ int solve_stab(wctdata *pd, wctparms *parms) {
         pd->reduced_cost =
             compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
-        if (pd->reduced_cost >= 0.00001) {
+        if (pd->reduced_cost >= 0.000001) {
             val = construct_sol(pd, &sol);
             CCcheck_val_2(val, "Failed in construct_sol_stab");
             pd->update = 1;
@@ -547,7 +547,7 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
         pd->reduced_cost =
             compute_reduced_cost(sol, pd->pi_out, pd->njobs);
 
-        if (pd->reduced_cost >= 0.00001) {
+        if (pd->reduced_cost >= 0.000001) {
             compute_subgradient(sol, pd);
             adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient_in, pd->njobs,
                         alpha);
@@ -588,7 +588,7 @@ int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
 
         stabilized = is_stabilized(pd);
 
-        for(int i = 0; i <= pd->njobs; ++i) {
+        for (int i = 0; i <= pd->njobs; ++i) {
             pd->pi_sep[i] = compute_dual(pd, i);
         }
 
@@ -600,8 +600,8 @@ int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
 
         update_stabcenter(sol, pd);
 
-        if(pd->reduced_cost > 0.00001) {
-            if(pd->inmispricingschedule) {
+        if (pd->reduced_cost > 0.00001) {
+            if (pd->inmispricingschedule) {
                 pd->inmispricingschedule = 0;
             }
             update_subgradientproduct(pd);
@@ -609,7 +609,7 @@ int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
             construct_sol(pd, &sol);
             pd->update = 1;
         } else {
-            if(stabilized) {
+            if (stabilized) {
                 pd->inmispricingschedule = 1;
                 update_alpha_misprice(pd);
             } else {

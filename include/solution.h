@@ -50,6 +50,7 @@ int solution_update(solution *dest, solution *src);
 int solution_check(partlist *part, int jcount);
 
 Job *job_alloc(int *p, int *w, int *d);
+void job_init(Job *job, int p, int d, int w);
 void g_job_free(void *set);
 void reset_nblayers(GPtrArray *jobs);
 void g_print_job(gpointer data, gpointer user_data);

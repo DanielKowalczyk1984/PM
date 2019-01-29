@@ -64,7 +64,7 @@ void calculate_Hmax(wctproblem *problem) {
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
     temp_dbl = floor(temp_dbl / problem->nmachines);
-    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax;
+    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax  + 1;
     problem->H_min = (int)ceil(temp_dbl / problem->nmachines) - problem->pmax;
     printf("H_max = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
            problem->H_max, problem->pmax, problem->pmin, problem->psum,
@@ -72,19 +72,18 @@ void calculate_Hmax(wctproblem *problem) {
 }
 
 void determine_jobs_order_interval(wctproblem *problem) {
-    Job *     tmp, *tmp_j;
     interval *tmp_interval;
 
     GPtrArray *local_intervals = problem->root_pd.local_intervals;
 
     for (unsigned i = 0; i < problem->g_job_array->len; ++i) {
-        tmp_j = (Job *)g_ptr_array_index(problem->g_job_array, i);
+        Job* tmp_j = (Job *)g_ptr_array_index(problem->g_job_array, i);
         tmp_j->pos_interval = CC_SAFE_MALLOC(local_intervals->len, int);
         for (unsigned j = 0; j < local_intervals->len; ++j) {
             tmp_interval = (interval *)g_ptr_array_index(local_intervals, j);
             GPtrArray *sigma = tmp_interval->sigma;
             for (unsigned k = 0; k < sigma->len; ++k) {
-                tmp = (Job *)g_ptr_array_index(sigma, k);
+                Job *tmp = (Job *)g_ptr_array_index(sigma, k);
                 if (tmp == tmp_j) {
                     tmp_j->pos_interval[j] = k;
                     break;
@@ -216,11 +215,10 @@ static GPtrArray *array_time_slots(interval *I, GList *pairs) {
 void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b) {
     interval *         tmp_interval;
     Job *              tmp_j;
-    GPtrArray *        jobarray;
     job_interval_pair *tmp_pair;
     for (unsigned i = 0; i < a->len; ++i) {
         tmp_interval = (interval *)g_ptr_array_index(a, i);
-        jobarray = tmp_interval->sigma;
+        GPtrArray *jobarray = tmp_interval->sigma;
         for (unsigned j = 0; j < jobarray->len; ++j) {
             tmp_j = (Job *)g_ptr_array_index(jobarray, j);
             if (tmp_j->processingime <= tmp_interval->b) {
@@ -240,7 +238,6 @@ int find_division(wctproblem *problem) {
     int            val = 0;
     int            counter = 0;
     int            njobs = problem->njobs;
-    int            tmp;
     int            prev;
     wctdata *      root_pd = &(problem->root_pd);
     GPtrArray *    tmp_array = g_ptr_array_new_with_free_func(g_interval_free);
@@ -255,7 +252,7 @@ int find_division(wctproblem *problem) {
     prev = 0;
     for (int i = 0; i < njobs && prev < problem->H_max; ++i) {
         tmp_j = (Job *)g_ptr_array_index(jobarray, i);
-        tmp = CC_MIN(problem->H_max, tmp_j->duetime);
+        int tmp = CC_MIN(problem->H_max, tmp_j->duetime);
         if (prev < tmp) {
             tmp_interval = interval_alloc(prev, tmp, -1, jobarray, njobs);
             g_ptr_array_add(tmp_array, tmp_interval);
