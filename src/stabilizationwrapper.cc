@@ -1,10 +1,8 @@
-#include <defs.h>
 #include <wctprivate.h>
 #include <PricerSolver.hpp>
-#include <iostream>
-#include <vector>
+#include <stabilization.h>
 
-template <typename T = double, bool reverse = false>
+template <typename T = double>
 int construct_sol(wctdata *pd, Optimal_Solution<T> *sol) {
     int          val = 0;
     int          nbset = 1;
@@ -34,87 +32,7 @@ CLEAN:
 
 extern "C" {
 
-static double compute_lagrange(Optimal_Solution<double> &sol,
-                               double *                  rhs,
-                               double *                  pi,
-                               int                       nbjobs);
-void update_alpha(wctdata *pd);
-void update_alpha_misprice(wctdata *pd);
-int is_stabilized(wctdata *pd);
-int get_dual_row(wctdata *pd, int i);
-int calculate_dualdiffnorm(wctdata *pd);
-int calculate_beta(wctdata *pd);
-int calculate_hybridfactor(wctdata *pd);
-int update_hybrid(wctdata *pd);
-int update_node(wctdata *pd);
-double compute_dual(wctdata *pd, int i);
-int row_getDual(wctdata *pd, int i);
-int update_subgradientproduct(wctdata *pd);
-int update_stabcenter(const Optimal_Solution<double> & sol, wctdata *pd);
-
-PricerSolverBase* newSolver(GPtrArray *jobs,
-                            GPtrArray *ordered_jobs,
-                            wctparms *parms) {
-    switch (parms->pricing_solver) {
-        case bdd_solver_simple:
-            return new PricerSolverBddSimple(jobs, ordered_jobs);
-        break;
-        case bdd_solver_cycle:
-            return new PricerSolverBddCycle(jobs, ordered_jobs);
-        break;
-        case zdd_solver_cycle:
-            return new PricerSolverCycle(jobs, ordered_jobs);
-        break;
-        case zdd_solver_simple:
-            return new PricerSolverZddSimple(jobs, ordered_jobs);
-        break;
-        case bdd_solver_backward_simple:
-            return new PricerSolverBddBackwardSimple(jobs, ordered_jobs);
-        break;
-        case bdd_solver_backward_cycle:
-            return new PricerSolverBddBackwardCycle (jobs, ordered_jobs);
-        break;
-        default:
-            return new PricerSolverCycle(jobs, ordered_jobs);
-    }
-}
-
-PricerSolverBase* newSolverDp(GPtrArray *_jobs, int _Hmax, wctparms *parms) {
-    switch (parms->pricing_solver) {
-        case dp_solver:
-            return new PricerSolverSimpleDp(_jobs, _Hmax);
-        break;
-        case ati_solver:
-            return new PricerSolverArcTimeDp(_jobs, _Hmax);
-        default:
-            return new PricerSolverSimpleDp(_jobs, _Hmax);
-        break;
-    }
-}
-
-void print_dot_file(PricerSolver *solver, char *name) {
-    solver->create_dot_zdd(name);
-}
-
-void freeSolver(PricerSolver *src) { delete src; }
-
-int solve_farkas_dbl(wctdata *pd) {
-    int                      val = 0;
-    Optimal_Solution<double> s = pd->solver->pricing_algorithm(pd->pi);
-
-    if (s.obj < -0.00001) {
-        // val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
-        //                     pd->njobs);
-        CCcheck_val_2(val, "Failed in constructing jobs");
-    } else {
-        pd->nnewsets = 0;
-    }
-
-CLEAN:
-    return val;
-}
-
-static double compute_lagrange(Optimal_Solution<double> &sol,
+double compute_lagrange(Optimal_Solution<double> &sol,
                                double *                  rhs,
                                double *                  pi,
                                int                       nbjobs) {
@@ -133,23 +51,6 @@ static double compute_lagrange(Optimal_Solution<double> &sol,
     result = CC_MIN(0.0, sol.cost - result);
     result = -rhs[nbjobs] * result;
     result += a;
-    // printf("result = %f\n", result);
-
-    // result = 0.0;
-    // for(int i = 0; i <= nbjobs; ++i)
-    // {
-    //     result += rhs[i]*pi[i];
-    // }
-
-    // int C = 0;
-    // for(int i = 0; i < sol.jobs->len; ++i)
-    // {
-    //     Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-    //     C += tmp_j->processingime;
-    //     result -= pi[tmp_j->job] - value_Fj(C, tmp_j);
-    // }
-    // result -= pi[nbjobs];
-    // printf("result2 = %f\n", result);
 
     return result;
 }
@@ -165,72 +66,6 @@ static double compute_reduced_cost(Optimal_Solution<double> &sol,
     }
 
     return result - sol.cost;
-}
-
-int evaluate_nodes(wctdata *pd) {
-    int    val = 0;
-    int    UB = pd->problem->opt_sol->tw;
-    double LB = pd->LP_lower_bound;
-    int    nmachines = pd->problem->nmachines;
-
-    pd->solver->evaluate_nodes(pd->pi, UB, LB, nmachines, pd->reduced_cost);
-
-    return val;
-}
-
-int calculate_new_ordered_jobs(wctdata *pd) {
-    int val = 0;
-
-    pd->solver->calculate_new_ordered_jobs();
-
-    return val;
-}
-
-int build_solve_mip(wctdata *pd) {
-    int val = 0;
-
-    // pd->solver->build_mip(pd->x_e);
-
-    return val;
-}
-
-void print_number_nodes_edges(wctdata *pd) {
-    pd->solver->print_number_nodes_edges();
-}
-
-void deletePricerSolver(PricerSolver *solver) {
-    if (solver) {
-        delete solver;
-    }
-}
-
-int calculate_table(PricerSolver *solver, wctparms *parms) {
-    int val = 0;
-
-    // solver->init_zdd_table();
-    // solver->init_table_farkas();
-
-    return val = 0;
-}
-
-void iterate_zdd(PricerSolver *solver) { solver->IterateZdd(); }
-
-void print_number_paths(PricerSolver *solver) { solver->PrintNumberPaths(); }
-
-size_t get_datasize(PricerSolver *solver) { return solver->get_datasize(); }
-
-size_t get_numberrows_zdd(PricerSolver *solver) {
-    return solver->get_numberrows_zdd();
-}
-
-double get_edge_cost(PricerSolver *solver, int idx) {
-    return solver->get_cost_edge(idx);
-}
-
-int init_tables(PricerSolver *solver) {
-    int val = 0;
-    // solver->init_tables();
-    return val;
 }
 
 void update_alpha(wctdata *pd) {
@@ -469,10 +304,6 @@ int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
         pd->nnewsets = 0;
     }
 
-    // if (pd->iterations%pd->njobs == 0) {
-    //     print_number_nodes_edges(pd);
-    // }
-
 CLEAN:
     return val;
 }
@@ -628,15 +459,20 @@ int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
     return val;
 }
 
+int solve_farkas_dbl(wctdata *pd) {
+    int                      val = 0;
+    Optimal_Solution<double> s = pd->solver->pricing_algorithm(pd->pi);
 
-void calculate_edges(PricerSolver *solver, scheduleset *set) {
-    solver->calculate_edges(set);
+    if (s.obj < -0.00001) {
+        // val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
+        //                     pd->njobs);
+        CCcheck_val_2(val, "Failed in constructing jobs");
+    } else {
+        pd->nnewsets = 0;
+    }
+
+CLEAN:
+    return val;
 }
 
-void g_calculate_edges(gpointer data, gpointer user_data) {
-    scheduleset *tmp = (scheduleset *) data;
-    PricerSolver *solver = (PricerSolver *) user_data;
-
-    solver->calculate_edges(tmp);
-}
 }
