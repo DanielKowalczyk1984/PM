@@ -7,14 +7,11 @@
  * PricerSolverBase default COnstructor
  */
 PricerSolverBase::PricerSolverBase(GPtrArray *_jobs):
-    jobs(_jobs), njobs(_jobs->len), ordered_jobs(nullptr), nlayers(0) {
-    dd = nullptr;
-    zdd = nullptr;
-    nb_nodes_bdd = 0;
-    nb_nodes_zdd = 0;
-    nb_removed_nodes = 0;
-    nb_removed_edges = 0;
-}
+    jobs(_jobs), njobs(_jobs->len), ordered_jobs(nullptr), nlayers(0),
+    zdd(nullptr), dd(nullptr), nb_nodes_bdd(0), nb_nodes_zdd(0), nb_arcs_ati(0),
+    nb_removed_edges(0), nb_removed_nodes(0) { 
+
+    }
 
 
 PricerSolverBase::PricerSolverBase(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
@@ -92,6 +89,10 @@ size_t PricerSolverBase::get_datasize() {
 
 size_t PricerSolverBase::get_numberrows_zdd() {
     return zdd->root().row();
+}
+
+int PricerSolverBase::get_nb_arcs_ati() {
+    return nb_arcs_ati;
 }
 
 double PricerSolverBase::get_cost_edge(int idx) {
@@ -248,50 +249,50 @@ void PricerSolverBdd::evaluate_nodes(double *pi, int UB, double LB, int nmachine
     double value;
 
     /** Calculate the distance from  the origin to the given node */
-    for (int i = zdd->topLevel(); i > 0; i--) {
-        for (auto &it : table[i]) {
-            if (i == dd->topLevel()) {
-                it.dist_root_node = 0;
-            }
-            Job *job = it.GetJob();
+    // for (int i = zdd->topLevel(); i > 0; i--) {
+    //     for (auto &it : table[i]) {
+    //         if (i == dd->topLevel()) {
+    //             it.dist_root_node = 0;
+    //         }
+    //         Job *job = it.GetJob();
 
-            value = pi[job->job] - value_Fj(it.GetWeight() + job->processingime, job);
+    //         value = pi[job->job] - value_Fj(it.GetWeight() + job->processingime, job);
 
-            if (it.child[1]->dist_root_node < it.dist_root_node + value) {
-                it.child[1]->dist_root_node = it.dist_root_node + value;
-            }
+    //         if (it.child[1]->dist_root_node < it.dist_root_node + value) {
+    //             it.child[1]->dist_root_node = it.dist_root_node + value;
+    //         }
 
-            if (it.child[0]->dist_root_node < it.dist_root_node) {
-                it.child[0]->dist_root_node  = it.dist_root_node;
-            }
-        }
-    }
+    //         if (it.child[0]->dist_root_node < it.dist_root_node) {
+    //             it.child[0]->dist_root_node  = it.dist_root_node;
+    //         }
+    //     }
+    // }
 
-    /** check for each node the Lagrangian dual */
-    for (int i = zdd->topLevel(); i > 0; i--) {
-        size_t const m = table[i].size();
+    // /** check for each node the Lagrangian dual */
+    // for (int i = zdd->topLevel(); i > 0; i--) {
+    //     size_t const m = table[i].size();
 
-        for (size_t j = 0; j < m; j++) {
-            Node<double> *n = &table[i][j];
-            // printf("%f %f \n",  -(double)(nmachines - 1)*reduced_cost - (n->dist_root_node + n->dist_terminal_yes), UB - LB);
-                if (LB - (double)(nmachines - 1)*reduced_cost - (n->dist_root_node + n->dist_terminal_yes) > UB - 1 +
-                        0.0001 && (n->calc_yes)) {
-                    n->calc_yes = false;
-                    nb_removed_edges++;
-                }
+    //     for (size_t j = 0; j < m; j++) {
+    //         Node<double> *n = &table[i][j];
+    //         // printf("%f %f \n",  -(double)(nmachines - 1)*reduced_cost - (n->dist_root_node + n->dist_terminal_yes), UB - LB);
+    //             if (LB - (double)(nmachines - 1)*reduced_cost - (n->dist_root_node + n->dist_terminal_yes) > UB - 1 +
+    //                     0.0001 && (n->calc_yes)) {
+    //                 n->calc_yes = false;
+    //                 nb_removed_edges++;
+    //             }
 
-                if (LB - (double)(nmachines - 1)*reduced_cost - (n->dist_root_node + n->dist_terminal_no) > UB - 1
-                        + 0.0001 && (n->calc_no)) {
-                    n->calc_no = false;
-                    nb_removed_edges++;
-                }
+    //             if (LB - (double)(nmachines - 1)*reduced_cost - (n->dist_root_node + n->dist_terminal_no) > UB - 1
+    //                     + 0.0001 && (n->calc_no)) {
+    //                 n->calc_no = false;
+    //                 nb_removed_edges++;
+    //             }
 
-                if (n->calc_no == false && n->calc_yes == false && n->remove_node == false) {
-                    nb_removed_nodes++;
-                    n->remove_node = true;
-                }
-        }
-    }
+    //             if (n->calc_no == false && n->calc_yes == false && n->remove_node == false) {
+    //                 nb_removed_nodes++;
+    //                 n->remove_node = true;
+    //             }
+    //     }
+    // }
 
     printf("removed nodes = %d\n", nb_removed_nodes);
 }
@@ -415,7 +416,6 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray *_jobs, int _Hmax) :
 
 void PricerSolverArcTimeDp::InitTable() {
     graph = new boost::unordered_set<Job *>*[n + 1];
-    int count = 0;
 
     F = new double*[jobs->len + 1];
     for (unsigned i = 0; i < jobs->len + 1; ++i) {
@@ -457,7 +457,7 @@ void PricerSolverArcTimeDp::InitTable() {
                     && t - p_matrix[it->job][j] >= 0
                     && t <= Hmax - tmp->processingime ) {
                     graph[j][t].insert(it);
-                    count++;
+                    nb_arcs_ati++;
                 }
             }
         }
@@ -468,7 +468,7 @@ void PricerSolverArcTimeDp::InitTable() {
         for (auto &it : vector_jobs) {
             if(t >= it->processingime) {
                 graph[n][t].insert(it);
-                count++;
+                nb_arcs_ati++;
             }
         }
     }
@@ -483,10 +483,10 @@ void PricerSolverArcTimeDp::InitTable() {
             for (int t = tmp_i->processingime; t <= Hmax - tmp_j->processingime ; ++t) {
                 if (delta1(i, j, t) >= 0) {
                     remove_arc(i, j, t);
-                    count--;
+                    nb_arcs_ati--;
                 } else {
                     remove_arc(j, i, t - tmp_i->processingime + tmp_j->processingime);
-                    count--;
+                    nb_arcs_ati--;
                 }
             }
         }
@@ -497,10 +497,10 @@ void PricerSolverArcTimeDp::InitTable() {
         for (int t = tmp_j->processingime; t < Hmax; ++t) {
             if (delta2(j, t) <= 0) {
                 remove_arc(n, j, t - tmp_j->processingime + 1);
-                count--;
+                nb_arcs_ati--;
             } else {
                 remove_arc(j, n, t);
-                count--;
+                nb_arcs_ati--;
             }
         }
     }
@@ -513,7 +513,7 @@ void PricerSolverArcTimeDp::InitTable() {
             }
         }
     }
-    std::cout << "count = " << count << std::endl;
+    std::cout << "Number of arcs in ATI formulation = " << nb_arcs_ati << std::endl;
 }
 
 PricerSolverArcTimeDp::~PricerSolverArcTimeDp() {

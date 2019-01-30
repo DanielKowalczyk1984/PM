@@ -61,12 +61,7 @@ int read_problem(wctproblem *problem) {
 
         while (fgets(buf2, bufsize, in) != (char *)NULL) {
             p = buf2;
-            // data = strtok(p, delim);
             sscanf(p, "%d %d %d", &curduration, &curduedate, &curweight);
-            // data = strtok(NULL, delim);
-            // sscanf(data, "%d", &curduedate);
-            // data = strtok(NULL, delim);
-            // sscanf(data, "%d", &curweight);
             curduedate = curduedate / parms->nmachines;
             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
             g_ptr_array_add(problem->g_job_array, tmp_j);
@@ -208,24 +203,13 @@ int print_to_screen(wctproblem *problem) {
 int print_size_to_csv(wctproblem *problem, wctdata *pd) {
     int       val = 0;
     int       size;
-    wctdata * root_node = &(problem->root_pd);
     wctparms *parms = &(problem->parms);
     char      filenm[128];
     FILE *    file = (FILE *)NULL;
     GDate     date;
     g_date_set_time_t(&date, time(NULL));
 
-    switch (parms->bb_branch_strategy) {
-        case conflict_strategy:
-        case cbfs_conflict_strategy:
-            sprintf(filenm, "SIZE_%d_%d.csv", pd->nmachines, pd->njobs);
-            break;
-
-        case ahv_strategy:
-        case cbfs_ahv_strategy:
-            sprintf(filenm, "AHV_%d_%d.csv", pd->nmachines, pd->njobs);
-            break;
-    }
+    sprintf(filenm, "overall_size.csv");
 
     file = fopen(filenm, "a+");
 
@@ -239,27 +223,11 @@ int print_size_to_csv(wctproblem *problem, wctdata *pd) {
     fseek(file, 0, SEEK_END);
     size = ftell(file);
 
-    switch (parms->bb_branch_strategy) {
-        case conflict_strategy:
-            if (size == 0) {
-                fprintf(file, "%s,%s,%s,%s\n", "NameInstance","size","date","sizearc");
-            }
-
-            fprintf(file, "%s,%zu,%u/%u/%u,%d\n",pd->pname,get_datasize(pd->solver), date.day,
-                    date.month, date.year,pd->njobs*pd->njobs*problem->H_max);
-            break;
-
-        case ahv_strategy:
-            if (size == 0) {
-                fprintf(file, "%s;%s;%s;%s;%s;%s\n", "NameInstance", "depth",
-                        "size", "branch_job", "completion_time", "data");
-            }
-
-            fprintf(file, "%s;%d;%zu;%d;%d;%u/%u/%u\n", root_node->pname,
-                    pd->depth, get_datasize(pd->solver), pd->branch_job,
-                    pd->completiontime, date.day, date.month, date.year);
-            break;
+    if (size == 0) {
+        fprintf(file, "%s,%s,%s,%s,%s\n", "NameInstance","date","solver","size","sizearc");
     }
+
+    fprintf(file, "%s,%u/%u/%u,%d,%zu,%d\n",pd->pname, date.day, date.month, date.year, parms->pricing_solver, get_datasize(pd->solver), get_nb_arcs_ati(pd->solver));
 
     fclose(file);
 CLEAN:

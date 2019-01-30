@@ -41,6 +41,7 @@ void print_number_paths(PricerSolver *solver);
 void set_release_due_time(PricerSolver *solver, Job *jobarray);
 
 size_t get_datasize(PricerSolver *solver);
+int get_nb_arcs_ati(PricerSolver *solver);
 size_t get_numberrows_zdd(PricerSolver *solver);
 size_t get_numberrows_bdd(PricerSolver *solver);
 

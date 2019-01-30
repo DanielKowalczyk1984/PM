@@ -19,6 +19,7 @@ protected:
 
     size_t nb_nodes_bdd;
     size_t nb_nodes_zdd;
+    int nb_arcs_ati;
 
     int nb_removed_edges;
     int nb_removed_nodes;
@@ -78,6 +79,7 @@ public:
 
      int get_remove();
      size_t get_datasize();
+     int get_nb_arcs_ati();
      size_t get_numberrows_zdd();
      double get_cost_edge(int idx);
 
