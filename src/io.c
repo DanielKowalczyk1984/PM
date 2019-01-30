@@ -111,18 +111,6 @@ int print_to_csv(wctproblem *problem) {
     problem->real_time_total = getRealTime() - problem->real_time_total;
     CCutil_stop_timer(&(problem->tot_cputime), 0);
 
-    // switch (parms->bb_branch_strategy) {
-    //     case conflict_strategy:
-    //     case cbfs_conflict_strategy:
-    //         break;
-
-    //     case ahv_strategy:
-    //     case cbfs_ahv_strategy:
-    //         sprintf(filenm, "WCT_AHV_%d_%d.csv", pd->nmachines, pd->njobs);
-    //         break;
-    // }
-    // sprintf(filenm, "PM_%d_%d.csv", pd->nmachines, pd->njobs);
-
     file = fopen("overall.csv", "a+");
 
     if (file == NULL) {
