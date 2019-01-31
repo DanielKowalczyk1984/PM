@@ -164,17 +164,15 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
 
     Optimal_Solution<T> get_objective(Node<T> &n) const {
         Optimal_Solution<T> sol(-pi[num_jobs]);
+        Label<T> *aux_label = &(n.backward_label1);
 
-        Label<T> *aux_label = &n.backward_label1;
-        Job *aux_job =  aux_label->GetJob();
-
-        while (aux_job) {
+        while (aux_label) {
+            Job *aux_job = aux_label->GetJob();
             if (aux_label->GetHigh()) {
                 sol.push_job_back(aux_job, pi[aux_job->job]);
             }
 
             aux_label = aux_label->GetPrev();
-            aux_job = aux_label->GetJob();
         }
 
         return sol;
