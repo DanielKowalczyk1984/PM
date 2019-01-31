@@ -5,6 +5,7 @@
 #include <PricerEvaluate.hpp>
 #include <scheduleset.h>
 #include <boost/unordered_set.hpp>
+#include <NodeBddStructure.hpp>
 using namespace std;
 
 struct PricerSolverBase {
@@ -16,6 +17,7 @@ protected:
 
     tdzdd::DdStructure<2> *zdd;
     tdzdd::DdStructure<2> *dd;
+    DdStructure<double> *new_dd;
 
     size_t nb_nodes_bdd;
     size_t nb_nodes_zdd;
@@ -119,6 +121,7 @@ public:
 class PricerSolverZdd : public PricerSolverBase {
 protected:
     tdzdd::DataTable<ForwardZddNode<double>> table;
+    ForwardZddNode<double>& child(tdzdd::NodeId const & id);
 public:
     PricerSolverZdd(GPtrArray *_jobs, GPtrArray *ordered_jobs);
     void InitTable() override;

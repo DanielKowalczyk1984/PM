@@ -10,7 +10,7 @@ PricerSolverBase::PricerSolverBase(GPtrArray *_jobs):
     jobs(_jobs), njobs(_jobs->len), ordered_jobs(nullptr), nlayers(0),
     zdd(nullptr), dd(nullptr), nb_nodes_bdd(0), nb_nodes_zdd(0), nb_arcs_ati(0),
     nb_removed_edges(0), nb_removed_nodes(0) { 
-
+        new_dd = nullptr;
     }
 
 
@@ -24,6 +24,7 @@ PricerSolverBase::PricerSolverBase(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     dd = new tdzdd::DdStructure<2>(ps);
     nb_nodes_bdd = dd->size();
 
+    new_dd = new DdStructure<double>(ps);
     /**
      * Construction of ZDD
      */
@@ -34,6 +35,7 @@ PricerSolverBase::PricerSolverBase(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     printf("size BDD = %lu and size ZDD = %lu\n", nb_nodes_bdd, nb_nodes_zdd);
     nb_removed_nodes = 0;
     nb_removed_edges = 0;
+    nb_arcs_ati = 0;
 }
 
 PricerSolverBase::~PricerSolverBase() {
@@ -43,6 +45,10 @@ PricerSolverBase::~PricerSolverBase() {
 
     if (zdd) {
         delete zdd;
+    }
+
+    if(new_dd) {
+        delete new_dd;
     }
 }
 
@@ -184,16 +190,13 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
 }
 
 void PricerSolverBdd::InitTable() {
-    tdzdd::NodeTableHandler<2> &handler = dd->getDiagram();
-    table.init(dd->topLevel() + 1);
+    NodeTableHandler<double> &handler_bdd = new_dd->getDiagram();
+    NodeTableEntity<double>& table_new = handler_bdd.privateEntity();
 
     /** init table */
-    for (int i = zdd->topLevel(); i >= 0; i--) {
-        tdzdd::MyVector<tdzdd::Node<2>> const &layer = handler.privateEntity()[i];
-        size_t const m = layer.size();
-        table[i].resize(m);
-
-        for (auto &it : table[i]) {
+    table_new.node(new_dd->root()).InitNode(0, true);
+    for (int i = dd->topLevel(); i >= 0; i--) {
+        for (auto &it : table_new[i]) {
             if (i != 0) {
                 int layer = nlayers - i;
                 job_interval_pair *tmp_pair =
@@ -201,52 +204,24 @@ void PricerSolverBdd::InitTable() {
                     (g_ptr_array_index(ordered_jobs, layer));
                 it.set_job(tmp_pair->j);
                 it.set_layer(layer);
+                int w = it.GetWeight();
+                int p = it.GetJob()->processingime;
+
+                Node<double>& n0 = table_new.node(it.branch[0]);
+                Node<double>& n1 = table_new.node(it.branch[1]);
+
+                it.child[0] = n0.InitNode(w);
+                it.child[1] = n1.InitNode(w + p);
             } else {
                 it.set_job(nullptr, true);
                 it.set_layer(nlayers);
             }
         }
     }
-
-    /** init root */
-    table[zdd->topLevel()][0].InitNode(0, true);
-
-    for (int i = zdd->topLevel(); i > 0; i--) {
-        size_t const m = table[i].size();
-
-        for (size_t j = 0; j < m; j++) {
-            Node<double> &n = table[i][j];
-            Job *job = n.GetJob();
-
-            tdzdd::NodeId cur_node_0 = handler.privateEntity().child(i, j, 0);
-            tdzdd::NodeId cur_node_1 = handler.privateEntity().child(i, j, 1);
-
-            n.child[1] = table[cur_node_1.row()][cur_node_1.col()].InitNode(
-                             n.GetWeight() + job->processingime);
-
-            n.child[0] = table[cur_node_0.row()][cur_node_0.col()].InitNode(
-                             n.GetWeight());
-
-            // if ((cur_node_1.row() > 0) || (cur_node_1.row() == 0 &&
-            //                                cur_node_1.col() == 1U)) {
-            //     edges.push_back(std::make_shared<edge<double>>(value_Fj(it->weight +
-            //                     job->processingime, job), job, it, it->y));
-            //     it->out_edge.push_back(edges.back());
-            //     it->y->in_edge.push_back(edges.back());
-            // }
-
-            // if ((cur_node_0.row() > 0) || (cur_node_0.row() == 0 &&
-            //                                cur_node_0.col() == 1U)) {
-            //     edges.push_back(make_shared<edge<double>>(0.0, nullptr, it, it->n));
-            //     it->out_edge.push_back(edges.back());
-            //     it->n->in_edge.push_back(edges.back());
-            // }
-        }
-    }
 }
 
 void PricerSolverBdd::evaluate_nodes(double *pi, int UB, double LB, int nmachines, double reduced_cost) {
-    double value;
+    // double value;
 
     /** Calculate the distance from  the origin to the given node */
     // for (int i = zdd->topLevel(); i > 0; i--) {
@@ -304,7 +279,7 @@ PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray *_jobs, GPtrArray *_order
 
 Optimal_Solution<double> PricerSolverBddSimple::pricing_algorithm(double *_pi) {
     evaluator.initializepi(_pi);
-    return dd->evaluate_forward(evaluator, table);
+    return new_dd->evaluate_forward(evaluator);
 }
 
 PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray *_jobs,
@@ -315,7 +290,7 @@ PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray *_jobs,
 
 Optimal_Solution<double> PricerSolverBddCycle::pricing_algorithm(double *_pi) {
     evaluator.initializepi(_pi);
-    return dd->evaluate_forward(evaluator, table);
+    return new_dd->evaluate_forward(evaluator);
 }
 
 /**
@@ -326,13 +301,18 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     InitTable();
 }
 
+ForwardZddNode<double>& PricerSolverZdd::child(tdzdd::NodeId const & id) {
+    return table[id.row()][id.col()];
+}
+
 void PricerSolverZdd::InitTable() {
     tdzdd::NodeTableHandler<2> &handler = zdd->getDiagram();
+    const tdzdd::NodeTableEntity<2> &diagram = handler.privateEntity();
     table.init(zdd->topLevel() + 1);
 
     /** Init table */
     for (int i = zdd->topLevel(); i >= 0; i--) {
-        tdzdd::MyVector<tdzdd::Node<2>> const &layer = handler.privateEntity()[i];
+        tdzdd::MyVector<tdzdd::Node<2>> const &layer = diagram[i];
         size_t const m = layer.size();
         table[i].resize(m);
 
@@ -361,15 +341,14 @@ void PricerSolverZdd::InitTable() {
 
         for (size_t j = 0; j < m; j++) {
             Job *job = table[i][j].get_job();
-            tdzdd::NodeId cur_node_0 = handler.privateEntity().child(i, j, 0);
-            tdzdd::NodeId cur_node_1 = handler.privateEntity().child(i, j, 1);
+            tdzdd::NodeId n0 = diagram.child(i, j, 0);
+            tdzdd::NodeId n1 = diagram.child(i, j, 1);
 
             for (auto &it : table[i][j].list) {
-                it->y = table[cur_node_1.row()][cur_node_1.col()].add_weight((
-                            it)->GetWeight() + job->processingime, nlayers - cur_node_1.row());
-
-                it->n = table[cur_node_0.row()][cur_node_0.col()].add_weight(it->GetWeight(),
-                        nlayers - cur_node_0.row());
+                int w = it->GetWeight();
+                int p = w + job->processingime;
+                it->y = child(n1).add_weight(p, nlayers - n1.row());
+                it->n = child(n0).add_weight(w, nlayers - n0.row());
             }
         }
     }
@@ -688,7 +667,7 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(GPtrArray *_jobs, G
 
 Optimal_Solution<double> PricerSolverBddBackwardSimple::pricing_algorithm(double *_pi) {
     evaluator.initializepi(_pi);
-    return dd->evaluate_backward(evaluator, table);
+    return new_dd->evaluate_backward(evaluator);
 }
 
 PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(GPtrArray *_jobs,
@@ -699,7 +678,7 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(GPtrArray *_jobs,
 
 Optimal_Solution<double> PricerSolverBddBackwardCycle::pricing_algorithm(double *_pi) {
     evaluator.initializepi(_pi);
-    return dd->evaluate_backward(evaluator, table);
+    return new_dd->evaluate_backward(evaluator);
 }
 
 /**
