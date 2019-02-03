@@ -34,11 +34,10 @@
 
 #include <NodeBddTable.hpp>
 #include <NodeBddBuilder.hpp>
+#include <NodeBddReducer.hpp>
 
 #include "tdzdd/DdEval.hpp"
 #include "tdzdd/DdSpec.hpp"
-#include "tdzdd/dd/DdBuilder.hpp"
-#include "tdzdd/dd/DdReducer.hpp"
 #include "tdzdd/util/MyHashTable.hpp"
 #include "tdzdd/util/MyVector.hpp"
 
@@ -288,7 +287,7 @@ public:
     void reduce() {
         int n = root_.row();
 
-        tdzdd::DdReducer<2,BDD,ZDD> zr(diagram);
+        DdReducer<T,BDD,ZDD> zr(diagram);
         zr.setRoot(root_);
 
         for (int i = 1; i <= n; ++i) {
