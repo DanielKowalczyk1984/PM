@@ -248,6 +248,13 @@ class Node {
           child[1] = nullptr;
     }
 
+    void set_head_node() {
+      forward_label1.SetHeadNode(this);
+      forward_label2.SetHeadNode(this);
+      backward_label1.SetHeadNode(this);
+      backward_label2.SetHeadNode(this);
+    }
+
     Node(int i, int j) : weight(0),
           num_layer(0),
           root_node(false),
