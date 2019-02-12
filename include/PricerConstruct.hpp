@@ -19,7 +19,7 @@ class PricerConstruct : public tdzdd::DdSpec<PricerConstruct, int, 2> {
     int nlayers;
 
 public:
-    PricerConstruct(GPtrArray *_pair_list)
+    explicit PricerConstruct(GPtrArray *_pair_list)
     : pair_list(_pair_list){
         nlayers = pair_list->len;
     };
