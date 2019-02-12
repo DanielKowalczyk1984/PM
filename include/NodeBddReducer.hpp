@@ -295,6 +295,8 @@ private:
             if (ff.row() == i) {
                 output[i][ff.col()] = input[i][j];
                 output[i][ff.col()].set_head_node();
+                output[i][ff.col()].child[0] = &(output.node(output[i][ff.col()].branch[0]));
+                output[i][ff.col()].child[1] = &(output.node(output[i][ff.col()].branch[1]));
             }
         }
 
