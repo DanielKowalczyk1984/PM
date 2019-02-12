@@ -55,7 +55,7 @@ int evaluate_nodes(wctdata *pd) {
     double LB = pd->LP_lower_bound;
     int    nmachines = pd->problem->nmachines;
 
-    pd->solver->evaluate_nodes(pd->pi, UB, LB, nmachines, pd->reduced_cost);
+    pd->solver->evaluate_nodes(pd->pi, UB, LB, nmachines);
 
     return val;
 }
