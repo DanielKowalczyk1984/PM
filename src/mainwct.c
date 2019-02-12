@@ -186,6 +186,15 @@ int main(int ac, char **av) {
         compute_lower_bound(&problem, &(problem.root_pd));
         problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
+
+        lpwctdata_free(&(problem.root_pd));
+        problem.root_pd.localColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+        heuristic_rpup(&problem);
+        build_lp(&(problem.root_pd), 0);
+        CCutil_start_timer(&(problem.tot_lb_root));
+        compute_lower_bound(&problem, &(problem.root_pd));
+        CCutil_stop_timer(&(problem.tot_lb_root), 1);
+
     }
     print_to_csv(&problem);
 
