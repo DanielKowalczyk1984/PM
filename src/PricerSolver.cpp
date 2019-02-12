@@ -56,9 +56,9 @@ PricerSolverBase::~PricerSolverBase() {
  * Some getters
  */
 void PricerSolverBase::IterateZdd() {
-    tdzdd::DdStructure<2>::const_iterator it = zdd->begin();
+    DdStructure<double>::const_iterator it = new_dd->begin();
 
-    for (; it != zdd->end(); ++it) {
+    for (; it != new_dd->end(); ++it) {
         std::set<int>::const_iterator i = (*it).begin();
 
         for (; i != (*it).end(); ++i) {
@@ -70,13 +70,13 @@ void PricerSolverBase::IterateZdd() {
 }
 
 void PricerSolverBase::PrintNumberPaths() {
-    cout << "Number of paths: " << zdd->evaluate(tdzdd::ZddCardinality<>()) << "\n";
+    cout << "Number of paths: " << dd->evaluate(tdzdd::ZddCardinality<>()) << "\n";
 }
 
 void PricerSolverBase::create_dot_zdd(const char *name) {
     std::ofstream file;
     file.open(name);
-    zdd->dumpDot(file);
+    new_dd->dumpDot(file);
     file.close();
 }
 
@@ -90,11 +90,11 @@ int PricerSolverBase::get_remove() {
 }
 
 size_t PricerSolverBase::get_datasize() {
-    return dd->size();
+    return new_dd->size();
 }
 
 size_t PricerSolverBase::get_numberrows_zdd() {
-    return zdd->root().row();
+    return new_dd->root().row();
 }
 
 int PricerSolverBase::get_nb_arcs_ati() {
@@ -195,7 +195,7 @@ void PricerSolverBdd::InitTable() {
 
     /** init table */
     table_new.node(new_dd->root()).InitNode(0, true);
-    for (int i = dd->topLevel(); i >= 0; i--) {
+    for (int i = new_dd->topLevel(); i >= 0; i--) {
         for (auto &it : table_new[i]) {
             if (i != 0) {
                 int layer = nlayers - i;
@@ -282,8 +282,7 @@ Optimal_Solution<double> PricerSolverBddSimple::pricing_algorithm(double *_pi) {
     return new_dd->evaluate_forward(evaluator);
 }
 
-PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray *_jobs,
-        GPtrArray *_ordered_jobs) :
+PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverBdd(_jobs, _ordered_jobs) {
     evaluator = ForwardBddCycleDouble(njobs);
 }
@@ -355,8 +354,7 @@ void PricerSolverZdd::InitTable() {
 }
 
 
-PricerSolverCycle::PricerSolverCycle(GPtrArray *_jobs,
-                                     GPtrArray *_ordered_jobs) :
+PricerSolverCycle::PricerSolverCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverZdd(_jobs, _ordered_jobs) {
     evaluator = ForwardZddCycleDouble(njobs);
 }
@@ -366,8 +364,7 @@ Optimal_Solution<double> PricerSolverCycle::pricing_algorithm(double *_pi) {
     return zdd->evaluate_forward(evaluator, table);
 }
 
-PricerSolverZddSimple::PricerSolverZddSimple(GPtrArray *_jobs,
-    GPtrArray *_ordered_jobs) :
+PricerSolverZddSimple::PricerSolverZddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverZdd(_jobs, _ordered_jobs) {
     evaluator = ForwardZddSimpleDouble(njobs);
 }
@@ -375,6 +372,26 @@ PricerSolverZddSimple::PricerSolverZddSimple(GPtrArray *_jobs,
 Optimal_Solution<double> PricerSolverZddSimple::pricing_algorithm(double *_pi) {
     evaluator.initializepi(_pi);
     return zdd->evaluate_forward(evaluator, table);
+}
+
+PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
+    PricerSolverBdd(_jobs, _ordered_jobs) {
+    evaluator = BackwardBddSimpleDouble(njobs);
+}
+
+Optimal_Solution<double> PricerSolverBddBackwardSimple::pricing_algorithm(double *_pi) {
+    evaluator.initializepi(_pi);
+    return new_dd->evaluate_backward(evaluator);
+}
+
+PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
+    PricerSolverBdd(_jobs, _ordered_jobs) {
+    evaluator = BackwardBddCycleDouble(njobs);
+}
+
+Optimal_Solution<double> PricerSolverBddBackwardCycle::pricing_algorithm(double *_pi) {
+    evaluator.initializepi(_pi);
+    return new_dd->evaluate_backward(evaluator);
 }
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray *_jobs, int _Hmax) :
@@ -586,6 +603,7 @@ PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax):
     PricerSolverBase(_jobs), Hmax(_Hmax) {}
 
 void PricerSolverSimpleDp::InitTable() {
+
 }
 
 Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
@@ -636,7 +654,6 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
             opt_sol.obj = F[i];
         }
     }
-    // std::cout << "reduced cost = " << opt_sol.obj << std::endl;
 
     t_min = opt_sol.C_max;
 
@@ -658,27 +675,6 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
     delete[] A;
     delete[] F;
     return opt_sol;
-}
-
-PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
-    PricerSolverBdd(_jobs, _ordered_jobs) {
-    evaluator = BackwardBddSimpleDouble(njobs);
-}
-
-Optimal_Solution<double> PricerSolverBddBackwardSimple::pricing_algorithm(double *_pi) {
-    evaluator.initializepi(_pi);
-    return new_dd->evaluate_backward(evaluator);
-}
-
-PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(GPtrArray *_jobs,
-    GPtrArray *_ordered_jobs) :
-    PricerSolverBdd(_jobs, _ordered_jobs) {
-    evaluator = BackwardBddCycleDouble(njobs);
-}
-
-Optimal_Solution<double> PricerSolverBddBackwardCycle::pricing_algorithm(double *_pi) {
-    evaluator.initializepi(_pi);
-    return new_dd->evaluate_backward(evaluator);
 }
 
 /**

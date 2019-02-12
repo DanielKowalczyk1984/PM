@@ -194,8 +194,6 @@ class Node {
     nodeid branch[2];
 
     T dist_root_node;
-    T dist_terminal_yes;
-    T dist_terminal_no;
 
     bool calc_yes;
     bool calc_no;
@@ -355,8 +353,6 @@ class Node {
       branch[1] = src.branch[1];
 
       dist_root_node = src.dist_root_node;
-      dist_terminal_yes = src.dist_terminal_yes;
-      dist_terminal_no = src.dist_terminal_no;
 
       calc_no = src.calc_no;
       calc_yes = src.calc_yes;
@@ -393,8 +389,6 @@ class Node {
       branch[0] = src.branch[0];
       branch[1] = src.branch[1];
       dist_root_node = src.dist_root_node;
-      dist_terminal_yes = src.dist_terminal_yes;
-      dist_terminal_no = src.dist_terminal_no;
 
       calc_no = src.calc_no;
       calc_yes = src.calc_yes;
