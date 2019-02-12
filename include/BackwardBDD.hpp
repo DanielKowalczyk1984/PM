@@ -23,12 +23,7 @@ class BackwardBddBase : public tdzdd::DdEval<E, Node<T>, Optimal_Solution<T>> {
     virtual void initializenode(Node<T> &n) const  = 0;
     virtual void initializerootnode(Node<T> &n) const  = 0;
     virtual void evalNode(Node<T> &n) const = 0;
-
-    Optimal_Solution<T> getValue(Node<T> const &n) {
-        Optimal_Solution<T> sol;
-
-        return sol;
-    }
+    virtual Optimal_Solution<T> getValue(Node<T> const &n) = 0;
 };
 
 template<typename E, typename T>
@@ -58,14 +53,10 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
             n.backward_label1.UpdateSolution(obj0, nullptr, false);
         }
 
-        n.dist_terminal_no = obj0;
-        n.dist_terminal_yes = obj1;
     }
 
     void initializenode(Node<T> &n) const override {
         n.backward_label1.UpdateSolution(-DBL_MAX / 2, nullptr, false);
-        n.dist_terminal_yes = -DBL_MAX / 2;
-        n.dist_terminal_no = -DBL_MAX / 2;
     }
 
     void initializerootnode(Node<T> &n) const override {
@@ -90,6 +81,11 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
 
         }
 
+        return sol;
+    }
+
+    Optimal_Solution<T> getValue(Node<T> const &n) override {
+        Optimal_Solution<T> sol;
         return sol;
     }
 
@@ -121,7 +117,6 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         bool diff =  bool_diff_Fij(weight, prev_job, tmp_j);
         bool diff1 = bool_diff_Fij(weight, p1->backward_label1.get_prev_job(), tmp_j); 
         bool diff2 = bool_diff_Fij(weight, p1->backward_label2.get_prev_job(), tmp_j);
-        n.dist_terminal_no = n.backward_label1.GetF();
 
         if(prev_job != tmp_j && diff) {
             T obj1 {p1->backward_label1.GetF() + result};
@@ -132,13 +127,10 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
                     n.backward_label2.UpdateNode(&(p0->backward_label1));
                 }
                 n.backward_label1.UpdateNode(&(p1->backward_label1), obj1, true);
-                n.dist_terminal_yes = obj1;
             } else if (obj1 > n.backward_label2.GetF() && tmp_j != n.backward_label1.get_prev_job() && diff1){
                 n.backward_label2.UpdateNode(&(p1->backward_label1), obj1, true);
-                n.dist_terminal_yes = obj1;
             } else if (obj2 > n.backward_label2.GetF() && tmp_j != n.backward_label1.get_prev_job() && diff2) {
                 n.backward_label2.UpdateNode(&(p1->backward_label2), obj2, true);
-                n.dist_terminal_yes = obj2;
             }
         } else {
             T obj1 = p1->backward_label2.GetF() + result;
@@ -150,7 +142,6 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
             } else if (obj1 > n.backward_label2.GetF() && tmp_j != n.backward_label1.get_prev_job() && diff2){
                 n.backward_label2.UpdateNode(&(p1->backward_label2), obj1, true);
             }
-            n.dist_terminal_yes = obj1;
         }
     }
 
@@ -175,6 +166,11 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
             aux_label = aux_label->GetPrev();
         }
 
+        return sol;
+    }
+
+    Optimal_Solution<T> getValue(Node<T> const &n) override {
+        Optimal_Solution<T> sol;
         return sol;
     }
 };

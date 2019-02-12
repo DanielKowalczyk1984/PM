@@ -229,6 +229,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
 
     Optimal_Solution<T> getValue(Node<T> const &n){
         Optimal_Solution<T> sol;
+
         return sol;
     }
 };
