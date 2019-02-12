@@ -357,10 +357,30 @@ public:
         return evaluator.get_objective(work[n][0]);
     }
 
+    template <typename S, typename R>
+    void compute_labels_backward(tdzdd::DdEval<S, Node<T>, R> const &evaluator) {
+        int            n = root_.row();
+        NodeTableHandler<double> &handler_bdd = getDiagram();
+        NodeTableEntity<T>& work = handler_bdd.privateEntity();
+
+        if (this->size() == 0) {
+            printf("empty DDstructure\n");
+            return;
+        }
+
+        evaluator.initializerootnode(work[0][1]);
+        for (int i = 1; i <= n; ++i) {
+            for (auto &it : work[i]) {
+                evaluator.initializenode(it);
+                evaluator.evalNode(it);
+            }
+        }
+    }
+
     template<typename S, typename R>
     R evaluate_forward(tdzdd::DdEval<S, Node<T>, R> const &evaluator) {
         int n = root_.row();
-        NodeTableEntity<T> & work = getDiagram().privateEntity();
+        NodeTableEntity<T>& work = getDiagram().privateEntity();
 
         if (this->size() == 0){
             printf("empty DDstructure\n");
@@ -391,6 +411,38 @@ public:
          * Return the optimal solution
          */
         return evaluator.get_objective(work[0][1]);
+    }
+
+    template<typename S, typename R>
+    void compute_labels_forward(tdzdd::DdEval<S, Node<T>, R> const &evaluator) {
+        int n = root_.row();
+        NodeTableEntity<T>& work = getDiagram().privateEntity();
+
+        if (this->size() == 0){
+            printf("empty DDstructure\n");
+            return;
+        }
+
+        /**
+         * Initialize nodes of the DD
+         */
+        evaluator.initializerootnode(work[n][0]);
+        for (int i = n - 1; i >= 0; i--) {
+            for(auto &it : work[i]){
+                evaluator.initializenode(it);
+            }
+        }
+
+        /**
+         * Compute all the node of DD
+         */
+        for (int i = n ; i > 0; i--) {
+            for (auto &it: work[i]) {
+                evaluator.evalNode(it);
+            }
+        }
+
+        return;
     }
 
     /**
