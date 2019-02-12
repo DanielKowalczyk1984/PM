@@ -85,7 +85,7 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.forward_label1.f = pi[num_jobs];
+        n.forward_label1.f = -pi[num_jobs];
         n.forward_label2.SetF(-DBL_MAX/2);
     }
 
@@ -193,7 +193,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.forward_label1.f = pi[num_jobs];
+        n.forward_label1.f = -pi[num_jobs];
     }
 
     void initializepi(T *_pi){
