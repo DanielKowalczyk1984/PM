@@ -71,7 +71,7 @@ public:
       */
      void calculate_new_ordered_jobs();
      void calculate_edges(scheduleset *set);
-     virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines, double reduced_cost);
+     virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines);
 
      /**
       * Some getters
@@ -98,25 +98,54 @@ protected:
 public:
     PricerSolverBdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
     void InitTable() override;
-    void evaluate_nodes(double *pi, int UB, double LB, int nmachines, double reduced_cost) override;
+    virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override = 0;
 };
 
 class PricerSolverBddSimple : public PricerSolverBdd {
 private:
     ForwardBddSimpleDouble evaluator;
+    BackwardBddSimpleDouble reversed_evaluator;
 public:
     PricerSolverBddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    void compute_labels(double *_pi);
+    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;    
 };
 
 class PricerSolverBddCycle : public PricerSolverBdd {
 private:
     ForwardBddCycleDouble evaluator;
+    BackwardBddCycleDouble reversed_evaluator;
 public:
     PricerSolverBddCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    void compute_labels(double *_pi);
+    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;        
 };
 
+class PricerSolverBddBackwardSimple : public PricerSolverBdd {
+private:
+    BackwardBddSimpleDouble evaluator;
+    ForwardBddSimpleDouble reversed_evaluator;
+
+public:
+    PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    void compute_labels(double *_pi);
+    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;    
+};
+
+class PricerSolverBddBackwardCycle : public PricerSolverBdd {
+private:
+    BackwardBddCycleDouble evaluator;
+    ForwardBddCycleDouble reversed_evaluator;
+public:
+    PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+
+    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    void compute_labels(double *_pi);
+    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;    
+};
 
 class PricerSolverZdd : public PricerSolverBase {
 protected:
@@ -199,27 +228,6 @@ public:
         Job *tmp_j = vector_jobs[j];
         return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
     }
-};
-
-class PricerSolverBddBackwardSimple : public PricerSolverBdd {
-private:
-    BackwardBddSimpleDouble evaluator;
-
-public:
-    PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-
-    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
-
-};
-
-class PricerSolverBddBackwardCycle : public PricerSolverBdd {
-private:
-    BackwardBddCycleDouble evaluator;
-public:
-    PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-
-    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
-
 };
 
 #endif  // INCLUDE_PRICERSOLVER_HPP
