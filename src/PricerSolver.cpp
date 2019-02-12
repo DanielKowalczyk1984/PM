@@ -181,8 +181,9 @@ void PricerSolverBase::calculate_edges(scheduleset *set) {
     //     }
     // }
 // }
+
 /**
- * PricerSolverBdd constructor
+ * base class for the bdd based pricersolvers
  */
 PricerSolverBdd::PricerSolverBdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverBase(_jobs, _ordered_jobs) {
@@ -271,7 +272,9 @@ void PricerSolverBdd::evaluate_nodes(double *pi, int UB, double LB, int nmachine
 
     printf("removed nodes = %d\n", nb_removed_nodes);
 }
-
+/**
+ *  bdd solver pricersolver for the flow formulation
+ */
 PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs):
     PricerSolverBdd(_jobs, _ordered_jobs) {
     evaluator = ForwardBddSimpleDouble(njobs);
@@ -282,6 +285,9 @@ Optimal_Solution<double> PricerSolverBddSimple::pricing_algorithm(double *_pi) {
     return new_dd->evaluate_forward(evaluator);
 }
 
+/**
+ * bdd solver pricersolver for the flow formulation that takes care of the consecutive jobs
+ */
 PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverBdd(_jobs, _ordered_jobs) {
     evaluator = ForwardBddCycleDouble(njobs);
@@ -293,7 +299,33 @@ Optimal_Solution<double> PricerSolverBddCycle::pricing_algorithm(double *_pi) {
 }
 
 /**
- * PricerSolverZdd Constructor
+ * backward bdd pricersolver for the flow formulation that takes care of the consecutive jobs
+ */
+PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
+    PricerSolverBdd(_jobs, _ordered_jobs) {
+    evaluator = BackwardBddSimpleDouble(njobs);
+}
+
+Optimal_Solution<double> PricerSolverBddBackwardSimple::pricing_algorithm(double *_pi) {
+    evaluator.initializepi(_pi);
+    return new_dd->evaluate_backward(evaluator);
+}
+
+/**
+ * Simple backward bdd pricersolver for the flow formulation
+ */
+PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
+    PricerSolverBdd(_jobs, _ordered_jobs) {
+    evaluator = BackwardBddCycleDouble(njobs);
+}
+
+Optimal_Solution<double> PricerSolverBddBackwardCycle::pricing_algorithm(double *_pi) {
+    evaluator.initializepi(_pi);
+    return new_dd->evaluate_backward(evaluator);
+}
+
+/**
+ * Base class for the Zdd based pricing solver
  */
 PricerSolverZdd::PricerSolverZdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverBase(_jobs, _ordered_jobs) {
@@ -353,7 +385,9 @@ void PricerSolverZdd::InitTable() {
     }
 }
 
-
+/**
+ * ZDD solver for the flow formulation which ensures that two consecutive jobs are different
+ */
 PricerSolverCycle::PricerSolverCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverZdd(_jobs, _ordered_jobs) {
     evaluator = ForwardZddCycleDouble(njobs);
@@ -364,6 +398,9 @@ Optimal_Solution<double> PricerSolverCycle::pricing_algorithm(double *_pi) {
     return zdd->evaluate_forward(evaluator, table);
 }
 
+/**
+ * Simple ZDD solver for the flow formulation
+ */
 PricerSolverZddSimple::PricerSolverZddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverZdd(_jobs, _ordered_jobs) {
     evaluator = ForwardZddSimpleDouble(njobs);
@@ -374,26 +411,90 @@ Optimal_Solution<double> PricerSolverZddSimple::pricing_algorithm(double *_pi) {
     return zdd->evaluate_forward(evaluator, table);
 }
 
-PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
-    PricerSolverBdd(_jobs, _ordered_jobs) {
-    evaluator = BackwardBddSimpleDouble(njobs);
+/**
+ * Pricersolver for the TI index formulation
+ */
+PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax):
+    PricerSolverBase(_jobs), Hmax(_Hmax) {}
+
+void PricerSolverSimpleDp::InitTable() {
+
 }
 
-Optimal_Solution<double> PricerSolverBddBackwardSimple::pricing_algorithm(double *_pi) {
-    evaluator.initializepi(_pi);
-    return new_dd->evaluate_backward(evaluator);
+Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
+    Optimal_Solution<double> opt_sol;
+    opt_sol.cost = 0;
+    double *F;
+    Job **A;
+    int t_min = 0;
+    F = new double[Hmax + 1];
+    A = new Job* [Hmax + 1];
+    std::vector<Job *> v;
+
+
+    /** Initialisation */
+    F[0] = -_pi[njobs];
+    A[0] = nullptr;
+
+    for (int t = 1; t < Hmax + 1; t++) {
+        F[t] = -DBL_MAX / 2;
+        A[t] = nullptr;
+    }
+
+
+    /** Recursion */
+    for (int t = 0; t < Hmax + 1; t++) {
+        for (int i = 1; i < njobs + 1; i++) {
+            int j = i - 1;
+            Job *job = reinterpret_cast<Job *>(g_ptr_array_index(jobs, j));
+
+            if (t >=  job->processingime) {
+                if (F[t - job->processingime]
+                        - static_cast<double>(value_Fj(t, job))
+                        + _pi[job->job] >= F[t]) {
+                    F[t] = F[t - job->processingime]
+                           - value_Fj(t, job) + _pi[job->job];
+                    A[t] = job;
+                }
+            }
+        }
+    }
+
+    /** Find optimal solution */
+    opt_sol.obj = -DBL_MAX;
+
+    for (int i =  0; i < Hmax + 1; i++) {
+        if (F[i] > opt_sol.obj) {
+            opt_sol.C_max = i;
+            opt_sol.obj = F[i];
+        }
+    }
+
+    t_min = opt_sol.C_max;
+
+    /** Construct the solution */
+    while (A[t_min] != nullptr) {
+        Job *job = A[t_min];
+        v.push_back(A[t_min]);
+        opt_sol.cost += value_Fj(t_min, A[t_min]);
+        t_min -= job->processingime;
+    }
+
+    std::vector<Job *>::reverse_iterator it = v.rbegin();
+
+    for (; it != v.rend(); ++it) {
+        g_ptr_array_add(opt_sol.jobs, *it);
+    }
+
+    /** Free the memory */
+    delete[] A;
+    delete[] F;
+    return opt_sol;
 }
 
-PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
-    PricerSolverBdd(_jobs, _ordered_jobs) {
-    evaluator = BackwardBddCycleDouble(njobs);
-}
-
-Optimal_Solution<double> PricerSolverBddBackwardCycle::pricing_algorithm(double *_pi) {
-    evaluator.initializepi(_pi);
-    return new_dd->evaluate_backward(evaluator);
-}
-
+/**
+ * PricerSolver for the arc-time index formulation
+ */
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray *_jobs, int _Hmax) :
     PricerSolverBase(_jobs),
     Hmax(_Hmax),
@@ -598,97 +699,6 @@ Optimal_Solution<double> PricerSolverArcTimeDp::pricing_algorithm(double *_pi) {
 
     return sol;
 }
-
-PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax):
-    PricerSolverBase(_jobs), Hmax(_Hmax) {}
-
-void PricerSolverSimpleDp::InitTable() {
-
-}
-
-Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
-    Optimal_Solution<double> opt_sol;
-    opt_sol.cost = 0;
-    double *F;
-    Job **A;
-    int t_min = 0;
-    F = new double[Hmax + 1];
-    A = new Job* [Hmax + 1];
-    std::vector<Job *> v;
-
-
-    /** Initialisation */
-    F[0] = -_pi[njobs];
-    A[0] = nullptr;
-
-    for (int t = 1; t < Hmax + 1; t++) {
-        F[t] = -DBL_MAX / 2;
-        A[t] = nullptr;
-    }
-
-
-    /** Recursion */
-    for (int t = 0; t < Hmax + 1; t++) {
-        for (int i = 1; i < njobs + 1; i++) {
-            int j = i - 1;
-            Job *job = reinterpret_cast<Job *>(g_ptr_array_index(jobs, j));
-
-            if (t >=  job->processingime) {
-                if (F[t - job->processingime]
-                        - static_cast<double>(value_Fj(t, job))
-                        + _pi[job->job] >= F[t]) {
-                    F[t] = F[t - job->processingime]
-                           - value_Fj(t, job) + _pi[job->job];
-                    A[t] = job;
-                }
-            }
-        }
-    }
-
-    /** Find optimal solution */
-    opt_sol.obj = -DBL_MAX;
-
-    for (int i =  0; i < Hmax + 1; i++) {
-        if (F[i] > opt_sol.obj) {
-            opt_sol.C_max = i;
-            opt_sol.obj = F[i];
-        }
-    }
-
-    t_min = opt_sol.C_max;
-
-    /** Construct the solution */
-    while (A[t_min] != nullptr) {
-        Job *job = A[t_min];
-        v.push_back(A[t_min]);
-        opt_sol.cost += value_Fj(t_min, A[t_min]);
-        t_min -= job->processingime;
-    }
-
-    std::vector<Job *>::reverse_iterator it = v.rbegin();
-
-    for (; it != v.rend(); ++it) {
-        g_ptr_array_add(opt_sol.jobs, *it);
-    }
-
-    /** Free the memory */
-    delete[] A;
-    delete[] F;
-    return opt_sol;
-}
-
-/**
- * Default Constructor
- */
-
-// /** Copy constructor */
-
-
-// /** Move constructor */
-
-// /** Move assignment operator */
-
-// /** Destructor */
 
 // void PricerSolver::build_mip(double *x_e) {
 //     try {
