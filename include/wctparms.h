@@ -26,10 +26,10 @@ enum BBNodeSelection {
 enum PricingSolver {
     bdd_solver_simple = 1,
     bdd_solver_cycle = 2,
-    zdd_solver_simple = 3,
-    zdd_solver_cycle = 4,
-    bdd_solver_backward_simple = 5,
-    bdd_solver_backward_cycle = 6,
+    bdd_solver_backward_simple = 3,
+    bdd_solver_backward_cycle = 4,
+    zdd_solver_simple = 5,
+    zdd_solver_cycle = 6,
     dp_solver = 7,
     ati_solver = 8
 };

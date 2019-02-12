@@ -26,7 +26,7 @@ PricerSolverBase* newSolver(GPtrArray *jobs,
             return new PricerSolverBddBackwardCycle (jobs, ordered_jobs);
         break;
         default:
-            return new PricerSolverCycle(jobs, ordered_jobs);
+            return new PricerSolverBddBackwardCycle(jobs, ordered_jobs);
     }
 }
 
