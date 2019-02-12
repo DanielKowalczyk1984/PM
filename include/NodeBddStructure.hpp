@@ -379,7 +379,7 @@ public:
         }
 
         /**
-         * Compute all the node of ZDD
+         * Compute all the node of DD
          */
         for (int i = n ; i > 0; i--) {
             for (auto &it: work[i]) {
