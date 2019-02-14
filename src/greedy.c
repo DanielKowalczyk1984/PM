@@ -436,9 +436,11 @@ int heuristic_rpup(wctproblem *prob) {
     printf("Solution after local search:\n");
     solution_print(sol);
 
-    prob->opt_sol = solution_alloc(nmachines, njobs, prob->off);
-    CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
-    solution_update(prob->opt_sol, sol);
+    if(prob->opt_sol == NULL) {
+        prob->opt_sol = solution_alloc(nmachines, njobs, prob->off);
+        CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
+        solution_update(prob->opt_sol, sol);
+    }
 
     for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0; ++i) {
         //fprintf(stderr, "iteration %d\n", i);
