@@ -528,10 +528,6 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 CCcheck_val_2(val, "Failed in compute_objective");
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
                 // print_x(pd);
-                if(parms->pricing_solver < dp_solver) {
-                    evaluate_nodes(pd);
-                    calculate_new_ordered_jobs(pd);
-                }
                 break;
 
             case GRB_INFEASIBLE:
