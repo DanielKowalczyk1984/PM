@@ -1,12 +1,9 @@
 #ifndef WCT_PRIVATE_H
 #define WCT_PRIVATE_H
 
-#include <scheduleset.h>
 #include <binomial-heap.h>
 #include <lp.h>
-#include <solution.h>
 #include <util.h>
-#include <wctparms.h>
 #include <solver.h>
 #include <interval.h>
 
@@ -278,26 +275,20 @@ void temporary_data_free(wctdata *pd);
 /**
  * solver zdd
  */
-int solve_weight_dbl_bdd(wctdata *pd);
-int solve_weight_dbl_zdd(wctdata *pd);
-int solve_pricing(wctdata *pd, wctparms *parms, int evaluate);
-int solve_farkas_dbl(wctdata *pd);
-int solve_farkas_dbl_DP(wctdata *pd);
-void print_dot_file(PricerSolver *solver, char *name);
 int evaluate_nodes(wctdata *pd);
 int calculate_new_ordered_jobs(wctdata *pd);
 int build_solve_mip(wctdata *pd);
-void print_number_nodes_edges(wctdata *pd);
-double get_edge_cost(PricerSolver *solver, int idx);
-void calculate_edges(PricerSolver *solver, scheduleset *set);
-void g_calculate_edges(gpointer data, gpointer user_data);
+
 
 /**
- * Stabilization techniques
+ * pricing algorithms
  */
+int solve_pricing(wctdata *pd, wctparms *parms, int evaluate);
 int solve_stab(wctdata *pd, wctparms *parms);
 int solve_stab_dynamic(wctdata *pd, wctparms *parms);
 int solve_stab_hybrid(wctdata *pd, wctparms *parms);
+int solve_farkas_dbl(wctdata *pd);
+int solve_farkas_dbl_DP(wctdata *pd);
 #ifdef __cplusplus
 }
 #endif

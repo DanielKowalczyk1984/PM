@@ -216,6 +216,7 @@ void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b) {
     interval *         tmp_interval;
     Job *              tmp_j;
     job_interval_pair *tmp_pair;
+    int counter = 0;
     for (unsigned i = 0; i < a->len; ++i) {
         tmp_interval = (interval *)g_ptr_array_index(a, i);
         GPtrArray *jobarray = tmp_interval->sigma;
@@ -225,6 +226,8 @@ void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b) {
                 tmp_pair = CC_SAFE_MALLOC(1, job_interval_pair);
                 tmp_pair->j = tmp_j;
                 tmp_pair->I = tmp_interval;
+                tmp_pair->key = counter;
+                counter++;
                 tmp_pair->take = 0;
                 g_ptr_array_add(b, tmp_pair);
             }

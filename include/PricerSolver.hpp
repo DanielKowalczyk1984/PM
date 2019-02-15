@@ -5,6 +5,7 @@
 #include <PricerEvaluate.hpp>
 #include <scheduleset.h>
 #include <boost/unordered_set.hpp>
+#include <NodeBddStructure.hpp>
 using namespace std;
 
 struct PricerSolverBase {
@@ -16,9 +17,11 @@ protected:
 
     tdzdd::DdStructure<2> *zdd;
     tdzdd::DdStructure<2> *dd;
+    DdStructure<double> *new_dd;
 
     size_t nb_nodes_bdd;
     size_t nb_nodes_zdd;
+    int nb_arcs_ati;
 
     int nb_removed_edges;
     int nb_removed_nodes;
@@ -66,9 +69,11 @@ public:
      /**
       * Reduced cost fixing
       */
-     void calculate_new_ordered_jobs();
+     void calculate_new_ordered_jobs(double *pi,int UB, double LB, int nmachines);
+     void remove_layers();
+     void remove_edges();
      void calculate_edges(scheduleset *set);
-     virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines, double reduced_cost);
+     virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines);
 
      /**
       * Some getters
@@ -78,6 +83,7 @@ public:
 
      int get_remove();
      size_t get_datasize();
+     int get_nb_arcs_ati();
      size_t get_numberrows_zdd();
      double get_cost_edge(int idx);
 
@@ -94,29 +100,59 @@ protected:
 public:
     PricerSolverBdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
     void InitTable() override;
-    void evaluate_nodes(double *pi, int UB, double LB, int nmachines, double reduced_cost) override;
+    virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override = 0;
 };
 
 class PricerSolverBddSimple : public PricerSolverBdd {
 private:
     ForwardBddSimpleDouble evaluator;
+    BackwardBddSimpleDouble reversed_evaluator;
 public:
     PricerSolverBddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    void compute_labels(double *_pi);
+    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;    
 };
 
 class PricerSolverBddCycle : public PricerSolverBdd {
 private:
     ForwardBddCycleDouble evaluator;
+    BackwardBddCycleDouble reversed_evaluator;
 public:
     PricerSolverBddCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    void compute_labels(double *_pi);
+    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;        
 };
 
+class PricerSolverBddBackwardSimple : public PricerSolverBdd {
+private:
+    BackwardBddSimpleDouble evaluator;
+    ForwardBddSimpleDouble reversed_evaluator;
+
+public:
+    PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    void compute_labels(double *_pi);
+    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;    
+};
+
+class PricerSolverBddBackwardCycle : public PricerSolverBdd {
+private:
+    BackwardBddCycleDouble evaluator;
+    ForwardBddCycleDouble reversed_evaluator;
+public:
+    PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+
+    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    void compute_labels(double *_pi);
+    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;    
+};
 
 class PricerSolverZdd : public PricerSolverBase {
 protected:
     tdzdd::DataTable<ForwardZddNode<double>> table;
+    ForwardZddNode<double>& child(tdzdd::NodeId const & id);
 public:
     PricerSolverZdd(GPtrArray *_jobs, GPtrArray *ordered_jobs);
     void InitTable() override;
@@ -194,27 +230,6 @@ public:
         Job *tmp_j = vector_jobs[j];
         return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
     }
-};
-
-class PricerSolverBddBackwardSimple : public PricerSolverBdd {
-private:
-    BackwardBddSimpleDouble evaluator;
-
-public:
-    PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-
-    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
-
-};
-
-class PricerSolverBddBackwardCycle : public PricerSolverBdd {
-private:
-    BackwardBddCycleDouble evaluator;
-public:
-    PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-
-    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
-
 };
 
 #endif  // INCLUDE_PRICERSOLVER_HPP

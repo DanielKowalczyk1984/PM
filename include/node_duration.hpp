@@ -2,6 +2,9 @@
 #define NODE_DURATION_HPP
 #include <memory>
 #include <OptimalSolution.hpp>
+#include <tdzdd/dd/Node.hpp>
+
+using nodeid = tdzdd::NodeId;
 
 template<typename T>
 class Node;
@@ -188,10 +191,9 @@ class Node {
     std::shared_ptr<Node<T>> n;
 
     Node<T>* child[2];
+    nodeid branch[2];
 
     T dist_root_node;
-    T dist_terminal_yes;
-    T dist_terminal_no;
 
     bool calc_yes;
     bool calc_no;
@@ -244,6 +246,37 @@ class Node {
           child[1] = nullptr;
     }
 
+    void set_head_node() {
+      forward_label1.SetHeadNode(this);
+      forward_label2.SetHeadNode(this);
+      backward_label1.SetHeadNode(this);
+      backward_label2.SetHeadNode(this);
+    }
+
+    Node(int i, int j) : weight(0),
+          num_layer(0),
+          root_node(false),
+          terminal_node(false),
+          job(nullptr),
+          forward_label1(),
+          forward_label2(),
+          backward_label1(),
+          backward_label2(),
+          y(nullptr),
+          n(nullptr),
+          calc_yes(true),
+          calc_no(true),
+          remove_node(false) {
+        child[0] = nullptr;
+        child[1] = nullptr;
+        backward_label1.SetHeadNode(this);
+        backward_label2.SetHeadNode(this);
+        forward_label1.SetHeadNode(this);
+        forward_label2.SetHeadNode(this);
+        branch[0] = i;
+        branch[1] = j;
+      }
+
     /**
      * Copy Constructor
      */
@@ -260,6 +293,7 @@ class Node {
         y(src.y),
         n(src.n),
         child{src.child[0], src.child[1]},
+        branch{src.branch[0], src.branch[1]},
         calc_yes(src.calc_yes),
         calc_no(src.calc_no),
         remove_node(src.remove_node) {
@@ -284,6 +318,7 @@ class Node {
         y(std::move(src.y)),
         n(std::move(src.n)),
         child{src.child[0], src.child[1]},
+        branch{src.branch[0], src.branch[2]},
         calc_yes(src.calc_yes),
         calc_no(src.calc_no),
         remove_node(src.remove_node){
@@ -300,7 +335,7 @@ class Node {
       weight = src.weight;
       num_layer = src.num_layer;
       root_node = src.root_node;
-      terminal_node = src.node;
+      terminal_node = src.terminal_node;
       job = src.job;
 
       y = src.y;
@@ -312,11 +347,12 @@ class Node {
       backward_label1 = src.backward_label1;
       backward_label2 = src.backward_label2;
 
-      child = {src.child[0], src.child[1]};
+      child[0] = src.child[0];
+      child[1] = src.child[1];
+      branch[0] = src.branch[0];
+      branch[1] = src.branch[1];
 
       dist_root_node = src.dist_root_node;
-      dist_terminal_yes = src.dist_terminal_yes;
-      dist_terminal_no = src.dist_terminal_no;
 
       calc_no = src.calc_no;
       calc_yes = src.calc_yes;
@@ -336,7 +372,7 @@ class Node {
       weight = src.weight;
       num_layer = src.num_layer;
       root_node = src.root_node;
-      terminal_node = src.node;
+      terminal_node = src.terminal_node;
       job = src.job;
 
       y = std::move(src.y);
@@ -348,10 +384,11 @@ class Node {
       backward_label1 = src.backward_label1;
       backward_label2 = src.backward_label2;
 
-      child = {src.child[0], src.child[1]};
+      child[0] = src.child[0];
+      child[1] = src.child[1];
+      branch[0] = src.branch[0];
+      branch[1] = src.branch[1];
       dist_root_node = src.dist_root_node;
-      dist_terminal_yes = src.dist_terminal_yes;
-      dist_terminal_no = src.dist_terminal_no;
 
       calc_no = src.calc_no;
       calc_yes = src.calc_yes;
@@ -392,6 +429,33 @@ class Node {
 
     Job *GetJob(){
       return job;
+    }
+
+    size_t hash() const {
+        size_t h = branch[0].code();
+        for (int i = 1; i < 2; ++i) {
+            h = h * 314159257 + branch[i].code() * 271828171;
+        }
+        return h;
+    }
+
+    bool operator==(Node const& o) const {
+        for (int i = 0; i < 2; ++i) {
+            if (branch[i] != o.branch[i]) return false;
+        }
+        return true;
+    }
+
+    bool operator!=(Node const& o) const {
+        return !operator==(o);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, Node const& o) {
+        os << "(" << o.branch[0];
+        for (int i = 1; i < 2; ++i) {
+            os << "," << o.branch[i];
+        }
+        return os << ")";
     }
 
     Node<T>* InitNode(int _weight, bool _root_node = false, bool _terminal_node = false){

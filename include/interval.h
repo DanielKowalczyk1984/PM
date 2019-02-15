@@ -24,6 +24,7 @@ typedef struct _job_interval_pair {
     Job *j;
     interval *I;
     int take;
+    int key;
 } job_interval_pair;
 
 void interval_init(interval *p, int a, int b,int key, GPtrArray* jobarray, int njobs);

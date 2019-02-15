@@ -17,17 +17,6 @@
 			],
 			"folder_exclude_patterns":
 			[
-				"buildlinux",
-				"buildmac",
-				"data",
-				"help",
-				"linux*",
-				"mac*",
-				"build_arch",
-				"release",
-				"debug",
-				"third_party/EGlib/",
-				"build_ubuntu",
 				"resources",
 				"solutions"
 			],

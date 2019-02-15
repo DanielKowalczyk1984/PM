@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////
 
 #include <defs.h>
-#include <wct.h> 
+#include <wct.h>
 
 #include <unistd.h>
 
@@ -37,75 +37,75 @@ static int parseargs(int ac, char **av, wctparms *parms) {
 
     while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:")) != EOF) {
         switch (c) {
-            case 'd':
-                ++(debug);
-                set_dbg_lvl(debug);
-                break;
+        case 'd':
+            ++(debug);
+            set_dbg_lvl(debug);
+            break;
 
-            case 'f':
-                c = strtol(optarg, &ptr ,10);
-                val = wctparms_set_nb_iterations_rvnd(parms, c);
-                CCcheck_val(val, "Failed number feasible solutions");
-                break;
+        case 'f':
+            c = strtol(optarg, &ptr,10);
+            val = wctparms_set_nb_iterations_rvnd(parms, c);
+            CCcheck_val(val, "Failed number feasible solutions");
+            break;
 
-            case 's':
-                c = strtol(optarg, &ptr ,10);
-                val = wctparms_set_search_strategy(parms, c);
-                CCcheck_val(val, "Failed set_branching_strategy");
-                break;
+        case 's':
+            c = strtol(optarg, &ptr,10);
+            val = wctparms_set_search_strategy(parms, c);
+            CCcheck_val(val, "Failed set_branching_strategy");
+            break;
 
-            case 'l':
-                f = strtod(optarg, &ptr);
-                val = wctparms_set_branching_cpu_limit(parms, f);
-                CCcheck_val(val, "Failed wctparms_set_branching_cpu_limit");
-                break;
+        case 'l':
+            f = strtod(optarg, &ptr);
+            val = wctparms_set_branching_cpu_limit(parms, f);
+            CCcheck_val(val, "Failed wctparms_set_branching_cpu_limit");
+            break;
 
-            case 'L':
-                f = strtod(optarg, &ptr);
-                val = wctparms_set_scatter_search_cpu_limit(parms, f);
-                CCcheck_val(val,
-                            "Failed wctparms_set_scatter_search_cpu_limit");
-                break;
+        case 'L':
+            f = strtod(optarg, &ptr);
+            val = wctparms_set_scatter_search_cpu_limit(parms, f);
+            CCcheck_val(val,
+                        "Failed wctparms_set_scatter_search_cpu_limit");
+            break;
 
-            case 'B':
-                c = strtol(optarg, &ptr ,10);
-                val = wctparms_set_branchandbound(parms, c);
-                CCcheck_val(val, "Failed wctparms_set_branchandbound");
-                break;
+        case 'B':
+            c = strtol(optarg, &ptr,10);
+            val = wctparms_set_branchandbound(parms, c);
+            CCcheck_val(val, "Failed wctparms_set_branchandbound");
+            break;
 
-            case 'S':
-                c = strtol(optarg, &ptr ,10);
-                val = wctparms_set_stab_technique(parms, c);
-                CCcheck_val(val, "Failed in wctparms_set_stab_technique");
-                break;
+        case 'S':
+            c = strtol(optarg, &ptr,10);
+            val = wctparms_set_stab_technique(parms, c);
+            CCcheck_val(val, "Failed in wctparms_set_stab_technique");
+            break;
 
-            case 'p':
-                c = strtol(optarg, &ptr ,10);
-                val = wctparms_set_print(parms, c);
-                CCcheck_val(val, "Failed in print");
-                break;
+        case 'p':
+            c = strtol(optarg, &ptr,10);
+            val = wctparms_set_print(parms, c);
+            CCcheck_val(val, "Failed in print");
+            break;
 
-            case 'b':
-                c = strtol(optarg, &ptr ,10);
-                val = wctparms_set_branching_strategy(parms, c);
-                CCcheck_val(val, "Failed in set branching strategy");
-                break;
-            case 'a':
-                c = strtol(optarg, &ptr ,10);
-                val = wctparms_set_pricing_solver(parms, c);
-                CCcheck_val(val, "Failed in set alpha");
-                break;
+        case 'b':
+            c = strtol(optarg, &ptr,10);
+            val = wctparms_set_branching_strategy(parms, c);
+            CCcheck_val(val, "Failed in set branching strategy");
+            break;
+        case 'a':
+            c = strtol(optarg, &ptr,10);
+            val = wctparms_set_pricing_solver(parms, c);
+            CCcheck_val(val, "Failed in set alpha");
+            break;
 
-            case 'Z':
-                c = strtol(optarg, &ptr ,10);
-                val = wctparms_set_strong_branching(parms, c);
-                CCcheck_val(val, "Failed in set strong branching");
-                break;
+        case 'Z':
+            c = strtol(optarg, &ptr,10);
+            val = wctparms_set_strong_branching(parms, c);
+            CCcheck_val(val, "Failed in set strong branching");
+            break;
 
-            default:
-                usage(av[0]);
-                val = 1;
-                goto CLEAN;
+        default:
+            usage(av[0]);
+            val = 1;
+            goto CLEAN;
         }
     }
 
@@ -135,8 +135,8 @@ CLEAN:
 }
 
 int main(int ac, char **av) {
-    int        val = 0;
-    double     start_time;
+    int val = 0;
+    double start_time;
     wctproblem problem;
     wctdata *root = &(problem.root_pd);
     wctparms *parms = &(problem.parms);
@@ -186,6 +186,18 @@ int main(int ac, char **av) {
         compute_lower_bound(&problem, &(problem.root_pd));
         problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
+        if(parms->pricing_solver < dp_solver) {
+            calculate_new_ordered_jobs(root);
+        }
+
+        lpwctdata_free(&(problem.root_pd));
+        problem.root_pd.localColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+        heuristic_rpup(&problem);
+        build_lp(&(problem.root_pd), 0);
+        CCutil_start_timer(&(problem.tot_lb_root));
+        compute_lower_bound(&problem, &(problem.root_pd));
+        CCutil_stop_timer(&(problem.tot_lb_root), 1);
+
     }
     print_to_csv(&problem);
 
