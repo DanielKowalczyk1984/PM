@@ -515,11 +515,6 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
                 pd->status = LP_bound_computed;
                 val = wctlp_pi(pd->LP, pd->pi);
                 CCcheck_val_2(val, "wctlp_pi failed");
-                solve_pricing(pd, parms, 1);
-                if(pd->nnewsets) {
-                    schedulesets_free(&pd->newsets, &(pd->nnewsets));
-                }
-
 
                 /**
                  * Compute the objective function

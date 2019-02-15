@@ -6,12 +6,12 @@
 /**
  * PricerSolverBase default COnstructor
  */
-PricerSolverBase::PricerSolverBase(GPtrArray *_jobs):
+PricerSolverBase::PricerSolverBase(GPtrArray *_jobs) :
     jobs(_jobs), njobs(_jobs->len), ordered_jobs(nullptr), nlayers(0),
     zdd(nullptr), dd(nullptr), nb_nodes_bdd(0), nb_nodes_zdd(0), nb_arcs_ati(0),
-    nb_removed_edges(0), nb_removed_nodes(0) { 
-        new_dd = nullptr;
-    }
+    nb_removed_edges(0), nb_removed_nodes(0) {
+    new_dd = nullptr;
+}
 
 
 PricerSolverBase::PricerSolverBase(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
@@ -119,15 +119,19 @@ void PricerSolverBase::calculate_edges(scheduleset *set) {
     return;
 }
 
-void PricerSolverBase::calculate_new_ordered_jobs() {
-    // int          first_del = -1;
-    // int          last_del = -1;
-    // int it = 0;
+// void PricerSolverBase::cleanup_table() {
+//     NodeTableHandler<double> &handler_bdd = new_dd->getDiagram();
+//     NodeTableEntity<double>& table = handler_bdd.privateEntity();
+// }
+
+void PricerSolverBase::remove_layers() {
+    int first_del = -1;
+    int last_del = -1;
+    int it = 0;
     NodeTableHandler<double> &handler_bdd = new_dd->getDiagram();
     NodeTableEntity<double>& table = handler_bdd.privateEntity();
-    // tdzdd::NodeTableHandler<2> &handler = zdd->getDiagram();
 
-    /** remove the unnecessary edges of the bdd */
+    /** remove the unnecessary layers of the bdd */
     for (int i = new_dd->topLevel(); i > 0; i--) {
         bool remove = true;
 
@@ -140,34 +144,70 @@ void PricerSolverBase::calculate_new_ordered_jobs() {
             }
         }
 
-        // if (!remove) {
-        //     if (first_del != -1) {
-        //         g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
-        //         it = it - (last_del - first_del);
-        //         first_del = last_del = -1;
-        //     } else {
-        //         it++;
-        //     }
-        // } else {
-        //     if (first_del == -1) {
-        //         first_del = it;
-        //         last_del = first_del;
-        //     } else {
-        //         last_del++;
-        //     }
+        if (!remove) {
+            if (first_del != -1) {
+                g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
+                it = it - (last_del - first_del);
+                first_del = last_del = -1;
+            } else {
+                it++;
+            }
+        } else {
+            if (first_del == -1) {
+                first_del = it;
+                last_del = first_del;
+            } else {
+                last_del++;
+            }
 
-        //     it++;
-        // }
+            it++;
+        }
     }
 
-    // if (first_del != -1) {
-    //     g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
-    // }
+    if (first_del != -1) {
+        g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
+    }
 
-    /** Construct the new dd */
     nlayers = ordered_jobs->len;
+    printf("The new number of layers = %u\n", nlayers);
+}
+
+void PricerSolverBase::remove_edges() {
+    NodeTableHandler<double> &handler_bdd_bis = new_dd->getDiagram();
+    NodeTableEntity<double>& table_bis = handler_bdd_bis.privateEntity();
+
+    /** remove the unnecessary nodes of the bdd */
+    for (int i = new_dd->topLevel(); i > 0; i--) {
+        for (auto &iter : table_bis[i]) {
+            if (!iter.calc_yes) {
+                nodeid &cur_node_1 = iter.branch[1];
+                cur_node_1 = 0;
+            }
+        }
+    }
+
     new_dd->zddReduce();
     nb_nodes_bdd = new_dd->size();
+    printf("The new size of BDD = %lu\n", nb_nodes_bdd);
+}
+
+void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB, int nmachines) {
+    
+    /** Remove Layers */
+    evaluate_nodes(pi, UB, LB, nmachines);
+    remove_layers();
+
+    /** Construct the new dd (contraction of tables) */
+    delete new_dd;
+    PricerConstruct ps(ordered_jobs);
+    new_dd = new DdStructure<double>(ps);
+    InitTable();
+    
+    /** Remove edges */
+    evaluate_nodes(pi, UB, LB, nmachines);
+    remove_edges();
+    
+
 
     // for (int i = njobs  - 1; i >= 0 && count <  8; --i) {
     //     Job *tmp_j = (Job *) g_ptr_array_index(jobs, i);
@@ -179,24 +219,15 @@ void PricerSolverBase::calculate_new_ordered_jobs() {
     //     }
     // }
 
-    // NodeTableHandler<double> &handler_bdd_bis = new_dd->getDiagram();
-    // NodeTableEntity<double>& table_bis = handler_bdd_bis.privateEntity();
-    printf("The new number of layers = %u\n", ordered_jobs->len);
-    printf("The new size of BDD = %lu and toplevel BDD= %d\n", nb_nodes_bdd, new_dd->root().row());
 
     /** calculate the new table */
     // zdd_table.init();
     // edges.clear();
-    // for (int i = new_dd->topLevel(); i > 0; i--) {
-    //     std::cout << "size of vector = " << table_bis[i].size() << std::endl;
-    //     if (table_bis[i].size() > 0)
-    //     {
-    //         for(auto &iter : table_bis[i])
-    //         printf("%d (%d)", iter.GetJob()->job, iter.GetWeight());
-    //     }
-    //     printf("\n");
+
+    // for(unsigned i = 0; i < ordered_jobs->len; ++i) {
+    //    job_interval_pair* tmp = (job_interval_pair*)  g_ptr_array_index(ordered_jobs, i);
+    //    printf("job %d layers %d\n", tmp->j->job, new_dd->topLevel() - tmp->key);
     // }
-    // InitTable();
 }
 
 /**
@@ -241,7 +272,7 @@ void PricerSolverBdd::InitTable() {
 /**
  *  bdd solver pricersolver for the flow formulation
  */
-PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs):
+PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverBdd(_jobs, _ordered_jobs) {
     std::cout << "Constructing BDD with Forward Simple evaluator" << std::endl;
     std::cout << "size BDD = " << nb_nodes_bdd << " and size ZDD = " << nb_nodes_zdd << std::endl;
@@ -262,12 +293,11 @@ void PricerSolverBddSimple::compute_labels(double *_pi) {
     new_dd->compute_labels_backward(reversed_evaluator);
 }
 
-void PricerSolverBddSimple::evaluate_nodes(double *pi, int UB, double LB, int nmachines) {    
+void PricerSolverBddSimple::evaluate_nodes(double *pi, int UB, double LB, int nmachines) {
     NodeTableHandler<double> &handler_bdd = new_dd->getDiagram();
     NodeTableEntity<double>& table = handler_bdd.privateEntity();
     compute_labels(pi);
     double reduced_cost = table[0][1].forward_label1.GetF();
-    printf("reduced cost = %f\n", reduced_cost);
 
     /** check for each node the Lagrangian dual */
     for (int i = new_dd->topLevel(); i > 0; i--) {
@@ -275,9 +305,8 @@ void PricerSolverBddSimple::evaluate_nodes(double *pi, int UB, double LB, int nm
             int w = it.GetWeight();
             Job *job = it.GetJob();
             double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
-            // printf("test %f %f\n", result, reduced_cost);
 
-            if (LB + (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
+            if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                 it.calc_yes = false;
                 nb_removed_edges++;
             }
@@ -311,25 +340,44 @@ void PricerSolverBddCycle::compute_labels(double *_pi) {
     new_dd->compute_labels_backward(reversed_evaluator);
 }
 
-void PricerSolverBddCycle::evaluate_nodes(double *pi, int UB, double LB, int nmachines) {    
+void PricerSolverBddCycle::evaluate_nodes(double *pi, int UB, double LB, int nmachines) {
     NodeTableHandler<double> &handler_bdd = new_dd->getDiagram();
     NodeTableEntity<double>& table = handler_bdd.privateEntity();
     compute_labels(pi);
     double reduced_cost = table[0][1].forward_label1.GetF();
-    printf("reduced cost = %f\n", reduced_cost);
 
     /** check for each node the Lagrangian dual */
     for (int i = new_dd->topLevel(); i > 0; i--) {
         for (auto &it : table[i]) {
             int w = it.GetWeight();
             Job *job = it.GetJob();
-            double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
-            // printf("test %f %f\n", result, reduced_cost);
 
-            if (LB + (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
-                it.calc_yes = false;
-                nb_removed_edges++;
+            if(it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() != job) {
+                double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
+                    it.calc_yes = false;
+                    nb_removed_edges++;
+                }
+            } else if (it.forward_label1.GetPrevJob() == job && it.child[1]->backward_label1.get_prev_job() != job) {
+                double result = it.forward_label2.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
+                    it.calc_yes = false;
+                    nb_removed_edges++;
+                }
+            } else if (it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() == job) {
+                double result = it.forward_label1.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
+                    it.calc_yes = false;
+                    nb_removed_edges++;
+                }
+            } else {
+                double result = it.forward_label2.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
+                    it.calc_yes = false;
+                    nb_removed_edges++;
+                }
             }
+
         }
     }
 
@@ -360,12 +408,11 @@ void PricerSolverBddBackwardSimple::compute_labels(double *_pi) {
     new_dd->compute_labels_forward(reversed_evaluator);
 }
 
-void PricerSolverBddBackwardSimple::evaluate_nodes(double *pi, int UB, double LB, int nmachines) {    
+void PricerSolverBddBackwardSimple::evaluate_nodes(double *pi, int UB, double LB, int nmachines) {
     NodeTableHandler<double> &handler_bdd = new_dd->getDiagram();
     NodeTableEntity<double>& table = handler_bdd.privateEntity();
     compute_labels(pi);
     double reduced_cost = table[0][1].forward_label1.GetF();
-    printf("reduced cost = %f\n", reduced_cost);
 
     /** check for each node the Lagrangian dual */
     for (int i = new_dd->topLevel(); i > 0; i--) {
@@ -374,7 +421,7 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double *pi, int UB, double LB
             Job *job = it.GetJob();
             double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
 
-            if (LB + (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
+            if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                 it.calc_yes = false;
                 nb_removed_edges++;
             }
@@ -408,23 +455,42 @@ void PricerSolverBddBackwardCycle::compute_labels(double *_pi) {
     new_dd->compute_labels_forward(reversed_evaluator);
 }
 
-void PricerSolverBddBackwardCycle::evaluate_nodes(double *pi, int UB, double LB, int nmachines) {    
+void PricerSolverBddBackwardCycle::evaluate_nodes(double *pi, int UB, double LB, int nmachines) {
     NodeTableHandler<double> &handler_bdd = new_dd->getDiagram();
     NodeTableEntity<double>& table = handler_bdd.privateEntity();
     compute_labels(pi);
     double reduced_cost = table[0][1].forward_label1.GetF();
-    printf("reduced cost = %f\n", reduced_cost);
 
     /** check for each node the Lagrangian dual */
     for (int i = new_dd->topLevel(); i > 0; i--) {
         for (auto &it : table[i]) {
             int w = it.GetWeight();
             Job *job = it.GetJob();
-            double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
 
-            if (LB + (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
-                it.calc_yes = false;
-                nb_removed_edges++;
+            if(it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() != job) {
+                double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
+                    it.calc_yes = false;
+                    nb_removed_edges++;
+                }
+            } else if (it.forward_label1.GetPrevJob() == job && it.child[1]->backward_label1.get_prev_job() != job) {
+                double result = it.forward_label2.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
+                    it.calc_yes = false;
+                    nb_removed_edges++;
+                }
+            } else if (it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() == job) {
+                double result = it.forward_label1.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
+                    it.calc_yes = false;
+                    nb_removed_edges++;
+                }
+            } else {
+                double result = it.forward_label2.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
+                    it.calc_yes = false;
+                    nb_removed_edges++;
+                }
             }
         }
     }
@@ -451,15 +517,15 @@ void PricerSolverZdd::InitTable() {
 
     /** Init table */
     for (int i = zdd->topLevel(); i >= 0; i--) {
-        tdzdd::MyVector<tdzdd::Node<2>> const &layer = diagram[i];
+        tdzdd::MyVector<tdzdd::Node<2> > const &layer = diagram[i];
         size_t const m = layer.size();
         table[i].resize(m);
 
         for (auto &it : table[i]) {
             if (i != 0) {
-                int          layer = nlayers - i;
+                int layer = nlayers - i;
                 job_interval_pair *tmp_pair = reinterpret_cast<job_interval_pair *>(
-                                                  g_ptr_array_index(ordered_jobs, layer));
+                    g_ptr_array_index(ordered_jobs, layer));
                 it.set_job(tmp_pair->j);
             } else {
                 it.set_job(nullptr);
@@ -522,8 +588,9 @@ Optimal_Solution<double> PricerSolverZddSimple::pricing_algorithm(double *_pi) {
 /**
  * Pricersolver for the TI index formulation
  */
-PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax):
-    PricerSolverBase(_jobs), Hmax(_Hmax) {}
+PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax) :
+    PricerSolverBase(_jobs), Hmax(_Hmax) {
+}
 
 void PricerSolverSimpleDp::InitTable() {
 
@@ -558,8 +625,8 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
 
             if (t >=  job->processingime) {
                 if (F[t - job->processingime]
-                        - static_cast<double>(value_Fj(t, job))
-                        + _pi[job->job] >= F[t]) {
+                    - static_cast<double>(value_Fj(t, job))
+                    + _pi[job->job] >= F[t]) {
                     F[t] = F[t - job->processingime]
                            - value_Fj(t, job) + _pi[job->job];
                     A[t] = job;
@@ -608,14 +675,14 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray *_jobs, int _Hmax) :
     Hmax(_Hmax),
     n(_jobs->len),
     vector_jobs() {
-        for (int i = 0; i < n; ++i) {
-            vector_jobs.push_back(reinterpret_cast<Job*>(g_ptr_array_index(jobs, i)));
-        }
-        job_init(&j0, 0, 0, 0);
-        j0.job = n;
-        vector_jobs.push_back(&j0);
+    for (int i = 0; i < n; ++i) {
+        vector_jobs.push_back(reinterpret_cast<Job*>(g_ptr_array_index(jobs, i)));
+    }
+    job_init(&j0, 0, 0, 0);
+    j0.job = n;
+    vector_jobs.push_back(&j0);
 
-        InitTable();
+    InitTable();
 }
 
 
@@ -685,7 +752,7 @@ void PricerSolverArcTimeDp::InitTable() {
         Job *tmp_i = vector_jobs[i];
         for (int j = i + 1; j < n; ++j) {
             Job *tmp_j = vector_jobs[j];
-            for (int t = tmp_i->processingime; t <= Hmax - tmp_j->processingime ; ++t) {
+            for (int t = tmp_i->processingime; t <= Hmax - tmp_j->processingime; ++t) {
                 if (delta1(i, j, t) >= 0) {
                     remove_arc(i, j, t);
                     nb_arcs_ati--;
@@ -754,7 +821,7 @@ Optimal_Solution<double> PricerSolverArcTimeDp::pricing_algorithm(double *_pi) {
 
     F[n][0] = _pi[n];
     double sigma = _pi[n];
-     _pi[n] = 0;
+    _pi[n] = 0;
 
     for (int t = 0; t < Hmax + 1; ++t) {
         for (int j = 0; j <= n; ++j) {

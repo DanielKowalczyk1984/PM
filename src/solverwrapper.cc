@@ -62,8 +62,11 @@ int evaluate_nodes(wctdata *pd) {
 
 int calculate_new_ordered_jobs(wctdata *pd) {
     int val = 0;
+    int    UB = pd->problem->opt_sol->tw;
+    double LB = pd->LP_lower_bound;
+    int    nmachines = pd->problem->nmachines;
 
-    pd->solver->calculate_new_ordered_jobs();
+    pd->solver->calculate_new_ordered_jobs(pd->pi, UB, LB, nmachines);
 
     return val;
 }

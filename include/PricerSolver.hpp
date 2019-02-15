@@ -69,7 +69,9 @@ public:
      /**
       * Reduced cost fixing
       */
-     void calculate_new_ordered_jobs();
+     void calculate_new_ordered_jobs(double *pi,int UB, double LB, int nmachines);
+     void remove_layers();
+     void remove_edges();
      void calculate_edges(scheduleset *set);
      virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines);
 

@@ -187,7 +187,6 @@ int main(int ac, char **av) {
         problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
         if(parms->pricing_solver < dp_solver) {
-            evaluate_nodes(root);
             calculate_new_ordered_jobs(root);
         }
 
