@@ -337,8 +337,7 @@ public:
     template <typename S, typename R>
     R evaluate_backward(tdzdd::DdEval<S, Node<T>, R> const &evaluator) {
         int            n = root_.row();
-        NodeTableHandler<double> &handler_bdd = getDiagram();
-        NodeTableEntity<T>& work = handler_bdd.privateEntity();
+        NodeTableEntity<T>& work = getDiagram().privateEntity();
 
         if (this->size() == 0) {
             printf("empty DDstructure\n");
@@ -346,7 +345,7 @@ public:
             return retval;
         }
 
-        evaluator.initializerootnode(work[0][1]);
+        evaluator.initializerootnode(work.node(1));
         for (int i = 1; i <= n; ++i) {
             for (auto &it : work[i]) {
                 evaluator.initializenode(it);
@@ -354,21 +353,20 @@ public:
             }
         }
 
-        return evaluator.get_objective(work[n][0]);
+        return evaluator.get_objective(work.node(root()));
     }
 
     template <typename S, typename R>
     void compute_labels_backward(tdzdd::DdEval<S, Node<T>, R> const &evaluator) {
         int            n = root_.row();
-        NodeTableHandler<double> &handler_bdd = getDiagram();
-        NodeTableEntity<T>& work = handler_bdd.privateEntity();
+        NodeTableEntity<T>& work = getDiagram().privateEntity();
 
         if (this->size() == 0) {
             printf("empty DDstructure\n");
             return;
         }
 
-        evaluator.initializerootnode(work[0][1]);
+        evaluator.initializerootnode(work.node(1));
         for (int i = 1; i <= n; ++i) {
             for (auto &it : work[i]) {
                 evaluator.initializenode(it);
@@ -391,7 +389,7 @@ public:
         /**
          * Initialize nodes of the DD
          */
-        evaluator.initializerootnode(work[n][0]);
+        evaluator.initializerootnode(work.node(root()));
         for (int i = n - 1; i >= 0; i--) {
             for(auto &it : work[i]){
                 evaluator.initializenode(it);
@@ -410,7 +408,7 @@ public:
         /**
          * Return the optimal solution
          */
-        return evaluator.get_objective(work[0][1]);
+        return evaluator.get_objective(work.node(1));
     }
 
     template<typename S, typename R>
@@ -426,7 +424,7 @@ public:
         /**
          * Initialize nodes of the DD
          */
-        evaluator.initializerootnode(work[n][0]);
+        evaluator.initializerootnode(work.node(root()));
         for (int i = n - 1; i >= 0; i--) {
             for(auto &it : work[i]){
                 evaluator.initializenode(it);
