@@ -52,6 +52,12 @@ public:
 
         return sol;
     }
+
+    Optimal_Solution<T> getValue(Node<T> const &n){
+        Optimal_Solution<T> sol;
+
+        return sol;
+    }
 };
 
 
@@ -154,12 +160,6 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
             p0->forward_label2.UpdateSolution(n.forward_label2);
         }
     }
-
-    Optimal_Solution<T> getValue(Node<T> const &n){
-        Optimal_Solution<T> sol;
-
-        return sol;
-    }
 };
 
 
@@ -225,12 +225,6 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         if(n.forward_label1.GetF() > p0->forward_label1.GetF()) {
             p0->forward_label1.UpdateSolution(n.forward_label1);
         }
-    }
-
-    Optimal_Solution<T> getValue(Node<T> const &n){
-        Optimal_Solution<T> sol;
-
-        return sol;
     }
 };
 
