@@ -36,6 +36,13 @@ class Label {
       f(-DBL_MAX),
       prev_job(nullptr){};
 
+    explicit Label(Node<T>* _head_node) :
+      prev(nullptr),
+      high(false),
+      head_node(_head_node),
+      f(-DBL_MAX),
+      prev_job(nullptr){};
+
     /**
      * Copy Constructor
      */
@@ -193,11 +200,7 @@ class Node {
     Node<T>* child[2];
     nodeid branch[2];
 
-    T dist_root_node;
-
     bool calc_yes;
-    bool calc_no;
-    bool remove_node;
     
     /**
      * Constructor
@@ -207,21 +210,15 @@ class Node {
           root_node(false),
           terminal_node(false),
           job(nullptr),
-          forward_label1(),
-          forward_label2(),
-          backward_label1(),
-          backward_label2(),
+          forward_label1(this),
+          forward_label2(this),
+          backward_label1(this),
+          backward_label2(this),
           y(nullptr),
           n(nullptr),
-          calc_yes(true),
-          calc_no(true),
-          remove_node(false) {
+          calc_yes(true) {
         child[0] = nullptr;
         child[1] = nullptr;
-        backward_label1.SetHeadNode(this);
-        backward_label2.SetHeadNode(this);
-        forward_label1.SetHeadNode(this);
-        forward_label2.SetHeadNode(this);
     };
 
     Node(int &_weight, int &_num_layer, bool &_root_node,bool &_terminal_node):
@@ -229,19 +226,13 @@ class Node {
          num_layer(_num_layer),
          root_node(_root_node),
          terminal_node(_terminal_node),
-         forward_label1(),
-         forward_label2(),
-         backward_label1(),
-         backward_label2(),
+         forward_label1(this),
+         forward_label2(this),
+         backward_label1(this),
+         backward_label2(this),
          y(nullptr),
          n(nullptr),
-         calc_yes(true),
-         calc_no(true),
-         remove_node(false) {
-          forward_label1.SetHeadNode(this);
-          forward_label2.SetHeadNode(this);
-          backward_label1.SetHeadNode(this);
-          backward_label2.SetHeadNode(this);
+         calc_yes(true) {
           child[0] = nullptr;
           child[1] = nullptr;
     }
@@ -258,21 +249,15 @@ class Node {
           root_node(false),
           terminal_node(false),
           job(nullptr),
-          forward_label1(),
-          forward_label2(),
-          backward_label1(),
-          backward_label2(),
+          forward_label1(this),
+          forward_label2(this),
+          backward_label1(this),
+          backward_label2(this),
           y(nullptr),
           n(nullptr),
-          calc_yes(true),
-          calc_no(true),
-          remove_node(false) {
+          calc_yes(true) {
         child[0] = nullptr;
         child[1] = nullptr;
-        backward_label1.SetHeadNode(this);
-        backward_label2.SetHeadNode(this);
-        forward_label1.SetHeadNode(this);
-        forward_label2.SetHeadNode(this);
         branch[0] = i;
         branch[1] = j;
       }
@@ -294,12 +279,7 @@ class Node {
         n(src.n),
         child{src.child[0], src.child[1]},
         branch{src.branch[0], src.branch[1]},
-        calc_yes(src.calc_yes),
-        calc_no(src.calc_no),
-        remove_node(src.remove_node) {
-      // child[0] = src.child[0];
-      // child[1] = src.child[1]; 
-      // child = {src.child[0], src.child[1]};
+        calc_yes(src.calc_yes) {
     }
 
     /**
@@ -319,9 +299,7 @@ class Node {
         n(std::move(src.n)),
         child{src.child[0], src.child[1]},
         branch{src.branch[0], src.branch[2]},
-        calc_yes(src.calc_yes),
-        calc_no(src.calc_no),
-        remove_node(src.remove_node){
+        calc_yes(src.calc_yes) {
     }
 
     /**
@@ -349,14 +327,11 @@ class Node {
 
       child[0] = src.child[0];
       child[1] = src.child[1];
+
       branch[0] = src.branch[0];
       branch[1] = src.branch[1];
 
-      dist_root_node = src.dist_root_node;
-
-      calc_no = src.calc_no;
       calc_yes = src.calc_yes;
-      remove_node = src.remove_node;
 
       return *this;
     }
@@ -388,11 +363,8 @@ class Node {
       child[1] = src.child[1];
       branch[0] = src.branch[0];
       branch[1] = src.branch[1];
-      dist_root_node = src.dist_root_node;
 
-      calc_no = src.calc_no;
       calc_yes = src.calc_yes;
-      remove_node = src.remove_node;
       return *this;
     }
 
