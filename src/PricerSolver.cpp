@@ -35,6 +35,9 @@ PricerSolverBase::PricerSolverBase(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     nb_removed_nodes = 0;
     nb_removed_edges = 0;
     nb_arcs_ati = 0;
+
+    env = new GRBEnv;
+    model = new GRBModel(*env);
 }
 
 PricerSolverBase::~PricerSolverBase() {
@@ -49,6 +52,9 @@ PricerSolverBase::~PricerSolverBase() {
     if(new_dd) {
         delete new_dd;
     }
+
+    delete model;
+    delete env;
 }
 
 /**
@@ -172,11 +178,11 @@ void PricerSolverBase::remove_layers() {
 }
 
 void PricerSolverBase::remove_edges() {
-    NodeTableEntity<double>& table_bis = new_dd->getDiagram().privateEntity();
+    NodeTableEntity<double>& table = new_dd->getDiagram().privateEntity();
 
     /** remove the unnecessary nodes of the bdd */
     for (int i = new_dd->topLevel(); i > 0; i--) {
-        for (auto &iter : table_bis[i]) {
+        for (auto &iter : table[i]) {
             if (!iter.calc_yes) {
                 nodeid &cur_node_1 = iter.branch[1];
                 cur_node_1 = 0;
@@ -187,6 +193,139 @@ void PricerSolverBase::remove_edges() {
     new_dd->zddReduce();
     nb_nodes_bdd = new_dd->size();
     printf("The new size of BDD = %lu\n", nb_nodes_bdd);
+}
+
+void PricerSolverBase::construct_mipgraph() {
+    NodeTableEntity<double>& table = new_dd->getDiagram().privateEntity();
+    NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(), g));
+    EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), g));
+
+    for (int i = new_dd->topLevel(); i >= 0; i--) {
+        for (size_t j = 0; j < table[i].size(); j++) {
+           if (nodeid(i, j) != 0) {
+                table[i][j].key = add_vertex(g);
+                vertex_nodeid_list[table[i][j].key] = nodeid(i,j);
+           } 
+        }
+    }
+
+    int count = 0;
+    for (int i = new_dd->topLevel(); i > 0; i--) {
+        for (auto &it : table[i]) {
+            if(it.branch[0] != 0) {
+                auto &n0 = table.node(it.branch[0]);
+                auto a = add_edge(it.key, n0.key,g);
+                put(edge_type_list, a.first, false);
+                put(boost::edge_index_t(), g, a.first, count++);
+            }
+
+            if(it.branch[1] != 0) {
+                auto &n1 = table.node(it.branch[1]);
+                auto a = add_edge(it.key, n1.key, g);
+                put(edge_type_list, a.first, true);
+                put(boost::edge_index_t(), g, a.first, count++);
+            }
+        }
+    }
+
+    std::cout << "Number of vertices = " << num_vertices(g) << std::endl;
+    std::cout << "Number of edges = " << num_edges(g) << std::endl;
+
+    // count = 0;
+    // auto it = vertices(g);
+    // for(;it.first != it.second; ++it.first) {
+    //         std::cout << in_degree(*it.first, g) << " " << out_degree(*it.first, g) << std::endl;
+    //         count++;
+    // }
+    // std::cout << "count = "  << count << std::endl;
+
+}
+
+void PricerSolverBase::build_mip() {
+    
+
+
+    try {
+        printf("Building Mip model for the extented formulation:\n");
+        NodeTableEntity<double>& table = new_dd->getDiagram().privateEntity();
+        NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(),g));
+        EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(),g));
+        EdgeVarAccessor edge_var_list(get(boost::edge_weight2_t(),g));
+        model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
+        model->set(GRB_IntParam_Threads, 1);
+        model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
+        model->set(GRB_IntParam_Presolve, 2);
+        model->set(GRB_IntParam_VarBranch, 3);
+
+        /** adding variables */
+        for (auto it = edges(g); it.first != it.second; it.first++) {
+            auto high = edge_type_list[*it.first];
+            if (high) {
+                auto &n = table.node(get(boost::vertex_name_t(),g,source(*it.first, g)));
+                double cost = (double) value_Fj(n.GetWeight() + n.GetJob()->processingime, n.GetJob());
+                edge_var_list[*it.first] = model->addVar(0.0, 1.0, cost, GRB_BINARY);
+            } else {
+                put(boost::edge_weight2_t(),g,*it.first, model->addVar(0.0, 8.0, 0.0, GRB_CONTINUOUS));
+            }
+        }
+
+        model->update();
+
+        /** Flow constraints */
+        for(auto it = vertices(g); it.first != it.second; ++it.first) {
+            auto NodeIt = vertex_nodeid_list[*it.first];
+            GRBLinExpr expr = 0;
+            
+            auto out_edges_it = boost::out_edges(*it.first, g);
+            for(;out_edges_it.first != out_edges_it.second; ++out_edges_it.first) {
+                expr -= edge_var_list[*out_edges_it.first];
+            }
+            
+            auto in_edges_it = boost::in_edges(*it.first, g);
+            for(;in_edges_it.first != in_edges_it.second; ++in_edges_it.first) {
+                expr += edge_var_list[*in_edges_it.first];
+            }
+            
+            if(NodeIt == new_dd->root()) {
+                model->addConstr(expr, GRB_EQUAL, -8.0);
+            } else if (NodeIt == 1) {
+                model->addConstr(expr, GRB_EQUAL, 8.0);
+            } else {
+                model->addConstr(expr, GRB_EQUAL, 0.0);
+            }
+        }
+
+        model->update();
+
+        /** Assignment constraints */
+        GRBLinExpr *assignment = new GRBLinExpr[njobs];
+
+        for (unsigned i = 0; i < jobs->len; ++i) {
+            assignment[i] = 0;
+        }
+
+        for (auto it = edges(g); it.first != it.second; it.first++) {
+            auto high = edge_type_list[*it.first];
+            if (high) {
+                auto &n = table.node(get(boost::vertex_name_t(),g,source(*it.first, g)));
+                assignment[n.GetJob()->job] += edge_var_list[*it.first] ;
+            }
+        }
+
+        for (unsigned i = 0; i < jobs->len; ++i) {
+            model->addConstr(assignment[i], GRB_GREATER_EQUAL, 1.0);
+        }
+
+        delete[] assignment;
+
+        model->update();
+        model->optimize();
+    } catch (GRBException e) {
+        cout << "Error code = " << e.getErrorCode() << endl;
+        cout << e.getMessage() << endl;
+    } catch (...) {
+        cout << "Exception during optimization" << endl;
+    }
 }
 
 void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB, int nmachines) {
@@ -204,6 +343,9 @@ void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB,
     /** Remove nodes that for which the high points to 0 */
     evaluate_nodes(pi, UB, LB, nmachines);
     remove_edges();
+
+    construct_mipgraph();
+    build_mip();
     
 
 
@@ -243,11 +385,13 @@ void PricerSolverBdd::InitTable() {
                 int w = it.GetWeight();
                 int p = it.GetJob()->processingime;
 
-                Node<double>& n0 = table_new.node(it.branch[0]);
-                Node<double>& n1 = table_new.node(it.branch[1]);
+                auto& n0 = table_new.node(it.branch[0]);
+                auto& n1 = table_new.node(it.branch[1]);
 
                 it.child[0] = n0.InitNode(w);
                 it.child[1] = n1.InitNode(w + p);
+
+
             } else {
                 it.set_job(nullptr, true);
                 it.set_layer(nlayers);
@@ -857,110 +1001,6 @@ Optimal_Solution<double> PricerSolverArcTimeDp::pricing_algorithm(double *_pi) {
 
     return sol;
 }
-
-// void PricerSolver::build_mip(double *x_e) {
-//     try {
-//         printf("Building Mip model for the extented formulation:\n");
-//         model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-//         model->set(GRB_IntParam_Threads, 1);
-//         model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-//         model->set(GRB_IntParam_Presolve, 2);
-//         model->set(GRB_IntParam_VarBranch, 3);
-
-//         /** adding variables */
-//         for (auto &i : edges) {
-//             if (i->job) {
-//                 if (i->out->calc) {
-//                     i->v = model->addVar(0.0, 1.0, i->cost, GRB_BINARY);
-//                 } else {
-//                     i->v = model->addVar(0.0, 0.0, i->cost, GRB_CONTINUOUS);
-//                 }
-//             } else {
-//                 i->v = model->addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
-//             }
-//         }
-
-//         model->update();
-//         GRBLinExpr obj = 0;
-
-//         for (auto &i : edges) {
-//             if (i->job && i->out->calc) {
-//                 obj +=  i->cost * i->v;
-//             }
-//         }
-
-//         model->addConstr(obj, GRB_LESS_EQUAL, (double) ub - 1.0);
-//         model->update();
-//         /** assign the jobs to some path */
-//         printf("Adding assignment constraints:\n");
-
-//         GRBLinExpr *assignment = new GRBLinExpr[njobs];
-
-//         for (unsigned i = 0; i < jobs->len; ++i) {
-//             assignment[i] = 0;
-//         }
-
-//         for (const auto &i : edges) {
-//             if (i->job) {
-//                 assignment[i->job->job] += i->v;
-//             }
-//         }
-
-//         for (unsigned i = 0; i < jobs->len; ++i) {
-//             model->addConstr(assignment[i], GRB_EQUAL, 1.0);
-//         }
-
-//         delete[] assignment;
-
-//         model->update();
-
-//         tdzdd::NodeId              &root = zdd->root();
-//         /** Calculate the distance from  the origin to the given node */
-//         printf("Adding flow constraints:\n");
-
-//         for (int i = root.row() - 1; i > 0; i--) {
-//             size_t const m = zdd_table[i].size();
-
-//             for (size_t j = 0; j < m; j++) {
-//                 for (auto &it : zdd_table[i][j].list) {
-//                     GRBLinExpr expr = 0;
-
-//                     for (const auto &v : it->out_edge) {
-//                         auto p = v.lock();
-//                         expr -= p->v;
-//                     }
-
-//                     for (const auto &v : it->in_edge) {
-//                         auto p = v.lock();
-//                         expr += p->v;
-//                     }
-
-//                     model->addConstr(expr, GRB_EQUAL, 0.0);
-//                 }
-//             }
-//         }
-
-//         printf("Adding convex constraint:\n");
-//         GRBLinExpr expr = 0;
-
-//         for (auto &it : zdd_table[0][1].list) {
-//             for (const auto &v : it->in_edge) {
-//                 auto p = v.lock();
-//                 expr += p->v;
-//             }
-//         }
-
-//         model->addConstr(expr, GRB_EQUAL, (double) nmachines);
-//         model->update();
-//         printf("Begin solving:\n");
-//         model->optimize();
-//     } catch (GRBException e) {
-//         cout << "Error code = " << e.getErrorCode() << endl;
-//         cout << e.getMessage() << endl;
-//     } catch (...) {
-//         cout << "Exception during optimization" << endl;
-//     }
-// }
 
 // void PricerSolver::iterate_zdd() {
 //     tdzdd::DdStructure<2>::const_iterator it = zdd->begin();
