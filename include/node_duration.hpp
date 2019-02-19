@@ -176,7 +176,7 @@ class Label {
     }
 };
 
-template<typename T>
+template<typename T = double>
 class Node {
   private:
     int weight;
@@ -201,11 +201,14 @@ class Node {
     nodeid branch[2];
 
     bool calc_yes;
+
+    int key;
     
     /**
      * Constructor
      */
-    Node():weight(0),
+    Node():
+          weight(0),
           num_layer(0),
           root_node(false),
           terminal_node(false),
@@ -216,13 +219,14 @@ class Node {
           backward_label2(this),
           y(nullptr),
           n(nullptr),
-          calc_yes(true) {
+          calc_yes(true),
+          key(-1) {
         child[0] = nullptr;
         child[1] = nullptr;
     };
 
     Node(int &_weight, int &_num_layer, bool &_root_node,bool &_terminal_node):
-         weight(_weight),
+          weight(_weight),
          num_layer(_num_layer),
          root_node(_root_node),
          terminal_node(_terminal_node),
@@ -232,7 +236,8 @@ class Node {
          backward_label2(this),
          y(nullptr),
          n(nullptr),
-         calc_yes(true) {
+         calc_yes(true),
+         key(-1) {
           child[0] = nullptr;
           child[1] = nullptr;
     }
@@ -244,7 +249,8 @@ class Node {
       backward_label2.SetHeadNode(this);
     }
 
-    Node(int i, int j) : weight(0),
+    Node(int i, int j) :
+          weight(0),
           num_layer(0),
           root_node(false),
           terminal_node(false),
@@ -255,7 +261,8 @@ class Node {
           backward_label2(this),
           y(nullptr),
           n(nullptr),
-          calc_yes(true) {
+          calc_yes(true),
+          key(-1) {
         child[0] = nullptr;
         child[1] = nullptr;
         branch[0] = i;
@@ -279,7 +286,8 @@ class Node {
         n(src.n),
         child{src.child[0], src.child[1]},
         branch{src.branch[0], src.branch[1]},
-        calc_yes(src.calc_yes) {
+        calc_yes(src.calc_yes),
+        key(src.key) {
     }
 
     /**
@@ -299,7 +307,8 @@ class Node {
         n(std::move(src.n)),
         child{src.child[0], src.child[1]},
         branch{src.branch[0], src.branch[2]},
-        calc_yes(src.calc_yes) {
+        calc_yes(src.calc_yes),
+        key(src.key) {
     }
 
     /**
@@ -332,6 +341,7 @@ class Node {
       branch[1] = src.branch[1];
 
       calc_yes = src.calc_yes;
+      key = src.key;
 
       return *this;
     }
@@ -365,6 +375,7 @@ class Node {
       branch[1] = src.branch[1];
 
       calc_yes = src.calc_yes;
+      key = src.key;
       return *this;
     }
 
