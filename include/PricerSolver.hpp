@@ -2,11 +2,10 @@
 #define INCLUDE_PRICERSOLVER_HPP
 
 #include <tdzdd/DdStructure.hpp>
+#include <NodeBddStructure.hpp>
 #include <PricerEvaluate.hpp>
 #include <scheduleset.h>
-#include <boost/unordered_set.hpp>
-#include <NodeBddStructure.hpp>
-using namespace std;
+#include <MipGraph.hpp>
 
 struct PricerSolverBase {
 protected:
@@ -25,6 +24,10 @@ protected:
 
     int nb_removed_edges;
     int nb_removed_nodes;
+
+    MipGraph g;
+    GRBEnv *env;
+    GRBModel *model;
 public:
     /**
      * Default constructors
@@ -74,6 +77,10 @@ public:
      void remove_edges();
      void calculate_edges(scheduleset *set);
      virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines);
+
+     /** Construct MipGraph */
+     void construct_mipgraph();
+     void build_mip();
 
      /**
       * Some getters
