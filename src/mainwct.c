@@ -169,11 +169,11 @@ int main(int ac, char **av) {
      */
     if(parms->pricing_solver < dp_solver) {
         CCutil_start_timer(&(problem.tot_build_dd));
-        root->solver = newSolver(root->jobarray, root->ordered_jobs, &(problem.parms));
+        root->solver = newSolver(root->jobarray, root->nmachines, root->ordered_jobs, &(problem.parms));
         CCutil_stop_timer(&(problem.tot_build_dd), 0);
         print_size_to_csv(&problem, root);
     } else {
-        root->solver = newSolverDp(root->jobarray, root->H_max, parms);
+        root->solver = newSolverDp(root->jobarray, root->nmachines, root->H_max, parms);
     }
     g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
 
