@@ -4,41 +4,42 @@
 extern "C" {
 
 PricerSolverBase* newSolver(GPtrArray *jobs,
+                            int _num_machines,
                             GPtrArray *ordered_jobs,
                             wctparms *parms) {
     switch (parms->pricing_solver) {
         case bdd_solver_simple:
-            return new PricerSolverBddSimple(jobs, ordered_jobs);
+            return new PricerSolverBddSimple(jobs, _num_machines, ordered_jobs);
         break;
         case bdd_solver_cycle:
-            return new PricerSolverBddCycle(jobs, ordered_jobs);
+            return new PricerSolverBddCycle(jobs, _num_machines, ordered_jobs);
         break;
-        case zdd_solver_cycle:
-            return new PricerSolverCycle(jobs, ordered_jobs);
-        break;
-        case zdd_solver_simple:
-            return new PricerSolverZddSimple(jobs, ordered_jobs);
-        break;
+        // case zdd_solver_cycle:
+        //     return new PricerSolverCycle(jobs, _num_machines, ordered_jobs);
+        // break;
+        // case zdd_solver_simple:
+        //     return new PricerSolverZddSimple(jobs, _num_machines, ordered_jobs);
+        // break;
         case bdd_solver_backward_simple:
-            return new PricerSolverBddBackwardSimple(jobs, ordered_jobs);
+            return new PricerSolverBddBackwardSimple(jobs, _num_machines, ordered_jobs);
         break;
         case bdd_solver_backward_cycle:
-            return new PricerSolverBddBackwardCycle (jobs, ordered_jobs);
+            return new PricerSolverBddBackwardCycle (jobs, _num_machines, ordered_jobs);
         break;
         default:
-            return new PricerSolverBddBackwardCycle(jobs, ordered_jobs);
+            return new PricerSolverBddBackwardCycle(jobs, _num_machines, ordered_jobs);
     }
 }
 
-PricerSolverBase* newSolverDp(GPtrArray *_jobs, int _Hmax, wctparms *parms) {
+PricerSolverBase* newSolverDp(GPtrArray *_jobs, int _num_machines, int _Hmax, wctparms *parms) {
     switch (parms->pricing_solver) {
         case dp_solver:
-            return new PricerSolverSimpleDp(_jobs, _Hmax);
+            return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax);
         break;
         case ati_solver:
-            return new PricerSolverArcTimeDp(_jobs, _Hmax);
+            return new PricerSolverArcTimeDp(_jobs, _num_machines, _Hmax);
         default:
-            return new PricerSolverSimpleDp(_jobs, _Hmax);
+            return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax);
         break;
     }
 }
@@ -53,9 +54,8 @@ int evaluate_nodes(wctdata *pd) {
     int    val = 0;
     int    UB = pd->problem->opt_sol->tw;
     double LB = pd->LP_lower_bound;
-    int    nmachines = pd->problem->nmachines;
 
-    pd->solver->evaluate_nodes(pd->pi, UB, LB, nmachines);
+    pd->solver->evaluate_nodes(pd->pi, UB, LB);
 
     return val;
 }
@@ -64,9 +64,8 @@ int calculate_new_ordered_jobs(wctdata *pd) {
     int val = 0;
     int    UB = pd->problem->opt_sol->tw;
     double LB = pd->LP_lower_bound;
-    int    nmachines = pd->problem->nmachines;
 
-    pd->solver->calculate_new_ordered_jobs(pd->pi, UB, LB, nmachines);
+    pd->solver->calculate_new_ordered_jobs(pd->pi, UB, LB);
 
     return val;
 }
