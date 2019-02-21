@@ -306,7 +306,7 @@ class Node {
         y(std::move(src.y)),
         n(std::move(src.n)),
         child{src.child[0], src.child[1]},
-        branch{src.branch[0], src.branch[2]},
+        branch{src.branch[0], src.branch[1]},
         calc_yes(src.calc_yes),
         key(src.key) {
     }
@@ -378,12 +378,6 @@ class Node {
       key = src.key;
       return *this;
     }
-
-    // void SetJob(Job* &_job){
-    //   job = _job;
-    //   state1.SetHeadNode(this);
-    //   state2.SetHeadNode(this);
-    // }
 
     void set_job(Job *_job, bool _terminal_node = false){
       job = _job;
