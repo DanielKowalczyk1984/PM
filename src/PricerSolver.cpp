@@ -591,7 +591,9 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double *pi, int UB, double LB)
  * Pricersolver for the TI index formulation
  */
 PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray *_jobs, int _num_machines, int _Hmax) :
-    PricerSolverBase(_jobs, _num_machines), Hmax(_Hmax) {
+    PricerSolverBase(_jobs, _num_machines), Hmax(_Hmax),
+    A(std::unique_ptr<Job*[]>(new Job*[Hmax])),
+    F(std::unique_ptr<double[]>(new double[Hmax])) {
 }
 
 void PricerSolverSimpleDp::init_table() {
@@ -601,11 +603,7 @@ void PricerSolverSimpleDp::init_table() {
 Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
     Optimal_Solution<double> opt_sol;
     opt_sol.cost = 0;
-    double *F;
-    Job **A;
     int t_min = 0;
-    F = new double[Hmax + 1];
-    A = new Job* [Hmax + 1];
     std::vector<Job *> v;
 
 
@@ -663,9 +661,6 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
         g_ptr_array_add(opt_sol.jobs, *it);
     }
 
-    /** Free the memory */
-    delete[] A;
-    delete[] F;
     return opt_sol;
 }
 

@@ -157,6 +157,8 @@ public:
 class PricerSolverSimpleDp : public PricerSolverBase {
 private:
     int Hmax;
+    std::unique_ptr<Job*[]> A;
+    std::unique_ptr<double[]> F;
 public:
     PricerSolverSimpleDp(GPtrArray *_jobs, int _num_machines, int _Hmax);
     void init_table() override;
