@@ -433,6 +433,7 @@ int heuristic_rpup(wctproblem *prob) {
     local_search_create_g(sol, data);
     RVND(sol, data);
     solution_canonical_order(sol, intervals);
+    add_solution_to_colpool(sol, &(prob->root_pd));
     printf("Solution after local search:\n");
     solution_print(sol);
 
