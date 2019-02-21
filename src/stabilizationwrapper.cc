@@ -235,7 +235,7 @@ int update_subgradientproduct(wctdata *pd) {
     for (int i = 0; i < pd->njobs; ++i) {
         pd->subgradientproduct -= (pd->pi_out[i] - pd->pi_in[i]) * pd->subgradient_in[i];
     }
-    printf("subgradientproduct %f\n", pd->subgradientproduct);
+    // printf("subgradientproduct %f\n", pd->subgradientproduct);
 
     return val;
 }
@@ -449,12 +449,12 @@ int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
         }
     } while (pd->inmispricingschedule && stabilized);
 
-    // if (pd->iterations%pd->njobs == 0) {
+    if (pd->iterations%pd->njobs == 0) {
         printf(
             " alpha = %f, result of primal bound and Lagragian bound: out =%f, "
             "in = %f\n",
             pd->alpha, pd->eta_out, pd->eta_in);
-    // }
+    }
 
     return val;
 }
