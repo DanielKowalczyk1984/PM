@@ -60,7 +60,7 @@ PricerSolverBase::~PricerSolverBase() {
 /**
  * Some getters
  */
-void PricerSolverBase::IterateZdd() {
+void PricerSolverBase::iterate_zdd() {
     DdStructure<double>::const_iterator it = new_dd->begin();
 
     for (; it != new_dd->end(); ++it) {
@@ -74,7 +74,7 @@ void PricerSolverBase::IterateZdd() {
     }
 }
 
-void PricerSolverBase::PrintNumberPaths() {
+void PricerSolverBase::print_num_paths() {
     cout << "Number of paths: " << dd->evaluate(tdzdd::ZddCardinality<>()) << "\n";
 }
 
@@ -248,6 +248,7 @@ void PricerSolverBase::build_mip() {
     try {
         printf("Building Mip model for the extented formulation:\n");
         NodeTableEntity<double>& table = new_dd->getDiagram().privateEntity();
+        IndexAccessor vertex_index_list(get(boost::vertex_index_t(),g));
         NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(),g));
         EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(),g));
         EdgeVarAccessor edge_var_list(get(boost::edge_weight2_t(),g));
@@ -265,43 +266,60 @@ void PricerSolverBase::build_mip() {
                 double cost = (double) value_Fj(n.GetWeight() + n.GetJob()->processing_time, n.GetJob());
                 edge_var_list[*it.first] = model->addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
-                put(boost::edge_weight2_t(),g,*it.first, model->addVar(0.0, 8.0, 0.0, GRB_CONTINUOUS));
+                put(boost::edge_weight2_t(),g,*it.first, model->addVar(0.0, 4.0, 0.0, GRB_CONTINUOUS));
             }
         }
 
         model->update();
 
         /** Flow constraints */
+        size_t num_vertices =  boost::num_vertices(g) ;
+        GRBLinExpr* flow_conservation_constr = new GRBLinExpr[num_vertices];
+        char *sense_flow = new char[num_vertices];
+        double* rhs_flow = new double[num_vertices]; 
+
         for(auto it = vertices(g); it.first != it.second; ++it.first) {
-            auto NodeIt = vertex_nodeid_list[*it.first];
-            GRBLinExpr expr = 0;
+            const auto node_iterator = vertex_nodeid_list[*it.first];
+            const auto vertex_index = vertex_index_list[*it.first];
+            flow_conservation_constr[vertex_index] = 0;
+            sense_flow[vertex_index] = GRB_EQUAL;
             
             auto out_edges_it = boost::out_edges(*it.first, g);
             for(;out_edges_it.first != out_edges_it.second; ++out_edges_it.first) {
-                expr -= edge_var_list[*out_edges_it.first];
+                flow_conservation_constr[vertex_index] -= edge_var_list[*out_edges_it.first];
             }
             
             auto in_edges_it = boost::in_edges(*it.first, g);
             for(;in_edges_it.first != in_edges_it.second; ++in_edges_it.first) {
-                expr += edge_var_list[*in_edges_it.first];
+                flow_conservation_constr[vertex_index] += edge_var_list[*in_edges_it.first];
             }
             
-            if(NodeIt == new_dd->root()) {
-                model->addConstr(expr, GRB_EQUAL, -8.0);
-            } else if (NodeIt == 1) {
-                model->addConstr(expr, GRB_EQUAL, 8.0);
+            if(node_iterator == new_dd->root()) {
+                rhs_flow[vertex_index] = -4.0;
+            } else if (node_iterator == 1) {
+                rhs_flow[vertex_index] = 4.0;
             } else {
-                model->addConstr(expr, GRB_EQUAL, 0.0);
+                rhs_flow[vertex_index] = 0.0;
             }
         }
 
+        model->addConstrs(flow_conservation_constr, sense_flow, rhs_flow, nullptr, num_vertices);
         model->update();
 
+        delete[] flow_conservation_constr;
+        delete[] sense_flow;
+        delete[] rhs_flow;
+
+
         /** Assignment constraints */
-        GRBLinExpr *assignment = new GRBLinExpr[njobs];
+        GRBLinExpr* assignment = new GRBLinExpr[njobs];
+        char *sense = new char[njobs];
+        double* rhs = new double[njobs];
 
         for (unsigned i = 0; i < jobs->len; ++i) {
             assignment[i] = 0;
+            sense[i] = GRB_GREATER_EQUAL;
+            rhs[i] = 1.0;
         }
 
         for (auto it = edges(g); it.first != it.second; it.first++) {
@@ -312,13 +330,13 @@ void PricerSolverBase::build_mip() {
             }
         }
 
-        for (unsigned i = 0; i < jobs->len; ++i) {
-            model->addConstr(assignment[i], GRB_GREATER_EQUAL, 1.0);
-        }
+        model->addConstrs(assignment, sense, rhs, nullptr, njobs);
+        model->update();
 
         delete[] assignment;
+        delete[] sense;
+        delete[] rhs;
 
-        model->update();
         model->optimize();
     } catch (GRBException e) {
         cout << "Error code = " << e.getErrorCode() << endl;
@@ -338,14 +356,14 @@ void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB,
     delete new_dd;
     PricerConstruct ps(ordered_jobs);
     new_dd = new DdStructure<double>(ps);
-    InitTable();
+    init_table();
     
     /** Remove nodes that for which the high points to 0 */
     evaluate_nodes(pi, UB, LB, nmachines);
     remove_edges();
 
-    construct_mipgraph();
-    build_mip();
+    // construct_mipgraph();
+    // build_mip();
     
 
 
@@ -365,10 +383,10 @@ void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB,
  */
 PricerSolverBdd::PricerSolverBdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverBase(_jobs, _ordered_jobs) {
-    InitTable();
+    init_table();
 }
 
-void PricerSolverBdd::InitTable() {
+void PricerSolverBdd::init_table() {
     NodeTableEntity<double>& table_new = new_dd->getDiagram().privateEntity();
 
     /** init table */
@@ -630,14 +648,14 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double *pi, int UB, double LB,
  */
 PricerSolverZdd::PricerSolverZdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs) :
     PricerSolverBase(_jobs, _ordered_jobs) {
-    InitTable();
+    init_table();
 }
 
 ForwardZddNode<double>& PricerSolverZdd::child(tdzdd::NodeId const & id) {
     return table[id.row()][id.col()];
 }
 
-void PricerSolverZdd::InitTable() {
+void PricerSolverZdd::init_table() {
     tdzdd::NodeTableHandler<2> &handler = zdd->getDiagram();
     const tdzdd::NodeTableEntity<2> &diagram = handler.privateEntity();
     table.init(zdd->topLevel() + 1);
@@ -719,7 +737,7 @@ PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax) :
     PricerSolverBase(_jobs), Hmax(_Hmax) {
 }
 
-void PricerSolverSimpleDp::InitTable() {
+void PricerSolverSimpleDp::init_table() {
 
 }
 
@@ -809,11 +827,11 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray *_jobs, int _Hmax) :
     j0.job = n;
     vector_jobs.push_back(&j0);
 
-    InitTable();
+    init_table();
 }
 
 
-void PricerSolverArcTimeDp::InitTable() {
+void PricerSolverArcTimeDp::init_table() {
     graph = new boost::unordered_set<Job *>*[n + 1];
 
     F = new double*[jobs->len + 1];
