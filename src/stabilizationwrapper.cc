@@ -13,13 +13,13 @@ int construct_sol(wctdata *pd, Optimal_Solution<T> *sol) {
         Job *tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol->jobs, i));
         g_hash_table_add(newset->table, tmp_j);
     }
-    newset->jobs = sol->jobs;
+    newset->job_list = sol->jobs;
     sol->jobs = nullptr;
-    newset->e_list = sol->e_list;
+    newset->edge_list = sol->e_list;
     sol->e_list = nullptr;
 
-    newset->totwct = sol->cost;
-    newset->totweight = sol->C_max;
+    newset->total_weighted_completion_time = sol->cost;
+    newset->total_processing_time = sol->C_max;
     pd->newsets = newset;
     pd->nnewsets = 1;
 CLEAN:

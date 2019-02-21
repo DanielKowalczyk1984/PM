@@ -127,8 +127,8 @@ void g_make_pi_feasible(gpointer data, gpointer user_data) {
     int    i;
     double colsum = .0;
 
-    for (i = 0; i < x->jobs->len; ++i) {
-        tmp_j = (Job *)g_ptr_array_index(x->jobs, i);
+    for (i = 0; i < x->job_list->len; ++i) {
+        tmp_j = (Job *)g_ptr_array_index(x->job_list, i);
         if (signbit(pd->pi[tmp_j->job])) {
             pd->pi[tmp_j->job] = 0.0;
         }
@@ -144,17 +144,17 @@ void g_make_pi_feasible(gpointer data, gpointer user_data) {
     colsum += pd->pi[pd->njobs];
     colsum = nextafter(colsum, DBL_MAX);
 
-    if (colsum > x->totwct) {
+    if (colsum > x->total_weighted_completion_time) {
         double newcolsum = .0;
-        for (i = 0; i < x->jobs->len; ++i) {
-            tmp_j = (Job *)g_ptr_array_index(x->jobs, i);
+        for (i = 0; i < x->job_list->len; ++i) {
+            tmp_j = (Job *)g_ptr_array_index(x->job_list, i);
             pd->pi[tmp_j->job] /= colsum;
-            pd->pi[tmp_j->job] *= x->totwct;
+            pd->pi[tmp_j->job] *= x->total_weighted_completion_time;
             newcolsum += pd->pi[tmp_j->job];
         }
 
         pd->pi[pd->njobs] /= colsum;
-        pd->pi[pd->njobs] *= x->totwct;
+        pd->pi[pd->njobs] *= x->total_weighted_completion_time;
         newcolsum += pd->pi[pd->njobs];
 
         if (dbg_lvl() > 1) {
@@ -177,8 +177,8 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
     int    i;
     double colsum = .0;
 
-    for (i = 0; i < x->jobs->len; ++i) {
-        tmp_j = (Job *)g_ptr_array_index(x->jobs, i);
+    for (i = 0; i < x->job_list->len; ++i) {
+        tmp_j = (Job *)g_ptr_array_index(x->job_list, i);
         if (signbit(pd->pi[tmp_j->job])) {
             pd->pi[tmp_j->job] = 0.0;
         }
@@ -189,17 +189,17 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
 
     colsum += pd->pi[pd->njobs];
 
-    if (colsum > x->totwct) {
+    if (colsum > x->total_weighted_completion_time) {
         double newcolsum = .0;
-        for (i = 0; i < x->jobs->len; ++i) {
-            tmp_j = (Job *)g_ptr_array_index(x->jobs, i);
+        for (i = 0; i < x->job_list->len; ++i) {
+            tmp_j = (Job *)g_ptr_array_index(x->job_list, i);
             pd->pi[tmp_j->job] /= colsum;
-            pd->pi[tmp_j->job] *= x->totwct;
+            pd->pi[tmp_j->job] *= x->total_weighted_completion_time;
             newcolsum += pd->pi[tmp_j->job];
         }
 
         pd->pi[pd->njobs] /= colsum;
-        pd->pi[pd->njobs] *= x->totwct;
+        pd->pi[pd->njobs] *= x->total_weighted_completion_time;
         newcolsum += pd->pi[pd->njobs];
 
         if (dbg_lvl() > 1) {
@@ -598,7 +598,7 @@ int print_x(wctdata *pd){
                     //     C += j1->processingime;
                     // }
                     // printf("\n");
-                    g_ptr_array_foreach(tmp->jobs, g_print_machine, NULL);
+                    g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
                     printf("\n");
                 }
             }
@@ -629,10 +629,10 @@ int calculate_nblayers(wctdata *pd){
             for(unsigned i = 0; i < nb_cols; ++i) {
                 if(pd->x[i] > 0.00001) {
                     scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
-                    for(unsigned i = 0; i < tmp->jobs->len - 1; ++i) {
+                    for(unsigned i = 0; i < tmp->job_list->len - 1; ++i) {
                         Job *j1, *j2;
-                        j1 = (Job*) g_ptr_array_index(tmp->jobs, i);
-                        j2 = (Job*) g_ptr_array_index(tmp->jobs, i + 1);
+                        j1 = (Job*) g_ptr_array_index(tmp->job_list, i);
+                        j2 = (Job*) g_ptr_array_index(tmp->job_list, i + 1);
                         if(j1 == j2) {
                             j1->num_layers = 1;
                         }
@@ -667,8 +667,8 @@ int calculate_x_e(wctdata *pd){
             for(unsigned i = 0; i < nb_cols; ++i) {
                 if(pd->x[i] > 0.00001) {
                     scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
-                    for(unsigned j = 0; j < tmp->e_list->len; ++j) {
-                        int *ptr = (int *) g_ptr_array_index(tmp->e_list, j);
+                    for(unsigned j = 0; j < tmp->edge_list->len; ++j) {
+                        int *ptr = (int *) g_ptr_array_index(tmp->edge_list, j);
                         pd->x_e[*ptr] += pd->x[i];
                     }
                 }

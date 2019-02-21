@@ -98,9 +98,9 @@ int calculate_table(PricerSolver *solver, wctparms *parms) {
     return val = 0;
 }
 
-void iterate_zdd(PricerSolver *solver) { solver->IterateZdd(); }
+void iterate_zdd(PricerSolver *solver) { solver->iterate_zdd(); }
 
-void print_number_paths(PricerSolver *solver) { solver->PrintNumberPaths(); }
+void print_number_paths(PricerSolver *solver) { solver->print_num_paths(); }
 
 size_t get_datasize(PricerSolver *solver) { return solver->get_datasize(); }
 

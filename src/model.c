@@ -30,18 +30,18 @@ int grab_int_sol(wctdata *pd, double *x, double tolerance) {
             int k;
             scheduleset_init(pd->bestcolors + j);
 
-            g_ptr_array_set_size(pd->bestcolors[j].jobs,
-                                 tmp_schedule->jobs->len);
-            for (k = 0; k < tmp_schedule->jobs->len; ++k) {
-                tmp_j = (Job *)g_ptr_array_index(tmp_schedule->jobs, k);
-                g_ptr_array_add(pd->bestcolors[j].jobs, tmp_j);
-                pd->bestcolors[j].totweight += tmp_j->processing_time;
-                pd->bestcolors[j].totwct +=
-                    value_Fj(pd->bestcolors[j].totweight, tmp_j);
+            g_ptr_array_set_size(pd->bestcolors[j].job_list,
+                                 tmp_schedule->job_list->len);
+            for (k = 0; k < tmp_schedule->job_list->len; ++k) {
+                tmp_j = (Job *)g_ptr_array_index(tmp_schedule->job_list, k);
+                g_ptr_array_add(pd->bestcolors[j].job_list, tmp_j);
+                pd->bestcolors[j].total_processing_time += tmp_j->processing_time;
+                pd->bestcolors[j].total_weighted_completion_time +=
+                    value_Fj(pd->bestcolors[j].total_processing_time, tmp_j);
             }
 
             pd->nbbest++;
-            tot_weighted += pd->bestcolors[j].totwct;
+            tot_weighted += pd->bestcolors[j].total_weighted_completion_time;
 
             if (pd->nbbest > pd->nmachines) {
                 printf(
@@ -79,14 +79,14 @@ int addColToLP(scheduleset *set, wctdata *pd) {
     int        vind;
     double     cval;
     int        njobs = pd->njobs;
-    GPtrArray *members = set->jobs;
+    GPtrArray *members = set->job_list;
     wctlp *    lp = pd->LP;
     Job *      job;
 
     val = wctlp_get_nb_cols(lp, &(set->id));
     CCcheck_val_2(val, "Failed to get the number of cols");
     vind = set->id;
-    val = wctlp_addcol(lp, 0, NULL, NULL, (double)set->totwct, 0.0, GRB_INFINITY, wctlp_CONT, NULL);
+    val = wctlp_addcol(lp, 0, NULL, NULL, (double)set->total_weighted_completion_time, 0.0, GRB_INFINITY, wctlp_CONT, NULL);
     CCcheck_val_2(val, "Failed to add column to lp")
 
     for (unsigned i = 0; i < members->len; ++i) {
@@ -95,7 +95,7 @@ int addColToLP(scheduleset *set, wctdata *pd) {
         val = wctlp_getcoef(lp, &cind, &vind, &cval);
         CCcheck_val_2(val, "Failed wctlp_getcoef");
         cval += 1.0;
-        set->nb[job->job] += 1;
+        set->num[job->job] += 1;
         val = wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
         CCcheck_val_2(val, "Failed wctlp_chgcoef");
     }
@@ -210,11 +210,11 @@ int get_solution_lp_lowerbound(wctdata *pd) {
         scheduleset *tmp = ((scheduleset *)g_ptr_array_index(pd->localColPool, i));
         if (pd->x[i]) {
             printf("%f: ", pd->x[i]);
-            g_ptr_array_foreach(tmp->jobs, g_print_machine, NULL);
+            g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
             printf("\n");
-            for (unsigned j = 0; j < tmp->jobs->len; ++j) {
-                tmp_j = (Job *)g_ptr_array_index(tmp->jobs, j);
-                printf("%d (%d) ", tmp->nb[tmp_j->job], tmp_j->processing_time);
+            for (unsigned j = 0; j < tmp->job_list->len; ++j) {
+                tmp_j = (Job *)g_ptr_array_index(tmp->job_list, j);
+                printf("%d (%d) ", tmp->num[tmp_j->job], tmp_j->processing_time);
             }
             printf("\n");
         }

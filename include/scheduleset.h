@@ -9,12 +9,12 @@ extern "C" {
 
 typedef struct scheduleset {
     int         age;
-    int         totweight;
-    int         totwct;
-    GHashTable *table;
-    GPtrArray  *jobs;
-    GPtrArray *e_list;
-    int        *nb;
+    int         total_processing_time;
+    int         total_weighted_completion_time;
+    GHashTable* table;
+    GPtrArray*  job_list;
+    GPtrArray*  edge_list;
+    int*        num;
     int         id;
 } scheduleset;
 

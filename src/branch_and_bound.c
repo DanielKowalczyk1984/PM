@@ -139,16 +139,16 @@ int insert_frac_pairs_into_heap(wctdata *pd,
         }
         tmp_schedule = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
 
-        for (j = 0; j < tmp_schedule->jobs->len; ++j) {
-            tmp_j1 = (Job *)g_ptr_array_index(tmp_schedule->jobs, j);
+        for (j = 0; j < tmp_schedule->job_list->len; ++j) {
+            tmp_j1 = (Job *)g_ptr_array_index(tmp_schedule->job_list, j);
             int v1 = tmp_j1->job;
             int k;
             ref_key = nodepair_ref_key(v1, v1);
             nodepair_weights[ref_key] += pd->x[i];
 
-            for (k = j + 1; k < tmp_schedule->jobs->len; ++k) {
+            for (k = j + 1; k < tmp_schedule->job_list->len; ++k) {
                 assert(k != j);
-                tmp_j2 = (Job *)g_ptr_array_index(tmp_schedule->jobs, k);
+                tmp_j2 = (Job *)g_ptr_array_index(tmp_schedule->job_list, k);
                 int v2 = tmp_j2->job;
                 assert(v1 < v2);
                 ref_key = nodepair_ref_key(v1, v2);
@@ -393,20 +393,17 @@ static void scheduleset_unify(GPtrArray *array) {
 
 int prune_duplicated_sets(wctdata *pd) {
     int          val = 0;
-    scheduleset *tmp;
-    GPtrArray *  tmp_a;
-    Job *        tmp_j;
     scheduleset_unify(pd->localColPool);
 
     if (dbg_lvl() > 1) {
         for (int i = 0; i < pd->localColPool->len; ++i) {
-            tmp = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
-            tmp_a = tmp->jobs;
+            scheduleset* tmp = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
+            GPtrArray* tmp_a = tmp->job_list;
 
             printf("TRANSSORT SET ");
 
             for (int j = 0; j < tmp_a->len; ++j) {
-                tmp_j = (Job *)g_ptr_array_index(tmp_a, j);
+                Job* tmp_j = (Job *)g_ptr_array_index(tmp_a, j);
                 printf(" %d", tmp_j->job);
             }
 
