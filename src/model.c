@@ -35,7 +35,7 @@ int grab_int_sol(wctdata *pd, double *x, double tolerance) {
             for (k = 0; k < tmp_schedule->jobs->len; ++k) {
                 tmp_j = (Job *)g_ptr_array_index(tmp_schedule->jobs, k);
                 g_ptr_array_add(pd->bestcolors[j].jobs, tmp_j);
-                pd->bestcolors[j].totweight += tmp_j->processingime;
+                pd->bestcolors[j].totweight += tmp_j->processing_time;
                 pd->bestcolors[j].totwct +=
                     value_Fj(pd->bestcolors[j].totweight, tmp_j);
             }
@@ -214,7 +214,7 @@ int get_solution_lp_lowerbound(wctdata *pd) {
             printf("\n");
             for (unsigned j = 0; j < tmp->jobs->len; ++j) {
                 tmp_j = (Job *)g_ptr_array_index(tmp->jobs, j);
-                printf("%d (%d) ", tmp->nb[tmp_j->job], tmp_j->processingime);
+                printf("%d (%d) ", tmp->nb[tmp_j->job], tmp_j->processing_time);
             }
             printf("\n");
         }

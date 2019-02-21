@@ -112,7 +112,7 @@ void g_sum_processing_time(gpointer data, gpointer user_data) {
     Job *        j = (Job *)data;
     scheduleset *set = (scheduleset *)user_data;
 
-    set->totweight += j->processingime;
+    set->totweight += j->processing_time;
     set->totwct += value_Fj(set->totweight, j);
     (set->nb[j->job])++;
     g_ptr_array_add(set->jobs, j);
@@ -215,7 +215,7 @@ void g_compute_nblayers_schedule(gpointer data, gpointer user_data){
     Job *j = (Job *) data;
     scheduleset *tmp = (scheduleset *) user_data;
     if(tmp->nb[j->job] > 1) {
-        j->nb_layers = 1;
+        j->num_layers = 1;
     }
 }
 

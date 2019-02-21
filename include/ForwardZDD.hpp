@@ -97,7 +97,7 @@ public:
             Label<T> *aux_prev_node = ptr_node->GetPrev();
             Job *aux_job = aux_prev_node->GetJob();
             if(ptr_node->GetHigh()) {
-                sol.C_max += aux_job->processingime;
+                sol.C_max += aux_job->processing_time;
                 if(ptr_node->GetNode()) {
                     sol.cost = sol.cost + value_Fj(ptr_node->GetWeight(), aux_job) ;
                     sol.obj += pi[aux_job->job] - value_Fj(ptr_node->GetWeight(), aux_job);
@@ -167,7 +167,7 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
             T g;
             std::shared_ptr<Node<T>> p0 = it->n;
             std::shared_ptr<Node<T>> p1 = it->y;
-            double result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
+            double result = - value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job];
 
             /**
              * High edge calculation
@@ -279,7 +279,7 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
             T g;
             std::shared_ptr<Node<T>> p0 = it->n;
             std::shared_ptr<Node<T>> p1 = it->y;
-            double result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
+            double result = - value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job];
 
             /**
              * High edge calculation

@@ -45,7 +45,7 @@ public:
         while(ptr_node->GetPrev() != nullptr) {
             Label<T> *aux_prev_node = ptr_node->GetPrev();
             Job *aux_job = aux_prev_node->GetJob();
-            sol.C_max += aux_job->processingime;
+            sol.C_max += aux_job->processing_time;
             sol.push_job_back(aux_job, aux_prev_node->GetWeight(), pi[aux_job->job]);
             ptr_node = aux_prev_node;
         }
@@ -106,7 +106,7 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
         T g;
         Node<T>* p0 = n.child[0];
         Node<T>* p1 = n.child[1];
-        result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
+        result = - value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job];
 
         /**
          * High edge calculation
@@ -209,7 +209,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         T g;
         Node<T>* p0 = n.child[0];
         Node<T>* p1 = n.child[1];
-        result = - value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
+        result = - value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job];
 
         /**
          * High edge calculation

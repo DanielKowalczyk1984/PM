@@ -222,9 +222,9 @@ public:
     int delta1(const int &i,const int &j, const int &t) {
         Job *tmp_i = vector_jobs[i];
         Job *tmp_j = vector_jobs[j];
-        return (value_Fj(t, tmp_i) + value_Fj(t + tmp_j->processingime, tmp_j))
-            - (value_Fj(t + tmp_j->processingime - tmp_i->processingime, tmp_j)
-                + value_Fj(t + tmp_j->processingime, tmp_i) );
+        return (value_Fj(t, tmp_i) + value_Fj(t + tmp_j->processing_time, tmp_j))
+            - (value_Fj(t + tmp_j->processing_time - tmp_i->processing_time, tmp_j)
+                + value_Fj(t + tmp_j->processing_time, tmp_i) );
     }
 
     void remove_arc(const int &i, const int &j, const int &t) {

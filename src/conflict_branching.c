@@ -35,7 +35,7 @@ static int transfer_same_cclasses(wctdata *  pd,
 
         for (j = 0; j < it->jobs->len && construct; ++j) {
             tmp_j = (Job *)g_ptr_array_index(it->jobs, j);
-            tmp->totweight += tmp_j->processingime;
+            tmp->totweight += tmp_j->processing_time;
             g_hash_table_insert(tmp->table, tmp_j, NULL);
             g_ptr_array_add(tmp->jobs, tmp_j);
             tmp->totwct += value_Fj(tmp->totweight, tmp_j);
@@ -210,7 +210,7 @@ static int create_differ_conflict(wctproblem *problem,
 
             for (j = 0; j < it->jobs->len; j++) {
                 tmp_j = (Job *)g_ptr_array_index(it->jobs, j);
-                tmp->totweight += tmp_j->processingime;
+                tmp->totweight += tmp_j->processing_time;
                 g_hash_table_insert(tmp->table, tmp_j, NULL);
                 g_ptr_array_add(tmp->jobs, tmp_j);
                 tmp->totwct += value_Fj(tmp->totweight, tmp_j);

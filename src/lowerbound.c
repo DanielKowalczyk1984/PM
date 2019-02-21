@@ -634,7 +634,7 @@ int calculate_nblayers(wctdata *pd){
                         j1 = (Job*) g_ptr_array_index(tmp->jobs, i);
                         j2 = (Job*) g_ptr_array_index(tmp->jobs, i + 1);
                         if(j1 == j2) {
-                            j1->nb_layers = 1;
+                            j1->num_layers = 1;
                         }
                     }
                 }

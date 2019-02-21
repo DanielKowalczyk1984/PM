@@ -262,7 +262,7 @@ void PricerSolverBase::build_mip() {
             auto high = edge_type_list[*it.first];
             if (high) {
                 auto &n = table.node(get(boost::vertex_name_t(),g,source(*it.first, g)));
-                double cost = (double) value_Fj(n.GetWeight() + n.GetJob()->processingime, n.GetJob());
+                double cost = (double) value_Fj(n.GetWeight() + n.GetJob()->processing_time, n.GetJob());
                 edge_var_list[*it.first] = model->addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
                 put(boost::edge_weight2_t(),g,*it.first, model->addVar(0.0, 8.0, 0.0, GRB_CONTINUOUS));
@@ -383,7 +383,7 @@ void PricerSolverBdd::InitTable() {
                 it.set_job(tmp_pair->j);
                 it.set_layer(layer);
                 int w = it.GetWeight();
-                int p = it.GetJob()->processingime;
+                int p = it.GetJob()->processing_time;
 
                 auto& n0 = table_new.node(it.branch[0]);
                 auto& n1 = table_new.node(it.branch[1]);
@@ -434,7 +434,7 @@ void PricerSolverBddSimple::evaluate_nodes(double *pi, int UB, double LB, int nm
         for (auto &it : table[i]) {
             int w = it.GetWeight();
             Job *job = it.GetJob();
-            double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+            double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
 
             if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                 it.calc_yes = false;
@@ -482,25 +482,25 @@ void PricerSolverBddCycle::evaluate_nodes(double *pi, int UB, double LB, int nma
             Job *job = it.GetJob();
 
             if(it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() != job) {
-                double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
             } else if (it.forward_label1.GetPrevJob() == job && it.child[1]->backward_label1.get_prev_job() != job) {
-                double result = it.forward_label2.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                double result = it.forward_label2.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
             } else if (it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() == job) {
-                double result = it.forward_label1.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                double result = it.forward_label1.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
             } else {
-                double result = it.forward_label2.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                double result = it.forward_label2.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
@@ -547,7 +547,7 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double *pi, int UB, double LB
         for (auto &it : table[i]) {
             int w = it.GetWeight();
             Job *job = it.GetJob();
-            double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+            double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
 
             if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                 it.calc_yes = false;
@@ -595,25 +595,25 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double *pi, int UB, double LB,
             Job *job = it.GetJob();
 
             if(it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() != job) {
-                double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
             } else if (it.forward_label1.GetPrevJob() == job && it.child[1]->backward_label1.get_prev_job() != job) {
-                double result = it.forward_label2.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                double result = it.forward_label2.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
             } else if (it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() == job) {
-                double result = it.forward_label1.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                double result = it.forward_label1.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
             } else {
-                double result = it.forward_label2.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processingime, job) + pi[job->job] + pi[njobs];
+                double result = it.forward_label2.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(nmachines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
@@ -678,7 +678,7 @@ void PricerSolverZdd::InitTable() {
 
             for (auto &it : table[i][j].list) {
                 int w = it->GetWeight();
-                int p = w + job->processingime;
+                int p = w + job->processing_time;
                 it->y = child(n1).add_weight(p, nlayers - n1.row());
                 it->n = child(n0).add_weight(w, nlayers - n0.row());
             }
@@ -750,11 +750,11 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
             int j = i - 1;
             Job *job = reinterpret_cast<Job *>(g_ptr_array_index(jobs, j));
 
-            if (t >=  job->processingime) {
-                if (F[t - job->processingime]
+            if (t >=  job->processing_time) {
+                if (F[t - job->processing_time]
                     - static_cast<double>(value_Fj(t, job))
                     + _pi[job->job] >= F[t]) {
-                    F[t] = F[t - job->processingime]
+                    F[t] = F[t - job->processing_time]
                            - value_Fj(t, job) + _pi[job->job];
                     A[t] = job;
                 }
@@ -779,7 +779,7 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
         Job *job = A[t_min];
         v.push_back(A[t_min]);
         opt_sol.cost += value_Fj(t_min, A[t_min]);
-        t_min -= job->processingime;
+        t_min -= job->processing_time;
     }
 
     std::vector<Job *>::reverse_iterator it = v.rbegin();
@@ -837,7 +837,7 @@ void PricerSolverArcTimeDp::InitTable() {
     }
 
     for (int i = 0; i < n; ++i) {
-        int p = vector_jobs[i]->processingime;
+        int p = vector_jobs[i]->processing_time;
         for (int j = 0; j < n + 1; ++j) {
             p_matrix[i][j] = p;
         }
@@ -854,7 +854,7 @@ void PricerSolverArcTimeDp::InitTable() {
             for (auto &it : vector_jobs) {
                 if (it != tmp
                     && t - p_matrix[it->job][j] >= 0
-                    && t <= Hmax - tmp->processingime ) {
+                    && t <= Hmax - tmp->processing_time ) {
                     graph[j][t].insert(it);
                     nb_arcs_ati++;
                 }
@@ -865,7 +865,7 @@ void PricerSolverArcTimeDp::InitTable() {
     graph[n] = new boost::unordered_set<Job *>[Hmax + 1];
     for (int t = 1; t < Hmax + 1; t++) {
         for (auto &it : vector_jobs) {
-            if(t >= it->processingime) {
+            if(t >= it->processing_time) {
                 graph[n][t].insert(it);
                 nb_arcs_ati++;
             }
@@ -879,12 +879,12 @@ void PricerSolverArcTimeDp::InitTable() {
         Job *tmp_i = vector_jobs[i];
         for (int j = i + 1; j < n; ++j) {
             Job *tmp_j = vector_jobs[j];
-            for (int t = tmp_i->processingime; t <= Hmax - tmp_j->processingime; ++t) {
+            for (int t = tmp_i->processing_time; t <= Hmax - tmp_j->processing_time; ++t) {
                 if (delta1(i, j, t) >= 0) {
                     remove_arc(i, j, t);
                     nb_arcs_ati--;
                 } else {
-                    remove_arc(j, i, t - tmp_i->processingime + tmp_j->processingime);
+                    remove_arc(j, i, t - tmp_i->processing_time + tmp_j->processing_time);
                     nb_arcs_ati--;
                 }
             }
@@ -893,9 +893,9 @@ void PricerSolverArcTimeDp::InitTable() {
 
     for (int j = 0; j < n; ++j) {
         Job *tmp_j = vector_jobs[j];
-        for (int t = tmp_j->processingime; t < Hmax; ++t) {
+        for (int t = tmp_j->processing_time; t < Hmax; ++t) {
             if (delta2(j, t) <= 0) {
-                remove_arc(n, j, t - tmp_j->processingime + 1);
+                remove_arc(n, j, t - tmp_j->processing_time + 1);
                 nb_arcs_ati--;
             } else {
                 remove_arc(j, n, t);
@@ -906,7 +906,7 @@ void PricerSolverArcTimeDp::InitTable() {
 
     for (int j = 0; j < n + 1; ++j) {
         Job* tmp = vector_jobs[j];
-        for (int t = 0; t <= Hmax - tmp->processingime; ++t) {
+        for (int t = 0; t <= Hmax - tmp->processing_time; ++t) {
             if (graph[j][t].empty()) {
                 F[j][t] = DBL_MAX/2;
             }
@@ -957,13 +957,13 @@ Optimal_Solution<double> PricerSolverArcTimeDp::pricing_algorithm(double *_pi) {
             B[j][t] = -1;
             F[j][t] = DBL_MAX/2;
             job_iterator it = graph[j][t].begin();
-            if (!graph[j][t].empty() && t <= Hmax - tmp->processingime ) {
-                F[j][t] = F[(*it)->job][t - p_matrix[(*it)->job][j]] + value_Fj(t + tmp->processingime, tmp) - _pi[j];
+            if (!graph[j][t].empty() && t <= Hmax - tmp->processing_time ) {
+                F[j][t] = F[(*it)->job][t - p_matrix[(*it)->job][j]] + value_Fj(t + tmp->processing_time, tmp) - _pi[j];
                 A[j][t] = (*it);
                 B[j][t] = t - p_matrix[(*it)->job][j];
                 it++;
                 while(it != graph[j][t].end()) {
-                    double result = F[(*it)->job][t - p_matrix[(*it)->job][j]] + value_Fj(t + tmp->processingime, tmp) - _pi[j];
+                    double result = F[(*it)->job][t - p_matrix[(*it)->job][j]] + value_Fj(t + tmp->processing_time, tmp) - _pi[j];
                     if (F[j][t] >= result) {
                         F[j][t] = result;
                         A[j][t] = (*it);
@@ -983,9 +983,9 @@ Optimal_Solution<double> PricerSolverArcTimeDp::pricing_algorithm(double *_pi) {
         int aux_T = B[job][T];
         if (aux_job != n) {
             v.push_back(vector_jobs[aux_job]);
-            sol.C_max += vector_jobs[aux_job]->processingime;
-            sol.cost += value_Fj(aux_T + vector_jobs[aux_job]->processingime, vector_jobs[aux_job]);
-            sol.obj += _pi[aux_job] - value_Fj(aux_T + vector_jobs[aux_job]->processingime, vector_jobs[aux_job]);
+            sol.C_max += vector_jobs[aux_job]->processing_time;
+            sol.cost += value_Fj(aux_T + vector_jobs[aux_job]->processing_time, vector_jobs[aux_job]);
+            sol.obj += _pi[aux_job] - value_Fj(aux_T + vector_jobs[aux_job]->processing_time, vector_jobs[aux_job]);
         }
         job = aux_job;
         T = aux_T;

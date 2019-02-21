@@ -66,10 +66,10 @@ int read_problem(wctproblem *problem) {
             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
             g_ptr_array_add(problem->g_job_array, tmp_j);
 
-            if (tmp_j->processingime > tmp_j->duetime) {
+            if (tmp_j->processing_time > tmp_j->due_time) {
                 problem->off +=
-                    tmp_j->weight * (tmp_j->processingime - tmp_j->duetime);
-                tmp_j->duetime = tmp_j->processingime;
+                    tmp_j->weight * (tmp_j->processing_time - tmp_j->due_time);
+                tmp_j->due_time = tmp_j->processing_time;
             }
 
             tmp_j->job = curjob;
