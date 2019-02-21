@@ -60,9 +60,9 @@ public:
     virtual ~PricerSolverBase();
 
     /**
-     * InitTable
+     * init_table
      */
-    virtual void InitTable() = 0;
+    virtual void init_table() = 0;
 
     /**
      * Pricing Algorithm
@@ -85,8 +85,8 @@ public:
      /**
       * Some getters
       */
-     void IterateZdd();
-     void PrintNumberPaths();
+     void iterate_zdd();
+     void print_num_paths();
 
      int get_remove();
      size_t get_datasize();
@@ -106,7 +106,7 @@ protected:
     tdzdd::DataTable<Node<double>> table;
 public:
     PricerSolverBdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-    void InitTable() override;
+    void init_table() override;
     virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override = 0;
 };
 
@@ -162,7 +162,7 @@ protected:
     ForwardZddNode<double>& child(tdzdd::NodeId const & id);
 public:
     PricerSolverZdd(GPtrArray *_jobs, GPtrArray *ordered_jobs);
-    void InitTable() override;
+    void init_table() override;
 };
 
 class PricerSolverZddSimple : public PricerSolverZdd {
@@ -195,7 +195,7 @@ private:
     int Hmax;
 public:
     PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax);
-    void InitTable() override;
+    void init_table() override;
 
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
 };
@@ -216,7 +216,7 @@ private:
 public:
     PricerSolverArcTimeDp(GPtrArray *_jobs, int _Hmax);
     ~PricerSolverArcTimeDp();
-    void InitTable() override;
+    void init_table() override;
 
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
     int delta1(const int &i,const int &j, const int &t) {
