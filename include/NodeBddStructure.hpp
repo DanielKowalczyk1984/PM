@@ -59,7 +59,6 @@ public:
     /**
      * Universal ZDD constructor.
      * @param n the number of variables.
-     * @param useMP use algorithms for multiple processors.
      */
     explicit DdStructure(int n) :
             diagram(n + 1), root_(1) {
@@ -81,7 +80,6 @@ public:
     /**
      * DD construction.
      * @param spec DD spec.
-     * @param useMP use algorithms for multiple processors.
      */
     template<typename SPEC>
     explicit DdStructure(tdzdd::DdSpecBase<SPEC,2> const& spec) {

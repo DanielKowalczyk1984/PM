@@ -49,13 +49,13 @@ int _job_compare_spt(const void *a, const void *b) {
     const Job *x = ((const Job *)&a);
     const Job *y = ((const Job *)&b);
 
-    if (x->processingime > y->processingime) {
+    if (x->processing_time > y->processing_time) {
         return 1;
-    } else if (x->processingime < y->processingime) {
+    } else if (x->processing_time < y->processing_time) {
         return -1;
-    } else if (x->duetime > y->duetime) {
+    } else if (x->due_time > y->due_time) {
         return 1;
-    } else if (x->duetime < y->duetime) {
+    } else if (x->due_time < y->due_time) {
         return -1;
     } else if (x->weight > y->weight) {
         return 1;
@@ -98,11 +98,11 @@ static int solution_set_c(solution *sol) {
         tmp = (partlist *)binomial_heap_pop(heap);
         j->index = tmp->machine->len;
         g_ptr_array_add(tmp->machine, j);
-        tmp->c += j->processingime;
+        tmp->c += j->processing_time;
         sol->c[j->job] = tmp->c;
         tmp->tw += value_Fj(tmp->c, j);
         sol->tw += value_Fj(tmp->c, j);
-        sol->b += j->duetime * (sol->njobs - i);
+        sol->b += j->due_time * (sol->njobs - i);
         binomial_heap_insert(heap, tmp);
     }
 
@@ -349,17 +349,17 @@ static void perturb_swap(solution *         sol,
     for (unsigned i = 0; i < part1->machine->len; ++i) {
         tmp = (Job *)g_ptr_array_index(part1->machine, i);
         tmp->index = i;
-        part1->c += tmp->processingime;
+        part1->c += tmp->processing_time;
         sol->c[tmp->job] = part1->c;
-        part1->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->duetime);
+        part1->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->due_time);
     }
 
     for (unsigned i = 0; i < part2->machine->len; ++i) {
         tmp = (Job *)g_ptr_array_index(part2->machine, i);
         tmp->index = i;
-        part2->c += tmp->processingime;
+        part2->c += tmp->processing_time;
         sol->c[tmp->job] = part2->c;
-        part2->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->duetime);
+        part2->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->due_time);
     }
 
     sol->tw += part1->tw + part2->tw;
@@ -433,6 +433,7 @@ int heuristic_rpup(wctproblem *prob) {
     local_search_create_g(sol, data);
     RVND(sol, data);
     solution_canonical_order(sol, intervals);
+    add_solution_to_colpool(sol, &(prob->root_pd));
     printf("Solution after local search:\n");
     solution_print(sol);
 

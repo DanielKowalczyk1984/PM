@@ -38,13 +38,13 @@ public:
          Job *tmp_j = (Job *) tmp_pair->j;
 
          // if (level - 1 == 0 && value) {
-         //     return (state + tmp_j->processingime <= tmp_interval->b)? -1 : 0;
+         //     return (state + tmp_j->processing_time <= tmp_interval->b)? -1 : 0;
          // } else if (level - 1 == 0) {
          //     return ( state <= tmp_interval->b) ? -1 : 0;
          // }
 
          if (value) {
-             state = state + tmp_j->processingime;
+             state = state + tmp_j->processing_time;
          }
 
          _j = min_job(layer, state,value);
@@ -75,7 +75,7 @@ public:
                 tmp_interval = tmp_pair->I;
                 tmp_j = tmp_pair->j;
 
-                 if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b ) {
+                 if (state + tmp_j->processing_time > tmp_interval->a  && state + tmp_j->processing_time <= tmp_interval->b ) {
                      if(tmp == tmp_j || value_diff_Fij(state, tmp_j, tmp) < 0) {
                          continue;
                      }
@@ -89,7 +89,7 @@ public:
                tmp_interval = tmp_pair->I;
                tmp_j = tmp_pair->j;
 
-                if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b) {
+                if (state + tmp_j->processing_time > tmp_interval->a  && state + tmp_j->processing_time <= tmp_interval->b) {
                     val = i;
                     break;
                 }
@@ -100,7 +100,7 @@ public:
      }
 
      int diff_obj(Job *i, Job *j, int C) const {
-        return value_Fj(C, i) + value_Fj(C + j->processingime, j) - (value_Fj(C - i->processingime + j->processingime, j) + value_Fj(C + j->processingime, i));
+        return value_Fj(C, i) + value_Fj(C + j->processing_time, j) - (value_Fj(C - i->processing_time + j->processing_time, j) + value_Fj(C + j->processing_time, i));
 
      }
 

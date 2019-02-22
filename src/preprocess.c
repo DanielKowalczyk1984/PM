@@ -5,24 +5,24 @@ void g_problem_summary_init(gpointer data, gpointer user_data) {
     Job *       j = (Job *)data;
     wctproblem *prob = (wctproblem *)user_data;
 
-    prob->psum += j->processingime;
-    prob->pmax = CC_MAX(prob->pmax, j->processingime);
-    prob->pmin = CC_MIN(prob->pmin, j->processingime);
-    prob->dmax = CC_MAX(prob->dmax, j->duetime);
-    prob->dmin = CC_MIN(prob->pmin, j->duetime);
+    prob->psum += j->processing_time;
+    prob->pmax = CC_MAX(prob->pmax, j->processing_time);
+    prob->pmin = CC_MIN(prob->pmin, j->processing_time);
+    prob->dmax = CC_MAX(prob->dmax, j->due_time);
+    prob->dmin = CC_MIN(prob->pmin, j->due_time);
 }
 
 gint g_job_compare_edd(const void *a, const void *b, void *data) {
     const Job *x = *((Job *const *)a);
     const Job *y = *((Job *const *)b);
 
-    if (x->duetime > y->duetime) {
+    if (x->due_time > y->due_time) {
         return (1);
-    } else if (x->duetime < y->duetime) {
+    } else if (x->due_time < y->due_time) {
         return (-1);
-    } else if (x->processingime > y->processingime) {
+    } else if (x->processing_time > y->processing_time) {
         return (1);
-    } else if (x->processingime < y->processingime) {
+    } else if (x->processing_time < y->processing_time) {
         return (-1);
     } else if (x->weight < y->weight) {
         return (1);
@@ -128,9 +128,9 @@ static int calculate_T(interval_pair *pair, int k, GPtrArray *interval_array) {
     Job *     i = pair->a;
     Job *     j = pair->b;
     pair->left = I->a;
-    pair->right = I->a + j->processingime;
+    pair->right = I->a + j->processing_time;
 
-    if (pair->left > I->b - i->processingime) {
+    if (pair->left > I->b - i->processing_time) {
         return pair->left;
     } else {
         if (value_diff_Fij(pair->left, i, j) <= 0) {
@@ -139,9 +139,9 @@ static int calculate_T(interval_pair *pair, int k, GPtrArray *interval_array) {
 
         for (int t = k - 1; t >= 0; t--) {
             tmp = (interval *)g_ptr_array_index(interval_array, t);
-            pair->left = tmp->a + j->processingime - i->processingime;
+            pair->left = tmp->a + j->processing_time - i->processing_time;
 
-            if (value_diff_Fij(pair->left, i, j) <= 0 && pair->left >= tmp->a && pair->left <= tmp->b - i->processingime) {
+            if (value_diff_Fij(pair->left, i, j) <= 0 && pair->left >= tmp->a && pair->left <= tmp->b - i->processing_time) {
                 break;
             }
         }
@@ -155,7 +155,7 @@ static int check_interval(interval_pair *pair,
                           GPtrArray *    interval_array) {
     interval *I = (interval *)g_ptr_array_index(interval_array, k);
     Job *     j = pair->b;
-    return (I->a + j->processingime >= I->b ||
+    return (I->a + j->processing_time >= I->b ||
             calculate_T(pair, k, interval_array) <= I->a);
 }
 
@@ -222,7 +222,7 @@ void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b) {
         GPtrArray *jobarray = tmp_interval->sigma;
         for (unsigned j = 0; j < jobarray->len; ++j) {
             tmp_j = (Job *)g_ptr_array_index(jobarray, j);
-            if (tmp_j->processingime <= tmp_interval->b) {
+            if (tmp_j->processing_time <= tmp_interval->b) {
                 tmp_pair = CC_SAFE_MALLOC(1, job_interval_pair);
                 tmp_pair->j = tmp_j;
                 tmp_pair->I = tmp_interval;
@@ -255,12 +255,12 @@ int find_division(wctproblem *problem) {
     prev = 0;
     for (int i = 0; i < njobs && prev < problem->H_max; ++i) {
         tmp_j = (Job *)g_ptr_array_index(jobarray, i);
-        int tmp = CC_MIN(problem->H_max, tmp_j->duetime);
+        int tmp = CC_MIN(problem->H_max, tmp_j->due_time);
         if (prev < tmp) {
             tmp_interval = interval_alloc(prev, tmp, -1, jobarray, njobs);
             g_ptr_array_add(tmp_array, tmp_interval);
             CCcheck_NULL_2(tmp_interval, "Failed to allocate memory");
-            prev = tmp_j->duetime;
+            prev = tmp_j->due_time;
         }
     }
 

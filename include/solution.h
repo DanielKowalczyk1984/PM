@@ -11,11 +11,11 @@ extern "C" {
 typedef struct _Job {
     int job;
     int weight;
-    int processingime;
-    int releasetime;
-    int duetime;
+    int processing_time;
+    int release_time;
+    int due_time;
     int index;
-    int nb_layers;
+    int num_layers;
     int *pos_interval;
 } Job;
 
@@ -61,7 +61,7 @@ void g_print_machine(gpointer data, gpointer user_data);
 void g_set_sol_perm(gpointer data, gpointer user_data);
 void g_reset_nb_layers(gpointer data, gpointer user_data);
 
-inline int value_Fj(int C, Job *j) { return j->weight * CC_MAX(0, C - j->duetime); }
+inline int value_Fj(int C, Job *j) { return j->weight * CC_MAX(0, C - j->due_time); }
 int value_diff_Fij(int C, Job *i, Job *j);
 int bool_diff_Fij(int , Job *, Job *);
 

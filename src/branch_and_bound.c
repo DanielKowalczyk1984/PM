@@ -139,16 +139,16 @@ int insert_frac_pairs_into_heap(wctdata *pd,
         }
         tmp_schedule = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
 
-        for (j = 0; j < tmp_schedule->jobs->len; ++j) {
-            tmp_j1 = (Job *)g_ptr_array_index(tmp_schedule->jobs, j);
+        for (j = 0; j < tmp_schedule->job_list->len; ++j) {
+            tmp_j1 = (Job *)g_ptr_array_index(tmp_schedule->job_list, j);
             int v1 = tmp_j1->job;
             int k;
             ref_key = nodepair_ref_key(v1, v1);
             nodepair_weights[ref_key] += pd->x[i];
 
-            for (k = j + 1; k < tmp_schedule->jobs->len; ++k) {
+            for (k = j + 1; k < tmp_schedule->job_list->len; ++k) {
                 assert(k != j);
-                tmp_j2 = (Job *)g_ptr_array_index(tmp_schedule->jobs, k);
+                tmp_j2 = (Job *)g_ptr_array_index(tmp_schedule->job_list, k);
                 int v2 = tmp_j2->job;
                 assert(v1 < v2);
                 ref_key = nodepair_ref_key(v1, v2);
@@ -393,20 +393,17 @@ static void scheduleset_unify(GPtrArray *array) {
 
 int prune_duplicated_sets(wctdata *pd) {
     int          val = 0;
-    scheduleset *tmp;
-    GPtrArray *  tmp_a;
-    Job *        tmp_j;
     scheduleset_unify(pd->localColPool);
 
     if (dbg_lvl() > 1) {
         for (int i = 0; i < pd->localColPool->len; ++i) {
-            tmp = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
-            tmp_a = tmp->jobs;
+            scheduleset* tmp = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
+            GPtrArray* tmp_a = tmp->job_list;
 
             printf("TRANSSORT SET ");
 
             for (int j = 0; j < tmp_a->len; ++j) {
-                tmp_j = (Job *)g_ptr_array_index(tmp_a, j);
+                Job* tmp_j = (Job *)g_ptr_array_index(tmp_a, j);
                 printf(" %d", tmp_j->job);
             }
 
@@ -579,7 +576,7 @@ int branching_msg(wctdata *pd, wctproblem *problem) {
             problem->tot_cputime.cum_zeit, binomial_heap_num_entries(heap),
             pd->njobs, problem->global_upper_bound, root->lower_bound,
             pd->v1->job, pd->v2->job, pd->ecount_differ, pd->ecount_same,
-            get_datasize(pd->solver), pd->localColPool->len);
+            get_size_graph(pd->solver), pd->localColPool->len);
         CCutil_resume_timer(&problem->tot_cputime);
         problem->nb_explored_nodes++;
     }
@@ -599,7 +596,6 @@ int sequential_branching_conflict(wctproblem *problem) {
            problem->tot_branch_and_bound.cum_zeit <
                parms->branching_cpu_limit) {
         CCutil_resume_timer(&problem->tot_branch_and_bound);
-        int i;
         pd->upper_bound = problem->global_upper_bound;
 
         if (pd->lower_bound >= pd->upper_bound ||
@@ -616,13 +612,13 @@ int sequential_branching_conflict(wctproblem *problem) {
             val = create_branches_conflict(pd, problem);
             CCcheck_val_2(val, "Failed at create_branches");
 
-            for (i = 0; i < pd->nsame; i++) {
+            for (int i = 0; i < pd->nsame; i++) {
                 val = insert_into_branching_heap(&(pd->same_children[i]),
                                                  problem);
                 CCcheck_val_2(val, "Failed in insert_into_branching_heap");
             }
 
-            for (i = 0; i < pd->ndiff; i++) {
+            for (int i = 0; i < pd->ndiff; i++) {
                 val =
                     insert_into_branching_heap(pd->diff_children + i, problem);
                 CCcheck_val_2(val, "Faield at insert_into_branching_heap");
@@ -675,7 +671,7 @@ int branching_msg_cbfs(wctdata *pd, wctproblem *problem) {
             problem->tot_cputime.cum_zeit, nb_nodes, pd->njobs,
             problem->global_upper_bound, root->lower_bound, pd->v1->job,
             pd->v2->job, pd->ecount_differ, pd->ecount_same,
-            get_datasize(pd->solver), pd->localColPool->len);
+            get_size_graph(pd->solver), pd->localColPool->len);
         CCutil_resume_timer(&problem->tot_cputime);
         problem->nb_explored_nodes++;
     }
@@ -694,7 +690,6 @@ int sequential_cbfs_branch_and_bound_conflict(wctproblem *problem) {
            problem->tot_branch_and_bound.cum_zeit <
                parms->branching_cpu_limit) {
         CCutil_resume_timer(&problem->tot_branch_and_bound);
-        int i;
         pd->upper_bound = problem->global_upper_bound;
 
         if (pd->lower_bound >= pd->upper_bound ||
@@ -711,11 +706,11 @@ int sequential_cbfs_branch_and_bound_conflict(wctproblem *problem) {
             val = create_branches_conflict(pd, problem);
             CCcheck_val_2(val, "Failed at create_branches");
 
-            for (i = 0; i < pd->nsame; i++) {
+            for (int i = 0; i < pd->nsame; i++) {
                 insert_node_for_exploration(pd->same_children + i, problem);
             }
 
-            for (i = 0; i < pd->ndiff; i++) {
+            for (int i = 0; i < pd->ndiff; i++) {
                 insert_node_for_exploration(pd->diff_children + i, problem);
             }
 

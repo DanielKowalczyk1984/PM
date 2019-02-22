@@ -12,40 +12,40 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data) {
     const Job *y = *(Job *const *)b;
     interval * user_data = (interval *)data;
     int        diff = user_data->b - user_data->a;
-    double     w_x = (x->duetime <= user_data->a)
-                     ? (double)x->weight / x->processingime
+    double     w_x = (x->due_time <= user_data->a)
+                     ? (double)x->weight / x->processing_time
                      : 0.0;
-    double w_y = (y->duetime <= user_data->a)
-                     ? (double)y->weight / y->processingime
+    double w_y = (y->due_time <= user_data->a)
+                     ? (double)y->weight / y->processing_time
                      : 0.0;
 
-    if (x->processingime > diff) {
-        if (y->processingime <= diff) {
+    if (x->processing_time > diff) {
+        if (y->processing_time <= diff) {
             return -1;
         } else {
             if (w_x > w_y) {
                 return -1;
             } else if (w_y > w_x) {
                 return 1;
-            } else if (x->processingime > y->processingime) {
+            } else if (x->processing_time > y->processing_time) {
                 return -1;
-            } else if (y->processingime > x->processingime) {
+            } else if (y->processing_time > x->processing_time) {
                 return 1;
             }
 
             return x->job - y->job;
         }
     } else {
-        if (y->processingime > diff) {
+        if (y->processing_time > diff) {
             return 1;
         } else {
             if (w_x > w_y) {
                 return -1;
             } else if (w_y > w_x) {
                 return 1;
-            } else if (x->processingime > y->processingime) {
+            } else if (x->processing_time > y->processing_time) {
                 return -1;
-            } else if (y->processingime > x->processingime) {
+            } else if (y->processing_time > x->processing_time) {
                 return 1;
             }
 
@@ -70,7 +70,7 @@ void interval_init(
     g_ptr_array_sort_with_data(p->sigma, compare_interval, p);
 
     j = (Job *)g_ptr_array_index(p->sigma, p->begin);
-    while (p->b - p->a <= j->processingime && p->begin < (int)jobarray->len) {
+    while (p->b - p->a <= j->processing_time && p->begin < (int)jobarray->len) {
         j = (Job *)g_ptr_array_index(p->sigma, p->begin);
         p->begin++;
     }
@@ -134,7 +134,7 @@ void print_interval_pair(GPtrArray *ordered_jobs){
             printf("\n");
             printf("Interval %d (%d,%d]: ", cur->key, cur->a, cur->b);
         }
-        printf("%d (%d, %d) ", tmp_p->j->job, tmp_p->j->processingime, tmp_p->j->weight);
+        printf("%d (%d, %d) ", tmp_p->j->job, tmp_p->j->processing_time, tmp_p->j->weight);
     }
 }
 
@@ -143,6 +143,6 @@ void count_jobs_interval_pair(GPtrArray *ordered_jobs){
 
     for(size_t i = 0; i < ordered_jobs->len;i++){
         tmp_p = g_ptr_array_index(ordered_jobs, i);
-        tmp_p->j->nb_layers++;
+        tmp_p->j->num_layers++;
     }
 }

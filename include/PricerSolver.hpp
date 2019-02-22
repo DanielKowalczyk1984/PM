@@ -2,35 +2,35 @@
 #define INCLUDE_PRICERSOLVER_HPP
 
 #include <tdzdd/DdStructure.hpp>
+#include <NodeBddStructure.hpp>
 #include <PricerEvaluate.hpp>
 #include <scheduleset.h>
-#include <boost/unordered_set.hpp>
-#include <NodeBddStructure.hpp>
-using namespace std;
+#include <MipGraph.hpp>
 
 struct PricerSolverBase {
 protected:
     GPtrArray *jobs;
     int njobs;
+    int num_machines;
     GPtrArray *ordered_jobs;
     int nlayers;
 
-    tdzdd::DdStructure<2> *zdd;
-    tdzdd::DdStructure<2> *dd;
-    DdStructure<double> *new_dd;
+    std::unique_ptr<DdStructure<>> decision_diagram;
 
-    size_t nb_nodes_bdd;
-    size_t nb_nodes_zdd;
-    int nb_arcs_ati;
+    size_t size_graph;
 
     int nb_removed_edges;
     int nb_removed_nodes;
+
+    MipGraph g;
+    std::unique_ptr<GRBEnv> env;
+    std::unique_ptr<GRBModel> model;
 public:
     /**
      * Default constructors
      */
-    PricerSolverBase(GPtrArray *_jobs);
-    PricerSolverBase(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    PricerSolverBase(GPtrArray *_jobs, int _num_machines);
+    PricerSolverBase(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
     /**
      * Copy constructor
      */
@@ -57,9 +57,9 @@ public:
     virtual ~PricerSolverBase();
 
     /**
-     * InitTable
+     * init_table
      */
-    virtual void InitTable() = 0;
+    virtual void init_table() = 0;
 
     /**
      * Pricing Algorithm
@@ -69,22 +69,27 @@ public:
      /**
       * Reduced cost fixing
       */
-     void calculate_new_ordered_jobs(double *pi,int UB, double LB, int nmachines);
+     void calculate_new_ordered_jobs(double *pi, int UB, double LB);
      void remove_layers();
      void remove_edges();
      void calculate_edges(scheduleset *set);
-     virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines);
+     virtual void evaluate_nodes(double *pi, int UB, double LB);
+
+     /** Construct MipGraph */
+     void construct_mipgraph();
+     void build_mip();
 
      /**
       * Some getters
       */
-     void IterateZdd();
-     void PrintNumberPaths();
+     void iterate_zdd();
+     void print_num_paths();
 
-     int get_remove();
+     int get_num_remove_nodes();
+     int get_num_remove_edges();
+     int get_num_layers();
+     size_t get_size_graph();
      size_t get_datasize();
-     int get_nb_arcs_ati();
-     size_t get_numberrows_zdd();
      double get_cost_edge(int idx);
 
      /**
@@ -98,9 +103,9 @@ class PricerSolverBdd : public PricerSolverBase {
 protected:
     tdzdd::DataTable<Node<double>> table;
 public:
-    PricerSolverBdd(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-    void InitTable() override;
-    virtual void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override = 0;
+    PricerSolverBdd(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
+    void init_table() override;
+    virtual void evaluate_nodes(double *pi, int UB, double LB) override = 0;
 };
 
 class PricerSolverBddSimple : public PricerSolverBdd {
@@ -108,10 +113,10 @@ private:
     ForwardBddSimpleDouble evaluator;
     BackwardBddSimpleDouble reversed_evaluator;
 public:
-    PricerSolverBddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    PricerSolverBddSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
     void compute_labels(double *_pi);
-    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;    
+    void evaluate_nodes(double *pi, int UB, double LB) override ;    
 };
 
 class PricerSolverBddCycle : public PricerSolverBdd {
@@ -119,10 +124,10 @@ private:
     ForwardBddCycleDouble evaluator;
     BackwardBddCycleDouble reversed_evaluator;
 public:
-    PricerSolverBddCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    PricerSolverBddCycle(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
     void compute_labels(double *_pi);
-    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;        
+    void evaluate_nodes(double *pi, int UB, double LB) override ;        
 };
 
 class PricerSolverBddBackwardSimple : public PricerSolverBdd {
@@ -131,10 +136,10 @@ private:
     ForwardBddSimpleDouble reversed_evaluator;
 
 public:
-    PricerSolverBddBackwardSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    PricerSolverBddBackwardSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
     void compute_labels(double *_pi);
-    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;    
+    void evaluate_nodes(double *pi, int UB, double LB) override ;    
 };
 
 class PricerSolverBddBackwardCycle : public PricerSolverBdd {
@@ -142,53 +147,23 @@ private:
     BackwardBddCycleDouble evaluator;
     ForwardBddCycleDouble reversed_evaluator;
 public:
-    PricerSolverBddBackwardCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
+    PricerSolverBddBackwardCycle(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
 
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
     void compute_labels(double *_pi);
-    void evaluate_nodes(double *pi, int UB, double LB, int nmachines) override ;    
-};
-
-class PricerSolverZdd : public PricerSolverBase {
-protected:
-    tdzdd::DataTable<ForwardZddNode<double>> table;
-    ForwardZddNode<double>& child(tdzdd::NodeId const & id);
-public:
-    PricerSolverZdd(GPtrArray *_jobs, GPtrArray *ordered_jobs);
-    void InitTable() override;
-};
-
-class PricerSolverZddSimple : public PricerSolverZdd {
-private:
-    ForwardZddSimpleDouble evaluator;
-public:
-    PricerSolverZddSimple(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-
-    /**
-     * Pricing Algorithm
-     */
-    Optimal_Solution<double> pricing_algorithm(double * _pi) override;
-};
-
-class PricerSolverCycle : public PricerSolverZdd {
-private:
-    ForwardZddCycleDouble evaluator;
-public:
-    PricerSolverCycle(GPtrArray *_jobs, GPtrArray *_ordered_jobs);
-
-    /**
-     * Pricing Algorithm
-     */
-    Optimal_Solution<double> pricing_algorithm(double * _pi) override;
-
+    void evaluate_nodes(double *pi, int UB, double LB) override ;    
 };
 
 class PricerSolverSimpleDp : public PricerSolverBase {
 private:
     int Hmax;
+    std::unique_ptr<Job*[]> A;
+    std::unique_ptr<double[]> F;
+    
 public:
-    PricerSolverSimpleDp(GPtrArray *_jobs, int _Hmax);
-    void InitTable() override;
+    PricerSolverSimpleDp(GPtrArray *_jobs, int _num_machines, int _Hmax);
+    ~PricerSolverSimpleDp();
+    void init_table() override;
 
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
 };
@@ -207,17 +182,17 @@ private:
 
     typedef boost::unordered_set<Job*>::iterator job_iterator;
 public:
-    PricerSolverArcTimeDp(GPtrArray *_jobs, int _Hmax);
+    PricerSolverArcTimeDp(GPtrArray *_jobs, int _num_machines, int _Hmax);
     ~PricerSolverArcTimeDp();
-    void InitTable() override;
+    void init_table() override;
 
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;
     int delta1(const int &i,const int &j, const int &t) {
         Job *tmp_i = vector_jobs[i];
         Job *tmp_j = vector_jobs[j];
-        return (value_Fj(t, tmp_i) + value_Fj(t + tmp_j->processingime, tmp_j))
-            - (value_Fj(t + tmp_j->processingime - tmp_i->processingime, tmp_j)
-                + value_Fj(t + tmp_j->processingime, tmp_i) );
+        return (value_Fj(t, tmp_i) + value_Fj(t + tmp_j->processing_time, tmp_j))
+            - (value_Fj(t + tmp_j->processing_time - tmp_i->processing_time, tmp_j)
+                + value_Fj(t + tmp_j->processing_time, tmp_i) );
     }
 
     void remove_arc(const int &i, const int &j, const int &t) {
@@ -231,5 +206,40 @@ public:
         return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
     }
 };
+
+
+// class PricerSolverZdd : public PricerSolverBase {
+// protected:
+//     tdzdd::DataTable<ForwardZddNode<double>> table;
+//     ForwardZddNode<double>& child(tdzdd::NodeId const & id);
+// public:
+//     PricerSolverZdd(GPtrArray *_jobs, int _num_machines, GPtrArray *ordered_jobs);
+//     void init_table() override;
+// };
+
+// class PricerSolverZddSimple : public PricerSolverZdd {
+// private:
+//     ForwardZddSimpleDouble evaluator;
+// public:
+//     PricerSolverZddSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
+
+//     /**
+//      * Pricing Algorithm
+//      */
+//     Optimal_Solution<double> pricing_algorithm(double * _pi) override;
+// };
+
+// class PricerSolverCycle : public PricerSolverZdd {
+// private:
+//     ForwardZddCycleDouble evaluator;
+// public:
+//     PricerSolverCycle(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
+
+//     /**
+//      * Pricing Algorithm
+//      */
+//     Optimal_Solution<double> pricing_algorithm(double * _pi) override;
+
+// };
 
 #endif  // INCLUDE_PRICERSOLVER_HPP

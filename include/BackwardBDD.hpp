@@ -49,7 +49,7 @@ void evalNode(Node<T> &n) const override {
     int weight = n.GetWeight();
     Node<T> *p0 = n.child[0];
     Node<T> *p1 = n.child[1];
-    T result = -value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job];
+    T result = -value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job];
 
     T obj0 = p0->backward_label1.GetF();
     T obj1 = p1->backward_label1.GetF() + result;
@@ -118,7 +118,7 @@ void evalNode(Node<T> &n) const override {
     int weight{n.GetWeight()};
     Node<T> *p0  {n.child[0]};
     Node<T> *p1  {n.child[1]};
-    T result {-value_Fj(weight + tmp_j->processingime, tmp_j) + pi[tmp_j->job]};
+    T result {-value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job]};
 
     Job *prev_job{p1->backward_label1.get_prev_job()};
 

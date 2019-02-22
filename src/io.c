@@ -66,10 +66,10 @@ int read_problem(wctproblem *problem) {
             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
             g_ptr_array_add(problem->g_job_array, tmp_j);
 
-            if (tmp_j->processingime > tmp_j->duetime) {
+            if (tmp_j->processing_time > tmp_j->due_time) {
                 problem->off +=
-                    tmp_j->weight * (tmp_j->processingime - tmp_j->duetime);
-                tmp_j->duetime = tmp_j->processingime;
+                    tmp_j->weight * (tmp_j->processing_time - tmp_j->due_time);
+                tmp_j->due_time = tmp_j->processing_time;
             }
 
             tmp_j->job = curjob;
@@ -125,19 +125,20 @@ int print_to_csv(wctproblem *problem) {
 
     if (size == 0) {
         fprintf(file,
-                "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                 "NameInstance", "tot_real_time", "tot_cputime", "tot_lb",
                 "tot_lb_root", 
                 "tot_heuristic", "tot_build_dd", "tot_pricing",
                 "rel_error", "global_lower_bound",
                 "global_upper_bound",
                 "first_rel_error",
-                "nb_generated_col", "date","nb_iterations_rvnd", "stabilization","alpha", "pricing_solver", "n", "m");
+                "nb_generated_col", "date","nb_iterations_rvnd", "stabilization","alpha", "pricing_solver", "n", "m",
+                "first_size_graph", "size_after_reduced_cost");
     }
 
     fprintf(file,
             "%s,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
-            "%u/%u,%d,%d,%f,%d,%d,%d\n",
+            "%u/%u,%d,%d,%f,%d,%d,%d,%lu,%lu\n",
             pd->pname, problem->real_time_total, problem->tot_cputime.cum_zeit,
             problem->tot_lb.cum_zeit, problem->tot_lb_root.cum_zeit,
             problem->tot_heuristic.cum_zeit, problem->tot_build_dd.cum_zeit,
@@ -145,7 +146,9 @@ int print_to_csv(wctproblem *problem) {
             problem->global_lower_bound, problem->global_upper_bound,
             problem->root_rel_error,
             problem->nb_generated_col, date.day,
-            date.month, date.year, parms->nb_iterations_rvnd, parms->stab_technique,parms->alpha,parms->pricing_solver,problem->njobs, problem->nmachines);
+            date.month, date.year, parms->nb_iterations_rvnd, parms->stab_technique,
+            parms->alpha,parms->pricing_solver,problem->njobs, problem->nmachines,
+            problem->first_size_graph, problem->size_graph_after_reduced_cost_fixing);
     fclose(file);
 CLEAN:
     return val;
@@ -212,10 +215,10 @@ int print_size_to_csv(wctproblem *problem, wctdata *pd) {
     size = ftell(file);
 
     if (size == 0) {
-        fprintf(file, "%s,%s,%s,%s,%s\n", "NameInstance","date","solver","size","sizearc");
+        fprintf(file, "%s,%s,%s,%s,%s\n", "NameInstance","date","solver","size","depth");
     }
 
-    fprintf(file, "%s,%u/%u/%u,%d,%zu,%d\n",pd->pname, date.day, date.month, date.year, parms->pricing_solver, get_datasize(pd->solver), get_nb_arcs_ati(pd->solver));
+    fprintf(file, "%s,%u/%u/%u,%d,%lu,%d\n",pd->pname, date.day, date.month, date.year, parms->pricing_solver, get_size_graph(pd->solver),pd->depth);
 
     fclose(file);
 CLEAN:

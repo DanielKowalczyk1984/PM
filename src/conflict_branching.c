@@ -12,14 +12,13 @@ static int transfer_same_cclasses(wctdata *  pd,
                                   Job *      v2) {
     int          val = 0;
     int          i;
-    scheduleset *it, *tmp;
+    scheduleset *tmp;
     Job *        tmp_j;
     /* Transfer independent sets: */
     g_ptr_array_set_size(pd->localColPool, colPool->len);
 
     for (i = 0; i < colPool->len; ++i) {
-        it = (scheduleset *)g_ptr_array_index(colPool, i);
-        int      j;
+        scheduleset* it = (scheduleset *)g_ptr_array_index(colPool, i);
         int      construct = 1;
         gboolean v1_in;
         gboolean v2_in;
@@ -33,23 +32,23 @@ static int transfer_same_cclasses(wctdata *  pd,
             g_ptr_array_add(pd->localColPool, tmp);
         }
 
-        for (j = 0; j < it->jobs->len && construct; ++j) {
-            tmp_j = (Job *)g_ptr_array_index(it->jobs, j);
-            tmp->totweight += tmp_j->processingime;
+        for (int j = 0; j < it->job_list->len && construct; ++j) {
+            tmp_j = (Job *)g_ptr_array_index(it->job_list, j);
+            tmp->total_processing_time += tmp_j->processing_time;
             g_hash_table_insert(tmp->table, tmp_j, NULL);
-            g_ptr_array_add(tmp->jobs, tmp_j);
-            tmp->totwct += value_Fj(tmp->totweight, tmp_j);
+            g_ptr_array_add(tmp->job_list, tmp_j);
+            tmp->total_weighted_completion_time += value_Fj(tmp->total_processing_time, tmp_j);
         }
 
         if (dbg_lvl() > 1 && construct) {
             printf("PARENT SET SAME ");
 
-            g_ptr_array_foreach(it->jobs, g_print_job, NULL);
+            g_ptr_array_foreach(it->job_list, g_print_job, NULL);
 
             printf("\n");
             printf("TRANS SET SAME");
 
-            g_ptr_array_foreach(tmp->jobs, g_print_job, NULL);
+            g_ptr_array_foreach(tmp->job_list, g_print_job, NULL);
 
             printf("\n");
         }
@@ -68,7 +67,7 @@ static int create_same_conflict(wctproblem *problem,
                                 Job *       v1,
                                 Job *       v2) {
     int       val = 0;
-    wctparms *parms = &(problem->parms);
+    // wctparms *parms = &(problem->parms);
     wctdata * pd = CC_SAFE_MALLOC(1, wctdata);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     wctdata_init(pd, problem);
@@ -101,7 +100,7 @@ static int create_same_conflict(wctproblem *problem,
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 1);
 
-        if ((size_t)pd->njobs != get_numberrows_zdd(pd->solver)) {
+        if ((size_t)pd->njobs != get_num_layers(pd->solver)) {
             pd->status = infeasible;
 
             if (pd->solver) {
@@ -142,7 +141,7 @@ static int create_differ_conflict(wctproblem *problem,
     int       i;
     int       nb_cols;
     wctdata * pd = CC_SAFE_MALLOC(1, wctdata);
-    wctparms *parms = &(problem->parms);
+    // wctparms *parms = &(problem->parms);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     scheduleset *it, *tmp;
     Job *        tmp_j;
@@ -174,7 +173,7 @@ static int create_differ_conflict(wctproblem *problem,
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 0);
 
-        if ((size_t)pd->njobs != get_numberrows_zdd(pd->solver)) {
+        if ((size_t)pd->njobs != get_num_layers(pd->solver)) {
             pd->status = infeasible;
 
             if (pd->solver) {
@@ -198,7 +197,6 @@ static int create_differ_conflict(wctproblem *problem,
 
     for (i = 0; i < nb_cols; ++i) {
         it = (scheduleset *)g_ptr_array_index(parent_pd->localColPool, i);
-        int      j;
         gboolean v1_in = g_hash_table_contains(it->table, v1);
         gboolean v2_in = g_hash_table_contains(it->table, v2);
         int      construct = (v1_in && v2_in) ? 0 : 1;
@@ -208,24 +206,24 @@ static int create_differ_conflict(wctproblem *problem,
             CCcheck_NULL_3(tmp, "Failed to allocate memory");
             g_ptr_array_add(pd->localColPool, tmp);
 
-            for (j = 0; j < it->jobs->len; j++) {
-                tmp_j = (Job *)g_ptr_array_index(it->jobs, j);
-                tmp->totweight += tmp_j->processingime;
+            for (int j = 0; j < it->job_list->len; j++) {
+                tmp_j = (Job *)g_ptr_array_index(it->job_list, j);
+                tmp->total_processing_time += tmp_j->processing_time;
                 g_hash_table_insert(tmp->table, tmp_j, NULL);
-                g_ptr_array_add(tmp->jobs, tmp_j);
-                tmp->totwct += value_Fj(tmp->totweight, tmp_j);
+                g_ptr_array_add(tmp->job_list, tmp_j);
+                tmp->total_weighted_completion_time += value_Fj(tmp->total_processing_time, tmp_j);
             }
         }
 
         if (dbg_lvl() > 1 && construct) {
             printf("PARENT SET DIFFER");
 
-            g_ptr_array_foreach(it->jobs, g_print_machine, NULL);
+            g_ptr_array_foreach(it->job_list, g_print_machine, NULL);
 
             printf("\n");
             printf("TRANS SET DIFFER");
 
-            g_ptr_array_foreach(tmp->jobs, g_print_machine, NULL);
+            g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
 
             printf("\n");
         }

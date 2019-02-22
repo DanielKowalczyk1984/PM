@@ -209,32 +209,32 @@ void partlist_permquicksort(int *     perm,
 
 Job *job_alloc(int *p, int *w, int *d) {
     Job *j = CC_SAFE_MALLOC(1, Job);
-    j->processingime = *p;
-    j->duetime = *d;
+    j->processing_time = *p;
+    j->due_time = *d;
     j->weight = *w;
-    j->nb_layers = 0;
+    j->num_layers = 0;
     j->pos_interval = (int *)NULL;
     return j;
 }
 
 void job_init(Job *job, int p, int w, int d) {
-    job->processingime = p;
+    job->processing_time = p;
     job->weight = w;
-    job->duetime = d;
+    job->due_time = d;
 }
 
 void g_set_jobarray_job(gpointer data, gpointer user_data) {
     Job *j = (Job *)data;
     int *i = (int *)user_data;
     j->job = *i;
-    j->nb_layers = 0;
+    j->num_layers = 0;
     (*i)++;
 }
 
 void g_print_jobarray(gpointer data, gpointer user_data) {
     Job *j = (Job *)data;
-    g_print("Job %d: %d %d %d %f\n", j->job, j->processingime, j->duetime,
-            j->weight, (double)j->weight / j->processingime);
+    g_print("Job %d: %d %d %d %f\n", j->job, j->processing_time, j->due_time,
+            j->weight, (double)j->weight / j->processing_time);
 }
 
 void g_print_machine(gpointer data, gpointer user_data) {
@@ -242,13 +242,13 @@ void g_print_machine(gpointer data, gpointer user_data) {
     g_print("%d ", j->job);
 }
 
-void g_reset_nb_layers(gpointer data, gpointer user_data){
+void g_reset_num_layers(gpointer data, gpointer user_data){
     Job *j = (Job *) data;
-    j->nb_layers = 0;
+    j->num_layers = 0;
 }
 
 void reset_nblayers(GPtrArray *jobs){
-    g_ptr_array_foreach(jobs, g_reset_nb_layers, NULL);
+    g_ptr_array_foreach(jobs, g_reset_num_layers, NULL);
 }
 
 void g_set_sol_perm(gpointer data, gpointer user_data) {
@@ -260,15 +260,15 @@ void g_set_sol_perm(gpointer data, gpointer user_data) {
 extern inline int value_Fj(int C, Job *j);
 
 int value_diff_Fij(int C, Job *i, Job *j) {
-    int val = value_Fj(C + i->processingime - j->processingime, i);
-    val += value_Fj(C + i->processingime, j);
+    int val = value_Fj(C + i->processing_time - j->processing_time, i);
+    val += value_Fj(C + i->processing_time, j);
     val -= value_Fj(C, j);
-    val -= value_Fj(C + i->processingime, i);
+    val -= value_Fj(C + i->processing_time, i);
     return val;
 }
 
 int bool_diff_Fij(int weight, Job *_prev, Job *tmp_j){
-    return (_prev == NULL ) ? 1 : (value_diff_Fij(weight + tmp_j->processingime, _prev, tmp_j) >= 0 );
+    return (_prev == NULL ) ? 1 : (value_diff_Fij(weight + tmp_j->processing_time, _prev, tmp_j) >= 0 );
 }
 
 void solution_calculate_machine(solution *sol, int m) {
@@ -282,7 +282,7 @@ void solution_calculate_machine(solution *sol, int m) {
         for (unsigned i = 0; i < machine->len; ++i) {
             Job *tmp = (Job *)g_ptr_array_index(machine, i);
             tmp->index = i;
-            part->c += tmp->processingime;
+            part->c += tmp->processing_time;
             sol->c[tmp->job] = part->c;
             part->tw += value_Fj(sol->c[tmp->job], tmp);
         }
@@ -332,7 +332,7 @@ static void calculate_partition(
     Job *      i = (Job *)g_ptr_array_index(machine, cur);
     Job *      j;
 
-    while (sol->c[i->job] - i->processingime >= I->a &&
+    while (sol->c[i->job] - i->processing_time >= I->a &&
            sol->c[i->job] <= I->b) {
         if (cur > 0) {
             count++;
@@ -366,8 +366,8 @@ static void calculate_partition(
                 }
             } else {
                 sol->c[j->job] =
-                    sol->c[i->job] - i->processingime + j->processingime;
-                sol->c[i->job] = sol->c[j->job] + i->processingime;
+                    sol->c[i->job] - i->processing_time + j->processing_time;
+                sol->c[i->job] = sol->c[j->job] + i->processing_time;
                 CC_SWAP(g_ptr_array_index(machine, cur),
                         g_ptr_array_index(machine, cur + 1), tmp);
                 if (sol->c[j->job] > I->a && sol->c[j->job] <= I->b) {
