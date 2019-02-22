@@ -17,8 +17,7 @@ protected:
 
     std::unique_ptr<DdStructure<>> decision_diagram;
 
-    size_t nb_nodes_bdd;
-    int nb_arcs_ati;
+    size_t size_graph;
 
     int nb_removed_edges;
     int nb_removed_nodes;
@@ -86,10 +85,11 @@ public:
      void iterate_zdd();
      void print_num_paths();
 
-     int get_remove();
+     int get_num_remove_nodes();
+     int get_num_remove_edges();
+     int get_num_layers();
+     size_t get_size_graph();
      size_t get_datasize();
-     int get_nb_arcs_ati();
-     size_t get_numberrows_zdd();
      double get_cost_edge(int idx);
 
      /**
@@ -159,8 +159,10 @@ private:
     int Hmax;
     std::unique_ptr<Job*[]> A;
     std::unique_ptr<double[]> F;
+    
 public:
     PricerSolverSimpleDp(GPtrArray *_jobs, int _num_machines, int _Hmax);
+    ~PricerSolverSimpleDp();
     void init_table() override;
 
     Optimal_Solution<double> pricing_algorithm(double *_pi) override;

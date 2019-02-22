@@ -103,9 +103,9 @@ void print_number_paths(PricerSolver *solver) { solver->print_num_paths(); }
 
 size_t get_datasize(PricerSolver *solver) { return solver->get_datasize(); }
 
-int get_nb_arcs_ati(PricerSolver *solver) { return solver->get_nb_arcs_ati(); }
+int get_num_layers(PricerSolver *solver) { return solver->get_num_layers(); }
 
-size_t get_numberrows_zdd(PricerSolver *solver) { return solver->get_numberrows_zdd(); }
+size_t get_size_graph(PricerSolver *solver) { return solver->get_size_graph(); }
 
 double get_edge_cost(PricerSolver *solver, int idx) { return solver->get_cost_edge(idx); }
 

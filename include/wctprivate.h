@@ -229,11 +229,14 @@ struct wctproblem {
     unsigned int  last_explored;
     int           mult_key;
     int           found;
+    /*Cpu time measurement + Statistics*/
     int           nb_explored_nodes;
     int           nb_generated_nodes;
     int           nb_generated_col;
     int           nb_generated_col_root;
-    /*Cpu time measurement*/
+    size_t first_size_graph;
+    size_t size_graph_after_reduced_cost_fixing;
+
     CCutil_timer tot_build_dd;
     CCutil_timer tot_cputime;
     CCutil_timer tot_branch_and_bound;

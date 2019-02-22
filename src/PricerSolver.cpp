@@ -8,26 +8,23 @@
  */
 PricerSolverBase::PricerSolverBase(GPtrArray *_jobs, int _num_machines) :
     jobs(_jobs), njobs(_jobs->len), num_machines(_num_machines), ordered_jobs(nullptr), nlayers(0),
-    nb_nodes_bdd(0), nb_arcs_ati(0),
-    nb_removed_edges(0), nb_removed_nodes(0) {
+    size_graph(0), nb_removed_edges(0), nb_removed_nodes(0) {
     decision_diagram = nullptr;
 }
 
 
 PricerSolverBase::PricerSolverBase(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs) :
     jobs(_jobs), njobs(_jobs->len), num_machines(_num_machines),
-    ordered_jobs(_ordered_jobs), nlayers(ordered_jobs->len),
-    env(std::unique_ptr<GRBEnv>(new GRBEnv())),
-    model(std::unique_ptr<GRBModel>(new GRBModel(*env))) {
+    ordered_jobs(_ordered_jobs), nlayers(ordered_jobs->len), size_graph(0),
+    nb_removed_edges(0), nb_removed_nodes(0),
+    env(new GRBEnv()),
+    model(new GRBModel(*env)) {
     /**
      * Construction of decision diagram
      */
     PricerConstruct ps(ordered_jobs);
     decision_diagram = std::unique_ptr<DdStructure<> >(new DdStructure<>(ps));
-    nb_nodes_bdd = decision_diagram->size();
-    nb_removed_nodes = 0;
-    nb_removed_edges = 0;
-    nb_arcs_ati = 0;
+    size_graph = decision_diagram->size();
 }
 
 PricerSolverBase::~PricerSolverBase() {
@@ -66,21 +63,30 @@ void PricerSolverBase::print_number_nodes_edges() {
            nb_removed_nodes);
 }
 
-int PricerSolverBase::get_remove() {
+int PricerSolverBase::get_num_remove_nodes() {
     return nb_removed_nodes;
+}
+
+
+int PricerSolverBase::get_num_remove_edges() {
+    return nb_removed_edges;
 }
 
 size_t PricerSolverBase::get_datasize() {
     return decision_diagram->size();
 }
 
-size_t PricerSolverBase::get_numberrows_zdd() {
-    return decision_diagram->root().row();
+size_t PricerSolverBase::get_size_graph() {
+    return size_graph;
 }
 
-int PricerSolverBase::get_nb_arcs_ati() {
-    return nb_arcs_ati;
+int PricerSolverBase::get_num_layers() {
+    return decision_diagram->topLevel();
 }
+
+// size_t PricerSolverBase::get_numberrows_zdd() {
+//     return decision_diagram->root().row();
+// }
 
 double PricerSolverBase::get_cost_edge(int idx) {
     return 0.0;
@@ -158,8 +164,9 @@ void PricerSolverBase::remove_edges() {
     }
 
     decision_diagram->zddReduce();
-    nb_nodes_bdd = decision_diagram->size();
-    printf("The new size of BDD = %lu\n", nb_nodes_bdd);
+    nb_removed_nodes -= size_graph;
+    size_graph = decision_diagram->size();
+    printf("The new size of BDD = %lu\n", size_graph);
 }
 
 void PricerSolverBase::construct_mipgraph() {
@@ -282,7 +289,7 @@ void PricerSolverBase::build_mip() {
         std::unique_ptr<GRBConstr[]> assignment_constrs(model->addConstrs(assignment.get(), sense.get(), rhs.get(), nullptr, njobs));
         model->update();
 
-        model->optimize();
+        // model->optimize();
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;
@@ -368,7 +375,7 @@ void PricerSolverBdd::init_table() {
 PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs) :
     PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing BDD with Forward Simple evaluator" << '\n';
-    std::cout << "size BDD = " << nb_nodes_bdd << '\n';
+    std::cout << "size BDD = " << get_size_graph() << '\n';
     evaluator = ForwardBddSimpleDouble(njobs);
     reversed_evaluator = BackwardBddSimpleDouble(njobs);
 }
@@ -390,6 +397,7 @@ void PricerSolverBddSimple::evaluate_nodes(double *pi, int UB, double LB) {
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label1.GetF();
+    nb_removed_edges = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
@@ -414,7 +422,7 @@ void PricerSolverBddSimple::evaluate_nodes(double *pi, int UB, double LB) {
 PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs) :
     PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing BDD with Forward Cycle evaluator" << '\n';
-    std::cout << "size BDD = " << nb_nodes_bdd << '\n';
+    std::cout << "size BDD = " << get_size_graph() << '\n';
     evaluator = ForwardBddCycleDouble(njobs);
     reversed_evaluator = BackwardBddCycleDouble(njobs);
 }
@@ -436,6 +444,7 @@ void PricerSolverBddCycle::evaluate_nodes(double *pi, int UB, double LB) {
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label1.GetF();
+    nb_removed_edges = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
@@ -481,7 +490,7 @@ void PricerSolverBddCycle::evaluate_nodes(double *pi, int UB, double LB) {
 PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs) :
     PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing BDD with Backward Simple evaluator" << '\n';
-    std::cout << "size BDD = " << nb_nodes_bdd << '\n';
+    std::cout << "size BDD = " << get_size_graph() << '\n';
     evaluator = BackwardBddSimpleDouble(njobs);
     reversed_evaluator = ForwardBddSimpleDouble(njobs);
 }
@@ -503,6 +512,7 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double *pi, int UB, double LB
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label1.GetF();
+    nb_removed_edges = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
@@ -527,7 +537,7 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double *pi, int UB, double LB
 PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs) :
     PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
-    std::cout << "size BDD = " << nb_nodes_bdd << '\n';
+    std::cout << "size BDD = " << get_size_graph() << '\n';
     evaluator = BackwardBddCycleDouble(njobs);
     reversed_evaluator = ForwardBddCycleDouble(njobs);
 }
@@ -549,6 +559,7 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double *pi, int UB, double LB)
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label1.GetF();
+    nb_removed_edges = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
@@ -591,13 +602,26 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double *pi, int UB, double LB)
  * Pricersolver for the TI index formulation
  */
 PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray *_jobs, int _num_machines, int _Hmax) :
-    PricerSolverBase(_jobs, _num_machines), Hmax(_Hmax),
-    A(std::unique_ptr<Job*[]>(new Job*[Hmax])),
-    F(std::unique_ptr<double[]>(new double[Hmax])) {
+    PricerSolverBase(_jobs, _num_machines), Hmax(_Hmax), A(new Job* [Hmax + 1]), F(new double[Hmax + 1]) {
+        init_table();
 }
 
 void PricerSolverSimpleDp::init_table() {
+    for (int t = 0; t < Hmax + 1; t++) {
+        for (int i = 1; i < njobs + 1; i++) {
+            int j = i - 1;
+            Job *job = reinterpret_cast<Job *>(g_ptr_array_index(jobs, j));
 
+            if (t >=  job->processing_time) {
+                size_graph++;
+            }
+        }
+    }
+
+    std::cout << "Number of arcs in TI formulation = " << size_graph << '\n';
+}
+
+PricerSolverSimpleDp::~PricerSolverSimpleDp() {
 }
 
 Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
@@ -661,6 +685,7 @@ Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
         g_ptr_array_add(opt_sol.jobs, *it);
     }
 
+    /** Free the memory */
     return opt_sol;
 }
 
@@ -726,7 +751,7 @@ void PricerSolverArcTimeDp::init_table() {
                     && t - p_matrix[it->job][j] >= 0
                     && t <= Hmax - tmp->processing_time ) {
                     graph[j][t].insert(it);
-                    nb_arcs_ati++;
+                    size_graph++;
                 }
             }
         }
@@ -737,7 +762,7 @@ void PricerSolverArcTimeDp::init_table() {
         for (auto &it : vector_jobs) {
             if(t >= it->processing_time) {
                 graph[n][t].insert(it);
-                nb_arcs_ati++;
+                size_graph++;
             }
         }
     }
@@ -752,10 +777,10 @@ void PricerSolverArcTimeDp::init_table() {
             for (int t = tmp_i->processing_time; t <= Hmax - tmp_j->processing_time; ++t) {
                 if (delta1(i, j, t) >= 0) {
                     remove_arc(i, j, t);
-                    nb_arcs_ati--;
+                    size_graph--;
                 } else {
                     remove_arc(j, i, t - tmp_i->processing_time + tmp_j->processing_time);
-                    nb_arcs_ati--;
+                    size_graph--;
                 }
             }
         }
@@ -766,10 +791,10 @@ void PricerSolverArcTimeDp::init_table() {
         for (int t = tmp_j->processing_time; t < Hmax; ++t) {
             if (delta2(j, t) <= 0) {
                 remove_arc(n, j, t - tmp_j->processing_time + 1);
-                nb_arcs_ati--;
+                size_graph--;
             } else {
                 remove_arc(j, n, t);
-                nb_arcs_ati--;
+                size_graph--;
             }
         }
     }
@@ -782,7 +807,7 @@ void PricerSolverArcTimeDp::init_table() {
             }
         }
     }
-    std::cout << "Number of arcs in ATI formulation = " << nb_arcs_ati << '\n';
+    std::cout << "Number of arcs in ATI formulation = " << size_graph << '\n';
 }
 
 PricerSolverArcTimeDp::~PricerSolverArcTimeDp() {

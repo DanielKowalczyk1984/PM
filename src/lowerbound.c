@@ -629,10 +629,10 @@ int calculate_nblayers(wctdata *pd){
             for(unsigned i = 0; i < nb_cols; ++i) {
                 if(pd->x[i] > 0.00001) {
                     scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
-                    for(unsigned i = 0; i < tmp->job_list->len - 1; ++i) {
+                    for(unsigned j = 0; j < tmp->job_list->len - 1; ++j) {
                         Job *j1, *j2;
-                        j1 = (Job*) g_ptr_array_index(tmp->job_list, i);
-                        j2 = (Job*) g_ptr_array_index(tmp->job_list, i + 1);
+                        j1 = (Job*) g_ptr_array_index(tmp->job_list, j);
+                        j2 = (Job*) g_ptr_array_index(tmp->job_list, j + 1);
                         if(j1 == j2) {
                             j1->num_layers = 1;
                         }
@@ -660,7 +660,7 @@ int calculate_x_e(wctdata *pd){
     
     switch(status){
         case GRB_OPTIMAL:
-            for(unsigned i = 0; i < 2*get_datasize(pd->solver); ++i) {
+            for(unsigned i = 0; i < 2*get_size_graph(pd->solver); ++i) {
                 pd->x_e[i] = 0.0;
             }
 
