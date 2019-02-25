@@ -170,6 +170,7 @@ void PricerSolverBase::remove_edges() {
 }
 
 void PricerSolverBase::construct_mipgraph() {
+    g.clear();
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(), g));
     EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), g));
@@ -190,6 +191,7 @@ void PricerSolverBase::construct_mipgraph() {
                 auto &n0 = table.node(it.branch[0]);
                 auto a = add_edge(it.key, n0.key,g);
                 put(edge_type_list, a.first, false);
+                it.low_edge_key = count;
                 put(boost::edge_index_t(), g, a.first, count++);
             }
 
@@ -197,6 +199,7 @@ void PricerSolverBase::construct_mipgraph() {
                 auto &n1 = table.node(it.branch[1]);
                 auto a = add_edge(it.key, n1.key, g);
                 put(edge_type_list, a.first, true);
+                it.high_edge_key = count;
                 put(boost::edge_index_t(), g, a.first, count++);
             }
         }
@@ -329,12 +332,42 @@ void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB)
     // }
 }
 
+void PricerSolverBase::construct_lp_sol_from_rmp(const double *columns,
+                const GPtrArray *schedule_sets,
+                int num_columns,
+                double *x) {
+    NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
+
+    for(int i = 0; i < num_columns; ++i) {
+        if(columns[i] > 0.00001) {
+            scheduleset *tmp = (scheduleset *) g_ptr_array_index(schedule_sets, i);
+            nodeid tmp_nodeid(decision_diagram->root());
+
+            for(unsigned j = 0; j < tmp->job_list->len && tmp_nodeid > 1; ++j) {
+                Job* tmp_j = (Job *) g_ptr_array_index(tmp->job_list, j);
+                while(true){
+                    Node<>& tmp_node = table.node(tmp_nodeid);
+                    if(tmp_j == tmp_node.GetJob()) {
+                        x[tmp_node.high_edge_key] += columns[i];
+                        tmp_nodeid = tmp_node.branch[1];
+                        break;
+                    } else {
+                        x[tmp_node.low_edge_key] += columns[i];
+                        tmp_nodeid = tmp_node.branch[0];
+                    }
+                }
+            }
+        }
+    }
+}
+
 /**
  * base class for the bdd based pricersolvers
  */
 PricerSolverBdd::PricerSolverBdd(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs) :
     PricerSolverBase(_jobs, _num_machines, _ordered_jobs) {
     init_table();
+    construct_mipgraph();
 }
 
 void PricerSolverBdd::init_table() {

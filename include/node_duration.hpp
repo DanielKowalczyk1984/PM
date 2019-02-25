@@ -203,6 +203,8 @@ class Node {
     bool calc_yes;
 
     int key;
+    int high_edge_key;
+    int low_edge_key;
     
     /**
      * Constructor
@@ -220,7 +222,9 @@ class Node {
           y(nullptr),
           n(nullptr),
           calc_yes(true),
-          key(-1) {
+          key(-1),
+          high_edge_key (-1),
+          low_edge_key (-1) {
         child[0] = nullptr;
         child[1] = nullptr;
     };
@@ -237,7 +241,9 @@ class Node {
          y(nullptr),
          n(nullptr),
          calc_yes(true),
-         key(-1) {
+         key(-1),
+         high_edge_key (-1),
+         low_edge_key (-1) {
           child[0] = nullptr;
           child[1] = nullptr;
     }
@@ -262,7 +268,9 @@ class Node {
           y(nullptr),
           n(nullptr),
           calc_yes(true),
-          key(-1) {
+          key(-1),
+          high_edge_key (-1),
+          low_edge_key (-1) {
         child[0] = nullptr;
         child[1] = nullptr;
         branch[0] = i;
@@ -287,7 +295,9 @@ class Node {
         child{src.child[0], src.child[1]},
         branch{src.branch[0], src.branch[1]},
         calc_yes(src.calc_yes),
-        key(src.key) {
+        key(src.key),
+        high_edge_key(src.high_edge_key),
+        low_edge_key(src.low_edge_key) {
     }
 
     /**
@@ -308,7 +318,9 @@ class Node {
         child{src.child[0], src.child[1]},
         branch{src.branch[0], src.branch[1]},
         calc_yes(src.calc_yes),
-        key(src.key) {
+        key(src.key),
+        high_edge_key(src.high_edge_key),
+        low_edge_key(src.low_edge_key) {
     }
 
     /**
@@ -343,6 +355,9 @@ class Node {
       calc_yes = src.calc_yes;
       key = src.key;
 
+      high_edge_key = src.high_edge_key;
+      low_edge_key = src.low_edge_key;
+
       return *this;
     }
 
@@ -376,6 +391,9 @@ class Node {
 
       calc_yes = src.calc_yes;
       key = src.key;
+
+      high_edge_key = src.high_edge_key;
+      low_edge_key = src.low_edge_key;
       return *this;
     }
 

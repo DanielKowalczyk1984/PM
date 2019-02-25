@@ -567,37 +567,39 @@ int print_x(wctdata *pd){
     int nb_cols;
     int status;
 
-    wctlp_get_nb_cols(pd->LP, &nb_cols);
-    pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
-    CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
-    val = wctlp_x(pd->LP, pd->x, 0);
-    CCcheck_val_2(val, "Failed in wctlp_x");
     val = wctlp_status(pd->LP, &status);
     CCcheck_val_2(val, "Failed in wctlp_status");
 
     switch(status){
         case GRB_OPTIMAL:
-            for(unsigned i = 0; i < nb_cols; ++i) {
+            val = wctlp_get_nb_cols(pd->LP, &nb_cols);
+            CCcheck_val_2(val, "Failed to get nb cols");
+            pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
+            CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
+            val = wctlp_x(pd->LP, pd->x, 0);
+            CCcheck_val_2(val, "Failed in wctlp_x");
+
+            for(int i = 0; i < nb_cols; ++i) {
                 if(pd->x[i] > 0.00001) {
                     printf("x = %f\n", pd->x[i]);
                     scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
-                    // int C = 0;
-                    // for (int i = 0; i < tmp->jobs->len; ++i)
-                    // {
-                    //     Job *j1 = (Job *) g_ptr_array_index(tmp->jobs, i);
+                    int C = 0;
+                    for (int j = 0; j < tmp->job_list->len; ++j)
+                    {
+                        Job *j1 = (Job *) g_ptr_array_index(tmp->job_list, j);
                         
-                    //     if(i  < tmp->jobs->len - 1) {
-                    //         Job *j2 = (Job *) g_ptr_array_index(tmp->jobs, i + 1);
-                    //         if(! bool_diff_Fij(C, j2, j1)) {
-                    //             /* code */
-                    //         printf("%d ", bool_diff_Fij(C, j2, j1));
-                    //         printf("test test\n");
-                    //         getchar();
-                    //         }
-                    //     }
-                    //     C += j1->processingime;
-                    // }
-                    // printf("\n");
+                        if(j  < tmp->job_list->len - 1) {
+                            Job *j2 = (Job *) g_ptr_array_index(tmp->job_list, j + 1);
+                            if(! bool_diff_Fij(C, j2, j1)) {
+                                /* code */
+                            printf("%d ", bool_diff_Fij(C, j2, j1));
+                            printf("test test\n");
+                            getchar();
+                            }
+                        }
+                        C += j1->processing_time;
+                    }
+                    printf("\n");
                     g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
                     printf("\n");
                 }
@@ -614,11 +616,6 @@ int calculate_nblayers(wctdata *pd){
     int nb_cols;
     int status;
 
-    wctlp_get_nb_cols(pd->LP, &nb_cols);
-    pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
-    CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
-    val = wctlp_x(pd->LP, pd->x, 0);
-    CCcheck_val_2(val, "Failed in wctlp_x");
     val = wctlp_status(pd->LP, &status);
     CCcheck_val_2(val, "Failed in wctlp_status");
     
@@ -626,13 +623,19 @@ int calculate_nblayers(wctdata *pd){
     
     switch(status){
         case GRB_OPTIMAL:
+            val = wctlp_get_nb_cols(pd->LP, &nb_cols);
+            CCcheck_val_2(val, "Failed to get nb cols");
+            pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
+            CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
+            val = wctlp_x(pd->LP, pd->x, 0);
+            CCcheck_val_2(val, "Failed in wctlp_x");
+
             for(unsigned i = 0; i < nb_cols; ++i) {
                 if(pd->x[i] > 0.00001) {
                     scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
                     for(unsigned j = 0; j < tmp->job_list->len - 1; ++j) {
-                        Job *j1, *j2;
-                        j1 = (Job*) g_ptr_array_index(tmp->job_list, j);
-                        j2 = (Job*) g_ptr_array_index(tmp->job_list, j + 1);
+                        Job* j1 = (Job*) g_ptr_array_index(tmp->job_list, j);
+                        Job* j2 = (Job*) g_ptr_array_index(tmp->job_list, j + 1);
                         if(j1 == j2) {
                             j1->num_layers = 1;
                         }
@@ -641,7 +644,9 @@ int calculate_nblayers(wctdata *pd){
             }
         break;
     }
+
     CLEAN:
+
     return val;
 }
 
@@ -650,32 +655,28 @@ int calculate_x_e(wctdata *pd){
     int nb_cols;
     int status;
 
-    wctlp_get_nb_cols(pd->LP, &nb_cols);
-    pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
-    CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
-    val = wctlp_x(pd->LP, pd->x, 0);
-    CCcheck_val_2(val, "Failed in wctlp_x");
     val = wctlp_status(pd->LP, &status);
     CCcheck_val_2(val, "Failed in wctlp_status")
     
     switch(status){
         case GRB_OPTIMAL:
+            val = wctlp_get_nb_cols(pd->LP, &nb_cols);
+            CCcheck_val_2(val, "Failed to get nb cols");
+            pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
+            CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
+            val = wctlp_x(pd->LP, pd->x, 0);
+            CCcheck_val_2(val, "Failed in wctlp_x");
+            pd->x_e = CC_SAFE_REALLOC(pd->x_e, 2*get_size_graph(pd->solver), double);
+            CCcheck_NULL_2(pd->x_e, "Failed to reallocate memory to  pd->x_e");
+
             for(unsigned i = 0; i < 2*get_size_graph(pd->solver); ++i) {
                 pd->x_e[i] = 0.0;
             }
-
-            for(unsigned i = 0; i < nb_cols; ++i) {
-                if(pd->x[i] > 0.00001) {
-                    scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
-                    for(unsigned j = 0; j < tmp->edge_list->len; ++j) {
-                        int *ptr = (int *) g_ptr_array_index(tmp->edge_list, j);
-                        pd->x_e[*ptr] += pd->x[i];
-                    }
-                }
-            }
+            construct_lp_sol_from_rmp(pd);
         break;
     }
 
     CLEAN:
+
     return val;
 }

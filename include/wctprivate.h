@@ -281,6 +281,7 @@ void temporary_data_free(wctdata *pd);
 int evaluate_nodes(wctdata *pd);
 int calculate_new_ordered_jobs(wctdata *pd);
 int build_solve_mip(wctdata *pd);
+void construct_lp_sol_from_rmp(wctdata *pd);
 
 
 /**
