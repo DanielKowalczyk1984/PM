@@ -276,7 +276,6 @@ void PricerSolverBase::build_mip() {
         std::unique_ptr<double[]> rhs(new double[njobs]);
 
         for (unsigned i = 0; i < jobs->len; ++i) {
-            // assignment[i] = 0;
             sense[i] = GRB_GREATER_EQUAL;
             rhs[i] = 1.0;
         }
@@ -359,6 +358,35 @@ void PricerSolverBase::construct_lp_sol_from_rmp(const double *columns,
             }
         }
     }
+}
+
+bool PricerSolverBase::check_schedule_set(scheduleset *set) {
+    int weight = 0;
+    int counter = 0;
+    NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
+    nodeid tmp_nodeid(decision_diagram->root());
+
+    for(unsigned j = 0; j < set->job_list->len && tmp_nodeid > 1; ++j) {
+        Job *tmp_j = (Job *) g_ptr_array_index(set->job_list, j);
+
+        while(true) {
+            Node<>& tmp_node = table.node(tmp_nodeid);
+
+            if(tmp_j == tmp_node.GetJob()) {
+                tmp_nodeid = tmp_node.branch[1];
+                weight += tmp_j->processing_time;
+                counter += 1;
+                if(weight != table.node(tmp_nodeid).GetWeight() && tmp_nodeid > 1) {
+                    return false;
+                }
+                break;
+            } else {
+                tmp_nodeid = tmp_node.branch[0];
+            }
+        }
+    }
+
+    return (weight == set->total_processing_time);
 }
 
 /**

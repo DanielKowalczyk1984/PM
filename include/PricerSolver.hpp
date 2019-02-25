@@ -92,6 +92,7 @@ public:
      size_t get_datasize();
      double get_cost_edge(int idx);
      void construct_lp_sol_from_rmp(const double *columns, const GPtrArray* schedule_sets, int num_columns, double *x);
+     bool check_schedule_set(scheduleset *set);
 
      /**
       * Some printing functions
