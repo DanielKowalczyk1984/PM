@@ -3,6 +3,7 @@
 #include <set>
 #include <vector>
 #include <memory>
+#include "boost/graph/graphviz.hpp"
 /**
  * PricerSolverBase default COnstructor
  */
@@ -179,7 +180,7 @@ void PricerSolverBase::construct_mipgraph() {
         for (size_t j = 0; j < table[i].size(); j++) {
             if (nodeid(i, j) != 0) {
                 table[i][j].key = add_vertex(g);
-                vertex_nodeid_list[table[i][j].key] = nodeid(i,j);
+                vertex_nodeid_list[table[i][j].key] = nodeid(i, j);
             }
         }
     }
@@ -187,15 +188,15 @@ void PricerSolverBase::construct_mipgraph() {
     int count = 0;
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto &it : table[i]) {
-            if(it.branch[0] != 0) {
+            if (it.branch[0] != 0) {
                 auto &n0 = table.node(it.branch[0]);
-                auto a = add_edge(it.key, n0.key,g);
+                auto a = add_edge(it.key, n0.key, g);
                 put(edge_type_list, a.first, false);
                 it.low_edge_key = count;
                 put(boost::edge_index_t(), g, a.first, count++);
             }
 
-            if(it.branch[1] != 0) {
+            if (it.branch[1] != 0) {
                 auto &n1 = table.node(it.branch[1]);
                 auto a = add_edge(it.key, n1.key, g);
                 put(edge_type_list, a.first, true);
@@ -213,10 +214,10 @@ void PricerSolverBase::build_mip() {
     try {
         printf("Building Mip model for the extented formulation:\n");
         NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
-        IndexAccessor vertex_index_list(get(boost::vertex_index_t(),g));
-        NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(),g));
-        EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(),g));
-        EdgeVarAccessor edge_var_list(get(boost::edge_weight2_t(),g));
+        IndexAccessor vertex_index_list(get(boost::vertex_index_t(), g));
+        NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(), g));
+        EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), g));
+        EdgeVarAccessor edge_var_list(get(boost::edge_weight2_t(), g));
         model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
         model->set(GRB_IntParam_Threads, 1);
         model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
@@ -226,11 +227,11 @@ void PricerSolverBase::build_mip() {
         /** Constructing variables */
         for (auto it = edges(g); it.first != it.second; it.first++) {
             if (edge_type_list[*it.first]) {
-                auto &n = table.node(get(boost::vertex_name_t(),g,source(*it.first, g)));
+                auto &n = table.node(get(boost::vertex_name_t(), g, source(*it.first, g)));
                 double cost = (double) value_Fj(n.GetWeight() + n.GetJob()->processing_time, n.GetJob());
                 edge_var_list[*it.first] = model->addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
-                put(boost::edge_weight2_t(),g,*it.first, model->addVar(0.0, (double) num_machines, 0.0, GRB_CONTINUOUS));
+                put(boost::edge_weight2_t(), g, *it.first, model->addVar(0.0, (double) num_machines, 0.0, GRB_CONTINUOUS));
             }
         }
 
@@ -316,7 +317,7 @@ void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB)
     remove_edges();
 
     construct_mipgraph();
-    build_mip();
+    // build_mip();
 
 
 
@@ -331,38 +332,43 @@ void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB)
     // }
 }
 
-void PricerSolverBase::construct_lp_sol_from_rmp(const double *columns,
-                const GPtrArray *schedule_sets,
-                int num_columns,
-                double *x) {
+void PricerSolverBase::construct_lp_sol_from_rmp(
+    const double *columns,
+    const GPtrArray *schedule_sets,
+    int num_columns,
+    double *x) {
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
 
     for(int i = 0; i < num_columns; ++i) {
         if(columns[i] > 0.00001) {
+            int counter = 0;
             scheduleset *tmp = (scheduleset *) g_ptr_array_index(schedule_sets, i);
             nodeid tmp_nodeid(decision_diagram->root());
 
-            for(unsigned j = 0; j < tmp->job_list->len && tmp_nodeid > 1; ++j) {
-                Job* tmp_j = (Job *) g_ptr_array_index(tmp->job_list, j);
-                while(true){
-                    Node<>& tmp_node = table.node(tmp_nodeid);
-                    if(tmp_j == tmp_node.GetJob()) {
-                        x[tmp_node.high_edge_key] += columns[i];
-                        tmp_nodeid = tmp_node.branch[1];
-                        break;
-                    } else {
-                        x[tmp_node.low_edge_key] += columns[i];
-                        tmp_nodeid = tmp_node.branch[0];
-                    }
-                }
+            while(tmp_nodeid > 1){
+                Job* tmp_j = (Job *) g_ptr_array_index(tmp->job_list, counter);
+                Node<>& tmp_node = table.node(tmp_nodeid);
+                if(tmp_j == tmp_node.GetJob()) {
+                    x[tmp_node.high_edge_key] += columns[i];
+                    tmp_nodeid = tmp_node.branch[1];
+                    counter++;
+                } else {
+                    x[tmp_node.low_edge_key] += columns[i];
+                    tmp_nodeid = tmp_node.branch[0];
+                } 
             }
         }
     }
+
+    ColorWriterEdge edge_writer(g, x);
+    ColorWriterVertex vertex_writer(g, table);
+    std::ofstream outf("min.gv");
+    boost::write_graphviz(outf, g, vertex_writer, edge_writer);
+    outf.close();
 }
 
 bool PricerSolverBase::check_schedule_set(scheduleset *set) {
     int weight = 0;
-    int counter = 0;
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     nodeid tmp_nodeid(decision_diagram->root());
 
@@ -375,7 +381,6 @@ bool PricerSolverBase::check_schedule_set(scheduleset *set) {
             if(tmp_j == tmp_node.GetJob()) {
                 tmp_nodeid = tmp_node.branch[1];
                 weight += tmp_j->processing_time;
-                counter += 1;
                 if(weight != table.node(tmp_nodeid).GetWeight() && tmp_nodeid > 1) {
                     return false;
                 }
@@ -538,7 +543,6 @@ void PricerSolverBddCycle::evaluate_nodes(double *pi, int UB, double LB) {
                     nb_removed_edges++;
                 }
             }
-
         }
     }
 
@@ -821,7 +825,7 @@ void PricerSolverArcTimeDp::init_table() {
     graph[n] = new boost::unordered_set<Job *>[Hmax + 1];
     for (int t = 1; t < Hmax + 1; t++) {
         for (auto &it : vector_jobs) {
-            if(t >= it->processing_time) {
+            if (t >= it->processing_time) {
                 graph[n][t].insert(it);
                 size_graph++;
             }
@@ -913,12 +917,12 @@ Optimal_Solution<double> PricerSolverArcTimeDp::pricing_algorithm(double *_pi) {
             B[j][t] = -1;
             F[j][t] = DBL_MAX/2;
             job_iterator it = graph[j][t].begin();
-            if (!graph[j][t].empty() && t <= Hmax - tmp->processing_time ) {
+            if (!graph[j][t].empty() && t <= Hmax - tmp->processing_time) {
                 F[j][t] = F[(*it)->job][t - p_matrix[(*it)->job][j]] + value_Fj(t + tmp->processing_time, tmp) - _pi[j];
                 A[j][t] = (*it);
                 B[j][t] = t - p_matrix[(*it)->job][j];
                 it++;
-                while(it != graph[j][t].end()) {
+                while (it != graph[j][t].end()) {
                     double result = F[(*it)->job][t - p_matrix[(*it)->job][j]] + value_Fj(t + tmp->processing_time, tmp) - _pi[j];
                     if (F[j][t] >= result) {
                         F[j][t] = result;
