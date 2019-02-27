@@ -584,17 +584,13 @@ int print_x(wctdata *pd){
                     printf("x = %f\n", pd->x[i]);
                     scheduleset *tmp = (scheduleset *) g_ptr_array_index(pd->localColPool,i);
                     int C = 0;
-                    for (int j = 0; j < tmp->job_list->len; ++j)
-                    {
+                    for (int j = 0; j < tmp->job_list->len; ++j) {
                         Job *j1 = (Job *) g_ptr_array_index(tmp->job_list, j);
                         
                         if(j  < tmp->job_list->len - 1) {
                             Job *j2 = (Job *) g_ptr_array_index(tmp->job_list, j + 1);
                             if(! bool_diff_Fij(C, j2, j1)) {
-                                /* code */
-                            printf("%d ", bool_diff_Fij(C, j2, j1));
-                            printf("test test\n");
-                            getchar();
+                                printf("%d ", bool_diff_Fij(C, j2, j1));
                             }
                         }
                         C += j1->processing_time;
@@ -608,6 +604,7 @@ int print_x(wctdata *pd){
     }
 
     CLEAN:
+
     return val;
 }
 
