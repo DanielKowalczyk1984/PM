@@ -27,6 +27,7 @@ using EdgeIterator = graph_traits<MipGraph>::edge_iterator;
 
 typedef property_map<MipGraph, vertex_index_t>::type IndexAccessor;
 typedef property_map<MipGraph, vertex_name_t>::type NodeIdAccessor;
+typedef property_map<MipGraph, edge_index_t>::type EdgeIndexAccessor;
 typedef property_map<MipGraph, edge_weight_t>::type EdgeTypeAccessor;
 typedef property_map<MipGraph, edge_weight2_t>::type EdgeVarAccessor;
 
