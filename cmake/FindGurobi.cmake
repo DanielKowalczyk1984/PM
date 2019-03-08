@@ -8,7 +8,7 @@ find_path(GUROBI_INCLUDE_DIR
           NAMES  gurobi_c++.h gurobi_c.h
           PATHS
           "$ENV{GUROBI_HOME}/include"
-          "/opt/gurobi8*/linux64/include"
+          "/opt/gurobi810/linux64/include"
           "/opt/gurobi801/linux64/include"
           "/opt/gurobi752/linux64/include"
           "/opt/gurobi751/linux64/include"
@@ -55,6 +55,8 @@ find_library( GUROBI_LIBRARY
               "C:\\libs\\gurobi502\\lib"
               "/opt/gurobi563/linux64/lib"
               )
+
+message(${GUROBI_INCLUDE_DIR})
 
 find_library( GUROBI_CXX_LIBRARY
               NAMES
