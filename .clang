@@ -1,6 +1,4 @@
--I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include
--I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/EGlib/src/project_EGlib/include
--I/opt/gurobi752/linux64/include
+-I/opt/gurobi810/linux64/include
 -I/usr/include/glib-2.0
 -I/usr/lib/glib-2.0/include
 -I/home/daniel/Dropbox/PapersOR/PM/implementation/include
