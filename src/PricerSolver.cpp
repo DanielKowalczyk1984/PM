@@ -85,10 +85,6 @@ int PricerSolverBase::get_num_layers() {
     return decision_diagram->topLevel();
 }
 
-// size_t PricerSolverBase::get_numberrows_zdd() {
-//     return decision_diagram->root().row();
-// }
-
 double PricerSolverBase::get_cost_edge(int idx) {
     return 0.0;
 }
@@ -229,9 +225,9 @@ void PricerSolverBase::build_mip() {
             if (edge_type_list[*it.first]) {
                 auto &n = table.node(get(boost::vertex_name_t(), g, source(*it.first, g)));
                 double cost = (double) value_Fj(n.GetWeight() + n.GetJob()->processing_time, n.GetJob());
-                edge_var_list[*it.first] = model->addVar(0.0, 1.0, cost, GRB_BINARY);
+                edge_var_list[*it.first].x = model->addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
-                put(boost::edge_weight2_t(), g, *it.first, model->addVar(0.0, (double) num_machines, 0.0, GRB_CONTINUOUS));
+                edge_var_list[*it.first].x = model->addVar(0.0, (double) num_machines, 0.0, GRB_CONTINUOUS);
             }
         }
 
@@ -250,12 +246,12 @@ void PricerSolverBase::build_mip() {
 
             auto out_edges_it = boost::out_edges(*it.first, g);
             for(; out_edges_it.first != out_edges_it.second; ++out_edges_it.first) {
-                flow_conservation_constr[vertex_index] -= edge_var_list[*out_edges_it.first];
+                flow_conservation_constr[vertex_index] -= edge_var_list[*out_edges_it.first].x;
             }
 
             auto in_edges_it = boost::in_edges(*it.first, g);
             for(; in_edges_it.first != in_edges_it.second; ++in_edges_it.first) {
-                flow_conservation_constr[vertex_index] += edge_var_list[*in_edges_it.first];
+                flow_conservation_constr[vertex_index] += edge_var_list[*in_edges_it.first].x;
             }
 
             if(node_iterator == decision_diagram->root()) {
@@ -285,7 +281,7 @@ void PricerSolverBase::build_mip() {
             auto high = edge_type_list[*it.first];
             if (high) {
                 auto &n = table.node(get(boost::vertex_name_t(),g,source(*it.first, g)));
-                assignment[n.GetJob()->job] += edge_var_list[*it.first];
+                assignment[n.GetJob()->job] += edge_var_list[*it.first].x;
             }
         }
 
@@ -360,11 +356,147 @@ void PricerSolverBase::construct_lp_sol_from_rmp(
         }
     }
 
+    EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), g));
+    EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(), g));
+    for (auto it = edges(g); it.first != it.second; it.first++) {
+        auto index = edge_index_list[*it.first];
+
+            printf("test edge %d: %f\n",index, x[index]);
+    }
+
+
     ColorWriterEdge edge_writer(g, x);
     ColorWriterVertex vertex_writer(g, table);
     std::ofstream outf("min.gv");
     boost::write_graphviz(outf, g, vertex_writer, edge_writer);
     outf.close();
+}
+
+void PricerSolverBase::disjunctive_inequality(double *x) {
+    
+    NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
+    int branch_key = -1;
+
+    std::unique_ptr<GRBModel> model_ineq(new GRBModel(*env));
+    EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), g));
+    EdgeVarAccessor edge_var_list(get(boost::edge_weight2_t(), g));
+    EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(), g));
+    VarsNodeAccessor node_var_list(get(boost::vertex_distance_t(),g));
+    NodeIdAccessor node_id_list(get(boost::vertex_name_t(),g));
+    
+    int count = 0;
+    for (auto it = edges(g); it.first != it.second; it.first++) {
+        auto high = edge_type_list[*it.first];
+        auto index = edge_index_list[*it.first];
+        if (high) {
+            if(x[index] > 0.00001 && x[index] < 0.99999 && count < 3) {
+                    branch_key = index;
+                    count++;
+            }
+        }
+    }
+
+    printf("branch key = %d\n", branch_key);
+
+    try {
+        /**
+         * add variables
+         */
+        
+        for (auto it = edges(g); it.first != it.second; it.first++) {
+            edge_var_list[*it.first].alpha = model_ineq->addVar(-GRB_INFINITY, GRB_INFINITY, x[edge_index_list[*it.first]], GRB_CONTINUOUS);            
+        }
+
+        for (auto it = vertices(g); it.first != it.second; it.first++) {
+            node_var_list[*it.first].omega[0] = model_ineq->addVar(-GRB_INFINITY, GRB_INFINITY,0.0, GRB_CONTINUOUS);
+            node_var_list[*it.first].omega[1] = model_ineq->addVar(-GRB_INFINITY, GRB_INFINITY,0.0, GRB_CONTINUOUS);
+        }
+
+        std::unique_ptr<GRBVar[]> pi_0(new GRBVar[njobs]);
+        std::unique_ptr<GRBVar[]> pi_1(new GRBVar[njobs]);
+        for (int j = 0; j < njobs; j++) {
+            pi_0[j] = model_ineq->addVar(-GRB_INFINITY,GRB_INFINITY,0.0,GRB_CONTINUOUS);
+            pi_1[j] = model_ineq->addVar(-GRB_INFINITY,GRB_INFINITY,0.0,GRB_CONTINUOUS);
+        }
+
+        GRBVar alpha = model_ineq->addVar(-GRB_INFINITY,0.0,-1.0,GRB_CONTINUOUS);
+        GRBVar s = model_ineq->addVar(0.0,GRB_INFINITY,0.0,GRB_CONTINUOUS);
+        GRBVar t = model_ineq->addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
+
+        model_ineq->update();
+
+        /**
+         * Add constraints
+         */
+        size_t num_edges = boost::num_edges(g);
+        std::unique_ptr<GRBLinExpr[]> constraints_0(new GRBLinExpr[num_edges + 1]);
+        std::unique_ptr<GRBLinExpr[]> constraints_1(new GRBLinExpr[num_edges + 1]);
+        std::unique_ptr<char[]> sense(new char[num_edges + 1]);
+        std::unique_ptr<double[]> rhs(new double[num_edges + 1]);
+
+
+        for (auto it = edges(g); it.first != it.second; it.first++) {
+            int edge_key = edge_index_list[*it.first];
+            bool high = edge_type_list[*it.first];
+            auto tail = source(*it.first,g);
+            auto head = target(*it.first,g);
+            constraints_0[edge_key] = edge_var_list[*it.first].alpha - node_var_list[tail].omega[0] + node_var_list[head].omega[0];
+            constraints_1[edge_key] = edge_var_list[*it.first].alpha - node_var_list[tail].omega[1] + node_var_list[head].omega[1];
+            if(high) {
+                nodeid &n = node_id_list[tail];
+                constraints_0[edge_key] -= pi_0[table.node(n).GetJob()->job];
+                constraints_1[edge_key] -= pi_1[table.node(n).GetJob()->job];
+            }
+
+            if(edge_key == branch_key) {
+                constraints_0[edge_key] += s;
+                constraints_1[edge_key] -= t;
+            }
+
+            sense[edge_key] = GRB_GREATER_EQUAL;
+            rhs[edge_key] = 0.0;
+        }
+        sense[num_edges] = GRB_GREATER_EQUAL;
+        rhs[num_edges] = 0.0;
+
+        int root_key = table.node(decision_diagram->root()).key;
+        int terminal_key = table.node(nodeid(1)).key;
+
+        constraints_0[num_edges] += -alpha;
+        constraints_1[num_edges] += -alpha;
+        for (int j = 0; j < njobs; j++) {
+            constraints_0[num_edges] += pi_0[j];
+            constraints_1[num_edges] += pi_1[j];
+        }
+
+        constraints_0[num_edges] += num_machines*node_var_list[root_key].omega[0] - num_machines*node_var_list[terminal_key].omega[0];
+        constraints_1[num_edges] += num_machines*node_var_list[root_key].omega[1] - num_machines*node_var_list[terminal_key].omega[1] + t;
+
+        std::unique_ptr<GRBConstr[]> constrs0(model_ineq->addConstrs(constraints_0.get(), sense.get(), rhs.get(), nullptr, num_edges + 1));
+        std::unique_ptr<GRBConstr[]> constrs1(model_ineq->addConstrs(constraints_1.get(), sense.get(), rhs.get(), nullptr, num_edges + 1));
+        model_ineq->addConstr(s + t, GRB_EQUAL, 1);
+
+        model_ineq->update();
+
+        model_ineq->write("test.lp");
+        model_ineq->optimize();
+
+
+        for(auto it = edges(g); it.first != it.second; it.first++) {
+            double sol = (edge_var_list[*it.first]).alpha.get(GRB_DoubleAttr_X);
+            if(sol != 0.0) {
+                printf("test %d %f\n",edge_index_list[*it.first],sol);
+            }
+        }
+        printf("test %f\n", alpha.get(GRB_DoubleAttr_X));
+    } catch (GRBException& e) {
+        cout << "Error code = " << e.getErrorCode() << endl;
+        cout << e.getMessage() << endl;
+    } catch (...) {
+        cout << "Exception during optimization" << endl;
+    }
+
+
 }
 
 bool PricerSolverBase::check_schedule_set(scheduleset *set) {
