@@ -282,6 +282,7 @@ int evaluate_nodes(wctdata *pd);
 int calculate_new_ordered_jobs(wctdata *pd);
 int build_solve_mip(wctdata *pd);
 void construct_lp_sol_from_rmp(wctdata *pd);
+void disjunctive_inequality(wctdata *pd);
 int check_schedule_set(scheduleset *set, wctdata *pd);
 
 

@@ -123,6 +123,11 @@ void construct_lp_sol_from_rmp(wctdata *pd) {
     pd->solver->construct_lp_sol_from_rmp(pd->x, pd->localColPool, pd->localColPool->len, pd->x_e);
 }
 
+void disjunctive_inequality(wctdata *pd) {
+    construct_lp_sol_from_rmp(pd);
+    pd->solver->disjunctive_inequality(pd->x_e);
+}
+
 int check_schedule_set(scheduleset *set, wctdata *pd) {
     return pd->solver->check_schedule_set(set);
 }

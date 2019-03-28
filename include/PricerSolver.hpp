@@ -78,6 +78,7 @@ public:
      /** Construct MipGraph */
      void construct_mipgraph();
      void build_mip();
+     void disjunctive_inequality(double *x);
 
      /**
       * Some getters
