@@ -168,8 +168,8 @@ Optimal_Solution<T> get_objective(Node<T> &n) const {
     Label<T> *aux_label = &(n.backward_label1);
 
     while (aux_label) {
-        Job *aux_job = aux_label->GetJob();
         if (aux_label->GetHigh()) {
+            Job *aux_job = aux_label->GetJob();
             sol.push_job_back(aux_job, pi[aux_job->job]);
         }
 
