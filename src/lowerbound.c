@@ -509,8 +509,8 @@ int compute_lower_bound(wctproblem *problem, wctdata *pd) {
 
                 if(parms->pricing_solver < dp_solver) {
                     calculate_nblayers(pd);
-                    val = calculate_x_e(pd);
-                    CCcheck_val_2(val, "Failed in calculate_x_e");
+                    // val = calculate_x_e(pd);
+                    // CCcheck_val_2(val, "Failed in calculate_x_e");
                 }
                 pd->status = LP_bound_computed;
                 val = wctlp_pi(pd->LP, pd->pi);
