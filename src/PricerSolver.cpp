@@ -337,12 +337,17 @@ void PricerSolverBase::construct_lp_sol_from_rmp(
 
     for(int i = 0; i < num_columns; ++i) {
         if(columns[i] > 0.00001) {
-            int counter = 0;
+            size_t counter = 0;
             scheduleset *tmp = (scheduleset *) g_ptr_array_index(schedule_sets, i);
             nodeid tmp_nodeid(decision_diagram->root());
 
             while(tmp_nodeid > 1){
-                Job* tmp_j = (Job *) g_ptr_array_index(tmp->job_list, counter);
+                Job *tmp_j;
+                if(counter < tmp->job_list->len) {
+                    tmp_j = (Job *) g_ptr_array_index(tmp->job_list, counter);
+                } else {
+                    tmp_j = (Job *) nullptr;
+                }
                 Node<>& tmp_node = table.node(tmp_nodeid);
                 if(tmp_j == tmp_node.GetJob()) {
                     x[tmp_node.high_edge_key] += columns[i];
@@ -358,13 +363,11 @@ void PricerSolverBase::construct_lp_sol_from_rmp(
 
     EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), g));
     EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(), g));
-    for (auto it = edges(g); it.first != it.second; it.first++) {
-        auto index = edge_index_list[*it.first];
-
-            printf("test edge %d: %f\n",index, x[index]);
-    }
-
-
+        for (auto it = edges(g); it.first != it.second; it.first++) {
+            auto index = edge_index_list[*it.first];
+    
+                printf("test edge %d: %f\n",index, x[index]);
+        }
     ColorWriterEdge edge_writer(g, x);
     ColorWriterVertex vertex_writer(g, table);
     std::ofstream outf("min.gv");
@@ -478,9 +481,7 @@ void PricerSolverBase::disjunctive_inequality(double *x) {
 
         model_ineq->update();
 
-        model_ineq->write("test.lp");
         model_ineq->optimize();
-
 
         for(auto it = edges(g); it.first != it.second; it.first++) {
             double sol = (edge_var_list[*it.first]).alpha.get(GRB_DoubleAttr_X);

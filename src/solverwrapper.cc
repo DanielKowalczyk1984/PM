@@ -124,7 +124,6 @@ void construct_lp_sol_from_rmp(wctdata *pd) {
 }
 
 void disjunctive_inequality(wctdata *pd) {
-    construct_lp_sol_from_rmp(pd);
     pd->solver->disjunctive_inequality(pd->x_e);
 }
 
