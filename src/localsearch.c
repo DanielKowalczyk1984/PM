@@ -433,6 +433,10 @@ static int local_search_create_processing_list_swap_inter(
         Job *      j1, *j2;
         GPtrArray *machine = sol->part[i].machine;
 
+        if(njobs - l1 < 0 || njobs - l2 < 0) {
+            continue;
+        }
+
         for (int j = 0; j < l1; ++j) {
             j1 = (Job *)g_ptr_array_index(machine, j);
             C += j1->processing_time;
@@ -1427,12 +1431,13 @@ void local_search_swap_inter(solution *         sol,
         GPtrArray *machine1 = sol->part[k1].machine;
 
         for (int k2 = 0; k2 < sol->nmachines; ++k2) {
-            if (k1 == k2) {
+            int        njobs2 = sol->part[k2].machine->len;
+            GPtrArray *machine2 = sol->part[k2].machine;
+            
+            if (k1 == k2 || njobs1 - l1 < 0 || njobs2 - l2 < 0) {
                 continue;
             }
 
-            int        njobs2 = sol->part[k2].machine->len;
-            GPtrArray *machine2 = sol->part[k2].machine;
 
             /** compute B2_1 */
             for (int i = 0; i < njobs1 - l1 + 1; ++i) {
