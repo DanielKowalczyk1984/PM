@@ -73,7 +73,7 @@ int calculate_new_ordered_jobs(wctdata *pd) {
 int build_solve_mip(wctdata *pd) {
     int val = 0;
 
-    // pd->solver->build_mip(pd->x_e);
+   // pd->solver->build_mip(pd->x_e);
 
     return val;
 }
@@ -123,8 +123,12 @@ void construct_lp_sol_from_rmp(wctdata *pd) {
     pd->solver->construct_lp_sol_from_rmp(pd->x, pd->localColPool, pd->localColPool->len, pd->x_e);
 }
 
-void disjunctive_inequality(wctdata *pd) {
-    pd->solver->disjunctive_inequality(pd->x_e);
+void disjunctive_inequality(wctdata *pd, solution *sol) {
+    pd->solver->disjunctive_inequality(pd->x_e, sol);
+}
+
+void represent_solution(wctdata *pd, solution *sol) {
+    pd->solver->represent_solution(sol);
 }
 
 int check_schedule_set(scheduleset *set, wctdata *pd) {

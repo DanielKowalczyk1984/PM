@@ -78,7 +78,9 @@ public:
      /** Construct MipGraph */
      void construct_mipgraph();
      void build_mip();
-     void disjunctive_inequality(double *x);
+     void disjunctive_inequality(double *x, solution *sol);
+     void represent_solution(solution *sol);
+     double* project_solution(solution *sol);
 
      /**
       * Some getters

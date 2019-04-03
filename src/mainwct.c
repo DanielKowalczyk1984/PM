@@ -190,7 +190,7 @@ int main(int ac, char **av) {
         if(parms->pricing_solver < dp_solver) {
             calculate_new_ordered_jobs(root);
             calculate_x_e(root);
-            disjunctive_inequality(root);
+            disjunctive_inequality(root, problem.opt_sol);
         }
         problem.size_graph_after_reduced_cost_fixing = get_size_graph(root->solver);
 
