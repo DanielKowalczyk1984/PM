@@ -98,3 +98,4 @@ compile_commands.json
 .history
 
 # End of https://www.gitignore.io/api/visualstudiocode
+.ccls-cache
