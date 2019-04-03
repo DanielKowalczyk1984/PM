@@ -22,6 +22,7 @@ int construct_sol(wctdata *pd, Optimal_Solution<T> *sol) {
     newset->total_processing_time = sol->C_max;
     pd->newsets = newset;
     pd->nnewsets = 1;
+
 CLEAN:
     if (val) {
         schedulesets_free(&(newset), &(nbset));
