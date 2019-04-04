@@ -9,7 +9,7 @@ GList **iterators;
 int **B2_1 , **B2_2 , **B3_1 , **B3_2 , **B4_1 , **B4_2 , **B5_1 , **B5_2 , **B6_1;
 int *B3_1_;
 
-void alloc_all(solution* sol){
+void alloc_all(Solution* sol){
 
     g = CC_SAFE_MALLOC(sol->njobs, int *);
     h = CC_SAFE_MALLOC(sol->njobs, int *);
@@ -46,7 +46,7 @@ void alloc_all(solution* sol){
     }
 }
 
-void free_all(solution* sol){
+void free_all(Solution* sol){
 
     for (int i = 0; i < sol->njobs; ++i) {
         CC_IFFREE(g[i], int);
@@ -249,7 +249,7 @@ void local_search_data_free(local_search_data **data) {
     }
 }
 
-int local_search_create_W(solution *sol, local_search_data *data) {
+int local_search_create_W(Solution *sol, local_search_data *data) {
     int  val = 0;
     int  nmachines;
     Job *tmp;
@@ -279,7 +279,7 @@ int local_search_create_W(solution *sol, local_search_data *data) {
     return val;
 }
 
-static int local_search_create_processing_list(solution *         sol,
+static int local_search_create_processing_list(Solution *         sol,
                                                local_search_data *data,
                                                int                l) {
     int val = 0;
@@ -309,7 +309,7 @@ static int local_search_create_processing_list(solution *         sol,
     return val;
 }
 
-static int local_search_create_processing_list_2(solution *         sol,
+static int local_search_create_processing_list_2(Solution *         sol,
                                                  local_search_data *data,
                                                  int                l) {
     int val = 0;
@@ -339,7 +339,7 @@ static int local_search_create_processing_list_2(solution *         sol,
     return val;
 }
 
-static int local_search_create_processing_list_swap(solution *         sol,
+static int local_search_create_processing_list_swap(Solution *         sol,
                                                     local_search_data *data,
                                                     int                l1,
                                                     int                l2) {
@@ -393,7 +393,7 @@ static int local_search_create_processing_list_swap(solution *         sol,
 }
 
 static int local_search_create_processing_list_insertion_inter(
-    solution *sol, local_search_data *data, int l) {
+    Solution *sol, local_search_data *data, int l) {
     int val = 0;
 
     for (int i = 0; i < data->nmachines; ++i) {
@@ -424,7 +424,7 @@ static int local_search_create_processing_list_insertion_inter(
 }
 
 static int local_search_create_processing_list_swap_inter(
-    solution *sol, local_search_data *data, int l1, int l2) {
+    Solution *sol, local_search_data *data, int l1, int l2) {
     int val = 0;
 
     for (int i = 0; i < data->nmachines; ++i) {
@@ -478,7 +478,7 @@ static int local_search_create_processing_list_swap_inter(
     return val;
 }
 
-int local_search_create_g(solution *sol, local_search_data *data) {
+int local_search_create_g(Solution *sol, local_search_data *data) {
     int  val = 0;
     int  nmachines = sol->nmachines;
     int  njobs = sol->njobs;
@@ -567,7 +567,7 @@ int local_search_create_g(solution *sol, local_search_data *data) {
 }
 
 static void local_search_update_insertion(
-    solution *sol, int i_best, int j_best, int k_best, int l, int improvement) {
+    Solution *sol, int i_best, int j_best, int k_best, int l, int improvement) {
     Job *tmp;
 #ifndef NDEBUG
     int old = sol->tw;
@@ -595,7 +595,7 @@ static void local_search_update_insertion(
     assert(old - sol->tw == improvement);
 }
 
-static void local_search_update_insertion_inter(solution *sol,
+static void local_search_update_insertion_inter(Solution *sol,
                                                 int       i_best,
                                                 int       j_best,
                                                 int       k_best,
@@ -642,7 +642,7 @@ static void local_search_update_insertion_inter(solution *sol,
     sol->part[kk_best].used = 1;
 }
 
-static void local_search_update_swap(solution *sol,
+static void local_search_update_swap(Solution *sol,
                                      int       i_best,
                                      int       j_best,
                                      int       k_best,
@@ -701,7 +701,7 @@ static void local_search_update_swap(solution *sol,
     part->used = 1;
 }
 
-static void local_search_update_inter_swap(solution *sol,
+static void local_search_update_inter_swap(Solution *sol,
                                            int       i_best,
                                            int       j_best,
                                            int       k_best,
@@ -773,7 +773,7 @@ static void local_search_update_inter_swap(solution *sol,
     part2->used = 1;
 }
 
-void local_search_forward_insertion(solution *         sol,
+void local_search_forward_insertion(Solution *         sol,
                                     local_search_data *data,
                                     int                l) {
     int     pos, p, c, tmp;
@@ -906,7 +906,7 @@ void local_search_forward_insertion(solution *         sol,
 
 }
 
-void local_search_backward_insertion(solution *         sol,
+void local_search_backward_insertion(Solution *         sol,
                                      local_search_data *data,
                                      int                l) {
     int     c;
@@ -1052,7 +1052,7 @@ void local_search_backward_insertion(solution *         sol,
     }
 }
 
-void local_search_swap_intra(solution *         sol,
+void local_search_swap_intra(Solution *         sol,
                              local_search_data *data,
                              int                l1,
                              int                l2) {
@@ -1246,7 +1246,7 @@ void local_search_swap_intra(solution *         sol,
     }
 }
 
-void local_search_insertion_inter(solution *         sol,
+void local_search_insertion_inter(Solution *         sol,
                                   local_search_data *data,
                                   int                l) {
     int     pos, p, c, t;
@@ -1410,7 +1410,7 @@ void local_search_insertion_inter(solution *         sol,
 
 }
 
-void local_search_swap_inter(solution *         sol,
+void local_search_swap_inter(Solution *         sol,
                              local_search_data *data,
                              int                l1,
                              int                l2) {

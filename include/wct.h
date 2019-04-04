@@ -13,37 +13,37 @@ extern "C" {
  * io.c
  */
 
-int print_to_screen(wctproblem *problem);
-int print_to_csv(wctproblem *problem);
-int read_problem(wctproblem *problem);
-int print_size_to_csv(wctproblem *problem, wctdata *pd);
+int print_to_screen(Problem *problem);
+int print_to_csv(Problem *problem);
+int read_problem(Problem *problem);
+int print_size_to_csv(Problem *problem, wctdata *pd);
 
 /**
  * preprocess.c
  */
 
-void calculate_Hmax(wctproblem *problem);
+void calculate_Hmax(Problem *problem);
 int calculate_Hmin(
     int *durations, int nmachines, int njobs, int *perm, double *H);
-int preprocess_data(wctproblem *problem);
-int find_division(wctproblem *problem);
+int preprocess_data(Problem *problem);
+int find_division(Problem *problem);
 void g_problem_summary_init(gpointer data, gpointer user_data);
 void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b);
-void determine_jobs_order_interval(wctproblem *problem);
+void determine_jobs_order_interval(Problem *problem);
 
 /**
  * greedy.c
  */
 
-void update_bestschedule(wctproblem *problem, solution *sol);
+void update_bestschedule(Problem *problem, Solution *sol);
 
-int construct_wspt(Job *jobarray, int njobs, int nmachines, solution *sol);
-int construct_feasible_solutions(wctproblem *problem);
-int construct_edd(wctproblem *prob, solution *sol);
-int construct_spt(wctproblem *prob, solution *sol);
-int construct_random(wctproblem *prob, solution *sol, GRand *rand_uniform);
+int construct_wspt(Job *jobarray, int njobs, int nmachines, Solution *sol);
+int construct_feasible_solutions(Problem *problem);
+int construct_edd(Problem *prob, Solution *sol);
+int construct_spt(Problem *prob, Solution *sol);
+int construct_random(Problem *prob, Solution *sol, GRand *rand_uniform);
 
-int heuristic_rpup(wctproblem *prob);
+int heuristic_rpup(Problem *prob);
 int partlist_to_scheduleset(
     partlist *part, int nbpart, int njobs, scheduleset **classes, int *ccount);
 
@@ -52,24 +52,24 @@ int partlist_to_scheduleset(
  */
 
 /*Help functions for branching*/
-int insert_into_branching_heap(wctdata *pd, wctproblem *problem);
-int skip_wctdata(wctdata *pd, wctproblem *problem);
-int branching_msg(wctdata *pd, wctproblem *problem);
-int branching_msg_cbfs(wctdata *pd, wctproblem *problem);
-void free_elist(wctdata *cd, wctparms *parms);
+int insert_into_branching_heap(wctdata *pd, Problem *problem);
+int skip_wctdata(wctdata *pd, Problem *problem);
+int branching_msg(wctdata *pd, Problem *problem);
+int branching_msg_cbfs(wctdata *pd, Problem *problem);
+void free_elist(wctdata *cd, Parms *parms);
 int prune_duplicated_sets(wctdata *pd);
 
 /** Initialize BB tree */
-void init_BB_tree(wctproblem *problem);
+void init_BB_tree(Problem *problem);
 
 /** Conflict Branching functions */
-int sequential_branching_conflict(wctproblem *problem);
+int sequential_branching_conflict(Problem *problem);
 /** Conflict Branching CBFS exploration */
-int sequential_cbfs_branch_and_bound_conflict(wctproblem *problem);
+int sequential_cbfs_branch_and_bound_conflict(Problem *problem);
 
 /** help function for cbfs */
-void insert_node_for_exploration(wctdata *pd, wctproblem *problem);
-wctdata *get_next_node(wctproblem *problem);
+void insert_node_for_exploration(wctdata *pd, Problem *problem);
+wctdata *get_next_node(Problem *problem);
 
 int insert_frac_pairs_into_heap(wctdata *    pd,
                                        int *        nodepair_refs,
@@ -80,14 +80,14 @@ int insert_frac_pairs_into_heap(wctdata *    pd,
 /**
  * conflict_branching.c
  */
-int create_branches_conflict(wctdata *pd, wctproblem *problem);
+int create_branches_conflict(wctdata *pd, Problem *problem);
 
 /**
  * lowerbound.c
  */
 
-int compute_lower_bound(wctproblem *problem, wctdata *pd);
-int compute_objective(wctdata *pd, wctparms *parms);
+int compute_lower_bound(Problem *problem, wctdata *pd);
+int compute_objective(wctdata *pd, Parms *parms);
 int print_x(wctdata *pd);
 int calculate_x_e(wctdata *pd);
 int calculate_nblayers(wctdata *pd);
@@ -119,7 +119,7 @@ int get_solution_lp_lowerbound(wctdata *pd);
  * wct.c
  */
 
-void adapt_global_upper_bound(wctproblem *problem, int new_upper_bound);
+void adapt_global_upper_bound(Problem *problem, int new_upper_bound);
 /** compute row-index v1 and column-index v2 from array-index.*/
 static inline void inodepair_ref_key(int *v1, int *v2, int index) {
     *v2 = (int)floor(sqrt(2 * ((double)index) + 0.25) - 0.5);
@@ -134,9 +134,9 @@ static inline int nodepair_ref_key(int v1, int v2) {
     return v2 * (v2 + 1) / 2 + v1;
 }
 
-int compute_schedule(wctproblem *problem);
-int add_solution_to_colpool(solution *sol, wctdata *pd);
-int add_solution_to_colpool_and_lp(solution *sol, wctdata *pd);
+int compute_schedule(Problem *problem);
+int add_solution_to_colpool(Solution *sol, wctdata *pd);
+int add_solution_to_colpool_and_lp(Solution *sol, wctdata *pd);
 
 
 /**

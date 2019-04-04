@@ -26,7 +26,7 @@ static int get_problem_name(char *pname, const char *efname) {
     return rval;
 }
 
-int read_problem(wctproblem *problem) {
+int read_problem(Problem *problem) {
     int         val = 0;
     int         nbjobs = 0;
     int         curduration, curduedate, curweight, curjob;
@@ -38,7 +38,7 @@ int read_problem(wctproblem *problem) {
     char *      data = (char *)NULL;
     char *      buf2 = (char *)NULL;
     wctdata *   pd;
-    wctparms *  parms;
+    Parms *  parms;
     parms = &(problem->parms);
     pd = &(problem->root_pd);
     FILE *in = fopen(parms->jobfile, "r");
@@ -99,10 +99,10 @@ CLEAN:
     return val;
 }
 
-int print_to_csv(wctproblem *problem) {
+int print_to_csv(Problem *problem) {
     int       val = 0;
     wctdata * pd = &(problem->root_pd);
-    wctparms *parms = &(problem->parms);
+    Parms *parms = &(problem->parms);
     FILE *    file = (FILE *)NULL;
     char      filenm[128];
     int       size;
@@ -154,7 +154,7 @@ CLEAN:
     return val;
 }
 
-int print_to_screen(wctproblem *problem) {
+int print_to_screen(Problem *problem) {
     int val = 0;
 
     switch (problem->status) {
@@ -191,10 +191,10 @@ int print_to_screen(wctproblem *problem) {
 }
 
 /** Printing sizes of ZDD */
-int print_size_to_csv(wctproblem *problem, wctdata *pd) {
+int print_size_to_csv(Problem *problem, wctdata *pd) {
     int       val = 0;
     int       size;
-    wctparms *parms = &(problem->parms);
+    Parms *parms = &(problem->parms);
     char      filenm[128];
     FILE *    file = (FILE *)NULL;
     GDate     date;

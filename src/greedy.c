@@ -2,14 +2,14 @@
 #include <wct.h>
 
 // static int add_feasible_solution(wctproblem *problem, solution *new_sol);
-static int  solution_set_c(solution *sol);
-static void perturb_swap(solution *         sol,
+static int  solution_set_c(Solution *sol);
+static void perturb_swap(Solution *         sol,
                          local_search_data *data,
                          int                l1,
                          int                l2,
                          GRand *            rand_uniform);
-void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform);
-void permutation_solution(GRand *rand_uniform, solution *sol);
+void Perturb(Solution *sol, local_search_data *data, GRand *rand_uniform);
+void permutation_solution(GRand *rand_uniform, Solution *sol);
 
 int _job_compare_spt(const void *a, const void *b);
 int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b);
@@ -74,7 +74,7 @@ int _job_compare_spt(const void *a, const void *b) {
  * greedy constructions
  */
 
-static int solution_set_c(solution *sol) {
+static int solution_set_c(Solution *sol) {
     int           val = 0;
     partlist *    tmp = (partlist *)NULL;
     Job *         j = (Job *)NULL;
@@ -116,7 +116,7 @@ CLEAN:
     return val;
 }
 
-int construct_spt(wctproblem *prob, solution *sol) {
+int construct_spt(Problem *prob, Solution *sol) {
     int val = 0;
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
@@ -130,7 +130,7 @@ CLEAN:
     return val;
 }
 
-int construct_edd(wctproblem *prob, solution *sol) {
+int construct_edd(Problem *prob, Solution *sol) {
     int val = 0;
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
@@ -143,7 +143,7 @@ CLEAN:
     return val;
 }
 
-int construct_random(wctproblem *prob, solution *sol, GRand *rand_uniform) {
+int construct_random(Problem *prob, Solution *sol, GRand *rand_uniform) {
     int val = 0;
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
@@ -156,7 +156,7 @@ CLEAN:
     return val;
 }
 
-void permutation_solution(GRand *rand_uniform, solution *sol) {
+void permutation_solution(GRand *rand_uniform, Solution *sol) {
     int  i;
     Job *tmp = (Job *)NULL;
 
@@ -166,7 +166,7 @@ void permutation_solution(GRand *rand_uniform, solution *sol) {
     }
 }
 
-void RVND(solution *sol, local_search_data *data) {
+void RVND(Solution *sol, local_search_data *data) {
 
     alloc_all(sol);
 
@@ -265,7 +265,7 @@ void RVND(solution *sol, local_search_data *data) {
     free_all(sol);
 }
 
-static void perturb_swap(solution *         sol,
+static void perturb_swap(Solution *         sol,
                          local_search_data *data,
                          int                l1,
                          int                l2,
@@ -367,7 +367,7 @@ static void perturb_swap(solution *         sol,
     CC_IFFREE(tmp2, Job *);
 }
 
-void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform) {
+void Perturb(Solution *sol, local_search_data *data, GRand *rand_uniform) {
     int L;
     L = g_rand_int_range(rand_uniform, 0, 3);
 
@@ -401,17 +401,17 @@ void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform) {
     local_search_create_g(sol, data);
 }
 
-int heuristic_rpup(wctproblem *prob) {
+int heuristic_rpup(Problem *prob) {
     int    val = 0;
     int njobs = prob->njobs;
     int nmachines = prob->nmachines;
     GRand *rand_uniform = g_rand_new_with_seed(2011);
-    wctparms *parms = &(prob->parms);
+    Parms *parms = &(prob->parms);
     g_random_set_seed(1984);
     int          ILS = prob->njobs/2 ;
     int          IR  = parms->nb_iterations_rvnd;
-    solution *   sol;
-    solution *   sol1 = (solution *)NULL;
+    Solution *   sol;
+    Solution *   sol1 = (Solution *)NULL;
     GPtrArray *  intervals = prob->root_pd.local_intervals;
     local_search_data *data = (local_search_data *)NULL;
     local_search_data *data_RS = (local_search_data *)NULL;

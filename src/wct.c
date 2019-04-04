@@ -7,10 +7,10 @@ int  dbg_lvl() { return debug; }
 void set_dbg_lvl(int dbglvl) { debug = dbglvl; }
 
 /*Functions for initialization of the problem and freeing the problem*/
-void wctproblem_init(wctproblem *problem) {
+void wctproblem_init(Problem *problem) {
     /** Job data */
     problem->g_job_array = g_ptr_array_new_with_free_func(g_job_free);
-    problem->opt_sol = (solution *)NULL;
+    problem->opt_sol = (Solution *)NULL;
     /** Job summary */
     problem->njobs = 0;
     problem->psum = 0;
@@ -41,7 +41,7 @@ void wctproblem_init(wctproblem *problem) {
     set_id_and_name(&(problem->root_pd), 0, "root_node");
     problem->nwctdata++;
     /*parms of the problem*/
-    wctparms_init(&(problem->parms));
+    parms_init(&(problem->parms));
     /*heap initialization*/
     problem->unexplored_states = g_ptr_array_new();
     problem->non_empty_level_pqs = g_queue_new();
@@ -74,9 +74,9 @@ void wctproblem_init(wctproblem *problem) {
     CCutil_start_timer(&(problem->tot_cputime));
 }
 
-void wctproblem_free(wctproblem *problem) {
+void wctproblem_free(Problem *problem) {
     /*free the parameters*/
-    wctparms_free(&(problem->parms));
+    parms_free(&(problem->parms));
     wctdata_free(&(problem->root_pd));
 
     /*free the heap*/
@@ -101,7 +101,7 @@ void wctproblem_free(wctproblem *problem) {
 }
 
 /*Functions for initialization and free the data*/
-void wctdata_init(wctdata *pd, wctproblem *prob) {
+void wctdata_init(wctdata *pd, Problem *prob) {
     /*Initialization B&B data*/
     pd->id = -1;
     pd->depth = 0;
@@ -302,7 +302,7 @@ CLEAN:
     return val;
 }
 
-static int prefill_heap(wctdata *pd, wctproblem *problem) {
+static int prefill_heap(wctdata *pd, Problem *problem) {
     int val = 0;
     int insert_into_heap = 0;
 
@@ -357,10 +357,10 @@ CLEAN:
     return val;
 }
 
-int compute_schedule(wctproblem *problem) {
+int compute_schedule(Problem *problem) {
     int       val = 0;
     wctdata * root_pd = &(problem->root_pd);
-    wctparms *parms = &(problem->parms);
+    Parms *parms = &(problem->parms);
     problem->mult_key = 1.0;
     problem->root_upper_bound = problem->global_upper_bound;
     problem->root_lower_bound = problem->global_lower_bound;
@@ -457,7 +457,7 @@ CLEAN:
     return val;
 }
 
-int add_solution_to_colpool(solution *sol, wctdata *pd) {
+int add_solution_to_colpool(Solution *sol, wctdata *pd) {
     int          val = 0;
 
     for (int i = 0; i < sol->nmachines; ++i) {
@@ -471,7 +471,7 @@ CLEAN:
     return val;
 }
 
-int add_solution_to_colpool_and_lp(solution *sol, wctdata *pd) {
+int add_solution_to_colpool_and_lp(Solution *sol, wctdata *pd) {
     int          val = 0;
     scheduleset *tmp;
 

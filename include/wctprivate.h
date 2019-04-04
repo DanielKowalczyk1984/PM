@@ -26,7 +26,7 @@ typedef enum {
 /**
  * problem data
  */
-typedef struct wctproblem wctproblem;
+typedef struct wctproblem Problem;
 /**
  * node data
  */
@@ -162,7 +162,7 @@ struct wctdata {
     /**
      * ptr to the data overview
      */
-    wctproblem *problem;
+    Problem *problem;
 
     char pname[MAX_PNAME_LEN];
 };
@@ -181,10 +181,11 @@ typedef enum {
 
 
 struct wctproblem {
-    wctparms parms;
+    Parms parms;
     wctdata  root_pd;
     /** Job data in EDD order */
     GPtrArray *g_job_array;
+    GPtrArray *list_solutions;
     /** Summary of jobs */
     int njobs;
     int psum;
@@ -219,7 +220,7 @@ struct wctproblem {
     /** Actual number of artificial columns */
     int nArtificials;
     /* Best Solution*/
-    solution    *opt_sol;
+    Solution    *opt_sol;
     scheduleset *bestschedule;
     int          nbestschedule;
     /*heap variables*/
@@ -260,11 +261,11 @@ struct wctproblem {
 };
 
 /*Initialization and free memory for the problem*/
-void wctproblem_init(wctproblem *problem);
-void wctproblem_free(wctproblem *problem);
+void wctproblem_init(Problem *problem);
+void wctproblem_free(Problem *problem);
 
 /*Initialize pmc data*/
-void wctdata_init(wctdata *pd, wctproblem *prob);
+void wctdata_init(wctdata *pd, Problem *prob);
 int set_id_and_name(wctdata *pd, int id, const char *fname);
 int wctdata_init_unique(wctdata *pd, int id, const char *name);
 int lp_build(wctdata *pd);
@@ -282,18 +283,18 @@ int evaluate_nodes(wctdata *pd);
 int calculate_new_ordered_jobs(wctdata *pd);
 int build_solve_mip(wctdata *pd);
 void construct_lp_sol_from_rmp(wctdata *pd);
-void disjunctive_inequality(wctdata *pd, solution *sol);
-void represent_solution(wctdata *pd, solution *sol);
+void disjunctive_inequality(wctdata *pd, Solution *sol);
+void represent_solution(wctdata *pd, Solution *sol);
 int check_schedule_set(scheduleset *set, wctdata *pd);
 
 
 /**
  * pricing algorithms
  */
-int solve_pricing(wctdata *pd, wctparms *parms, int evaluate);
-int solve_stab(wctdata *pd, wctparms *parms);
-int solve_stab_dynamic(wctdata *pd, wctparms *parms);
-int solve_stab_hybrid(wctdata *pd, wctparms *parms);
+int solve_pricing(wctdata *pd, Parms *parms, int evaluate);
+int solve_stab(wctdata *pd, Parms *parms);
+int solve_stab_dynamic(wctdata *pd, Parms *parms);
+int solve_stab_hybrid(wctdata *pd, Parms *parms);
 int solve_farkas_dbl(wctdata *pd);
 int solve_farkas_dbl_DP(wctdata *pd);
 #ifdef __cplusplus

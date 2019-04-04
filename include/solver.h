@@ -10,15 +10,15 @@ extern "C" {
 #endif
 
 typedef struct PricerSolverBase PricerSolver;
-PricerSolver *newSolver(GPtrArray *jobs, int _num_machines, GPtrArray *ordered_jobs, wctparms *parms);
-PricerSolver *newSolverDp(GPtrArray *_jobs, int _num_machines, int _Hmax, wctparms *parms);
+PricerSolver *newSolver(GPtrArray *jobs, int _num_machines, GPtrArray *ordered_jobs, Parms *parms);
+PricerSolver *newSolverDp(GPtrArray *_jobs, int _num_machines, int _Hmax, Parms *parms);
 void copy_solver(PricerSolver **dest, PricerSolver *src);
 void freeSolver(PricerSolver *src);
 void deletePricerSolver(PricerSolver *solver);
 
 // PricerSolver *copySolver(PricerSolver *src);
 int init_tables(PricerSolver *solver);
-int calculate_table(PricerSolver *solver, wctparms *parms);
+int calculate_table(PricerSolver *solver, Parms *parms);
 
 
 

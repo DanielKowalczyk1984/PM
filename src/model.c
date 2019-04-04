@@ -117,10 +117,10 @@ void g_add_col_to_lp(gpointer data, gpointer user_data) {
 
 int build_lp(wctdata *pd, int construct) {
     int         val = 0;
-    wctproblem *problem = pd->problem;
+    Problem *problem = pd->problem;
     int         njobs = problem->njobs;
     int         nmachines = problem->nmachines;
-    wctparms *parms = &(problem->parms);
+    Parms *parms = &(problem->parms);
     int         nb_row;
     int *       covered = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");

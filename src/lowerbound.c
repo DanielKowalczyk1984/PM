@@ -214,7 +214,7 @@ void make_pi_feasible_farkas_pricing(wctdata *pd) {
     g_ptr_array_foreach(pd->localColPool, g_make_pi_feasible_farkas, pd);
 }
 
-int compute_objective(wctdata *pd, wctparms *parms) {
+int compute_objective(wctdata *pd, Parms *parms) {
     int val = 0;
     int i;
     pd->LP_lower_bound_dual = .0;
@@ -246,14 +246,14 @@ CLEAN:
     return val;
 }
 
-int compute_lower_bound(wctproblem *problem, wctdata *pd) {
+int compute_lower_bound(Problem *problem, wctdata *pd) {
     int       j, val = 0;
     int       break_while_loop = 1;
     int       nnonimprovements = 0;
     int       status = GRB_LOADED;
     double    real_time_solve_lp;
     double    real_time_pricing;
-    wctparms *parms = &(problem->parms);
+    Parms *parms = &(problem->parms);
 
     if (pd->status == infeasible) {
         goto CLEAN;

@@ -369,7 +369,7 @@ void PricerSolverBase::construct_lp_sol_from_rmp(
     outf.close();
 }
 
-double* PricerSolverBase::project_solution(solution *sol) {
+double* PricerSolverBase::project_solution(Solution *sol) {
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     double* x = new double[num_edges(g)] {};
 
@@ -400,7 +400,7 @@ double* PricerSolverBase::project_solution(solution *sol) {
     return x;
 }
 
-void PricerSolverBase::represent_solution(solution *sol) {
+void PricerSolverBase::represent_solution(Solution *sol) {
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     double* x = new double[num_edges(g)] {};
 
@@ -436,7 +436,7 @@ void PricerSolverBase::represent_solution(solution *sol) {
     delete[] x;
 }
 
-void PricerSolverBase::disjunctive_inequality(double *x, solution *sol) {
+void PricerSolverBase::disjunctive_inequality(double *x, Solution *sol) {
 
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     int branch_key = -1;

@@ -2,9 +2,9 @@
 
 /** help functions for conflict branching */
 static int create_same_conflict(
-    wctproblem *problem, wctdata *parent_pd, wctdata **child, Job *v1, Job *v2);
+    Problem *problem, wctdata *parent_pd, wctdata **child, Job *v1, Job *v2);
 static int create_differ_conflict(
-    wctproblem *problem, wctdata *parent_pd, wctdata **child, Job *v1, Job *v2);
+    Problem *problem, wctdata *parent_pd, wctdata **child, Job *v1, Job *v2);
 
 static int transfer_same_cclasses(wctdata *  pd,
                                   GPtrArray *colPool,
@@ -61,7 +61,7 @@ CLEAN:
     return val;
 }
 
-static int create_same_conflict(wctproblem *problem,
+static int create_same_conflict(Problem *problem,
                                 wctdata *   parent_pd,
                                 wctdata **  child,
                                 Job *       v1,
@@ -132,7 +132,7 @@ CLEAN:
     return val;
 }
 
-static int create_differ_conflict(wctproblem *problem,
+static int create_differ_conflict(Problem *problem,
                                   wctdata *   parent_pd,
                                   wctdata **  child,
                                   Job *       v1,
@@ -249,7 +249,7 @@ CLEAN:
 static int find_strongest_children_conflict(int *       strongest_v1,
                                             int *       strongest_v2,
                                             wctdata *   pd,
-                                            wctproblem *problem,
+                                            Problem *problem,
                                             pmcheap *   cand_heap,
                                             int *       nodepair_refs,
                                             double *    nodepair_weights) {
@@ -258,7 +258,7 @@ static int find_strongest_children_conflict(int *       strongest_v1,
     int       remaining_branches = max_non_improving_branches;
     double    strongest_dbl_lb = -115648465146;
     int *     min_nodepair;
-    wctparms *parms = &(problem->parms);
+    Parms *parms = &(problem->parms);
     *strongest_v1 = -1;
     *strongest_v2 = -1;
 
@@ -398,13 +398,13 @@ CLEAN:
     return val;
 }
 
-int create_branches_conflict(wctdata *pd, wctproblem *problem) {
+int create_branches_conflict(wctdata *pd, Problem *problem) {
     int       val = 0;
     int       status;
     int       i;
     int       nb_cols;
     double *  x = (double *)NULL;
-    wctparms *parms = &(problem->parms);
+    Parms *parms = &(problem->parms);
     int       strongest_v1 = -1, strongest_v2 = -1;
     int *     nodepair_refs = (int *)NULL;
     double *  nodepair_weights = (double *)NULL;

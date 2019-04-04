@@ -94,7 +94,7 @@ static int get_int_heap_key_0(double dbl_heap_key, int v1, int v2) {
     return x_frac(dbl_heap_key / ABS((v2 - v1)), 0.5);
 }
 
-void init_BB_tree(wctproblem *problem) {
+void init_BB_tree(Problem *problem) {
     switch (problem->parms.bb_branch_strategy) {
         case conflict_strategy:
             problem->br_heap_a =
@@ -231,7 +231,7 @@ static int trigger_lb_changes_conflict(wctdata *child) {
     return val;
 }
 
-void adapt_global_upper_bound(wctproblem *problem, int new_upper_bound) {
+void adapt_global_upper_bound(Problem *problem, int new_upper_bound) {
     if (problem->global_upper_bound > new_upper_bound) {
         problem->global_upper_bound = new_upper_bound;
     }
@@ -414,7 +414,7 @@ int prune_duplicated_sets(wctdata *pd) {
     return val;
 }
 
-int skip_wctdata(wctdata *pd, wctproblem *problem) {
+int skip_wctdata(wctdata *pd, Problem *problem) {
     BinomialHeap *br_heap = problem->br_heap_a;
 
     if (dbg_lvl() > 0) {
@@ -429,10 +429,10 @@ int skip_wctdata(wctdata *pd, wctproblem *problem) {
     return 0;
 }
 
-int insert_into_branching_heap(wctdata *pd, wctproblem *problem) {
+int insert_into_branching_heap(wctdata *pd, Problem *problem) {
     int       val = 0;
     int       heap_key = 0;
-    wctparms *parms = &(problem->parms);
+    Parms *parms = &(problem->parms);
     problem->parms.bb_search_strategy = dfs_strategy;
     int lb = pd->lower_bound;
 
@@ -464,9 +464,9 @@ CLEAN:
     return val;
 }
 
-void insert_node_for_exploration(wctdata *pd, wctproblem *problem) {
+void insert_node_for_exploration(wctdata *pd, Problem *problem) {
     unsigned int level = pd->ecount_same;
-    wctparms *   parms = &(problem->parms);
+    Parms *   parms = &(problem->parms);
 
     if (pd->lower_bound < pd->upper_bound && pd->status != infeasible) {
         while (problem->unexplored_states->len <= level) {
@@ -517,7 +517,7 @@ void insert_node_for_exploration(wctdata *pd, wctproblem *problem) {
     }
 }
 
-wctdata *get_next_node(wctproblem *problem) {
+wctdata *get_next_node(Problem *problem) {
     wctdata *     pd = (wctdata *)NULL;
     GQueue *      non_empty_level_pqs = problem->non_empty_level_pqs;
     BinomialHeap *next_level_pq =
@@ -551,7 +551,7 @@ wctdata *get_next_node(wctproblem *problem) {
     return pd;
 }
 
-void free_elist(wctdata *cd, wctparms *parms) {
+void free_elist(wctdata *cd, Parms *parms) {
     if (cd->parent && parms->delete_elists) {
         CC_IFFREE(cd->elist_same, int);
         CC_IFFREE(cd->elist_differ, int);
@@ -561,7 +561,7 @@ void free_elist(wctdata *cd, wctparms *parms) {
     }
 }
 
-int branching_msg(wctdata *pd, wctproblem *problem) {
+int branching_msg(wctdata *pd, Problem *problem) {
     BinomialHeap *heap = problem->br_heap_a;
     wctdata *     root = &(problem->root_pd);
 
@@ -584,11 +584,11 @@ int branching_msg(wctdata *pd, wctproblem *problem) {
     return 0;
 }
 
-int sequential_branching_conflict(wctproblem *problem) {
+int sequential_branching_conflict(Problem *problem) {
     int           val = 0;
     wctdata *     pd;
     BinomialHeap *br_heap = problem->br_heap_a;
-    wctparms *    parms = &(problem->parms);
+    Parms *    parms = &(problem->parms);
     printf("ENTERED SEQUANTIAL BRANCHING CONFLICT:\n");
     CCutil_suspend_timer(&problem->tot_branch_and_bound);
 
@@ -650,7 +650,7 @@ CLEAN:
     return val;
 }
 
-int branching_msg_cbfs(wctdata *pd, wctproblem *problem) {
+int branching_msg_cbfs(wctdata *pd, Problem *problem) {
     int      nb_nodes = 0;
     wctdata *root = &(problem->root_pd);
 
@@ -679,10 +679,10 @@ int branching_msg_cbfs(wctdata *pd, wctproblem *problem) {
     return 0;
 }
 
-int sequential_cbfs_branch_and_bound_conflict(wctproblem *problem) {
+int sequential_cbfs_branch_and_bound_conflict(Problem *problem) {
     int       val = 0;
     wctdata * pd;
-    wctparms *parms = &(problem->parms);
+    Parms *parms = &(problem->parms);
     printf("ENTERED SEQUANTIAL BRANCHING CONFLICT + CBFS SEARCHING:\n");
     CCutil_suspend_timer(&problem->tot_branch_and_bound);
 

@@ -10,6 +10,7 @@
 
 #include <defs.h>
 #include <wct.h>
+#include <wctparms.h>
 
 #include <unistd.h>
 
@@ -28,7 +29,7 @@ static void usage(char *f) {
     fprintf(stderr, "   -a int  Set solver: 0 = bdd solver(default), 1 = dp solver\n");
 }
 
-static int parseargs(int ac, char **av, wctparms *parms) {
+static int parseargs(int ac, char **av, Parms *parms) {
     int c;
     double f;
     int val = 0;
@@ -44,61 +45,61 @@ static int parseargs(int ac, char **av, wctparms *parms) {
 
         case 'f':
             c = strtol(optarg, &ptr,10);
-            val = wctparms_set_nb_iterations_rvnd(parms, c);
+            val = parms_set_nb_iterations_rvnd(parms, c);
             CCcheck_val(val, "Failed number feasible solutions");
             break;
 
         case 's':
             c = strtol(optarg, &ptr,10);
-            val = wctparms_set_search_strategy(parms, c);
+            val = parms_set_search_strategy(parms, c);
             CCcheck_val(val, "Failed set_branching_strategy");
             break;
 
         case 'l':
             f = strtod(optarg, &ptr);
-            val = wctparms_set_branching_cpu_limit(parms, f);
-            CCcheck_val(val, "Failed wctparms_set_branching_cpu_limit");
+            val = parms_set_branching_cpu_limit(parms, f);
+            CCcheck_val(val, "Failed parms_set_branching_cpu_limit");
             break;
 
         case 'L':
             f = strtod(optarg, &ptr);
-            val = wctparms_set_scatter_search_cpu_limit(parms, f);
+            val = parms_set_scatter_search_cpu_limit(parms, f);
             CCcheck_val(val,
-                        "Failed wctparms_set_scatter_search_cpu_limit");
+                        "Failed parms_set_scatter_search_cpu_limit");
             break;
 
         case 'B':
             c = strtol(optarg, &ptr,10);
-            val = wctparms_set_branchandbound(parms, c);
-            CCcheck_val(val, "Failed wctparms_set_branchandbound");
+            val = parms_set_branchandbound(parms, c);
+            CCcheck_val(val, "Failed parms_set_branchandbound");
             break;
 
         case 'S':
             c = strtol(optarg, &ptr,10);
-            val = wctparms_set_stab_technique(parms, c);
-            CCcheck_val(val, "Failed in wctparms_set_stab_technique");
+            val = parms_set_stab_technique(parms, c);
+            CCcheck_val(val, "Failed in parms_set_stab_technique");
             break;
 
         case 'p':
             c = strtol(optarg, &ptr,10);
-            val = wctparms_set_print(parms, c);
+            val = parms_set_print(parms, c);
             CCcheck_val(val, "Failed in print");
             break;
 
         case 'b':
             c = strtol(optarg, &ptr,10);
-            val = wctparms_set_branching_strategy(parms, c);
+            val = parms_set_branching_strategy(parms, c);
             CCcheck_val(val, "Failed in set branching strategy");
             break;
         case 'a':
             c = strtol(optarg, &ptr,10);
-            val = wctparms_set_pricing_solver(parms, c);
+            val = parms_set_pricing_solver(parms, c);
             CCcheck_val(val, "Failed in set alpha");
             break;
 
         case 'Z':
             c = strtol(optarg, &ptr,10);
-            val = wctparms_set_strong_branching(parms, c);
+            val = parms_set_strong_branching(parms, c);
             CCcheck_val(val, "Failed in set strong branching");
             break;
 
@@ -113,7 +114,7 @@ static int parseargs(int ac, char **av, wctparms *parms) {
         val = 1;
         goto CLEAN;
     } else {
-        val = wctparms_set_file(parms, av[optind++]);
+        val = parms_set_file(parms, av[optind++]);
         CCcheck_val(val, "Failed in wctparms_set_file");
 
         if (ac <= optind) {
@@ -121,7 +122,7 @@ static int parseargs(int ac, char **av, wctparms *parms) {
             goto CLEAN;
         }
         c = strtol(av[optind++], &ptr, 10);
-        val = wctparms_set_nmachines(parms, c);
+        val = parms_set_nmachines(parms, c);
         CCcheck_val(val, "Failed in wctparms_set_nmachines");
     }
 
@@ -137,9 +138,9 @@ CLEAN:
 int main(int ac, char **av) {
     int val = 0;
     double start_time;
-    wctproblem problem;
+    Problem problem;
     wctdata *root = &(problem.root_pd);
-    wctparms *parms = &(problem.parms);
+    Parms *parms = &(problem.parms);
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header");
     wctproblem_init(&problem);

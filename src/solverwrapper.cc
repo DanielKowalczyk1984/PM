@@ -123,11 +123,11 @@ void construct_lp_sol_from_rmp(wctdata *pd) {
     pd->solver->construct_lp_sol_from_rmp(pd->x, pd->localColPool, pd->localColPool->len, pd->x_e);
 }
 
-void disjunctive_inequality(wctdata *pd, solution *sol) {
+void disjunctive_inequality(wctdata *pd, Solution *sol) {
     pd->solver->disjunctive_inequality(pd->x_e, sol);
 }
 
-void represent_solution(wctdata *pd, solution *sol) {
+void represent_solution(wctdata *pd, Solution *sol) {
     pd->solver->represent_solution(sol);
 }
 
