@@ -18,7 +18,9 @@
 			"folder_exclude_patterns":
 			[
 				"resources",
-				"solutions"
+				"solutions",
+				".ccls-cache",
+				"build/CMakeFiles"
 			],
 			"path": "."
 		},
