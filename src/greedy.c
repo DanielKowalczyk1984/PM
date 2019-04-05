@@ -459,11 +459,8 @@ int heuristic_rpup(Problem *prob) {
             RVND(sol1, data_RS);
 
             if (sol1->tw < sol->tw) {
-                //fprintf(stderr, "solution_update(sol, sol1);\n");
                 solution_update(sol, sol1);
-                //fprintf(stderr , "solution_canonical_order(sol, intervals);\n");
                 solution_canonical_order(sol, intervals);
-                //fprintf(stderr , "add_solution_to_colpool(sol, &(prob->root_pd));\n");
                 add_solution_to_colpool(sol, &(prob->root_pd));
                 j = 0;
             }
