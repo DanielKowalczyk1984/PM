@@ -132,7 +132,7 @@ void represent_solution(wctdata *pd, Solution *sol) {
 }
 
 int check_schedule_set(scheduleset *set, wctdata *pd) {
-    return pd->solver->check_schedule_set(set);
+    return pd->solver->check_schedule_set(set->job_list);
 }
 
 void g_calculate_edges(gpointer data, gpointer user_data) {
