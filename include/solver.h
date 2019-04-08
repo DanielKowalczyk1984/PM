@@ -2,7 +2,6 @@
 #define INCLUDE_SOLVER_H_
 
 #include <wctparms.h>
-#include <solution.h>
 #include <scheduleset.h>
 
 #ifdef __cplusplus
