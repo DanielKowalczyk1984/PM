@@ -8,6 +8,7 @@
 #include <NodeBddTable.hpp>
 #include <node_duration.hpp>
 #include <gurobi_c++.h>
+#include <scheduleset.h>
 
 using namespace boost;
 
@@ -89,5 +90,34 @@ public:
         }
     }
 };
+
+/*class ColorWriterSolution {
+private:
+    const MipGraph& g;
+
+public:
+    explicit ColorWriterSolution(MipGraph& _g) : g{_g} {
+
+    }
+
+    void operator()(std::ostream &output, Edge _edge) {
+        VarsEdge var =  get(boost::edge_weight2_t(),g,_edge);
+        bool high =  get(boost::edge_weight_t(),g,_edge);
+        double x = var.x.get(GRB_DoubleAttr_X);  
+        if(x > 0.00001) {
+            if(high) {
+                output << "[label = "<< x << ",color = red, style =dashed]";
+            } else {
+                output << "[label = "<< x <<",color = red]";
+            }
+        } else {
+            if(high) {
+                output << "[label = "<< x <<",style = dashed]";
+            } else {
+                output << "[label = "<< x <<"]";
+            }
+        }
+    }
+};*/
 
 #endif // MIP_GRAPH_HPP
