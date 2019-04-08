@@ -53,7 +53,7 @@
 		},
 		"LSP":
 		{
-			"ccls":
+			"cquery1":
 			{
 				"enabled": true
 			}
@@ -64,7 +64,7 @@
 			"/usr/include/*",
 			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
 			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/include",
-			"-I/opt/gurobi810/linux64/include",
+			"-I/opt/gurobi811/linux64/include",
 			"-I/usr/include/glib-2.0",
 			"-I/usr/lib64/glib-2.0/include",
 			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/build/_deps/project_tdzdd-src/include"
@@ -74,7 +74,7 @@
 		"SublimeLinter.linters.gcc.include_dirs":
 		[
 			"/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
-			"/opt/gurobi810/linux64/include",
+			"/opt/gurobi811/linux64/include",
 			"/usr/include/glib-2.0",
 			"/usr/lib64/glib-2.0/include",
 			"/home/daniel/Dropbox/PapersOR/PM/implementation/include"
