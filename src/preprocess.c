@@ -59,7 +59,7 @@ int calculate_Hmin(
 void calculate_Hmax(Problem *problem) {
     int      temp = 0;
     double   temp_dbl = 0.0;
-    wctdata *pd = &(problem->root_pd);
+    NodeData *pd = &(problem->root_pd);
 
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
@@ -96,7 +96,7 @@ void determine_jobs_order_interval(Problem *problem) {
 int preprocess_data(Problem *problem) {
     int val = 0;
     int i = 0;
-    wctdata *root = &(problem->root_pd);
+    NodeData *root = &(problem->root_pd);
 
     /** Calculate the statistics of the instance */
     g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
@@ -242,7 +242,7 @@ int find_division(Problem *problem) {
     int            counter = 0;
     int            njobs = problem->njobs;
     int            prev;
-    wctdata *      root_pd = &(problem->root_pd);
+    NodeData *      root_pd = &(problem->root_pd);
     GPtrArray *    tmp_array = g_ptr_array_new_with_free_func(g_interval_free);
     GPtrArray *    jobarray = problem->g_job_array;
     Job *          tmp_j;

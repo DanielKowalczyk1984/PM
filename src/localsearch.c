@@ -651,7 +651,7 @@ static void local_search_update_swap(Solution *sol,
                                      int       improvement) {
     Job *     tmp;
     gpointer  swap;
-    partlist *part = sol->part + k_best;
+    PartList *part = sol->part + k_best;
 #ifndef NDEBUG
     int old = sol->tw;
 #endif
@@ -711,8 +711,8 @@ static void local_search_update_inter_swap(Solution *sol,
                                            int       improvement) {
     Job *     tmp;
     gpointer  swap;
-    partlist *part1 = sol->part + k_best;
-    partlist *part2 = sol->part + kk_best;
+    PartList *part1 = sol->part + k_best;
+    PartList *part2 = sol->part + kk_best;
 #ifndef NDEBUG
     int old = sol->tw;
 #endif

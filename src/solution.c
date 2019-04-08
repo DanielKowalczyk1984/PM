@@ -15,7 +15,7 @@ void g_print_job(gpointer data, gpointer user_data) {
 
 void solution_init(Solution *sol) {
     if (sol) {
-        sol->part = (partlist *)NULL;
+        sol->part = (PartList *)NULL;
         sol->perm = (Job **)NULL;
         sol->c = (int *)NULL;
         sol->u = (int *)NULL;
@@ -33,7 +33,7 @@ void solution_free(Solution **sol) {
             partlist_free((*sol)->part + i);
         }
 
-        CC_IFFREE((*sol)->part, partlist);
+        CC_IFFREE((*sol)->part, PartList);
         CC_IFFREE((*sol)->perm, Job *);
         CC_IFFREE((*sol)->c, int);
         CC_IFFREE((*sol)->u, int);
@@ -64,7 +64,7 @@ Solution *solution_alloc(int nmachines, int njobs, int off) {
     sol->tw = 0;
     sol->b = 0;
     sol->off = off;
-    sol->part = CC_SAFE_MALLOC(nmachines, partlist);
+    sol->part = CC_SAFE_MALLOC(nmachines, PartList);
     CCcheck_NULL_2(sol->part, "Failed to allocate memory to part");
 
     for (i = 0; i < nmachines; ++i) {
@@ -175,11 +175,11 @@ int solution_update(Solution *dest, Solution *src) {
 }
 
 void partlist_permquicksort(int *     perm,
-                            partlist *part,
+                            PartList *part,
                             int       nbpart,
-                            int (*functionPtr)(partlist *, partlist *)) {
+                            int (*functionPtr)(PartList *, PartList *)) {
     int      i, j, temp;
-    partlist t;
+    PartList t;
 
     if (nbpart <= 1) {
         return;
@@ -188,7 +188,7 @@ void partlist_permquicksort(int *     perm,
     CC_SWAP(perm[0], perm[(nbpart - 1) / 2], temp);
     i = 0;
     j = nbpart;
-    memcpy(&t, &(part[perm[0]]), sizeof(partlist));
+    memcpy(&t, &(part[perm[0]]), sizeof(PartList));
 
     while (1) {
         do {
@@ -277,7 +277,7 @@ int bool_diff_Fij(int weight, Job *_prev, Job *tmp_j){
 
 void solution_calculate_machine(Solution *sol, int m) {
     if (m < sol->nmachines) {
-        partlist * part = sol->part + m;
+        PartList * part = sol->part + m;
         GPtrArray *machine = sol->part[m].machine;
         sol->tw -= part->tw;
         part->tw = 0;

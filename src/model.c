@@ -1,28 +1,28 @@
 #include <wct.h>
 
-int grab_int_sol(wctdata *pd, double *x, double tolerance) {
+int grab_integer_solution(NodeData *pd, double *x, double tolerance) {
     int          val = 0;
     double       test_incumbent = .0;
     double       incumbent;
     int          i;
     int          tot_weighted = 0;
     int          nb_cols;
-    scheduleset *tmp_schedule;
+    ScheduleSet *tmp_schedule;
     Job *        tmp_j;
 
-    val = wctlp_objval(pd->LP, &incumbent);
+    val = wctlp_objval(pd->RMP, &incumbent);
     CCcheck_val_2(val, "wctlp_objval failed");
-    val = wctlp_get_nb_cols(pd->LP, &nb_cols);
+    val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed get nb_cols");
 
     schedulesets_free(&(pd->bestcolors), &(pd->nbbest));
-    pd->bestcolors = CC_SAFE_MALLOC(pd->nmachines, scheduleset);
+    pd->bestcolors = CC_SAFE_MALLOC(pd->nmachines, ScheduleSet);
     CCcheck_NULL_2(pd->bestcolors, "Failed to realloc pd->bestcolors");
     pd->nbbest = 0;
 
     assert(nb_cols == pd->localColPool->len);
     for (i = 0; i < pd->localColPool->len; ++i) {
-        tmp_schedule = (scheduleset *)g_ptr_array_index(pd->localColPool, i);
+        tmp_schedule = (ScheduleSet *)g_ptr_array_index(pd->localColPool, i);
         test_incumbent += x[i];
 
         if (x[i] >= 1.0 - tolerance) {
@@ -73,14 +73,14 @@ CLEAN:
     return val;
 }
 
-int addColToLP(scheduleset *set, wctdata *pd) {
+int add_scheduleset_to_rmp(ScheduleSet *set, NodeData *pd) {
     int        val = 0;
     int        cind;
     int        vind;
     double     cval;
     int        njobs = pd->njobs;
     GPtrArray *members = set->job_list;
-    wctlp *    lp = pd->LP;
+    wctlp *    lp = pd->RMP;
     Job *      job;
 
     val = wctlp_get_nb_cols(lp, &(set->id));
@@ -110,12 +110,12 @@ CLEAN:
 }
 
 void g_add_col_to_lp(gpointer data, gpointer user_data) {
-    scheduleset *tmp = (scheduleset *)data;
-    wctdata *    pd = (wctdata *)user_data;
-    addColToLP(tmp, pd);
+    ScheduleSet *tmp = (ScheduleSet *)data;
+    NodeData *    pd = (NodeData *)user_data;
+    add_scheduleset_to_rmp(tmp, pd);
 }
 
-int build_lp(wctdata *pd, int construct) {
+int build_rmp(NodeData *pd, int construct) {
     int         val = 0;
     Problem *problem = pd->problem;
     int         njobs = problem->njobs;
@@ -125,14 +125,14 @@ int build_lp(wctdata *pd, int construct) {
     int *       covered = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
     fill_int(covered, njobs, 0);
-    val = wctlp_init(&(pd->LP), NULL);
+    val = wctlp_init(&(pd->RMP), NULL);
     CCcheck_val_2(val, "wctlp_init failed");
 
     /**
      * add assignment constraints
      */
     for (int i = 0; i < njobs; i++) {
-        val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_GREATER_EQUAL,
+        val = wctlp_addrow(pd->RMP, 0, (int *)NULL, (double *)NULL, wctlp_GREATER_EQUAL,
                            1.0, (char *)NULL);
         CCcheck_val_2(val, "Failed wctlp_addrow");
     }
@@ -140,10 +140,10 @@ int build_lp(wctdata *pd, int construct) {
     /**
      * add number of machines constraint (convexfication)
      */
-    val = wctlp_addrow(pd->LP, 0, (int *)NULL, (double *)NULL, wctlp_GREATER_EQUAL,
+    val = wctlp_addrow(pd->RMP, 0, (int *)NULL, (double *)NULL, wctlp_GREATER_EQUAL,
                        -(double)nmachines, (char *)NULL);
 
-    wctlp_get_nb_rows(pd->LP, &nb_row);
+    wctlp_get_nb_rows(pd->RMP, &nb_row);
 
     /** add columns from localColPool */
     g_ptr_array_foreach(pd->localColPool, g_add_col_to_lp, pd);
@@ -174,12 +174,12 @@ int build_lp(wctdata *pd, int construct) {
     }
     pd->rhs = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
-    val = wctlp_get_rhs(pd->LP, pd->rhs);
+    val = wctlp_get_rhs(pd->RMP, pd->rhs);
     CCcheck_val_2(val, "Failed to get RHS");
 CLEAN:
 
     if (val) {
-        wctlp_free(&(pd->LP));
+        wctlp_free(&(pd->RMP));
         CC_IFFREE(pd->coef, double);
         CC_IFFREE(pd->pi, double);
         CC_IFFREE(pd->pi_in, double)
@@ -194,20 +194,20 @@ CLEAN:
     return val;
 }
 
-int get_solution_lp_lowerbound(wctdata *pd) {
+int get_solution_lp_lowerbound(NodeData *pd) {
     int          val = 0;
     int          nbcols;
     Job *        tmp_j;
 
-    val = wctlp_get_nb_cols(pd->LP, &nbcols);
+    val = wctlp_get_nb_cols(pd->RMP, &nbcols);
     CCcheck_val_2(val, "Failed in wctlp_get_nb_cols");
     pd->x = CC_SAFE_REALLOC(pd->x, nbcols, double);
     CCcheck_NULL_2(pd->x, "Failed to allocate memory");
     assert(nbcols == pd->localColPool->len);
-    wctlp_x(pd->LP, pd->x, 0);
+    wctlp_x(pd->RMP, pd->x, 0);
 
     for (unsigned i = 0; i < nbcols; ++i) {
-        scheduleset *tmp = ((scheduleset *)g_ptr_array_index(pd->localColPool, i));
+        ScheduleSet *tmp = ((ScheduleSet *)g_ptr_array_index(pd->localColPool, i));
         if (pd->x[i]) {
             printf("%f: ", pd->x[i]);
             g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);

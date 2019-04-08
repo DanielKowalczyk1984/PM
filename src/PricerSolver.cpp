@@ -96,7 +96,7 @@ void PricerSolverBase::evaluate_nodes(double *pi, int UB, double LB) {
     return;
 }
 
-void PricerSolverBase::calculate_edges(scheduleset *set) {
+void PricerSolverBase::calculate_edges(ScheduleSet *set) {
     return;
 }
 
@@ -114,7 +114,7 @@ void PricerSolverBase::remove_layers() {
             if (iter.calc_yes) {
                 remove = false;
             } else {
-                nodeid &cur_node_1 = iter.branch[1];
+                NodeId &cur_node_1 = iter.branch[1];
                 cur_node_1 = 0;
             }
         }
@@ -154,7 +154,7 @@ void PricerSolverBase::remove_edges() {
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto &iter : table[i]) {
             if (!iter.calc_yes) {
-                nodeid &cur_node_1 = iter.branch[1];
+                NodeId &cur_node_1 = iter.branch[1];
                 cur_node_1 = 0;
             }
         }
@@ -174,9 +174,9 @@ void PricerSolverBase::construct_mipgraph() {
 
     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
         for (size_t j = 0; j < table[i].size(); j++) {
-            if (nodeid(i, j) != 0) {
+            if (NodeId(i, j) != 0) {
                 table[i][j].key = add_vertex(g);
-                vertex_nodeid_list[table[i][j].key] = nodeid(i, j);
+                vertex_nodeid_list[table[i][j].key] = NodeId(i, j);
             }
         }
     }
@@ -214,6 +214,7 @@ void PricerSolverBase::build_mip() {
         NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(), g));
         EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), g));
         EdgeVarAccessor edge_var_list(get(boost::edge_weight2_t(), g));
+        EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(), g));
         model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
         model->set(GRB_IntParam_Threads, 1);
         model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
@@ -224,7 +225,7 @@ void PricerSolverBase::build_mip() {
         for (auto it = edges(g); it.first != it.second; it.first++) {
             if (edge_type_list[*it.first]) {
                 auto &n = table.node(get(boost::vertex_name_t(), g, source(*it.first, g)));
-                double cost = (double) value_Fj(n.GetWeight() + n.GetJob()->processing_time, n.GetJob());
+                double cost = (double) value_Fj(n.get_weight() + n.get_job()->processing_time, n.get_job());
                 edge_var_list[*it.first].x = model->addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
                 edge_var_list[*it.first].x = model->addVar(0.0, (double) num_machines, 0.0, GRB_CONTINUOUS);
@@ -240,26 +241,26 @@ void PricerSolverBase::build_mip() {
         std::unique_ptr<double[]> rhs_flow(new double[num_vertices]);
 
         for(auto it = vertices(g); it.first != it.second; ++it.first) {
-            const auto node_iterator = vertex_nodeid_list[*it.first];
-            const auto vertex_index = vertex_index_list[*it.first];
-            sense_flow[vertex_index] = GRB_EQUAL;
+            const auto node_id = vertex_nodeid_list[*it.first];
+            const auto vertex_key = vertex_index_list[*it.first];
+            sense_flow[vertex_key] = GRB_EQUAL;
 
             auto out_edges_it = boost::out_edges(*it.first, g);
             for(; out_edges_it.first != out_edges_it.second; ++out_edges_it.first) {
-                flow_conservation_constr[vertex_index] -= edge_var_list[*out_edges_it.first].x;
+                flow_conservation_constr[vertex_key] -= edge_var_list[*out_edges_it.first].x;
             }
 
             auto in_edges_it = boost::in_edges(*it.first, g);
             for(; in_edges_it.first != in_edges_it.second; ++in_edges_it.first) {
-                flow_conservation_constr[vertex_index] += edge_var_list[*in_edges_it.first].x;
+                flow_conservation_constr[vertex_key] += edge_var_list[*in_edges_it.first].x;
             }
 
-            if(node_iterator == decision_diagram->root()) {
-                rhs_flow[vertex_index] = -(double) num_machines;
-            } else if (node_iterator == 1) {
-                rhs_flow[vertex_index] = (double) num_machines;
+            if(node_id == decision_diagram->root()) {
+                rhs_flow[vertex_key] = -(double) num_machines;
+            } else if (node_id == 1) {
+                rhs_flow[vertex_key] = (double) num_machines;
             } else {
-                rhs_flow[vertex_index] = 0.0;
+                rhs_flow[vertex_key] = 0.0;
             }
         }
 
@@ -281,7 +282,7 @@ void PricerSolverBase::build_mip() {
             auto high = edge_type_list[*it.first];
             if (high) {
                 auto &n = table.node(get(boost::vertex_name_t(),g,source(*it.first, g)));
-                assignment[n.GetJob()->job] += edge_var_list[*it.first].x;
+                assignment[n.get_job()->job] += edge_var_list[*it.first].x;
             }
         }
 
@@ -289,6 +290,12 @@ void PricerSolverBase::build_mip() {
         model->update();
 
         model->optimize();
+        for(auto it = edges(g); it.first != it.second; it.first++) {
+            double sol = (edge_var_list[*it.first]).x.get(GRB_DoubleAttr_X);
+            if(sol > 0.00001) {
+                printf("test %d %f\n",edge_index_list[*it.first],sol);
+            }
+        }
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;
@@ -316,7 +323,6 @@ void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB)
     // build_mip();
 
 
-
     // for (int i = njobs  - 1; i >= 0 && count <  8; --i) {
     //     Job *tmp_j = (Job *) g_ptr_array_index(jobs, i);
 
@@ -338,8 +344,8 @@ void PricerSolverBase::construct_lp_sol_from_rmp(
     for(int i = 0; i < num_columns; ++i) {
         if(columns[i] > 0.00001) {
             size_t counter = 0;
-            scheduleset *tmp = (scheduleset *) g_ptr_array_index(schedule_sets, i);
-            nodeid tmp_nodeid(decision_diagram->root());
+            ScheduleSet *tmp = (ScheduleSet *) g_ptr_array_index(schedule_sets, i);
+            NodeId tmp_nodeid(decision_diagram->root());
 
             while(tmp_nodeid > 1){
                 Job *tmp_j;
@@ -350,7 +356,7 @@ void PricerSolverBase::construct_lp_sol_from_rmp(
                 }
 
                 Node<>& tmp_node = table.node(tmp_nodeid);
-                if(tmp_j == tmp_node.GetJob()) {
+                if(tmp_j == tmp_node.get_job()) {
                     x[tmp_node.high_edge_key] += columns[i];
                     tmp_nodeid = tmp_node.branch[1];
                     counter++;
@@ -376,7 +382,7 @@ double* PricerSolverBase::project_solution(Solution *sol) {
     for(int i = 0; i < sol->nmachines; ++i) {
             size_t counter = 0;
             GPtrArray *tmp = sol->part[i].machine;
-            nodeid tmp_nodeid(decision_diagram->root());
+            NodeId tmp_nodeid(decision_diagram->root());
 
             while(tmp_nodeid > 1){
                 Job *tmp_j;
@@ -386,7 +392,7 @@ double* PricerSolverBase::project_solution(Solution *sol) {
                     tmp_j = (Job *) nullptr;
                 }
                 Node<>& tmp_node = table.node(tmp_nodeid);
-                if(tmp_j == tmp_node.GetJob()) {
+                if(tmp_j == tmp_node.get_job()) {
                     x[tmp_node.high_edge_key] += 1.0;
                     tmp_nodeid = tmp_node.branch[1];
                     counter++;
@@ -407,7 +413,7 @@ void PricerSolverBase::represent_solution(Solution *sol) {
     for(int i = 0; i < sol->nmachines; ++i) {
             size_t counter = 0;
             GPtrArray *tmp = sol->part[i].machine;
-            nodeid tmp_nodeid(decision_diagram->root());
+            NodeId tmp_nodeid(decision_diagram->root());
 
             while(tmp_nodeid > 1){
                 Job *tmp_j;
@@ -417,7 +423,7 @@ void PricerSolverBase::represent_solution(Solution *sol) {
                     tmp_j = (Job *) nullptr;
                 }
                 Node<>& tmp_node = table.node(tmp_nodeid);
-                if(tmp_j == tmp_node.GetJob()) {
+                if(tmp_j == tmp_node.get_job()) {
                     x[tmp_node.high_edge_key] += 1.0;
                     tmp_nodeid = tmp_node.branch[1];
                     counter++;
@@ -512,9 +518,9 @@ void PricerSolverBase::disjunctive_inequality(double *x, Solution *sol) {
             constraints_0[edge_key] = edge_var_list[*it.first].alpha - node_var_list[tail].omega[0] + node_var_list[head].omega[0];
             constraints_1[edge_key] = edge_var_list[*it.first].alpha - node_var_list[tail].omega[1] + node_var_list[head].omega[1];
             if(high) {
-                nodeid &n = node_id_list[tail];
-                constraints_0[edge_key] -= pi_0[table.node(n).GetJob()->job];
-                constraints_1[edge_key] -= pi_1[table.node(n).GetJob()->job];
+                NodeId &n = node_id_list[tail];
+                constraints_0[edge_key] -= pi_0[table.node(n).get_job()->job];
+                constraints_1[edge_key] -= pi_1[table.node(n).get_job()->job];
             }
 
             if(edge_key == branch_key) {
@@ -532,7 +538,7 @@ void PricerSolverBase::disjunctive_inequality(double *x, Solution *sol) {
         rhs[num_edges] = 0.0;
 
         int root_key = table.node(decision_diagram->root()).key;
-        int terminal_key = table.node(nodeid(1)).key;
+        int terminal_key = table.node(NodeId(1)).key;
 
         constraints_0[num_edges] += -alpha;
         constraints_1[num_edges] += -alpha;
@@ -557,9 +563,9 @@ void PricerSolverBase::disjunctive_inequality(double *x, Solution *sol) {
         double min = DBL_MAX;
         for(auto it = edges(g); it.first != it.second; it.first++) {
             double sol = (edge_var_list[*it.first]).alpha.get(GRB_DoubleAttr_X);
-            if(sol != 0.0) {
-                if (min > CC_OURABS(sol)) {
-                    min = CC_OURABS(sol);
+            if(CC_ABS(sol) > 0.00001) {
+                if (min > CC_ABS(sol)) {
+                    min = CC_ABS(sol);
                 }
             }
 
@@ -567,12 +573,11 @@ void PricerSolverBase::disjunctive_inequality(double *x, Solution *sol) {
 
         for(auto it = edges(g); it.first != it.second; it.first++) {
             double sol = (edge_var_list[*it.first]).alpha.get(GRB_DoubleAttr_X);
-            if(sol != 0.0) {
-                printf("test %d %f\n",edge_index_list[*it.first],sol/min);
+            if(CC_ABS(sol) > 0.00001) {
+                std::cout << "(" << edge_index_list[*it.first]<< "," << sol/min << ") ";
             }
-
-
         }
+        std::cout << "\n";
         printf("test %f\n", alpha.get(GRB_DoubleAttr_X)/min);
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
@@ -582,21 +587,21 @@ void PricerSolverBase::disjunctive_inequality(double *x, Solution *sol) {
     }
 }
 
-bool PricerSolverBase::check_schedule_set(scheduleset *set) {
-    int weight = 0;
+bool PricerSolverBase::check_schedule_set(GPtrArray *set) {
+    guint weight = 0;
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
-    nodeid tmp_nodeid(decision_diagram->root());
+    NodeId tmp_nodeid(decision_diagram->root());
 
-    for(unsigned j = 0; j < set->job_list->len && tmp_nodeid > 1; ++j) {
-        Job *tmp_j = (Job *) g_ptr_array_index(set->job_list, j);
+    for(unsigned j = 0; j < set->len && tmp_nodeid > 1; ++j) {
+        Job *tmp_j = (Job *) g_ptr_array_index(set, j);
 
-        while(true) {
+        while(tmp_nodeid > 1) {
             Node<>& tmp_node = table.node(tmp_nodeid);
 
-            if(tmp_j == tmp_node.GetJob()) {
+            if(tmp_j == tmp_node.get_job()) {
                 tmp_nodeid = tmp_node.branch[1];
-                weight += tmp_j->processing_time;
-                if(weight != table.node(tmp_nodeid).GetWeight() && tmp_nodeid > 1) {
+                weight += 1;
+                if(j + 1 != weight) {
                     return false;
                 }
                 break;
@@ -606,7 +611,7 @@ bool PricerSolverBase::check_schedule_set(scheduleset *set) {
         }
     }
 
-    return (weight == set->total_processing_time);
+    return (weight == set->len);
 }
 
 /**
@@ -622,7 +627,7 @@ void PricerSolverBdd::init_table() {
     NodeTableEntity<double>& table_new = decision_diagram->getDiagram().privateEntity();
 
     /** init table */
-    table_new.node(decision_diagram->root()).InitNode(0, true);
+    table_new.node(decision_diagram->root()).init_node(0, true);
     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
         for (auto &it : table_new[i]) {
             if (i != 0) {
@@ -632,14 +637,14 @@ void PricerSolverBdd::init_table() {
                     (g_ptr_array_index(ordered_jobs, layer));
                 it.set_job(tmp_pair->j);
                 it.set_layer(layer);
-                int w = it.GetWeight();
-                int p = it.GetJob()->processing_time;
+                int w = it.get_weight();
+                int p = it.get_job()->processing_time;
 
                 auto& n0 = table_new.node(it.branch[0]);
                 auto& n1 = table_new.node(it.branch[1]);
 
-                it.child[0] = n0.InitNode(w);
-                it.child[1] = n1.InitNode(w + p);
+                it.child[0] = n0.init_node(w);
+                it.child[1] = n1.init_node(w + p);
 
 
             } else {
@@ -677,15 +682,15 @@ void PricerSolverBddSimple::compute_labels(double *_pi) {
 void PricerSolverBddSimple::evaluate_nodes(double *pi, int UB, double LB) {
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     compute_labels(pi);
-    double reduced_cost = table.node(1).forward_label1.GetF();
+    double reduced_cost = table.node(1).forward_label1.get_f();
     nb_removed_edges = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto &it : table[i]) {
-            int w = it.GetWeight();
-            Job *job = it.GetJob();
-            double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
+            int w = it.get_weight();
+            Job *job = it.get_job();
+            double result = it.forward_label1.get_f() + it.child[1]->backward_label1.get_f() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
 
             if (LB - (double)(num_machines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                 it.calc_yes = false;
@@ -724,35 +729,35 @@ void PricerSolverBddCycle::compute_labels(double *_pi) {
 void PricerSolverBddCycle::evaluate_nodes(double *pi, int UB, double LB) {
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     compute_labels(pi);
-    double reduced_cost = table.node(1).forward_label1.GetF();
+    double reduced_cost = table.node(1).forward_label1.get_f();
     nb_removed_edges = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto &it : table[i]) {
-            int w = it.GetWeight();
-            Job *job = it.GetJob();
+            int w = it.get_weight();
+            Job *job = it.get_job();
 
-            if(it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() != job) {
-                double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
+            if(it.forward_label1.get_previous_job() != job && it.child[1]->backward_label1.get_prev_job() != job) {
+                double result = it.forward_label1.get_f() + it.child[1]->backward_label1.get_f() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(num_machines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
-            } else if (it.forward_label1.GetPrevJob() == job && it.child[1]->backward_label1.get_prev_job() != job) {
-                double result = it.forward_label2.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
+            } else if (it.forward_label1.get_previous_job() == job && it.child[1]->backward_label1.get_prev_job() != job) {
+                double result = it.forward_label2.get_f() + it.child[1]->backward_label1.get_f() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(num_machines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
-            } else if (it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() == job) {
-                double result = it.forward_label1.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
+            } else if (it.forward_label1.get_previous_job() != job && it.child[1]->backward_label1.get_prev_job() == job) {
+                double result = it.forward_label1.get_f() + it.child[1]->backward_label2.get_f() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(num_machines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
             } else {
-                double result = it.forward_label2.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
+                double result = it.forward_label2.get_f() + it.child[1]->backward_label2.get_f() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
                 if (LB - (double)(num_machines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
@@ -791,15 +796,15 @@ void PricerSolverBddBackwardSimple::compute_labels(double *_pi) {
 void PricerSolverBddBackwardSimple::evaluate_nodes(double *pi, int UB, double LB) {
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     compute_labels(pi);
-    double reduced_cost = table.node(1).forward_label1.GetF();
+    double reduced_cost = table.node(1).forward_label1.get_f();
     nb_removed_edges = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto &it : table[i]) {
-            int w = it.GetWeight();
-            Job *job = it.GetJob();
-            double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
+            int w = it.get_weight();
+            Job *job = it.get_job();
+            double result = it.forward_label1.get_f() + it.child[1]->backward_label1.get_f() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
 
             if (LB - (double)(num_machines - 1)*reduced_cost - result > UB - 1 + 0.0001 && (it.calc_yes)) {
                 it.calc_yes = false;
@@ -838,36 +843,36 @@ void PricerSolverBddBackwardCycle::compute_labels(double *_pi) {
 void PricerSolverBddBackwardCycle::evaluate_nodes(double *pi, int UB, double LB) {
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
     compute_labels(pi);
-    double reduced_cost = table.node(1).forward_label1.GetF();
+    double reduced_cost = table.node(1).forward_label1.get_f();
     nb_removed_edges = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto &it : table[i]) {
-            int w = it.GetWeight();
-            Job *job = it.GetJob();
+            int w = it.get_weight();
+            Job *job = it.get_job();
 
-            if(it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() != job) {
-                double result = it.forward_label1.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
-                if (LB - (double)(num_machines - 1)*reduced_cost - result > UB  + 0.0001 && (it.calc_yes)) {
+            if(it.forward_label1.get_previous_job() != job && it.child[1]->backward_label1.get_prev_job() != job) {
+                double result = it.forward_label1.get_f() + it.child[1]->backward_label1.get_f() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(num_machines - 1)*reduced_cost - result > UB + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
-            } else if (it.forward_label1.GetPrevJob() == job && it.child[1]->backward_label1.get_prev_job() != job) {
-                double result = it.forward_label2.GetF() + it.child[1]->backward_label1.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
-                if (LB - (double)(num_machines - 1)*reduced_cost - result > UB  + 0.0001 && (it.calc_yes)) {
+            } else if (it.forward_label1.get_previous_job() == job && it.child[1]->backward_label1.get_prev_job() != job) {
+                double result = it.forward_label2.get_f() + it.child[1]->backward_label1.get_f() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(num_machines - 1)*reduced_cost - result > UB + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
-            } else if (it.forward_label1.GetPrevJob() != job && it.child[1]->backward_label1.get_prev_job() == job) {
-                double result = it.forward_label1.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
-                if (LB - (double)(num_machines - 1)*reduced_cost - result > UB  + 0.0001 && (it.calc_yes)) {
+            } else if (it.forward_label1.get_previous_job() != job && it.child[1]->backward_label1.get_prev_job() == job) {
+                double result = it.forward_label1.get_f() + it.child[1]->backward_label2.get_f() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(num_machines - 1)*reduced_cost - result > UB + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }
             } else {
-                double result = it.forward_label2.GetF() + it.child[1]->backward_label2.GetF() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
-                if (LB - (double)(num_machines - 1)*reduced_cost - result > UB  + 0.0001 && (it.calc_yes)) {
+                double result = it.forward_label2.get_f() + it.child[1]->backward_label2.get_f() - value_Fj(w + job->processing_time, job) + pi[job->job] + pi[njobs];
+                if (LB - (double)(num_machines - 1)*reduced_cost - result > UB + 0.0001 && (it.calc_yes)) {
                     it.calc_yes = false;
                     nb_removed_edges++;
                 }

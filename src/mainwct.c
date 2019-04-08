@@ -139,11 +139,11 @@ int main(int ac, char **av) {
     int val = 0;
     double start_time;
     Problem problem;
-    wctdata *root = &(problem.root_pd);
+    NodeData *root = &(problem.root_pd);
     Parms *parms = &(problem.parms);
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header");
-    wctproblem_init(&problem);
+    problem_init(&problem);
     val = parseargs(ac, av, &(problem.parms));
     CCcheck_val_2(val, "Failed in parseargs");
     if (dbg_lvl() > 1) {
@@ -183,7 +183,7 @@ int main(int ac, char **av) {
      * Calculation of LB at the root node with column generation
      */
     if(problem.opt_sol->tw + problem.opt_sol->off != 0) {
-        build_lp(&(problem.root_pd), 0);
+        build_rmp(&(problem.root_pd), 0);
         CCutil_start_timer(&(problem.tot_lb_root));
         compute_lower_bound(&problem, &(problem.root_pd));
         problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
@@ -207,6 +207,6 @@ int main(int ac, char **av) {
     print_to_csv(&problem);
 
 CLEAN:
-    wctproblem_free(&problem);
+    problem_free(&problem);
     return val;
 }

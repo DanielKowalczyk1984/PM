@@ -20,8 +20,8 @@ int compare_nb_job(gconstpointer a, gconstpointer b);
  */
 
 int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
-    partlist *x = (partlist *)a;
-    partlist *y = (partlist *)b;
+    PartList *x = (PartList *)a;
+    PartList *y = (PartList *)b;
     int       C_a = x->c;
     int       C_b = y->c;
     int       key_a = x->key;
@@ -76,7 +76,7 @@ int _job_compare_spt(const void *a, const void *b) {
 
 static int solution_set_c(Solution *sol) {
     int           val = 0;
-    partlist *    tmp = (partlist *)NULL;
+    PartList *    tmp = (PartList *)NULL;
     Job *         j = (Job *)NULL;
     BinomialHeap *heap =
         binomial_heap_new(BINOMIAL_HEAP_TYPE_MIN, compare_completion_time);
@@ -95,7 +95,7 @@ static int solution_set_c(Solution *sol) {
 
     for (int i = 0; i < sol->njobs; ++i) {
         j = sol->perm[i];
-        tmp = (partlist *)binomial_heap_pop(heap);
+        tmp = (PartList *)binomial_heap_pop(heap);
         j->index = tmp->machine->len;
         g_ptr_array_add(tmp->machine, j);
         tmp->c += j->processing_time;
@@ -276,8 +276,8 @@ static void perturb_swap(Solution *         sol,
     Job **    tmp1 = (Job **)NULL;
     Job **    tmp2 = (Job **)NULL;
     Job *     tmp;
-    partlist *part1 = (partlist *)NULL;
-    partlist *part2 = (partlist *)NULL;
+    PartList *part1 = (PartList *)NULL;
+    PartList *part2 = (PartList *)NULL;
     m1 = g_rand_int_range(rand_uniform, 0, nmachines);
     m2 = g_rand_int_range(rand_uniform, 0, nmachines);
 

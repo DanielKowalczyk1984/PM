@@ -24,7 +24,7 @@ struct VarsNode{
 typedef adjacency_list_traits < vecS, vecS, bidirectionalS > Traits;
 
 typedef property < vertex_index_t, int,
-        property < vertex_name_t, nodeid,
+        property < vertex_name_t, NodeId,
         property < vertex_distance_t, VarsNode
         > > > VertexProperty;
 
@@ -84,9 +84,9 @@ public:
     }
 
     void operator()(std::ostream &output, Vertex _vertex) {
-        nodeid tmp_nodeid = get(boost::vertex_name_t(), g, _vertex);
+        NodeId tmp_nodeid = get(boost::vertex_name_t(), g, _vertex);
         if(tmp_nodeid > 1) {
-            output <<  " [label=\" " << table.node(tmp_nodeid).GetJob()->job << " " << table.node(tmp_nodeid).GetWeight()  << "\"]";
+            output <<  " [label=\" " << table.node(tmp_nodeid).get_job()->job << " " << table.node(tmp_nodeid).get_weight()  << "\"]";
         }
     }
 };

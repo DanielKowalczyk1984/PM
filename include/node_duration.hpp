@@ -4,7 +4,7 @@
 #include <OptimalSolution.hpp>
 #include <tdzdd/dd/Node.hpp>
 
-using nodeid = tdzdd::NodeId;
+using NodeId = tdzdd::NodeId;
 
 template<typename T>
 class Node;
@@ -97,72 +97,72 @@ class Label {
       return *this;
     }
 
-    void SetPrev(Label<T> * &&_prev) {
+    void set_previous(Label<T> * &&_prev) {
         prev = _prev;
     }
 
-    void SetF(T _f) {
+    void set_f(T _f) {
         f = _f;
     }
 
-    void SetHigh(bool &&_high) {
+    void set_high(bool &&_high) {
         high = _high;
     }
 
-    void SetHeadNode(Node<T>* _head) {
+    void set_head_node(Node<T>* _head) {
       head_node = _head;
     }
 
-    void Reset(){
+    void reset(){
       f = -DBL_MAX;
       prev = nullptr;
       high = false;
     }
 
-    T GetF() const {
+    T get_f() const {
         return f;
     }
 
-    Label<T>* GetPrev() {
+    Label<T>* get_previous() {
         return prev;
     }
 
-    bool GetHigh() {
+    bool get_high() {
         return high;
     }
 
-    Job* GetJob() {
-        return head_node->GetJob();
+    Job* get_job() {
+        return head_node->get_job();
     }
 
-    Job* GetPrevJob() {
-      return GetPrev() == nullptr ? nullptr : GetPrev()->GetJob();
+    Job* get_previous_job() {
+      return get_previous() == nullptr ? nullptr : get_previous()->get_job();
     }
 
-    void UpdateSolution(T _f, Label<T>* && _prev, bool &&_high) {
+    void update_solution(T _f, Label<T>* && _prev, bool &&_high) {
       f = _f;
       prev = _prev;
       high = _high;
     }
 
-    void UpdateSolution(Label<T> &_node) {
+    void update_solution(Label<T> &_node) {
       f = _node.f;
       prev = _node.prev;
       high = _node.high;
     }
 
-    Node<T> *GetNode() const {
+    Node<T> *get_node() const {
       return head_node;
     }
 
-    int GetWeight(){
-      return head_node->GetWeight();
+    int get_weight(){
+      return head_node->get_weight();
     }
 
-    void UpdateNode(Label<T> *_n, T _f = 0, bool _high = false){
+    void update_label(Label<T> *_n, T _f = 0, bool _high = false){
       if(_high) {
         f = _f;
-        prev_job = GetJob();
+        prev_job = get_job();
       } else {
         f = _n->f;
         prev_job = _n->prev_job;
@@ -198,7 +198,7 @@ class Node {
     std::shared_ptr<Node<T>> n;
 
     Node<T>* child[2];
-    nodeid branch[2];
+    NodeId branch[2];
 
     bool calc_yes;
 
@@ -234,6 +234,7 @@ class Node {
          num_layer(_num_layer),
          root_node(_root_node),
          terminal_node(_terminal_node),
+         job(nullptr),
          forward_label1(this),
          forward_label2(this),
          backward_label1(this),
@@ -249,10 +250,10 @@ class Node {
     }
 
     void set_head_node() {
-      forward_label1.SetHeadNode(this);
-      forward_label2.SetHeadNode(this);
-      backward_label1.SetHeadNode(this);
-      backward_label2.SetHeadNode(this);
+      forward_label1.set_head_node(this);
+      forward_label2.set_head_node(this);
+      backward_label1.set_head_node(this);
+      backward_label2.set_head_node(this);
     }
 
     Node(int i, int j) :
@@ -410,19 +411,19 @@ class Node {
       num_layer = _num_layer;
     }
 
-    int GetWeight(){
+    int get_weight(){
       return weight;
     }
 
-    int GetLayerNum() {
+    int get_layer_number() {
       return num_layer;
     }
 
-    bool GetTerminalNode(){
+    bool is_terminal_node(){
       return terminal_node;
     }
 
-    Job *GetJob(){
+    Job *get_job(){
       return job;
     }
 
@@ -453,7 +454,7 @@ class Node {
         return os << ")";
     }
 
-    Node<T>* InitNode(int _weight, bool _root_node = false, bool _terminal_node = false){
+    Node<T>* init_node(int _weight, bool _root_node = false, bool _terminal_node = false){
       if(!_terminal_node) {
         weight = _weight;
         root_node = _root_node;

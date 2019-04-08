@@ -29,7 +29,7 @@ extern "C" {
 #define CC_MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define CC_MIN_PTR(x, y) (((x) < (y)) ? (&x) : (&y))
 #define CC_MAX_PTR(x, y) (((x) > (y)) ? (&x) : (&y))
-#define CC_OURABS(a) (((a) >= 0) ? (a) : -(a))
+#define CC_ABS(a) (((a) >= 0) ? (a) : -(a))
 
 #ifndef SQR
 #define SQR(x)        ((x)*(x))

@@ -50,7 +50,7 @@ void print_dot_file(PricerSolver *solver, char *name) {
 
 void freeSolver(PricerSolver *src) { delete src; }
 
-int evaluate_nodes(wctdata *pd) {
+int evaluate_nodes(NodeData *pd) {
     int    val = 0;
     int    UB = pd->problem->opt_sol->tw;
     double LB = pd->LP_lower_bound;
@@ -60,7 +60,7 @@ int evaluate_nodes(wctdata *pd) {
     return val;
 }
 
-int calculate_new_ordered_jobs(wctdata *pd) {
+int calculate_new_ordered_jobs(NodeData *pd) {
     int val = 0;
     int    UB = pd->problem->opt_sol->tw;
     double LB = pd->LP_lower_bound;
@@ -70,7 +70,7 @@ int calculate_new_ordered_jobs(wctdata *pd) {
     return val;
 }
 
-int build_solve_mip(wctdata *pd) {
+int build_solve_mip(NodeData *pd) {
     int val = 0;
 
    // pd->solver->build_mip(pd->x_e);
@@ -115,28 +115,28 @@ int init_tables(PricerSolver *solver) {
     return val;
 }
 
-void calculate_edges(PricerSolver *solver, scheduleset *set) {
+void calculate_edges(PricerSolver *solver, ScheduleSet *set) {
     solver->calculate_edges(set);
 }
 
-void construct_lp_sol_from_rmp(wctdata *pd) {
+void construct_lp_sol_from_rmp(NodeData *pd) {
     pd->solver->construct_lp_sol_from_rmp(pd->x, pd->localColPool, pd->localColPool->len, pd->x_e);
 }
 
-void disjunctive_inequality(wctdata *pd, Solution *sol) {
+void disjunctive_inequality(NodeData *pd, Solution *sol) {
     pd->solver->disjunctive_inequality(pd->x_e, sol);
 }
 
-void represent_solution(wctdata *pd, Solution *sol) {
+void represent_solution(NodeData *pd, Solution *sol) {
     pd->solver->represent_solution(sol);
 }
 
-int check_schedule_set(scheduleset *set, wctdata *pd) {
+int check_schedule_set(ScheduleSet *set, NodeData *pd) {
     return pd->solver->check_schedule_set(set->job_list);
 }
 
 void g_calculate_edges(gpointer data, gpointer user_data) {
-    scheduleset *tmp = (scheduleset *) data;
+    ScheduleSet *tmp = (ScheduleSet *) data;
     PricerSolver *solver = (PricerSolver *) user_data;
 
     solver->calculate_edges(tmp);

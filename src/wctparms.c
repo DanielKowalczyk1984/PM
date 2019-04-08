@@ -70,6 +70,7 @@ int parms_set_branching_cpu_limit(Parms *parms, double limit) {
     parms->branching_cpu_limit = limit;
     return 0;
 }
+
 int parms_set_branching_strategy(Parms *parms, int strategy) {
     parms->bb_branch_strategy = strategy;
     return 0;

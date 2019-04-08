@@ -89,18 +89,18 @@ public:
 
 
         auto m =  std::max_element(n.list.begin(), n.list.end(),my_compare<T>);
-        weight = (*m)->GetWeight();
+        weight = (*m)->get_weight();
 
         Label<T> *ptr_node = &((*m)->forward_label1);
 
-        while(ptr_node->GetPrev() != nullptr) {
-            Label<T> *aux_prev_node = ptr_node->GetPrev();
-            Job *aux_job = aux_prev_node->GetJob();
-            if(ptr_node->GetHigh()) {
+        while(ptr_node->get_previous() != nullptr) {
+            Label<T> *aux_prev_node = ptr_node->get_previous();
+            Job *aux_job = aux_prev_node->get_job();
+            if(ptr_node->get_high()) {
                 sol.C_max += aux_job->processing_time;
-                if(ptr_node->GetNode()) {
-                    sol.cost = sol.cost + value_Fj(ptr_node->GetWeight(), aux_job) ;
-                    sol.obj += pi[aux_job->job] - value_Fj(ptr_node->GetWeight(), aux_job);
+                if(ptr_node->get_node()) {
+                    sol.cost = sol.cost + value_Fj(ptr_node->get_weight(), aux_job) ;
+                    sol.obj += pi[aux_job->job] - value_Fj(ptr_node->get_weight(), aux_job);
                 } else {
                     sol.cost = sol.cost + value_Fj(weight, aux_job);
                     sol.obj += pi[aux_job->job] - value_Fj(weight, aux_job);
@@ -140,12 +140,12 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
 
     void initializenode(ForwardZddNode<T>& n) const override {
         for (auto &it: n.list) {
-            if(it->GetWeight() == 0) {
-                it->forward_label1.UpdateSolution(-pi[num_jobs], nullptr, false);
-                it->forward_label2.UpdateSolution(-DBL_MAX/2, nullptr, false);
+            if(it->get_weight() == 0) {
+                it->forward_label1.update_solution(-pi[num_jobs], nullptr, false);
+                it->forward_label2.update_solution(-DBL_MAX/2, nullptr, false);
             } else {
-                it->forward_label1.UpdateSolution(-DBL_MAX/2, nullptr, false);
-                it->forward_label2.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->forward_label1.update_solution(-DBL_MAX/2, nullptr, false);
+                it->forward_label2.update_solution(-DBL_MAX/2, nullptr, false);
             }
         }
     }
@@ -153,7 +153,7 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
     void initializerootnode(ForwardZddNode<T> &n) const override {
         for(auto &it: n.list){
             it->forward_label1.f = -pi[num_jobs];
-            it->forward_label2.SetF(-DBL_MAX/2);
+            it->forward_label2.set_f(-DBL_MAX/2);
         }
     }
 
@@ -163,7 +163,7 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
         assert(tmp_j != nullptr);
 
         for (auto &it : n.list) {
-            int      weight = it->GetWeight();
+            int      weight = it->get_weight();
             T g;
             std::shared_ptr<Node<T>> p0 = it->n;
             std::shared_ptr<Node<T>> p1 = it->y;
@@ -172,32 +172,32 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
             /**
              * High edge calculation
              */
-            Job *prev = it->forward_label1.GetPrevJob();
-            Job *aux1 = p1->forward_label1.GetPrevJob();
+            Job *prev = it->forward_label1.get_previous_job();
+            Job *aux1 = p1->forward_label1.get_previous_job();
             double diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
 
             if(prev != tmp_j && diff) {
-                g = it->forward_label1.GetF() + result;
-                if(g > p1->forward_label1.GetF()) {
+                g = it->forward_label1.get_f() + result;
+                if(g > p1->forward_label1.get_f()) {
                     if(aux1 != tmp_j) {
-                        p1->forward_label2.UpdateSolution(p1->forward_label1);
+                        p1->forward_label2.update_solution(p1->forward_label1);
                     }
-                    p1->forward_label1.UpdateSolution(g, &(it->forward_label1), true);
-                } else if ((g > p1->forward_label2.GetF()) && (aux1 != tmp_j)) {
-                    p1->forward_label2.UpdateSolution(g, &(it->forward_label1), true);
+                    p1->forward_label1.update_solution(g, &(it->forward_label1), true);
+                } else if ((g > p1->forward_label2.get_f()) && (aux1 != tmp_j)) {
+                    p1->forward_label2.update_solution(g, &(it->forward_label1), true);
                 }
             } else  {
-                g = it->forward_label2.GetF() + result;
-                prev = it->forward_label2.GetPrevJob();
+                g = it->forward_label2.get_f() + result;
+                prev = it->forward_label2.get_previous_job();
                 diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
                 if(diff) {
-                    if(g > p1->forward_label1.GetF()) {
+                    if(g > p1->forward_label1.get_f()) {
                         if(aux1 != tmp_j) {
-                            p1->forward_label2.UpdateSolution(p1->forward_label1);
+                            p1->forward_label2.update_solution(p1->forward_label1);
                         }
-                        p1->forward_label1.UpdateSolution(g, &(it->forward_label2), true);
-                    } else if ((g > p1->forward_label2.GetF()) && (aux1 != tmp_j)) {
-                        p1->forward_label2.UpdateSolution(g, &(it->forward_label2), true);
+                        p1->forward_label1.update_solution(g, &(it->forward_label2), true);
+                    } else if ((g > p1->forward_label2.get_f()) && (aux1 != tmp_j)) {
+                        p1->forward_label2.update_solution(g, &(it->forward_label2), true);
                     }
                 }
             }
@@ -205,24 +205,24 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
             /**
              * Low edge calculation
              */
-            aux1 = p0->forward_label1.GetPrevJob();
-            if(it->forward_label1.GetF() > p0->forward_label1.GetF()) {
+            aux1 = p0->forward_label1.get_previous_job();
+            if(it->forward_label1.get_f() > p0->forward_label1.get_f()) {
                 if(prev != aux1) {
-                    p0->forward_label2.UpdateSolution(p0->forward_label1);
+                    p0->forward_label2.update_solution(p0->forward_label1);
                 }
-                p0->forward_label1.UpdateSolution(it->forward_label1);
-                if(it->forward_label2.GetF() > p0->forward_label2.GetF()) {
-                    p0->forward_label2.UpdateSolution(it->forward_label2);
+                p0->forward_label1.update_solution(it->forward_label1);
+                if(it->forward_label2.get_f() > p0->forward_label2.get_f()) {
+                    p0->forward_label2.update_solution(it->forward_label2);
                 }
-            } else if ((it->forward_label1.GetF() > p0->forward_label2.GetF()) && (aux1 != prev)){
-                p0->forward_label2.UpdateSolution(it->forward_label1);
-            } else if ((it->forward_label2.GetF() > p0->forward_label2.GetF())) {
-                p0->forward_label2.UpdateSolution(it->forward_label2);
+            } else if ((it->forward_label1.get_f() > p0->forward_label2.get_f()) && (aux1 != prev)){
+                p0->forward_label2.update_solution(it->forward_label1);
+            } else if ((it->forward_label2.get_f() > p0->forward_label2.get_f())) {
+                p0->forward_label2.update_solution(it->forward_label2);
             }
         }
     }
 
-    Optimal_Solution<T> getValue(ForwardZddNode<T> const &n){
+    Optimal_Solution<T> getValue(ForwardZddNode<T> const &n) {
         Optimal_Solution<T> sol;
 
         return sol;
@@ -252,10 +252,10 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
 
     void initializenode(ForwardZddNode<T>& n) const override {
         for (auto &it: n.list) {
-            if(it->GetWeight() == 0) {
-                it->forward_label1.UpdateSolution(-pi[num_jobs], nullptr, false);
+            if(it->get_weight() == 0) {
+                it->forward_label1.update_solution(-pi[num_jobs], nullptr, false);
             } else {
-                it->forward_label1.UpdateSolution(-DBL_MAX/2, nullptr, false);
+                it->forward_label1.update_solution(-DBL_MAX/2, nullptr, false);
             }
         }
     }
@@ -275,7 +275,7 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
         assert(tmp_j != nullptr);
 
         for (auto &it : n.list) {
-            int      weight = it->GetWeight();
+            int      weight = it->get_weight();
             T g;
             std::shared_ptr<Node<T>> p0 = it->n;
             std::shared_ptr<Node<T>> p1 = it->y;
@@ -284,21 +284,21 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
             /**
              * High edge calculation
              */
-            g = it->forward_label1.GetF() + result;
-            if(g > p1->forward_label1.GetF()) {
-                p1->forward_label1.UpdateSolution(g, &(it->forward_label1), true);
+            g = it->forward_label1.get_f() + result;
+            if(g > p1->forward_label1.get_f()) {
+                p1->forward_label1.update_solution(g, &(it->forward_label1), true);
             }
 
             /**
              * Low edge calculation
              */
-            if(it->forward_label1.GetF() > p0->forward_label1.GetF()) {
-                p0->forward_label1.UpdateSolution(it->forward_label1);
+            if(it->forward_label1.get_f() > p0->forward_label1.get_f()) {
+                p0->forward_label1.update_solution(it->forward_label1);
             }
         }
     }
 
-    Optimal_Solution<T> getValue(ForwardZddNode<T> const &n){
+    Optimal_Solution<T> getValue(ForwardZddNode<T> const &n) {
         Optimal_Solution<T> sol;
         return sol;
     }

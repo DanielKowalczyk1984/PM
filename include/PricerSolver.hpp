@@ -72,7 +72,7 @@ public:
      void calculate_new_ordered_jobs(double *pi, int UB, double LB);
      void remove_layers();
      void remove_edges();
-     void calculate_edges(scheduleset *set);
+     void calculate_edges(ScheduleSet *set);
      virtual void evaluate_nodes(double *pi, int UB, double LB);
 
      /** Construct MipGraph */

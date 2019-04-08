@@ -8,19 +8,19 @@
 extern "C" {
 #endif
 
-void update_alpha(wctdata *pd);
-void update_alpha_misprice(wctdata *pd);
-int is_stabilized(wctdata *pd);
-int calculate_dualdiffnorm(wctdata *pd);
-int calculate_beta(wctdata *pd);
-int calculate_hybridfactor(wctdata *pd);
-int update_hybrid(wctdata *pd);
-int update_node(wctdata *pd);
-int get_dual_row(wctdata *pd, int i);
-int row_getDual(wctdata *pd, int i);
-int update_subgradientproduct(wctdata *pd);
-int update_stabcenter(const Optimal_Solution<double> & sol, wctdata *pd);
-double compute_dual(wctdata *pd, int i);
+void update_alpha(NodeData *pd);
+void update_alpha_misprice(NodeData *pd);
+int is_stabilized(NodeData *pd);
+int calculate_dualdiffnorm(NodeData *pd);
+int calculate_beta(NodeData *pd);
+int calculate_hybridfactor(NodeData *pd);
+int update_hybrid(NodeData *pd);
+int update_node(NodeData *pd);
+int get_dual_row(NodeData *pd, int i);
+int row_getDual(NodeData *pd, int i);
+int update_subgradientproduct(NodeData *pd);
+int update_stabcenter(const Optimal_Solution<double> & sol, NodeData *pd);
+double compute_dual(NodeData *pd, int i);
 double compute_lagrange(Optimal_Solution<double> &sol,
                                double *                  rhs,
                                double *                  pi,

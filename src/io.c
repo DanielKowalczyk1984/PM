@@ -37,7 +37,7 @@ int read_problem(Problem *problem) {
     const char *delim = " \n\t";
     char *      data = (char *)NULL;
     char *      buf2 = (char *)NULL;
-    wctdata *   pd;
+    NodeData *   pd;
     Parms *  parms;
     parms = &(problem->parms);
     pd = &(problem->root_pd);
@@ -101,7 +101,7 @@ CLEAN:
 
 int print_to_csv(Problem *problem) {
     int       val = 0;
-    wctdata * pd = &(problem->root_pd);
+    NodeData * pd = &(problem->root_pd);
     Parms *parms = &(problem->parms);
     FILE *    file = (FILE *)NULL;
     char      filenm[128];
@@ -191,7 +191,7 @@ int print_to_screen(Problem *problem) {
 }
 
 /** Printing sizes of ZDD */
-int print_size_to_csv(Problem *problem, wctdata *pd) {
+int print_size_to_csv(Problem *problem, NodeData *pd) {
     int       val = 0;
     int       size;
     Parms *parms = &(problem->parms);

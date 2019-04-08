@@ -20,7 +20,7 @@ typedef struct _Job {
 } Job;
 
 typedef struct _solution {
-    partlist *part;
+    PartList *part;
     Job **    perm;
     int *     c;
     int *     u;
@@ -47,7 +47,7 @@ Solution *solution_alloc(int nmachines, int njobs, int off);
 void solution_print(Solution *sol);
 int solution_copy(Solution *dest, Solution *src);
 int solution_update(Solution *dest, Solution *src);
-int solution_check(partlist *part, int jcount);
+int solution_check(PartList *part, int jcount);
 
 Job *job_alloc(int *p, int *w, int *d);
 void job_init(Job *job, int p, int d, int w);

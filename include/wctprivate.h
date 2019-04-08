@@ -26,13 +26,13 @@ typedef enum {
 /**
  * problem data
  */
-typedef struct wctproblem Problem;
+typedef struct _Problem Problem;
 /**
  * node data
  */
-typedef struct wctdata wctdata;
+typedef struct _NodeData NodeData;
 
-struct wctdata {
+struct _NodeData {
     // The id and depth of the node in the B&B tree
     int id;
     int depth;
@@ -53,7 +53,7 @@ struct wctdata {
     int **sump;
 
     // The column generation lp information
-    wctlp *LP;
+    wctlp *RMP;
     wctlp *MIP;
     double *x;
     double *x_e;
@@ -67,15 +67,10 @@ struct wctdata {
     // scheduleset *cclasses;
     int          dzcount;
     // int          gallocated;
-    scheduleset *newsets;
+    ScheduleSet *newsets;
     int          nnewsets;
     int *cstat;
     GPtrArray *localColPool;
-
-    int  kpc_pi_scalef;
-    int  kpc_pi_scalef_heur;
-    int *kpc_pi;
-    int *kpc_pi_heur;
 
     int     lower_bound;
     int     upper_bound;
@@ -115,11 +110,11 @@ struct wctdata {
     int     update;
 
     // Best Solution
-    scheduleset *bestcolors;
+    ScheduleSet *bestcolors;
     int          besttotwct;
     int          nbbest;
 
-    const scheduleset *debugcolors;
+    const ScheduleSet *debugcolors;
     int                ndebugcolors;
     int                opt_track;
 
@@ -134,15 +129,15 @@ struct wctdata {
     int      ecount_same;
     int     *elist_differ;
     int      ecount_differ;
-    wctdata *same_children;
+    NodeData *same_children;
     int      nsame;
-    wctdata *diff_children;
+    NodeData *diff_children;
     int      ndiff;
     Job      *v1, *v2;
     /** ahv branching */
-    wctdata *duetime_child;
+    NodeData *duetime_child;
     int      nduetime;
-    wctdata *releasetime_child;
+    NodeData *releasetime_child;
     int      nreleasetime;
     int      branch_job;
     int      completiontime;
@@ -150,14 +145,14 @@ struct wctdata {
     int      *v1_wide;
     int      *v2_wide;
     int       nb_wide;
-    wctdata **same_children_wide;
-    wctdata **diff_children_wide;
+    NodeData **same_children_wide;
+    NodeData **diff_children_wide;
 
 
     /**
      * ptr to the parent node
      */
-    wctdata *parent;
+    NodeData *parent;
 
     /**
      * ptr to the data overview
@@ -180,9 +175,9 @@ typedef enum {
 } problem_status;
 
 
-struct wctproblem {
+struct _Problem {
     Parms parms;
-    wctdata  root_pd;
+    NodeData  root_pd;
     /** Job data in EDD order */
     GPtrArray *g_job_array;
     GPtrArray *list_solutions;
@@ -211,9 +206,6 @@ struct wctproblem {
     problem_status status;
 
     /* All partial schedules*/
-    scheduleset *initsets;
-    int          nbinitsets;
-    int          gallocated;
     GPtrArray *ColPool;
     /** Maximum number of artificial columns */
     int maxArtificials;
@@ -221,8 +213,6 @@ struct wctproblem {
     int nArtificials;
     /* Best Solution*/
     Solution    *opt_sol;
-    scheduleset *bestschedule;
-    int          nbestschedule;
     /*heap variables*/
     BinomialHeap *br_heap_a;
     GPtrArray    *unexplored_states;
@@ -261,42 +251,40 @@ struct wctproblem {
 };
 
 /*Initialization and free memory for the problem*/
-void wctproblem_init(Problem *problem);
-void wctproblem_free(Problem *problem);
+void problem_init(Problem *problem);
+void problem_free(Problem *problem);
 
 /*Initialize pmc data*/
-void wctdata_init(wctdata *pd, Problem *prob);
-int set_id_and_name(wctdata *pd, int id, const char *fname);
-int wctdata_init_unique(wctdata *pd, int id, const char *name);
-int lp_build(wctdata *pd);
+void nodedata_init(NodeData *pd, Problem *prob);
+int set_id_and_name(NodeData *pd, int id, const char *fname);
 
 /*Free the wctdata*/
-void lpwctdata_free(wctdata *pd);
-void children_data_free(wctdata *pd);
-void wctdata_free(wctdata *pd);
-void temporary_data_free(wctdata *pd);
+void lpwctdata_free(NodeData *pd);
+void children_data_free(NodeData *pd);
+void nodedata_free(NodeData *pd);
+void temporary_data_free(NodeData *pd);
 
 /**
  * solver zdd
  */
-int evaluate_nodes(wctdata *pd);
-int calculate_new_ordered_jobs(wctdata *pd);
-int build_solve_mip(wctdata *pd);
-void construct_lp_sol_from_rmp(wctdata *pd);
-void disjunctive_inequality(wctdata *pd, Solution *sol);
-void represent_solution(wctdata *pd, Solution *sol);
-int check_schedule_set(scheduleset *set, wctdata *pd);
+int evaluate_nodes(NodeData *pd);
+int calculate_new_ordered_jobs(NodeData *pd);
+int build_solve_mip(NodeData *pd);
+void construct_lp_sol_from_rmp(NodeData *pd);
+void disjunctive_inequality(NodeData *pd, Solution *sol);
+void represent_solution(NodeData *pd, Solution *sol);
+int check_schedule_set(ScheduleSet *set, NodeData *pd);
 
 
 /**
  * pricing algorithms
  */
-int solve_pricing(wctdata *pd, Parms *parms, int evaluate);
-int solve_stab(wctdata *pd, Parms *parms);
-int solve_stab_dynamic(wctdata *pd, Parms *parms);
-int solve_stab_hybrid(wctdata *pd, Parms *parms);
-int solve_farkas_dbl(wctdata *pd);
-int solve_farkas_dbl_DP(wctdata *pd);
+int solve_pricing(NodeData *pd, Parms *parms, int evaluate);
+int solve_stab(NodeData *pd, Parms *parms);
+int solve_stab_dynamic(NodeData *pd, Parms *parms);
+int solve_stab_hybrid(NodeData *pd, Parms *parms);
+int solve_farkas_dbl(NodeData *pd);
+int solve_farkas_dbl_DP(NodeData *pd);
 #ifdef __cplusplus
 }
 #endif

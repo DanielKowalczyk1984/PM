@@ -48,7 +48,7 @@
 template<typename T = double>
 class DdStructure: public tdzdd::DdSpec<DdStructure<T>,tdzdd::NodeId,2> {
     NodeTableHandler<T> diagram; ///< The diagram structure.
-    nodeid root_;                    ///< Root node ID.
+    NodeId root_;                    ///< Root node ID.
 
 public:
     /**
@@ -64,14 +64,14 @@ public:
             diagram(n + 1), root_(1) {
         assert(n >= 0);
         NodeTableEntity<T>& table = diagram.privateEntity();
-        nodeid f(1);
+        NodeId f(1);
 
         for (int i = 1; i <= n; ++i) {
             table.initRow(i, 1);
             for (int b = 0; b < 2; ++b) {
                 table[i][0].branch[b] = f;
             }
-            f = nodeid(i, 0);
+            f = NodeId(i, 0);
         }
 
         root_ = f;
@@ -134,7 +134,7 @@ public:
      * Gets the root node.
      * @return root node ID.
      */
-    nodeid& root() {
+    NodeId& root() {
         return root_;
     }
 
@@ -142,7 +142,7 @@ public:
      * Gets the root node.
      * @return root node ID.
      */
-    nodeid root() const {
+    NodeId root() const {
         return root_;
     }
 
@@ -152,7 +152,7 @@ public:
      * @param b branch number.
      * @return child node ID.
      */
-    nodeid child(nodeid f, int b) const {
+    NodeId child(NodeId f, int b) const {
         return diagram->child(f, b);
     }
 
@@ -208,7 +208,7 @@ public:
         if (size() > o.size()) return o.operator==(*this);
 
         tdzdd::MyHashMap<tdzdd::InitializedNode<2>,size_t> uniq;
-        tdzdd::DataTable<nodeid> equiv(n + 1);
+        tdzdd::DataTable<NodeId> equiv(n + 1);
         {
             size_t om = (*o.diagram)[0].size();
             equiv[0].resize(om);
@@ -232,12 +232,12 @@ public:
                 tdzdd::InitializedNode<2> node;
 
                 for (int b = 0; b < 2; ++b) {
-                    nodeid f = (*o.diagram)[i][j].branch[b];
+                    NodeId f = (*o.diagram)[i][j].branch[b];
                     node.branch[b] = equiv[f.row()][f.col()];
                 }
 
                 size_t* p = uniq.getValue(node);
-                equiv[i][j] = nodeid(i, (p != 0) ? *p : m);
+                equiv[i][j] = NodeId(i, (p != 0) ? *p : m);
             }
         }
 
@@ -446,14 +446,14 @@ public:
      */
     class const_iterator {
         struct Selection {
-            nodeid node;
+            NodeId node;
             bool val;
 
             Selection() :
                     val(false) {
             }
 
-            Selection(nodeid node, bool val) :
+            Selection(NodeId node, bool val) :
                     node(node), val(val) {
             }
 
@@ -474,7 +474,7 @@ public:
         }
 
         const_iterator& operator++() {
-            next(nodeid(0, 0));
+            next(NodeId(0, 0));
             return *this;
         }
 
@@ -495,7 +495,7 @@ public:
         }
 
     private:
-        void next(nodeid f) {
+        void next(NodeId f) {
             itemset.clear();
 
             for (;;) {
@@ -565,7 +565,7 @@ public:
     /**
      * Implements DdSpec.
      */
-    int getRoot(nodeid& f) const {
+    int getRoot(NodeId& f) const {
         f = root_;
         return (f == 1) ? -1 : f.row();
     }
@@ -573,7 +573,7 @@ public:
     /**
      * Implements DdSpec.
      */
-    int getChild(nodeid& f, int level, int value) const {
+    int getChild(NodeId& f, int level, int value) const {
         assert(level > 0 && level == f.row());
         assert(0 <= value && value < 2);
         f = child(f, value);
@@ -583,7 +583,7 @@ public:
     /**
      * Implements DdSpec.
      */
-    size_t hashCode(nodeid const& f) const {
+    size_t hashCode(NodeId const& f) const {
         return f.hash();
     }
 
@@ -614,7 +614,7 @@ public:
                 os << k << " " << i;
 
                 for (int c = 0; c <= 1; ++c) {
-                    nodeid fc = p->branch[c];
+                    NodeId fc = p->branch[c];
                     if (fc == 0) {
                         os << " F";
                     }
