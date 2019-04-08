@@ -21,12 +21,13 @@ typedef enum {
     submitted_for_branching = 3,
     infeasible = 4,
     finished = 5,
-} data_status;
+} NodeDataStatus;
 
 /**
  * problem data
  */
 typedef struct _Problem Problem;
+
 /**
  * node data
  */
@@ -37,7 +38,7 @@ struct _NodeData {
     int id;
     int depth;
 
-    data_status status;
+    NodeDataStatus status;
 
     // The instance information
     int njobs;
