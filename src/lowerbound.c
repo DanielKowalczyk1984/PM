@@ -348,6 +348,7 @@ int compute_lower_bound(Problem *problem, NodeData *pd) {
          */
         if (pd->dzcount > pd->njobs * min_ndelrow_ratio && status == GRB_OPTIMAL) {
             val = delete_old_cclasses(pd);
+            CCcheck_val_2(val, "Failed in delete_old_cclasses");
         }
 
         /** 
@@ -364,13 +365,8 @@ int compute_lower_bound(Problem *problem, NodeData *pd) {
                 if (pd->iterations < pd->maxiterations) {
                     switch (parms->stab_technique) {
                         case stab_wentgnes:
-                            // if(pd->iterations%5 == 0) {
-                            //     val = solve_pricing(pd, parms,0);
-                            //     CCcheck_val_2(val, "Failed in solving pricing");
-                            // } else {
-                                val = solve_stab(pd, parms);
-                                CCcheck_val_2(val, "Failed in solve_stab");
-                            // }
+                            val = solve_stab(pd, parms);
+                            CCcheck_val_2(val, "Failed in solve_stab");
                             break;
 
                         case stab_dynamic:
