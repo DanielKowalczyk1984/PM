@@ -22,7 +22,7 @@ typedef struct Heap_t {
     HeapElement *elms;
 } HeapContainer;
 
-int heapcontainer_init(HeapContainer **heap, int size), pmcheap_free(HeapContainer *heap),
+int heapcontainer_init(HeapContainer **heap, int size), heapcontainer_free(HeapContainer *heap),
     heapcontainer_free_all(HeapContainer *heap),
     heapcontainer_insert(HeapContainer *heap, int key, void *obj),
     heapcontainer_remove(HeapContainer *heap, int href),
@@ -32,7 +32,7 @@ int heapcontainer_init(HeapContainer **heap, int size), pmcheap_free(HeapContain
     heapcontainer_relabel(HeapContainer *heap, int href, int new_key);
 void *heapcontainer_get_obj(const HeapContainer *heap, int href);
 
-void *heapcontainer_min(HeapContainer *heap), pmcheap_reset(HeapContainer *heap),
+void *heapcontainer_min(HeapContainer *heap), heapcontainer_reset(HeapContainer *heap),
     heapcontainer_reset_free(HeapContainer *heap);
 
 #ifdef __cplusplus

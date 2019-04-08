@@ -523,7 +523,7 @@ CLEAN:
     free_elist(pd, &(problem->parms));
 
     if (heap) {
-        pmcheap_free(heap);
+        heapcontainer_free(heap);
         heap = (HeapContainer *)NULL;
     }
 
