@@ -101,8 +101,6 @@ void iterate_zdd(PricerSolver *solver) { solver->iterate_zdd(); }
 
 void print_number_paths(PricerSolver *solver) { solver->print_num_paths(); }
 
-size_t get_datasize(PricerSolver *solver) { return solver->get_datasize(); }
-
 int get_num_layers(PricerSolver *solver) { return solver->get_num_layers(); }
 
 size_t get_size_graph(PricerSolver *solver) { return solver->get_size_graph(); }
