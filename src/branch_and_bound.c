@@ -112,7 +112,7 @@ int insert_frac_pairs_into_heap(NodeData *pd,
                                 int *    nodepair_refs,
                                 double * nodepair_weights,
                                 int      npairs,
-                                pmcheap *heap) {
+                                HeapContainer *heap) {
     int          val = 0;
     int          i;
     int          ref_key;
@@ -176,14 +176,14 @@ int insert_frac_pairs_into_heap(NodeData *pd,
             int int_heap_key =
                 get_int_heap_key(dbl_heap_key, v1, v2, mean_counter[ref_key],
                                  pd->njobs, mean_error[ref_key]);
-            val = pmcheap_insert(heap, int_heap_key + 1,
+            val = heapcontainer_insert(heap, int_heap_key + 1,
                                  (void *)&(nodepair_refs[ref_key]));
             CCcheck_val_2(val, "Failed in pmcheap_insert");
         }
     }
 
     if (dbg_lvl()) {
-        printf("Size of frac heap is %d\n", pmcheap_size(heap));
+        printf("Size of frac heap is %d\n", heapcontainer_size(heap));
     }
 
 CLEAN:

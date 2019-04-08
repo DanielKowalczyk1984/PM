@@ -250,7 +250,7 @@ static int find_strongest_children_conflict(int *       strongest_v1,
                                             int *       strongest_v2,
                                             NodeData *   pd,
                                             Problem *problem,
-                                            pmcheap *   cand_heap,
+                                            HeapContainer *   cand_heap,
                                             int *       nodepair_refs,
                                             double *    nodepair_weights) {
     int       val = 0;
@@ -264,7 +264,7 @@ static int find_strongest_children_conflict(int *       strongest_v1,
 
     switch (parms->strong_branching) {
         case use_strong_branching:
-            while ((min_nodepair = (int *)pmcheap_min(cand_heap)) &&
+            while ((min_nodepair = (int *)heapcontainer_min(cand_heap)) &&
                    (remaining_branches--)) {
                 int    v1 = -1, v2 = -1;
                 double dbl_child_lb;
@@ -366,7 +366,7 @@ static int find_strongest_children_conflict(int *       strongest_v1,
             break;
 
         case no_strong_branching:
-            min_nodepair = (int *)pmcheap_min(cand_heap);
+            min_nodepair = (int *)heapcontainer_min(cand_heap);
             int v1 = -1, v2 = -1;
             inodepair_ref_key(&v1, &v2, (int)(min_nodepair - nodepair_refs));
             assert(v1 < v2);
@@ -412,8 +412,8 @@ int create_branches_conflict(NodeData *pd, Problem *problem) {
     int *     mf_col = (int *)NULL;
     GList *   branchjobs = (GList *)NULL;
     int *     completion_time = (int *)NULL;
-    pmcheap * heap = (pmcheap *)NULL;
-    val = pmcheap_init(&heap, npairs);
+    HeapContainer * heap = (HeapContainer *)NULL;
+    val = heapcontainer_init(&heap, npairs);
     CCcheck_val_2(val, "Failed pmcheap_init");
     nodepair_refs = CC_SAFE_MALLOC(npairs, int);
     CCcheck_NULL_2(nodepair_refs, "Failed to allocate memory to nodepair_refs");
@@ -463,7 +463,7 @@ int create_branches_conflict(NodeData *pd, Problem *problem) {
                                       npairs, heap);
     CCcheck_val_2(val, "Failed in insert_frac_pairs_into_heap");
 
-    if (pmcheap_size(heap) == 0) {
+    if (heapcontainer_size(heap) == 0) {
         printf("LP returned integral solution\n");
         val = grab_integer_solution(pd, x, lp_int_tolerance());
         CCcheck_val_2(val, "Failed in grab_int_sol");
@@ -472,7 +472,7 @@ int create_branches_conflict(NodeData *pd, Problem *problem) {
     }
 
     if (dbg_lvl() > 1) {
-        printf("Collected %d branching candidates.\n", pmcheap_size(heap));
+        printf("Collected %d branching candidates.\n", heapcontainer_size(heap));
     }
 
     val = find_strongest_children_conflict(&strongest_v1, &strongest_v2, pd,
@@ -524,7 +524,7 @@ CLEAN:
 
     if (heap) {
         pmcheap_free(heap);
-        heap = (pmcheap *)NULL;
+        heap = (HeapContainer *)NULL;
     }
 
     CC_IFFREE(x, double);

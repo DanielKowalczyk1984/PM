@@ -75,7 +75,7 @@ int insert_frac_pairs_into_heap(NodeData *    pd,
                                        int *        nodepair_refs,
                                        double *     nodepair_weights,
                                        int          npairs,
-                                       pmcheap *    heap);
+                                       HeapContainer *    heap);
 
 /**
  * conflict_branching.c
