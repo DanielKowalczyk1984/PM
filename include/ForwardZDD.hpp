@@ -48,7 +48,7 @@ bool my_compare(const std::shared_ptr<Node<T>> &lhs, const std::shared_ptr<Node<
 }
 
 template<typename E, typename T> class ForwardZddBase : public 
-    tdzdd::DdEval<E, ForwardZddNode<T>, Optimal_Solution<T>> {
+    tdzdd::DdEval<E, ForwardZddNode<T>, OptimalSolution<T>> {
 protected:
     T *pi;
     int num_jobs;
@@ -82,8 +82,8 @@ public:
 
     // virtual Optimal_Solution<double> get_objective(ForwardZddNode<T>& n) const = 0;
 
-    Optimal_Solution<T> get_objective(ForwardZddNode<T> &n) const {
-        Optimal_Solution<T> sol(-pi[num_jobs]);
+    OptimalSolution<T> get_objective(ForwardZddNode<T> &n) const {
+        OptimalSolution<T> sol(-pi[num_jobs]);
 
         int weight;
 
@@ -222,8 +222,8 @@ template<typename E, typename T> class ForwardZddCycle : public ForwardZddBase<E
         }
     }
 
-    Optimal_Solution<T> getValue(ForwardZddNode<T> const &n) {
-        Optimal_Solution<T> sol;
+    OptimalSolution<T> getValue(ForwardZddNode<T> const &n) {
+        OptimalSolution<T> sol;
 
         return sol;
     }
@@ -298,8 +298,8 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
         }
     }
 
-    Optimal_Solution<T> getValue(ForwardZddNode<T> const &n) {
-        Optimal_Solution<T> sol;
+    OptimalSolution<T> getValue(ForwardZddNode<T> const &n) {
+        OptimalSolution<T> sol;
         return sol;
     }
 };

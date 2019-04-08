@@ -3,7 +3,7 @@
 #include <stabilization.h>
 
 template <typename T = double>
-int construct_sol(NodeData *pd, Optimal_Solution<T> *sol) {
+int construct_sol(NodeData *pd,OptimalSolution<T> *sol) {
     int          val = 0;
     int          nbset = 1;
     ScheduleSet *newset = scheduleset_alloc_bis(pd->njobs);
@@ -33,7 +33,7 @@ CLEAN:
 
 extern "C" {
 
-double compute_lagrange(Optimal_Solution<double> &sol,
+double compute_lagrange(OptimalSolution<double> &sol,
                                double *                  rhs,
                                double *                  pi,
                                int                       nbjobs) {
@@ -56,7 +56,7 @@ double compute_lagrange(Optimal_Solution<double> &sol,
     return result;
 }
 
-static double compute_reduced_cost(Optimal_Solution<double> &sol,
+static double compute_reduced_cost(OptimalSolution<double> &sol,
                                double *                  pi,
                                int                       nbjobs) {
     double result = -pi[nbjobs];
@@ -207,7 +207,7 @@ int row_getDual(NodeData *pd, int i) {
 
 
 
-static void compute_subgradient(const Optimal_Solution<double> &sol, NodeData *pd) {
+static void compute_subgradient(const OptimalSolution<double> &sol, NodeData *pd) {
     fill_dbl(pd->subgradient_in, pd->njobs, 1.0);
     pd->subgradient_in[pd->njobs] = 0.0;
 
@@ -241,7 +241,7 @@ int update_subgradientproduct(NodeData *pd) {
     return val;
 }
 
-int update_stabcenter(const Optimal_Solution<double> & sol, NodeData *pd) {
+int update_stabcenter(const OptimalSolution<double> & sol, NodeData *pd) {
     int val = 0;
 
     if (pd->eta_sep > pd->eta_in) {
@@ -293,7 +293,7 @@ static void compute_pi_eta_sep(int     vcount,
 int solve_pricing(NodeData *pd, wctparms *parms, int evaluate) {
     int val = 0;
 
-    Optimal_Solution<double> sol;
+    OptimalSolution<double> sol;
 
     sol = pd->solver->pricing_algorithm(pd->pi);
     pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
@@ -326,7 +326,7 @@ int solve_stab(NodeData *pd, wctparms *parms) {
         compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
                            pd->pi_in, &(pd->eta_in), pd->pi_out,
                            &(pd->eta_out));
-        Optimal_Solution<double> sol;
+        OptimalSolution<double> sol;
         sol = solver->pricing_algorithm(pd->pi_sep);
 
         result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
@@ -373,7 +373,7 @@ int solve_stab_dynamic(NodeData *pd, wctparms *parms) {
         compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
                            pd->pi_in, &(pd->eta_in), pd->pi_out,
                            &(pd->eta_out));
-        Optimal_Solution<double> sol;
+        OptimalSolution<double> sol;
         sol = solver->pricing_algorithm(pd->pi_sep);
         result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
         pd->reduced_cost =
@@ -424,7 +424,7 @@ int solve_stab_hybrid(NodeData *pd, wctparms *parms) {
             pd->pi_sep[i] = compute_dual(pd, i);
         }
 
-        Optimal_Solution<double> sol;
+        OptimalSolution<double> sol;
         sol = solver->pricing_algorithm(pd->pi_sep);
 
         pd->eta_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
@@ -462,7 +462,7 @@ int solve_stab_hybrid(NodeData *pd, wctparms *parms) {
 
 int solve_farkas_dbl(NodeData *pd) {
     int                      val = 0;
-    Optimal_Solution<double> s = pd->solver->pricing_algorithm(pd->pi);
+    OptimalSolution<double> s = pd->solver->pricing_algorithm(pd->pi);
 
     if (s.obj < -0.00001) {
         // val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,

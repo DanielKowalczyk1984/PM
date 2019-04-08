@@ -5,7 +5,7 @@
 #include <node_duration.hpp>
 
 template<typename E, typename T>
-class BackwardBddBase : public tdzdd::DdEval<E, Node<T>, Optimal_Solution<T> > {
+class BackwardBddBase : public tdzdd::DdEval<E, Node<T>, OptimalSolution<T> > {
   protected:
     T *pi;
     int num_jobs;
@@ -31,7 +31,7 @@ class BackwardBddBase : public tdzdd::DdEval<E, Node<T>, Optimal_Solution<T> > {
     virtual void initializenode(Node<T> &n) const  = 0;
     virtual void initializerootnode(Node<T> &n) const  = 0;
     virtual void evalNode(Node<T> &n) const = 0;
-    virtual Optimal_Solution<T> getValue(Node<T> const &n) = 0;
+    virtual OptimalSolution<T> getValue(Node<T> const &n) = 0;
 };
 
 template<typename E, typename T>
@@ -74,8 +74,8 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
         n.backward_label1.f = -pi[num_jobs];
     }
 
-    Optimal_Solution<T> get_objective(Node<T> &n) const {
-        Optimal_Solution<T> sol(-pi[num_jobs]);
+    OptimalSolution<T> get_objective(Node<T> &n) const {
+        OptimalSolution<T> sol(-pi[num_jobs]);
 
         Node<T> *aux_node = &n;
         Job *aux_job =  n.get_job();
@@ -95,8 +95,8 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
         return sol;
     }
 
-    Optimal_Solution<T> getValue(Node<T> const &n) override {
-        Optimal_Solution<T> sol;
+    OptimalSolution<T> getValue(Node<T> const &n) override {
+        OptimalSolution<T> sol;
         return sol;
     }
 
@@ -174,8 +174,8 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         n.backward_label1.f = -pi[num_jobs];
     }
 
-    Optimal_Solution<T> get_objective(Node<T> &n) const {
-        Optimal_Solution<T> sol(-pi[num_jobs]);
+    OptimalSolution<T> get_objective(Node<T> &n) const {
+        OptimalSolution<T> sol(-pi[num_jobs]);
         Label<T> *aux_label = &(n.backward_label1);
 
         while (aux_label) {
@@ -190,8 +190,8 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         return sol;
     }
 
-    Optimal_Solution<T> getValue(Node<T> const &n) override {
-        Optimal_Solution<T> sol;
+    OptimalSolution<T> getValue(Node<T> const &n) override {
+        OptimalSolution<T> sol;
         return sol;
     }
 };

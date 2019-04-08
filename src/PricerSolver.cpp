@@ -666,7 +666,7 @@ PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray *_jobs, int _num_machines
     reversed_evaluator = BackwardBddSimpleDouble(njobs);
 }
 
-Optimal_Solution<double> PricerSolverBddSimple::pricing_algorithm(double *_pi) {
+OptimalSolution<double> PricerSolverBddSimple::pricing_algorithm(double *_pi) {
     evaluator.initializepi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
@@ -713,7 +713,7 @@ PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray *_jobs, int _num_machines, 
     reversed_evaluator = BackwardBddCycleDouble(njobs);
 }
 
-Optimal_Solution<double> PricerSolverBddCycle::pricing_algorithm(double *_pi) {
+OptimalSolution<double> PricerSolverBddCycle::pricing_algorithm(double *_pi) {
     evaluator.initializepi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
@@ -780,7 +780,7 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(GPtrArray *_jobs, i
     reversed_evaluator = ForwardBddSimpleDouble(njobs);
 }
 
-Optimal_Solution<double> PricerSolverBddBackwardSimple::pricing_algorithm(double *_pi) {
+OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(double *_pi) {
     evaluator.initializepi(_pi);
     return decision_diagram->evaluate_backward(evaluator);
 }
@@ -827,7 +827,7 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(GPtrArray *_jobs, int
     reversed_evaluator = ForwardBddCycleDouble(njobs);
 }
 
-Optimal_Solution<double> PricerSolverBddBackwardCycle::pricing_algorithm(double *_pi) {
+OptimalSolution<double> PricerSolverBddBackwardCycle::pricing_algorithm(double *_pi) {
     evaluator.initializepi(_pi);
     return decision_diagram->evaluate_backward(evaluator);
 }
@@ -909,8 +909,8 @@ void PricerSolverSimpleDp::init_table() {
 PricerSolverSimpleDp::~PricerSolverSimpleDp() {
 }
 
-Optimal_Solution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
-    Optimal_Solution<double> opt_sol;
+OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double *_pi) {
+    OptimalSolution<double> opt_sol;
     opt_sol.cost = 0;
     int t_min = 0;
     std::vector<Job *> v;
@@ -1122,8 +1122,8 @@ PricerSolverArcTimeDp::~PricerSolverArcTimeDp() {
     delete[] p_matrix;
 }
 
-Optimal_Solution<double> PricerSolverArcTimeDp::pricing_algorithm(double *_pi) {
-    Optimal_Solution<double> sol(-_pi[n]);
+OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double *_pi) {
+    OptimalSolution<double> sol(-_pi[n]);
     std::vector<Job*> v;
 
     F[n][0] = _pi[n];

@@ -6,7 +6,7 @@
 
 
 template<typename E, typename T> class ForwardBddBase : public 
-    tdzdd::DdEval<E, Node<T>, Optimal_Solution<T>> {
+    tdzdd::DdEval<E, Node<T>, OptimalSolution<T>> {
 protected:
     T *pi;
     int num_jobs;
@@ -38,8 +38,8 @@ public:
 
     virtual void evalNode(Node<T>& n) const = 0;
 
-    Optimal_Solution<T> get_objective(Node<T> &n) const {
-        Optimal_Solution<T> sol(-pi[num_jobs]);
+    OptimalSolution<T> get_objective(Node<T> &n) const {
+        OptimalSolution<T> sol(-pi[num_jobs]);
         Label<T> *ptr_node = &(n.forward_label1);
 
         while(ptr_node->get_previous() != nullptr) {
@@ -53,8 +53,8 @@ public:
         return sol;
     }
 
-    Optimal_Solution<T> getValue(Node<T> const &n){
-        Optimal_Solution<T> sol;
+    OptimalSolution<T> getValue(Node<T> const &n){
+        OptimalSolution<T> sol;
 
         return sol;
     }
