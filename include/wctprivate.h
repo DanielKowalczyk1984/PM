@@ -195,7 +195,7 @@ struct _Problem {
     /** nmachines */
     int nmachines;
 
-    int    nwctdata;
+    int    nb_data_nodes;
     int    global_upper_bound;
     int    global_lower_bound;
     double rel_error;

@@ -481,7 +481,7 @@ int create_branches_conflict(NodeData *pd, Problem *problem) {
     CCcheck_val_2(val, "Failed in find_strongest_children");
     // val = create_same_conflict(problem, pd, strongest_v1, strongest_v2);
     // CCcheck_val(val, "Failed in create_same");
-    val = set_id_and_name(pd->same_children, problem->nwctdata++, pd->pname);
+    val = set_id_and_name(pd->same_children, problem->nb_data_nodes++, pd->pname);
     CCcheck_val_2(val, "Failed in set_id_and_name");
 
     if (pd->same_children->status != infeasible) {
@@ -495,7 +495,7 @@ int create_branches_conflict(NodeData *pd, Problem *problem) {
 
     // val = create_differ_conflict(problem, pd, strongest_v1, strongest_v2);
     // CCcheck_val_2(val, "Failed in create_differ");
-    val = set_id_and_name(pd->diff_children, problem->nwctdata++, pd->pname);
+    val = set_id_and_name(pd->diff_children, problem->nb_data_nodes++, pd->pname);
     CCcheck_val_2(val, "Failed in set_id_and_name");
 
     if (pd->diff_children->status != infeasible) {

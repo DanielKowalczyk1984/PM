@@ -22,7 +22,7 @@ void problem_init(Problem *problem) {
     problem->H_min = 0;
     problem->H_max = INT_MAX;
     /*B&B info*/
-    problem->nwctdata = 0;
+    problem->nb_data_nodes = 0;
     problem->global_upper_bound = INT_MAX;
     problem->root_lower_bound = 0;
     problem->global_lower_bound = 0;
@@ -33,7 +33,7 @@ void problem_init(Problem *problem) {
     /*data of the problem*/
     nodedata_init(&(problem->root_pd), problem);
     set_id_and_name(&(problem->root_pd), 0, "root_node");
-    problem->nwctdata++;
+    problem->nb_data_nodes++;
     /*parms of the problem*/
     parms_init(&(problem->parms));
     /*heap initialization*/
@@ -295,8 +295,8 @@ static int prefill_heap(NodeData *pd, Problem *problem) {
     int val = 0;
     int insert_into_heap = 0;
 
-    if (problem->nwctdata <= pd->id) {
-        problem->nwctdata = pd->id + 1;
+    if (problem->nb_data_nodes <= pd->id) {
+        problem->nb_data_nodes = pd->id + 1;
     }
 
     if (pd->status < LP_bound_computed) {
