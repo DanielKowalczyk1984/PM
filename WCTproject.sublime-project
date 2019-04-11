@@ -22,7 +22,7 @@
 				".ccls-cache",
 				"build/CMakeFiles"
 			],
-			"path": "."
+			"path": "~/Dropbox/PapersOR/PM/implementation"
 		},
 		{
 			"folder_exclude_patterns":
@@ -33,7 +33,7 @@
 				"dep",
 				"obj"
 			],
-			"path": "/home/daniel/tool/bcp_vrp/"
+			"path": "/home/daniel/Dropbox/apps/ORapps/bcp_vrp"
 		}
 	],
 	"settings":
