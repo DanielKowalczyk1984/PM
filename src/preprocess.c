@@ -3,7 +3,7 @@
 
 void g_problem_summary_init(gpointer data, gpointer user_data) {
     Job *       j = (Job *)data;
-    wctproblem *prob = (wctproblem *)user_data;
+    Problem *prob = (Problem *)user_data;
 
     prob->psum += j->processing_time;
     prob->pmax = CC_MAX(prob->pmax, j->processing_time);
@@ -56,22 +56,22 @@ int calculate_Hmin(
     return val;
 }
 
-void calculate_Hmax(wctproblem *problem) {
+void calculate_Hmax(Problem *problem) {
     int      temp = 0;
     double   temp_dbl = 0.0;
-    wctdata *pd = &(problem->root_pd);
+    NodeData *pd = &(problem->root_pd);
 
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
     temp_dbl = floor(temp_dbl / problem->nmachines);
-    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax  + 1;
+    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax  + 10;
     problem->H_min = (int)ceil(temp_dbl / problem->nmachines) - problem->pmax;
     printf("H_max = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
            problem->H_max, problem->pmax, problem->pmin, problem->psum,
            problem->off);
 }
 
-void determine_jobs_order_interval(wctproblem *problem) {
+void determine_jobs_order_interval(Problem *problem) {
     interval *tmp_interval;
 
     GPtrArray *local_intervals = problem->root_pd.local_intervals;
@@ -93,10 +93,10 @@ void determine_jobs_order_interval(wctproblem *problem) {
     }
 }
 
-int preprocess_data(wctproblem *problem) {
+int preprocess_data(Problem *problem) {
     int val = 0;
     int i = 0;
-    wctdata *root = &(problem->root_pd);
+    NodeData *root = &(problem->root_pd);
 
     /** Calculate the statistics of the instance */
     g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
@@ -237,12 +237,12 @@ void create_ordered_jobs_array(GPtrArray *a, GPtrArray *b) {
     printf("There are %u layers\n", b->len);
 }
 
-int find_division(wctproblem *problem) {
+int find_division(Problem *problem) {
     int            val = 0;
     int            counter = 0;
     int            njobs = problem->njobs;
     int            prev;
-    wctdata *      root_pd = &(problem->root_pd);
+    NodeData *      root_pd = &(problem->root_pd);
     GPtrArray *    tmp_array = g_ptr_array_new_with_free_func(g_interval_free);
     GPtrArray *    jobarray = problem->g_job_array;
     Job *          tmp_j;

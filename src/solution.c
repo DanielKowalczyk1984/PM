@@ -13,9 +13,9 @@ void g_print_job(gpointer data, gpointer user_data) {
     printf("%d ", a->job);
 }
 
-void solution_init(solution *sol) {
+void solution_init(Solution *sol) {
     if (sol) {
-        sol->part = (partlist *)NULL;
+        sol->part = (PartList *)NULL;
         sol->perm = (Job **)NULL;
         sol->c = (int *)NULL;
         sol->u = (int *)NULL;
@@ -27,18 +27,22 @@ void solution_init(solution *sol) {
     }
 }
 
-void solution_free(solution **sol) {
+void solution_free(Solution **sol) {
     if (*sol) {
         for (int i = 0; i < (*sol)->nmachines; ++i) {
             partlist_free((*sol)->part + i);
         }
 
-        CC_IFFREE((*sol)->part, partlist);
+        CC_IFFREE((*sol)->part, PartList);
         CC_IFFREE((*sol)->perm, Job *);
         CC_IFFREE((*sol)->c, int);
         CC_IFFREE((*sol)->u, int);
-        CC_IFFREE((*sol), solution);
+        CC_IFFREE((*sol), Solution);
     }
+}
+
+void g_solution_free(void *solution) {
+
 }
 
 void g_job_free(void *set) {
@@ -49,10 +53,10 @@ void g_job_free(void *set) {
     }
 }
 
-solution *solution_alloc(int nmachines, int njobs, int off) {
+Solution *solution_alloc(int nmachines, int njobs, int off) {
     int       val = 0;
     int       i;
-    solution *sol = CC_SAFE_MALLOC(1, solution);
+    Solution *sol = CC_SAFE_MALLOC(1, Solution);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     solution_init(sol);
     sol->nmachines = nmachines;
@@ -60,7 +64,7 @@ solution *solution_alloc(int nmachines, int njobs, int off) {
     sol->tw = 0;
     sol->b = 0;
     sol->off = off;
-    sol->part = CC_SAFE_MALLOC(nmachines, partlist);
+    sol->part = CC_SAFE_MALLOC(nmachines, PartList);
     CCcheck_NULL_2(sol->part, "Failed to allocate memory to part");
 
     for (i = 0; i < nmachines; ++i) {
@@ -75,7 +79,7 @@ solution *solution_alloc(int nmachines, int njobs, int off) {
     fill_int(sol->c, sol->njobs, 0);
     sol->u = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(sol->u, "Failed to allocate memory")
-        fill_int(sol->u, njobs, 0);
+    fill_int(sol->u, njobs, 0);
 
     for (i = 0; i < njobs; ++i) {
         sol->perm[i] = (Job *)NULL;
@@ -109,7 +113,7 @@ static void print_machine(gpointer j, gpointer data) {
     printf("%d ", tmp->job);
 }
 
-void solution_print(solution *sol) {
+void solution_print(Solution *sol) {
     for (int i = 0; i < sol->nmachines; ++i) {
         printf("Machine %-1d: ", sol->part[i].key);
         g_ptr_array_foreach(sol->part[i].machine, print_machine, NULL);
@@ -120,7 +124,7 @@ void solution_print(solution *sol) {
     printf("with total weighted tardiness %d\n", sol->tw + sol->off);
 }
 
-int solution_copy(solution *dest, solution *src) {
+int solution_copy(Solution *dest, Solution *src) {
     int val = 0;
     dest = solution_alloc(src->nmachines, src->njobs, src->off);
     CCcheck_val_2(val, "Failed in  solution_alloc");
@@ -143,7 +147,7 @@ CLEAN:
     return val;
 }
 
-int solution_update(solution *dest, solution *src) {
+int solution_update(Solution *dest, Solution *src) {
     int val = 0;
     dest->tw = src->tw;
     dest->b = src->b;
@@ -171,11 +175,11 @@ int solution_update(solution *dest, solution *src) {
 }
 
 void partlist_permquicksort(int *     perm,
-                            partlist *part,
+                            PartList *part,
                             int       nbpart,
-                            int (*functionPtr)(partlist *, partlist *)) {
+                            int (*functionPtr)(PartList *, PartList *)) {
     int      i, j, temp;
-    partlist t;
+    PartList t;
 
     if (nbpart <= 1) {
         return;
@@ -184,7 +188,7 @@ void partlist_permquicksort(int *     perm,
     CC_SWAP(perm[0], perm[(nbpart - 1) / 2], temp);
     i = 0;
     j = nbpart;
-    memcpy(&t, &(part[perm[0]]), sizeof(partlist));
+    memcpy(&t, &(part[perm[0]]), sizeof(PartList));
 
     while (1) {
         do {
@@ -253,7 +257,7 @@ void reset_nblayers(GPtrArray *jobs){
 
 void g_set_sol_perm(gpointer data, gpointer user_data) {
     Job *     j = (Job *)data;
-    solution *sol = (solution *)user_data;
+    Solution *sol = (Solution *)user_data;
     sol->perm[j->job] = j;
 }
 
@@ -271,9 +275,9 @@ int bool_diff_Fij(int weight, Job *_prev, Job *tmp_j){
     return (_prev == NULL ) ? 1 : (value_diff_Fij(weight + tmp_j->processing_time, _prev, tmp_j) >= 0 );
 }
 
-void solution_calculate_machine(solution *sol, int m) {
+void solution_calculate_machine(Solution *sol, int m) {
     if (m < sol->nmachines) {
-        partlist * part = sol->part + m;
+        PartList * part = sol->part + m;
         GPtrArray *machine = sol->part[m].machine;
         sol->tw -= part->tw;
         part->tw = 0;
@@ -291,13 +295,13 @@ void solution_calculate_machine(solution *sol, int m) {
     }
 }
 
-void solution_calculate_all(solution *sol) {
+void solution_calculate_all(Solution *sol) {
     for (int i = 0; i < sol->nmachines; ++i) {
         solution_calculate_machine(sol, i);
     }
 }
 
-void solution_calculate_partition_machine(solution * sol,
+void solution_calculate_partition_machine(Solution * sol,
                                           GPtrArray *intervals,
                                           int        m) {
     if (m < sol->nmachines) {
@@ -316,14 +320,14 @@ void solution_calculate_partition_machine(solution * sol,
     }
 }
 
-void solution_calculate_partition_all(solution *sol, GPtrArray *intervals) {
+void solution_calculate_partition_all(Solution *sol, GPtrArray *intervals) {
     for (int i = 0; i < sol->nmachines; ++i) {
         solution_calculate_partition_machine(sol, intervals, i);
     }
 }
 
 static void calculate_partition(
-    solution *sol, GPtrArray *intervals, int m, int *u, int *last) {
+    Solution *sol, GPtrArray *intervals, int m, int *u, int *last) {
     int        count = 0;
     int        cur = *last;
     void *     tmp;
@@ -397,7 +401,7 @@ static void calculate_partition(
     solution_calculate_machine(sol, m);
 }
 
-int solution_canonical_order(solution *sol, GPtrArray *intervals) {
+int solution_canonical_order(Solution *sol, GPtrArray *intervals) {
     int val = 0;
 
     solution_calculate_partition_all(sol, intervals);

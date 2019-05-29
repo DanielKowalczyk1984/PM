@@ -3,10 +3,10 @@
 #include <stabilization.h>
 
 template <typename T = double>
-int construct_sol(wctdata *pd, Optimal_Solution<T> *sol) {
+int construct_sol(NodeData *pd,OptimalSolution<T> *sol) {
     int          val = 0;
     int          nbset = 1;
-    scheduleset *newset = scheduleset_alloc_bis(pd->njobs);
+    ScheduleSet *newset = scheduleset_alloc_bis(pd->njobs);
     CCcheck_NULL_3(newset, "Failed to allocate memory newset");
 
     for (unsigned i = 0; i < sol->jobs->len; ++i) {
@@ -22,6 +22,7 @@ int construct_sol(wctdata *pd, Optimal_Solution<T> *sol) {
     newset->total_processing_time = sol->C_max;
     pd->newsets = newset;
     pd->nnewsets = 1;
+
 CLEAN:
     if (val) {
         schedulesets_free(&(newset), &(nbset));
@@ -32,7 +33,7 @@ CLEAN:
 
 extern "C" {
 
-double compute_lagrange(Optimal_Solution<double> &sol,
+double compute_lagrange(OptimalSolution<double> &sol,
                                double *                  rhs,
                                double *                  pi,
                                int                       nbjobs) {
@@ -55,7 +56,7 @@ double compute_lagrange(Optimal_Solution<double> &sol,
     return result;
 }
 
-static double compute_reduced_cost(Optimal_Solution<double> &sol,
+static double compute_reduced_cost(OptimalSolution<double> &sol,
                                double *                  pi,
                                int                       nbjobs) {
     double result = -pi[nbjobs];
@@ -68,7 +69,7 @@ static double compute_reduced_cost(Optimal_Solution<double> &sol,
     return result - sol.cost;
 }
 
-void update_alpha(wctdata *pd) {
+void update_alpha(NodeData *pd) {
     if (pd->subgradientproduct > 0.0) {
         pd->alpha = CC_MAX(0, pd->alpha - 0.1);
     } else {
@@ -76,25 +77,25 @@ void update_alpha(wctdata *pd) {
     }
 }
 
-void update_alpha_misprice(wctdata *pd) {
+void update_alpha_misprice(NodeData *pd) {
     pd->k++;
     pd->alphabar = CC_MAX(0.0, 1 - pd->k*(1.0 - pd->alpha));
 }
 
-int is_stabilized(wctdata *pd) {
+int is_stabilized(NodeData *pd) {
     if (pd->inmispricingschedule) {
         return pd->alphabar > 0.0;
     }
     return pd->alpha > 0.0;
 }
 
-int get_dual_row(wctdata *pd, int i) {
+int get_dual_row(NodeData *pd, int i) {
     int val = 0;
 
     return val;
 }
 
-int calculate_dualdiffnorm(wctdata *pd) {
+int calculate_dualdiffnorm(NodeData *pd) {
     int val = 0;
 
     pd->dualdiffnorm = 0.0;
@@ -111,7 +112,7 @@ int calculate_dualdiffnorm(wctdata *pd) {
     return val;
 }
 
-int calculate_beta(wctdata *pd) {
+int calculate_beta(NodeData *pd) {
     int val = 0;
 
     pd->beta = 0.0;
@@ -131,7 +132,7 @@ int calculate_beta(wctdata *pd) {
     return val;
 }
 
-int calculate_hybridfactor(wctdata *pd) {
+int calculate_hybridfactor(NodeData *pd) {
     int val = 0;
 
     double aux_norm = 0.0;
@@ -148,7 +149,7 @@ int calculate_hybridfactor(wctdata *pd) {
     return val;
 }
 
-int update_hybrid(wctdata *pd) {
+int update_hybrid(NodeData *pd) {
     int val = 0;
 
     if (pd->hasstabcenter && !pd->inmispricingschedule && pd->alpha > 0.0) {
@@ -161,7 +162,7 @@ int update_hybrid(wctdata *pd) {
 }
 
 
-int update_node(wctdata *pd) {
+int update_node(NodeData *pd) {
     int val = 0;
     if (pd->node_stab != pd->id) {
         pd->node_stab = pd->id;
@@ -175,7 +176,7 @@ int update_node(wctdata *pd) {
     return val;
 }
 
-double compute_dual(wctdata *pd, int i) {
+double compute_dual(NodeData *pd, int i) {
     double usedalpha = pd->alpha;
     double usedbeta = pd->beta;
 
@@ -194,7 +195,7 @@ double compute_dual(wctdata *pd, int i) {
     return pd->pi_out[i];
 }
 
-int row_getDual(wctdata *pd, int i) {
+int row_getDual(NodeData *pd, int i) {
     int val = 0;
     assert(i <= pd->njobs);
 
@@ -206,7 +207,7 @@ int row_getDual(wctdata *pd, int i) {
 
 
 
-static void compute_subgradient(const Optimal_Solution<double> &sol, wctdata *pd) {
+static void compute_subgradient(const OptimalSolution<double> &sol, NodeData *pd) {
     fill_dbl(pd->subgradient_in, pd->njobs, 1.0);
     pd->subgradient_in[pd->njobs] = 0.0;
 
@@ -228,7 +229,7 @@ static void compute_subgradient(const Optimal_Solution<double> &sol, wctdata *pd
     pd->subgradientnorm = SQRT(pd->subgradientnorm);
 }
 
-int update_subgradientproduct(wctdata *pd) {
+int update_subgradientproduct(NodeData *pd) {
     int val = 0;
 
     pd->subgradientproduct = 0.0;
@@ -240,7 +241,7 @@ int update_subgradientproduct(wctdata *pd) {
     return val;
 }
 
-int update_stabcenter(const Optimal_Solution<double> & sol, wctdata *pd) {
+int update_stabcenter(const OptimalSolution<double> & sol, NodeData *pd) {
     int val = 0;
 
     if (pd->eta_sep > pd->eta_in) {
@@ -289,10 +290,10 @@ static void compute_pi_eta_sep(int     vcount,
     *eta_sep = alpha * (*eta_in) + beta * (*eta_out);
 }
 
-int solve_pricing(wctdata *pd, wctparms *parms, int evaluate) {
+int solve_pricing(NodeData *pd, wctparms *parms, int evaluate) {
     int val = 0;
 
-    Optimal_Solution<double> sol;
+    OptimalSolution<double> sol;
 
     sol = pd->solver->pricing_algorithm(pd->pi);
     pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
@@ -309,7 +310,7 @@ CLEAN:
 }
 
 
-int solve_stab(wctdata *pd, wctparms *parms) {
+int solve_stab(NodeData *pd, wctparms *parms) {
     int           val = 0;
     PricerSolver *solver = pd->solver;
     double k = 0.0;
@@ -325,7 +326,7 @@ int solve_stab(wctdata *pd, wctparms *parms) {
         compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
                            pd->pi_in, &(pd->eta_in), pd->pi_out,
                            &(pd->eta_out));
-        Optimal_Solution<double> sol;
+        OptimalSolution<double> sol;
         sol = solver->pricing_algorithm(pd->pi_sep);
 
         result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
@@ -357,7 +358,7 @@ CLEAN:
     return val;
 }
 
-int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
+int solve_stab_dynamic(NodeData *pd, wctparms *parms) {
     int           val = 0;
     PricerSolver *solver = pd->solver;
     double        k = 0.0;
@@ -372,7 +373,7 @@ int solve_stab_dynamic(wctdata *pd, wctparms *parms) {
         compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
                            pd->pi_in, &(pd->eta_in), pd->pi_out,
                            &(pd->eta_out));
-        Optimal_Solution<double> sol;
+        OptimalSolution<double> sol;
         sol = solver->pricing_algorithm(pd->pi_sep);
         result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
         pd->reduced_cost =
@@ -407,7 +408,7 @@ CLEAN:
     return val;
 }
 
-int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
+int solve_stab_hybrid(NodeData *pd, wctparms *parms) {
     int           val = 0;
     PricerSolver *solver = pd->solver;
     pd->update = 0;
@@ -423,7 +424,7 @@ int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
             pd->pi_sep[i] = compute_dual(pd, i);
         }
 
-        Optimal_Solution<double> sol;
+        OptimalSolution<double> sol;
         sol = solver->pricing_algorithm(pd->pi_sep);
 
         pd->eta_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
@@ -459,9 +460,9 @@ int solve_stab_hybrid(wctdata *pd, wctparms *parms) {
     return val;
 }
 
-int solve_farkas_dbl(wctdata *pd) {
+int solve_farkas_dbl(NodeData *pd) {
     int                      val = 0;
-    Optimal_Solution<double> s = pd->solver->pricing_algorithm(pd->pi);
+    OptimalSolution<double> s = pd->solver->pricing_algorithm(pd->pi);
 
     if (s.obj < -0.00001) {
         // val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,

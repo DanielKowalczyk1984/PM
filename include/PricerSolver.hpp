@@ -64,7 +64,7 @@ public:
     /**
      * Pricing Algorithm
      */
-     virtual Optimal_Solution<double> pricing_algorithm(double *_pi) = 0;
+     virtual OptimalSolution<double> pricing_algorithm(double *_pi) = 0;
 
      /**
       * Reduced cost fixing
@@ -72,12 +72,15 @@ public:
      void calculate_new_ordered_jobs(double *pi, int UB, double LB);
      void remove_layers();
      void remove_edges();
-     void calculate_edges(scheduleset *set);
+     void calculate_edges(ScheduleSet *set);
      virtual void evaluate_nodes(double *pi, int UB, double LB);
 
      /** Construct MipGraph */
      void construct_mipgraph();
      void build_mip();
+     void disjunctive_inequality(double *x, Solution *sol);
+     void represent_solution(Solution *sol);
+     double* project_solution(Solution *sol);
 
      /**
       * Some getters
@@ -91,6 +94,8 @@ public:
      size_t get_size_graph();
      size_t get_datasize();
      double get_cost_edge(int idx);
+     void construct_lp_sol_from_rmp(const double *columns, const GPtrArray* schedule_sets, int num_columns, double *x);
+     bool check_schedule_set(GPtrArray *set);
 
      /**
       * Some printing functions
@@ -114,7 +119,7 @@ private:
     BackwardBddSimpleDouble reversed_evaluator;
 public:
     PricerSolverBddSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
-    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    OptimalSolution<double> pricing_algorithm(double *_pi) override;
     void compute_labels(double *_pi);
     void evaluate_nodes(double *pi, int UB, double LB) override ;    
 };
@@ -125,7 +130,7 @@ private:
     BackwardBddCycleDouble reversed_evaluator;
 public:
     PricerSolverBddCycle(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
-    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    OptimalSolution<double> pricing_algorithm(double *_pi) override;
     void compute_labels(double *_pi);
     void evaluate_nodes(double *pi, int UB, double LB) override ;        
 };
@@ -137,7 +142,7 @@ private:
 
 public:
     PricerSolverBddBackwardSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
-    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    OptimalSolution<double> pricing_algorithm(double *_pi) override;
     void compute_labels(double *_pi);
     void evaluate_nodes(double *pi, int UB, double LB) override ;    
 };
@@ -149,7 +154,7 @@ private:
 public:
     PricerSolverBddBackwardCycle(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
 
-    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    OptimalSolution<double> pricing_algorithm(double *_pi) override;
     void compute_labels(double *_pi);
     void evaluate_nodes(double *pi, int UB, double LB) override ;    
 };
@@ -165,7 +170,7 @@ public:
     ~PricerSolverSimpleDp();
     void init_table() override;
 
-    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    OptimalSolution<double> pricing_algorithm(double *_pi) override;
 };
 
 class PricerSolverArcTimeDp : public PricerSolverBase {
@@ -186,7 +191,7 @@ public:
     ~PricerSolverArcTimeDp();
     void init_table() override;
 
-    Optimal_Solution<double> pricing_algorithm(double *_pi) override;
+    OptimalSolution<double> pricing_algorithm(double *_pi) override;
     int delta1(const int &i,const int &j, const int &t) {
         Job *tmp_i = vector_jobs[i];
         Job *tmp_j = vector_jobs[j];

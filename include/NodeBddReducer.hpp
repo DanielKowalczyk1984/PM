@@ -18,8 +18,8 @@ class DdReducer {
     NodeTableHandler<T> oldDiagram;
     NodeTableHandler<T> newDiagram;
     NodeTableEntity<T>& output;
-    tdzdd::MyVector<tdzdd::MyVector<nodeid> > newIdTable;
-    tdzdd::MyVector<tdzdd::MyVector<nodeid*> > rootPtr;
+    tdzdd::MyVector<tdzdd::MyVector<NodeId> > newIdTable;
+    tdzdd::MyVector<tdzdd::MyVector<NodeId*> > rootPtr;
 
     struct ReducNodeInfo {
         Node<T> children;
@@ -75,11 +75,11 @@ private:
 
             for (size_t j = 0; j < m; ++j) {
                 for (int b = 0; b < 2; ++b) {
-                    nodeid& f = tt[j].branch[b];
+                    NodeId& f = tt[j].branch[b];
                     if (f.row() == 0) continue;
 
-                    nodeid f0 = input.child(f, 0);
-                    nodeid deletable = BDD ? f0 : 0;
+                    NodeId f0 = input.child(f, 0);
+                    NodeId deletable = BDD ? f0 : 0;
                     bool del = true;
 
                     for (int bb = (BDD || ZDD) ? 1 : 0; bb < 2; ++bb) {
@@ -104,7 +104,7 @@ public:
      * Sets a root node.
      * @param root reference to a root node ID storage.
      */
-    void setRoot(nodeid& root) {
+    void setRoot(NodeId& root) {
         rootPtr[root.row()].push_back(&root);
     }
 
@@ -131,14 +131,14 @@ private:
         makeReadyForSequentialReduction();
         size_t const m = input[i].size();
         Node<T>* const tt = input[i].data();
-        nodeid const mark(i, m);
+        NodeId const mark(i, m);
 
-        tdzdd::MyVector<nodeid>& newId = newIdTable[i];
+        tdzdd::MyVector<NodeId>& newId = newIdTable[i];
         newId.resize(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j) {
-            nodeid& f0 = tt[j].branch[0];
-            nodeid& f1 = tt[j].branch[1];
+            NodeId& f0 = tt[j].branch[0];
+            NodeId& f1 = tt[j].branch[1];
 
             if (f0.row() != 0) f0 = newIdTable[f0.row()][f0.col()];
             if (f1.row() != 0) f1 = newIdTable[f1.row()][f1.col()];
@@ -147,17 +147,17 @@ private:
                 newId[j] = f0;
             }
             else {
-                nodeid& f00 = input.child(f0, 0);
-                nodeid& f01 = input.child(f0, 1);
+                NodeId& f00 = input.child(f0, 0);
+                NodeId& f01 = input.child(f0, 1);
 
                 // if (f01 != mark) {        // the first touch from this level
                     f01 = mark;        // mark f0 as touched
-                    newId[j] = nodeid(i + 1, m); // tail of f0-equivalent list
+                    newId[j] = NodeId(i + 1, m); // tail of f0-equivalent list
                 // }
                 // else {
                 //     newId[j] = f00;         // next of f0-equivalent list
                 // }
-                f00 = nodeid(i + 1, j);  // new head of f0-equivalent list
+                f00 = NodeId(i + 1, j);  // new head of f0-equivalent list
             }
         }
 
@@ -170,17 +170,17 @@ private:
         size_t mm = 0;
 
         for (size_t j = 0; j < m; ++j) {
-            nodeid const f(i, j);
+            NodeId const f(i, j);
             assert(newId[j].row() <= i + 1);
             if (newId[j].row() <= i){ continue;}
 
             for (size_t k = j; k < m;) { // for each g in f0-equivalent list
                 assert(j <= k);
-                nodeid const g(i, k);
-                nodeid& g0 = tt[k].branch[0];
-                nodeid& g1 = tt[k].branch[1];
-                nodeid& g10 = input.child(g1, 0);
-                nodeid& g11 = input.child(g1, 1);
+                NodeId const g(i, k);
+                NodeId& g0 = tt[k].branch[0];
+                NodeId& g1 = tt[k].branch[1];
+                NodeId& g10 = input.child(g1, 0);
+                NodeId& g11 = input.child(g1, 1);
                 assert(g1 != mark);
                 assert(newId[k].row() == i + 1);
                 size_t next = newId[k].col();
@@ -188,7 +188,7 @@ private:
                 if (g11 != f) { // the first touch to g1 in f0-equivalent list
                     g11 = f; // mark g1 as touched
                     g10 = g; // record g as a canonical node for <f0,g1>
-                    newId[k] = nodeid(i, mm++, g0.hasEmpty());
+                    newId[k] = NodeId(i, mm++, g0.hasEmpty());
                 }
                 else {
                     g0 = g10;       // make a forward link
@@ -211,8 +211,8 @@ private:
         Node<T>* nt = output[i].data();
 
         for (size_t j = 0; j < m; ++j) {
-            nodeid const& f0 = tt[j].branch[0];
-            nodeid const& f1 = tt[j].branch[1];
+            NodeId const& f0 = tt[j].branch[0];
+            NodeId const& f1 = tt[j].branch[1];
 
             if (f1 == mark) { // forwarded
                 assert(f0.row() == i);
@@ -233,7 +233,7 @@ private:
         }
 
         for (size_t k = 0; k < rootPtr[i].size(); ++k) {
-            nodeid& root = *rootPtr[i][k];
+            NodeId& root = *rootPtr[i][k];
             root = newId[root.col()];
         }
     }
@@ -257,12 +257,12 @@ private:
                 Node<T>& f = input[i][j];
 
                 // make f canonical
-                nodeid& f0 = f.branch[0];
+                NodeId& f0 = f.branch[0];
                 f0 = newIdTable[f0.row()][f0.col()];
-                nodeid deletable = BDD ? f0 : 0;
+                NodeId deletable = BDD ? f0 : 0;
                 bool del = BDD || ZDD || (f0 == 0);
                 for (int b = 1; b < 2; ++b) {
-                    nodeid& ff = f.branch[b];
+                    NodeId& ff = f.branch[b];
                     ff = newIdTable[ff.row()][ff.col()];
                     if (ff != deletable) del = false;
                 }
@@ -274,7 +274,7 @@ private:
                     Node<T> const* pp = uniq.add(&f);
 
                     if (pp == &f) {
-                        newIdTable[i][j] = nodeid(i, jj++, f0.hasEmpty());
+                        newIdTable[i][j] = NodeId(i, jj++, f0.hasEmpty());
                     }
                     else {
                         newIdTable[i][j] = newIdTable[i][pp - p0];
@@ -291,7 +291,7 @@ private:
         output.initRow(i, jj);
 
         for (size_t j = 0; j < m; ++j) {
-            nodeid const& ff = newIdTable[i][j];
+            NodeId const& ff = newIdTable[i][j];
             if (ff.row() == i) {
                 output[i][ff.col()] = input[i][j];
                 output[i][ff.col()].set_head_node();
@@ -303,7 +303,7 @@ private:
         input[i].clear();
 
         for (size_t k = 0; k < rootPtr[i].size(); ++k) {
-            nodeid& root = *rootPtr[i][k];
+            NodeId& root = *rootPtr[i][k];
             root = newIdTable[i][root.col()];
         }
     }

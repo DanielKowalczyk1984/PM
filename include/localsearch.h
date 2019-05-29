@@ -29,34 +29,34 @@ typedef struct _local_search_data {
     int                    updated;
 } local_search_data;
 
-void alloc_all(solution* sol);
-void free_all(solution* sol);
+void alloc_all(Solution* sol);
+void free_all(Solution* sol);
 
 local_search_data *local_search_data_init(int njobs, int nmachines);
 void local_search_data_free(local_search_data **data);
 
 /** Preperation of the data */
-int local_search_create_W(solution *sol, local_search_data *data);
-int local_search_create_g(solution *sol, local_search_data *data);
+int local_search_create_W(Solution *sol, local_search_data *data);
+int local_search_create_g(Solution *sol, local_search_data *data);
 /** Search for the best intra insertion */
-void local_search_forward_insertion(solution *         sol,
+void local_search_forward_insertion(Solution *         sol,
                                     local_search_data *data,
                                     int                l);
-void local_search_backward_insertion(solution *         sol,
+void local_search_backward_insertion(Solution *         sol,
                                      local_search_data *data,
                                      int                l);
-void local_search_swap_intra(solution *         sol,
+void local_search_swap_intra(Solution *         sol,
                              local_search_data *data,
                              int                l1,
                              int                l2);
-void local_search_insertion_inter(solution *         sol,
+void local_search_insertion_inter(Solution *         sol,
                                   local_search_data *data,
                                   int                l);
-void local_search_swap_inter(solution *         sol,
+void local_search_swap_inter(Solution *         sol,
                              local_search_data *data,
                              int                l1,
                              int                l2);
-void RVND(solution *sol, local_search_data *data);
+void RVND(Solution *sol, local_search_data *data);
 
 #ifdef __cplusplus
 }

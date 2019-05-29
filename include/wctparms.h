@@ -102,41 +102,41 @@ typedef struct wctparms {
 
     int upper_bounds_only;
     int nmachines;
-} wctparms;
+} Parms;
 
 /*Initialization and free memory*/
-void wctparms_init(wctparms *parms);
-void wctparms_free(wctparms *parms);
+void parms_init(Parms *parms);
+void parms_free(Parms *parms);
 
 /*Functions for setting some parameters*/
-int wctparms_set_init_upper_bound(wctparms *parms, int bound);
-int wctparms_set_branching_cpu_limit(wctparms *parms, double limit);
-int wctparms_set_alpha(wctparms *parms, double alpha);
-int wctparms_set_search_strategy(wctparms *parms, int strategy);
-int wctparms_set_branching_strategy(wctparms *parms, int strategy);
-int wctparms_set_strong_branching(wctparms *parms, int strong);
-int wctparms_set_nb_iterations_rvnd(wctparms *parms, int nb_sol);
+int parms_set_init_upper_bound(Parms *parms, int bound);
+int parms_set_branching_cpu_limit(Parms *parms, double limit);
+int parms_set_alpha(Parms *parms, double alpha);
+int parms_set_search_strategy(Parms *parms, int strategy);
+int parms_set_branching_strategy(Parms *parms, int strategy);
+int parms_set_strong_branching(Parms *parms, int strong);
+int parms_set_nb_iterations_rvnd(Parms *parms, int nb_sol);
 
 /**
  * column generation
  */
-int wctparms_set_branchandbound(wctparms *parms, int bound);
-int wctparms_set_stab_technique(wctparms *parms, int stab_technique);
-int wctparms_set_print(wctparms *parms, int print);
-int wctparms_set_pricing_solver(wctparms *parms, int solver);
+int parms_set_branchandbound(Parms *parms, int bound);
+int parms_set_stab_technique(Parms *parms, int stab_technique);
+int parms_set_print(Parms *parms, int print);
+int parms_set_pricing_solver(Parms *parms, int solver);
 
 /**
  * scatter search
  */
-int wctparms_set_scatter_search(wctparms *parms, int scatter);
-int wctparms_set_combine_method(wctparms *parms, int combine_method);
-int wctparms_set_scatter_search_cpu_limit(wctparms *parms, double limit);
+int parms_set_scatter_search(Parms *parms, int scatter);
+int parms_set_combine_method(Parms *parms, int combine_method);
+int parms_set_scatter_search_cpu_limit(Parms *parms, double limit);
 
 /*Functions for defining the filesname*/
-int wctparms_set_outfile(wctparms *parms, const char *fname);
-int wctparms_set_file(wctparms *parms, const char *fname);
-int wctparms_set_backupdir(wctparms *parms, const char *fname);
-int wctparms_set_nmachines(wctparms *parms, int nmachines);
+int parms_set_outfile(Parms *parms, const char *fname);
+int parms_set_file(Parms *parms, const char *fname);
+int parms_set_backupdir(Parms *parms, const char *fname);
+int parms_set_nmachines(Parms *parms, int nmachines);
 
 #ifdef __cplusplus
 }

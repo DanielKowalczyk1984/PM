@@ -18,9 +18,11 @@
 			"folder_exclude_patterns":
 			[
 				"resources",
-				"solutions"
+				"solutions",
+				".ccls-cache",
+				"build/CMakeFiles"
 			],
-			"path": "."
+			"path": "~/Dropbox/PapersOR/PM/implementation"
 		},
 		{
 			"folder_exclude_patterns":
@@ -31,7 +33,7 @@
 				"dep",
 				"obj"
 			],
-			"path": "/home/daniel/tool/bcp_vrp/"
+			"path": "/home/daniel/Dropbox/apps/ORapps/bcp_vrp"
 		}
 	],
 	"settings":
@@ -49,30 +51,37 @@
 				"use_only_additional_options": true
 			}
 		},
-		"ecc_show_errors": true,
-		"ecc_show_type_body": false,
-		"ecc_show_type_info": false,
-		"SublimeLinter.linters.cpplint.line_lenght": 90,
+		"LSP":
+		{
+			"cquery1":
+			{
+				"enabled": true
+			}
+		},
 		"SublimeLinter.linters.clang.extra_flags": "--std=c++11 -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wnested-externs -Wundef -Wcast-qual -Wcast-align -Wwrite-strings -w",
 		"SublimeLinter.linters.clang.include_dirs":
 		[
 			"/usr/include/*",
 			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
 			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/include",
-			"-I/opt/gurobi810/linux64/include",
+			"-I/opt/gurobi811/linux64/include",
 			"-I/usr/include/glib-2.0",
 			"-I/usr/lib64/glib-2.0/include",
 			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/build/_deps/project_tdzdd-src/include"
 		],
+		"SublimeLinter.linters.cpplint.line_lenght": 90,
 		"SublimeLinter.linters.gcc.extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/PM/implementation/include -I/home/daniel/Dropbox/PapersOR/PM/implementation/build/_deps/project_tdzdd-src/include -w ",
 		"SublimeLinter.linters.gcc.include_dirs":
 		[
 			"/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
-			"/opt/gurobi810/linux64/include",
+			"/opt/gurobi811/linux64/include",
 			"/usr/include/glib-2.0",
 			"/usr/lib64/glib-2.0/include",
 			"/home/daniel/Dropbox/PapersOR/PM/implementation/include"
 		],
+		"ecc_show_errors": true,
+		"ecc_show_type_body": false,
+		"ecc_show_type_info": false,
 		"sublimeclang_hide_output_when_empty": true,
 		"sublimeclang_options":
 		[

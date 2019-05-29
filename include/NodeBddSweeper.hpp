@@ -47,7 +47,7 @@ class DdSweeper {
     tdzdd::MyVector<size_t> deadCount;
     size_t allCount;
     size_t maxCount;
-    nodeid* rootPtr;
+    NodeId* rootPtr;
 
 public:
     /**
@@ -76,7 +76,7 @@ public:
      * Set the root pointer.
      * @param root reference to the root ID storage.
      */
-    void setRoot(nodeid& root) {
+    void setRoot(NodeId& root) {
         rootPtr = &root;
     }
 
@@ -112,7 +112,7 @@ public:
         if (maxCount < allCount) maxCount = allCount;
         if (deadCount[k] * SWEEP_RATIO < maxCount) return;
 
-        tdzdd::MyVector<tdzdd::MyVector<nodeid> > newId(diagram.numRows());
+        tdzdd::MyVector<tdzdd::MyVector<NodeId> > newId(diagram.numRows());
 
 
         for (int i = k; i < diagram.numRows(); ++i) {
@@ -126,7 +126,7 @@ public:
                 bool dead = true;
 
                 for (int b = 0; b < 2; ++b) {
-                    nodeid& f = p.branch[b];
+                    NodeId& f = p.branch[b];
                     if (f.row() >= k) f = newId[f.row()][f.col()];
                     if (f != 0) dead = false;
                 }
@@ -135,7 +135,7 @@ public:
                     newId[i][j] = 0;
                 }
                 else {
-                    newId[i][j] = nodeid(i, jj);
+                    newId[i][j] = NodeId(i, jj);
                     diagram[i][jj] = p;
                     ++jj;
                 }
@@ -148,7 +148,7 @@ public:
             for (size_t i = 0; i < oneSrcPtr->size(); ++i) {
                 tdzdd::NodeBranchId& nbi = (*oneSrcPtr)[i];
                 if (nbi.row >= k) {
-                    nodeid f = newId[nbi.row][nbi.col];
+                    NodeId f = newId[nbi.row][nbi.col];
                     nbi.row = f.row();
                     nbi.col = f.col();
                 }

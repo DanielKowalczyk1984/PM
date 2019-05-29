@@ -20,7 +20,7 @@ typedef struct _Job {
 } Job;
 
 typedef struct _solution {
-    partlist *part;
+    PartList *part;
     Job **    perm;
     int *     c;
     int *     u;
@@ -29,25 +29,25 @@ typedef struct _solution {
     int       njobs;
     int       nmachines;
     int       off;
-} solution;
+} Solution;
 
 /**
  * Initialization of a solution type
  */
-void solution_init(solution *sol);
+void solution_init(Solution *sol);
 /**
  * free all dynamic allocated memory of solution type
  */
-void solution_free(solution **sol);
-solution *solution_alloc(int nmachines, int njobs, int off);
+void solution_free(Solution **sol);
+Solution *solution_alloc(int nmachines, int njobs, int off);
 
 /**
  * functions to work on solution type data
  */
-void solution_print(solution *sol);
-int solution_copy(solution *dest, solution *src);
-int solution_update(solution *dest, solution *src);
-int solution_check(partlist *part, int jcount);
+void solution_print(Solution *sol);
+int solution_copy(Solution *dest, Solution *src);
+int solution_update(Solution *dest, Solution *src);
+int solution_check(PartList *part, int jcount);
 
 Job *job_alloc(int *p, int *w, int *d);
 void job_init(Job *job, int p, int d, int w);
@@ -65,13 +65,13 @@ inline int value_Fj(int C, Job *j) { return j->weight * CC_MAX(0, C - j->due_tim
 int value_diff_Fij(int C, Job *i, Job *j);
 int bool_diff_Fij(int , Job *, Job *);
 
-int solution_canonical_order(solution *sol, GPtrArray *intervals);
-void solution_calculate_all(solution *sol);
-void solution_calculate_partition_all(solution *sol, GPtrArray *intervals);
-void solution_calculate_partition_machine(solution * sol,
+int solution_canonical_order(Solution *sol, GPtrArray *intervals);
+void solution_calculate_all(Solution *sol);
+void solution_calculate_partition_all(Solution *sol, GPtrArray *intervals);
+void solution_calculate_partition_machine(Solution * sol,
                                           GPtrArray *intervals,
                                           int        m);
-void solution_calculate_machine(solution *sol, int m);
+void solution_calculate_machine(Solution *sol, int m);
 
 #ifdef __cplusplus
 }

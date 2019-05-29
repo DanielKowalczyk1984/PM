@@ -9,16 +9,16 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "/home/daniel/Dropbox/PapersOR/PM/implementation/build/PM ",
-            "args": ["../resources/instances/wt100/wt100/wt100_011.dat 4"],
+            "program": "${workspaceRoot}/build/PM",
+            "args": ["${workspaceRoot}/instances/wt40/wt040_011.dat", "4"],
+            "cwd": "${workspaceRoot}/build",
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
             "linux": {
                 "MIMode": "gdb",
-                "miDebuggerPath": "/usr/bin/gdb",
+                "miDebuggerPath": "/usr/bin/gdb"
              },
             "setupCommands": [
                 {

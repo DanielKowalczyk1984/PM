@@ -10,7 +10,7 @@ int partition_order(const void *a, const void *b, void *data) {
     return (*v1 - *w1);
 }
 
-void partlist_free(partlist *part) {
+void partlist_free(PartList *part) {
     if (part) {
         if (part->machine != (GPtrArray *)NULL) {
             g_ptr_array_free(part->machine, TRUE);
@@ -18,7 +18,7 @@ void partlist_free(partlist *part) {
     }
 }
 
-void partlist_init(partlist *part) {
+void partlist_init(PartList *part) {
     if (part) {
         part->c = 0;
         part->tw = 0;
@@ -29,11 +29,11 @@ void partlist_init(partlist *part) {
 
 void joblist_init(joblist *jlist) {
     if (jlist) {
-        jlist->part = (partlist *)NULL;
+        jlist->part = (PartList *)NULL;
     }
 }
 
-void partition_init(partlist *part, joblist *jlist, int nbpart, int njobs) {
+void partition_init(PartList *part, joblist *jlist, int nbpart, int njobs) {
     int i;
 
     for (i = 0; i < nbpart; i++) {

@@ -100,10 +100,10 @@ class NodeTableEntity: public data_table_node<T> {
 
                     for (size_t j = 0; j < m; ++j) {
                         for (int b = 0; b < 2; ++b) {
-                            nodeid ff = child(i, j, b);
+                            NodeId ff = child(i, j, b);
                             int ii = ff.row();
                             child(i + d, j, b) =
-                                    (ii == 0) ? ff : nodeid(ii + d, ff.col());
+                                    (ii == 0) ? ff : NodeId(ii + d, ff.col());
                         }
                     }
 
@@ -117,11 +117,11 @@ class NodeTableEntity: public data_table_node<T> {
 
                     for (size_t j = 0; j < m; ++j) {
                         for (int b = 0; b < 2; ++b) {
-                            nodeid ff = child(i, j, b);
+                            NodeId ff = child(i, j, b);
                             int ii = ff.row();
                             child(i + d, j, b) =
                                     (ii == 0) ? ff :
-                                    (ii + d <= 0) ? 1 : nodeid(ii + d, ff.col());
+                                    (ii + d <= 0) ? 1 : NodeId(ii + d, ff.col());
                         }
                     }
 
@@ -137,7 +137,7 @@ class NodeTableEntity: public data_table_node<T> {
          * @param f node ID.
          * @return node @p f.
          */
-        Node<double> const& node(nodeid f) const {
+        Node<double> const& node(NodeId f) const {
             return (*this)[f.row()][f.col()];
         }
 
@@ -146,7 +146,7 @@ class NodeTableEntity: public data_table_node<T> {
          * @param f node ID.
          * @return node @p f.
          */
-        Node<double>& node(nodeid f) {
+        Node<double>& node(NodeId f) {
             return (*this)[f.row()][f.col()];
         }
 
@@ -156,7 +156,7 @@ class NodeTableEntity: public data_table_node<T> {
          * @param b child branch.
          * @return the @p b-child of @p f.
          */
-        nodeid child(nodeid f, int b) const {
+        NodeId child(NodeId f, int b) const {
             return child(f.row(), f.col(), b);
         }
 
@@ -166,7 +166,7 @@ class NodeTableEntity: public data_table_node<T> {
          * @param b child branch.
          * @return the @p b-child of @p f.
          */
-        nodeid& child(nodeid f, int b) {
+        NodeId& child(NodeId f, int b) {
             return child(f.row(), f.col(), b);
         }
 
@@ -177,7 +177,7 @@ class NodeTableEntity: public data_table_node<T> {
          * @param b child branch.
          * @return the @p b-child of the parent.
          */
-        nodeid child(int i, size_t j, int b) const {
+        NodeId child(int i, size_t j, int b) const {
             assert(0 <= b && b < 2);
             return (*this)[i][j].branch[b];
         }
@@ -189,7 +189,7 @@ class NodeTableEntity: public data_table_node<T> {
          * @param b child branch.
          * @return the @p b-child of the parent.
          */
-        nodeid& child(int i, size_t j, int b) {
+        NodeId& child(int i, size_t j, int b) {
             assert(0 <= b && b < 2);
             return (*this)[i][j].branch[b];
         }
@@ -200,7 +200,7 @@ class NodeTableEntity: public data_table_node<T> {
          * @param stopLevel level to stop going down.
          * @return reached node ID.
          */
-        nodeid getZeroDescendant(nodeid f, int stopLevel) const {
+        NodeId getZeroDescendant(NodeId f, int stopLevel) const {
             assert(0 <= stopLevel);
             if (stopLevel == 0 && f.hasEmpty()) return 1;
             while (f.row() > stopLevel) {
@@ -321,11 +321,11 @@ class NodeTableEntity: public data_table_node<T> {
                 size_t m = (*this)[i].size();
 
                 for (size_t j = 0; j < m; ++j) {
-                    nodeid f = nodeid(i, j);
+                    NodeId f = NodeId(i, j);
                     os << "  \"" << f << "\";\n";
 
                     for (int b = 0; b < 2; ++b) {
-                        nodeid ff = child(i, j, b);
+                        NodeId ff = child(i, j, b);
                         bool aa = ff.getAttr();
                         if (ff == 0) continue;
 
@@ -361,7 +361,7 @@ class NodeTableEntity: public data_table_node<T> {
 
                 os << "  {rank=same; " << i;
                 for (size_t j = 0; j < m; ++j) {
-                    os << "; \"" << nodeid(i, j) << "\"";
+                    os << "; \"" << NodeId(i, j) << "\"";
                 }
                 os << "}\n";
             }

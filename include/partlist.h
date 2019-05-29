@@ -12,22 +12,22 @@ typedef struct _partlist {
     int        tw;
     int        key;
     int        used;
-} partlist;
+} PartList;
 
-typedef struct _joblist { partlist *part; } joblist;
+typedef struct _joblist { PartList *part; } joblist;
 
-void partlist_free(partlist *part);
-void partlist_init(partlist *part);
+void partlist_free(PartList *part);
+void partlist_init(PartList *part);
 void joblist_init(joblist *vlist);
-void partition_init(partlist *part, joblist *vlist, int nbpart, int jcount);
+void partition_init(PartList *part, joblist *vlist, int nbpart, int jcount);
 int partition_order(const void *a, const void *b, void *data);
 int find_vertex(const void *a, const void *b);
 
 void partlist_permquicksort(int *     perm,
-                            partlist *part,
+                            PartList *part,
                             int       nbpart,
-                            int (*functionPtr)(partlist *, partlist *));
-int partlist_more_totweight(partlist *c1, partlist *c2);
+                            int (*functionPtr)(PartList *, PartList *));
+int partlist_more_totweight(PartList *c1, PartList *c2);
 #ifdef __cplusplus
 }
 #endif

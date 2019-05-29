@@ -50,11 +50,11 @@ protected:
      * └────────┴────────┴────────┴─────
      */
     union SpecNode {
-        nodeid* srcPtr;
+        NodeId* srcPtr;
         int64_t code;
     };
 
-    static nodeid*& srcPtr(SpecNode* p) {
+    static NodeId*& srcPtr(SpecNode* p) {
         return p[0].srcPtr;
     }
 
@@ -62,8 +62,8 @@ protected:
         return p[0].code;
     }
 
-    static nodeid& nodeId(SpecNode* p) {
-        return *reinterpret_cast<nodeid*>(&p[0].code);
+    static NodeId& nodeId(SpecNode* p) {
+        return *reinterpret_cast<NodeId*>(&p[0].code);
     }
 
     static void* state(SpecNode* p) {
@@ -149,7 +149,7 @@ public:
      * @param level node level of the event.
      * @param s node state of the event.
      */
-    void schedule(nodeid* fp, int level, void* s) {
+    void schedule(NodeId* fp, int level, void* s) {
         SpecNode* p0 = snodeTable[level].alloc_front(specNodeSize);
         spec.get_copy(state(p0), s);
         srcPtr(p0) = fp;
@@ -159,7 +159,7 @@ public:
      * Initializes the builder.
      * @param root result storage.
      */
-    int initialize(nodeid& root) {
+    int initialize(NodeId& root) {
         sweeper.setRoot(root);
         tdzdd::MyVector<char> tmp(spec.datasize());
         void* const tmpState = tmp.data();
@@ -205,13 +205,13 @@ public:
                 SpecNode*& p0 = uniq.add(p);
 
                 if (p0 == p) {
-                    nodeId(p) = *srcPtr(p) = nodeid(i, m++);
+                    nodeId(p) = *srcPtr(p) = NodeId(i, m++);
                 }
                 else {
                     switch (spec.merge_states(state(p0), state(p))) {
                     case 1:
                         nodeId(p0) = 0; // forward to 0-terminal
-                        nodeId(p) = *srcPtr(p) = nodeid(i, m++);
+                        nodeId(p) = *srcPtr(p) = NodeId(i, m++);
                         p0 = p;
                         break;
                     case 2:
@@ -370,7 +370,7 @@ public:
      * Initializes the builder.
      * @param root the root node.
      */
-    int initialize(nodeid& root) {
+    int initialize(NodeId& root) {
         sweeper.setRoot(root);
         tdzdd::MyVector<char> tmp(spec.datasize());
         void* const tmpState = tmp.data();
@@ -391,7 +391,7 @@ public:
 
         if (n <= 0 || k <= 0) {
             assert(n == 0 || k == 0 || (n == -1 && k == -1));
-            root = nodeid(0, n != 0 && k != 0);
+            root = NodeId(0, n != 0 && k != 0);
             n = 0;
         }
         else {
@@ -448,13 +448,13 @@ public:
                     SpecNode*& p0 = uniq.add(p);
 
                     if (p0 == p) {
-                        nodeId(p) = *srcPtr(p) = nodeid(i, mm++);
+                        nodeId(p) = *srcPtr(p) = NodeId(i, mm++);
                     }
                     else {
                         switch (spec.merge_states(state(p0), state(p))) {
                         case 1:
                             nodeId(p0) = 0; // forward to 0-terminal
-                            nodeId(p) = *srcPtr(p) = nodeid(i, mm++);
+                            nodeId(p) = *srcPtr(p) = NodeId(i, mm++);
                             p0 = p;
                             break;
                         case 2:
@@ -471,7 +471,7 @@ public:
             }
             else if (n == 1) {
                 SpecNode* p = list.front();
-                nodeId(p) = *srcPtr(p) = nodeid(i, mm++);
+                nodeId(p) = *srcPtr(p) = NodeId(i, mm++);
             }
         }
 
@@ -500,7 +500,7 @@ public:
                         continue;
                     }
 
-                    nodeid f(i, j);
+                    NodeId f(i, j);
                     spec.get_copy(tmpState, state(p));
                     int kk = downTable(f, b, i - 1);
                     int ii = downSpec(tmpState, i, b, kk);
@@ -581,7 +581,7 @@ public:
     }
 
 private:
-    int downTable(nodeid& f, int b, int zerosupLevel) const {
+    int downTable(NodeId& f, int b, int zerosupLevel) const {
         if (zerosupLevel < 0) zerosupLevel = 0;
 
         f = input.child(f, b);
@@ -620,14 +620,14 @@ class DdDumper {
      * └────────┴────────┴────────┴─────
      */
     struct SpecNode {
-        nodeid nodeId;
+        NodeId nodeId;
     };
 
-    static nodeid& nodeId(SpecNode* p) {
+    static NodeId& nodeId(SpecNode* p) {
         return p->nodeId;
     }
 
-    static nodeid nodeId(SpecNode const* p) {
+    static NodeId nodeId(SpecNode const* p) {
         return p->nodeId;
     }
 
@@ -668,7 +668,7 @@ class DdDumper {
     Spec spec;
     int const specNodeSize;
     char* oneState;
-    nodeid oneId;
+    NodeId oneId;
 
     tdzdd::MyVector<tdzdd::MyList<SpecNode> > snodeTable;
     tdzdd::MyVector<UniqTable> uniqTable;
@@ -718,7 +718,7 @@ public:
             os << "[shape=square,label=\"⊤\"];\n";
         }
         else {
-            nodeid root(n, 0);
+            NodeId root(n, 0);
 
             for (int i = n; i >= 1; --i) {
                 os << "  " << i << " [shape=none,label=\"";
@@ -752,7 +752,7 @@ public:
             }
 
             for (size_t j = 2; j < oneId.code(); ++j) {
-                os << "  \"" << nodeid(j) << "\" ";
+                os << "  \"" << NodeId(j) << "\" ";
                 os << "[style=invis];\n";
             }
             os << "  \"" << oneId << "\" ";
@@ -772,7 +772,7 @@ private:
         tdzdd::MyVector<Node<T> > nodeList(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j, snodes.pop_front()) {
-            nodeid f(i, j);
+            NodeId f(i, j);
             assert(!snodes.empty());
             SpecNode* p = snodes.front();
 
@@ -781,7 +781,7 @@ private:
             os << "\"];\n";
 
             for (int b = 0; b < AR; ++b) {
-                nodeid& child = nodeList[j].branch[b];
+                NodeId& child = nodeList[j].branch[b];
 
                 if (nodeId(p) == 0) {
                     child = 0;
@@ -825,13 +825,13 @@ private:
 
                     SpecNode*& pp0 = uniqTable[ii].add(pp);
                     if (pp0 == pp) {
-                        nodeId(pp) = child = nodeid(ii, jj);
+                        nodeId(pp) = child = NodeId(ii, jj);
                     }
                     else {
                         switch (spec.merge_states(state(pp0), state(pp))) {
                         case 1:
                             nodeId(pp0) = 0;
-                            nodeId(pp) = child = nodeid(ii, jj);
+                            nodeId(pp) = child = NodeId(ii, jj);
                             pp0 = pp;
                             break;
                         case 2:
@@ -856,8 +856,8 @@ private:
 
         for (size_t j = 0; j < m; ++j) {
             for (int b = 0; b < AR; ++b) {
-                nodeid f(i, j);
-                nodeid child = nodeList[j].branch[b];
+                NodeId f(i, j);
+                NodeId child = nodeList[j].branch[b];
                 if (child == 0) continue;
                 if (child == 1) child = oneId;
 
@@ -880,7 +880,7 @@ private:
 
         os << "  {rank=same; " << i;
         for (size_t j = 0; j < m; ++j) {
-            os << "; \"" << nodeid(i, j) << "\"";
+            os << "; \"" << NodeId(i, j) << "\"";
         }
         os << "}\n";
 
