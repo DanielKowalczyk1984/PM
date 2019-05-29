@@ -1,11 +1,15 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 project(PM)
 include(FetchContent)
+
+# DATE(TIMESTAMP)
+string(TIMESTAMP _output "%m%y") 
+
 # add json export compile commands
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Define a local module path
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 
 # Find Glib
 find_package(Glib)
@@ -49,3 +53,6 @@ include(customCppCheck)
 
 # Include dev-tools
 include(dev-tools)
+
+set_property(TARGET ${PROJECT_NAME}
+             PROPERTY OUTPUT_NAME "${PROJECT_NAME}$<CONFIG>${_output}" )
