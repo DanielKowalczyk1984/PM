@@ -113,7 +113,7 @@ static int create_same_conflict(Problem *problem,
             goto CLEAN;
         }
 
-        init_tables(pd->solver);
+        // init_tables(pd->solver);
         CCutil_suspend_timer(&(problem->tot_build_dd));
     }
 
@@ -186,7 +186,7 @@ static int create_differ_conflict(Problem *problem,
             goto CLEAN;
         }
 
-        init_tables(pd->solver);
+        // init_tables(pd->solver);
         CCutil_suspend_timer(&(problem->tot_build_dd));
     }
 
