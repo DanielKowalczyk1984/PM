@@ -81,6 +81,7 @@ public:
      void disjunctive_inequality(double *x, Solution *sol);
      void represent_solution(Solution *sol);
      double* project_solution(Solution *sol);
+     void add_constraint(Job *job, GPtrArray *list, int order);
 
      /**
       * Some getters

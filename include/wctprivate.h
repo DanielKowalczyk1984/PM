@@ -37,6 +37,7 @@ struct _NodeData {
     // The id and depth of the node in the B&B tree
     int id;
     int depth;
+    int test;
 
     NodeDataStatus status;
 
@@ -275,6 +276,7 @@ void construct_lp_sol_from_rmp(NodeData *pd);
 void disjunctive_inequality(NodeData *pd, Solution *sol);
 void represent_solution(NodeData *pd, Solution *sol);
 int check_schedule_set(ScheduleSet *set, NodeData *pd);
+void add_constraint(NodeData *pd, Job *job, int order);
 
 
 /**

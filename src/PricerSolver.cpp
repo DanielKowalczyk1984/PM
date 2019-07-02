@@ -78,7 +78,7 @@ size_t PricerSolverBase::get_datasize() {
 }
 
 size_t PricerSolverBase::get_size_graph() {
-    return size_graph;
+    return decision_diagram->size();
 }
 
 int PricerSolverBase::get_num_layers() {
@@ -310,28 +310,63 @@ void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB)
     evaluate_nodes(pi, UB, LB);
     remove_layers();
 
-    /** Construct the new dd (contraction of tables) */
+    // * Construct the new dd (contraction of tables) 
     PricerConstruct ps(ordered_jobs);
     decision_diagram.reset(new DdStructure<>(ps));
     init_table();
 
     /** Remove nodes for which the high edge points to 0 */
-    evaluate_nodes(pi, UB, LB);
+    // evaluate_nodes(pi, UB, LB);
     remove_edges();
-
+    NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
+    for (int i = decision_diagram->topLevel(); i >= 1; i--) {
+        unsigned int m = table[i].size();
+        for(unsigned j = 0; j < m; ++j) {
+            cout << table[i][j].get_job()->job << " " << table[i][j].branch[1] << " " << i << ":" << j <<  "\n";
+        }
+        cout << "\n";
+    }
+    cout << decision_diagram->root() << "\n";
     construct_mipgraph();
     // build_mip();
+    for(unsigned i = 0; i < ordered_jobs->len; ++i) {
+        job_interval_pair *job = (job_interval_pair *) g_ptr_array_index(ordered_jobs, i);
+        std::cout << job->j->job << "\n";
+    }
 
+    int count = 0;
+    for (int i = njobs  - 1; i >= 0 && count <  7; --i) {
+        Job *tmp_j = (Job *) g_ptr_array_index(jobs, i);
 
-    // for (int i = njobs  - 1; i >= 0 && count <  8; --i) {
-    //     Job *tmp_j = (Job *) g_ptr_array_index(jobs, i);
+        if (tmp_j->num_layers == 1) {
+            decision_diagram->zddSubset(scheduling(tmp_j, ordered_jobs, 2));
+            decision_diagram->zddReduce();
+            count++;
+            std::cout << decision_diagram->size() << "\n";
+        }
+    }
+    init_table();
+}
 
-    //     if (tmp_j->nb_layers == 1) {
-    //         zdd->zddSubset(scheduling(tmp_j, ordered_jobs, 2));
-    //         zdd->zddReduce();
-    //         count++;
-    //     }
-    // }
+void PricerSolverBase::add_constraint(Job *job, GPtrArray *list, int order) {
+    cout << decision_diagram->size() << '\n';
+    scheduling constr(job, list, order);
+    std::ofstream outf("min1.gv");
+    NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
+
+    ColorWriterVertex vertex_writer(g, table);
+    boost::write_graphviz(outf, g, vertex_writer);
+    decision_diagram->zddSubset(constr);
+    outf.close();
+    decision_diagram->zddReduce();
+    init_table();
+    cout << decision_diagram->size() << '\n';
+    construct_mipgraph();
+    NodeTableEntity<double>& table1 = decision_diagram->getDiagram().privateEntity();
+    ColorWriterVertex vertex_writer1(g, table1);
+    outf = std::ofstream("min2.gv");
+    boost::write_graphviz(outf, g,vertex_writer1);
+    outf.close();
 }
 
 void PricerSolverBase::construct_lp_sol_from_rmp(

@@ -290,6 +290,7 @@ class scheduling: public tdzdd::DdSpec<scheduling, int, 2> {
 
         if (take) {
             if(tmp_j != job) {
+                // state++;
                 j++;
                 return nlayers - j;
             } else {
@@ -297,12 +298,12 @@ class scheduling: public tdzdd::DdSpec<scheduling, int, 2> {
                     state++;
                     j++;
                     return  nlayers - j;
-                }else if (state >= order) {
+                }else if (state >= order + 1) {
                     state = 0;
                     j++;
                     return nlayers - j;
-
                 } else {
+                    state++;
                     return 0;
                 }
             }
