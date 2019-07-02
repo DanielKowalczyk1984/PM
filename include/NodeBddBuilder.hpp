@@ -338,7 +338,7 @@ class ZddSubsetter: DdBuilderBase {
     NodeTableEntity<T> const& input;
     NodeTableEntity<T>& output;
     tdzdd::DataTable<tdzdd::MyListOnPool<SpecNode> > work;
-    tdzdd::DdSweeper<AR> sweeper;
+    DdSweeper<T> sweeper;
 
     tdzdd::MyVector<char> oneStorage;
     void* const one;
