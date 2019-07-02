@@ -15,12 +15,6 @@ void copy_solver(PricerSolver **dest, PricerSolver *src);
 void freeSolver(PricerSolver *src);
 void deletePricerSolver(PricerSolver *solver);
 
-// PricerSolver *copySolver(PricerSolver *src);
-int init_tables(PricerSolver *solver);
-int calculate_table(PricerSolver *solver, Parms *parms);
-
-
-
 void iterate_dd(PricerSolver *solver);
 void iterate_zdd(PricerSolver *solver);
 
