@@ -104,24 +104,25 @@ public:
      * ZDD subsetting.
      * @param spec ZDD spec.
      */
-//     template<typename SPEC>
-//     void zddSubset(DdSpecBase<SPEC,ARITY> const& spec) {
-// #ifdef _OPENMP
-//         if (useMP) zddSubsetMP_(spec.entity());
-//         else
-// #endif
-//         zddSubset_(spec.entity());
-//     }
+    template<typename SPEC>
+    void zddSubset(SPEC const& spec) {
+#ifdef _OPENMP
+        if (useMP) zddSubsetMP_(spec.entity());
+        else
+#endif
+        zddSubset_(spec.entity());
+    }
 
 private:
     template<typename SPEC>
     void zddSubset_(SPEC const& spec) {
         NodeTableHandler<T> tmpTable;
-        tdzdd::ZddSubsetter<SPEC> zs(diagram, spec, tmpTable);
+        ZddSubsetter<double,SPEC> zs(diagram, spec, tmpTable);
         int n = zs.initialize(root_);
 
         if (n > 0) {
             for (int i = n; i > 0; --i) {
+                zs.subset(i);
                 diagram.derefLevel(i);
             }
         }
