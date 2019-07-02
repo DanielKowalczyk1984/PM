@@ -52,7 +52,7 @@
 		},
 		"LSP":
 		{
-			"cquery1":
+			"cquery":
 			{
 				"enabled": true
 			}
@@ -80,25 +80,6 @@
 		],
 		"ecc_show_errors": true,
 		"ecc_show_type_body": false,
-		"ecc_show_type_info": false,
-		"sublimeclang_hide_output_when_empty": true,
-		"sublimeclang_options":
-		[
-			"-isystem",
-			"/usr/include/*",
-			"-isystem",
-			"/usr/include/c++/7.2.0/*",
-			"-Wall",
-			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
-			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/EGlib/src/project_EGlib/include",
-			"-I/home/daniel/Dropbox/PapersOR/PM/implementation/include",
-			"-I/opt/gurobi751/linux64/include",
-			"-I/opt/gurobi752/linux64/include",
-			"-I/usr/include/glib-2.0",
-			"-I/usr/lib64/glib-2.0/include",
-			"-I/usr/lib/x86_64-linux-gnu/glib-2.0/include"
-		],
-		"sublimeclang_reparse_on_activated": false,
-		"sublimeclang_reparse_on_save": true
+		"ecc_show_type_info": false
 	}
 }
