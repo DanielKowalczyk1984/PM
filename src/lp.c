@@ -96,7 +96,10 @@ int wctlp_optimize(wctlp *lp, int *status) {
             goto CLEAN;
         }
     } else if (*status == GRB_INFEASIBLE) {
-        printf("infeasible\n");
+        printf("infeasible LP relaxation\n");
+        wctlp_write(lp, "model.lp");
+        wctlp_compute_IIS(lp);
+        wctlp_write(lp, "model.ilp");
     }
 
 CLEAN:
@@ -536,9 +539,8 @@ int wctlp_compute_IIS(wctlp *lp) {
     GRBgetintattr(lp->model, GRB_INT_ATTR_STATUS, &status);
 
     if (status == GRB_INFEASIBLE) {
-        printf("test infeasible\n");
         GRBcomputeIIS(lp->model);
-        GRBwrite(lp->model, "test.ilp");
+        GRBwrite(lp->model, "compute_iis.ilp");
     }
 
     return val;
