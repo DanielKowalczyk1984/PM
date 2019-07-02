@@ -22,6 +22,7 @@ void iterator(gpointer key, gpointer value, gpointer user_data) {
 void scheduleset_init(ScheduleSet *set) {
     if (set) {
         set->num = (int *)NULL;
+        set->del = 0;
         set->age = 0;
         set->total_processing_time = 0;
         set->total_weighted_completion_time = 0;
@@ -36,6 +37,7 @@ void scheduleset_init(ScheduleSet *set) {
 void scheduleset_init_bis(ScheduleSet *set) {
     if (set) {
         set->num = (int *)NULL;
+        set->del = 0;
         set->age = 0;
         set->total_processing_time = 0;
         set->total_weighted_completion_time = 0;
@@ -60,6 +62,7 @@ void scheduleset_free(ScheduleSet *set) {
 
         set->total_processing_time = 0;
         set->age = 0;
+        set->del = 0;
         set->total_weighted_completion_time = 0;
         CC_IFFREE(set->num, int);
     }
@@ -72,6 +75,7 @@ void g_scheduleset_free(void *set) {
 
         tmp->total_processing_time = 0;
         tmp->age = 0;
+        tmp->del = 0;
         tmp->total_weighted_completion_time = 0;
         tmp->id = -1;
         tmp->total_weighted_completion_time = 0;
