@@ -88,15 +88,6 @@ void deletePricerSolver(PricerSolver *solver) {
     }
 }
 
-int calculate_table(PricerSolver *solver, wctparms *parms) {
-    int val = 0;
-
-    // solver->init_zdd_table();
-    // solver->init_table_farkas();
-
-    return val = 0;
-}
-
 void iterate_zdd(PricerSolver *solver) { solver->iterate_zdd(); }
 
 void print_number_paths(PricerSolver *solver) { solver->print_num_paths(); }
@@ -106,12 +97,6 @@ int get_num_layers(PricerSolver *solver) { return solver->get_num_layers(); }
 size_t get_size_graph(PricerSolver *solver) { return solver->get_size_graph(); }
 
 double get_edge_cost(PricerSolver *solver, int idx) { return solver->get_cost_edge(idx); }
-
-int init_tables(PricerSolver *solver) {
-    int val = 0;
-    // solver->init_tables();
-    return val;
-}
 
 void calculate_edges(PricerSolver *solver, ScheduleSet *set) {
     solver->calculate_edges(set);
@@ -130,7 +115,11 @@ void represent_solution(NodeData *pd, Solution *sol) {
 }
 
 int check_schedule_set(ScheduleSet *set, NodeData *pd) {
-    return pd->solver->check_schedule_set(set->job_list);
+    return static_cast<int>(pd->solver->check_schedule_set(set->job_list));
+}
+
+void add_constraint(NodeData *pd, Job *job, int order) {
+    pd->solver->add_constraint(job, pd->ordered_jobs, order);
 }
 
 void g_calculate_edges(gpointer data, gpointer user_data) {
