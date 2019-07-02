@@ -119,6 +119,72 @@ CLEAN:
     return val;
 }
 
+int delete_infeasible_cclasses(NodeData *pd) {
+    int          val = 0;
+    int          nb_col;
+    guint        i;
+    guint        count = pd->localColPool->len;
+    ScheduleSet *tmp_schedule;
+    /** pd->dzcount can be deprecated! */
+    pd->dzcount = 0;
+
+    for (i = 0; i < pd->localColPool->len; ++i) {
+        tmp_schedule = (ScheduleSet *)g_ptr_array_index(pd->localColPool, i);
+        if (tmp_schedule->age > 0) {
+            pd->dzcount++;
+        }
+    }
+
+    int          it = 0;
+    int          first_del = -1;
+    int          last_del = -1;
+    for (i = 0; i < count; ++i) {
+        tmp_schedule = (ScheduleSet *)g_ptr_array_index(pd->localColPool, it);
+        if (tmp_schedule->del != 1) {
+            if (first_del != -1) {
+                /** Delete recently found deletion range.*/
+                val = wctlp_deletecols(pd->RMP, first_del, last_del);
+                CCcheck_val_2(val, "Failed in wctlp_deletecols");
+                g_ptr_array_remove_range(pd->localColPool, first_del, last_del - first_del + 1);
+                it = it - (last_del - first_del);
+                first_del = last_del = -1;
+            } else {
+                it++;
+            }
+        } else {
+            if (first_del == -1) {
+                first_del = it;
+                last_del = first_del;
+            } else {
+                last_del++;
+            }
+            it++;
+        }
+    }
+
+    if (first_del != -1) {
+        wctlp_deletecols(pd->RMP, first_del, last_del);
+        CCcheck_val_2(val, "Failed in wctlp_deletecols");
+        g_ptr_array_remove_range(pd->localColPool, first_del, last_del - first_del + 1);
+    }
+
+    if (dbg_lvl() > 1) {
+        printf("Deleted %d out of %d columns with age > %d.\n", pd->dzcount, count, pd->retirementage);
+    }
+
+    wctlp_get_nb_cols(pd->RMP, &nb_col);
+    assert(pd->localColPool->len == nb_col);
+    printf("number of cols = %d\n", nb_col);
+    for (i = 0; i < pd->localColPool->len; ++i) {
+        tmp_schedule = (ScheduleSet *)g_ptr_array_index(pd->localColPool, i);
+        tmp_schedule->id = i;
+    }
+    pd->dzcount = 0;
+
+CLEAN:
+    return val;
+}
+
 void g_make_pi_feasible(gpointer data, gpointer user_data) {
     ScheduleSet *x = (ScheduleSet *)data;
     NodeData *    pd = (NodeData *)user_data;
@@ -255,9 +321,12 @@ int compute_lower_bound(Problem *problem, NodeData *pd) {
     double    real_time_pricing;
     Parms *parms = &(problem->parms);
 
-    if (pd->status == infeasible) {
-        goto CLEAN;
-    }
+    // if (pd->status == infeasible) {
+    //     wctlp_write(pd->RMP, "test.lp");
+    //     wctlp_compute_IIS(pd->RMP);
+    //     pd->test = 0;
+    //     goto CLEAN;
+    // }
 
     if (dbg_lvl() > 1) {
         printf(
@@ -347,7 +416,7 @@ int compute_lower_bound(Problem *problem, NodeData *pd) {
          * Delete old columns
          */
         if (pd->dzcount > pd->njobs * min_ndelrow_ratio && status == GRB_OPTIMAL) {
-            val = delete_old_cclasses(pd);
+            // val = delete_old_cclasses(pd);
             CCcheck_val_2(val, "Failed in delete_old_cclasses");
         }
 
@@ -504,25 +573,52 @@ int compute_lower_bound(Problem *problem, NodeData *pd) {
                 }
 
                 if(parms->pricing_solver < dp_solver) {
-                    calculate_nblayers(pd);
-                    // val = calculate_x_e(pd);
-                    // CCcheck_val_2(val, "Failed in calculate_x_e");
+                    val = wctlp_optimize(pd->RMP, &status);
+                    CCcheck_val_2(val, "wctlp_optimize failed");
+                    val = compute_objective(pd, parms);
+                    CCcheck_val_2(val, "Failed in computing the objective");
+                    printf("test objective before %d\n", pd->lower_bound);
+                    reset_nblayers(pd->jobarray);
+                    calculate_nblayers(pd, 2);
+                    calculate_new_ordered_jobs(pd);
+                    // check_schedules(pd);
+                    // int add = -1;
+                    // for(unsigned i = 0; i < pd->jobarray->len; ++i) {
+                    //     Job *j = (Job*) g_ptr_array_index(pd->jobarray, i);
+                    //     if(j->num_layers > 0 && add < 0) {
+                    //         add++;
+                    //         add_constraint(pd, j, pd->njobs);
+                    //     } 
+                    // }
+                    // if(add >= 0) {
+                    //     pd->test =1;
+                    // } else {
+                        pd->test = 0;
+                    // }
+                    val = check_schedules(pd);
+                    CCcheck_val_2(val, "Failed in checkschedules");
+                    delete_infeasible_cclasses(pd);
                 }
-                pd->status = LP_bound_computed;
-                val = wctlp_pi(pd->RMP, pd->pi);
-                CCcheck_val_2(val, "wctlp_pi failed");
+                // pd->status = LP_bound_computed;
+                // val = wctlp_pi(pd->RMP, pd->pi);
+                // CCcheck_val_2(val, "wctlp_pi failed");
 
                 /**
                  * Compute the objective function
                  */
+                val = wctlp_optimize(pd->RMP, &status);
+                CCcheck_val_2(val, "wctlp_optimize failed");
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
-                // print_x(pd);
+                printf("size evolution %lu\n", get_size_graph(pd->solver));
                 break;
 
             case GRB_INFEASIBLE:
                 pd->status = infeasible;
+                pd->test = 0;
+                wctlp_write(pd->RMP, "test1.lp");
+                wctlp_compute_IIS(pd->RMP);
         }
     } else {
         switch (status) {
@@ -604,13 +700,16 @@ int print_x(NodeData *pd){
     return val;
 }
 
-int calculate_nblayers(NodeData *pd){
+int calculate_nblayers(NodeData *pd, int k){
     int val = 0;
     int nb_cols;
     int status;
 
     val = wctlp_status(pd->RMP, &status);
     CCcheck_val_2(val, "Failed in wctlp_status");
+    if(status == GRB_LOADED) {
+        wctlp_optimize(pd->RMP, &status);
+    }
     
     reset_nblayers(pd->jobarray);
     
@@ -626,16 +725,19 @@ int calculate_nblayers(NodeData *pd){
             for(unsigned i = 0; i < nb_cols; ++i) {
                 if(pd->x[i] > 0.00001) {
                     ScheduleSet *tmp = (ScheduleSet *) g_ptr_array_index(pd->localColPool,i);
-                    for(unsigned j = 0; j < tmp->job_list->len - 1; ++j) {
-                        Job* j1 = (Job*) g_ptr_array_index(tmp->job_list, j);
-                        Job* j2 = (Job*) g_ptr_array_index(tmp->job_list, j + 1);
-                        if(j1 == j2) {
-                            j1->num_layers = 1;
-                        }
+                        for(int j = 0; j < (int) tmp->job_list->len - k; ++j) {
+                            Job* j1 = (Job*) g_ptr_array_index(tmp->job_list, j);
+                            Job* j2 = (Job*) g_ptr_array_index(tmp->job_list, j + k);
+                            if(j1 == j2) {
+                                j1->num_layers = 1;
+                                tmp->del = 1;
+                            }
                     }
                 }
             }
         break;
+        default:
+        printf("tres test \n");
     }
 
     CLEAN:
@@ -672,4 +774,39 @@ int calculate_x_e(NodeData *pd){
     CLEAN:
 
     return val;
+}
+
+int check_schedules(NodeData *pd) {
+    int val = 0;
+    int nb_cols;
+    int status;
+
+    val = wctlp_status(pd->RMP, &status);
+    CCcheck_val_2(val, "Failed in wctlp_status")
+    
+    val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
+    CCcheck_val_2(val, "Failed to get nb cols");
+    assert(nb_cols == pd->localColPool->len);
+    printf("number of cols check %d\n", nb_cols);
+    for(unsigned i = 0; i < nb_cols; ++i) {
+        ScheduleSet *tmp = (ScheduleSet *) g_ptr_array_index(pd->localColPool,i);
+        if(check_schedule_set(tmp, pd) == 1) {
+            tmp->del = 0;
+        } else {
+            tmp->del = 1;
+            // printf("deleted column\n");
+            // print_schedule(tmp, 1);
+        }
+    }
+
+    if(status != GRB_OPTIMAL) {
+        wctlp_compute_IIS(pd->RMP);
+        wctlp_write(pd->RMP, "rmpcheck.lp");
+        // printf("check file %d\n", status);
+        // getchar();
+    }
+
+    CLEAN:
+
+    return val;  
 }

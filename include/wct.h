@@ -90,7 +90,9 @@ int compute_lower_bound(Problem *problem, NodeData *pd);
 int compute_objective(NodeData *pd, Parms *parms);
 int print_x(NodeData *pd);
 int calculate_x_e(NodeData *pd);
-int calculate_nblayers(NodeData *pd);
+int calculate_nblayers(NodeData *pd, int k);
+int check_schedules(NodeData *pd);
+int delete_infeasible_cclasses(NodeData *pd);
 
 void make_pi_feasible(NodeData *pd);
 void make_pi_feasible_farkas_pricing(NodeData *pd);
