@@ -382,8 +382,8 @@ class NodeTableEntity: public data_table_node<T> {
                     : refCount(1), entity(n) {
             }
 
-            explicit Object(NodeTableEntity<T> const& entity)
-                    : refCount(1) , entity(entity) {
+            explicit Object(NodeTableEntity<T> const& _entity)
+                    : refCount(1) , entity(_entity) {
             }
 
             void ref() {
