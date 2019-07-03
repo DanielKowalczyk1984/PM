@@ -20,6 +20,7 @@ class DdReducer {
     NodeTableEntity<T>& output;
     tdzdd::MyVector<tdzdd::MyVector<NodeId> > newIdTable;
     tdzdd::MyVector<tdzdd::MyVector<NodeId*> > rootPtr;
+    int counter = 1;
 
     struct ReducNodeInfo {
         Node<T> children;
@@ -131,7 +132,6 @@ private:
         makeReadyForSequentialReduction();
         size_t const m = input[i].size();
         Node<T>* const tt = input[i].data();
-        NodeId const mark(i, m);
 
         tdzdd::MyVector<NodeId>& newId = newIdTable[i];
         newId.resize(m);
@@ -145,24 +145,13 @@ private:
 
             if ((BDD && f1 == f0) || (ZDD && f1 == 0)) {
                 newId[j] = f0;
-            }
-            else {
-                NodeId& f00 = input.child(f0, 0);
-                NodeId& f01 = input.child(f0, 1);
-
-                // if (f01 != mark) {        // the first touch from this level
-                    f01 = mark;        // mark f0 as touched
-                    newId[j] = NodeId(i + 1, m); // tail of f0-equivalent list
-                // }
-                // else {
-                //     newId[j] = f00;         // next of f0-equivalent list
-                // }
-                f00 = NodeId(i + 1, j);  // new head of f0-equivalent list
+            } else {
+                newId[j] = NodeId(counter + 1, m); // tail of f0-equivalent list
             }
         }
 
         {
-            tdzdd::MyVector<int> const& levels = input.lowerLevels(i);
+            tdzdd::MyVector<int> const& levels = input.lowerLevels(counter);
             for (int const* t = levels.begin(); t != levels.end(); ++t) {
                 newIdTable[*t].clear();
             }
@@ -170,66 +159,42 @@ private:
         size_t mm = 0;
 
         for (size_t j = 0; j < m; ++j) {
-            NodeId const f(i, j);
-            assert(newId[j].row() <= i + 1);
-            if (newId[j].row() <= i){ continue;}
+            assert(newId[j].row() <= counter + 1);
+            if (newId[j].row() <= counter){ continue;}
 
-            for (size_t k = j; k < m;) { // for each g in f0-equivalent list
-                assert(j <= k);
-                NodeId const g(i, k);
-                NodeId& g0 = tt[k].branch[0];
-                NodeId& g1 = tt[k].branch[1];
-                NodeId& g10 = input.child(g1, 0);
-                NodeId& g11 = input.child(g1, 1);
-                assert(g1 != mark);
-                assert(newId[k].row() == i + 1);
-                size_t next = newId[k].col();
-
-                if (g11 != f) { // the first touch to g1 in f0-equivalent list
-                    g11 = f; // mark g1 as touched
-                    g10 = g; // record g as a canonical node for <f0,g1>
-                    newId[k] = NodeId(i, mm++, g0.hasEmpty());
-                }
-                else {
-                    g0 = g10;       // make a forward link
-                    g1 = mark;      // mark g as forwarded
-                    newId[k] = 0;
-                }
-
-                k = next;
-            }
+            NodeId& g0 = tt[j].branch[0];
+            assert(newId[j].row() == counter + 1);
+            newId[j] = NodeId(counter, mm++, g0.hasEmpty());
         }
 
         if (!BDD) {
-            tdzdd::MyVector<int> const& levels = input.lowerLevels(i);
+            tdzdd::MyVector<int> const& levels = input.lowerLevels(counter);
             for (int const* t = levels.begin(); t != levels.end(); ++t) {
                 input[*t].clear();
             }
         }
 
-        output.initRow(i, mm);
-        Node<T>* nt = output[i].data();
+        if(mm > 0u) {
+            output.initRow(counter, mm);
+            Node<T>* nt = output[counter].data();
 
-        for (size_t j = 0; j < m; ++j) {
-            NodeId const& f0 = tt[j].branch[0];
-            NodeId const& f1 = tt[j].branch[1];
+            for (size_t j = 0; j < m; ++j) {
+                NodeId const& f0 = tt[j].branch[0];
+                NodeId const& f1 = tt[j].branch[1];
 
-            if (f1 == mark) { // forwarded
-                assert(f0.row() == i);
-                assert(newId[j] == 0);
-                newId[j] = newId[f0.col()];
+                if ((BDD && f1 == f0) || (ZDD && f1 == 0)) { // forwarded
+                    assert(newId[j].row() < counter);
+                } else {
+                    assert(newId[j].row() == counter);
+                    size_t k = newId[j].col();
+                    nt[k] = tt[j];
+                    nt[k].set_head_node();
+                    nt[k].child[0] = &(output.node(nt[k].branch[0]));
+                    nt[k].child[1] = &(output.node(nt[k].branch[1]));
+                }
             }
-            else if ((BDD && f1 == f0) || (ZDD && f1 == 0)) { // forwarded
-                assert(newId[j].row() < i);
-            }
-            else {
-                assert(newId[j].row() == i);
-                size_t k = newId[j].col();
-                nt[k] = tt[j];
-                nt[k].set_head_node();
-                nt[k].child[0] = &(output.node(nt[k].branch[0]));
-                nt[k].child[1] = &(output.node(nt[k].branch[1]));
-            }
+
+            counter++;
         }
 
         for (size_t k = 0; k < rootPtr[i].size(); ++k) {
