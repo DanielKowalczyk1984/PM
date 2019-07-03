@@ -142,6 +142,7 @@ int build_rmp(NodeData *pd, int construct) {
      */
     val = wctlp_addrow(pd->RMP, 0, (int *)NULL, (double *)NULL, wctlp_GREATER_EQUAL,
                        -(double)nmachines, (char *)NULL);
+    CCcheck_val_2(val, "Failed to add convexification constraint");
 
     wctlp_get_nb_rows(pd->RMP, &nb_row);
 
