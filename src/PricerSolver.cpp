@@ -149,7 +149,6 @@ void PricerSolverBase::remove_layers() {
 
 void PricerSolverBase::remove_edges() {
     NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
-
     /** remove the unnecessary nodes of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto &iter : table[i]) {
@@ -310,42 +309,9 @@ void PricerSolverBase::calculate_new_ordered_jobs(double *pi, int UB, double LB)
     evaluate_nodes(pi, UB, LB);
     remove_layers();
 
-    // * Construct the new dd (contraction of tables) 
-    PricerConstruct ps(ordered_jobs);
-    decision_diagram.reset(new DdStructure<>(ps));
-    init_table();
-
-    /** Remove nodes for which the high edge points to 0 */
-    // evaluate_nodes(pi, UB, LB);
     remove_edges();
-    NodeTableEntity<double>& table = decision_diagram->getDiagram().privateEntity();
-    for (int i = decision_diagram->topLevel(); i >= 1; i--) {
-        unsigned int m = table[i].size();
-        for(unsigned j = 0; j < m; ++j) {
-            cout << table[i][j].get_job()->job << " " << table[i][j].branch[1] << " " << i << ":" << j <<  "\n";
-        }
-        cout << "\n";
-    }
-    cout << decision_diagram->root() << "\n";
-    construct_mipgraph();
-    // build_mip();
-    for(unsigned i = 0; i < ordered_jobs->len; ++i) {
-        job_interval_pair *job = (job_interval_pair *) g_ptr_array_index(ordered_jobs, i);
-        std::cout << job->j->job << "\n";
-    }
-
-    int count = 0;
-    for (int i = njobs  - 1; i >= 0 && count <  7; --i) {
-        Job *tmp_j = (Job *) g_ptr_array_index(jobs, i);
-
-        if (tmp_j->num_layers == 1) {
-            decision_diagram->zddSubset(scheduling(tmp_j, ordered_jobs, 2));
-            decision_diagram->zddReduce();
-            count++;
-            std::cout << decision_diagram->size() << "\n";
-        }
-    }
     init_table();
+    construct_mipgraph();
 }
 
 void PricerSolverBase::add_constraint(Job *job, GPtrArray *list, int order) {
