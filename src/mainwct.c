@@ -189,16 +189,17 @@ int main(int ac, char **av) {
         problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
         if(parms->pricing_solver < dp_solver) {
-            calculate_new_ordered_jobs(root);
-            calculate_x_e(root);
-            disjunctive_inequality(root, problem.opt_sol);
+            // calculate_new_ordered_jobs(root);
+            // calculate_x_e(root);
+            // disjunctive_inequality(root, problem.opt_sol);
         }
+        // compute_lower_bound(&problem, &(problem.root_pd));
         problem.size_graph_after_reduced_cost_fixing = get_size_graph(root->solver);
 
         // lpwctdata_free(&(problem.root_pd));
         // problem.root_pd.localColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
         // heuristic_rpup(&problem);
-        // build_lp(&(problem.root_pd), 0);
+        // build_rmp(&(problem.root_pd), 0);
         // CCutil_start_timer(&(problem.tot_lb_root));
         // compute_lower_bound(&problem, &(problem.root_pd));
         // CCutil_stop_timer(&(problem.tot_lb_root), 1);

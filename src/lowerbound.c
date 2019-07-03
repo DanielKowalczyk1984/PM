@@ -577,24 +577,10 @@ int compute_lower_bound(Problem *problem, NodeData *pd) {
                     CCcheck_val_2(val, "wctlp_optimize failed");
                     val = compute_objective(pd, parms);
                     CCcheck_val_2(val, "Failed in computing the objective");
-                    printf("test objective before %d\n", pd->lower_bound);
+
                     reset_nblayers(pd->jobarray);
                     calculate_nblayers(pd, 2);
                     calculate_new_ordered_jobs(pd);
-                    // check_schedules(pd);
-                    // int add = -1;
-                    // for(unsigned i = 0; i < pd->jobarray->len; ++i) {
-                    //     Job *j = (Job*) g_ptr_array_index(pd->jobarray, i);
-                    //     if(j->num_layers > 0 && add < 0) {
-                    //         add++;
-                    //         add_constraint(pd, j, pd->njobs);
-                    //     } 
-                    // }
-                    // if(add >= 0) {
-                    //     pd->test =1;
-                    // } else {
-                        pd->test = 0;
-                    // }
                     val = check_schedules(pd);
                     CCcheck_val_2(val, "Failed in checkschedules");
                     delete_infeasible_cclasses(pd);
