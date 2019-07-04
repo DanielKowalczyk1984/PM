@@ -1,0 +1,296 @@
+#ifndef NODE_BDD_DUMPER_HPP
+#define NODE_BDD_DUMPER_HPP
+
+#include "node_duration.hpp"
+#include "util/MyHashTable.hpp"
+#include "util/MyVector.hpp"
+#include "util/MyList.hpp"
+
+/**
+ * DD dumper.
+ * A node table is printed in Graphviz (dot) format.
+ */
+template<typename S,typename T = Node<double>>
+class DdDumper {
+    typedef S Spec;
+    static int const AR = Spec::ARITY;
+    static int const headerSize = 1;
+
+    /* SpecNode
+     * ┌────────┬────────┬────────┬─────
+     * │ nodeId │state[0]│state[1]│ ...
+     * └────────┴────────┴────────┴─────
+     */
+    struct SpecNode {
+        NodeId nodeId;
+    };
+
+    static NodeId& nodeId(SpecNode* p) {
+        return p->nodeId;
+    }
+
+    static NodeId nodeId(SpecNode const* p) {
+        return p->nodeId;
+    }
+
+    static void* state(SpecNode* p) {
+        return p + headerSize;
+    }
+
+    static void const* state(SpecNode const* p) {
+        return p + headerSize;
+    }
+
+    template<typename SPEC>
+    struct Hasher {
+        SPEC const& spec;
+        int const level;
+
+        Hasher(SPEC const& spec, int level) :
+                spec(spec), level(level) {
+        }
+
+        size_t operator()(SpecNode const* p) const {
+            return spec.hash_code(state(p), level);
+        }
+
+        size_t operator()(SpecNode const* p, SpecNode const* q) const {
+            return spec.equal_to(state(p), state(q), level);
+        }
+    };
+
+    typedef MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
+
+    static int getSpecNodeSize(int n) {
+        if (n < 0)
+            throw std::runtime_error("storage size is not initialized!!!");
+        return headerSize + (n + sizeof(SpecNode) - 1) / sizeof(SpecNode);
+    }
+
+    Spec spec;
+    int const specNodeSize;
+    char* oneState;
+    NodeId oneId;
+
+    MyVector<MyList<SpecNode> > snodeTable;
+    MyVector<UniqTable> uniqTable;
+    MyVector<Hasher<Spec> > hasher;
+
+public:
+    explicit DdDumper(Spec const& s) :
+            spec(s),
+            specNodeSize(getSpecNodeSize(spec.datasize())),
+            oneState(0),
+            oneId(1) {
+    }
+
+    ~DdDumper() {
+        if (oneState) {
+            spec.destruct(oneState);
+            delete[] oneState;
+        }
+    }
+
+    /**
+     * Dumps the node table in Graphviz (dot) format.
+     * @param os the output stream.
+     * @param title title label.
+     */
+    void dump(std::ostream& os, std::string title) {
+        if (oneState) {
+            spec.destruct(oneState);
+        }
+        else {
+            oneState = new char[spec.datasize()];
+        }
+        int n = spec.get_root(oneState);
+
+        os << "digraph \"" << title << "\" {\n";
+
+        if (n == 0) {
+            if (!title.empty()) {
+                os << "  labelloc=\"t\";\n";
+                os << "  label=\"" << title << "\";\n";
+            }
+        }
+        else if (n < 0) {
+            os << "  \"^\" [shape=none,label=\"" << title << "\"];\n";
+            os << "  \"^\" -> \"" << oneId << "\" [style=dashed" << "];\n";
+            os << "  \"" << oneId << "\" ";
+            os << "[shape=square,label=\"⊤\"];\n";
+        }
+        else {
+            NodeId root(n, 0);
+
+            for (int i = n; i >= 1; --i) {
+                os << "  " << i << " [shape=none,label=\"";
+                spec.printLevel(os, i);
+                os << "\"];\n";
+            }
+            for (int i = n - 1; i >= 1; --i) {
+                os << "  " << (i + 1) << " -> " << i << " [style=invis];\n";
+            }
+
+            os << "  \"^\" [shape=none,label=\"" << title << "\"];\n";
+            os << "  \"^\" -> \"" << root << "\" [style=dashed" << "];\n";
+
+            snodeTable.init(n + 1);
+            SpecNode* p = snodeTable[n].alloc_front(specNodeSize);
+            spec.destruct(oneState);
+            spec.get_copy(state(p), oneState);
+            nodeId(p) = root;
+
+            uniqTable.clear();
+            uniqTable.reserve(n + 1);
+            hasher.clear();
+            hasher.reserve(n + 1);
+            for (int i = 0; i <= n; ++i) {
+                hasher.push_back(Hasher<Spec>(spec, i));
+                uniqTable.push_back(UniqTable(hasher.back(), hasher.back()));
+            }
+
+            for (int i = n; i >= 1; --i) {
+                dumpStep(os, i);
+            }
+
+            for (size_t j = 2; j < oneId.code(); ++j) {
+                os << "  \"" << NodeId(j) << "\" ";
+                os << "[style=invis];\n";
+            }
+            os << "  \"" << oneId << "\" ";
+            os << "[shape=square,label=\"⊤\"];\n";
+        }
+
+        os << "}\n";
+        os.flush();
+    }
+
+private:
+    void dumpStep(std::ostream& os, int i) {
+        MyList<SpecNode> &snodes = snodeTable[i];
+        size_t const m = snodes.size();
+        MyVector<char> tmp(spec.datasize());
+        void* const tmpState = tmp.data();
+        MyVector<T> nodeList(m);
+
+        for (size_t j = m - 1; j + 1 > 0; --j, snodes.pop_front()) {
+            NodeId f(i, j);
+            assert(!snodes.empty());
+            SpecNode* p = snodes.front();
+
+            os << "  \"" << f << "\" [label=\"";
+            spec.print_state(os, state(p), i);
+            os << "\"];\n";
+
+            for (int b = 0; b < AR; ++b) {
+                NodeId& child = nodeList[j].branch[b];
+
+                if (nodeId(p) == 0) {
+                    child = 0;
+                    continue;
+                }
+
+                spec.get_copy(tmpState, state(p));
+                int ii = spec.get_child(tmpState, i, b);
+
+                if (ii == 0) {
+                    child = 0;
+                }
+                else if (ii < 0) {
+                    if (oneId == 1) { // the first 1-terminal candidate
+                        oneId = 2;
+                        spec.destruct(oneState);
+                        spec.get_copy(oneState, tmpState);
+                        child = oneId;
+                    }
+                    else {
+                        switch (spec.merge_states(oneState, tmpState)) {
+                        case 1:
+                            oneId = oneId.code() + 1;
+                            spec.destruct(oneState);
+                            spec.get_copy(oneState, tmpState);
+                            child = oneId;
+                            break;
+                        case 2:
+                            child = 0;
+                            break;
+                        default:
+                            child = oneId;
+                            break;
+                        }
+                    }
+                }
+                else {
+                    SpecNode* pp = snodeTable[ii].alloc_front(specNodeSize);
+                    size_t jj = snodeTable[ii].size() - 1;
+                    spec.get_copy(state(pp), tmpState);
+
+                    SpecNode*& pp0 = uniqTable[ii].add(pp);
+                    if (pp0 == pp) {
+                        nodeId(pp) = child = NodeId(ii, jj);
+                    }
+                    else {
+                        switch (spec.merge_states(state(pp0), state(pp))) {
+                        case 1:
+                            nodeId(pp0) = 0;
+                            nodeId(pp) = child = NodeId(ii, jj);
+                            pp0 = pp;
+                            break;
+                        case 2:
+                            child = 0;
+                            spec.destruct(state(pp));
+                            snodeTable[ii].pop_front();
+                            break;
+                        default:
+                            child = nodeId(pp0);
+                            spec.destruct(state(pp));
+                            snodeTable[ii].pop_front();
+                            break;
+                        }
+                    }
+                }
+
+                spec.destruct(tmpState);
+            }
+
+            spec.destruct(state(p));
+        }
+
+        for (size_t j = 0; j < m; ++j) {
+            for (int b = 0; b < AR; ++b) {
+                NodeId f(i, j);
+                NodeId child = nodeList[j].branch[b];
+                if (child == 0) continue;
+                if (child == 1) child = oneId;
+
+                os << "  \"" << f << "\" -> \"" << child << "\"";
+
+                os << " [style=";
+                if (b == 0) {
+                    os << "dashed";
+                }
+                else {
+                    os << "solid";
+                    if (AR > 2) {
+                        os << ",color="
+                           << ((b == 1) ? "blue" : (b == 2) ? "red" : "green");
+                    }
+                }
+                os << "];\n";
+            }
+        }
+
+        os << "  {rank=same; " << i;
+        for (size_t j = 0; j < m; ++j) {
+            os << "; \"" << NodeId(i, j) << "\"";
+        }
+        os << "}\n";
+
+        uniqTable[i - 1].clear();
+        spec.destructLevel(i);
+    }
+};
+
+
+
+#endif // NODE_BDD_DUMPER_HPP
