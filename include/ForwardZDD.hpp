@@ -1,6 +1,7 @@
 #ifndef DURATION_ZDD_HPP
 #define DURATION_ZDD_HPP
-#include <tdzdd/DdEval.hpp>
+// #include <tdzdd/DdEval.hpp>
+#include "NodeBddEval.hpp"
 #include <OptimalSolution.hpp>
 #include <node_duration.hpp>
 #include <vector>
@@ -48,7 +49,7 @@ bool my_compare(const std::shared_ptr<Node<T>> &lhs, const std::shared_ptr<Node<
 }
 
 template<typename E, typename T> class ForwardZddBase : public 
-    tdzdd::DdEval<E, ForwardZddNode<T>, OptimalSolution<T>> {
+    NodeBddEval<E, ForwardZddNode<T>, OptimalSolution<T>> {
 protected:
     T *pi;
     int num_jobs;

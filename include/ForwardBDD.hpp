@@ -1,12 +1,13 @@
 #ifndef FORWARD_BDD_HPP
 #define FORWARD_BDD_HPP
-#include <tdzdd/DdEval.hpp>
+// #include <tdzdd/DdEval.hpp>
+#include "NodeBddEval.hpp"
 #include <OptimalSolution.hpp>
 #include <node_duration.hpp>
 
 
 template<typename E, typename T> class ForwardBddBase : public 
-    tdzdd::DdEval<E, Node<T>, OptimalSolution<T>> {
+    NodeBddEval<E, Node<T>, OptimalSolution<T>> {
 protected:
     T *pi;
     int num_jobs;
