@@ -41,10 +41,10 @@ public:
 
     OptimalSolution<T> get_objective(Node<T> &n) const {
         OptimalSolution<T> sol(-pi[num_jobs]);
-        Label<T> *ptr_node = &(n.forward_label1);
+        Label<Node<T>,T> *ptr_node = &(n.forward_label[0]);
 
         while(ptr_node->get_previous() != nullptr) {
-            Label<T> *aux_prev_node = ptr_node->get_previous();
+            Label<Node<T>,T> *aux_prev_node = ptr_node->get_previous();
             Job *aux_job = aux_prev_node->get_job();
             sol.C_max += aux_job->processing_time;
             sol.push_job_back(aux_job, aux_prev_node->get_weight(), pi[aux_job->job]);
@@ -83,17 +83,17 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
 
     void initializenode(Node<T>& n) const override {
         if(n.get_weight() == 0) {
-            n.forward_label1.update_solution(-pi[num_jobs], nullptr, false);
-            n.forward_label2.update_solution(-DBL_MAX/2, nullptr, false);
+            n.forward_label[0].update_solution(-pi[num_jobs], nullptr, false);
+            n.forward_label[1].update_solution(-DBL_MAX/2, nullptr, false);
         } else {
-            n.forward_label1.update_solution(-DBL_MAX/2, nullptr, false);
-            n.forward_label2.update_solution(-DBL_MAX/2, nullptr, false);
+            n.forward_label[0].update_solution(-DBL_MAX/2, nullptr, false);
+            n.forward_label[1].update_solution(-DBL_MAX/2, nullptr, false);
         }
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.forward_label1.f = -pi[num_jobs];
-        n.forward_label2.set_f(-DBL_MAX/2);
+        n.forward_label[0].f = -pi[num_jobs];
+        n.forward_label[1].set_f(-DBL_MAX/2);
     }
 
     void evalNode(Node<T> &n) const override
@@ -112,33 +112,33 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
         /**
          * High edge calculation
          */
-        Job *prev = n.forward_label1.get_previous_job();
-        Job *aux1 = p1->forward_label1.get_previous_job();
+        Job *prev = n.forward_label[0].get_previous_job();
+        Job *aux1 = p1->forward_label[0].get_previous_job();
         diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
 
         if(prev != tmp_j && diff) {
-            g = n.forward_label1.get_f() + result;
-            if(g > p1->forward_label1.get_f()) {
+            g = n.forward_label[0].get_f() + result;
+            if(g > p1->forward_label[0].get_f()) {
                 if(aux1 != tmp_j) {
-                    p1->forward_label2.update_solution(p1->forward_label1);
+                    p1->forward_label[1].update_solution(p1->forward_label[0]);
                 }
-                p1->forward_label1.update_solution(g, &(n.forward_label1), true);
-            } else if ((g > p1->forward_label2.get_f()) && (aux1 != tmp_j)) {
-                p1->forward_label2.update_solution(g, &(n.forward_label1), true);
+                p1->forward_label[0].update_solution(g, &(n.forward_label[0]), true);
+            } else if ((g > p1->forward_label[1].get_f()) && (aux1 != tmp_j)) {
+                p1->forward_label[1].update_solution(g, &(n.forward_label[0]), true);
             }
         } else  {
-            g = n.forward_label2.get_f() + result;
-            prev = n.forward_label2.get_previous_job();
+            g = n.forward_label[1].get_f() + result;
+            prev = n.forward_label[1].get_previous_job();
             diff = (prev == nullptr ) ? true : (value_diff_Fij(weight, tmp_j, prev) >= 0 );
 
             if(diff) {
-                if(g > p1->forward_label1.get_f()) {
+                if(g > p1->forward_label[0].get_f()) {
                     if(aux1 != tmp_j) {
-                        p1->forward_label2.update_solution(p1->forward_label1);
+                        p1->forward_label[1].update_solution(p1->forward_label[0]);
                     }
-                    p1->forward_label1.update_solution(g, &(n.forward_label2), true);
-                } else if ((g > p1->forward_label2.get_f()) && (aux1 != tmp_j)) {
-                    p1->forward_label2.update_solution(g, &(n.forward_label2), true);
+                    p1->forward_label[0].update_solution(g, &(n.forward_label[1]), true);
+                } else if ((g > p1->forward_label[1].get_f()) && (aux1 != tmp_j)) {
+                    p1->forward_label[1].update_solution(g, &(n.forward_label[1]), true);
                 }
             }
         }
@@ -146,19 +146,19 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
         /**
          * Low edge calculation
          */
-        aux1 = p0->forward_label1.get_previous_job();
-        if(n.forward_label1.get_f() > p0->forward_label1.get_f()) {
+        aux1 = p0->forward_label[0].get_previous_job();
+        if(n.forward_label[0].get_f() > p0->forward_label[0].get_f()) {
             if(prev != aux1) {
-                p0->forward_label2.update_solution(p0->forward_label1);
+                p0->forward_label[1].update_solution(p0->forward_label[0]);
             }
-            p0->forward_label1.update_solution(n.forward_label1);
-            if(n.forward_label2.get_f() > p0->forward_label2.get_f()) {
-                p0->forward_label2.update_solution(n.forward_label2);
+            p0->forward_label[0].update_solution(n.forward_label[0]);
+            if(n.forward_label[1].get_f() > p0->forward_label[1].get_f()) {
+                p0->forward_label[1].update_solution(n.forward_label[1]);
             }
-        } else if ((n.forward_label1.get_f() > p0->forward_label2.get_f()) && (aux1 != prev)){
-            p0->forward_label2.update_solution(n.forward_label1);
-        } else if ((n.forward_label2.get_f() > p0->forward_label2.get_f())) {
-            p0->forward_label2.update_solution(n.forward_label2);
+        } else if ((n.forward_label[0].get_f() > p0->forward_label[1].get_f()) && (aux1 != prev)){
+            p0->forward_label[1].update_solution(n.forward_label[0]);
+        } else if ((n.forward_label[1].get_f() > p0->forward_label[1].get_f())) {
+            p0->forward_label[1].update_solution(n.forward_label[1]);
         }
     }
 };
@@ -187,14 +187,14 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
 
     void initializenode(Node<T>& n) const override {
         if(n.get_weight() == 0) {
-            n.forward_label1.update_solution(-pi[num_jobs], nullptr, false);
+            n.forward_label[0].update_solution(-pi[num_jobs], nullptr, false);
         } else {
-            n.forward_label1.update_solution(-DBL_MAX/2, nullptr, false);
+            n.forward_label[0].update_solution(-DBL_MAX/2, nullptr, false);
         }
     }
 
     void initializerootnode(Node<T> &n) const override {
-        n.forward_label1.f = -pi[num_jobs];
+        n.forward_label[0].f = -pi[num_jobs];
     }
 
     void initializepi(T *_pi){
@@ -215,16 +215,16 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         /**
          * High edge calculation
          */
-        g = n.forward_label1.get_f() + result;
-        if(g > p1->forward_label1.get_f()) {
-            p1->forward_label1.update_solution(g, &(n.forward_label1), true);
+        g = n.forward_label[0].get_f() + result;
+        if(g > p1->forward_label[0].get_f()) {
+            p1->forward_label[0].update_solution(g, &(n.forward_label[0]), true);
         }
 
         /**
          * Low edge calculation
          */
-        if(n.forward_label1.get_f() > p0->forward_label1.get_f()) {
-            p0->forward_label1.update_solution(n.forward_label1);
+        if(n.forward_label[0].get_f() > p0->forward_label[0].get_f()) {
+            p0->forward_label[0].update_solution(n.forward_label[0]);
         }
     }
 };
