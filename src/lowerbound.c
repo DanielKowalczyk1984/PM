@@ -578,12 +578,12 @@ int compute_lower_bound(Problem *problem, NodeData *pd) {
                     val = compute_objective(pd, parms);
                     CCcheck_val_2(val, "Failed in computing the objective");
 
-                    reset_nblayers(pd->jobarray);
-                    calculate_nblayers(pd, 2);
-                    calculate_new_ordered_jobs(pd);
-                    val = check_schedules(pd);
-                    CCcheck_val_2(val, "Failed in checkschedules");
-                    delete_infeasible_cclasses(pd);
+                    // reset_nblayers(pd->jobarray);
+                    // calculate_nblayers(pd, 2);
+                    // reduce_cost_fixing(pd);
+                    // val = check_schedules(pd);
+                    // CCcheck_val_2(val, "Failed in checkschedules");
+                    // delete_infeasible_cclasses(pd);
                 }
                 // pd->status = LP_bound_computed;
                 // val = wctlp_pi(pd->RMP, pd->pi);
