@@ -22,7 +22,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef MY_HASH_TABLE_HPP
+#define MY_HASH_TABLE_HPP
 
 #include <cassert>
 #include <ostream>
@@ -613,4 +614,5 @@ struct MyHashMap: public MyHashTable<MyHashMapEntry<K,V>,
     }
 };
 
-// } // namespace tdzdd
+
+#endif // MY_HASH_TABLE_HPP

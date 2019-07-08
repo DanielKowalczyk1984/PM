@@ -22,14 +22,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef DATA_TABLE_HPP
+#define DATA_TABLE_HPP
 
 #include <cassert>
 #include <ostream>
 
 #include "MyVector.hpp"
-
-// namespace tdzdd {
 
 template<typename T>
 class DataTable {
@@ -205,4 +204,4 @@ public:
     }
 };
 
-// } // namespace tdzdd
+#endif // DATA_TABLE_HPP

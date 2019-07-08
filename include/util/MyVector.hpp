@@ -22,11 +22,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef MY_VECTOR_HPP
+#define MY_VECTOR_HPP
 
 #include <cassert>
 #include <cstring>
 #include <vector>
+#include <iostream>
 
 template<typename T, typename Size = size_t>
 class MyVector {
@@ -528,6 +530,11 @@ public:
         return os << ")";
     }
 };
+
+
+#endif // MY_VECTOR_HPP
+
+
 
 //template<typename T, typename Size>
 //void swap(MyVector<T,Size>& v1, MyVector<T,Size>& v2) {

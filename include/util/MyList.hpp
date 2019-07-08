@@ -22,11 +22,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef MY_LIST_HPP
+#define MY_LIST_HPP
 
 #include <cassert>
 #include <cstring>
 #include <stdexcept>
+#include <iostream>
 
 // namespace tdzdd {
 
@@ -586,4 +588,4 @@ public:
     }
 };
 
-// } // namespace tdzdd
+#endif // MY_LIST_HPP
