@@ -22,7 +22,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef NODE_BDD_BUILDER_HPP
+#define NODE_BDD_BUILDER_HPP
 
 #include <cassert>
 #include <cmath>
@@ -32,11 +33,11 @@
 #include "NodeBddSweeper.hpp"
 #include "node_duration.hpp"
 #include "NodeBddTable.hpp"
-#include "tdzdd/DdSpec.hpp"
-#include "tdzdd/util/MemoryPool.hpp"
-#include "tdzdd/util/MyHashTable.hpp"
-#include "tdzdd/util/MyList.hpp"
-#include "tdzdd/util/MyVector.hpp"
+#include "NodeBddSpec.hpp"
+#include "util/MemoryPool.hpp"
+#include "util/MyHashTable.hpp"
+#include "util/MyList.hpp"
+#include "util/MyVector.hpp"
 
 
 class DdBuilderBase {
@@ -102,22 +103,22 @@ protected:
 /**
  * Basic breadth-first DD builder.
  */
-template< typename S, typename T = double>
+template< typename S, typename T = Node<double>>
 class DdBuilder: DdBuilderBase {
     typedef S Spec;
-    typedef tdzdd::MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
+    typedef MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
     static int const AR = Spec::ARITY;
 
     Spec spec;
     int const specNodeSize;
-    NodeTableEntity<>& output;
+    NodeTableEntity<T>& output;
     DdSweeper<T> sweeper;
 
-    tdzdd::MyVector<tdzdd::MyList<SpecNode> > snodeTable;
+    MyVector<MyList<SpecNode> > snodeTable;
 
-    tdzdd::MyVector<char> oneStorage;
+    MyVector<char> oneStorage;
     void* const one;
-    tdzdd::MyVector<tdzdd::NodeBranchId> oneSrcPtr;
+    MyVector<tdzdd::NodeBranchId> oneSrcPtr;
 
     void init(int n) {
         snodeTable.resize(n + 1);
@@ -161,7 +162,7 @@ public:
      */
     int initialize(NodeId& root) {
         sweeper.setRoot(root);
-        tdzdd::MyVector<char> tmp(spec.datasize());
+        MyVector<char> tmp(spec.datasize());
         void* const tmpState = tmp.data();
         int n = spec.get_root(tmpState);
 
@@ -189,7 +190,7 @@ public:
     void construct(int i) {
         assert(0 < i && size_t(i) < snodeTable.size());
 
-        tdzdd::MyList<SpecNode> &snodes = snodeTable[i];
+        MyList<SpecNode> &snodes = snodeTable[i];
         size_t j0 = output[i].size();
         size_t m = j0;
         int lowestChild = i - 1;
@@ -199,7 +200,7 @@ public:
             Hasher<Spec> hasher(spec, i);
             UniqTable uniq(snodes.size() * 2, hasher, hasher);
 
-            for (tdzdd::MyList<SpecNode>::iterator t = snodes.begin();
+            for (MyList<SpecNode>::iterator t = snodes.begin();
                     t != snodes.end(); ++t) {
                 SpecNode* p = *t;
                 SpecNode*& p0 = uniq.add(p);
@@ -232,13 +233,13 @@ public:
         }
 
         output[i].resize(m);
-        Node<T>* const outi = output[i].data();
+        T* const outi = output[i].data();
         size_t jj = j0;
         SpecNode* pp = snodeTable[i - 1].alloc_front(specNodeSize);
 
         for (; !snodes.empty(); snodes.pop_front()) {
             SpecNode* p = snodes.front();
-            Node<T>& q = outi[jj];
+            T & q = outi[jj];
 
             if (nodeId(p) == 1) {
                 spec.destruct(state(p));
@@ -330,21 +331,21 @@ template<typename T, typename S>
 class ZddSubsetter: DdBuilderBase {
 //typedef typename std::remove_const<typename std::remove_reference<S>::type>::type Spec;
     typedef S Spec;
-    typedef tdzdd::MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
+    typedef MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
     static int const AR = Spec::ARITY;
 
     Spec spec;
     int const specNodeSize;
     NodeTableEntity<T> const& input;
     NodeTableEntity<T>& output;
-    tdzdd::DataTable<tdzdd::MyListOnPool<SpecNode> > work;
+    DataTable<MyListOnPool<SpecNode> > work;
     DdSweeper<T> sweeper;
 
-    tdzdd::MyVector<char> oneStorage;
+    MyVector<char> oneStorage;
     void* const one;
-    tdzdd::MyVector<tdzdd::NodeBranchId> oneSrcPtr;
+    MyVector<tdzdd::NodeBranchId> oneSrcPtr;
 
-    tdzdd::MemoryPools pools;
+    MemoryPools pools;
 
 public:
     ZddSubsetter(NodeTableHandler<T> const& input, Spec const& s,
@@ -372,7 +373,7 @@ public:
      */
     int initialize(NodeId& root) {
         sweeper.setRoot(root);
-        tdzdd::MyVector<char> tmp(spec.datasize());
+        MyVector<char> tmp(spec.datasize());
         void* const tmpState = tmp.data();
         int n = spec.get_root(tmpState);
 
@@ -425,7 +426,7 @@ public:
         assert(output.numRows() - pools.size() == 0);
 
         Hasher<Spec> const hasher(spec, i);
-        tdzdd::MyVector<char> tmp(spec.datasize());
+        MyVector<char> tmp(spec.datasize());
         void* const tmpState = tmp.data();
         size_t const m = input[i].size();
         size_t mm = 0;
@@ -436,13 +437,13 @@ public:
         assert(work[i].size() == m);
 
         for (size_t j = 0; j < m; ++j) {
-            tdzdd::MyListOnPool<SpecNode> &list = work[i][j];
+            MyListOnPool<SpecNode> &list = work[i][j];
             size_t n = list.size();
 
             if (n >= 2) {
                 UniqTable uniq(n * 2, hasher, hasher);
 
-                for (tdzdd::MyListOnPool<SpecNode>::iterator t = list.begin();
+                for (MyListOnPool<SpecNode>::iterator t = list.begin();
                         t != list.end(); ++t) {
                     SpecNode* p = *t;
                     SpecNode*& p0 = uniq.add(p);
@@ -476,16 +477,16 @@ public:
         }
 
         output.initRow(i, mm);
-        Node<T>* const outi = output[i].data();
+        T* const outi = output[i].data();
         size_t jj = 0;
 
         for (size_t j = 0; j < m; ++j) {
-            tdzdd::MyListOnPool<SpecNode> &list = work[i][j];
+            MyListOnPool<SpecNode> &list = work[i][j];
 
-            for (tdzdd::MyListOnPool<SpecNode>::iterator t = list.begin();
+            for (MyListOnPool<SpecNode>::iterator t = list.begin();
                     t != list.end(); ++t) {
                 SpecNode* p = *t;
-                Node<T>& q = outi[jj];
+                T& q = outi[jj];
 
                 if (nodeId(p) == 1) {
                     spec.destruct(state(p));
@@ -603,288 +604,6 @@ private:
     }
 };
 
+#endif // NODE_BDD_BUILDER_HPP
 
-/**
- * DD dumper.
- * A node table is printed in Graphviz (dot) format.
- */
-template<typename T,typename S>
-class DdDumper {
-    typedef S Spec;
-    static int const AR = Spec::ARITY;
-    static int const headerSize = 1;
 
-    /* SpecNode
-     * ┌────────┬────────┬────────┬─────
-     * │ nodeId │state[0]│state[1]│ ...
-     * └────────┴────────┴────────┴─────
-     */
-    struct SpecNode {
-        NodeId nodeId;
-    };
-
-    static NodeId& nodeId(SpecNode* p) {
-        return p->nodeId;
-    }
-
-    static NodeId nodeId(SpecNode const* p) {
-        return p->nodeId;
-    }
-
-    static void* state(SpecNode* p) {
-        return p + headerSize;
-    }
-
-    static void const* state(SpecNode const* p) {
-        return p + headerSize;
-    }
-
-    template<typename SPEC>
-    struct Hasher {
-        SPEC const& spec;
-        int const level;
-
-        Hasher(SPEC const& spec, int level) :
-                spec(spec), level(level) {
-        }
-
-        size_t operator()(SpecNode const* p) const {
-            return spec.hash_code(state(p), level);
-        }
-
-        size_t operator()(SpecNode const* p, SpecNode const* q) const {
-            return spec.equal_to(state(p), state(q), level);
-        }
-    };
-
-    typedef tdzdd::MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
-
-    static int getSpecNodeSize(int n) {
-        if (n < 0)
-            throw std::runtime_error("storage size is not initialized!!!");
-        return headerSize + (n + sizeof(SpecNode) - 1) / sizeof(SpecNode);
-    }
-
-    Spec spec;
-    int const specNodeSize;
-    char* oneState;
-    NodeId oneId;
-
-    tdzdd::MyVector<tdzdd::MyList<SpecNode> > snodeTable;
-    tdzdd::MyVector<UniqTable> uniqTable;
-    tdzdd::MyVector<Hasher<Spec> > hasher;
-
-public:
-    explicit DdDumper(Spec const& s) :
-            spec(s),
-            specNodeSize(getSpecNodeSize(spec.datasize())),
-            oneState(0),
-            oneId(1) {
-    }
-
-    ~DdDumper() {
-        if (oneState) {
-            spec.destruct(oneState);
-            delete[] oneState;
-        }
-    }
-
-    /**
-     * Dumps the node table in Graphviz (dot) format.
-     * @param os the output stream.
-     * @param title title label.
-     */
-    void dump(std::ostream& os, std::string title) {
-        if (oneState) {
-            spec.destruct(oneState);
-        }
-        else {
-            oneState = new char[spec.datasize()];
-        }
-        int n = spec.get_root(oneState);
-
-        os << "digraph \"" << title << "\" {\n";
-
-        if (n == 0) {
-            if (!title.empty()) {
-                os << "  labelloc=\"t\";\n";
-                os << "  label=\"" << title << "\";\n";
-            }
-        }
-        else if (n < 0) {
-            os << "  \"^\" [shape=none,label=\"" << title << "\"];\n";
-            os << "  \"^\" -> \"" << oneId << "\" [style=dashed" << "];\n";
-            os << "  \"" << oneId << "\" ";
-            os << "[shape=square,label=\"⊤\"];\n";
-        }
-        else {
-            NodeId root(n, 0);
-
-            for (int i = n; i >= 1; --i) {
-                os << "  " << i << " [shape=none,label=\"";
-                spec.printLevel(os, i);
-                os << "\"];\n";
-            }
-            for (int i = n - 1; i >= 1; --i) {
-                os << "  " << (i + 1) << " -> " << i << " [style=invis];\n";
-            }
-
-            os << "  \"^\" [shape=none,label=\"" << title << "\"];\n";
-            os << "  \"^\" -> \"" << root << "\" [style=dashed" << "];\n";
-
-            snodeTable.init(n + 1);
-            SpecNode* p = snodeTable[n].alloc_front(specNodeSize);
-            spec.destruct(oneState);
-            spec.get_copy(state(p), oneState);
-            nodeId(p) = root;
-
-            uniqTable.clear();
-            uniqTable.reserve(n + 1);
-            hasher.clear();
-            hasher.reserve(n + 1);
-            for (int i = 0; i <= n; ++i) {
-                hasher.push_back(Hasher<Spec>(spec, i));
-                uniqTable.push_back(UniqTable(hasher.back(), hasher.back()));
-            }
-
-            for (int i = n; i >= 1; --i) {
-                dumpStep(os, i);
-            }
-
-            for (size_t j = 2; j < oneId.code(); ++j) {
-                os << "  \"" << NodeId(j) << "\" ";
-                os << "[style=invis];\n";
-            }
-            os << "  \"" << oneId << "\" ";
-            os << "[shape=square,label=\"⊤\"];\n";
-        }
-
-        os << "}\n";
-        os.flush();
-    }
-
-private:
-    void dumpStep(std::ostream& os, int i) {
-        tdzdd::MyList<SpecNode> &snodes = snodeTable[i];
-        size_t const m = snodes.size();
-        tdzdd::MyVector<char> tmp(spec.datasize());
-        void* const tmpState = tmp.data();
-        tdzdd::MyVector<Node<T> > nodeList(m);
-
-        for (size_t j = m - 1; j + 1 > 0; --j, snodes.pop_front()) {
-            NodeId f(i, j);
-            assert(!snodes.empty());
-            SpecNode* p = snodes.front();
-
-            os << "  \"" << f << "\" [label=\"";
-            spec.print_state(os, state(p), i);
-            os << "\"];\n";
-
-            for (int b = 0; b < AR; ++b) {
-                NodeId& child = nodeList[j].branch[b];
-
-                if (nodeId(p) == 0) {
-                    child = 0;
-                    continue;
-                }
-
-                spec.get_copy(tmpState, state(p));
-                int ii = spec.get_child(tmpState, i, b);
-
-                if (ii == 0) {
-                    child = 0;
-                }
-                else if (ii < 0) {
-                    if (oneId == 1) { // the first 1-terminal candidate
-                        oneId = 2;
-                        spec.destruct(oneState);
-                        spec.get_copy(oneState, tmpState);
-                        child = oneId;
-                    }
-                    else {
-                        switch (spec.merge_states(oneState, tmpState)) {
-                        case 1:
-                            oneId = oneId.code() + 1;
-                            spec.destruct(oneState);
-                            spec.get_copy(oneState, tmpState);
-                            child = oneId;
-                            break;
-                        case 2:
-                            child = 0;
-                            break;
-                        default:
-                            child = oneId;
-                            break;
-                        }
-                    }
-                }
-                else {
-                    SpecNode* pp = snodeTable[ii].alloc_front(specNodeSize);
-                    size_t jj = snodeTable[ii].size() - 1;
-                    spec.get_copy(state(pp), tmpState);
-
-                    SpecNode*& pp0 = uniqTable[ii].add(pp);
-                    if (pp0 == pp) {
-                        nodeId(pp) = child = NodeId(ii, jj);
-                    }
-                    else {
-                        switch (spec.merge_states(state(pp0), state(pp))) {
-                        case 1:
-                            nodeId(pp0) = 0;
-                            nodeId(pp) = child = NodeId(ii, jj);
-                            pp0 = pp;
-                            break;
-                        case 2:
-                            child = 0;
-                            spec.destruct(state(pp));
-                            snodeTable[ii].pop_front();
-                            break;
-                        default:
-                            child = nodeId(pp0);
-                            spec.destruct(state(pp));
-                            snodeTable[ii].pop_front();
-                            break;
-                        }
-                    }
-                }
-
-                spec.destruct(tmpState);
-            }
-
-            spec.destruct(state(p));
-        }
-
-        for (size_t j = 0; j < m; ++j) {
-            for (int b = 0; b < AR; ++b) {
-                NodeId f(i, j);
-                NodeId child = nodeList[j].branch[b];
-                if (child == 0) continue;
-                if (child == 1) child = oneId;
-
-                os << "  \"" << f << "\" -> \"" << child << "\"";
-
-                os << " [style=";
-                if (b == 0) {
-                    os << "dashed";
-                }
-                else {
-                    os << "solid";
-                    if (AR > 2) {
-                        os << ",color="
-                           << ((b == 1) ? "blue" : (b == 2) ? "red" : "green");
-                    }
-                }
-                os << "];\n";
-            }
-        }
-
-        os << "  {rank=same; " << i;
-        for (size_t j = 0; j < m; ++j) {
-            os << "; \"" << NodeId(i, j) << "\"";
-        }
-        os << "}\n";
-
-        uniqTable[i - 1].clear();
-        spec.destructLevel(i);
-    }
-};

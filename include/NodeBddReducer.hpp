@@ -8,9 +8,9 @@
 
 #include <node_duration.hpp>
 #include <NodeBddTable.hpp>
-#include "tdzdd/util/MyHashTable.hpp"
-#include "tdzdd/util/MyList.hpp"
-#include "tdzdd/util/MyVector.hpp"
+#include "util/MyHashTable.hpp"
+// #include "tdzdd/util/MyList.hpp"
+#include "util/MyVector.hpp"
 
 template<typename T, bool BDD, bool ZDD>
 class DdReducer {
@@ -18,8 +18,8 @@ class DdReducer {
     NodeTableHandler<T> oldDiagram;
     NodeTableHandler<T> newDiagram;
     NodeTableEntity<T>& output;
-    tdzdd::MyVector<tdzdd::MyVector<NodeId> > newIdTable;
-    tdzdd::MyVector<tdzdd::MyVector<NodeId*> > rootPtr;
+    MyVector<MyVector<NodeId> > newIdTable;
+    MyVector<MyVector<NodeId*> > rootPtr;
     int counter = 1;
 
     struct ReducNodeInfo {
@@ -72,7 +72,7 @@ private:
 
         for (int i = 2; i < input.numRows(); ++i) {
             size_t const m = input[i].size();
-            Node<T>* const tt = input[i].data();
+            T* const tt = input[i].data();
 
             for (size_t j = 0; j < m; ++j) {
                 for (int b = 0; b < 2; ++b) {
@@ -131,9 +131,9 @@ private:
     void algorithmR(int i) {
         makeReadyForSequentialReduction();
         size_t const m = input[i].size();
-        Node<T>* const tt = input[i].data();
+        T* const tt = input[i].data();
 
-        tdzdd::MyVector<NodeId>& newId = newIdTable[i];
+        MyVector<NodeId>& newId = newIdTable[i];
         newId.resize(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j) {
@@ -151,7 +151,7 @@ private:
         }
 
         {
-            tdzdd::MyVector<int> const& levels = input.lowerLevels(counter);
+            MyVector<int> const& levels = input.lowerLevels(counter);
             for (int const* t = levels.begin(); t != levels.end(); ++t) {
                 newIdTable[*t].clear();
             }
@@ -168,7 +168,7 @@ private:
         }
 
         if (!BDD) {
-            tdzdd::MyVector<int> const& levels = input.lowerLevels(counter);
+            MyVector<int> const& levels = input.lowerLevels(counter);
             for (int const* t = levels.begin(); t != levels.end(); ++t) {
                 input[*t].clear();
             }
@@ -176,7 +176,7 @@ private:
 
         if(mm > 0u) {
             output.initRow(counter, mm);
-            Node<T>* nt = output[counter].data();
+            T* nt = output[counter].data();
 
             for (size_t j = 0; j < m; ++j) {
                 NodeId const& f0 = tt[j].branch[0];
@@ -215,7 +215,7 @@ private:
         {
             //MyList<ReducNodeInfo> rni;
             //MyHashTable<ReducNodeInfo const*> uniq(m * 2);
-            tdzdd::MyHashTable<Node<T> const*> uniq(m * 2);
+            MyHashTable<Node<T> const*> uniq(m * 2);
 
             for (size_t j = 0; j < m; ++j) {
                 Node<T>* const p0 = input[i].data();
@@ -248,7 +248,7 @@ private:
             }
         }
 
-        tdzdd::MyVector<int> const& levels = input.lowerLevels(i);
+        MyVector<int> const& levels = input.lowerLevels(i);
         for (int const* t = levels.begin(); t != levels.end(); ++t) {
             newIdTable[*t].clear();
         }

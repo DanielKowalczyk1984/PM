@@ -32,21 +32,19 @@
 #include <stdexcept>
 #include <vector>
 
-#include <NodeBddTable.hpp>
-#include <NodeBddBuilder.hpp>
-#include <NodeBddReducer.hpp>
+#include "NodeBddTable.hpp"
+#include "NodeBddBuilder.hpp"
+#include "NodeBddReducer.hpp"
 
-#include "tdzdd/DdEval.hpp"
-#include "tdzdd/DdSpec.hpp"
-#include "tdzdd/util/MyHashTable.hpp"
-#include "tdzdd/util/MyVector.hpp"
+#include "NodeBddEval.hpp"
+#include "NodeBddSpec.hpp"
 
 /**
  * Ordered n-ary decision diagram structure.
  * @tparam ARITY arity of the nodes.
  */
-template<typename T = double>
-class DdStructure: public tdzdd::DdSpec<DdStructure<T>,tdzdd::NodeId,2> {
+template<typename T = Node<double>>
+class DdStructure: public DdSpec<DdStructure<T>, NodeId> {
     NodeTableHandler<T> diagram; ///< The diagram structure.
     NodeId root_;                    ///< Root node ID.
 
@@ -82,14 +80,14 @@ public:
      * @param spec DD spec.
      */
     template<typename SPEC>
-    explicit DdStructure(tdzdd::DdSpecBase<SPEC,2> const& spec) {
+    explicit DdStructure(DdSpecBase<SPEC> const& spec) {
         construct_(spec.entity());
     }
 
 private:
     template<typename SPEC>
     void construct_(SPEC const& spec) {
-        DdBuilder<SPEC> zc(spec, diagram);
+        DdBuilder<SPEC, T> zc(spec, diagram);
         int n = zc.initialize(root_);
 
         if (n > 0) {
@@ -117,7 +115,7 @@ private:
     template<typename SPEC>
     void zddSubset_(SPEC const& spec) {
         NodeTableHandler<T> tmpTable;
-        ZddSubsetter<double,SPEC> zs(diagram, spec, tmpTable);
+        ZddSubsetter<T,SPEC> zs(diagram, spec, tmpTable);
         int n = zs.initialize(root_);
 
         if (n > 0) {
@@ -208,8 +206,8 @@ public:
         if (root_ == o.root_ && &*diagram == &*o.diagram) return true;
         if (size() > o.size()) return o.operator==(*this);
 
-        tdzdd::MyHashMap<tdzdd::InitializedNode<2>,size_t> uniq;
-        tdzdd::DataTable<NodeId> equiv(n + 1);
+        MyHashMap<tdzdd::InitializedNode<2>,size_t> uniq;
+        DataTable<NodeId> equiv(n + 1);
         {
             size_t om = (*o.diagram)[0].size();
             equiv[0].resize(om);
@@ -334,7 +332,7 @@ public:
 
 
     template <typename S, typename R>
-    R evaluate_backward(tdzdd::DdEval<S, Node<T>, R> const &evaluator) {
+    R evaluate_backward(NodeBddEval<S, T, R> const &evaluator) {
         int            n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -356,7 +354,7 @@ public:
     }
 
     template <typename S, typename R>
-    void compute_labels_backward(tdzdd::DdEval<S, Node<T>, R> const &evaluator) {
+    void compute_labels_backward(NodeBddEval<S, T, R> const &evaluator) {
         int            n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -375,7 +373,7 @@ public:
     }
 
     template<typename S, typename R>
-    R evaluate_forward(tdzdd::DdEval<S, Node<T>, R> const &evaluator) {
+    R evaluate_forward(NodeBddEval<S, T, R> const &evaluator) {
         int n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -411,7 +409,7 @@ public:
     }
 
     template<typename S, typename R>
-    void compute_labels_forward(tdzdd::DdEval<S, Node<T>, R> const &evaluator) {
+    void compute_labels_forward(NodeBddEval<S, T, R> const &evaluator) {
         int n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -501,7 +499,7 @@ public:
 
             for (;;) {
                 while (f > 1) { /* down */
-                    Node<T> const& s = (*dd.diagram)[f.row()][f.col()];
+                    T const& s = (*dd.diagram)[f.row()][f.col()];
 
                     if (s.branch[0] != 0) {
                         cursor = path.size();
@@ -518,7 +516,7 @@ public:
 
                 for (; cursor >= 0; --cursor) { /* up */
                     Selection& sel = path[cursor];
-                    Node<T> const& ss =
+                    T const& ss =
                             (*dd.diagram)[sel.node.row()][sel.node.col()];
                     if (sel.val == false && ss.branch[1] != 0) {
                         f = sel.node;
@@ -601,7 +599,7 @@ public:
         os << "_o 1\n";
         os << "_n " << l << "\n";
 
-        tdzdd::DataTable<size_t> nodeId(diagram->numRows());
+        DataTable<size_t> nodeId(diagram->numRows());
         size_t k = 0;
 
         for (int i = 1; i <= n; ++i) {
@@ -630,7 +628,7 @@ public:
                 os << "\n";
             }
 
-            tdzdd::MyVector<int> const& levels = diagram->lowerLevels(i);
+            MyVector<int> const& levels = diagram->lowerLevels(i);
             for (int const* t = levels.begin(); t != levels.end(); ++t) {
                 nodeId[*t].clear();
             }

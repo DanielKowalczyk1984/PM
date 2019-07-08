@@ -1,16 +1,16 @@
 #ifndef NODE_BDD_TABLE_HPP
 #define NODE_BDD_TABLE_HPP
 
-#include <tdzdd/util/MyVector.hpp>
-#include <tdzdd/dd/DataTable.hpp>
-#include <node_duration.hpp>
+#include "util/MyVector.hpp"
+#include "util/DataTable.hpp"
+#include "node_duration.hpp"
 
-template<typename T = double>
-using data_table_node = tdzdd::DataTable<Node<T>>;
 template<typename T>
-using my_vector = tdzdd::MyVector<T>;
+using data_table_node = DataTable<T>;
+template<typename T>
+using my_vector = MyVector<T>;
 
-template<typename T = double>
+template<typename T = Node<double>>
 class NodeTableEntity: public data_table_node<T> {
         mutable my_vector<my_vector<int> > higherLevelTable;
         mutable my_vector<my_vector<int> > lowerLevelTable;
@@ -39,10 +39,10 @@ class NodeTableEntity: public data_table_node<T> {
          * Initializes the terminal nodes.
          */
         void initTerminals() {
-            my_vector<Node<T> >& t = (*this)[0];
+            my_vector<T >& t = (*this)[0];
             t.resize(2);
             for (int j = 0; j < 2; ++j) {
-                t[j] = Node<double>(j, j);
+                t[j] = T(j, j);
             }
         }
 
@@ -137,7 +137,7 @@ class NodeTableEntity: public data_table_node<T> {
          * @param f node ID.
          * @return node @p f.
          */
-        Node<double> const& node(NodeId f) const {
+        T const& node(NodeId f) const {
             return (*this)[f.row()][f.col()];
         }
 
@@ -146,8 +146,12 @@ class NodeTableEntity: public data_table_node<T> {
          * @param f node ID.
          * @return node @p f.
          */
-        Node<double>& node(NodeId f) {
+        T& node(NodeId f) {
             return (*this)[f.row()][f.col()];
+        }
+
+        T* node_ptr(NodeId f) {
+            return &(*this)[f.row()][f.col()];
         }
 
         /**
@@ -230,7 +234,7 @@ class NodeTableEntity: public data_table_node<T> {
             my_vector<bool> lowerMark(n + 1);
 
             for (int i = n; i >= 1; --i) {
-                my_vector<Node<double> > const& node = (*this)[i];
+                my_vector<T> const& node = (*this)[i];
                 size_t const m = node.size();
                 int lowest = i;
                 my_vector<bool> myLower(n + 1);

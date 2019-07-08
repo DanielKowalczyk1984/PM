@@ -22,29 +22,30 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef NODE_BDD_SWEEPER_HPP
+#define NODE_BDD_SWEEPER_HPP
 
 #include <cassert>
 #include <ostream>
 
 #include "node_duration.hpp"
 #include "NodeBddTable.hpp"
-#include "tdzdd/util/MyVector.hpp"
+#include "util/MyVector.hpp"
 
 /**
  * On-the-fly DD cleaner.
  * Removes the nodes that are identified as equivalent to the 0-terminal
  * while top-down DD construction.
  */
-template<typename T = double>
+template<typename T = Node<double>>
 class DdSweeper {
     static size_t const SWEEP_RATIO = 20;
 
     NodeTableEntity<T>& diagram;
-    tdzdd::MyVector<tdzdd::NodeBranchId>* oneSrcPtr;
+    MyVector<tdzdd::NodeBranchId>* oneSrcPtr;
 
-    tdzdd::MyVector<int> sweepLevel;
-    tdzdd::MyVector<size_t> deadCount;
+    MyVector<int> sweepLevel;
+    MyVector<size_t> deadCount;
     size_t allCount;
     size_t maxCount;
     NodeId* rootPtr;
@@ -64,7 +65,7 @@ public:
      * @param oneSrcPtr collection of node branch IDs.
      */
     DdSweeper(NodeTableEntity<T>& diagram,
-              tdzdd::MyVector<tdzdd::NodeBranchId>& oneSrcPtr) :
+              MyVector<tdzdd::NodeBranchId>& oneSrcPtr) :
             diagram(diagram),
             oneSrcPtr(&oneSrcPtr),
             allCount(0),
@@ -112,7 +113,7 @@ public:
         if (maxCount < allCount) maxCount = allCount;
         if (deadCount[k] * SWEEP_RATIO < maxCount) return;
 
-        tdzdd::MyVector<tdzdd::MyVector<NodeId> > newId(diagram.numRows());
+        MyVector<MyVector<NodeId> > newId(diagram.numRows());
 
 
         for (int i = k; i < diagram.numRows(); ++i) {
@@ -122,7 +123,7 @@ public:
             size_t jj = 0;
 
             for (size_t j = 0; j < m; ++j) {
-                Node<T>& p = diagram[i][j];
+                T& p = diagram[i][j];
                 bool dead = true;
 
                 for (int b = 0; b < 2; ++b) {
@@ -160,3 +161,8 @@ public:
         allCount = diagram.size();
     }
 };
+
+
+#endif // NODE_BDD_SWEEPER_HPP
+
+

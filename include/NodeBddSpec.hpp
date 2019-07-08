@@ -22,19 +22,19 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef NODE_BDD_SPEC_HPP
+#define NODE_BDD_SPEC_HPP
 
 #include <cassert>
 #include <iostream>
 #include <stdexcept>
 #include "NodeBddDumper.hpp"
 
-#include "NodeBddBuilder.hpp"
+// #include "NodeBddBuilder.hpp"
 // #include "dd/DepthFirstSearcher.hpp"
 // #include "util/demangle.hpp"
 // #include "util/MessageHandler.hpp"
 
-// namespace tdzdd {
 
 /**
  * Base class of DD specs.
@@ -657,5 +657,9 @@ public:
 template<typename S, typename TS, typename TA, int AR = 2>
 class PodHybridDdSpec: public HybridDdSpec<S,TS,TA,AR> {
 };
+
+
+#endif // NODE_BDD_SPEC_HPP
+
 
 // } // namespace tdzdd

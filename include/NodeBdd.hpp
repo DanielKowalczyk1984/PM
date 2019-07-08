@@ -22,7 +22,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef NODE_BDD_HPP
+#define NODE_BDD_HPP
 
 #include <cassert>
 #include <stdint.h>
@@ -124,6 +125,16 @@ public:
         return !(o < *this);
     }
 
+    NodeId& operator=(const NodeId &src){
+      if(&src == this) {
+        return *this;
+      }
+
+      code_ = src.code_;
+
+      return *this;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, NodeId const& o) {
         os << o.row() << ":" << o.col();
         if (o.code_ & NODE_ATTR_MASK) os << "+";
@@ -158,7 +169,7 @@ struct Node {
         }
     }
 
-    Node(NodeId const* f) {
+    explicit Node(NodeId const* f) {
         for (int i = 0; i < ARITY; ++i) {
             branch[i] = f[i];
         }
@@ -202,9 +213,14 @@ struct InitializedNode: Node<ARITY> {
             Node<ARITY>(f0, f1) {
     }
 
-    InitializedNode(Node<ARITY> const& o) :
+    explicit InitializedNode(Node<ARITY> const& o) :
             Node<ARITY>(o.branch) {
     }
 };
 
 } // namespace tdzdd
+
+
+#endif // NODE_BDD_HPP
+
+
