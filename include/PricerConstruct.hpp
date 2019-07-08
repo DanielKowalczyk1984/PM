@@ -299,8 +299,8 @@ class scheduling: public DdSpec<scheduling, int, 2> {
                     state++;
                     j++;
                     return  nlayers - j;
-                }else if (state >= order + 1) {
-                    state = 0;
+                }else if (state >= order) {
+                    state = 1;
                     j++;
                     return nlayers - j;
                 } else {
