@@ -72,7 +72,6 @@
 		"SublimeLinter.linters.gcc.extra_flags": "-Wall -std=c++11 -I/home/daniel/Dropbox/PM/implementation/include -I/home/daniel/Dropbox/PapersOR/PM/implementation/build/_deps/project_tdzdd-src/include -w ",
 		"SublimeLinter.linters.gcc.include_dirs":
 		[
-			"/home/daniel/Dropbox/PapersOR/PM/implementation/third_party/TdZDD/src/project_TdZdd/include",
 			"/opt/gurobi811/linux64/include",
 			"/usr/include/glib-2.0",
 			"/usr/lib64/glib-2.0/include",
