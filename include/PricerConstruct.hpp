@@ -1,5 +1,6 @@
 #include <boost/dynamic_bitset.hpp>
-#include <tdzdd/DdSpec.hpp>
+// #include <tdzdd/DdSpec.hpp>
+#include "NodeBddSpec.hpp"
 #include <solution.h>
 #include <interval.h>
 #include <glib.h>
@@ -14,7 +15,7 @@ class conflict_state {
     ~conflict_state(){};
 };
 
-class PricerConstruct : public tdzdd::DdSpec<PricerConstruct, int, 2> {
+class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     GPtrArray *pair_list;
     int nlayers;
 
@@ -108,7 +109,7 @@ public:
 };
 
 class ConflictConstraints
-    : public tdzdd::DdSpec<ConflictConstraints, conflict_state, 2> {
+    : public DdSpec<ConflictConstraints, conflict_state, 2> {
     int                                  nbjobs;
     std::vector<boost::dynamic_bitset<>> differsets;
     std::vector<boost::dynamic_bitset<>> samesets;
@@ -249,7 +250,7 @@ class ConflictConstraints
     }
 };
 
-class scheduling: public tdzdd::DdSpec<scheduling, int, 2> {
+class scheduling: public DdSpec<scheduling, int, 2> {
     Job * job;
     GPtrArray *list_layers;
     int nlayers;
