@@ -109,7 +109,7 @@
  * @tparam R data type of return value.
  */
 template<typename E, typename T, typename R = T>
-class NodeBddEval {
+class Eval {
 public:
     E& entity() {
         return *static_cast<E*>(this);

@@ -332,7 +332,7 @@ public:
 
 
     template <typename S, typename R>
-    R evaluate_backward(NodeBddEval<S, T, R> const &evaluator) {
+    R evaluate_backward(Eval<S, T, R> const &evaluator) {
         int            n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -354,7 +354,7 @@ public:
     }
 
     template <typename S, typename R>
-    void compute_labels_backward(NodeBddEval<S, T, R> const &evaluator) {
+    void compute_labels_backward(Eval<S, T, R> const &evaluator) {
         int            n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -373,7 +373,7 @@ public:
     }
 
     template<typename S, typename R>
-    R evaluate_forward(NodeBddEval<S, T, R> const &evaluator) {
+    R evaluate_forward(Eval<S, T, R> const &evaluator) {
         int n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -409,7 +409,7 @@ public:
     }
 
     template<typename S, typename R>
-    void compute_labels_forward(NodeBddEval<S, T, R> const &evaluator) {
+    void compute_labels_forward(Eval<S, T, R> const &evaluator) {
         int n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 

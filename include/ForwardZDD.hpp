@@ -13,7 +13,7 @@ bool my_compare(const std::shared_ptr<SubNodeZdd<T>> &lhs, const std::shared_ptr
 }
 
 template<typename E, typename T> class ForwardZddBase : public 
-    NodeBddEval<E, NodeZdd<T>, OptimalSolution<T>> {
+    Eval<E, NodeZdd<T>, OptimalSolution<T>> {
 protected:
     T *pi;
     int num_jobs;

@@ -7,7 +7,7 @@
 
 
 template<typename E, typename T> class ForwardBddBase : public 
-    NodeBddEval<E, Node<T>, OptimalSolution<T>> {
+    Eval<E, Node<T>, OptimalSolution<T>> {
 protected:
     T *pi;
     int num_jobs;
