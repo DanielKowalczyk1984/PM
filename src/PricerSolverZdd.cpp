@@ -123,8 +123,8 @@ void PricerSolverZdd::remove_layers()
 
         for (auto& iter : table[i]) {
             bool remove_edge = true;
-            for(auto &it : iter.list) {
-                if (it->calc_yes) {
+            for(auto &j : iter.list) {
+                if (j->calc_yes) {
                     remove_edge = false;
                 } 
             }

@@ -15,8 +15,8 @@
 template<typename T, bool BDD, bool ZDD>
 class DdReducer {
     NodeTableEntity<T>& input;
-    NodeTableHandler<T> oldDiagram;
-    NodeTableHandler<T> newDiagram;
+    TableHandler<T> oldDiagram;
+    TableHandler<T> newDiagram;
     NodeTableEntity<T>& output;
     MyVector<MyVector<NodeId> > newIdTable;
     MyVector<MyVector<NodeId*> > rootPtr;
@@ -43,7 +43,7 @@ class DdReducer {
     bool readyForSequentialReduction;
 
 public:
-    explicit DdReducer(NodeTableHandler<T>& diagram, bool useMP = false) :
+    explicit DdReducer(TableHandler<T>& diagram, bool useMP = false) :
             input(diagram.privateEntity()),
             oldDiagram(diagram),
             newDiagram(input.numRows()),

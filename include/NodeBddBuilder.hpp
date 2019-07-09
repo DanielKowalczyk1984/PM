@@ -40,7 +40,7 @@
 #include "util/MyVector.hpp"
 
 
-class DdBuilderBase {
+class BuilderBase {
 protected:
     static int const headerSize = 1;
 
@@ -104,7 +104,7 @@ protected:
  * Basic breadth-first DD builder.
  */
 template< typename S, typename T = Node<double>>
-class DdBuilder: DdBuilderBase {
+class DdBuilder: BuilderBase {
     typedef S Spec;
     typedef MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
     static int const AR = Spec::ARITY;
@@ -127,7 +127,7 @@ class DdBuilder: DdBuilderBase {
     }
 
 public:
-    DdBuilder(Spec const& spec, NodeTableHandler<T>& output, int n = 0) :
+    DdBuilder(Spec const& spec, TableHandler<T>& output, int n = 0) :
             spec(spec),
             specNodeSize(getSpecNodeSize(spec.datasize())),
             output(output.privateEntity()),
@@ -328,7 +328,7 @@ public:
  * Breadth-first ZDD subset builder.
  */
 template<typename T, typename S>
-class ZddSubsetter: DdBuilderBase {
+class ZddSubsetter: BuilderBase {
 //typedef typename std::remove_const<typename std::remove_reference<S>::type>::type Spec;
     typedef S Spec;
     typedef MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
@@ -348,8 +348,8 @@ class ZddSubsetter: DdBuilderBase {
     MemoryPools pools;
 
 public:
-    ZddSubsetter(NodeTableHandler<T> const& input, Spec const& s,
-                 NodeTableHandler<T>& output) :
+    ZddSubsetter(TableHandler<T> const& input, Spec const& s,
+                 TableHandler<T>& output) :
             spec(s),
             specNodeSize(getSpecNodeSize(spec.datasize())),
             input(*input),

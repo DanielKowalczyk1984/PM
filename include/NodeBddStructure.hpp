@@ -45,7 +45,7 @@
  */
 template<typename T = Node<double>>
 class DdStructure: public DdSpec<DdStructure<T>, NodeId> {
-    NodeTableHandler<T> diagram; ///< The diagram structure.
+    TableHandler<T> diagram; ///< The diagram structure.
     NodeId root_;                    ///< Root node ID.
 
 public:
@@ -114,7 +114,7 @@ public:
 private:
     template<typename SPEC>
     void zddSubset_(SPEC const& spec) {
-        NodeTableHandler<T> tmpTable;
+        TableHandler<T> tmpTable;
         ZddSubsetter<T,SPEC> zs(diagram, spec, tmpTable);
         int n = zs.initialize(root_);
 
@@ -159,7 +159,7 @@ public:
      * Gets the diagram.
      * @return the node table handler.
      */
-    NodeTableHandler<T>& getDiagram() {
+    TableHandler<T>& getDiagram() {
         return diagram;
     }
 
@@ -167,7 +167,7 @@ public:
      * Gets the diagram.
      * @return the node table handler.
      */
-    NodeTableHandler<T> const& getDiagram() const {
+    TableHandler<T> const& getDiagram() const {
         return diagram;
     }
 

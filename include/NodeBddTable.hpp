@@ -11,7 +11,8 @@ template<typename T>
 using my_vector = MyVector<T>;
 
 template<typename T = Node<double>>
-class NodeTableEntity: public data_table_node<T> {
+class NodeTableEntity: public data_table_node<T>
+{
         mutable my_vector<my_vector<int> > higherLevelTable;
         mutable my_vector<my_vector<int> > lowerLevelTable;
 
@@ -20,7 +21,8 @@ class NodeTableEntity: public data_table_node<T> {
          * Constructor.
          * @param n the number of rows.
          */
-        explicit NodeTableEntity(int n = 1) : data_table_node<T>(n) {
+        explicit NodeTableEntity(int n = 1) : data_table_node<T>(n)
+        {
             assert(n >= 1);
             initTerminals();
         }
@@ -29,7 +31,8 @@ class NodeTableEntity: public data_table_node<T> {
          * Clears and initializes the table.
          * @param n the number of rows.
          */
-        void init(int n) {
+        void init(int n)
+        {
             assert(n >= 1);
             data_table_node<T>::init(n);
             initTerminals();
@@ -38,39 +41,42 @@ class NodeTableEntity: public data_table_node<T> {
         /**
          * Initializes the terminal nodes.
          */
-        void initTerminals() {
+        void initTerminals()
+        {
             my_vector<T >& t = (*this)[0];
             t.resize(2);
+
             for (int j = 0; j < 2; ++j) {
                 t[j] = T(j, j);
             }
         }
 
-    //    /**
-    //     * Gets the variable ID at a given level.
-    //     * @param level level.
-    //     * @return variable ID.
-    //     */
-    //    int varAtLevel(int level) const {
-    //        assert(0 <= level && level <= numVars());
-    //        return (level == 0) ? INT_MAX : numVars() - level;
-    //    }
-    //
-    //    /**
-    //     * Gets the level of a variable.
-    //     * @param var variable ID.
-    //     * @return level.
-    //     */
-    //    int levelOfVar(int var) const {
-    //        assert((0 <= var && var < numVars()) || var == INT_MAX);
-    //        return (var == INT_MAX) ? 0 : numVars() - var;
-    //    }
+        //    /**
+        //     * Gets the variable ID at a given level.
+        //     * @param level level.
+        //     * @return variable ID.
+        //     */
+        //    int varAtLevel(int level) const {
+        //        assert(0 <= level && level <= numVars());
+        //        return (level == 0) ? INT_MAX : numVars() - level;
+        //    }
+        //
+        //    /**
+        //     * Gets the level of a variable.
+        //     * @param var variable ID.
+        //     * @return level.
+        //     */
+        //    int levelOfVar(int var) const {
+        //        assert((0 <= var && var < numVars()) || var == INT_MAX);
+        //        return (var == INT_MAX) ? 0 : numVars() - var;
+        //    }
 
         /**
          * Gets the number of nonterminal nodes.
          * @return the number of nonterminal nodes.
          */
-        size_t size() const {
+        size_t size() const
+        {
             return this->totalSize() - (*this)[0].size();
         }
 
@@ -78,7 +84,8 @@ class NodeTableEntity: public data_table_node<T> {
          * Gets the number of ZDD variables.
          * @return the number of ZDD variables.
          */
-        int numVars() const {
+        int numVars() const
+        {
             return this->numRows() - 1;
         }
 
@@ -87,7 +94,8 @@ class NodeTableEntity: public data_table_node<T> {
          * by shifting up/down the levels of existing variables.
          * @param n required number of variables.
          */
-        void stretchBottom(int n) {
+        void stretchBottom(int n)
+        {
             int n0 = numVars();
             int d = n - n0;
 
@@ -103,14 +111,13 @@ class NodeTableEntity: public data_table_node<T> {
                             NodeId ff = child(i, j, b);
                             int ii = ff.row();
                             child(i + d, j, b) =
-                                    (ii == 0) ? ff : NodeId(ii + d, ff.col());
+                                (ii == 0) ? ff : NodeId(ii + d, ff.col());
                         }
                     }
 
                     this->initRow(i, 0);
                 }
-            }
-            else if (d < 0) {
+            } else if (d < 0) {
                 for (int i = 1 - d; i <= n0; ++i) {
                     size_t m = (*this)[i].size();
                     this->initRow(i + d, m);
@@ -120,8 +127,8 @@ class NodeTableEntity: public data_table_node<T> {
                             NodeId ff = child(i, j, b);
                             int ii = ff.row();
                             child(i + d, j, b) =
-                                    (ii == 0) ? ff :
-                                    (ii + d <= 0) ? 1 : NodeId(ii + d, ff.col());
+                                (ii == 0) ? ff :
+                                (ii + d <= 0) ? 1 : NodeId(ii + d, ff.col());
                         }
                     }
 
@@ -137,7 +144,8 @@ class NodeTableEntity: public data_table_node<T> {
          * @param f node ID.
          * @return node @p f.
          */
-        T const& node(NodeId f) const {
+        T const& node(NodeId f) const
+        {
             return (*this)[f.row()][f.col()];
         }
 
@@ -146,11 +154,13 @@ class NodeTableEntity: public data_table_node<T> {
          * @param f node ID.
          * @return node @p f.
          */
-        T& node(NodeId f) {
+        T& node(NodeId f)
+        {
             return (*this)[f.row()][f.col()];
         }
 
-        T* node_ptr(NodeId f) {
+        T* node_ptr(NodeId f)
+        {
             return &(*this)[f.row()][f.col()];
         }
 
@@ -160,7 +170,8 @@ class NodeTableEntity: public data_table_node<T> {
          * @param b child branch.
          * @return the @p b-child of @p f.
          */
-        NodeId child(NodeId f, int b) const {
+        NodeId child(NodeId f, int b) const
+        {
             return child(f.row(), f.col(), b);
         }
 
@@ -170,7 +181,8 @@ class NodeTableEntity: public data_table_node<T> {
          * @param b child branch.
          * @return the @p b-child of @p f.
          */
-        NodeId& child(NodeId f, int b) {
+        NodeId& child(NodeId f, int b)
+        {
             return child(f.row(), f.col(), b);
         }
 
@@ -181,7 +193,8 @@ class NodeTableEntity: public data_table_node<T> {
          * @param b child branch.
          * @return the @p b-child of the parent.
          */
-        NodeId child(int i, size_t j, int b) const {
+        NodeId child(int i, size_t j, int b) const
+        {
             assert(0 <= b && b < 2);
             return (*this)[i][j].branch[b];
         }
@@ -193,7 +206,8 @@ class NodeTableEntity: public data_table_node<T> {
          * @param b child branch.
          * @return the @p b-child of the parent.
          */
-        NodeId& child(int i, size_t j, int b) {
+        NodeId& child(int i, size_t j, int b)
+        {
             assert(0 <= b && b < 2);
             return (*this)[i][j].branch[b];
         }
@@ -204,19 +218,26 @@ class NodeTableEntity: public data_table_node<T> {
          * @param stopLevel level to stop going down.
          * @return reached node ID.
          */
-        NodeId getZeroDescendant(NodeId f, int stopLevel) const {
+        NodeId getZeroDescendant(NodeId f, int stopLevel) const
+        {
             assert(0 <= stopLevel);
-            if (stopLevel == 0 && f.hasEmpty()) return 1;
+
+            if (stopLevel == 0 && f.hasEmpty()) {
+                return 1;
+            }
+
             while (f.row() > stopLevel) {
                 f = child(f, 0);
             }
+
             return f;
         }
 
         /**
          * Deletes current index information.
          */
-        void deleteIndex() {
+        void deleteIndex()
+        {
             higherLevelTable.clear();
             lowerLevelTable.clear();
         }
@@ -225,7 +246,8 @@ class NodeTableEntity: public data_table_node<T> {
          * Makes index information.
          * @param useMP use an algorithm for multiple processors.
          */
-        void makeIndex(bool useMP = false) const {
+        void makeIndex(bool useMP = false) const
+        {
             int const n = this->numRows() - 1;
             higherLevelTable.clear();
             higherLevelTable.resize(n + 1);
@@ -239,31 +261,38 @@ class NodeTableEntity: public data_table_node<T> {
                 int lowest = i;
                 my_vector<bool> myLower(n + 1);
 
-    // #ifdef _OPENMP
-    //             if (useMP) {
-    // #pragma omp parallel for schedule(static)
-    //                 for (intmax_t j = 0; j < intmax_t(m); ++j) {
-    //                     for (int b = 0; b < 2; ++b) {
-    //                         int const ii = node[j].branch[b].row();
-    //                         if (ii == 0) continue;
-    //                         if (ii < lowest) {
-    // #pragma omp critical
-    //                             if (ii < lowest) lowest = ii;
-    //                         }
-    //                         if (!lowerMark[ii]) {
-    //                             myLower[ii] = true;
-    //                             lowerMark[ii] = true;
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //             else
-    // #endif
+                // #ifdef _OPENMP
+                //             if (useMP) {
+                // #pragma omp parallel for schedule(static)
+                //                 for (intmax_t j = 0; j < intmax_t(m); ++j) {
+                //                     for (int b = 0; b < 2; ++b) {
+                //                         int const ii = node[j].branch[b].row();
+                //                         if (ii == 0) continue;
+                //                         if (ii < lowest) {
+                // #pragma omp critical
+                //                             if (ii < lowest) lowest = ii;
+                //                         }
+                //                         if (!lowerMark[ii]) {
+                //                             myLower[ii] = true;
+                //                             lowerMark[ii] = true;
+                //                         }
+                //                     }
+                //                 }
+                //             }
+                //             else
+                // #endif
                 for (size_t j = 0; j < m; ++j) {
                     for (int b = 0; b < 2; ++b) {
                         int const ii = node[j].branch[b].row();
-                        if (ii == 0) continue;
-                        if (ii < lowest) lowest = ii;
+
+                        if (ii == 0) {
+                            continue;
+                        }
+
+                        if (ii < lowest) {
+                            lowest = ii;
+                        }
+
                         if (!lowerMark[ii]) {
                             myLower[ii] = true;
                             lowerMark[ii] = true;
@@ -273,8 +302,11 @@ class NodeTableEntity: public data_table_node<T> {
 
                 higherLevelTable[lowest].push_back(i);
                 my_vector<int>& lower = lowerLevelTable[i];
+
                 for (int ii = lowest; ii < i; ++ii) {
-                    if (myLower[ii]) lower.push_back(ii);
+                    if (myLower[ii]) {
+                        lower.push_back(ii);
+                    }
                 }
             }
         }
@@ -284,8 +316,12 @@ class NodeTableEntity: public data_table_node<T> {
          * the given level and that does not refer any lower levels.
          * @param level the level.
          */
-        my_vector<int> const& higherLevels(int level) const {
-            if (higherLevelTable.empty()) makeIndex();
+        my_vector<int> const& higherLevels(int level) const
+        {
+            if (higherLevelTable.empty()) {
+                makeIndex();
+            }
+
             return higherLevelTable[level];
         }
 
@@ -295,8 +331,12 @@ class NodeTableEntity: public data_table_node<T> {
          * any higher levels.
          * @param level the level.
          */
-        my_vector<int> const& lowerLevels(int level) const {
-            if (lowerLevelTable.empty()) makeIndex();
+        my_vector<int> const& lowerLevels(int level) const
+        {
+            if (lowerLevelTable.empty()) {
+                makeIndex();
+            }
+
             return lowerLevelTable[level];
         }
 
@@ -305,11 +345,14 @@ class NodeTableEntity: public data_table_node<T> {
          * @param os output stream.
          * @param title title label.
          */
-        void dumpDot(std::ostream& os, std::string title = "") const {
+        void dumpDot(std::ostream& os, std::string title = "") const
+        {
             os << "digraph \"" << title << "\" {\n";
+
             for (int i = this->numRows() - 1; i >= 1; --i) {
                 os << "  " << i << " [shape=none];\n";
             }
+
             for (int i = this->numRows() - 2; i >= 1; --i) {
                 os << "  " << (i + 1) << " -> " << i << " [style=invis];\n";
             }
@@ -331,22 +374,24 @@ class NodeTableEntity: public data_table_node<T> {
                     for (int b = 0; b < 2; ++b) {
                         NodeId ff = child(i, j, b);
                         bool aa = ff.getAttr();
-                        if (ff == 0) continue;
+
+                        if (ff == 0) {
+                            continue;
+                        }
 
                         if (ff == 1) {
                             terminal1 = true;
                             os << "  \"" << f << "\" -> \"$\"";
-                        }
-                        else {
+                        } else {
                             ff.setAttr(false);
                             os << "  \"" << f << "\" -> \"" << ff << "\"";
                         }
 
                         os << " [style=";
+
                         if (b == 0) {
                             os << "dashed";
-                        }
-                        else {
+                        } else {
                             os << "solid";
                             // if (ARITY > 2) {
                             //     os << ",color="
@@ -354,7 +399,11 @@ class NodeTableEntity: public data_table_node<T> {
                             //                 (b == 2) ? "red" : "green");
                             // }
                         }
-                        if (aa) os << ",arrowtail=dot";
+
+                        if (aa) {
+                            os << ",arrowtail=dot";
+                        }
+
                         os << "];\n";
                     }
                 }
@@ -364,69 +413,88 @@ class NodeTableEntity: public data_table_node<T> {
                 }
 
                 os << "  {rank=same; " << i;
+
                 for (size_t j = 0; j < m; ++j) {
                     os << "; \"" << NodeId(i, j) << "\"";
                 }
+
                 os << "}\n";
             }
 
             os << "}\n";
             os.flush();
         }
-    };
+};
 
 
-    template<typename T = double>
-    class NodeTableHandler {
+template<typename T = double>
+class TableHandler
+{
         struct Object {
             unsigned refCount;
             NodeTableEntity<T> entity;
 
             explicit Object(int n)
-                    : refCount(1), entity(n) {
+                : refCount(1), entity(n)
+            {
             }
 
             explicit Object(NodeTableEntity<T> const& _entity)
-                    : refCount(1) , entity(_entity) {
+                : refCount(1) , entity(_entity)
+            {
             }
 
-            void ref() {
+            void ref()
+            {
                 ++refCount;
-                if (refCount == 0) throw std::runtime_error("Too many references");
+
+                if (refCount == 0) {
+                    throw std::runtime_error("Too many references");
+                }
             }
 
-            void deref() {
+            void deref()
+            {
                 --refCount;
-                if (refCount == 0) delete this;
+
+                if (refCount == 0) {
+                    delete this;
+                }
             }
         };
 
         Object* pointer;
 
     public:
-        explicit NodeTableHandler(int n = 1) : pointer(new Object(n)) {
+        explicit TableHandler(int n = 1) : pointer(new Object(n))
+        {
         }
 
-        NodeTableHandler(NodeTableHandler const& o) : pointer(o.pointer) {
+        TableHandler(TableHandler const& o) : pointer(o.pointer)
+        {
             pointer->ref();
         }
 
-        NodeTableHandler& operator=(NodeTableHandler const& o) {
+        TableHandler& operator=(TableHandler const& o)
+        {
             pointer->deref();
             pointer = o.pointer;
             pointer->ref();
             return *this;
         }
 
-        ~NodeTableHandler() {
+        ~TableHandler()
+        {
             pointer->deref();
         }
 
-        NodeTableEntity<T> const& operator*() const {
+        NodeTableEntity<T> const& operator*() const
+        {
             return pointer->entity;
         }
 
-        NodeTableEntity<T> const* operator->() const {
+        NodeTableEntity<T> const* operator->() const
+        {
             return &pointer->entity;
         }
 
@@ -434,11 +502,13 @@ class NodeTableEntity: public data_table_node<T> {
          * Make the table unshared.
          * @return writable reference to the private table.
          */
-        NodeTableEntity<T>& privateEntity() {
+        NodeTableEntity<T>& privateEntity()
+        {
             if (pointer->refCount >= 2) {
                 pointer->deref();
                 pointer = new Object(pointer->entity);
             }
+
             return pointer->entity;
         }
 
@@ -447,14 +517,15 @@ class NodeTableEntity: public data_table_node<T> {
          * @param n the number of rows.
          * @return writable reference to the private table.
          */
-        NodeTableEntity<T>& init(int n = 1) {
+        NodeTableEntity<T>& init(int n = 1)
+        {
             if (pointer->refCount == 1) {
                 pointer->entity.init(n);
-            }
-            else {
+            } else {
                 pointer->deref();
                 pointer = new Object(n);
             }
+
             return pointer->entity;
         }
 
@@ -462,10 +533,13 @@ class NodeTableEntity: public data_table_node<T> {
          * Clear a row if it is not shared.
          * @param i row index.
          */
-        void derefLevel(int i) {
-            if (pointer->refCount == 1) pointer->entity[i].clear();
+        void derefLevel(int i)
+        {
+            if (pointer->refCount == 1) {
+                pointer->entity[i].clear();
+            }
         }
-    };
+};
 
 
 #endif // NODE_BDD_TABLE_HPP
