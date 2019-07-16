@@ -580,7 +580,7 @@ int compute_lower_bound(Problem *problem, NodeData *pd) {
 
                     // reset_nblayers(pd->jobarray);
                     // calculate_nblayers(pd, 2);
-                    // reduce_cost_fixing(pd);
+                    reduce_cost_fixing(pd);
                     // val = check_schedules(pd);
                     // CCcheck_val_2(val, "Failed in checkschedules");
                     // delete_infeasible_cclasses(pd);
