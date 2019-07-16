@@ -221,7 +221,7 @@ class NodeZdd : public NodeBase
                 }
             }
 
-            add_sub_node(_weight, _node_id, this);
+            add_sub_node(_weight, _node_id);
 
             return list.back();
         }
