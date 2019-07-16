@@ -139,7 +139,6 @@ void PricerSolverZdd::remove_layers()
 
         if (!remove_layer) {
             if (first_del != -1) {
-                printf("%ld\n", ordered_jobs->len);
                 g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
                 it = it - (last_del - first_del);
                 first_del = last_del = -1;
