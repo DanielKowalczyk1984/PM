@@ -4,6 +4,7 @@
 #include "PricerSolverSimpleDP.hpp"
 #include "PricerSolverArcTimeDP.hpp"
 #include "PricerSolverZddForward.hpp"
+#include "PricerSolverZddBackward.hpp"
 
 extern "C" {
 
@@ -30,6 +31,11 @@ PricerSolverBase* newSolver(GPtrArray *jobs,
         case bdd_solver_backward_cycle:
             return new PricerSolverBddBackwardCycle (jobs, _num_machines, ordered_jobs);
         break;
+        case zdd_solver_backward_simple:
+            return new PricerSolverZddBackwardSimple(jobs, _num_machines, ordered_jobs);
+        break;
+        case zdd_solver_backward_cycle:
+            return new PricerSolverZddBackwardCycle(jobs,_num_machines,ordered_jobs);
         default:
             return new PricerSolverBddBackwardCycle(jobs, _num_machines, ordered_jobs);
     }
