@@ -115,4 +115,106 @@ class BackwardZddSimple : public BackwardZDDBase<E, T> {
 
 };
 
+template<typename E, typename T>
+class BackwardZddCycle : public BackwardZDDBase<E, T> {
+  public:
+    using BackwardZDDBase<E, T>::pi;
+    using BackwardZDDBase<E, T>::num_jobs;
+
+    BackwardZddCycle() : BackwardZDDBase<E, T>() {
+    };
+    BackwardZddCycle(T *_pi, int _num_jobs) : BackwardZDDBase<E, T>(_pi,
+                _num_jobs) {
+    };
+    explicit BackwardZddCycle(int _num_jobs) : BackwardZDDBase<E, T>(_num_jobs) {
+    };
+
+    void evalNode(NodeZdd<T> &n) const override {
+        Job *tmp_j = n.get_job();
+
+        for(auto &it : n.list) {
+            int weight{it->get_weight()};
+            std::shared_ptr<SubNodeZdd<>> p0  {it->n};
+            std::shared_ptr<SubNodeZdd<>> p1  {it->y};
+            T result { -value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job]};
+
+            Job *prev_job{p1->backward_label[0].get_prev_job()};
+
+            it->backward_label[0].update_label(&(p0->backward_label[0]));
+            it->backward_label[1].update_label(&(p0->backward_label[1]));
+            bool diff =  bool_diff_Fij(weight, prev_job, tmp_j);
+            bool diff1 = bool_diff_Fij(weight, p1->backward_label[0].get_prev_job(), tmp_j);
+            bool diff2 = bool_diff_Fij(weight, p1->backward_label[1].get_prev_job(), tmp_j);
+
+            if (prev_job != tmp_j && diff) {
+                T obj1 {p1->backward_label[0].get_f() + result};
+                T obj2 {p1->backward_label[1].get_f() + result};
+
+                if (obj1 > it->backward_label[0].get_f()) {
+                    if (tmp_j != it->backward_label[0].get_prev_job()) {
+                        it->backward_label[1].update_label(&(p0->backward_label[0]));
+                    }
+
+                    it->backward_label[0].update_label(&(p1->backward_label[0]), obj1, true);
+                } else if (obj1 > it->backward_label[1].get_f() &&
+                           tmp_j != it->backward_label[0].get_prev_job() && diff1) {
+                    it->backward_label[1].update_label(&(p1->backward_label[0]), obj1, true);
+                } else if (obj2 > it->backward_label[1].get_f() &&
+                           tmp_j != it->backward_label[0].get_prev_job() && diff2) {
+                    it->backward_label[1].update_label(&(p1->backward_label[1]), obj2, true);
+                }
+            } else {
+                T obj1 = p1->backward_label[1].get_f() + result;
+
+                if (obj1 > it->backward_label[0].get_f() && diff2) {
+                    if (tmp_j != it->backward_label[0].get_prev_job()) {
+                        it->backward_label[1].update_label(&(p0->backward_label[0]));
+                    }
+
+                    it->backward_label[0].update_label(&(p1->backward_label[1]), obj1, true);
+                } else if (obj1 > it->backward_label[1].get_f() &&
+                           tmp_j != it->backward_label[0].get_prev_job() && diff2) {
+                    it->backward_label[1].update_label(&(p1->backward_label[1]), obj1, true);
+                }
+            }
+
+        }
+
+    }
+
+    void initializenode(NodeZdd<T> &n) const override {
+        for(auto &it:n.list) {
+            it->backward_label[0].update_solution(-DBL_MAX / 2, nullptr, false);
+        }
+    }
+
+    void initializerootnode(NodeZdd<T> &n) const override {
+        for(auto &it : n.list) {
+            it->backward_label[0].f = -pi[num_jobs];
+        }
+    }
+
+    OptimalSolution<T> get_objective(NodeZdd<> &n) const {
+        OptimalSolution<T> sol(-pi[num_jobs]);
+        auto m = std::max_element(n.list.begin(), n.list.end(), my_compare<T>);
+        Label<SubNodeZdd<T>,T> *aux_label = &((*m)->backward_label[0]);
+
+        while (aux_label) {
+            if (aux_label->get_high()) {
+                Job *aux_job = aux_label->get_job();
+                sol.push_job_back(aux_job, pi[aux_job->job]);
+            }
+
+            aux_label = aux_label->get_previous();
+        }
+
+        return sol;
+    }
+
+    OptimalSolution<T> getValue(NodeZdd<T> const &n) override {
+        OptimalSolution<T> sol;
+        return sol;
+    }
+};
+
 #endif  // BACKWARD_ZDD_HPP

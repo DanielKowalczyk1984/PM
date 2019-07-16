@@ -119,7 +119,7 @@ void PricerSolverZdd::remove_layers()
 
     /** remove the unnecessary layers of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
-        bool remove = true;
+        bool remove_layer = true;
 
         for (auto& iter : table[i]) {
             bool remove_edge = true;
@@ -133,12 +133,13 @@ void PricerSolverZdd::remove_layers()
                 NodeId& cur_node_1 = iter.branch[1];
                 cur_node_1 = 0;
             } else {
-                remove = false;
+                remove_layer = false;
             }
         }
 
-        if (!remove) {
+        if (!remove_layer) {
             if (first_del != -1) {
+                printf("%ld\n", ordered_jobs->len);
                 g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
                 it = it - (last_del - first_del);
                 first_del = last_del = -1;
@@ -296,7 +297,7 @@ void PricerSolverZdd::reduce_cost_fixing(double* pi, int UB, double LB)
 {
     /** Remove Layers */
     evaluate_nodes(pi, UB, LB);
-    remove_layers();
+    // remove_layers();
     remove_edges();
     init_table();
     construct_mipgraph();

@@ -6,7 +6,7 @@
 class PricerSolverSimple : public PricerSolverZdd {
 private:
     ForwardZddSimpleDouble evaluator;
-    ForwardZddSimpleDouble reversed_evaluator;
+    BackwardZddSimpleDouble reversed_evaluator;
 public:
     PricerSolverSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
     OptimalSolution<double> pricing_algorithm(double *_pi) override;
