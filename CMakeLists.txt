@@ -21,17 +21,17 @@ find_package(Gurobi)
 find_package(Boost)
 
 # Download the tdzdd library
-fetchcontent_declare(project_TdZdd
-                     GIT_REPOSITORY
-                     https://github.com/DanielKowalczyk1984/TdZdd.git
-                     GIT_TAG
-                     "master")
+# fetchcontent_declare(project_TdZdd
+#                      GIT_REPOSITORY
+#                      https://github.com/DanielKowalczyk1984/TdZdd.git
+#                      GIT_TAG
+#                      "master")
 
-fetchcontent_getproperties(project_TdZdd)
-if(NOT project_TdZdd_POPULATED)
-  fetchcontent_populate(project_TdZdd)
-  set(TdZDD_INCLUDE_DIR ${project_tdzdd_SOURCE_DIR}/include)
-endif()
+# fetchcontent_getproperties(project_TdZdd)
+# if(NOT project_TdZdd_POPULATED)
+#   fetchcontent_populate(project_TdZdd)
+#   set(TdZDD_INCLUDE_DIR ${project_tdzdd_SOURCE_DIR}/include)
+# endif()
 
 # Set the flags for compiling
 add_definitions(-Wall

@@ -2,478 +2,142 @@
 #define NODE_DURATION_HPP
 #include <memory>
 #include <OptimalSolution.hpp>
-#include <tdzdd/dd/Node.hpp>
-
-using NodeId = tdzdd::NodeId;
-
-template<typename T>
-class Node;
-
-template<typename T>
-class Label {
-  private:
-    Label<T> *prev;
-    bool high;
-    Node<T>* head_node;
-
-  public:
-    T f;
-    Job *prev_job;
-    /**
-     * Constructor
-     */
-    Label(T &_f, Label<T> *&_prev, bool &_high) :
-      prev(_prev),
-      high(_high),
-      head_node(nullptr),
-      f(_f),
-      prev_job(nullptr){};
-
-    Label() :
-      prev(nullptr),
-      high(false),
-      head_node(nullptr),
-      f(-DBL_MAX),
-      prev_job(nullptr){};
-
-    explicit Label(Node<T>* _head_node) :
-      prev(nullptr),
-      high(false),
-      head_node(_head_node),
-      f(-DBL_MAX),
-      prev_job(nullptr){};
-
-    /**
-     * Copy Constructor
-     */
-    Label<T>(const Label<T> &src) :
-      prev(src.prev),
-      high(src.high),
-      head_node(src.head_node),
-      f(src.f),
-      prev_job(src.prev_job) {}
-
-    /**
-     * Move Constructor
-     */
-    Label<T>(const Label<T> &&src) :
-      prev(src.prev),
-      high (src.high),
-      head_node(src.head_node),
-      f(src.f),
-      prev_job(src.prev_job) {}
-
-    /**
-     * Copy Assignment
-     */
-    Label<T>& operator=(const Label<T> &src){
-      if(&src == this) {
-        return *this;
-      }
-
-      prev = src.prev;
-      high = src.high;
-      head_node = src.head_node;
-      f = src.f;
-      prev_job = src.prev_job;
-
-      return *this;
-    }
-
-    /**
-     * Move Assignment
-     */
-    Label<T>& operator=(const Label<T> &&src){
-      if(&src == this) {
-        return *this;
-      }
-
-      f = src.f;
-      prev = src.prev;
-      high = src.high;
-      head_node = src.head_node;
-      prev_job = src.prev_job;
-
-      return *this;
-    }
-
-    void set_previous(Label<T> * &&_prev) {
-        prev = _prev;
-    }
-
-    void set_f(T _f) {
-        f = _f;
-    }
-
-    void set_high(bool &&_high) {
-        high = _high;
-    }
-
-    void set_head_node(Node<T>* _head) {
-      head_node = _head;
-    }
-
-    void reset(){
-      f = -DBL_MAX;
-      prev = nullptr;
-      high = false;
-    }
-
-    T get_f() const {
-        return f;
-    }
-
-    Label<T>* get_previous() {
-        return prev;
-    }
-
-    bool get_high() {
-        return high;
-    }
-
-    Job* get_job() {
-        return head_node->get_job();
-    }
-
-    Job* get_previous_job() {
-      return get_previous() == nullptr ? nullptr : get_previous()->get_job();
-    }
-
-    void update_solution(T _f, Label<T>* && _prev, bool &&_high) {
-      f = _f;
-      prev = _prev;
-      high = _high;
-    }
-
-    void update_solution(Label<T> &_node) {
-      f = _node.f;
-      prev = _node.prev;
-      high = _node.high;
-    }
-
-    Node<T> *get_node() const {
-      return head_node;
-    }
-
-    int get_weight(){
-      return head_node->get_weight();
-    }
-
-    void update_label(Label<T> *_n, T _f = 0, bool _high = false){
-      if(_high) {
-        f = _f;
-        prev_job = get_job();
-      } else {
-        f = _n->f;
-        prev_job = _n->prev_job;
-      }
-      high = _high;
-      prev = _n;
-    }
-
-    Job* get_prev_job() {
-      return prev_job;
-    }
-};
+#include "NodeBase.hpp"
+#include "Label.hpp"
 
 template<typename T = double>
-class Node {
-  private:
-    int weight;
-    int num_layer;
+class Node : public NodeBase
+{
+    private:
+        int weight;
 
-    bool root_node;
-    bool terminal_node;
+    public:
+        Label<Node<T>,T> forward_label[2];
+        Label<Node<T>,T> backward_label[2];
 
-    Job *job;
+        Node<T>* child[2];
 
-  public:
-    Label<T> forward_label1;
-    Label<T> forward_label2;
+        bool calc_yes;
+        int key;
+        int high_edge_key;
+        int low_edge_key;
 
-    Label<T> backward_label1;
-    Label<T> backward_label2;
+        /**
+         * Constructor
+         */
+        Node():
+            NodeBase(),
+            weight(0),
+            forward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
+            backward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
+            calc_yes(true),
+            key(-1),
+            high_edge_key(-1),
+            low_edge_key(-1)
+        {
+            child[0] = nullptr;
+            child[1] = nullptr;
+        };
 
-    std::shared_ptr<Node<T>> y;
-    std::shared_ptr<Node<T>> n;
-
-    Node<T>* child[2];
-    NodeId branch[2];
-
-    bool calc_yes;
-
-    int key;
-    int high_edge_key;
-    int low_edge_key;
-    
-    /**
-     * Constructor
-     */
-    Node():
-          weight(0),
-          num_layer(0),
-          root_node(false),
-          terminal_node(false),
-          job(nullptr),
-          forward_label1(this),
-          forward_label2(this),
-          backward_label1(this),
-          backward_label2(this),
-          y(nullptr),
-          n(nullptr),
-          calc_yes(true),
-          key(-1),
-          high_edge_key (-1),
-          low_edge_key (-1) {
-        child[0] = nullptr;
-        child[1] = nullptr;
-    };
-
-    Node(int &_weight, int &_num_layer, bool &_root_node,bool &_terminal_node):
-          weight(_weight),
-         num_layer(_num_layer),
-         root_node(_root_node),
-         terminal_node(_terminal_node),
-         job(nullptr),
-         forward_label1(this),
-         forward_label2(this),
-         backward_label1(this),
-         backward_label2(this),
-         y(nullptr),
-         n(nullptr),
-         calc_yes(true),
-         key(-1),
-         high_edge_key (-1),
-         low_edge_key (-1) {
-          child[0] = nullptr;
-          child[1] = nullptr;
-    }
-
-    void set_head_node() {
-      forward_label1.set_head_node(this);
-      forward_label2.set_head_node(this);
-      backward_label1.set_head_node(this);
-      backward_label2.set_head_node(this);
-    }
-
-    Node(int i, int j) :
-          weight(0),
-          num_layer(0),
-          root_node(false),
-          terminal_node(false),
-          job(nullptr),
-          forward_label1(this),
-          forward_label2(this),
-          backward_label1(this),
-          backward_label2(this),
-          y(nullptr),
-          n(nullptr),
-          calc_yes(true),
-          key(-1),
-          high_edge_key (-1),
-          low_edge_key (-1) {
-        child[0] = nullptr;
-        child[1] = nullptr;
-        branch[0] = i;
-        branch[1] = j;
-      }
-
-    /**
-     * Copy Constructor
-     */
-    Node<T>(const Node<T> &src):
-        weight(src.weight),
-        num_layer(src.num_layer),
-        root_node(src.root_node),
-        terminal_node(src.terminal_node),
-        job(src.job),
-        forward_label1(src.forward_label1),
-        forward_label2(src.forward_label2),
-        backward_label1(src.backward_label1),
-        backward_label2(src.backward_label2),
-        y(src.y),
-        n(src.n),
-        child{src.child[0], src.child[1]},
-        branch{src.branch[0], src.branch[1]},
-        calc_yes(src.calc_yes),
-        key(src.key),
-        high_edge_key(src.high_edge_key),
-        low_edge_key(src.low_edge_key) {
-    }
-
-    /**
-     * Move Constructor
-     */
-    Node<T>(Node<T> &&src):
-        weight(src.weight),
-        num_layer(src.num_layer),
-        root_node(src.root_node),
-        terminal_node(src.terminal_node),
-        job(src.job),
-        forward_label1(src.forward_label1),
-        forward_label2(src.forward_label2),
-        backward_label1(src.backward_label1),
-        backward_label2(src.backward_label2), 
-        y(std::move(src.y)),
-        n(std::move(src.n)),
-        child{src.child[0], src.child[1]},
-        branch{src.branch[0], src.branch[1]},
-        calc_yes(src.calc_yes),
-        key(src.key),
-        high_edge_key(src.high_edge_key),
-        low_edge_key(src.low_edge_key) {
-    }
-
-    /**
-     * Copy Operator
-     */
-    Node<T>& operator=(const Node<T> &src){
-      if(&src == this) {
-        return *this;
-      }
-
-      weight = src.weight;
-      num_layer = src.num_layer;
-      root_node = src.root_node;
-      terminal_node = src.terminal_node;
-      job = src.job;
-
-      y = src.y;
-      n = src.n;
-
-      forward_label1 = src.forward_label1;
-      forward_label2 = src.forward_label2;
-
-      backward_label1 = src.backward_label1;
-      backward_label2 = src.backward_label2;
-
-      child[0] = src.child[0];
-      child[1] = src.child[1];
-
-      branch[0] = src.branch[0];
-      branch[1] = src.branch[1];
-
-      calc_yes = src.calc_yes;
-      key = src.key;
-
-      high_edge_key = src.high_edge_key;
-      low_edge_key = src.low_edge_key;
-
-      return *this;
-    }
-
-    /**
-     * Move Operator
-     */
-    Node<T>& operator=(Node<T> &&src){
-      if(&src == this) {
-        return *this;
-      }
-
-      weight = src.weight;
-      num_layer = src.num_layer;
-      root_node = src.root_node;
-      terminal_node = src.terminal_node;
-      job = src.job;
-
-      y = std::move(src.y);
-      n = std::move(src.n);
-
-      forward_label1 = src.forward_label1;
-      forward_label2 = src.forward_label2;
-
-      backward_label1 = src.backward_label1;
-      backward_label2 = src.backward_label2;
-
-      child[0] = src.child[0];
-      child[1] = src.child[1];
-      branch[0] = src.branch[0];
-      branch[1] = src.branch[1];
-
-      calc_yes = src.calc_yes;
-      key = src.key;
-
-      high_edge_key = src.high_edge_key;
-      low_edge_key = src.low_edge_key;
-      return *this;
-    }
-
-    void set_job(Job *_job, bool _terminal_node = false){
-      job = _job;
-      terminal_node = _terminal_node;
-    }
-
-    void set_weight(int _weight){
-      weight = _weight;
-    }
-
-    void set_layer(int _num_layer) {
-      num_layer = _num_layer;
-    }
-
-    int get_weight(){
-      return weight;
-    }
-
-    int get_layer_number() {
-      return num_layer;
-    }
-
-    bool is_terminal_node(){
-      return terminal_node;
-    }
-
-    Job *get_job(){
-      return job;
-    }
-
-    size_t hash() const {
-        size_t h = branch[0].code();
-        for (int i = 1; i < 2; ++i) {
-            h = h * 314159257 + branch[i].code() * 271828171;
+        Node(int& _weight, int& _num_layer, bool& _root_node, bool& _terminal_node):
+            NodeBase(_num_layer, _root_node, _terminal_node),
+            weight(_weight),
+            forward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
+            backward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
+            calc_yes(true),
+            key(-1),
+            high_edge_key(-1),
+            low_edge_key(-1)
+        {
+            child[0] = nullptr;
+            child[1] = nullptr;
         }
-        return h;
-    }
 
-    bool operator==(Node const& o) const {
-        for (int i = 0; i < 2; ++i) {
-            if (branch[i] != o.branch[i]) return false;
+        void set_head_node()
+        {
+            forward_label[0].set_head_node(this);
+            forward_label[1].set_head_node(this);
+            backward_label[0].set_head_node(this);
+            backward_label[1].set_head_node(this);
         }
-        return true;
-    }
 
-    bool operator!=(Node const& o) const {
-        return !operator==(o);
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, Node const& o) {
-        os << "(" << o.branch[0];
-        for (int i = 1; i < 2; ++i) {
-            os << "," << o.branch[i];
+        Node(int i, int j) :
+            NodeBase(i, j),
+            weight(0),
+            forward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
+            backward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
+            calc_yes(true),
+            key(-1),
+            high_edge_key(-1),
+            low_edge_key(-1)
+        {
+            child[0] = nullptr;
+            child[1] = nullptr;
         }
-        return os << ")";
-    }
 
-    Node<T>* init_node(int _weight, bool _root_node = false, bool _terminal_node = false){
-      if(!_terminal_node) {
-        weight = _weight;
-        root_node = _root_node;
-      } else {
-        job = nullptr;
-        weight = -1;
-        root_node = _root_node;
-        terminal_node = _terminal_node;
-      }
-      return this;
-    }
+        Node<T>(const Node<T>& src) = default;
+        Node<T>(Node<T>&& src) = default;
+        Node<T>& operator=(const Node<T>& src) = default;
+        Node<T>& operator=(Node<T>&& src) = default;
 
-    friend bool operator<(const Node<T> &lhs, const Node<T> &rhs) {
-        return lhs.forward_label1.f < rhs.forward_label1.f;
-    }
+        void set_weight(int _weight)
+        {
+            weight = _weight;
+        }
 
-    friend bool operator> (const Node<T> &lhs, const Node<T> &rhs){ return rhs < lhs; }
-    friend bool operator<=(const Node<T> &lhs, const Node<T> &rhs){ return !(lhs > rhs); }
-    friend bool operator>=(const Node<T> &lhs, const Node<T> &rhs){ return !(lhs < rhs); }
+        int get_weight()
+        {
+            return weight;
+        }
+
+        bool operator!=(Node const& o) const
+        {
+            return !operator==(o);
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, Node const& o)
+        {
+            os << "(" << o.branch[0];
+
+            for (int i = 1; i < 2; ++i) {
+                os << "," << o.branch[i];
+            }
+
+            return os << ")";
+        }
+
+        Node<T>* init_node(int _weight, bool _root_node = false, bool _terminal_node = false)
+        {
+            if (!_terminal_node) {
+                weight = _weight;
+                NodeBase::set_root_node(_root_node);
+            } else {
+                NodeBase::set_job(nullptr);
+                weight = -1;
+                NodeBase::set_root_node(_root_node);
+                NodeBase::set_terminal_node(_terminal_node);
+            }
+
+            return this;
+        }
+
+        friend bool operator<(const Node<T>& lhs, const Node<T>& rhs)
+        {
+            return lhs.forward_label[0].f < rhs.forward_label[0].f;
+        }
+
+        friend bool operator> (const Node<T>& lhs, const Node<T>& rhs)
+        {
+            return rhs < lhs;
+        }
+        friend bool operator<=(const Node<T>& lhs, const Node<T>& rhs)
+        {
+            return !(lhs > rhs);
+        }
+        friend bool operator>=(const Node<T>& lhs, const Node<T>& rhs)
+        {
+            return !(lhs < rhs);
+        }
 };
 
 

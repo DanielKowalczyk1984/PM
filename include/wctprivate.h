@@ -270,7 +270,7 @@ void temporary_data_free(NodeData *pd);
  * solver zdd
  */
 int evaluate_nodes(NodeData *pd);
-int calculate_new_ordered_jobs(NodeData *pd);
+int reduce_cost_fixing(NodeData *pd);
 int build_solve_mip(NodeData *pd);
 void construct_lp_sol_from_rmp(NodeData *pd);
 void disjunctive_inequality(NodeData *pd, Solution *sol);

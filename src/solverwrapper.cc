@@ -1,5 +1,10 @@
 #include <wctprivate.h>
-#include <PricerSolver.hpp>
+#include "PricerSolverBddForward.hpp"
+#include "PricerSolverBddBackward.hpp"
+#include "PricerSolverSimpleDP.hpp"
+#include "PricerSolverArcTimeDP.hpp"
+#include "PricerSolverZddForward.hpp"
+#include "PricerSolverZddBackward.hpp"
 
 extern "C" {
 
@@ -14,18 +19,23 @@ PricerSolverBase* newSolver(GPtrArray *jobs,
         case bdd_solver_cycle:
             return new PricerSolverBddCycle(jobs, _num_machines, ordered_jobs);
         break;
-        // case zdd_solver_cycle:
-        //     return new PricerSolverCycle(jobs, _num_machines, ordered_jobs);
-        // break;
-        // case zdd_solver_simple:
-        //     return new PricerSolverZddSimple(jobs, _num_machines, ordered_jobs);
-        // break;
+        case zdd_solver_cycle:
+            return new PricerSolverZddCycle(jobs, _num_machines, ordered_jobs);
+        break;
+        case zdd_solver_simple:
+            return new PricerSolverSimple(jobs, _num_machines, ordered_jobs);
+        break;
         case bdd_solver_backward_simple:
             return new PricerSolverBddBackwardSimple(jobs, _num_machines, ordered_jobs);
         break;
         case bdd_solver_backward_cycle:
             return new PricerSolverBddBackwardCycle (jobs, _num_machines, ordered_jobs);
         break;
+        case zdd_solver_backward_simple:
+            return new PricerSolverZddBackwardSimple(jobs, _num_machines, ordered_jobs);
+        break;
+        case zdd_solver_backward_cycle:
+            return new PricerSolverZddBackwardCycle(jobs,_num_machines,ordered_jobs);
         default:
             return new PricerSolverBddBackwardCycle(jobs, _num_machines, ordered_jobs);
     }
@@ -60,12 +70,12 @@ int evaluate_nodes(NodeData *pd) {
     return val;
 }
 
-int calculate_new_ordered_jobs(NodeData *pd) {
+int reduce_cost_fixing(NodeData *pd) {
     int val = 0;
     int    UB = pd->problem->opt_sol->tw;
     double LB = pd->LP_lower_bound;
 
-    pd->solver->calculate_new_ordered_jobs(pd->pi, UB, LB);
+    pd->solver->reduce_cost_fixing(pd->pi, UB, LB);
 
     return val;
 }

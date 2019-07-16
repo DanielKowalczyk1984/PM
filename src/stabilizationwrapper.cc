@@ -1,6 +1,6 @@
 #include <wctprivate.h>
-#include <PricerSolver.hpp>
 #include <stabilization.h>
+#include "PricerSolverBase.hpp"
 
 template <typename T = double>
 int construct_sol(NodeData *pd,OptimalSolution<T> *sol) {

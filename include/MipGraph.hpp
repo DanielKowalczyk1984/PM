@@ -7,6 +7,7 @@
 #include <boost/unordered_set.hpp>
 #include <NodeBddTable.hpp>
 #include <node_duration.hpp>
+#include "ZddNode.hpp"
 #include <gurobi_c++.h>
 #include <scheduleset.h>
 
@@ -25,8 +26,9 @@ typedef adjacency_list_traits < vecS, vecS, bidirectionalS > Traits;
 
 typedef property < vertex_index_t, int,
         property < vertex_name_t, NodeId,
-        property < vertex_distance_t, VarsNode
-        > > > VertexProperty;
+        property < vertex_distance_t, VarsNode,
+        property < vertex_color_t, std::shared_ptr<SubNodeZdd<>> 
+        > > > > VertexProperty;
 
 typedef property < edge_index_t, int, 
         property < edge_weight_t, bool,
@@ -40,6 +42,7 @@ using EdgeIterator = graph_traits<MipGraph>::edge_iterator;
 
 typedef property_map<MipGraph, vertex_index_t>::type IndexAccessor;
 typedef property_map<MipGraph, vertex_name_t>::type NodeIdAccessor;
+typedef property_map<MipGraph, vertex_color_t>::type NodeZddIdAccessor;
 typedef property_map<MipGraph, vertex_distance_t>::type VarsNodeAccessor;
 typedef property_map<MipGraph, edge_index_t>::type EdgeIndexAccessor;
 typedef property_map<MipGraph, edge_weight_t>::type EdgeTypeAccessor;
