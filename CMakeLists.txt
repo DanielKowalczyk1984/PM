@@ -1,9 +1,5 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.10)
 project(PM)
-include(FetchContent)
-
-# DATE(TIMESTAMP)
-string(TIMESTAMP _output "%m%y") 
 
 # add json export compile commands
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -20,19 +16,6 @@ find_package(Gurobi)
 # Find Boost
 find_package(Boost)
 
-# Download the tdzdd library
-# fetchcontent_declare(project_TdZdd
-#                      GIT_REPOSITORY
-#                      https://github.com/DanielKowalczyk1984/TdZdd.git
-#                      GIT_TAG
-#                      "master")
-
-# fetchcontent_getproperties(project_TdZdd)
-# if(NOT project_TdZdd_POPULATED)
-#   fetchcontent_populate(project_TdZdd)
-#   set(TdZDD_INCLUDE_DIR ${project_tdzdd_SOURCE_DIR}/include)
-# endif()
-
 # Set the flags for compiling
 add_definitions(-Wall
                 -Wno-deprecated
@@ -42,6 +25,7 @@ add_definitions(-Wall
                 -Wcast-qual
                 -Wcast-align
                 -Wwrite-strings)
+
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++14 -m64")
 set(
   CMAKE_C_FLAGS_RELEASE
