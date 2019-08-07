@@ -41,10 +41,6 @@ void solution_free(Solution **sol) {
     }
 }
 
-void g_solution_free(void *solution) {
-
-}
-
 void g_job_free(void *set) {
     Job *tmp = (Job *)set;
     if (tmp) {

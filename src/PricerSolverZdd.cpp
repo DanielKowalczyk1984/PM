@@ -46,7 +46,10 @@ void PricerSolverZdd::construct_mipgraph()
     int count = 0;
 
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
-        Job* job = ((job_interval_pair*) g_ptr_array_index(ordered_jobs,ordered_jobs->len - i))->j;
+        #ifndef NDEBUG
+        auto job = ((job_interval_pair*) g_ptr_array_index(ordered_jobs,ordered_jobs->len - i))->j;
+        #endif // NDEBUG
+        
         for (auto& it : table[i]) {
             if (it.branch[0] != 0) {
                 for(auto &iter : it.list) {

@@ -45,12 +45,12 @@ public:
 
     virtual void evalNode(NodeZdd<T>& n) const = 0;
 
-    // virtual Optimal_Solution<double> get_objective(NodeZdd<T>& n) const = 0;
-
     OptimalSolution<T> get_objective(NodeZdd<T> &n) const {
         OptimalSolution<T> sol(-pi[num_jobs]);
         auto m =  std::max_element(n.list.begin(), n.list.end(),my_compare<T>);
+        #ifndef NDEBUG
         auto weight = (*m)->weight;
+        #endif
 
         Label<SubNodeZdd<T>,T> *ptr_node = &((*m)->forward_label[0]);
 
