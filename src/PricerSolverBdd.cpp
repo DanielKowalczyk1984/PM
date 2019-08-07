@@ -18,9 +18,10 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines, GPtrArray*
      */
     PricerConstruct ps(ordered_jobs);
     decision_diagram = std::unique_ptr<DdStructure<> >(new DdStructure<>(ps));
+    remove_layers_init();
+    decision_diagram->zddReduce();
     size_graph = decision_diagram->size();
     init_table();
-    create_dot_zdd("bdd.gv");
     construct_mipgraph();
 }
 
@@ -93,6 +94,51 @@ void PricerSolverBdd::init_table()
             }
         }
     }
+}
+
+void PricerSolverBdd::remove_layers_init()
+{
+    int first_del = -1;
+    int last_del = -1;
+    int it = 0;
+    NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
+
+    /** remove the unnecessary layers of the bdd */
+    for (int i = decision_diagram->topLevel(); i > 0; i--) {
+        bool remove = true;
+
+        for (auto& iter : table[i]) {
+            if (iter.branch[1] != 0) {
+                remove = false;
+            }
+        }
+
+        if (!remove) {
+            if (first_del != -1) {
+                g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
+                it = it - (last_del - first_del);
+                first_del = last_del = -1;
+            } else {
+                it++;
+            }
+        } else {
+            if (first_del == -1) {
+                first_del = it;
+                last_del = first_del;
+            } else {
+                last_del++;
+            }
+
+            it++;
+        }
+    }
+
+    if (first_del != -1) {
+        g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
+    }
+
+    nlayers = ordered_jobs->len;
+    printf("The new number of layers = %u\n", nlayers);
 }
 
 void PricerSolverBdd::remove_layers()

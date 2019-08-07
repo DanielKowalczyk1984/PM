@@ -24,6 +24,7 @@ class PricerSolverBdd : public PricerSolverBase
         void reduce_cost_fixing(double* pi, int UB, double LB) override;
         void remove_layers();
         void remove_edges();
+        void remove_layers_init();
 
         void construct_mipgraph();
         void build_mip() override;
