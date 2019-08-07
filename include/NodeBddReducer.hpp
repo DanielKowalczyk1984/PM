@@ -80,10 +80,10 @@ private:
                     if (f.row() == 0) continue;
 
                     NodeId f0 = input.child(f, 0);
-                    NodeId deletable = BDD ? f0 : 0;
+                    NodeId deletable = 0;
                     bool del = true;
 
-                    for (int bb = (BDD || ZDD) ? 1 : 0; bb < 2; ++bb) {
+                    for (int bb = ZDD ? 1 : 0; bb < 2; ++bb) {
                         if (input.child(f, bb) != deletable) {
                             del = false;
                         }
@@ -115,12 +115,11 @@ public:
      * @param useMP use an algorithm for multiple processors.
      */
     void reduce(int i) {
-        // if (2 == 2) {
-        algorithmR(i);
-        // }
-        // else {
-            // reduce_(i);
-        // }
+        if(BDD) {
+            algorithmZdd(i);
+        } else if (ZDD) {
+            algorithmR(i);
+        }
     }
 
 private:
@@ -143,7 +142,7 @@ private:
             if (f0.row() != 0) f0 = newIdTable[f0.row()][f0.col()];
             if (f1.row() != 0) f1 = newIdTable[f1.row()][f1.col()];
 
-            if ((BDD && f1 == f0) || (ZDD && f1 == 0)) {
+            if (ZDD && f1 == 0) {
                 newId[j] = f0;
             } else {
                 newId[j] = NodeId(counter + 1, m); // tail of f0-equivalent list
@@ -167,11 +166,9 @@ private:
             newId[j] = NodeId(counter, mm++, g0.hasEmpty());
         }
 
-        if (!BDD) {
-            MyVector<int> const& levels = input.lowerLevels(counter);
-            for (int const* t = levels.begin(); t != levels.end(); ++t) {
-                input[*t].clear();
-            }
+        MyVector<int> const& levels = input.lowerLevels(counter);
+        for (int const* t = levels.begin(); t != levels.end(); ++t) {
+            input[*t].clear();
         }
 
         if(mm > 0u) {
@@ -179,10 +176,10 @@ private:
             T* nt = output[counter].data();
 
             for (size_t j = 0; j < m; ++j) {
-                NodeId const& f0 = tt[j].branch[0];
+                // NodeId const& f0 = tt[j].branch[0];
                 NodeId const& f1 = tt[j].branch[1];
 
-                if ((BDD && f1 == f0) || (ZDD && f1 == 0)) { // forwarded
+                if (ZDD && f1 == 0) { // forwarded
                     assert(newId[j].row() < counter);
                 } else {
                     assert(newId[j].row() == counter);
@@ -197,6 +194,123 @@ private:
             counter++;
         }
 
+        for (size_t k = 0; k < rootPtr[i].size(); ++k) {
+            NodeId& root = *rootPtr[i][k];
+            root = newId[root.col()];
+        }
+    }
+
+    /**
+     * Reduces one level using Algorithm-R.
+     * @param i level.
+     */
+    void algorithmZdd(int i) {
+        makeReadyForSequentialReduction();
+        size_t const m = input[i].size();
+        T* const tt = input[i].data();
+        NodeId const mark(i, m);
+
+        MyVector<NodeId>& newId = newIdTable[i];
+        newId.resize(m);
+
+        for (size_t j = m - 1; j + 1 > 0; --j) {
+            NodeId& f0 = tt[j].branch[0];
+            NodeId& f1 = tt[j].branch[1];
+
+            if (f0.row() != 0) f0 = newIdTable[f0.row()][f0.col()];
+            if (f1.row() != 0) f1 = newIdTable[f1.row()][f1.col()];
+
+            if (ZDD && f1 == 0) {
+                newId[j] = f0;
+            }
+            else {
+                NodeId& f00 = input.child(f0, 0);
+                NodeId& f01 = input.child(f0, 1);
+
+                if (f01 != mark) {        // the first touch from this level
+                    f01 = mark;        // mark f0 as touched
+                    newId[j] = NodeId(i + 1, m); // tail of f0-equivalent list
+                }
+                else {
+                    newId[j] = f00;         // next of f0-equivalent list
+                }
+                f00 = NodeId(i + 1, j);  // new head of f0-equivalent list
+            }
+        }
+
+        {
+            MyVector<int> const& levels = input.lowerLevels(i);
+            for (int const* t = levels.begin(); t != levels.end(); ++t) {
+                newIdTable[*t].clear();
+            }
+        }
+        size_t mm = 0;
+
+        for (size_t j = 0; j < m; ++j) {
+            NodeId const f(i, j);
+            assert(newId[j].row() <= i + 1);
+            if (newId[j].row() <= i) continue;
+
+            for (size_t k = j; k < m;) { // for each g in f0-equivalent list
+                assert(j <= k);
+                NodeId const g(i, k);
+                NodeId& g0 = tt[k].branch[0];
+                NodeId& g1 = tt[k].branch[1];
+                NodeId& g10 = input.child(g1, 0);
+                NodeId& g11 = input.child(g1, 1);
+                assert(g1 != mark);
+                assert(newId[k].row() == i + 1);
+                size_t next = newId[k].col();
+
+                if (g11 != f) { // the first touch to g1 in f0-equivalent list
+                    g11 = f; // mark g1 as touched
+                    g10 = g; // record g as a canonical node for <f0,g1>
+                    newId[k] = NodeId(i, mm++, g0.hasEmpty());
+                }
+                else {
+                    g0 = g10;       // make a forward link
+                    g1 = mark;      // mark g as forwarded
+                    newId[k] = 0;
+                }
+
+                k = next;
+            }
+        }
+
+        MyVector<int> const& levels = input.lowerLevels(i);
+        for (int const* t = levels.begin(); t != levels.end(); ++t) {
+            input[*t].clear();
+        }
+
+        // if(mm > 0u) {
+            output.initRow(i, mm);
+            T* nt = output[i].data();
+
+            for (size_t j = 0; j < m; ++j) {
+                NodeId const& f0 = tt[j].branch[0];
+                NodeId const& f1 = tt[j].branch[1];
+
+                if (f1 == mark) { // forwarded
+                    assert(f0.row() == i);
+                    assert(newId[j] == 0);
+                    newId[j] = newId[f0.col()];
+                }
+                else if (ZDD && f1 == 0) { // forwarded
+                    assert(newId[j].row() < i);
+                }
+                else {
+                    assert(newId[j].row() == i);
+                    size_t k = newId[j].col();
+                    nt[k] = tt[j];
+                    nt[k].set_head_node();
+                    nt[k].child[0] = &(output.node(nt[k].branch[0]));
+                    nt[k].child[1] = &(output.node(nt[k].branch[1]));
+                }
+            }
+
+            counter++;
+        // }
+        
         for (size_t k = 0; k < rootPtr[i].size(); ++k) {
             NodeId& root = *rootPtr[i][k];
             root = newId[root.col()];
