@@ -49,18 +49,14 @@ public:
 
     OptimalSolution<T> get_objective(NodeZdd<T> &n) const {
         OptimalSolution<T> sol(-pi[num_jobs]);
-
-        int weight;
-
-
         auto m =  std::max_element(n.list.begin(), n.list.end(),my_compare<T>);
-        weight = (*m)->weight;
+        auto weight = (*m)->weight;
 
         Label<SubNodeZdd<T>,T> *ptr_node = &((*m)->forward_label[0]);
 
         while(ptr_node->get_previous() != nullptr) {
-            Label<SubNodeZdd<T>,T> *aux_prev_node = ptr_node->get_previous();
-            Job *aux_job = aux_prev_node->get_job();
+            auto aux_prev_node = ptr_node->get_previous();
+            auto aux_job = aux_prev_node->get_job();
             sol.C_max += aux_job->processing_time;
             sol.push_job_back(aux_job, aux_prev_node->get_weight(), pi[aux_job->job]);
             ptr_node = aux_prev_node;
