@@ -275,6 +275,10 @@ public:
         reduce<false,true>();
     }
 
+    void zddReduce2() {
+        reduce<true,true>();
+    }
+
     /**
      * BDD/ZDD reduction.
      * @tparam BDD enable BDD reduction.

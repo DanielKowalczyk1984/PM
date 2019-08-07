@@ -16,6 +16,7 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines, GPtrArray*
      */
     PricerConstruct ps(ordered_jobs);
     decision_diagram = std::unique_ptr<DdStructure<NodeZdd<>> >(new DdStructure<NodeZdd<>>(ps));
+    decision_diagram->zddReduce2();
     size_graph = decision_diagram->size();
     init_table();
     create_dot_zdd("zdd.gv");
