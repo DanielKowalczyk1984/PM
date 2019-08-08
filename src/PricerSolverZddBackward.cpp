@@ -6,7 +6,7 @@
 PricerSolverZddBackwardSimple::PricerSolverZddBackwardSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs) :
     PricerSolverZdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing ZDD with Backward Simple evaluator" << '\n';
-    std::cout << "size BDD = " << get_size_graph() << '\n';
+    std::cout << "size BDD = " << decision_diagram->size() << '\n';
     evaluator = BackwardZddSimpleDouble(njobs);
     reversed_evaluator = ForwardZddSimpleDouble(njobs);
 }
