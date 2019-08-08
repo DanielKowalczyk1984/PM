@@ -282,7 +282,7 @@ private:
             input[*t].clear();
         }
 
-        // if(mm > 0u) {
+        if(mm > 0u) {
             output.initRow(i, mm);
             T* nt = output[i].data();
 
@@ -309,7 +309,7 @@ private:
             }
 
             counter++;
-        // }
+        }
         
         for (size_t k = 0; k < rootPtr[i].size(); ++k) {
             NodeId& root = *rootPtr[i][k];
