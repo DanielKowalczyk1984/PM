@@ -46,6 +46,7 @@ class PricerSolverZdd : public PricerSolverBase
         int get_num_layers() override ;
         void print_num_paths() override;
         double get_cost_edge(int idx) override;
+        void remove_layers_init();
 
 
         void add_constraint(Job* job, GPtrArray* list, int order) override;
