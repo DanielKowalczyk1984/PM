@@ -485,7 +485,7 @@ int compute_lower_bound(Problem *problem, NodeData *pd) {
                     case stab_dynamic:
                     case stab_hybrid:
                         break_while_loop =
-                            (CC_ABS(pd->eta_out - pd->eta_in) < 0.00001) || (ceil(pd->eta_in - 0.00001) >= pd->eta_out);
+                            (CC_ABS(pd->eta_out - pd->eta_in) < 0.0001); // || (ceil(pd->eta_in - 0.00001) >= pd->eta_out);
                         break;
 
                     case no_stab:
