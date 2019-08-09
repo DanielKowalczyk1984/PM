@@ -113,4 +113,6 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double *pi, int UB, double LB)
             }
         }
     }
+
+    printf("removed edges = %d\n", nb_removed_edges);
 }
