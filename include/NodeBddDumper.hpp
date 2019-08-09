@@ -10,7 +10,7 @@
  * DD dumper.
  * A node table is printed in Graphviz (dot) format.
  */
-template<typename S,typename T = Node<double>>
+template<typename S,typename T = NodeBdd<double>>
 class DdDumper {
     typedef S Spec;
     static int const AR = Spec::ARITY;

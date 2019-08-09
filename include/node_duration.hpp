@@ -6,16 +6,16 @@
 #include "Label.hpp"
 
 template<typename T = double>
-class Node : public NodeBase
+class NodeBdd : public NodeBase
 {
     private:
         int weight;
 
     public:
-        Label<Node<T>,T> forward_label[2];
-        Label<Node<T>,T> backward_label[2];
+        Label<NodeBdd<T>,T> forward_label[2];
+        Label<NodeBdd<T>,T> backward_label[2];
 
-        Node<T>* child[2];
+        NodeBdd<T>* child[2];
 
         bool calc_yes;
         int key;
@@ -25,11 +25,11 @@ class Node : public NodeBase
         /**
          * Constructor
          */
-        Node():
+        NodeBdd():
             NodeBase(),
             weight(0),
-            forward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
-            backward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
+            forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
+            backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             calc_yes(true),
             key(-1),
             high_edge_key(-1),
@@ -39,11 +39,11 @@ class Node : public NodeBase
             child[1] = nullptr;
         };
 
-        Node(int& _weight, int& _num_layer, bool& _root_node, bool& _terminal_node):
+        NodeBdd(int& _weight, int& _num_layer, bool& _root_node, bool& _terminal_node):
             NodeBase(_num_layer, _root_node, _terminal_node),
             weight(_weight),
-            forward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
-            backward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
+            forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
+            backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             calc_yes(true),
             key(-1),
             high_edge_key(-1),
@@ -61,11 +61,11 @@ class Node : public NodeBase
             backward_label[1].set_head_node(this);
         }
 
-        Node(int i, int j) :
+        NodeBdd(int i, int j) :
             NodeBase(i, j),
             weight(0),
-            forward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
-            backward_label{Label<Node<T>,T>(this), Label<Node,T>(this)},
+            forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
+            backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             calc_yes(true),
             key(-1),
             high_edge_key(-1),
@@ -75,10 +75,10 @@ class Node : public NodeBase
             child[1] = nullptr;
         }
 
-        Node<T>(const Node<T>& src) = default;
-        Node<T>(Node<T>&& src) = default;
-        Node<T>& operator=(const Node<T>& src) = default;
-        Node<T>& operator=(Node<T>&& src) = default;
+        NodeBdd<T>(const NodeBdd<T>& src) = default;
+        NodeBdd<T>(NodeBdd<T>&& src) = default;
+        NodeBdd<T>& operator=(const NodeBdd<T>& src) = default;
+        NodeBdd<T>& operator=(NodeBdd<T>&& src) = default;
 
         void set_weight(int _weight)
         {
@@ -90,12 +90,12 @@ class Node : public NodeBase
             return weight;
         }
 
-        bool operator!=(Node const& o) const
+        bool operator!=(NodeBdd const& o) const
         {
             return !operator==(o);
         }
 
-        friend std::ostream& operator<<(std::ostream& os, Node const& o)
+        friend std::ostream& operator<<(std::ostream& os, NodeBdd const& o)
         {
             os << "(" << o.branch[0];
 
@@ -106,7 +106,7 @@ class Node : public NodeBase
             return os << ")";
         }
 
-        Node<T>* init_node(int _weight, bool _root_node = false, bool _terminal_node = false)
+        NodeBdd<T>* init_node(int _weight, bool _root_node = false, bool _terminal_node = false)
         {
             if (!_terminal_node) {
                 weight = _weight;
@@ -121,20 +121,20 @@ class Node : public NodeBase
             return this;
         }
 
-        friend bool operator<(const Node<T>& lhs, const Node<T>& rhs)
+        friend bool operator<(const NodeBdd<T>& lhs, const NodeBdd<T>& rhs)
         {
             return lhs.forward_label[0].f < rhs.forward_label[0].f;
         }
 
-        friend bool operator> (const Node<T>& lhs, const Node<T>& rhs)
+        friend bool operator> (const NodeBdd<T>& lhs, const NodeBdd<T>& rhs)
         {
             return rhs < lhs;
         }
-        friend bool operator<=(const Node<T>& lhs, const Node<T>& rhs)
+        friend bool operator<=(const NodeBdd<T>& lhs, const NodeBdd<T>& rhs)
         {
             return !(lhs > rhs);
         }
-        friend bool operator>=(const Node<T>& lhs, const Node<T>& rhs)
+        friend bool operator>=(const NodeBdd<T>& lhs, const NodeBdd<T>& rhs)
         {
             return !(lhs < rhs);
         }

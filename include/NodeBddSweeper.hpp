@@ -37,7 +37,7 @@
  * Removes the nodes that are identified as equivalent to the 0-terminal
  * while top-down DD construction.
  */
-template<typename T = Node<double>>
+template<typename T = NodeBdd<double>>
 class DdSweeper {
     static size_t const SWEEP_RATIO = 20;
 

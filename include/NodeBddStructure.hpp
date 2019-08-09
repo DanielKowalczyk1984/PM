@@ -43,7 +43,7 @@
  * Ordered n-ary decision diagram structure.
  * @tparam ARITY arity of the nodes.
  */
-template<typename T = Node<double>>
+template<typename T = NodeBdd<double>>
 class DdStructure: public DdSpec<DdStructure<T>, NodeId> {
     TableHandler<T> diagram; ///< The diagram structure.
     NodeId root_;                    ///< Root node ID.
@@ -271,11 +271,11 @@ public:
      * ZDD reduction.
      * The node of which 1-edge points to the 0-terminal is deleted.
      */
-    void zddReduce() {
+    void compressBdd() {
         reduce<false,true>();
     }
 
-    void zddReduce2() {
+    void reduceZdd() {
         reduce<true,true>();
     }
 
@@ -608,7 +608,7 @@ public:
 
         for (int i = 1; i <= n; ++i) {
             size_t const m = (*diagram)[i].size();
-            Node<double> const* p = (*diagram)[i].data();
+            NodeBdd<double> const* p = (*diagram)[i].data();
             nodeId[i].resize(m);
 
             for (size_t j = 0; j < m; ++j, ++p) {

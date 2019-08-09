@@ -103,7 +103,7 @@ protected:
 /**
  * Basic breadth-first DD builder.
  */
-template< typename S, typename T = Node<double>>
+template< typename S, typename T = NodeBdd<double>>
 class DdBuilder: BuilderBase {
     typedef S Spec;
     typedef MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;

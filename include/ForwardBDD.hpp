@@ -7,7 +7,7 @@
 
 
 template<typename E, typename T> class ForwardBddBase : public 
-    Eval<E, Node<T>, OptimalSolution<T>> {
+    Eval<E, NodeBdd<T>, OptimalSolution<T>> {
 protected:
     T *pi;
     int num_jobs;
@@ -33,18 +33,18 @@ public:
         pi = _pi;
     }
 
-    virtual void initializenode(Node<T>& n) const = 0;
+    virtual void initializenode(NodeBdd<T>& n) const = 0;
 
-    virtual void initializerootnode(Node<T>& n) const  = 0;
+    virtual void initializerootnode(NodeBdd<T>& n) const  = 0;
 
-    virtual void evalNode(Node<T>& n) const = 0;
+    virtual void evalNode(NodeBdd<T>& n) const = 0;
 
-    OptimalSolution<T> get_objective(Node<T> &n) const {
+    OptimalSolution<T> get_objective(NodeBdd<T> &n) const {
         OptimalSolution<T> sol(-pi[num_jobs]);
-        Label<Node<T>,T> *ptr_node = &(n.forward_label[0]);
+        Label<NodeBdd<T>,T> *ptr_node = &(n.forward_label[0]);
 
         while(ptr_node->get_previous() != nullptr) {
-            Label<Node<T>,T> *aux_prev_node = ptr_node->get_previous();
+            Label<NodeBdd<T>,T> *aux_prev_node = ptr_node->get_previous();
             Job *aux_job = aux_prev_node->get_job();
             sol.C_max += aux_job->processing_time;
             sol.push_job_back(aux_job, aux_prev_node->get_weight(), pi[aux_job->job]);
@@ -54,7 +54,7 @@ public:
         return sol;
     }
 
-    OptimalSolution<T> getValue(Node<T> const &n){
+    OptimalSolution<T> getValue(NodeBdd<T> const &n){
         OptimalSolution<T> sol;
 
         return sol;
@@ -81,7 +81,7 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
         num_jobs = src.num_jobs;
     }
 
-    void initializenode(Node<T>& n) const override {
+    void initializenode(NodeBdd<T>& n) const override {
         if(n.get_weight() == 0) {
             n.forward_label[0].update_solution(-pi[num_jobs], nullptr, false);
             n.forward_label[1].update_solution(-DBL_MAX/2, nullptr, false);
@@ -91,12 +91,12 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
         }
     }
 
-    void initializerootnode(Node<T> &n) const override {
+    void initializerootnode(NodeBdd<T> &n) const override {
         n.forward_label[0].f = -pi[num_jobs];
         n.forward_label[1].set_f(-DBL_MAX/2);
     }
 
-    void evalNode(Node<T> &n) const override
+    void evalNode(NodeBdd<T> &n) const override
     {
         Job *tmp_j = n.get_job();
         assert(tmp_j != nullptr);
@@ -105,8 +105,8 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
 
         int      weight = n.get_weight();
         T g;
-        Node<T>* p0 = n.child[0];
-        Node<T>* p1 = n.child[1];
+        NodeBdd<T>* p0 = n.child[0];
+        NodeBdd<T>* p1 = n.child[1];
         result = - value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job];
 
         /**
@@ -185,7 +185,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         num_jobs = src.num_jobs;
     }
 
-    void initializenode(Node<T>& n) const override {
+    void initializenode(NodeBdd<T>& n) const override {
         if(n.get_weight() == 0) {
             n.forward_label[0].update_solution(-pi[num_jobs], nullptr, false);
         } else {
@@ -193,7 +193,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         }
     }
 
-    void initializerootnode(Node<T> &n) const override {
+    void initializerootnode(NodeBdd<T> &n) const override {
         n.forward_label[0].f = -pi[num_jobs];
     }
 
@@ -201,15 +201,15 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         pi = _pi;
     }
 
-    void evalNode(Node<T> &n) const override {
+    void evalNode(NodeBdd<T> &n) const override {
         Job *tmp_j = n.get_job();
         assert(tmp_j != nullptr);
         T result;
 
         int      weight = n.get_weight();
         T g;
-        Node<T>* p0 = n.child[0];
-        Node<T>* p1 = n.child[1];
+        NodeBdd<T>* p0 = n.child[0];
+        NodeBdd<T>* p1 = n.child[1];
         result = - value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job];
 
         /**

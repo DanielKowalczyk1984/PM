@@ -10,7 +10,7 @@ using data_table_node = DataTable<T>;
 template<typename T>
 using my_vector = MyVector<T>;
 
-template<typename T = Node<double>>
+template<typename T = NodeBdd<double>>
 class NodeTableEntity: public data_table_node<T>
 {
         mutable my_vector<my_vector<int> > higherLevelTable;

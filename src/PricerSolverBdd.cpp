@@ -19,7 +19,7 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines, GPtrArray*
     PricerConstruct ps(ordered_jobs);
     decision_diagram = std::unique_ptr<DdStructure<> >(new DdStructure<>(ps));
     remove_layers_init();
-    decision_diagram->zddReduce();
+    decision_diagram->compressBdd();
     size_graph = decision_diagram->size();
     init_table();
     construct_mipgraph();
@@ -105,15 +105,7 @@ void PricerSolverBdd::remove_layers_init()
 
     /** remove the unnecessary layers of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
-        bool remove = true;
-
-        for (auto& iter : table[i]) {
-            if (iter.branch[1] != 0) {
-                remove = false;
-            }
-        }
-
-        if (!remove) {
+        if (std::any_of(table[i].begin(),table[i].end(), [](NodeBdd<> &n) { return n.branch[1] != 0;})) {
             if (first_del != -1) {
                 g_ptr_array_remove_range(ordered_jobs, first_del, last_del - first_del + 1);
                 it = it - (last_del - first_del);
@@ -203,10 +195,9 @@ void PricerSolverBdd::remove_edges()
         }
     }
 
-    decision_diagram->zddReduce();
+    decision_diagram->compressBdd();
     nb_removed_nodes -= size_graph;
     size_graph = decision_diagram->size();
-    create_dot_zdd("bdd_reduced.gv");
     printf("The new size of BDD = %lu\n", size_graph);
 }
 
@@ -329,7 +320,7 @@ void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order)
     boost::write_graphviz(outf, g, vertex_writer);
     decision_diagram->zddSubset(constr);
     outf.close();
-    decision_diagram->zddReduce();
+    decision_diagram->compressBdd();
     init_table();
     cout << decision_diagram->size() << '\n';
     construct_mipgraph();
@@ -363,7 +354,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
                     tmp_j = (Job*) nullptr;
                 }
 
-                Node<>& tmp_node = table.node(tmp_nodeid);
+                NodeBdd<>& tmp_node = table.node(tmp_nodeid);
 
                 if (tmp_j == tmp_node.get_job()) {
                     x[tmp_node.high_edge_key] += columns[i];
@@ -403,7 +394,7 @@ double* PricerSolverBdd::project_solution(Solution* sol)
                 tmp_j = (Job*) nullptr;
             }
 
-            Node<>& tmp_node = table.node(tmp_nodeid);
+            NodeBdd<>& tmp_node = table.node(tmp_nodeid);
 
             if (tmp_j == tmp_node.get_job()) {
                 x[tmp_node.high_edge_key] += 1.0;
@@ -464,7 +455,7 @@ bool PricerSolverBdd::check_schedule_set(GPtrArray* set)
         Job* tmp_j = (Job*) g_ptr_array_index(set, j);
 
         while (tmp_nodeid > 1) {
-            Node<>& tmp_node = table.node(tmp_nodeid);
+            NodeBdd<>& tmp_node = table.node(tmp_nodeid);
 
             if (tmp_j == tmp_node.get_job()) {
                 tmp_nodeid = tmp_node.branch[1];
@@ -629,7 +620,7 @@ void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol)
 
 void PricerSolverBdd::iterate_zdd()
 {
-    DdStructure<Node<double>>::const_iterator it = decision_diagram->begin();
+    DdStructure<NodeBdd<double>>::const_iterator it = decision_diagram->begin();
 
     for (; it != decision_diagram->end(); ++it) {
         std::set<int>::const_iterator i = (*it).begin();

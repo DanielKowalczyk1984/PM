@@ -23,7 +23,7 @@ class DdReducer {
     int counter = 1;
 
     struct ReducNodeInfo {
-        Node<T> children;
+        NodeBdd<T> children;
         size_t column;
 
         size_t hash() const {
@@ -329,11 +329,11 @@ private:
         {
             //MyList<ReducNodeInfo> rni;
             //MyHashTable<ReducNodeInfo const*> uniq(m * 2);
-            MyHashTable<Node<T> const*> uniq(m * 2);
+            MyHashTable<NodeBdd<T> const*> uniq(m * 2);
 
             for (size_t j = 0; j < m; ++j) {
-                Node<T>* const p0 = input[i].data();
-                Node<T>& f = input[i][j];
+                NodeBdd<T>* const p0 = input[i].data();
+                NodeBdd<T>& f = input[i][j];
 
                 // make f canonical
                 NodeId& f0 = f.branch[0];
@@ -350,7 +350,7 @@ private:
                     newIdTable[i][j] = f0;
                 }
                 else {
-                    Node<T> const* pp = uniq.add(&f);
+                    NodeBdd<T> const* pp = uniq.add(&f);
 
                     if (pp == &f) {
                         newIdTable[i][j] = NodeId(i, jj++, f0.hasEmpty());

@@ -6,7 +6,7 @@
 #include <node_duration.hpp>
 
 template<typename E, typename T>
-class BackwardBddBase : public Eval<E, Node<T>, OptimalSolution<T> > {
+class BackwardBddBase : public Eval<E, NodeBdd<T>, OptimalSolution<T> > {
   protected:
     T *pi;
     int num_jobs;
@@ -29,10 +29,10 @@ class BackwardBddBase : public Eval<E, Node<T>, OptimalSolution<T> > {
         pi = _pi;
     }
 
-    virtual void initializenode(Node<T> &n) const  = 0;
-    virtual void initializerootnode(Node<T> &n) const  = 0;
-    virtual void evalNode(Node<T> &n) const = 0;
-    virtual OptimalSolution<T> getValue(Node<T> const &n) = 0;
+    virtual void initializenode(NodeBdd<T> &n) const  = 0;
+    virtual void initializerootnode(NodeBdd<T> &n) const  = 0;
+    virtual void evalNode(NodeBdd<T> &n) const = 0;
+    virtual OptimalSolution<T> getValue(NodeBdd<T> const &n) = 0;
 };
 
 template<typename E, typename T>
@@ -49,11 +49,11 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
     explicit BackwardBddSimple(int _num_jobs) : BackwardBddBase<E, T>(_num_jobs) {
     };
 
-    void evalNode(Node<T> &n) const override {
+    void evalNode(NodeBdd<T> &n) const override {
         Job *tmp_j = n.get_job();
         int weight = n.get_weight();
-        Node<T> *p0 = n.child[0];
-        Node<T> *p1 = n.child[1];
+        NodeBdd<T> *p0 = n.child[0];
+        NodeBdd<T> *p1 = n.child[1];
         T result = -value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job];
 
         T obj0 = p0->backward_label[0].get_f();
@@ -67,18 +67,18 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
 
     }
 
-    void initializenode(Node<T> &n) const override {
+    void initializenode(NodeBdd<T> &n) const override {
         n.backward_label[0].update_solution(-DBL_MAX / 2, nullptr, false);
     }
 
-    void initializerootnode(Node<T> &n) const override {
+    void initializerootnode(NodeBdd<T> &n) const override {
         n.backward_label[0].f = -pi[num_jobs];
     }
 
-    OptimalSolution<T> get_objective(Node<T> &n) const {
+    OptimalSolution<T> get_objective(NodeBdd<T> &n) const {
         OptimalSolution<T> sol(-pi[num_jobs]);
 
-        Node<T> *aux_node = &n;
+        NodeBdd<T> *aux_node = &n;
         Job *aux_job =  n.get_job();
 
         while (aux_job) {
@@ -96,7 +96,7 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
         return sol;
     }
 
-    OptimalSolution<T> getValue(Node<T> const &n) override {
+    OptimalSolution<T> getValue(NodeBdd<T> const &n) override {
         OptimalSolution<T> sol;
         return sol;
     }
@@ -119,11 +119,11 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
     explicit BackwardBddCycle(int _num_jobs) : BackwardBddBase<E, T>(_num_jobs) {
     };
 
-    void evalNode(Node<T> &n) const override {
+    void evalNode(NodeBdd<T> &n) const override {
         Job *tmp_j = n.get_job();
         int weight{n.get_weight()};
-        Node<T> *p0  {n.child[0]};
-        Node<T> *p1  {n.child[1]};
+        NodeBdd<T> *p0  {n.child[0]};
+        NodeBdd<T> *p1  {n.child[1]};
         T result { -value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job]};
 
         Job *prev_job{p1->backward_label[0].get_prev_job()};
@@ -167,17 +167,17 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         }
     }
 
-    void initializenode(Node<T> &n) const override {
+    void initializenode(NodeBdd<T> &n) const override {
         n.backward_label[0].update_solution(-DBL_MAX / 2, nullptr, false);
     }
 
-    void initializerootnode(Node<T> &n) const override {
+    void initializerootnode(NodeBdd<T> &n) const override {
         n.backward_label[0].f = -pi[num_jobs];
     }
 
-    OptimalSolution<T> get_objective(Node<T> &n) const {
+    OptimalSolution<T> get_objective(NodeBdd<T> &n) const {
         OptimalSolution<T> sol(-pi[num_jobs]);
-        Label<Node<T>,T> *aux_label = &(n.backward_label[0]);
+        Label<NodeBdd<T>,T> *aux_label = &(n.backward_label[0]);
 
         while (aux_label) {
             if (aux_label->get_high()) {
@@ -191,7 +191,7 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         return sol;
     }
 
-    OptimalSolution<T> getValue(Node<T> const &n) override {
+    OptimalSolution<T> getValue(NodeBdd<T> const &n) override {
         OptimalSolution<T> sol;
         return sol;
     }
