@@ -2,11 +2,8 @@
 #define NODE_BASE_HPP
 
 #include "OptimalSolution.hpp"
-#include "NodeBdd.hpp"
+#include "NodeId.hpp"
 
-using NodeId = tdzdd::NodeId;
-
-// template<typename T = double>
 class NodeBase {
   private:
     int num_layer;
@@ -46,7 +43,15 @@ class NodeBase {
           terminal_node(false),
           job(nullptr),
           branch{i,j}{
-      }
+    }
+
+    NodeBase(NodeId f0, NodeId f1) : 
+          num_layer(0),
+          root_node(false),
+          terminal_node(false),
+          job(nullptr),
+          branch{f0,f1}{
+    }
 
     NodeBase(const NodeBase &src) = default;
     NodeBase(NodeBase &&src) = default;
@@ -109,6 +114,16 @@ class NodeBase {
         return os << ")";
     }
 
+};
+
+struct InitializedNode : NodeBase {
+    InitializedNode() :
+            NodeBase(0, 0) {
+    }
+
+    InitializedNode(NodeId f0, NodeId f1) :
+            NodeBase(f0, f1) {
+    }
 };
 
 
