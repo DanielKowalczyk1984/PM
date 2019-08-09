@@ -206,7 +206,7 @@ public:
         if (root_ == o.root_ && &*diagram == &*o.diagram) return true;
         if (size() > o.size()) return o.operator==(*this);
 
-        MyHashMap<tdzdd::InitializedNode<2>,size_t> uniq;
+        MyHashMap<InitializedNode,size_t> uniq;
         DataTable<NodeId> equiv(n + 1);
         {
             size_t om = (*o.diagram)[0].size();
@@ -228,7 +228,7 @@ public:
             equiv[i].resize(om);
 
             for (size_t j = 0; j < om; ++j) {
-                tdzdd::InitializedNode<2> node;
+                InitializedNode node;
 
                 for (int b = 0; b < 2; ++b) {
                     NodeId f = (*o.diagram)[i][j].branch[b];

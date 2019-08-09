@@ -31,6 +31,7 @@
 #include <stdexcept>
 
 #include "NodeBddSweeper.hpp"
+#include "NodeBranchId.hpp"
 #include "node_duration.hpp"
 #include "NodeBddTable.hpp"
 #include "NodeBddSpec.hpp"
@@ -118,7 +119,7 @@ class DdBuilder: BuilderBase {
 
     MyVector<char> oneStorage;
     void* const one;
-    MyVector<tdzdd::NodeBranchId> oneSrcPtr;
+    MyVector<NodeBranchId> oneSrcPtr;
 
     void init(int n) {
         snodeTable.resize(n + 1);
@@ -265,13 +266,13 @@ public:
                     if (oneSrcPtr.empty()) { // the first 1-terminal candidate
                         spec.get_copy(one, state(pp));
                         q.branch[b] = 1;
-                        oneSrcPtr.push_back(tdzdd::NodeBranchId(i, jj, b));
+                        oneSrcPtr.push_back(NodeBranchId(i, jj, b));
                     }
                     else {
                         switch (spec.merge_states(one, state(pp))) {
                         case 1:
                             while (!oneSrcPtr.empty()) {
-                                tdzdd::NodeBranchId const& nbi = oneSrcPtr.back();
+                                NodeBranchId const& nbi = oneSrcPtr.back();
                                 assert(nbi.row >= i);
                                 output[nbi.row][nbi.col].branch[nbi.val] = 0;
                                 oneSrcPtr.pop_back();
@@ -279,14 +280,14 @@ public:
                             spec.destruct(one);
                             spec.get_copy(one, state(pp));
                             q.branch[b] = 1;
-                            oneSrcPtr.push_back(tdzdd::NodeBranchId(i, jj, b));
+                            oneSrcPtr.push_back(NodeBranchId(i, jj, b));
                             break;
                         case 2:
                             q.branch[b] = 0;
                             break;
                         default:
                             q.branch[b] = 1;
-                            oneSrcPtr.push_back(tdzdd::NodeBranchId(i, jj, b));
+                            oneSrcPtr.push_back(NodeBranchId(i, jj, b));
                             break;
                         }
                     }
@@ -343,7 +344,7 @@ class ZddSubsetter: BuilderBase {
 
     MyVector<char> oneStorage;
     void* const one;
-    MyVector<tdzdd::NodeBranchId> oneSrcPtr;
+    MyVector<NodeBranchId> oneSrcPtr;
 
     MemoryPools pools;
 
@@ -525,13 +526,13 @@ public:
                             if (oneSrcPtr.empty()) { // the first 1-terminal candidate
                                 spec.get_copy(one, tmpState);
                                 q.branch[b] = 1;
-                                oneSrcPtr.push_back(tdzdd::NodeBranchId(i, jj, b));
+                                oneSrcPtr.push_back(NodeBranchId(i, jj, b));
                             }
                             else {
                                 switch (spec.merge_states(one, tmpState)) {
                                 case 1:
                                     while (!oneSrcPtr.empty()) {
-                                        tdzdd::NodeBranchId const& nbi =
+                                        NodeBranchId const& nbi =
                                                 oneSrcPtr.back();
                                         assert(nbi.row >= i);
                                         output[nbi.row][nbi.col].branch[nbi.val] =
@@ -541,14 +542,14 @@ public:
                                     spec.destruct(one);
                                     spec.get_copy(one, tmpState);
                                     q.branch[b] = 1;
-                                    oneSrcPtr.push_back(tdzdd::NodeBranchId(i, jj, b));
+                                    oneSrcPtr.push_back(NodeBranchId(i, jj, b));
                                     break;
                                 case 2:
                                     q.branch[b] = 0;
                                     break;
                                 default:
                                     q.branch[b] = 1;
-                                    oneSrcPtr.push_back(tdzdd::NodeBranchId(i, jj, b));
+                                    oneSrcPtr.push_back(NodeBranchId(i, jj, b));
                                     break;
                                 }
                             }

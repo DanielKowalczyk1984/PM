@@ -29,6 +29,7 @@
 #include <ostream>
 
 #include "node_duration.hpp"
+#include "NodeBranchId.hpp"
 #include "NodeBddTable.hpp"
 #include "util/MyVector.hpp"
 
@@ -42,7 +43,7 @@ class DdSweeper {
     static size_t const SWEEP_RATIO = 20;
 
     NodeTableEntity<T>& diagram;
-    MyVector<tdzdd::NodeBranchId>* oneSrcPtr;
+    MyVector<NodeBranchId>* oneSrcPtr;
 
     MyVector<int> sweepLevel;
     MyVector<size_t> deadCount;
@@ -65,7 +66,7 @@ public:
      * @param oneSrcPtr collection of node branch IDs.
      */
     DdSweeper(NodeTableEntity<T>& diagram,
-              MyVector<tdzdd::NodeBranchId>& oneSrcPtr) :
+              MyVector<NodeBranchId>& oneSrcPtr) :
             diagram(diagram),
             oneSrcPtr(&oneSrcPtr),
             allCount(0),
@@ -147,7 +148,7 @@ public:
 
         if (oneSrcPtr) {
             for (size_t i = 0; i < oneSrcPtr->size(); ++i) {
-                tdzdd::NodeBranchId& nbi = (*oneSrcPtr)[i];
+                NodeBranchId& nbi = (*oneSrcPtr)[i];
                 if (nbi.row >= k) {
                     NodeId f = newId[nbi.row][nbi.col];
                     nbi.row = f.row();
