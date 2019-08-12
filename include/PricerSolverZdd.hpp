@@ -2,10 +2,7 @@
 #define PRICER_SOLVER_ZDD_HPP
 
 #include "PricerSolverBase.hpp"
-// #include "PricerEvaluate.hpp"
 #include "MipGraph.hpp"
-// #include "ZddNode.hpp"
-
 
 class PricerSolverZdd : public PricerSolverBase
 {
