@@ -188,11 +188,7 @@ int main(int ac, char **av) {
         compute_lower_bound(&problem, &(problem.root_pd));
         problem.rel_error = (double) (problem.global_upper_bound - problem.global_lower_bound)/(problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
-        if(parms->pricing_solver < dp_solver) {
-            // calculate_new_ordered_jobs(root);
-            // calculate_x_e(root);
-            // disjunctive_inequality(root, problem.opt_sol);
-        }
+        build_solve_mip(root);
         // compute_lower_bound(&problem, &(problem.root_pd));
         problem.size_graph_after_reduced_cost_fixing = get_size_graph(root->solver);
 

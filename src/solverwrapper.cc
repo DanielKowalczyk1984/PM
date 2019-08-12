@@ -83,7 +83,7 @@ int reduce_cost_fixing(NodeData *pd) {
 int build_solve_mip(NodeData *pd) {
     int val = 0;
 
-   // pd->solver->build_mip(pd->x_e);
+   pd->solver->build_mip();
 
     return val;
 }
