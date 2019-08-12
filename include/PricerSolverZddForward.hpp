@@ -17,7 +17,7 @@ public:
 class PricerSolverZddCycle : public PricerSolverZdd {
 private:
     ForwardZddCycleDouble evaluator;
-    ForwardZddCycleDouble reversed_evaluator;
+    BackwardZddCycleDouble reversed_evaluator;
 public:
     PricerSolverZddCycle(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
     OptimalSolution<double> pricing_algorithm(double *_pi) override;
