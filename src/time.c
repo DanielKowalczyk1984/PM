@@ -76,10 +76,10 @@
 #endif
 
 double CCutil_zeit(void) {
-  struct rusage ru;
-  getrusage(RUSAGE_SELF, &ru);
-  return ((double)ru.ru_utime.tv_sec) +
-         ((double)ru.ru_utime.tv_usec) / 1000000.0;
+    struct rusage ru;
+    getrusage(RUSAGE_SELF, &ru);
+    return ((double)ru.ru_utime.tv_sec) +
+           ((double)ru.ru_utime.tv_usec) / 1000000.0;
 }
 #else /* HAVE_GETRUSAGE */
 
@@ -99,9 +99,9 @@ double CCutil_zeit(void) {
 #endif
 
 double CCutil_zeit(void) {
-  struct tms now;
-  times(&now);
-  return ((double)now.tms_utime) / ((double)MACHINE_FREQ);
+    struct tms now;
+    times(&now);
+    return ((double)now.tms_utime) / ((double)MACHINE_FREQ);
 }
 #else /* HAVE_TIMES */
 
@@ -116,112 +116,117 @@ double CCutil_zeit(void) {
 #endif
 
 double CCutil_zeit(void) {
-  return ((double)clock()) / ((double)CLOCKS_PER_SEC);
+    return ((double)clock()) / ((double)CLOCKS_PER_SEC);
 }
 
 #else  /* HAVE_CLOCK */
 
-double CCutil_zeit(void) { return 0.0; }
+double CCutil_zeit(void) {
+    return 0.0;
+}
 #endif /* HAVE_CLOCK */
 #endif /* HAVE_TIMES */
 #endif /* HAVE_GETRUSAGE */
 
-double CCutil_real_zeit(void) { return (double)time(0); }
-
-void CCutil_init_timer(CCutil_timer *t, const char *name) {
-  t->szeit = -1.0;
-  t->cum_zeit = 0.0;
-  t->count = 0;
-
-  if (name == (char *)NULL || name[0] == '\0') {
-    strncpy(t->name, "ANONYMOUS", sizeof(t->name) - 1);
-  } else {
-    strncpy(t->name, name, sizeof(t->name) - 1);
-  }
-
-  t->name[sizeof(t->name) - 1] = '\0';
+double CCutil_real_zeit(void) {
+    return (double)time(0);
 }
 
-void CCutil_start_timer(CCutil_timer *t) {
-  if (t->szeit != -1.0) {
-    fprintf(stderr, "Warning: restarting running timer %s at %d in %s\n",
-            t->name, __LINE__, __FILE__);
-  }
+void CCutil_init_timer(CCutil_timer* t, const char* name) {
+    t->szeit = -1.0;
+    t->cum_zeit = 0.0;
+    t->count = 0;
 
-  t->szeit = CCutil_zeit();
+    if (name == (char*)NULL || name[0] == '\0') {
+        strncpy(t->name, "ANONYMOUS", sizeof(t->name) - 1);
+    } else {
+        strncpy(t->name, name, sizeof(t->name) - 1);
+    }
+
+    t->name[sizeof(t->name) - 1] = '\0';
 }
 
-void CCutil_suspend_timer(CCutil_timer *t) {
-  if (t->szeit == -1.0) {
-    fprintf(stderr, "Warning: suspended non-running timer %s at %d in %s\n",
-            t->name, __LINE__, __FILE__);
-    return;
-  }
+void CCutil_start_timer(CCutil_timer* t) {
+    if (t->szeit != -1.0) {
+        fprintf(stderr, "Warning: restarting running timer %s at %d in %s\n",
+                t->name, __LINE__, __FILE__);
+    }
 
-  t->cum_zeit += CCutil_zeit() - t->szeit;
-  t->szeit = -1.0;
+    t->szeit = CCutil_zeit();
 }
 
-void CCutil_start_resume_time(CCutil_timer *t) {
-  if (t->cum_zeit == .0) {
-    CCutil_start_timer(t);
-  } else {
-    CCutil_resume_timer(t);
-  }
+void CCutil_suspend_timer(CCutil_timer* t) {
+    if (t->szeit == -1.0) {
+        fprintf(stderr, "Warning: suspended non-running timer %s at %d in %s\n",
+                t->name, __LINE__, __FILE__);
+        return;
+    }
+
+    t->cum_zeit += CCutil_zeit() - t->szeit;
+    t->szeit = -1.0;
 }
 
-void CCutil_resume_timer(CCutil_timer *t) {
-  if (t->szeit != -1.0) {
-    fprintf(stderr, "Warning: resuming running timer %s at %d in %s\n", t->name,
-            __LINE__, __FILE__);
-    return;
-  }
-
-  t->szeit = CCutil_zeit();
+void CCutil_start_resume_time(CCutil_timer* t) {
+    if (t->cum_zeit == .0) {
+        CCutil_start_timer(t);
+    } else {
+        CCutil_resume_timer(t);
+    }
 }
 
-double CCutil_stop_timer(CCutil_timer *t, int printit) {
-  double z;
+void CCutil_resume_timer(CCutil_timer* t) {
+    if (t->szeit != -1.0) {
+        fprintf(stderr, "Warning: resuming running timer %s at %d in %s\n",
+                t->name, __LINE__, __FILE__);
+        return;
+    }
 
-  if (t->szeit == -1.0) {
-    fprintf(stderr, "Warning: stopping non-running timer %s at %d in %s\n",
-            t->name, __LINE__, __FILE__);
-    return 0.0;
-  }
-
-  z = CCutil_zeit() - t->szeit;
-  t->szeit = -1.0;
-  t->cum_zeit += z;
-  t->count++;
-
-  if (printit == 1 || (printit == 2 && z > 0.0)) {
-    printf("Time for %s: %.2f seconds (%.2f total in %d calls)\n", t->name, z,
-           t->cum_zeit, t->count);
-    fflush(stdout);
-  } else if (printit == 3 || (printit == 4 && z > 0.0)) {
-    printf("T %-34.34s %9.2f %9.2f %d\n", t->name, z, t->cum_zeit, t->count);
-    fflush(stdout);
-  }
-
-  return z;
+    t->szeit = CCutil_zeit();
 }
 
-double CCutil_total_timer(CCutil_timer *t, int printit) {
-  double z = t->cum_zeit;
+double CCutil_stop_timer(CCutil_timer* t, int printit) {
+    double z;
 
-  if (t->szeit != -1.0) {
-    z += CCutil_zeit() - t->szeit;
-  }
+    if (t->szeit == -1.0) {
+        fprintf(stderr, "Warning: stopping non-running timer %s at %d in %s\n",
+                t->name, __LINE__, __FILE__);
+        return 0.0;
+    }
 
-  if (printit == 1 || (printit == 2 && z > 0.0)) {
-    printf("Total time for %-34.34s %.2f seconds in %d%s calls\n", t->name, z,
-           t->count, t->szeit == -1.0 ? "" : "+1");
-    fflush(stdout);
-  } else if (printit == 3 || (printit == 4 && z > 0.0)) {
-    printf("CT %-34.34s %9.2f %6d%s\n", t->name, z, t->count,
-           t->szeit == -1.0 ? "" : "+1");
-    fflush(stdout);
-  }
+    z = CCutil_zeit() - t->szeit;
+    t->szeit = -1.0;
+    t->cum_zeit += z;
+    t->count++;
 
-  return z;
+    if (printit == 1 || (printit == 2 && z > 0.0)) {
+        printf("Time for %s: %.2f seconds (%.2f total in %d calls)\n", t->name,
+               z, t->cum_zeit, t->count);
+        fflush(stdout);
+    } else if (printit == 3 || (printit == 4 && z > 0.0)) {
+        printf("T %-34.34s %9.2f %9.2f %d\n", t->name, z, t->cum_zeit,
+               t->count);
+        fflush(stdout);
+    }
+
+    return z;
+}
+
+double CCutil_total_timer(CCutil_timer* t, int printit) {
+    double z = t->cum_zeit;
+
+    if (t->szeit != -1.0) {
+        z += CCutil_zeit() - t->szeit;
+    }
+
+    if (printit == 1 || (printit == 2 && z > 0.0)) {
+        printf("Total time for %-34.34s %.2f seconds in %d%s calls\n", t->name,
+               z, t->count, t->szeit == -1.0 ? "" : "+1");
+        fflush(stdout);
+    } else if (printit == 3 || (printit == 4 && z > 0.0)) {
+        printf("CT %-34.34s %9.2f %6d%s\n", t->name, z, t->count,
+               t->szeit == -1.0 ? "" : "+1");
+        fflush(stdout);
+    }
+
+    return z;
 }

@@ -64,284 +64,284 @@
 
 #define NBINS (1 << BITS_PER_PASS)
 
-void CCutil_int_array_quicksort(int *len, int n) {
-  int i, j, temp, t;
+void CCutil_int_array_quicksort(int* len, int n) {
+    int i, j, temp, t;
 
-  if (n <= 1) {
-    return;
-  }
-
-  CC_SWAP(len[0], len[(n - 1) / 2], temp);
-  i = 0;
-  j = n;
-  t = len[0];
-
-  while (1) {
-    do {
-      i++;
-    } while (i < n && len[i] < t);
-
-    do {
-      j--;
-    } while (len[j] > t);
-
-    if (j < i) {
-      break;
+    if (n <= 1) {
+        return;
     }
 
-    CC_SWAP(len[i], len[j], temp);
-  }
+    CC_SWAP(len[0], len[(n - 1) / 2], temp);
+    i = 0;
+    j = n;
+    t = len[0];
 
-  CC_SWAP(len[0], len[j], temp);
-  CCutil_int_array_quicksort(len, j);
-  CCutil_int_array_quicksort(len + i, n - i);
+    while (1) {
+        do {
+            i++;
+        } while (i < n && len[i] < t);
+
+        do {
+            j--;
+        } while (len[j] > t);
+
+        if (j < i) {
+            break;
+        }
+
+        CC_SWAP(len[i], len[j], temp);
+    }
+
+    CC_SWAP(len[0], len[j], temp);
+    CCutil_int_array_quicksort(len, j);
+    CCutil_int_array_quicksort(len + i, n - i);
 }
 
-void CCutil_int_array_quicksort_0(int *len, int n) {
-  int i, j, temp, t;
+void CCutil_int_array_quicksort_0(int* len, int n) {
+    int i, j, temp, t;
 
-  if (n <= 1) {
-    return;
-  }
-
-  CC_SWAP(len[0], len[(n - 1) / 2], temp);
-  i = 0;
-  j = n;
-  t = len[0];
-
-  while (1) {
-    do {
-      i++;
-    } while (i < n && len[i] > t);
-
-    do {
-      j--;
-    } while (len[j] < t);
-
-    if (j < i) {
-      break;
+    if (n <= 1) {
+        return;
     }
 
-    CC_SWAP(len[i], len[j], temp);
-  }
+    CC_SWAP(len[0], len[(n - 1) / 2], temp);
+    i = 0;
+    j = n;
+    t = len[0];
 
-  CC_SWAP(len[0], len[j], temp);
-  CCutil_int_array_quicksort_0(len, j);
-  CCutil_int_array_quicksort_0(len + i, n - i);
+    while (1) {
+        do {
+            i++;
+        } while (i < n && len[i] > t);
+
+        do {
+            j--;
+        } while (len[j] < t);
+
+        if (j < i) {
+            break;
+        }
+
+        CC_SWAP(len[i], len[j], temp);
+    }
+
+    CC_SWAP(len[0], len[j], temp);
+    CCutil_int_array_quicksort_0(len, j);
+    CCutil_int_array_quicksort_0(len + i, n - i);
 }
 
-void CCutil_int_perm_quicksort(int *perm, int *len, int n) {
-  int i, j, temp, t;
+void CCutil_int_perm_quicksort(int* perm, int* len, int n) {
+    int i, j, temp, t;
 
-  if (n <= 1) {
-    return;
-  }
-
-  CC_SWAP(perm[0], perm[(n - 1) / 2], temp);
-  i = 0;
-  j = n;
-  t = len[perm[0]];
-
-  while (1) {
-    do {
-      i++;
-    } while (i < n && len[perm[i]] < t);
-
-    do {
-      j--;
-    } while (len[perm[j]] > t);
-
-    if (j < i) {
-      break;
+    if (n <= 1) {
+        return;
     }
 
-    CC_SWAP(perm[i], perm[j], temp);
-  }
+    CC_SWAP(perm[0], perm[(n - 1) / 2], temp);
+    i = 0;
+    j = n;
+    t = len[perm[0]];
 
-  CC_SWAP(perm[0], perm[j], temp);
-  CCutil_int_perm_quicksort(perm, len, j);
-  CCutil_int_perm_quicksort(perm + i, len, n - i);
+    while (1) {
+        do {
+            i++;
+        } while (i < n && len[perm[i]] < t);
+
+        do {
+            j--;
+        } while (len[perm[j]] > t);
+
+        if (j < i) {
+            break;
+        }
+
+        CC_SWAP(perm[i], perm[j], temp);
+    }
+
+    CC_SWAP(perm[0], perm[j], temp);
+    CCutil_int_perm_quicksort(perm, len, j);
+    CCutil_int_perm_quicksort(perm + i, len, n - i);
 }
 
-void CCutil_int_perm_quicksort_0(int *perm, int *len, int n) {
-  int i, j, temp, t;
+void CCutil_int_perm_quicksort_0(int* perm, int* len, int n) {
+    int i, j, temp, t;
 
-  if (n <= 1) {
-    return;
-  }
-
-  CC_SWAP(perm[0], perm[(n - 1) / 2], temp);
-  i = 0;
-  j = n;
-  t = len[perm[0]];
-
-  while (1) {
-    do {
-      i++;
-    } while (i < n && len[perm[i]] > t);
-
-    do {
-      j--;
-    } while (len[perm[j]] < t);
-
-    if (j < i) {
-      break;
+    if (n <= 1) {
+        return;
     }
 
-    CC_SWAP(perm[i], perm[j], temp);
-  }
+    CC_SWAP(perm[0], perm[(n - 1) / 2], temp);
+    i = 0;
+    j = n;
+    t = len[perm[0]];
 
-  CC_SWAP(perm[0], perm[j], temp);
-  CCutil_int_perm_quicksort_0(perm, len, j);
-  CCutil_int_perm_quicksort_0(perm + i, len, n - i);
+    while (1) {
+        do {
+            i++;
+        } while (i < n && len[perm[i]] > t);
+
+        do {
+            j--;
+        } while (len[perm[j]] < t);
+
+        if (j < i) {
+            break;
+        }
+
+        CC_SWAP(perm[i], perm[j], temp);
+    }
+
+    CC_SWAP(perm[0], perm[j], temp);
+    CCutil_int_perm_quicksort_0(perm, len, j);
+    CCutil_int_perm_quicksort_0(perm + i, len, n - i);
 }
 
-void CCutil_double_perm_quicksort(int *perm, double *len, int n) {
-  int i, j, temp;
-  double t;
+void CCutil_double_perm_quicksort(int* perm, double* len, int n) {
+    int    i, j, temp;
+    double t;
 
-  if (n <= 1) {
-    return;
-  }
-
-  CC_SWAP(perm[0], perm[(n - 1) / 2], temp);
-  i = 0;
-  j = n;
-  t = len[perm[0]];
-
-  while (1) {
-    do {
-      i++;
-    } while (i < n && len[perm[i]] < t);
-
-    do {
-      j--;
-    } while (len[perm[j]] > t);
-
-    if (j < i) {
-      break;
+    if (n <= 1) {
+        return;
     }
 
-    CC_SWAP(perm[i], perm[j], temp);
-  }
+    CC_SWAP(perm[0], perm[(n - 1) / 2], temp);
+    i = 0;
+    j = n;
+    t = len[perm[0]];
 
-  CC_SWAP(perm[0], perm[j], temp);
-  CCutil_double_perm_quicksort(perm, len, j);
-  CCutil_double_perm_quicksort(perm + i, len, n - i);
+    while (1) {
+        do {
+            i++;
+        } while (i < n && len[perm[i]] < t);
+
+        do {
+            j--;
+        } while (len[perm[j]] > t);
+
+        if (j < i) {
+            break;
+        }
+
+        CC_SWAP(perm[i], perm[j], temp);
+    }
+
+    CC_SWAP(perm[0], perm[j], temp);
+    CCutil_double_perm_quicksort(perm, len, j);
+    CCutil_double_perm_quicksort(perm + i, len, n - i);
 }
 
-static int partition(int *input, int p, int r) {
-  int pivot = input[r];
+static int partition(int* input, int p, int r) {
+    int pivot = input[r];
 
-  while (p < r) {
-    while (input[p] < pivot) {
-      p++;
+    while (p < r) {
+        while (input[p] < pivot) {
+            p++;
+        }
+
+        while (input[r] > pivot) {
+            r--;
+        }
+
+        if (input[p] == input[r]) {
+            p++;
+        } else if (p < r) {
+            int tmp = input[p];
+            input[p] = input[r];
+            input[r] = tmp;
+        }
     }
 
-    while (input[r] > pivot) {
-      r--;
-    }
-
-    if (input[p] == input[r]) {
-      p++;
-    } else if (p < r) {
-      int tmp = input[p];
-      input[p] = input[r];
-      input[r] = tmp;
-    }
-  }
-
-  return r;
+    return r;
 }
 
-int CCutil_quickselect(int *input, int p, int r, int k) {
-  if (p == r) {
-    return input[p];
-  }
-
-  int j = partition(input, p, r);
-  int length = j - p + 1;
-
-  if (length == k) {
-    return input[j];
-  } else if (k < length) {
-    return CCutil_quickselect(input, p, j - 1, k);
-  } else {
-    return CCutil_quickselect(input, j + 1, r, k - length);
-  }
-}
-
-static int recursiveSelect(int *V, int *inds, int start, int end, int k) {
-  /*recursively partitions vector V to find kth element */
-  int pivot, i, tmp;
-  float tmpdbl;
-
-  if (start == end - 1) { /* active set is only one entry    */
-    return inds[start];
-  }
-
-  /*otherwise pick pivot and split */
-  pivot = start;
-
-  for (i = start + 1; i < end; i++) {
-    /* put all entries greater than V[pivot] to the left of pivot*/
-    if (V[i] > V[pivot]) {
-      /* first move pivot value up one index */
-      tmp = inds[pivot];
-      tmpdbl = V[pivot];
-      inds[pivot] = inds[pivot + 1];
-      V[pivot] = V[pivot + 1];
-      inds[pivot + 1] = tmp;
-      V[pivot + 1] = tmpdbl;
-
-      if (i > pivot + 1) {
-        /* now we need to swap i th with pivot-1 th */
-        tmp = inds[pivot];
-        tmpdbl = V[pivot];
-        inds[pivot] = inds[i];
-        V[pivot] = V[i];
-        inds[i] = tmp;
-        V[i] = tmpdbl;
-      }
-
-      pivot++;
+int CCutil_quickselect(int* input, int p, int r, int k) {
+    if (p == r) {
+        return input[p];
     }
-  }
 
-  if (pivot == k) {
-    return inds[pivot];
-  }
-  /* now we decide if kth is to the right of the pivot or the left */
-  else if (pivot > k) {
-    return recursiveSelect(V, inds, start, pivot, k);
-  } else {
-    return recursiveSelect(V, inds, pivot + 1, end, k);
-  }
+    int j = partition(input, p, r);
+    int length = j - p + 1;
+
+    if (length == k) {
+        return input[j];
+    } else if (k < length) {
+        return CCutil_quickselect(input, p, j - 1, k);
+    } else {
+        return CCutil_quickselect(input, j + 1, r, k - length);
+    }
 }
 
-int quickselect(int *V, int N, int k) {
-  /* returns the index of the kth greatest value in vector V */
-  int *Vcopy;
-  int i, *inds, ret;
+static int recursiveSelect(int* V, int* inds, int start, int end, int k) {
+    /*recursively partitions vector V to find kth element */
+    int   pivot, i, tmp;
+    float tmpdbl;
 
-  if (k >= N) {
-    return -1;
-  }
+    if (start == end - 1) { /* active set is only one entry    */
+        return inds[start];
+    }
 
-  if (k < 0) {
-    return -1;
-  }
+    /*otherwise pick pivot and split */
+    pivot = start;
 
-  Vcopy = (int *)malloc(N * sizeof(float));
-  inds = (int *)malloc(N * sizeof(int));
+    for (i = start + 1; i < end; i++) {
+        /* put all entries greater than V[pivot] to the left of pivot*/
+        if (V[i] > V[pivot]) {
+            /* first move pivot value up one index */
+            tmp = inds[pivot];
+            tmpdbl = V[pivot];
+            inds[pivot] = inds[pivot + 1];
+            V[pivot] = V[pivot + 1];
+            inds[pivot + 1] = tmp;
+            V[pivot + 1] = tmpdbl;
 
-  for (i = 0; i < N; i++) {
-    Vcopy[i] = V[i];
-    inds[i] = i;
-  }
+            if (i > pivot + 1) {
+                /* now we need to swap i th with pivot-1 th */
+                tmp = inds[pivot];
+                tmpdbl = V[pivot];
+                inds[pivot] = inds[i];
+                V[pivot] = V[i];
+                inds[i] = tmp;
+                V[i] = tmpdbl;
+            }
 
-  ret = recursiveSelect(Vcopy, inds, 0, N, k);
-  free(Vcopy);
-  free(inds);
-  return ret;
+            pivot++;
+        }
+    }
+
+    if (pivot == k) {
+        return inds[pivot];
+    }
+    /* now we decide if kth is to the right of the pivot or the left */
+    else if (pivot > k) {
+        return recursiveSelect(V, inds, start, pivot, k);
+    } else {
+        return recursiveSelect(V, inds, pivot + 1, end, k);
+    }
+}
+
+int quickselect(int* V, int N, int k) {
+    /* returns the index of the kth greatest value in vector V */
+    int* Vcopy;
+    int  i, *inds, ret;
+
+    if (k >= N) {
+        return -1;
+    }
+
+    if (k < 0) {
+        return -1;
+    }
+
+    Vcopy = (int*)malloc(N * sizeof(float));
+    inds = (int*)malloc(N * sizeof(int));
+
+    for (i = 0; i < N; i++) {
+        Vcopy[i] = V[i];
+        inds[i] = i;
+    }
+
+    ret = recursiveSelect(Vcopy, inds, 0, N, k);
+    free(Vcopy);
+    free(inds);
+    return ret;
 }
