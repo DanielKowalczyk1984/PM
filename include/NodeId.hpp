@@ -25,7 +25,7 @@ public:
     NodeId() { // 'code_' is not initialized in the default constructor for SPEED.
     }
 
-    explicit NodeId(uint64_t code) :
+    NodeId(uint64_t code) :
             code_(code) {
     }
 
