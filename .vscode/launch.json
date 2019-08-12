@@ -9,11 +9,11 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
-            "args": ["-S 1 -a 4", "${workspaceRoot}/instances/wt40/wt040_011.dat", "4"],
+            "args": ["-S 0", "-a 0", "${workspaceRoot}/instances/wt40/wt040_121.dat", "4"],
             "cwd": "${workspaceRoot}/build",
             "stopAtEntry": false,
             "environment": [],
-            "externalConsole": false,
+            "externalConsole": true,
             "MIMode": "gdb",
             "linux": {
                 "MIMode": "gdb",

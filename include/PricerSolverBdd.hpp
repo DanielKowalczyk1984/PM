@@ -12,7 +12,7 @@ class PricerSolverBdd : public PricerSolverBase
         int nb_removed_edges;
         int nb_removed_nodes;
 
-        MipGraph g;
+        MipGraph mip_graph;
         std::unique_ptr<GRBEnv> env;
         std::unique_ptr<GRBModel> model;
 
