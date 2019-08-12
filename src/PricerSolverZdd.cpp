@@ -331,7 +331,6 @@ void PricerSolverZdd::build_mip() {
 
             if (node_id == decision_diagram->root()) {
                 rhs_flow[vertex_key] = -(double)num_machines;
-                printf("test test %d", vertex_key);
             } else if (node_id.row() == 0) {
                 rhs_flow[vertex_key] = (double)num_machines;
             } else {
