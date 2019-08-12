@@ -7,6 +7,7 @@
 class NodeBase {
   private:
     int num_layer;
+    int id_key;
 
     bool root_node;
     bool terminal_node;
@@ -21,6 +22,7 @@ class NodeBase {
      */
     NodeBase():
           num_layer(0),
+          id_key(-1),
           root_node(false),
           terminal_node(false),
           job(nullptr),
@@ -31,6 +33,7 @@ class NodeBase {
 
     NodeBase(int &_num_layer, bool &_root_node,bool &_terminal_node):
          num_layer(_num_layer),
+         id_key(-1),
          root_node(_root_node),
          terminal_node(_terminal_node),
          job(nullptr),
@@ -39,6 +42,7 @@ class NodeBase {
 
     NodeBase(int i, int j) :
           num_layer(0),
+          id_key(-1),
           root_node(false),
           terminal_node(false),
           job(nullptr),
@@ -47,6 +51,7 @@ class NodeBase {
 
     NodeBase(NodeId f0, NodeId f1) : 
           num_layer(0),
+          id_key(-1),
           root_node(false),
           terminal_node(false),
           job(nullptr),
@@ -75,8 +80,16 @@ class NodeBase {
       root_node = _terminal_node;
     }
 
+    void set_id_key(int _id_key) {
+      id_key = _id_key;
+    }
+
     int get_layer_number() {
       return num_layer;
+    }
+
+    int get_id_key() {
+      return id_key;
     }
 
     bool is_terminal_node(){
