@@ -210,7 +210,6 @@ void PricerSolverBdd::build_mip()
         NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(), g));
         EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), g));
         EdgeVarAccessor edge_var_list(get(boost::edge_weight2_t(), g));
-        EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(), g));
         model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
         model->set(GRB_IntParam_Threads, 1);
         model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
@@ -228,6 +227,27 @@ void PricerSolverBdd::build_mip()
             }
         }
 
+        model->update();
+        /** Assignment constraints */
+        std::unique_ptr<GRBLinExpr[]> assignment(new GRBLinExpr[njobs]());
+        std::unique_ptr<char[]> sense(new char[njobs]);
+        std::unique_ptr<double[]> rhs(new double[njobs]);
+
+        for (unsigned i = 0; i < jobs->len; ++i) {
+            sense[i] = GRB_GREATER_EQUAL;
+            rhs[i] = 1.0;
+        }
+
+        for (auto it = edges(g); it.first != it.second; it.first++) {
+            auto high = edge_type_list[*it.first];
+
+            if (high) {
+                auto& n = table.node(get(boost::vertex_name_t(), g, source(*it.first, g)));
+                assignment[n.get_job()->job] += edge_var_list[*it.first].x;
+            }
+        }
+
+        std::unique_ptr<GRBConstr[]> assignment_constrs(model->addConstrs(assignment.get(), sense.get(), rhs.get(), nullptr, njobs));
         model->update();
         /** Flow constraints */
         size_t num_vertices =  boost::num_vertices(g);
@@ -262,36 +282,7 @@ void PricerSolverBdd::build_mip()
 
         std::unique_ptr<GRBConstr[]> flow_constrs(model->addConstrs(flow_conservation_constr.get(), sense_flow.get(), rhs_flow.get(), nullptr, num_vertices));
         model->update();
-        /** Assignment constraints */
-        std::unique_ptr<GRBLinExpr[]> assignment(new GRBLinExpr[njobs]());
-        std::unique_ptr<char[]> sense(new char[njobs]);
-        std::unique_ptr<double[]> rhs(new double[njobs]);
-
-        for (unsigned i = 0; i < jobs->len; ++i) {
-            sense[i] = GRB_GREATER_EQUAL;
-            rhs[i] = 1.0;
-        }
-
-        for (auto it = edges(g); it.first != it.second; it.first++) {
-            auto high = edge_type_list[*it.first];
-
-            if (high) {
-                auto& n = table.node(get(boost::vertex_name_t(), g, source(*it.first, g)));
-                assignment[n.get_job()->job] += edge_var_list[*it.first].x;
-            }
-        }
-
-        std::unique_ptr<GRBConstr[]> assignment_constrs(model->addConstrs(assignment.get(), sense.get(), rhs.get(), nullptr, njobs));
-        model->update();
         model->optimize();
-
-        for (auto it = edges(g); it.first != it.second; it.first++) {
-            double sol = (edge_var_list[*it.first]).x.get(GRB_DoubleAttr_X);
-
-            if (sol > 0.00001) {
-                printf("test %d %f\n", edge_index_list[*it.first], sol);
-            }
-        }
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;
