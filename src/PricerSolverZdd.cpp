@@ -36,10 +36,9 @@ void PricerSolverZdd::construct_mipgraph() {
     NodeMipIdAccessor vertex_mipid_list(
         get(boost::vertex_degree_t(), mip_graph));
     EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
-    int              number = 0;
 
     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
-        for (size_t j = 0; j < table[i].size(); j++) {
+        for (size_t j = 0; j < table[i].size();j++) {
             auto n{NodeId(i, j)};
             if (n.row() != 0) {
                 for (auto& it : table[i][j].list) {
@@ -51,12 +50,13 @@ void PricerSolverZdd::construct_mipgraph() {
                 }
             } else {
                 if (n != 0) {
-                    number++;
+                    auto terminal_node = add_vertex(mip_graph);
                     for (auto& it : table[i][j].list) {
-                        it->key = add_vertex(mip_graph);
-                        vertex_mipid_list[it->key] = number;
-                        vertex_nodeid_list[it->key] = it->node_id;
-                        vertex_nodezddid_list[it->key] = it;
+                        // it->key = add_vertex(mip_graph);
+                        it->key = terminal_node;
+                        vertex_mipid_list[terminal_node] = terminal_node;
+                        vertex_nodeid_list[terminal_node] = it->node_id;
+                        vertex_nodezddid_list[terminal_node] = it;
                     }
                 }
             }
@@ -246,8 +246,6 @@ void PricerSolverZdd::remove_edges() {
 void PricerSolverZdd::build_mip() {
     try {
         printf("Building Mip model for the extented formulation:\n");
-        NodeTableEntity<NodeZdd<>>& table =
-            decision_diagram->getDiagram().privateEntity();
         NodeIdAccessor vertex_nodeid_list(
             get(boost::vertex_name_t(), mip_graph));
         NodeMipIdAccessor vertex_mipid_list(
@@ -302,8 +300,8 @@ void PricerSolverZdd::build_mip() {
             assignment.get(), sense.get(), rhs.get(), nullptr, njobs));
         model->update();
         /** Flow constraints */
-        size_t num_vertices =
-            boost::num_vertices(mip_graph) - table[0][1].list.size() + 1;
+        size_t num_vertices = boost::num_vertices(mip_graph);
+            //boost::num_vertices(mip_graph) - table[0][1].list.size() + 1;
         std::unique_ptr<GRBLinExpr[]> flow_conservation_constr(
             new GRBLinExpr[num_vertices]());
         std::unique_ptr<char[]>   sense_flow(new char[num_vertices]);
@@ -357,6 +355,9 @@ void PricerSolverZdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     /** Remove Layers */
     evaluate_nodes(pi, UB, LB);
     remove_layers();
+    remove_edges();
+    init_table();
+    evaluate_nodes(pi, UB, LB);
     remove_edges();
     init_table();
     construct_mipgraph();
