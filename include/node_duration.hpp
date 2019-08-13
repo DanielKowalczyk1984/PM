@@ -18,6 +18,7 @@ class NodeBdd : public NodeBase
         NodeBdd<T>* child[2];
 
         bool calc_yes;
+        bool calc_no;
         int key;
         int high_edge_key;
         int low_edge_key;
@@ -31,6 +32,7 @@ class NodeBdd : public NodeBase
             forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             calc_yes(true),
+            calc_no(true),
             key(-1),
             high_edge_key(-1),
             low_edge_key(-1)
@@ -45,6 +47,7 @@ class NodeBdd : public NodeBase
             forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             calc_yes(true),
+            calc_no(true),
             key(-1),
             high_edge_key(-1),
             low_edge_key(-1)
@@ -67,6 +70,7 @@ class NodeBdd : public NodeBase
             forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             calc_yes(true),
+            calc_no(true),
             key(-1),
             high_edge_key(-1),
             low_edge_key(-1)
