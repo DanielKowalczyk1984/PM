@@ -9,14 +9,15 @@
                 "cwd": "${workspaceRoot}/build"
             },
             "args": [
-                "-j" , "8"
+                "-j",
+                "8"
             ],
             "problemMatcher": []
         },
         {
             "label": "run",
             "type": "shell",
-            "command": "${command:cmake.launchTargetPath} -S 1 -a 8 ../instances/wt40/wt040_031.dat 4",
+            "command": "${command:cmake.launchTargetPath} -S 1 -a 1 ../instances/wt40/wt040_001.dat 4",
             "dependsOn": [
                 "build"
             ],
@@ -27,4 +28,3 @@
         }
     ]
 }
-
