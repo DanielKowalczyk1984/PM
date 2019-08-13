@@ -34,7 +34,7 @@ void PricerSolverBdd::construct_mipgraph() {
 
     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
         for (size_t j = 0; j < table[i].size(); j++) {
-            if (NodeId(i, j) != 0) {
+            if (NodeId(i, j) != 0 && (table[i][j].calc_yes || table[i][j].calc_no)) {
                 table[i][j].key = add_vertex(mip_graph);
                 vertex_nodeid_list[table[i][j].key] = NodeId(i, j);
             }
@@ -45,7 +45,7 @@ void PricerSolverBdd::construct_mipgraph() {
 
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            if (it.branch[0] != 0) {
+            if (it.branch[0] != 0 && it.calc_no) {
                 auto& n0 = table.node(it.branch[0]);
                 auto  a = add_edge(it.key, n0.key, mip_graph);
                 put(edge_type_list, a.first, false);
@@ -53,7 +53,7 @@ void PricerSolverBdd::construct_mipgraph() {
                 put(boost::edge_index_t(), mip_graph, a.first, count++);
             }
 
-            if (it.branch[1] != 0) {
+            if (it.branch[1] != 0 && it.calc_yes) {
                 auto& n1 = table.node(it.branch[1]);
                 auto  a = add_edge(it.key, n1.key, mip_graph);
                 put(edge_type_list, a.first, true);
@@ -193,6 +193,13 @@ void PricerSolverBdd::remove_edges() {
                 NodeId& cur_node_1 = iter.branch[1];
                 cur_node_1 = 0;
             }
+
+            if (!iter.calc_no)
+            {
+                NodeId& cur_node_0 = iter.branch[0];
+                cur_node_0 = 0;
+            }
+            
         }
     }
 
