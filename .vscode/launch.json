@@ -6,7 +6,14 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
-            "args": ["-S", "1", "-a", "4", "${workspaceRoot}/instances/wt40/wt040_001.dat", "4"],
+            "args": [
+                "-S",
+                "1",
+                "-a",
+                "4",
+                "${workspaceRoot}/instances/wt40/wt040_001.dat",
+                "4"
+            ],
             "cwd": "${workspaceRoot}/build",
             "stopAtEntry": false,
             "environment": [],
@@ -15,7 +22,7 @@
             "linux": {
                 "MIMode": "gdb",
                 "miDebuggerPath": "/usr/bin/gdb"
-             },
+            },
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
@@ -29,7 +36,14 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
-            "args": ["-S", "1", "-a", "8", "${workspaceRoot}/instances/wt40/wt040_001.dat", "4"],
+            "args": [
+                "-S",
+                "1",
+                "-a",
+                "8",
+                "${workspaceRoot}/instances/wt40/wt040_031.dat",
+                "4"
+            ],
             "cwd": "${workspaceRoot}/build",
             "stopAtEntry": false,
             "environment": [],
@@ -38,7 +52,7 @@
             "linux": {
                 "MIMode": "gdb",
                 "miDebuggerPath": "/usr/bin/gdb"
-             },
+            },
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
