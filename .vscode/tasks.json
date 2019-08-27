@@ -33,6 +33,18 @@
                 "cwd": "${workspaceRoot}/build"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "run test",
+            "type": "shell",
+            "command": "${workspaceRoot}/scripts/mip.sh",
+            "dependsOn": [
+                "build"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "problemMatcher": []
         }
     ]
 }
