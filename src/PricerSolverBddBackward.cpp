@@ -101,56 +101,61 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            int  w = it.get_weight();
-            Job* job = it.get_job();
+            int    w = it.get_weight();
+            Job*   job = it.get_job();
+            double result;
 
             if (it.forward_label[0].get_previous_job() != job &&
                 it.child[1]->backward_label[0].get_prev_job() != job) {
-                double result = it.forward_label[0].get_f() +
-                                it.child[1]->backward_label[0].get_f() -
-                                value_Fj(w + job->processing_time, job) +
-                                pi[job->job] + pi[njobs];
-                if (LB - (double)(num_machines - 1) * reduced_cost - result >
-                        UB + 0.0001 &&
-                    (it.calc_yes)) {
-                    it.calc_yes = false;
-                    nb_removed_edges++;
-                }
+                result = it.forward_label[0].get_f() +
+                         it.child[1]->backward_label[0].get_f() -
+                         value_Fj(w + job->processing_time, job) +
+                         pi[job->job] + pi[njobs];
+
             } else if (it.forward_label[0].get_previous_job() == job &&
                        it.child[1]->backward_label[0].get_prev_job() != job) {
-                double result = it.forward_label[1].get_f() +
-                                it.child[1]->backward_label[0].get_f() -
-                                value_Fj(w + job->processing_time, job) +
-                                pi[job->job] + pi[njobs];
-                if (LB - (double)(num_machines - 1) * reduced_cost - result >
-                        UB + 0.0001 &&
-                    (it.calc_yes)) {
-                    it.calc_yes = false;
-                    nb_removed_edges++;
-                }
+                result = it.forward_label[1].get_f() +
+                         it.child[1]->backward_label[0].get_f() -
+                         value_Fj(w + job->processing_time, job) +
+                         pi[job->job] + pi[njobs];
             } else if (it.forward_label[0].get_previous_job() != job &&
                        it.child[1]->backward_label[0].get_prev_job() == job) {
-                double result = it.forward_label[0].get_f() +
-                                it.child[1]->backward_label[1].get_f() -
-                                value_Fj(w + job->processing_time, job) +
-                                pi[job->job] + pi[njobs];
-                if (LB - (double)(num_machines - 1) * reduced_cost - result >
-                        UB + 0.0001 &&
-                    (it.calc_yes)) {
-                    it.calc_yes = false;
-                    nb_removed_edges++;
-                }
+                result = it.forward_label[0].get_f() +
+                         it.child[1]->backward_label[1].get_f() -
+                         value_Fj(w + job->processing_time, job) +
+                         pi[job->job] + pi[njobs];
             } else {
-                double result = it.forward_label[1].get_f() +
-                                it.child[1]->backward_label[1].get_f() -
-                                value_Fj(w + job->processing_time, job) +
-                                pi[job->job] + pi[njobs];
-                if (LB - (double)(num_machines - 1) * reduced_cost - result >
-                        UB + 0.0001 &&
-                    (it.calc_yes)) {
-                    it.calc_yes = false;
-                    nb_removed_edges++;
+                result = it.forward_label[1].get_f() +
+                         it.child[1]->backward_label[1].get_f() -
+                         value_Fj(w + job->processing_time, job) +
+                         pi[job->job] + pi[njobs];
+            }
+
+            if (LB - (double)(num_machines - 1) * reduced_cost - result >
+                    UB + 0.0001 &&
+                (it.calc_yes)) {
+                it.calc_yes = false;
+                nb_removed_edges++;
+            }
+
+            auto max = std::numeric_limits<double>::min();
+
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < 2; j++) {
+                    auto result_no = it.forward_label[i].get_f() +
+                                     it.child[0]->backward_label[j].get_f() +
+                                     pi[njobs];
+                    if (max < result_no) {
+                        max = result_no;
+                    }
                 }
+            }
+
+            if (LB - (double)(num_machines - 1) * reduced_cost - max >
+                    UB - 1 + 0.00001 &&
+                (it.calc_no)) {
+                it.calc_no = false;
+                nb_removed_edges++;
             }
         }
     }
