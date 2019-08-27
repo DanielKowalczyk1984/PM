@@ -19,7 +19,7 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray* _jobs,
 }
 
 void PricerSolverArcTimeDp::init_table() {
-    graph = new boost::unordered_set<Job*>*[n + 1];
+    graph = new std::vector<Job*>*[n + 1];
 
     F = new double*[jobs->len + 1];
     for (unsigned i = 0; i < jobs->len + 1; ++i) {
@@ -53,24 +53,24 @@ void PricerSolverArcTimeDp::init_table() {
     }
 
     for (int j = 0; j < n; ++j) {
-        graph[j] = new boost::unordered_set<Job*>[Hmax + 1];
+        graph[j] = new std::vector<Job*>[Hmax + 1];
         Job* tmp = reinterpret_cast<Job*>(g_ptr_array_index(jobs, j));
         for (int t = 0; t < Hmax + 1; t++) {
             for (auto& it : vector_jobs) {
                 if (it != tmp && t - p_matrix[it->job][j] >= 0 &&
                     t <= Hmax - tmp->processing_time) {
-                    graph[j][t].insert(it);
+                    graph[j][t].push_back(it);
                     size_graph++;
                 }
             }
         }
     }
 
-    graph[n] = new boost::unordered_set<Job*>[Hmax + 1];
+    graph[n] = new std::vector<Job*>[Hmax + 1];
     for (int t = 1; t < Hmax + 1; t++) {
         for (auto& it : vector_jobs) {
             if (t >= it->processing_time) {
-                graph[n][t].insert(it);
+                graph[n][t].push_back(it);
                 size_graph++;
             }
         }

@@ -6,7 +6,7 @@ private:
     int Hmax;
     int n;
     size_t size_graph;
-    boost::unordered_set <Job*> **graph;
+    std::vector<Job*> **graph;
     std::vector<Job*> vector_jobs;
     Job j0;
     double **F;
@@ -14,7 +14,7 @@ private:
     int **B;
     int **p_matrix;
 
-    typedef boost::unordered_set<Job*>::iterator job_iterator;
+    typedef std::vector<Job*>::iterator job_iterator;
 public:
     PricerSolverArcTimeDp(GPtrArray *_jobs, int _num_machines, int _Hmax);
     ~PricerSolverArcTimeDp();
@@ -57,7 +57,8 @@ public:
     void remove_arc(const int &i, const int &j, const int &t) {
         Job *tmp_i = vector_jobs[i];
         // auto it = graph[j][t].find(tmp_i);
-        graph[j][t].erase(tmp_i) ;
+        auto pend = std::remove(graph[j][t].begin(),graph[j][t].end(), tmp_i) ;
+        graph[j][t].erase(pend);
     }
 
     int delta2(const int &j, const int &t) {
