@@ -4,5 +4,11 @@
     "cmake.preferredGenerators": [
         "Unix Makefiles",
         "Ninja"
+    ],
+    "cSpell.words": [
+        "Hiroaki",
+        "Iwashita",
+        "MINATO",
+        "hokudai"
     ]
 }
