@@ -33,7 +33,7 @@ void PricerSolverZdd::construct_mipgraph() {
     NodeZddIdAccessor vertex_nodezddid_list(
         get(boost::vertex_color_t(), mip_graph));
     NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
-    NodeMipIdAccessor vertex_mipid_list(
+    NodeMipIdAccessor vertex_mip_id_list(
         get(boost::vertex_degree_t(), mip_graph));
     EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
 
@@ -42,9 +42,9 @@ void PricerSolverZdd::construct_mipgraph() {
             auto n{NodeId(i, j)};
             if (n.row() != 0) {
                 for (auto& it : table[i][j].list) {
-                    it->key = add_vertex(mip_graph);
-                    number = it->key;
-                    vertex_mipid_list[it->key] = number;
+                    auto key = add_vertex(mip_graph); 
+                    it->key = key;
+                    vertex_mip_id_list[it->key] = key;
                     vertex_nodeid_list[it->key] = it->node_id;
                     vertex_nodezddid_list[it->key] = it;
                 }
@@ -52,9 +52,8 @@ void PricerSolverZdd::construct_mipgraph() {
                 if (n != 0) {
                     auto terminal_node = add_vertex(mip_graph);
                     for (auto& it : table[i][j].list) {
-                        // it->key = add_vertex(mip_graph);
                         it->key = terminal_node;
-                        vertex_mipid_list[terminal_node] = terminal_node;
+                        vertex_mip_id_list[terminal_node] = terminal_node;
                         vertex_nodeid_list[terminal_node] = it->node_id;
                         vertex_nodezddid_list[terminal_node] = it;
                     }
@@ -268,7 +267,7 @@ void PricerSolverZdd::build_mip() {
                 double cost =
                     (double)value_Fj(n->weight + job->processing_time, job);
                 edge_var_list[*it.first].x =
-                    model->addVar(0.0, 1.0, cost, GRB_BINARY);
+                    model->addVar(0.0, 1.0, cost, GRB_CONTINUOUS);
             } else {
                 edge_var_list[*it.first].x = model->addVar(
                     0.0, (double)num_machines, 0.0, GRB_CONTINUOUS);

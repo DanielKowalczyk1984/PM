@@ -234,7 +234,7 @@ void PricerSolverBdd::build_mip() {
                 double cost = (double)value_Fj(
                     n.get_weight() + n.get_job()->processing_time, n.get_job());
                 edge_var_list[*it.first].x =
-                    model->addVar(0.0, 1.0, cost, GRB_BINARY);
+                    model->addVar(0.0, 1.0, cost, GRB_CONTINUOUS);
             } else {
                 edge_var_list[*it.first].x = model->addVar(
                     0.0, (double)num_machines, 0.0, GRB_CONTINUOUS);
