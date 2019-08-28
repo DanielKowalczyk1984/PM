@@ -302,11 +302,12 @@ void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
     if (m < sol->nmachines) {
         GPtrArray* machine = sol->part[m].machine;
         int        iter = 0;
+        int Hmax = ((interval*) g_ptr_array_index(intervals, intervals->len - 1))->b;
 
         for (unsigned i = 0; i < machine->len; ++i) {
             Job*      tmp = (Job*)g_ptr_array_index(machine, i);
             interval* I = (interval*)g_ptr_array_index(intervals, iter);
-            while (!(sol->c[tmp->job] <= I->b)) {
+            while (!(sol->c[tmp->job] <= I->b || I->b < Hmax)) {
                 iter++;
                 I = (interval*)g_ptr_array_index(intervals, iter);
             }
