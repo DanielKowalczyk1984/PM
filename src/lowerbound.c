@@ -488,6 +488,9 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 g_ptr_array_add(pd->localColPool, pd->newsets + j);
             }
             pd->newsets = NULL;
+            nnonimprovements = 0;
+        } else {
+            nnonimprovements++;
         }
 
         switch (status) {
@@ -498,7 +501,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     case stab_hybrid:
                         break_while_loop =
                             (CC_ABS(pd->eta_out - pd->eta_in) <
-                             0.0001);  // || (ceil(pd->eta_in - 0.00001) >=
+                             0.00001) || nnonimprovements > 5;  // || (ceil(pd->eta_in - 0.00001) >=
                                        // pd->eta_out);
                         break;
 
