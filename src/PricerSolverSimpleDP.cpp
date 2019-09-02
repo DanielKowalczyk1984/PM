@@ -139,7 +139,7 @@ size_t PricerSolverSimpleDp::get_datasize() {
 }
 
 size_t PricerSolverSimpleDp::get_size_graph() {
-    return 0u;
+    return size_graph;
 }
 
 int PricerSolverSimpleDp::get_num_layers() {
