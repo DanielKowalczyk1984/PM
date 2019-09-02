@@ -96,10 +96,6 @@ void PricerSolverBase::print_num_paths() {
 //     return decision_diagram->topLevel();
 // }
 
-// double PricerSolverBase::get_cost_edge(int idx) {
-//     return 0.0;
-// }
-
 /**
  * Reduced cost Fixing
  */

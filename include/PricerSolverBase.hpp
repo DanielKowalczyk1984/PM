@@ -96,7 +96,6 @@ public:
      virtual int get_num_layers() = 0;
      virtual size_t get_size_graph() = 0;
      virtual size_t get_datasize() = 0;
-     virtual double get_cost_edge(int idx) = 0;
      virtual bool check_schedule_set(GPtrArray *set) = 0;
 
      /**

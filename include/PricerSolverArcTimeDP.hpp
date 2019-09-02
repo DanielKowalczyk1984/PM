@@ -44,8 +44,6 @@ public:
     size_t get_size_graph() override ;
     int get_num_layers() override ;
     void print_num_paths() override;
-    double get_cost_edge(int idx) override;
-
     bool check_schedule_set(GPtrArray* set) override;
 
     void forward_evaluator(double *pi);

@@ -120,10 +120,6 @@ size_t get_size_graph(PricerSolver* solver) {
     return solver->get_size_graph();
 }
 
-double get_edge_cost(PricerSolver* solver, int idx) {
-    return solver->get_cost_edge(idx);
-}
-
 void calculate_edges(PricerSolver* solver, ScheduleSet* set) {
     solver->calculate_edges(set);
 }

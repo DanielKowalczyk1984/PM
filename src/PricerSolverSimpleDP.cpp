@@ -151,9 +151,6 @@ void PricerSolverSimpleDp::print_num_paths() {
     // decision_diagram->evaluate(tdzdd::ZddCardinality<>()) << "\n";
 }
 
-double PricerSolverSimpleDp::get_cost_edge(int idx) {
-    return 0.0;
-}
 
 bool PricerSolverSimpleDp::check_schedule_set(GPtrArray* set) {
     return true;

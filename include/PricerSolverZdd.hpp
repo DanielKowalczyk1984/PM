@@ -42,7 +42,6 @@ class PricerSolverZdd : public PricerSolverBase
         size_t get_size_graph() override ;
         int get_num_layers() override ;
         void print_num_paths() override;
-        double get_cost_edge(int idx) override;
         void remove_layers_init();
 
 

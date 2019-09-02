@@ -698,10 +698,6 @@ void PricerSolverBdd::print_num_paths() {
     // decision_diagram->evaluate(tdzdd::ZddCardinality<>()) << "\n";
 }
 
-double PricerSolverBdd::get_cost_edge(int idx) {
-    return 0.0;
-}
-
 // void PricerSolverBdd::remove_layers() {
 //     int first_del = -1;
 //     int last_del = -1;

@@ -140,28 +140,6 @@ void PricerSolverArcTimeDp::evaluate_nodes(double* pi, int UB, double LB) {
     forward_evaluator(pi);
     backward_evaluator(pi);
 
-    for (int j = 0; j < n; j++) {
-        Job* tmp = vector_jobs[j];
-        for (int t = 0; t <= Hmax - tmp->processing_time; t++) {
-            auto it = graph[j][t].begin();
-            while (it != graph[j][t].end()) {
-                double result =
-                    forward_F[(*it)->job][t - (*it)->processing_time] +
-                    value_Fj(t + tmp->processing_time, tmp) - pi[tmp->job] +
-                    backward_F[tmp->job][t + tmp->processing_time];
-                if (result + pi[n] +
-                        (num_machines - 1) * (forward_F[n][Hmax] + pi[n]) + LB >
-                    UB - 1 + 0.00001) {
-                    size_graph--;
-                    graph[j][t].erase(it);
-                } else {
-                    it++;
-                }
-            }
-        }
-    }
-
-    std::cout << "size_graph = " << size_graph << "\n";
     return;
 }
 
@@ -250,6 +228,31 @@ void PricerSolverArcTimeDp::build_mip() {
 }
 
 void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
+    evaluate_nodes(pi, UB, LB);
+
+    for (int j = 0; j < n; j++) {
+        Job* tmp = vector_jobs[j];
+        for (int t = 0; t <= Hmax - tmp->processing_time; t++) {
+            auto it = graph[j][t].begin();
+            while (it != graph[j][t].end()) {
+                double result =
+                    forward_F[(*it)->job][t - (*it)->processing_time] +
+                    value_Fj(t + tmp->processing_time, tmp) - pi[tmp->job] +
+                    backward_F[tmp->job][t + tmp->processing_time];
+                if (result + pi[n] +
+                        (num_machines - 1) * (forward_F[n][Hmax] + pi[n]) + LB >
+                    UB - 1 + 0.00001) {
+                    size_graph--;
+                    graph[j][t].erase(it);
+                } else {
+                    it++;
+                }
+            }
+        }
+    }
+
+    std::cout << "size_graph = " << size_graph << "\n";
+
     return;
 }
 
@@ -440,7 +443,7 @@ int PricerSolverArcTimeDp::get_num_remove_edges() {
 }
 
 size_t PricerSolverArcTimeDp::get_datasize() {
-    return 0u;
+    return size_graph;
 }
 
 size_t PricerSolverArcTimeDp::get_size_graph() {
@@ -454,10 +457,6 @@ int PricerSolverArcTimeDp::get_num_layers() {
 void PricerSolverArcTimeDp::print_num_paths() {
     // cout << "Number of paths: " <<
     // decision_diagram->evaluate(tdzdd::ZddCardinality<>()) << "\n";
-}
-
-double PricerSolverArcTimeDp::get_cost_edge(int idx) {
-    return 0.0;
 }
 
 bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {

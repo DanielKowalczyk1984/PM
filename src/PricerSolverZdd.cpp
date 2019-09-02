@@ -580,7 +580,3 @@ void PricerSolverZdd::print_num_paths() {
     // cout << "Number of paths: " <<
     // decision_diagram->evaluate(tdzdd::ZddCardinality<>()) << "\n";
 }
-
-double PricerSolverZdd::get_cost_edge(int idx) {
-    return 0.0;
-}
