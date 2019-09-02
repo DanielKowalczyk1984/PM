@@ -14,9 +14,10 @@ private:
     double **backward_F;
     Job ***A;
     int **B;
-    int **p_matrix;
+    std::unique_ptr<GRBEnv> env;
+    std::unique_ptr<GRBModel> model;
+    GRBVar*** arctime_x;
 
-    typedef std::vector<Job*>::iterator job_iterator;
 public:
     PricerSolverArcTimeDp(GPtrArray *_jobs, int _num_machines, int _Hmax);
     ~PricerSolverArcTimeDp();
