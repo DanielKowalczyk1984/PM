@@ -7,9 +7,11 @@ private:
     int n;
     size_t size_graph;
     std::vector<Job*> **graph;
+    std::vector<Job*> **reversed_graph;
     std::vector<Job*> vector_jobs;
     Job j0;
-    double **F;
+    double **forward_F;
+    double **backward_F;
     Job ***A;
     int **B;
     int **p_matrix;
@@ -45,6 +47,9 @@ public:
 
     bool check_schedule_set(GPtrArray* set) override;
 
+    void forward_evaluator(double *pi);
+    void backward_evaluator(double *_pi);
+
 
     int delta1(const int &i,const int &j, const int &t) {
         Job *tmp_i = vector_jobs[i];
@@ -57,10 +62,24 @@ public:
     void remove_arc(const int &i, const int &j, const int &t) {
         Job *tmp_i = vector_jobs[i];
         // auto it = graph[j][t].find(tmp_i);
-        auto pend = std::remove(graph[j][t].begin(),graph[j][t].end(), tmp_i) ;
+        auto pend = std::remove(graph[j][t].begin(),graph[j][t].end(), tmp_i);
         graph[j][t].erase(pend);
     }
 
+    // void remove_arc_test(const int &i, const int &j, const int &t) {
+    //     Job *tmp_i = vector_jobs[i];
+    //     auto it = std::find(graph[j][t].begin(), graph[i][j].end(),tmp_i);
+    //     if (it != graph[j][t].end())
+    //     {
+    //         graph[j][t].erase(it);
+    //     }
+        
+    //     // auto pend = std::remove(graph[j][t].begin(),graph[j][t].end(), tmp_i);
+    //     // for(auto it = graph[j][t].begin(); it != pend; it++) {
+    //     //     std::cout << (*it)->job << "\n";
+    //     // }
+        
+    // }
     int delta2(const int &j, const int &t) {
         Job *tmp_j = vector_jobs[j];
         return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
