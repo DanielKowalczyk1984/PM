@@ -8,7 +8,8 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray* _jobs,
       size_graph(0u),
       vector_jobs(),
       env(new GRBEnv()),
-      model(new GRBModel(*env)) {
+      model(new GRBModel(*env)),
+      num_edges_removed{} {
     for (int i = 0; i < n; ++i) {
         vector_jobs.push_back(
             reinterpret_cast<Job*>(g_ptr_array_index(jobs, i)));
@@ -243,6 +244,7 @@ void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
                         (num_machines - 1) * (forward_F[n][Hmax] + pi[n]) + LB >
                     UB - 1 + 0.00001) {
                     size_graph--;
+                    num_edges_removed++;
                     graph[j][t].erase(it);
                 } else {
                     it++;
@@ -251,7 +253,8 @@ void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
         }
     }
 
-    std::cout << "size_graph = " << size_graph << "\n";
+    std::cout << "size_graph after reduced cost fixing = " << size_graph
+              << " and edges removed = " << num_edges_removed << "\n";
 
     return;
 }
@@ -415,15 +418,78 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
 
 void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     const double* columns, const GPtrArray* schedule_sets, int num_columns,
-    double* x) {}
+    double* x) {
+    for (int k = 0; k < num_columns; k++) {
+        if (columns[k]) {
+            size_t       counter = 0;
+            ScheduleSet* tmp =
+                (ScheduleSet*)g_ptr_array_index(schedule_sets, k);
+            int i = n;
+            int t = 0;
+            while (t < Hmax + 1) {
+                Job* tmp_j = nullptr;
+                int  j = n;
+
+                if (counter < tmp->job_list->len) {
+                    tmp_j = (Job*)g_ptr_array_index(tmp->job_list, counter);
+                    j = tmp_j->job;
+                }
+
+                x[i * (n + 1) * (Hmax + 1) + j * (Hmax + 1) + t] = columns[k];
+
+                if (tmp_j == nullptr) {
+                    i = n;
+                    t += 1;
+                } else {
+                    i = j;
+                    t += tmp_j->processing_time;
+                    counter++;
+                }
+            }
+        }
+    }
+}
 
 double* PricerSolverArcTimeDp::project_solution(Solution* sol) {
-    double* x = nullptr;
+    double* x = new double[(n + 1) * (n + 1) * (Hmax + 1)]{};
+
+    for (int it = 0; it < sol->nmachines; it++) {
+        GPtrArray* tmp = sol->part[it].machine;
+        size_t     counter = tmp->len - 1;
+        int        i = n;
+        int        t = 0;
+        while (t < Hmax + 1) {
+            Job* tmp_j;
+            int  j;
+            if (counter < tmp->len) {
+                tmp_j = (Job*)g_ptr_array_index(tmp, counter);
+                j = tmp_j->job;
+            } else {
+                tmp_j = nullptr;
+                j = n;
+            }
+
+            x[i * (n + 1) * (Hmax + 1) + j * (Hmax + 1) + t] += 1.0;
+
+            if (tmp_j == nullptr) {
+                i = n;
+                t += 1;
+            } else {
+                i = j;
+                t += tmp_j->processing_time;
+                counter++;
+            }
+        }
+    }
 
     return x;
 }
 
-void PricerSolverArcTimeDp::represent_solution(Solution* sol) {}
+void PricerSolverArcTimeDp::represent_solution(Solution* sol) {
+    double* x = project_solution(sol);
+
+    delete[] x;
+}
 
 void PricerSolverArcTimeDp::add_constraint(Job* job, GPtrArray* list,
                                            int order) {}
@@ -439,11 +505,11 @@ int PricerSolverArcTimeDp::get_num_remove_nodes() {
 }
 
 int PricerSolverArcTimeDp::get_num_remove_edges() {
-    return 0;
+    return num_edges_removed;
 }
 
-size_t PricerSolverArcTimeDp::get_datasize() {
-    return size_graph;
+size_t PricerSolverArcTimeDp::get_size_data() {
+    return (n + 1) * (n + 1) * (Hmax + 1);
 }
 
 size_t PricerSolverArcTimeDp::get_size_graph() {
@@ -460,6 +526,34 @@ void PricerSolverArcTimeDp::print_num_paths() {
 }
 
 bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
+    size_t counter = set->len - 1;
+    int    i = n;
+    int    t = 0;
+
+    while (t < Hmax + 1) {
+        Job* tmp_j = nullptr;
+        int  j = n;
+
+        if (counter < set->len) {
+            tmp_j = (Job*)g_ptr_array_index(set, counter);
+            j = tmp_j->job;
+        }
+
+        if (std::find(graph[j][t].begin(), graph[j][t].end(), vector_jobs[i]) ==
+            graph[j][t].end()) {
+            return false;
+        }
+
+        if (tmp_j == nullptr) {
+            i = n;
+            t += 1;
+        } else {
+            i = j;
+            t += tmp_j->processing_time;
+            counter--;
+        }
+    }
+
     return true;
 }
 
