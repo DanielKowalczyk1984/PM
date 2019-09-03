@@ -564,8 +564,8 @@ int PricerSolverZdd::get_num_remove_edges() {
     return nb_removed_edges;
 }
 
-size_t PricerSolverZdd::get_datasize() {
-    return decision_diagram->size();
+size_t PricerSolverZdd::get_size_data() {
+    return num_edges(mip_graph);
 }
 
 size_t PricerSolverZdd::get_size_graph() {

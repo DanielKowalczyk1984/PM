@@ -681,8 +681,8 @@ int PricerSolverBdd::get_num_remove_edges() {
     return nb_removed_edges;
 }
 
-size_t PricerSolverBdd::get_datasize() {
-    return decision_diagram->size();
+size_t PricerSolverBdd::get_size_data() {
+    return 2*decision_diagram->size();
 }
 
 size_t PricerSolverBdd::get_size_graph() {

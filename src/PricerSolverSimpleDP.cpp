@@ -134,8 +134,8 @@ int PricerSolverSimpleDp::get_num_remove_edges() {
     return 0;
 }
 
-size_t PricerSolverSimpleDp::get_datasize() {
-    return 0u;
+size_t PricerSolverSimpleDp::get_size_data() {
+    return (jobs->len + 1)*(Hmax + 1);
 }
 
 size_t PricerSolverSimpleDp::get_size_graph() {

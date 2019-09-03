@@ -17,6 +17,7 @@ private:
     std::unique_ptr<GRBEnv> env;
     std::unique_ptr<GRBModel> model;
     GRBVar*** arctime_x;
+    int num_edges_removed;
 
 public:
     PricerSolverArcTimeDp(GPtrArray *_jobs, int _num_machines, int _Hmax);
@@ -40,7 +41,7 @@ public:
     void print_number_nodes_edges() override;
     int get_num_remove_nodes() override ;
     int get_num_remove_edges() override ;
-    size_t get_datasize() override ;
+    size_t get_size_data() override ;
     size_t get_size_graph() override ;
     int get_num_layers() override ;
     void print_num_paths() override;

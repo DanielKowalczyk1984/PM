@@ -324,7 +324,7 @@ CLEAN:
 int compute_lower_bound(Problem* problem, NodeData* pd) {
     int    j, val = 0;
     int    break_while_loop = 1;
-    int    nnonimprovements = 0;
+    int    nb_non_improvements = 0;
     int    status = GRB_LOADED;
     double real_time_solve_lp;
     double real_time_pricing;
@@ -488,9 +488,9 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 g_ptr_array_add(pd->localColPool, pd->newsets + j);
             }
             pd->newsets = NULL;
-            nnonimprovements = 0;
+            nb_non_improvements = 0;
         } else {
-            nnonimprovements++;
+            nb_non_improvements++;
         }
 
         switch (status) {
@@ -501,13 +501,13 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     case stab_hybrid:
                         break_while_loop =
                             (CC_ABS(pd->eta_out - pd->eta_in) <
-                             0.00001) || nnonimprovements > 5;  // || (ceil(pd->eta_in - 0.00001) >=
+                             0.00001) || nb_non_improvements > 5;  // || (ceil(pd->eta_in - 0.00001) >=
                                        // pd->eta_out);
                         break;
 
                     case no_stab:
                         break_while_loop =
-                            (pd->nnewsets == 0 || nnonimprovements > 5);
+                            (pd->nnewsets == 0 || nb_non_improvements > 5);
                         break;
                 }
 
@@ -598,11 +598,12 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
 
                     // reset_nblayers(pd->jobarray);
                     // calculate_nblayers(pd, 2);
-                    reduce_cost_fixing(pd);
+                    // reduce_cost_fixing(pd);
                     // val = check_schedules(pd);
                     // CCcheck_val_2(val, "Failed in checkschedules");
                     // delete_infeasible_cclasses(pd);
                 }
+                    calculate_x_e(pd);
                 // pd->status = LP_bound_computed;
                 // val = wctlp_pi(pd->RMP, pd->pi);
                 // CCcheck_val_2(val, "wctlp_pi failed");
@@ -770,11 +771,11 @@ int calculate_x_e(NodeData* pd) {
             CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
             val = wctlp_x(pd->RMP, pd->x, 0);
             CCcheck_val_2(val, "Failed in wctlp_x");
-            pd->x_e = CC_SAFE_REALLOC(pd->x_e, 2 * get_size_graph(pd->solver),
+            pd->x_e = CC_SAFE_REALLOC(pd->x_e, get_size_data(pd->solver),
                                       double);
             CCcheck_NULL_2(pd->x_e, "Failed to reallocate memory to  pd->x_e");
 
-            for (unsigned i = 0; i < 2 * get_size_graph(pd->solver); ++i) {
+            for (unsigned i = 0; i < get_size_data(pd->solver); ++i) {
                 pd->x_e[i] = 0.0;
             }
             construct_lp_sol_from_rmp(pd);

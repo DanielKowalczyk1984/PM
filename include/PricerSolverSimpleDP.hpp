@@ -27,7 +27,7 @@ public:
     void print_number_nodes_edges() override;
     int get_num_remove_nodes() override ;
     int get_num_remove_edges() override ;
-    size_t get_datasize() override ;
+    size_t get_size_data() override ;
     size_t get_size_graph() override ;
     int get_num_layers() override ;
     void print_num_paths() override;
