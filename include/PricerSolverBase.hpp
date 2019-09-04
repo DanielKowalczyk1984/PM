@@ -73,7 +73,7 @@ public:
 
      /** Original Mip formulation */
      virtual void build_mip() = 0;
-     virtual void construct_lp_sol_from_rmp(const double *columns, const GPtrArray* schedule_sets, int num_columns, double *x) = 0;
+     virtual void construct_lp_sol_from_rmp(const double *columns, const GPtrArray* schedule_sets, int num_columns) = 0;
      virtual void represent_solution(Solution *sol) = 0;
      virtual double* project_solution(Solution *sol) = 0;
 

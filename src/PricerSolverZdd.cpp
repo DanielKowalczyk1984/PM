@@ -24,6 +24,10 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines,
     size_graph = decision_diagram->size();
     init_table();
     construct_mipgraph();
+    lp_x = std::unique_ptr<double[]>(new double[get_size_data()]);
+    solution_x = std::unique_ptr<double[]>(new double[get_size_data()]);
+
+
 }
 
 void PricerSolverZdd::construct_mipgraph() {
@@ -384,10 +388,10 @@ void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
 
 void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 const GPtrArray* schedule_sets,
-                                                int num_columns, double* x) {
+                                                int num_columns) {
     NodeTableEntity<NodeZdd<>>& table =
         decision_diagram->getDiagram().privateEntity();
-
+    std::fill(lp_x.get(), lp_x.get() + get_size_data(), 0.0);
     for (int i = 0; i < num_columns; ++i) {
         if (columns[i] > 0.00001) {
             size_t       counter = 0;
@@ -409,12 +413,12 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                 NodeZdd<>& tmp_node = table.node(tmp_nodeid);
 
                 if (tmp_j == tmp_node.get_job()) {
-                    x[tmp_sub_node->high_edge_key] += columns[i];
+                    lp_x[tmp_sub_node->high_edge_key] += columns[i];
                     tmp_nodeid = tmp_node.branch[1];
                     tmp_sub_node = tmp_sub_node->y;
                     counter++;
                 } else {
-                    x[tmp_sub_node->low_edge_key] += columns[i];
+                    lp_x[tmp_sub_node->low_edge_key] += columns[i];
                     tmp_nodeid = tmp_node.branch[0];
                     tmp_sub_node = tmp_sub_node->n;
                 }
@@ -432,7 +436,8 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
 double* PricerSolverZdd::project_solution(Solution* sol) {
     NodeTableEntity<NodeZdd<>>& table =
         decision_diagram->getDiagram().privateEntity();
-    double* x = new double[num_edges(mip_graph)]{};
+    // double* x = new double[num_edges(mip_graph)]{};
+    std::fill(solution_x.get(), solution_x.get() + get_size_data(), 0.0);
 
     for (int i = 0; i < sol->nmachines; ++i) {
         size_t                        counter = 0;
@@ -453,19 +458,19 @@ double* PricerSolverZdd::project_solution(Solution* sol) {
             NodeZdd<>& tmp_node = table.node(tmp_nodeid);
 
             if (tmp_j == tmp_node.get_job()) {
-                x[tmp_sub_node->high_edge_key] += 1.0;
+                solution_x[tmp_sub_node->high_edge_key] += 1.0;
                 tmp_nodeid = tmp_node.branch[1];
                 tmp_sub_node = tmp_sub_node->y;
                 counter++;
             } else {
-                x[tmp_sub_node->low_edge_key] += 1.0;
+                solution_x[tmp_sub_node->low_edge_key] += 1.0;
                 tmp_nodeid = tmp_node.branch[0];
                 tmp_sub_node = tmp_sub_node->n;
             }
         }
     }
 
-    return x;
+    return solution_x.get();
 }
 
 void PricerSolverZdd::represent_solution(Solution* sol) {
@@ -498,7 +503,7 @@ void PricerSolverZdd::represent_solution(Solution* sol) {
     // edge_writer(g, x); ColorWriterVertex vertex_writer(g, table);
     // std::ofstream outf("solution.gv"); boost::write_graphviz(outf, g,
     // vertex_writer, edge_writer); outf.close();
-    delete[] x;
+    // delete[] x;
 }
 
 bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {

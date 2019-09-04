@@ -15,6 +15,8 @@ class PricerSolverBdd : public PricerSolverBase
         MipGraph mip_graph;
         std::unique_ptr<GRBEnv> env;
         std::unique_ptr<GRBModel> model;
+        std::unique_ptr<double[]> lp_x;
+        std::unique_ptr<double[]> solution_x;
 
         PricerSolverBdd(GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs);
         void init_table() override;
@@ -28,7 +30,7 @@ class PricerSolverBdd : public PricerSolverBase
 
         void construct_mipgraph();
         void build_mip() override;
-        void construct_lp_sol_from_rmp(const double* columns, const GPtrArray* schedule_sets, int num_columns, double* x) override;
+        void construct_lp_sol_from_rmp(const double* columns, const GPtrArray* schedule_sets, int num_columns) override;
         void represent_solution(Solution* sol)  override;
         double* project_solution(Solution* sol) override;
         bool check_schedule_set(GPtrArray* set) override;

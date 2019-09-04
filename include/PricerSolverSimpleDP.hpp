@@ -1,6 +1,7 @@
 #ifndef PRICER_SOLVER_SIMPLE_DP_HPP
 #define PRICER_SOLVER_SIMPLE_DP_HPP
 #include "PricerSolverBase.hpp"
+#include <gurobi_c++.h>
 
 class PricerSolverSimpleDp : public PricerSolverBase {
 private:
@@ -8,6 +9,15 @@ private:
     size_t size_graph;
     std::unique_ptr<Job*[]> A;
     std::unique_ptr<double[]> F;
+    std::unique_ptr<double[]> backward_F;
+    std::vector<Job*> *backward_graph;
+    std::vector<Job*> *forward_graph;
+    std::unique_ptr<GRBEnv> env;
+    std::unique_ptr<GRBModel> model;
+    GRBVar* TI_x; 
+    bool* take;
+    double* lp_x;
+    double* solution_x;
     
 public:
     PricerSolverSimpleDp(GPtrArray *_jobs, int _num_machines, int _Hmax);
@@ -17,7 +27,7 @@ public:
     void evaluate_nodes(double *pi, int UB, double LB) override;
     void reduce_cost_fixing(double *pi, int UB, double LB) override;
     void build_mip() override;
-    void construct_lp_sol_from_rmp(const double *columns, const GPtrArray* schedule_sets, int num_columns, double *x) override;
+    void construct_lp_sol_from_rmp(const double *columns, const GPtrArray* schedule_sets, int num_columns) override;
     void represent_solution(Solution *sol)  override;
     double* project_solution(Solution *sol) override;
 
@@ -37,6 +47,8 @@ public:
     bool check_schedule_set(GPtrArray* set) override;
 
     OptimalSolution<double> pricing_algorithm(double *_pi) override;
+    void forward_evaluator(double *_pi);
+    void backward_evaluator(double *_pi);
 };
 
 #endif // PRICER_SOLVER_SIMPLE_DP_HPP

@@ -18,6 +18,8 @@ private:
     std::unique_ptr<GRBModel> model;
     GRBVar*** arctime_x;
     int num_edges_removed;
+    double *lp_x;
+    double *solution_x;
 
 public:
     PricerSolverArcTimeDp(GPtrArray *_jobs, int _num_machines, int _Hmax);
@@ -28,7 +30,7 @@ public:
     void evaluate_nodes(double *pi, int UB, double LB) override;
     
     void build_mip() override;
-    void construct_lp_sol_from_rmp(const double *columns, const GPtrArray* schedule_sets, int num_columns, double *x) override;
+    void construct_lp_sol_from_rmp(const double *columns, const GPtrArray* schedule_sets, int num_columns) override;
     void represent_solution(Solution *sol)  override;
     double* project_solution(Solution *sol) override;
     void add_constraint(Job *job, GPtrArray *list, int order) override;
