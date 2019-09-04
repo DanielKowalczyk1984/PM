@@ -590,7 +590,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                         pd->id, pd->iterations, pd->opt_track);
                 }
 
-                if (parms->pricing_solver < dp_solver) {
+                // if (parms->pricing_solver < dp_solver) {
                     val = wctlp_optimize(pd->RMP, &status);
                     CCcheck_val_2(val, "wctlp_optimize failed");
                     val = compute_objective(pd, parms);
@@ -598,12 +598,12 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
 
                     // reset_nblayers(pd->jobarray);
                     // calculate_nblayers(pd, 2);
-                    // reduce_cost_fixing(pd);
+                    reduce_cost_fixing(pd);
                     // val = check_schedules(pd);
                     // CCcheck_val_2(val, "Failed in checkschedules");
                     // delete_infeasible_cclasses(pd);
-                }
-                    calculate_x_e(pd);
+                // }
+                    // calculate_x_e(pd);
                 // pd->status = LP_bound_computed;
                 // val = wctlp_pi(pd->RMP, pd->pi);
                 // CCcheck_val_2(val, "wctlp_pi failed");
