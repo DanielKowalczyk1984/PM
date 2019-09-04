@@ -22,8 +22,6 @@ struct VarsNode{
     GRBVar omega[2];
 };
 
-typedef adjacency_list_traits < vecS, vecS, bidirectionalS > Traits;
-
 typedef property < vertex_index_t, int,
         property < vertex_name_t, NodeId,
         property < vertex_degree_t, int,
@@ -39,7 +37,6 @@ typedef property < edge_index_t, int,
 using MipGraph = adjacency_list<vecS,vecS,bidirectionalS,VertexProperty,EdgeProperty>;
 using Edge = graph_traits<MipGraph>::edge_descriptor;
 using Vertex = graph_traits<MipGraph>::vertex_descriptor;
-using EdgeIterator = graph_traits<MipGraph>::edge_iterator;
 
 typedef property_map<MipGraph, vertex_index_t>::type IndexAccessor;
 typedef property_map<MipGraph, vertex_name_t>::type NodeIdAccessor;
