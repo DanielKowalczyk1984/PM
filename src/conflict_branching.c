@@ -26,7 +26,7 @@ static int transfer_same_cclasses(NodeData* pd, GPtrArray* colPool, Job* v1,
         if ((v1_in == 1 && v2_in == 0) || (v1_in == 0 && v2_in == 1)) {
             construct = 0;
         } else {
-            tmp = scheduleset_alloc(pd->njobs);
+            tmp = scheduleset_alloc(pd->nb_jobs);
             g_ptr_array_add(pd->localColPool, tmp);
         }
 
@@ -75,8 +75,8 @@ static int create_same_conflict(Problem* problem, NodeData* parent_pd,
     pd->v1 = v1;
     pd->v2 = v2;
     /** Init jobs data */
-    pd->njobs = parent_pd->njobs;
-    pd->nmachines = parent_pd->nmachines;
+    pd->nb_jobs = parent_pd->nb_jobs;
+    pd->nb_machines = parent_pd->nb_machines;
     pd->jobarray = parent_pd->jobarray;
     pd->ecount_same = parent_pd->ecount_same + 1;
     pd->ecount_differ = parent_pd->ecount_differ;
@@ -96,7 +96,7 @@ static int create_same_conflict(Problem* problem, NodeData* parent_pd,
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 1);
 
-        if ((size_t)pd->njobs != get_num_layers(pd->solver)) {
+        if ((size_t)pd->nb_jobs != get_num_layers(pd->solver)) {
             pd->status = infeasible;
 
             if (pd->solver) {
@@ -147,8 +147,8 @@ static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
     pd->v1 = v1;
     pd->v2 = v2;
     /** Init jobs data */
-    pd->njobs = parent_pd->njobs;
-    pd->nmachines = parent_pd->nmachines;
+    pd->nb_jobs = parent_pd->nb_jobs;
+    pd->nb_machines = parent_pd->nb_machines;
     pd->jobarray = parent_pd->jobarray;
     /** Init lower bound and upper bound of node */
     pd->upper_bound = parent_pd->upper_bound;
@@ -166,7 +166,7 @@ static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 0);
 
-        if ((size_t)pd->njobs != get_num_layers(pd->solver)) {
+        if ((size_t)pd->nb_jobs != get_num_layers(pd->solver)) {
             pd->status = infeasible;
 
             if (pd->solver) {
@@ -195,7 +195,7 @@ static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
         int      construct = (v1_in && v2_in) ? 0 : 1;
 
         if (construct) {
-            tmp = scheduleset_alloc(pd->njobs);
+            tmp = scheduleset_alloc(pd->nb_jobs);
             CCcheck_NULL_3(tmp, "Failed to allocate memory");
             g_ptr_array_add(pd->localColPool, tmp);
 
@@ -310,22 +310,22 @@ static int find_strongest_children_conflict(
                     if (pd->same_children) {
                         nodedata_free(pd->same_children);
                         free(pd->same_children);
-                        pd->nsame = 0;
+                        pd->nb_same = 0;
                     }
 
                     same_children->maxiterations = 1000000;
                     pd->same_children = same_children;
-                    pd->nsame = 1;
+                    pd->nb_same = 1;
 
                     if (pd->diff_children) {
                         nodedata_free(pd->diff_children);
                         free(pd->diff_children);
-                        pd->ndiff = 0;
+                        pd->nb_diff = 0;
                     }
 
                     diff_children->maxiterations = 1000000;
                     pd->diff_children = diff_children;
-                    pd->ndiff = 1;
+                    pd->nb_diff = 1;
                 } else {
                     nodedata_free(same_children);
                     free(same_children);
@@ -374,13 +374,13 @@ static int find_strongest_children_conflict(
                 (Job*)g_ptr_array_index(problem->g_job_array, v1),
                 (Job*)g_ptr_array_index(problem->g_job_array, v2));
             CCcheck_val_2(val, "Failed in create_same");
-            pd->nsame = 1;
+            pd->nb_same = 1;
             val = create_differ_conflict(
                 problem, pd, &(pd->diff_children),
                 (Job*)g_ptr_array_index(problem->g_job_array, v1),
                 (Job*)g_ptr_array_index(problem->g_job_array, v2));
             CCcheck_val_2(val, "Failed in create_differ");
-            pd->ndiff = 1;
+            pd->nb_diff = 1;
             break;
     }
 
@@ -398,7 +398,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     int            strongest_v1 = -1, strongest_v2 = -1;
     int*           nodepair_refs = (int*)NULL;
     double*        nodepair_weights = (double*)NULL;
-    int            npairs = pd->njobs * (pd->njobs + 1) / 2;
+    int            npairs = pd->nb_jobs * (pd->nb_jobs + 1) / 2;
     int*           mf_col = (int*)NULL;
     GList*         branchjobs = (GList*)NULL;
     int*           completion_time = (int*)NULL;
@@ -416,10 +416,10 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
         nodepair_weights[i] = .0;
     }
 
-    mf_col = CC_SAFE_MALLOC(pd->njobs, int);
+    mf_col = CC_SAFE_MALLOC(pd->nb_jobs, int);
     CCcheck_NULL_2(mf_col, "Failed to allocate memory to mf_col");
 
-    for (i = 0; i < pd->njobs; i++) {
+    for (i = 0; i < pd->nb_jobs; i++) {
         mf_col[i] = -1;
     }
 
@@ -445,10 +445,10 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
 
     val = wctlp_x(pd->RMP, x, 0);
     CCcheck_val_2(val, "Failed at wctlp_x");
-    CC_IFFREE(pd->x, double);
-    pd->x = CC_SAFE_MALLOC(nb_cols, double);
-    CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
-    memcpy(pd->x, x, nb_cols * sizeof(double));
+    CC_IFFREE(pd->lambda, double);
+    pd->lambda = CC_SAFE_MALLOC(nb_cols, double);
+    CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
+    memcpy(pd->lambda, x, nb_cols * sizeof(double));
     val = insert_frac_pairs_into_heap(pd, nodepair_refs, nodepair_weights,
                                       npairs, heap);
     CCcheck_val_2(val, "Failed in insert_frac_pairs_into_heap");

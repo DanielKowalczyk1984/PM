@@ -123,8 +123,8 @@ int insert_frac_pairs_into_heap(NodeData* pd, int* nodepair_refs,
     for (i = 0; i < nb_cols; ++i) {
         int j;
 
-        if (pd->x[i] <= 0.0 + lp_int_tolerance() ||
-            pd->x[i] >= 1.0 - lp_int_tolerance()) {
+        if (pd->lambda[i] <= 0.0 + lp_int_tolerance() ||
+            pd->lambda[i] >= 1.0 - lp_int_tolerance()) {
             continue;
         }
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
@@ -134,7 +134,7 @@ int insert_frac_pairs_into_heap(NodeData* pd, int* nodepair_refs,
             int v1 = tmp_j1->job;
             int k;
             ref_key = nodepair_ref_key(v1, v1);
-            nodepair_weights[ref_key] += pd->x[i];
+            nodepair_weights[ref_key] += pd->lambda[i];
 
             for (k = j + 1; k < tmp_schedule->job_list->len; ++k) {
                 assert(k != j);
@@ -143,9 +143,9 @@ int insert_frac_pairs_into_heap(NodeData* pd, int* nodepair_refs,
                 assert(v1 < v2);
                 ref_key = nodepair_ref_key(v1, v2);
                 mean_error[ref_key] +=
-                    0.5 - ABS(pd->x[i] - floor(pd->x[i]) - 0.5);
+                    0.5 - ABS(pd->lambda[i] - floor(pd->lambda[i]) - 0.5);
                 mean_counter[ref_key]++;
-                nodepair_weights[ref_key] += pd->x[i];
+                nodepair_weights[ref_key] += pd->lambda[i];
             }
         }
     }
@@ -165,7 +165,7 @@ int insert_frac_pairs_into_heap(NodeData* pd, int* nodepair_refs,
             // mean_error[ref_key]);
             int int_heap_key =
                 get_int_heap_key(dbl_heap_key, v1, v2, mean_counter[ref_key],
-                                 pd->njobs, mean_error[ref_key]);
+                                 pd->nb_jobs, mean_error[ref_key]);
             val = heapcontainer_insert(heap, int_heap_key + 1,
                                        (void*)&(nodepair_refs[ref_key]));
             CCcheck_val_2(val, "Failed in pmcheap_insert");
@@ -189,13 +189,13 @@ static int trigger_lb_changes_conflict(NodeData* child) {
     NodeData* pd = (NodeData*)child->parent;
 
     while (pd) {
-        for (i = 0; i < pd->nsame; ++i) {
+        for (i = 0; i < pd->nb_same; ++i) {
             if (pd->same_children[i].lower_bound < new_lower_bound) {
                 new_lower_bound = pd->same_children[i].lower_bound;
             }
         }
 
-        for (i = 0; i < pd->ndiff; ++i) {
+        for (i = 0; i < pd->nb_diff; ++i) {
             if (pd->diff_children[i].lower_bound < new_lower_bound) {
                 new_lower_bound = pd->diff_children[i].lower_bound;
             }
@@ -231,17 +231,17 @@ static int collect_same_child_conflict(NodeData* cd) {
     int rval = 0;
     int c;
 
-    for (c = 0; c < cd->nsame; ++c) {
-        if (cd->same_children[c].nbbest &&
-            (!cd->nbbest ||
+    for (c = 0; c < cd->nb_same; ++c) {
+        if (cd->same_children[c].nb_best &&
+            (!cd->nb_best ||
              cd->same_children[c].besttotwct < cd->upper_bound)) {
-            if (cd->nbbest) {
-                schedulesets_free(&(cd->bestcolors), &(cd->nbbest));
+            if (cd->nb_best) {
+                schedulesets_free(&(cd->bestcolors), &(cd->nb_best));
             }
 
             cd->upper_bound = cd->besttotwct = cd->same_children[c].besttotwct;
-            cd->nbbest = cd->same_children[c].nbbest;
-            cd->same_children[c].nbbest = 0;
+            cd->nb_best = cd->same_children[c].nb_best;
+            cd->same_children[c].nb_best = 0;
             cd->bestcolors = cd->same_children[c].bestcolors;
             cd->same_children[c].bestcolors = (ScheduleSet*)NULL;
             /** Check if the solution is feasible, i.e. every job is covered */
@@ -255,17 +255,17 @@ static int collect_diff_child_conflict(NodeData* cd) {
     int rval = 0;
     int c;
 
-    for (c = 0; c < cd->ndiff; ++c) {
-        if (cd->diff_children[c].nbbest &&
-            (!cd->nbbest ||
+    for (c = 0; c < cd->nb_diff; ++c) {
+        if (cd->diff_children[c].nb_best &&
+            (!cd->nb_best ||
              cd->diff_children[c].besttotwct < cd->upper_bound)) {
-            if (cd->nbbest) {
-                schedulesets_free(&(cd->bestcolors), &(cd->nbbest));
+            if (cd->nb_best) {
+                schedulesets_free(&(cd->bestcolors), &(cd->nb_best));
             }
 
             cd->upper_bound = cd->besttotwct = cd->diff_children[c].besttotwct;
-            cd->nbbest = cd->diff_children[c].nbbest;
-            cd->diff_children[c].nbbest = 0;
+            cd->nb_best = cd->diff_children[c].nb_best;
+            cd->diff_children[c].nb_best = 0;
             cd->bestcolors = cd->diff_children[c].bestcolors;
             cd->diff_children[c].bestcolors = (ScheduleSet*)NULL;
             /** Check if the solution is feasible, i.e. every job is covered */
@@ -283,44 +283,44 @@ static int remove_finished_subtree_conflict(NodeData* child) {
     int       all_diff_finished = 1;
 
     while (cd) {
-        for (i = 0; i < cd->nsame; ++i) {
+        for (i = 0; i < cd->nb_same; ++i) {
             if (cd->same_children[i].status < infeasible) {
                 all_same_finished = 0;
                 break;
             }
         }
 
-        if (cd->nsame && all_same_finished) {
+        if (cd->nb_same && all_same_finished) {
             val = collect_same_child_conflict(cd);
             CCcheck_val_2(val, "Failed in collect_same_children");
 
-            for (i = 0; i < cd->nsame; ++i) {
+            for (i = 0; i < cd->nb_same; ++i) {
                 nodedata_free(cd->same_children + i);
             }
 
             free(cd->same_children);
             cd->same_children = (NodeData*)NULL;
-            cd->nsame = 0;
+            cd->nb_same = 0;
         }
 
-        for (i = 0; i < cd->ndiff; ++i) {
+        for (i = 0; i < cd->nb_diff; ++i) {
             if (cd->diff_children[i].status < infeasible) {
                 all_diff_finished = 0;
                 break;
             }
         }
 
-        if (cd->ndiff && all_diff_finished) {
+        if (cd->nb_diff && all_diff_finished) {
             val = collect_diff_child_conflict(cd);
             CCcheck_val_2(val, "Failed in collect_diff_children");
 
-            for (i = 0; i < cd->ndiff; ++i) {
+            for (i = 0; i < cd->nb_diff; ++i) {
                 nodedata_free(cd->diff_children + i);
             }
 
             free(cd->diff_children);
             cd->diff_children = (NodeData*)NULL;
-            cd->ndiff = 0;
+            cd->nb_diff = 0;
         }
 
         if (!cd->same_children && !cd->diff_children) {
@@ -565,7 +565,7 @@ int branching_msg(NodeData* pd, Problem* problem) {
             "size= %zu, nb_cols = %u ).\n",
             pd->lower_bound, pd->LP_lower_bound_BB, pd->depth, pd->id,
             problem->tot_cputime.cum_zeit, binomial_heap_num_entries(heap),
-            pd->njobs, problem->global_upper_bound, root->lower_bound,
+            pd->nb_jobs, problem->global_upper_bound, root->lower_bound,
             pd->v1->job, pd->v2->job, pd->ecount_differ, pd->ecount_same,
             get_size_graph(pd->solver), pd->localColPool->len);
         CCutil_resume_timer(&problem->tot_cputime);
@@ -603,13 +603,13 @@ int sequential_branching_conflict(Problem* problem) {
             val = create_branches_conflict(pd, problem);
             CCcheck_val_2(val, "Failed at create_branches");
 
-            for (int i = 0; i < pd->nsame; i++) {
+            for (int i = 0; i < pd->nb_same; i++) {
                 val = insert_into_branching_heap(&(pd->same_children[i]),
                                                  problem);
                 CCcheck_val_2(val, "Failed in insert_into_branching_heap");
             }
 
-            for (int i = 0; i < pd->ndiff; i++) {
+            for (int i = 0; i < pd->nb_diff; i++) {
                 val =
                     insert_into_branching_heap(pd->diff_children + i, problem);
                 CCcheck_val_2(val, "Faield at insert_into_branching_heap");
@@ -659,7 +659,7 @@ int branching_msg_cbfs(NodeData* pd, Problem* problem) {
             "lower bound = %d, v1 = %d, v2 = %d, nbdiff = %d, nbsame = %d, ZDD "
             "size = %zu, nb_cols = %u ).\n",
             pd->lower_bound, pd->LP_lower_bound, pd->depth, pd->id,
-            problem->tot_cputime.cum_zeit, nb_nodes, pd->njobs,
+            problem->tot_cputime.cum_zeit, nb_nodes, pd->nb_jobs,
             problem->global_upper_bound, root->lower_bound, pd->v1->job,
             pd->v2->job, pd->ecount_differ, pd->ecount_same,
             get_size_graph(pd->solver), pd->localColPool->len);
@@ -697,11 +697,11 @@ int sequential_cbfs_branch_and_bound_conflict(Problem* problem) {
             val = create_branches_conflict(pd, problem);
             CCcheck_val_2(val, "Failed at create_branches");
 
-            for (int i = 0; i < pd->nsame; i++) {
+            for (int i = 0; i < pd->nb_same; i++) {
                 insert_node_for_exploration(pd->same_children + i, problem);
             }
 
-            for (int i = 0; i < pd->ndiff; i++) {
+            for (int i = 0; i < pd->nb_diff; i++) {
                 insert_node_for_exploration(pd->diff_children + i, problem);
             }
 

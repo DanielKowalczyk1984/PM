@@ -9,8 +9,8 @@ PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray* _jobs,
     : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing BDD with Forward Simple evaluator" << '\n';
     std::cout << "size BDD = " << get_size_graph() << '\n';
-    evaluator = ForwardBddSimpleDouble(njobs);
-    reversed_evaluator = BackwardBddSimpleDouble(njobs);
+    evaluator = ForwardBddSimpleDouble(nb_jobs);
+    reversed_evaluator = BackwardBddSimpleDouble(nb_jobs);
 }
 
 OptimalSolution<double> PricerSolverBddSimple::pricing_algorithm(double* _pi) {
@@ -40,9 +40,9 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
             double result = it.forward_label[0].get_f() +
                             it.child[1]->backward_label[0].get_f() -
                             value_Fj(w + job->processing_time, job) +
-                            pi[job->job] + pi[njobs];
+                            pi[job->job] + pi[nb_jobs];
             auto result_no = it.forward_label[0].get_f() +
-                             it.child[0]->backward_label[0].get_f() + pi[njobs];
+                             it.child[0]->backward_label[0].get_f() + pi[nb_jobs];
 
             if (LB - (double)(num_machines - 1) * reduced_cost - result >
                     UB - 1 + 0.0001 &&
@@ -72,8 +72,8 @@ PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray* _jobs, int _num_machines,
     : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing BDD with Forward Cycle evaluator" << '\n';
     std::cout << "size BDD = " << get_size_graph() << '\n';
-    evaluator = ForwardBddCycleDouble(njobs);
-    reversed_evaluator = BackwardBddCycleDouble(njobs);
+    evaluator = ForwardBddCycleDouble(nb_jobs);
+    reversed_evaluator = BackwardBddCycleDouble(nb_jobs);
 }
 
 OptimalSolution<double> PricerSolverBddCycle::pricing_algorithm(double* _pi) {
@@ -107,24 +107,24 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                 result = it.forward_label[0].get_f() +
                          it.child[1]->backward_label[0].get_f() -
                          value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[njobs];
+                         pi[job->job] + pi[nb_jobs];
             } else if (it.forward_label[0].get_previous_job() == job &&
                        it.child[1]->backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[1].get_f() +
                          it.child[1]->backward_label[0].get_f() -
                          value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[njobs];
+                         pi[job->job] + pi[nb_jobs];
             } else if (it.forward_label[0].get_previous_job() != job &&
                        it.child[1]->backward_label[0].get_prev_job() == job) {
                 result = it.forward_label[0].get_f() +
                          it.child[1]->backward_label[1].get_f() -
                          value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[njobs];
+                         pi[job->job] + pi[nb_jobs];
             } else {
                 result = it.forward_label[1].get_f() +
                          it.child[1]->backward_label[1].get_f() -
                          value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[njobs];
+                         pi[job->job] + pi[nb_jobs];
             }
 
             if (LB - (double)(num_machines - 1) * reduced_cost - result >
@@ -140,7 +140,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                 for (int j = 0; j < 2; j++) {
                     auto result_no = it.forward_label[i].get_f() +
                                      it.child[0]->backward_label[j].get_f() +
-                                     pi[njobs];
+                                     pi[nb_jobs];
                     if (max < result_no) {
                         max = result_no;
                     }

@@ -8,8 +8,8 @@ PricerSolverSimple::PricerSolverSimple(GPtrArray* _jobs, int _num_machines,
     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing ZDD with Forward Simple evaluator" << '\n';
     std::cout << "size ZDD = " << get_size_graph() << '\n';
-    evaluator = ForwardZddSimpleDouble(njobs);
-    reversed_evaluator = BackwardZddSimpleDouble(njobs);
+    evaluator = ForwardZddSimpleDouble(nb_jobs);
+    reversed_evaluator = BackwardZddSimpleDouble(nb_jobs);
 }
 
 OptimalSolution<double> PricerSolverSimple::pricing_algorithm(double* _pi) {
@@ -43,7 +43,7 @@ void PricerSolverSimple::evaluate_nodes(double* pi, int UB, double LB) {
                 double result = iter->forward_label[0].get_f() +
                                 iter->y->backward_label[0].get_f() -
                                 value_Fj(w + job->processing_time, job) +
-                                pi[job->job] + pi[njobs];
+                                pi[job->job] + pi[nb_jobs];
 
                 if (LB - (double)(num_machines - 1) * reduced_cost - result >
                         UB - 1 + 0.0001 &&
@@ -63,8 +63,8 @@ PricerSolverZddCycle::PricerSolverZddCycle(GPtrArray* _jobs, int _num_machines,
     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing ZDD with Forward ZddCycle evaluator" << '\n';
     std::cout << "size ZDD = " << get_size_graph() << '\n';
-    evaluator = ForwardZddCycleDouble(njobs);
-    reversed_evaluator = BackwardZddCycleDouble(njobs);
+    evaluator = ForwardZddCycleDouble(nb_jobs);
+    reversed_evaluator = BackwardZddCycleDouble(nb_jobs);
 }
 
 OptimalSolution<double> PricerSolverZddCycle::pricing_algorithm(double* _pi) {
@@ -100,7 +100,7 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                     double result = iter->forward_label[0].get_f() +
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + job->processing_time, job) +
-                                    pi[job->job] + pi[njobs];
+                                    pi[job->job] + pi[nb_jobs];
                     if (LB - (double)(num_machines - 1) * reduced_cost -
                                 result >
                             UB + 0.0001 &&
@@ -113,7 +113,7 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                     double result = iter->forward_label[1].get_f() +
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + job->processing_time, job) +
-                                    pi[job->job] + pi[njobs];
+                                    pi[job->job] + pi[nb_jobs];
                     if (LB - (double)(num_machines - 1) * reduced_cost -
                                 result >
                             UB + 0.0001 &&
@@ -126,7 +126,7 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                     double result = iter->forward_label[0].get_f() +
                                     iter->y->backward_label[1].get_f() -
                                     value_Fj(w + job->processing_time, job) +
-                                    pi[job->job] + pi[njobs];
+                                    pi[job->job] + pi[nb_jobs];
                     if (LB - (double)(num_machines - 1) * reduced_cost -
                                 result >
                             UB + 0.0001 &&
@@ -138,7 +138,7 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                     double result = iter->forward_label[1].get_f() +
                                     iter->y->backward_label[1].get_f() -
                                     value_Fj(w + job->processing_time, job) +
-                                    pi[job->job] + pi[njobs];
+                                    pi[job->job] + pi[nb_jobs];
                     if (LB - (double)(num_machines - 1) * reduced_cost -
                                 result >
                             UB + 0.0001 &&

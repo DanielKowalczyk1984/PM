@@ -53,7 +53,7 @@ CLEAN:
 
 static int delete_old_cclasses(NodeData* pd) {
     int          val = 0;
-    int          min_numdel = pd->njobs * min_ndelrow_ratio;
+    int          min_numdel = pd->nb_jobs * min_ndelrow_ratio;
     int          nb_col;
     guint        i;
     guint        count = pd->localColPool->len;
@@ -210,11 +210,11 @@ void g_make_pi_feasible(gpointer data, gpointer user_data) {
         colsum = nextafter(colsum, DBL_MAX);
     }
 
-    if (!signbit(pd->pi[pd->njobs])) {
-        pd->pi[pd->njobs] = 0.0;
+    if (!signbit(pd->pi[pd->nb_jobs])) {
+        pd->pi[pd->nb_jobs] = 0.0;
     }
 
-    colsum += pd->pi[pd->njobs];
+    colsum += pd->pi[pd->nb_jobs];
     colsum = nextafter(colsum, DBL_MAX);
 
     if (colsum > x->total_weighted_completion_time) {
@@ -226,9 +226,9 @@ void g_make_pi_feasible(gpointer data, gpointer user_data) {
             newcolsum += pd->pi[tmp_j->job];
         }
 
-        pd->pi[pd->njobs] /= colsum;
-        pd->pi[pd->njobs] *= x->total_weighted_completion_time;
-        newcolsum += pd->pi[pd->njobs];
+        pd->pi[pd->nb_jobs] /= colsum;
+        pd->pi[pd->nb_jobs] *= x->total_weighted_completion_time;
+        newcolsum += pd->pi[pd->nb_jobs];
 
         if (dbg_lvl() > 1) {
             printf("Decreased column sum of %5d from  %30.20f to  %30.20f\n",
@@ -260,7 +260,7 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
         colsum = nextafter(colsum, DBL_MAX);
     }
 
-    colsum += pd->pi[pd->njobs];
+    colsum += pd->pi[pd->nb_jobs];
 
     if (colsum > x->total_weighted_completion_time) {
         double newcolsum = .0;
@@ -271,9 +271,9 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
             newcolsum += pd->pi[tmp_j->job];
         }
 
-        pd->pi[pd->njobs] /= colsum;
-        pd->pi[pd->njobs] *= x->total_weighted_completion_time;
-        newcolsum += pd->pi[pd->njobs];
+        pd->pi[pd->nb_jobs] /= colsum;
+        pd->pi[pd->nb_jobs] *= x->total_weighted_completion_time;
+        newcolsum += pd->pi[pd->nb_jobs];
 
         if (dbg_lvl() > 1) {
             printf("Decreased column sum of %5d from  %30.20f to  %30.20f\n",
@@ -293,7 +293,7 @@ int compute_objective(NodeData* pd, Parms* parms) {
     pd->LP_lower_bound_dual = .0;
 
     /** compute lower bound with the dual variables */
-    for (i = 0; i < pd->njobs + 1; i++) {
+    for (i = 0; i < pd->nb_jobs + 1; i++) {
         pd->LP_lower_bound_dual += (double)pd->pi[i] * pd->rhs[i];
     }
     pd->LP_lower_bound_dual -= 0.0001;
@@ -309,7 +309,7 @@ int compute_objective(NodeData* pd, Parms* parms) {
     pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound, pd->LP_lower_bound_dual);
     pd->eta_out = pd->LP_lower_bound_BB;
 
-    if (pd->iterations % pd->njobs == 0) {
+    if (pd->iterations % pd->nb_jobs == 0) {
         printf(
             "Current primal LP objective: %19.16f  (LP_dual-bound %19.16f, "
             "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
@@ -353,14 +353,14 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     if (pd->localColPool->len == 0) {
         add_solution_to_colpool(problem->opt_sol, pd);
     }
-    reset_nblayers(pd->jobarray);
+    reset_nb_layers(pd->jobarray);
 
     if (!pd->RMP) {
         val = build_rmp(pd, 0);
         CCcheck_val(val, "build_lp failed");
     }
 
-    pd->retirementage = (int)sqrt(pd->njobs) + 30;
+    pd->retirementage = (int)sqrt(pd->nb_jobs) + 30;
 
     /** Init alpha */
     switch (parms->stab_technique) {
@@ -405,7 +405,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             /** Compute the objective function */
             val = compute_objective(pd, parms);
             CCcheck_val_2(val, "Failed in compute_objective");
-            memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
+            memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->nb_jobs + 1));
             pd->eta_out = pd->LP_lower_bound_dual;
             break;
 
@@ -426,7 +426,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
         /**
          * Delete old columns
          */
-        if (pd->dzcount > pd->njobs * min_ndelrow_ratio &&
+        if (pd->dzcount > pd->nb_jobs * min_ndelrow_ratio &&
             status == GRB_OPTIMAL) {
             // val = delete_old_cclasses(pd);
             CCcheck_val_2(val, "Failed in delete_old_cclasses");
@@ -482,7 +482,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
         problem->real_time_pricing += real_time_pricing;
 
         if (pd->update) {
-            for (j = 0; j < pd->nnewsets; j++) {
+            for (j = 0; j < pd->nb_new_sets; j++) {
                 val = add_scheduleset_to_rmp(pd->newsets + j, pd);
                 CCcheck_val_2(val, "wctlp_addcol failed");
                 g_ptr_array_add(pd->localColPool, pd->newsets + j);
@@ -507,14 +507,14 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
 
                     case no_stab:
                         break_while_loop =
-                            (pd->nnewsets == 0 || nb_non_improvements > 5);
+                            (pd->nb_new_sets == 0 || nb_non_improvements > 5);
                         break;
                 }
 
                 break;
 
             case GRB_INFEASIBLE:
-                break_while_loop = (pd->nnewsets == 0);
+                break_while_loop = (pd->nb_new_sets == 0);
                 break;
         }
 
@@ -553,7 +553,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     val = compute_objective(pd, parms);
                     CCcheck_val_2(val, "Failed in compute_objective");
                     memcpy(pd->pi_out, pd->pi,
-                           sizeof(double) * (pd->njobs + 1));
+                           sizeof(double) * (pd->nb_jobs + 1));
                 }
 
                 break;
@@ -599,6 +599,8 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     // reset_nblayers(pd->jobarray);
                     // calculate_nblayers(pd, 2);
                     reduce_cost_fixing(pd);
+                    print_x(pd);
+                    construct_lp_sol_from_rmp(pd);
                     // val = check_schedules(pd);
                     // CCcheck_val_2(val, "Failed in checkschedules");
                     // delete_infeasible_cclasses(pd);
@@ -615,7 +617,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 CCcheck_val_2(val, "wctlp_optimize failed");
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
-                memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->njobs + 1));
+                memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->nb_jobs + 1));
                 printf("size evolution %lu\n", get_size_graph(pd->solver));
                 break;
 
@@ -673,34 +675,34 @@ int print_x(NodeData* pd) {
         case GRB_OPTIMAL:
             val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
             CCcheck_val_2(val, "Failed to get nb cols");
-            pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
-            CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
-            val = wctlp_x(pd->RMP, pd->x, 0);
+            pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols, double);
+            CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
+            val = wctlp_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in wctlp_x");
 
-            for (int i = 0; i < nb_cols; ++i) {
-                if (pd->x[i] > 0.00001) {
-                    printf("x = %f\n", pd->x[i]);
-                    ScheduleSet* tmp =
-                        (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
-                    int C = 0;
-                    for (int j = 0; j < tmp->job_list->len; ++j) {
-                        Job* j1 = (Job*)g_ptr_array_index(tmp->job_list, j);
+            // for (int i = 0; i < nb_cols; ++i) {
+            //     if (pd->x[i] > 0.00001) {
+            //         printf("x = %f\n", pd->x[i]);
+            //         ScheduleSet* tmp =
+            //             (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
+            //         int C = 0;
+            //         for (int j = 0; j < tmp->job_list->len; ++j) {
+            //             Job* j1 = (Job*)g_ptr_array_index(tmp->job_list, j);
 
-                        if (j < tmp->job_list->len - 1) {
-                            Job* j2 =
-                                (Job*)g_ptr_array_index(tmp->job_list, j + 1);
-                            if (!bool_diff_Fij(C, j2, j1)) {
-                                printf("%d ", bool_diff_Fij(C, j2, j1));
-                            }
-                        }
-                        C += j1->processing_time;
-                    }
-                    printf("\n");
-                    g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
-                    printf("\n");
-                }
-            }
+            //             if (j < tmp->job_list->len - 1) {
+            //                 Job* j2 =
+            //                     (Job*)g_ptr_array_index(tmp->job_list, j + 1);
+            //                 if (!bool_diff_Fij(C, j2, j1)) {
+            //                     printf("%d ", bool_diff_Fij(C, j2, j1));
+            //                 }
+            //             }
+            //             C += j1->processing_time;
+            //         }
+            //         printf("\n");
+            //         g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
+            //         printf("\n");
+            //     }
+            // }
             break;
     }
 
@@ -720,19 +722,19 @@ int calculate_nblayers(NodeData* pd, int k) {
         wctlp_optimize(pd->RMP, &status);
     }
 
-    reset_nblayers(pd->jobarray);
+    reset_nb_layers(pd->jobarray);
 
     switch (status) {
         case GRB_OPTIMAL:
             val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
             CCcheck_val_2(val, "Failed to get nb cols");
-            pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
-            CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
-            val = wctlp_x(pd->RMP, pd->x, 0);
+            pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols, double);
+            CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
+            val = wctlp_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in wctlp_x");
 
             for (unsigned i = 0; i < nb_cols; ++i) {
-                if (pd->x[i] > 0.00001) {
+                if (pd->lambda[i] > 0.00001) {
                     ScheduleSet* tmp =
                         (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
                     for (int j = 0; j < (int)tmp->job_list->len - k; ++j) {
@@ -767,9 +769,9 @@ int calculate_x_e(NodeData* pd) {
         case GRB_OPTIMAL:
             val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
             CCcheck_val_2(val, "Failed to get nb cols");
-            pd->x = CC_SAFE_REALLOC(pd->x, nb_cols, double);
-            CCcheck_NULL_2(pd->x, "Failed to allocate memory to pd->x");
-            val = wctlp_x(pd->RMP, pd->x, 0);
+            pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols, double);
+            CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
+            val = wctlp_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in wctlp_x");
             pd->x_e = CC_SAFE_REALLOC(pd->x_e, get_size_data(pd->solver),
                                       double);

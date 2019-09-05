@@ -6,7 +6,7 @@ template <typename T = double>
 int construct_sol(NodeData* pd, OptimalSolution<T>* sol) {
     int          val = 0;
     int          nbset = 1;
-    ScheduleSet* newset = scheduleset_alloc_bis(pd->njobs);
+    ScheduleSet* newset = scheduleset_alloc_bis(pd->nb_jobs);
     CCcheck_NULL_3(newset, "Failed to allocate memory newset");
 
     for (unsigned i = 0; i < sol->jobs->len; ++i) {
@@ -21,7 +21,7 @@ int construct_sol(NodeData* pd, OptimalSolution<T>* sol) {
     newset->total_weighted_completion_time = sol->cost;
     newset->total_processing_time = sol->C_max;
     pd->newsets = newset;
-    pd->nnewsets = 1;
+    pd->nb_new_sets = 1;
 
 CLEAN:
     if (val) {
@@ -97,7 +97,7 @@ int calculate_dualdiffnorm(NodeData* pd) {
 
     pd->dualdiffnorm = 0.0;
 
-    for (int i = 0; i <= pd->njobs; ++i) {
+    for (int i = 0; i <= pd->nb_jobs; ++i) {
         double dualdiff = SQR(pd->pi_in[i] - pd->pi_out[i]);
         if (dualdiff > 0.00001) {
             pd->dualdiffnorm += dualdiff;
@@ -113,7 +113,7 @@ int calculate_beta(NodeData* pd) {
     int val = 0;
 
     pd->beta = 0.0;
-    for (int i = 0; i <= pd->njobs; ++i) {
+    for (int i = 0; i <= pd->nb_jobs; ++i) {
         double dualdiff = ABS(pd->pi_out[i] - pd->pi_in[i]);
         double product = dualdiff * ABS(pd->subgradient_in[i]);
 
@@ -133,7 +133,7 @@ int calculate_hybridfactor(NodeData* pd) {
     int val = 0;
 
     double aux_norm = 0.0;
-    for (int i = 0; i <= pd->njobs; ++i) {
+    for (int i = 0; i <= pd->nb_jobs; ++i) {
         double aux_double =
             SQR((pd->beta - 1.0) * (pd->pi_out[i] - pd->pi_in[i]) +
                 pd->beta * (pd->subgradient_in[i] * pd->dualdiffnorm /
@@ -201,7 +201,7 @@ double compute_dual(NodeData* pd, int i) {
 
 int row_getDual(NodeData* pd, int i) {
     int val = 0;
-    assert(i <= pd->njobs);
+    assert(i <= pd->nb_jobs);
 
     pd->pi_sep[i] = compute_dual(pd, i);
 
@@ -210,17 +210,17 @@ int row_getDual(NodeData* pd, int i) {
 
 static void compute_subgradient(const OptimalSolution<double>& sol,
                                 NodeData*                      pd) {
-    fill_dbl(pd->subgradient_in, pd->njobs, 1.0);
-    pd->subgradient_in[pd->njobs] = 0.0;
+    fill_dbl(pd->subgradient_in, pd->nb_jobs, 1.0);
+    pd->subgradient_in[pd->nb_jobs] = 0.0;
 
     for (guint i = 0; i < sol.jobs->len; i++) {
         Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-        pd->subgradient_in[tmp_j->job] += pd->rhs[pd->njobs] * 1.0;
+        pd->subgradient_in[tmp_j->job] += pd->rhs[pd->nb_jobs] * 1.0;
     }
 
     pd->subgradientnorm = 0.0;
 
-    for (int i = 0; i < pd->njobs; ++i) {
+    for (int i = 0; i < pd->nb_jobs; ++i) {
         double sqr = SQR(pd->subgradient_in[i]);
 
         if (sqr > 0.00001) {
@@ -235,7 +235,7 @@ int update_subgradientproduct(NodeData* pd) {
     int val = 0;
 
     pd->subgradientproduct = 0.0;
-    for (int i = 0; i < pd->njobs; ++i) {
+    for (int i = 0; i < pd->nb_jobs; ++i) {
         pd->subgradientproduct -=
             (pd->pi_out[i] - pd->pi_in[i]) * pd->subgradient_in[i];
     }
@@ -248,7 +248,7 @@ int update_stabcenter(const OptimalSolution<double>& sol, NodeData* pd) {
     int val = 0;
 
     if (pd->eta_sep > pd->eta_in) {
-        memcpy(pd->pi_in, pd->pi_sep, (pd->njobs + 1) * sizeof(double));
+        memcpy(pd->pi_in, pd->pi_sep, (pd->nb_jobs + 1) * sizeof(double));
         compute_subgradient(sol, pd);
         pd->eta_in = pd->eta_sep;
         pd->hasstabcenter = 1;
@@ -291,13 +291,13 @@ int solve_pricing(NodeData* pd, wctparms* parms, int evaluate) {
     OptimalSolution<double> sol;
 
     sol = pd->solver->pricing_algorithm(pd->pi);
-    pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->njobs);
+    pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->nb_jobs);
 
     if (pd->reduced_cost > 0.000001) {
         val = construct_sol(pd, &sol);
         CCcheck_val_2(val, "Failed in construction")
     } else {
-        pd->nnewsets = 0;
+        pd->nb_new_sets = 0;
     }
 
 CLEAN:
@@ -317,14 +317,14 @@ int solve_stab(NodeData* pd, wctparms* parms) {
         k += 1.0;
         alpha =
             pd->hasstabcenter ? CC_MAX(0, 1.0 - k * (1.0 - pd->alpha)) : 0.0;
-        compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
+        compute_pi_eta_sep(pd->nb_jobs, pd->pi_sep, &(pd->eta_sep), alpha,
                            pd->pi_in, &(pd->eta_in), pd->pi_out,
                            &(pd->eta_out));
         OptimalSolution<double> sol;
         sol = solver->pricing_algorithm(pd->pi_sep);
 
-        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
+        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->nb_jobs);
+        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->nb_jobs);
 
         if (pd->reduced_cost >= 0.000001) {
             val = construct_sol(pd, &sol);
@@ -337,10 +337,10 @@ int solve_stab(NodeData* pd, wctparms* parms) {
     if (result_sep > pd->eta_in) {
         pd->hasstabcenter = 1;
         pd->eta_in = result_sep;
-        memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->njobs + 1));
+        memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->nb_jobs + 1));
     }
 
-    if (pd->iterations % pd->njobs == 0) {
+    if (pd->iterations % pd->nb_jobs == 0) {
         printf(
             "alpha = %f, result of primal bound and Lagragian "
             "bound: out =%f, in = %f\n",
@@ -364,17 +364,17 @@ int solve_stab_dynamic(NodeData* pd, wctparms* parms) {
         k += 1.0;
         alpha =
             pd->hasstabcenter ? CC_MAX(0.0, 1.0 - k * (1 - pd->alpha)) : 0.0;
-        compute_pi_eta_sep(pd->njobs, pd->pi_sep, &(pd->eta_sep), alpha,
+        compute_pi_eta_sep(pd->nb_jobs, pd->pi_sep, &(pd->eta_sep), alpha,
                            pd->pi_in, &(pd->eta_in), pd->pi_out,
                            &(pd->eta_out));
         OptimalSolution<double> sol;
         sol = solver->pricing_algorithm(pd->pi_sep);
-        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
+        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->nb_jobs);
+        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->nb_jobs);
 
         if (pd->reduced_cost >= 0.000001) {
             compute_subgradient(sol, pd);
-            adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient_in, pd->njobs,
+            adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient_in, pd->nb_jobs,
                          alpha);
             val = construct_sol(pd, &sol);
             CCcheck_val_2(val, "Failed in construct_sol_stab");
@@ -387,10 +387,10 @@ int solve_stab_dynamic(NodeData* pd, wctparms* parms) {
     if (result_sep > pd->eta_in) {
         pd->hasstabcenter = 1;
         pd->eta_in = result_sep;
-        memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->njobs + 1));
+        memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->nb_jobs + 1));
     }
 
-    if (pd->iterations % pd->njobs == 0) {
+    if (pd->iterations % pd->nb_jobs == 0) {
         printf(
             " alpha = %f, result of primal bound and Lagragian bound: out =%f, "
             "in = %f\n",
@@ -413,15 +413,15 @@ int solve_stab_hybrid(NodeData* pd, wctparms* parms) {
 
         stabilized = is_stabilized(pd);
 
-        for (int i = 0; i <= pd->njobs; ++i) {
+        for (int i = 0; i <= pd->nb_jobs; ++i) {
             pd->pi_sep[i] = compute_dual(pd, i);
         }
 
         OptimalSolution<double> sol;
         sol = solver->pricing_algorithm(pd->pi_sep);
 
-        pd->eta_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->njobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->njobs);
+        pd->eta_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->nb_jobs);
+        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->nb_jobs);
 
         update_stabcenter(sol, pd);
 
@@ -443,7 +443,7 @@ int solve_stab_hybrid(NodeData* pd, wctparms* parms) {
         }
     } while (pd->inmispricingschedule && stabilized);
 
-    if (pd->iterations % pd->njobs == 0) {
+    if (pd->iterations % pd->nb_jobs == 0) {
         printf(
             " alpha = %f, result of primal bound and Lagragian bound: out =%f, "
             "in = %f\n",
@@ -462,7 +462,7 @@ int solve_farkas_dbl(NodeData* pd) {
         //                     pd->njobs);
         CCcheck_val_2(val, "Failed in constructing jobs");
     } else {
-        pd->nnewsets = 0;
+        pd->nb_new_sets = 0;
     }
 
 CLEAN:

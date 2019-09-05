@@ -42,8 +42,8 @@ struct _NodeData {
     NodeDataStatus status;
 
     // The instance information
-    int njobs;
-    int nmachines;
+    int nb_jobs;
+    int nb_machines;
     int *orig_node_ids;
     // data for meta heuristic
     GPtrArray *jobarray;
@@ -57,7 +57,7 @@ struct _NodeData {
     // The column generation lp information
     wctlp *RMP;
     wctlp *MIP;
-    double *x;
+    double *lambda;
     double *x_e;
     double *coef;
     double *pi;
@@ -70,7 +70,7 @@ struct _NodeData {
     int          dzcount;
     // int          gallocated;
     ScheduleSet *newsets;
-    int          nnewsets;
+    int          nb_new_sets;
     int *cstat;
     GPtrArray *localColPool;
 
@@ -80,9 +80,7 @@ struct _NodeData {
     double  partial_sol;
     double  dbl_safe_lower_bound;
     double  dbl_est_lower_bound;
-    double  dbl_est_lower_bound_heur;
     double  LP_lower_bound;
-    double  LP_lower_bound_heur;
     double  LP_lower_bound_dual;
     double  LP_lower_bound_BB;
     double *rhs;
@@ -114,7 +112,7 @@ struct _NodeData {
     // Best Solution
     ScheduleSet *bestcolors;
     int          besttotwct;
-    int          nbbest;
+    int          nb_best;
 
     const ScheduleSet *debugcolors;
     int                ndebugcolors;
@@ -132,15 +130,15 @@ struct _NodeData {
     int     *elist_differ;
     int      ecount_differ;
     NodeData *same_children;
-    int      nsame;
+    int      nb_same;
     NodeData *diff_children;
-    int      ndiff;
+    int      nb_diff;
     Job      *v1, *v2;
     /** ahv branching */
     NodeData *duetime_child;
-    int      nduetime;
+    int      nb_duetime;
     NodeData *releasetime_child;
-    int      nreleasetime;
+    int      nb_releasetime;
     int      branch_job;
     int      completiontime;
     /** wide branching conflict */
@@ -194,7 +192,7 @@ struct _Problem {
     int H_max;
     int off;
     /** nmachines */
-    int nmachines;
+    int nb_machines;
 
     int    nb_data_nodes;
     int    global_upper_bound;

@@ -129,7 +129,7 @@ void calculate_edges(PricerSolver* solver, ScheduleSet* set) {
 }
 
 void construct_lp_sol_from_rmp(NodeData* pd) {
-    pd->solver->construct_lp_sol_from_rmp(pd->x, pd->localColPool,
+    pd->solver->construct_lp_sol_from_rmp(pd->lambda, pd->localColPool,
                                           pd->localColPool->len);
 }
 

@@ -81,7 +81,7 @@ static int solution_set_c(Solution* sol) {
     sol->tw = 0;
     sol->b = 0;
 
-    for (int i = 0; i < sol->nmachines; ++i) {
+    for (int i = 0; i < sol->nb_machines; ++i) {
         sol->part[i].c = 0;
         sol->part[i].tw = 0;
         sol->part[i].key = i;
@@ -90,7 +90,7 @@ static int solution_set_c(Solution* sol) {
         binomial_heap_insert(heap, sol->part + i);
     }
 
-    for (int i = 0; i < sol->njobs; ++i) {
+    for (int i = 0; i < sol->nb_jobs; ++i) {
         j = sol->perm[i];
         tmp = (PartList*)binomial_heap_pop(heap);
         j->index = tmp->machine->len;
@@ -99,7 +99,7 @@ static int solution_set_c(Solution* sol) {
         sol->c[j->job] = tmp->c;
         tmp->tw += value_Fj(tmp->c, j);
         sol->tw += value_Fj(tmp->c, j);
-        sol->b += j->due_time * (sol->njobs - i);
+        sol->b += j->due_time * (sol->nb_jobs - i);
         binomial_heap_insert(heap, tmp);
     }
 
@@ -118,9 +118,9 @@ int construct_spt(Problem* prob, Solution* sol) {
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
 
-    sol->njobs = prob->njobs;
-    sol->nmachines = prob->nmachines;
-    qsort(sol->perm, sol->njobs, sizeof(Job*), _job_compare_spt);
+    sol->nb_jobs = prob->njobs;
+    sol->nb_machines = prob->nb_machines;
+    qsort(sol->perm, sol->nb_jobs, sizeof(Job*), _job_compare_spt);
     val = solution_set_c(sol);
     CCcheck_val_2(val, "Failed in solution_set_c");
 CLEAN:
@@ -132,8 +132,8 @@ int construct_edd(Problem* prob, Solution* sol) {
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
 
-    sol->njobs = prob->njobs;
-    sol->nmachines = prob->nmachines;
+    sol->nb_jobs = prob->njobs;
+    sol->nb_machines = prob->nb_machines;
     val = solution_set_c(sol);
     CCcheck_val_2(val, "failed in solution_set_c");
 CLEAN:
@@ -144,8 +144,8 @@ int construct_random(Problem* prob, Solution* sol, GRand* rand_uniform) {
     int val = 0;
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
-    sol->njobs = prob->njobs;
-    sol->nmachines = prob->nmachines;
+    sol->nb_jobs = prob->njobs;
+    sol->nb_machines = prob->nb_machines;
     permutation_solution(rand_uniform, sol);
     val = solution_set_c(sol);
     CCcheck_val_2(val, "failed in solution_set_c");
@@ -157,8 +157,8 @@ void permutation_solution(GRand* rand_uniform, Solution* sol) {
     int  i;
     Job* tmp = (Job*)NULL;
 
-    for (i = 0; i <= sol->njobs - 2; i++) {
-        int j = g_rand_int_range(rand_uniform, 0, sol->njobs - i);
+    for (i = 0; i <= sol->nb_jobs - 2; i++) {
+        int j = g_rand_int_range(rand_uniform, 0, sol->nb_jobs - i);
         CC_SWAP(sol->perm[i], sol->perm[i + j], tmp);
     }
 }
@@ -265,7 +265,7 @@ static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
                          GRand* rand_uniform) {
     int       m1, m2;
     unsigned  i1 = 0, i2 = 0;
-    int       nmachines = sol->nmachines;
+    int       nmachines = sol->nb_machines;
     Job**     tmp1 = (Job**)NULL;
     Job**     tmp2 = (Job**)NULL;
     Job*      tmp;
@@ -386,7 +386,7 @@ void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform) {
         perturb_swap(sol, data, 2, 3, rand_uniform);
     }
 
-    for (int i = 0; i < sol->nmachines; ++i) {
+    for (int i = 0; i < sol->nb_machines; ++i) {
         sol->part[i].used = 1;
     }
 
@@ -397,7 +397,7 @@ void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform) {
 int heuristic_rpup(Problem* prob) {
     int    val = 0;
     int    njobs = prob->njobs;
-    int    nmachines = prob->nmachines;
+    int    nmachines = prob->nb_machines;
     GRand* rand_uniform = g_rand_new_with_seed(2011);
     Parms* parms = &(prob->parms);
     g_random_set_seed(1984);

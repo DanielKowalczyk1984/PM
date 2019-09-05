@@ -63,9 +63,9 @@ void calculate_Hmax(Problem* problem) {
 
     temp = problem->psum - problem->pmax;
     temp_dbl = (double)temp;
-    temp_dbl = floor(temp_dbl / problem->nmachines);
+    temp_dbl = floor(temp_dbl / problem->nb_machines);
     problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax + 10;
-    problem->H_min = (int)ceil(temp_dbl / problem->nmachines) - problem->pmax;
+    problem->H_min = (int)ceil(temp_dbl / problem->nb_machines) - problem->pmax;
     printf("H_max = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
            problem->H_max, problem->pmax, problem->pmin, problem->psum,
            problem->off);

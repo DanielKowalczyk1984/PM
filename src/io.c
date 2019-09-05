@@ -76,8 +76,8 @@ int read_problem(Problem* problem) {
             curjob++;
         }
 
-        problem->njobs = pd->njobs = nbjobs;
-        problem->nmachines = pd->nmachines = parms->nmachines;
+        problem->njobs = pd->nb_jobs = nbjobs;
+        problem->nb_machines = pd->nb_machines = parms->nmachines;
     } else {
         fprintf(stderr, "Unable to open file %s\n", parms->jobfile);
         val = 1;
@@ -147,7 +147,7 @@ int print_to_csv(Problem* problem) {
             problem->root_rel_error, problem->nb_generated_col, date.day,
             date.month, date.year, parms->nb_iterations_rvnd,
             parms->stab_technique, parms->alpha, parms->pricing_solver,
-            problem->njobs, problem->nmachines, problem->first_size_graph,
+            problem->njobs, problem->nb_machines, problem->first_size_graph,
             problem->size_graph_after_reduced_cost_fixing);
     fclose(file);
 CLEAN:

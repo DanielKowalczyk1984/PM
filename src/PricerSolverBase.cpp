@@ -10,10 +10,10 @@
  **/
 PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines)
     : jobs(_jobs),
-      njobs(_jobs->len),
+      nb_jobs(_jobs->len),
       num_machines(_num_machines),
       ordered_jobs(nullptr),
-      nlayers(0)
+      nb_layers(0)
 // size_graph(0), nb_removed_edges(0), nb_removed_nodes(0)
 {
     // decision_diagram = nullptr;
@@ -22,10 +22,10 @@ PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines)
 PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
                                    GPtrArray* _ordered_jobs)
     : jobs(_jobs),
-      njobs(_jobs->len),
+      nb_jobs(_jobs->len),
       num_machines(_num_machines),
       ordered_jobs(_ordered_jobs),
-      nlayers(ordered_jobs->len) {}
+      nb_layers(ordered_jobs->len) {}
 
 // size_graph(0),
 // nb_removed_edges(0), nb_removed_nodes(0),

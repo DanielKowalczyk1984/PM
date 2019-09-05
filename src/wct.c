@@ -104,7 +104,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->status = initialized;
     sprintf(pd->pname, "temporary");
     /*Initialization node instance data*/
-    pd->njobs = 0;
+    pd->nb_jobs = 0;
     pd->orig_node_ids = (int*)NULL;
     pd->H_max = 0;
     pd->H_min = 0;
@@ -124,7 +124,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     /*Initialization  of the LP*/
     pd->RMP = (wctlp*)NULL;
     pd->MIP = (wctlp*)NULL;
-    pd->x = (double*)NULL;
+    pd->lambda = (double*)NULL;
     pd->x_e = (double*)NULL;
     pd->coef = (double*)NULL;
     pd->pi = (double*)NULL;
@@ -150,7 +150,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->nnonimprovements = 0;
     pd->dzcount = 0;
     pd->bestcolors = (ScheduleSet*)NULL;
-    pd->nbbest = 0;
+    pd->nb_best = 0;
     pd->debugcolors = (ScheduleSet*)NULL;
     pd->ndebugcolors = 0;
     pd->opt_track = 0;
@@ -165,9 +165,9 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->choose = 0;
     /** ahv branching */
     pd->duetime_child = (NodeData*)NULL;
-    pd->nduetime = 0;
+    pd->nb_duetime = 0;
     pd->releasetime_child = (NodeData*)NULL;
-    pd->nreleasetime = 0;
+    pd->nb_releasetime = 0;
     pd->branch_job = -1;
     pd->completiontime = 0;
     /** conflict branching */
@@ -176,9 +176,9 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->elist_differ = (int*)NULL;
     pd->ecount_differ = 0;
     pd->same_children = (NodeData*)NULL;
-    pd->nsame = 0;
+    pd->nb_same = 0;
     pd->diff_children = (NodeData*)NULL;
-    pd->ndiff = 0;
+    pd->nb_diff = 0;
     pd->v1 = (Job*)NULL;
     pd->v2 = (Job*)NULL;
     /** Wide branching */
@@ -204,7 +204,7 @@ void lpwctdata_free(NodeData* pd) {
      */
     CC_IFFREE(pd->coef, double);
     CC_IFFREE(pd->pi, double);
-    CC_IFFREE(pd->x, double);
+    CC_IFFREE(pd->lambda, double);
     CC_IFFREE(pd->x_e, double);
     CC_IFFREE(pd->pi_out, double);
     CC_IFFREE(pd->pi_in, double);
@@ -223,29 +223,29 @@ void lpwctdata_free(NodeData* pd) {
 void children_data_free(NodeData* pd) {
     int i;
 
-    for (i = 0; i < pd->nsame; ++i) {
+    for (i = 0; i < pd->nb_same; ++i) {
         nodedata_free(&(pd->same_children[i]));
     }
 
-    for (i = 0; i < pd->nduetime; ++i) {
+    for (i = 0; i < pd->nb_duetime; ++i) {
         nodedata_free(&(pd->duetime_child[i]));
     }
 
     CC_IFFREE(pd->same_children, NodeData);
     CC_IFFREE(pd->duetime_child, NodeData);
 
-    for (i = 0; i < pd->ndiff; ++i) {
+    for (i = 0; i < pd->nb_diff; ++i) {
         nodedata_free(&(pd->diff_children[i]));
     }
 
-    for (i = 0; i < pd->nreleasetime; ++i) {
+    for (i = 0; i < pd->nb_releasetime; ++i) {
         nodedata_free(&(pd->releasetime_child[i]));
     }
 
     CC_IFFREE(pd->releasetime_child, NodeData);
     CC_IFFREE(pd->diff_children, NodeData);
-    pd->nsame = pd->ndiff = 0;
-    pd->nreleasetime = pd->nduetime = 0;
+    pd->nb_same = pd->nb_diff = 0;
+    pd->nb_releasetime = pd->nb_duetime = 0;
 }
 
 void temporary_data_free(NodeData* pd) {
@@ -259,7 +259,7 @@ void temporary_data_free(NodeData* pd) {
 }
 
 void nodedata_free(NodeData* pd) {
-    schedulesets_free(&(pd->bestcolors), &(pd->nbbest));
+    schedulesets_free(&(pd->bestcolors), &(pd->nb_best));
     temporary_data_free(pd);
     if (pd->sump) {
         for (unsigned i = 0; i < pd->local_intervals->len; ++i) {
@@ -313,17 +313,17 @@ static int prefill_heap(NodeData* pd, Problem* problem) {
     if (pd->status < finished) {
         int i;
 
-        if (!pd->nsame || !pd->ndiff) {
+        if (!pd->nb_same || !pd->nb_diff) {
             insert_into_heap = 1;
         }
 
-        for (i = 0; (!insert_into_heap) && i < pd->nsame; ++i) {
+        for (i = 0; (!insert_into_heap) && i < pd->nb_same; ++i) {
             if (pd->duetime_child[i].status < LP_bound_computed) {
                 insert_into_heap = 1;
             }
         }
 
-        for (i = 0; (!insert_into_heap) && i < pd->ndiff; ++i) {
+        for (i = 0; (!insert_into_heap) && i < pd->nb_diff; ++i) {
             if (pd->releasetime_child[i].status < LP_bound_computed) {
                 insert_into_heap = 1;
             }
@@ -337,11 +337,11 @@ static int prefill_heap(NodeData* pd, Problem* problem) {
     } else {
         int i;
 
-        for (i = 0; i < pd->nsame; ++i) {
+        for (i = 0; i < pd->nb_same; ++i) {
             prefill_heap(pd->duetime_child + i, problem);
         }
 
-        for (i = 0; i < pd->ndiff; ++i) {
+        for (i = 0; i < pd->nb_diff; ++i) {
             prefill_heap(pd->releasetime_child + i, problem);
         }
     }
@@ -430,7 +430,7 @@ int compute_schedule(Problem* problem) {
                              ((double)problem->global_lower_bound);
         problem->status = optimal;
         printf("The optimal schedule is given by:\n");
-        print_schedule(root_pd->bestcolors, root_pd->nbbest);
+        print_schedule(root_pd->bestcolors, root_pd->nb_best);
         printf("with total weighted completion time %d\n",
                root_pd->upper_bound);
     } else {
@@ -441,7 +441,7 @@ int compute_schedule(Problem* problem) {
         problem->status = meta_heur;
         problem->global_lower_bound = root_pd->lower_bound;
         printf("The suboptimal schedule is given by:\n");
-        print_schedule(root_pd->bestcolors, root_pd->nbbest);
+        print_schedule(root_pd->bestcolors, root_pd->nb_best);
         printf("with total weighted completion time\n");
     }
 
@@ -453,9 +453,9 @@ CLEAN:
 int add_solution_to_colpool(Solution* sol, NodeData* pd) {
     int val = 0;
 
-    for (int i = 0; i < sol->nmachines; ++i) {
+    for (int i = 0; i < sol->nb_machines; ++i) {
         GPtrArray*   machine = sol->part[i].machine;
-        ScheduleSet* tmp = scheduleset_from_solution(machine, pd->njobs);
+        ScheduleSet* tmp = scheduleset_from_solution(machine, pd->nb_jobs);
         CCcheck_NULL_2(tmp, "Failed to allocate memory");
         g_ptr_array_add(pd->localColPool, tmp);
     }
@@ -468,9 +468,9 @@ int add_solution_to_colpool_and_lp(Solution* sol, NodeData* pd) {
     int          val = 0;
     ScheduleSet* tmp;
 
-    for (int i = 0; i < sol->nmachines; ++i) {
+    for (int i = 0; i < sol->nb_machines; ++i) {
         GPtrArray* machine = sol->part[i].machine;
-        tmp = scheduleset_from_solution(machine, pd->njobs);
+        tmp = scheduleset_from_solution(machine, pd->nb_jobs);
         CCcheck_NULL_2(tmp, "Failed to allocate memory");
         g_ptr_array_add(pd->localColPool, tmp);
     }

@@ -8,10 +8,10 @@
 struct PricerSolverBase {
 protected:
     GPtrArray *jobs;
-    int njobs;
+    int nb_jobs;
     int num_machines;
     GPtrArray *ordered_jobs;
-    int nlayers;
+    int nb_layers;
 
     // std::unique_ptr<DdStructure<>> decision_diagram;
     // size_t size_graph;

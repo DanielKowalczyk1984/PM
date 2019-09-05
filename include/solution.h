@@ -26,8 +26,8 @@ typedef struct _solution {
     int *     u;
     int       tw;
     int       b;
-    int       njobs;
-    int       nmachines;
+    int       nb_jobs;
+    int       nb_machines;
     int       off;
 } Solution;
 
@@ -39,7 +39,7 @@ void solution_init(Solution *sol);
  * free all dynamic allocated memory of solution type
  */
 void solution_free(Solution **sol);
-Solution *solution_alloc(int nmachines, int njobs, int off);
+Solution *solution_alloc(int nb_machines, int nb_jobs, int off);
 
 /**
  * functions to work on solution type data
@@ -47,12 +47,12 @@ Solution *solution_alloc(int nmachines, int njobs, int off);
 void solution_print(Solution *sol);
 int solution_copy(Solution *dest, Solution *src);
 int solution_update(Solution *dest, Solution *src);
-int solution_check(PartList *part, int jcount);
+int solution_check(PartList *part, int job_count);
 
 Job *job_alloc(int *p, int *w, int *d);
 void job_init(Job *job, int p, int d, int w);
 void g_job_free(void *set);
-void reset_nblayers(GPtrArray *jobs);
+void reset_nb_layers(GPtrArray *jobs);
 void g_print_job(gpointer data, gpointer user_data);
 gint g_job_compare_edd(const void *a, const void *b, void *data);
 void g_set_jobarray_job(gpointer data, gpointer user_data);

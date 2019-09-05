@@ -8,43 +8,43 @@ int **B2_1, **B2_2, **B3_1, **B3_2, **B4_1, **B4_2, **B5_1, **B5_2, **B6_1;
 int*  B3_1_;
 
 void alloc_all(Solution* sol) {
-    g = CC_SAFE_MALLOC(sol->njobs, int*);
-    h = CC_SAFE_MALLOC(sol->njobs, int*);
-    hh = CC_SAFE_MALLOC(sol->njobs, int*);
-    gg = CC_SAFE_MALLOC(sol->njobs, int);
-    iterators = CC_SAFE_MALLOC(sol->njobs, GList*);
+    g = CC_SAFE_MALLOC(sol->nb_jobs, int*);
+    h = CC_SAFE_MALLOC(sol->nb_jobs, int*);
+    hh = CC_SAFE_MALLOC(sol->nb_jobs, int*);
+    gg = CC_SAFE_MALLOC(sol->nb_jobs, int);
+    iterators = CC_SAFE_MALLOC(sol->nb_jobs, GList*);
 
-    for (int i = 0; i < sol->njobs; ++i) {
-        g[i] = CC_SAFE_MALLOC(sol->njobs, int);
-        h[i] = CC_SAFE_MALLOC(sol->njobs, int);
-        hh[i] = CC_SAFE_MALLOC(sol->njobs, int);
+    for (int i = 0; i < sol->nb_jobs; ++i) {
+        g[i] = CC_SAFE_MALLOC(sol->nb_jobs, int);
+        h[i] = CC_SAFE_MALLOC(sol->nb_jobs, int);
+        hh[i] = CC_SAFE_MALLOC(sol->nb_jobs, int);
     }
-    B2_1 = CC_SAFE_MALLOC(sol->njobs + 1, int*);
-    B2_2 = CC_SAFE_MALLOC(sol->njobs + 1, int*);
-    B3_1 = CC_SAFE_MALLOC(sol->njobs + 1, int*);
-    B3_2 = CC_SAFE_MALLOC(sol->njobs + 1, int*);
-    B4_1 = CC_SAFE_MALLOC(sol->njobs + 1, int*);
-    B4_2 = CC_SAFE_MALLOC(sol->njobs + 1, int*);
-    B5_1 = CC_SAFE_MALLOC(sol->njobs + 1, int*);
-    B5_2 = CC_SAFE_MALLOC(sol->njobs + 1, int*);
-    B6_1 = CC_SAFE_MALLOC(sol->njobs + 1, int*);
-    B3_1_ = CC_SAFE_MALLOC(sol->njobs + 1, int);
+    B2_1 = CC_SAFE_MALLOC(sol->nb_jobs + 1, int*);
+    B2_2 = CC_SAFE_MALLOC(sol->nb_jobs + 1, int*);
+    B3_1 = CC_SAFE_MALLOC(sol->nb_jobs + 1, int*);
+    B3_2 = CC_SAFE_MALLOC(sol->nb_jobs + 1, int*);
+    B4_1 = CC_SAFE_MALLOC(sol->nb_jobs + 1, int*);
+    B4_2 = CC_SAFE_MALLOC(sol->nb_jobs + 1, int*);
+    B5_1 = CC_SAFE_MALLOC(sol->nb_jobs + 1, int*);
+    B5_2 = CC_SAFE_MALLOC(sol->nb_jobs + 1, int*);
+    B6_1 = CC_SAFE_MALLOC(sol->nb_jobs + 1, int*);
+    B3_1_ = CC_SAFE_MALLOC(sol->nb_jobs + 1, int);
 
-    for (int i = 0; i < sol->njobs + 1; ++i) {
-        B2_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B2_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B3_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B3_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B4_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B4_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B5_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B5_2[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
-        B6_1[i] = CC_SAFE_MALLOC(sol->njobs + 1, int);
+    for (int i = 0; i < sol->nb_jobs + 1; ++i) {
+        B2_1[i] = CC_SAFE_MALLOC(sol->nb_jobs + 1, int);
+        B2_2[i] = CC_SAFE_MALLOC(sol->nb_jobs + 1, int);
+        B3_1[i] = CC_SAFE_MALLOC(sol->nb_jobs + 1, int);
+        B3_2[i] = CC_SAFE_MALLOC(sol->nb_jobs + 1, int);
+        B4_1[i] = CC_SAFE_MALLOC(sol->nb_jobs + 1, int);
+        B4_2[i] = CC_SAFE_MALLOC(sol->nb_jobs + 1, int);
+        B5_1[i] = CC_SAFE_MALLOC(sol->nb_jobs + 1, int);
+        B5_2[i] = CC_SAFE_MALLOC(sol->nb_jobs + 1, int);
+        B6_1[i] = CC_SAFE_MALLOC(sol->nb_jobs + 1, int);
     }
 }
 
 void free_all(Solution* sol) {
-    for (int i = 0; i < sol->njobs; ++i) {
+    for (int i = 0; i < sol->nb_jobs; ++i) {
         CC_IFFREE(g[i], int);
         CC_IFFREE(h[i], int);
         CC_IFFREE(hh[i], int);
@@ -56,7 +56,7 @@ void free_all(Solution* sol) {
     CC_IFFREE(hh, int*);
     CC_IFFREE(iterators, GList*);
 
-    for (int i = 0; i < sol->njobs + 1; ++i) {
+    for (int i = 0; i < sol->nb_jobs + 1; ++i) {
         CC_IFFREE(B2_1[i], int);
         CC_IFFREE(B2_2[i], int);
         CC_IFFREE(B3_1[i], int);
@@ -165,20 +165,20 @@ static void local_search_add_slope_t(local_search_data* data, int b1, int b2,
     data->g[i][j] = g_list_append(data->g[i][j], tmp);
 }
 
-local_search_data* local_search_data_init(int njobs, int nmachines) {
+local_search_data* local_search_data_init(int njobs, int nb_machines) {
     int                val = 0;
     local_search_data* data;
     int                i, j;
     data = CC_SAFE_MALLOC(1, local_search_data);
     CCcheck_NULL_2(data, "Failed to allocate memory");
-    data->nmachines = nmachines;
-    data->W = CC_SAFE_MALLOC(nmachines, int*);
-    data->g = CC_SAFE_MALLOC(nmachines, GList**);
-    data->processing_list_1 = CC_SAFE_MALLOC(nmachines, processing_list_data*);
-    data->processing_list_2 = CC_SAFE_MALLOC(nmachines, processing_list_data*);
+    data->nmachines = nb_machines;
+    data->W = CC_SAFE_MALLOC(nb_machines, int*);
+    data->g = CC_SAFE_MALLOC(nb_machines, GList**);
+    data->processing_list_1 = CC_SAFE_MALLOC(nb_machines, processing_list_data*);
+    data->processing_list_2 = CC_SAFE_MALLOC(nb_machines, processing_list_data*);
     data->njobs = njobs;
 
-    for (i = 0; i < nmachines; ++i) {
+    for (i = 0; i < nb_machines; ++i) {
         data->W[i] = CC_SAFE_MALLOC(njobs, int);
         data->g[i] = CC_SAFE_MALLOC(njobs, GList*);
         data->processing_list_1[i] =
@@ -194,7 +194,7 @@ local_search_data* local_search_data_init(int njobs, int nmachines) {
 CLEAN:
 
     if (val) {
-        for (i = 0; i < nmachines; ++i) {
+        for (i = 0; i < nb_machines; ++i) {
             for (j = 0; j < njobs; ++j) {
                 g_list_free_full(data->g[i][j], destroy_slope_t);
             }
@@ -248,7 +248,7 @@ int local_search_create_W(Solution* sol, local_search_data* data) {
     int  nmachines;
     Job* tmp;
 
-    if (sol == NULL || data == NULL || sol->nmachines != data->nmachines) {
+    if (sol == NULL || data == NULL || sol->nb_machines != data->nmachines) {
         val = 1;
         printf("Not compatible data structures\n");
         return val;
@@ -472,8 +472,8 @@ static int local_search_create_processing_list_swap_inter(
 
 int local_search_create_g(Solution* sol, local_search_data* data) {
     int  val = 0;
-    int  nmachines = sol->nmachines;
-    int  njobs = sol->njobs;
+    int  nmachines = sol->nb_machines;
+    int  njobs = sol->nb_jobs;
     Job* tmp;
     int  t1, t2;
     int  tw;
@@ -766,7 +766,7 @@ void local_search_forward_insertion(Solution* sol, local_search_data* data,
     max = 0;
     local_search_create_processing_list(sol, data, l);
 
-    for (int k = 0; k < sol->nmachines; ++k) {
+    for (int k = 0; k < sol->nb_machines; ++k) {
         /** compute g */
         int njobs = sol->part[k].machine->len;
 
@@ -900,7 +900,7 @@ void local_search_backward_insertion(Solution* sol, local_search_data* data,
     max = 0;
     local_search_create_processing_list_2(sol, data, l);
 
-    for (int k = 0; k < sol->nmachines; ++k) {
+    for (int k = 0; k < sol->nb_machines; ++k) {
         int        njobs = sol->part[k].machine->len;
         int        p;
         GPtrArray* machine = sol->part[k].machine;
@@ -1042,7 +1042,7 @@ void local_search_swap_intra(Solution* sol, local_search_data* data, int l1,
     max = 0;
     local_search_create_processing_list_swap(sol, data, l1, l2);
 
-    for (int k = 0; k < sol->nmachines; ++k) {
+    for (int k = 0; k < sol->nb_machines; ++k) {
         int        njobs = sol->part[k].machine->len;
         GPtrArray* machine = sol->part[k].machine;
 
@@ -1233,11 +1233,11 @@ void local_search_insertion_inter(Solution* sol, local_search_data* data,
     max = 0;
     local_search_create_processing_list_insertion_inter(sol, data, l);
 
-    for (int k1 = 0; k1 < sol->nmachines; ++k1) {
+    for (int k1 = 0; k1 < sol->nb_machines; ++k1) {
         int        njobs1 = sol->part[k1].machine->len;
         GPtrArray* machine1 = sol->part[k1].machine;
 
-        for (int k2 = 0; k2 < sol->nmachines; ++k2) {
+        for (int k2 = 0; k2 < sol->nb_machines; ++k2) {
             if (k1 == k2) {
                 continue;
             }
@@ -1395,11 +1395,11 @@ void local_search_swap_inter(Solution* sol, local_search_data* data, int l1,
     max = 0;
     local_search_create_processing_list_swap_inter(sol, data, l1, l2);
 
-    for (int k1 = 0; k1 < sol->nmachines; ++k1) {
+    for (int k1 = 0; k1 < sol->nb_machines; ++k1) {
         int        njobs1 = sol->part[k1].machine->len;
         GPtrArray* machine1 = sol->part[k1].machine;
 
-        for (int k2 = 0; k2 < sol->nmachines; ++k2) {
+        for (int k2 = 0; k2 < sol->nb_machines; ++k2) {
             int        njobs2 = sol->part[k2].machine->len;
             GPtrArray* machine2 = sol->part[k2].machine;
 

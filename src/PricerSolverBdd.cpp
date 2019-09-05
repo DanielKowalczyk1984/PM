@@ -77,7 +77,7 @@ void PricerSolverBdd::init_table() {
     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
         for (auto& it : table[i]) {
             if (i != 0) {
-                int                layer = nlayers - i;
+                int                layer = nb_layers - i;
                 job_interval_pair* tmp_pair =
                     reinterpret_cast<job_interval_pair*>(
                         g_ptr_array_index(ordered_jobs, layer));
@@ -91,7 +91,7 @@ void PricerSolverBdd::init_table() {
                 it.child[1] = n1.init_node(w + p);
             } else {
                 it.set_job(nullptr, true);
-                it.set_layer(nlayers);
+                it.set_layer(nb_layers);
             }
         }
     }
@@ -132,8 +132,8 @@ void PricerSolverBdd::remove_layers_init() {
                                  last_del - first_del + 1);
     }
 
-    nlayers = ordered_jobs->len;
-    printf("The new number of layers = %u\n", nlayers);
+    nb_layers = ordered_jobs->len;
+    printf("The new number of layers = %u\n", nb_layers);
 }
 
 void PricerSolverBdd::remove_layers() {
@@ -181,8 +181,8 @@ void PricerSolverBdd::remove_layers() {
                                  last_del - first_del + 1);
     }
 
-    nlayers = ordered_jobs->len;
-    printf("The new number of layers = %u\n", nlayers);
+    nb_layers = ordered_jobs->len;
+    printf("The new number of layers = %u\n", nb_layers);
 }
 
 void PricerSolverBdd::remove_edges() {
@@ -245,9 +245,9 @@ void PricerSolverBdd::build_mip() {
 
         model->update();
         /** Assignment constraints */
-        std::unique_ptr<GRBLinExpr[]> assignment(new GRBLinExpr[njobs]());
-        std::unique_ptr<char[]>       sense(new char[njobs]);
-        std::unique_ptr<double[]>     rhs(new double[njobs]);
+        std::unique_ptr<GRBLinExpr[]> assignment(new GRBLinExpr[nb_jobs]());
+        std::unique_ptr<char[]>       sense(new char[nb_jobs]);
+        std::unique_ptr<double[]>     rhs(new double[nb_jobs]);
 
         for (unsigned i = 0; i < jobs->len; ++i) {
             sense[i] = GRB_GREATER_EQUAL;
@@ -265,7 +265,7 @@ void PricerSolverBdd::build_mip() {
         }
 
         std::unique_ptr<GRBConstr[]> assignment_constrs(model->addConstrs(
-            assignment.get(), sense.get(), rhs.get(), nullptr, njobs));
+            assignment.get(), sense.get(), rhs.get(), nullptr, nb_jobs));
         model->update();
         /** Flow constraints */
         size_t num_vertices = boost::num_vertices(mip_graph);
@@ -391,7 +391,7 @@ double* PricerSolverBdd::project_solution(Solution* sol) {
     // double*            x = new double[num_edges(mip_graph)]{};
     std::fill(solution_x.get(), solution_x.get() + get_size_data(), 0.0);
 
-    for (int i = 0; i < sol->nmachines; ++i) {
+    for (int i = 0; i < sol->nb_machines; ++i) {
         size_t     counter = 0;
         GPtrArray* tmp = sol->part[i].machine;
         NodeId     tmp_nodeid(decision_diagram->root());
@@ -533,10 +533,10 @@ void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol) {
                 -GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
         }
 
-        std::unique_ptr<GRBVar[]> pi_0(new GRBVar[njobs]);
-        std::unique_ptr<GRBVar[]> pi_1(new GRBVar[njobs]);
+        std::unique_ptr<GRBVar[]> pi_0(new GRBVar[nb_jobs]);
+        std::unique_ptr<GRBVar[]> pi_1(new GRBVar[nb_jobs]);
 
-        for (int j = 0; j < njobs; j++) {
+        for (int j = 0; j < nb_jobs; j++) {
             pi_0[j] = model_ineq->addVar(-GRB_INFINITY, GRB_INFINITY, 0.0,
                                          GRB_CONTINUOUS);
             pi_1[j] = model_ineq->addVar(-GRB_INFINITY, GRB_INFINITY, 0.0,
@@ -594,7 +594,7 @@ void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol) {
         constraints_0[num_edges] += -alpha;
         constraints_1[num_edges] += -alpha;
 
-        for (int j = 0; j < njobs; j++) {
+        for (int j = 0; j < nb_jobs; j++) {
             constraints_0[num_edges] += pi_0[j];
             constraints_1[num_edges] += pi_1[j];
         }
@@ -655,7 +655,7 @@ void PricerSolverBdd::iterate_zdd() {
         std::set<int>::const_iterator i = (*it).begin();
 
         for (; i != (*it).end(); ++i) {
-            std::cout << nlayers - *i << " ";
+            std::cout << nb_layers - *i << " ";
         }
 
         std::cout << '\n';

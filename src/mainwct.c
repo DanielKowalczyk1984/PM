@@ -181,13 +181,13 @@ int main(int ac, char** av) {
      */
     if (parms->pricing_solver < dp_solver) {
         CCutil_start_timer(&(problem.tot_build_dd));
-        root->solver = newSolver(root->jobarray, root->nmachines,
+        root->solver = newSolver(root->jobarray, root->nb_machines,
                                  root->ordered_jobs, &(problem.parms));
         CCutil_stop_timer(&(problem.tot_build_dd), 0);
         print_size_to_csv(&problem, root);
     } else {
         root->solver =
-            newSolverDp(root->jobarray, root->nmachines, root->H_max, parms);
+            newSolverDp(root->jobarray, root->nb_machines, root->H_max, parms);
     }
     problem.first_size_graph = get_size_graph(root->solver);
     g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
@@ -203,11 +203,15 @@ int main(int ac, char** av) {
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
+        represent_solution(root, problem.opt_sol);
+        // construct_lp_sol_from_rmp(root);
+        build_solve_mip(root);
         // build_solve_mip(root);
+        // represent_solution(root, problem.opt_sol);
         // compute_lower_bound(&problem, &(problem.root_pd));
-        problem.size_graph_after_reduced_cost_fixing =
-            get_size_graph(root->solver);
-
+        // problem.size_graph_after_reduced_cost_fixing =
+        // get_size_graph(root->solver);
+        // evaluate_nodes(root);
         // lpwctdata_free(&(problem.root_pd));
         // problem.root_pd.localColPool =
         // g_ptr_array_new_with_free_func(g_scheduleset_free);

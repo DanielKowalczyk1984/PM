@@ -19,8 +19,8 @@ void solution_init(Solution* sol) {
         sol->perm = (Job**)NULL;
         sol->c = (int*)NULL;
         sol->u = (int*)NULL;
-        sol->nmachines = 0;
-        sol->njobs = 0;
+        sol->nb_machines = 0;
+        sol->nb_jobs = 0;
         sol->tw = 0;
         sol->b = 0;
         sol->off = 0;
@@ -29,7 +29,7 @@ void solution_init(Solution* sol) {
 
 void solution_free(Solution** sol) {
     if (*sol) {
-        for (int i = 0; i < (*sol)->nmachines; ++i) {
+        for (int i = 0; i < (*sol)->nb_machines; ++i) {
             partlist_free((*sol)->part + i);
         }
 
@@ -49,21 +49,21 @@ void g_job_free(void* set) {
     }
 }
 
-Solution* solution_alloc(int nmachines, int njobs, int off) {
+Solution* solution_alloc(int nb_machines, int njobs, int off) {
     int       val = 0;
     int       i;
     Solution* sol = CC_SAFE_MALLOC(1, Solution);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     solution_init(sol);
-    sol->nmachines = nmachines;
-    sol->njobs = njobs;
+    sol->nb_machines = nb_machines;
+    sol->nb_jobs = njobs;
     sol->tw = 0;
     sol->b = 0;
     sol->off = off;
-    sol->part = CC_SAFE_MALLOC(nmachines, PartList);
+    sol->part = CC_SAFE_MALLOC(nb_machines, PartList);
     CCcheck_NULL_2(sol->part, "Failed to allocate memory to part");
 
-    for (i = 0; i < nmachines; ++i) {
+    for (i = 0; i < nb_machines; ++i) {
         partlist_init(sol->part + i);
         (sol->part + i)->key = i;
     }
@@ -72,7 +72,7 @@ Solution* solution_alloc(int nmachines, int njobs, int off) {
     CCcheck_NULL_2(sol->perm, "Failed to allocate memory to perm");
     sol->c = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(sol->c, "Failed to allocate memory");
-    fill_int(sol->c, sol->njobs, 0);
+    fill_int(sol->c, sol->nb_jobs, 0);
     sol->u = CC_SAFE_MALLOC(njobs, int);
     CCcheck_NULL_2(sol->u, "Failed to allocate memory")
         fill_int(sol->u, njobs, 0);
@@ -110,7 +110,7 @@ static void print_machine(gpointer j, gpointer data) {
 }
 
 void solution_print(Solution* sol) {
-    for (int i = 0; i < sol->nmachines; ++i) {
+    for (int i = 0; i < sol->nb_machines; ++i) {
         printf("Machine %-1d: ", sol->part[i].key);
         g_ptr_array_foreach(sol->part[i].machine, print_machine, NULL);
         printf("with C =  %d, wC = %d and %u jobs\n", sol->part[i].c,
@@ -122,13 +122,13 @@ void solution_print(Solution* sol) {
 
 int solution_copy(Solution* dest, Solution* src) {
     int val = 0;
-    dest = solution_alloc(src->nmachines, src->njobs, src->off);
+    dest = solution_alloc(src->nb_machines, src->nb_jobs, src->off);
     CCcheck_val_2(val, "Failed in  solution_alloc");
     dest->tw = src->tw;
     dest->b = src->b;
     dest->off = src->off;
 
-    for (int i = 0; i < dest->nmachines; i++) {
+    for (int i = 0; i < dest->nb_machines; i++) {
         dest->part[i].key = src->part[i].key;
         dest->part[i].tw = src->part[i].tw;
         dest->part[i].c = src->part[i].c;
@@ -147,11 +147,11 @@ int solution_update(Solution* dest, Solution* src) {
     int val = 0;
     dest->tw = src->tw;
     dest->b = src->b;
-    dest->nmachines = src->nmachines;
-    dest->njobs = src->njobs;
+    dest->nb_machines = src->nb_machines;
+    dest->nb_jobs = src->nb_jobs;
     dest->off = src->off;
 
-    for (int i = 0; i < dest->nmachines; i++) {
+    for (int i = 0; i < dest->nb_machines; i++) {
         g_ptr_array_remove_range(dest->part[i].machine, 0,
                                  dest->part[i].machine->len);
 
@@ -164,30 +164,30 @@ int solution_update(Solution* dest, Solution* src) {
         dest->part[i].c = src->part[i].c;
     }
 
-    memcpy(dest->perm, src->perm, src->njobs * sizeof(Job*));
-    memcpy(dest->c, src->c, dest->njobs * sizeof(int));
-    memcpy(dest->u, src->c, dest->njobs * sizeof(int));
+    memcpy(dest->perm, src->perm, src->nb_jobs * sizeof(Job*));
+    memcpy(dest->c, src->c, dest->nb_jobs * sizeof(int));
+    memcpy(dest->u, src->c, dest->nb_jobs * sizeof(int));
     return val;
 }
 
-void partlist_permquicksort(int* perm, PartList* part, int nbpart,
+void partlist_permquicksort(int* perm, PartList* part, int nb_part,
                             int (*functionPtr)(PartList*, PartList*)) {
     int      i, j, temp;
     PartList t;
 
-    if (nbpart <= 1) {
+    if (nb_part <= 1) {
         return;
     }
 
-    CC_SWAP(perm[0], perm[(nbpart - 1) / 2], temp);
+    CC_SWAP(perm[0], perm[(nb_part - 1) / 2], temp);
     i = 0;
-    j = nbpart;
+    j = nb_part;
     memcpy(&t, &(part[perm[0]]), sizeof(PartList));
 
     while (1) {
         do {
             i++;
-        } while (i < nbpart && (*functionPtr)(&(part[perm[i]]), &t));
+        } while (i < nb_part && (*functionPtr)(&(part[perm[i]]), &t));
 
         do {
             j--;
@@ -202,7 +202,7 @@ void partlist_permquicksort(int* perm, PartList* part, int nbpart,
 
     CC_SWAP(perm[0], perm[j], temp);
     partlist_permquicksort(perm, part, j, (*functionPtr));
-    partlist_permquicksort(perm + i, part, nbpart - i, (*functionPtr));
+    partlist_permquicksort(perm + i, part, nb_part - i, (*functionPtr));
 }
 
 Job* job_alloc(int* p, int* w, int* d) {
@@ -245,7 +245,7 @@ void g_reset_num_layers(gpointer data, gpointer user_data) {
     j->num_layers = 0;
 }
 
-void reset_nblayers(GPtrArray* jobs) {
+void reset_nb_layers(GPtrArray* jobs) {
     g_ptr_array_foreach(jobs, g_reset_num_layers, NULL);
 }
 
@@ -272,7 +272,7 @@ int bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) {
 }
 
 void solution_calculate_machine(Solution* sol, int m) {
-    if (m < sol->nmachines) {
+    if (m < sol->nb_machines) {
         PartList*  part = sol->part + m;
         GPtrArray* machine = sol->part[m].machine;
         sol->tw -= part->tw;
@@ -292,14 +292,14 @@ void solution_calculate_machine(Solution* sol, int m) {
 }
 
 void solution_calculate_all(Solution* sol) {
-    for (int i = 0; i < sol->nmachines; ++i) {
+    for (int i = 0; i < sol->nb_machines; ++i) {
         solution_calculate_machine(sol, i);
     }
 }
 
 void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
                                           int m) {
-    if (m < sol->nmachines) {
+    if (m < sol->nb_machines) {
         GPtrArray* machine = sol->part[m].machine;
         int        iter = 0;
         int Hmax = ((interval*) g_ptr_array_index(intervals, intervals->len - 1))->b;
@@ -317,7 +317,7 @@ void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
 }
 
 void solution_calculate_partition_all(Solution* sol, GPtrArray* intervals) {
-    for (int i = 0; i < sol->nmachines; ++i) {
+    for (int i = 0; i < sol->nb_machines; ++i) {
         solution_calculate_partition_machine(sol, intervals, i);
     }
 }
@@ -402,7 +402,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
 
     solution_calculate_partition_all(sol, intervals);
 
-    for (int it = 0; it < sol->nmachines; ++it) {
+    for (int it = 0; it < sol->nb_machines; ++it) {
         GPtrArray* machine = sol->part[it].machine;
         int        last = machine->len - 1;
         Job*       i = (Job*)g_ptr_array_index(machine, last);

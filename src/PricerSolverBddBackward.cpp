@@ -9,8 +9,8 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing BDD with Backward Simple evaluator" << '\n';
     std::cout << "size BDD = " << get_size_graph() << '\n';
-    evaluator = BackwardBddSimpleDouble(njobs);
-    reversed_evaluator = ForwardBddSimpleDouble(njobs);
+    evaluator = BackwardBddSimpleDouble(nb_jobs);
+    reversed_evaluator = ForwardBddSimpleDouble(nb_jobs);
 }
 
 OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
@@ -42,9 +42,9 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
             double result = it.forward_label[0].get_f() +
                             it.child[1]->backward_label[0].get_f() -
                             value_Fj(w + job->processing_time, job) +
-                            pi[job->job] + pi[njobs];
+                            pi[job->job] + pi[nb_jobs];
             auto result_no = it.forward_label[0].get_f() +
-                             it.child[0]->backward_label[0].get_f() + pi[njobs];
+                             it.child[0]->backward_label[0].get_f() + pi[nb_jobs];
 
             if (LB - (double)(num_machines - 1) * reduced_cost - result >
                     UB - 1 + 0.0001 &&
@@ -73,8 +73,8 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
     std::cout << "size BDD = " << get_size_graph() << '\n';
-    evaluator = BackwardBddCycleDouble(njobs);
-    reversed_evaluator = ForwardBddCycleDouble(njobs);
+    evaluator = BackwardBddCycleDouble(nb_jobs);
+    reversed_evaluator = ForwardBddCycleDouble(nb_jobs);
 }
 
 OptimalSolution<double> PricerSolverBddBackwardCycle::pricing_algorithm(
@@ -110,25 +110,25 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
                 result = it.forward_label[0].get_f() +
                          it.child[1]->backward_label[0].get_f() -
                          value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[njobs];
+                         pi[job->job] + pi[nb_jobs];
 
             } else if (it.forward_label[0].get_previous_job() == job &&
                        it.child[1]->backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[1].get_f() +
                          it.child[1]->backward_label[0].get_f() -
                          value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[njobs];
+                         pi[job->job] + pi[nb_jobs];
             } else if (it.forward_label[0].get_previous_job() != job &&
                        it.child[1]->backward_label[0].get_prev_job() == job) {
                 result = it.forward_label[0].get_f() +
                          it.child[1]->backward_label[1].get_f() -
                          value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[njobs];
+                         pi[job->job] + pi[nb_jobs];
             } else {
                 result = it.forward_label[1].get_f() +
                          it.child[1]->backward_label[1].get_f() -
                          value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[njobs];
+                         pi[job->job] + pi[nb_jobs];
             }
 
             if (LB - (double)(num_machines - 1) * reduced_cost - result >
@@ -144,7 +144,7 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
                 for (int j = 0; j < 2; j++) {
                     auto result_no = it.forward_label[i].get_f() +
                                      it.child[0]->backward_label[j].get_f() +
-                                     pi[njobs];
+                                     pi[nb_jobs];
                     if (max < result_no) {
                         max = result_no;
                     }

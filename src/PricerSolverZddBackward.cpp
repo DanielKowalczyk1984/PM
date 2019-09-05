@@ -8,8 +8,8 @@ PricerSolverZddBackwardSimple::PricerSolverZddBackwardSimple(
     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing ZDD with Backward Simple evaluator" << '\n';
     std::cout << "size ZDD = " << decision_diagram->size() << '\n';
-    evaluator = BackwardZddSimpleDouble(njobs);
-    reversed_evaluator = ForwardZddSimpleDouble(njobs);
+    evaluator = BackwardZddSimpleDouble(nb_jobs);
+    reversed_evaluator = ForwardZddSimpleDouble(nb_jobs);
 }
 
 OptimalSolution<double> PricerSolverZddBackwardSimple::pricing_algorithm(
@@ -45,7 +45,7 @@ void PricerSolverZddBackwardSimple::evaluate_nodes(double* pi, int UB,
                 double result = iter->forward_label[0].get_f() +
                                 iter->y->backward_label[0].get_f() -
                                 value_Fj(w + job->processing_time, job) +
-                                pi[job->job] + pi[njobs];
+                                pi[job->job] + pi[nb_jobs];
 
                 if (LB - (double)(num_machines - 1) * reduced_cost - result >
                         UB - 1 + 0.0001 &&
@@ -65,8 +65,8 @@ PricerSolverZddBackwardCycle::PricerSolverZddBackwardCycle(
     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing ZDD with Backward ZddCycle evaluator" << '\n';
     std::cout << "size ZDD = " << get_size_graph() << '\n';
-    evaluator = BackwardZddCycleDouble(njobs);
-    reversed_evaluator = ForwardZddCycleDouble(njobs);
+    evaluator = BackwardZddCycleDouble(nb_jobs);
+    reversed_evaluator = ForwardZddCycleDouble(nb_jobs);
 }
 
 OptimalSolution<double> PricerSolverZddBackwardCycle::pricing_algorithm(
@@ -104,7 +104,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi, int UB,
                     double result = iter->forward_label[0].get_f() +
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + job->processing_time, job) +
-                                    pi[job->job] + pi[njobs];
+                                    pi[job->job] + pi[nb_jobs];
                     if (LB - (double)(num_machines - 1) * reduced_cost -
                                 result >
                             UB + 0.0001 &&
@@ -117,7 +117,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi, int UB,
                     double result = iter->forward_label[1].get_f() +
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + job->processing_time, job) +
-                                    pi[job->job] + pi[njobs];
+                                    pi[job->job] + pi[nb_jobs];
                     if (LB - (double)(num_machines - 1) * reduced_cost -
                                 result >
                             UB + 0.0001 &&
@@ -130,7 +130,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi, int UB,
                     double result = iter->forward_label[0].get_f() +
                                     iter->y->backward_label[1].get_f() -
                                     value_Fj(w + job->processing_time, job) +
-                                    pi[job->job] + pi[njobs];
+                                    pi[job->job] + pi[nb_jobs];
                     if (LB - (double)(num_machines - 1) * reduced_cost -
                                 result >
                             UB + 0.0001 &&
@@ -142,7 +142,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi, int UB,
                     double result = iter->forward_label[1].get_f() +
                                     iter->y->backward_label[1].get_f() -
                                     value_Fj(w + job->processing_time, job) +
-                                    pi[job->job] + pi[njobs];
+                                    pi[job->job] + pi[nb_jobs];
                     if (LB - (double)(num_machines - 1) * reduced_cost -
                                 result >
                             UB + 0.0001 &&

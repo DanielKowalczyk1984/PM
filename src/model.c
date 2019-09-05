@@ -15,10 +15,10 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed get nb_cols");
 
-    schedulesets_free(&(pd->bestcolors), &(pd->nbbest));
-    pd->bestcolors = CC_SAFE_MALLOC(pd->nmachines, ScheduleSet);
+    schedulesets_free(&(pd->bestcolors), &(pd->nb_best));
+    pd->bestcolors = CC_SAFE_MALLOC(pd->nb_machines, ScheduleSet);
     CCcheck_NULL_2(pd->bestcolors, "Failed to realloc pd->bestcolors");
-    pd->nbbest = 0;
+    pd->nb_best = 0;
 
     assert(nb_cols == pd->localColPool->len);
     for (i = 0; i < pd->localColPool->len; ++i) {
@@ -26,7 +26,7 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
         test_incumbent += x[i];
 
         if (x[i] >= 1.0 - tolerance) {
-            int j = pd->nbbest;
+            int j = pd->nb_best;
             int k;
             scheduleset_init(pd->bestcolors + j);
 
@@ -41,10 +41,10 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
                     value_Fj(pd->bestcolors[j].total_processing_time, tmp_j);
             }
 
-            pd->nbbest++;
+            pd->nb_best++;
             tot_weighted += pd->bestcolors[j].total_weighted_completion_time;
 
-            if (pd->nbbest > pd->nmachines) {
+            if (pd->nb_best > pd->nb_machines) {
                 printf(
                     "ERROR: \"Integral\" solution turned out to be not "
                     "integral!\n");
@@ -57,7 +57,7 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
 
     /** Write a check function */
     printf("Intermediate schedule:\n");
-    print_schedule(pd->bestcolors, pd->nbbest);
+    print_schedule(pd->bestcolors, pd->nb_best);
     printf("with total weight %d\n", tot_weighted);
     assert(fabs((double)tot_weighted - incumbent) <= 0.00001);
 
@@ -79,7 +79,7 @@ int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     int        cind;
     int        vind;
     double     cval;
-    int        njobs = pd->njobs;
+    int        njobs = pd->nb_jobs;
     GPtrArray* members = set->job_list;
     wctlp*     lp = pd->RMP;
     Job*       job;
@@ -122,7 +122,7 @@ int build_rmp(NodeData* pd, int construct) {
     int      val = 0;
     Problem* problem = pd->problem;
     int      njobs = problem->njobs;
-    int      nmachines = problem->nmachines;
+    int      nmachines = problem->nb_machines;
     Parms*   parms = &(problem->parms);
     int      nb_row;
     int*     covered = CC_SAFE_MALLOC(njobs, int);
@@ -205,16 +205,16 @@ int get_solution_lp_lowerbound(NodeData* pd) {
 
     val = wctlp_get_nb_cols(pd->RMP, &nbcols);
     CCcheck_val_2(val, "Failed in wctlp_get_nb_cols");
-    pd->x = CC_SAFE_REALLOC(pd->x, nbcols, double);
-    CCcheck_NULL_2(pd->x, "Failed to allocate memory");
+    pd->lambda = CC_SAFE_REALLOC(pd->lambda, nbcols, double);
+    CCcheck_NULL_2(pd->lambda, "Failed to allocate memory");
     assert(nbcols == pd->localColPool->len);
-    wctlp_x(pd->RMP, pd->x, 0);
+    wctlp_x(pd->RMP, pd->lambda, 0);
 
     for (unsigned i = 0; i < nbcols; ++i) {
         ScheduleSet* tmp =
             ((ScheduleSet*)g_ptr_array_index(pd->localColPool, i));
-        if (pd->x[i]) {
-            printf("%f: ", pd->x[i]);
+        if (pd->lambda[i]) {
+            printf("%f: ", pd->lambda[i]);
             g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
             printf("\n");
             for (unsigned j = 0; j < tmp->job_list->len; ++j) {
