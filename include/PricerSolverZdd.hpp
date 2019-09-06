@@ -32,7 +32,7 @@ class PricerSolverZdd : public PricerSolverBase
         void build_mip() override;
         void construct_lp_sol_from_rmp(const double* columns, const GPtrArray* schedule_sets, int num_columns) override;
         void represent_solution(Solution* sol)  override;
-        double* project_solution(Solution* sol) override;
+        void project_solution(Solution* sol) override;
         bool check_schedule_set(GPtrArray* set) override;
         void disjunctive_inequality(double* x, Solution* sol) override;
         void iterate_zdd() override;

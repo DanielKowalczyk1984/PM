@@ -29,7 +29,7 @@ public:
     void build_mip() override;
     void construct_lp_sol_from_rmp(const double *columns, const GPtrArray* schedule_sets, int num_columns) override;
     void represent_solution(Solution *sol)  override;
-    double* project_solution(Solution *sol) override;
+    void project_solution(Solution *sol) override;
 
     void add_constraint(Job *job, GPtrArray *list, int order) override;
     void iterate_zdd() override;

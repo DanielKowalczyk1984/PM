@@ -311,7 +311,7 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     }
 }
 
-double* PricerSolverSimpleDp::project_solution(Solution* sol) {
+void PricerSolverSimpleDp::project_solution(Solution* sol) {
     std::fill(solution_x, solution_x + nb_jobs * (Hmax + 1), 0.0);
 
     for (int it = 0; it < sol->nb_machines; it++) {
@@ -323,12 +323,10 @@ double* PricerSolverSimpleDp::project_solution(Solution* sol) {
             t += tmp_j->processing_time;
         }
     }
-
-    return solution_x;
 }
 
 void PricerSolverSimpleDp::represent_solution(Solution* sol) {
-    double* x = project_solution(sol);
+    project_solution(sol);
 }
 
 void PricerSolverSimpleDp::add_constraint(Job* job, GPtrArray* list,

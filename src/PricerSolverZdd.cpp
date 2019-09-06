@@ -433,7 +433,7 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
     // outf.close();
 }
 
-double* PricerSolverZdd::project_solution(Solution* sol) {
+void PricerSolverZdd::project_solution(Solution* sol) {
     NodeTableEntity<NodeZdd<>>& table =
         decision_diagram->getDiagram().privateEntity();
     // double* x = new double[num_edges(mip_graph)]{};
@@ -469,8 +469,6 @@ double* PricerSolverZdd::project_solution(Solution* sol) {
             }
         }
     }
-
-    return solution_x.get();
 }
 
 void PricerSolverZdd::represent_solution(Solution* sol) {
@@ -497,7 +495,7 @@ void PricerSolverZdd::represent_solution(Solution* sol) {
     //             }
     //         }
     // }
-    double* x = project_solution(sol);
+    project_solution(sol);
     // NodeTableEntity<NodeZdd<>>& table =
     // decision_diagram->getDiagram().privateEntity(); ColorWriterEdge
     // edge_writer(g, x); ColorWriterVertex vertex_writer(g, table);

@@ -386,7 +386,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
     outf.close();
 }
 
-double* PricerSolverBdd::project_solution(Solution* sol) {
+void PricerSolverBdd::project_solution(Solution* sol) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     // double*            x = new double[num_edges(mip_graph)]{};
     std::fill(solution_x.get(), solution_x.get() + get_size_data(), 0.0);
@@ -417,8 +417,6 @@ double* PricerSolverBdd::project_solution(Solution* sol) {
             }
         }
     }
-
-    return solution_x.get();
 }
 
 void PricerSolverBdd::represent_solution(Solution* sol) {
@@ -445,14 +443,13 @@ void PricerSolverBdd::represent_solution(Solution* sol) {
     //             }
     //         }
     // }
-    double*            x = project_solution(sol);
+    project_solution(sol);
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
-    ColorWriterEdge    edge_writer(mip_graph, x);
+    ColorWriterEdge    edge_writer(mip_graph, solution_x.get());
     ColorWriterVertex  vertex_writer(mip_graph, table);
     std::ofstream      outf("solution.gv");
     boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
     outf.close();
-    delete[] x;
 }
 
 bool PricerSolverBdd::check_schedule_set(GPtrArray* set) {
@@ -493,7 +490,6 @@ void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol) {
     EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(), mip_graph));
     VarsNodeAccessor  node_var_list(get(boost::vertex_distance_t(), mip_graph));
     NodeIdAccessor    node_id_list(get(boost::vertex_name_t(), mip_graph));
-    std::unique_ptr<double[]> p(project_solution(sol));
     /**
      * Determine the branch key for the disjunctive program
      */
@@ -522,7 +518,7 @@ void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol) {
 
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
             edge_var_list[*it.first].alpha = model_ineq->addVar(
-                -GRB_INFINITY, GRB_INFINITY, p[edge_index_list[*it.first]],
+                -GRB_INFINITY, GRB_INFINITY, solution_x[edge_index_list[*it.first]],
                 GRB_CONTINUOUS);
         }
 

@@ -479,7 +479,7 @@ void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     }
 }
 
-double* PricerSolverArcTimeDp::project_solution(Solution* sol) {
+void PricerSolverArcTimeDp::project_solution(Solution* sol) {
     // double* x = new double[(n + 1) * (n + 1) * (Hmax + 1)]{};
     std::fill(solution_x, solution_x + get_size_data(), 0.0);
 
@@ -513,11 +513,10 @@ std::cout << i << " test " << j << " " << t << " " << solution_x[i * (n + 1) * (
         std::cout << "\n";
     }
 getchar();
-    return solution_x;
 }
 
 void PricerSolverArcTimeDp::represent_solution(Solution* sol) {
-    double* x = project_solution(sol);
+    project_solution(sol);
 
     for(int j = 0; j < n;j++) {
         for(int t = 0; t <= Hmax ; t++) {
