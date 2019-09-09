@@ -65,7 +65,7 @@ void g_reset_num_layers(gpointer data, gpointer user_data);
 inline int value_Fj(int C, Job *j) { return j->weight * CC_MAX(0, C - j->due_time); }
 int value_diff_Fij(int C, Job *i, Job *j);
 int bool_diff_Fij(int , Job *, Job *);
-
+int arctime_diff_Fij(int weight, Job* i, Job* j); 
 int solution_canonical_order(Solution *sol, GPtrArray *intervals);
 void solution_calculate_all(Solution *sol);
 void solution_calculate_partition_all(Solution *sol, GPtrArray *intervals);
@@ -73,7 +73,7 @@ void solution_calculate_partition_machine(Solution * sol,
                                           GPtrArray *intervals,
                                           int        m);
 void solution_calculate_machine(Solution *sol, int m);
-
+int solution_arctime_order(Solution *sol);
 #ifdef __cplusplus
 }
 #endif

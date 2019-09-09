@@ -271,6 +271,14 @@ int bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) {
                                              _prev, tmp_j) >= 0);
 }
 
+int arctime_diff_Fij(int weight, Job* i, Job* j) {
+    int val = value_Fj(weight, i);
+    val += value_Fj(weight + j->processing_time, j);
+    val -= value_Fj(weight - i->processing_time + j->processing_time, j);
+    val -= value_Fj(weight + j->processing_time, i);
+    return val;
+}
+
 void solution_calculate_machine(Solution* sol, int m) {
     if (m < sol->nb_machines) {
         PartList*  part = sol->part + m;
@@ -302,7 +310,8 @@ void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
     if (m < sol->nb_machines) {
         GPtrArray* machine = sol->part[m].machine;
         int        iter = 0;
-        int Hmax = ((interval*) g_ptr_array_index(intervals, intervals->len - 1))->b;
+        int        Hmax =
+            ((interval*)g_ptr_array_index(intervals, intervals->len - 1))->b;
 
         for (unsigned i = 0; i < machine->len; ++i) {
             Job*      tmp = (Job*)g_ptr_array_index(machine, i);
@@ -412,5 +421,55 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
         }
     }
 
+    return val;
+}
+
+int solution_arctime_order(Solution* sol) {
+    int val = 0;
+    solution_print(sol);
+
+    for (int it = 0; it < sol->nb_machines; it++) {
+        GPtrArray* tmp = sol->part[it].machine;
+        int        C = ((Job*)g_ptr_array_index(tmp, 0))->processing_time;
+        int        i = 0;
+        int        j = 1;
+
+        while (i < tmp->len - 2 && j < tmp->len - 1) {
+            Job* tmp_i = (Job*)g_ptr_array_index(tmp, i);
+            Job* tmp_j = (Job*)g_ptr_array_index(tmp, j);
+            printf("%d %d %d %d %d %d\n", it, tmp_i->job, tmp_j->job,
+                   -value_diff_Fij(C, tmp_i, tmp_j),i,j);
+            if (tmp_i->job < tmp_j->job) {
+                if (arctime_diff_Fij(C, tmp_i, tmp_j) >= 0) {
+                    void* tmp_job = NULL;
+                    CC_SWAP(g_ptr_array_index(tmp, i),
+                            g_ptr_array_index(tmp, j), tmp_job);
+                    C = ((Job*)g_ptr_array_index(tmp, 0))->processing_time;
+                    i = 0;
+                    j = 1;
+                } else {
+                    C += tmp_j->processing_time;
+                    i++;
+                    j++;
+                }
+            } else {
+                if (arctime_diff_Fij(C, tmp_i, tmp_j) > 0) {
+                    void* tmp_job = NULL;
+                    CC_SWAP(g_ptr_array_index(tmp, i),
+                            g_ptr_array_index(tmp, j), tmp_job);
+                    C = ((Job*)g_ptr_array_index(tmp, 0))->processing_time;
+                    i = 0;
+                    j = 1;
+                } else {
+                    C += tmp_j->processing_time;
+                    i++;
+                    j++;
+                }
+            }
+        }
+    }
+    solution_calculate_all(sol);
+
+    solution_print(sol);
     return val;
 }
