@@ -175,7 +175,6 @@ void PricerSolverArcTimeDp::build_mip() {
     std::unique_ptr<GRBLinExpr[]> assignment(new GRBLinExpr[nb_jobs]());
     std::unique_ptr<char[]>       sense(new char[nb_jobs]);
     std::unique_ptr<double[]>     rhs(new double[nb_jobs]);
-    std::unique_ptr<double[]>     sum(new double[nb_jobs]);
 
     for (unsigned i = 0; i < jobs->len; ++i) {
         sense[i] = GRB_GREATER_EQUAL;
@@ -186,21 +185,10 @@ void PricerSolverArcTimeDp::build_mip() {
         for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
             for (auto& it : graph[j][t]) {
                 assignment[j] += arctime_x[it->job][j][t];
-                if(t == 0 ) {
-                    std::cout << (it->job) <<  " " << solution_x[(it->job)*(n + 1) * (Hmax + 1) + j* ( Hmax + 1) + t] << "\n";
-                } 
-
-                if( solution_x[(it->job)*(n + 1) * (Hmax + 1) + j* ( Hmax + 1) + t] > 0) {
-                    std::cout << "OK OK OK " << (it->job) << " " << j << "\n";
-                }
-                sum[j] += solution_x[(it->job)*(n + 1) * (Hmax + 1) + j* ( Hmax + 1) + t];
             }
         }
     }
 
-    for(int j = 0; j < n; j++) {
-        std::cout << " sum = " << sum[j] << "\n";
-    }
 
     std::unique_ptr<GRBConstr[]> assignment_constrs(model->addConstrs(
         assignment.get(), sense.get(), rhs.get(), nullptr, nb_jobs));
@@ -244,6 +232,7 @@ void PricerSolverArcTimeDp::build_mip() {
         for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
             for (auto& it : graph[j][t]) {
                 arctime_x[it->job][j][t].set(GRB_DoubleAttr_Start, solution_x[(it->job)*(Hmax + 1)*(n + 1) + j*(Hmax + 1) + t]);
+                arctime_x[it->job][j][t].set(GRB_DoubleAttr_PStart, lp_x[(it->job)*(Hmax + 1)*(n + 1) + j*(Hmax + 1) + t]);
             }
         }
     }
@@ -438,8 +427,8 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     }
 
     sol.C_max = 0;
-    for (auto& it : v) {
-        g_ptr_array_add(sol.jobs, it);
+    for (auto it = v.rbegin(); it != v.rend(); it++) {
+        g_ptr_array_add(sol.jobs, *it);
     }
 
     return sol;
@@ -485,7 +474,7 @@ void PricerSolverArcTimeDp::project_solution(Solution* sol) {
 
     for (int it = 0; it < sol->nb_machines; it++) {
         GPtrArray* tmp = sol->part[it].machine;
-        size_t     counter = tmp->len - 1;
+        size_t     counter = 0;
         int        i = n;
         int        t = 0;
         while (t < Hmax + 1) {
@@ -499,7 +488,6 @@ void PricerSolverArcTimeDp::project_solution(Solution* sol) {
                 j = n;
             }
             solution_x[i * (n + 1) * (Hmax + 1) + j * (Hmax + 1) + t] += 1.0;
-std::cout << i << " test " << j << " " << t << " " << solution_x[i * (n + 1) * (Hmax + 1) + j * (Hmax + 1) + t] <<  "\n" ;
 
             if (tmp_j == nullptr) {
                 i = n;
@@ -507,26 +495,15 @@ std::cout << i << " test " << j << " " << t << " " << solution_x[i * (n + 1) * (
             } else {
                 i = j;
                 t += tmp_j->processing_time;
-                counter--;
+                counter++;
             }
         }
-        std::cout << "\n";
     }
-getchar();
 }
 
 void PricerSolverArcTimeDp::represent_solution(Solution* sol) {
+    solution_arctime_order(sol);
     project_solution(sol);
-
-    for(int j = 0; j < n;j++) {
-        for(int t = 0; t <= Hmax ; t++) {
-            for (auto &it : graph[j][t]) {
-                    std::cout <<solution_x[(it->job)*(n + 1)*(Hmax +1) + j*(Hmax + 1) + t] << " " << j << "\n";
-            }
-        }
-    }
-getchar();
-    // delete[] x;
 }
 
 void PricerSolverArcTimeDp::add_constraint(Job* job, GPtrArray* list,
