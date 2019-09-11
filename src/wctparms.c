@@ -13,7 +13,7 @@ void parms_init(Parms* parms) {
     parms->branchandbound = no;
     parms->stab_technique = no_stab;
     parms->print = min_print_size;
-    parms->delete_elists = 1;
+    parms->delete_edge_lists = 1;
     parms->delete_cclasses = 0;
     parms->jobfile = (char*)NULL;
     parms->outfile = (char*)NULL;
@@ -91,8 +91,8 @@ int parms_set_strong_branching(Parms* parms, int strong) {
     return 0;
 }
 
-int parms_set_nmachines(Parms* parms, int nmachines) {
-    parms->nmachines = nmachines;
+int parms_set_nb_machines(Parms* parms, int nb_machines) {
+    parms->nb_machines = nb_machines;
     return 0;
 }
 

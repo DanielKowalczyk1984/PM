@@ -34,7 +34,7 @@ void PricerSolverZdd::construct_mipgraph() {
     mip_graph.clear();
     NodeTableEntity<NodeZdd<>>& table =
         decision_diagram->getDiagram().privateEntity();
-    NodeZddIdAccessor vertex_nodezddid_list(
+    NodeZddIdAccessor vertex_node_zdd_id_list(
         get(boost::vertex_color_t(), mip_graph));
     NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
     NodeMipIdAccessor vertex_mip_id_list(
@@ -50,7 +50,7 @@ void PricerSolverZdd::construct_mipgraph() {
                     it->key = key;
                     vertex_mip_id_list[it->key] = key;
                     vertex_nodeid_list[it->key] = it->node_id;
-                    vertex_nodezddid_list[it->key] = it;
+                    vertex_node_zdd_id_list[it->key] = it;
                 }
             } else {
                 if (n != 0) {
@@ -59,7 +59,7 @@ void PricerSolverZdd::construct_mipgraph() {
                         it->key = terminal_node;
                         vertex_mip_id_list[terminal_node] = terminal_node;
                         vertex_nodeid_list[terminal_node] = it->node_id;
-                        vertex_nodezddid_list[terminal_node] = it;
+                        vertex_node_zdd_id_list[terminal_node] = it;
                     }
                 }
             }
@@ -248,10 +248,10 @@ void PricerSolverZdd::remove_edges() {
 
 void PricerSolverZdd::build_mip() {
     try {
-        printf("Building Mip model for the extented formulation:\n");
+        printf("Building Mip model for the extended formulation:\n");
         NodeIdAccessor vertex_nodeid_list(
             get(boost::vertex_name_t(), mip_graph));
-        NodeMipIdAccessor vertex_mipid_list(
+        NodeMipIdAccessor vertex_mip_id_list(
             get(boost::vertex_degree_t(), mip_graph));
         EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
         EdgeVarAccessor  edge_var_list(get(boost::edge_weight2_t(), mip_graph));
@@ -312,7 +312,7 @@ void PricerSolverZdd::build_mip() {
 
         for (auto it = vertices(mip_graph); it.first != it.second; ++it.first) {
             const auto node_id = vertex_nodeid_list[*it.first];
-            const auto vertex_key = vertex_mipid_list[*it.first];
+            const auto vertex_key = vertex_mip_id_list[*it.first];
             sense_flow[vertex_key] = GRB_EQUAL;
             auto out_edges_it = boost::out_edges(*it.first, mip_graph);
 
@@ -473,7 +473,7 @@ void PricerSolverZdd::project_solution(Solution* sol) {
 
 void PricerSolverZdd::represent_solution(Solution* sol) {
     // double* x = new double[num_edges(g)] {};
-    // for(int i = 0; i < sol->nmachines; ++i) {
+    // for(int i = 0; i < sol->nb_machines; ++i) {
     //         size_t counter = 0;
     //         GPtrArray *tmp = sol->part[i].machine;
     //         NodeId tmp_nodeid(decision_diagram->root());
@@ -580,6 +580,4 @@ int PricerSolverZdd::get_num_layers() {
 }
 
 void PricerSolverZdd::print_num_paths() {
-    // cout << "Number of paths: " <<
-    // decision_diagram->evaluate(tdzdd::ZddCardinality<>()) << "\n";
 }

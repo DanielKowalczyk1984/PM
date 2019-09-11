@@ -130,22 +130,22 @@ int wctlp_change_obj(wctlp* lp, int start, int len, double* values) {
     return val;
 }
 
-int wctlp_addrow(wctlp* lp, int nzcount, int* cind, double* cval, char sense,
+int wctlp_addrow(wctlp* lp, int nb_zero, int* column_indices, double* cval, char sense,
                  double rhs, char* name) {
     int  val = 0;
-    char isense;
+    char inequality_sense;
 
     switch (sense) {
         case wctlp_EQUAL:
-            isense = GRB_EQUAL;
+            inequality_sense = GRB_EQUAL;
             break;
 
         case wctlp_LESS_EQUAL:
-            isense = GRB_LESS_EQUAL;
+            inequality_sense = GRB_LESS_EQUAL;
             break;
 
         case wctlp_GREATER_EQUAL:
-            isense = GRB_GREATER_EQUAL;
+            inequality_sense = GRB_GREATER_EQUAL;
             break;
 
         default:
@@ -154,29 +154,29 @@ int wctlp_addrow(wctlp* lp, int nzcount, int* cind, double* cval, char sense,
             return val;
     }
 
-    val = GRBaddconstr(lp->model, nzcount, cind, cval, isense, rhs, name);
+    val = GRBaddconstr(lp->model, nb_zero, column_indices, cval, inequality_sense, rhs, name);
     CHECK_VAL_GRB(val, "Failed GRBadd", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
     return val;
 }
 
-int wctlp_addcol(wctlp* lp, int nzcount, int* cind, double* cval, double obj,
+int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval, double obj,
                  double lb, double ub, char sense, char* name) {
     int  val = 0;
-    char isense;
+    char inequality_sense;
 
     switch (sense) {
         case wctlp_CONT:
-            isense = GRB_CONTINUOUS;
+            inequality_sense = GRB_CONTINUOUS;
             break;
 
         case wctlp_BIN:
-            isense = GRB_BINARY;
+            inequality_sense = GRB_BINARY;
             break;
 
         case wctlp_INT:
-            isense = GRB_INTEGER;
+            inequality_sense = GRB_INTEGER;
             break;
 
         default:
@@ -185,25 +185,25 @@ int wctlp_addcol(wctlp* lp, int nzcount, int* cind, double* cval, double obj,
             return val;
     }
 
-    val = GRBaddvar(lp->model, nzcount, cind, cval, obj, lb, ub, isense, name);
+    val = GRBaddvar(lp->model, nb_zero, column_indices, cval, obj, lb, ub, inequality_sense, name);
     CHECK_VAL_GRB(val, "Failed adding GRBaddvar", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
     return val;
 }
 
-int wctlp_chgcoef(wctlp* lp, int cnt, int* cind, int* vind, double* cval) {
+int wctlp_chgcoeff(wctlp* lp, int cnt, int* column_indices, int* var_indices, double* cval) {
     int val = 0;
-    val = GRBchgcoeffs(lp->model, cnt, cind, vind, cval);
+    val = GRBchgcoeffs(lp->model, cnt, column_indices, var_indices, cval);
     CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed to update model", lp->env);
     return val;
 }
 
-int wctlp_getcoef(wctlp* lp, int* cind, int* vind, double* cval) {
+int wctlp_getcoeff(wctlp* lp, int* column_indices, int* var_indices, double* cval) {
     int val;
-    val = GRBgetcoeff(lp->model, *cind, *vind, cval);
+    val = GRBgetcoeff(lp->model, *column_indices, *var_indices, cval);
     CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
 
     return val;
@@ -211,16 +211,16 @@ int wctlp_getcoef(wctlp* lp, int* cind, int* vind, double* cval) {
 
 int wctlp_deletecols(wctlp* lp, int first, int last) {
     int  val = 0;
-    int  ndel = last - first + 1;
+    int  nb_del = last - first + 1;
     int  i;
-    int* dellist = CC_SAFE_MALLOC(ndel, int);
+    int* dellist = CC_SAFE_MALLOC(nb_del, int);
     CCcheck_NULL_2(dellist, "Failed to allocated memory to dellist");
 
-    for (i = 0; i < ndel; ++i) {
+    for (i = 0; i < nb_del; ++i) {
         dellist[i] = first + i;
     }
 
-    val = GRBdelvars(lp->model, ndel, dellist);
+    val = GRBdelvars(lp->model, nb_del, dellist);
     CHECK_VAL_GRB2(val, "Failed to delete cols", lp->env);
     GRBupdatemodel(lp->model);
     CHECK_VAL_GRB2(val, "Failed to update the model", lp->env);
@@ -271,7 +271,7 @@ int wctlp_pi_inf(wctlp* lp, double* pi) {
 
 int wctlp_x(wctlp* lp, double* x, int first) {
     int val = 0;
-    int ncols;
+    int nb_cols;
     int solstat;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_STATUS, &solstat);
     CHECK_VAL_GRB(val, "Failed to the status of model", lp->env);
@@ -282,46 +282,46 @@ int wctlp_x(wctlp* lp, double* x, int first) {
         return val;
     }
 
-    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, &ncols);
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, &nb_cols);
     CHECK_VAL_GRB(val, "", lp->env);
 
-    if (ncols == 0) {
+    if (nb_cols == 0) {
         fprintf(stderr, "Lp has no variables\n");
         val = 1;
         return val;
     }
 
     val =
-        GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_X, first, ncols - first, x);
+        GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_X, first, nb_cols - first, x);
     CHECK_VAL_GRB(val, "Failed in GRB_DBL_ATTR_X", lp->env);
     return val;
 }
 
-int wctlp_basis_cols(wctlp* lp, int* cstat, int first) {
+int wctlp_basis_cols(wctlp* lp, int* column_status, int first) {
     int val = 0;
-    int ncols, i;
-    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, &ncols);
+    int nb_cols, i;
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, &nb_cols);
     CHECK_VAL_GRB(val, "Failed to get", lp->env);
     val = GRBgetintattrarray(lp->model, GRB_INT_ATTR_VBASIS, first,
-                             ncols - first, cstat);
+                             nb_cols - first, column_status);
     CHECK_VAL_GRB(val, "Failed to get", lp->env);
 
-    for (i = 0; i < ncols - first; ++i) {
-        switch (cstat[i]) {
+    for (i = 0; i < nb_cols - first; ++i) {
+        switch (column_status[i]) {
             case GRB_BASIC:
-                cstat[i] = wctlp_BASIC;
+                column_status[i] = wctlp_BASIC;
                 break;
 
             case GRB_NONBASIC_LOWER:
-                cstat[i] = wctlp_LOWER;
+                column_status[i] = wctlp_LOWER;
                 break;
 
             case GRB_NONBASIC_UPPER:
-                cstat[i] = wctlp_UPPER;
+                column_status[i] = wctlp_UPPER;
                 break;
 
             case GRB_SUPERBASIC:
-                cstat[i] = wctlp_FREE;
+                column_status[i] = wctlp_FREE;
                 break;
 
             default:
@@ -335,20 +335,20 @@ int wctlp_basis_cols(wctlp* lp, int* cstat, int first) {
 }
 
 int wctlp_set_coltypes(wctlp* lp, char sense) {
-    int  nvars, i, val = 0;
-    char isense;
+    int  nb_vars, i, val = 0;
+    char inequality_sense;
 
     switch (sense) {
         case wctlp_CONT:
-            isense = GRB_CONTINUOUS;
+            inequality_sense = GRB_CONTINUOUS;
             break;
 
         case wctlp_BIN:
-            isense = GRB_BINARY;
+            inequality_sense = GRB_BINARY;
             break;
 
         case wctlp_INT:
-            isense = GRB_INTEGER;
+            inequality_sense = GRB_INTEGER;
             break;
 
         default:
@@ -357,11 +357,11 @@ int wctlp_set_coltypes(wctlp* lp, char sense) {
             return val;
     }
 
-    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, &nvars);
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, &nb_vars);
     CHECK_VAL_GRB(val, "Failed to get number of variables", lp->env);
 
-    for (i = 0; i < nvars; ++i) {
-        val = GRBsetcharattrelement(lp->model, GRB_CHAR_ATTR_VTYPE, i, isense);
+    for (i = 0; i < nb_vars; ++i) {
+        val = GRBsetcharattrelement(lp->model, GRB_CHAR_ATTR_VTYPE, i, inequality_sense);
         CHECK_VAL_GRB(val, "Failed to set variable types", lp->env);
     }
 
@@ -372,10 +372,10 @@ int wctlp_set_coltypes(wctlp* lp, char sense) {
 
 int wctlp_get_rhs(wctlp* lp, double* rhs) {
     int val = 0;
-    int nconstr;
-    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMCONSTRS, &nconstr);
+    int nb_constr;
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMCONSTRS, &nb_constr);
     CHECK_VAL_GRB(val, "Failed in getting the number of variables", lp->env);
-    val = GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_RHS, 0, nconstr, rhs);
+    val = GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_RHS, 0, nb_constr, rhs);
     CHECK_VAL_GRB(val, "Failed in getting the RHS", lp->env);
     return val;
 }
@@ -419,9 +419,9 @@ CLEAN:
 
 void wctlp_warmstart_free(wctlp_warmstart** w) {
     if (*w != (wctlp_warmstart*)NULL) {
-        CC_IFFREE((*w)->cstat, int);
+        CC_IFFREE((*w)->column_status, int);
         CC_IFFREE((*w)->rstat, int);
-        CC_IFFREE((*w)->dnorm, double);
+        CC_IFFREE((*w)->d_norm, double);
         CC_FREE(*w, wctlp_warmstart);
     }
 }
@@ -447,7 +447,7 @@ void wctlp_printerrorcode(int c) {
             break;
 
         case GRB_ERROR_NULL_ARGUMENT:
-            printf("NULL input valua provided for a required argument\n");
+            printf("NULL input value provided for a required argument\n");
             break;
 
         case GRB_ERROR_INVALID_ARGUMENT:

@@ -59,7 +59,7 @@ void k_subset_lex_rank(int* subset, int k, int n, int* r) {
 
         if (lo <= hi) {
             for (j = lo; j <= hi; j = j + 1) {
-                (*r) = (*r) + bin_coef(n - j, k - i);
+                (*r) = (*r) + bin_coeff(n - j, k - i);
             }
         }
     }
@@ -70,12 +70,12 @@ void k_subset_lex_unrank(int r, int* T, int n, int k) {
     x = 1;
 
     for (int i = 1; i <= k; i = i + 1) {
-        int y = bin_coef(n - x, k - i);
+        int y = bin_coeff(n - x, k - i);
 
         while (y <= r) {
             r = r - y;
             x = x + 1;
-            y = bin_coef(n - x, k - i);
+            y = bin_coeff(n - x, k - i);
         }
 
         T[i] = x;

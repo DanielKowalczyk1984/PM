@@ -59,19 +59,19 @@ struct _NodeData {
     wctlp *MIP;
     double *lambda;
     double *x_e;
-    double *coef;
+    double *coeff;
     double *pi;
     // PricerSolver
     PricerSolver *solver;
 
     // Columns
-    // int          ccount;
+    // int          nb_columns;
     // scheduleset *cclasses;
     int          dzcount;
     // int          gallocated;
     ScheduleSet *newsets;
     int          nb_new_sets;
-    int *cstat;
+    int *column_status;
     GPtrArray *localColPool;
 
     int     lower_bound;
@@ -84,7 +84,7 @@ struct _NodeData {
     double  LP_lower_bound_dual;
     double  LP_lower_bound_BB;
     double *rhs;
-    int     nnonimprovements;
+    int     nb_non_improvements;
     int iterations;
     /** Wentges smoothing technique */
     double *pi_in;
@@ -99,7 +99,7 @@ struct _NodeData {
     int node_stab;
     int     hasstabcenter;
     double  eta_in;
-    int inmispricingschedule;
+    int in_mispricing_schedule;
     double subgradientproduct;
     double *pi_out;
     double *pi_sep;
@@ -111,7 +111,7 @@ struct _NodeData {
 
     // Best Solution
     ScheduleSet *bestcolors;
-    int          besttotwct;
+    int          best_objective;
     int          nb_best;
 
     const ScheduleSet *debugcolors;
@@ -126,9 +126,9 @@ struct _NodeData {
     int choose;
     /** conflict */
     int     *elist_same;
-    int      ecount_same;
+    int      edge_count_same;
     int     *elist_differ;
-    int      ecount_differ;
+    int      edge_count_differ;
     NodeData *same_children;
     int      nb_same;
     NodeData *diff_children;
@@ -170,7 +170,7 @@ typedef enum {
     no_sol = 0,
     lp_feasible = 1,
     feasible = 2,
-    meta_heur = 3,
+    meta_heuristic = 3,
     optimal = 4
 } problem_status;
 
@@ -182,8 +182,8 @@ struct _Problem {
     GPtrArray *g_job_array;
     GPtrArray *list_solutions;
     /** Summary of jobs */
-    int njobs;
-    int psum;
+    int nb_jobs;
+    int p_sum;
     int pmax;
     int pmin;
     int dmax;
@@ -191,7 +191,6 @@ struct _Problem {
     int H_min;
     int H_max;
     int off;
-    /** nmachines */
     int nb_machines;
 
     int    nb_data_nodes;
@@ -210,7 +209,6 @@ struct _Problem {
     /** Maximum number of artificial columns */
     int maxArtificials;
     /** Actual number of artificial columns */
-    int nArtificials;
     /* Best Solution*/
     Solution    *opt_sol;
     /*heap variables*/
@@ -258,8 +256,8 @@ void problem_free(Problem *problem);
 void nodedata_init(NodeData *pd, Problem *prob);
 int set_id_and_name(NodeData *pd, int id, const char *fname);
 
-/*Free the wctdata*/
-void lpwctdata_free(NodeData *pd);
+/*Free the Nodedata*/
+void lp_node_data_free(NodeData *pd);
 void children_data_free(NodeData *pd);
 void nodedata_free(NodeData *pd);
 void temporary_data_free(NodeData *pd);

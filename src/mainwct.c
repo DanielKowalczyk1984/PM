@@ -132,7 +132,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
             goto CLEAN;
         }
         c = strtol(av[optind++], &ptr, 10);
-        val = parms_set_nmachines(parms, c);
+        val = parms_set_nb_machines(parms, c);
         CCcheck_val(val, "Failed in wctparms_set_nmachines");
     }
 
@@ -174,7 +174,7 @@ int main(int ac, char** av) {
     /**
      * Finding heuristic solutions to the problem
      */
-    heuristic_rpup(&problem);
+    heuristic(&problem);
 
     /**
      * Build DD at the root node

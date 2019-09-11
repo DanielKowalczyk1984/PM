@@ -35,7 +35,7 @@ public:
         num_jobs = src.num_jobs;
     }
 
-    void initializepi(T *_pi){
+    void initialize_pi(T *_pi){
         pi = _pi;
     }
 
@@ -219,7 +219,7 @@ template<typename E, typename T> class ForwardZddSimple : public ForwardZddBase<
         }
     }
 
-    void initializepi(T *_pi){
+    void initialize_pi(T *_pi){
         pi = _pi;
     }
 

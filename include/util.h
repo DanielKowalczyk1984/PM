@@ -297,7 +297,7 @@ void fill_char(char *dst, int n, char v);
 void acopy_int(const int *src, int *dst, int n);
 void acopy_dbl(const double *src, double *dst, int n);
 
-int bin_coef(int n, int r);
+int bin_coeff(int n, int r);
 
 #ifdef __cplusplus
 }

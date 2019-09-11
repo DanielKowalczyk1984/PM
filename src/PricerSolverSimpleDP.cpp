@@ -347,7 +347,7 @@ void PricerSolverSimpleDp::create_dot_zdd(const char* name) {
         }
     }
 
-    auto otf = std::ofstream("TIgraph.gv");
+    auto otf = std::ofstream("TI_graph.gv");
     boost::write_graphviz(otf, graph);
 }
 
@@ -374,8 +374,6 @@ int PricerSolverSimpleDp::get_num_layers() {
 }
 
 void PricerSolverSimpleDp::print_num_paths() {
-    // cout << "Number of paths: " <<
-    // decision_diagram->evaluate(tdzdd::ZddCardinality<>()) << "\n";
 }
 
 bool PricerSolverSimpleDp::check_schedule_set(GPtrArray* set) {

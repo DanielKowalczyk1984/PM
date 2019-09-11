@@ -23,7 +23,7 @@ class BackwardZDDBase : public Eval<E, NodeZdd<T>, OptimalSolution<T>> {
   BackwardZDDBase() : pi(nullptr), num_jobs(0){};
   ~BackwardZDDBase() {};
 
-  void initializepi(T *_pi) {
+  void initialize_pi(T *_pi) {
       pi = _pi;
   }
 

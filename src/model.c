@@ -63,7 +63,7 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
 
     if (tot_weighted < pd->upper_bound) {
         pd->upper_bound = tot_weighted;
-        pd->besttotwct = tot_weighted;
+        pd->best_objective = tot_weighted;
     }
 
     if (pd->upper_bound == pd->lower_bound) {
@@ -76,17 +76,17 @@ CLEAN:
 
 int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     int        val = 0;
-    int        cind;
-    int        vind;
+    int        col_ind;
+    int        var_ind;
     double     cval;
-    int        njobs = pd->nb_jobs;
+    int        nb_jobs = pd->nb_jobs;
     GPtrArray* members = set->job_list;
     wctlp*     lp = pd->RMP;
     Job*       job;
 
     val = wctlp_get_nb_cols(lp, &(set->id));
     CCcheck_val_2(val, "Failed to get the number of cols");
-    vind = set->id;
+    var_ind = set->id;
     val = wctlp_addcol(lp, 0, NULL, NULL,
                        (double)set->total_weighted_completion_time, 0.0,
                        GRB_INFINITY, wctlp_CONT, NULL);
@@ -94,18 +94,18 @@ int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
 
         for (unsigned i = 0; i < members->len; ++i) {
         job = (Job*)g_ptr_array_index(members, i);
-        cind = job->job;
-        val = wctlp_getcoef(lp, &cind, &vind, &cval);
+        col_ind = job->job;
+        val = wctlp_getcoeff(lp, &col_ind, &var_ind, &cval);
         CCcheck_val_2(val, "Failed wctlp_getcoef");
         cval += 1.0;
         set->num[job->job] += 1;
-        val = wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
+        val = wctlp_chgcoeff(lp, 1, &col_ind, &var_ind, &cval);
         CCcheck_val_2(val, "Failed wctlp_chgcoef");
     }
 
-    cind = njobs;
+    col_ind = nb_jobs;
     cval = -1.0;
-    val = wctlp_chgcoef(lp, 1, &cind, &vind, &cval);
+    val = wctlp_chgcoeff(lp, 1, &col_ind, &var_ind, &cval);
     CCcheck_val_2(val, "Failed wctlp_chgcoef");
 
 CLEAN:
@@ -121,7 +121,7 @@ void g_add_col_to_lp(gpointer data, gpointer user_data) {
 int build_rmp(NodeData* pd, int construct) {
     int      val = 0;
     Problem* problem = pd->problem;
-    int      njobs = problem->njobs;
+    int      njobs = problem->nb_jobs;
     int      nmachines = problem->nb_machines;
     Parms*   parms = &(problem->parms);
     int      nb_row;
@@ -184,7 +184,7 @@ CLEAN:
 
     if (val) {
         wctlp_free(&(pd->RMP));
-        CC_IFFREE(pd->coef, double);
+        CC_IFFREE(pd->coeff, double);
         CC_IFFREE(pd->pi, double);
         CC_IFFREE(pd->pi_in, double)
         CC_IFFREE(pd->pi_out, double)

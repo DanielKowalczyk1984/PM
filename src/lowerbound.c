@@ -22,7 +22,7 @@ void g_grow_ages(gpointer data, gpointer user_data) {
     ScheduleSet* x = (ScheduleSet*)data;
     NodeData*    pd = (NodeData*)user_data;
 
-    if (pd->cstat[x->id] == wctlp_LOWER || pd->cstat[x->id] == wctlp_FREE) {
+    if (pd->column_status[x->id] == wctlp_LOWER || pd->column_status[x->id] == wctlp_FREE) {
         x->age++;
 
         if (x->age > pd->retirementage) {
@@ -38,10 +38,10 @@ static int grow_ages(NodeData* pd) {
     int nb_cols;
     wctlp_get_nb_cols(pd->RMP, &nb_cols);
     assert(nb_cols == pd->localColPool->len);
-    CC_IFFREE(pd->cstat, int);
-    pd->cstat = (int*)CC_SAFE_MALLOC(nb_cols, int);
-    CCcheck_NULL_2(pd->cstat, "Failed to allocate cstat");
-    val = wctlp_basis_cols(pd->RMP, pd->cstat, 0);
+    CC_IFFREE(pd->column_status, int);
+    pd->column_status = (int*)CC_SAFE_MALLOC(nb_cols, int);
+    CCcheck_NULL_2(pd->column_status, "Failed to allocate cstat");
+    val = wctlp_basis_cols(pd->RMP, pd->column_status, 0);
     CCcheck_val_2(val, "Failed in wctlp_basis_cols");
     pd->dzcount = 0;
 
@@ -51,7 +51,7 @@ CLEAN:
     return val;
 }
 
-static int delete_old_cclasses(NodeData* pd) {
+int delete_old_cclasses(NodeData* pd) {
     int          val = 0;
     int          min_numdel = pd->nb_jobs * min_ndelrow_ratio;
     int          nb_col;
@@ -500,9 +500,10 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     case stab_dynamic:
                     case stab_hybrid:
                         break_while_loop =
-                            (CC_ABS(pd->eta_out - pd->eta_in) <
-                             0.00001) || nb_non_improvements > 5;  // || (ceil(pd->eta_in - 0.00001) >=
-                                       // pd->eta_out);
+                            (CC_ABS(pd->eta_out - pd->eta_in) < 0.00001) ||
+                            nb_non_improvements >
+                                5;  // || (ceil(pd->eta_in - 0.00001) >=
+                                    // pd->eta_out);
                         break;
 
                     case no_stab:
@@ -591,21 +592,21 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 }
 
                 // if (parms->pricing_solver < dp_solver) {
-                    val = wctlp_optimize(pd->RMP, &status);
-                    CCcheck_val_2(val, "wctlp_optimize failed");
-                    val = compute_objective(pd, parms);
-                    CCcheck_val_2(val, "Failed in computing the objective");
+                val = wctlp_optimize(pd->RMP, &status);
+                CCcheck_val_2(val, "wctlp_optimize failed");
+                val = compute_objective(pd, parms);
+                CCcheck_val_2(val, "Failed in computing the objective");
 
-                    // reset_nblayers(pd->jobarray);
-                    // calculate_nblayers(pd, 2);
-                    reduce_cost_fixing(pd);
-                    print_x(pd);
-                    construct_lp_sol_from_rmp(pd);
-                    // val = check_schedules(pd);
-                    // CCcheck_val_2(val, "Failed in checkschedules");
-                    // delete_infeasible_cclasses(pd);
+                // reset_nblayers(pd->jobarray);
+                // calculate_nblayers(pd, 2);
+                reduce_cost_fixing(pd);
+                print_x(pd);
+                construct_lp_sol_from_rmp(pd);
+                // val = check_schedules(pd);
+                // CCcheck_val_2(val, "Failed in checkschedules");
+                // delete_infeasible_cclasses(pd);
                 // }
-                    // calculate_x_e(pd);
+                // calculate_x_e(pd);
                 // pd->status = LP_bound_computed;
                 // val = wctlp_pi(pd->RMP, pd->pi);
                 // CCcheck_val_2(val, "wctlp_pi failed");
@@ -680,38 +681,34 @@ int print_x(NodeData* pd) {
             val = wctlp_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in wctlp_x");
 
-            // for (int i = 0; i < nb_cols; ++i) {
-            //     if (pd->x[i] > 0.00001) {
-            //         printf("x = %f\n", pd->x[i]);
-            //         ScheduleSet* tmp =
-            //             (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
-            //         int C = 0;
-            //         for (int j = 0; j < tmp->job_list->len; ++j) {
-            //             Job* j1 = (Job*)g_ptr_array_index(tmp->job_list, j);
+            for (int i = 0; i < pd->problem->opt_sol->nb_machines; ++i) {
+                GPtrArray* tmp = pd->problem->opt_sol->part[i].machine;
+                int        C = 0;
+                for (int j = 0; j < tmp->len; ++j) {
+                    Job* j1 = (Job*)g_ptr_array_index(tmp, j);
 
-            //             if (j < tmp->job_list->len - 1) {
-            //                 Job* j2 =
-            //                     (Job*)g_ptr_array_index(tmp->job_list, j + 1);
-            //                 if (!bool_diff_Fij(C, j2, j1)) {
-            //                     printf("%d ", bool_diff_Fij(C, j2, j1));
-            //                 }
-            //             }
-            //             C += j1->processing_time;
-            //         }
-            //         printf("\n");
-            //         g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
-            //         printf("\n");
-            //     }
-            // }
+                    if (j < tmp->len - 1) {
+                        Job* j2 = (Job*)g_ptr_array_index(tmp, j + 1);
+                        if (bool_diff_Fij(C, j2, j1)) {
+                            printf("%d ", bool_diff_Fij(C, j2, j1));
+                        }
+                    }
+                    C += j1->processing_time;
+                }
+                printf("\n");
+                g_ptr_array_foreach(tmp, g_print_machine, NULL);
+                printf("\n");
+            }
             break;
     }
 
-CLEAN:
+
+CLEAN :
 
     return val;
 }
 
-int calculate_nblayers(NodeData* pd, int k) {
+int calculate_nb_layers(NodeData* pd, int k) {
     int val = 0;
     int nb_cols;
     int status;
@@ -773,8 +770,8 @@ int calculate_x_e(NodeData* pd) {
             CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
             val = wctlp_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in wctlp_x");
-            pd->x_e = CC_SAFE_REALLOC(pd->x_e, get_size_data(pd->solver),
-                                      double);
+            pd->x_e =
+                CC_SAFE_REALLOC(pd->x_e, get_size_data(pd->solver), double);
             CCcheck_NULL_2(pd->x_e, "Failed to reallocate memory to  pd->x_e");
 
             for (unsigned i = 0; i < get_size_data(pd->solver); ++i) {

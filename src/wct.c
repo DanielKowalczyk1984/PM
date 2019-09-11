@@ -16,8 +16,8 @@ void problem_init(Problem* problem) {
     problem->g_job_array = g_ptr_array_new_with_free_func(g_job_free);
     problem->opt_sol = (Solution*)NULL;
     /** Job summary */
-    problem->njobs = 0;
-    problem->psum = 0;
+    problem->nb_jobs = 0;
+    problem->p_sum = 0;
     problem->pmax = 0;
     problem->pmin = INT_MAX;
     problem->dmax = INT_MIN;
@@ -59,7 +59,6 @@ void problem_init(Problem* problem) {
     CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
     /** initialize colPool */
     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
-    problem->nArtificials = 0;
     /** initialize the time */
     problem->real_time_build_dd = 0.0;
     problem->real_time_total = getRealTime();
@@ -126,7 +125,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->MIP = (wctlp*)NULL;
     pd->lambda = (double*)NULL;
     pd->x_e = (double*)NULL;
-    pd->coef = (double*)NULL;
+    pd->coeff = (double*)NULL;
     pd->pi = (double*)NULL;
     /**init stab data */
     pd->pi_in = (double*)NULL;
@@ -147,7 +146,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->subgradientproduct = 0.0;
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver*)NULL;
-    pd->nnonimprovements = 0;
+    pd->nb_non_improvements = 0;
     pd->dzcount = 0;
     pd->bestcolors = (ScheduleSet*)NULL;
     pd->nb_best = 0;
@@ -155,7 +154,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->ndebugcolors = 0;
     pd->opt_track = 0;
     pd->localColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
-    pd->cstat = (int*)NULL;
+    pd->column_status = (int*)NULL;
     /*Initialization max and retirement age*/
     pd->maxiterations = 1000000;
     pd->retirementage = 1000000;
@@ -172,9 +171,9 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->completiontime = 0;
     /** conflict branching */
     pd->elist_same = (int*)NULL;
-    pd->ecount_same = 0;
+    pd->edge_count_same = 0;
     pd->elist_differ = (int*)NULL;
-    pd->ecount_differ = 0;
+    pd->edge_count_differ = 0;
     pd->same_children = (NodeData*)NULL;
     pd->nb_same = 0;
     pd->diff_children = (NodeData*)NULL;
@@ -191,7 +190,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->problem = prob;
 }
 
-void lpwctdata_free(NodeData* pd) {
+void lp_node_data_free(NodeData* pd) {
     /**
      * free all the gurobi data associated with the LP relaxation
      */
@@ -202,7 +201,7 @@ void lpwctdata_free(NodeData* pd) {
     /**
      * free all the data associated with the LP
      */
-    CC_IFFREE(pd->coef, double);
+    CC_IFFREE(pd->coeff, double);
     CC_IFFREE(pd->pi, double);
     CC_IFFREE(pd->lambda, double);
     CC_IFFREE(pd->x_e, double);
@@ -212,7 +211,7 @@ void lpwctdata_free(NodeData* pd) {
     CC_IFFREE(pd->subgradient, double);
     CC_IFFREE(pd->subgradient_in, double);
     CC_IFFREE(pd->rhs, double);
-    CC_IFFREE(pd->cstat, int);
+    CC_IFFREE(pd->column_status, int);
 
     /**
      * free all the schedules from the localColPool
@@ -250,7 +249,7 @@ void children_data_free(NodeData* pd) {
 
 void temporary_data_free(NodeData* pd) {
     children_data_free(pd);
-    lpwctdata_free(pd);
+    lp_node_data_free(pd);
     // g_ptr_array_free(pd->localColPool, TRUE);
     if (pd->solver) {
         freeSolver(pd->solver);
@@ -281,12 +280,12 @@ void nodedata_free(NodeData* pd) {
 
 int set_id_and_name(NodeData* pd, int id, const char* fname) {
     int val = 0;
-    int sval = 0;
+    int s_val = 0;
     CCcheck_NULL_2(pd, "np memory was allocated to pd");
     pd->id = id;
-    sval = snprintf(pd->pname, MAX_PNAME_LEN, "%s", fname);
+    s_val = snprintf(pd->pname, MAX_PNAME_LEN, "%s", fname);
 
-    if (sval < 0 || MAX_PNAME_LEN <= sval) {
+    if (s_val < 0 || MAX_PNAME_LEN <= s_val) {
         val = 1;
         CCcheck_val(val, "Failed to write pname")
     }
@@ -438,7 +437,7 @@ int compute_schedule(Problem* problem) {
         problem->rel_error = (double)(problem->global_upper_bound -
                                       problem->global_lower_bound) /
                              ((double)problem->global_lower_bound);
-        problem->status = meta_heur;
+        problem->status = meta_heuristic;
         problem->global_lower_bound = root_pd->lower_bound;
         printf("The suboptimal schedule is given by:\n");
         print_schedule(root_pd->bestcolors, root_pd->nb_best);

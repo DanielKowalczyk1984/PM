@@ -67,7 +67,7 @@ enum Strong_Branching {
     no_strong_branching = 1,
 };
 
-typedef struct wctparms {
+typedef struct parms {
     /**
      * General parameters
      */
@@ -92,7 +92,7 @@ typedef struct wctparms {
     int stab_technique;
     int print;
 
-    int delete_elists;
+    int delete_edge_lists;
     int delete_cclasses;
 
     char *jobfile;
@@ -103,7 +103,7 @@ typedef struct wctparms {
     char *backupdir;
 
     int upper_bounds_only;
-    int nmachines;
+    int nb_machines;
 } Parms;
 
 /*Initialization and free memory*/
@@ -138,7 +138,7 @@ int parms_set_scatter_search_cpu_limit(Parms *parms, double limit);
 int parms_set_outfile(Parms *parms, const char *fname);
 int parms_set_file(Parms *parms, const char *fname);
 int parms_set_backupdir(Parms *parms, const char *fname);
-int parms_set_nmachines(Parms *parms, int nmachines);
+int parms_set_nb_machines(Parms *parms, int nb_machines);
 
 #ifdef __cplusplus
 }

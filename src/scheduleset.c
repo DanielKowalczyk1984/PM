@@ -90,23 +90,23 @@ void g_scheduleset_free(void* set) {
     }
 }
 
-ScheduleSet* scheduleset_alloc(int nbjobs) {
+ScheduleSet* scheduleset_alloc(int nb_jobs) {
     ScheduleSet* tmp;
     tmp = CC_SAFE_MALLOC(1, ScheduleSet);
     CCcheck_NULL_3(tmp, "Failed to allocate memory") scheduleset_init(tmp);
-    tmp->num = CC_SAFE_MALLOC(nbjobs, int);
-    fill_int(tmp->num, nbjobs, 0);
+    tmp->num = CC_SAFE_MALLOC(nb_jobs, int);
+    fill_int(tmp->num, nb_jobs, 0);
 
 CLEAN:
     return tmp;
 }
 
-ScheduleSet* scheduleset_alloc_bis(int nbjobs) {
+ScheduleSet* scheduleset_alloc_bis(int nb_jobs) {
     ScheduleSet* tmp;
     tmp = CC_SAFE_MALLOC(1, ScheduleSet);
     CCcheck_NULL_3(tmp, "Failed to allocate memory") scheduleset_init_bis(tmp);
-    tmp->num = CC_SAFE_MALLOC(nbjobs, int);
-    fill_int(tmp->num, nbjobs, 0);
+    tmp->num = CC_SAFE_MALLOC(nb_jobs, int);
+    fill_int(tmp->num, nb_jobs, 0);
 
 CLEAN:
     return tmp;
@@ -123,16 +123,16 @@ void g_sum_processing_time(gpointer data, gpointer user_data) {
     g_ptr_array_add(set->job_list, j);
 }
 
-ScheduleSet* scheduleset_from_solution(GPtrArray* machine, int nbjobs) {
+ScheduleSet* scheduleset_from_solution(GPtrArray* machine, int nb_jobs) {
     ScheduleSet* tmp;
 
     tmp = CC_SAFE_MALLOC(1, ScheduleSet);
     CCcheck_NULL_3(tmp, "failed to allocate memory")
 
         scheduleset_init(tmp);
-    tmp->num = CC_SAFE_MALLOC(nbjobs, int);
+    tmp->num = CC_SAFE_MALLOC(nb_jobs, int);
     CCcheck_NULL(tmp->num, "Failed to allocate memory")
-        fill_int(tmp->num, nbjobs, 0);
+        fill_int(tmp->num, nb_jobs, 0);
     g_ptr_array_foreach(machine, g_sum_processing_time, tmp);
 
 CLEAN:
@@ -212,7 +212,7 @@ void g_scheduleset_print(gpointer data, gpointer user_data) {
            tmp->total_weighted_completion_time, tmp_a->len);
 }
 
-void g_compute_nblayers_schedule(gpointer data, gpointer user_data) {
+void g_compute_nb_layers_schedule(gpointer data, gpointer user_data) {
     Job*         j = (Job*)data;
     ScheduleSet* tmp = (ScheduleSet*)user_data;
     if (tmp->num[j->job] > 1) {
@@ -220,11 +220,11 @@ void g_compute_nblayers_schedule(gpointer data, gpointer user_data) {
     }
 }
 
-int print_schedule(ScheduleSet* cclasses, int ccount) {
+int print_schedule(ScheduleSet* cclasses, int nb_columns) {
     int i;
     int sum = 0;
 
-    for (i = 0; i < ccount; i++) {
+    for (i = 0; i < nb_columns; i++) {
         printf("Machine %d:", i);
 
         g_ptr_array_foreach(cclasses[i].job_list, g_print_machine, NULL);
@@ -240,11 +240,11 @@ int print_schedule(ScheduleSet* cclasses, int ccount) {
     return 0;
 }
 
-int scheduleset_max(ScheduleSet* cclasses, int ccount) {
+int scheduleset_max(ScheduleSet* cclasses, int nb_columns) {
     int val = 0;
     int i;
 
-    for (i = 0; i < ccount; i++) {
+    for (i = 0; i < nb_columns; i++) {
         if (cclasses[i].total_processing_time > val) {
             val = cclasses[i].total_processing_time;
         }

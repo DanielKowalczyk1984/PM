@@ -1,13 +1,13 @@
 #include <wct.h>
 
-static int get_problem_name(char* pname, const char* efname) {
+static int get_problem_name(char* pname, const char* end_file_name) {
     int         rval = 0;
     int         len = 0;
-    const char* fname = strrchr(efname, '/');
-    const char* lastdot = strrchr(efname, '.');
+    const char* fname = strrchr(end_file_name, '/');
+    const char* lastdot = strrchr(end_file_name, '.');
 
     if (!fname) {
-        fname = efname;
+        fname = end_file_name;
     } else {
         fname++;
     }
@@ -28,7 +28,7 @@ static int get_problem_name(char* pname, const char* efname) {
 
 int read_problem(Problem* problem) {
     int         val = 0;
-    int         nbjobs = 0;
+    int         nb_jobs = 0;
     int         curduration, curduedate, curweight, curjob;
     Job*        _jobarray = (Job*)NULL;
     Job*        tmp_j;
@@ -50,8 +50,8 @@ int read_problem(Problem* problem) {
         if (fgets(buf, 254, in) != NULL) {
             p = buf;
             data = strtok(p, delim);
-            sscanf(data, "%d", &nbjobs);
-            bufsize = 3 * nbjobs * (2 + (int)ceil(log((double)nbjobs + 10)));
+            sscanf(data, "%d", &nb_jobs);
+            bufsize = 3 * nb_jobs * (2 + (int)ceil(log((double)nb_jobs + 10)));
             buf2 = (char*)CC_SAFE_MALLOC(bufsize, char);
             CCcheck_NULL_2(buf2, "Failed to allocate buf2");
         } else {
@@ -62,7 +62,7 @@ int read_problem(Problem* problem) {
         while (fgets(buf2, bufsize, in) != (char*)NULL) {
             p = buf2;
             sscanf(p, "%d %d %d", &curduration, &curduedate, &curweight);
-            curduedate = curduedate / parms->nmachines;
+            curduedate = curduedate / parms->nb_machines;
             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
             g_ptr_array_add(problem->g_job_array, tmp_j);
 
@@ -76,8 +76,8 @@ int read_problem(Problem* problem) {
             curjob++;
         }
 
-        problem->njobs = pd->nb_jobs = nbjobs;
-        problem->nb_machines = pd->nb_machines = parms->nmachines;
+        problem->nb_jobs = pd->nb_jobs = nb_jobs;
+        problem->nb_machines = pd->nb_machines = parms->nb_machines;
     } else {
         fprintf(stderr, "Unable to open file %s\n", parms->jobfile);
         val = 1;
@@ -104,7 +104,7 @@ int print_to_csv(Problem* problem) {
     NodeData* pd = &(problem->root_pd);
     Parms*    parms = &(problem->parms);
     FILE*     file = (FILE*)NULL;
-    char      filenm[128];
+    char      file_name[128];
     int       size;
     GDate     date;
     g_date_set_time_t(&date, time(NULL));
@@ -114,7 +114,7 @@ int print_to_csv(Problem* problem) {
     file = fopen("overall.csv", "a+");
 
     if (file == NULL) {
-        printf("We couldn't open %s in %s at line %d\n", filenm, __FILE__,
+        printf("We couldn't open %s in %s at line %d\n", file_name, __FILE__,
                __LINE__);
         val = 1;
         goto CLEAN;
@@ -147,7 +147,7 @@ int print_to_csv(Problem* problem) {
             problem->root_rel_error, problem->nb_generated_col, date.day,
             date.month, date.year, parms->nb_iterations_rvnd,
             parms->stab_technique, parms->alpha, parms->pricing_solver,
-            problem->njobs, problem->nb_machines, problem->first_size_graph,
+            problem->nb_jobs, problem->nb_machines, problem->first_size_graph,
             problem->size_graph_after_reduced_cost_fixing);
     fclose(file);
 CLEAN:
@@ -166,7 +166,7 @@ int print_to_screen(Problem* problem) {
 
         case feasible:
         case lp_feasible:
-        case meta_heur:
+        case meta_heuristic:
             printf("A suboptimal schedule with relative error %f is found.\n",
                    (double)(problem->global_upper_bound -
                             problem->global_lower_bound) /
@@ -195,17 +195,17 @@ int print_size_to_csv(Problem* problem, NodeData* pd) {
     int    val = 0;
     int    size;
     Parms* parms = &(problem->parms);
-    char   filenm[128];
+    char   file_name[128];
     FILE*  file = (FILE*)NULL;
     GDate  date;
     g_date_set_time_t(&date, time(NULL));
 
-    sprintf(filenm, "overall_size.csv");
+    sprintf(file_name, "overall_size.csv");
 
-    file = fopen(filenm, "a+");
+    file = fopen(file_name, "a+");
 
     if (file == NULL) {
-        printf("We couldn't open %s in %s at line %d\n", filenm, __FILE__,
+        printf("We couldn't open %s in %s at line %d\n", file_name, __FILE__,
                __LINE__);
         val = 1;
         goto CLEAN;

@@ -25,7 +25,7 @@ class BackwardBddBase : public Eval<E, NodeBdd<T>, OptimalSolution<T> > {
         num_jobs(src.num_jobs) {
     };
 
-    void initializepi(T *_pi) {
+    void initialize_pi(T *_pi) {
         pi = _pi;
     }
 

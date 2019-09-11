@@ -1,6 +1,6 @@
 #include <util.h>
 
-int bin_coef(int n, int r) {
+int bin_coeff(int n, int r) {
     int b;
 
     if ((r < 0) || (n < r)) {

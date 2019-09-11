@@ -5,7 +5,7 @@ void g_problem_summary_init(gpointer data, gpointer user_data) {
     Job*     j = (Job*)data;
     Problem* prob = (Problem*)user_data;
 
-    prob->psum += j->processing_time;
+    prob->p_sum += j->processing_time;
     prob->pmax = CC_MAX(prob->pmax, j->processing_time);
     prob->pmin = CC_MIN(prob->pmin, j->processing_time);
     prob->dmax = CC_MAX(prob->dmax, j->due_time);
@@ -37,7 +37,7 @@ gint g_job_compare_edd(const void* a, const void* b, void* data) {
     return (0);
 }
 
-int calculate_Hmin(int* durations, int nmachines, int njobs, int* perm,
+int calculate_H_min(int* durations, int nmachines, int njobs, int* perm,
                    double* H) {
     int    i, val = 0;
     double temp;
@@ -61,13 +61,13 @@ void calculate_Hmax(Problem* problem) {
     double    temp_dbl = 0.0;
     NodeData* pd = &(problem->root_pd);
 
-    temp = problem->psum - problem->pmax;
+    temp = problem->p_sum - problem->pmax;
     temp_dbl = (double)temp;
     temp_dbl = floor(temp_dbl / problem->nb_machines);
     problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax + 10;
     problem->H_min = (int)ceil(temp_dbl / problem->nb_machines) - problem->pmax;
     printf("H_max = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
-           problem->H_max, problem->pmax, problem->pmin, problem->psum,
+           problem->H_max, problem->pmax, problem->pmin, problem->p_sum,
            problem->off);
 }
 
@@ -240,7 +240,7 @@ void create_ordered_jobs_array(GPtrArray* a, GPtrArray* b) {
 int find_division(Problem* problem) {
     int            val = 0;
     int            counter = 0;
-    int            njobs = problem->njobs;
+    int            njobs = problem->nb_jobs;
     int            prev;
     NodeData*      root_pd = &(problem->root_pd);
     GPtrArray*     tmp_array = g_ptr_array_new_with_free_func(g_interval_free);

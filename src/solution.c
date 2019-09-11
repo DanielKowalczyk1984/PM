@@ -49,14 +49,14 @@ void g_job_free(void* set) {
     }
 }
 
-Solution* solution_alloc(int nb_machines, int njobs, int off) {
+Solution* solution_alloc(int nb_machines, int nb_jobs, int off) {
     int       val = 0;
     int       i;
     Solution* sol = CC_SAFE_MALLOC(1, Solution);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     solution_init(sol);
     sol->nb_machines = nb_machines;
-    sol->nb_jobs = njobs;
+    sol->nb_jobs = nb_jobs;
     sol->tw = 0;
     sol->b = 0;
     sol->off = off;
@@ -68,16 +68,16 @@ Solution* solution_alloc(int nb_machines, int njobs, int off) {
         (sol->part + i)->key = i;
     }
 
-    sol->perm = CC_SAFE_MALLOC(njobs, Job*);
+    sol->perm = CC_SAFE_MALLOC(nb_jobs, Job*);
     CCcheck_NULL_2(sol->perm, "Failed to allocate memory to perm");
-    sol->c = CC_SAFE_MALLOC(njobs, int);
+    sol->c = CC_SAFE_MALLOC(nb_jobs, int);
     CCcheck_NULL_2(sol->c, "Failed to allocate memory");
     fill_int(sol->c, sol->nb_jobs, 0);
-    sol->u = CC_SAFE_MALLOC(njobs, int);
+    sol->u = CC_SAFE_MALLOC(nb_jobs, int);
     CCcheck_NULL_2(sol->u, "Failed to allocate memory")
-        fill_int(sol->u, njobs, 0);
+        fill_int(sol->u, nb_jobs, 0);
 
-    for (i = 0; i < njobs; ++i) {
+    for (i = 0; i < nb_jobs; ++i) {
         sol->perm[i] = (Job*)NULL;
     }
 

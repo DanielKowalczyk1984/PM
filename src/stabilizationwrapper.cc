@@ -5,7 +5,7 @@
 template <typename T = double>
 int construct_sol(NodeData* pd, OptimalSolution<T>* sol) {
     int          val = 0;
-    int          nbset = 1;
+    int          nb_set = 1;
     ScheduleSet* newset = scheduleset_alloc_bis(pd->nb_jobs);
     CCcheck_NULL_3(newset, "Failed to allocate memory newset");
 
@@ -25,7 +25,7 @@ int construct_sol(NodeData* pd, OptimalSolution<T>* sol) {
 
 CLEAN:
     if (val) {
-        schedulesets_free(&(newset), &(nbset));
+        schedulesets_free(&(newset), &(nb_set));
     }
 
     return val;
@@ -34,7 +34,7 @@ CLEAN:
 extern "C" {
 
 double compute_lagrange(OptimalSolution<double>& sol, double* rhs, double* pi,
-                        int nbjobs) {
+                        int nb_jobs) {
     double result = 0.0;
     double a = 0.0;
 
@@ -43,20 +43,20 @@ double compute_lagrange(OptimalSolution<double>& sol, double* rhs, double* pi,
         result += pi[tmp_j->job];
     }
 
-    for (int i = 0; i < nbjobs; ++i) {
+    for (int i = 0; i < nb_jobs; ++i) {
         a += rhs[i] * pi[i];
     }
 
     result = CC_MIN(0.0, sol.cost - result);
-    result = -rhs[nbjobs] * result;
+    result = -rhs[nb_jobs] * result;
     result += a;
 
     return result;
 }
 
 static double compute_reduced_cost(OptimalSolution<double>& sol, double* pi,
-                                   int nbjobs) {
-    double result = -pi[nbjobs];
+                                   int nb_jobs) {
+    double result = -pi[nb_jobs];
 
     for (guint i = 0; i < sol.jobs->len; ++i) {
         Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
@@ -80,7 +80,7 @@ void update_alpha_misprice(NodeData* pd) {
 }
 
 int is_stabilized(NodeData* pd) {
-    if (pd->inmispricingschedule) {
+    if (pd->in_mispricing_schedule) {
         return pd->alphabar > 0.0;
     }
     return pd->alpha > 0.0;
@@ -152,7 +152,7 @@ int calculate_hybridfactor(NodeData* pd) {
 int update_hybrid(NodeData* pd) {
     int val = 0;
 
-    if (pd->hasstabcenter && !pd->inmispricingschedule && pd->alpha > 0.0) {
+    if (pd->hasstabcenter && !pd->in_mispricing_schedule && pd->alpha > 0.0) {
         calculate_dualdiffnorm(pd);
         calculate_beta(pd);
         calculate_hybridfactor(pd);
@@ -169,7 +169,7 @@ int update_node(NodeData* pd) {
         pd->alpha = 0.0;
         pd->hasstabcenter = 0;
         pd->eta_in = 0.0;
-        pd->inmispricingschedule = 0;
+        pd->in_mispricing_schedule = 0;
     }
 
     return val;
@@ -179,7 +179,7 @@ double compute_dual(NodeData* pd, int i) {
     double usedalpha = pd->alpha;
     double usedbeta = pd->beta;
 
-    if (pd->inmispricingschedule) {
+    if (pd->in_mispricing_schedule) {
         usedalpha = pd->alphabar;
         usedbeta = 0.0;
     }
@@ -258,10 +258,10 @@ int update_stabcenter(const OptimalSolution<double>& sol, NodeData* pd) {
 }
 
 static void adjust_alpha(double* pi_out, double* pi_in, double* subgradient,
-                         int nbjobs, double& alpha) {
+                         int nb_jobs, double& alpha) {
     double sum = 0.0;
 
-    for (int i = 0; i < nbjobs; ++i) {
+    for (int i = 0; i < nb_jobs; ++i) {
         sum += subgradient[i] * (pi_out[i] - pi_in[i]);
     }
 
@@ -272,20 +272,20 @@ static void adjust_alpha(double* pi_out, double* pi_in, double* subgradient,
     }
 }
 
-static void compute_pi_eta_sep(int vcount, double* pi_sep, double* eta_sep,
+static void compute_pi_eta_sep(int nb_constr, double* pi_sep, double* eta_sep,
                                double alpha, double* pi_in, double* eta_in,
                                double* pi_out, double* eta_out) {
     int    i;
     double beta = 1.0 - alpha;
 
-    for (i = 0; i <= vcount; ++i) {
+    for (i = 0; i <= nb_constr; ++i) {
         pi_sep[i] = alpha * pi_in[i] + beta * pi_out[i];
     }
 
     *eta_sep = alpha * (*eta_in) + beta * (*eta_out);
 }
 
-int solve_pricing(NodeData* pd, wctparms* parms, int evaluate) {
+int solve_pricing(NodeData* pd, parms* parms, int evaluate) {
     int val = 0;
 
     OptimalSolution<double> sol;
@@ -304,7 +304,7 @@ CLEAN:
     return val;
 }
 
-int solve_stab(NodeData* pd, wctparms* parms) {
+int solve_stab(NodeData* pd, parms* parms) {
     int           val = 0;
     PricerSolver* solver = pd->solver;
     double        k = 0.0;
@@ -351,7 +351,7 @@ CLEAN:
     return val;
 }
 
-int solve_stab_dynamic(NodeData* pd, wctparms* parms) {
+int solve_stab_dynamic(NodeData* pd, parms* parms) {
     int           val = 0;
     PricerSolver* solver = pd->solver;
     double        k = 0.0;
@@ -401,7 +401,7 @@ CLEAN:
     return val;
 }
 
-int solve_stab_hybrid(NodeData* pd, wctparms* parms) {
+int solve_stab_hybrid(NodeData* pd, parms* parms) {
     int           val = 0;
     PricerSolver* solver = pd->solver;
     pd->update = 0;
@@ -426,8 +426,8 @@ int solve_stab_hybrid(NodeData* pd, wctparms* parms) {
         update_stabcenter(sol, pd);
 
         if (pd->reduced_cost > 0.00001) {
-            if (pd->inmispricingschedule) {
-                pd->inmispricingschedule = 0;
+            if (pd->in_mispricing_schedule) {
+                pd->in_mispricing_schedule = 0;
             }
             update_subgradientproduct(pd);
             update_alpha(pd);
@@ -435,13 +435,13 @@ int solve_stab_hybrid(NodeData* pd, wctparms* parms) {
             pd->update = 1;
         } else {
             if (stabilized) {
-                pd->inmispricingschedule = 1;
+                pd->in_mispricing_schedule = 1;
                 update_alpha_misprice(pd);
             } else {
-                pd->inmispricingschedule = 0;
+                pd->in_mispricing_schedule = 0;
             }
         }
-    } while (pd->inmispricingschedule && stabilized);
+    } while (pd->in_mispricing_schedule && stabilized);
 
     if (pd->iterations % pd->nb_jobs == 0) {
         printf(
@@ -458,8 +458,6 @@ int solve_farkas_dbl(NodeData* pd) {
     OptimalSolution<double> s = pd->solver->pricing_algorithm(pd->pi);
 
     if (s.obj < -0.00001) {
-        // val = construct_sol(&(pd->newsets), &(pd->nnewsets), pd->jobarray, s,
-        //                     pd->njobs);
         CCcheck_val_2(val, "Failed in constructing jobs");
     } else {
         pd->nb_new_sets = 0;

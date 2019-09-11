@@ -63,14 +63,14 @@ CLEAN:
 static int create_same_conflict(Problem* problem, NodeData* parent_pd,
                                 NodeData** child, Job* v1, Job* v2) {
     int val = 0;
-    // wctparms *parms = &(problem->parms);
+    // Parms *parms = &(problem->parms);
     NodeData* pd = CC_SAFE_MALLOC(1, NodeData);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     nodedata_init(pd, problem);
     /** Init B&B data */
     pd->parent = parent_pd;
     pd->depth = parent_pd->depth + 1;
-    // parent_pd->nsame = 1;
+    // parent_pd->nb_same = 1;
     // parent_pd->same_children = pd;
     pd->v1 = v1;
     pd->v2 = v2;
@@ -78,8 +78,8 @@ static int create_same_conflict(Problem* problem, NodeData* parent_pd,
     pd->nb_jobs = parent_pd->nb_jobs;
     pd->nb_machines = parent_pd->nb_machines;
     pd->jobarray = parent_pd->jobarray;
-    pd->ecount_same = parent_pd->ecount_same + 1;
-    pd->ecount_differ = parent_pd->ecount_differ;
+    pd->edge_count_same = parent_pd->edge_count_same + 1;
+    pd->edge_count_differ = parent_pd->edge_count_differ;
     /** Init lower bound and upper bound */
     pd->upper_bound = parent_pd->upper_bound;
     pd->lower_bound = parent_pd->lower_bound;
@@ -134,7 +134,7 @@ static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
     int       i;
     int       nb_cols;
     NodeData* pd = CC_SAFE_MALLOC(1, NodeData);
-    // wctparms *parms = &(problem->parms);
+    // Parms *parms = &(problem->parms);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     ScheduleSet *it, *tmp;
     Job*         tmp_j;
@@ -142,7 +142,7 @@ static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
     /** Init B&B data */
     pd->parent = parent_pd;
     pd->depth = parent_pd->depth + 1;
-    // parent_pd->ndiff         += 1;
+    // parent_pd->nb_diff         += 1;
     // parent_pd->diff_children = pd;
     pd->v1 = v1;
     pd->v2 = v2;
@@ -157,8 +157,8 @@ static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
     pd->LP_lower_bound_dual = parent_pd->LP_lower_bound_dual;
     pd->dbl_safe_lower_bound = parent_pd->dbl_safe_lower_bound;
     /* Create  graph with extra edge (v1,v2) */
-    pd->ecount_differ = parent_pd->ecount_differ + 1;
-    pd->ecount_same = parent_pd->ecount_same;
+    pd->edge_count_differ = parent_pd->edge_count_differ + 1;
+    pd->edge_count_same = parent_pd->edge_count_same;
 
     /* Construction of solver*/
     if (pd->parent) {
@@ -244,7 +244,7 @@ static int find_strongest_children_conflict(
     int* strongest_v1, int* strongest_v2, NodeData* pd, Problem* problem,
     HeapContainer* cand_heap, int* nodepair_refs, double* nodepair_weights) {
     int    val = 0;
-    int    max_non_improving_branches = 4; /* pd->njobs / 100 + 1; */
+    int    max_non_improving_branches = 4; /* pd->nb_jobs / 100 + 1; */
     int    remaining_branches = max_non_improving_branches;
     double strongest_dbl_lb = -115648465146;
     int*   min_nodepair;
@@ -398,20 +398,20 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     int            strongest_v1 = -1, strongest_v2 = -1;
     int*           nodepair_refs = (int*)NULL;
     double*        nodepair_weights = (double*)NULL;
-    int            npairs = pd->nb_jobs * (pd->nb_jobs + 1) / 2;
+    int            nb_pairs = pd->nb_jobs * (pd->nb_jobs + 1) / 2;
     int*           mf_col = (int*)NULL;
     GList*         branchjobs = (GList*)NULL;
     int*           completion_time = (int*)NULL;
     HeapContainer* heap = (HeapContainer*)NULL;
-    val = heapcontainer_init(&heap, npairs);
+    val = heapcontainer_init(&heap, nb_pairs);
     CCcheck_val_2(val, "Failed pmcheap_init");
-    nodepair_refs = CC_SAFE_MALLOC(npairs, int);
+    nodepair_refs = CC_SAFE_MALLOC(nb_pairs, int);
     CCcheck_NULL_2(nodepair_refs, "Failed to allocate memory to nodepair_refs");
-    nodepair_weights = CC_SAFE_MALLOC(npairs, double);
+    nodepair_weights = CC_SAFE_MALLOC(nb_pairs, double);
     CCcheck_NULL_2(nodepair_weights,
                    "Failed to allocate memory to nodepair_weights");
 
-    for (i = 0; i < npairs; i++) {
+    for (i = 0; i < nb_pairs; i++) {
         nodepair_refs[i] = -1;
         nodepair_weights[i] = .0;
     }
@@ -450,7 +450,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
     memcpy(pd->lambda, x, nb_cols * sizeof(double));
     val = insert_frac_pairs_into_heap(pd, nodepair_refs, nodepair_weights,
-                                      npairs, heap);
+                                      nb_pairs, heap);
     CCcheck_val_2(val, "Failed in insert_frac_pairs_into_heap");
 
     if (heapcontainer_size(heap) == 0) {
@@ -512,7 +512,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     free_elist(pd->same_children, &(problem->parms));
     free_elist(pd->diff_children, &(problem->parms));
 CLEAN:
-    lpwctdata_free(pd);
+    lp_node_data_free(pd);
     free_elist(pd, &(problem->parms));
 
     if (heap) {

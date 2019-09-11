@@ -9,7 +9,7 @@
 extern "C" {
 
 PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
-                            GPtrArray* ordered_jobs, wctparms* parms) {
+                            GPtrArray* ordered_jobs, parms* parms) {
     switch (parms->pricing_solver) {
         case bdd_solver_simple:
             return new PricerSolverBddSimple(jobs, _num_machines, ordered_jobs);
@@ -45,7 +45,7 @@ PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
 }
 
 PricerSolverBase* newSolverDp(GPtrArray* _jobs, int _num_machines, int _Hmax,
-                              wctparms* parms) {
+                              parms* parms) {
     switch (parms->pricing_solver) {
         case dp_solver:
             return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax);

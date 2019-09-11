@@ -23,8 +23,8 @@ int print_size_to_csv(Problem *problem, NodeData *pd);
  */
 
 void calculate_Hmax(Problem *problem);
-int calculate_Hmin(
-    int *durations, int nmachines, int njobs, int *perm, double *H);
+int calculate_H_min(
+    int *durations, int nb_machines, int nb_jobs, int *perm, double *H);
 int preprocess_data(Problem *problem);
 int find_division(Problem *problem);
 void g_problem_summary_init(gpointer data, gpointer user_data);
@@ -37,15 +37,15 @@ void determine_jobs_order_interval(Problem *problem);
 
 void update_bestschedule(Problem *problem, Solution *sol);
 
-int construct_wspt(Job *jobarray, int njobs, int nmachines, Solution *sol);
+int construct_wspt(Job *jobarray, int nb_jobs, int nb_machines, Solution *sol);
 int construct_feasible_solutions(Problem *problem);
 int construct_edd(Problem *prob, Solution *sol);
 int construct_spt(Problem *prob, Solution *sol);
 int construct_random(Problem *prob, Solution *sol, GRand *rand_uniform);
 
-int heuristic_rpup(Problem *prob);
+int heuristic(Problem *prob);
 int partlist_to_scheduleset(
-    PartList *part, int nbpart, int njobs, ScheduleSet **classes, int *ccount);
+    PartList *part, int nb_part, int nb_jobs, ScheduleSet **classes, int *column_count);
 
 /**
  * branch_and_bound.c
@@ -53,7 +53,7 @@ int partlist_to_scheduleset(
 
 /*Help functions for branching*/
 int insert_into_branching_heap(NodeData *pd, Problem *problem);
-int skip_wctdata(NodeData *pd, Problem *problem);
+int skip_nodedata(NodeData *pd, Problem *problem);
 int branching_msg(NodeData *pd, Problem *problem);
 int branching_msg_cbfs(NodeData *pd, Problem *problem);
 void free_elist(NodeData *cd, Parms *parms);
@@ -74,7 +74,7 @@ NodeData *get_next_node(Problem *problem);
 int insert_frac_pairs_into_heap(NodeData *    pd,
                                        int *        nodepair_refs,
                                        double *     nodepair_weights,
-                                       int          npairs,
+                                       int          nb_pairs,
                                        HeapContainer *    heap);
 
 /**
@@ -90,9 +90,10 @@ int compute_lower_bound(Problem *problem, NodeData *pd);
 int compute_objective(NodeData *pd, Parms *parms);
 int print_x(NodeData *pd);
 int calculate_x_e(NodeData *pd);
-int calculate_nblayers(NodeData *pd, int k);
+int calculate_nb_layers(NodeData *pd, int k);
 int check_schedules(NodeData *pd);
 int delete_infeasible_cclasses(NodeData *pd);
+int delete_old_cclasses(NodeData* pd);
 
 void make_pi_feasible(NodeData *pd);
 void make_pi_feasible_farkas_pricing(NodeData *pd);
@@ -128,10 +129,10 @@ static inline void inodepair_ref_key(int *v1, int *v2, int index) {
     *v1 = index - (*v2 * (*v2 + 1) / 2);
 }
 
-/** help functions for heap srong branching */
+/** help functions for heap strong branching */
 static inline int nodepair_ref_key(int v1, int v2) {
     /* We store only the elements of the upper right triangle within the
-     vcount x vcount matrix. */
+     v_count x v_count matrix. */
     assert(v1 <= v2);
     return v2 * (v2 + 1) / 2 + v1;
 }

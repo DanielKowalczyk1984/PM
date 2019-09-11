@@ -15,13 +15,13 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
 
 OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
     double* _pi) {
-    evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_backward(evaluator);
 }
 
 void PricerSolverBddBackwardSimple::compute_labels(double* _pi) {
-    evaluator.initializepi(_pi);
-    reversed_evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
+    reversed_evaluator.initialize_pi(_pi);
 
     decision_diagram->compute_labels_backward(evaluator);
     decision_diagram->compute_labels_forward(reversed_evaluator);
@@ -79,13 +79,13 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
 
 OptimalSolution<double> PricerSolverBddBackwardCycle::pricing_algorithm(
     double* _pi) {
-    evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_backward(evaluator);
 }
 
 void PricerSolverBddBackwardCycle::compute_labels(double* _pi) {
-    evaluator.initializepi(_pi);
-    reversed_evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
+    reversed_evaluator.initialize_pi(_pi);
 
     decision_diagram->compute_labels_backward(evaluator);
     decision_diagram->compute_labels_forward(reversed_evaluator);

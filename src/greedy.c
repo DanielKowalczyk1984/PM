@@ -1,7 +1,7 @@
 #include <localsearch.h>
 #include <wct.h>
 
-// static int add_feasible_solution(wctproblem *problem, solution *new_sol);
+// static int add_feasible_solution(problem *problem, solution *new_sol);
 static int  solution_set_c(Solution* sol);
 static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
                          GRand* rand_uniform);
@@ -118,7 +118,7 @@ int construct_spt(Problem* prob, Solution* sol) {
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
 
-    sol->nb_jobs = prob->njobs;
+    sol->nb_jobs = prob->nb_jobs;
     sol->nb_machines = prob->nb_machines;
     qsort(sol->perm, sol->nb_jobs, sizeof(Job*), _job_compare_spt);
     val = solution_set_c(sol);
@@ -132,7 +132,7 @@ int construct_edd(Problem* prob, Solution* sol) {
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
 
-    sol->nb_jobs = prob->njobs;
+    sol->nb_jobs = prob->nb_jobs;
     sol->nb_machines = prob->nb_machines;
     val = solution_set_c(sol);
     CCcheck_val_2(val, "failed in solution_set_c");
@@ -144,7 +144,7 @@ int construct_random(Problem* prob, Solution* sol, GRand* rand_uniform) {
     int val = 0;
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
-    sol->nb_jobs = prob->njobs;
+    sol->nb_jobs = prob->nb_jobs;
     sol->nb_machines = prob->nb_machines;
     permutation_solution(rand_uniform, sol);
     val = solution_set_c(sol);
@@ -265,17 +265,17 @@ static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
                          GRand* rand_uniform) {
     int       m1, m2;
     unsigned  i1 = 0, i2 = 0;
-    int       nmachines = sol->nb_machines;
+    int       nb_machines = sol->nb_machines;
     Job**     tmp1 = (Job**)NULL;
     Job**     tmp2 = (Job**)NULL;
     Job*      tmp;
     PartList* part1 = (PartList*)NULL;
     PartList* part2 = (PartList*)NULL;
-    m1 = g_rand_int_range(rand_uniform, 0, nmachines);
-    m2 = g_rand_int_range(rand_uniform, 0, nmachines);
+    m1 = g_rand_int_range(rand_uniform, 0, nb_machines);
+    m2 = g_rand_int_range(rand_uniform, 0, nb_machines);
 
     while (m1 == m2) {
-        m2 = g_rand_int_range(rand_uniform, 0, nmachines);
+        m2 = g_rand_int_range(rand_uniform, 0, nb_machines);
     }
 
     part1 = sol->part + m1;
@@ -394,14 +394,14 @@ void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform) {
     local_search_create_g(sol, data);
 }
 
-int heuristic_rpup(Problem* prob) {
+int heuristic(Problem* prob) {
     int    val = 0;
-    int    njobs = prob->njobs;
-    int    nmachines = prob->nb_machines;
+    int    nb_jobs = prob->nb_jobs;
+    int    nb_machines = prob->nb_machines;
     GRand* rand_uniform = g_rand_new_with_seed(2011);
     Parms* parms = &(prob->parms);
     g_random_set_seed(1984);
-    int                ILS = prob->njobs / 2;
+    int                ILS = prob->nb_jobs / 2;
     int                IR = parms->nb_iterations_rvnd;
     Solution*          sol;
     Solution*          sol1 = (Solution*)NULL;
@@ -410,7 +410,7 @@ int heuristic_rpup(Problem* prob) {
     local_search_data* data_RS = (local_search_data*)NULL;
 
     CCutil_start_resume_time(&(prob->tot_heuristic));
-    sol = solution_alloc(nmachines, njobs, prob->off);
+    sol = solution_alloc(nb_machines, nb_jobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
     CCcheck_val_2(val, "Failed construct edd");
@@ -420,7 +420,7 @@ int heuristic_rpup(Problem* prob) {
     printf("Solution in canonical order: \n");
     solution_print(sol);
 
-    data = local_search_data_init(njobs, nmachines);
+    data = local_search_data_init(nb_jobs, nb_machines);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
     local_search_create_W(sol, data);
     local_search_create_g(sol, data);
@@ -431,7 +431,7 @@ int heuristic_rpup(Problem* prob) {
     solution_print(sol);
 
     if (prob->opt_sol == NULL) {
-        prob->opt_sol = solution_alloc(nmachines, njobs, prob->off);
+        prob->opt_sol = solution_alloc(nb_machines, nb_jobs, prob->off);
         CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
         solution_update(prob->opt_sol, sol);
     }
@@ -439,11 +439,11 @@ int heuristic_rpup(Problem* prob) {
     for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0;
          ++i) {
         // fprintf(stderr, "iteration %d\n", i);
-        sol1 = solution_alloc(nmachines, njobs, prob->off);
+        sol1 = solution_alloc(nb_machines, nb_jobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
         CCcheck_val_2(val, "Failed in construct random solution");
-        data_RS = local_search_data_init(njobs, nmachines);
+        data_RS = local_search_data_init(nb_jobs, nb_machines);
         local_search_create_W(sol1, data_RS);
         local_search_create_g(sol1, data_RS);
         solution_update(sol, sol1);

@@ -53,13 +53,13 @@ void* CCutil_reallocrus(void* ptr, size_t size) {
     }
 }
 
-int CCutil_reallocrus_scale(void** pptr, int* pnnum, int count, double scale,
+int CCutil_reallocrus_scale(void** pptr, int* pn_num, int count, double scale,
                             size_t size) {
-    int   newsize = (int)(((double)*pnnum) * scale);
+    int   newsize = (int)(((double)*pn_num) * scale);
     void* ptr;
 
-    if (newsize < *pnnum + 1000) {
-        newsize = *pnnum + 1000;
+    if (newsize < *pn_num + 1000) {
+        newsize = *pn_num + 1000;
     }
 
     if (newsize < count) {
@@ -72,7 +72,7 @@ int CCutil_reallocrus_scale(void** pptr, int* pnnum, int count, double scale,
         return 1;
     } else {
         *pptr = ptr;
-        *pnnum = newsize;
+        *pn_num = newsize;
         return 0;
     }
 }

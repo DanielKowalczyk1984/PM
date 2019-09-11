@@ -14,13 +14,13 @@ PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray* _jobs,
 }
 
 OptimalSolution<double> PricerSolverBddSimple::pricing_algorithm(double* _pi) {
-    evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
 
 void PricerSolverBddSimple::compute_labels(double* _pi) {
-    evaluator.initializepi(_pi);
-    reversed_evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
+    reversed_evaluator.initialize_pi(_pi);
 
     decision_diagram->compute_labels_forward(evaluator);
     decision_diagram->compute_labels_backward(reversed_evaluator);
@@ -77,13 +77,13 @@ PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray* _jobs, int _num_machines,
 }
 
 OptimalSolution<double> PricerSolverBddCycle::pricing_algorithm(double* _pi) {
-    evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
 
 void PricerSolverBddCycle::compute_labels(double* _pi) {
-    evaluator.initializepi(_pi);
-    reversed_evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
+    reversed_evaluator.initialize_pi(_pi);
 
     decision_diagram->compute_labels_forward(evaluator);
     decision_diagram->compute_labels_backward(reversed_evaluator);
@@ -149,22 +149,22 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
 
             // auto result_no = it.forward_label[0].get_f() +
             //                  it.child[0]->backward_label[0].get_f() +
-            //                  pi[njobs];
+            //                  pi[nb_jobs];
             // if (max < result_no) {
             //     max = result_no;
             // }
             // result_no = it.forward_label[1].get_f() +
-            //             it.child[0]->backward_label[0].get_f() + pi[njobs];
+            //             it.child[0]->backward_label[0].get_f() + pi[nb_jobs];
             // if (max < result_no) {
             //     max = result_no;
             // }
             // result_no = it.forward_label[0].get_f() +
-            //             it.child[0]->backward_label[1].get_f() + pi[njobs];
+            //             it.child[0]->backward_label[1].get_f() + pi[nb_jobs];
             // if (max < result_no) {
             //     max = result_no;
             // }
             // result_no = it.forward_label[1].get_f() +
-            //             it.child[0]->backward_label[1].get_f() + pi[njobs];
+            //             it.child[0]->backward_label[1].get_f() + pi[nb_jobs];
             // if (max < result_no) {
             //     max = result_no;
             // }
@@ -173,7 +173,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
             // it.child[0]->backward_label[0].get_prev_job()) {
             // auto result_no = it.forward_label[0].get_f() +
             //                  it.child[0]->backward_label[0].get_f() +
-            //                  pi[njobs];
+            //                  pi[nb_jobs];
             // auto min =(double)(num_machines - 1) * reduced_cost + result_no;
             // for (int i = 0; i < num_machines + 1; i++)
             // {

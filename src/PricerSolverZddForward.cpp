@@ -13,13 +13,13 @@ PricerSolverSimple::PricerSolverSimple(GPtrArray* _jobs, int _num_machines,
 }
 
 OptimalSolution<double> PricerSolverSimple::pricing_algorithm(double* _pi) {
-    evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
 
 void PricerSolverSimple::compute_labels(double* _pi) {
-    evaluator.initializepi(_pi);
-    reversed_evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
+    reversed_evaluator.initialize_pi(_pi);
 
     decision_diagram->compute_labels_forward(evaluator);
     decision_diagram->compute_labels_backward(reversed_evaluator);
@@ -68,13 +68,13 @@ PricerSolverZddCycle::PricerSolverZddCycle(GPtrArray* _jobs, int _num_machines,
 }
 
 OptimalSolution<double> PricerSolverZddCycle::pricing_algorithm(double* _pi) {
-    evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
 
 void PricerSolverZddCycle::compute_labels(double* _pi) {
-    evaluator.initializepi(_pi);
-    reversed_evaluator.initializepi(_pi);
+    evaluator.initialize_pi(_pi);
+    reversed_evaluator.initialize_pi(_pi);
 
     decision_diagram->compute_labels_forward(evaluator);
     decision_diagram->compute_labels_backward(reversed_evaluator);

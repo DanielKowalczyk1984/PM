@@ -271,13 +271,13 @@ int CCutil_quickselect(int* input, int p, int r, int k) {
     }
 }
 
-static int recursiveSelect(int* V, int* inds, int start, int end, int k) {
+static int recursiveSelect(int* V, int* indices, int start, int end, int k) {
     /*recursively partitions vector V to find kth element */
     int   pivot, i, tmp;
     float tmpdbl;
 
     if (start == end - 1) { /* active set is only one entry    */
-        return inds[start];
+        return indices[start];
     }
 
     /*otherwise pick pivot and split */
@@ -287,20 +287,20 @@ static int recursiveSelect(int* V, int* inds, int start, int end, int k) {
         /* put all entries greater than V[pivot] to the left of pivot*/
         if (V[i] > V[pivot]) {
             /* first move pivot value up one index */
-            tmp = inds[pivot];
+            tmp = indices[pivot];
             tmpdbl = V[pivot];
-            inds[pivot] = inds[pivot + 1];
+            indices[pivot] = indices[pivot + 1];
             V[pivot] = V[pivot + 1];
-            inds[pivot + 1] = tmp;
+            indices[pivot + 1] = tmp;
             V[pivot + 1] = tmpdbl;
 
             if (i > pivot + 1) {
                 /* now we need to swap i th with pivot-1 th */
-                tmp = inds[pivot];
+                tmp = indices[pivot];
                 tmpdbl = V[pivot];
-                inds[pivot] = inds[i];
+                indices[pivot] = indices[i];
                 V[pivot] = V[i];
-                inds[i] = tmp;
+                indices[i] = tmp;
                 V[i] = tmpdbl;
             }
 
@@ -309,20 +309,20 @@ static int recursiveSelect(int* V, int* inds, int start, int end, int k) {
     }
 
     if (pivot == k) {
-        return inds[pivot];
+        return indices[pivot];
     }
     /* now we decide if kth is to the right of the pivot or the left */
     else if (pivot > k) {
-        return recursiveSelect(V, inds, start, pivot, k);
+        return recursiveSelect(V, indices, start, pivot, k);
     } else {
-        return recursiveSelect(V, inds, pivot + 1, end, k);
+        return recursiveSelect(V, indices, pivot + 1, end, k);
     }
 }
 
 int quickselect(int* V, int N, int k) {
     /* returns the index of the kth greatest value in vector V */
-    int* Vcopy;
-    int  i, *inds, ret;
+    int* V_copy;
+    int  i, *indices, ret;
 
     if (k >= N) {
         return -1;
@@ -332,16 +332,16 @@ int quickselect(int* V, int N, int k) {
         return -1;
     }
 
-    Vcopy = (int*)malloc(N * sizeof(float));
-    inds = (int*)malloc(N * sizeof(int));
+    V_copy = (int*)malloc(N * sizeof(float));
+    indices = (int*)malloc(N * sizeof(int));
 
     for (i = 0; i < N; i++) {
-        Vcopy[i] = V[i];
-        inds[i] = i;
+        V_copy[i] = V[i];
+        indices[i] = i;
     }
 
-    ret = recursiveSelect(Vcopy, inds, 0, N, k);
-    free(Vcopy);
-    free(inds);
+    ret = recursiveSelect(V_copy, indices, 0, N, k);
+    free(V_copy);
+    free(indices);
     return ret;
 }

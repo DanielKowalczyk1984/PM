@@ -29,7 +29,7 @@ public:
         num_jobs = src.num_jobs;
     }
 
-    void initializepi(T *_pi){
+    void initialize_pi(T *_pi){
         pi = _pi;
     }
 
@@ -197,7 +197,7 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         n.forward_label[0].f = -pi[num_jobs];
     }
 
-    void initializepi(T *_pi){
+    void initialize_pi(T *_pi){
         pi = _pi;
     }
 
