@@ -7,10 +7,6 @@
 #include <algorithm>
 using namespace std;
 
-template<typename T>
-bool my_compare(const std::shared_ptr<SubNodeZdd<T>> &lhs, const std::shared_ptr<SubNodeZdd<T>> &rhs){
-    return *lhs < *rhs;
-}
 
 template<typename E, typename T> class ForwardZddBase : public 
     Eval<E, NodeZdd<T>, OptimalSolution<T>> {
@@ -47,7 +43,7 @@ public:
 
     OptimalSolution<T> get_objective(NodeZdd<T> &n) const {
         OptimalSolution<T> sol(-pi[num_jobs]);
-        auto m =  std::max_element(n.list.begin(), n.list.end(),my_compare<T>);
+        auto m =  std::max_element(n.list.begin(), n.list.end(),compare_sub_nodes<T>);
         #ifndef NDEBUG
         auto weight = (*m)->weight;
         #endif

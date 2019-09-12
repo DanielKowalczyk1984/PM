@@ -5,12 +5,6 @@
 #include "ZddNode.hpp"
 #include <algorithm>
 
-
-// template<typename T>
-// bool my_compare(const std::shared_ptr<SubNodeZdd<T>> &lhs, const std::shared_ptr<SubNodeZdd<T>> &rhs){
-//     return *lhs < *rhs;
-// }
-
 template <typename E, typename T>
 class BackwardZDDBase : public Eval<E, NodeZdd<T>, OptimalSolution<T>> {
  protected:
@@ -86,7 +80,7 @@ class BackwardZddSimple : public BackwardZDDBase<E, T> {
     OptimalSolution<T> get_objective(NodeZdd<T> &n) const {
         OptimalSolution<T> sol(-pi[num_jobs]);
 
-        auto m =  std::max_element(n.list.begin(),n.list.end(),my_compare<T>);
+        auto m =  std::max_element(n.list.begin(),n.list.end(),compare_sub_nodes<T>);
         std::shared_ptr<SubNodeZdd<T>> ptr_node = (*m);
         auto aux_job = n.get_job();
 
@@ -194,9 +188,9 @@ class BackwardZddCycle : public BackwardZDDBase<E, T> {
         }
     }
 
-    OptimalSolution<T> get_objective(NodeZdd<> &n) const {
+    OptimalSolution<T> get_objective(NodeZdd<> &n) const override {
         OptimalSolution<T> sol(-pi[num_jobs]);
-        auto m = std::max_element(n.list.begin(), n.list.end(), my_compare<T>);
+        auto m = std::max_element(n.list.begin(), n.list.end(), compare_sub_nodes<T>);
         Label<SubNodeZdd<T>,T> *aux_label = &((*m)->backward_label[0]);
 
         while (aux_label) {

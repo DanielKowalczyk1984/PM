@@ -129,6 +129,11 @@ class SubNodeZdd
         }
 };
 
+template<typename T>
+bool compare_sub_nodes(const std::shared_ptr<SubNodeZdd<T>> &lhs, const std::shared_ptr<SubNodeZdd<T>> &rhs){
+    return *lhs < *rhs;
+}
+
 
 template<typename T>
 class NodeZdd : public NodeBase
