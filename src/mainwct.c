@@ -22,7 +22,7 @@ static void usage(char* f) {
             "   -s int  Node selection: 0 = none, 1= minimum lower "
             "bound(default), 2 = DFS\n");
     fprintf(stderr, "   -l dbl  Cpu time limit for branching\n");
-    fprintf(stderr, "   -L dbl  Cpu time limit for heurisric construction\n");
+    fprintf(stderr, "   -L dbl  Cpu time limit for heuristic construction\n");
     fprintf(stderr,
             "   -B int  Branch and Bound use: 0 = no branch and bound, 1 "
             "= use branch and bound(default)\n");
@@ -125,7 +125,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
         goto CLEAN;
     } else {
         val = parms_set_file(parms, av[optind++]);
-        CCcheck_val(val, "Failed in wctparms_set_file");
+        CCcheck_val(val, "Failed in parms_set_file");
 
         if (ac <= optind) {
             val = 1;
@@ -133,7 +133,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
         }
         c = strtol(av[optind++], &ptr, 10);
         val = parms_set_nb_machines(parms, c);
-        CCcheck_val(val, "Failed in wctparms_set_nmachines");
+        CCcheck_val(val, "Failed in parms_set_nb_machines");
     }
 
 CLEAN:
@@ -203,9 +203,9 @@ int main(int ac, char** av) {
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
-        represent_solution(root, problem.opt_sol);
+        // represent_solution(root, problem.opt_sol);
         // construct_lp_sol_from_rmp(root);
-        build_solve_mip(root);
+        // build_solve_mip(root);
         // build_solve_mip(root);
         // represent_solution(root, problem.opt_sol);
         // compute_lower_bound(&problem, &(problem.root_pd));
