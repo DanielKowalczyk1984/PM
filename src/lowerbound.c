@@ -1,7 +1,7 @@
 #include <solver.h>
 #include <wct.h>
 
-static const double min_ndelrow_ratio = 0.9;
+static const double min_nb_del_row_ratio = 0.9;
 
 void g_print_ages_col(gpointer data, gpointer user_data) {
     ScheduleSet* x = (ScheduleSet*)data;
@@ -26,7 +26,7 @@ void g_grow_ages(gpointer data, gpointer user_data) {
         x->age++;
 
         if (x->age > pd->retirementage) {
-            pd->dzcount++;
+            pd->zero_count++;
         }
     } else {
         x->age = 0;
@@ -40,10 +40,10 @@ static int grow_ages(NodeData* pd) {
     assert(nb_cols == pd->localColPool->len);
     CC_IFFREE(pd->column_status, int);
     pd->column_status = (int*)CC_SAFE_MALLOC(nb_cols, int);
-    CCcheck_NULL_2(pd->column_status, "Failed to allocate cstat");
+    CCcheck_NULL_2(pd->column_status, "Failed to allocate column_status");
     val = wctlp_basis_cols(pd->RMP, pd->column_status, 0);
     CCcheck_val_2(val, "Failed in wctlp_basis_cols");
-    pd->dzcount = 0;
+    pd->zero_count = 0;
 
     g_ptr_array_foreach(pd->localColPool, g_grow_ages, pd);
 
@@ -53,22 +53,22 @@ CLEAN:
 
 int delete_old_cclasses(NodeData* pd) {
     int          val = 0;
-    int          min_numdel = pd->nb_jobs * min_ndelrow_ratio;
+    int          min_numdel = pd->nb_jobs * min_nb_del_row_ratio;
     int          nb_col;
     guint        i;
     guint        count = pd->localColPool->len;
     ScheduleSet* tmp_schedule;
-    /** pd->dzcount can be deprecated! */
-    pd->dzcount = 0;
+    /** pd->zero_count can be deprecated! */
+    pd->zero_count = 0;
 
     for (i = 0; i < pd->localColPool->len; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
         if (tmp_schedule->age > 0) {
-            pd->dzcount++;
+            pd->zero_count++;
         }
     }
 
-    if (pd->dzcount > min_numdel) {
+    if (pd->zero_count > min_numdel) {
         int it = 0;
         int first_del = -1;
         int last_del = -1;
@@ -106,7 +106,7 @@ int delete_old_cclasses(NodeData* pd) {
         }
 
         if (dbg_lvl() > 1) {
-            printf("Deleted %d out of %d columns with age > %d.\n", pd->dzcount,
+            printf("Deleted %d out of %d columns with age > %d.\n", pd->zero_count,
                    count, pd->retirementage);
         }
 
@@ -116,7 +116,7 @@ int delete_old_cclasses(NodeData* pd) {
             tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
             tmp_schedule->id = i;
         }
-        pd->dzcount = 0;
+        pd->zero_count = 0;
     }
 
 CLEAN:
@@ -129,13 +129,13 @@ int delete_infeasible_cclasses(NodeData* pd) {
     guint        i;
     guint        count = pd->localColPool->len;
     ScheduleSet* tmp_schedule;
-    /** pd->dzcount can be deprecated! */
-    pd->dzcount = 0;
+    /** pd->zero_count can be deprecated! */
+    pd->zero_count = 0;
 
     for (i = 0; i < pd->localColPool->len; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
         if (tmp_schedule->age > 0) {
-            pd->dzcount++;
+            pd->zero_count++;
         }
     }
 
@@ -175,7 +175,7 @@ int delete_infeasible_cclasses(NodeData* pd) {
     }
 
     if (dbg_lvl() > 1) {
-        printf("Deleted %d out of %d columns with age > %d.\n", pd->dzcount,
+        printf("Deleted %d out of %d columns with age > %d.\n", pd->zero_count,
                count, pd->retirementage);
     }
 
@@ -186,7 +186,7 @@ int delete_infeasible_cclasses(NodeData* pd) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
         tmp_schedule->id = i;
     }
-    pd->dzcount = 0;
+    pd->zero_count = 0;
 
 CLEAN:
     return val;
@@ -330,13 +330,6 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     double real_time_pricing;
     Parms* parms = &(problem->parms);
 
-    // if (pd->status == infeasible) {
-    //     wctlp_write(pd->RMP, "test.lp");
-    //     wctlp_compute_IIS(pd->RMP);
-    //     pd->test = 0;
-    //     goto CLEAN;
-    // }
-
     if (dbg_lvl() > 1) {
         printf(
             "Starting compute_lower_bound with lb %d and ub %d at depth %d(id "
@@ -426,7 +419,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
         /**
          * Delete old columns
          */
-        if (pd->dzcount > pd->nb_jobs * min_ndelrow_ratio &&
+        if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
             status == GRB_OPTIMAL) {
             // val = delete_old_cclasses(pd);
             CCcheck_val_2(val, "Failed in delete_old_cclasses");
@@ -472,8 +465,6 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             case GRB_INFEASIBLE:
                 val = solve_farkas_dbl(pd);
                 CCcheck_val_2(val, "Failed in solving farkas");
-                break;
-
                 break;
         }
 
@@ -531,9 +522,6 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
         if (dbg_lvl() > 1) {
             printf("Simplex took %f seconds.\n", real_time_solve_lp);
             fflush(stdout);
-        }
-
-        if (dbg_lvl() > 1) {
             print_ages(pd);
         }
 
@@ -574,7 +562,6 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
         problem->tot_cputime.cum_zeit <= problem->parms.branching_cpu_limit) {
         switch (status) {
             case GRB_OPTIMAL:
-
                 /**
                  * change status of problem
                  */
@@ -681,9 +668,11 @@ int print_x(NodeData* pd) {
             val = wctlp_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in wctlp_x");
 
-            for (int i = 0; i < pd->problem->opt_sol->nb_machines; ++i) {
-                GPtrArray* tmp = pd->problem->opt_sol->part[i].machine;
+            for (int i = 0; i < nb_cols; ++i) {
+                GPtrArray* tmp = ((ScheduleSet*) g_ptr_array_index(pd->localColPool, i))->job_list;
                 int        C = 0;
+                if(pd->lambda[i] > 0.00001) {
+
                 for (int j = 0; j < tmp->len; ++j) {
                     Job* j1 = (Job*)g_ptr_array_index(tmp, j);
 
@@ -698,6 +687,7 @@ int print_x(NodeData* pd) {
                 printf("\n");
                 g_ptr_array_foreach(tmp, g_print_machine, NULL);
                 printf("\n");
+                }
             }
             break;
     }
@@ -794,7 +784,7 @@ int check_schedules(NodeData* pd) {
     val = wctlp_status(pd->RMP, &status);
     CCcheck_val_2(val, "Failed in wctlp_status")
 
-        val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
+    val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed to get nb cols");
     assert(nb_cols == pd->localColPool->len);
     printf("number of cols check %d\n", nb_cols);
@@ -811,7 +801,7 @@ int check_schedules(NodeData* pd) {
 
     if (status != GRB_OPTIMAL) {
         wctlp_compute_IIS(pd->RMP);
-        wctlp_write(pd->RMP, "rmpcheck.lp");
+        wctlp_write(pd->RMP, "rmp_check.lp");
         // printf("check file %d\n", status);
         // getchar();
     }

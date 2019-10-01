@@ -22,9 +22,9 @@
                 "-S",
                 "1",
                 "-a",
-                "2",
-                "${workspaceRoot}/instances/wt40/wt040_121.dat",
-                "4"
+                "1",
+                "${workspaceRoot}/instances/wt5/wt040_112.dat",
+                "2"
             ],
             "dependsOn": [
                 "build"
