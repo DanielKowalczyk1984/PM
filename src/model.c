@@ -76,7 +76,7 @@ CLEAN:
 
 int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     int        val = 0;
-    int        col_ind;
+    int        row_ind;
     int        var_ind;
     double     cval;
     int        nb_jobs = pd->nb_jobs;
@@ -92,21 +92,21 @@ int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
                        GRB_INFINITY, wctlp_CONT, NULL);
     CCcheck_val_2(val, "Failed to add column to lp")
 
-        for (unsigned i = 0; i < members->len; ++i) {
+    for (unsigned i = 0; i < members->len; ++i) {
         job = (Job*)g_ptr_array_index(members, i);
-        col_ind = job->job;
-        val = wctlp_getcoeff(lp, &col_ind, &var_ind, &cval);
-        CCcheck_val_2(val, "Failed wctlp_getcoef");
+        row_ind = job->job;
+        val = wctlp_getcoeff(lp, &row_ind, &var_ind, &cval);
+        CCcheck_val_2(val, "Failed wctlp_getcoeff");
         cval += 1.0;
         set->num[job->job] += 1;
-        val = wctlp_chgcoeff(lp, 1, &col_ind, &var_ind, &cval);
-        CCcheck_val_2(val, "Failed wctlp_chgcoef");
+        val = wctlp_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
+        CCcheck_val_2(val, "Failed wctlp_chgcoeff");
     }
 
-    col_ind = nb_jobs;
+    row_ind = nb_jobs;
     cval = -1.0;
-    val = wctlp_chgcoeff(lp, 1, &col_ind, &var_ind, &cval);
-    CCcheck_val_2(val, "Failed wctlp_chgcoef");
+    val = wctlp_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
+    CCcheck_val_2(val, "Failed wctlp_chgcoeff");
 
 CLEAN:
     return val;
@@ -121,30 +121,30 @@ void g_add_col_to_lp(gpointer data, gpointer user_data) {
 int build_rmp(NodeData* pd, int construct) {
     int      val = 0;
     Problem* problem = pd->problem;
-    int      njobs = problem->nb_jobs;
-    int      nmachines = problem->nb_machines;
+    int      nb_jobs = problem->nb_jobs;
+    int      nb_machines = problem->nb_machines;
     Parms*   parms = &(problem->parms);
     int      nb_row;
-    int*     covered = CC_SAFE_MALLOC(njobs, int);
+    int*     covered = CC_SAFE_MALLOC(nb_jobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
-    fill_int(covered, njobs, 0);
+    fill_int(covered, nb_jobs, 0);
     val = wctlp_init(&(pd->RMP), NULL);
     CCcheck_val_2(val, "wctlp_init failed");
 
     /**
      * add assignment constraints
      */
-    for (int i = 0; i < njobs; i++) {
+    for (int i = 0; i < nb_jobs; i++) {
         val = wctlp_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL,
                            wctlp_GREATER_EQUAL, 1.0, (char*)NULL);
         CCcheck_val_2(val, "Failed wctlp_addrow");
     }
 
     /**
-     * add number of machines constraint (convexfication)
+     * add number of machines constraint (convexification)
      */
     val = wctlp_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL,
-                       wctlp_GREATER_EQUAL, -(double)nmachines, (char*)NULL);
+                       wctlp_GREATER_EQUAL, -(double)nb_machines, (char*)NULL);
     CCcheck_val_2(val, "Failed to add convexification constraint");
 
     wctlp_get_nb_rows(pd->RMP, &nb_row);
@@ -200,17 +200,17 @@ CLEAN:
 
 int get_solution_lp_lowerbound(NodeData* pd) {
     int  val = 0;
-    int  nbcols;
+    int  nb_cols;
     Job* tmp_j;
 
-    val = wctlp_get_nb_cols(pd->RMP, &nbcols);
+    val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed in wctlp_get_nb_cols");
-    pd->lambda = CC_SAFE_REALLOC(pd->lambda, nbcols, double);
+    pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols, double);
     CCcheck_NULL_2(pd->lambda, "Failed to allocate memory");
-    assert(nbcols == pd->localColPool->len);
+    assert(nb_cols == pd->localColPool->len);
     wctlp_x(pd->RMP, pd->lambda, 0);
 
-    for (unsigned i = 0; i < nbcols; ++i) {
+    for (unsigned i = 0; i < nb_cols; ++i) {
         ScheduleSet* tmp =
             ((ScheduleSet*)g_ptr_array_index(pd->localColPool, i));
         if (pd->lambda[i]) {
