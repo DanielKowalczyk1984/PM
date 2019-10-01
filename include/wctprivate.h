@@ -67,7 +67,7 @@ struct _NodeData {
     // Columns
     // int          nb_columns;
     // scheduleset *cclasses;
-    int          dzcount;
+    int          zero_count;
     // int          gallocated;
     ScheduleSet *newsets;
     int          nb_new_sets;
