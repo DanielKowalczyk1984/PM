@@ -147,7 +147,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver*)NULL;
     pd->nb_non_improvements = 0;
-    pd->dzcount = 0;
+    pd->zero_count = 0;
     pd->bestcolors = (ScheduleSet*)NULL;
     pd->nb_best = 0;
     pd->debugcolors = (ScheduleSet*)NULL;
