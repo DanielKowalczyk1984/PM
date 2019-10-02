@@ -268,7 +268,7 @@ void temporary_data_free(NodeData *pd);
 int evaluate_nodes(NodeData *pd);
 int reduce_cost_fixing(NodeData *pd);
 int build_solve_mip(NodeData *pd);
-void construct_lp_sol_from_rmp(NodeData *pd);
+int construct_lp_sol_from_rmp(NodeData *pd);
 void disjunctive_inequality(NodeData *pd, Solution *sol);
 void represent_solution(NodeData *pd, Solution *sol);
 int check_schedule_set(ScheduleSet *set, NodeData *pd);
