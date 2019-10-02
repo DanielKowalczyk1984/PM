@@ -40,8 +40,8 @@ class PricerSolverZdd : public PricerSolverBase
         void print_number_nodes_edges() override;
         int get_num_remove_nodes() override ;
         int get_num_remove_edges() override ;
-        size_t get_size_data() override ;
-        size_t get_size_graph() override ;
+        size_t get_nb_edges() override ;
+        size_t get_nb_vertices() override ;
         int get_num_layers() override ;
         void print_num_paths() override;
         void remove_layers_init();

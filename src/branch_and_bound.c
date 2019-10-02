@@ -567,7 +567,7 @@ int branching_msg(NodeData* pd, Problem* problem) {
             problem->tot_cputime.cum_zeit, binomial_heap_num_entries(heap),
             pd->nb_jobs, problem->global_upper_bound, root->lower_bound,
             pd->v1->job, pd->v2->job, pd->edge_count_differ, pd->edge_count_same,
-            get_size_graph(pd->solver), pd->localColPool->len);
+            get_nb_vertices(pd->solver), pd->localColPool->len);
         CCutil_resume_timer(&problem->tot_cputime);
         problem->nb_explored_nodes++;
     }
@@ -662,7 +662,7 @@ int branching_msg_cbfs(NodeData* pd, Problem* problem) {
             problem->tot_cputime.cum_zeit, nb_nodes, pd->nb_jobs,
             problem->global_upper_bound, root->lower_bound, pd->v1->job,
             pd->v2->job, pd->edge_count_differ, pd->edge_count_same,
-            get_size_graph(pd->solver), pd->localColPool->len);
+            get_nb_vertices(pd->solver), pd->localColPool->len);
         CCutil_resume_timer(&problem->tot_cputime);
         problem->nb_explored_nodes++;
     }

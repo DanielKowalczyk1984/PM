@@ -24,8 +24,8 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines,
     size_graph = decision_diagram->size();
     init_table();
     construct_mipgraph();
-    lp_x = std::unique_ptr<double[]>(new double[get_size_data()]);
-    solution_x = std::unique_ptr<double[]>(new double[get_size_data()]);
+    lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
+    solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
 
 
 }
@@ -391,7 +391,7 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 int num_columns) {
     NodeTableEntity<NodeZdd<>>& table =
         decision_diagram->getDiagram().privateEntity();
-    std::fill(lp_x.get(), lp_x.get() + get_size_data(), 0.0);
+    std::fill(lp_x.get(), lp_x.get() + get_nb_edges(), 0.0);
     for (int i = 0; i < num_columns; ++i) {
         if (columns[i] > 0.00001) {
             size_t       counter = 0;
@@ -437,7 +437,7 @@ void PricerSolverZdd::project_solution(Solution* sol) {
     NodeTableEntity<NodeZdd<>>& table =
         decision_diagram->getDiagram().privateEntity();
     // double* x = new double[num_edges(mip_graph)]{};
-    std::fill(solution_x.get(), solution_x.get() + get_size_data(), 0.0);
+    std::fill(solution_x.get(), solution_x.get() + get_nb_edges(), 0.0);
 
     for (int i = 0; i < sol->nb_machines; ++i) {
         size_t                        counter = 0;
@@ -567,11 +567,11 @@ int PricerSolverZdd::get_num_remove_edges() {
     return nb_removed_edges;
 }
 
-size_t PricerSolverZdd::get_size_data() {
+size_t PricerSolverZdd::get_nb_edges() {
     return num_edges(mip_graph);
 }
 
-size_t PricerSolverZdd::get_size_graph() {
+size_t PricerSolverZdd::get_nb_vertices() {
     return decision_diagram->size();
 }
 

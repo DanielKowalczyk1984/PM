@@ -220,7 +220,7 @@ int print_size_to_csv(Problem* problem, NodeData* pd) {
     }
 
     fprintf(file, "%s,%u/%u/%u,%d,%lu,%d\n", pd->pname, date.day, date.month,
-            date.year, parms->pricing_solver, get_size_graph(pd->solver),
+            date.year, parms->pricing_solver, get_nb_vertices(pd->solver),
             pd->depth);
 
     fclose(file);

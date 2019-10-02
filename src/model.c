@@ -173,7 +173,7 @@ int build_rmp(NodeData* pd, int construct) {
     pd->subgradient = CC_SAFE_MALLOC(nb_row, double);
     CCcheck_NULL_2(pd->subgradient, "Failed to allocate memory");
     if (parms->pricing_solver < dp_solver) {
-        pd->x_e = CC_SAFE_MALLOC(2 * get_size_graph(pd->solver), double);
+        pd->x_e = CC_SAFE_MALLOC(2 * get_nb_vertices(pd->solver), double);
         CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
     }
     pd->rhs = CC_SAFE_MALLOC(nb_row, double);

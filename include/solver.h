@@ -21,8 +21,8 @@ void iterate_zdd(PricerSolver *solver);
 // int get_nb_arcs_ati(PricerSolver *solver);
 // size_t get_datasize(PricerSolver *solver);
 int get_num_layers(PricerSolver *solver);
-size_t get_size_graph(PricerSolver *solver);
-size_t get_size_data(PricerSolver *solver);
+size_t get_nb_vertices(PricerSolver *solver);
+size_t get_nb_edges(PricerSolver *solver);
 // size_t get_numberrows_zdd(PricerSolver *solver);
 // size_t get_numberrows_bdd(PricerSolver *solver);
 

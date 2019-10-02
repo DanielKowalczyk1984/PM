@@ -189,7 +189,7 @@ int main(int ac, char** av) {
         root->solver =
             newSolverDp(root->jobarray, root->nb_machines, root->H_max, parms);
     }
-    problem.first_size_graph = get_size_graph(root->solver);
+    problem.first_size_graph = get_nb_edges(root->solver);
     g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
 
     /**

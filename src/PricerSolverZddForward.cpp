@@ -7,7 +7,8 @@ PricerSolverSimple::PricerSolverSimple(GPtrArray* _jobs, int _num_machines,
                                        GPtrArray* _ordered_jobs)
     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing ZDD with Forward Simple evaluator" << '\n';
-    std::cout << "size ZDD = " << get_size_graph() << '\n';
+    std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
+    std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
     evaluator = ForwardZddSimpleDouble(nb_jobs);
     reversed_evaluator = BackwardZddSimpleDouble(nb_jobs);
 }
@@ -62,7 +63,8 @@ PricerSolverZddCycle::PricerSolverZddCycle(GPtrArray* _jobs, int _num_machines,
                                            GPtrArray* _ordered_jobs)
     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing ZDD with Forward ZddCycle evaluator" << '\n';
-    std::cout << "size ZDD = " << get_size_graph() << '\n';
+    std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
+    std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
     evaluator = ForwardZddCycleDouble(nb_jobs);
     reversed_evaluator = BackwardZddCycleDouble(nb_jobs);
 }

@@ -82,7 +82,7 @@ int reduce_cost_fixing(NodeData* pd) {
     double LB = pd->LP_lower_bound;
 
     pd->solver->reduce_cost_fixing(pd->pi, UB, LB);
-
+    pd->problem->size_graph_after_reduced_cost_fixing = get_nb_edges(pd->solver);
     return val;
 }
 
@@ -116,12 +116,12 @@ int get_num_layers(PricerSolver* solver) {
     return solver->get_num_layers();
 }
 
-size_t get_size_graph(PricerSolver* solver) {
-    return solver->get_size_graph();
+size_t get_nb_vertices(PricerSolver* solver) {
+    return solver->get_nb_vertices();
 }
 
-size_t get_size_data(PricerSolver* solver) {
-    return solver->get_size_data();
+size_t get_nb_edges(PricerSolver* solver) {
+    return solver->get_nb_edges();
 }
 
 void calculate_edges(PricerSolver* solver, ScheduleSet* set) {

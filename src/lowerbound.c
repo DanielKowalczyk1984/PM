@@ -543,6 +543,11 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     CCcheck_val_2(val, "Failed in compute_objective");
                     memcpy(pd->pi_out, pd->pi,
                            sizeof(double) * (pd->nb_jobs + 1));
+                    if (pd->iterations % pd->nb_jobs)
+                    {
+                        // reduce_cost_fixing(pd);
+                    }
+                    
                 }
 
                 break;
@@ -579,25 +584,17 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 }
 
                 // if (parms->pricing_solver < dp_solver) {
-                val = wctlp_optimize(pd->RMP, &status);
-                CCcheck_val_2(val, "wctlp_optimize failed");
-                val = compute_objective(pd, parms);
-                CCcheck_val_2(val, "Failed in computing the objective");
+                // val = wctlp_optimize(pd->RMP, &status);
+                // CCcheck_val_2(val, "wctlp_optimize failed");
+                // val = compute_objective(pd, parms);
+                // CCcheck_val_2(val, "Failed in computing the objective");
 
                 // reset_nblayers(pd->jobarray);
                 // calculate_nblayers(pd, 2);
                 reduce_cost_fixing(pd);
-                print_x(pd);
-                construct_lp_sol_from_rmp(pd);
                 // val = check_schedules(pd);
                 // CCcheck_val_2(val, "Failed in checkschedules");
                 // delete_infeasible_cclasses(pd);
-                // }
-                // calculate_x_e(pd);
-                // pd->status = LP_bound_computed;
-                // val = wctlp_pi(pd->RMP, pd->pi);
-                // CCcheck_val_2(val, "wctlp_pi failed");
-
                 /**
                  * Compute the objective function
                  */
@@ -605,8 +602,9 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 CCcheck_val_2(val, "wctlp_optimize failed");
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
+                construct_lp_sol_from_rmp(pd);
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->nb_jobs + 1));
-                printf("size evolution %lu\n", get_size_graph(pd->solver));
+                printf("size evolution %lu\n", get_nb_vertices(pd->solver));
                 break;
 
             case GRB_INFEASIBLE:
@@ -670,23 +668,9 @@ int print_x(NodeData* pd) {
 
             for (int i = 0; i < nb_cols; ++i) {
                 GPtrArray* tmp = ((ScheduleSet*) g_ptr_array_index(pd->localColPool, i))->job_list;
-                int        C = 0;
                 if(pd->lambda[i] > 0.00001) {
-
-                for (int j = 0; j < tmp->len; ++j) {
-                    Job* j1 = (Job*)g_ptr_array_index(tmp, j);
-
-                    if (j < tmp->len - 1) {
-                        Job* j2 = (Job*)g_ptr_array_index(tmp, j + 1);
-                        if (bool_diff_Fij(C, j2, j1)) {
-                            printf("%d ", bool_diff_Fij(C, j2, j1));
-                        }
-                    }
-                    C += j1->processing_time;
-                }
-                printf("\n");
-                g_ptr_array_foreach(tmp, g_print_machine, NULL);
-                printf("\n");
+                    g_ptr_array_foreach(tmp, g_print_machine, NULL);
+                    printf("\n");
                 }
             }
             break;
@@ -761,10 +745,10 @@ int calculate_x_e(NodeData* pd) {
             val = wctlp_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in wctlp_x");
             pd->x_e =
-                CC_SAFE_REALLOC(pd->x_e, get_size_data(pd->solver), double);
+                CC_SAFE_REALLOC(pd->x_e, get_nb_edges(pd->solver), double);
             CCcheck_NULL_2(pd->x_e, "Failed to reallocate memory to  pd->x_e");
 
-            for (unsigned i = 0; i < get_size_data(pd->solver); ++i) {
+            for (unsigned i = 0; i < get_nb_edges(pd->solver); ++i) {
                 pd->x_e[i] = 0.0;
             }
             construct_lp_sol_from_rmp(pd);

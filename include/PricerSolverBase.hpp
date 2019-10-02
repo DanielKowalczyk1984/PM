@@ -94,8 +94,8 @@ public:
      virtual int get_num_remove_nodes() = 0;
      virtual int get_num_remove_edges() = 0;
      virtual int get_num_layers() = 0;
-     virtual size_t get_size_graph() = 0;
-     virtual size_t get_size_data() = 0;
+     virtual size_t get_nb_vertices() = 0;
+     virtual size_t get_nb_edges() = 0;
      virtual bool check_schedule_set(GPtrArray *set) = 0;
 
      /**

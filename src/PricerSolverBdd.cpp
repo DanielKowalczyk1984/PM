@@ -24,8 +24,8 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
     size_graph = decision_diagram->size();
     init_table();
     construct_mipgraph();
-    lp_x = std::unique_ptr<double[]>(new double[get_size_data()]);
-    solution_x = std::unique_ptr<double[]>(new double[get_size_data()]);
+    lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
+    solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
 }
 
 void PricerSolverBdd::construct_mipgraph() {
@@ -222,6 +222,7 @@ void PricerSolverBdd::build_mip() {
             get(boost::vertex_name_t(), mip_graph));
         EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
         EdgeVarAccessor  edge_var_list(get(boost::edge_weight2_t(), mip_graph));
+        EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(),mip_graph));
         model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
         model->set(GRB_IntParam_Threads, 1);
         model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
@@ -307,7 +308,33 @@ void PricerSolverBdd::build_mip() {
             model->addConstrs(flow_conservation_constr.get(), sense_flow.get(),
                               rhs_flow.get(), nullptr, num_vertices));
         model->update();
+        for(auto it = edges(mip_graph); it.first != it.second;it.first++) {
+            if(lp_x[edge_index_list[*it.first]] > 0) {
+                cout << lp_x[edge_index_list[*it.first]] << "\n";
+            }
+            edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart, lp_x[edge_index_list[*it.first]]);
+        }
         model->optimize();
+
+        for(auto it = edges(mip_graph); it.first != it.second;it.first++) {
+            lp_x[edge_index_list[*it.first]] =   edge_var_list[*it.first].x.get(GRB_DoubleAttr_X);
+            cout << lp_x[edge_index_list[*it.first]] << " " << edge_var_list[*it.first].x.get(GRB_DoubleAttr_X) << " " << edge_var_list[*it.first].x.get(GRB_IntAttr_VBasis) << "\n";
+        }
+
+        for(int i = 0; i < nb_jobs;i++){
+            cout << assignment_constrs[i].get(GRB_IntAttr_CBasis) << "\n";
+        }
+
+        cout << "-------------------------------------------------------------------\n";
+
+        for(int i = 0; i <  num_vertices ;i++) {
+            cout << flow_constrs[i].get(GRB_IntAttr_CBasis) << "\n";
+        }
+        ColorWriterEdge   edge_writer(mip_graph, lp_x.get());
+        ColorWriterVertex vertex_writer(mip_graph, table);
+        std::ofstream     outf("basis.gv");
+        boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
+        outf.close();
         model->write("bdd_formulation.lp");
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
@@ -350,7 +377,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 const GPtrArray* schedule_sets,
                                                 int num_columns) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
-    std::fill(lp_x.get(), lp_x.get() + get_size_data(), 0);
+    std::fill(lp_x.get(), lp_x.get() + get_nb_edges(), 0);
     for (int i = 0; i < num_columns; ++i) {
         if (columns[i] > 0.00001) {
             size_t       counter = 0;
@@ -389,7 +416,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
 void PricerSolverBdd::project_solution(Solution* sol) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     // double*            x = new double[num_edges(mip_graph)]{};
-    std::fill(solution_x.get(), solution_x.get() + get_size_data(), 0.0);
+    std::fill(solution_x.get(), solution_x.get() + get_nb_edges(), 0.0);
 
     for (int i = 0; i < sol->nb_machines; ++i) {
         size_t     counter = 0;
@@ -655,12 +682,12 @@ int PricerSolverBdd::get_num_remove_edges() {
     return nb_removed_edges;
 }
 
-size_t PricerSolverBdd::get_size_data() {
-    return 2*decision_diagram->size();
+size_t PricerSolverBdd::get_nb_edges() {
+    return num_edges(mip_graph);
 }
 
-size_t PricerSolverBdd::get_size_graph() {
-    return decision_diagram->size();
+size_t PricerSolverBdd::get_nb_vertices() {
+    return num_vertices(mip_graph);
 }
 
 int PricerSolverBdd::get_num_layers() {

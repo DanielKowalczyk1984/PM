@@ -360,13 +360,23 @@ int PricerSolverSimpleDp::get_num_remove_nodes() {
 int PricerSolverSimpleDp::get_num_remove_edges() {
     return 0;
 }
-
-size_t PricerSolverSimpleDp::get_size_data() {
-    return (jobs->len + 1) * (Hmax + 1);
+ 
+size_t PricerSolverSimpleDp::get_nb_edges() {
+    size_t nb_edges = 0u;
+    for(int t = 0; t < Hmax + 1; t++) {
+        nb_edges = forward_graph[t].size();
+    }
+    return nb_edges;
 }
 
-size_t PricerSolverSimpleDp::get_size_graph() {
-    return size_graph;
+size_t PricerSolverSimpleDp::get_nb_vertices() {
+    size_t nb_vertices = 0u;
+    for(int t = 0; t < Hmax + 1; t++) {
+        if(!forward_graph[t].empty()){
+            nb_vertices++;
+        }
+    }
+    return nb_vertices;
 }
 
 int PricerSolverSimpleDp::get_num_layers() {

@@ -8,7 +8,8 @@ PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray* _jobs,
                                              GPtrArray* _ordered_jobs)
     : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing BDD with Forward Simple evaluator" << '\n';
-    std::cout << "size BDD = " << get_size_graph() << '\n';
+    std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
+    std::cout << "number edges BDD = " << get_nb_edges() << '\n';
     evaluator = ForwardBddSimpleDouble(nb_jobs);
     reversed_evaluator = BackwardBddSimpleDouble(nb_jobs);
 }
@@ -71,7 +72,8 @@ PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray* _jobs, int _num_machines,
                                            GPtrArray* _ordered_jobs)
     : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
     std::cout << "Constructing BDD with Forward Cycle evaluator" << '\n';
-    std::cout << "size BDD = " << get_size_graph() << '\n';
+    std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
+    std::cout << "number edges BDD = " << get_nb_edges() << '\n';
     evaluator = ForwardBddCycleDouble(nb_jobs);
     reversed_evaluator = BackwardBddCycleDouble(nb_jobs);
 }

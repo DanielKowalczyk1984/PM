@@ -443,7 +443,7 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
 
 void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     const double* columns, const GPtrArray* schedule_sets, int num_columns) {
-    std::fill(lp_x, lp_x + get_size_data(), 0);
+    std::fill(lp_x, lp_x + get_nb_edges(), 0);
     for (int k = 0; k < num_columns; k++) {
         if (columns[k]) {
             size_t       counter = 0;
@@ -478,7 +478,7 @@ void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
 
 void PricerSolverArcTimeDp::project_solution(Solution* sol) {
     // double* x = new double[(n + 1) * (n + 1) * (Hmax + 1)]{};
-    std::fill(solution_x, solution_x + get_size_data(), 0.0);
+    std::fill(solution_x, solution_x + get_nb_edges(), 0.0);
 
     for (int it = 0; it < sol->nb_machines; it++) {
         GPtrArray* tmp = sol->part[it].machine;
@@ -531,12 +531,26 @@ int PricerSolverArcTimeDp::get_num_remove_edges() {
     return num_edges_removed;
 }
 
-size_t PricerSolverArcTimeDp::get_size_data() {
-    return (n + 1) * (n + 1) * (Hmax + 1);
+size_t PricerSolverArcTimeDp::get_nb_edges() {
+    size_t nb_edges = 0u;
+    for(int j = 0; j < n + 1; j++) {
+        for(int t = 0; t < Hmax + 1;t++) {
+            nb_edges += graph[j][t].size();
+        }
+    }
+    return nb_edges;
 }
 
-size_t PricerSolverArcTimeDp::get_size_graph() {
-    return size_graph;
+size_t PricerSolverArcTimeDp::get_nb_vertices() {
+    size_t nb_vertices = 0u;
+    for(int j = 0; j < n + 1; j++) {
+        for(int t = 0; t < Hmax + 1;t++) {
+            if(!graph[j][t].empty()){
+                nb_vertices++;
+            }
+        }
+    }
+    return nb_vertices;
 }
 
 int PricerSolverArcTimeDp::get_num_layers() {
