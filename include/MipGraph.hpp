@@ -62,15 +62,15 @@ public:
         bool high =  get(boost::edge_weight_t(),g,_edge);       
         if(x[index] > 0.00001) {
             if(high) {
-                output << "[label = "<< index << ",color = red, style =dashed]";
+                output << "[label = "<< x[index] << ",color = red]";
             } else {
-                output << "[label = "<< index <<",color = red]";
+                output << "[label = "<< x[index] <<",color = red, style = dashed]";
             }
         } else {
             if(high) {
-                output << "[label = "<< index <<",style = dashed]";
+                output << "[label = "<< x[index] <<"]";
             } else {
-                output << "[label = "<< index <<"]";
+                output << "[label = "<< x[index] <<",style=dashed]";
             }
         }
     }
