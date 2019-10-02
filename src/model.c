@@ -136,7 +136,7 @@ int build_rmp(NodeData* pd, int construct) {
      */
     for (int i = 0; i < nb_jobs; i++) {
         val = wctlp_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL,
-                           wctlp_GREATER_EQUAL, 1.0, (char*)NULL);
+                           wctlp_EQUAL, 1.0, (char*)NULL);
         CCcheck_val_2(val, "Failed wctlp_addrow");
     }
 
@@ -144,7 +144,7 @@ int build_rmp(NodeData* pd, int construct) {
      * add number of machines constraint (convexification)
      */
     val = wctlp_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL,
-                       wctlp_GREATER_EQUAL, -(double)nb_machines, (char*)NULL);
+                       wctlp_EQUAL, -(double)nb_machines, (char*)NULL);
     CCcheck_val_2(val, "Failed to add convexification constraint");
 
     wctlp_get_nb_rows(pd->RMP, &nb_row);
