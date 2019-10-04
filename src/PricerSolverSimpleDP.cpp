@@ -366,7 +366,7 @@ int PricerSolverSimpleDp::get_num_remove_edges() {
 size_t PricerSolverSimpleDp::get_nb_edges() {
     size_t nb_edges = 0u;
     for (int t = 0; t < Hmax + 1; t++) {
-        nb_edges = forward_graph[t].size();
+        nb_edges += forward_graph[t].size();
     }
     return nb_edges;
 }
