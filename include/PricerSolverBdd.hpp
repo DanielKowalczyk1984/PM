@@ -18,7 +18,7 @@ class PricerSolverBdd : public PricerSolverBase
         std::unique_ptr<double[]> lp_x;
         std::unique_ptr<double[]> solution_x;
 
-        PricerSolverBdd(GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs);
+        PricerSolverBdd(GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs,const char* p_name);
         void init_table() override;
         virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 

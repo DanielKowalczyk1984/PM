@@ -5,8 +5,8 @@
 using namespace std;
 
 PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
-                                 GPtrArray* _ordered_jobs)
-    : PricerSolverBase(_jobs, _num_machines, _ordered_jobs),
+                                 GPtrArray* _ordered_jobs, const char* p_name)
+    : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name),
       size_graph(0),
       nb_removed_edges(0),
       nb_removed_nodes(0),
@@ -36,7 +36,8 @@ void PricerSolverBdd::construct_mipgraph() {
 
     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
         for (size_t j = 0; j < table[i].size(); j++) {
-            if (NodeId(i, j) != 0 && (table[i][j].calc_yes || table[i][j].calc_no)) {
+            if (NodeId(i, j) != 0 &&
+                (table[i][j].calc_yes || table[i][j].calc_no)) {
                 table[i][j].key = add_vertex(mip_graph);
                 vertex_nodeid_list[table[i][j].key] = NodeId(i, j);
             }
@@ -196,12 +197,10 @@ void PricerSolverBdd::remove_edges() {
                 cur_node_1 = 0;
             }
 
-            if (!iter.calc_no)
-            {
+            if (!iter.calc_no) {
                 NodeId& cur_node_0 = iter.branch[0];
                 cur_node_0 = 0;
             }
-            
         }
     }
 
@@ -222,7 +221,8 @@ void PricerSolverBdd::build_mip() {
             get(boost::vertex_name_t(), mip_graph));
         EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
         EdgeVarAccessor  edge_var_list(get(boost::edge_weight2_t(), mip_graph));
-        EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(),mip_graph));
+        EdgeIndexAccessor edge_index_list(
+            get(boost::edge_index_t(), mip_graph));
         model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
         model->set(GRB_IntParam_Threads, 1);
         model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
@@ -308,26 +308,31 @@ void PricerSolverBdd::build_mip() {
             model->addConstrs(flow_conservation_constr.get(), sense_flow.get(),
                               rhs_flow.get(), nullptr, num_vertices));
         model->update();
-        for(auto it = edges(mip_graph); it.first != it.second;it.first++) {
-            if(lp_x[edge_index_list[*it.first]] > 0) {
+        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+            if (lp_x[edge_index_list[*it.first]] > 0) {
                 cout << lp_x[edge_index_list[*it.first]] << "\n";
             }
-            edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart, lp_x[edge_index_list[*it.first]]);
+            edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart,
+                                           lp_x[edge_index_list[*it.first]]);
         }
         model->optimize();
 
-        for(auto it = edges(mip_graph); it.first != it.second;it.first++) {
-            lp_x[edge_index_list[*it.first]] =   edge_var_list[*it.first].x.get(GRB_DoubleAttr_X);
-            cout << lp_x[edge_index_list[*it.first]] << " " << edge_var_list[*it.first].x.get(GRB_DoubleAttr_X) << " " << edge_var_list[*it.first].x.get(GRB_IntAttr_VBasis) << "\n";
+        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+            lp_x[edge_index_list[*it.first]] =
+                edge_var_list[*it.first].x.get(GRB_DoubleAttr_X);
+            cout << lp_x[edge_index_list[*it.first]] << " "
+                 << edge_var_list[*it.first].x.get(GRB_DoubleAttr_X) << " "
+                 << edge_var_list[*it.first].x.get(GRB_IntAttr_VBasis) << "\n";
         }
 
-        for(int i = 0; i < nb_jobs;i++){
+        for (int i = 0; i < nb_jobs; i++) {
             cout << assignment_constrs[i].get(GRB_IntAttr_CBasis) << "\n";
         }
 
-        cout << "-------------------------------------------------------------------\n";
+        cout << "--------------------------------------------------------------"
+                "-----\n";
 
-        for(int i = 0; i <  num_vertices ;i++) {
+        for (int i = 0; i < num_vertices; i++) {
             cout << flow_constrs[i].get(GRB_IntAttr_CBasis) << "\n";
         }
         ColorWriterEdge   edge_writer(mip_graph, lp_x.get());
@@ -375,7 +380,7 @@ void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
 
 void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 const GPtrArray* schedule_sets,
-                                                int num_columns) {
+                                                int              num_columns) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     std::fill(lp_x.get(), lp_x.get() + get_nb_edges(), 0);
     for (int i = 0; i < num_columns; ++i) {
@@ -408,7 +413,8 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
 
     ColorWriterEdge   edge_writer(mip_graph, lp_x.get());
     ColorWriterVertex vertex_writer(mip_graph, table);
-    std::ofstream     outf("min.gv");
+    string file_name = "lp_solution_" + problem_name + "_" + std::to_string(num_machines) + ".gv";
+    std::ofstream     outf(file_name);
     boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
     outf.close();
 }
@@ -451,7 +457,8 @@ void PricerSolverBdd::represent_solution(Solution* sol) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     ColorWriterEdge    edge_writer(mip_graph, solution_x.get());
     ColorWriterVertex  vertex_writer(mip_graph, table);
-    std::ofstream      outf("solution.gv");
+    string file_name = "solution_" + problem_name + "_" + std::to_string(num_machines) + ".gv"; 
+    std::ofstream      outf(file_name);
     boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
     outf.close();
 }
@@ -517,13 +524,15 @@ void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol) {
         /**
          * Add variables
          */
-        GRBVar s = model_inequality->addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
-        GRBVar t = model_inequality->addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
+        GRBVar s =
+            model_inequality->addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
+        GRBVar t =
+            model_inequality->addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
 
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
             edge_var_list[*it.first].alpha = model_inequality->addVar(
-                -GRB_INFINITY, GRB_INFINITY, solution_x[edge_index_list[*it.first]],
-                GRB_CONTINUOUS);
+                -GRB_INFINITY, GRB_INFINITY,
+                solution_x[edge_index_list[*it.first]], GRB_CONTINUOUS);
         }
 
         for (auto it = vertices(mip_graph); it.first != it.second; it.first++) {
@@ -538,13 +547,13 @@ void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol) {
 
         for (int j = 0; j < nb_jobs; j++) {
             pi_0[j] = model_inequality->addVar(-GRB_INFINITY, GRB_INFINITY, 0.0,
-                                         GRB_CONTINUOUS);
+                                               GRB_CONTINUOUS);
             pi_1[j] = model_inequality->addVar(-GRB_INFINITY, GRB_INFINITY, 0.0,
-                                         GRB_CONTINUOUS);
+                                               GRB_CONTINUOUS);
         }
 
-        GRBVar alpha = model_inequality->addVar(-GRB_INFINITY, GRB_INFINITY, -1.0,
-                                          GRB_CONTINUOUS);
+        GRBVar alpha = model_inequality->addVar(-GRB_INFINITY, GRB_INFINITY,
+                                                -1.0, GRB_CONTINUOUS);
         model_inequality->update();
         /**
          * Compute the constraints
@@ -609,11 +618,11 @@ void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol) {
          * Add the constraints to the model
          */
         std::unique_ptr<GRBConstr[]> constrs0(
-            model_inequality->addConstrs(constraints_0.get(), sense.get(), rhs.get(),
-                                   nullptr, num_edges + 1));
+            model_inequality->addConstrs(constraints_0.get(), sense.get(),
+                                         rhs.get(), nullptr, num_edges + 1));
         std::unique_ptr<GRBConstr[]> constrs1(
-            model_inequality->addConstrs(constraints_1.get(), sense.get(), rhs.get(),
-                                   nullptr, num_edges + 1));
+            model_inequality->addConstrs(constraints_1.get(), sense.get(),
+                                         rhs.get(), nullptr, num_edges + 1));
         model_inequality->addConstr(normalization, GRB_EQUAL, -1.0);
         model_inequality->update();
         model_inequality->optimize();
@@ -694,5 +703,4 @@ int PricerSolverBdd::get_num_layers() {
     return decision_diagram->topLevel();
 }
 
-void PricerSolverBdd::print_num_paths() {
-}
+void PricerSolverBdd::print_num_paths() {}

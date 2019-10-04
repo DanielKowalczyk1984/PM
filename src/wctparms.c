@@ -16,6 +16,7 @@ void parms_init(Parms* parms) {
     parms->delete_edge_lists = 1;
     parms->delete_cclasses = 0;
     parms->jobfile = (char*)NULL;
+    parms->pname = (char*)NULL;
     parms->outfile = (char*)NULL;
     parms->cclasses_outfile = (char*)NULL;
     parms->cclasses_infile = (char*)NULL;
@@ -31,6 +32,7 @@ void parms_init(Parms* parms) {
 void parms_free(Parms* parms) {
     CC_IFFREE(parms->color_infile, char);
     CC_IFFREE(parms->jobfile, char);
+    CC_IFFREE(parms->pname, char);
     CC_IFFREE(parms->outfile, char);
     CC_IFFREE(parms->cclasses_outfile, char);
     CC_IFFREE(parms->cclasses_infile, char);
@@ -56,6 +58,10 @@ int parms_set_outfile(Parms* parms, const char* fname) {
 
 int parms_set_file(Parms* parms, const char* fname) {
     return copy_string(&(parms->jobfile), fname);
+}
+
+int parms_set_pname(Parms* parms, const char* fname) {
+    return copy_string(&(parms->pname), fname);
 }
 int parms_set_backupdir(Parms* parms, const char* fname) {
     return copy_string(&(parms->backupdir), fname);

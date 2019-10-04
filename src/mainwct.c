@@ -9,11 +9,12 @@
 ////////////////////////////////////////////////////////////////
 
 #include <defs.h>
+#include <regex.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <wct.h>
 #include <wctparms.h>
-
-#include <unistd.h>
-
 static void usage(char* f) {
     fprintf(stderr, "Usage %s: [-see below-] adjlist_file NrMachines\n", f);
     fprintf(stderr, "   -d      turn on the debugging\n");
@@ -38,6 +39,29 @@ static void usage(char* f) {
             "branching(default), 1 = no strong branching\n");
     fprintf(stderr,
             "   -a int  Set solver: 0 = bdd solver(default), 1 = dp solver\n");
+}
+
+char* find_match(const char* _instance_file) {
+    regex_t    regex;
+    regmatch_t matches[2];
+    char* val = (char*) NULL;
+    int regex_val = regcomp(&regex, "^.*(wt[0-9]*_[0-9]*).*$", REG_EXTENDED);
+    if (regex_val) {
+        fprintf(stderr, "Could not compile regex\n");
+        val = strdup("regex_error");
+    } else {
+        regex_val = regexec(&regex, _instance_file, 2, (regmatch_t*)&matches, 0);
+        if (!regex_val) {
+            val = g_strndup(_instance_file + matches[1].rm_so,
+                                matches[1].rm_eo - matches[1].rm_so);
+        } else {
+            printf("No match\n");
+            val = strdup("unknown_name");
+        }
+    }
+    regfree(&regex);
+
+    return val;
 }
 
 static int parseargs(int ac, char** av, Parms* parms) {
@@ -124,8 +148,12 @@ static int parseargs(int ac, char** av, Parms* parms) {
         val = 1;
         goto CLEAN;
     } else {
-        val = parms_set_file(parms, av[optind++]);
+        char* instance_file = av[optind++];
+
+        val = parms_set_file(parms, instance_file);
         CCcheck_val(val, "Failed in parms_set_file");
+        val = parms_set_pname(parms, find_match(instance_file));
+        CCcheck_val(val, "Failed in parms_set_pname");
 
         if (ac <= optind) {
             val = 1;
@@ -199,6 +227,7 @@ int main(int ac, char** av) {
         build_rmp(&(problem.root_pd), 0);
         CCutil_start_timer(&(problem.tot_lb_root));
         compute_lower_bound(&problem, &(problem.root_pd));
+        print_dot_file(root->solver, NULL);
         problem.rel_error =
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);

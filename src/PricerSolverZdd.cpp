@@ -3,8 +3,8 @@
 #include "boost/graph/graphviz.hpp"
 
 PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines,
-                                 GPtrArray* _ordered_jobs)
-    : PricerSolverBase(_jobs, _num_machines, _ordered_jobs),
+                                 GPtrArray* _ordered_jobs, const char* p_name)
+    : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name),
       size_graph(0),
       nb_removed_edges(0),
       nb_removed_nodes(0),

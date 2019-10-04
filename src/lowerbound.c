@@ -633,12 +633,12 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     problem->global_lower_bound =
         CC_MAX(pd->lower_bound + pd->problem->off, problem->global_lower_bound);
 
-    if (pd->depth == 0) {
+    if (pd == &(problem->root_pd)) {
         problem->root_lower_bound = problem->global_lower_bound;
         problem->root_upper_bound = problem->global_upper_bound;
         problem->root_rel_error = (double)(problem->global_upper_bound -
                                            problem->global_lower_bound) /
-                                  ((double)problem->global_lower_bound);
+                                  ((double)problem->global_lower_bound + 0.000001);
     }
 
     fflush(stdout);

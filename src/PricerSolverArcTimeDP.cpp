@@ -1,8 +1,9 @@
 #include "PricerSolverArcTimeDP.hpp"
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray* _jobs,
-                                             int _num_machines, int _Hmax)
-    : PricerSolverBase(_jobs, _num_machines),
+                                             int _num_machines, int _Hmax,
+                                             const char* p_name)
+    : PricerSolverBase(_jobs, _num_machines, p_name),
       Hmax(_Hmax),
       n(_jobs->len),
       size_graph(0u),
@@ -533,8 +534,8 @@ int PricerSolverArcTimeDp::get_num_remove_edges() {
 
 size_t PricerSolverArcTimeDp::get_nb_edges() {
     size_t nb_edges = 0u;
-    for(int j = 0; j < n + 1; j++) {
-        for(int t = 0; t < Hmax + 1;t++) {
+    for (int j = 0; j < n + 1; j++) {
+        for (int t = 0; t < Hmax + 1; t++) {
             nb_edges += graph[j][t].size();
         }
     }
@@ -543,9 +544,9 @@ size_t PricerSolverArcTimeDp::get_nb_edges() {
 
 size_t PricerSolverArcTimeDp::get_nb_vertices() {
     size_t nb_vertices = 0u;
-    for(int j = 0; j < n + 1; j++) {
-        for(int t = 0; t < Hmax + 1;t++) {
-            if(!graph[j][t].empty()){
+    for (int j = 0; j < n + 1; j++) {
+        for (int t = 0; t < Hmax + 1; t++) {
+            if (!graph[j][t].empty()) {
                 nb_vertices++;
             }
         }
@@ -557,8 +558,7 @@ int PricerSolverArcTimeDp::get_num_layers() {
     return 0;
 }
 
-void PricerSolverArcTimeDp::print_num_paths() {
-}
+void PricerSolverArcTimeDp::print_num_paths() {}
 
 bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
     size_t counter = set->len - 1;

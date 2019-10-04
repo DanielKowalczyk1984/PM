@@ -3,10 +3,11 @@
 /**
  *  bdd solver pricersolver for the flow formulation
  */
-PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray* _jobs,
-                                             int        _num_machines,
-                                             GPtrArray* _ordered_jobs)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
+PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray*  _jobs,
+                                             int         _num_machines,
+                                             GPtrArray*  _ordered_jobs,
+                                             const char* p_name)
+    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name) {
     std::cout << "Constructing BDD with Forward Simple evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
@@ -43,7 +44,8 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
                             value_Fj(w + job->processing_time, job) +
                             pi[job->job] + pi[nb_jobs];
             auto result_no = it.forward_label[0].get_f() +
-                             it.child[0]->backward_label[0].get_f() + pi[nb_jobs];
+                             it.child[0]->backward_label[0].get_f() +
+                             pi[nb_jobs];
 
             if (LB - (double)(num_machines - 1) * reduced_cost - result >
                     UB - 1 + 0.0001 &&
@@ -69,8 +71,9 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
  * consecutive jobs
  */
 PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray* _jobs, int _num_machines,
-                                           GPtrArray* _ordered_jobs)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs) {
+                                           GPtrArray*  _ordered_jobs,
+                                           const char* p_name)
+    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name) {
     std::cout << "Constructing BDD with Forward Cycle evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';

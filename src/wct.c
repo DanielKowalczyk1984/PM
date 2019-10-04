@@ -28,11 +28,12 @@ void problem_init(Problem* problem) {
     /*B&B info*/
     problem->nb_data_nodes = 0;
     problem->global_upper_bound = INT_MAX;
-    problem->root_lower_bound = 0;
+    problem->root_lower_bound = 0.0;
     problem->global_lower_bound = 0;
     problem->root_upper_bound = INT_MAX;
+    problem->root_rel_error = DBL_MAX;
     problem->status = no_sol;
-    problem->rel_error = 1.0;
+    problem->rel_error = DBL_MAX;
     problem->br_heap_a = (BinomialHeap*)NULL;
     /*data of the problem*/
     nodedata_init(&(problem->root_pd), problem);
@@ -69,6 +70,8 @@ void problem_init(Problem* problem) {
     problem->real_time_pricing = 0.0;
     problem->real_time_heuristic = 0.0;
     CCutil_start_timer(&(problem->tot_cputime));
+    problem->first_size_graph = 0;
+    problem->size_graph_after_reduced_cost_fixing = 0;
 }
 
 void problem_free(Problem* problem) {
@@ -358,7 +361,7 @@ int compute_schedule(Problem* problem) {
     problem->root_lower_bound = problem->global_lower_bound;
     problem->root_rel_error =
         (double)(problem->global_upper_bound - problem->global_lower_bound) /
-        ((double)problem->global_lower_bound);
+        ((double)problem->global_lower_bound + 0.00001);
     prune_duplicated_sets(root_pd);
     init_BB_tree(problem);
     print_size_to_csv(problem, root_pd);
@@ -376,7 +379,7 @@ int compute_schedule(Problem* problem) {
             problem->root_lower_bound = root_pd->lower_bound;
             problem->root_rel_error = (double)(problem->root_upper_bound -
                                                problem->root_lower_bound) /
-                                      ((double)problem->root_lower_bound);
+                                      ((double)problem->root_lower_bound + 0.00001);
         }
 
         CCcheck_val_2(val, "Failed in compute_lower_bound");

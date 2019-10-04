@@ -7,8 +7,8 @@
  * Pricersolver for the TI index formulation
  */
 PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray* _jobs, int _num_machines,
-                                           int _Hmax)
-    : PricerSolverBase(_jobs, _num_machines),
+                                           int _Hmax, const char* p_name)
+    : PricerSolverBase(_jobs, _num_machines, p_name),
       Hmax(_Hmax),
       size_graph(0u),
       A(new Job*[Hmax + 1]),
@@ -187,7 +187,8 @@ void PricerSolverSimpleDp::build_mip() {
     model->optimize();
     // for (int t = 0; t < Hmax; t++) {
     //     for (auto& it : backward_graph[t]) {
-    //         if (TI_x[(it->job) * (Hmax + 1) + t].get(GRB_IntAttr_VBasis) == 0) {
+    //         if (TI_x[(it->job) * (Hmax + 1) + t].get(GRB_IntAttr_VBasis) ==
+    //         0) {
     //             std::cout << "job = " << it->job << " " << t << " "
     //                       << TI_x[(it->job) * (Hmax + 1) + t].get(
     //                              GRB_DoubleAttr_X)
@@ -346,9 +347,10 @@ void PricerSolverSimpleDp::create_dot_zdd(const char* name) {
             boost::add_edge(t, t + it->processing_time, graph);
         }
     }
-
-    auto otf = std::ofstream("TI_graph.gv");
+    auto file_name = "TI_representation_" + problem_name + "_" + std::to_string(num_machines) + ".gv";
+    auto otf = std::ofstream(file_name);
     boost::write_graphviz(otf, graph);
+    otf.close();
 }
 
 void PricerSolverSimpleDp::print_number_nodes_edges() {}
@@ -360,10 +362,10 @@ int PricerSolverSimpleDp::get_num_remove_nodes() {
 int PricerSolverSimpleDp::get_num_remove_edges() {
     return 0;
 }
- 
+
 size_t PricerSolverSimpleDp::get_nb_edges() {
     size_t nb_edges = 0u;
-    for(int t = 0; t < Hmax + 1; t++) {
+    for (int t = 0; t < Hmax + 1; t++) {
         nb_edges = forward_graph[t].size();
     }
     return nb_edges;
@@ -371,8 +373,8 @@ size_t PricerSolverSimpleDp::get_nb_edges() {
 
 size_t PricerSolverSimpleDp::get_nb_vertices() {
     size_t nb_vertices = 0u;
-    for(int t = 0; t < Hmax + 1; t++) {
-        if(!forward_graph[t].empty()){
+    for (int t = 0; t < Hmax + 1; t++) {
+        if (!forward_graph[t].empty()) {
             nb_vertices++;
         }
     }
@@ -383,8 +385,7 @@ int PricerSolverSimpleDp::get_num_layers() {
     return 0;
 }
 
-void PricerSolverSimpleDp::print_num_paths() {
-}
+void PricerSolverSimpleDp::print_num_paths() {}
 
 bool PricerSolverSimpleDp::check_schedule_set(GPtrArray* set) {
     return true;

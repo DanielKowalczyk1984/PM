@@ -1,5 +1,5 @@
+#include <unistd.h>
 #include <wct.h>
-
 static int get_problem_name(char* pname, const char* end_file_name) {
     int         rval = 0;
     int         len = 0;
@@ -104,26 +104,24 @@ int print_to_csv(Problem* problem) {
     NodeData* pd = &(problem->root_pd);
     Parms*    parms = &(problem->parms);
     FILE*     file = (FILE*)NULL;
-    char      file_name[128];
-    int       size;
-    GDate     date;
+    char*      file_name = CC_SAFE_MALLOC(128, char);
+    GDate date;
     g_date_set_time_t(&date, time(NULL));
     problem->real_time_total = getRealTime() - problem->real_time_total;
     CCutil_stop_timer(&(problem->tot_cputime), 0);
 
-    file = fopen("overall.csv", "a+");
+    sprintf(file_name, "CG_overall_%d%02d%02d.csv", date.year,date.month,date.day);
 
-    if (file == NULL) {
-        printf("We couldn't open %s in %s at line %d\n", file_name, __FILE__,
-               __LINE__);
-        val = 1;
-        goto CLEAN;
-    }
-
-    fseek(file, 0, SEEK_END);
-    size = ftell(file);
-
-    if (size == 0) {
+    if (access(file_name, F_OK) != -1) {
+        file = fopen(file_name, "a");
+    } else {
+        file = fopen(file_name, "w");
+        if (file == NULL) {
+            printf("We couldn't open %s in %s at line %d\n", "CG_overall.csv",
+                   __FILE__, __LINE__);
+            val = 1;
+            goto CLEAN;
+        }
         fprintf(file,
                 "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%"
                 "s,%s\n",
@@ -135,6 +133,7 @@ int print_to_csv(Problem* problem) {
                 "pricing_solver", "n", "m", "first_size_graph",
                 "size_after_reduced_cost");
     }
+
 
     fprintf(file,
             "%s,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
@@ -151,6 +150,7 @@ int print_to_csv(Problem* problem) {
             problem->size_graph_after_reduced_cost_fixing);
     fclose(file);
 CLEAN:
+    CC_FREE(file_name, char);
     return val;
 }
 
