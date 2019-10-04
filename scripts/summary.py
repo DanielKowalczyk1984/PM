@@ -11,13 +11,17 @@ except:
 
 #%%
 import pandas as pd
+import re
 
 
 #%%
-data = pd.read_csv("../results/28augf1S1/overall.csv")
-
-
-#%%
+file_name ="CG_overall_20191004.csv" 
+data = pd.read_csv("/home/daniel/CG_overall_20191004.csv")
+match = re.search(r'.*\_(\d{4})(\d{2})(\d{2})\.csv',file_name)
+year = match.group(1)
+month = match.group(2)
+day = match.group(3)
+print(type(day))
 
 
 
@@ -52,11 +56,12 @@ aggregation = {"tot_lb": {np.max, np.mean},
                "opt": np.sum,
                "reduction": {np.max,np.mean},
               "tot_cputime" : {np.max, np.mean}}
+aggregation
             #    "rel_error": {np.max,np.mean},
 #%%
 grouped["NameInstance"].count()
 grouped2 = data.groupby("NameInstance")
-grouped2["Id"].count().to_csv("allinstances.csv")
+grouped2["Id"].count().to_csv("CG_allinstances_"+year+month+day+".csv" )
 
 #%%
 result = grouped.agg(aggregation)
@@ -85,7 +90,7 @@ to_write.columns = ["_".join(x) for x in to_write.columns.ravel()]
 to_write
 
 #%%
-to_write.to_csv('results_tue2019aug_summary.csv')
+to_write.to_csv("CG_summary_"+year+month+day+".csv")
 
 
 #%%
@@ -93,7 +98,7 @@ pivot
 
 
 #%%
-pivot.columns.set_levels(['AF','TI','ATI'],level=1,inplace=True)
+pivot.columns.set_levels(['AFFS','AFFC','AFBS','AFBC','AFZFS','AFZFC','AFZBS','AFZBC','TI','ATI'],level=1,inplace=True)
 pivot
 
 
@@ -106,7 +111,7 @@ pivot
 
 
 #%%
-pivot.to_csv('results_tue2019_latex_pivot.csv')
+pivot.to_csv("CG_allinstances_"+year+month+day+".csv")
 
 
 #%%
