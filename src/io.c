@@ -1,13 +1,13 @@
 #include <wct.h>
 
-static int get_problem_name(char *pname, const char *efname) {
+static int get_problem_name(char* pname, const char* end_file_name) {
     int         rval = 0;
     int         len = 0;
-    const char *fname = strrchr(efname, '/');
-    const char *lastdot = strrchr(efname, '.');
+    const char* fname = strrchr(end_file_name, '/');
+    const char* lastdot = strrchr(end_file_name, '.');
 
     if (!fname) {
-        fname = efname;
+        fname = end_file_name;
     } else {
         fname++;
     }
@@ -26,58 +26,58 @@ static int get_problem_name(char *pname, const char *efname) {
     return rval;
 }
 
-int read_problem(wctproblem *problem) {
+int read_problem(Problem* problem) {
     int         val = 0;
-    int         nbjobs = 0;
+    int         nb_jobs = 0;
     int         curduration, curduedate, curweight, curjob;
-    Job *       _jobarray = (Job *)NULL;
-    Job *       tmp_j;
+    Job*        _jobarray = (Job*)NULL;
+    Job*        tmp_j;
     char        buf[256], *p;
     int         bufsize;
-    const char *delim = " \n\t";
-    char *      data = (char *)NULL;
-    char *      buf2 = (char *)NULL;
-    wctdata *   pd;
-    wctparms *  parms;
+    const char* delim = " \n\t";
+    char*       data = (char*)NULL;
+    char*       buf2 = (char*)NULL;
+    NodeData*   pd;
+    Parms*      parms;
     parms = &(problem->parms);
     pd = &(problem->root_pd);
-    FILE *in = fopen(parms->jobfile, "r");
+    FILE* in = fopen(parms->jobfile, "r");
     curjob = 0;
 
-    if (in != (FILE *)NULL) {
+    if (in != (FILE*)NULL) {
         get_problem_name(pd->pname, parms->jobfile);
 
         if (fgets(buf, 254, in) != NULL) {
             p = buf;
             data = strtok(p, delim);
-            sscanf(data, "%d", &nbjobs);
-            bufsize = 3 * nbjobs * (2 + (int)ceil(log((double)nbjobs + 10)));
-            buf2 = (char *)CC_SAFE_MALLOC(bufsize, char);
+            sscanf(data, "%d", &nb_jobs);
+            bufsize = 3 * nb_jobs * (2 + (int)ceil(log((double)nb_jobs + 10)));
+            buf2 = (char*)CC_SAFE_MALLOC(bufsize, char);
             CCcheck_NULL_2(buf2, "Failed to allocate buf2");
         } else {
             val = 1;
             goto CLEAN;
         }
 
-        while (fgets(buf2, bufsize, in) != (char *)NULL) {
+        while (fgets(buf2, bufsize, in) != (char*)NULL) {
             p = buf2;
             sscanf(p, "%d %d %d", &curduration, &curduedate, &curweight);
-            curduedate = curduedate / parms->nmachines;
+            curduedate = curduedate / parms->nb_machines;
             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
             g_ptr_array_add(problem->g_job_array, tmp_j);
 
-            if (tmp_j->processingime > tmp_j->duetime) {
+            if (tmp_j->processing_time > tmp_j->due_time) {
                 problem->off +=
-                    tmp_j->weight * (tmp_j->processingime - tmp_j->duetime);
-                tmp_j->duetime = tmp_j->processingime;
+                    tmp_j->weight * (tmp_j->processing_time - tmp_j->due_time);
+                tmp_j->due_time = tmp_j->processing_time;
             }
 
             tmp_j->job = curjob;
             curjob++;
         }
 
-        problem->njobs = pd->njobs = nbjobs;
-        problem->nmachines = pd->nmachines = parms->nmachines;
+        problem->nb_jobs = pd->nb_jobs = nb_jobs;
+        problem->nb_machines = pd->nb_machines = parms->nb_machines;
     } else {
         fprintf(stderr, "Unable to open file %s\n", parms->jobfile);
         val = 1;
@@ -99,12 +99,12 @@ CLEAN:
     return val;
 }
 
-int print_to_csv(wctproblem *problem) {
+int print_to_csv(Problem* problem) {
     int       val = 0;
-    wctdata * pd = &(problem->root_pd);
-    wctparms *parms = &(problem->parms);
-    FILE *    file = (FILE *)NULL;
-    char      filenm[128];
+    NodeData* pd = &(problem->root_pd);
+    Parms*    parms = &(problem->parms);
+    FILE*     file = (FILE*)NULL;
+    char      file_name[128];
     int       size;
     GDate     date;
     g_date_set_time_t(&date, time(NULL));
@@ -114,7 +114,7 @@ int print_to_csv(wctproblem *problem) {
     file = fopen("overall.csv", "a+");
 
     if (file == NULL) {
-        printf("We couldn't open %s in %s at line %d\n", filenm, __FILE__,
+        printf("We couldn't open %s in %s at line %d\n", file_name, __FILE__,
                __LINE__);
         val = 1;
         goto CLEAN;
@@ -125,33 +125,36 @@ int print_to_csv(wctproblem *problem) {
 
     if (size == 0) {
         fprintf(file,
-                "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%"
+                "s,%s\n",
                 "NameInstance", "tot_real_time", "tot_cputime", "tot_lb",
-                "tot_lb_root", 
-                "tot_heuristic", "tot_build_dd", "tot_pricing",
-                "rel_error", "global_lower_bound",
-                "global_upper_bound",
-                "first_rel_error",
-                "nb_generated_col", "date","nb_iterations_rvnd", "stabilization","alpha", "pricing_solver", "n", "m");
+                "tot_lb_root", "tot_heuristic", "tot_build_dd", "tot_pricing",
+                "rel_error", "global_lower_bound", "global_upper_bound",
+                "first_rel_error", "nb_generated_col", "date",
+                "nb_iterations_rvnd", "stabilization", "alpha",
+                "pricing_solver", "n", "m", "first_size_graph",
+                "size_after_reduced_cost");
     }
 
     fprintf(file,
             "%s,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
-            "%u/%u,%d,%d,%f,%d,%d,%d\n",
+            "%u/%u,%d,%d,%f,%d,%d,%d,%lu,%lu\n",
             pd->pname, problem->real_time_total, problem->tot_cputime.cum_zeit,
             problem->tot_lb.cum_zeit, problem->tot_lb_root.cum_zeit,
             problem->tot_heuristic.cum_zeit, problem->tot_build_dd.cum_zeit,
             problem->tot_pricing.cum_zeit, problem->rel_error,
             problem->global_lower_bound, problem->global_upper_bound,
-            problem->root_rel_error,
-            problem->nb_generated_col, date.day,
-            date.month, date.year, parms->nb_iterations_rvnd, parms->stab_technique,parms->alpha,parms->pricing_solver,problem->njobs, problem->nmachines);
+            problem->root_rel_error, problem->nb_generated_col, date.day,
+            date.month, date.year, parms->nb_iterations_rvnd,
+            parms->stab_technique, parms->alpha, parms->pricing_solver,
+            problem->nb_jobs, problem->nb_machines, problem->first_size_graph,
+            problem->size_graph_after_reduced_cost_fixing);
     fclose(file);
 CLEAN:
     return val;
 }
 
-int print_to_screen(wctproblem *problem) {
+int print_to_screen(Problem* problem) {
     int val = 0;
 
     switch (problem->status) {
@@ -163,7 +166,7 @@ int print_to_screen(wctproblem *problem) {
 
         case feasible:
         case lp_feasible:
-        case meta_heur:
+        case meta_heuristic:
             printf("A suboptimal schedule with relative error %f is found.\n",
                    (double)(problem->global_upper_bound -
                             problem->global_lower_bound) /
@@ -188,21 +191,21 @@ int print_to_screen(wctproblem *problem) {
 }
 
 /** Printing sizes of ZDD */
-int print_size_to_csv(wctproblem *problem, wctdata *pd) {
-    int       val = 0;
-    int       size;
-    wctparms *parms = &(problem->parms);
-    char      filenm[128];
-    FILE *    file = (FILE *)NULL;
-    GDate     date;
+int print_size_to_csv(Problem* problem, NodeData* pd) {
+    int    val = 0;
+    int    size;
+    Parms* parms = &(problem->parms);
+    char   file_name[128];
+    FILE*  file = (FILE*)NULL;
+    GDate  date;
     g_date_set_time_t(&date, time(NULL));
 
-    sprintf(filenm, "overall_size.csv");
+    sprintf(file_name, "overall_size.csv");
 
-    file = fopen(filenm, "a+");
+    file = fopen(file_name, "a+");
 
     if (file == NULL) {
-        printf("We couldn't open %s in %s at line %d\n", filenm, __FILE__,
+        printf("We couldn't open %s in %s at line %d\n", file_name, __FILE__,
                __LINE__);
         val = 1;
         goto CLEAN;
@@ -212,10 +215,13 @@ int print_size_to_csv(wctproblem *problem, wctdata *pd) {
     size = ftell(file);
 
     if (size == 0) {
-        fprintf(file, "%s,%s,%s,%s,%s\n", "NameInstance","date","solver","size","sizearc");
+        fprintf(file, "%s,%s,%s,%s,%s\n", "NameInstance", "date", "solver",
+                "size", "depth");
     }
 
-    fprintf(file, "%s,%u/%u/%u,%d,%zu,%d\n",pd->pname, date.day, date.month, date.year, parms->pricing_solver, get_datasize(pd->solver), get_nb_arcs_ati(pd->solver));
+    fprintf(file, "%s,%u/%u/%u,%d,%lu,%d\n", pd->pname, date.day, date.month,
+            date.year, parms->pricing_solver, get_nb_vertices(pd->solver),
+            pd->depth);
 
     fclose(file);
 CLEAN:

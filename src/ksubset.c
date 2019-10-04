@@ -1,7 +1,7 @@
 #include <ksubset.h>
 #include <util.h>
 
-void k_subset_init(int n, int k, int *subset, int *flag) {
+void k_subset_init(int n, int k, int* subset, int* flag) {
     if (k > n) {
         k = n;
     }
@@ -15,9 +15,9 @@ void k_subset_init(int n, int k, int *subset, int *flag) {
     *flag = 1;
 }
 
-int k_subset_lex_successor(int n, int k, int *subset, int *flag) {
+int k_subset_lex_successor(int n, int k, int* subset, int* flag) {
     int  val = 0, i, j;
-    int *temp_set = CC_SAFE_MALLOC(k + 1, int);
+    int* temp_set = CC_SAFE_MALLOC(k + 1, int);
     CCcheck_NULL_2(temp_set, "Failed to allocate memory to temp_set");
     *flag = 1;
 
@@ -48,7 +48,7 @@ CLEAN:
     return val;
 }
 
-void k_subset_lex_rank(int *subset, int k, int n, int *r) {
+void k_subset_lex_rank(int* subset, int k, int n, int* r) {
     int i, j;
     (*r) = 0;
     subset[0] = 0;
@@ -59,23 +59,23 @@ void k_subset_lex_rank(int *subset, int k, int n, int *r) {
 
         if (lo <= hi) {
             for (j = lo; j <= hi; j = j + 1) {
-                (*r) = (*r) + bin_coef(n - j, k - i);
+                (*r) = (*r) + bin_coeff(n - j, k - i);
             }
         }
     }
 }
 
-void k_subset_lex_unrank(int r, int *T, int n, int k) {
+void k_subset_lex_unrank(int r, int* T, int n, int k) {
     int x;
     x = 1;
 
     for (int i = 1; i <= k; i = i + 1) {
-        int y = bin_coef(n - x, k - i);
+        int y = bin_coeff(n - x, k - i);
 
         while (y <= r) {
             r = r - y;
             x = x + 1;
-            y = bin_coef(n - x, k - i);
+            y = bin_coeff(n - x, k - i);
         }
 
         T[i] = x;
@@ -83,7 +83,7 @@ void k_subset_lex_unrank(int r, int *T, int n, int k) {
     }
 }
 
-int ksubset_init(int n, int k, ksubset_lex *set) {
+int ksubset_init(int n, int k, ksubset_lex* set) {
     int val = 0;
     set->n = n;
 
@@ -105,14 +105,14 @@ CLEAN:
     return val;
 }
 
-void ksubset_free(ksubset_lex *set) {
+void ksubset_free(ksubset_lex* set) {
     set->m = 0;
     set->n = 0;
     set->j = 0;
     CC_IFFREE(set->x, int);
 }
 
-int ksubset_next(ksubset_lex *set) {
+int ksubset_next(ksubset_lex* set) {
     int j1 = set->j - 1;
     int z1 = set->x[j1] + 1;
 
@@ -136,9 +136,11 @@ int ksubset_next(ksubset_lex *set) {
     }
 }
 
-int *ksubset_data(ksubset_lex *set) { return set->x; }
+int* ksubset_data(ksubset_lex* set) {
+    return set->x;
+}
 
-int ksubset_check(ksubset_lex *set) {
+int ksubset_check(ksubset_lex* set) {
     if (set->x[set->j - 1] >= set->n) {
         return 0;
     }
@@ -150,7 +152,7 @@ int ksubset_check(ksubset_lex *set) {
     return 1;
 }
 
-int ksubset_rec_init(ksubset_rec *set, ulong n) {
+int ksubset_rec_init(ksubset_rec* set, ulong n) {
     int val = 0;
     set->n = n;
     set->rv = CC_SAFE_MALLOC(set->n + 1, ulong);
@@ -166,18 +168,14 @@ CLEAN:
     return val;
 }
 
-void ksubset_rec_free(ksubset_rec *set) {
+void ksubset_rec_free(ksubset_rec* set) {
     --set->rv;
     CC_IFFREE(set->rv, ulong);
 }
 
-void ksubset_rec_generate(void *       data,
-                          ksubset_rec *set,
-                          ulong        kmin,
-                          ulong        kmax,
-                          ulong        rq,
-                          ulong        nq,
-                          void (*visit)(const void *, const void *, ulong)) {
+void ksubset_rec_generate(void* data, ksubset_rec* set, ulong kmin, ulong kmax,
+                          ulong rq, ulong nq,
+                          void (*visit)(const void*, const void*, ulong)) {
     set->ct = 0;
     set->rct = 0;
     set->kmin = kmin;
@@ -203,7 +201,7 @@ void ksubset_rec_generate(void *       data,
     ksubset_next_rec(data, set, 0);
 }
 
-void ksubset_next_rec(void *data, ksubset_rec *set, ulong d) {
+void ksubset_next_rec(void* data, ksubset_rec* set, ulong d) {
     if (d > set->kmax) {
         return;
     }

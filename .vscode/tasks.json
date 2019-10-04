@@ -1,0 +1,50 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "make",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "args": [
+                "-j",
+                "8"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "${command:cmake.launchTargetPath}",
+            "args": [
+                "-S",
+                "1",
+                "-a",
+                "1",
+                "${workspaceRoot}/instances/wt5/wt040_112.dat",
+                "2"
+            ],
+            "dependsOn": [
+                "build"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "run test",
+            "type": "shell",
+            "command": "${workspaceRoot}/scripts/mip.sh",
+            "dependsOn": [
+                "build"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

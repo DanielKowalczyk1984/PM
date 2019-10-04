@@ -1,5 +1,6 @@
 #include <boost/dynamic_bitset.hpp>
-#include <tdzdd/DdSpec.hpp>
+// #include <tdzdd/DdSpec.hpp>
+#include "NodeBddSpec.hpp"
 #include <solution.h>
 #include <interval.h>
 #include <glib.h>
@@ -14,7 +15,7 @@ class conflict_state {
     ~conflict_state(){};
 };
 
-class PricerConstruct : public tdzdd::DdSpec<PricerConstruct, int, 2> {
+class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     GPtrArray *pair_list;
     int nlayers;
 
@@ -38,13 +39,13 @@ public:
          Job *tmp_j = (Job *) tmp_pair->j;
 
          // if (level - 1 == 0 && value) {
-         //     return (state + tmp_j->processingime <= tmp_interval->b)? -1 : 0;
+         //     return (state + tmp_j->processing_time <= tmp_interval->b)? -1 : 0;
          // } else if (level - 1 == 0) {
          //     return ( state <= tmp_interval->b) ? -1 : 0;
          // }
 
          if (value) {
-             state = state + tmp_j->processingime;
+             state = state + tmp_j->processing_time;
          }
 
          _j = min_job(layer, state,value);
@@ -75,7 +76,7 @@ public:
                 tmp_interval = tmp_pair->I;
                 tmp_j = tmp_pair->j;
 
-                 if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b ) {
+                 if (state + tmp_j->processing_time > tmp_interval->a  && state + tmp_j->processing_time <= tmp_interval->b ) {
                      if(tmp == tmp_j || value_diff_Fij(state, tmp_j, tmp) < 0) {
                          continue;
                      }
@@ -89,7 +90,7 @@ public:
                tmp_interval = tmp_pair->I;
                tmp_j = tmp_pair->j;
 
-                if (state + tmp_j->processingime > tmp_interval->a  && state + tmp_j->processingime <= tmp_interval->b) {
+                if (state + tmp_j->processing_time > tmp_interval->a  && state + tmp_j->processing_time <= tmp_interval->b) {
                     val = i;
                     break;
                 }
@@ -100,7 +101,7 @@ public:
      }
 
      int diff_obj(Job *i, Job *j, int C) const {
-        return value_Fj(C, i) + value_Fj(C + j->processingime, j) - (value_Fj(C - i->processingime + j->processingime, j) + value_Fj(C + j->processingime, i));
+        return value_Fj(C, i) + value_Fj(C + j->processing_time, j) - (value_Fj(C - i->processing_time + j->processing_time, j) + value_Fj(C + j->processing_time, i));
 
      }
 
@@ -108,7 +109,7 @@ public:
 };
 
 class ConflictConstraints
-    : public tdzdd::DdSpec<ConflictConstraints, conflict_state, 2> {
+    : public DdSpec<ConflictConstraints, conflict_state, 2> {
     int                                  nbjobs;
     std::vector<boost::dynamic_bitset<>> differsets;
     std::vector<boost::dynamic_bitset<>> samesets;
@@ -249,7 +250,7 @@ class ConflictConstraints
     }
 };
 
-class scheduling: public tdzdd::DdSpec<scheduling, int, 2> {
+class scheduling: public DdSpec<scheduling, int, 2> {
     Job * job;
     GPtrArray *list_layers;
     int nlayers;
@@ -290,6 +291,7 @@ class scheduling: public tdzdd::DdSpec<scheduling, int, 2> {
 
         if (take) {
             if(tmp_j != job) {
+                // state++;
                 j++;
                 return nlayers - j;
             } else {
@@ -298,11 +300,11 @@ class scheduling: public tdzdd::DdSpec<scheduling, int, 2> {
                     j++;
                     return  nlayers - j;
                 }else if (state >= order) {
-                    state = 0;
+                    state = 1;
                     j++;
                     return nlayers - j;
-
                 } else {
+                    state++;
                     return 0;
                 }
             }

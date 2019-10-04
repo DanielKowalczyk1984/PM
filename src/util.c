@@ -1,6 +1,6 @@
 #include <util.h>
 
-int bin_coef(int n, int r) {
+int bin_coeff(int n, int r) {
     int b;
 
     if ((r < 0) || (n < r)) {
@@ -28,10 +28,8 @@ void print_line() {
         "-------------\n");
 }
 
-int bisearch(int *       sorted,
-             const void *target,
-             int         size,
-             int (*compare)(const void *key1, const void *key2)) {
+int bisearch(int* sorted, const void* target, int size,
+             int (*compare)(const void* key1, const void* key2)) {
     int left, right;
     left = 0;
     right = size - 1;
@@ -66,7 +64,7 @@ void dump_uname() {
     printf("machine: %s\n", uts.machine);
 }
 
-int program_header(int ac, char **av) {
+int program_header(int ac, char** av) {
     int    val = 0;
     time_t starttime;
     int    i;

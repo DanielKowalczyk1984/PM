@@ -121,19 +121,23 @@ double CCutil_zeit(void) {
 
 #else  /* HAVE_CLOCK */
 
-double CCutil_zeit(void) { return 0.0; }
+double CCutil_zeit(void) {
+    return 0.0;
+}
 #endif /* HAVE_CLOCK */
 #endif /* HAVE_TIMES */
 #endif /* HAVE_GETRUSAGE */
 
-double CCutil_real_zeit(void) { return (double)time(0); }
+double CCutil_real_zeit(void) {
+    return (double)time(0);
+}
 
-void CCutil_init_timer(CCutil_timer *t, const char *name) {
+void CCutil_init_timer(CCutil_timer* t, const char* name) {
     t->szeit = -1.0;
     t->cum_zeit = 0.0;
     t->count = 0;
 
-    if (name == (char *)NULL || name[0] == '\0') {
+    if (name == (char*)NULL || name[0] == '\0') {
         strncpy(t->name, "ANONYMOUS", sizeof(t->name) - 1);
     } else {
         strncpy(t->name, name, sizeof(t->name) - 1);
@@ -142,7 +146,7 @@ void CCutil_init_timer(CCutil_timer *t, const char *name) {
     t->name[sizeof(t->name) - 1] = '\0';
 }
 
-void CCutil_start_timer(CCutil_timer *t) {
+void CCutil_start_timer(CCutil_timer* t) {
     if (t->szeit != -1.0) {
         fprintf(stderr, "Warning: restarting running timer %s at %d in %s\n",
                 t->name, __LINE__, __FILE__);
@@ -151,7 +155,7 @@ void CCutil_start_timer(CCutil_timer *t) {
     t->szeit = CCutil_zeit();
 }
 
-void CCutil_suspend_timer(CCutil_timer *t) {
+void CCutil_suspend_timer(CCutil_timer* t) {
     if (t->szeit == -1.0) {
         fprintf(stderr, "Warning: suspended non-running timer %s at %d in %s\n",
                 t->name, __LINE__, __FILE__);
@@ -162,7 +166,7 @@ void CCutil_suspend_timer(CCutil_timer *t) {
     t->szeit = -1.0;
 }
 
-void CCutil_start_resume_time(CCutil_timer *t) {
+void CCutil_start_resume_time(CCutil_timer* t) {
     if (t->cum_zeit == .0) {
         CCutil_start_timer(t);
     } else {
@@ -170,7 +174,7 @@ void CCutil_start_resume_time(CCutil_timer *t) {
     }
 }
 
-void CCutil_resume_timer(CCutil_timer *t) {
+void CCutil_resume_timer(CCutil_timer* t) {
     if (t->szeit != -1.0) {
         fprintf(stderr, "Warning: resuming running timer %s at %d in %s\n",
                 t->name, __LINE__, __FILE__);
@@ -180,7 +184,7 @@ void CCutil_resume_timer(CCutil_timer *t) {
     t->szeit = CCutil_zeit();
 }
 
-double CCutil_stop_timer(CCutil_timer *t, int printit) {
+double CCutil_stop_timer(CCutil_timer* t, int printit) {
     double z;
 
     if (t->szeit == -1.0) {
@@ -207,7 +211,7 @@ double CCutil_stop_timer(CCutil_timer *t, int printit) {
     return z;
 }
 
-double CCutil_total_timer(CCutil_timer *t, int printit) {
+double CCutil_total_timer(CCutil_timer* t, int printit) {
     double z = t->cum_zeit;
 
     if (t->szeit != -1.0) {

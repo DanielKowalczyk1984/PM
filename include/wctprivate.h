@@ -21,27 +21,29 @@ typedef enum {
     submitted_for_branching = 3,
     infeasible = 4,
     finished = 5,
-} data_status;
+} NodeDataStatus;
 
 /**
  * problem data
  */
-typedef struct wctproblem wctproblem;
+typedef struct _Problem Problem;
+
 /**
  * node data
  */
-typedef struct wctdata wctdata;
+typedef struct _NodeData NodeData;
 
-struct wctdata {
+struct _NodeData {
     // The id and depth of the node in the B&B tree
     int id;
     int depth;
+    int test;
 
-    data_status status;
+    NodeDataStatus status;
 
     // The instance information
-    int njobs;
-    int nmachines;
+    int nb_jobs;
+    int nb_machines;
     int *orig_node_ids;
     // data for meta heuristic
     GPtrArray *jobarray;
@@ -53,29 +55,24 @@ struct wctdata {
     int **sump;
 
     // The column generation lp information
-    wctlp *LP;
+    wctlp *RMP;
     wctlp *MIP;
-    double *x;
+    double *lambda;
     double *x_e;
-    double *coef;
+    double *coeff;
     double *pi;
     // PricerSolver
     PricerSolver *solver;
 
     // Columns
-    // int          ccount;
+    // int          nb_columns;
     // scheduleset *cclasses;
-    int          dzcount;
+    int          zero_count;
     // int          gallocated;
-    scheduleset *newsets;
-    int          nnewsets;
-    int *cstat;
+    ScheduleSet *newsets;
+    int          nb_new_sets;
+    int *column_status;
     GPtrArray *localColPool;
-
-    int  kpc_pi_scalef;
-    int  kpc_pi_scalef_heur;
-    int *kpc_pi;
-    int *kpc_pi_heur;
 
     int     lower_bound;
     int     upper_bound;
@@ -83,13 +80,11 @@ struct wctdata {
     double  partial_sol;
     double  dbl_safe_lower_bound;
     double  dbl_est_lower_bound;
-    double  dbl_est_lower_bound_heur;
     double  LP_lower_bound;
-    double  LP_lower_bound_heur;
     double  LP_lower_bound_dual;
     double  LP_lower_bound_BB;
     double *rhs;
-    int     nnonimprovements;
+    int     nb_non_improvements;
     int iterations;
     /** Wentges smoothing technique */
     double *pi_in;
@@ -104,7 +99,7 @@ struct wctdata {
     int node_stab;
     int     hasstabcenter;
     double  eta_in;
-    int inmispricingschedule;
+    int in_mispricing_schedule;
     double subgradientproduct;
     double *pi_out;
     double *pi_sep;
@@ -115,11 +110,11 @@ struct wctdata {
     int     update;
 
     // Best Solution
-    scheduleset *bestcolors;
-    int          besttotwct;
-    int          nbbest;
+    ScheduleSet *bestcolors;
+    int          best_objective;
+    int          nb_best;
 
-    const scheduleset *debugcolors;
+    const ScheduleSet *debugcolors;
     int                ndebugcolors;
     int                opt_track;
 
@@ -131,38 +126,38 @@ struct wctdata {
     int choose;
     /** conflict */
     int     *elist_same;
-    int      ecount_same;
+    int      edge_count_same;
     int     *elist_differ;
-    int      ecount_differ;
-    wctdata *same_children;
-    int      nsame;
-    wctdata *diff_children;
-    int      ndiff;
+    int      edge_count_differ;
+    NodeData *same_children;
+    int      nb_same;
+    NodeData *diff_children;
+    int      nb_diff;
     Job      *v1, *v2;
     /** ahv branching */
-    wctdata *duetime_child;
-    int      nduetime;
-    wctdata *releasetime_child;
-    int      nreleasetime;
+    NodeData *duetime_child;
+    int      nb_duetime;
+    NodeData *releasetime_child;
+    int      nb_releasetime;
     int      branch_job;
     int      completiontime;
     /** wide branching conflict */
     int      *v1_wide;
     int      *v2_wide;
     int       nb_wide;
-    wctdata **same_children_wide;
-    wctdata **diff_children_wide;
+    NodeData **same_children_wide;
+    NodeData **diff_children_wide;
 
 
     /**
      * ptr to the parent node
      */
-    wctdata *parent;
+    NodeData *parent;
 
     /**
      * ptr to the data overview
      */
-    wctproblem *problem;
+    Problem *problem;
 
     char pname[MAX_PNAME_LEN];
 };
@@ -175,19 +170,20 @@ typedef enum {
     no_sol = 0,
     lp_feasible = 1,
     feasible = 2,
-    meta_heur = 3,
+    meta_heuristic = 3,
     optimal = 4
 } problem_status;
 
 
-struct wctproblem {
-    wctparms parms;
-    wctdata  root_pd;
+struct _Problem {
+    Parms parms;
+    NodeData  root_pd;
     /** Job data in EDD order */
     GPtrArray *g_job_array;
+    GPtrArray *list_solutions;
     /** Summary of jobs */
-    int njobs;
-    int psum;
+    int nb_jobs;
+    int p_sum;
     int pmax;
     int pmin;
     int dmax;
@@ -195,10 +191,9 @@ struct wctproblem {
     int H_min;
     int H_max;
     int off;
-    /** nmachines */
-    int nmachines;
+    int nb_machines;
 
-    int    nwctdata;
+    int    nb_data_nodes;
     int    global_upper_bound;
     int    global_lower_bound;
     double rel_error;
@@ -210,18 +205,12 @@ struct wctproblem {
     problem_status status;
 
     /* All partial schedules*/
-    scheduleset *initsets;
-    int          nbinitsets;
-    int          gallocated;
     GPtrArray *ColPool;
     /** Maximum number of artificial columns */
     int maxArtificials;
     /** Actual number of artificial columns */
-    int nArtificials;
     /* Best Solution*/
-    solution    *opt_sol;
-    scheduleset *bestschedule;
-    int          nbestschedule;
+    Solution    *opt_sol;
     /*heap variables*/
     BinomialHeap *br_heap_a;
     GPtrArray    *unexplored_states;
@@ -229,11 +218,14 @@ struct wctproblem {
     unsigned int  last_explored;
     int           mult_key;
     int           found;
+    /*Cpu time measurement + Statistics*/
     int           nb_explored_nodes;
     int           nb_generated_nodes;
     int           nb_generated_col;
     int           nb_generated_col_root;
-    /*Cpu time measurement*/
+    size_t first_size_graph;
+    size_t size_graph_after_reduced_cost_fixing;
+
     CCutil_timer tot_build_dd;
     CCutil_timer tot_cputime;
     CCutil_timer tot_branch_and_bound;
@@ -257,38 +249,41 @@ struct wctproblem {
 };
 
 /*Initialization and free memory for the problem*/
-void wctproblem_init(wctproblem *problem);
-void wctproblem_free(wctproblem *problem);
+void problem_init(Problem *problem);
+void problem_free(Problem *problem);
 
 /*Initialize pmc data*/
-void wctdata_init(wctdata *pd, wctproblem *prob);
-int set_id_and_name(wctdata *pd, int id, const char *fname);
-int wctdata_init_unique(wctdata *pd, int id, const char *name);
-int lp_build(wctdata *pd);
+void nodedata_init(NodeData *pd, Problem *prob);
+int set_id_and_name(NodeData *pd, int id, const char *fname);
 
-/*Free the wctdata*/
-void lpwctdata_free(wctdata *pd);
-void children_data_free(wctdata *pd);
-void wctdata_free(wctdata *pd);
-void temporary_data_free(wctdata *pd);
+/*Free the Nodedata*/
+void lp_node_data_free(NodeData *pd);
+void children_data_free(NodeData *pd);
+void nodedata_free(NodeData *pd);
+void temporary_data_free(NodeData *pd);
 
 /**
  * solver zdd
  */
-int evaluate_nodes(wctdata *pd);
-int calculate_new_ordered_jobs(wctdata *pd);
-int build_solve_mip(wctdata *pd);
+int evaluate_nodes(NodeData *pd);
+int reduce_cost_fixing(NodeData *pd);
+int build_solve_mip(NodeData *pd);
+int construct_lp_sol_from_rmp(NodeData *pd);
+void disjunctive_inequality(NodeData *pd, Solution *sol);
+void represent_solution(NodeData *pd, Solution *sol);
+int check_schedule_set(ScheduleSet *set, NodeData *pd);
+void add_constraint(NodeData *pd, Job *job, int order);
 
 
 /**
  * pricing algorithms
  */
-int solve_pricing(wctdata *pd, wctparms *parms, int evaluate);
-int solve_stab(wctdata *pd, wctparms *parms);
-int solve_stab_dynamic(wctdata *pd, wctparms *parms);
-int solve_stab_hybrid(wctdata *pd, wctparms *parms);
-int solve_farkas_dbl(wctdata *pd);
-int solve_farkas_dbl_DP(wctdata *pd);
+int solve_pricing(NodeData *pd, Parms *parms, int evaluate);
+int solve_stab(NodeData *pd, Parms *parms);
+int solve_stab_dynamic(NodeData *pd, Parms *parms);
+int solve_stab_hybrid(NodeData *pd, Parms *parms);
+int solve_farkas_dbl(NodeData *pd);
+int solve_farkas_dbl_DP(NodeData *pd);
 #ifdef __cplusplus
 }
 #endif

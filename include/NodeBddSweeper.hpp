@@ -22,32 +22,34 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef NODE_BDD_SWEEPER_HPP
+#define NODE_BDD_SWEEPER_HPP
 
 #include <cassert>
 #include <ostream>
 
 #include "node_duration.hpp"
+#include "NodeBranchId.hpp"
 #include "NodeBddTable.hpp"
-#include "tdzdd/util/MyVector.hpp"
+#include "util/MyVector.hpp"
 
 /**
  * On-the-fly DD cleaner.
  * Removes the nodes that are identified as equivalent to the 0-terminal
  * while top-down DD construction.
  */
-template<typename T = double>
+template<typename T = NodeBdd<double>>
 class DdSweeper {
     static size_t const SWEEP_RATIO = 20;
 
     NodeTableEntity<T>& diagram;
-    tdzdd::MyVector<tdzdd::NodeBranchId>* oneSrcPtr;
+    MyVector<NodeBranchId>* oneSrcPtr;
 
-    tdzdd::MyVector<int> sweepLevel;
-    tdzdd::MyVector<size_t> deadCount;
+    MyVector<int> sweepLevel;
+    MyVector<size_t> deadCount;
     size_t allCount;
     size_t maxCount;
-    nodeid* rootPtr;
+    NodeId* rootPtr;
 
 public:
     /**
@@ -64,7 +66,7 @@ public:
      * @param oneSrcPtr collection of node branch IDs.
      */
     DdSweeper(NodeTableEntity<T>& diagram,
-              tdzdd::MyVector<tdzdd::NodeBranchId>& oneSrcPtr) :
+              MyVector<NodeBranchId>& oneSrcPtr) :
             diagram(diagram),
             oneSrcPtr(&oneSrcPtr),
             allCount(0),
@@ -76,7 +78,7 @@ public:
      * Set the root pointer.
      * @param root reference to the root ID storage.
      */
-    void setRoot(nodeid& root) {
+    void setRoot(NodeId& root) {
         rootPtr = &root;
     }
 
@@ -112,7 +114,7 @@ public:
         if (maxCount < allCount) maxCount = allCount;
         if (deadCount[k] * SWEEP_RATIO < maxCount) return;
 
-        tdzdd::MyVector<tdzdd::MyVector<nodeid> > newId(diagram.numRows());
+        MyVector<MyVector<NodeId> > newId(diagram.numRows());
 
 
         for (int i = k; i < diagram.numRows(); ++i) {
@@ -122,11 +124,11 @@ public:
             size_t jj = 0;
 
             for (size_t j = 0; j < m; ++j) {
-                Node<T>& p = diagram[i][j];
+                T& p = diagram[i][j];
                 bool dead = true;
 
                 for (int b = 0; b < 2; ++b) {
-                    nodeid& f = p.branch[b];
+                    NodeId& f = p.branch[b];
                     if (f.row() >= k) f = newId[f.row()][f.col()];
                     if (f != 0) dead = false;
                 }
@@ -135,7 +137,7 @@ public:
                     newId[i][j] = 0;
                 }
                 else {
-                    newId[i][j] = nodeid(i, jj);
+                    newId[i][j] = NodeId(i, jj);
                     diagram[i][jj] = p;
                     ++jj;
                 }
@@ -146,9 +148,9 @@ public:
 
         if (oneSrcPtr) {
             for (size_t i = 0; i < oneSrcPtr->size(); ++i) {
-                tdzdd::NodeBranchId& nbi = (*oneSrcPtr)[i];
+                NodeBranchId& nbi = (*oneSrcPtr)[i];
                 if (nbi.row >= k) {
-                    nodeid f = newId[nbi.row][nbi.col];
+                    NodeId f = newId[nbi.row][nbi.col];
                     nbi.row = f.row();
                     nbi.col = f.col();
                 }
@@ -160,3 +162,8 @@ public:
         allCount = diagram.size();
     }
 };
+
+
+#endif // NODE_BDD_SWEEPER_HPP
+
+

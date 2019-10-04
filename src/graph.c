@@ -12,15 +12,10 @@
 #include <graph.h>
 #include <util.h>
 
-static int permute_nodes(int * invorder,
-                         int   vcount,
-                         int   ecount,
-                         int * elist,
-                         int * weights,
-                         int **pielist,
-                         int **piweights);
+static int permute_nodes(int* invorder, int nb_nodes, int nb_edges, int* elist,
+                         int* weights, int** pielist, int** pi_weights);
 
-static void adjNode_SWAP(adjNode *n1, adjNode *n2, adjNode *temp);
+static void adjNode_SWAP(adjNode* n1, adjNode* n2, adjNode* temp);
 #define fill(x)                               \
     {                                         \
         list[x].degree = 0;                   \
@@ -28,7 +23,7 @@ static void adjNode_SWAP(adjNode *n1, adjNode *n2, adjNode *temp);
         list[x].color = -1;                   \
         list[x].weight = weights[x];          \
         G->totweight += weights[x];           \
-        for (int j = i; j < G->vcount; j++) { \
+        for (int j = i; j < G->nb_nodes; j++) { \
             G->adjMatrix[i][j] = 0;           \
             G->adjMatrix[j][i] = 0;           \
         }                                     \
@@ -42,7 +37,7 @@ static void adjNode_SWAP(adjNode *n1, adjNode *n2, adjNode *temp);
         list->color = -1;                     \
         list->weight = *weights;              \
         G->totweight += *weights;             \
-        for (int j = i; j < G->vcount; j++) { \
+        for (int j = i; j < G->nb_nodes; j++) { \
             G->adjMatrix[i][j] = 0;           \
             G->adjMatrix[j][i] = 0;           \
         }                                     \
@@ -68,25 +63,25 @@ static void adjNode_SWAP(adjNode *n1, adjNode *n2, adjNode *temp);
         G->adjMatrix[elist[2 * x + 1]][elist[2 * x]] = 1; \
     }
 
-static void fill_graph(adjGraph *G, const int *weights) {
+static void fill_graph(adjGraph* G, const int* weights) {
     int      i = 0;
-    int      vcount = G->vcount;
-    adjNode *list = G->nodelist;
+    int      nb_nodes = G->nb_nodes;
+    adjNode* list = G->nodelist;
 
-    if (vcount & 1) {
+    if (nb_nodes & 1) {
         fill1();
     }
 
-    vcount >>= 1;
+    nb_nodes >>= 1;
 
-    if (vcount & 1) {
+    if (nb_nodes & 1) {
         fill1();
         fill1();
     }
 
-    vcount >>= 1;
+    nb_nodes >>= 1;
 
-    while (vcount--) {
+    while (nb_nodes--) {
         fill(0);
         fill(1);
         fill(2);
@@ -96,24 +91,24 @@ static void fill_graph(adjGraph *G, const int *weights) {
     }
 }
 
-static void fill_list(adjGraph *G, const int *elist) {
-    adjNode *list = G->nodelist;
-    int      ecount = G->ecount;
+static void fill_list(adjGraph* G, const int* elist) {
+    adjNode* list = G->nodelist;
+    int      nb_edges = G->nb_edges;
 
-    if (ecount & 1) {
+    if (nb_edges & 1) {
         fill2();
     }
 
-    ecount >>= 1;
+    nb_edges >>= 1;
 
-    if (ecount & 1) {
+    if (nb_edges & 1) {
         fill2();
         fill2();
     }
 
-    ecount >>= 1;
+    nb_edges >>= 1;
 
-    while (ecount--) {
+    while (nb_edges--) {
         fill3(0);
         fill3(1);
         fill3(2);
@@ -122,28 +117,28 @@ static void fill_list(adjGraph *G, const int *elist) {
     }
 }
 
-void reset_color(adjGraph *G) {
-    int      vcount = G->vcount;
-    adjNode *list = G->nodelist;
-    G->ncolor = 0;
+void reset_color(adjGraph* G) {
+    int      nb_nodes = G->nb_nodes;
+    adjNode* list = G->nodelist;
+    G->nb_colors = 0;
 
-    if (vcount & 1) {
+    if (nb_nodes & 1) {
         list->color = -1;
         list++;
     }
 
-    vcount >>= 1;
+    nb_nodes >>= 1;
 
-    if (vcount & 1) {
+    if (nb_nodes & 1) {
         list->color = -1;
         list++;
         list->color = -1;
         list++;
     }
 
-    vcount >>= 1;
+    nb_nodes >>= 1;
 
-    while (vcount--) {
+    while (nb_nodes--) {
         list[0].color = -1;
         list[1].color = -1;
         list[2].color = -1;
@@ -152,37 +147,34 @@ void reset_color(adjGraph *G) {
     }
 }
 
-int adjGraph_build(adjGraph *G,
-                   int       vcount,
-                   int       ecount,
-                   const int elist[],
+int adjGraph_build(adjGraph* G, int nb_nodes, int nb_edges, const int elist[],
                    const int weights[]) {
     int      val = 0;
     int      i;
-    int *    p;
-    adjNode *nodelist;
+    int*     p;
+    adjNode* nodelist;
     adjGraph_init(G);
-    G->vcount = vcount;
-    G->ecount = ecount;
-    G->nodelist = CC_SAFE_MALLOC(G->vcount, adjNode);
+    G->nb_nodes = nb_nodes;
+    G->nb_edges = nb_edges;
+    G->nodelist = CC_SAFE_MALLOC(G->nb_nodes, adjNode);
     CCcheck_NULL(G->nodelist, "Out of memory for G->nodelist");
-    G->perm = CC_SAFE_MALLOC(G->vcount, int);
+    G->perm = CC_SAFE_MALLOC(G->nb_nodes, int);
     CCcheck_NULL(G->nodelist, "out of memory for G->nodelist");
-    G->weightorder = CC_SAFE_MALLOC(vcount, int);
+    G->weightorder = CC_SAFE_MALLOC(nb_nodes, int);
     CCcheck_NULL(G->weightorder, "Out of memory for G->weightorder");
-    G->adjMatrix = CC_SAFE_MALLOC(G->vcount, int *);
+    G->adjMatrix = CC_SAFE_MALLOC(G->nb_nodes, int*);
 
-    for (i = 0; i < G->vcount; i++) {
-        G->adjMatrix[i] = (int *)NULL;
-        G->adjMatrix[i] = CC_SAFE_MALLOC(G->vcount, int);
+    for (i = 0; i < G->nb_nodes; i++) {
+        G->adjMatrix[i] = (int*)NULL;
+        G->adjMatrix[i] = CC_SAFE_MALLOC(G->nb_nodes, int);
         G->perm[i] = i;
         G->weightorder[i] = i;
     }
 
     nodelist = G->nodelist;
 
-    if (G->ecount != 0) {
-        G->adjspace = CC_SAFE_MALLOC(2 * G->ecount, int);
+    if (G->nb_edges != 0) {
+        G->adjspace = CC_SAFE_MALLOC(2 * G->nb_edges, int);
         CCcheck_NULL(G->adjspace, "out of memory for G->adjspace");
     }
 
@@ -190,59 +182,59 @@ int adjGraph_build(adjGraph *G,
     fill_list(G, elist);
     p = G->adjspace;
 
-    for (i = 0; i < vcount; ++i) {
+    for (i = 0; i < nb_nodes; ++i) {
         nodelist[i].adj = p;
         p += nodelist[i].degree;
         nodelist[i].degree = 0;
     }
 
-    for (i = 0; i < ecount; i++) {
+    for (i = 0; i < nb_edges; i++) {
         nodelist[elist[2 * i]].adj[nodelist[elist[2 * i]].degree++] =
             elist[2 * i + 1];
         nodelist[elist[2 * i + 1]].adj[nodelist[elist[2 * i + 1]].degree++] =
             elist[2 * i];
     }
 
-    adjGraph_quicksort_perm(nodelist, G->weightorder, G->vcount,
+    adjGraph_quicksort_perm(nodelist, G->weightorder, G->nb_nodes,
                             (adjGraph_weight));
     return val;
 }
 
-int adjGraph_buildquick(adjGraph *G, int vcount, int ecount, int *elist) {
+int adjGraph_buildquick(adjGraph* G, int nb_nodes, int nb_edges, int* elist) {
     int      val = 0;
     int      i;
-    int *    p;
-    adjNode *nodelist;
+    int*     p;
+    adjNode* nodelist;
     adjGraph_init(G);
-    G->vcount = vcount;
-    G->ecount = ecount;
-    G->nodelist = CC_SAFE_MALLOC(G->vcount, adjNode);
+    G->nb_nodes = nb_nodes;
+    G->nb_edges = nb_edges;
+    G->nodelist = CC_SAFE_MALLOC(G->nb_nodes, adjNode);
     CCcheck_NULL_2(G->nodelist, "Out of memory for G->nodelist");
     nodelist = G->nodelist;
 
-    if (G->ecount) {
-        G->adjspace = CC_SAFE_MALLOC(2 * G->ecount, int);
+    if (G->nb_edges) {
+        G->adjspace = CC_SAFE_MALLOC(2 * G->nb_edges, int);
         CCcheck_NULL(G->adjspace, "out of memory for G->adjspace");
     }
 
-    for (i = 0; i < vcount; ++i) {
+    for (i = 0; i < nb_nodes; ++i) {
         nodelist[i].degree = 0;
     }
 
-    for (i = 0; i < ecount; i++) {
+    for (i = 0; i < nb_edges; i++) {
         nodelist[elist[2 * i]].degree++;
         nodelist[elist[2 * i + 1]].degree++;
     }
 
     p = G->adjspace;
 
-    for (i = 0; i < vcount; ++i) {
+    for (i = 0; i < nb_nodes; ++i) {
         nodelist[i].adj = p;
         p += nodelist[i].degree;
         nodelist[i].degree = 0;
     }
 
-    for (i = 0; i < ecount; i++) {
+    for (i = 0; i < nb_edges; i++) {
         nodelist[elist[2 * i]].adj[nodelist[elist[2 * i]].degree++] =
             elist[2 * i + 1];
         nodelist[elist[2 * i + 1]].adj[nodelist[elist[2 * i + 1]].degree++] =
@@ -253,24 +245,24 @@ CLEAN:
     return val;
 }
 
-int adjGraph_copy(adjGraph *Gdst, const adjGraph *Gsrc) {
+int adjGraph_copy(adjGraph* graph_dst, const adjGraph* graph_src) {
     int  val = 0;
-    int *elist = (int *)NULL;
-    int  ecount;
-    int *tmp_weightlist = CC_SAFE_MALLOC(Gsrc->vcount, int);
+    int* elist = (int*)NULL;
+    int  nb_edges;
+    int* tmp_weightlist = CC_SAFE_MALLOC(graph_src->nb_nodes, int);
     CCcheck_NULL_2(tmp_weightlist, "Failed allocate memory to tmp_weightlist");
 
-    for (int i = 0; i < Gsrc->vcount; ++i) {
-        tmp_weightlist[i] = Gsrc->nodelist[i].weight;
+    for (int i = 0; i < graph_src->nb_nodes; ++i) {
+        tmp_weightlist[i] = graph_src->nodelist[i].weight;
     }
 
-    val = adjGraph_get_elist(&ecount, &elist, Gsrc);
+    val = adjGraph_get_elist(&nb_edges, &elist, graph_src);
     CCcheck_val_2(val, "adjGraph_get_elist failed");
-    val = adjGraph_build(Gdst, Gsrc->vcount, ecount, elist, tmp_weightlist);
+    val = adjGraph_build(graph_dst, graph_src->nb_nodes, nb_edges, elist, tmp_weightlist);
     CCcheck_val_2(val, "adjGraph_build failed")
 
         CLEAN : if (val) {
-        adjGraph_free(Gdst);
+        adjGraph_free(graph_dst);
     }
 
     if (elist) {
@@ -284,56 +276,56 @@ int adjGraph_copy(adjGraph *Gdst, const adjGraph *Gsrc) {
     return val;
 }
 
-int adjGraph_adjust_schedule(adjGraph *Gdst, const adjGraph *Gsrc) {
+int adjGraph_adjust_schedule(adjGraph* graph_dst, const adjGraph* graph_src) {
     int val = 0;
     int i;
 
-    if (Gdst->vcount != Gsrc->vcount || Gdst->ecount != Gsrc->ecount) {
+    if (graph_dst->nb_nodes != graph_src->nb_nodes || graph_dst->nb_edges != graph_src->nb_edges) {
         fprintf(stderr, "We are considering here two different graphs\n");
         val = 1;
         goto CLEAN;
     }
 
-    CC_IFFREE(Gdst->makespan, int);
-    Gdst->ncolor = Gsrc->ncolor;
-    Gdst->makespan = CC_SAFE_MALLOC(Gdst->ncolor, int);
-    CCcheck_NULL_2(Gdst->makespan, "Out of memory for Gdst->makespan");
+    CC_IFFREE(graph_dst->makespan, int);
+    graph_dst->nb_colors = graph_src->nb_colors;
+    graph_dst->makespan = CC_SAFE_MALLOC(graph_dst->nb_colors, int);
+    CCcheck_NULL_2(graph_dst->makespan, "Out of memory for graph_dst->makespan");
 
-    for (i = 0; i < Gdst->ncolor; i++) {
-        Gdst->makespan[i] = Gsrc->makespan[i];
+    for (i = 0; i < graph_dst->nb_colors; i++) {
+        graph_dst->makespan[i] = graph_src->makespan[i];
     }
 
-    for (i = 0; i < Gdst->vcount; i++) {
-        Gdst->nodelist[i].color = Gsrc->nodelist[i].color;
+    for (i = 0; i < graph_dst->nb_nodes; i++) {
+        graph_dst->nodelist[i].color = graph_src->nodelist[i].color;
     }
 
-    Gdst->makespancolor = Gsrc->makespancolor;
+    graph_dst->makespancolor = graph_src->makespancolor;
 CLEAN:
     return val;
 }
 
-int adjGraph_reset_schedule(adjGraph *G) {
+int adjGraph_reset_schedule(adjGraph* G) {
     int val = 0;
     CC_IFFREE(G->makespan, int);
-    G->ncolor = 0;
+    G->nb_colors = 0;
     reset_color(G);
     G->makespancolor = 0;
     return val;
 }
 
-static int comp_node_ids(const void *v1, const void *v2) {
-    int id1 = *(const int *)v1;
-    int id2 = *(const int *)v2;
+static int comp_node_ids(const void* v1, const void* v2) {
+    int id1 = *(const int*)v1;
+    int id2 = *(const int*)v2;
     return id1 - id2;
 }
 
-static void swap_nodes(int *v1, int *v2) {
+static void swap_nodes(int* v1, int* v2) {
     int tmp = *v1;
     *v1 = *v2;
     *v2 = tmp;
 }
 
-static int unify_adjlist(int *adjlist, int degree, int *tmp_adjlist) {
+static int unify_adjlist(int* adjlist, int degree, int* tmp_adjlist) {
     int new_degree = 0;
 
     if (degree) {
@@ -354,21 +346,21 @@ static int unify_adjlist(int *adjlist, int degree, int *tmp_adjlist) {
     return new_degree;
 }
 
-int adjGraph_simplify(adjGraph *G) {
+int adjGraph_simplify(adjGraph* G) {
     int  val = 0;
     int  i, j;
-    int  vcount, ecount;
-    int *tmp_adjlist = CC_SAFE_MALLOC(G->ecount, int);
-    int *tmp_weightlist = CC_SAFE_MALLOC(G->vcount, int);
+    int  nb_nodes, nb_edges;
+    int* tmp_adjlist = CC_SAFE_MALLOC(G->nb_edges, int);
+    int* tmp_weightlist = CC_SAFE_MALLOC(G->nb_nodes, int);
     CCcheck_NULL_2(tmp_adjlist, "Failed to allocate memory to tmp_adjlist");
     CCcheck_NULL_2(tmp_weightlist,
                    "Failed to allocate memory to tmp_weightlist");
 
-    for (i = 0; i < G->vcount; i++) {
+    for (i = 0; i < G->nb_nodes; i++) {
         tmp_weightlist[i] = G->nodelist[i].weight;
     }
 
-    for (i = 0; i < G->vcount; ++i) {
+    for (i = 0; i < G->nb_nodes; ++i) {
         int new_degree;
         int nloops = 0;
         qsort(G->nodelist[i].adj, G->nodelist[i].degree, sizeof(int),
@@ -400,14 +392,14 @@ int adjGraph_simplify(adjGraph *G) {
 
     if (tmp_adjlist) {
         free(tmp_adjlist);
-        tmp_adjlist = (int *)NULL;
+        tmp_adjlist = (int*)NULL;
     }
 
-    vcount = G->vcount;
-    val = adjGraph_get_elist(&ecount, &tmp_adjlist, G);
+    nb_nodes = G->nb_nodes;
+    val = adjGraph_get_elist(&nb_edges, &tmp_adjlist, G);
     CCcheck_val(val, "Failed in adjGraph_get_elist");
     adjGraph_freequick(G);
-    val = adjGraph_build(G, vcount, ecount, tmp_adjlist, tmp_weightlist);
+    val = adjGraph_build(G, nb_nodes, nb_edges, tmp_adjlist, tmp_weightlist);
     CCcheck_val(val, "Failed adjGraph_build");
 
 CLEAN:
@@ -422,18 +414,18 @@ CLEAN:
     return val;
 }
 
-int adjGraph_simplifyquick(adjGraph *G) {
+int adjGraph_simplifyquick(adjGraph* G) {
     int  val = 0;
     int  i, j;
-    int *tmp_adjlist = (int *)NULL;
-    int  vcount, ecount;
+    int* tmp_adjlist = (int*)NULL;
+    int  nb_nodes, nb_edges;
 
-    if (G->ecount != 0) {
-        tmp_adjlist = CC_SAFE_MALLOC(G->ecount, int);
+    if (G->nb_edges != 0) {
+        tmp_adjlist = CC_SAFE_MALLOC(G->nb_edges, int);
         CCcheck_NULL(tmp_adjlist, "Failed to allocate memory to tmp_adjlist");
     }
 
-    for (i = 0; i < G->vcount; ++i) {
+    for (i = 0; i < G->nb_nodes; ++i) {
         int new_degree;
         int nloops = 0;
         qsort(G->nodelist[i].adj, G->nodelist[i].degree, sizeof(int),
@@ -465,14 +457,14 @@ int adjGraph_simplifyquick(adjGraph *G) {
 
     if (tmp_adjlist) {
         free(tmp_adjlist);
-        tmp_adjlist = (int *)NULL;
+        tmp_adjlist = (int*)NULL;
     }
 
-    vcount = G->vcount;
-    val = adjGraph_get_elist(&ecount, &tmp_adjlist, G);
+    nb_nodes = G->nb_nodes;
+    val = adjGraph_get_elist(&nb_edges, &tmp_adjlist, G);
     CCcheck_val(val, "Failed in adjGraph_get_elist");
     adjGraph_freequick(G);
-    val = adjGraph_buildquick(G, vcount, ecount, tmp_adjlist);
+    val = adjGraph_buildquick(G, nb_nodes, nb_edges, tmp_adjlist);
     CCcheck_val(val, "Failed adjGraph_build");
 
     if (tmp_adjlist) {
@@ -482,16 +474,16 @@ int adjGraph_simplifyquick(adjGraph *G) {
     return val;
 }
 
-int adjGraph_complement(adjGraph *Gc, const adjGraph *G) {
+int adjGraph_complement(adjGraph* Gc, const adjGraph* G) {
     int  val = 0;
-    int  ecount = 0;
-    int  ecount_chk = 0;
+    int  nb_edges = 0;
+    int  nb_edges_chk = 0;
     int  v_i, a_i, na;
-    int *elist = (int *)NULL;
-    int *tmp_weightlist = CC_SAFE_MALLOC(G->vcount, int);
+    int* elist = (int*)NULL;
+    int* tmp_weightlist = CC_SAFE_MALLOC(G->nb_nodes, int);
     CCcheck_NULL_2(tmp_weightlist, "No memory for tmp_weightlist");
 
-    for (int i = 0; i < G->vcount; ++i) {
+    for (int i = 0; i < G->nb_nodes; ++i) {
         tmp_weightlist[i] = G->nodelist[i].weight;
     }
 
@@ -499,36 +491,36 @@ int adjGraph_complement(adjGraph *Gc, const adjGraph *G) {
     CCcheck_val_2(val, "Failed adjGraph_copy");
     val = adjGraph_simplify(Gc);
     CCcheck_val_2(val, "Failed in adjGraph_simplify");
-    ecount_chk = (Gc->vcount * (Gc->vcount - 1)) / 2 - Gc->ecount;
+    nb_edges_chk = (Gc->nb_nodes * (Gc->nb_nodes - 1)) / 2 - Gc->nb_edges;
 
-    if (ecount_chk) {
-        elist = CC_SAFE_MALLOC(2 * ecount_chk, int);
+    if (nb_edges_chk) {
+        elist = CC_SAFE_MALLOC(2 * nb_edges_chk, int);
         CCcheck_NULL_2(elist, "Failed to allocate memory to elist");
 
-        for (v_i = 0; v_i < Gc->vcount; ++v_i) {
-            adjNode *v = &(Gc->nodelist[v_i]);
+        for (v_i = 0; v_i < Gc->nb_nodes; ++v_i) {
+            adjNode* v = &(Gc->nodelist[v_i]);
             int      a = -1;
             a_i = 0;
 
-            for (na = v_i + 1; na < Gc->vcount; ++na) {
+            for (na = v_i + 1; na < Gc->nb_nodes; ++na) {
                 while (a_i < v->degree && a < na) {
                     a = v->adj[a_i];
                     ++a_i;
                 }
 
                 if (na != a) {
-                    elist[2 * ecount] = v_i;
-                    elist[2 * ecount + 1] = na;
-                    ++ecount;
+                    elist[2 * nb_edges] = v_i;
+                    elist[2 * nb_edges + 1] = na;
+                    ++nb_edges;
                 }
             }
         }
 
-        assert(ecount == ecount_chk);
+        assert(nb_edges == nb_edges_chk);
     }
 
     adjGraph_free(Gc);
-    val = adjGraph_build(Gc, G->vcount, ecount_chk, elist, tmp_weightlist);
+    val = adjGraph_build(Gc, G->nb_nodes, nb_edges_chk, elist, tmp_weightlist);
     CCcheck_val(val, "Failed adjGraph_build");
 CLEAN:
 
@@ -547,30 +539,30 @@ CLEAN:
     return val;
 }
 
-void adjGraph_init(adjGraph *G) {
+void adjGraph_init(adjGraph* G) {
     if (G) {
-        G->nodelist = (adjNode *)NULL;
-        G->adjspace = (int *)NULL;
-        G->makespan = (int *)NULL;
-        G->perm = (int *)NULL;
-        G->weightorder = (int *)NULL;
-        G->adjMatrix = (int **)NULL;
-        G->ncolor = 0;
-        G->vcount = 0;
-        G->ecount = 0;
+        G->nodelist = (adjNode*)NULL;
+        G->adjspace = (int*)NULL;
+        G->makespan = (int*)NULL;
+        G->perm = (int*)NULL;
+        G->weightorder = (int*)NULL;
+        G->adjMatrix = (int**)NULL;
+        G->nb_colors = 0;
+        G->nb_nodes = 0;
+        G->nb_edges = 0;
         G->totweight = 0;
         G->makespancolor = 0;
         G->flag = 0;
     }
 }
 
-void adjGraph_free(adjGraph *G) {
+void adjGraph_free(adjGraph* G) {
     if (G) {
-        for (int i = 0; i < G->vcount; i++) {
+        for (int i = 0; i < G->nb_nodes; i++) {
             CC_IFFREE(G->adjMatrix[i], int);
         }
 
-        CC_IFFREE(G->adjMatrix, int *)
+        CC_IFFREE(G->adjMatrix, int*)
         CC_IFFREE(G->nodelist, adjNode);
         CC_IFFREE(G->adjspace, int);
         CC_IFFREE(G->makespan, int);
@@ -580,7 +572,7 @@ void adjGraph_free(adjGraph *G) {
     }
 }
 
-void adjGraph_freequick(adjGraph *G) {
+void adjGraph_freequick(adjGraph* G) {
     if (G) {
         CC_IFFREE(G->nodelist, adjNode);
         CC_IFFREE(G->adjspace, int);
@@ -588,23 +580,23 @@ void adjGraph_freequick(adjGraph *G) {
     }
 }
 
-int read_adjlist(
-    char *f, int *pvcount, int *pecount, int **pelist, int **weightlist) {
+int read_adjlist(char* f, int* pvcount, int* pecount, int** pelist,
+                 int** weightlist) {
     int         val = 0;
-    int         vcount = 0, ecount = 0, count = 0, prob = 0;
+    int         nb_nodes = 0, nb_edges = 0, count = 0, prob = 0;
     int         curnode, curweight, nodeadj;
-    int *       elist = (int *)NULL;
-    int *       weight = (int *)NULL;
+    int*        elist = (int*)NULL;
+    int*        weight = (int*)NULL;
     char        buf[256], *p;
     int         bufsize;
-    const char *delim = " \n";
-    char *      data = (char *)NULL;
-    char *      buf2 = (char *)NULL;
-    int *       perm = (int *)NULL;
-    int *       iperm = (int *)NULL;
-    FILE *      in = fopen(f, "r");
+    const char* delim = " \n";
+    char*       data = (char*)NULL;
+    char*       buf2 = (char*)NULL;
+    int*        perm = (int*)NULL;
+    int*        inv_perm = (int*)NULL;
+    FILE*       in = fopen(f, "r");
 
-    if (in != (FILE *)NULL) {
+    if (in != (FILE*)NULL) {
         if (fgets(buf, 254, in) != NULL) {
             p = buf;
 
@@ -618,20 +610,20 @@ int read_adjlist(
                 prob = 1;
                 strtok(p, delim);
                 data = strtok(NULL, delim);
-                sscanf(data, "%d", &vcount);
+                sscanf(data, "%d", &nb_nodes);
                 data = strtok(NULL, delim);
-                sscanf(data, "%d", &ecount);
+                sscanf(data, "%d", &nb_edges);
                 bufsize =
-                    2 * vcount * (2 + (int)ceil(log((double)vcount + 10)));
-                buf2 = (char *)CC_SAFE_MALLOC(bufsize, char);
+                    2 * nb_nodes * (2 + (int)ceil(log((double)nb_nodes + 10)));
+                buf2 = (char*)CC_SAFE_MALLOC(bufsize, char);
                 CCcheck_NULL_2(buf2, "Failed to allocate buf2");
 
-                if (ecount != 0) {
-                    elist = CC_SAFE_MALLOC(2 * ecount, int);
+                if (nb_edges != 0) {
+                    elist = CC_SAFE_MALLOC(2 * nb_edges, int);
                     CCcheck_NULL_2(elist, "out of memory for elist");
                 }
 
-                weight = CC_SAFE_MALLOC(vcount, int);
+                weight = CC_SAFE_MALLOC(nb_nodes, int);
                 CCcheck_NULL_2(weight, "out of memory for weight");
             } else {
                 fprintf(
@@ -645,7 +637,7 @@ int read_adjlist(
             goto CLEAN;
         }
 
-        while (fgets(buf2, bufsize, in) != (char *)NULL) {
+        while (fgets(buf2, bufsize, in) != (char*)NULL) {
             p = buf2;
 
             if (p[0] == 'p') {
@@ -661,7 +653,7 @@ int read_adjlist(
                     goto CLEAN;
                 }
 
-                if (count > ecount) {
+                if (count > nb_edges) {
                     fprintf(stderr, "ERROR: too many edges in file\n");
                     val = 1;
                     goto CLEAN;
@@ -685,23 +677,23 @@ int read_adjlist(
             }
         }
 
-        perm = CC_SAFE_MALLOC(vcount, int);
+        perm = CC_SAFE_MALLOC(nb_nodes, int);
         CCcheck_NULL_2(perm, "Failed to allocate memory");
 
-        for (int i = 0; i < vcount; i++) {
+        for (int i = 0; i < nb_nodes; i++) {
             perm[i] = i;
         }
 
-        CCutil_int_perm_quicksort_0(perm, weight, vcount);
-        iperm = CC_SAFE_MALLOC(vcount, int);
-        CCcheck_NULL_2(iperm, "Failed to allocate memory");
+        CCutil_int_perm_quicksort_0(perm, weight, nb_nodes);
+        inv_perm = CC_SAFE_MALLOC(nb_nodes, int);
+        CCcheck_NULL_2(inv_perm, "Failed to allocate memory");
 
-        for (int i = 0; i < vcount; ++i) {
-            iperm[perm[i]] = i;
+        for (int i = 0; i < nb_nodes; ++i) {
+            inv_perm[perm[i]] = i;
         }
 
-        permute_nodes(iperm, vcount, ecount, elist, weight, pelist, weightlist);
-        *pvcount = vcount;
+        permute_nodes(inv_perm, nb_nodes, nb_edges, elist, weight, pelist, weightlist);
+        *pvcount = nb_nodes;
         *pecount = count;
     } else {
         fprintf(stderr, "Unable to open file %s\n", f);
@@ -720,7 +712,7 @@ CLEAN:
     CC_IFFREE(weight, int);
     CC_IFFREE(buf2, char);
     CC_IFFREE(perm, int);
-    CC_IFFREE(iperm, int);
+    CC_IFFREE(inv_perm, int);
 
     if (in) {
         fclose(in);
@@ -729,38 +721,38 @@ CLEAN:
     return val;
 }
 
-void graph_print(int ecount, const int elist[]) {
-    for (int i = 0; i < ecount; ++i) {
+void graph_print(int nb_edges, const int elist[]) {
+    for (int i = 0; i < nb_edges; ++i) {
         printf("e %d %d\n", elist[2 * i], elist[2 * i + 1]);
     }
 }
 
-int adjGraph_get_elist(int *ecount, int *elist[], const adjGraph *G) {
+int adjGraph_get_elist(int* nb_edges, int* elist[], const adjGraph* G) {
     int val = 0;
     int i;
     CC_IFFREE(*elist, int);
-    *ecount = 0;
+    *nb_edges = 0;
 
-    for (i = 0; i < G->vcount; i++) {
-        *ecount += G->nodelist[i].degree;
+    for (i = 0; i < G->nb_nodes; i++) {
+        *nb_edges += G->nodelist[i].degree;
     }
 
-    assert(*ecount % 2 == 0);
+    assert(*nb_edges % 2 == 0);
 
-    if (*ecount != 0) {
+    if (*nb_edges != 0) {
         /* code */
-        (*elist) = CC_SAFE_MALLOC((*ecount), int);
+        (*elist) = CC_SAFE_MALLOC((*nb_edges), int);
         CCcheck_NULL_2(*elist, "Out of memory for elist");
-        *ecount = 0;
+        *nb_edges = 0;
 
-        for (i = 0; i < G->vcount; i++) {
+        for (i = 0; i < G->nb_nodes; i++) {
             int j;
 
             for (j = 0; j < G->nodelist[i].degree; ++j) {
                 if (G->nodelist[i].adj[j] > i) {
-                    (*elist)[(*ecount) * 2] = i;
-                    (*elist)[(*ecount) * 2 + 1] = G->nodelist[i].adj[j];
-                    (*ecount)++;
+                    (*elist)[(*nb_edges) * 2] = i;
+                    (*elist)[(*nb_edges) * 2 + 1] = G->nodelist[i].adj[j];
+                    (*nb_edges)++;
                 }
             }
         }
@@ -770,66 +762,65 @@ CLEAN:
     return val;
 }
 
-int adjGraph_delete_unweighted(adjGraph *G,
-                               int **    new_nweights,
-                               const int nweights[]) {
+int adjGraph_delete_unweighted(adjGraph* G, int** new_node_weights,
+                               const int node_weights[]) {
     int  val = 0;
     int  i, a_i;
-    int  vcount = 0;
-    int  ecount = 0;
-    int *nmap = CC_SAFE_MALLOC(G->vcount, int);
-    int *newelist = CC_SAFE_MALLOC(2 * G->ecount, int);
-    int *new_weightlist = CC_SAFE_MALLOC(G->vcount, int);
+    int  nb_nodes = 0;
+    int  nb_edges = 0;
+    int* nodes_map = CC_SAFE_MALLOC(G->nb_nodes, int);
+    int* newelist = CC_SAFE_MALLOC(2 * G->nb_edges, int);
+    int* new_weightlist = CC_SAFE_MALLOC(G->nb_nodes, int);
 
-    CCcheck_NULL_2(nmap, "Failed to allocate nmap");
-    CCcheck_NULL_2(nmap, "Failed to allocate newelist");
+    CCcheck_NULL_2(nodes_map, "Failed to allocate nodes_map");
+    CCcheck_NULL_2(nodes_map, "Failed to allocate newelist");
     CCcheck_NULL_2(new_weightlist,
                    "Failed to allocate memory to new_weightlist");
 
-    for (i = 0; i < G->vcount; ++i) {
-        if (nweights[i] == 0) {
-            nmap[i] = -1;
+    for (i = 0; i < G->nb_nodes; ++i) {
+        if (node_weights[i] == 0) {
+            nodes_map[i] = -1;
             G->nodelist[i].degree = 0;
         } else {
             int a = 0;
-            nmap[i] = vcount++;
+            nodes_map[i] = nb_nodes++;
 
             for (a_i = 0; a_i < G->nodelist[i].degree && a < i; ++a_i) {
                 a = G->nodelist[i].adj[a_i];
 
-                if (a < i && nmap[a] != -1) {
-                    newelist[2 * ecount] = nmap[a];
-                    newelist[2 * ecount + 1] = nmap[i];
-                    ++ecount;
+                if (a < i && nodes_map[a] != -1) {
+                    newelist[2 * nb_edges] = nodes_map[a];
+                    newelist[2 * nb_edges + 1] = nodes_map[i];
+                    ++nb_edges;
                 }
             }
         }
     }
 
-    *new_nweights = CC_SAFE_MALLOC(vcount, int);
-    CCcheck_NULL_2(*new_nweights, "Failed to allocate nne");
+    *new_node_weights = CC_SAFE_MALLOC(nb_nodes, int);
+    CCcheck_NULL_2(*new_node_weights, "Failed to allocate nne");
 
-    for (i = 0; i < G->vcount; ++i) {
-        int ni = nmap[i];
+    for (i = 0; i < G->nb_nodes; ++i) {
+        int ni = nodes_map[i];
 
         if (ni != -1) {
-            (*new_nweights)[ni] = nweights[i];
+            (*new_node_weights)[ni] = node_weights[i];
             new_weightlist[ni] = G->nodelist[i].weight;
         }
     }
 
     adjGraph_free(G);
-    val = adjGraph_build(G, vcount, ecount, newelist, new_weightlist);
+    val = adjGraph_build(G, nb_nodes, nb_edges, newelist, new_weightlist);
     CCcheck_val_2(val, "Failed in COLORadjgraph_build");
 
     if (dbg_lvl() > 1) {
-        printf("Reduced graph has %d nodes and %d edges.\n", vcount, ecount);
+        printf("Reduced graph has %d nodes and %d edges.\n", nb_nodes, nb_edges);
     }
 
 CLEAN:
 
-    if (nmap) {
-        free(nmap);
+    if (nodes_map) {
+        free(nodes_map);
     }
 
     if (newelist) {
@@ -841,17 +832,17 @@ CLEAN:
     }
 
     if (val) {
-        if (*new_nweights) {
-            free(*new_nweights);
+        if (*new_node_weights) {
+            free(*new_node_weights);
         }
 
-        *new_nweights = (int *)NULL;
+        *new_node_weights = (int*)NULL;
     }
 
     return val;
 }
 
-static void adjNode_SWAP(adjNode *n1, adjNode *n2, adjNode *temp) {
+static void adjNode_SWAP(adjNode* n1, adjNode* n2, adjNode* temp) {
     if (n1 != n2) {
         memcpy(temp, n2, sizeof(adjNode));
         memcpy(n2, n1, sizeof(adjNode));
@@ -859,25 +850,24 @@ static void adjNode_SWAP(adjNode *n1, adjNode *n2, adjNode *temp) {
     }
 }
 
-void adjGraph_quicksort(adjNode *nodelist,
-                        int      vcount,
-                        int (*compareFunction)(adjNode *, adjNode *)) {
+void adjGraph_quicksort(adjNode* nodelist, int nb_nodes,
+                        int (*compareFunction)(adjNode*, adjNode*)) {
     int     i, j;
     adjNode t, temp;
 
-    if (vcount <= 1) {
+    if (nb_nodes <= 1) {
         return;
     }
 
-    adjNode_SWAP(&nodelist[0], &nodelist[(vcount - 1) / 2], &temp);
+    adjNode_SWAP(&nodelist[0], &nodelist[(nb_nodes - 1) / 2], &temp);
     i = 0;
-    j = vcount;
+    j = nb_nodes;
     t = nodelist[0];
 
     while (1) {
         do {
             i++;
-        } while (i < vcount && (*compareFunction)(&nodelist[i], &t));
+        } while (i < nb_nodes && (*compareFunction)(&nodelist[i], &t));
 
         do {
             j--;
@@ -892,40 +882,38 @@ void adjGraph_quicksort(adjNode *nodelist,
 
     adjNode_SWAP(&nodelist[0], &nodelist[j], &temp);
     adjGraph_quicksort(nodelist, j, (*compareFunction));
-    adjGraph_quicksort(nodelist + i, vcount - i, (*compareFunction));
+    adjGraph_quicksort(nodelist + i, nb_nodes - i, (*compareFunction));
     return;
 }
 
-void adjGraph_sort_adjlists_by_id(adjGraph *G) {
+void adjGraph_sort_adjlists_by_id(adjGraph* G) {
     int i;
 
-    for (i = 0; i < G->vcount; ++i) {
+    for (i = 0; i < G->nb_nodes; ++i) {
         qsort(G->nodelist[i].adj, G->nodelist[i].degree, sizeof(int),
               comp_node_ids);
     }
 }
 
-void adjGraph_quicksort_perm(adjNode *nodelist,
-                             int *    perm,
-                             int      vcount,
-                             int (*compareFunction)(adjNode *, adjNode *)) {
+void adjGraph_quicksort_perm(adjNode* nodelist, int* perm, int nb_nodes,
+                             int (*compareFunction)(adjNode*, adjNode*)) {
     int     i, j;
     int     temp;
     adjNode t;
 
-    if (vcount <= 1) {
+    if (nb_nodes <= 1) {
         return;
     }
 
-    CC_SWAP(perm[0], perm[(vcount - 1) / 2], temp);
+    CC_SWAP(perm[0], perm[(nb_nodes - 1) / 2], temp);
     i = 0;
-    j = vcount;
+    j = nb_nodes;
     t = nodelist[perm[0]];
 
     while (1) {
         do {
             i++;
-        } while (i < vcount && (*compareFunction)(&nodelist[perm[i]], &t));
+        } while (i < nb_nodes && (*compareFunction)(&nodelist[perm[i]], &t));
 
         do {
             j--;
@@ -940,11 +928,11 @@ void adjGraph_quicksort_perm(adjNode *nodelist,
 
     CC_SWAP(perm[0], perm[j], temp);
     adjGraph_quicksort_perm(nodelist, perm, j, (*compareFunction));
-    adjGraph_quicksort_perm(nodelist, perm + i, vcount - i, (*compareFunction));
+    adjGraph_quicksort_perm(nodelist, perm + i, nb_nodes - i, (*compareFunction));
     return;
 }
 
-int adjGraph_degree(adjNode *n1, adjNode *n2) {
+int adjGraph_degree(adjNode* n1, adjNode* n2) {
     if (n1->degree != n2->degree) {
         return n1->degree > n2->degree;
     }
@@ -952,7 +940,7 @@ int adjGraph_degree(adjNode *n1, adjNode *n2) {
     return 0;
 }
 
-int adjGraph_weight(adjNode *n1, adjNode *n2) {
+int adjGraph_weight(adjNode* n1, adjNode* n2) {
     if (n1->weight != n2->weight) {
         return n1->weight > n2->weight;
     }
@@ -960,7 +948,7 @@ int adjGraph_weight(adjNode *n1, adjNode *n2) {
     return 0;
 }
 
-int adjGraph_invdegree(adjNode *n1, adjNode *n2) {
+int adjGraph_invdegree(adjNode* n1, adjNode* n2) {
     if (n1->degree != n2->degree) {
         return n1->degree < n2->degree;
     }
@@ -968,37 +956,32 @@ int adjGraph_invdegree(adjNode *n1, adjNode *n2) {
     return 0;
 }
 
-int adjGraph_print(int ecount, const int elist[]) {
+int adjGraph_print(int nb_edges, const int elist[]) {
     int i;
 
-    for (i = 0; i < ecount; ++i) {
+    for (i = 0; i < nb_edges; ++i) {
         printf("e %d %d\n", elist[2 * i], elist[2 * i + 1]);
     }
 
     return 0;
 }
 
-static int permute_nodes(int * invorder,
-                         int   vcount,
-                         int   ecount,
-                         int * elist,
-                         int * weights,
-                         int **pielist,
-                         int **piweights) {
+static int permute_nodes(int* invorder, int nb_nodes, int nb_edges, int* elist,
+                         int* weights, int** pielist, int** pi_weights) {
     int  i, val = 0;
-    int *ielist = (int *)NULL, *iweights = (int *)NULL;
-    *pielist = (int *)NULL;
-    *piweights = (int *)NULL;
+    int *ielist = (int*)NULL, *inv_weights = (int*)NULL;
+    *pielist = (int*)NULL;
+    *pi_weights = (int*)NULL;
 
-    if (ecount != 0) {
-        ielist = CC_SAFE_MALLOC(2 * ecount, int);
+    if (nb_edges != 0) {
+        ielist = CC_SAFE_MALLOC(2 * nb_edges, int);
         CCcheck_NULL_2(pielist, "out of memory for pielist");
     }
 
-    iweights = CC_SAFE_MALLOC(vcount, int);
-    CCcheck_NULL_2(iweights, "out of memory for iweights");
+    inv_weights = CC_SAFE_MALLOC(nb_nodes, int);
+    CCcheck_NULL_2(inv_weights, "out of memory for inv_weights");
 
-    for (i = 0; i < ecount; i++) {
+    for (i = 0; i < nb_edges; i++) {
         if (invorder[elist[2 * i]] < invorder[elist[2 * i + 1]]) {
             ielist[2 * i] = invorder[elist[2 * i]];
             ielist[2 * i + 1] = invorder[elist[2 * i + 1]];
@@ -1008,17 +991,17 @@ static int permute_nodes(int * invorder,
         }
     }
 
-    for (i = 0; i < vcount; i++) {
-        iweights[invorder[i]] = weights[i];
+    for (i = 0; i < nb_nodes; i++) {
+        inv_weights[invorder[i]] = weights[i];
     }
 
     *pielist = ielist;
-    *piweights = iweights;
+    *pi_weights = inv_weights;
 CLEAN:
 
     if (val) {
         CC_IFFREE(ielist, int);
-        CC_IFFREE(iweights, int);
+        CC_IFFREE(inv_weights, int);
     }
 
     return val;

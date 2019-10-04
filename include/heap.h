@@ -11,7 +11,7 @@ extern "C" {
 typedef struct heapelm {
     int   key;
     void *obj;
-} heapelm;
+} HeapElement;
 
 typedef struct Heap_t {
     int  end;
@@ -19,21 +19,21 @@ typedef struct Heap_t {
     int *perm;
     int *iperm;
 
-    heapelm *elms;
-} pmcheap;
+    HeapElement *elms;
+} HeapContainer;
 
-int pmcheap_init(pmcheap **heap, int size), pmcheap_free(pmcheap *heap),
-    pmcheap_free_all(pmcheap *heap),
-    pmcheap_insert(pmcheap *heap, int key, void *obj),
-    pmcheap_remove(pmcheap *heap, int href),
-    pmcheap_get_key(const pmcheap *heap, int href),
-    pmcheap_size(const pmcheap *heap),
-    pmcheap_decrease_key(pmcheap *heap, int href, int new_key),
-    pmcheap_relabel(pmcheap *heap, int href, int new_key);
-void *pmcheap_get_obj(const pmcheap *heap, int href);
+int heapcontainer_init(HeapContainer **heap, int size), heapcontainer_free(HeapContainer *heap),
+    heapcontainer_free_all(HeapContainer *heap),
+    heapcontainer_insert(HeapContainer *heap, int key, void *obj),
+    heapcontainer_remove(HeapContainer *heap, int href),
+    heapcontainer_get_key(const HeapContainer *heap, int href),
+    heapcontainer_size(const HeapContainer *heap),
+    heapcontainer_decrease_key(HeapContainer *heap, int href, int new_key),
+    heapcontainer_relabel(HeapContainer *heap, int href, int new_key);
+void *heapcontainer_get_obj(const HeapContainer *heap, int href);
 
-void *pmcheap_min(pmcheap *heap), pmcheap_reset(pmcheap *heap),
-    pmcheap_reset_free(pmcheap *heap);
+void *heapcontainer_min(HeapContainer *heap), heapcontainer_reset(HeapContainer *heap),
+    heapcontainer_reset_free(HeapContainer *heap);
 
 #ifdef __cplusplus
 }

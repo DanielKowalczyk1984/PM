@@ -5,7 +5,7 @@
 #include <iostream>
 
 template <typename T>
-class Optimal_Solution {
+class OptimalSolution {
 public:
     T                obj;
     int              cost;
@@ -14,16 +14,16 @@ public:
     GPtrArray       *e_list;
 
     /** Default constructor */
-    Optimal_Solution() : obj(0), cost(0), C_max(0), jobs(g_ptr_array_new()), e_list(g_ptr_array_new())
+    OptimalSolution() : obj(0), cost(0), C_max(0), jobs(g_ptr_array_new()), e_list(g_ptr_array_new())
     {
     }
 
-    explicit Optimal_Solution(T _obj) : obj(_obj), cost(0), C_max(0), jobs(g_ptr_array_new()), e_list(g_ptr_array_new())
+    explicit OptimalSolution(T _obj) : obj(_obj), cost(0), C_max(0), jobs(g_ptr_array_new()), e_list(g_ptr_array_new())
     {
     }
 
     /** Copy constructor */
-    Optimal_Solution(const Optimal_Solution& other) :
+    OptimalSolution(const OptimalSolution& other) :
         obj(other.obj), cost(other.cost), C_max(other.C_max),
         jobs(g_ptr_array_sized_new(other.jobs->len)),
         e_list(g_ptr_array_sized_new(other.e_list->len))
@@ -38,7 +38,7 @@ public:
     }
 
     /** Move constructor */
-    Optimal_Solution(Optimal_Solution&& other)
+    OptimalSolution(OptimalSolution&& other)
     noexcept :  /* noexcept needed to enable optimizations in containers */
         obj(other.obj), cost(other.cost), C_max(other.C_max), jobs(other.jobs), e_list(other.e_list)
     {
@@ -47,15 +47,15 @@ public:
     }
 
     /** Copy assignment operator */
-    Optimal_Solution& operator= (const Optimal_Solution& other)
+    OptimalSolution& operator= (const OptimalSolution& other)
     {
-        Optimal_Solution tmp(other);         // re-use copy-constructor
+        OptimalSolution tmp(other);         // re-use copy-constructor
         *this = move(tmp); // re-use move-assignment
         return *this;
     }
 
     /** Move assignment operator */
-    Optimal_Solution& operator= (Optimal_Solution&& other) noexcept
+    OptimalSolution& operator= (OptimalSolution&& other) noexcept
     {
         obj = other.obj;
         cost = other.cost;
@@ -70,7 +70,7 @@ public:
     }
 
     /** Destructor */
-    ~Optimal_Solution() noexcept
+    ~OptimalSolution() noexcept
     {
         if (jobs) {
             g_ptr_array_free(jobs, TRUE);
@@ -82,7 +82,7 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream&              os,
-                                    Optimal_Solution<T> const& o)
+                                    OptimalSolution<T> const& o)
     {
         os << "obj = " << o.obj << "," << std::endl
            << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
@@ -92,15 +92,15 @@ public:
 
     inline void push_job_back(Job *_job, double _pi) {
         g_ptr_array_add(jobs, _job);
-        C_max += _job->processingime;
+        C_max += _job->processing_time;
         cost += value_Fj(C_max, _job);
         obj += _pi - value_Fj(C_max, _job);
     }
 
     inline void push_job_back(Job *_job, int C, double _pi) {
         g_ptr_array_add(jobs, _job);
-        cost += value_Fj(C + _job->processingime, _job);
-        obj += _pi - value_Fj(C + _job->processingime, _job);
+        cost += value_Fj(C + _job->processing_time, _job);
+        obj += _pi - value_Fj(C + _job->processing_time, _job);
     }
 
 };

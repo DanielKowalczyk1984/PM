@@ -1,130 +1,170 @@
 #include <wctprivate.h>
-#include <PricerSolver.hpp>
+#include "PricerSolverArcTimeDP.hpp"
+#include "PricerSolverBddBackward.hpp"
+#include "PricerSolverBddForward.hpp"
+#include "PricerSolverSimpleDP.hpp"
+#include "PricerSolverZddBackward.hpp"
+#include "PricerSolverZddForward.hpp"
 
 extern "C" {
 
-PricerSolverBase* newSolver(GPtrArray *jobs,
-                            GPtrArray *ordered_jobs,
-                            wctparms *parms) {
+PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
+                            GPtrArray* ordered_jobs, parms* parms) {
     switch (parms->pricing_solver) {
         case bdd_solver_simple:
-            return new PricerSolverBddSimple(jobs, ordered_jobs);
-        break;
+            return new PricerSolverBddSimple(jobs, _num_machines, ordered_jobs);
+            break;
         case bdd_solver_cycle:
-            return new PricerSolverBddCycle(jobs, ordered_jobs);
-        break;
+            return new PricerSolverBddCycle(jobs, _num_machines, ordered_jobs);
+            break;
         case zdd_solver_cycle:
-            return new PricerSolverCycle(jobs, ordered_jobs);
-        break;
+            return new PricerSolverZddCycle(jobs, _num_machines, ordered_jobs);
+            break;
         case zdd_solver_simple:
-            return new PricerSolverZddSimple(jobs, ordered_jobs);
-        break;
+            return new PricerSolverSimple(jobs, _num_machines, ordered_jobs);
+            break;
         case bdd_solver_backward_simple:
-            return new PricerSolverBddBackwardSimple(jobs, ordered_jobs);
-        break;
+            return new PricerSolverBddBackwardSimple(jobs, _num_machines,
+                                                     ordered_jobs);
+            break;
         case bdd_solver_backward_cycle:
-            return new PricerSolverBddBackwardCycle (jobs, ordered_jobs);
-        break;
+            return new PricerSolverBddBackwardCycle(jobs, _num_machines,
+                                                    ordered_jobs);
+            break;
+        case zdd_solver_backward_simple:
+            return new PricerSolverZddBackwardSimple(jobs, _num_machines,
+                                                     ordered_jobs);
+            break;
+        case zdd_solver_backward_cycle:
+            return new PricerSolverZddBackwardCycle(jobs, _num_machines,
+                                                    ordered_jobs);
         default:
-            return new PricerSolverBddBackwardCycle(jobs, ordered_jobs);
+            return new PricerSolverBddBackwardCycle(jobs, _num_machines,
+                                                    ordered_jobs);
     }
 }
 
-PricerSolverBase* newSolverDp(GPtrArray *_jobs, int _Hmax, wctparms *parms) {
+PricerSolverBase* newSolverDp(GPtrArray* _jobs, int _num_machines, int _Hmax,
+                              parms* parms) {
     switch (parms->pricing_solver) {
         case dp_solver:
-            return new PricerSolverSimpleDp(_jobs, _Hmax);
-        break;
+            return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax);
+            break;
         case ati_solver:
-            return new PricerSolverArcTimeDp(_jobs, _Hmax);
+            return new PricerSolverArcTimeDp(_jobs, _num_machines, _Hmax);
         default:
-            return new PricerSolverSimpleDp(_jobs, _Hmax);
-        break;
+            return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax);
+            break;
     }
 }
 
-void print_dot_file(PricerSolver *solver, char *name) {
+void print_dot_file(PricerSolver* solver, char* name) {
     solver->create_dot_zdd(name);
 }
 
-void freeSolver(PricerSolver *src) { delete src; }
+void freeSolver(PricerSolver* src) {
+    delete src;
+}
 
-int evaluate_nodes(wctdata *pd) {
+int evaluate_nodes(NodeData* pd) {
     int    val = 0;
     int    UB = pd->problem->opt_sol->tw;
     double LB = pd->LP_lower_bound;
-    int    nmachines = pd->problem->nmachines;
 
-    pd->solver->evaluate_nodes(pd->pi, UB, LB, nmachines);
+    pd->solver->evaluate_nodes(pd->pi, UB, LB);
 
     return val;
 }
 
-int calculate_new_ordered_jobs(wctdata *pd) {
-    int val = 0;
+int reduce_cost_fixing(NodeData* pd) {
+    int    val = 0;
     int    UB = pd->problem->opt_sol->tw;
     double LB = pd->LP_lower_bound;
-    int    nmachines = pd->problem->nmachines;
 
-    pd->solver->calculate_new_ordered_jobs(pd->pi, UB, LB, nmachines);
-
+    pd->solver->reduce_cost_fixing(pd->pi, UB, LB);
+    pd->problem->size_graph_after_reduced_cost_fixing = get_nb_edges(pd->solver);
     return val;
 }
 
-int build_solve_mip(wctdata *pd) {
+int build_solve_mip(NodeData* pd) {
     int val = 0;
 
-    // pd->solver->build_mip(pd->x_e);
+    pd->solver->build_mip();
 
     return val;
 }
 
-void print_number_nodes_edges(PricerSolver *solver) {
+void print_number_nodes_edges(PricerSolver* solver) {
     solver->print_number_nodes_edges();
 }
 
-void deletePricerSolver(PricerSolver *solver) {
+void deletePricerSolver(PricerSolver* solver) {
     if (solver) {
         delete solver;
     }
 }
 
-int calculate_table(PricerSolver *solver, wctparms *parms) {
-    int val = 0;
-
-    // solver->init_zdd_table();
-    // solver->init_table_farkas();
-
-    return val = 0;
+void iterate_zdd(PricerSolver* solver) {
+    solver->iterate_zdd();
 }
 
-void iterate_zdd(PricerSolver *solver) { solver->IterateZdd(); }
-
-void print_number_paths(PricerSolver *solver) { solver->PrintNumberPaths(); }
-
-size_t get_datasize(PricerSolver *solver) { return solver->get_datasize(); }
-
-int get_nb_arcs_ati(PricerSolver *solver) { return solver->get_nb_arcs_ati(); }
-
-size_t get_numberrows_zdd(PricerSolver *solver) { return solver->get_numberrows_zdd(); }
-
-double get_edge_cost(PricerSolver *solver, int idx) { return solver->get_cost_edge(idx); }
-
-int init_tables(PricerSolver *solver) {
-    int val = 0;
-    // solver->init_tables();
-    return val;
+void print_number_paths(PricerSolver* solver) {
+    solver->print_num_paths();
 }
 
-void calculate_edges(PricerSolver *solver, scheduleset *set) {
+int get_num_layers(PricerSolver* solver) {
+    return solver->get_num_layers();
+}
+
+size_t get_nb_vertices(PricerSolver* solver) {
+    return solver->get_nb_vertices();
+}
+
+size_t get_nb_edges(PricerSolver* solver) {
+    return solver->get_nb_edges();
+}
+
+void calculate_edges(PricerSolver* solver, ScheduleSet* set) {
     solver->calculate_edges(set);
 }
 
+int construct_lp_sol_from_rmp(NodeData* pd) {
+    int val = 0;
+    int nb_cols;
+
+    val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
+    CCcheck_val_2(val, "Failed to get nb cols");
+    pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols, double);
+    CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
+    val = wctlp_x(pd->RMP, pd->lambda, 0);
+    CCcheck_val_2(val, "Failed in wctlp_x");
+    pd->solver->construct_lp_sol_from_rmp(pd->lambda, pd->localColPool,
+                                          pd->localColPool->len);
+
+    CLEAN:
+    return val;
+}
+
+void disjunctive_inequality(NodeData* pd, Solution* sol) {
+    pd->solver->disjunctive_inequality(pd->x_e, sol);
+}
+
+void represent_solution(NodeData* pd, Solution* sol) {
+    pd->solver->represent_solution(sol);
+}
+
+int check_schedule_set(ScheduleSet* set, NodeData* pd) {
+    return static_cast<int>(pd->solver->check_schedule_set(set->job_list));
+}
+
+void add_constraint(NodeData* pd, Job* job, int order) {
+    pd->solver->add_constraint(job, pd->ordered_jobs, order);
+}
+
 void g_calculate_edges(gpointer data, gpointer user_data) {
-    scheduleset *tmp = (scheduleset *) data;
-    PricerSolver *solver = (PricerSolver *) user_data;
+    ScheduleSet*  tmp = (ScheduleSet*)data;
+    PricerSolver* solver = (PricerSolver*)user_data;
 
     solver->calculate_edges(tmp);
 }
-
 }

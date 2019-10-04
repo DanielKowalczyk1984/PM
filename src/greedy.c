@@ -1,17 +1,14 @@
 #include <localsearch.h>
 #include <wct.h>
 
-// static int add_feasible_solution(wctproblem *problem, solution *new_sol);
-static int  solution_set_c(solution *sol);
-static void perturb_swap(solution *         sol,
-                         local_search_data *data,
-                         int                l1,
-                         int                l2,
-                         GRand *            rand_uniform);
-void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform);
-void permutation_solution(GRand *rand_uniform, solution *sol);
+// static int add_feasible_solution(problem *problem, solution *new_sol);
+static int  solution_set_c(Solution* sol);
+static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
+                         GRand* rand_uniform);
+void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform);
+void permutation_solution(GRand* rand_uniform, Solution* sol);
 
-int _job_compare_spt(const void *a, const void *b);
+int _job_compare_spt(const void* a, const void* b);
 int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b);
 int compare_nb_job(gconstpointer a, gconstpointer b);
 
@@ -20,8 +17,8 @@ int compare_nb_job(gconstpointer a, gconstpointer b);
  */
 
 int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
-    partlist *x = (partlist *)a;
-    partlist *y = (partlist *)b;
+    PartList* x = (PartList*)a;
+    PartList* y = (PartList*)b;
     int       C_a = x->c;
     int       C_b = y->c;
     int       key_a = x->key;
@@ -39,23 +36,23 @@ int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
 }
 
 int compare_nb_job(gconstpointer a, gconstpointer b) {
-    const Job *x = *(Job *const *)a;
-    const Job *y = *(Job *const *)b;
+    const Job* x = *(Job* const*)a;
+    const Job* y = *(Job* const*)b;
 
     return (x->job - y->job);
 }
 
-int _job_compare_spt(const void *a, const void *b) {
-    const Job *x = ((const Job *)&a);
-    const Job *y = ((const Job *)&b);
+int _job_compare_spt(const void* a, const void* b) {
+    const Job* x = ((const Job*)&a);
+    const Job* y = ((const Job*)&b);
 
-    if (x->processingime > y->processingime) {
+    if (x->processing_time > y->processing_time) {
         return 1;
-    } else if (x->processingime < y->processingime) {
+    } else if (x->processing_time < y->processing_time) {
         return -1;
-    } else if (x->duetime > y->duetime) {
+    } else if (x->due_time > y->due_time) {
         return 1;
-    } else if (x->duetime < y->duetime) {
+    } else if (x->due_time < y->due_time) {
         return -1;
     } else if (x->weight > y->weight) {
         return 1;
@@ -74,17 +71,17 @@ int _job_compare_spt(const void *a, const void *b) {
  * greedy constructions
  */
 
-static int solution_set_c(solution *sol) {
+static int solution_set_c(Solution* sol) {
     int           val = 0;
-    partlist *    tmp = (partlist *)NULL;
-    Job *         j = (Job *)NULL;
-    BinomialHeap *heap =
+    PartList*     tmp = (PartList*)NULL;
+    Job*          j = (Job*)NULL;
+    BinomialHeap* heap =
         binomial_heap_new(BINOMIAL_HEAP_TYPE_MIN, compare_completion_time);
     CCcheck_NULL_2(heap, "Failed to allocate memory to heap");
     sol->tw = 0;
     sol->b = 0;
 
-    for (int i = 0; i < sol->nmachines; ++i) {
+    for (int i = 0; i < sol->nb_machines; ++i) {
         sol->part[i].c = 0;
         sol->part[i].tw = 0;
         sol->part[i].key = i;
@@ -93,16 +90,16 @@ static int solution_set_c(solution *sol) {
         binomial_heap_insert(heap, sol->part + i);
     }
 
-    for (int i = 0; i < sol->njobs; ++i) {
+    for (int i = 0; i < sol->nb_jobs; ++i) {
         j = sol->perm[i];
-        tmp = (partlist *)binomial_heap_pop(heap);
+        tmp = (PartList*)binomial_heap_pop(heap);
         j->index = tmp->machine->len;
         g_ptr_array_add(tmp->machine, j);
-        tmp->c += j->processingime;
+        tmp->c += j->processing_time;
         sol->c[j->job] = tmp->c;
         tmp->tw += value_Fj(tmp->c, j);
         sol->tw += value_Fj(tmp->c, j);
-        sol->b += j->duetime * (sol->njobs - i);
+        sol->b += j->due_time * (sol->nb_jobs - i);
         binomial_heap_insert(heap, tmp);
     }
 
@@ -116,39 +113,39 @@ CLEAN:
     return val;
 }
 
-int construct_spt(wctproblem *prob, solution *sol) {
+int construct_spt(Problem* prob, Solution* sol) {
     int val = 0;
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
 
-    sol->njobs = prob->njobs;
-    sol->nmachines = prob->nmachines;
-    qsort(sol->perm, sol->njobs, sizeof(Job *), _job_compare_spt);
+    sol->nb_jobs = prob->nb_jobs;
+    sol->nb_machines = prob->nb_machines;
+    qsort(sol->perm, sol->nb_jobs, sizeof(Job*), _job_compare_spt);
     val = solution_set_c(sol);
     CCcheck_val_2(val, "Failed in solution_set_c");
 CLEAN:
     return val;
 }
 
-int construct_edd(wctproblem *prob, solution *sol) {
+int construct_edd(Problem* prob, Solution* sol) {
     int val = 0;
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
 
-    sol->njobs = prob->njobs;
-    sol->nmachines = prob->nmachines;
+    sol->nb_jobs = prob->nb_jobs;
+    sol->nb_machines = prob->nb_machines;
     val = solution_set_c(sol);
     CCcheck_val_2(val, "failed in solution_set_c");
 CLEAN:
     return val;
 }
 
-int construct_random(wctproblem *prob, solution *sol, GRand *rand_uniform) {
+int construct_random(Problem* prob, Solution* sol, GRand* rand_uniform) {
     int val = 0;
 
     g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
-    sol->njobs = prob->njobs;
-    sol->nmachines = prob->nmachines;
+    sol->nb_jobs = prob->nb_jobs;
+    sol->nb_machines = prob->nb_machines;
     permutation_solution(rand_uniform, sol);
     val = solution_set_c(sol);
     CCcheck_val_2(val, "failed in solution_set_c");
@@ -156,18 +153,17 @@ CLEAN:
     return val;
 }
 
-void permutation_solution(GRand *rand_uniform, solution *sol) {
+void permutation_solution(GRand* rand_uniform, Solution* sol) {
     int  i;
-    Job *tmp = (Job *)NULL;
+    Job* tmp = (Job*)NULL;
 
-    for (i = 0; i <= sol->njobs - 2; i++) {
-        int j = g_rand_int_range(rand_uniform, 0, sol->njobs - i);
+    for (i = 0; i <= sol->nb_jobs - 2; i++) {
+        int j = g_rand_int_range(rand_uniform, 0, sol->nb_jobs - i);
         CC_SWAP(sol->perm[i], sol->perm[i + j], tmp);
     }
 }
 
-void RVND(solution *sol, local_search_data *data) {
-
+void RVND(Solution* sol, local_search_data* data) {
     alloc_all(sol);
 
     do {
@@ -265,24 +261,21 @@ void RVND(solution *sol, local_search_data *data) {
     free_all(sol);
 }
 
-static void perturb_swap(solution *         sol,
-                         local_search_data *data,
-                         int                l1,
-                         int                l2,
-                         GRand *            rand_uniform) {
+static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
+                         GRand* rand_uniform) {
     int       m1, m2;
     unsigned  i1 = 0, i2 = 0;
-    int       nmachines = sol->nmachines;
-    Job **    tmp1 = (Job **)NULL;
-    Job **    tmp2 = (Job **)NULL;
-    Job *     tmp;
-    partlist *part1 = (partlist *)NULL;
-    partlist *part2 = (partlist *)NULL;
-    m1 = g_rand_int_range(rand_uniform, 0, nmachines);
-    m2 = g_rand_int_range(rand_uniform, 0, nmachines);
+    int       nb_machines = sol->nb_machines;
+    Job**     tmp1 = (Job**)NULL;
+    Job**     tmp2 = (Job**)NULL;
+    Job*      tmp;
+    PartList* part1 = (PartList*)NULL;
+    PartList* part2 = (PartList*)NULL;
+    m1 = g_rand_int_range(rand_uniform, 0, nb_machines);
+    m2 = g_rand_int_range(rand_uniform, 0, nb_machines);
 
     while (m1 == m2) {
-        m2 = g_rand_int_range(rand_uniform, 0, nmachines);
+        m2 = g_rand_int_range(rand_uniform, 0, nb_machines);
     }
 
     part1 = sol->part + m1;
@@ -292,8 +285,8 @@ static void perturb_swap(solution *         sol,
         return;
     }
 
-    tmp1 = CC_SAFE_MALLOC(l1, Job *);
-    tmp2 = CC_SAFE_MALLOC(l2, Job *);
+    tmp1 = CC_SAFE_MALLOC(l1, Job*);
+    tmp2 = CC_SAFE_MALLOC(l2, Job*);
     sol->tw -= part1->tw + part2->tw;
     part1->c = 0;
     part1->tw = 0;
@@ -306,7 +299,7 @@ static void perturb_swap(solution *         sol,
     }
 
     for (int i = 0; i < l1; ++i) {
-        tmp1[i] = (Job *)g_ptr_array_index(part1->machine, i1);
+        tmp1[i] = (Job*)g_ptr_array_index(part1->machine, i1);
         g_ptr_array_remove_index(part1->machine, i1);
     }
 
@@ -316,7 +309,7 @@ static void perturb_swap(solution *         sol,
     }
 
     for (int i = 0; i < l2; ++i) {
-        tmp2[i] = (Job *)g_ptr_array_index(part2->machine, i2);
+        tmp2[i] = (Job*)g_ptr_array_index(part2->machine, i2);
         g_ptr_array_remove_index(part2->machine, i2);
     }
 
@@ -347,27 +340,27 @@ static void perturb_swap(solution *         sol,
     }
 
     for (unsigned i = 0; i < part1->machine->len; ++i) {
-        tmp = (Job *)g_ptr_array_index(part1->machine, i);
+        tmp = (Job*)g_ptr_array_index(part1->machine, i);
         tmp->index = i;
-        part1->c += tmp->processingime;
+        part1->c += tmp->processing_time;
         sol->c[tmp->job] = part1->c;
-        part1->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->duetime);
+        part1->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->due_time);
     }
 
     for (unsigned i = 0; i < part2->machine->len; ++i) {
-        tmp = (Job *)g_ptr_array_index(part2->machine, i);
+        tmp = (Job*)g_ptr_array_index(part2->machine, i);
         tmp->index = i;
-        part2->c += tmp->processingime;
+        part2->c += tmp->processing_time;
         sol->c[tmp->job] = part2->c;
-        part2->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->duetime);
+        part2->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->due_time);
     }
 
     sol->tw += part1->tw + part2->tw;
-    CC_IFFREE(tmp1, Job *);
-    CC_IFFREE(tmp2, Job *);
+    CC_IFFREE(tmp1, Job*);
+    CC_IFFREE(tmp2, Job*);
 }
 
-void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform) {
+void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform) {
     int L;
     L = g_rand_int_range(rand_uniform, 0, 3);
 
@@ -393,7 +386,7 @@ void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform) {
         perturb_swap(sol, data, 2, 3, rand_uniform);
     }
 
-    for (int i = 0; i < sol->nmachines; ++i) {
+    for (int i = 0; i < sol->nb_machines; ++i) {
         sol->part[i].used = 1;
     }
 
@@ -401,23 +394,23 @@ void Perturb(solution *sol, local_search_data *data, GRand *rand_uniform) {
     local_search_create_g(sol, data);
 }
 
-int heuristic_rpup(wctproblem *prob) {
+int heuristic(Problem* prob) {
     int    val = 0;
-    int njobs = prob->njobs;
-    int nmachines = prob->nmachines;
-    GRand *rand_uniform = g_rand_new_with_seed(2011);
-    wctparms *parms = &(prob->parms);
+    int    nb_jobs = prob->nb_jobs;
+    int    nb_machines = prob->nb_machines;
+    GRand* rand_uniform = g_rand_new_with_seed(2011);
+    Parms* parms = &(prob->parms);
     g_random_set_seed(1984);
-    int          ILS = prob->njobs/2 ;
-    int          IR  = parms->nb_iterations_rvnd;
-    solution *   sol;
-    solution *   sol1 = (solution *)NULL;
-    GPtrArray *  intervals = prob->root_pd.local_intervals;
-    local_search_data *data = (local_search_data *)NULL;
-    local_search_data *data_RS = (local_search_data *)NULL;
+    int                ILS = prob->nb_jobs / 2;
+    int                IR = parms->nb_iterations_rvnd;
+    Solution*          sol;
+    Solution*          sol1 = (Solution*)NULL;
+    GPtrArray*         intervals = prob->root_pd.local_intervals;
+    local_search_data* data = (local_search_data*)NULL;
+    local_search_data* data_RS = (local_search_data*)NULL;
 
     CCutil_start_resume_time(&(prob->tot_heuristic));
-    sol = solution_alloc(nmachines, njobs, prob->off);
+    sol = solution_alloc(nb_machines, nb_jobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
     CCcheck_val_2(val, "Failed construct edd");
@@ -427,42 +420,41 @@ int heuristic_rpup(wctproblem *prob) {
     printf("Solution in canonical order: \n");
     solution_print(sol);
 
-    data = local_search_data_init(njobs,  nmachines);
+    data = local_search_data_init(nb_jobs, nb_machines);
     CCcheck_NULL_2(data, "Failed to allocate memory to data");
     local_search_create_W(sol, data);
     local_search_create_g(sol, data);
     RVND(sol, data);
     solution_canonical_order(sol, intervals);
+    add_solution_to_colpool(sol, &(prob->root_pd));
     printf("Solution after local search:\n");
     solution_print(sol);
 
-    if(prob->opt_sol == NULL) {
-        prob->opt_sol = solution_alloc(nmachines, njobs, prob->off);
+    if (prob->opt_sol == NULL) {
+        prob->opt_sol = solution_alloc(nb_machines, nb_jobs, prob->off);
         CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
         solution_update(prob->opt_sol, sol);
     }
 
-    for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0; ++i) {
-        //fprintf(stderr, "iteration %d\n", i);
-        sol1 = solution_alloc(nmachines, njobs, prob->off);
+    for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0;
+         ++i) {
+        // fprintf(stderr, "iteration %d\n", i);
+        sol1 = solution_alloc(nb_machines, nb_jobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
         CCcheck_val_2(val, "Failed in construct random solution");
-        data_RS = local_search_data_init(njobs, nmachines);
+        data_RS = local_search_data_init(nb_jobs, nb_machines);
         local_search_create_W(sol1, data_RS);
         local_search_create_g(sol1, data_RS);
         solution_update(sol, sol1);
 
         for (int j = 0; j < ILS; ++j) {
-            //fprintf(stderr, "\tsub iteration %d\n", j);
+            // fprintf(stderr, "\tsub iteration %d\n", j);
             RVND(sol1, data_RS);
 
             if (sol1->tw < sol->tw) {
-                //fprintf(stderr, "solution_update(sol, sol1);\n");
                 solution_update(sol, sol1);
-                //fprintf(stderr , "solution_canonical_order(sol, intervals);\n");
                 solution_canonical_order(sol, intervals);
-                //fprintf(stderr , "add_solution_to_colpool(sol, &(prob->root_pd));\n");
                 add_solution_to_colpool(sol, &(prob->root_pd));
                 j = 0;
             }
@@ -490,4 +482,3 @@ CLEAN:
     g_rand_free(rand_uniform);
     return val;
 }
-
