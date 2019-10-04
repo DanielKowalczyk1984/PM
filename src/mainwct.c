@@ -41,7 +41,7 @@ static void usage(char* f) {
             "   -a int  Set solver: 0 = bdd solver(default), 1 = dp solver\n");
 }
 
-char* find_match(const char* _instance_file) {
+static char* find_match(const char* _instance_file) {
     regex_t    regex;
     regmatch_t matches[2];
     char* val = (char*) NULL;
