@@ -4,29 +4,25 @@
 # ms-python.python added
 import os
 try:
-	os.chdir(os.path.join(os.getcwd(), 'build'))
+	os.chdir("/home/daniel/CG_results_20191004/")
 	print(os.getcwd())
 except:
 	pass
 
 #%%
+import numpy as np
 import pandas as pd
 import re
 
 
 #%%
 file_name ="CG_overall_20191004.csv" 
-data = pd.read_csv("/home/daniel/CG_overall_20191004.csv")
+data = pd.read_csv(file_name)
 match = re.search(r'.*\_(\d{4})(\d{2})(\d{2})\.csv',file_name)
 year = match.group(1)
 month = match.group(2)
 day = match.group(3)
 print(type(day))
-
-
-
-#%%
-data.head()
 
 
 #%%
@@ -45,73 +41,30 @@ data['Id'] = se.values
 
 
 #%%
-grouped = data.groupby(['pricing_solver','n','m'])
+summary_grouped = data.groupby(['pricing_solver','n','m'])
 
 
 #%%
-import numpy as np
 aggregation = {"tot_lb": {np.max, np.mean},
                "gap": {np.max, np.mean},
                "first_size_graph": {np.max, np.mean},
                "opt": np.sum,
                "reduction": {np.max,np.mean},
               "tot_cputime" : {np.max, np.mean}}
-aggregation
-            #    "rel_error": {np.max,np.mean},
-#%%
-grouped["NameInstance"].count()
-grouped2 = data.groupby("NameInstance")
-grouped2["Id"].count().to_csv("CG_allinstances_"+year+month+day+".csv" )
 
 #%%
-result = grouped.agg(aggregation)
-result
-
-
-#%%
-to_write = result.pivot_table(index=['n', 'm'], values=[
+summary_write = summary_grouped.agg(aggregation).pivot_table(index=['n', 'm'], values=[
                               'tot_lb', 'gap', 'first_size_graph','reduction','opt'], columns=['pricing_solver'])
-to_write
+summary_write.columns.set_levels(['AFFS','AFFC','AFBS','AFBC','AFZFS','AFZFC','AFZBS','AFZBC','TI','ATI'],level=2,inplace=True)
+summary_write.columns = ["_".join(x) for x in summary_write.columns.ravel()]
+summary_write.to_csv("CG_summary_"+year+month+day+".csv")
+summary_write
 
 #%%
-pivot = data.pivot_table(values=['tot_lb', 'gap', 'first_size_graph','reduction','opt','rel_error','nb_generated_col','global_lower_bound','global_upper_bound','tot_cputime'], index=['n','m','Id'], columns=['pricing_solver'])
-
-
-#%%
-to_write.columns.set_levels(['AFFS','AFFC','AFBS','AFBC','AFZFS','AFZFC','AFZBS','AFZBC','TI','ATI'],level=2,inplace=True)
-to_write
-
-#%%
-to_write.head()
-
-
-#%%
-to_write.columns = ["_".join(x) for x in to_write.columns.ravel()]
-to_write
-
-#%%
-to_write.to_csv("CG_summary_"+year+month+day+".csv")
-
-
-#%%
-pivot
-
-
-#%%
-pivot.columns.set_levels(['AFFS','AFFC','AFBS','AFBC','AFZFS','AFZFC','AFZBS','AFZBC','TI','ATI'],level=1,inplace=True)
-pivot
-
-
-#%%
-pivot.columns = ["_".join(x) for x in pivot.columns.ravel()]
-
-
-#%%
-pivot
-
-
-#%%
-pivot.to_csv("CG_allinstances_"+year+month+day+".csv")
+all_instances = data.pivot_table(values=['tot_lb', 'gap', 'first_size_graph','reduction','opt','rel_error','nb_generated_col','global_lower_bound','global_upper_bound','tot_cputime'], index=['n','m','Id'], columns=['pricing_solver'])
+all_instances.columns.set_levels(['AFFS','AFFC','AFBS','AFBC','AFZFS','AFZFC','AFZBS','AFZBC','TI','ATI'],level=1,inplace=True)
+all_instances.columns = ["_".join(x) for x in all_instances.columns.ravel()]
+all_instances.to_csv("CG_allinstances_"+year+month+day+".csv")
 
 
 #%%
