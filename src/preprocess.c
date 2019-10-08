@@ -240,7 +240,7 @@ void create_ordered_jobs_array(GPtrArray* a, GPtrArray* b) {
 int find_division(Problem* problem) {
     int            val = 0;
     int            counter = 0;
-    int            njobs = problem->nb_jobs;
+    int            nb_jobs = problem->nb_jobs;
     int            prev;
     NodeData*      root_pd = &(problem->root_pd);
     GPtrArray*     tmp_array = g_ptr_array_new_with_free_func(g_interval_free);
@@ -253,11 +253,11 @@ int find_division(Problem* problem) {
 
     /** Find initial partition */
     prev = 0;
-    for (int i = 0; i < njobs && prev < problem->H_max; ++i) {
+    for (int i = 0; i < nb_jobs && prev < problem->H_max; ++i) {
         tmp_j = (Job*)g_ptr_array_index(jobarray, i);
         int tmp = CC_MIN(problem->H_max, tmp_j->due_time);
         if (prev < tmp) {
-            tmp_interval = interval_alloc(prev, tmp, -1, jobarray, njobs);
+            tmp_interval = interval_alloc(prev, tmp, -1, jobarray, nb_jobs);
             g_ptr_array_add(tmp_array, tmp_interval);
             CCcheck_NULL_2(tmp_interval, "Failed to allocate memory");
             prev = tmp_j->due_time;
@@ -266,7 +266,7 @@ int find_division(Problem* problem) {
 
     if (prev < problem->H_max) {
         tmp_interval =
-            interval_alloc(prev, problem->H_max, -1, jobarray, njobs);
+            interval_alloc(prev, problem->H_max, -1, jobarray, nb_jobs);
         g_ptr_array_add(tmp_array, tmp_interval);
     }
 
@@ -295,14 +295,14 @@ int find_division(Problem* problem) {
                 g_ptr_array_add(root_pd->local_intervals,
                                 interval_alloc(*((int*)slots->pdata[j - 1]),
                                                *((int*)slots->pdata[j]),
-                                               counter, jobarray, njobs));
+                                               counter, jobarray, nb_jobs));
                 counter++;
             }
             g_ptr_array_free(slots, TRUE);
         } else {
             g_ptr_array_add(root_pd->local_intervals,
                             interval_alloc(tmp_interval->a, tmp_interval->b,
-                                           counter, jobarray, njobs));
+                                           counter, jobarray, nb_jobs));
             counter++;
         }
     }
