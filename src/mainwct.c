@@ -227,28 +227,16 @@ int main(int ac, char** av) {
         build_rmp(&(problem.root_pd), 0);
         CCutil_start_timer(&(problem.tot_lb_root));
         compute_lower_bound(&problem, &(problem.root_pd));
+        if(parms->pricing_solver < dp_solver){
+            solution_canonical_order(problem.opt_sol, root->local_intervals);
+        }
+        represent_solution(root, problem.opt_sol);
         print_dot_file(root->solver, NULL);
         problem.rel_error =
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
-        // represent_solution(root, problem.opt_sol);
-        // construct_lp_sol_from_rmp(root);
-        // build_solve_mip(root);
-        // build_solve_mip(root);
-        // represent_solution(root, problem.opt_sol);
-        // compute_lower_bound(&problem, &(problem.root_pd));
-        // problem.size_graph_after_reduced_cost_fixing =
-        // get_size_graph(root->solver);
-        // evaluate_nodes(root);
-        // lpwctdata_free(&(problem.root_pd));
-        // problem.root_pd.localColPool =
-        // g_ptr_array_new_with_free_func(g_scheduleset_free);
-        // heuristic_rpup(&problem);
-        // build_rmp(&(problem.root_pd), 0);
-        // CCutil_start_timer(&(problem.tot_lb_root));
-        // compute_lower_bound(&problem, &(problem.root_pd));
-        // CCutil_stop_timer(&(problem.tot_lb_root), 1);
+        build_solve_mip(root);
     }
     print_to_csv(&problem);
 
