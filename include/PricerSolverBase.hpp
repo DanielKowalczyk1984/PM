@@ -2,6 +2,7 @@
 #define PRICER_SOLVER_BASE_HPP
 
 #include <OptimalSolution.hpp>
+#include <solution.h>
 
 struct PricerSolverBase {
    protected:
