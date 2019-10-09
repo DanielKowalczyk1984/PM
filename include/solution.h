@@ -43,9 +43,7 @@ int solution_check(PartList *part, int job_count);
 void reset_nb_layers(GPtrArray *jobs);
 gint g_job_compare_edd(const void *a, const void *b, void *data);
 void g_set_jobarray_job(gpointer data, gpointer user_data);
-void g_print_machine(gpointer data, gpointer user_data);
 void g_set_sol_perm(gpointer data, gpointer user_data);
-// void g_reset_nb_layers(gpointer data, gpointer user_data);
 void g_reset_num_layers(gpointer data, gpointer user_data);
 
 int solution_canonical_order(Solution *sol, GPtrArray *intervals);
