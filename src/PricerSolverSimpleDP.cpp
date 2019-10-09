@@ -15,8 +15,6 @@ PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray* _jobs, int _num_machines,
       A(new Job*[Hmax + 1]),
       F(new double[Hmax + 1]),
       backward_F(new double[Hmax + 1]),
-      env(new GRBEnv()),
-      model(new GRBModel(*env)),
       TI_x(new GRBVar[nb_jobs * (Hmax + 1)]),
       take(new bool[nb_jobs * (Hmax + 1)]{}),
       lp_x(new double[nb_jobs * (Hmax + 1)]{}),
@@ -108,12 +106,6 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
 void PricerSolverSimpleDp::build_mip() {
     try {
         std::cout << "Building Mip model for the TI formulation\n";
-        model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-        model->set(GRB_IntParam_Threads, 1);
-        model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-        model->set(GRB_IntParam_Presolve, 2);
-        model->set(GRB_DoubleParam_MIPGap,0.0);
-        // model->set(GRB_IntParam_VarBranch, 3);
 
         /** Constructing variables */
         for (int t = 0; t <= Hmax; t++) {
@@ -380,50 +372,3 @@ bool PricerSolverSimpleDp::check_schedule_set(GPtrArray* set) {
 }
 
 void PricerSolverSimpleDp::disjunctive_inequality(double* x, Solution* sol) {}
-
-int PricerSolverSimpleDp::get_int_attr_model(enum MIP_Attr c) {
-    int val = -1;
-    switch (c) {
-        case MIP_Attr_Nb_Vars:
-            val = model->get(GRB_IntAttr_NumVars);
-            break;
-        case MIP_Attr_Nb_Constr:
-            val = model->get(GRB_IntAttr_NumConstrs);
-            break;
-        case MIP_Attr_Status:
-            val = model->get(GRB_IntAttr_Status);
-            break;
-        default:
-            break;
-    }
-
-    return val;
-}
-
-double PricerSolverSimpleDp::get_dbl_attr_model(enum MIP_Attr c) {
-    double val = -1.0;
-    switch (c) {
-        case MIP_Attr_Obj_Bound:
-            val = model->get(GRB_DoubleAttr_ObjBound);
-            break;
-        case MIP_Attr_Obj_Bound_LP:
-            val = model->get(GRB_DoubleAttr_ObjBoundC);
-            break;
-        case MIP_Attr_Mip_Gap:
-            val = model->get(GRB_DoubleAttr_MIPGap);
-            break;
-        case MIP_Attr_Run_Time:
-            val = model->get(GRB_DoubleAttr_Runtime);
-           break; 
-        case MIP_Attr_Nb_Simplex_Iter:
-            val = model->get(GRB_DoubleAttr_IterCount);
-            break;
-        case MIP_Attr_Nb_Nodes:
-            val = model->get(GRB_DoubleAttr_NodeCount);
-            break;
-        default:
-            break;
-    }
-
-    return val;
-}

@@ -14,8 +14,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     double**                  backward_F;
     Job***                    A;
     int**                     B;
-    std::unique_ptr<GRBEnv>   env;
-    std::unique_ptr<GRBModel> model;
     GRBVar***                 arctime_x;
     int                       num_edges_removed;
     double*                   lp_x;
@@ -54,9 +52,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     void forward_evaluator(double* pi);
     void backward_evaluator(double* _pi);
-
-    int    get_int_attr_model(enum MIP_Attr) override;
-    double get_dbl_attr_model(enum MIP_Attr) override;
 
     int delta1(const int& i, const int& j, const int& t) {
         Job* tmp_i = vector_jobs[i];

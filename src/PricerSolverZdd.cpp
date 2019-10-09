@@ -8,9 +8,7 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines,
     : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name),
       size_graph(0),
       nb_removed_edges(0),
-      nb_removed_nodes(0),
-      env(new GRBEnv()),
-      model(new GRBModel(*env))
+      nb_removed_nodes(0)
 
 {
     /**
@@ -254,11 +252,6 @@ void PricerSolverZdd::build_mip() {
             get(boost::vertex_degree_t(), mip_graph));
         EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
         EdgeVarAccessor  edge_var_list(get(boost::edge_weight2_t(), mip_graph));
-        model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-        model->set(GRB_IntParam_Threads, 1);
-        model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-        model->set(GRB_IntParam_Presolve, 2);
-        model->set(GRB_IntParam_VarBranch, 3);
 
         /** Constructing variables */
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
@@ -579,50 +572,3 @@ int PricerSolverZdd::get_num_layers() {
 }
 
 void PricerSolverZdd::print_num_paths() {}
-
-int PricerSolverZdd::get_int_attr_model(enum MIP_Attr c) {
-    int val = -1;
-    switch (c) {
-        case MIP_Attr_Nb_Vars:
-            val = model->get(GRB_IntAttr_NumVars);
-            break;
-        case MIP_Attr_Nb_Constr:
-            val = model->get(GRB_IntAttr_NumConstrs);
-            break;
-        case MIP_Attr_Status:
-            val = model->get(GRB_IntAttr_Status);
-            break;
-        default:
-            break;
-    }
-
-    return val;
-}
-
-double PricerSolverZdd::get_dbl_attr_model(enum MIP_Attr c) {
-    double val = -1.0;
-    switch (c) {
-        case MIP_Attr_Obj_Bound:
-            val = model->get(GRB_DoubleAttr_ObjBound);
-            break;
-        case MIP_Attr_Obj_Bound_LP:
-            val = model->get(GRB_DoubleAttr_ObjBoundC);
-            break;
-        case MIP_Attr_Mip_Gap:
-            val = model->get(GRB_DoubleAttr_MIPGap);
-            break;
-        case MIP_Attr_Run_Time:
-            val = model->get(GRB_DoubleAttr_Runtime);
-            break;
-        case MIP_Attr_Nb_Simplex_Iter:
-            val = model->get(GRB_DoubleAttr_IterCount);
-            break;
-        case MIP_Attr_Nb_Nodes:
-            val = model->get(GRB_DoubleAttr_NodeCount);
-            break;
-        default:
-            break;
-    }
-
-    return val;
-}

@@ -14,8 +14,6 @@ class PricerSolverBdd : public PricerSolverBase
         int nb_removed_nodes;
 
         MipGraph mip_graph;
-        std::unique_ptr<GRBEnv> env;
-        std::unique_ptr<GRBModel> model;
         std::unique_ptr<double[]> lp_x;
         std::unique_ptr<double[]> solution_x;
 
@@ -46,8 +44,6 @@ class PricerSolverBdd : public PricerSolverBase
         int get_num_layers() override ;
         void print_num_paths() override;
         void add_constraint(Job* job, GPtrArray* list, int order) override;
-        int get_int_attr_model(enum MIP_Attr) override;
-        double get_dbl_attr_model (enum MIP_Attr) override;
 
 };
 
