@@ -228,7 +228,6 @@ void PricerSolverBdd::build_mip() {
         model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
         model->set(GRB_IntParam_Presolve, 2);
         model->set(GRB_DoubleParam_MIPGap,0.0);
-        // model->set(GRB_IntParam_VarBranch, 3);
 
         /** Constructing variables */
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {

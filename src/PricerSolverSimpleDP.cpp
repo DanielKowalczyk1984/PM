@@ -111,7 +111,8 @@ void PricerSolverSimpleDp::build_mip() {
         model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
         model->set(GRB_IntParam_Threads, 1);
         model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-        // model->set(GRB_IntParam_Presolve, 2);
+        model->set(GRB_IntParam_Presolve, 2);
+        model->set(GRB_DoubleParam_MIPGap,0.0);
         // model->set(GRB_IntParam_VarBranch, 3);
 
         /** Constructing variables */
@@ -186,21 +187,6 @@ void PricerSolverSimpleDp::build_mip() {
         }
     }
     model->optimize();
-    // for (int t = 0; t < Hmax; t++) {
-    //     for (auto& it : backward_graph[t]) {
-    //         if (TI_x[(it->job) * (Hmax + 1) + t].get(GRB_IntAttr_VBasis) ==
-    //         0) {
-    //             std::cout << "job = " << it->job << " " << t << " "
-    //                       << TI_x[(it->job) * (Hmax + 1) + t].get(
-    //                              GRB_DoubleAttr_X)
-    //                       << " " << lp_x[(it->job) * (Hmax + 1) + t] << "\n";
-    //             if (TI_x[(it->job) * (Hmax + 1) + t].get(GRB_DoubleAttr_X) >
-    //                 0.00001) {
-    //                 std::cout << "tes tes\n";
-    //             }
-    //         }
-    //     }
-    // }
     return;
 }
 

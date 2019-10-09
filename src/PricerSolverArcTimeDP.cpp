@@ -152,8 +152,8 @@ void PricerSolverArcTimeDp::build_mip() {
     model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
     model->set(GRB_IntParam_Threads, 1);
     model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-    // model->set(GRB_IntParam_Presolve, 2);
-    // model->set(GRB_IntParam_VarBranch, 3);
+    model->set(GRB_IntParam_Presolve, 2);
+    model->set(GRB_DoubleParam_MIPGap,0.0);
 
     /** Constructing variables */
     for (int j = 0; j < n + 1; j++) {
