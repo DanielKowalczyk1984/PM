@@ -4,7 +4,7 @@
 # ms-python.python added
 import os
 try:
-	os.chdir("/home/daniel/CG_results_20191004/")
+	os.chdir("/home/daniel/")
 	print(os.getcwd())
 except:
 	pass
@@ -16,13 +16,12 @@ import re
 
 
 #%%
-file_name ="CG_overall_20191004.csv" 
-data = pd.read_csv(file_name)
+file_name = "CG_overall_20190829.csv"
+data = pd.read_csv("/home/daniel/Dropbox/PapersOR/PM/implementation/results/CG_results_20190829/CG_overall_20190829.csv")
 match = re.search(r'.*\_(\d{4})(\d{2})(\d{2})\.csv',file_name)
 year = match.group(1)
 month = match.group(2)
 day = match.group(3)
-print(type(day))
 
 
 #%%
@@ -58,7 +57,6 @@ summary_write = summary_grouped.agg(aggregation).pivot_table(index=['n', 'm'], v
 summary_write.columns.set_levels(['AFFS','AFFC','AFBS','AFBC','AFZFS','AFZFC','AFZBS','AFZBC','TI','ATI'],level=2,inplace=True)
 summary_write.columns = ["_".join(x) for x in summary_write.columns.ravel()]
 summary_write.to_csv("CG_summary_"+year+month+day+".csv")
-summary_write
 
 #%%
 all_instances = data.pivot_table(values=['tot_lb', 'gap', 'first_size_graph','reduction','opt','rel_error','nb_generated_col','global_lower_bound','global_upper_bound','tot_cputime'], index=['n','m','Id'], columns=['pricing_solver'])
