@@ -40,12 +40,11 @@ int solution_update(Solution *dest, Solution *src);
 int solution_check(PartList *part, int job_count);
 
 
-void g_job_free(void *set);
+// void g_job_free(void *set);
 void reset_nb_layers(GPtrArray *jobs);
 void g_print_job(gpointer data, gpointer user_data);
 gint g_job_compare_edd(const void *a, const void *b, void *data);
 void g_set_jobarray_job(gpointer data, gpointer user_data);
-void g_print_jobarray(gpointer data, gpointer user_data);
 void g_print_machine(gpointer data, gpointer user_data);
 void g_set_sol_perm(gpointer data, gpointer user_data);
 // void g_reset_nb_layers(gpointer data, gpointer user_data);
