@@ -147,11 +147,6 @@ void PricerSolverArcTimeDp::evaluate_nodes(double* pi, int UB, double LB) {
 
 void PricerSolverArcTimeDp::build_mip() {
     std::cout << "Building Mip model for the arcTI formulation\n";
-    model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-    model->set(GRB_IntParam_Threads, 1);
-    model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-    model->set(GRB_IntParam_Presolve, 2);
-    model->set(GRB_DoubleParam_MIPGap,0.0);
 
     /** Constructing variables */
     for (int j = 0; j < n + 1; j++) {

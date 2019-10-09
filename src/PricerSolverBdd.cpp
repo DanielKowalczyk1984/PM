@@ -221,11 +221,6 @@ void PricerSolverBdd::build_mip() {
         EdgeVarAccessor  edge_var_list(get(boost::edge_weight2_t(), mip_graph));
         EdgeIndexAccessor edge_index_list(
             get(boost::edge_index_t(), mip_graph));
-        model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-        model->set(GRB_IntParam_Threads, 1);
-        model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-        model->set(GRB_IntParam_Presolve, 2);
-        model->set(GRB_DoubleParam_MIPGap,0.0);
 
         /** Constructing variables */
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {

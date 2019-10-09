@@ -12,7 +12,13 @@ PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
       nb_layers(0),
       problem_name(p_name),
       env(new GRBEnv()),
-      model(new GRBModel(*env)) { }
+      model(new GRBModel(*env)) {
+    model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
+    model->set(GRB_IntParam_Threads, 1);
+    model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
+    model->set(GRB_IntParam_Presolve, 2);
+    model->set(GRB_DoubleParam_MIPGap, 0.0);
+}
 
 PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
                                    GPtrArray* _ordered_jobs, const char* p_name)
@@ -23,7 +29,13 @@ PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
       nb_layers(ordered_jobs->len),
       problem_name(p_name),
       env(new GRBEnv()),
-      model(new GRBModel(*env)) {}
+      model(new GRBModel(*env)) {
+    model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
+    model->set(GRB_IntParam_Threads, 1);
+    model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
+    model->set(GRB_IntParam_Presolve, 2);
+    model->set(GRB_DoubleParam_MIPGap, 0.0);
+}
 
 PricerSolverBase::~PricerSolverBase() {}
 

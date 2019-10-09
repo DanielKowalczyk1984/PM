@@ -106,12 +106,6 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
 void PricerSolverSimpleDp::build_mip() {
     try {
         std::cout << "Building Mip model for the TI formulation\n";
-        model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-        model->set(GRB_IntParam_Threads, 1);
-        model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-        model->set(GRB_IntParam_Presolve, 2);
-        model->set(GRB_DoubleParam_MIPGap,0.0);
-        // model->set(GRB_IntParam_VarBranch, 3);
 
         /** Constructing variables */
         for (int t = 0; t <= Hmax; t++) {
