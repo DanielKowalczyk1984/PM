@@ -227,6 +227,7 @@ void PricerSolverBdd::build_mip() {
         model->set(GRB_IntParam_Threads, 1);
         model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
         model->set(GRB_IntParam_Presolve, 2);
+        model->set(GRB_DoubleParam_MIPGap,0.0);
         // model->set(GRB_IntParam_VarBranch, 3);
 
         /** Constructing variables */
@@ -314,10 +315,9 @@ void PricerSolverBdd::build_mip() {
             edge_var_list[*it.first].x.set(
                 GRB_DoubleAttr_Start, solution_x[edge_index_list[*it.first]]);
         }
-        model->optimize();
-
         model->write("bdd_" + problem_name + "_" +
                      std::to_string(num_machines) + ".lp");
+        model->optimize();
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;

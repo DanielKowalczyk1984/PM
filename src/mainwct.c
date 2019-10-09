@@ -230,7 +230,6 @@ int main(int ac, char** av) {
             solution_canonical_order(problem.opt_sol, root->local_intervals);
         }
         represent_solution(root, problem.opt_sol);
-        print_dot_file(root->solver, NULL);
         problem.rel_error =
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);
