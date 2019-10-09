@@ -1,6 +1,5 @@
 #ifndef PRICER_SOLVER_SIMPLE_DP_HPP
 #define PRICER_SOLVER_SIMPLE_DP_HPP
-#include <gurobi_c++.h>
 #include <memory>
 #include "PricerSolverBase.hpp"
 
@@ -50,9 +49,6 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     void                    forward_evaluator(double* _pi);
     void                    backward_evaluator(double* _pi);
-
-    int    get_int_attr_model(enum MIP_Attr) override;
-    double get_dbl_attr_model(enum MIP_Attr) override;
 };
 
 #endif  // PRICER_SOLVER_SIMPLE_DP_HPP

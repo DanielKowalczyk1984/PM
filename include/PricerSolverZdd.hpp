@@ -47,8 +47,6 @@ class PricerSolverZdd : public PricerSolverBase
 
 
         void add_constraint(Job* job, GPtrArray* list, int order) override;
-        int get_int_attr_model(enum MIP_Attr) override;
-        double get_dbl_attr_model (enum MIP_Attr) override;
 };
 
 
