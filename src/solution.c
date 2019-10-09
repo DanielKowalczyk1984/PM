@@ -106,13 +106,14 @@ gint order_weight(gconstpointer a, gconstpointer b, void* data) {
 
 static void print_machine(gpointer j, gpointer data) {
     Job* tmp = (Job*)j;
-    printf("%d ", tmp->job);
+    int C = ((Solution *) data)->c[tmp->job];
+    printf("%d (%d) ", tmp->job, C);
 }
 
 void solution_print(Solution* sol) {
     for (int i = 0; i < sol->nb_machines; ++i) {
         printf("Machine %-1d: ", sol->part[i].key);
-        g_ptr_array_foreach(sol->part[i].machine, print_machine, NULL);
+        g_ptr_array_foreach(sol->part[i].machine, print_machine, sol);
         printf("with C =  %d, wC = %d and %u jobs\n", sol->part[i].c,
                sol->part[i].tw, sol->part[i].machine->len);
     }

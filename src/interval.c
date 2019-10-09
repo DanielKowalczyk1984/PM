@@ -134,8 +134,7 @@ void print_interval_pair(GPtrArray* ordered_jobs) {
             printf("\n");
             printf("Interval %d (%d,%d]: ", cur->key, cur->a, cur->b);
         }
-        printf("%d (%d, %d) ", tmp_p->j->job, tmp_p->j->processing_time,
-               tmp_p->j->weight);
+        printf("%d ", tmp_p->j->job);
     }
 }
 
