@@ -136,6 +136,7 @@ void print_interval_pair(GPtrArray* ordered_jobs) {
         }
         printf("%d ", tmp_p->j->job);
     }
+    printf("\n");
 }
 
 void count_jobs_interval_pair(GPtrArray* ordered_jobs) {
