@@ -583,18 +583,8 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                         pd->id, pd->iterations, pd->opt_track);
                 }
 
-                // if (parms->pricing_solver < dp_solver) {
-                // val = wctlp_optimize(pd->RMP, &status);
-                // CCcheck_val_2(val, "wctlp_optimize failed");
-                // val = compute_objective(pd, parms);
-                // CCcheck_val_2(val, "Failed in computing the objective");
 
-                // reset_nblayers(pd->jobarray);
-                // calculate_nblayers(pd, 2);
                 reduce_cost_fixing(pd);
-                // val = check_schedules(pd);
-                // CCcheck_val_2(val, "Failed in checkschedules");
-                // delete_infeasible_cclasses(pd);
                 /**
                  * Compute the objective function
                  */
