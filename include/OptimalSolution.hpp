@@ -1,8 +1,7 @@
 #ifndef OPTIMAL_SOLUTION_HPP
 #define OPTIMAL_SOLUTION_HPP
-#include <solution.h>
-#include <interval.h>
 #include <iostream>
+#include <job.h>
 
 template <typename T>
 class OptimalSolution {
