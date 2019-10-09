@@ -30,8 +30,6 @@ void print_number_paths(PricerSolver *solver);
 void print_dot_file(PricerSolver *solver, char *name);
 void print_number_nodes_edges(PricerSolver *solver);
 
-void calculate_edges(PricerSolver *solver, ScheduleSet *set);
-void g_calculate_edges(gpointer data, gpointer user_data);
 double get_edge_cost(PricerSolver *solver, int idx);
 
 #ifdef __cplusplus

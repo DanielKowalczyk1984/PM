@@ -1,9 +1,4 @@
 #include "PricerSolverBase.hpp"
-#include <memory>
-#include <set>
-#include <vector>
-#include "PricerConstruct.hpp"
-#include "boost/graph/graphviz.hpp"
 
 /**
  * PricerSolverBase default COnstructor
@@ -33,7 +28,3 @@ PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
 PricerSolverBase::~PricerSolverBase() {}
 
 void PricerSolverBase::print_num_paths() {}
-
-void PricerSolverBase::calculate_edges(ScheduleSet* set) {
-    return;
-}
