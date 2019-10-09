@@ -3,7 +3,7 @@
 
 #include <glib.h>
 #include <util.h>
-#include <solution.h>
+#include <job.h>
 
 typedef struct _interval{
 	int a;
