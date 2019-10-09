@@ -106,7 +106,7 @@ gint order_weight(gconstpointer a, gconstpointer b, void* data) {
 
 static void print_machine(gpointer j, gpointer data) {
     Job* tmp = (Job*)j;
-    int C = ((Solution *) data)->c[tmp->job];
+    int  C = ((Solution*)data)->c[tmp->job];
     printf("%d (%d) ", tmp->job, C);
 }
 
@@ -311,13 +311,12 @@ void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
     if (m < sol->nb_machines) {
         GPtrArray* machine = sol->part[m].machine;
         int        iter = 0;
-        int        Hmax =
-            ((interval*)g_ptr_array_index(intervals, intervals->len - 1))->b;
+        // int        Hmax = ((interval*)g_ptr_array_index(intervals, intervals->len - 1))->b;
 
         for (unsigned i = 0; i < machine->len; ++i) {
             Job*      tmp = (Job*)g_ptr_array_index(machine, i);
             interval* I = (interval*)g_ptr_array_index(intervals, iter);
-            while (!(sol->c[tmp->job] <= I->b || I->b < Hmax)) {
+            while (!(sol->c[tmp->job] <= I->b && I->a < sol->c[tmp->job])) {
                 iter++;
                 I = (interval*)g_ptr_array_index(intervals, iter);
             }
@@ -337,34 +336,38 @@ static void calculate_partition(Solution* sol, GPtrArray* intervals, int m,
     int        count = 0;
     int        cur = *last;
     void*      tmp;
+
     GPtrArray* machine = sol->part[m].machine;
     interval*  I = (interval*)g_ptr_array_index(intervals, *u);
+    Job *first_job = g_ptr_array_index(machine, 0);
     Job*       i = (Job*)g_ptr_array_index(machine, cur);
     Job*       j;
 
-    while (sol->c[i->job] - i->processing_time >= I->a &&
-           sol->c[i->job] <= I->b) {
-        if (cur > 0) {
+    while (sol->c[i->job] > I->a && sol->c[i->job] <= I->b &&
+           sol->c[i->job] - i->processing_time <= I->b &&
+           sol->c[i->job] - i->processing_time > I->a) {
+        if (first_job != i) {
             count++;
-            i = (Job*)g_ptr_array_index(machine, cur - 1);
-            cur--;
+            i = (Job*)g_ptr_array_index(machine, --cur);
         } else {
             break;
         }
+
     }
 
-    if (count > 1) {
-        if (cur > 0) {
+    if (count > 0) {
+        if (first_job != i) {
             g_qsort_with_data(machine->pdata + cur + 1, count, sizeof(Job*),
                               compare_interval, I);
+            j = (Job*)g_ptr_array_index(machine, cur + 1);
         } else {
-            g_qsort_with_data(machine->pdata + cur, count + 1, sizeof(Job*),
+            g_qsort_with_data(machine->pdata, count + 1 , sizeof(Job*),
                               compare_interval, I);
-            i = (Job*)g_ptr_array_index(machine, cur);
+            i = (Job*)g_ptr_array_index(machine, 0);
+            j = (Job*)g_ptr_array_index(machine, 1);
         }
 
-        j = (Job*)g_ptr_array_index(machine, cur + 1);
-        if (sol->c[i->job] <= I->b) {
+        if (sol->c[i->job] > I->a && sol->c[i->job] <= I->b) {
             if (compare_interval(&i, &j, I) < 0) {
                 cur--;
                 *last = cur;
@@ -438,8 +441,6 @@ int solution_arctime_order(Solution* sol) {
         while (i < tmp->len - 2 && j < tmp->len - 1) {
             Job* tmp_i = (Job*)g_ptr_array_index(tmp, i);
             Job* tmp_j = (Job*)g_ptr_array_index(tmp, j);
-            printf("%d %d %d %d %d %d\n", it, tmp_i->job, tmp_j->job,
-                   -value_diff_Fij(C, tmp_i, tmp_j),i,j);
             if (tmp_i->job < tmp_j->job) {
                 if (arctime_diff_Fij(C, tmp_i, tmp_j) >= 0) {
                     void* tmp_job = NULL;
