@@ -1,8 +1,7 @@
 #ifndef PRICER_SOLVER_BASE_HPP
 #define PRICER_SOLVER_BASE_HPP
 
-#include <scheduleset.h>
-#include <NodeBddStructure.hpp>
+#include <OptimalSolution.hpp>
 
 struct PricerSolverBase {
    protected:
@@ -13,15 +12,6 @@ struct PricerSolverBase {
     int         nb_layers;
     std::string problem_name;
 
-    // std::unique_ptr<DdStructure<>> decision_diagram;
-    // size_t size_graph;
-
-    // int nb_removed_edges;
-    // int nb_removed_nodes;
-
-    // MipGraph g;
-    // std::unique_ptr<GRBEnv> env;
-    // std::unique_ptr<GRBModel> model;
    public:
     /**
      * Default constructors
@@ -68,7 +58,6 @@ struct PricerSolverBase {
      * Reduced cost fixing
      */
 
-    virtual void calculate_edges(ScheduleSet* set);
     virtual void reduce_cost_fixing(double* pi, int UB, double LB) = 0;
     virtual void evaluate_nodes(double* pi, int UB, double LB) = 0;
 
