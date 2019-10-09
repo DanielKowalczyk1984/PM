@@ -3,6 +3,7 @@
 
 #include "PricerSolverBase.hpp"
 #include "MipGraph.hpp"
+#include <NodeBddStructure.hpp>
 
 class PricerSolverZdd : public PricerSolverBase
 {

@@ -1,7 +1,8 @@
 #ifndef PRICER_SOLVER_SIMPLE_DP_HPP
 #define PRICER_SOLVER_SIMPLE_DP_HPP
-#include <gurobi_c++.h>
 #include "PricerSolverBase.hpp"
+#include <gurobi_c++.h>
+#include <memory>
 
 class PricerSolverSimpleDp : public PricerSolverBase {
    private:

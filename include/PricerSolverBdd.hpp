@@ -1,5 +1,6 @@
 #ifndef PRICER_SOLVER_BDD_HPP
 #define PRICER_SOLVER_BDD_HPP
+#include <NodeBddStructure.hpp>
 #include "PricerSolverBase.hpp"
 #include "MipGraph.hpp"
 

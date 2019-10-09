@@ -1,5 +1,6 @@
 #include "PricerSolverZdd.hpp"
 #include "PricerConstruct.hpp"
+#include <NodeBddStructure.hpp>
 #include "boost/graph/graphviz.hpp"
 
 PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines,

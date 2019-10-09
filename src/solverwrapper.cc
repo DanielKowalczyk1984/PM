@@ -7,6 +7,7 @@
 #include "PricerSolverZddForward.hpp"
 
 extern "C" {
+#include <scheduleset.h>
 
 PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
                             GPtrArray* ordered_jobs, parms* parms) {
@@ -124,9 +125,6 @@ size_t get_nb_edges(PricerSolver* solver) {
     return solver->get_nb_edges();
 }
 
-void calculate_edges(PricerSolver* solver, ScheduleSet* set) {
-    solver->calculate_edges(set);
-}
 
 int construct_lp_sol_from_rmp(NodeData* pd) {
     int val = 0;
@@ -161,10 +159,4 @@ void add_constraint(NodeData* pd, Job* job, int order) {
     pd->solver->add_constraint(job, pd->ordered_jobs, order);
 }
 
-void g_calculate_edges(gpointer data, gpointer user_data) {
-    ScheduleSet*  tmp = (ScheduleSet*)data;
-    PricerSolver* solver = (PricerSolver*)user_data;
-
-    solver->calculate_edges(tmp);
-}
 }
