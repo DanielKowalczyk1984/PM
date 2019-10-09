@@ -72,6 +72,17 @@ void problem_init(Problem* problem) {
     CCutil_start_timer(&(problem->tot_cputime));
     problem->first_size_graph = 0;
     problem->size_graph_after_reduced_cost_fixing = 0;
+    /** Mip statistics */
+    problem->mip_nb_vars = 0;
+    problem->mip_nb_constr = 0;
+    problem->mip_obj_bound = 0.0;
+    problem->mip_obj_bound_lp = 0.0;
+    problem->mip_rel_gap = 0.0;
+    problem->mip_run_time = 110.0;
+    problem->mip_status = 0;
+    problem->mip_nb_iter_simplex = 0;
+    problem->mip_nb_nodes = 0;
+    problem->mip_reduced_cost_fixing = 0;
 }
 
 void problem_free(Problem* problem) {

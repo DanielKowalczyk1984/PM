@@ -13,35 +13,39 @@ PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
                             GPtrArray* ordered_jobs, parms* parms) {
     switch (parms->pricing_solver) {
         case bdd_solver_simple:
-            return new PricerSolverBddSimple(jobs, _num_machines, ordered_jobs,parms->pname);
+            return new PricerSolverBddSimple(jobs, _num_machines, ordered_jobs,
+                                             parms->pname);
             break;
         case bdd_solver_cycle:
-            return new PricerSolverBddCycle(jobs, _num_machines, ordered_jobs,parms->pname);
+            return new PricerSolverBddCycle(jobs, _num_machines, ordered_jobs,
+                                            parms->pname);
             break;
         case zdd_solver_cycle:
-            return new PricerSolverZddCycle(jobs, _num_machines, ordered_jobs,parms->pname);
+            return new PricerSolverZddCycle(jobs, _num_machines, ordered_jobs,
+                                            parms->pname);
             break;
         case zdd_solver_simple:
-            return new PricerSolverSimple(jobs, _num_machines, ordered_jobs,parms->pname);
+            return new PricerSolverSimple(jobs, _num_machines, ordered_jobs,
+                                          parms->pname);
             break;
         case bdd_solver_backward_simple:
-            return new PricerSolverBddBackwardSimple(jobs, _num_machines,
-                                                     ordered_jobs,parms->pname);
+            return new PricerSolverBddBackwardSimple(
+                jobs, _num_machines, ordered_jobs, parms->pname);
             break;
         case bdd_solver_backward_cycle:
             return new PricerSolverBddBackwardCycle(jobs, _num_machines,
-                                                    ordered_jobs,parms->pname);
+                                                    ordered_jobs, parms->pname);
             break;
         case zdd_solver_backward_simple:
-            return new PricerSolverZddBackwardSimple(jobs, _num_machines,
-                                                     ordered_jobs,parms->pname);
+            return new PricerSolverZddBackwardSimple(
+                jobs, _num_machines, ordered_jobs, parms->pname);
             break;
         case zdd_solver_backward_cycle:
             return new PricerSolverZddBackwardCycle(jobs, _num_machines,
-                                                    ordered_jobs,parms->pname);
+                                                    ordered_jobs, parms->pname);
         default:
             return new PricerSolverBddBackwardCycle(jobs, _num_machines,
-                                                    ordered_jobs,parms->pname);
+                                                    ordered_jobs, parms->pname);
     }
 }
 
@@ -49,12 +53,15 @@ PricerSolverBase* newSolverDp(GPtrArray* _jobs, int _num_machines, int _Hmax,
                               parms* parms) {
     switch (parms->pricing_solver) {
         case dp_solver:
-            return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax,parms->pname);
+            return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax,
+                                            parms->pname);
             break;
         case ati_solver:
-            return new PricerSolverArcTimeDp(_jobs, _num_machines, _Hmax,parms->pname);
+            return new PricerSolverArcTimeDp(_jobs, _num_machines, _Hmax,
+                                             parms->pname);
         default:
-            return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax,parms->pname);
+            return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax,
+                                            parms->pname);
             break;
     }
 }
@@ -83,7 +90,8 @@ int reduce_cost_fixing(NodeData* pd) {
     double LB = pd->LP_lower_bound;
 
     pd->solver->reduce_cost_fixing(pd->pi, UB, LB);
-    pd->problem->size_graph_after_reduced_cost_fixing = get_nb_edges(pd->solver);
+    pd->problem->size_graph_after_reduced_cost_fixing =
+        get_nb_edges(pd->solver);
     return val;
 }
 
@@ -125,7 +133,6 @@ size_t get_nb_edges(PricerSolver* solver) {
     return solver->get_nb_edges();
 }
 
-
 int construct_lp_sol_from_rmp(NodeData* pd) {
     int val = 0;
     int nb_cols;
@@ -139,7 +146,7 @@ int construct_lp_sol_from_rmp(NodeData* pd) {
     pd->solver->construct_lp_sol_from_rmp(pd->lambda, pd->localColPool,
                                           pd->localColPool->len);
 
-    CLEAN:
+CLEAN:
     return val;
 }
 
@@ -157,6 +164,40 @@ int check_schedule_set(ScheduleSet* set, NodeData* pd) {
 
 void add_constraint(NodeData* pd, Job* job, int order) {
     pd->solver->add_constraint(job, pd->ordered_jobs, order);
+}
+
+void get_mip_statistics(NodeData* pd, enum MIP_Attr c) {
+    Problem*          problem = pd->problem;
+    PricerSolverBase* solver = pd->solver;
+    switch (c) {
+        case MIP_Attr_Nb_Vars:
+            problem->mip_nb_vars = solver->get_int_attr_model(c);
+            break;
+        case MIP_Attr_Nb_Constr:
+            problem->mip_nb_constr = solver->get_int_attr_model(c);
+            break;
+        case MIP_Attr_Obj_Bound:
+            problem->mip_obj_bound = solver->get_dbl_attr_model(c);
+            break;
+        case MIP_Attr_Obj_Bound_LP:
+            problem->mip_obj_bound_lp = solver->get_dbl_attr_model(c);
+            break;
+        case MIP_Attr_Mip_Gap:
+            problem->mip_rel_gap = solver->get_dbl_attr_model(c);
+            break;
+        case MIP_Attr_Run_Time:
+            problem->mip_run_time = solver->get_dbl_attr_model(c);
+            break;
+        case MIP_Attr_Status:
+            problem->mip_status = solver->get_int_attr_model(c);
+            break;
+        case MIP_Attr_Nb_Simplex_Iter:
+            problem->mip_nb_iter_simplex = solver->get_dbl_attr_model(c);
+            break;
+        case MIP_Attr_Nb_Nodes:
+            problem->mip_nb_nodes = solver->get_dbl_attr_model(c);
+            break;
+    }
 }
 
 }

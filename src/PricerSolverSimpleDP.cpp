@@ -1,8 +1,8 @@
 #include "PricerSolverSimpleDP.hpp"
+#include <scheduleset.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include "boost/graph/graphviz.hpp"
-#include <scheduleset.h>
 
 /**
  * Pricersolver for the TI index formulation
@@ -348,7 +348,8 @@ void PricerSolverSimpleDp::create_dot_zdd(const char* name) {
             boost::add_edge(t, t + it->processing_time, graph);
         }
     }
-    auto file_name = "TI_representation_" + problem_name + "_" + std::to_string(num_machines) + ".gv";
+    auto file_name = "TI_representation_" + problem_name + "_" +
+                     std::to_string(num_machines) + ".gv";
     auto otf = std::ofstream(file_name);
     boost::write_graphviz(otf, graph);
     otf.close();
@@ -393,3 +394,50 @@ bool PricerSolverSimpleDp::check_schedule_set(GPtrArray* set) {
 }
 
 void PricerSolverSimpleDp::disjunctive_inequality(double* x, Solution* sol) {}
+
+int PricerSolverSimpleDp::get_int_attr_model(enum MIP_Attr c) {
+    int val = -1;
+    switch (c) {
+        case MIP_Attr_Nb_Vars:
+            val = model->get(GRB_IntAttr_NumVars);
+            break;
+        case MIP_Attr_Nb_Constr:
+            val = model->get(GRB_IntAttr_NumConstrs);
+            break;
+        case MIP_Attr_Status:
+            val = model->get(GRB_IntAttr_Status);
+            break;
+        default:
+            break;
+    }
+
+    return val;
+}
+
+double PricerSolverSimpleDp::get_dbl_attr_model(enum MIP_Attr c) {
+    double val = -1.0;
+    switch (c) {
+        case MIP_Attr_Obj_Bound:
+            val = model->get(GRB_DoubleAttr_ObjBound);
+            break;
+        case MIP_Attr_Obj_Bound_LP:
+            val = model->get(GRB_DoubleAttr_ObjBoundC);
+            break;
+        case MIP_Attr_Mip_Gap:
+            val = model->get(GRB_DoubleAttr_MIPGap);
+            break;
+        case MIP_Attr_Run_Time:
+            val = model->get(GRB_DoubleAttr_Runtime);
+           break; 
+        case MIP_Attr_Nb_Simplex_Iter:
+            val = model->get(GRB_DoubleAttr_IterCount);
+            break;
+        case MIP_Attr_Nb_Nodes:
+            val = model->get(GRB_DoubleAttr_NodeCount);
+            break;
+        default:
+            break;
+    }
+
+    return val;
+}

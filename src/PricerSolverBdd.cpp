@@ -311,13 +311,13 @@ void PricerSolverBdd::build_mip() {
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
             edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart,
                                            lp_x[edge_index_list[*it.first]]);
-            edge_var_list[*it.first].x.set(GRB_DoubleAttr_Start,
-                                           solution_x[edge_index_list[*it.first]]);
+            edge_var_list[*it.first].x.set(
+                GRB_DoubleAttr_Start, solution_x[edge_index_list[*it.first]]);
         }
         model->optimize();
 
-
-        model->write( "bdd_" +  problem_name + "_" + std::to_string(num_machines) + ".lp");
+        model->write("bdd_" + problem_name + "_" +
+                     std::to_string(num_machines) + ".lp");
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;
@@ -390,8 +390,9 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
 
     ColorWriterEdge   edge_writer(mip_graph, lp_x.get());
     ColorWriterVertex vertex_writer(mip_graph, table);
-    string file_name = "lp_solution_" + problem_name + "_" + std::to_string(num_machines) + ".gv";
-    std::ofstream     outf(file_name);
+    string            file_name = "lp_solution_" + problem_name + "_" +
+                       std::to_string(num_machines) + ".gv";
+    std::ofstream outf(file_name);
     boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
     outf.close();
 }
@@ -434,8 +435,9 @@ void PricerSolverBdd::represent_solution(Solution* sol) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     ColorWriterEdge    edge_writer(mip_graph, solution_x.get());
     ColorWriterVertex  vertex_writer(mip_graph, table);
-    string file_name = "solution_" + problem_name + "_" + std::to_string(num_machines) + ".gv"; 
-    std::ofstream      outf(file_name);
+    string             file_name =
+        "solution_" + problem_name + "_" + std::to_string(num_machines) + ".gv";
+    std::ofstream outf(file_name);
     boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
     outf.close();
 }
@@ -681,3 +683,50 @@ int PricerSolverBdd::get_num_layers() {
 }
 
 void PricerSolverBdd::print_num_paths() {}
+
+int PricerSolverBdd::get_int_attr_model(enum MIP_Attr c) {
+    int val = -1;
+    switch (c) {
+        case MIP_Attr_Nb_Vars:
+            val = model->get(GRB_IntAttr_NumVars);
+            break;
+        case MIP_Attr_Nb_Constr:
+            val = model->get(GRB_IntAttr_NumConstrs);
+            break;
+        case MIP_Attr_Status:
+            val = model->get(GRB_IntAttr_Status);
+            break;
+        default:
+            break;
+    }
+
+    return val;
+}
+
+double PricerSolverBdd::get_dbl_attr_model(enum MIP_Attr c) {
+    double val = -1.0;
+    switch (c) {
+        case MIP_Attr_Obj_Bound:
+            val = model->get(GRB_DoubleAttr_ObjBound);
+            break;
+        case MIP_Attr_Obj_Bound_LP:
+            val = model->get(GRB_DoubleAttr_ObjBoundC);
+            break;
+        case MIP_Attr_Mip_Gap:
+            val = model->get(GRB_DoubleAttr_MIPGap);
+            break;
+        case MIP_Attr_Run_Time:
+            val = model->get(GRB_DoubleAttr_Runtime);
+            break;
+        case MIP_Attr_Nb_Simplex_Iter:
+            val = model->get(GRB_DoubleAttr_IterCount);
+            break;
+        case MIP_Attr_Nb_Nodes:
+            val = model->get(GRB_DoubleAttr_NodeCount);
+            break;
+        default:
+            break;
+    }
+
+    return val;
+}

@@ -6,6 +6,7 @@
 #include <util.h>
 #include <solver.h>
 #include <interval.h>
+#include <MIP_defs.hpp>
 
 #ifdef __cplusplus
 extern "C" {
@@ -245,6 +246,16 @@ struct _Problem {
     double real_time_solve_lp;
     double real_time_pricing;
     double real_time_heuristic;
+    int mip_nb_vars;
+    int mip_nb_constr;
+    double mip_obj_bound;
+    double mip_obj_bound_lp;
+    double mip_rel_gap;
+    double mip_run_time;
+    int mip_status;
+    double mip_nb_iter_simplex;
+    double mip_nb_nodes;
+    int mip_reduced_cost_fixing;
     //double       real_time;
 };
 
@@ -274,6 +285,7 @@ void represent_solution(NodeData *pd, Solution *sol);
 int check_schedule_set(ScheduleSet *set, NodeData *pd);
 void add_constraint(NodeData *pd, Job *job, int order);
 
+void get_mip_statistics(NodeData* pd, enum MIP_Attr c);
 
 /**
  * pricing algorithms

@@ -104,13 +104,14 @@ int print_to_csv(Problem* problem) {
     NodeData* pd = &(problem->root_pd);
     Parms*    parms = &(problem->parms);
     FILE*     file = (FILE*)NULL;
-    char*      file_name = CC_SAFE_MALLOC(128, char);
-    GDate date;
+    char*     file_name = CC_SAFE_MALLOC(128, char);
+    GDate     date;
     g_date_set_time_t(&date, time(NULL));
     problem->real_time_total = getRealTime() - problem->real_time_total;
     CCutil_stop_timer(&(problem->tot_cputime), 0);
 
-    sprintf(file_name, "CG_overall_%d%02d%02d.csv", date.year,date.month,date.day);
+    sprintf(file_name, "CG_overall_%d%02d%02d.csv", date.year, date.month,
+            date.day);
 
     if (access(file_name, F_OK) != -1) {
         file = fopen(file_name, "a");
@@ -124,20 +125,26 @@ int print_to_csv(Problem* problem) {
         }
         fprintf(file,
                 "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%"
-                "s,%s\n",
+                "s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                 "NameInstance", "tot_real_time", "tot_cputime", "tot_lb",
                 "tot_lb_root", "tot_heuristic", "tot_build_dd", "tot_pricing",
                 "rel_error", "global_lower_bound", "global_upper_bound",
                 "first_rel_error", "nb_generated_col", "date",
                 "nb_iterations_rvnd", "stabilization", "alpha",
                 "pricing_solver", "n", "m", "first_size_graph",
-                "size_after_reduced_cost");
+                "size_after_reduced_cost", "mip_nb_vars", "mip_nb_constr",
+                "mip_obj_bound", "mip_obj_bound_lp", "mip_rel_gap",
+                "mip_run_time", "mip_status", "mip_nb_iter_simplex",
+                "mip_nb_nodes");
     }
 
+    for (int i = MIP_Attr_Nb_Vars; i <= MIP_Attr_Nb_Nodes; i++) {
+        get_mip_statistics(pd, i);
+    }
 
     fprintf(file,
             "%s,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
-            "%u/%u,%d,%d,%f,%d,%d,%d,%lu,%lu\n",
+            "%u/%u,%d,%d,%f,%d,%d,%d,%lu,%lu,%d,%d,%f,%f,%f,%f,%d,%f,%f\n",
             pd->pname, problem->real_time_total, problem->tot_cputime.cum_zeit,
             problem->tot_lb.cum_zeit, problem->tot_lb_root.cum_zeit,
             problem->tot_heuristic.cum_zeit, problem->tot_build_dd.cum_zeit,
@@ -147,7 +154,11 @@ int print_to_csv(Problem* problem) {
             date.month, date.year, parms->nb_iterations_rvnd,
             parms->stab_technique, parms->alpha, parms->pricing_solver,
             problem->nb_jobs, problem->nb_machines, problem->first_size_graph,
-            problem->size_graph_after_reduced_cost_fixing);
+            problem->size_graph_after_reduced_cost_fixing, problem->mip_nb_vars,
+            problem->mip_nb_constr, problem->mip_obj_bound,
+            problem->mip_obj_bound_lp, problem->mip_rel_gap,
+            problem->mip_run_time, problem->mip_status,
+            problem->mip_nb_iter_simplex, problem->mip_nb_nodes);
     fclose(file);
 CLEAN:
     CC_FREE(file_name, char);

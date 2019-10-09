@@ -1,6 +1,6 @@
 #include "PricerSolverZdd.hpp"
-#include "PricerConstruct.hpp"
 #include <NodeBddStructure.hpp>
+#include "PricerConstruct.hpp"
 #include "boost/graph/graphviz.hpp"
 
 PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines,
@@ -27,8 +27,6 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines,
     construct_mipgraph();
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
-
-
 }
 
 void PricerSolverZdd::construct_mipgraph() {
@@ -43,11 +41,11 @@ void PricerSolverZdd::construct_mipgraph() {
     EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
 
     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
-        for (size_t j = 0; j < table[i].size();j++) {
+        for (size_t j = 0; j < table[i].size(); j++) {
             auto n{NodeId(i, j)};
             if (n.row() != 0) {
                 for (auto& it : table[i][j].list) {
-                    auto key = add_vertex(mip_graph); 
+                    auto key = add_vertex(mip_graph);
                     it->key = key;
                     vertex_mip_id_list[it->key] = key;
                     vertex_nodeid_list[it->key] = it->node_id;
@@ -305,7 +303,7 @@ void PricerSolverZdd::build_mip() {
         model->update();
         /** Flow constraints */
         size_t num_vertices = boost::num_vertices(mip_graph);
-            //boost::num_vertices(mip_graph) - table[0][1].list.size() + 1;
+        // boost::num_vertices(mip_graph) - table[0][1].list.size() + 1;
         std::unique_ptr<GRBLinExpr[]> flow_conservation_constr(
             new GRBLinExpr[num_vertices]());
         std::unique_ptr<char[]>   sense_flow(new char[num_vertices]);
@@ -389,7 +387,7 @@ void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
 
 void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 const GPtrArray* schedule_sets,
-                                                int num_columns) {
+                                                int              num_columns) {
     NodeTableEntity<NodeZdd<>>& table =
         decision_diagram->getDiagram().privateEntity();
     std::fill(lp_x.get(), lp_x.get() + get_nb_edges(), 0.0);
@@ -580,5 +578,51 @@ int PricerSolverZdd::get_num_layers() {
     return decision_diagram->topLevel();
 }
 
-void PricerSolverZdd::print_num_paths() {
+void PricerSolverZdd::print_num_paths() {}
+
+int PricerSolverZdd::get_int_attr_model(enum MIP_Attr c) {
+    int val = -1;
+    switch (c) {
+        case MIP_Attr_Nb_Vars:
+            val = model->get(GRB_IntAttr_NumVars);
+            break;
+        case MIP_Attr_Nb_Constr:
+            val = model->get(GRB_IntAttr_NumConstrs);
+            break;
+        case MIP_Attr_Status:
+            val = model->get(GRB_IntAttr_Status);
+            break;
+        default:
+            break;
+    }
+
+    return val;
+}
+
+double PricerSolverZdd::get_dbl_attr_model(enum MIP_Attr c) {
+    double val = -1.0;
+    switch (c) {
+        case MIP_Attr_Obj_Bound:
+            val = model->get(GRB_DoubleAttr_ObjBound);
+            break;
+        case MIP_Attr_Obj_Bound_LP:
+            val = model->get(GRB_DoubleAttr_ObjBoundC);
+            break;
+        case MIP_Attr_Mip_Gap:
+            val = model->get(GRB_DoubleAttr_MIPGap);
+            break;
+        case MIP_Attr_Run_Time:
+            val = model->get(GRB_DoubleAttr_Runtime);
+            break;
+        case MIP_Attr_Nb_Simplex_Iter:
+            val = model->get(GRB_DoubleAttr_IterCount);
+            break;
+        case MIP_Attr_Nb_Nodes:
+            val = model->get(GRB_DoubleAttr_NodeCount);
+            break;
+        default:
+            break;
+    }
+
+    return val;
 }

@@ -38,5 +38,15 @@
         "wctlp",
         "wentgnes",
         "zeit"
-    ]
+    ],
+    "files.associations": {
+        "*.ipynb": "jupyter",
+        "*.ipp": "cpp",
+        "array": "cpp",
+        "*.tcc": "cpp",
+        "istream": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "variant": "cpp"
+    }
 }

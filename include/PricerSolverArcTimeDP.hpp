@@ -55,6 +55,9 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void forward_evaluator(double* pi);
     void backward_evaluator(double* _pi);
 
+    int    get_int_attr_model(enum MIP_Attr) override;
+    double get_dbl_attr_model(enum MIP_Attr) override;
+
     int delta1(const int& i, const int& j, const int& t) {
         Job* tmp_i = vector_jobs[i];
         Job* tmp_j = vector_jobs[j];
