@@ -227,7 +227,7 @@ void PricerSolverBdd::build_mip() {
         model->set(GRB_IntParam_Threads, 1);
         model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
         model->set(GRB_IntParam_Presolve, 2);
-        model->set(GRB_IntParam_VarBranch, 3);
+        // model->set(GRB_IntParam_VarBranch, 3);
 
         /** Constructing variables */
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
@@ -237,7 +237,7 @@ void PricerSolverBdd::build_mip() {
                 double cost = (double)value_Fj(
                     n.get_weight() + n.get_job()->processing_time, n.get_job());
                 edge_var_list[*it.first].x =
-                    model->addVar(0.0, 1.0, cost, GRB_CONTINUOUS);
+                    model->addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
                 edge_var_list[*it.first].x = model->addVar(
                     0.0, (double)num_machines, 0.0, GRB_CONTINUOUS);
@@ -309,38 +309,15 @@ void PricerSolverBdd::build_mip() {
                               rhs_flow.get(), nullptr, num_vertices));
         model->update();
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            if (lp_x[edge_index_list[*it.first]] > 0) {
-                cout << lp_x[edge_index_list[*it.first]] << "\n";
-            }
             edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart,
                                            lp_x[edge_index_list[*it.first]]);
+            edge_var_list[*it.first].x.set(GRB_DoubleAttr_Start,
+                                           solution_x[edge_index_list[*it.first]]);
         }
         model->optimize();
 
-        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            lp_x[edge_index_list[*it.first]] =
-                edge_var_list[*it.first].x.get(GRB_DoubleAttr_X);
-            cout << lp_x[edge_index_list[*it.first]] << " "
-                 << edge_var_list[*it.first].x.get(GRB_DoubleAttr_X) << " "
-                 << edge_var_list[*it.first].x.get(GRB_IntAttr_VBasis) << "\n";
-        }
 
-        for (int i = 0; i < nb_jobs; i++) {
-            cout << assignment_constrs[i].get(GRB_IntAttr_CBasis) << "\n";
-        }
-
-        cout << "--------------------------------------------------------------"
-                "-----\n";
-
-        for (int i = 0; i < num_vertices; i++) {
-            cout << flow_constrs[i].get(GRB_IntAttr_CBasis) << "\n";
-        }
-        ColorWriterEdge   edge_writer(mip_graph, lp_x.get());
-        ColorWriterVertex vertex_writer(mip_graph, table);
-        std::ofstream     outf("basis.gv");
-        boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
-        outf.close();
-        model->write("bdd_formulation.lp");
+        model->write( "bdd_" +  problem_name + "_" + std::to_string(num_machines) + ".lp");
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;
