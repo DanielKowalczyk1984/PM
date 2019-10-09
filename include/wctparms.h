@@ -138,7 +138,7 @@ int parms_set_scatter_search_cpu_limit(Parms *parms, double limit);
 /*Functions for defining the filesname*/
 int parms_set_outfile(Parms *parms, const char *fname);
 int parms_set_file(Parms *parms, const char *fname);
-int parms_set_pname(Parms* parms, const char* fname);
+int parms_set_pname(Parms* parms, char* fname);
 int parms_set_backupdir(Parms *parms, const char *fname);
 int parms_set_nb_machines(Parms *parms, int nb_machines);
 

@@ -60,8 +60,10 @@ int parms_set_file(Parms* parms, const char* fname) {
     return copy_string(&(parms->jobfile), fname);
 }
 
-int parms_set_pname(Parms* parms, const char* fname) {
-    return copy_string(&(parms->pname), fname);
+int parms_set_pname(Parms* parms, char* fname) {
+    int val = copy_string(&(parms->pname), fname);
+    CC_IFFREE(fname, char);
+    return val;
 }
 int parms_set_backupdir(Parms* parms, const char* fname) {
     return copy_string(&(parms->backupdir), fname);
