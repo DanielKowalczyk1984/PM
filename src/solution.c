@@ -3,15 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
+#include <job.h>
 
 gint comparefunc(const void* a, const void* b, void* data);
 gint compare_func(const void* a, const void* b);
 gint order_weight(gconstpointer a, gconstpointer b, void* data);
 
-void g_print_job(gpointer data, gpointer user_data) {
-    Job* a = (Job*)data;
-    printf("%d ", a->job);
-}
 
 void solution_init(Solution* sol) {
     if (sol) {
@@ -38,14 +35,6 @@ void solution_free(Solution** sol) {
         CC_IFFREE((*sol)->c, int);
         CC_IFFREE((*sol)->u, int);
         CC_IFFREE((*sol), Solution);
-    }
-}
-
-void g_job_free(void* set) {
-    Job* tmp = (Job*)set;
-    if (tmp) {
-        CC_IFFREE(tmp->pos_interval, int);
-        CC_IFFREE(tmp, Job);
     }
 }
 
@@ -206,40 +195,6 @@ void partlist_permquicksort(int* perm, PartList* part, int nb_part,
     partlist_permquicksort(perm + i, part, nb_part - i, (*functionPtr));
 }
 
-Job* job_alloc(int* p, int* w, int* d) {
-    Job* j = CC_SAFE_MALLOC(1, Job);
-    j->processing_time = *p;
-    j->due_time = *d;
-    j->weight = *w;
-    j->num_layers = 0;
-    j->pos_interval = (int*)NULL;
-    return j;
-}
-
-void job_init(Job* job, int p, int w, int d) {
-    job->processing_time = p;
-    job->weight = w;
-    job->due_time = d;
-}
-
-void g_set_jobarray_job(gpointer data, gpointer user_data) {
-    Job* j = (Job*)data;
-    int* i = (int*)user_data;
-    j->job = *i;
-    j->num_layers = 0;
-    (*i)++;
-}
-
-void g_print_jobarray(gpointer data, gpointer user_data) {
-    Job* j = (Job*)data;
-    g_print("Job %d: %d %d %d %f\n", j->job, j->processing_time, j->due_time,
-            j->weight, (double)j->weight / j->processing_time);
-}
-
-void g_print_machine(gpointer data, gpointer user_data) {
-    Job* j = (Job*)data;
-    g_print("%d ", j->job);
-}
 
 void g_reset_num_layers(gpointer data, gpointer user_data) {
     Job* j = (Job*)data;
@@ -254,30 +209,6 @@ void g_set_sol_perm(gpointer data, gpointer user_data) {
     Job*      j = (Job*)data;
     Solution* sol = (Solution*)user_data;
     sol->perm[j->job] = j;
-}
-
-extern inline int value_Fj(int C, Job* j);
-
-int value_diff_Fij(int C, Job* i, Job* j) {
-    int val = value_Fj(C + i->processing_time - j->processing_time, i);
-    val += value_Fj(C + i->processing_time, j);
-    val -= value_Fj(C, j);
-    val -= value_Fj(C + i->processing_time, i);
-    return val;
-}
-
-int bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) {
-    return (_prev == NULL) ? 1
-                           : (value_diff_Fij(weight + tmp_j->processing_time,
-                                             _prev, tmp_j) >= 0);
-}
-
-int arctime_diff_Fij(int weight, Job* i, Job* j) {
-    int val = value_Fj(weight, i);
-    val += value_Fj(weight + j->processing_time, j);
-    val -= value_Fj(weight - i->processing_time + j->processing_time, j);
-    val -= value_Fj(weight + j->processing_time, i);
-    return val;
 }
 
 void solution_calculate_machine(Solution* sol, int m) {

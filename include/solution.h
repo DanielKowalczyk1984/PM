@@ -7,17 +7,7 @@ extern "C" {
 #include <glib.h>
 #include <partlist.h>
 #include <util.h>
-
-typedef struct _Job {
-    int job;
-    int weight;
-    int processing_time;
-    int release_time;
-    int due_time;
-    int index;
-    int num_layers;
-    int *pos_interval;
-} Job;
+#include <job.h>
 
 typedef struct _solution {
     PartList *part;
@@ -49,8 +39,7 @@ int solution_copy(Solution *dest, Solution *src);
 int solution_update(Solution *dest, Solution *src);
 int solution_check(PartList *part, int job_count);
 
-Job *job_alloc(int *p, int *w, int *d);
-void job_init(Job *job, int p, int d, int w);
+
 void g_job_free(void *set);
 void reset_nb_layers(GPtrArray *jobs);
 void g_print_job(gpointer data, gpointer user_data);
@@ -62,10 +51,6 @@ void g_set_sol_perm(gpointer data, gpointer user_data);
 // void g_reset_nb_layers(gpointer data, gpointer user_data);
 void g_reset_num_layers(gpointer data, gpointer user_data);
 
-inline int value_Fj(int C, Job *j) { return j->weight * CC_MAX(0, C - j->due_time); }
-int value_diff_Fij(int C, Job *i, Job *j);
-int bool_diff_Fij(int , Job *, Job *);
-int arctime_diff_Fij(int weight, Job* i, Job* j); 
 int solution_canonical_order(Solution *sol, GPtrArray *intervals);
 void solution_calculate_all(Solution *sol);
 void solution_calculate_partition_all(Solution *sol, GPtrArray *intervals);
