@@ -4,6 +4,8 @@
 #include <OptimalSolution.hpp>
 #include <solution.h>
 #include <MIP_defs.hpp>
+#include <gurobi_c++.h>
+#include <memory>
 
 
 
@@ -15,6 +17,9 @@ struct PricerSolverBase {
     GPtrArray*  ordered_jobs;
     int         nb_layers;
     std::string problem_name;
+    std::unique_ptr<GRBEnv> env;
+    std::unique_ptr<GRBModel> model;
+
 
    public:
     /**

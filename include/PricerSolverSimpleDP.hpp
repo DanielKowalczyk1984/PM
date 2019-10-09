@@ -13,8 +13,6 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     std::unique_ptr<double[]> backward_F;
     std::vector<Job*>*        backward_graph;
     std::vector<Job*>*        forward_graph;
-    std::unique_ptr<GRBEnv>   env;
-    std::unique_ptr<GRBModel> model;
     GRBVar*                   TI_x;
     bool*                     take;
     double*                   lp_x;

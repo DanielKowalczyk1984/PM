@@ -8,8 +8,6 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray* _jobs,
       n(_jobs->len),
       size_graph(0u),
       vector_jobs(),
-      env(new GRBEnv()),
-      model(new GRBModel(*env)),
       num_edges_removed{},
       lp_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}),
       solution_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}) {

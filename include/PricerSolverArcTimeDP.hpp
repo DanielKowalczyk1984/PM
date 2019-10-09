@@ -14,8 +14,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     double**                  backward_F;
     Job***                    A;
     int**                     B;
-    std::unique_ptr<GRBEnv>   env;
-    std::unique_ptr<GRBModel> model;
     GRBVar***                 arctime_x;
     int                       num_edges_removed;
     double*                   lp_x;

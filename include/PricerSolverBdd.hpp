@@ -14,8 +14,6 @@ class PricerSolverBdd : public PricerSolverBase
         int nb_removed_nodes;
 
         MipGraph mip_graph;
-        std::unique_ptr<GRBEnv> env;
-        std::unique_ptr<GRBModel> model;
         std::unique_ptr<double[]> lp_x;
         std::unique_ptr<double[]> solution_x;
 

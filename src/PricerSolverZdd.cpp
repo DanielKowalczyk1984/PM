@@ -8,9 +8,7 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines,
     : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name),
       size_graph(0),
       nb_removed_edges(0),
-      nb_removed_nodes(0),
-      env(new GRBEnv()),
-      model(new GRBModel(*env))
+      nb_removed_nodes(0)
 
 {
     /**
