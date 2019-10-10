@@ -281,7 +281,7 @@ static void calculate_partition(Solution* sol, GPtrArray* intervals, int m,
             count++;
             i = (Job*)g_ptr_array_index(machine, --cur);
         } else {
-            // count++;
+            count++;
             break;
         }
 
