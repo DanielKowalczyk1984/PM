@@ -48,14 +48,14 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
                              pi[nb_jobs];
 
             if (LB - (double)(num_machines - 1) * reduced_cost - result >
-                    UB - 1 + 0.0001 &&
+                    UB + 0.0001 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 nb_removed_edges++;
             }
 
             if (LB - (double)(num_machines - 1) * reduced_cost - result_no >
-                    UB - 1 + 0.0001 &&
+                    UB + 0.0001 &&
                 (it.calc_no)) {
                 it.calc_no = false;
                 nb_removed_edges++;
@@ -133,7 +133,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
             }
 
             if (LB - (double)(num_machines - 1) * reduced_cost - result >
-                    UB - 1 + 0.0001 &&
+                    UB + 0.0001 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 nb_removed_edges++;
@@ -190,7 +190,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
             // }
 
             if (LB - (double)(num_machines - 1) * reduced_cost - max >
-                    UB - 1 + 0.00001 &&
+                    UB + 0.00001 &&
                 (it.calc_no)) {
                 it.calc_no = false;
                 nb_removed_edges++;
