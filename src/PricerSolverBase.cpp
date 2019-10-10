@@ -19,6 +19,7 @@ PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
     model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
     model->set(GRB_IntParam_Presolve, 2);
     model->set(GRB_DoubleParam_MIPGap, 0.0);
+    model->set(GRB_DoubleParam_TimeLimit, 1800);
 }
 
 PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
@@ -36,6 +37,7 @@ PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
     model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
     model->set(GRB_IntParam_Presolve, 2);
     model->set(GRB_DoubleParam_MIPGap, 0.0);
+    model->set(GRB_DoubleParam_TimeLimit, 1800);
 }
 
 PricerSolverBase::~PricerSolverBase() {}
