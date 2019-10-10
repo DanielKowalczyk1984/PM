@@ -244,7 +244,7 @@ void PricerSolverBdd::build_mip() {
         std::unique_ptr<double[]>     rhs(new double[nb_jobs]);
 
         for (unsigned i = 0; i < jobs->len; ++i) {
-            sense[i] = GRB_GREATER_EQUAL;
+            sense[i] = GRB_EQUAL;
             rhs[i] = 1.0;
         }
 
