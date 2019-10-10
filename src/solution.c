@@ -281,13 +281,14 @@ static void calculate_partition(Solution* sol, GPtrArray* intervals, int m,
             count++;
             i = (Job*)g_ptr_array_index(machine, --cur);
         } else {
+            // count++;
             break;
         }
 
     }
 
     if (count > 0) {
-        if (first_job != i) {
+        if (first_job->job != i->job) {
             g_qsort_with_data(machine->pdata + cur + 1, count, sizeof(Job*),
                               compare_interval, I);
             j = (Job*)g_ptr_array_index(machine, cur + 1);
