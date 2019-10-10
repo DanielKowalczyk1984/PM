@@ -1,4 +1,5 @@
 #include "PricerSolverBase.hpp"
+#include <limits>
 
 /**
  * PricerSolverBase default COnstructor
@@ -62,28 +63,37 @@ int PricerSolverBase::get_int_attr_model(enum MIP_Attr c) {
 
 double PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) {
     double val = -1.0;
-    switch (c) {
-        case MIP_Attr_Obj_Bound:
-            val = model->get(GRB_DoubleAttr_ObjBound);
-            break;
-        case MIP_Attr_Obj_Bound_LP:
-            val = model->get(GRB_DoubleAttr_ObjBoundC);
-            break;
-        case MIP_Attr_Mip_Gap:
-            val = model->get(GRB_DoubleAttr_MIPGap);
-            break;
-        case MIP_Attr_Run_Time:
-            val = model->get(GRB_DoubleAttr_Runtime);
-            break;
-        case MIP_Attr_Nb_Simplex_Iter:
-            val = model->get(GRB_DoubleAttr_IterCount);
-            break;
-        case MIP_Attr_Nb_Nodes:
-            val = model->get(GRB_DoubleAttr_NodeCount);
-            break;
-        default:
-            break;
+    int    status = model->get(GRB_IntAttr_Status);
+    if (status != GRB_INF_OR_UNBD && status != GRB_INFEASIBLE &&
+        status != GRB_UNBOUNDED) {
+        switch (c) {
+            case MIP_Attr_Obj_Bound:
+                val = model->get(GRB_DoubleAttr_ObjBound);
+                break;
+            case MIP_Attr_Obj_Bound_LP:
+                val = model->get(GRB_DoubleAttr_ObjBoundC);
+                break;
+            case MIP_Attr_Mip_Gap:
+                val = model->get(GRB_DoubleAttr_MIPGap);
+                break;
+            default:
+                break;
+        }
+    } else {
+        switch (c) {
+            case MIP_Attr_Run_Time:
+                val = model->get(GRB_DoubleAttr_Runtime);
+                break;
+            case MIP_Attr_Nb_Simplex_Iter:
+                val = model->get(GRB_DoubleAttr_IterCount);
+                break;
+            case MIP_Attr_Nb_Nodes:
+                val = model->get(GRB_DoubleAttr_NodeCount);
+                break;
+            default:
+                val = std::numeric_limits<double>::max();
+                break;
+        }
     }
-
     return val;
 }
