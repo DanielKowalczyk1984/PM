@@ -70,7 +70,7 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
         while (it != forward_graph[t].end()) {
             double result = F[t - (*it)->processing_time] - value_Fj(t, *it) +
                             pi[(*it)->job] + backward_F[t] + pi[nb_jobs];
-            if (LB - result - (num_machines - 1) * F[Hmax] > UB - 1 + 0.00001) {
+            if (LB - result - (num_machines - 1) * F[Hmax] > UB + 0.00001) {
                 size_graph--;
                 forward_graph[t].erase(it);
             } else {
@@ -86,7 +86,7 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
                 F[t] - value_Fj(t + (*iter)->processing_time, *iter) +
                 pi[(*iter)->job] + backward_F[t + (*iter)->processing_time] +
                 pi[nb_jobs];
-            if (LB - result - (num_machines - 1) * F[Hmax] > UB - 1 + 0.00001) {
+            if (LB - result - (num_machines - 1) * F[Hmax] > UB + 0.00001) {
                 // backward_graph[t].erase(iter);
                 take[(*iter)->job * (Hmax + 1) + t] = false;
             } else {
