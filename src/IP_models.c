@@ -45,16 +45,17 @@ static void usage(char* f) {
 static char* find_match(const char* _instance_file) {
     regex_t    regex;
     regmatch_t matches[2];
-    char* val = (char*) NULL;
+    char*      val = (char*)NULL;
     int regex_val = regcomp(&regex, "^.*(wt[0-9]*_[0-9]*).*$", REG_EXTENDED);
     if (regex_val) {
         fprintf(stderr, "Could not compile regex\n");
         val = strdup("regex_error");
     } else {
-        regex_val = regexec(&regex, _instance_file, 2, (regmatch_t*)&matches, 0);
+        regex_val =
+            regexec(&regex, _instance_file, 2, (regmatch_t*)&matches, 0);
         if (!regex_val) {
             val = g_strndup(_instance_file + matches[1].rm_so,
-                                matches[1].rm_eo - matches[1].rm_so);
+                            matches[1].rm_eo - matches[1].rm_so);
         } else {
             printf("No match\n");
             val = strdup("unknown_name");
@@ -216,7 +217,8 @@ CLEAN:
 //         print_size_to_csv(&problem, root);
 //     } else {
 //         root->solver =
-//             newSolverDp(root->jobarray, root->nb_machines, root->H_max, parms);
+//             newSolverDp(root->jobarray, root->nb_machines, root->H_max,
+//             parms);
 //     }
 //     problem.first_size_graph = get_nb_edges(root->solver);
 
@@ -229,8 +231,8 @@ CLEAN:
 //         compute_lower_bound(&problem, &(problem.root_pd));
 //         print_dot_file(root->solver, NULL);
 //         problem.rel_error =
-//             (double)(problem.global_upper_bound - problem.global_lower_bound) /
-//             (problem.global_lower_bound + 0.00001);
+//             (double)(problem.global_upper_bound - problem.global_lower_bound)
+//             / (problem.global_lower_bound + 0.00001);
 //         CCutil_stop_timer(&(problem.tot_lb_root), 1);
 //         // represent_solution(root, problem.opt_sol);
 //         // construct_lp_sol_from_rmp(root);

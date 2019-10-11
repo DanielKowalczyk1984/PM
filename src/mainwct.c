@@ -44,16 +44,17 @@ static void usage(char* f) {
 static char* find_match(const char* _instance_file) {
     regex_t    regex;
     regmatch_t matches[2];
-    char* val = (char*) NULL;
+    char*      val = (char*)NULL;
     int regex_val = regcomp(&regex, "^.*(wt[0-9]*_[0-9]*).*$", REG_EXTENDED);
     if (regex_val) {
         fprintf(stderr, "Could not compile regex\n");
         val = strdup("regex_error");
     } else {
-        regex_val = regexec(&regex, _instance_file, 2, (regmatch_t*)&matches, 0);
+        regex_val =
+            regexec(&regex, _instance_file, 2, (regmatch_t*)&matches, 0);
         if (!regex_val) {
             val = g_strndup(_instance_file + matches[1].rm_so,
-                                matches[1].rm_eo - matches[1].rm_so);
+                            matches[1].rm_eo - matches[1].rm_so);
         } else {
             printf("No match\n");
             val = strdup("unknown_name");
@@ -226,7 +227,7 @@ int main(int ac, char** av) {
         build_rmp(&(problem.root_pd), 0);
         CCutil_start_timer(&(problem.tot_lb_root));
         compute_lower_bound(&problem, &(problem.root_pd));
-        if(parms->pricing_solver < dp_solver){
+        if (parms->pricing_solver < dp_solver) {
             solution_canonical_order(problem.opt_sol, root->local_intervals);
         }
         represent_solution(root, problem.opt_sol);

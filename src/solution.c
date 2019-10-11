@@ -1,14 +1,13 @@
 #include <interval.h>
+#include <job.h>
 #include <solution.h>
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
-#include <job.h>
 
 gint comparefunc(const void* a, const void* b, void* data);
 gint compare_func(const void* a, const void* b);
 gint order_weight(gconstpointer a, gconstpointer b, void* data);
-
 
 void solution_init(Solution* sol) {
     if (sol) {
@@ -195,7 +194,6 @@ void partlist_permquicksort(int* perm, PartList* part, int nb_part,
     partlist_permquicksort(perm + i, part, nb_part - i, (*functionPtr));
 }
 
-
 void g_reset_num_layers(gpointer data, gpointer user_data) {
     Job* j = (Job*)data;
     j->num_layers = 0;
@@ -242,7 +240,8 @@ void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
     if (m < sol->nb_machines) {
         GPtrArray* machine = sol->part[m].machine;
         int        iter = 0;
-        // int        Hmax = ((interval*)g_ptr_array_index(intervals, intervals->len - 1))->b;
+        // int        Hmax = ((interval*)g_ptr_array_index(intervals,
+        // intervals->len - 1))->b;
 
         for (unsigned i = 0; i < machine->len; ++i) {
             Job*      tmp = (Job*)g_ptr_array_index(machine, i);
@@ -264,13 +263,13 @@ void solution_calculate_partition_all(Solution* sol, GPtrArray* intervals) {
 
 static void calculate_partition(Solution* sol, GPtrArray* intervals, int m,
                                 int* u, int* last) {
-    int        count = 0;
-    int        cur = *last;
-    void*      tmp;
+    int   count = 0;
+    int   cur = *last;
+    void* tmp;
 
     GPtrArray* machine = sol->part[m].machine;
     interval*  I = (interval*)g_ptr_array_index(intervals, *u);
-    Job *first_job = g_ptr_array_index(machine, 0);
+    Job*       first_job = g_ptr_array_index(machine, 0);
     Job*       i = (Job*)g_ptr_array_index(machine, cur);
     Job*       j;
 
@@ -284,7 +283,6 @@ static void calculate_partition(Solution* sol, GPtrArray* intervals, int m,
             count++;
             break;
         }
-
     }
 
     if (count > 0) {
@@ -293,7 +291,7 @@ static void calculate_partition(Solution* sol, GPtrArray* intervals, int m,
                               compare_interval, I);
             j = (Job*)g_ptr_array_index(machine, cur + 1);
         } else {
-            g_qsort_with_data(machine->pdata, count + 1 , sizeof(Job*),
+            g_qsort_with_data(machine->pdata, count + 1, sizeof(Job*),
                               compare_interval, I);
             i = (Job*)g_ptr_array_index(machine, 0);
             j = (Job*)g_ptr_array_index(machine, 1);

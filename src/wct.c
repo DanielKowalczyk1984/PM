@@ -388,9 +388,10 @@ int compute_schedule(Problem* problem) {
         if (root_pd->lower_bound > problem->global_lower_bound) {
             problem->global_lower_bound = root_pd->lower_bound;
             problem->root_lower_bound = root_pd->lower_bound;
-            problem->root_rel_error = (double)(problem->root_upper_bound -
-                                               problem->root_lower_bound) /
-                                      ((double)problem->root_lower_bound + 0.00001);
+            problem->root_rel_error =
+                (double)(problem->root_upper_bound -
+                         problem->root_lower_bound) /
+                ((double)problem->root_lower_bound + 0.00001);
         }
 
         CCcheck_val_2(val, "Failed in compute_lower_bound");

@@ -5,7 +5,8 @@
  * consecutive jobs
  */
 PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
-    GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs, const char* p_name)
+    GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs,
+    const char* p_name)
     : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name) {
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
@@ -45,7 +46,8 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
                             value_Fj(w + job->processing_time, job) +
                             pi[job->job] + pi[nb_jobs];
             // auto result_no = it.forward_label[0].get_f() +
-            //                     it.child[0]->backward_label[0].get_f() + pi[nb_jobs];
+            //                     it.child[0]->backward_label[0].get_f() +
+            //                     pi[nb_jobs];
 
             if (LB - (double)(num_machines - 1) * reduced_cost - result >
                     UB + 0.0001 &&
@@ -70,7 +72,8 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
  * Simple backward bdd pricersolver for the flow formulation
  */
 PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
-    GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs, const char* p_name)
+    GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs,
+    const char* p_name)
     : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name) {
     std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';

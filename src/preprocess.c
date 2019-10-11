@@ -38,7 +38,7 @@ gint g_job_compare_edd(const void* a, const void* b, void* data) {
 }
 
 int calculate_H_min(int* durations, int nmachines, int njobs, int* perm,
-                   double* H) {
+                    double* H) {
     int    i, val = 0;
     double temp;
 

@@ -174,8 +174,10 @@ local_search_data* local_search_data_init(int njobs, int nb_machines) {
     data->nmachines = nb_machines;
     data->W = CC_SAFE_MALLOC(nb_machines, int*);
     data->g = CC_SAFE_MALLOC(nb_machines, GList**);
-    data->processing_list_1 = CC_SAFE_MALLOC(nb_machines, processing_list_data*);
-    data->processing_list_2 = CC_SAFE_MALLOC(nb_machines, processing_list_data*);
+    data->processing_list_1 =
+        CC_SAFE_MALLOC(nb_machines, processing_list_data*);
+    data->processing_list_2 =
+        CC_SAFE_MALLOC(nb_machines, processing_list_data*);
     data->njobs = njobs;
 
     for (i = 0; i < nb_machines; ++i) {

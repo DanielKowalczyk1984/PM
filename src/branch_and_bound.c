@@ -5,8 +5,8 @@ static int collect_diff_child_conflict(NodeData* cd);
 static int remove_finished_subtree_conflict(NodeData* child);
 static int compare_nodes_bfs(BinomialHeapValue a, BinomialHeapValue b);
 static int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b);
-static int get_int_heap_key(double dbl_heap_key, int v1, int v2, int nb_machines,
-                            int nb_jobs, double error);
+static int get_int_heap_key(double dbl_heap_key, int v1, int v2,
+                            int nb_machines, int nb_jobs, double error);
 static int get_int_heap_key_0(double dbl_heap_key, int v1, int v2);
 
 static int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b) {
@@ -42,8 +42,8 @@ static int x_frac(const double x, double error) {
 }
 
 MAYBE_UNUSED
-static int get_int_heap_key(double dbl_heap_key, int v1, int v2, int nb_machines,
-                            int nb_jobs, double error) {
+static int get_int_heap_key(double dbl_heap_key, int v1, int v2,
+                            int nb_machines, int nb_jobs, double error) {
     int    val = INT_MAX - 1;
     double temp;
 
@@ -239,7 +239,8 @@ static int collect_same_child_conflict(NodeData* cd) {
                 schedulesets_free(&(cd->bestcolors), &(cd->nb_best));
             }
 
-            cd->upper_bound = cd->best_objective = cd->same_children[c].best_objective;
+            cd->upper_bound = cd->best_objective =
+                cd->same_children[c].best_objective;
             cd->nb_best = cd->same_children[c].nb_best;
             cd->same_children[c].nb_best = 0;
             cd->bestcolors = cd->same_children[c].bestcolors;
@@ -263,7 +264,8 @@ static int collect_diff_child_conflict(NodeData* cd) {
                 schedulesets_free(&(cd->bestcolors), &(cd->nb_best));
             }
 
-            cd->upper_bound = cd->best_objective = cd->diff_children[c].best_objective;
+            cd->upper_bound = cd->best_objective =
+                cd->diff_children[c].best_objective;
             cd->nb_best = cd->diff_children[c].nb_best;
             cd->diff_children[c].nb_best = 0;
             cd->bestcolors = cd->diff_children[c].bestcolors;
@@ -561,13 +563,15 @@ int branching_msg(NodeData* pd, Problem* problem) {
         printf(
             "Branching with lb %d (LP %f) at depth %d (id = %d, "
             "time = %f, unprocessed nodes = %u, nb_jobs= %d, upper bound = %d, "
-            "lower bound = %d, v1 = %d, v2 = %d, nbdiff = %d, nb_same = %d, ZDD "
+            "lower bound = %d, v1 = %d, v2 = %d, nbdiff = %d, nb_same = %d, "
+            "ZDD "
             "size= %zu, nb_cols = %u ).\n",
             pd->lower_bound, pd->LP_lower_bound_BB, pd->depth, pd->id,
             problem->tot_cputime.cum_zeit, binomial_heap_num_entries(heap),
             pd->nb_jobs, problem->global_upper_bound, root->lower_bound,
-            pd->v1->job, pd->v2->job, pd->edge_count_differ, pd->edge_count_same,
-            get_nb_vertices(pd->solver), pd->localColPool->len);
+            pd->v1->job, pd->v2->job, pd->edge_count_differ,
+            pd->edge_count_same, get_nb_vertices(pd->solver),
+            pd->localColPool->len);
         CCutil_resume_timer(&problem->tot_cputime);
         problem->nb_explored_nodes++;
     }
@@ -656,7 +660,8 @@ int branching_msg_cbfs(NodeData* pd, Problem* problem) {
         printf(
             "Branching with lb %d (LP %f) at depth %d (id = %d, "
             "time = %f, unprocessed nodes = %d, nb_jobs= %d, upper bound = %d, "
-            "lower bound = %d, v1 = %d, v2 = %d, nbdiff = %d, nb_same = %d, ZDD "
+            "lower bound = %d, v1 = %d, v2 = %d, nbdiff = %d, nb_same = %d, "
+            "ZDD "
             "size = %zu, nb_cols = %u ).\n",
             pd->lower_bound, pd->LP_lower_bound, pd->depth, pd->id,
             problem->tot_cputime.cum_zeit, nb_nodes, pd->nb_jobs,

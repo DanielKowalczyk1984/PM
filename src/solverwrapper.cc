@@ -199,5 +199,4 @@ void get_mip_statistics(NodeData* pd, enum MIP_Attr c) {
             break;
     }
 }
-
 }
