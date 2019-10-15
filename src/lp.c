@@ -98,9 +98,9 @@ int wctlp_optimize(wctlp* lp, int* status) {
         }
     } else if (*status == GRB_INFEASIBLE) {
         printf("infeasible LP relaxation\n");
-        wctlp_write(lp, "model.lp");
+        wctlp_write(lp, "model_rmp.lp");
         wctlp_compute_IIS(lp);
-        wctlp_write(lp, "model.ilp");
+        wctlp_write(lp, "model_rmp_iss.ilp");
     }
 
 CLEAN:

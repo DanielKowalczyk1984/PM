@@ -598,7 +598,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             case GRB_INFEASIBLE:
                 pd->status = infeasible;
                 pd->test = 0;
-                wctlp_write(pd->RMP, "test1.lp");
+                wctlp_write(pd->RMP, "infeasible_RMP.lp");
                 wctlp_compute_IIS(pd->RMP);
         }
     } else {
@@ -775,7 +775,7 @@ int check_schedules(NodeData* pd) {
 
     if (status != GRB_OPTIMAL) {
         wctlp_compute_IIS(pd->RMP);
-        wctlp_write(pd->RMP, "rmp_check.lp");
+        wctlp_write(pd->RMP, "infeasible_RMP_after_reduce_cost_fixing.lp");
         // printf("check file %d\n", status);
         // getchar();
     }
