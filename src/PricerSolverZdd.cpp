@@ -335,7 +335,8 @@ void PricerSolverZdd::build_mip() {
             model->addConstrs(flow_conservation_constr.get(), sense_flow.get(),
                               rhs_flow.get(), nullptr, num_vertices));
         model->update();
-        model->write("zdd_formulation.lp");
+        model->write("zdd_" + problem_name + "_" +
+                     std::to_string(num_machines) + ".lp");
         model->optimize();
     } catch (GRBException& e) {
         std::cout << "Error code = " << e.getErrorCode() << "\n";

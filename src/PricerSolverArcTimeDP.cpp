@@ -236,6 +236,8 @@ void PricerSolverArcTimeDp::build_mip() {
         }
     }
 
+    model->write("ati_" + problem_name + "_" + std::to_string(num_machines) +
+                 ".lp");
     model->optimize();
     return;
 }

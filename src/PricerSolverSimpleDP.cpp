@@ -178,6 +178,9 @@ void PricerSolverSimpleDp::build_mip() {
                 GRB_DoubleAttr_Start, solution_x[(it->job) * (Hmax + 1) + t]);
         }
     }
+
+    model->write("ti_" + problem_name + "_" + std::to_string(num_machines) +
+                 ".lp");
     model->optimize();
     return;
 }
