@@ -72,7 +72,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
     char*  ptr;
     int    debug = dbg_lvl();
 
-    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:")) != EOF) {
+    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:")) != EOF) {
         switch (c) {
             case 'd':
                 ++(debug);
@@ -131,13 +131,16 @@ static int parseargs(int ac, char** av, Parms* parms) {
                 val = parms_set_pricing_solver(parms, c);
                 CCcheck_val(val, "Failed in set alpha");
                 break;
-
             case 'Z':
                 c = strtol(optarg, &ptr, 10);
                 val = parms_set_strong_branching(parms, c);
                 CCcheck_val(val, "Failed in set strong branching");
                 break;
-
+            case 'm':
+                c = strtol(optarg, &ptr, 10);
+                val = parms_set_mip_solver(parms, c);
+                CCcheck_val(val, "Failed in set mip solver");
+                break;
             default:
                 usage(av[0]);
                 val = 1;
@@ -235,7 +238,9 @@ int main(int ac, char** av) {
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
-        build_solve_mip(root);
+        if(parms->mip_solver) {
+            build_solve_mip(root);
+        }
     }
     print_to_csv(&problem);
 

@@ -67,6 +67,12 @@ enum Strong_Branching {
     no_strong_branching = 1,
 };
 
+enum MIP_solver{
+    min_mip_solver = 0,
+    no_mip_solver = min_mip_solver,
+    use_mip_solver = 1,
+};
+
 typedef struct parms {
     /**
      * General parameters
@@ -79,6 +85,7 @@ typedef struct parms {
     double branching_cpu_limit;
     double alpha;
     int pricing_solver;
+    int mip_solver;
     /**
      * scatter search
      */
@@ -118,6 +125,7 @@ int parms_set_alpha(Parms *parms, double alpha);
 int parms_set_search_strategy(Parms *parms, int strategy);
 int parms_set_branching_strategy(Parms *parms, int strategy);
 int parms_set_strong_branching(Parms *parms, int strong);
+int parms_set_mip_solver(Parms *parms, int usage);
 int parms_set_nb_iterations_rvnd(Parms *parms, int nb_sol);
 
 /**

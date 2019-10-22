@@ -8,6 +8,7 @@ void parms_init(Parms* parms) {
     parms->bb_branch_strategy = min_bb_strategy;
     parms->bb_search_strategy = min_search_strategy;
     parms->strong_branching = min_strong_branching;
+    parms->mip_solver = min_mip_solver;
     parms->nb_iterations_rvnd = 3;
     parms->scatter_search = 0;
     parms->branchandbound = no;
@@ -91,6 +92,11 @@ int parms_set_alpha(Parms* parms, double alpha) {
 
 int parms_set_search_strategy(Parms* parms, int strategy) {
     parms->bb_search_strategy = strategy;
+    return 0;
+}
+
+int parms_set_mip_solver(Parms *parms, int usage) {
+    parms->mip_solver = usage;
     return 0;
 }
 

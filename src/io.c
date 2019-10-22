@@ -138,7 +138,7 @@ int print_to_csv(Problem* problem) {
                 "mip_nb_nodes");
     }
 
-    for (int i = MIP_Attr_Run_Time; i <= MIP_Attr_Nb_Nodes; i++) {
+    for (int i = MIP_Attr_Run_Time; i <= MIP_Attr_Nb_Nodes && parms->mip_solver; i++) {
         get_mip_statistics(pd, i);
     }
 
