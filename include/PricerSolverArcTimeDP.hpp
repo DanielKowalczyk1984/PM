@@ -49,6 +49,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     int    get_num_layers() override;
     void   print_num_paths() override;
     bool   check_schedule_set(GPtrArray* set) override;
+    void make_schedule_set_feasible(GPtrArray *set) override;
 
     void forward_evaluator(double* pi);
     void backward_evaluator(double* _pi);

@@ -524,6 +524,10 @@ bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
     return (weight == set->len);
 }
 
+void PricerSolverZdd::make_schedule_set_feasible(GPtrArray *set) {
+    
+}
+
 void PricerSolverZdd::disjunctive_inequality(double* x, Solution* sol) {}
 
 void PricerSolverZdd::iterate_zdd() {

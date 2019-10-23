@@ -162,6 +162,11 @@ int check_schedule_set(ScheduleSet* set, NodeData* pd) {
     return static_cast<int>(pd->solver->check_schedule_set(set->job_list));
 }
 
+void make_schedule_set_feasible(NodeData *pd, ScheduleSet *set) {
+    PricerSolver *solver = pd->solver;
+    solver->make_schedule_set_feasible(set->job_list);
+}
+
 void add_constraint(NodeData* pd, Job* job, int order) {
     pd->solver->add_constraint(job, pd->ordered_jobs, order);
 }

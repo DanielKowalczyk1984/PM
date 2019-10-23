@@ -98,7 +98,7 @@ struct PricerSolverBase {
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
     virtual bool   check_schedule_set(GPtrArray* set) = 0;
-
+    virtual void make_schedule_set_feasible(GPtrArray *set) = 0;
     /**
      * Some printing functions
      */

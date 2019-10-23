@@ -45,6 +45,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void   disjunctive_inequality(double* x, Solution* sol) override;
 
     bool check_schedule_set(GPtrArray* set) override;
+    void make_schedule_set_feasible(GPtrArray *set) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     void                    forward_evaluator(double* _pi);

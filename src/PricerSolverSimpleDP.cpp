@@ -374,4 +374,8 @@ bool PricerSolverSimpleDp::check_schedule_set(GPtrArray* set) {
     return true;
 }
 
+void PricerSolverSimpleDp::make_schedule_set_feasible(GPtrArray *set) {
+    
+}
+
 void PricerSolverSimpleDp::disjunctive_inequality(double* x, Solution* sol) {}

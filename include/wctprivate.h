@@ -282,6 +282,7 @@ int build_solve_mip(NodeData *pd);
 int construct_lp_sol_from_rmp(NodeData *pd);
 void disjunctive_inequality(NodeData *pd, Solution *sol);
 void represent_solution(NodeData *pd, Solution *sol);
+void make_schedule_set_feasible(NodeData *pd, ScheduleSet *set);
 int check_schedule_set(ScheduleSet *set, NodeData *pd);
 void add_constraint(NodeData *pd, Job *job, int order);
 

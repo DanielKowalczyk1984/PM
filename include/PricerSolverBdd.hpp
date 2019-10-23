@@ -33,6 +33,7 @@ class PricerSolverBdd : public PricerSolverBase
         void represent_solution(Solution* sol)  override;
         void project_solution(Solution* sol) override;
         bool check_schedule_set(GPtrArray* set) override;
+        void make_schedule_set_feasible(GPtrArray *set) override;
         void disjunctive_inequality(double* x, Solution* sol) override;
         void iterate_zdd() override;
         void create_dot_zdd(const char* name) override;
