@@ -463,6 +463,10 @@ bool PricerSolverBdd::check_schedule_set(GPtrArray* set) {
     return (weight == set->len);
 }
 
+void PricerSolverBdd::make_schedule_set_feasible(GPtrArray *set) {
+    
+}
+
 void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     int                branch_key = -1;
