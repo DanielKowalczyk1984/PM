@@ -206,11 +206,6 @@ int main(int ac, char** av) {
     /**
      * Finding heuristic solutions to the problem
      */
-    heuristic(&problem);
-
-    /**
-     * Build DD at the root node
-     */
     if (parms->pricing_solver < dp_solver) {
         CCutil_start_timer(&(problem.tot_build_dd));
         root->solver = newSolver(root->jobarray, root->nb_machines,
@@ -222,6 +217,12 @@ int main(int ac, char** av) {
             newSolverDp(root->jobarray, root->nb_machines, root->H_max, parms);
     }
     problem.first_size_graph = get_nb_edges(root->solver);
+    heuristic(&problem);
+    print_interval_pair(root->ordered_jobs);
+
+    /**
+     * Build DD at the root node
+     */
 
     /**
      * Calculation of LB at the root node with column generation

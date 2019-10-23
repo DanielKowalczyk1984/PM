@@ -583,6 +583,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 }
 
                 reduce_cost_fixing(pd);
+                print_interval_pair(pd->ordered_jobs);
                 /**
                  * Compute the objective function
                  */
@@ -591,6 +592,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
                 construct_lp_sol_from_rmp(pd);
+                print_x(pd);
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->nb_jobs + 1));
                 printf("size evolution %lu\n", get_nb_vertices(pd->solver));
                 break;

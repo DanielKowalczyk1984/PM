@@ -470,6 +470,14 @@ int add_solution_to_colpool(Solution* sol, NodeData* pd) {
     for (int i = 0; i < sol->nb_machines; ++i) {
         GPtrArray*   machine = sol->part[i].machine;
         ScheduleSet* tmp = scheduleset_from_solution(machine, pd->nb_jobs);
+        if(check_schedule_set(tmp, pd)) {
+            printf("OK!!!\n");
+            
+        } else {
+            printf("not OK!!!\n");
+        }
+            g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
+            printf("\n");
         CCcheck_NULL_2(tmp, "Failed to allocate memory");
         g_ptr_array_add(pd->localColPool, tmp);
     }

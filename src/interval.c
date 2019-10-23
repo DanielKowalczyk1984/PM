@@ -27,13 +27,16 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data) {
                 return -1;
             } else if (w_y > w_x) {
                 return 1;
-            } else if (x->processing_time > y->processing_time) {
-                return -1;
-            } else if (y->processing_time > x->processing_time) {
-                return 1;
+            } else {
+                return x->job - y->job;
             }
+            // else if (x->processing_time > y->processing_time) {
+            //     return -1;
+            // } else if (y->processing_time > x->processing_time) {
+            //     return 1;
+            // }
 
-            return x->job - y->job;
+            // return x->job - y->job;
         }
     } else {
         if (y->processing_time > diff) {
@@ -43,13 +46,17 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data) {
                 return -1;
             } else if (w_y > w_x) {
                 return 1;
-            } else if (x->processing_time > y->processing_time) {
-                return -1;
-            } else if (y->processing_time > x->processing_time) {
-                return 1;
-            }
+            } else {
+                return x->job - y->job;
+            } 
+            
+            // else if (x->processing_time > y->processing_time) {
+            //     return -1;
+            // } else if (y->processing_time > x->processing_time) {
+            //     return 1;
+            // }
 
-            return x->job - y->job;
+            // return x->job - y->job;
         }
     }
 }
