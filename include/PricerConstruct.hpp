@@ -82,7 +82,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
                     if (tmp == tmp_j
                     ||
                         (tmp->job > tmp_j->job &&
-                         value_diff_Fij(state, tmp_j, tmp) >=0)
+                         value_diff_Fij(state, tmp_j, tmp) <=0)
                          ) {
                         continue;
                     }
