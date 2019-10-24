@@ -143,7 +143,7 @@
 				\caption{Comparison of algorithms \textbf{TIF}, \textbf{ATIF} and \textbf{BDDF} with \(m = \i \) and \(n = \j \)}\label{tbl:tw\k}
 				\begin{threeparttable}
 					\pgfplotstabletypeset[
-						columns={Id,global_upper_bound_TI,global_lower_bound_TI,nb_generated_col_TI,tot_lb_TI,global_lower_bound_AFBS,nb_generated_col_AFBS,tot_lb_AFBS,global_lower_bound_AFBC,nb_generated_col_AFBC,tot_lb_AFBC},
+						columns={Id,global_upper_bound_TI,global_lower_bound_TI,nb_generated_col_TI,tot_lb_TI,global_lower_bound_ATI,nb_generated_col_ATI,tot_lb_ATI,global_lower_bound_AFBC,nb_generated_col_AFBC,tot_lb_AFBC},
 						every head row/.style={
 								before row={%
 										\toprule
@@ -155,14 +155,14 @@
 						columns/Id/.style={column type=r,int detect,column name=\#\emph{id}},
 						columns/global_upper_bound_TI/.style={column type=r,int detect,column name=\emph{UB}},
 						columns/global_lower_bound_TI/.style={column type=r,int detect,column name=\emph{LB}},
-						columns/global_lower_bound_AFBS/.style={column type=r,int detect,column name=\emph{LB}},
+						columns/global_lower_bound_ATI/.style={column type=r,int detect,column name=\emph{LB}},
 						columns/global_lower_bound_AFBC/.style={column type=r,int detect,column name=\emph{LB}},
 						columns/nb_generated_col_TI/.style={column type=r,int detect,column name=\#\emph{iter}},
-						columns/nb_generated_col_AFBS/.style={column type=r,int detect,column name=\#\emph{iter}},
+						columns/nb_generated_col_ATI/.style={column type=r,int detect,column name=\#\emph{iter}},
 						columns/nb_generated_col_AFBC/.style={column type=r,int detect,column name=\#\emph{iter}},
 						columns/tot_lb_AFBC/.style={column type=r,fixed,precision=1,zerofill,column name=\emph{sec}},
 						columns/tot_lb_TI/.style={column type=r,fixed,precision=1,zerofill,column name=\emph{sec}},
-						columns/tot_lb_AFBS/.style={column type=r,fixed,precision=1,zerofill,column name=\emph{sec}},
+						columns/tot_lb_ATI/.style={column type=r,fixed,precision=1,zerofill,column name=\emph{sec}},
 						row predicate/.code={
 								\pgfplotstablegetelem{##1}{n}\of{\allinstances}
 								\pgfmathsetmacro{\xn}{\pgfplotsretval}
