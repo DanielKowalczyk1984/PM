@@ -93,7 +93,6 @@ static int solution_set_c(Solution* sol) {
     for (int i = 0; i < sol->nb_jobs; ++i) {
         j = sol->perm[i];
         tmp = (PartList*)binomial_heap_pop(heap);
-        j->index = tmp->machine->len;
         g_ptr_array_add(tmp->machine, j);
         tmp->c += j->processing_time;
         sol->c[j->job] = tmp->c;
@@ -341,7 +340,6 @@ static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
 
     for (unsigned i = 0; i < part1->machine->len; ++i) {
         tmp = (Job*)g_ptr_array_index(part1->machine, i);
-        tmp->index = i;
         part1->c += tmp->processing_time;
         sol->c[tmp->job] = part1->c;
         part1->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->due_time);
@@ -349,7 +347,6 @@ static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
 
     for (unsigned i = 0; i < part2->machine->len; ++i) {
         tmp = (Job*)g_ptr_array_index(part2->machine, i);
-        tmp->index = i;
         part2->c += tmp->processing_time;
         sol->c[tmp->job] = part2->c;
         part2->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->due_time);

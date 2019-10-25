@@ -219,7 +219,6 @@ void solution_calculate_machine(Solution* sol, int m) {
 
         for (unsigned i = 0; i < machine->len; ++i) {
             Job* tmp = (Job*)g_ptr_array_index(machine, i);
-            tmp->index = i;
             part->c += tmp->processing_time;
             sol->c[tmp->job] = part->c;
             part->tw += value_Fj(sol->c[tmp->job], tmp);

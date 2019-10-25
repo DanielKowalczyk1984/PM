@@ -13,7 +13,6 @@ typedef struct _Job {
     int processing_time;
     int release_time;
     int due_time;
-    int index;
     int num_layers;
     int *pos_interval;
 } Job;
