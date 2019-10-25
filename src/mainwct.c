@@ -204,25 +204,23 @@ int main(int ac, char** av) {
            CCutil_zeit() - start_time);
 
     /**
-     * Finding heuristic solutions to the problem
+     * Build DD at the root node
      */
     if (parms->pricing_solver < dp_solver) {
         CCutil_start_timer(&(problem.tot_build_dd));
         root->solver = newSolver(root->jobarray, root->nb_machines,
                                  root->ordered_jobs, &(problem.parms));
         CCutil_stop_timer(&(problem.tot_build_dd), 0);
-        print_size_to_csv(&problem, root);
     } else {
         root->solver =
             newSolverDp(root->jobarray, root->nb_machines, root->H_max, parms);
     }
     problem.first_size_graph = get_nb_edges(root->solver);
-    heuristic(&problem);
-    print_interval_pair(root->ordered_jobs);
-
     /**
-     * Build DD at the root node
+     * Finding heuristic solutions to the problem
      */
+    heuristic(&problem);
+
 
     /**
      * Calculation of LB at the root node with column generation
@@ -239,10 +237,12 @@ int main(int ac, char** av) {
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
-        if(parms->mip_solver) {
-            build_solve_mip(root);
-        }
     }
+
+    if(parms->mip_solver) {
+        build_solve_mip(root);
+    }
+
     print_to_csv(&problem);
 
 CLEAN:
