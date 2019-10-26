@@ -5,9 +5,8 @@
 #include <string.h>
 #include <util.h>
 
-gint comparefunc(const void* a, const void* b, void* data);
-gint compare_func(const void* a, const void* b);
-gint order_weight(gconstpointer a, gconstpointer b, void* data);
+gint g_sort_jobs_key(const void* a, const void* b, void* data);
+gint g_sort_jobs_weight(gconstpointer a, gconstpointer b, void* data);
 
 void solution_init(Solution* sol) {
     if (sol) {
@@ -93,21 +92,21 @@ CLEAN:
     return sol;
 }
 
-gint comparefunc(const void* a, const void* b, void* data) {
+gint g_sort_jobs_key(const void* a, const void* b, void* data) {
     (void)data;
     const int* v = &(((const Job*)a)->job);
     const int* w = &(((const Job*)b)->job);
     return *v - *w;
 }
 
-gint order_weight(gconstpointer a, gconstpointer b, void* data) {
+gint g_sort_jobs_weight(gconstpointer a, gconstpointer b, void* data) {
     (void)data;
     const int* v = &(((const Job*)a)->weight);
     const int* w = &(((const Job*)b)->weight);
     return -(*v - *w);
 }
 
-static void print_machine(gpointer j, gpointer data) {
+static void g_print_jobs(gpointer j, gpointer data) {
     Job* tmp = (Job*)j;
     printf("%d ", tmp->job);
 }
@@ -115,7 +114,7 @@ static void print_machine(gpointer j, gpointer data) {
 void solution_print(Solution* sol) {
     for (int i = 0; i < sol->nb_machines; ++i) {
         printf("Machine %-1d: ", i);
-        g_ptr_array_foreach(sol->part[i].machine, print_machine, sol);
+        g_ptr_array_foreach(sol->part[i].machine, g_print_jobs, sol);
         printf("with C =  %d, wC = %d and %u jobs\n", sol->part[i].c,
                sol->part[i].tw, sol->part[i].machine->len);
     }
@@ -170,41 +169,6 @@ int solution_update(Solution* dest, Solution* src) {
     memcpy(dest->c, src->c, dest->nb_jobs * sizeof(int));
     memcpy(dest->u, src->c, dest->nb_jobs * sizeof(int));
     return val;
-}
-
-void partlist_permquicksort(int* perm, PartList* part, int nb_part,
-                            int (*functionPtr)(PartList*, PartList*)) {
-    int      i, j, temp;
-    PartList t;
-
-    if (nb_part <= 1) {
-        return;
-    }
-
-    CC_SWAP(perm[0], perm[(nb_part - 1) / 2], temp);
-    i = 0;
-    j = nb_part;
-    memcpy(&t, &(part[perm[0]]), sizeof(PartList));
-
-    while (1) {
-        do {
-            i++;
-        } while (i < nb_part && (*functionPtr)(&(part[perm[i]]), &t));
-
-        do {
-            j--;
-        } while ((*functionPtr)(&t, &(part[perm[j]])));
-
-        if (j < i) {
-            break;
-        }
-
-        CC_SWAP(perm[i], perm[j], temp);
-    }
-
-    CC_SWAP(perm[0], perm[j], temp);
-    partlist_permquicksort(perm, part, j, (*functionPtr));
-    partlist_permquicksort(perm + i, part, nb_part - i, (*functionPtr));
 }
 
 void g_reset_num_layers(gpointer data, gpointer user_data) {

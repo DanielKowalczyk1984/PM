@@ -22,10 +22,6 @@ void partition_init(PartList *part, int nb_part, int nb_jobs);
 int partition_order(const void *a, const void *b, void *data);
 int find_vertex(const void *a, const void *b);
 
-void partlist_permquicksort(int *     perm,
-                            PartList *part,
-                            int       nb_part,
-                            int (*functionPtr)(PartList *, PartList *));
 int partlist_more_totweight(PartList *c1, PartList *c2);
 #ifdef __cplusplus
 }
