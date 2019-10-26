@@ -21,18 +21,14 @@ int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
     PartList* y = (PartList*)b;
     int       C_a = x->c;
     int       C_b = y->c;
-    int       key_a = x->key;
-    int       key_b = y->key;
 
     if (C_a < C_b) {
         return -1;
     } else if (C_a > C_b) {
         return 1;
-    } else if (key_a < key_b) {
-        return -1;
-    } else {
-        return 1;
-    }
+    } 
+
+    return 0;
 }
 
 int compare_nb_job(gconstpointer a, gconstpointer b) {
@@ -84,7 +80,6 @@ static int solution_set_c(Solution* sol) {
     for (int i = 0; i < sol->nb_machines; ++i) {
         sol->part[i].c = 0;
         sol->part[i].tw = 0;
-        sol->part[i].key = i;
         g_ptr_array_free(sol->part[i].machine, TRUE);
         sol->part[i].machine = g_ptr_array_new();
         binomial_heap_insert(heap, sol->part + i);

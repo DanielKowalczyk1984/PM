@@ -60,7 +60,6 @@ Solution* solution_alloc(int nb_interval,int nb_machines, int nb_jobs, int off) 
 
     for (i = 0; i < nb_machines; ++i) {
         partlist_init(sol->part + i);
-        (sol->part + i)->key = i;
         sol->part[i].Q = CC_SAFE_MALLOC(nb_interval, GPtrArray*);
         sol->part[i].Q_in = CC_SAFE_MALLOC(nb_interval, GPtrArray*);
         for(int j = 0; j < nb_interval; j++) {
@@ -133,7 +132,6 @@ int solution_copy(Solution* dest, Solution* src) {
     dest->off = src->off;
 
     for (int i = 0; i < dest->nb_machines; i++) {
-        dest->part[i].key = src->part[i].key;
         dest->part[i].tw = src->part[i].tw;
         dest->part[i].c = src->part[i].c;
     }

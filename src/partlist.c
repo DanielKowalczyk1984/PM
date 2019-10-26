@@ -38,6 +38,5 @@ void partition_init(PartList* part, int nb_part, int nb_jobs) {
 
     for (i = 0; i < nb_part; i++) {
         partlist_init(&part[i]);
-        part[i].key = i;
     }
 }

@@ -10,7 +10,6 @@ typedef struct _partlist {
     GPtrArray *machine;
     int        c;
     int        tw;
-    int        key;
     int        used;
     GPtrArray **Q_in;
     GPtrArray **Q;
