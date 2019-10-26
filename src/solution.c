@@ -17,6 +17,7 @@ void solution_init(Solution* sol) {
         sol->u = (int*)NULL;
         sol->nb_machines = 0;
         sol->nb_jobs = 0;
+        sol->nb_intervals = 0;
         sol->tw = 0;
         sol->b = 0;
         sol->off = 0;
@@ -26,6 +27,10 @@ void solution_init(Solution* sol) {
 void solution_free(Solution** sol) {
     if (*sol) {
         for (int i = 0; i < (*sol)->nb_machines; ++i) {
+            for(int j = 0; j < (*sol)->nb_intervals; ++j) {
+                g_ptr_array_free((*sol)->part[i].Q[j],TRUE);
+                g_ptr_array_free((*sol)->part[i].Q_in[j],TRUE);
+            }
             partlist_free((*sol)->part + i);
         }
 
@@ -33,11 +38,12 @@ void solution_free(Solution** sol) {
         CC_IFFREE((*sol)->perm, Job*);
         CC_IFFREE((*sol)->c, int);
         CC_IFFREE((*sol)->u, int);
+        CC_IFFREE((*sol)->u_in, int);
         CC_IFFREE((*sol), Solution);
     }
 }
 
-Solution* solution_alloc(int nb_machines, int nb_jobs, int off) {
+Solution* solution_alloc(int nb_interval,int nb_machines, int nb_jobs, int off) {
     int       val = 0;
     int       i;
     Solution* sol = CC_SAFE_MALLOC(1, Solution);
@@ -45,6 +51,7 @@ Solution* solution_alloc(int nb_machines, int nb_jobs, int off) {
     solution_init(sol);
     sol->nb_machines = nb_machines;
     sol->nb_jobs = nb_jobs;
+    sol->nb_intervals = nb_interval;
     sol->tw = 0;
     sol->b = 0;
     sol->off = off;
@@ -54,6 +61,12 @@ Solution* solution_alloc(int nb_machines, int nb_jobs, int off) {
     for (i = 0; i < nb_machines; ++i) {
         partlist_init(sol->part + i);
         (sol->part + i)->key = i;
+        sol->part[i].Q = CC_SAFE_MALLOC(nb_interval, GPtrArray*);
+        sol->part[i].Q_in = CC_SAFE_MALLOC(nb_interval, GPtrArray*);
+        for(int j = 0; j < nb_interval; j++) {
+            sol->part[i].Q[j] = g_ptr_array_new();
+            sol->part[i].Q_in[j] = g_ptr_array_new();
+        }
     }
 
     sol->perm = CC_SAFE_MALLOC(nb_jobs, Job*);
@@ -63,7 +76,10 @@ Solution* solution_alloc(int nb_machines, int nb_jobs, int off) {
     fill_int(sol->c, sol->nb_jobs, 0);
     sol->u = CC_SAFE_MALLOC(nb_jobs, int);
     CCcheck_NULL_2(sol->u, "Failed to allocate memory")
-        fill_int(sol->u, nb_jobs, 0);
+    fill_int(sol->u, nb_jobs, 0);
+    sol->u_in = CC_SAFE_MALLOC(nb_jobs, int);
+    CCcheck_NULL_2(sol->u_in, "Failed to allocate memory");
+    fill_int(sol->u_in, nb_jobs, -1);
 
     for (i = 0; i < nb_jobs; ++i) {
         sol->perm[i] = (Job*)NULL;
@@ -94,13 +110,12 @@ gint order_weight(gconstpointer a, gconstpointer b, void* data) {
 
 static void print_machine(gpointer j, gpointer data) {
     Job* tmp = (Job*)j;
-    int  C = ((Solution*)data)->c[tmp->job];
-    printf("%d (%d) ", tmp->job, C);
+    printf("%d ", tmp->job);
 }
 
 void solution_print(Solution* sol) {
     for (int i = 0; i < sol->nb_machines; ++i) {
-        printf("Machine %-1d: ", sol->part[i].key);
+        printf("Machine %-1d: ", i);
         g_ptr_array_foreach(sol->part[i].machine, print_machine, sol);
         printf("with C =  %d, wC = %d and %u jobs\n", sol->part[i].c,
                sol->part[i].tw, sol->part[i].machine->len);
@@ -111,7 +126,7 @@ void solution_print(Solution* sol) {
 
 int solution_copy(Solution* dest, Solution* src) {
     int val = 0;
-    dest = solution_alloc(src->nb_machines, src->nb_jobs, src->off);
+    dest = solution_alloc(src->nb_intervals, src->nb_machines, src->nb_jobs, src->off);
     CCcheck_val_2(val, "Failed in  solution_alloc");
     dest->tw = src->tw;
     dest->b = src->b;
@@ -239,8 +254,6 @@ void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
     if (m < sol->nb_machines) {
         GPtrArray* machine = sol->part[m].machine;
         int        iter = 0;
-        // int        Hmax = ((interval*)g_ptr_array_index(intervals,
-        // intervals->len - 1))->b;
 
         for (unsigned i = 0; i < machine->len; ++i) {
             Job*      tmp = (Job*)g_ptr_array_index(machine, i);
@@ -249,7 +262,12 @@ void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
                 iter++;
                 I = (interval*)g_ptr_array_index(intervals, iter);
             }
-            sol->u[tmp->job] = iter;
+            sol->u[tmp->job] = iter; 
+            g_ptr_array_add(sol->part[m].Q[iter], tmp);
+            if(sol->c[tmp->job] - tmp->processing_time > I->a || (iter == 0 && sol->c[tmp->job] - tmp->processing_time == 0 )) {
+                g_ptr_array_add(sol->part[m].Q_in[iter], tmp);
+                sol->u_in[tmp->job] = iter;
+            } 
         }
     }
 }
@@ -350,6 +368,27 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
         Job*       i = (Job*)g_ptr_array_index(machine, last);
         int        u = sol->u[i->job];
         while (u >= 0) {
+            // if(sol->part[it].Q[u]->len > 1) {
+            //     g_ptr_array_foreach(sol->part[it].Q_in[u], print_machine, sol);
+            //     printf("\n");
+            //     g_ptr_array_foreach(sol->part[it].Q[u], print_machine , sol);
+            //     g_qsort_with_data(sol->part[it].Q_in[u]->pdata, sol->part->Q_in[u]->len, sizeof(Job*), compare_interval, g_ptr_array_index(intervals, u));
+            //     if(sol->part[it].Q_in[u]->len + 1 == sol->part[it].Q[u]->len) {
+            //         printf("not likely %u %u", sol->part[it].Q_in[u]->len, sol->part[it].Q[u]->len);
+            //         Job *tmp_1 = (Job*) sol->part[it].Q[u]->pdata[0];
+            //         Job *tmp_2 = (Job*) sol->part[it].Q_in[u]->pdata[0];
+            //         if(compare_interval(&tmp_1, &tmp_2,g_ptr_array_index(intervals, u)) > 0) {
+            //             printf("test test order Q Q bar %d %d\n", tmp_1->job, tmp_2->job);
+            //         } else {
+            //             printf("keep on going\n");
+            //         }
+            //     } else {
+            //         printf("likely %d %d", sol->part[it].Q_in[u]->len, sol->part[it].Q[u]->len);
+            //     }
+            // } else {
+            //     printf("drop\n");
+            // }
+            // u--;
             calculate_partition(sol, intervals, it, &u, &last);
         }
     }
