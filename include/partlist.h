@@ -12,6 +12,8 @@ typedef struct _partlist {
     int        tw;
     int        key;
     int        used;
+    GPtrArray **Q_in;
+    GPtrArray **Q;
 } PartList;
 
 void partlist_free(PartList *part);
