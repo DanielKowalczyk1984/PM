@@ -214,7 +214,7 @@ int main(int ac, char** av) {
     if (parms->pricing_solver < dp_solver) {
         CCutil_start_timer(&(problem.tot_build_dd));
         root->solver = newSolver(root->jobarray, root->nb_machines,
-                                 root->ordered_jobs, &(problem.parms));
+                                 root->ordered_jobs, parms);
         CCutil_stop_timer(&(problem.tot_build_dd), 0);
     } else {
         root->solver =
