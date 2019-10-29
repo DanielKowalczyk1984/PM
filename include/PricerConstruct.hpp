@@ -112,6 +112,110 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     }
 };
 
+class PricerConstructTI : public DdSpec<PricerConstruct, int, 2> {
+    GPtrArray* pair_list;
+    int*       take_job;
+    int        Hmax;
+    int        nb_layers;
+
+   public:
+    explicit PricerConstructTI(GPtrArray* _pair_list,
+                               int* _take_job, int _Hmax)
+        : pair_list(_pair_list),
+          take_job(_take_job),
+          Hmax(_Hmax) {
+        nb_layers = pair_list->len;
+    };
+
+    int getRoot(int& state) {
+        state = 0;
+        return nb_layers;
+    };
+
+    int getChild(int& state, int level, int value) const {
+        int layer = nb_layers - level;
+        int _j;
+        assert(0 <= layer && layer <= nb_layers - 1);
+        job_interval_pair* tmp_pair =
+            (job_interval_pair*)g_ptr_array_index(pair_list, layer);
+        interval* tmp_interval = tmp_pair->I;
+        Job*      tmp_j = (Job*)tmp_pair->j;
+
+        // if (level - 1 == 0 && value) {
+        //     return (state + tmp_j->processing_time <= tmp_interval->b)? -1 :
+        //     0;
+        // } else if (level - 1 == 0) {
+        //     return ( state <= tmp_interval->b) ? -1 : 0;
+        // }
+
+        if (value) {
+            state = state + tmp_j->processing_time;
+        }
+
+        _j = min_job(layer, state, value);
+
+        if (!(_j < nb_layers)) {
+            if (state <= tmp_interval->b) {
+                return -1;
+            }
+            return 0;
+        }
+        assert(_j < nb_layers);
+        return nb_layers - _j;
+    }
+
+    ~PricerConstructTI(){};
+
+   private:
+    int min_job(int j, int state, int value) const {
+        int                val = nb_layers;
+        job_interval_pair* tmp_pair;
+        interval*          tmp_interval;
+        Job*               tmp_j;
+        Job* tmp = ((job_interval_pair*)g_ptr_array_index(pair_list, j))->j;
+
+        if (value) {
+            for (int i = j + 1; i < nb_layers; ++i) {
+                tmp_pair = (job_interval_pair*)g_ptr_array_index(pair_list, i);
+                tmp_interval = tmp_pair->I;
+                tmp_j = tmp_pair->j;
+
+                if (state + tmp_j->processing_time > tmp_interval->a &&
+                    state + tmp_j->processing_time <= tmp_interval->b &&
+                    take_job[tmp->job*(Hmax + 1) + state]) {
+                    if (tmp == tmp_j ||
+                        (tmp->job > tmp_j->job &&
+                         value_diff_Fij(state, tmp_j, tmp) <= 0)) {
+                        continue;
+                    }
+                    val = i;
+                    break;
+                }
+            }
+        } else {
+            for (int i = j + 1; i < nb_layers; ++i) {
+                tmp_pair = (job_interval_pair*)g_ptr_array_index(pair_list, i);
+                tmp_interval = tmp_pair->I;
+                tmp_j = tmp_pair->j;
+
+                if (state + tmp_j->processing_time > tmp_interval->a &&
+                    state + tmp_j->processing_time <= tmp_interval->b) {
+                    val = i;
+                    break;
+                }
+            }
+        }
+
+        return val;
+    }
+
+    int diff_obj(Job* i, Job* j, int C) const {
+        return value_Fj(C, i) + value_Fj(C + j->processing_time, j) -
+               (value_Fj(C - i->processing_time + j->processing_time, j) +
+                value_Fj(C + j->processing_time, i));
+    }
+};
+
 class ConflictConstraints
     : public DdSpec<ConflictConstraints, conflict_state, 2> {
     int                                  nb_jobs;
