@@ -582,7 +582,12 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                         pd->id, pd->iterations, pd->opt_track);
                 }
 
-                reduce_cost_fixing(pd);
+                if(parms->reduce_cost_fixing == yes_reduced_cost) {
+                    CCutil_start_resume_time(&(problem->tot_reduce_cost_fixing));
+                    reduce_cost_fixing(pd);
+                    CCutil_suspend_timer(&(problem->tot_reduce_cost_fixing));
+                }
+
                 /**
                  * Compute the objective function
                  */

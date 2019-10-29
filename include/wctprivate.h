@@ -236,6 +236,7 @@ struct _Problem {
     CCutil_timer tot_solve_lp;
     CCutil_timer tot_pricing;
     CCutil_timer tot_heuristic;
+    CCutil_timer tot_reduce_cost_fixing;
 
     double real_time_build_dd;
     double real_time_total;

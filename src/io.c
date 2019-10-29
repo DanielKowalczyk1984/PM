@@ -124,10 +124,10 @@ int print_to_csv(Problem* problem) {
             goto CLEAN;
         }
         fprintf(file,
-                "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%"
+                "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%"
                 "s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                 "NameInstance", "tot_real_time", "tot_cputime", "tot_lb",
-                "tot_lb_root", "tot_heuristic", "tot_build_dd", "tot_pricing",
+                "tot_lb_root", "tot_heuristic", "tot_build_dd", "tot_pricing", problem->tot_reduce_cost_fixing.name,
                 "rel_error", "global_lower_bound", "global_upper_bound",
                 "first_rel_error", "nb_generated_col", "date",
                 "nb_iterations_rvnd", "stabilization", "alpha",
@@ -143,12 +143,12 @@ int print_to_csv(Problem* problem) {
     }
 
     fprintf(file,
-            "%s,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
+            "%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
             "%u/%u,%d,%d,%f,%d,%d,%d,%lu,%lu,%d,%d,%f,%f,%f,%f,%d,%f,%f\n",
             pd->pname, problem->real_time_total, problem->tot_cputime.cum_zeit,
             problem->tot_lb.cum_zeit, problem->tot_lb_root.cum_zeit,
             problem->tot_heuristic.cum_zeit, problem->tot_build_dd.cum_zeit,
-            problem->tot_pricing.cum_zeit, problem->rel_error,
+            problem->tot_pricing.cum_zeit, problem->tot_reduce_cost_fixing.cum_zeit,problem->rel_error,
             problem->global_lower_bound, problem->global_upper_bound,
             problem->root_rel_error, problem->nb_generated_col, date.day,
             date.month, date.year, parms->nb_iterations_rvnd,
