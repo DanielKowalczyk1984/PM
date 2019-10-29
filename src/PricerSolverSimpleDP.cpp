@@ -91,8 +91,8 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
                 take[(*iter)->job * (Hmax + 1) + t] = false;
             } else {
                 take[(*iter)->job * (Hmax + 1) + t] = true;
+                iter++;
             }
-            iter++;
         }
 
         counter += backward_graph[t].size();
@@ -111,8 +111,9 @@ void PricerSolverSimpleDp::build_mip() {
         for (int t = 0; t <= Hmax; t++) {
             for (auto& it : backward_graph[t]) {
                 double cost = value_Fj(t + it->processing_time, it);
+                double ub = take[((*it).job) * (Hmax + 1) + t] ? 1.0 : 0.0;
                 TI_x[it->job * (Hmax + 1) + t] =
-                    model->addVar(0.0, 1.0, cost, GRB_BINARY);
+                    model->addVar(0.0, ub, cost, GRB_BINARY);
             }
         }
 
