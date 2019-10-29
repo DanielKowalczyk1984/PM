@@ -15,6 +15,17 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     reversed_evaluator = ForwardBddSimpleDouble(nb_jobs);
 }
 
+PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
+    GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs, int* _take_jobs, int _Hmax,
+    const char* p_name)
+    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs,_take_jobs,_Hmax, p_name) {
+    std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
+    std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
+    std::cout << "number edges BDD = " << get_nb_edges() << '\n';
+    evaluator = BackwardBddSimpleDouble(nb_jobs);
+    reversed_evaluator = ForwardBddSimpleDouble(nb_jobs);
+}
+
 OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
     double* _pi) {
     evaluator.initialize_pi(_pi);
@@ -76,6 +87,17 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     const char* p_name)
     : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name) {
     std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
+    std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
+    std::cout << "number edges BDD = " << get_nb_edges() << '\n';
+    evaluator = BackwardBddCycleDouble(nb_jobs);
+    reversed_evaluator = ForwardBddCycleDouble(nb_jobs);
+}
+
+PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
+    GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs, int* _take_jobs, int _Hmax,
+    const char* p_name)
+    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs,_take_jobs,_Hmax, p_name) {
+    std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
     evaluator = BackwardBddCycleDouble(nb_jobs);
