@@ -27,8 +27,10 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data) {
                 return -1;
             } else if (w_y > w_x) {
                 return 1;
+            } else if (x->job < y->job){
+                return -1;
             } else {
-                return x->job - y->job;
+                return 1;
             }
             // else if (x->processing_time > y->processing_time) {
             //     return -1;
@@ -46,9 +48,11 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data) {
                 return -1;
             } else if (w_y > w_x) {
                 return 1;
-            } else {
-                return x->job - y->job;
-            } 
+            } else if (x->job < y->job) {
+                return -1;
+            }  else {
+                return 1;
+            }
             
             // else if (x->processing_time > y->processing_time) {
             //     return -1;
