@@ -58,6 +58,7 @@ void problem_init(Problem* problem) {
     CCutil_init_timer(&(problem->tot_solve_lp), "tot_solve_lp");
     CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
     CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
+    CCutil_init_timer(&(problem->tot_reduce_cost_fixing), "tot_reduce_cost_fixing");
     /** initialize colPool */
     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     /** initialize the time */
