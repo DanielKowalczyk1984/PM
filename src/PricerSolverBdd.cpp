@@ -26,6 +26,21 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
 }
 
+PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
+                                 GPtrArray* _ordered_jobs, int* _take_jobs,
+                                 int _Hmax, const char* p_name)
+    : PricerSolverBase(_jobs, _nb_machines, _ordered_jobs, p_name) {
+
+    PricerConstructTI ps(ordered_jobs, _take_jobs, _Hmax);
+    decision_diagram = std::unique_ptr<DdStructure<>>(new DdStructure<>(ps));
+    remove_layers_init();
+    decision_diagram->compressBdd();
+    init_table();
+    construct_mipgraph();
+    lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
+    solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
+}
+
 void PricerSolverBdd::construct_mipgraph() {
     mip_graph.clear();
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
@@ -463,9 +478,7 @@ bool PricerSolverBdd::check_schedule_set(GPtrArray* set) {
     return (weight == set->len);
 }
 
-void PricerSolverBdd::make_schedule_set_feasible(GPtrArray *set) {
-    
-}
+void PricerSolverBdd::make_schedule_set_feasible(GPtrArray* set) {}
 
 void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
