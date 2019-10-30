@@ -75,4 +75,8 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         Job* tmp_j = vector_jobs[j];
         return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
     }
+
+    int* get_take() override {
+        return NULL;
+    }
 };

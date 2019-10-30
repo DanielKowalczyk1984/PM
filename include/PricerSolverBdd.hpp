@@ -49,6 +49,9 @@ class PricerSolverBdd : public PricerSolverBase {
     int    get_num_layers() override;
     void   print_num_paths() override;
     void   add_constraint(Job* job, GPtrArray* list, int order) override;
+    int* get_take() override {
+        return NULL;
+    }
 };
 
 #endif  // PRICER_SOLVER_BDD_HPP

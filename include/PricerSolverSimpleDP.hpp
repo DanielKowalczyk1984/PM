@@ -13,7 +13,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     std::vector<Job*>*        backward_graph;
     std::vector<Job*>*        forward_graph;
     GRBVar*                   TI_x;
-    bool*                     take;
+    int*                      take;
     double*                   lp_x;
     double*                   solution_x;
 
@@ -45,11 +45,17 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void   disjunctive_inequality(double* x, Solution* sol) override;
 
     bool check_schedule_set(GPtrArray* set) override;
-    void make_schedule_set_feasible(GPtrArray *set) override;
+    void make_schedule_set_feasible(GPtrArray* set) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     void                    forward_evaluator(double* _pi);
     void                    backward_evaluator(double* _pi);
+
+    int* get_take() {
+        int* tmp = take;
+        take = NULL;
+        return tmp;
+    }
 };
 
 #endif  // PRICER_SOLVER_SIMPLE_DP_HPP

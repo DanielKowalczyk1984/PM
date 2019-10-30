@@ -104,6 +104,7 @@ struct PricerSolverBase {
      */
     virtual void create_dot_zdd(const char* name) = 0;
     virtual void print_number_nodes_edges() = 0;
+    virtual int* get_take() = 0;
     virtual int get_int_attr_model(enum MIP_Attr);
     virtual double get_dbl_attr_model(enum MIP_Attr);
 };
