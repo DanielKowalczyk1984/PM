@@ -16,9 +16,10 @@ PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray* _jobs, int _num_machines,
       F(new double[Hmax + 1]),
       backward_F(new double[Hmax + 1]),
       TI_x(new GRBVar[nb_jobs * (Hmax + 1)]),
-      take(new bool[nb_jobs * (Hmax + 1)]{}),
+      take((int *)malloc(nb_jobs*(Hmax + 1)*sizeof(int))),
       lp_x(new double[nb_jobs * (Hmax + 1)]{}),
       solution_x(new double[nb_jobs * (Hmax + 1)]{}) {
+    fill_int(take, nb_jobs * (Hmax + 1), 0);
     init_table();
 }
 
@@ -49,7 +50,9 @@ PricerSolverSimpleDp::~PricerSolverSimpleDp() {
     delete[] backward_graph;
     delete[] forward_graph;
     delete[] TI_x;
-    delete[] take;
+    if(take) {
+        free(take);
+    }
     delete[] lp_x;
     delete[] solution_x;
 }
@@ -91,8 +94,8 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
                 take[(*iter)->job * (Hmax + 1) + t] = false;
             } else {
                 take[(*iter)->job * (Hmax + 1) + t] = true;
-                iter++;
             }
+            iter++;
         }
 
         counter += backward_graph[t].size();
