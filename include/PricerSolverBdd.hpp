@@ -15,6 +15,7 @@ class PricerSolverBdd : public PricerSolverBase {
     MipGraph                  mip_graph;
     std::unique_ptr<double[]> lp_x;
     std::unique_ptr<double[]> solution_x;
+    int H_min;
 
     PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
                     GPtrArray* _ordered_jobs, const char* p_name);
@@ -23,6 +24,9 @@ class PricerSolverBdd : public PricerSolverBase {
                     const char* _p_name);
     void         init_table() override;
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
+    void check_infeasible_arcs();
+    void calculate_Hmin();
+    void cleanup_arcs();
 
     void reduce_cost_fixing(double* pi, int UB, double LB) override;
     void remove_layers();
@@ -53,5 +57,6 @@ class PricerSolverBdd : public PricerSolverBase {
         return NULL;
     }
 };
+int g_compare_duration(gconstpointer a, gconstpointer b);
 
 #endif  // PRICER_SOLVER_BDD_HPP
