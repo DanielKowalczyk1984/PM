@@ -37,12 +37,12 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         interval* tmp_interval = tmp_pair->I;
         Job*      tmp_j = (Job*)tmp_pair->j;
 
-        // if (level - 1 == 0 && value) {
-        //     return (state + tmp_j->processing_time <= tmp_interval->b)? -1 :
-        //     0;
-        // } else if (level - 1 == 0) {
-        //     return ( state <= tmp_interval->b) ? -1 : 0;
-        // }
+        if (level - 1 == 0 && value) {
+            return (state + tmp_j->processing_time <= tmp_interval->b && state + tmp_j->processing_time > tmp_interval->a)? -1 :
+            0;
+        } else if (level - 1 == 0) {
+            return ( state <= tmp_interval->b && state > tmp_interval->a) ? -1 : 0;
+        }
 
         if (value) {
             state = state + tmp_j->processing_time;
