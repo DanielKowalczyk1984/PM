@@ -1,6 +1,7 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 from random import randint
+import numpy as np
 import argparse
 import os
 
@@ -50,35 +51,32 @@ def give_weight_duration(n):
 
 
 def main():
-    try:
-        parser = OptionParser()
-        args = parser.parse_args()
-    except argparse.ArgumentError, e:
-        raise e
+    parser = OptionParser()
+    args = parser.parse_args()
 
-    for m in args.number_machines:
-        for n in args.number_jobs:
-            directory = './%d_%d' % (n, m)
-            os.mkdir(directory)
-            for c in args.class_inst:
-                for i in xrange(0, 10):
-                    try:
-                        f = open(directory + '/instance%d_%d_%d_1%d.txt' %
-                                 (c, n, m, i), 'w')
-                    except IOError, (ErrorNumber, ErrorMessage):
-                        print ErrorMessage
-                        break
+    for n in args.number_jobs:
+        directory = './wt%03d' % (n)
+        os.mkdir(directory)
+        i = 1
+        for rdd in [0.2 + 0.2*i for i in range(0, 5)]:
+            for tdf in [0.2 + 0.2*i for i in range(0, 5)]:
+                for j in range(0,5):
+                    p = np.random.randint(low=1, high=100, size=n)
+                    w = np.random.randint(low=1, high=10, size=n)
+                    sum_p = p.sum()
+                    a = np.max([0,sum_p*(1 - tdf - rdd/2)])
+                    b = np.max([0,sum_p*(1 - tdf + rdd/2)])
+                    d = np.random.randint(
+                        low=a, high=b, size=n)
+                    f = open(directory + '/wt%03d_%03d.txt' %
+                             (n, i), 'w')
+                    f.write("%d\n" % (n))
+                    for it in zip(p,d,w) :
+                        line = "%d %d %d\n" % (it[0],it[1],it[2]) 
+                        f.write(line)
+                    f.close()
+                    i = i + 1
 
-                    f.write('p %d\n' % n)
-                    p = int()
-                    w = int()
-                    for it in xrange(0, n):
-                        try:
-                            w, p = give_weight_duration(c)
-                        except ValidationError as e:
-                            print e.msg
-                            break
-                        f.write('n %d %d\n' % (w, p))
 
 if __name__ == '__main__':
     main()
