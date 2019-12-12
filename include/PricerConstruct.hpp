@@ -1,7 +1,7 @@
-#include <boost/dynamic_bitset.hpp>
 #include <glib.h>
 #include <interval.h>
 #include <solution.h>
+#include <boost/dynamic_bitset.hpp>
 #include "NodeBddSpec.hpp"
 
 class conflict_state {
@@ -37,13 +37,6 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         interval* tmp_interval = tmp_pair->I;
         Job*      tmp_j = (Job*)tmp_pair->j;
 
-        if (level - 1 == 0 && value) {
-            return (state + tmp_j->processing_time <= tmp_interval->b && state + tmp_j->processing_time > tmp_interval->a)? -1 :
-            0;
-        } else if (level - 1 == 0) {
-            return ( state <= tmp_interval->b && state > tmp_interval->a) ? -1 : 0;
-        }
-
         if (value) {
             state = state + tmp_j->processing_time;
         }
@@ -64,17 +57,15 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
    private:
     int min_job(int j, int state, int value) const {
-        int                val = nb_layers;
-        job_interval_pair* tmp_pair;
-        interval*          tmp_interval;
-        Job*               tmp_j;
+        int  val = nb_layers;
         Job* tmp = ((job_interval_pair*)g_ptr_array_index(pair_list, j))->j;
 
         if (value) {
             for (int i = j + 1; i < nb_layers; ++i) {
-                tmp_pair = (job_interval_pair*)g_ptr_array_index(pair_list, i);
-                tmp_interval = tmp_pair->I;
-                tmp_j = tmp_pair->j;
+                job_interval_pair* tmp_pair =
+                    (job_interval_pair*)g_ptr_array_index(pair_list, i);
+                interval* tmp_interval = tmp_pair->I;
+                Job*      tmp_j = tmp_pair->j;
 
                 if (state + tmp_j->processing_time > tmp_interval->a &&
                     state + tmp_j->processing_time <= tmp_interval->b) {
@@ -89,9 +80,10 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
             }
         } else {
             for (int i = j + 1; i < nb_layers; ++i) {
-                tmp_pair = (job_interval_pair*)g_ptr_array_index(pair_list, i);
-                tmp_interval = tmp_pair->I;
-                tmp_j = tmp_pair->j;
+                job_interval_pair* tmp_pair =
+                    (job_interval_pair*)g_ptr_array_index(pair_list, i);
+                interval* tmp_interval = tmp_pair->I;
+                Job*      tmp_j = tmp_pair->j;
 
                 if (state + tmp_j->processing_time > tmp_interval->a &&
                     state + tmp_j->processing_time <= tmp_interval->b) {
@@ -118,11 +110,8 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
     int        nb_layers;
 
    public:
-    explicit PricerConstructTI(GPtrArray* _pair_list,
-                               int* _take_job, int _Hmax)
-        : pair_list(_pair_list),
-          take_job(_take_job),
-          Hmax(_Hmax) {
+    explicit PricerConstructTI(GPtrArray* _pair_list, int* _take_job, int _Hmax)
+        : pair_list(_pair_list), take_job(_take_job), Hmax(_Hmax) {
         nb_layers = pair_list->len;
     };
 
@@ -140,12 +129,12 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
         interval* tmp_interval = tmp_pair->I;
         Job*      tmp_j = (Job*)tmp_pair->j;
 
-        // if (level - 1 == 0 && value) {
-        //     return (state + tmp_j->processing_time <= tmp_interval->b)? -1 :
-        //     0;
-        // } else if (level - 1 == 0) {
-        //     return ( state <= tmp_interval->b) ? -1 : 0;
-        // }
+        if (level - 1 == 0 && value) {
+            return (state + tmp_j->processing_time <= tmp_interval->b)? -1 :
+            0;
+        } else if (level - 1 == 0) {
+            return ( state <= tmp_interval->b) ? -1 : 0;
+        }
 
         if (value) {
             state = state + tmp_j->processing_time;
@@ -181,7 +170,7 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
 
                 if (state + tmp_j->processing_time > tmp_interval->a &&
                     state + tmp_j->processing_time <= tmp_interval->b &&
-                    take_job[tmp_j->job * (Hmax + 1) + state] ) {
+                    take_job[tmp_j->job * (Hmax + 1) + state]) {
                     if (tmp == tmp_j ||
                         (tmp->job > tmp_j->job &&
                          value_diff_Fij(state, tmp_j, tmp) <= 0)) {
@@ -197,10 +186,9 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
                 tmp_interval = tmp_pair->I;
                 tmp_j = tmp_pair->j;
 
-                if (state + tmp_j->processing_time > tmp_interval->a
-                    && state + tmp_j->processing_time <= tmp_interval->b
-                    && take_job[tmp_j->job * (Hmax + 1) + state]
-                    ) {
+                if (state + tmp_j->processing_time > tmp_interval->a &&
+                    state + tmp_j->processing_time <= tmp_interval->b &&
+                    take_job[tmp_j->job * (Hmax + 1) + state]) {
                     val = i;
                     break;
                 }
