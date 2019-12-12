@@ -47,13 +47,13 @@ typedef property_map<MipGraph, edge_index_t>::type EdgeIndexAccessor;
 typedef property_map<MipGraph, edge_weight_t>::type EdgeTypeAccessor;
 typedef property_map<MipGraph, edge_weight2_t>::type EdgeVarAccessor;
 
-class ColorWriterEdge {
+class ColorWriterEdgeX {
 private:
     const MipGraph& g;
     const double *x;
 
 public:
-    explicit ColorWriterEdge(MipGraph& _g, double *_x) : g{_g}, x{_x} {
+    explicit ColorWriterEdgeX(MipGraph& _g, double *_x) : g{_g}, x{_x} {
 
     }
 
@@ -73,6 +73,27 @@ public:
                 output << "[label = "<< x[index] <<",style=dashed]";
             }
         }
+    }
+};
+
+class ColorWriterEdgeIndex {
+private:
+    const MipGraph& g;
+
+public:
+    explicit ColorWriterEdgeIndex(MipGraph& _g) : g{_g} {
+
+    }
+
+    void operator()(std::ostream &output, Edge _edge) {
+        int index = get(boost::edge_index_t(),g,_edge);
+        bool high =  get(boost::edge_weight_t(),g,_edge);       
+    
+            if(high) {
+                output << "[label = "<< index << "]";
+            } else {
+                output << "[label = "<< index <<"style = dashed]";
+            }
     }
 };
 
