@@ -9,8 +9,8 @@ class PricerSolverBdd : public PricerSolverBase {
     std::unique_ptr<DdStructure<>> decision_diagram;
     size_t                         size_graph;
 
-    int nb_removed_edges;
-    int nb_removed_nodes;
+    int nb_removed_edges = 0;
+    int nb_removed_nodes = 0;
 
     MipGraph                  mip_graph;
     std::unique_ptr<double[]> lp_x;
@@ -25,6 +25,8 @@ class PricerSolverBdd : public PricerSolverBase {
     void         init_table() override;
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
     void check_infeasible_arcs();
+    void topdown_filtering();
+    void bottumup_filtering();
     void calculate_Hmin();
     void cleanup_arcs();
 
