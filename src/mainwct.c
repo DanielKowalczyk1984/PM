@@ -226,7 +226,6 @@ int main(int ac, char** av) {
      */
     heuristic(&problem);
 
-
     /**
      * Calculation of LB at the root node with column generation
      */
@@ -246,12 +245,15 @@ int main(int ac, char** av) {
         if (parms->pricing_solver == dp_bdd_solver) {
             int* take = get_take(root->solver);
             lp_node_data_free(root);
-            root->localColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+            root->localColPool =
+                g_ptr_array_new_with_free_func(g_scheduleset_free);
             freeSolver(root->solver);
-            root->solver = newSolverTIBdd(root->jobarray, root->nb_machines,
-                           root->ordered_jobs, take, problem.H_max, parms);
+            root->solver =
+                newSolverTIBdd(root->jobarray, root->nb_machines,
+                               root->ordered_jobs, take, problem.H_max, parms);
             CC_IFFREE(take, int);
             solution_print(problem.opt_sol);
+            represent_solution(root, problem.opt_sol);
             add_solution_to_colpool(problem.opt_sol, root);
             build_rmp(root, 0);
             CCutil_start_timer(&(problem.tot_lb_root));
@@ -260,7 +262,7 @@ int main(int ac, char** av) {
         }
     }
 
-    if(parms->mip_solver) {
+    if (parms->mip_solver) {
         build_solve_mip(root);
     }
 
