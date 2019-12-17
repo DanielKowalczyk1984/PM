@@ -1,4 +1,5 @@
 #include "PricerSolverBdd.hpp"
+#include <list>
 #include "PricerConstruct.hpp"
 #include "boost/graph/graphviz.hpp"
 
@@ -22,11 +23,11 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
     decision_diagram->compressBdd();
     size_graph = decision_diagram->size();
     init_table();
-    calculate_Hmin();
+    calculate_H_min();
     cleanup_arcs();
     topdown_filtering();
     check_infeasible_arcs();
-    bottumup_filtering();
+    bottum_up_filtering();
     construct_mipgraph();
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
@@ -41,11 +42,11 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
     remove_layers_init();
     decision_diagram->compressBdd();
     init_table();
-    calculate_Hmin();
+    calculate_H_min();
     cleanup_arcs();
     topdown_filtering();
     check_infeasible_arcs();
-    bottumup_filtering();
+    bottum_up_filtering();
     construct_mipgraph();
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
@@ -62,7 +63,7 @@ int g_compare_duration(gconstpointer a, gconstpointer b) {
     }
 }
 
-void PricerSolverBdd::calculate_Hmin() {
+void PricerSolverBdd::calculate_H_min() {
     int        p_sum = 0;
     GPtrArray* duration = g_ptr_array_new();
     for (int j = 0; j < nb_jobs; j++) {
@@ -76,13 +77,13 @@ void PricerSolverBdd::calculate_Hmin() {
     int    i = nb_jobs - 1;
     double tmp = p_sum;
     do {
-        Job* job = (Job*)g_ptr_array_index(duration, i);
+        Job* job = (Job*)g_ptr_array_index(duration, nb_jobs - 1);
         tmp -= job->processing_time;
+        std::cout << job->processing_time << " " << m << "\n";
         m++;
-        i--;
     } while (m < num_machines - 1);
 
-    H_min = (int)ceil(tmp / num_machines);
+    H_min = (int)floor(tmp / num_machines);
 
     g_ptr_array_free(duration, TRUE);
 }
@@ -95,8 +96,9 @@ void PricerSolverBdd::construct_mipgraph() {
 
     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
         for (size_t j = 0; j < table[i].size(); j++) {
-            if (NodeId(i, j) != 0 &&
-                (table[i][j].calc_yes || table[i][j].calc_no)) {
+            if (NodeId(i, j) != 0
+                // && (table[i][j].calc_yes || table[i][j].calc_no)
+            ) {
                 table[i][j].key = add_vertex(mip_graph);
                 vertex_nodeid_list[table[i][j].key] = NodeId(i, j);
             }
@@ -273,6 +275,60 @@ void PricerSolverBdd::remove_edges() {
         << "-------------------------------------------------------------\n";
 }
 
+void PricerSolverBdd::print_representation_file() {
+    NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
+    NodeIdAccessor   vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
+    EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
+    EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(), mip_graph));
+    std::unique_ptr<vector<int>[]> index_edge(new vector<int>[nb_jobs]);
+
+    string outfile_file_mip_str =
+        problem_name + "_" + std::to_string(num_machines) + ".txt";
+    std::ofstream out_file_mip(outfile_file_mip_str);
+
+    out_file_mip << boost::num_vertices(mip_graph) << " "
+                 << boost::num_edges(mip_graph) << " " << nb_jobs << " "
+                 << num_machines << "\n\n";
+
+    for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+        auto& head = table.node(get(boost::vertex_name_t(), mip_graph,
+                                    source(*it.first, mip_graph)));
+        auto& n = table.node(get(boost::vertex_name_t(), mip_graph,
+                                 target(*it.first, mip_graph)));
+        auto  high = edge_type_list[*it.first];
+        if (high) {
+            auto cost = (double)value_Fj(
+                head.get_weight() + head.get_job()->processing_time,
+                head.get_job());
+            out_file_mip << head.key << " " << n.key << " " << cost << "\n";
+            index_edge[n.get_job()->job].push_back(edge_index_list[*it.first]);
+        } else {
+            out_file_mip << head.key << " " << n.key << " " << 0.0 << "\n";
+        }
+    }
+
+    out_file_mip << "\n";
+
+    for (int i = 0; i < nb_jobs; i++) {
+        for (auto& it : index_edge[i]) {
+            out_file_mip << it << " ";
+        }
+        out_file_mip << "\n";
+    }
+
+    out_file_mip << "\n";
+
+    for (auto it = vertices(mip_graph); it.first != it.second; it.first++) {
+        const auto node_id = vertex_nodeid_list[*it.first];
+        auto&      n = table.node(node_id);
+        if (node_id > 1) {
+            out_file_mip << n.get_job()->job << " " << n.get_weight() << "\n";
+        }
+    }
+
+    out_file_mip.close();
+}
+
 void PricerSolverBdd::build_mip() {
     try {
         printf("Building Mip model for the extended formulation:\n");
@@ -292,8 +348,8 @@ void PricerSolverBdd::build_mip() {
             if (edge_type_list[*it.first]) {
                 auto&  n = table.node(get(boost::vertex_name_t(), mip_graph,
                                          source(*it.first, mip_graph)));
-                double cost = (double)value_Fj(
-                    n.get_weight() + n.get_job()->processing_time, n.get_job());
+                auto   C = n.get_weight() + n.get_job()->processing_time;
+                double cost = (double)value_Fj(C, n.get_job());
                 edge_var_list[*it.first].x =
                     model->addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
@@ -366,14 +422,14 @@ void PricerSolverBdd::build_mip() {
             model->addConstrs(flow_conservation_constr.get(), sense_flow.get(),
                               rhs_flow.get(), nullptr, num_vertices));
         model->update();
-        // for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
             // edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart,
             //                                lp_x[edge_index_list[*it.first]]);
-            // edge_var_list[*it.first].x.set(
-            //     GRB_DoubleAttr_Start, solution_x[edge_index_list[*it.first]]);
-        // }
-        model->write(problem_name + "_" +
-                     std::to_string(num_machines) + "_mip.mps");
+            edge_var_list[*it.first].x.set(
+                GRB_DoubleAttr_Start, solution_x[edge_index_list[*it.first]]);
+        }
+        model->write(problem_name + "_" + std::to_string(num_machines) +
+                     "_mip.mps");
         model->optimize();
 
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
@@ -381,19 +437,21 @@ void PricerSolverBdd::build_mip() {
             solution_x[index] =
                 edge_var_list[*it.first].x.get(GRB_DoubleAttr_X);
         }
-        ColorWriterEdgeX     edge_writer(mip_graph, solution_x.get());
-        ColorWriterEdgeIndex edge_writer_index(mip_graph);
-        ColorWriterVertex    vertex_writer(mip_graph, table);
-        string               file_name = "cut_solution_" + problem_name + "_" +
+
+        ColorWriterEdgeX  edge_writer(mip_graph, solution_x.get());
+        ColorWriterVertex vertex_writer(mip_graph, table);
+        string            file_name = "lp_solution_" + problem_name + "_" +
                            std::to_string(num_machines) + ".gv";
-        string file_name_index = "index_solution_" + problem_name + "_" +
-                                 std::to_string(num_machines) + ".gv";
         std::ofstream outf(file_name);
-        std::ofstream outf_index(file_name_index);
         boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
+        outf.close();
+
+        ColorWriterEdgeIndex edge_writer_index(mip_graph);
+        file_name = "index_" + problem_name + "_" +
+                    std::to_string(num_machines) + ".gv";
+        std::ofstream outf_index(file_name);
         boost::write_graphviz(outf_index, mip_graph, vertex_writer,
                               edge_writer_index);
-        outf.close();
         outf_index.close();
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
@@ -409,10 +467,11 @@ void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     evaluate_nodes(pi, UB, LB);
     topdown_filtering();
     check_infeasible_arcs();
-    bottumup_filtering();
-    cleanup_arcs();
+    // bottumup_filtering();
+    // cleanup_arcs();
 
     construct_mipgraph();
+    equivalent_paths_filtering();
 }
 
 void PricerSolverBdd::cleanup_arcs() {
@@ -454,19 +513,23 @@ void PricerSolverBdd::cleanup_arcs() {
     /** remove the unnecessary nodes of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& iter : table[i]) {
-            if (iter.get_weight() + iter.backward_distance[0] < H_min) {
+            if (iter.get_weight() + iter.backward_distance[0] < H_min ) {
                 iter.calc_no = false;
                 removed_edges = true;
                 nb_edges_removed_tmp++;
                 nb_removed_edges++;
+                // iter.calc_yes = false;
+                // removed_edges = true;
+                // nb_edges_removed_tmp++;
+                // nb_removed_edges++;
             }
 
-            if (iter.get_weight() + iter.backward_distance[1] < H_min) {
-                iter.calc_yes = false;
-                removed_edges = true;
-                nb_edges_removed_tmp++;
-                nb_removed_edges++;
-            }
+            // if (iter.get_weight() + iter.backward_distance[1] < H_min && iter.branch[1] == 1) {
+            //     iter.calc_yes = false;
+            //     removed_edges = true;
+            //     nb_edges_removed_tmp++;
+            //     nb_removed_edges++;
+            // }
         }
     }
 
@@ -482,7 +545,7 @@ void PricerSolverBdd::cleanup_arcs() {
 }
 
 void PricerSolverBdd::topdown_filtering() {
-    bool removed_edges = false;
+    bool               removed_edges = false;
     int                nb_edges_removed_tmp = 0;
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     NodeBdd<>&         root = table.node(decision_diagram->root());
@@ -547,9 +610,9 @@ void PricerSolverBdd::topdown_filtering() {
     }
 }
 
-void PricerSolverBdd::bottumup_filtering() {
-    bool removed_edges = false;
-    int nb_edges_removed_tmp = 0;
+void PricerSolverBdd::bottum_up_filtering() {
+    bool              removed_edges = false;
+    int               nb_edges_removed_tmp = 0;
     NodeTableEntity<> table = decision_diagram->getDiagram().privateEntity();
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
@@ -598,8 +661,8 @@ void PricerSolverBdd::bottumup_filtering() {
 
 void PricerSolverBdd::check_infeasible_arcs() {
     /** init table */
-    bool removed_edges = false;
-    int nb_edges_removed_tmp = 0;
+    bool               removed_edges = false;
+    int                nb_edges_removed_tmp = 0;
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
         for (auto& it : table[i]) {
@@ -626,10 +689,10 @@ void PricerSolverBdd::check_infeasible_arcs() {
 
                 int  max = value_diff_Fij(it.get_weight(), it.get_job(),
                                          (Job*)g_ptr_array_index(jobs, index));
-                bool index_bool = (index < (size_t) it.get_job()->job);
+                bool index_bool = (index < (size_t)it.get_job()->job);
                 while (index != boost::dynamic_bitset<>::npos && max <= 0) {
                     index = it.all.find_next(index);
-                    index_bool = (index < (size_t) it.get_job()->job);
+                    index_bool = (index < (size_t)it.get_job()->job);
                     if (index != boost::dynamic_bitset<>::npos) {
                         int a = value_diff_Fij(
                             it.get_weight(), it.get_job(),
@@ -661,6 +724,166 @@ void PricerSolverBdd::check_infeasible_arcs() {
         init_table();
         cleanup_arcs();
     }
+}
+
+void PricerSolverBdd::equivalent_paths_filtering() {
+    /** init table */
+    bool               removed_edges = false;
+    int                nb_edges_removed_tmp = 0;
+    EdgeTypeAccessor   edge_type_list(get(boost::edge_weight_t(), mip_graph));
+    NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
+    for (int i = decision_diagram->topLevel(); i > 0; i--) {
+        for (auto& it : table[i]) {
+            it.visited = false;
+            it.all = boost::dynamic_bitset<>{nb_jobs, 0};
+            it.calc_yes = true;
+            it.calc_no = true;
+            auto& n0 = table.node(it.branch[0]);
+            n0.in_degree_0++;
+            auto& n1 = table.node(it.branch[1]);
+            n1.in_degree_1++;
+        }
+    }
+
+    std::vector<int> vertices;
+
+    for (int i = decision_diagram->topLevel(); i > 0; i--) {
+        for (auto& it : table[i]) {
+            if (it.in_degree_1 + it.in_degree_0 >= 2) {
+                vertices.push_back(it.key);
+            }
+        }
+    }
+
+    for (auto& it : vertices) {
+        NodeId       start_v = get(boost::vertex_name_t(), mip_graph, it);
+        list<NodeId> queue;
+        size_t       num_vertices = boost::num_vertices(mip_graph);
+
+        queue.push_back(start_v);
+        std::unique_ptr<bool[]> visited(new bool[num_vertices]());
+        std::unique_ptr<bool[]> edge_visited(new bool[num_vertices]());
+        std::unique_ptr<boost::dynamic_bitset<>[]> all(
+            new dynamic_bitset<>[num_vertices]);
+        std::unique_ptr<int[]> C(new int[num_vertices]);
+        for (size_t i = 0; i < num_vertices; i++) {
+            all[i] = dynamic_bitset<>(nb_jobs, 0);
+            C[i] = 0;
+        }
+
+        auto& tmp_n = table.node(start_v);
+        visited[tmp_n.key];
+        auto stop = false;
+
+        while (!queue.empty()) {
+            auto currVertex = queue.front();
+            queue.pop_front();
+            auto it = boost::in_edges(table.node(currVertex).key, mip_graph);
+
+            for (; it.first != it.second; it.first++) {
+                NodeId adjVertex = get(boost::vertex_name_t(), mip_graph,
+                                       source(*it.first, mip_graph));
+                auto&  n = table.node(adjVertex);
+                auto   high = edge_type_list[*it.first];
+
+                if (!visited[n.key]) {
+                    visited[n.key] = true;
+                    queue.push_back(adjVertex);
+                    if (high) {
+                        auto& tmp_node = table.node(n.branch[1]);
+                        all[n.key] |= all[tmp_node.key];
+                        all[n.key][n.get_job()->job] = 1;
+                        C[n.key] = C[tmp_node.key] +
+                                   value_Fj(tmp_node.get_weight(), n.get_job());
+                        edge_visited[n.key] = true;
+                    } else {
+                        auto& tmp_node = table.node(n.branch[0]);
+                        all[n.key] |= all[tmp_node.key];
+                        C[n.key] = C[tmp_node.key];
+                    }
+                } else {
+                    dynamic_bitset<> tmp;
+                    int              tmp_C;
+                    if (high) {
+                        auto& tmp_node = table.node(n.branch[1]);
+                        tmp = all[tmp_node.key];
+                        tmp[n.get_job()->job] = 1;
+                        tmp_C = C[tmp_node.key] +
+                                value_Fj(tmp_node.get_weight(), n.get_job());
+                    } else {
+                        auto& tmp_node = table.node(n.branch[0]);
+                        tmp = all[tmp_node.key];
+                        tmp_C = C[tmp_node.key];
+                    }
+
+                    if (all[n.key] == tmp) {
+                        NodeId cur;
+                        NodeId prev = adjVertex;
+                        if (high) {
+                            if (tmp_C > C[n.key]) {
+                                cur = n.branch[1];
+                            } else {
+                                cur = n.branch[0];
+                            }
+                        } else {
+                            if (tmp_C > C[n.key]) {
+                                cur = n.branch[0];
+                            } else {
+                                cur = n.branch[1];
+                            }
+                        }
+
+                        while (cur != start_v) {
+                            auto& node = table.node(cur);
+                            if (node.in_degree_1 + node.in_degree_0 > 1) {
+                                break;
+                            }
+                            prev = cur;
+                            assert(cur != NodeId(0, 0));
+                            assert(cur != NodeId(0, 1));
+                            if (edge_visited[node.key]) {
+                                cur = node.branch[1];
+                            } else {
+                                cur = node.branch[0];
+                            }
+                        }
+
+                        auto& node_delete = table.node(prev);
+                        if (edge_visited[node_delete.key] && cur == start_v) {
+                            node_delete.calc_yes = false;
+                            removed_edges = true;
+                            nb_edges_removed_tmp++;
+                        } else if (cur == start_v) {
+                            node_delete.calc_no = false;
+                            removed_edges = true;
+                            nb_edges_removed_tmp++;
+                        }
+                    }
+                    stop = true;
+                    break;
+                }
+            }
+
+            if (stop) {
+                break;
+            }
+        }
+    }
+
+    if (removed_edges) {
+        std::cout << "Number of edges removed by equivalent_path_filtering = "
+                  << nb_edges_removed_tmp << "\n"
+                  << "Number of edges removed in total = "
+                  << "\n";
+
+        remove_layers();
+        remove_edges();
+        cleanup_arcs();
+        init_table();
+        construct_mipgraph();
+    }
+
+
 }
 
 void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
