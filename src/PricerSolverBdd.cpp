@@ -468,10 +468,10 @@ void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     topdown_filtering();
     check_infeasible_arcs();
     // bottumup_filtering();
-    // cleanup_arcs();
+    cleanup_arcs();
 
     construct_mipgraph();
-    equivalent_paths_filtering();
+    // equivalent_paths_filtering();
 }
 
 void PricerSolverBdd::cleanup_arcs() {
@@ -513,7 +513,7 @@ void PricerSolverBdd::cleanup_arcs() {
     /** remove the unnecessary nodes of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& iter : table[i]) {
-            if (iter.get_weight() + iter.backward_distance[0] < H_min ) {
+            if (iter.get_weight() + iter.backward_distance[0] < H_min) {
                 iter.calc_no = false;
                 removed_edges = true;
                 nb_edges_removed_tmp++;
@@ -524,7 +524,8 @@ void PricerSolverBdd::cleanup_arcs() {
                 // nb_removed_edges++;
             }
 
-            // if (iter.get_weight() + iter.backward_distance[1] < H_min && iter.branch[1] == 1) {
+            // if (iter.get_weight() + iter.backward_distance[1] < H_min &&
+            // iter.branch[1] == 1) {
             //     iter.calc_yes = false;
             //     removed_edges = true;
             //     nb_edges_removed_tmp++;
@@ -882,8 +883,6 @@ void PricerSolverBdd::equivalent_paths_filtering() {
         init_table();
         construct_mipgraph();
     }
-
-
 }
 
 void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
