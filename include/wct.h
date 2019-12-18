@@ -23,8 +23,6 @@ int print_size_to_csv(Problem *problem, NodeData *pd);
  */
 
 void calculate_Hmax(Problem *problem);
-int calculate_H_min(
-    int *durations, int nb_machines, int nb_jobs, int *perm, double *H);
 int preprocess_data(Problem *problem);
 int find_division(Problem *problem);
 void g_problem_summary_init(gpointer data, gpointer user_data);

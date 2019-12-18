@@ -21,18 +21,14 @@ int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
     PartList* y = (PartList*)b;
     int       C_a = x->c;
     int       C_b = y->c;
-    int       key_a = x->key;
-    int       key_b = y->key;
 
     if (C_a < C_b) {
         return -1;
     } else if (C_a > C_b) {
         return 1;
-    } else if (key_a < key_b) {
-        return -1;
-    } else {
-        return 1;
-    }
+    } 
+
+    return 0;
 }
 
 int compare_nb_job(gconstpointer a, gconstpointer b) {
@@ -84,7 +80,6 @@ static int solution_set_c(Solution* sol) {
     for (int i = 0; i < sol->nb_machines; ++i) {
         sol->part[i].c = 0;
         sol->part[i].tw = 0;
-        sol->part[i].key = i;
         g_ptr_array_free(sol->part[i].machine, TRUE);
         sol->part[i].machine = g_ptr_array_new();
         binomial_heap_insert(heap, sol->part + i);
@@ -93,7 +88,6 @@ static int solution_set_c(Solution* sol) {
     for (int i = 0; i < sol->nb_jobs; ++i) {
         j = sol->perm[i];
         tmp = (PartList*)binomial_heap_pop(heap);
-        j->index = tmp->machine->len;
         g_ptr_array_add(tmp->machine, j);
         tmp->c += j->processing_time;
         sol->c[j->job] = tmp->c;
@@ -341,7 +335,6 @@ static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
 
     for (unsigned i = 0; i < part1->machine->len; ++i) {
         tmp = (Job*)g_ptr_array_index(part1->machine, i);
-        tmp->index = i;
         part1->c += tmp->processing_time;
         sol->c[tmp->job] = part1->c;
         part1->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->due_time);
@@ -349,7 +342,6 @@ static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
 
     for (unsigned i = 0; i < part2->machine->len; ++i) {
         tmp = (Job*)g_ptr_array_index(part2->machine, i);
-        tmp->index = i;
         part2->c += tmp->processing_time;
         sol->c[tmp->job] = part2->c;
         part2->tw += tmp->weight * CC_MAX(0, sol->c[tmp->job] - tmp->due_time);
@@ -410,7 +402,7 @@ int heuristic(Problem* prob) {
     local_search_data* data_RS = (local_search_data*)NULL;
 
     CCutil_start_resume_time(&(prob->tot_heuristic));
-    sol = solution_alloc(nb_machines, nb_jobs, prob->off);
+    sol = solution_alloc(intervals->len, nb_machines, nb_jobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
     CCcheck_val_2(val, "Failed construct edd");
@@ -431,7 +423,7 @@ int heuristic(Problem* prob) {
     solution_print(sol);
 
     if (prob->opt_sol == NULL) {
-        prob->opt_sol = solution_alloc(nb_machines, nb_jobs, prob->off);
+        prob->opt_sol = solution_alloc(intervals->len,nb_machines, nb_jobs, prob->off);
         CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
         solution_update(prob->opt_sol, sol);
     }
@@ -439,7 +431,7 @@ int heuristic(Problem* prob) {
     for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0;
          ++i) {
         // fprintf(stderr, "iteration %d\n", i);
-        sol1 = solution_alloc(nb_machines, nb_jobs, prob->off);
+        sol1 = solution_alloc(intervals->len,nb_machines, nb_jobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
         CCcheck_val_2(val, "Failed in construct random solution");
@@ -449,7 +441,6 @@ int heuristic(Problem* prob) {
         solution_update(sol, sol1);
 
         for (int j = 0; j < ILS; ++j) {
-            // fprintf(stderr, "\tsub iteration %d\n", j);
             RVND(sol1, data_RS);
 
             if (sol1->tw < sol->tw) {

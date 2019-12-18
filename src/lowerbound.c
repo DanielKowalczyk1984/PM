@@ -582,7 +582,13 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                         pd->id, pd->iterations, pd->opt_track);
                 }
 
-                reduce_cost_fixing(pd);
+                if(parms->reduce_cost_fixing == yes_reduced_cost) {
+                    CCutil_start_resume_time(&(problem->tot_reduce_cost_fixing));
+                    reduce_cost_fixing(pd);
+                    CCutil_suspend_timer(&(problem->tot_reduce_cost_fixing));
+                    print_interval_pair(pd->ordered_jobs);
+                }
+
                 /**
                  * Compute the objective function
                  */
@@ -590,7 +596,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 CCcheck_val_2(val, "wctlp_optimize failed");
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
-                construct_lp_sol_from_rmp(pd);
+                // construct_lp_sol_from_rmp(pd);
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->nb_jobs + 1));
                 printf("size evolution %lu\n", get_nb_vertices(pd->solver));
                 break;

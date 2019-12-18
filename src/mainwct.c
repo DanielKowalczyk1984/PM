@@ -72,7 +72,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
     char*  ptr;
     int    debug = dbg_lvl();
 
-    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:")) != EOF) {
+    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:r:")) != EOF) {
         switch (c) {
             case 'd':
                 ++(debug);
@@ -141,6 +141,11 @@ static int parseargs(int ac, char** av, Parms* parms) {
                 val = parms_set_mip_solver(parms, c);
                 CCcheck_val(val, "Failed in set mip solver");
                 break;
+            case 'r':
+                c = strtol(optarg, &ptr, 10);
+                val = parms_set_reduce_cost(parms, c);
+                CCcheck_val(val, "Failed in set reduce cost fixing");
+                break;
             default:
                 usage(av[0]);
                 val = 1;
@@ -204,24 +209,22 @@ int main(int ac, char** av) {
            CCutil_zeit() - start_time);
 
     /**
-     * Finding heuristic solutions to the problem
-     */
-    heuristic(&problem);
-
-    /**
      * Build DD at the root node
      */
     if (parms->pricing_solver < dp_solver) {
         CCutil_start_timer(&(problem.tot_build_dd));
         root->solver = newSolver(root->jobarray, root->nb_machines,
-                                 root->ordered_jobs, &(problem.parms));
+                                 root->ordered_jobs, parms);
         CCutil_stop_timer(&(problem.tot_build_dd), 0);
-        print_size_to_csv(&problem, root);
     } else {
         root->solver =
             newSolverDp(root->jobarray, root->nb_machines, root->H_max, parms);
     }
     problem.first_size_graph = get_nb_edges(root->solver);
+    /**
+     * Finding heuristic solutions to the problem
+     */
+    heuristic(&problem);
 
     /**
      * Calculation of LB at the root node with column generation
@@ -238,10 +241,31 @@ int main(int ac, char** av) {
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
-        if(parms->mip_solver) {
-            build_solve_mip(root);
+
+        if (parms->pricing_solver == dp_bdd_solver) {
+            int* take = get_take(root->solver);
+            lp_node_data_free(root);
+            root->localColPool =
+                g_ptr_array_new_with_free_func(g_scheduleset_free);
+            freeSolver(root->solver);
+            root->solver =
+                newSolverTIBdd(root->jobarray, root->nb_machines,
+                               root->ordered_jobs, take, problem.H_max, parms);
+            CC_IFFREE(take, int);
+            solution_print(problem.opt_sol);
+            add_solution_to_colpool(problem.opt_sol, root);
+            build_rmp(root, 0);
+            CCutil_start_timer(&(problem.tot_lb_root));
+            compute_lower_bound(&problem, root);
+            CCutil_stop_timer(&(problem.tot_lb_root), 1);
         }
     }
+
+    if (parms->mip_solver) {
+        represent_solution(root, problem.opt_sol);
+        build_solve_mip(root);
+    }
+
     print_to_csv(&problem);
 
 CLEAN:

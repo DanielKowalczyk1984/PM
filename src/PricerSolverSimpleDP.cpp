@@ -16,9 +16,10 @@ PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray* _jobs, int _num_machines,
       F(new double[Hmax + 1]),
       backward_F(new double[Hmax + 1]),
       TI_x(new GRBVar[nb_jobs * (Hmax + 1)]),
-      take(new bool[nb_jobs * (Hmax + 1)]{}),
+      take((int *)malloc(nb_jobs*(Hmax + 1)*sizeof(int))),
       lp_x(new double[nb_jobs * (Hmax + 1)]{}),
       solution_x(new double[nb_jobs * (Hmax + 1)]{}) {
+    fill_int(take, nb_jobs * (Hmax + 1), 0);
     init_table();
 }
 
@@ -49,7 +50,9 @@ PricerSolverSimpleDp::~PricerSolverSimpleDp() {
     delete[] backward_graph;
     delete[] forward_graph;
     delete[] TI_x;
-    delete[] take;
+    if(take) {
+        free(take);
+    }
     delete[] lp_x;
     delete[] solution_x;
 }
@@ -111,8 +114,9 @@ void PricerSolverSimpleDp::build_mip() {
         for (int t = 0; t <= Hmax; t++) {
             for (auto& it : backward_graph[t]) {
                 double cost = value_Fj(t + it->processing_time, it);
+                double ub = take[((*it).job) * (Hmax + 1) + t] ? 1.0 : 0.0;
                 TI_x[it->job * (Hmax + 1) + t] =
-                    model->addVar(0.0, 1.0, cost, GRB_BINARY);
+                    model->addVar(0.0, ub, cost, GRB_BINARY);
             }
         }
 

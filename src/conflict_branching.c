@@ -394,7 +394,6 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     int            i;
     int            nb_cols;
     double*        x = (double*)NULL;
-    Parms*         parms = &(problem->parms);
     int            strongest_v1 = -1, strongest_v2 = -1;
     int*           nodepair_refs = (int*)NULL;
     double*        nodepair_weights = (double*)NULL;
@@ -477,10 +476,6 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     CCcheck_val_2(val, "Failed in set_id_and_name");
 
     if (pd->same_children->status != infeasible) {
-        if (parms->print) {
-            print_size_to_csv(problem, pd->same_children);
-        }
-
         val = compute_lower_bound(problem, pd->same_children);
         CCcheck_val_2(val, "Failed in compute_lower_bound");
     }
@@ -492,10 +487,6 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     CCcheck_val_2(val, "Failed in set_id_and_name");
 
     if (pd->diff_children->status != infeasible) {
-        if (parms->print) {
-            print_size_to_csv(problem, pd->diff_children);
-        }
-
         val = compute_lower_bound(problem, pd->diff_children);
         CCcheck_val_2(val, "Failed in compute_lower_bound");
     }

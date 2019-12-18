@@ -2,6 +2,7 @@
 #define NODE_DURATION_HPP
 #include <memory>
 #include <OptimalSolution.hpp>
+#include<boost/dynamic_bitset.hpp>
 #include "NodeBase.hpp"
 #include "Label.hpp"
 
@@ -22,6 +23,12 @@ class NodeBdd : public NodeBase
         int key;
         int high_edge_key;
         int low_edge_key;
+        bool visited;
+        boost::dynamic_bitset<> all;
+        int backward_distance[2];
+        int in_degree_0;
+        int in_degree_1;
+
 
         /**
          * Constructor
@@ -35,7 +42,10 @@ class NodeBdd : public NodeBase
             calc_no(true),
             key(-1),
             high_edge_key(-1),
-            low_edge_key(-1)
+            low_edge_key(-1),
+            visited(false),
+            in_degree_0(0),
+            in_degree_1(0)
         {
             child[0] = nullptr;
             child[1] = nullptr;
@@ -50,7 +60,10 @@ class NodeBdd : public NodeBase
             calc_no(true),
             key(-1),
             high_edge_key(-1),
-            low_edge_key(-1)
+            low_edge_key(-1),
+            visited(false),
+            in_degree_0(0),
+            in_degree_1(0)
         {
             child[0] = nullptr;
             child[1] = nullptr;
@@ -73,7 +86,10 @@ class NodeBdd : public NodeBase
             calc_no(true),
             key(-1),
             high_edge_key(-1),
-            low_edge_key(-1)
+            low_edge_key(-1),
+            visited(false),
+            in_degree_0(0),
+            in_degree_1(0)
         {
             child[0] = nullptr;
             child[1] = nullptr;

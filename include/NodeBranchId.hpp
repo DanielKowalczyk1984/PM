@@ -1,5 +1,6 @@
 #ifndef NODE_BRANCH_ID_HPP
 #define NODE_BRANCH_ID_HPP
+#include <stddef.h>
 
 struct NodeBranchId {
     size_t col;

@@ -587,4 +587,8 @@ bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
     return true;
 }
 
+void PricerSolverArcTimeDp::make_schedule_set_feasible(GPtrArray *set) {
+    
+}
+
 void PricerSolverArcTimeDp::disjunctive_inequality(double* x, Solution* sol) {}

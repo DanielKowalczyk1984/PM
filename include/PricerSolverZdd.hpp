@@ -11,8 +11,8 @@ class PricerSolverZdd : public PricerSolverBase
         std::unique_ptr<DdStructure<NodeZdd<double>>> decision_diagram;
         size_t size_graph;
 
-        int nb_removed_edges;
-        int nb_removed_nodes;
+        int nb_removed_edges = 0;
+        int nb_removed_nodes = 0;
 
         MipGraph mip_graph;
         std::unique_ptr<double[]> lp_x;
@@ -45,6 +45,9 @@ class PricerSolverZdd : public PricerSolverBase
         int get_num_layers() override ;
         void print_num_paths() override;
         void remove_layers_init();
+        int* get_take() override {
+            return NULL;
+        }
 
 
         void add_constraint(Job* job, GPtrArray* list, int order) override;

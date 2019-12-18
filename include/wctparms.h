@@ -33,7 +33,8 @@ enum PricingSolver {
     zdd_solver_backward_simple = 7,
     zdd_solver_backward_cycle = 8,
     dp_solver = 9,
-    ati_solver = 10
+    ati_solver = 10,
+    dp_bdd_solver = 11,
 };
 
 enum BranchandBound {
@@ -73,6 +74,12 @@ enum MIP_solver{
     use_mip_solver = 1,
 };
 
+enum reduced_cost_fixing_param {
+    min_reduced_cost = 0,
+    yes_reduced_cost = min_reduced_cost,
+    no_reduced_cost = 1,
+};
+
 typedef struct parms {
     /**
      * General parameters
@@ -86,6 +93,9 @@ typedef struct parms {
     double alpha;
     int pricing_solver;
     int mip_solver;
+
+    enum reduced_cost_fixing_param reduce_cost_fixing;
+
     /**
      * scatter search
      */
@@ -126,6 +136,7 @@ int parms_set_search_strategy(Parms *parms, int strategy);
 int parms_set_branching_strategy(Parms *parms, int strategy);
 int parms_set_strong_branching(Parms *parms, int strong);
 int parms_set_mip_solver(Parms *parms, int usage);
+int parms_set_reduce_cost(Parms *parms, int usage);
 int parms_set_nb_iterations_rvnd(Parms *parms, int nb_sol);
 
 /**

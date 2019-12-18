@@ -59,11 +59,21 @@ PricerSolverBase* newSolverDp(GPtrArray* _jobs, int _num_machines, int _Hmax,
         case ati_solver:
             return new PricerSolverArcTimeDp(_jobs, _num_machines, _Hmax,
                                              parms->pname);
+        case dp_bdd_solver:
+            return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax,
+                                            parms->pname);
         default:
             return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax,
                                             parms->pname);
             break;
     }
+}
+
+PricerSolverBase* newSolverTIBdd(GPtrArray* _jobs, int _num_machines,
+                                 GPtrArray* _ordered_jobs, int* _take_jobs,
+                                 int _Hmax, Parms* parms) {
+    return new PricerSolverBddBackwardCycle(_jobs, _num_machines, _ordered_jobs,
+                                            _take_jobs, _Hmax, parms->pname);
 }
 
 void print_dot_file(PricerSolver* solver, char* name) {
@@ -72,6 +82,10 @@ void print_dot_file(PricerSolver* solver, char* name) {
 
 void freeSolver(PricerSolver* src) {
     delete src;
+}
+
+int* get_take(PricerSolver* solver) {
+    return solver->get_take();
 }
 
 int evaluate_nodes(NodeData* pd) {

@@ -578,7 +578,6 @@ static void local_search_update_insertion(Solution* sol, int i_best, int j_best,
 
     for (unsigned i = 0; i < sol->part[k_best].machine->len; ++i) {
         tmp = (Job*)g_ptr_array_index(sol->part[k_best].machine, i);
-        tmp->index = i;
         sol->part[k_best].c += tmp->processing_time;
         sol->c[tmp->job] = sol->part[k_best].c;
         sol->part[k_best].tw += value_Fj(sol->c[tmp->job], tmp);
@@ -612,7 +611,6 @@ static void local_search_update_insertion_inter(Solution* sol, int i_best,
 
     for (unsigned i = 0; i < sol->part[k_best].machine->len; ++i) {
         tmp = (Job*)g_ptr_array_index(sol->part[k_best].machine, i);
-        tmp->index = i;
         sol->part[k_best].c += tmp->processing_time;
         sol->c[tmp->job] = sol->part[k_best].c;
         sol->part[k_best].tw +=
@@ -621,7 +619,6 @@ static void local_search_update_insertion_inter(Solution* sol, int i_best,
 
     for (unsigned i = 0; i < sol->part[kk_best].machine->len; ++i) {
         tmp = (Job*)g_ptr_array_index(sol->part[kk_best].machine, i);
-        tmp->index = i;
         sol->part[kk_best].c += tmp->processing_time;
         sol->c[tmp->job] = sol->part[kk_best].c;
         sol->part[kk_best].tw += value_Fj(sol->c[tmp->job], tmp);
@@ -677,7 +674,6 @@ static void local_search_update_swap(Solution* sol, int i_best, int j_best,
 
     for (unsigned i = 0; i < part->machine->len; ++i) {
         tmp = (Job*)g_ptr_array_index(sol->part[k_best].machine, i);
-        tmp->index = i;
         part->c += tmp->processing_time;
         sol->c[tmp->job] = part->c;
         part->tw += value_Fj(sol->c[tmp->job], tmp);
@@ -735,7 +731,6 @@ static void local_search_update_inter_swap(Solution* sol, int i_best,
 
     for (unsigned i = 0; i < part1->machine->len; ++i) {
         tmp = (Job*)g_ptr_array_index(part1->machine, i);
-        tmp->index = i;
         part1->c += tmp->processing_time;
         sol->c[tmp->job] = part1->c;
         part1->tw += value_Fj(sol->c[tmp->job], tmp);
@@ -743,7 +738,6 @@ static void local_search_update_inter_swap(Solution* sol, int i_best,
 
     for (unsigned i = 0; i < part2->machine->len; ++i) {
         tmp = (Job*)g_ptr_array_index(part2->machine, i);
-        tmp->index = i;
         part2->c += tmp->processing_time;
         sol->c[tmp->job] = part2->c;
         part2->tw += value_Fj(sol->c[tmp->job], tmp);

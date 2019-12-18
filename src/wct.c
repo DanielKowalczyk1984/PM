@@ -58,6 +58,7 @@ void problem_init(Problem* problem) {
     CCutil_init_timer(&(problem->tot_solve_lp), "tot_solve_lp");
     CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
     CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
+    CCutil_init_timer(&(problem->tot_reduce_cost_fixing), "tot_reduce_cost_fixing");
     /** initialize colPool */
     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     /** initialize the time */
@@ -375,7 +376,6 @@ int compute_schedule(Problem* problem) {
         ((double)problem->global_lower_bound + 0.00001);
     prune_duplicated_sets(root_pd);
     init_BB_tree(problem);
-    print_size_to_csv(problem, root_pd);
 
     if (root_pd->status >= LP_bound_computed) {
         val = prefill_heap(root_pd, problem);
@@ -470,6 +470,14 @@ int add_solution_to_colpool(Solution* sol, NodeData* pd) {
     for (int i = 0; i < sol->nb_machines; ++i) {
         GPtrArray*   machine = sol->part[i].machine;
         ScheduleSet* tmp = scheduleset_from_solution(machine, pd->nb_jobs);
+        // if(check_schedule_set(tmp, pd)) {
+        //     printf("OK!!!\n");
+            
+        // } else {
+        //     printf("not OK!!!\n");
+        // }
+        // g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
+        // printf("\n");
         CCcheck_NULL_2(tmp, "Failed to allocate memory");
         g_ptr_array_add(pd->localColPool, tmp);
     }
