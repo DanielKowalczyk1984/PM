@@ -253,7 +253,6 @@ int main(int ac, char** av) {
                                root->ordered_jobs, take, problem.H_max, parms);
             CC_IFFREE(take, int);
             solution_print(problem.opt_sol);
-            represent_solution(root, problem.opt_sol);
             add_solution_to_colpool(problem.opt_sol, root);
             build_rmp(root, 0);
             CCutil_start_timer(&(problem.tot_lb_root));
@@ -263,6 +262,7 @@ int main(int ac, char** av) {
     }
 
     if (parms->mip_solver) {
+        represent_solution(root, problem.opt_sol);
         build_solve_mip(root);
     }
 
