@@ -8,6 +8,7 @@ else(GUROBI_INCLUDE_DIR)
 
   find_library(GUROBI_LIBRARY
                NAMES gurobi81
+                     gurobi90
                      gurobi80
                      gurobi75
                      gurobi65
