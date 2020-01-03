@@ -58,21 +58,21 @@ def main():
         directory = './wt%03d' % (n)
         os.mkdir(directory)
         i = 1
-        for rdd in [0.2 + 0.2*i for i in range(0, 5)]:
-            for tdf in [0.2 + 0.2*i for i in range(0, 5)]:
-                for j in range(0,5):
+        for rdd in [0.2 + 0.2 * i for i in range(0, 5)]:
+            for tdf in [0.2 + 0.2 * i for i in range(0, 5)]:
+                for j in range(0, 5):
                     p = np.random.randint(low=1, high=100, size=n)
                     w = np.random.randint(low=1, high=10, size=n)
                     sum_p = p.sum()
-                    a = np.max([0,sum_p*(1 - tdf - rdd/2)])
-                    b = np.max([0,sum_p*(1 - tdf + rdd/2)])
+                    a = np.max([0, sum_p * (1 - tdf - rdd / 2)])
+                    b = np.max([0, sum_p * (1 - tdf + rdd / 2)])
                     d = np.random.randint(
                         low=a, high=b, size=n)
                     f = open(directory + '/wt%03d_%03d.txt' %
                              (n, i), 'w')
                     f.write("%d\n" % (n))
-                    for it in zip(p,d,w) :
-                        line = "%d %d %d\n" % (it[0],it[1],it[2]) 
+                    for it in zip(p, d, w):
+                        line = "%d %d %d\n" % (it[0], it[1], it[2])
                         f.write(line)
                     f.close()
                     i = i + 1
