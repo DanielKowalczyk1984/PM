@@ -301,7 +301,7 @@ void PricerSolverBdd::print_representation_file() {
                 head.get_weight() + head.get_job()->processing_time,
                 head.get_job());
             out_file_mip << head.key << " " << n.key << " " << cost << "\n";
-            index_edge[n.get_job()->job].push_back(edge_index_list[*it.first]);
+            index_edge[head.get_job()->job].push_back(edge_index_list[*it.first]);
         } else {
             out_file_mip << head.key << " " << n.key << " " << 0.0 << "\n";
         }
@@ -310,6 +310,7 @@ void PricerSolverBdd::print_representation_file() {
     out_file_mip << "\n";
 
     for (int i = 0; i < nb_jobs; i++) {
+        out_file_mip << index_edge[i].size() << " ";
         for (auto& it : index_edge[i]) {
             out_file_mip << it << " ";
         }
@@ -453,6 +454,7 @@ void PricerSolverBdd::build_mip() {
         boost::write_graphviz(outf_index, mip_graph, vertex_writer,
                               edge_writer_index);
         outf_index.close();
+        print_representation_file();
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;
@@ -467,11 +469,11 @@ void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     evaluate_nodes(pi, UB, LB);
     topdown_filtering();
     check_infeasible_arcs();
-    // bottumup_filtering();
+    bottum_up_filtering();
     cleanup_arcs();
 
     construct_mipgraph();
-    // equivalent_paths_filtering();
+    equivalent_paths_filtering();
 }
 
 void PricerSolverBdd::cleanup_arcs() {
