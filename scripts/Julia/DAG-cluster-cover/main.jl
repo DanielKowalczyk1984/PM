@@ -49,15 +49,7 @@ function mainBPPColGen()
     DAGFlowColGen.colgen(dagFlowInstance)
 end
 
-function mainGenGraph()
-    dagFlowInstance = DagFlowInstanceModule.readDAGFlowArcsInstance("/home/danielk/Dropbox/PapersOR/PM/implementation/scripts/Julia/DAG-cluster-cover/Data/Graphs/wt_test.txt")
-    DAGIntFlow.setupIP(dagFlowInstance)
+function mainGenGraph(FileName::String)
+    dagFlowInstance = DagFlowInstanceModule.readDAGFlowArcsInstance(FileName)
+    DAGIntFlow.setupIP(dagFlowInstance, FileName)
 end
-
-
-#mainModule.mainCVRPColGen("Data/CVRP/Data/A-n32-k5.vrp")
-#mainBPPColGen()
-#mainBPP()
-
-
-mainGenGraph()
