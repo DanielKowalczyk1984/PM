@@ -116,8 +116,9 @@ function writeDOTFileSol(instance::DagFlowInstanceArcs, xVal, filename)
 end
 
 
-function setupIP(instance::DagFlowInstanceArcs)
-    writeDOTFile(instance, "graph.dot")
+function setupIP(instance::DagFlowInstanceArcs, file_name_instance::String)
+    fileNameInstance = splitext(basename(file_name_instance))[1]
+    writeDOTFile(instance, "$(fileNameInstance)_graph.dot")
     #varDict = createVarDict(g)
     g = instance.g
     n,m = MyGraphModule.size(g)
@@ -129,12 +130,23 @@ function setupIP(instance::DagFlowInstanceArcs)
     #gInOut = createMyGraph(graph)
     @variable(IP, x[allArcs(g)] >= 0, Int)
 
+    for i in 1:length(allArcs(g))
+        arc = g.arcs[i]
+        if i in instance.lowArcs
+            setupperbound(x[arc], 2.0)
+        else
+            setupperbound(x[arc],1.0)
+        end
+    end
+
+
+
     @objective(IP, Min, sum(a.cost*x[a] for a in allArcs(g)))
 
     @constraint(IP, [subset in instance.arcPartition], sum(x[getArc(g,a)] for a in subset ) == 1)
     @constraint(IP, [node in flowConsNodes], sum(x[a] for a in outArcs(g,Int32(node))) == sum(x[a] for a in inArcs(g,Int32(node))))
     @constraint(IP, [outFlowLimit in instance.outFlowLimits], sum(x[a] for a in outArcs(g,outFlowLimit.node)) <= outFlowLimit.limit)
-    writeLP(IP, "DagIntFlow.lp", genericnames=false);
+    writeLP(IP, "$(fileNameInstance)_formulation.lp", genericnames=false)
 
     JuMP.build(IP)
     MPB=MathProgBase
@@ -142,8 +154,6 @@ function setupIP(instance::DagFlowInstanceArcs)
     zhOrigSubSys = ZeroHalfChvatGom.findZeroHalfOrigSubSystem(MPB.getconstrmatrix(iModel), MPB.getconstrLB(iModel), MPB.getconstrUB(iModel), MPB.getvartype(iModel), false, 1)
     solve(IP, relaxation=true)
     println("objective value: ", getobjectivevalue(IP))
-
-
 
     xValOrig = getvalue(x)
     xVal = Vector{Float64}(undef,length(xValOrig))
@@ -153,7 +163,6 @@ function setupIP(instance::DagFlowInstanceArcs)
             println("x[$i] = $(xVal[i])")
         end
     end
-    #writeLP(model,"test.lp")
 
     strength=3
     maxIter = 40
@@ -163,11 +172,11 @@ function setupIP(instance::DagFlowInstanceArcs)
     done = false
     iter = 1
     while !done && iter <= maxIter
-        file_name = @sprintf("sol_%02d.dot", iter)
-        writeDOTFileSol(instance, xVal, file_name)
+        file_name_sol = "$(fileNameInstance)_sol_$(lpad(iter,2,"0")).dot"
+        writeDOTFileSol(instance, xVal, file_name_sol)
+        file_name_cuts = "$(fileNameInstance)_cuts_$(lpad(iter,2,"0")).txt"
         zhsParams = ZeroHalfChvatGom.ZeroHalfSepParams(strength,zhsPrintLevel)
         cuts = ZeroHalfChvatGom.ZeroHalfSepTranslateVars(zhOrigSubSys.ASub, zhOrigSubSys.bSub, xVal, 0.0001, zhsParams, zhOrigSubSys.varsSorted)
-        file_name_cuts = @sprintf("cuts_%02d.txt",iter)
         f = open(file_name_cuts, "w+")
         for i = 1:length(cuts)
             #println("*** Cut $i***")
