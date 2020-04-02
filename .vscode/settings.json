@@ -48,5 +48,7 @@
         "tuple": "cpp",
         "utility": "cpp",
         "variant": "cpp"
-    }
+    },
+    "julia.environmentPath": "${workspaceRoot}/scripts/Julia/DAG-cluster-cover",
+    "cquery.cacheDirectory": "${workspaceFolder}/.vscode/cquery_cached_index/"
 }
