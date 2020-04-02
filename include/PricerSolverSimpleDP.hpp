@@ -51,7 +51,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void                    forward_evaluator(double* _pi);
     void                    backward_evaluator(double* _pi);
 
-    int* get_take() {
+    int* get_take() override {
         int* tmp = take;
         take = NULL;
         return tmp;
