@@ -55,7 +55,7 @@ else(GUROBI_INCLUDE_DIR)
       "${GRB_VERSION_MAJOR}.${GRB_VERSION_MINOR}.${GRB_VERSION_MICRO}")
 
   include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(GUROBI
+  find_package_handle_standard_args(Gurobi
                                     REQUIRED_VARS
                                     GUROBI_INCLUDE_DIR
                                     GUROBI_LIBRARIES

@@ -104,7 +104,7 @@ foreach(_component ${GLIB_FIND_COMPONENTS})
 endforeach()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(GLIB
+find_package_handle_standard_args(Glib
                                   REQUIRED_VARS
                                   GLIB_INCLUDE_DIRS
                                   GLIB_LIBRARIES
