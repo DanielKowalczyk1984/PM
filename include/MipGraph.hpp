@@ -92,7 +92,7 @@ public:
             if(high) {
                 output << "[label = "<< index << "]";
             } else {
-                output << "[label = "<< index <<"style = dashed]";
+                output << "[label = "<< index <<", style = dashed]";
             }
     }
 };
