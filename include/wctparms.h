@@ -33,7 +33,8 @@ enum PricingSolver {
     zdd_solver_backward_simple = 7,
     zdd_solver_backward_cycle = 8,
     dp_solver = 9,
-    ati_solver = 10
+    ati_solver = 10,
+    dp_bdd_solver = 11,
 };
 
 enum BranchandBound {
@@ -67,6 +68,18 @@ enum Strong_Branching {
     no_strong_branching = 1,
 };
 
+enum MIP_solver{
+    min_mip_solver = 0,
+    no_mip_solver = min_mip_solver,
+    use_mip_solver = 1,
+};
+
+enum reduced_cost_fixing_param {
+    min_reduced_cost = 0,
+    yes_reduced_cost = min_reduced_cost,
+    no_reduced_cost = 1,
+};
+
 typedef struct parms {
     /**
      * General parameters
@@ -79,6 +92,10 @@ typedef struct parms {
     double branching_cpu_limit;
     double alpha;
     int pricing_solver;
+    int mip_solver;
+
+    enum reduced_cost_fixing_param reduce_cost_fixing;
+
     /**
      * scatter search
      */
@@ -96,6 +113,7 @@ typedef struct parms {
     int delete_cclasses;
 
     char *jobfile;
+    char* pname;
     char *outfile;
     char *cclasses_infile;
     char *cclasses_outfile;
@@ -117,6 +135,8 @@ int parms_set_alpha(Parms *parms, double alpha);
 int parms_set_search_strategy(Parms *parms, int strategy);
 int parms_set_branching_strategy(Parms *parms, int strategy);
 int parms_set_strong_branching(Parms *parms, int strong);
+int parms_set_mip_solver(Parms *parms, int usage);
+int parms_set_reduce_cost(Parms *parms, int usage);
 int parms_set_nb_iterations_rvnd(Parms *parms, int nb_sol);
 
 /**
@@ -137,6 +157,7 @@ int parms_set_scatter_search_cpu_limit(Parms *parms, double limit);
 /*Functions for defining the filesname*/
 int parms_set_outfile(Parms *parms, const char *fname);
 int parms_set_file(Parms *parms, const char *fname);
+int parms_set_pname(Parms* parms, char* fname);
 int parms_set_backupdir(Parms *parms, const char *fname);
 int parms_set_nb_machines(Parms *parms, int nb_machines);
 

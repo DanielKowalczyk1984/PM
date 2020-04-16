@@ -8,6 +8,8 @@ void parms_init(Parms* parms) {
     parms->bb_branch_strategy = min_bb_strategy;
     parms->bb_search_strategy = min_search_strategy;
     parms->strong_branching = min_strong_branching;
+    parms->mip_solver = min_mip_solver;
+    parms->reduce_cost_fixing = min_reduced_cost;
     parms->nb_iterations_rvnd = 3;
     parms->scatter_search = 0;
     parms->branchandbound = no;
@@ -16,6 +18,7 @@ void parms_init(Parms* parms) {
     parms->delete_edge_lists = 1;
     parms->delete_cclasses = 0;
     parms->jobfile = (char*)NULL;
+    parms->pname = (char*)NULL;
     parms->outfile = (char*)NULL;
     parms->cclasses_outfile = (char*)NULL;
     parms->cclasses_infile = (char*)NULL;
@@ -31,6 +34,7 @@ void parms_init(Parms* parms) {
 void parms_free(Parms* parms) {
     CC_IFFREE(parms->color_infile, char);
     CC_IFFREE(parms->jobfile, char);
+    CC_IFFREE(parms->pname, char);
     CC_IFFREE(parms->outfile, char);
     CC_IFFREE(parms->cclasses_outfile, char);
     CC_IFFREE(parms->cclasses_infile, char);
@@ -56,6 +60,12 @@ int parms_set_outfile(Parms* parms, const char* fname) {
 
 int parms_set_file(Parms* parms, const char* fname) {
     return copy_string(&(parms->jobfile), fname);
+}
+
+int parms_set_pname(Parms* parms, char* fname) {
+    int val = copy_string(&(parms->pname), fname);
+    CC_IFFREE(fname, char);
+    return val;
 }
 int parms_set_backupdir(Parms* parms, const char* fname) {
     return copy_string(&(parms->backupdir), fname);
@@ -83,6 +93,16 @@ int parms_set_alpha(Parms* parms, double alpha) {
 
 int parms_set_search_strategy(Parms* parms, int strategy) {
     parms->bb_search_strategy = strategy;
+    return 0;
+}
+
+int parms_set_mip_solver(Parms *parms, int usage) {
+    parms->mip_solver = usage;
+    return 0;
+}
+
+int parms_set_reduce_cost(Parms *parms, int usage) {
+    parms->mip_solver = usage;
     return 0;
 }
 

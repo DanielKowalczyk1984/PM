@@ -9,11 +9,12 @@
 ////////////////////////////////////////////////////////////////
 
 #include <defs.h>
+#include <regex.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <wct.h>
 #include <wctparms.h>
-
-#include <unistd.h>
-
 static void usage(char* f) {
     fprintf(stderr, "Usage %s: [-see below-] adjlist_file NrMachines\n", f);
     fprintf(stderr, "   -d      turn on the debugging\n");
@@ -40,6 +41,30 @@ static void usage(char* f) {
             "   -a int  Set solver: 0 = bdd solver(default), 1 = dp solver\n");
 }
 
+static char* find_match(const char* _instance_file) {
+    regex_t    regex;
+    regmatch_t matches[2];
+    char*      val = (char*)NULL;
+    int regex_val = regcomp(&regex, "^.*(wt[0-9]*_[0-9]*).*$", REG_EXTENDED);
+    if (regex_val) {
+        fprintf(stderr, "Could not compile regex\n");
+        val = strdup("regex_error");
+    } else {
+        regex_val =
+            regexec(&regex, _instance_file, 2, (regmatch_t*)&matches, 0);
+        if (!regex_val) {
+            val = g_strndup(_instance_file + matches[1].rm_so,
+                            matches[1].rm_eo - matches[1].rm_so);
+        } else {
+            printf("No match\n");
+            val = strdup("unknown_name");
+        }
+    }
+    regfree(&regex);
+
+    return val;
+}
+
 static int parseargs(int ac, char** av, Parms* parms) {
     int    c;
     double f;
@@ -47,7 +72,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
     char*  ptr;
     int    debug = dbg_lvl();
 
-    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:")) != EOF) {
+    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:r:")) != EOF) {
         switch (c) {
             case 'd':
                 ++(debug);
@@ -106,13 +131,21 @@ static int parseargs(int ac, char** av, Parms* parms) {
                 val = parms_set_pricing_solver(parms, c);
                 CCcheck_val(val, "Failed in set alpha");
                 break;
-
             case 'Z':
                 c = strtol(optarg, &ptr, 10);
                 val = parms_set_strong_branching(parms, c);
                 CCcheck_val(val, "Failed in set strong branching");
                 break;
-
+            case 'm':
+                c = strtol(optarg, &ptr, 10);
+                val = parms_set_mip_solver(parms, c);
+                CCcheck_val(val, "Failed in set mip solver");
+                break;
+            case 'r':
+                c = strtol(optarg, &ptr, 10);
+                val = parms_set_reduce_cost(parms, c);
+                CCcheck_val(val, "Failed in set reduce cost fixing");
+                break;
             default:
                 usage(av[0]);
                 val = 1;
@@ -124,8 +157,12 @@ static int parseargs(int ac, char** av, Parms* parms) {
         val = 1;
         goto CLEAN;
     } else {
-        val = parms_set_file(parms, av[optind++]);
+        char* instance_file = av[optind++];
+
+        val = parms_set_file(parms, instance_file);
         CCcheck_val(val, "Failed in parms_set_file");
+        val = parms_set_pname(parms, find_match(instance_file));
+        CCcheck_val(val, "Failed in parms_set_pname");
 
         if (ac <= optind) {
             val = 1;
@@ -172,25 +209,22 @@ int main(int ac, char** av) {
            CCutil_zeit() - start_time);
 
     /**
-     * Finding heuristic solutions to the problem
-     */
-    heuristic(&problem);
-
-    /**
      * Build DD at the root node
      */
     if (parms->pricing_solver < dp_solver) {
         CCutil_start_timer(&(problem.tot_build_dd));
         root->solver = newSolver(root->jobarray, root->nb_machines,
-                                 root->ordered_jobs, &(problem.parms));
+                                 root->ordered_jobs, parms);
         CCutil_stop_timer(&(problem.tot_build_dd), 0);
-        print_size_to_csv(&problem, root);
     } else {
         root->solver =
             newSolverDp(root->jobarray, root->nb_machines, root->H_max, parms);
     }
     problem.first_size_graph = get_nb_edges(root->solver);
-    g_ptr_array_foreach(root->localColPool, g_calculate_edges, root->solver);
+    /**
+     * Finding heuristic solutions to the problem
+     */
+    heuristic(&problem);
 
     /**
      * Calculation of LB at the root node with column generation
@@ -199,28 +233,39 @@ int main(int ac, char** av) {
         build_rmp(&(problem.root_pd), 0);
         CCutil_start_timer(&(problem.tot_lb_root));
         compute_lower_bound(&problem, &(problem.root_pd));
+        if (parms->pricing_solver < dp_solver) {
+            solution_canonical_order(problem.opt_sol, root->local_intervals);
+        }
+        represent_solution(root, problem.opt_sol);
         problem.rel_error =
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);
         CCutil_stop_timer(&(problem.tot_lb_root), 1);
-        // represent_solution(root, problem.opt_sol);
-        // construct_lp_sol_from_rmp(root);
-        // build_solve_mip(root);
-        // build_solve_mip(root);
-        // represent_solution(root, problem.opt_sol);
-        // compute_lower_bound(&problem, &(problem.root_pd));
-        // problem.size_graph_after_reduced_cost_fixing =
-        // get_size_graph(root->solver);
-        // evaluate_nodes(root);
-        // lpwctdata_free(&(problem.root_pd));
-        // problem.root_pd.localColPool =
-        // g_ptr_array_new_with_free_func(g_scheduleset_free);
-        // heuristic_rpup(&problem);
-        // build_rmp(&(problem.root_pd), 0);
-        // CCutil_start_timer(&(problem.tot_lb_root));
-        // compute_lower_bound(&problem, &(problem.root_pd));
-        // CCutil_stop_timer(&(problem.tot_lb_root), 1);
+
+        if (parms->pricing_solver == dp_bdd_solver) {
+            int* take = get_take(root->solver);
+            lp_node_data_free(root);
+            root->localColPool =
+                g_ptr_array_new_with_free_func(g_scheduleset_free);
+            freeSolver(root->solver);
+            root->solver =
+                newSolverTIBdd(root->jobarray, root->nb_machines,
+                               root->ordered_jobs, take, problem.H_max, parms);
+            CC_IFFREE(take, int);
+            solution_print(problem.opt_sol);
+            add_solution_to_colpool(problem.opt_sol, root);
+            build_rmp(root, 0);
+            CCutil_start_timer(&(problem.tot_lb_root));
+            compute_lower_bound(&problem, root);
+            CCutil_stop_timer(&(problem.tot_lb_root), 1);
+        }
     }
+
+    if (parms->mip_solver) {
+        represent_solution(root, problem.opt_sol);
+        build_solve_mip(root);
+    }
+
     print_to_csv(&problem);
 
 CLEAN:

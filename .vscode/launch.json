@@ -11,7 +11,7 @@
                 "1",
                 "-a",
                 "4",
-                "${workspaceRoot}/instances/wt40/wt040_001.dat",
+                "${workspaceRoot}/instances/wt040/wt040_001.dat",
                 "4"
             ],
             "cwd": "${workspaceRoot}/build",
@@ -41,7 +41,7 @@
                 "1",
                 "-a",
                 "8",
-                "${workspaceRoot}/instances/wt40/wt040_031.dat",
+                "${workspaceRoot}/instances/wt040/wt040_031.dat",
                 "4"
             ],
             "cwd": "${workspaceRoot}/build",
@@ -71,7 +71,7 @@
                 "1",
                 "-a",
                 "10",
-                "${workspaceRoot}/instances/wt40/wt040_031.dat",
+                "${workspaceRoot}/instances/wt040/wt040_031.dat",
                 "4"
             ],
             "cwd": "${workspaceRoot}/build",
@@ -101,7 +101,7 @@
                 "1",
                 "-a",
                 "9",
-                "${workspaceRoot}/instances/wt40/wt040_031.dat",
+                "${workspaceRoot}/instances/wt040/wt040_031.dat",
                 "4"
             ],
             "cwd": "${workspaceRoot}/build",

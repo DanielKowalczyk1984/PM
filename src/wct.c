@@ -28,11 +28,12 @@ void problem_init(Problem* problem) {
     /*B&B info*/
     problem->nb_data_nodes = 0;
     problem->global_upper_bound = INT_MAX;
-    problem->root_lower_bound = 0;
+    problem->root_lower_bound = 0.0;
     problem->global_lower_bound = 0;
     problem->root_upper_bound = INT_MAX;
+    problem->root_rel_error = DBL_MAX;
     problem->status = no_sol;
-    problem->rel_error = 1.0;
+    problem->rel_error = DBL_MAX;
     problem->br_heap_a = (BinomialHeap*)NULL;
     /*data of the problem*/
     nodedata_init(&(problem->root_pd), problem);
@@ -57,6 +58,7 @@ void problem_init(Problem* problem) {
     CCutil_init_timer(&(problem->tot_solve_lp), "tot_solve_lp");
     CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
     CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
+    CCutil_init_timer(&(problem->tot_reduce_cost_fixing), "tot_reduce_cost_fixing");
     /** initialize colPool */
     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     /** initialize the time */
@@ -69,6 +71,19 @@ void problem_init(Problem* problem) {
     problem->real_time_pricing = 0.0;
     problem->real_time_heuristic = 0.0;
     CCutil_start_timer(&(problem->tot_cputime));
+    problem->first_size_graph = 0;
+    problem->size_graph_after_reduced_cost_fixing = 0;
+    /** Mip statistics */
+    problem->mip_nb_vars = 0;
+    problem->mip_nb_constr = 0;
+    problem->mip_obj_bound = 0.0;
+    problem->mip_obj_bound_lp = 0.0;
+    problem->mip_rel_gap = 0.0;
+    problem->mip_run_time = 110.0;
+    problem->mip_status = 0;
+    problem->mip_nb_iter_simplex = 0;
+    problem->mip_nb_nodes = 0;
+    problem->mip_reduced_cost_fixing = 0;
 }
 
 void problem_free(Problem* problem) {
@@ -358,10 +373,9 @@ int compute_schedule(Problem* problem) {
     problem->root_lower_bound = problem->global_lower_bound;
     problem->root_rel_error =
         (double)(problem->global_upper_bound - problem->global_lower_bound) /
-        ((double)problem->global_lower_bound);
+        ((double)problem->global_lower_bound + 0.00001);
     prune_duplicated_sets(root_pd);
     init_BB_tree(problem);
-    print_size_to_csv(problem, root_pd);
 
     if (root_pd->status >= LP_bound_computed) {
         val = prefill_heap(root_pd, problem);
@@ -374,9 +388,10 @@ int compute_schedule(Problem* problem) {
         if (root_pd->lower_bound > problem->global_lower_bound) {
             problem->global_lower_bound = root_pd->lower_bound;
             problem->root_lower_bound = root_pd->lower_bound;
-            problem->root_rel_error = (double)(problem->root_upper_bound -
-                                               problem->root_lower_bound) /
-                                      ((double)problem->root_lower_bound);
+            problem->root_rel_error =
+                (double)(problem->root_upper_bound -
+                         problem->root_lower_bound) /
+                ((double)problem->root_lower_bound + 0.00001);
         }
 
         CCcheck_val_2(val, "Failed in compute_lower_bound");
@@ -455,6 +470,14 @@ int add_solution_to_colpool(Solution* sol, NodeData* pd) {
     for (int i = 0; i < sol->nb_machines; ++i) {
         GPtrArray*   machine = sol->part[i].machine;
         ScheduleSet* tmp = scheduleset_from_solution(machine, pd->nb_jobs);
+        // if(check_schedule_set(tmp, pd)) {
+        //     printf("OK!!!\n");
+            
+        // } else {
+        //     printf("not OK!!!\n");
+        // }
+        // g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
+        // printf("\n");
         CCcheck_NULL_2(tmp, "Failed to allocate memory");
         g_ptr_array_add(pd->localColPool, tmp);
     }

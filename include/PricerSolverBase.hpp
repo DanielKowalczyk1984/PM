@@ -1,52 +1,52 @@
 #ifndef PRICER_SOLVER_BASE_HPP
 #define PRICER_SOLVER_BASE_HPP
 
-#include <NodeBddStructure.hpp>
-#include <scheduleset.h>
+#include <OptimalSolution.hpp>
+#include <solution.h>
+#include <MIP_defs.hpp>
+#include <gurobi_c++.h>
+#include <memory>
+
 
 
 struct PricerSolverBase {
-protected:
-    GPtrArray *jobs;
-    int nb_jobs;
-    int num_machines;
-    GPtrArray *ordered_jobs;
-    int nb_layers;
+   protected:
+    GPtrArray*  jobs;
+    int         nb_jobs;
+    int         num_machines;
+    GPtrArray*  ordered_jobs;
+    int         nb_layers;
+    std::string problem_name;
+    std::unique_ptr<GRBEnv> env;
+    std::unique_ptr<GRBModel> model;
 
-    // std::unique_ptr<DdStructure<>> decision_diagram;
-    // size_t size_graph;
 
-    // int nb_removed_edges;
-    // int nb_removed_nodes;
-
-    // MipGraph g;
-    // std::unique_ptr<GRBEnv> env;
-    // std::unique_ptr<GRBModel> model;
-public:
+   public:
     /**
      * Default constructors
      */
-    PricerSolverBase(GPtrArray *_jobs, int _num_machines);
-    PricerSolverBase(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
+    PricerSolverBase(GPtrArray* _jobs, int _num_machines, const char* p_name);
+    PricerSolverBase(GPtrArray* _jobs, int _num_machines,
+                     GPtrArray* _ordered_jobs, const char* p_name);
     /**
      * Copy constructor
      */
-    PricerSolverBase(const PricerSolverBase &other);
+    PricerSolverBase(const PricerSolverBase& other);
 
     /**
      * Move Constructor
      */
-    PricerSolverBase(PricerSolverBase &&other) noexcept;
+    PricerSolverBase(PricerSolverBase&& other) noexcept;
 
     /**
      * Move Constructor
      */
-    PricerSolverBase &operator=(const PricerSolverBase &other);
+    PricerSolverBase& operator=(const PricerSolverBase& other);
 
     /**
      * Move assignment operator
      */
-    PricerSolverBase &operator=(PricerSolverBase &&other) noexcept;
+    PricerSolverBase& operator=(PricerSolverBase&& other) noexcept;
 
     /**
      * Destructor
@@ -61,52 +61,52 @@ public:
     /**
      * Pricing Algorithm
      */
-     virtual OptimalSolution<double> pricing_algorithm(double *_pi) = 0;
+    virtual OptimalSolution<double> pricing_algorithm(double* _pi) = 0;
 
-     /**
-      * Reduced cost fixing
-      */
+    /**
+     * Reduced cost fixing
+     */
 
-     virtual void calculate_edges(ScheduleSet *set);
-     virtual void reduce_cost_fixing(double *pi, int UB, double LB) = 0;
-     virtual void evaluate_nodes(double *pi, int UB, double LB) = 0;
+    virtual void reduce_cost_fixing(double* pi, int UB, double LB) = 0;
+    virtual void evaluate_nodes(double* pi, int UB, double LB) = 0;
 
-     /** Original Mip formulation */
-     virtual void build_mip() = 0;
-     virtual void construct_lp_sol_from_rmp(const double *columns, const GPtrArray* schedule_sets, int num_columns) = 0;
-     virtual void represent_solution(Solution *sol) = 0;
-     virtual void project_solution(Solution *sol) = 0;
+    /** Original Mip formulation */
+    virtual void build_mip() = 0;
+    virtual void construct_lp_sol_from_rmp(const double*    columns,
+                                           const GPtrArray* schedule_sets,
+                                           int              num_columns) = 0;
+    virtual void represent_solution(Solution* sol) = 0;
+    virtual void project_solution(Solution* sol) = 0;
 
-     /**
-      * Constraint on the solver
-      */
-     
-     virtual void add_constraint(Job *job, GPtrArray *list, int order) = 0;
-     
-     virtual void disjunctive_inequality(double *x, Solution *sol) = 0;
+    /**
+     * Constraint on the solver
+     */
 
-     /**
-      * Some getters
-      */
-     virtual void iterate_zdd() = 0;
-     virtual void print_num_paths() = 0;
+    virtual void add_constraint(Job* job, GPtrArray* list, int order) = 0;
 
-     virtual int get_num_remove_nodes() = 0;
-     virtual int get_num_remove_edges() = 0;
-     virtual int get_num_layers() = 0;
-     virtual size_t get_nb_vertices() = 0;
-     virtual size_t get_nb_edges() = 0;
-     virtual bool check_schedule_set(GPtrArray *set) = 0;
+    virtual void disjunctive_inequality(double* x, Solution* sol) = 0;
 
-     /**
-      * Some printing functions
-      */
-     virtual void create_dot_zdd(const char *name) = 0;
-     virtual void print_number_nodes_edges() = 0;
+    /**
+     * Some getters
+     */
+    virtual void iterate_zdd() = 0;
+    virtual void print_num_paths() = 0;
+
+    virtual int    get_num_remove_nodes() = 0;
+    virtual int    get_num_remove_edges() = 0;
+    virtual int    get_num_layers() = 0;
+    virtual size_t get_nb_vertices() = 0;
+    virtual size_t get_nb_edges() = 0;
+    virtual bool   check_schedule_set(GPtrArray* set) = 0;
+    virtual void make_schedule_set_feasible(GPtrArray *set) = 0;
+    /**
+     * Some printing functions
+     */
+    virtual void create_dot_zdd(const char* name) = 0;
+    virtual void print_number_nodes_edges() = 0;
+    virtual int* get_take() = 0;
+    virtual int get_int_attr_model(enum MIP_Attr);
+    virtual double get_dbl_attr_model(enum MIP_Attr);
 };
 
-
-#endif // PRICER_SOLVER_BASE_HPP
-
-
-
+#endif  // PRICER_SOLVER_BASE_HPP

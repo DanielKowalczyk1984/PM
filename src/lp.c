@@ -98,9 +98,9 @@ int wctlp_optimize(wctlp* lp, int* status) {
         }
     } else if (*status == GRB_INFEASIBLE) {
         printf("infeasible LP relaxation\n");
-        wctlp_write(lp, "model.lp");
+        wctlp_write(lp, "model_rmp.lp");
         wctlp_compute_IIS(lp);
-        wctlp_write(lp, "model.ilp");
+        wctlp_write(lp, "model_rmp_iss.ilp");
     }
 
 CLEAN:
@@ -130,8 +130,8 @@ int wctlp_change_obj(wctlp* lp, int start, int len, double* values) {
     return val;
 }
 
-int wctlp_addrow(wctlp* lp, int nb_zero, int* column_indices, double* cval, char sense,
-                 double rhs, char* name) {
+int wctlp_addrow(wctlp* lp, int nb_zero, int* column_indices, double* cval,
+                 char sense, double rhs, char* name) {
     int  val = 0;
     char inequality_sense;
 
@@ -154,15 +154,16 @@ int wctlp_addrow(wctlp* lp, int nb_zero, int* column_indices, double* cval, char
             return val;
     }
 
-    val = GRBaddconstr(lp->model, nb_zero, column_indices, cval, inequality_sense, rhs, name);
+    val = GRBaddconstr(lp->model, nb_zero, column_indices, cval,
+                       inequality_sense, rhs, name);
     CHECK_VAL_GRB(val, "Failed GRBadd", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
     return val;
 }
 
-int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval, double obj,
-                 double lb, double ub, char sense, char* name) {
+int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval,
+                 double obj, double lb, double ub, char sense, char* name) {
     int  val = 0;
     char inequality_sense;
 
@@ -185,14 +186,16 @@ int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval, doub
             return val;
     }
 
-    val = GRBaddvar(lp->model, nb_zero, column_indices, cval, obj, lb, ub, inequality_sense, name);
+    val = GRBaddvar(lp->model, nb_zero, column_indices, cval, obj, lb, ub,
+                    inequality_sense, name);
     CHECK_VAL_GRB(val, "Failed adding GRBaddvar", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
     return val;
 }
 
-int wctlp_chgcoeff(wctlp* lp, int cnt, int* column_indices, int* var_indices, double* cval) {
+int wctlp_chgcoeff(wctlp* lp, int cnt, int* column_indices, int* var_indices,
+                   double* cval) {
     int val = 0;
     val = GRBchgcoeffs(lp->model, cnt, column_indices, var_indices, cval);
     CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
@@ -201,7 +204,8 @@ int wctlp_chgcoeff(wctlp* lp, int cnt, int* column_indices, int* var_indices, do
     return val;
 }
 
-int wctlp_getcoeff(wctlp* lp, int* column_indices, int* var_indices, double* cval) {
+int wctlp_getcoeff(wctlp* lp, int* column_indices, int* var_indices,
+                   double* cval) {
     int val;
     val = GRBgetcoeff(lp->model, *column_indices, *var_indices, cval);
     CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
@@ -291,8 +295,8 @@ int wctlp_x(wctlp* lp, double* x, int first) {
         return val;
     }
 
-    val =
-        GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_X, first, nb_cols - first, x);
+    val = GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_X, first, nb_cols - first,
+                             x);
     CHECK_VAL_GRB(val, "Failed in GRB_DBL_ATTR_X", lp->env);
     return val;
 }
@@ -361,7 +365,8 @@ int wctlp_set_coltypes(wctlp* lp, char sense) {
     CHECK_VAL_GRB(val, "Failed to get number of variables", lp->env);
 
     for (i = 0; i < nb_vars; ++i) {
-        val = GRBsetcharattrelement(lp->model, GRB_CHAR_ATTR_VTYPE, i, inequality_sense);
+        val = GRBsetcharattrelement(lp->model, GRB_CHAR_ATTR_VTYPE, i,
+                                    inequality_sense);
         CHECK_VAL_GRB(val, "Failed to set variable types", lp->env);
     }
 

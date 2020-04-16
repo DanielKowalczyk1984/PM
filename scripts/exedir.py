@@ -44,12 +44,12 @@ class OptionParser(argparse.ArgumentParser):
                           help='Pricing solver technique',
                           default='1')
         self.add_argument('-c', '--construct', type=test1,
-                          help='Construct heuristically solutions:' +
-                          ' 0 = yes(default), 1 = no',
+                          help='Construct heuristically solutions:'
+                          + ' 0 = yes(default), 1 = no',
                           default='0')
         self.add_argument('-D', '--diving', type=test1,
-                          help='Use diving heuristic: 0 = no(default)' +
-                          ', 1 = yes',
+                          help='Use diving heuristic: 0 = no(default)'
+                          + ', 1 = yes',
                           default='0')
         self.add_argument('-t', '--heur_ahv', type=test1,
                           help='Use ahv test: 0 = no(default), 1 = yes',
@@ -58,30 +58,30 @@ class OptionParser(argparse.ArgumentParser):
                           help='Print csv-files: 0 = no(default), 1 = yes',
                           default='0')
         self.add_argument('-b', '--branching', type=test3,
-                          help='Branching strategy: 0 = conflict(default),' +
-                          '1 = ahv,2 = conflict cbfs, 3 = ahv cbfs',
+                          help='Branching strategy: 0 = conflict(default),'
+                          + '1 = ahv,2 = conflict cbfs, 3 = ahv cbfs',
                           default='0')
         self.add_argument('-Z', '--strong_branching',
                           type=test1,
-                          help='Use strong branching' +
-                          ': 0 = use strong branching(default)' +
-                          ', 1 = no strong branching',
+                          help='Use strong branching'
+                          + ': 0 = use strong branching(default)'
+                          + ', 1 = no strong branching',
                           default='1')
         self.add_argument('-r', '--scatter_search', type=test1,
-                          help='Scatter search use' +
-                          ': 0 = no scatter search(default)' +
-                          ', 1 = scatter search',
+                          help='Scatter search use'
+                          + ': 0 = no scatter search(default)'
+                          + ', 1 = scatter search',
                           default='0')
         self.add_argument('-C', '--combine_method', type=test1,
-                          help='Combine method scatter search' +
-                          ': 0 = Pathrelinking, 1 = PM',
+                          help='Combine method scatter search'
+                          + ': 0 = Pathrelinking, 1 = PM',
                           default='0')
         self.add_argument('-l', '--time_limit', type=String_is_number,
                           help='Cpu time limit',
                           default='3600')
         self.add_argument('-n', '--number_jobs', nargs='+', type=int,
-                          help='List of number of jobs that' +
-                          ' has to be processed',
+                          help='List of number of jobs that'
+                          + ' has to be processed',
                           default=[20, 50, 100])
         self.add_argument('-m', '--number_machines', nargs='+', type=int,
                           help='List of machines that has to be processed',
@@ -138,12 +138,11 @@ def main():
     try:
         os.chdir(exe_directory)
     except OSError:
-        print( OSError.errno)
+        print(OSError.errno)
         sys.exit(status=2)
     else:
         for n in args.number_jobs:
             for m in args.number_machines:
-                print instances
                 files = [f for f in os.listdir(
                     directory + '/%d_%d' % (n, m)) if re.match(instances, f)]
                 files.sort()

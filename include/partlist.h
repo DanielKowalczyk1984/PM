@@ -10,23 +10,18 @@ typedef struct _partlist {
     GPtrArray *machine;
     int        c;
     int        tw;
-    int        key;
     int        used;
+    GPtrArray **Q_in;
+    GPtrArray **Q;
 } PartList;
-
-typedef struct _joblist { PartList *part; } joblist;
 
 void partlist_free(PartList *part);
 void partlist_init(PartList *part);
-void joblist_init(joblist *vlist);
-void partition_init(PartList *part, joblist *vlist, int nbpart, int jcount);
+// void joblist_init(joblist *vlist);
+void partition_init(PartList *part, int nb_part, int nb_jobs);
 int partition_order(const void *a, const void *b, void *data);
 int find_vertex(const void *a, const void *b);
 
-void partlist_permquicksort(int *     perm,
-                            PartList *part,
-                            int       nbpart,
-                            int (*functionPtr)(PartList *, PartList *));
 int partlist_more_totweight(PartList *c1, PartList *c2);
 #ifdef __cplusplus
 }

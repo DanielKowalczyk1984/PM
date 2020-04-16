@@ -4,8 +4,9 @@
  *  zdd solver pricersolver for the flow formulation
  */
 PricerSolverSimple::PricerSolverSimple(GPtrArray* _jobs, int _num_machines,
-                                       GPtrArray* _ordered_jobs)
-    : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs) {
+                                       GPtrArray*  _ordered_jobs,
+                                       const char* p_name)
+    : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, p_name) {
     std::cout << "Constructing ZDD with Forward Simple evaluator" << '\n';
     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
@@ -60,8 +61,9 @@ void PricerSolverSimple::evaluate_nodes(double* pi, int UB, double LB) {
 }
 
 PricerSolverZddCycle::PricerSolverZddCycle(GPtrArray* _jobs, int _num_machines,
-                                           GPtrArray* _ordered_jobs)
-    : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs) {
+                                           GPtrArray*  _ordered_jobs,
+                                           const char* p_name)
+    : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, p_name) {
     std::cout << "Constructing ZDD with Forward ZddCycle evaluator" << '\n';
     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';

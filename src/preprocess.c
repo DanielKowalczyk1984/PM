@@ -37,23 +37,15 @@ gint g_job_compare_edd(const void* a, const void* b, void* data) {
     return (0);
 }
 
-int calculate_H_min(int* durations, int nmachines, int njobs, int* perm,
-                   double* H) {
-    int    i, val = 0;
-    double temp;
+gint g_compare_duration(gconstpointer a,gconstpointer b) {
+    const Job* x = *((Job* const*)a);
+    const Job* y = *((Job* const*)b);
 
-    for (i = 0; i < njobs; ++i) {
-        val += durations[i];
+    if(x->processing_time < y->processing_time) {
+        return -1;
+    } else {
+        return 1;
     }
-
-    for (i = 0; i < nmachines - 1; ++i) {
-        val -= durations[perm[i]];
-    }
-
-    temp = (double)val;
-    *H = temp / (double)nmachines;
-    val = (int)floor(*H);
-    return val;
 }
 
 void calculate_Hmax(Problem* problem) {
@@ -64,10 +56,32 @@ void calculate_Hmax(Problem* problem) {
     temp = problem->p_sum - problem->pmax;
     temp_dbl = (double)temp;
     temp_dbl = floor(temp_dbl / problem->nb_machines);
-    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax + 10;
+    problem->H_max = pd->H_max= (int)temp_dbl + problem->pmax;
     problem->H_min = (int)ceil(temp_dbl / problem->nb_machines) - problem->pmax;
-    printf("H_max = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
-           problem->H_max, problem->pmax, problem->pmin, problem->p_sum,
+
+    GPtrArray *duration = g_ptr_array_new();
+    for(int j = 0; j < problem->nb_jobs;j++) {
+        Job* job = g_ptr_array_index(problem->g_job_array, j);
+        g_ptr_array_add(duration, job);
+    }
+    g_ptr_array_sort(duration,g_compare_duration);
+
+    int m = 0;
+    int i = problem->nb_jobs - 1;
+    double tmp = problem->p_sum;
+    problem->H_min = problem->p_sum;
+    do{ 
+        Job* job = g_ptr_array_index(duration, i);
+        tmp -= job->processing_time;
+        m++;
+        i--;
+
+    } while (m < problem->nb_machines - 1);
+
+    problem->H_min = (int) ceil(tmp/problem->nb_machines);
+    g_ptr_array_free(duration, TRUE);
+    printf("H_max = %d, H_min = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
+           problem->H_max, problem->H_min, problem->pmax, problem->pmin, problem->p_sum,
            problem->off);
 }
 
@@ -240,7 +254,7 @@ void create_ordered_jobs_array(GPtrArray* a, GPtrArray* b) {
 int find_division(Problem* problem) {
     int            val = 0;
     int            counter = 0;
-    int            njobs = problem->nb_jobs;
+    int            nb_jobs = problem->nb_jobs;
     int            prev;
     NodeData*      root_pd = &(problem->root_pd);
     GPtrArray*     tmp_array = g_ptr_array_new_with_free_func(g_interval_free);
@@ -253,11 +267,11 @@ int find_division(Problem* problem) {
 
     /** Find initial partition */
     prev = 0;
-    for (int i = 0; i < njobs && prev < problem->H_max; ++i) {
+    for (int i = 0; i < nb_jobs && prev < problem->H_max; ++i) {
         tmp_j = (Job*)g_ptr_array_index(jobarray, i);
         int tmp = CC_MIN(problem->H_max, tmp_j->due_time);
         if (prev < tmp) {
-            tmp_interval = interval_alloc(prev, tmp, -1, jobarray, njobs);
+            tmp_interval = interval_alloc(prev, tmp, -1, jobarray, nb_jobs);
             g_ptr_array_add(tmp_array, tmp_interval);
             CCcheck_NULL_2(tmp_interval, "Failed to allocate memory");
             prev = tmp_j->due_time;
@@ -266,7 +280,7 @@ int find_division(Problem* problem) {
 
     if (prev < problem->H_max) {
         tmp_interval =
-            interval_alloc(prev, problem->H_max, -1, jobarray, njobs);
+            interval_alloc(prev, problem->H_max, -1, jobarray, nb_jobs);
         g_ptr_array_add(tmp_array, tmp_interval);
     }
 
@@ -295,14 +309,14 @@ int find_division(Problem* problem) {
                 g_ptr_array_add(root_pd->local_intervals,
                                 interval_alloc(*((int*)slots->pdata[j - 1]),
                                                *((int*)slots->pdata[j]),
-                                               counter, jobarray, njobs));
+                                               counter, jobarray, nb_jobs));
                 counter++;
             }
             g_ptr_array_free(slots, TRUE);
         } else {
             g_ptr_array_add(root_pd->local_intervals,
                             interval_alloc(tmp_interval->a, tmp_interval->b,
-                                           counter, jobarray, njobs));
+                                           counter, jobarray, nb_jobs));
             counter++;
         }
     }

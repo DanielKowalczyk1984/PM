@@ -22,7 +22,8 @@ void g_grow_ages(gpointer data, gpointer user_data) {
     ScheduleSet* x = (ScheduleSet*)data;
     NodeData*    pd = (NodeData*)user_data;
 
-    if (pd->column_status[x->id] == wctlp_LOWER || pd->column_status[x->id] == wctlp_FREE) {
+    if (pd->column_status[x->id] == wctlp_LOWER ||
+        pd->column_status[x->id] == wctlp_FREE) {
         x->age++;
 
         if (x->age > pd->retirementage) {
@@ -106,8 +107,8 @@ int delete_old_cclasses(NodeData* pd) {
         }
 
         if (dbg_lvl() > 1) {
-            printf("Deleted %d out of %d columns with age > %d.\n", pd->zero_count,
-                   count, pd->retirementage);
+            printf("Deleted %d out of %d columns with age > %d.\n",
+                   pd->zero_count, count, pd->retirementage);
         }
 
         wctlp_get_nb_cols(pd->RMP, &nb_col);
@@ -543,11 +544,9 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     CCcheck_val_2(val, "Failed in compute_objective");
                     memcpy(pd->pi_out, pd->pi,
                            sizeof(double) * (pd->nb_jobs + 1));
-                    if (pd->iterations % pd->nb_jobs)
-                    {
+                    if (pd->iterations % pd->nb_jobs) {
                         // reduce_cost_fixing(pd);
                     }
-                    
                 }
 
                 break;
@@ -583,18 +582,13 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                         pd->id, pd->iterations, pd->opt_track);
                 }
 
-                // if (parms->pricing_solver < dp_solver) {
-                // val = wctlp_optimize(pd->RMP, &status);
-                // CCcheck_val_2(val, "wctlp_optimize failed");
-                // val = compute_objective(pd, parms);
-                // CCcheck_val_2(val, "Failed in computing the objective");
+                if(parms->reduce_cost_fixing == yes_reduced_cost) {
+                    CCutil_start_resume_time(&(problem->tot_reduce_cost_fixing));
+                    reduce_cost_fixing(pd);
+                    CCutil_suspend_timer(&(problem->tot_reduce_cost_fixing));
+                    print_interval_pair(pd->ordered_jobs);
+                }
 
-                // reset_nblayers(pd->jobarray);
-                // calculate_nblayers(pd, 2);
-                reduce_cost_fixing(pd);
-                // val = check_schedules(pd);
-                // CCcheck_val_2(val, "Failed in checkschedules");
-                // delete_infeasible_cclasses(pd);
                 /**
                  * Compute the objective function
                  */
@@ -602,7 +596,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 CCcheck_val_2(val, "wctlp_optimize failed");
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
-                construct_lp_sol_from_rmp(pd);
+                // construct_lp_sol_from_rmp(pd);
                 memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->nb_jobs + 1));
                 printf("size evolution %lu\n", get_nb_vertices(pd->solver));
                 break;
@@ -610,7 +604,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             case GRB_INFEASIBLE:
                 pd->status = infeasible;
                 pd->test = 0;
-                wctlp_write(pd->RMP, "test1.lp");
+                wctlp_write(pd->RMP, "infeasible_RMP.lp");
                 wctlp_compute_IIS(pd->RMP);
         }
     } else {
@@ -633,12 +627,13 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     problem->global_lower_bound =
         CC_MAX(pd->lower_bound + pd->problem->off, problem->global_lower_bound);
 
-    if (pd->depth == 0) {
+    if (pd == &(problem->root_pd)) {
         problem->root_lower_bound = problem->global_lower_bound;
         problem->root_upper_bound = problem->global_upper_bound;
-        problem->root_rel_error = (double)(problem->global_upper_bound -
-                                           problem->global_lower_bound) /
-                                  ((double)problem->global_lower_bound);
+        problem->root_rel_error =
+            (double)(problem->global_upper_bound -
+                     problem->global_lower_bound) /
+            ((double)problem->global_lower_bound + 0.000001);
     }
 
     fflush(stdout);
@@ -667,8 +662,10 @@ int print_x(NodeData* pd) {
             CCcheck_val_2(val, "Failed in wctlp_x");
 
             for (int i = 0; i < nb_cols; ++i) {
-                GPtrArray* tmp = ((ScheduleSet*) g_ptr_array_index(pd->localColPool, i))->job_list;
-                if(pd->lambda[i] > 0.00001) {
+                GPtrArray* tmp =
+                    ((ScheduleSet*)g_ptr_array_index(pd->localColPool, i))
+                        ->job_list;
+                if (pd->lambda[i] > 0.00001) {
                     g_ptr_array_foreach(tmp, g_print_machine, NULL);
                     printf("\n");
                 }
@@ -676,8 +673,7 @@ int print_x(NodeData* pd) {
             break;
     }
 
-
-CLEAN :
+CLEAN:
 
     return val;
 }
@@ -768,7 +764,7 @@ int check_schedules(NodeData* pd) {
     val = wctlp_status(pd->RMP, &status);
     CCcheck_val_2(val, "Failed in wctlp_status")
 
-    val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
+        val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed to get nb cols");
     assert(nb_cols == pd->localColPool->len);
     printf("number of cols check %d\n", nb_cols);
@@ -785,7 +781,7 @@ int check_schedules(NodeData* pd) {
 
     if (status != GRB_OPTIMAL) {
         wctlp_compute_IIS(pd->RMP);
-        wctlp_write(pd->RMP, "rmp_check.lp");
+        wctlp_write(pd->RMP, "infeasible_RMP_after_reduce_cost_fixing.lp");
         // printf("check file %d\n", status);
         // getchar();
     }

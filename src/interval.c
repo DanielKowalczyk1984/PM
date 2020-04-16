@@ -7,7 +7,7 @@ void g_print_interval(gpointer data, gpointer user_data) {
     printf("\n");
 }
 
-gint compare_interval(gconstpointer a, gconstpointer b, gpointer data) {
+gint g_compare_interval_data(gconstpointer a, gconstpointer b, gpointer data) {
     const Job* x = *(Job* const*)a;
     const Job* y = *(Job* const*)b;
     interval*  user_data = (interval*)data;
@@ -27,13 +27,18 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data) {
                 return -1;
             } else if (w_y > w_x) {
                 return 1;
-            } else if (x->processing_time > y->processing_time) {
+            } else if (x->job < y->job){
                 return -1;
-            } else if (y->processing_time > x->processing_time) {
+            } else {
                 return 1;
             }
+            // else if (x->processing_time > y->processing_time) {
+            //     return -1;
+            // } else if (y->processing_time > x->processing_time) {
+            //     return 1;
+            // }
 
-            return x->job - y->job;
+            // return x->job - y->job;
         }
     } else {
         if (y->processing_time > diff) {
@@ -43,19 +48,25 @@ gint compare_interval(gconstpointer a, gconstpointer b, gpointer data) {
                 return -1;
             } else if (w_y > w_x) {
                 return 1;
-            } else if (x->processing_time > y->processing_time) {
+            } else if (x->job < y->job) {
                 return -1;
-            } else if (y->processing_time > x->processing_time) {
+            }  else {
                 return 1;
             }
+            
+            // else if (x->processing_time > y->processing_time) {
+            //     return -1;
+            // } else if (y->processing_time > x->processing_time) {
+            //     return 1;
+            // }
 
-            return x->job - y->job;
+            // return x->job - y->job;
         }
     }
 }
 
 void interval_init(interval* p, int a, int b, int key, GPtrArray* jobarray,
-                   int njobs) {
+                   int nb_jobs) {
     p->a = a;
     p->b = b;
     p->key = key;
@@ -63,11 +74,11 @@ void interval_init(interval* p, int a, int b, int key, GPtrArray* jobarray,
     p->begin = 0;
     Job* j;
 
-    for (int i = 0; i < njobs; ++i) {
+    for (int i = 0; i < nb_jobs; ++i) {
         g_ptr_array_add(p->sigma, g_ptr_array_index(jobarray, i));
     }
 
-    g_ptr_array_sort_with_data(p->sigma, compare_interval, p);
+    g_ptr_array_sort_with_data(p->sigma, g_compare_interval_data, p);
 
     j = (Job*)g_ptr_array_index(p->sigma, p->begin);
     while (p->b - p->a <= j->processing_time && p->begin < (int)jobarray->len) {
@@ -77,10 +88,10 @@ void interval_init(interval* p, int a, int b, int key, GPtrArray* jobarray,
 }
 
 interval* interval_alloc(int a, int b, int key, GPtrArray* jobarray,
-                         int njobs) {
+                         int nb_jobs) {
     interval* p = CC_SAFE_MALLOC(1, interval);
     CCcheck_NULL_3(p, "Failed to allocate memory")
-        interval_init(p, a, b, key, jobarray, njobs);
+        interval_init(p, a, b, key, jobarray, nb_jobs);
 CLEAN:
     return p;
 }
@@ -134,9 +145,9 @@ void print_interval_pair(GPtrArray* ordered_jobs) {
             printf("\n");
             printf("Interval %d (%d,%d]: ", cur->key, cur->a, cur->b);
         }
-        printf("%d (%d, %d) ", tmp_p->j->job, tmp_p->j->processing_time,
-               tmp_p->j->weight);
+        printf("%d ", tmp_p->j->job);
     }
+    printf("\n");
 }
 
 void count_jobs_interval_pair(GPtrArray* ordered_jobs) {

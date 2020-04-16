@@ -4,25 +4,24 @@
 # ms-python.python added
 import os
 try:
-	os.chdir(os.path.join(os.getcwd(), 'build'))
+	os.chdir("/home/daniel/")
 	print(os.getcwd())
 except:
 	pass
 
 #%%
+import numpy as np
 import pandas as pd
+import re
 
 
 #%%
-data = pd.read_csv("../results/28augf1S1/overall.csv")
-
-
-#%%
-
-
-
-#%%
-data.head()
+file_name = "CG_overall_20190829.csv"
+data = pd.read_csv("/home/daniel/Dropbox/PapersOR/PM/implementation/results/CG_results_20190829/CG_overall_20190829.csv")
+match = re.search(r'.*\_(\d{4})(\d{2})(\d{2})\.csv',file_name)
+year = match.group(1)
+month = match.group(2)
+day = match.group(3)
 
 
 #%%
@@ -41,72 +40,29 @@ data['Id'] = se.values
 
 
 #%%
-grouped = data.groupby(['pricing_solver','n','m'])
+summary_grouped = data.groupby(['pricing_solver','n','m'])
 
 
 #%%
-import numpy as np
 aggregation = {"tot_lb": {np.max, np.mean},
                "gap": {np.max, np.mean},
                "first_size_graph": {np.max, np.mean},
                "opt": np.sum,
                "reduction": {np.max,np.mean},
               "tot_cputime" : {np.max, np.mean}}
-            #    "rel_error": {np.max,np.mean},
-#%%
-grouped["NameInstance"].count()
-grouped2 = data.groupby("NameInstance")
-grouped2["Id"].count().to_csv("allinstances.csv")
 
 #%%
-result = grouped.agg(aggregation)
-result
-
-
-#%%
-to_write = result.pivot_table(index=['n', 'm'], values=[
+summary_write = summary_grouped.agg(aggregation).pivot_table(index=['n', 'm'], values=[
                               'tot_lb', 'gap', 'first_size_graph','reduction','opt'], columns=['pricing_solver'])
-to_write
+summary_write.columns.set_levels(['AFFS','AFFC','AFBS','AFBC','AFZFS','AFZFC','AFZBS','AFZBC','TI','ATI'],level=2,inplace=True)
+summary_write.columns = ["_".join(x) for x in summary_write.columns.ravel()]
+summary_write.to_csv("CG_summary_"+year+month+day+".csv")
 
 #%%
-pivot = data.pivot_table(values=['tot_lb', 'gap', 'first_size_graph','reduction','opt','rel_error','nb_generated_col','global_lower_bound','global_upper_bound','tot_cputime'], index=['n','m','Id'], columns=['pricing_solver'])
-
-
-#%%
-to_write.columns.set_levels(['AFFS','AFFC','AFBS','AFBC','AFZFS','AFZFC','AFZBS','AFZBC','TI','ATI'],level=2,inplace=True)
-to_write
-
-#%%
-to_write.head()
-
-
-#%%
-to_write.columns = ["_".join(x) for x in to_write.columns.ravel()]
-to_write
-
-#%%
-to_write.to_csv('results_tue2019aug_summary.csv')
-
-
-#%%
-pivot
-
-
-#%%
-pivot.columns.set_levels(['AF','TI','ATI'],level=1,inplace=True)
-pivot
-
-
-#%%
-pivot.columns = ["_".join(x) for x in pivot.columns.ravel()]
-
-
-#%%
-pivot
-
-
-#%%
-pivot.to_csv('results_tue2019_latex_pivot.csv')
+all_instances = data.pivot_table(values=['tot_lb', 'gap', 'first_size_graph','reduction','opt','rel_error','nb_generated_col','global_lower_bound','global_upper_bound','tot_cputime'], index=['n','m','Id'], columns=['pricing_solver'])
+all_instances.columns.set_levels(['AFFS','AFFC','AFBS','AFBC','AFZFS','AFZFC','AFZBS','AFZBC','TI','ATI'],level=1,inplace=True)
+all_instances.columns = ["_".join(x) for x in all_instances.columns.ravel()]
+all_instances.to_csv("CG_allinstances_"+year+month+day+".csv")
 
 
 #%%

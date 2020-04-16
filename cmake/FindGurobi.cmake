@@ -8,6 +8,7 @@ else(GUROBI_INCLUDE_DIR)
 
   find_library(GUROBI_LIBRARY
                NAMES gurobi81
+                     gurobi90
                      gurobi80
                      gurobi75
                      gurobi65
@@ -54,7 +55,7 @@ else(GUROBI_INCLUDE_DIR)
       "${GRB_VERSION_MAJOR}.${GRB_VERSION_MINOR}.${GRB_VERSION_MICRO}")
 
   include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(GUROBI
+  find_package_handle_standard_args(Gurobi
                                     REQUIRED_VARS
                                     GUROBI_INCLUDE_DIR
                                     GUROBI_LIBRARIES

@@ -99,3 +99,6 @@ compile_commands.json
 
 # End of https://www.gitignore.io/api/visualstudiocode
 .ccls-cache
+
+*.lp
+wt*_solutions

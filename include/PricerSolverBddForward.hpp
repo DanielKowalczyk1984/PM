@@ -9,7 +9,7 @@ private:
     ForwardBddSimpleDouble evaluator;
     BackwardBddSimpleDouble reversed_evaluator;
 public:
-    PricerSolverBddSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
+    PricerSolverBddSimple(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs, const char* p_name);
     OptimalSolution<double> pricing_algorithm(double *_pi) override;
     void compute_labels(double *_pi);
     void evaluate_nodes(double *pi, int UB, double LB) override ;    
@@ -20,7 +20,7 @@ private:
     ForwardBddCycleDouble evaluator;
     BackwardBddCycleDouble reversed_evaluator;
 public:
-    PricerSolverBddCycle(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs);
+    PricerSolverBddCycle(GPtrArray *_jobs, int _num_machines, GPtrArray *_ordered_jobs, const char* p_name);
     OptimalSolution<double> pricing_algorithm(double *_pi) override;
     void compute_labels(double *_pi);
     void evaluate_nodes(double *pi, int UB, double LB) override ;        

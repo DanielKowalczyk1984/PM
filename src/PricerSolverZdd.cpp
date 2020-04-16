@@ -1,15 +1,14 @@
 #include "PricerSolverZdd.hpp"
+#include <NodeBddStructure.hpp>
 #include "PricerConstruct.hpp"
 #include "boost/graph/graphviz.hpp"
 
 PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines,
-                                 GPtrArray* _ordered_jobs)
-    : PricerSolverBase(_jobs, _num_machines, _ordered_jobs),
+                                 GPtrArray* _ordered_jobs, const char* p_name)
+    : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name),
       size_graph(0),
       nb_removed_edges(0),
-      nb_removed_nodes(0),
-      env(new GRBEnv()),
-      model(new GRBModel(*env))
+      nb_removed_nodes(0)
 
 {
     /**
@@ -26,8 +25,6 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray* _jobs, int _num_machines,
     construct_mipgraph();
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
-
-
 }
 
 void PricerSolverZdd::construct_mipgraph() {
@@ -42,11 +39,11 @@ void PricerSolverZdd::construct_mipgraph() {
     EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
 
     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
-        for (size_t j = 0; j < table[i].size();j++) {
+        for (size_t j = 0; j < table[i].size(); j++) {
             auto n{NodeId(i, j)};
             if (n.row() != 0) {
                 for (auto& it : table[i][j].list) {
-                    auto key = add_vertex(mip_graph); 
+                    auto key = add_vertex(mip_graph);
                     it->key = key;
                     vertex_mip_id_list[it->key] = key;
                     vertex_nodeid_list[it->key] = it->node_id;
@@ -255,11 +252,6 @@ void PricerSolverZdd::build_mip() {
             get(boost::vertex_degree_t(), mip_graph));
         EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
         EdgeVarAccessor  edge_var_list(get(boost::edge_weight2_t(), mip_graph));
-        model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-        model->set(GRB_IntParam_Threads, 1);
-        model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-        model->set(GRB_IntParam_Presolve, 2);
-        model->set(GRB_IntParam_VarBranch, 3);
 
         /** Constructing variables */
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
@@ -304,7 +296,7 @@ void PricerSolverZdd::build_mip() {
         model->update();
         /** Flow constraints */
         size_t num_vertices = boost::num_vertices(mip_graph);
-            //boost::num_vertices(mip_graph) - table[0][1].list.size() + 1;
+        // boost::num_vertices(mip_graph) - table[0][1].list.size() + 1;
         std::unique_ptr<GRBLinExpr[]> flow_conservation_constr(
             new GRBLinExpr[num_vertices]());
         std::unique_ptr<char[]>   sense_flow(new char[num_vertices]);
@@ -343,7 +335,8 @@ void PricerSolverZdd::build_mip() {
             model->addConstrs(flow_conservation_constr.get(), sense_flow.get(),
                               rhs_flow.get(), nullptr, num_vertices));
         model->update();
-        model->write("zdd_formulation.lp");
+        model->write("zdd_" + problem_name + "_" +
+                     std::to_string(num_machines) + ".lp");
         model->optimize();
     } catch (GRBException& e) {
         std::cout << "Error code = " << e.getErrorCode() << "\n";
@@ -388,7 +381,7 @@ void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
 
 void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 const GPtrArray* schedule_sets,
-                                                int num_columns) {
+                                                int              num_columns) {
     NodeTableEntity<NodeZdd<>>& table =
         decision_diagram->getDiagram().privateEntity();
     std::fill(lp_x.get(), lp_x.get() + get_nb_edges(), 0.0);
@@ -531,6 +524,10 @@ bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
     return (weight == set->len);
 }
 
+void PricerSolverZdd::make_schedule_set_feasible(GPtrArray *set) {
+    
+}
+
 void PricerSolverZdd::disjunctive_inequality(double* x, Solution* sol) {}
 
 void PricerSolverZdd::iterate_zdd() {
@@ -579,5 +576,4 @@ int PricerSolverZdd::get_num_layers() {
     return decision_diagram->topLevel();
 }
 
-void PricerSolverZdd::print_num_paths() {
-}
+void PricerSolverZdd::print_num_paths() {}

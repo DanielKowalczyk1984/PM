@@ -16,34 +16,34 @@ static int permute_nodes(int* invorder, int nb_nodes, int nb_edges, int* elist,
                          int* weights, int** pielist, int** pi_weights);
 
 static void adjNode_SWAP(adjNode* n1, adjNode* n2, adjNode* temp);
-#define fill(x)                               \
-    {                                         \
-        list[x].degree = 0;                   \
-        list[x].node = i;                     \
-        list[x].color = -1;                   \
-        list[x].weight = weights[x];          \
-        G->totweight += weights[x];           \
+#define fill(x)                                 \
+    {                                           \
+        list[x].degree = 0;                     \
+        list[x].node = i;                       \
+        list[x].color = -1;                     \
+        list[x].weight = weights[x];            \
+        G->totweight += weights[x];             \
         for (int j = i; j < G->nb_nodes; j++) { \
-            G->adjMatrix[i][j] = 0;           \
-            G->adjMatrix[j][i] = 0;           \
-        }                                     \
-        i++;                                  \
+            G->adjMatrix[i][j] = 0;             \
+            G->adjMatrix[j][i] = 0;             \
+        }                                       \
+        i++;                                    \
     }
 
-#define fill1()                               \
-    {                                         \
-        list->degree = 0;                     \
-        list->node = i;                       \
-        list->color = -1;                     \
-        list->weight = *weights;              \
-        G->totweight += *weights;             \
+#define fill1()                                 \
+    {                                           \
+        list->degree = 0;                       \
+        list->node = i;                         \
+        list->color = -1;                       \
+        list->weight = *weights;                \
+        G->totweight += *weights;               \
         for (int j = i; j < G->nb_nodes; j++) { \
-            G->adjMatrix[i][j] = 0;           \
-            G->adjMatrix[j][i] = 0;           \
-        }                                     \
-        i++;                                  \
-        list++;                               \
-        weights++;                            \
+            G->adjMatrix[i][j] = 0;             \
+            G->adjMatrix[j][i] = 0;             \
+        }                                       \
+        i++;                                    \
+        list++;                                 \
+        weights++;                              \
     }
 
 #define fill2()                                 \
@@ -258,7 +258,8 @@ int adjGraph_copy(adjGraph* graph_dst, const adjGraph* graph_src) {
 
     val = adjGraph_get_elist(&nb_edges, &elist, graph_src);
     CCcheck_val_2(val, "adjGraph_get_elist failed");
-    val = adjGraph_build(graph_dst, graph_src->nb_nodes, nb_edges, elist, tmp_weightlist);
+    val = adjGraph_build(graph_dst, graph_src->nb_nodes, nb_edges, elist,
+                         tmp_weightlist);
     CCcheck_val_2(val, "adjGraph_build failed")
 
         CLEAN : if (val) {
@@ -280,7 +281,8 @@ int adjGraph_adjust_schedule(adjGraph* graph_dst, const adjGraph* graph_src) {
     int val = 0;
     int i;
 
-    if (graph_dst->nb_nodes != graph_src->nb_nodes || graph_dst->nb_edges != graph_src->nb_edges) {
+    if (graph_dst->nb_nodes != graph_src->nb_nodes ||
+        graph_dst->nb_edges != graph_src->nb_edges) {
         fprintf(stderr, "We are considering here two different graphs\n");
         val = 1;
         goto CLEAN;
@@ -289,7 +291,8 @@ int adjGraph_adjust_schedule(adjGraph* graph_dst, const adjGraph* graph_src) {
     CC_IFFREE(graph_dst->makespan, int);
     graph_dst->nb_colors = graph_src->nb_colors;
     graph_dst->makespan = CC_SAFE_MALLOC(graph_dst->nb_colors, int);
-    CCcheck_NULL_2(graph_dst->makespan, "Out of memory for graph_dst->makespan");
+    CCcheck_NULL_2(graph_dst->makespan,
+                   "Out of memory for graph_dst->makespan");
 
     for (i = 0; i < graph_dst->nb_colors; i++) {
         graph_dst->makespan[i] = graph_src->makespan[i];
@@ -692,7 +695,8 @@ int read_adjlist(char* f, int* pvcount, int* pecount, int** pelist,
             inv_perm[perm[i]] = i;
         }
 
-        permute_nodes(inv_perm, nb_nodes, nb_edges, elist, weight, pelist, weightlist);
+        permute_nodes(inv_perm, nb_nodes, nb_edges, elist, weight, pelist,
+                      weightlist);
         *pvcount = nb_nodes;
         *pecount = count;
     } else {
@@ -814,7 +818,8 @@ int adjGraph_delete_unweighted(adjGraph* G, int** new_node_weights,
     CCcheck_val_2(val, "Failed in COLORadjgraph_build");
 
     if (dbg_lvl() > 1) {
-        printf("Reduced graph has %d nodes and %d edges.\n", nb_nodes, nb_edges);
+        printf("Reduced graph has %d nodes and %d edges.\n", nb_nodes,
+               nb_edges);
     }
 
 CLEAN:
@@ -928,7 +933,8 @@ void adjGraph_quicksort_perm(adjNode* nodelist, int* perm, int nb_nodes,
 
     CC_SWAP(perm[0], perm[j], temp);
     adjGraph_quicksort_perm(nodelist, perm, j, (*compareFunction));
-    adjGraph_quicksort_perm(nodelist, perm + i, nb_nodes - i, (*compareFunction));
+    adjGraph_quicksort_perm(nodelist, perm + i, nb_nodes - i,
+                            (*compareFunction));
     return;
 }
 

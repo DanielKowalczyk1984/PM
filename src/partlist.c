@@ -15,6 +15,12 @@ void partlist_free(PartList* part) {
         if (part->machine != (GPtrArray*)NULL) {
             g_ptr_array_free(part->machine, TRUE);
         }
+        if (part->Q != (GPtrArray**) NULL) {
+            CC_IFFREE(part->Q, GPtrArray*);
+        }
+        if (part->Q_in != (GPtrArray**) NULL) {
+            CC_IFFREE(part->Q_in, GPtrArray*);
+        }
     }
 }
 
@@ -27,21 +33,10 @@ void partlist_init(PartList* part) {
     }
 }
 
-void joblist_init(joblist* jlist) {
-    if (jlist) {
-        jlist->part = (PartList*)NULL;
-    }
-}
-
-void partition_init(PartList* part, joblist* jlist, int nbpart, int njobs) {
+void partition_init(PartList* part, int nb_part, int nb_jobs) {
     int i;
 
-    for (i = 0; i < nbpart; i++) {
+    for (i = 0; i < nb_part; i++) {
         partlist_init(&part[i]);
-        part[i].key = i;
-    }
-
-    for (i = 0; i < njobs; i++) {
-        joblist_init(&jlist[i]);
     }
 }
