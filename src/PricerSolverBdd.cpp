@@ -25,10 +25,12 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
     init_table();
     calculate_H_min();
     cleanup_arcs();
-    topdown_filtering();
     check_infeasible_arcs();
     bottum_up_filtering();
+    topdown_filtering();
     construct_mipgraph();
+
+    std::cout << "Ending construction\n";
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
 }
@@ -52,16 +54,16 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     H_min = 0;
 }
-int g_compare_duration(gconstpointer a, gconstpointer b) {
-    const Job* x = *((Job* const*)a);
-    const Job* y = *((Job* const*)b);
+// int g_compare_duration(gconstpointer a, gconstpointer b) {
+//     const Job* x = *((Job* const*)a);
+//     const Job* y = *((Job* const*)b);
 
-    if (x->processing_time < y->processing_time) {
-        return -1;
-    } else {
-        return 1;
-    }
-}
+//     if (x->processing_time < y->processing_time) {
+//         return -1;
+//     } else {
+//         return 1;
+//     }
+// }
 
 void PricerSolverBdd::calculate_H_min() {
     int        p_sum = 0;
@@ -74,7 +76,6 @@ void PricerSolverBdd::calculate_H_min() {
     g_ptr_array_sort(duration, g_compare_duration);
 
     int    m = 0;
-    int    i = nb_jobs - 1;
     double tmp = p_sum;
     do {
         Job* job = (Job*)g_ptr_array_index(duration, nb_jobs - 1);
@@ -301,7 +302,8 @@ void PricerSolverBdd::print_representation_file() {
                 head.get_weight() + head.get_job()->processing_time,
                 head.get_job());
             out_file_mip << head.key << " " << n.key << " " << cost << "\n";
-            index_edge[head.get_job()->job].push_back(edge_index_list[*it.first]);
+            index_edge[head.get_job()->job].push_back(
+                edge_index_list[*it.first]);
         } else {
             out_file_mip << head.key << " " << n.key << " " << 0.0 << "\n";
         }
@@ -468,12 +470,19 @@ void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     std::cout << "Starting Reduced cost fixing\n";
     evaluate_nodes(pi, UB, LB);
     topdown_filtering();
-    check_infeasible_arcs();
     bottum_up_filtering();
     cleanup_arcs();
 
     construct_mipgraph();
-    equivalent_paths_filtering();
+    NodeTableEntity<>&   table = decision_diagram->getDiagram().privateEntity();
+    ColorWriterEdgeIndex edge_writer(mip_graph);
+    ColorWriterVertex    vertex_writer(mip_graph, table);
+    string               file_name = "representation_" + problem_name + "_" +
+                       std::to_string(num_machines) + ".gv";
+    std::ofstream outf(file_name);
+    boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
+    outf.close();
+    // equivalent_paths_filtering();
 }
 
 void PricerSolverBdd::cleanup_arcs() {
@@ -564,6 +573,7 @@ void PricerSolverBdd::topdown_filtering() {
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             auto& n0 = table.node(it.branch[0]);
+
             if (n0.visited) {
                 n0.all &= it.all;
             } else {
@@ -571,7 +581,9 @@ void PricerSolverBdd::topdown_filtering() {
                 n0.all = boost::dynamic_bitset<>{nb_jobs, 0};
                 n0.all |= it.all;
             }
+
             auto& n1 = table.node(it.branch[1]);
+
             if (n1.visited) {
                 if (n1.all[it.get_job()->job]) {
                     n1.all &= it.all;
@@ -672,13 +684,14 @@ void PricerSolverBdd::check_infeasible_arcs() {
             it.visited = false;
             it.all = boost::dynamic_bitset<>{nb_jobs, 0};
             it.calc_yes = true;
+            it.calc_no = true;
         }
     }
 
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             auto& n0 = table.node(it.branch[0]);
-            n0.all &= it.all;
+            n0.all |= it.all;
             auto& n1 = table.node(it.branch[1]);
             n1.all[it.get_job()->job] = 1;
         }
@@ -692,26 +705,31 @@ void PricerSolverBdd::check_infeasible_arcs() {
 
                 int  max = value_diff_Fij(it.get_weight(), it.get_job(),
                                          (Job*)g_ptr_array_index(jobs, index));
-                bool index_bool = (index < (size_t)it.get_job()->job);
-                while (index != boost::dynamic_bitset<>::npos && max <= 0) {
+                std::cout << index << " " << max << " ";
+                // bool index_bool = (index > (size_t)it.get_job()->job);
+                while (index != boost::dynamic_bitset<>::npos && max < 0) {
                     index = it.all.find_next(index);
-                    index_bool = (index < (size_t)it.get_job()->job);
                     if (index != boost::dynamic_bitset<>::npos) {
                         int a = value_diff_Fij(
                             it.get_weight(), it.get_job(),
                             (Job*)g_ptr_array_index(jobs, index));
+                    std::cout << index << " " << a << " ";
                         if (a > max) {
                             max = a;
                         }
                     }
+                
                 }
 
-                if (max < 0 || (max == 0 && index_bool)) {
+
+                if (max < 0 ) {
                     removed_edges = true;
                     it.calc_yes = false;
                     nb_removed_edges++;
                     nb_edges_removed_tmp++;
+                    std::cout << " Adjusted"; 
                 }
+                std::cout << "\n";
             }
         }
     }
