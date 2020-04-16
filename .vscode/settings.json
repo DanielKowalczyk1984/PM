@@ -38,5 +38,6 @@
         "wctlp",
         "wentgnes",
         "zeit"
-    ]
+    ],
+    "cquery.cacheDirectory": "${workspaceFolder}/.vscode/cquery_cached_index/"
 }
