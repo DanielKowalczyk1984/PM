@@ -61,6 +61,6 @@ class PricerSolverBdd : public PricerSolverBase {
         return NULL;
     }
 };
-int g_compare_duration(gconstpointer a, gconstpointer b);
+// int g_compare_duration(gconstpointer a, gconstpointer b);
 
 #endif  // PRICER_SOLVER_BDD_HPP

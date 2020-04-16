@@ -370,7 +370,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                     Job *last = (Job *) g_ptr_array_index(Q_in, Q_in->len - 1);
                     int C_last = sol->c[last->job];
                     #endif
-                    g_ptr_array_sort_with_data(Q_in, compare_interval, I);
+                    g_ptr_array_sort_with_data(Q_in, g_compare_interval_data, I);
                     for(int j = 0; j < Q_in->len;j++) {
                         Job *tmp = g_ptr_array_index(Q_in, j);
                         g_ptr_array_index(Q, j + 1) = tmp;
@@ -380,7 +380,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                     assert(C == C_last);
                     Job *tmp_out = (Job*) g_ptr_array_index(Q, 0);
                     Job *tmp_in = (Job*) g_ptr_array_index(Q_in, 0);
-                    if(compare_interval(&tmp_out, &tmp_in,I) < 0) {
+                    if(g_compare_interval_data(&tmp_out, &tmp_in,I) < 0) {
                         assert(sol->c[tmp_in->job] - tmp_in->processing_time == sol->c[tmp_out->job]);
                         u = next_interval_reversed(u, part);
                     } else {
@@ -396,7 +396,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                             sol->u[tmp_in->job] = u;
                             int C = sol->c[tmp_in->job];
                             assert(C == sol->c[tmp_out->job] - tmp_out->processing_time);
-                            g_ptr_array_sort_with_data(Q_in, compare_interval, I);
+                            g_ptr_array_sort_with_data(Q_in, g_compare_interval_data, I);
                             for(int j = 0; j < Q_in->len;j++) {
                                 Job *tmp = g_ptr_array_index(Q_in, j);
                                 g_ptr_array_index(Q, j + 1) = tmp;
@@ -433,7 +433,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                     }
                 } else {
                     assert(u == 0);
-                    g_qsort_with_data(Q->pdata, Q->len, sizeof(Job*), compare_interval, I);
+                    g_qsort_with_data(Q->pdata, Q->len, sizeof(Job*), g_compare_interval_data, I);
                     int C = 0;
                     for(int j = 0; j < Q->len;j++) {
                         Job *tmp = g_ptr_array_index(Q, j);

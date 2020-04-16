@@ -37,7 +37,7 @@ gint g_job_compare_edd(const void* a, const void* b, void* data) {
     return (0);
 }
 
-int g_compara_duration(gconstpointer a,gconstpointer b) {
+gint g_compare_duration(gconstpointer a,gconstpointer b) {
     const Job* x = *((Job* const*)a);
     const Job* y = *((Job* const*)b);
 
@@ -64,7 +64,7 @@ void calculate_Hmax(Problem* problem) {
         Job* job = g_ptr_array_index(problem->g_job_array, j);
         g_ptr_array_add(duration, job);
     }
-    g_ptr_array_sort(duration,g_compara_duration);
+    g_ptr_array_sort(duration,g_compare_duration);
 
     int m = 0;
     int i = problem->nb_jobs - 1;

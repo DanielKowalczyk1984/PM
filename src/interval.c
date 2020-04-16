@@ -7,7 +7,7 @@ void g_print_interval(gpointer data, gpointer user_data) {
     printf("\n");
 }
 
-gint compare_interval(gconstpointer a, gconstpointer b, gpointer data) {
+gint g_compare_interval_data(gconstpointer a, gconstpointer b, gpointer data) {
     const Job* x = *(Job* const*)a;
     const Job* y = *(Job* const*)b;
     interval*  user_data = (interval*)data;
@@ -78,7 +78,7 @@ void interval_init(interval* p, int a, int b, int key, GPtrArray* jobarray,
         g_ptr_array_add(p->sigma, g_ptr_array_index(jobarray, i));
     }
 
-    g_ptr_array_sort_with_data(p->sigma, compare_interval, p);
+    g_ptr_array_sort_with_data(p->sigma, g_compare_interval_data, p);
 
     j = (Job*)g_ptr_array_index(p->sigma, p->begin);
     while (p->b - p->a <= j->processing_time && p->begin < (int)jobarray->len) {
