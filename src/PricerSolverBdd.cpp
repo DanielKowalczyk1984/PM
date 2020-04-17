@@ -54,16 +54,6 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     H_min = 0;
 }
-// int g_compare_duration(gconstpointer a, gconstpointer b) {
-//     const Job* x = *((Job* const*)a);
-//     const Job* y = *((Job* const*)b);
-
-//     if (x->processing_time < y->processing_time) {
-//         return -1;
-//     } else {
-//         return 1;
-//     }
-// }
 
 void PricerSolverBdd::calculate_H_min() {
     int        p_sum = 0;
