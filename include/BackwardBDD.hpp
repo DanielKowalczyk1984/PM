@@ -161,7 +161,7 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
 
                 n.backward_label[0].update_label(&(p1->backward_label[1]), obj1, true);
             } else if (obj1 > n.backward_label[1].get_f() &&
-                       tmp_j != n.backward_label[0].get_prev_job() && diff2) {
+                       tmp_j != n.backward_label[0].get_prev_job() ) {
                 n.backward_label[1].update_label(&(p1->backward_label[1]), obj1, true);
             }
         }
