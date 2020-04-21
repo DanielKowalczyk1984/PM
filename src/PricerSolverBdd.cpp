@@ -52,7 +52,6 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
     construct_mipgraph();
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
-    H_min = 0;
 }
 
 void PricerSolverBdd::calculate_H_min() {
@@ -74,7 +73,7 @@ void PricerSolverBdd::calculate_H_min() {
         m++;
     } while (m < num_machines - 1);
 
-    H_min = (int)floor(tmp / num_machines);
+    H_min = (int)ceil(tmp / num_machines);
 
     g_ptr_array_free(duration, TRUE);
 }
@@ -492,7 +491,7 @@ void PricerSolverBdd::cleanup_arcs() {
             NodeBdd<>& cur_node_0 = table.node(it.branch[0]);
             NodeBdd<>& cur_node_1 = table.node(it.branch[1]);
 
-            if (cur_node_0.backward_distance[0] <
+            if (cur_node_0.backward_distance[0] <=
                 cur_node_0.backward_distance[1]) {
                 it.backward_distance[0] = cur_node_0.backward_distance[1];
             } else {
@@ -504,7 +503,7 @@ void PricerSolverBdd::cleanup_arcs() {
             int result1 =
                 cur_node_1.backward_distance[1] + it.get_job()->processing_time;
 
-            if (result0 < result1) {
+            if (result0 <= result1) {
                 it.backward_distance[1] = result1;
             } else {
                 it.backward_distance[1] = result0;
@@ -514,15 +513,11 @@ void PricerSolverBdd::cleanup_arcs() {
     /** remove the unnecessary nodes of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& iter : table[i]) {
-            if (iter.get_weight() + iter.backward_distance[0] < H_min) {
+            if (iter.get_weight() + iter.backward_distance[0] < H_min ) {
                 iter.calc_no = false;
                 removed_edges = true;
                 nb_edges_removed_tmp++;
                 nb_removed_edges++;
-                // iter.calc_yes = false;
-                // removed_edges = true;
-                // nb_edges_removed_tmp++;
-                // nb_removed_edges++;
             }
 
             // if (iter.get_weight() + iter.backward_distance[1] < H_min &&
@@ -609,8 +604,8 @@ void PricerSolverBdd::topdown_filtering() {
                   << "\n";
         remove_layers();
         remove_edges();
-        init_table();
         cleanup_arcs();
+        init_table();
         // continue;
     }
 }
@@ -658,8 +653,8 @@ void PricerSolverBdd::bottum_up_filtering() {
                   << "\n";
         remove_layers();
         remove_edges();
-        init_table();
         cleanup_arcs();
+        init_table();
         // continue;
     }
 }
@@ -695,7 +690,6 @@ void PricerSolverBdd::check_infeasible_arcs() {
 
                 int  max = value_diff_Fij(it.get_weight(), it.get_job(),
                                          (Job*)g_ptr_array_index(jobs, index));
-                std::cout << index << " " << max << " ";
                 // bool index_bool = (index > (size_t)it.get_job()->job);
                 while (index != boost::dynamic_bitset<>::npos && max < 0) {
                     index = it.all.find_next(index);
@@ -703,7 +697,6 @@ void PricerSolverBdd::check_infeasible_arcs() {
                         int a = value_diff_Fij(
                             it.get_weight(), it.get_job(),
                             (Job*)g_ptr_array_index(jobs, index));
-                    std::cout << index << " " << a << " ";
                         if (a > max) {
                             max = a;
                         }
@@ -717,9 +710,7 @@ void PricerSolverBdd::check_infeasible_arcs() {
                     it.calc_yes = false;
                     nb_removed_edges++;
                     nb_edges_removed_tmp++;
-                    std::cout << " Adjusted"; 
                 }
-                std::cout << "\n";
             }
         }
     }
@@ -732,8 +723,8 @@ void PricerSolverBdd::check_infeasible_arcs() {
                   << "\n";
         remove_layers();
         remove_edges();
-        init_table();
         cleanup_arcs();
+        init_table();
     }
 }
 
