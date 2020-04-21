@@ -422,7 +422,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
          */
         if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
             status == GRB_OPTIMAL) {
-            // val = delete_old_cclasses(pd);
+            val = delete_old_cclasses(pd);
             CCcheck_val_2(val, "Failed in delete_old_cclasses");
         }
 
@@ -493,8 +493,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     case stab_hybrid:
                         break_while_loop =
                             (CC_ABS(pd->eta_out - pd->eta_in) < 0.00001) ||
-                            nb_non_improvements >
-                                5;  // || (ceil(pd->eta_in - 0.00001) >=
+                            nb_non_improvements > 5;  // || (ceil(pd->eta_in - 0.00001) >=
                                     // pd->eta_out);
                         break;
 
