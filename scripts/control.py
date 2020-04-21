@@ -6,7 +6,7 @@ import re
 
 
 # %%
-df = pd.read_csv('../CG_overall_20200420.csv')
+df = pd.read_csv('../CG_overall_20200421.csv')
 
 
 # %%
@@ -48,3 +48,6 @@ df_all = pd.merge(df, df_pessoa, on=['Inst', 'n','m'])
 # %%
 df_all[df_all['global_lower_bound'] > df_all['best']]
 
+
+
+# %%
