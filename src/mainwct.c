@@ -236,7 +236,7 @@ int main(int ac, char** av) {
         if (parms->pricing_solver < dp_solver) {
             solution_canonical_order(problem.opt_sol, root->local_intervals);
         }
-        represent_solution(root, problem.opt_sol);
+        // represent_solution(root, problem.opt_sol);
         problem.rel_error =
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);
@@ -262,7 +262,7 @@ int main(int ac, char** av) {
     }
 
     if (parms->mip_solver) {
-        represent_solution(root, problem.opt_sol);
+        // represent_solution(root, problem.opt_sol);
         build_solve_mip(root);
     }
 
