@@ -3,6 +3,7 @@
 #include <NodeBddStructure.hpp>
 #include "MipGraph.hpp"
 #include "PricerSolverBase.hpp"
+#include <vector>
 
 class PricerSolverBdd : public PricerSolverBase {
    public:
@@ -59,7 +60,10 @@ class PricerSolverBdd : public PricerSolverBase {
     void   add_constraint(Job* job, GPtrArray* list, int order) override;
     int* get_take() override {
         return NULL;
-    }
+    };
+    private:
+    void add_inequality(std::vector<int> v1, std::vector<int> v2);
+    void add_inequality(std::vector<int> v1);
 };
 // int g_compare_duration(gconstpointer a, gconstpointer b);
 
