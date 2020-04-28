@@ -1,7 +1,9 @@
 #include "PricerSolverBdd.hpp"
 #include <list>
+#include <vector>
 #include "PricerConstruct.hpp"
 #include "boost/graph/graphviz.hpp"
+#include "gurobi_c.h"
 
 using namespace std;
 
@@ -25,7 +27,7 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
     init_table();
     calculate_H_min();
     cleanup_arcs();
-    check_infeasible_arcs();
+    // check_infeasible_arcs();
     bottum_up_filtering();
     topdown_filtering();
     construct_mipgraph();
@@ -47,7 +49,7 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
     calculate_H_min();
     cleanup_arcs();
     topdown_filtering();
-    check_infeasible_arcs();
+    // check_infeasible_arcs();
     bottum_up_filtering();
     construct_mipgraph();
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
@@ -321,6 +323,36 @@ void PricerSolverBdd::print_representation_file() {
     out_file_mip.close();
 }
 
+void PricerSolverBdd::add_inequality(std::vector<int> v1, std::vector<int> v2) {
+    GRBLinExpr        expr1;
+    EdgeVarAccessor   edge_var_list(get(boost::edge_weight2_t(), mip_graph));
+    EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(), mip_graph));
+    for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+        if (std::find(v1.begin(), v1.end(), edge_index_list[*it.first]) !=
+            v1.end()) {
+            expr1 += edge_var_list[*it.first].x;
+        }
+
+        if (std::find(v2.begin(), v2.end(), edge_index_list[*it.first]) !=
+            v2.end()) {
+            expr1 -= edge_var_list[*it.first].x;
+        }
+    }
+    model->addConstr(expr1, GRB_EQUAL, 0);
+}
+
+void PricerSolverBdd::add_inequality(std::vector<int> v1) {
+    GRBLinExpr        expr1;
+    EdgeVarAccessor   edge_var_list(get(boost::edge_weight2_t(), mip_graph));
+    EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(), mip_graph));
+    for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+        if (std::find(v1.begin(), v1.end(), edge_index_list[*it.first]) !=
+            v1.end()) {
+            expr1 += edge_var_list[*it.first].x;
+        }
+    }
+    model->addConstr(expr1, GRB_EQUAL, num_machines);
+}
 void PricerSolverBdd::build_mip() {
     try {
         printf("Building Mip model for the extended formulation:\n");
@@ -414,38 +446,40 @@ void PricerSolverBdd::build_mip() {
             model->addConstrs(flow_conservation_constr.get(), sense_flow.get(),
                               rhs_flow.get(), nullptr, num_vertices));
         model->update();
-        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            // edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart,
-            //                                lp_x[edge_index_list[*it.first]]);
-            edge_var_list[*it.first].x.set(
-                GRB_DoubleAttr_Start, solution_x[edge_index_list[*it.first]]);
-        }
-        model->write(problem_name + "_" + std::to_string(num_machines) +
-                     "_mip.mps");
+        // for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+        //     // edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart,
+        //     //                                lp_x[edge_index_list[*it.first]]);
+        //     edge_var_list[*it.first].x.set(
+        //         GRB_DoubleAttr_Start, solution_x[edge_index_list[*it.first]]);
+        // }
         model->optimize();
 
-        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            int index = edge_index_list[*it.first];
-            solution_x[index] =
-                edge_var_list[*it.first].x.get(GRB_DoubleAttr_X);
+        if (model->get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
+            for (auto it = edges(mip_graph); it.first != it.second;
+                 it.first++) {
+                int index = edge_index_list[*it.first];
+                solution_x[index] =
+                    edge_var_list[*it.first].x.get(GRB_DoubleAttr_X);
+            }
+
+            ColorWriterEdgeX  edge_writer(mip_graph, solution_x.get());
+            ColorWriterVertex vertex_writer(mip_graph, table);
+            string            file_name = "lp_solution_" + problem_name + "_" +
+                               std::to_string(num_machines) + ".gv";
+            std::ofstream outf(file_name);
+            boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
+            outf.close();
         }
 
-        ColorWriterEdgeX  edge_writer(mip_graph, solution_x.get());
-        ColorWriterVertex vertex_writer(mip_graph, table);
-        string            file_name = "lp_solution_" + problem_name + "_" +
-                           std::to_string(num_machines) + ".gv";
-        std::ofstream outf(file_name);
-        boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
-        outf.close();
-
         ColorWriterEdgeIndex edge_writer_index(mip_graph);
-        file_name = "index_" + problem_name + "_" +
-                    std::to_string(num_machines) + ".gv";
+        ColorWriterVertex    vertex_writer(mip_graph, table);
+        string               file_name = "index_" + problem_name + "_" +
+                           std::to_string(num_machines) + ".gv";
         std::ofstream outf_index(file_name);
         boost::write_graphviz(outf_index, mip_graph, vertex_writer,
                               edge_writer_index);
         outf_index.close();
-        print_representation_file();
+
     } catch (GRBException& e) {
         cout << "Error code = " << e.getErrorCode() << endl;
         cout << e.getMessage() << endl;
@@ -471,7 +505,6 @@ void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     std::ofstream outf(file_name);
     boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
     outf.close();
-    // equivalent_paths_filtering();
 }
 
 void PricerSolverBdd::cleanup_arcs() {
@@ -513,15 +546,14 @@ void PricerSolverBdd::cleanup_arcs() {
     /** remove the unnecessary nodes of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& iter : table[i]) {
-            if (iter.get_weight() + iter.backward_distance[0] < H_min ) {
+            if (iter.get_weight() + iter.backward_distance[0] < H_min) {
                 iter.calc_no = false;
                 removed_edges = true;
                 nb_edges_removed_tmp++;
                 nb_removed_edges++;
             }
 
-            // if (iter.get_weight() + iter.backward_distance[1] < H_min &&
-            // iter.branch[1] == 1) {
+            // if (iter.get_weight() + iter.backward_distance[1] < H_min) {
             //     iter.calc_yes = false;
             //     removed_edges = true;
             //     nb_edges_removed_tmp++;
