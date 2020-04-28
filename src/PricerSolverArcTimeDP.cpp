@@ -1,4 +1,7 @@
 #include "PricerSolverArcTimeDP.hpp"
+#include <iostream>
+#include "gurobi_c++.h"
+#include "gurobi_c.h"
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray* _jobs,
                                              int _num_machines, int _Hmax,
@@ -239,6 +242,19 @@ void PricerSolverArcTimeDp::build_mip() {
     model->write("ati_" + problem_name + "_" + std::to_string(num_machines) +
                  ".lp");
     model->optimize();
+
+    if (model->get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
+    for (int j = 0; j < n ; j++) {
+        for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
+            for (auto& it : graph[j][t]) {
+                auto a = arctime_x[it->job][j][t].get(GRB_DoubleAttr_X);
+                if(a > 0) {
+                    std::cout << j << " " << t << " " <<  ((Job*) jobs->pdata[j])->processing_time << "\n";
+                }
+            }
+        }
+    }
+    }
     return;
 }
 
