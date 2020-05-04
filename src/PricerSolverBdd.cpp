@@ -320,6 +320,8 @@ void PricerSolverBdd::print_representation_file() {
         }
     }
 
+    out_file_mip << "99 99\n";
+
     out_file_mip.close();
 }
 
@@ -553,12 +555,12 @@ void PricerSolverBdd::cleanup_arcs() {
                 nb_removed_edges++;
             }
 
-            // if (iter.get_weight() + iter.backward_distance[1] < H_min) {
-            //     iter.calc_yes = false;
-            //     removed_edges = true;
-            //     nb_edges_removed_tmp++;
-            //     nb_removed_edges++;
-            // }
+            if (iter.get_weight() + iter.backward_distance[1] < H_min) {
+                iter.calc_yes = false;
+                removed_edges = true;
+                nb_edges_removed_tmp++;
+                nb_removed_edges++;
+            }
         }
     }
 
