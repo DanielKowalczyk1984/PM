@@ -225,6 +225,7 @@ int main(int ac, char** av) {
      * Finding heuristic solutions to the problem
      */
     heuristic(&problem);
+    GPtrArray *solutions_pool = g_ptr_array_copy(root->localColPool,g_copy_scheduleset,&(problem.nb_jobs));
 
     /**
      * Calculation of LB at the root node with column generation
@@ -245,21 +246,21 @@ int main(int ac, char** av) {
         if (parms->pricing_solver == dp_bdd_solver) {
             int* take = get_take(root->solver);
             lp_node_data_free(root);
-            root->localColPool =
-                g_ptr_array_new_with_free_func(g_scheduleset_free);
+            root->localColPool = g_ptr_array_copy(solutions_pool, g_copy_scheduleset, &(problem.nb_jobs));
             freeSolver(root->solver);
             root->solver =
                 newSolverTIBdd(root->jobarray, root->nb_machines,
                                root->ordered_jobs, take, problem.H_max, parms);
+            
             CC_IFFREE(take, int);
-            solution_print(problem.opt_sol);
-            add_solution_to_colpool(problem.opt_sol, root);
             build_rmp(root, 0);
             CCutil_start_timer(&(problem.tot_lb_root));
             compute_lower_bound(&problem, root);
             CCutil_stop_timer(&(problem.tot_lb_root), 1);
         }
     }
+
+    g_ptr_array_free(solutions_pool, TRUE);
 
     if (parms->mip_solver) {
         // represent_solution(root, problem.opt_sol);
