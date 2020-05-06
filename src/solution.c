@@ -240,6 +240,11 @@ void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
             while (!(sol->c[tmp->job] <= I->b && I->a < sol->c[tmp->job])) {
                 iter++;
                 I = (interval*)g_ptr_array_index(intervals, iter);
+                if(iter == intervals->len) {
+                    iter--;
+                    I = (interval*)g_ptr_array_index(intervals, iter);
+                    break;
+                }
             }
             sol->u[tmp->job] = iter; 
             g_ptr_array_add(sol->part[m].Q[iter], tmp);
