@@ -34,6 +34,7 @@ int print_schedule(ScheduleSet *cclasses, int nb_columns);
 int scheduleset_max(ScheduleSet *cclasses, int nb_columns);
 gint g_scheduleset_less(gconstpointer a,gconstpointer b);
 void g_scheduleset_print(gpointer data, gpointer user_data);
+gpointer g_copy_scheduleset(gconstpointer src, gpointer data);
 
 /** new approach for columns */
 void g_scheduleset_free(void *set);

@@ -93,7 +93,8 @@ void g_scheduleset_free(void* set) {
 ScheduleSet* scheduleset_alloc(int nb_jobs) {
     ScheduleSet* tmp;
     tmp = CC_SAFE_MALLOC(1, ScheduleSet);
-    CCcheck_NULL_3(tmp, "Failed to allocate memory") scheduleset_init(tmp);
+    CCcheck_NULL_3(tmp, "Failed to allocate memory");
+    scheduleset_init(tmp);
     tmp->num = CC_SAFE_MALLOC(nb_jobs, int);
     fill_int(tmp->num, nb_jobs, 0);
 
@@ -110,6 +111,26 @@ ScheduleSet* scheduleset_alloc_bis(int nb_jobs) {
 
 CLEAN:
     return tmp;
+}
+
+gpointer g_copy_scheduleset(gconstpointer src, gpointer data) {
+    int *nb_jobs = (int*)data;
+    const ScheduleSet* src_schedule = (const ScheduleSet*) src;
+    ScheduleSet* aux = scheduleset_alloc(*nb_jobs);
+
+    memcpy(aux->num, src_schedule->num, *nb_jobs*sizeof(int));
+    aux->del = src_schedule->del;
+    aux->age = src_schedule->age;
+    aux->total_processing_time = src_schedule->total_processing_time;
+    aux->total_weighted_completion_time = src_schedule->total_weighted_completion_time;
+    aux->id = src_schedule->id;
+    for(int i = 0; i < src_schedule->job_list->len; i++) {
+        g_ptr_array_add(aux->job_list, src_schedule->job_list->pdata[i]);
+    }
+    for(int i = 0; i < src_schedule->edge_list->len;i++) {
+        g_ptr_array_add(aux->edge_list, src_schedule->edge_list->pdata[i]);
+    }
+    return aux;
 }
 
 void g_sum_processing_time(gpointer data, gpointer user_data) {
