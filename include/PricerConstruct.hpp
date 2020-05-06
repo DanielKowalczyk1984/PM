@@ -171,7 +171,7 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
                     take_job[tmp_j->job * (Hmax + 1) + state]) {
                     if (tmp == tmp_j ||
                         (tmp->job > tmp_j->job &&
-                         value_diff_Fij(state, tmp_j, tmp) <= 0)) {
+                         value_diff_Fij(state, tmp_j, tmp) < 0)) {
                         continue;
                     }
                     val = i;
