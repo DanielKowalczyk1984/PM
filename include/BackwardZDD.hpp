@@ -138,7 +138,6 @@ class BackwardZddCycle : public BackwardZDDBase<E, T> {
             it->backward_label[1].update_label(&(p0->backward_label[1]));
             bool diff =  bool_diff_Fij(weight, prev_job, tmp_j);
             bool diff1 = bool_diff_Fij(weight, p1->backward_label[0].get_prev_job(), tmp_j);
-            bool diff2 = bool_diff_Fij(weight, p1->backward_label[1].get_prev_job(), tmp_j);
 
             if (prev_job != tmp_j && diff) {
                 T obj1 {p1->backward_label[0].get_f() + result};
@@ -154,20 +153,20 @@ class BackwardZddCycle : public BackwardZDDBase<E, T> {
                            tmp_j != it->backward_label[0].get_prev_job() && diff1) {
                     it->backward_label[1].update_label(&(p1->backward_label[0]), obj1, true);
                 } else if (obj2 > it->backward_label[1].get_f() &&
-                           tmp_j != it->backward_label[0].get_prev_job() && diff2) {
+                           tmp_j != it->backward_label[0].get_prev_job() ) {
                     it->backward_label[1].update_label(&(p1->backward_label[1]), obj2, true);
                 }
             } else {
                 T obj1 = p1->backward_label[1].get_f() + result;
 
-                if (obj1 > it->backward_label[0].get_f() && diff2) {
+                if (obj1 > it->backward_label[0].get_f()) {
                     if (tmp_j != it->backward_label[0].get_prev_job()) {
                         it->backward_label[1].update_label(&(p0->backward_label[0]));
                     }
 
                     it->backward_label[0].update_label(&(p1->backward_label[1]), obj1, true);
                 } else if (obj1 > it->backward_label[1].get_f() &&
-                           tmp_j != it->backward_label[0].get_prev_job() && diff2) {
+                           tmp_j != it->backward_label[0].get_prev_job() ) {
                     it->backward_label[1].update_label(&(p1->backward_label[1]), obj1, true);
                 }
             }
