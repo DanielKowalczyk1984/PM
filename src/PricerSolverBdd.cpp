@@ -1,4 +1,5 @@
 #include "PricerSolverBdd.hpp"
+#include <iostream>
 #include <list>
 #include <vector>
 #include "PricerConstruct.hpp"
@@ -48,9 +49,9 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
     init_table();
     calculate_H_min();
     cleanup_arcs();
-    topdown_filtering();
     // check_infeasible_arcs();
     bottum_up_filtering();
+    topdown_filtering();
     construct_mipgraph();
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
@@ -68,14 +69,15 @@ void PricerSolverBdd::calculate_H_min() {
 
     int    m = 0;
     double tmp = p_sum;
+    int i = nb_jobs;
     do {
-        Job* job = (Job*)g_ptr_array_index(duration, nb_jobs - 1);
+        Job* job = (Job*)g_ptr_array_index(duration, i - 1);
         tmp -= job->processing_time;
-        std::cout << job->processing_time << " " << m << "\n";
         m++;
+        i--;
     } while (m < num_machines - 1);
 
-    H_min = (int)ceil(tmp / num_machines);
+    H_min = (int)floor(tmp / num_machines);
 
     g_ptr_array_free(duration, TRUE);
 }
@@ -494,19 +496,19 @@ void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     /** Remove Layers */
     std::cout << "Starting Reduced cost fixing\n";
     evaluate_nodes(pi, UB, LB);
-    topdown_filtering();
     bottum_up_filtering();
+    topdown_filtering();
     cleanup_arcs();
 
     construct_mipgraph();
-    NodeTableEntity<>&   table = decision_diagram->getDiagram().privateEntity();
-    ColorWriterEdgeIndex edge_writer(mip_graph);
-    ColorWriterVertex    vertex_writer(mip_graph, table);
-    string               file_name = "representation_" + problem_name + "_" +
-                       std::to_string(num_machines) + ".gv";
-    std::ofstream outf(file_name);
-    boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
-    outf.close();
+    // NodeTableEntity<>&   table = decision_diagram->getDiagram().privateEntity();
+    // ColorWriterEdgeIndex edge_writer(mip_graph);
+    // ColorWriterVertex    vertex_writer(mip_graph, table);
+    // string               file_name = "representation_" + problem_name + "_" +
+    //                    std::to_string(num_machines) + ".gv";
+    // std::ofstream outf(file_name);
+    // boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
+    // outf.close();
 }
 
 void PricerSolverBdd::cleanup_arcs() {
