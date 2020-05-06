@@ -58,7 +58,7 @@ df_pessoa.best = df_pessoa.best.apply(pd.to_numeric)
 df_all = pd.merge(data, df_pessoa, on=['Inst', 'n','m'])
 
 # %%
-df_all.loc[df_all['global_lower_bound'] > df_all['best']]
+df_all.loc[df_all['global_lower_bound'] > df_all['best'],['NameInstance','m','best','global_lower_bound']]
 
 #%%
 df_all.info()
