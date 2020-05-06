@@ -1,5 +1,6 @@
 #include <solver.h>
 #include <wct.h>
+#include "lp.h"
 
 static const double min_nb_del_row_ratio = 0.9;
 
@@ -355,6 +356,8 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     }
 
     pd->retirementage = (int)sqrt(pd->nb_jobs) + 30;
+    check_schedules(pd);
+    delete_infeasible_cclasses(pd);
 
     /** Init alpha */
     switch (parms->stab_technique) {
@@ -420,11 +423,11 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
         /**
          * Delete old columns
          */
-        if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
-            status == GRB_OPTIMAL) {
-            val = delete_old_cclasses(pd);
-            CCcheck_val_2(val, "Failed in delete_old_cclasses");
-        }
+        // if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
+        //     status == GRB_OPTIMAL) {
+        //     val = delete_old_cclasses(pd);
+        //     CCcheck_val_2(val, "Failed in delete_old_cclasses");
+        // }
 
         /**
          * Solve the pricing problem
@@ -543,9 +546,9 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     CCcheck_val_2(val, "Failed in compute_objective");
                     memcpy(pd->pi_out, pd->pi,
                            sizeof(double) * (pd->nb_jobs + 1));
-                    if (pd->iterations % pd->nb_jobs) {
-                        // reduce_cost_fixing(pd);
-                    }
+                    // if (!(pd->iterations % (4*pd->nb_jobs))) {
+                    //     reduce_cost_fixing(pd);
+                    // }
                 }
 
                 break;
@@ -585,7 +588,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     CCutil_start_resume_time(&(problem->tot_reduce_cost_fixing));
                     reduce_cost_fixing(pd);
                     CCutil_suspend_timer(&(problem->tot_reduce_cost_fixing));
-                    print_interval_pair(pd->ordered_jobs);
+                    // print_interval_pair(pd->ordered_jobs);
                 }
 
                 /**
@@ -763,7 +766,7 @@ int check_schedules(NodeData* pd) {
     val = wctlp_status(pd->RMP, &status);
     CCcheck_val_2(val, "Failed in wctlp_status")
 
-        val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
+    val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed to get nb cols");
     assert(nb_cols == pd->localColPool->len);
     printf("number of cols check %d\n", nb_cols);
@@ -778,12 +781,12 @@ int check_schedules(NodeData* pd) {
         }
     }
 
-    if (status != GRB_OPTIMAL) {
-        wctlp_compute_IIS(pd->RMP);
-        wctlp_write(pd->RMP, "infeasible_RMP_after_reduce_cost_fixing.lp");
-        // printf("check file %d\n", status);
-        // getchar();
-    }
+    // if (status != GRB_OPTIMAL) {
+    //     wctlp_compute_IIS(pd->RMP);
+    //     wctlp_write(pd->RMP, "infeasible_RMP_after_reduce_cost_fixing.lp");
+    //     // printf("check file %d\n", status);
+    //     // getchar();
+    // }
 
 CLEAN:
 
