@@ -1,4 +1,5 @@
 #include "PricerSolverBddBackward.hpp"
+#include <iostream>
 
 /**
  * backward bdd pricersolver for the flow formulation that takes care of the
@@ -57,9 +58,6 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
                             it.child[1]->backward_label[0].get_f() -
                             value_Fj(w + job->processing_time, job) +
                             pi[job->job] + pi[nb_jobs];
-            auto result_no = it.forward_label[0].get_f() +
-                                it.child[0]->backward_label[0].get_f() +
-                                pi[nb_jobs];
 
             if (LB - (double)(num_machines - 1) * reduced_cost - result >
                     UB + 0.0001 &&
@@ -69,13 +67,6 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
                 nb_removed_edges++;
                 nb_edges_removed_evaluate++;
             }
-
-            // if (LB - (double)(num_machines - 1) * reduced_cost - result_no >
-            //         UB + 0.0001 &&
-            //     (it.calc_no) && it.get_weight() != 0) {
-            //     it.calc_no = false;
-            //     nb_removed_edges++;
-            // }
         }
     }
 
@@ -177,26 +168,6 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
                 nb_removed_edges++;
                 nb_removed_edges_evaluate++;
             }
-
-            // auto max = std::numeric_limits<double>::min();
-
-            // for (int i = 0; i < 2; i++) {
-            //     for (int j = 0; j < 2; j++) {
-            //         auto result_no = it.forward_label[0].get_f() +
-            //                          it.child[0]->backward_label[j].get_f() +
-            //                          pi[nb_jobs];
-            //         if (max < result_no) {
-            //             max = result_no;
-            //         }
-            //     }
-            // }
-
-            // if (LB - (double)(num_machines - 1) * reduced_cost - max >
-            //         UB - 1 + 0.00001 &&
-            //     (it.calc_no) && it.get_weight() != 0 ) {
-            //     it.calc_no = false;
-            //     nb_removed_edges++;
-            // }
         }
     }
 
