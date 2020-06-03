@@ -64,6 +64,14 @@ class PricerSolverBdd : public PricerSolverBase {
     private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);
     void add_inequality(std::vector<int> v1);
+
+    void update_constraints() override {
+
+    }
+
+    void update_reduced_costs_arcs() override {
+
+    }
 };
 // int g_compare_duration(gconstpointer a, gconstpointer b);
 

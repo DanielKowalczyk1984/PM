@@ -79,4 +79,12 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     int* get_take() override {
         return NULL;
     }
+
+    void update_constraints() override {
+
+    }
+
+    void update_reduced_costs_arcs() override {
+
+    }
 };

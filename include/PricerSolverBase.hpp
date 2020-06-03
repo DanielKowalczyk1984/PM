@@ -107,6 +107,15 @@ struct PricerSolverBase {
     virtual int* get_take() = 0;
     virtual int get_int_attr_model(enum MIP_Attr);
     virtual double get_dbl_attr_model(enum MIP_Attr);
+
+    /**
+     * Constraints auxilary functions 
+     */
+
+    virtual void update_constraints() = 0;
+    virtual void update_reduced_costs_arcs() = 0;
+     
+
 };
 
 #endif  // PRICER_SOLVER_BASE_HPP

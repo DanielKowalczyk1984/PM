@@ -51,6 +51,14 @@ class PricerSolverZdd : public PricerSolverBase
 
 
         void add_constraint(Job* job, GPtrArray* list, int order) override;
+
+        void update_constraints() override {
+
+        }
+
+        void update_reduced_costs_arcs() override {
+            
+        }
 };
 
 
