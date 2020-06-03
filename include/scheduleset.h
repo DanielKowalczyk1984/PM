@@ -35,6 +35,7 @@ int scheduleset_max(ScheduleSet *cclasses, int nb_columns);
 gint g_scheduleset_less(gconstpointer a,gconstpointer b);
 void g_scheduleset_print(gpointer data, gpointer user_data);
 gpointer g_copy_scheduleset(gconstpointer src, gpointer data);
+void g_sum_recalculate(gpointer data, gpointer user_data);
 
 /** new approach for columns */
 void g_scheduleset_free(void *set);
@@ -42,6 +43,7 @@ void g_sum_processing_time(gpointer data, gpointer user_data);
 void g_compute_nb_layers_schedule(gpointer data, gpointer user_data);
 ScheduleSet *scheduleset_from_solution(GPtrArray *machine, int nb_jobs);
 ScheduleSet *scheduleset_alloc(int nb_jobs);
+void scheduleset_recalculate(ScheduleSet *set);
 
 #ifdef __cplusplus
 }
