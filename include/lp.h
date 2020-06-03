@@ -90,6 +90,7 @@ int wctlp_optimize(wctlp *lp, int *status);
 int wctlp_objval(wctlp *, double *obj);
 int wctlp_pi(wctlp *, double *pi);
 int wctlp_x(wctlp *, double *x, int first);
+int wctlp_rc(wctlp *, double *rc, int first);
 
 int wctlp_basis_cols(wctlp *lp, int *column_status, int first);
 int wctlp_change_obj(wctlp *lp, int start, int len, double *values);

@@ -301,6 +301,33 @@ int wctlp_x(wctlp* lp, double* x, int first) {
     return val;
 }
 
+int wctlp_rc(wctlp* lp, double* rc, int first) {
+    int val = 0;
+    int nb_cols;
+    int solstat;
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_STATUS, &solstat);
+    CHECK_VAL_GRB(val, "Failed to the status of model", lp->env);
+
+    if (solstat == GRB_INFEASIBLE) {
+        fprintf(stderr, "Problem is infeasible\n");
+        val = 1;
+        return val;
+    }
+
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, &nb_cols);
+    CHECK_VAL_GRB(val, "", lp->env);
+
+    if (nb_cols == 0) {
+        fprintf(stderr, "Lp has no variables\n");
+        val = 1;
+        return val;
+    }
+
+    val = GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_RC, first, nb_cols - first,
+                             rc);
+    CHECK_VAL_GRB(val, "Failed in GRB_DBL_ATTR_X", lp->env);
+    return val;
+}
 int wctlp_basis_cols(wctlp* lp, int* column_status, int first) {
     int val = 0;
     int nb_cols, i;
