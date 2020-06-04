@@ -134,20 +134,22 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->lower_scaled_bound = 1;
     pd->LP_lower_bound = 0.0;
     pd->partial_sol = 0.0;
-    pd->rhs = (double*)NULL;
+    pd->rhs = (GArray*)NULL;
     /*Initialization  of the LP*/
     pd->RMP = (wctlp*)NULL;
     pd->MIP = (wctlp*)NULL;
     pd->lambda = (double*)NULL;
     pd->x_e = (double*)NULL;
     pd->coeff = (double*)NULL;
-    pd->pi = (double*)NULL;
+    pd->pi = (GArray*)NULL;
+    pd->nb_rows = 0;
+    pd->nb_cols = 0;
     /**init stab data */
-    pd->pi_in = (double*)NULL;
-    pd->pi_out = (double*)NULL;
-    pd->pi_sep = (double*)NULL;
-    pd->subgradient = (double*)NULL;
-    pd->subgradient_in = (double*)NULL;
+    pd->pi_in = (GArray*)NULL;
+    pd->pi_out = (GArray*)NULL;
+    pd->pi_sep = (GArray*)NULL;
+    pd->subgradient = (GArray*)NULL;
+    pd->subgradient_in = (GArray*)NULL;
     pd->reduced_cost = 0.0;
     pd->alpha = 0.8;
     pd->update = 1;
@@ -217,15 +219,15 @@ void lp_node_data_free(NodeData* pd) {
      * free all the data associated with the LP
      */
     CC_IFFREE(pd->coeff, double);
-    CC_IFFREE(pd->pi, double);
+    g_array_free(pd->pi,TRUE);
     CC_IFFREE(pd->lambda, double);
     CC_IFFREE(pd->x_e, double);
-    CC_IFFREE(pd->pi_out, double);
-    CC_IFFREE(pd->pi_in, double);
-    CC_IFFREE(pd->pi_sep, double);
-    CC_IFFREE(pd->subgradient, double);
-    CC_IFFREE(pd->subgradient_in, double);
-    CC_IFFREE(pd->rhs, double);
+    g_array_free(pd->pi_out, TRUE);
+    g_array_free(pd->pi_in, TRUE);
+    g_array_free(pd->pi_sep, TRUE);
+    g_array_free(pd->subgradient, TRUE);
+    g_array_free(pd->subgradient_in, TRUE);
+    g_array_free(pd->rhs, TRUE);
     CC_IFFREE(pd->column_status, int);
 
     /**
