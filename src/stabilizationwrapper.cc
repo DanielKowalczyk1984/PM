@@ -59,14 +59,14 @@ double compute_lagrange(OptimalSolution<double>& sol, double* rhs, double* pi,
 
 static double compute_reduced_cost(OptimalSolution<double>& sol, double* pi,
                                    int nb_jobs) {
-    double result = -pi[nb_jobs];
+    double result = pi[nb_jobs];
 
     for (guint i = 0; i < sol.jobs->len; ++i) {
         Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-        result += pi[tmp_j->job];
+        result -= pi[tmp_j->job];
     }
 
-    return result - sol.cost;
+    return result + sol.cost;
 }
 
 void update_alpha(NodeData* pd) {
@@ -318,7 +318,7 @@ int solve_pricing(NodeData* pd, parms* parms, int evaluate) {
     sol = pd->solver->pricing_algorithm(&g_array_index(pd->pi, double, 0));
     pd->reduced_cost = compute_reduced_cost(sol, &g_array_index(pd->pi,double,0), pd->nb_jobs);
 
-    if (pd->reduced_cost > 0.000001) {
+    if (pd->reduced_cost < -0.000001) {
         val = construct_sol(pd, &sol);
         CCcheck_val_2(val, "Failed in construction")
     } else {
@@ -355,7 +355,7 @@ int solve_stab(NodeData* pd, parms* parms) {
         result_sep = compute_lagrange(sol, rhs, pi_sep, pd->nb_jobs);
         pd->reduced_cost = compute_reduced_cost(sol, pi_out, pd->nb_jobs);
 
-        if (pd->reduced_cost >= 0.000001) {
+        if (pd->reduced_cost <= -0.000001) {
             val = construct_sol(pd, &sol);
             CCcheck_val_2(val, "Failed in construct_sol_stab");
             pd->update = 1;
@@ -406,7 +406,7 @@ int solve_stab_dynamic(NodeData* pd, parms* parms) {
         result_sep = compute_lagrange(sol, rhs, pi_sep, pd->nb_jobs);
         pd->reduced_cost = compute_reduced_cost(sol, pi_out, pd->nb_jobs);
 
-        if (pd->reduced_cost >= 0.000001) {
+        if (pd->reduced_cost <= -0.000001) {
             compute_subgradient(sol, pd);
             adjust_alpha(pi_out, pi_in, subgradient_in, pd->nb_jobs,
                          alpha);
@@ -462,7 +462,7 @@ int solve_stab_hybrid(NodeData* pd, parms* parms) {
 
         update_stabcenter(sol, pd);
 
-        if (pd->reduced_cost > 0.00001) {
+        if (pd->reduced_cost < 0.00001) {
             if (pd->in_mispricing_schedule) {
                 pd->in_mispricing_schedule = 0;
             }
@@ -495,7 +495,7 @@ int solve_farkas_dbl(NodeData* pd) {
     OptimalSolution<double> s = pd->solver->farkas_pricing(&g_array_index(pd->pi,double,0));
     pd->update = 0;
 
-    if (s.obj > -0.00001) {
+    if (s.obj < 0.00001) {
         val = construct_sol(pd, &s);
         wctlp_write(pd->RMP, "RMP.lp");
 

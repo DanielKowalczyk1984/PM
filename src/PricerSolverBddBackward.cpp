@@ -61,11 +61,11 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
             int    w = it.get_weight();
             Job*   job = it.get_job();
             double result = it.forward_label[0].get_f() +
-                            it.child[1]->backward_label[0].get_f() -
-                            value_Fj(w + job->processing_time, job) +
-                            pi[job->job] + pi[nb_jobs];
+                            it.child[1]->backward_label[0].get_f() +
+                            value_Fj(w + job->processing_time, job) -
+                            pi[job->job] - pi[nb_jobs];
 
-            if (LB - (double)(num_machines - 1) * reduced_cost - result >
+            if (LB + (double)(num_machines - 1) * reduced_cost + result >
                     UB + 0.0001 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
@@ -151,30 +151,30 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
             if (it.forward_label[0].get_previous_job() != job &&
                 it.child[1]->backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[0].get_f() +
-                         it.child[1]->backward_label[0].get_f() -
-                         value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[nb_jobs];
+                         it.child[1]->backward_label[0].get_f() +
+                         value_Fj(w + job->processing_time, job) -
+                         pi[job->job] - pi[nb_jobs];
 
             } else if (it.forward_label[0].get_previous_job() == job &&
                        it.child[1]->backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[1].get_f() +
-                         it.child[1]->backward_label[0].get_f() -
-                         value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[nb_jobs];
+                         it.child[1]->backward_label[0].get_f() +
+                         value_Fj(w + job->processing_time, job) -
+                         pi[job->job] - pi[nb_jobs];
             } else if (it.forward_label[0].get_previous_job() != job &&
                        it.child[1]->backward_label[0].get_prev_job() == job) {
                 result = it.forward_label[0].get_f() +
-                         it.child[1]->backward_label[1].get_f() -
-                         value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[nb_jobs];
+                         it.child[1]->backward_label[1].get_f() +
+                         value_Fj(w + job->processing_time, job) -
+                         pi[job->job] - pi[nb_jobs];
             } else {
                 result = it.forward_label[1].get_f() +
-                         it.child[1]->backward_label[1].get_f() -
-                         value_Fj(w + job->processing_time, job) +
-                         pi[job->job] + pi[nb_jobs];
+                         it.child[1]->backward_label[1].get_f() +
+                         value_Fj(w + job->processing_time, job) -
+                         pi[job->job] - pi[nb_jobs];
             }
 
-            if (LB - (double)(num_machines - 1) * reduced_cost - result >
+            if (LB + (double)(num_machines - 1) * reduced_cost + result >
                     UB + 0.0001 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;

@@ -21,12 +21,12 @@ public:
         Job *tmp_j = n.get_job();
         NodeBdd<T> *p0 = n.child[0];
         NodeBdd<T> *p1 = n.child[1];
-        T result = pi[tmp_j->job];
+        T result = -pi[tmp_j->job];
 
         T obj0 = p0->backward_label[0].get_f();
         T obj1 = p1->backward_label[0].get_f() + result;
 
-        if (obj0 < obj1) {
+        if (obj0 > obj1) {
             n.backward_label[0].update_solution(obj1, nullptr, true);
         } else {
             n.backward_label[0].update_solution(obj0, nullptr, false);
@@ -35,15 +35,15 @@ public:
     }
 
     void initializenode(NodeBdd<T> &n) const override {
-        n.backward_label[0].update_solution(-DBL_MAX / 2, nullptr, false);
+        n.backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
     }
 
     void initializerootnode(NodeBdd<T> &n) const override {
-        n.backward_label[0].f = -pi[num_jobs];
+        n.backward_label[0].f = pi[num_jobs];
     }
 
     OptimalSolution<T> get_objective(NodeBdd<T> &n) const {
-        OptimalSolution<T> sol(-pi[num_jobs]);
+        OptimalSolution<T> sol(pi[num_jobs]);
 
         NodeBdd<T> *aux_node = &n;
         Job *aux_job =  n.get_job();
