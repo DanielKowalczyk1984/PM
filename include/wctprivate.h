@@ -61,7 +61,10 @@ struct _NodeData {
     double *lambda;
     double *x_e;
     double *coeff;
-    double *pi;
+    GArray *pi;
+    int nb_rows;
+    int nb_cols;
+
     // PricerSolver
     PricerSolver *solver;
 
@@ -84,13 +87,13 @@ struct _NodeData {
     double  LP_lower_bound;
     double  LP_lower_bound_dual;
     double  LP_lower_bound_BB;
-    double *rhs;
+    GArray *rhs;
     int     nb_non_improvements;
     int iterations;
     /** Wentges smoothing technique */
-    double *pi_in;
+    GArray *pi_in;
     double dualdiffnorm;
-    double *subgradient;
+    GArray *subgradient;
     double hybridfactor;
     double subgradientnorm;
     double  alpha;
@@ -102,9 +105,9 @@ struct _NodeData {
     double  eta_in;
     int in_mispricing_schedule;
     double subgradientproduct;
-    double *pi_out;
-    double *pi_sep;
-    double *subgradient_in;
+    GArray *pi_out;
+    GArray *pi_sep;
+    GArray *subgradient_in;
     double  eta_out;
     double  eta_sep;
     double reduced_cost;

@@ -93,7 +93,7 @@ int evaluate_nodes(NodeData* pd) {
     int    UB = pd->problem->opt_sol->tw;
     double LB = pd->LP_lower_bound;
 
-    pd->solver->evaluate_nodes(pd->pi, UB, LB);
+    pd->solver->evaluate_nodes( &g_array_index(pd->pi, double, 0), UB, LB);
 
     return val;
 }
@@ -103,7 +103,7 @@ int reduce_cost_fixing(NodeData* pd) {
     int    UB = pd->problem->opt_sol->tw;
     double LB = pd->LP_lower_bound;
 
-    pd->solver->reduce_cost_fixing(pd->pi, UB, LB);
+    pd->solver->reduce_cost_fixing(&g_array_index(pd->pi, double, 0) , UB, LB);
     pd->problem->size_graph_after_reduced_cost_fixing =
         get_nb_edges(pd->solver);
     return val;

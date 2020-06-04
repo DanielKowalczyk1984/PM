@@ -8,13 +8,12 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     double       incumbent;
     int          i;
     int          tot_weighted = 0;
-    int          nb_cols;
     ScheduleSet* tmp_schedule;
     Job*         tmp_j;
 
     val = wctlp_objval(pd->RMP, &incumbent);
     CCcheck_val_2(val, "wctlp_objval failed");
-    val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
+    val = wctlp_get_nb_cols(pd->RMP, &pd->nb_cols);
     CCcheck_val_2(val, "Failed get nb_cols");
 
     schedulesets_free(&(pd->bestcolors), &(pd->nb_best));
@@ -22,7 +21,7 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     CCcheck_NULL_2(pd->bestcolors, "Failed to realloc pd->bestcolors");
     pd->nb_best = 0;
 
-    assert(nb_cols == pd->localColPool->len);
+    assert(pd->nb_cols == pd->localColPool->len);
     for (i = 0; i < pd->localColPool->len; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
         test_incumbent += x[i];
@@ -103,6 +102,7 @@ int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     Job*       job;
 
     val = wctlp_get_nb_cols(lp, &(set->id));
+    pd->nb_cols = set->id;
     CCcheck_val_2(val, "Failed to get the number of cols");
     var_ind = set->id;
     val = wctlp_addcol(lp, 0, NULL, NULL,
@@ -142,7 +142,6 @@ int build_rmp(NodeData* pd, int construct) {
     int      nb_jobs = problem->nb_jobs;
     int      nb_machines = problem->nb_machines;
     Parms*   parms = &(problem->parms);
-    int      nb_row;
     int*     covered = CC_SAFE_MALLOC(nb_jobs, int);
     CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
     fill_int(covered, nb_jobs, 0);
@@ -165,7 +164,7 @@ int build_rmp(NodeData* pd, int construct) {
                        wctlp_GREATER_EQUAL, -(double)nb_machines, (char*)NULL);
     CCcheck_val_2(val, "Failed to add convexification constraint");
 
-    wctlp_get_nb_rows(pd->RMP, &nb_row);
+    wctlp_get_nb_rows(pd->RMP, &(pd->nb_rows));
 
     /** add columns from localColPool */
     add_artificial_var_to_rmp(pd);
@@ -174,43 +173,43 @@ int build_rmp(NodeData* pd, int construct) {
     /**
      * Some aux variables for column generation
      */
-    pd->pi = (double*)CCutil_reallocrus(pd->pi, nb_row * sizeof(double));
+    pd->pi = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi, "Failed to allocate memory");
-    pd->pi_in = CC_SAFE_MALLOC(nb_row, double);
+    pd->pi_in = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi_in, "Failed to allocate memory");
-    fill_dbl(pd->pi_in, nb_row, 0.0);
+    fill_dbl(&g_array_index(pd->pi_in,double,0), pd->nb_rows, 0.0);
     pd->eta_in = 0.0;
-    pd->pi_out = CC_SAFE_MALLOC(nb_row, double);
+    pd->pi_out = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi_out, "Failed to allocate memory");
     pd->eta_out = 0.0;
-    fill_dbl(pd->pi_out, nb_row, 0.0);
-    pd->pi_sep = CC_SAFE_MALLOC(nb_row, double);
+    fill_dbl(&g_array_index(pd->pi_out,double,0), pd->nb_rows, 0.0);
+    pd->pi_sep = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi_sep, "Failed to allocate memory");
-    fill_dbl(pd->pi_sep, nb_row, 0.0);
-    pd->subgradient_in = CC_SAFE_MALLOC(nb_row, double);
+    fill_dbl(&g_array_index(pd->pi_sep,double,0), pd->nb_rows, 0.0);
+    pd->subgradient_in = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->subgradient_in, "Failed to allocate memory");
-    pd->subgradient = CC_SAFE_MALLOC(nb_row, double);
+    pd->subgradient = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->subgradient, "Failed to allocate memory");
     if (parms->pricing_solver < dp_solver) {
         pd->x_e = CC_SAFE_MALLOC(2 * get_nb_vertices(pd->solver), double);
         CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
     }
-    pd->rhs = CC_SAFE_MALLOC(nb_row, double);
+    pd->rhs = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
-    val = wctlp_get_rhs(pd->RMP, pd->rhs);
+    val = wctlp_get_rhs(pd->RMP, &g_array_index(pd->rhs,double,0));
     CCcheck_val_2(val, "Failed to get RHS");
 CLEAN:
 
     if (val) {
         wctlp_free(&(pd->RMP));
         CC_IFFREE(pd->coeff, double);
-        CC_IFFREE(pd->pi, double);
-        CC_IFFREE(pd->pi_in, double)
-        CC_IFFREE(pd->pi_out, double)
-        CC_IFFREE(pd->pi_sep, double)
-        CC_IFFREE(pd->subgradient, double)
-        CC_IFFREE(pd->subgradient_in, double)
-        CC_IFFREE(pd->rhs, double)
+        g_array_free(pd->pi, TRUE);
+        g_array_free(pd->pi_in, TRUE);
+        g_array_free(pd->pi_out, TRUE);
+        g_array_free(pd->pi_sep, TRUE);
+        g_array_free(pd->subgradient, TRUE);
+        g_array_free(pd->subgradient_in, TRUE);
+        g_array_free(pd->rhs, TRUE);
     }
 
     CC_IFFREE(covered, int);
@@ -219,17 +218,16 @@ CLEAN:
 
 int get_solution_lp_lowerbound(NodeData* pd) {
     int  val = 0;
-    int  nb_cols;
     Job* tmp_j;
 
-    val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
+    val = wctlp_get_nb_cols(pd->RMP, &pd->nb_cols);
     CCcheck_val_2(val, "Failed in wctlp_get_nb_cols");
-    pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols, double);
+    pd->lambda = CC_SAFE_REALLOC(pd->lambda, pd->nb_cols, double);
     CCcheck_NULL_2(pd->lambda, "Failed to allocate memory");
-    assert(nb_cols == pd->localColPool->len);
+    assert(pd->nb_cols == pd->localColPool->len);
     wctlp_x(pd->RMP, pd->lambda, 0);
 
-    for (unsigned i = 0; i < nb_cols; ++i) {
+    for (unsigned i = 0; i < pd->nb_cols; ++i) {
         ScheduleSet* tmp =
             ((ScheduleSet*)g_ptr_array_index(pd->localColPool, i));
         if (pd->lambda[i]) {

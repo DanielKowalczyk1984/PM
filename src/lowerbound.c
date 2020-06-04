@@ -1,6 +1,8 @@
 #include <solver.h>
 #include <wct.h>
 #include "lp.h"
+#include "scheduleset.h"
+#include "wctprivate.h"
 
 static const double min_nb_del_row_ratio = 0.9;
 
@@ -74,6 +76,8 @@ int delete_old_cclasses(NodeData* pd) {
         int it = 0;
         int first_del = -1;
         int last_del = -1;
+        wctlp_get_nb_cols(pd->RMP, &nb_col);
+        assert(nb_col == count);
         for (i = 0; i < count; ++i) {
             tmp_schedule =
                 (ScheduleSet*)g_ptr_array_index(pd->localColPool, it);
@@ -134,7 +138,7 @@ int delete_infeasible_cclasses(NodeData* pd) {
     /** pd->zero_count can be deprecated! */
     pd->zero_count = 0;
 
-    for (i = 0; i < pd->localColPool->len; ++i) {
+    for (i = pd->nb_jobs; i < pd->localColPool->len; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
         if (tmp_schedule->age > 0) {
             pd->zero_count++;
@@ -144,7 +148,7 @@ int delete_infeasible_cclasses(NodeData* pd) {
     int it = 0;
     int first_del = -1;
     int last_del = -1;
-    for (i = 0; i < count; ++i) {
+    for (i = pd->nb_jobs; i < count; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, it);
         if (tmp_schedule->del != 1) {
             if (first_del != -1) {
@@ -204,33 +208,33 @@ void g_make_pi_feasible(gpointer data, gpointer user_data) {
 
     for (i = 0; i < x->job_list->len; ++i) {
         tmp_j = (Job*)g_ptr_array_index(x->job_list, i);
-        if (signbit(pd->pi[tmp_j->job])) {
-            pd->pi[tmp_j->job] = 0.0;
+        if (signbit((double)pd->pi->data[tmp_j->job])) {
+            pd->pi->data[tmp_j->job]= 0.0;
         }
 
-        colsum += pd->pi[tmp_j->job];
+        colsum += pd->pi->data[tmp_j->job];
         colsum = nextafter(colsum, DBL_MAX);
     }
 
-    if (!signbit(pd->pi[pd->nb_jobs])) {
-        pd->pi[pd->nb_jobs] = 0.0;
+    if (!signbit((double)pd->pi->data[pd->nb_jobs])) {
+        g_array_index(pd->pi, double, pd->nb_jobs)  = 0.0;
     }
 
-    colsum += pd->pi[pd->nb_jobs];
+    colsum += (double)pd->pi->data[pd->nb_jobs];
     colsum = nextafter(colsum, DBL_MAX);
 
     if (colsum > x->total_weighted_completion_time) {
         double newcolsum = .0;
         for (i = 0; i < x->job_list->len; ++i) {
             tmp_j = (Job*)g_ptr_array_index(x->job_list, i);
-            pd->pi[tmp_j->job] /= colsum;
-            pd->pi[tmp_j->job] *= x->total_weighted_completion_time;
-            newcolsum += pd->pi[tmp_j->job];
+            g_array_index(pd->pi, double, tmp_j->job)  /= colsum;
+            g_array_index(pd->pi, double, tmp_j->job) *= x->total_weighted_completion_time;
+            newcolsum += g_array_index(pd->pi, double, tmp_j->job) ;
         }
 
-        pd->pi[pd->nb_jobs] /= colsum;
-        pd->pi[pd->nb_jobs] *= x->total_weighted_completion_time;
-        newcolsum += pd->pi[pd->nb_jobs];
+        g_array_index(pd->pi, double, pd->nb_jobs) /= colsum;
+        g_array_index(pd->pi, double, pd->nb_jobs)  *= x->total_weighted_completion_time;
+        newcolsum += g_array_index(pd->pi, double, pd->nb_jobs) ;
 
         if (dbg_lvl() > 1) {
             printf("Decreased column sum of %5d from  %30.20f to  %30.20f\n",
@@ -253,29 +257,32 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
     double colsum = .0;
 
     for (i = 0; i < x->job_list->len; ++i) {
+        double *tmp = &g_array_index(pd->pi, double, i);
         tmp_j = (Job*)g_ptr_array_index(x->job_list, i);
-        if (signbit(pd->pi[tmp_j->job])) {
-            pd->pi[tmp_j->job] = 0.0;
+        if (signbit(*tmp)) {
+            *tmp = 0.0;
         }
 
-        colsum += pd->pi[tmp_j->job];
+        colsum += *tmp;
         colsum = nextafter(colsum, DBL_MAX);
     }
 
-    colsum += pd->pi[pd->nb_jobs];
+    colsum +=  g_array_index(pd->pi,double, pd->nb_jobs) ;
 
     if (colsum > x->total_weighted_completion_time) {
         double newcolsum = .0;
         for (i = 0; i < x->job_list->len; ++i) {
             tmp_j = (Job*)g_ptr_array_index(x->job_list, i);
-            pd->pi[tmp_j->job] /= colsum;
-            pd->pi[tmp_j->job] *= x->total_weighted_completion_time;
-            newcolsum += pd->pi[tmp_j->job];
+            double *tmp = &g_array_index(pd->pi, double, i);
+            *tmp /= colsum;
+            *tmp *= x->total_weighted_completion_time;
+            newcolsum += *tmp;
         }
 
-        pd->pi[pd->nb_jobs] /= colsum;
-        pd->pi[pd->nb_jobs] *= x->total_weighted_completion_time;
-        newcolsum += pd->pi[pd->nb_jobs];
+        double *tmp = &g_array_index(pd->pi, double, pd->nb_jobs);
+        *tmp /= colsum;
+        *tmp *= x->total_weighted_completion_time;
+        newcolsum += *tmp;
 
         if (dbg_lvl() > 1) {
             printf("Decreased column sum of %5d from  %30.20f to  %30.20f\n",
@@ -295,8 +302,10 @@ int compute_objective(NodeData* pd, Parms* parms) {
     pd->LP_lower_bound_dual = .0;
 
     /** compute lower bound with the dual variables */
+    double *tmp = &g_array_index(pd->pi, double, 0);
+    double *tmp_rhs = &g_array_index(pd->rhs, double, 0);
     for (i = 0; i < pd->nb_jobs + 1; i++) {
-        pd->LP_lower_bound_dual += (double)pd->pi[i] * pd->rhs[i];
+        pd->LP_lower_bound_dual += tmp[i] * tmp_rhs[i];
     }
     pd->LP_lower_bound_dual -= 0.0001;
 
@@ -346,7 +355,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
      * Construction of new solution if localPoolColPool is empty
      */
     if (pd->localColPool->len == 0) {
-        add_solution_to_colpool(problem->opt_sol, pd);
+        // add_solution_to_colpool(problem->opt_sol, pd);
     }
     reset_nb_layers(pd->jobarray);
 
@@ -397,18 +406,18 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             val = grow_ages(pd);
             CCcheck_val_2(val, "Failed in grow_ages");
             /** get the dual variables and make them feasible */
-            val = wctlp_pi(pd->RMP, pd->pi);
+            val = wctlp_pi(pd->RMP, &g_array_index(pd->pi,double, 0));
             CCcheck_val_2(val, "wctlp_pi failed");
             /** Compute the objective function */
             val = compute_objective(pd, parms);
             CCcheck_val_2(val, "Failed in compute_objective");
-            memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->nb_jobs + 1));
+            memcpy(&g_array_index(pd->pi_out,double,0), &g_array_index(pd->pi, double, 0), sizeof(double) * (pd->nb_jobs + 1));
             pd->eta_out = pd->LP_lower_bound_dual;
             break;
 
         case WCTLP_INFEASIBLE:
             /** get the dual variables and make them feasible */
-            val = wctlp_pi_inf(pd->RMP, pd->pi);
+            val = wctlp_pi_inf(pd->RMP, &g_array_index(pd->pi, double, 0));
             CCcheck_val_2(val, "Failed at wctlp_pi_inf");
             break;
     }
@@ -540,11 +549,11 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 /** Compute the objective function */
 
                 if (pd->update) {
-                    val = wctlp_pi(pd->RMP, pd->pi);
+                    val = wctlp_pi(pd->RMP, &g_array_index(pd->pi, double, 0) );
                     CCcheck_val_2(val, "wctlp_pi failed");
                     val = compute_objective(pd, parms);
                     CCcheck_val_2(val, "Failed in compute_objective");
-                    memcpy(pd->pi_out, pd->pi,
+                    memcpy(&g_array_index(pd->pi_out,double,0), &g_array_index(pd->pi, double, 0),
                            sizeof(double) * (pd->nb_jobs + 1));
                     // if (!(pd->iterations % (4*pd->nb_jobs))) {
                     //     reduce_cost_fixing(pd);
@@ -555,7 +564,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
 
             case GRB_INFEASIBLE:
                 /** get the dual variables and make them feasible */
-                val = wctlp_pi_inf(pd->RMP, pd->pi);
+                val = wctlp_pi_inf(pd->RMP, &g_array_index(pd->pi, double, 0) );
                 CCcheck_val_2(val, "wctlp_pi failed");
                 break;
         }
@@ -599,7 +608,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
                 // construct_lp_sol_from_rmp(pd);
-                memcpy(pd->pi_out, pd->pi, sizeof(double) * (pd->nb_jobs + 1));
+                memcpy(&g_array_index(pd->pi_out,double,0), &g_array_index(pd->pi, double, 0) , sizeof(double) * (pd->nb_jobs + 1));
                 printf("size evolution %lu\n", get_nb_vertices(pd->solver));
                 break;
 
@@ -781,12 +790,6 @@ int check_schedules(NodeData* pd) {
         }
     }
 
-    // if (status != GRB_OPTIMAL) {
-    //     wctlp_compute_IIS(pd->RMP);
-    //     wctlp_write(pd->RMP, "infeasible_RMP_after_reduce_cost_fixing.lp");
-    //     // printf("check file %d\n", status);
-    //     // getchar();
-    // }
 
 CLEAN:
 

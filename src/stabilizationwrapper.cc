@@ -97,11 +97,13 @@ int get_dual_row(NodeData* pd, int i) {
 
 int calculate_dualdiffnorm(NodeData* pd) {
     int val = 0;
+    double* pi_out = &g_array_index(pd->pi_out,double,0);
+    double* pi_in = &g_array_index(pd->pi_in,double,0);
 
     pd->dualdiffnorm = 0.0;
 
     for (int i = 0; i <= pd->nb_jobs; ++i) {
-        double dualdiff = SQR(pd->pi_in[i] - pd->pi_out[i]);
+        double dualdiff = SQR(pi_in[i] - pi_out[i]);
         if (dualdiff > 0.00001) {
             pd->dualdiffnorm += dualdiff;
         }
@@ -114,11 +116,14 @@ int calculate_dualdiffnorm(NodeData* pd) {
 
 int calculate_beta(NodeData* pd) {
     int val = 0;
+    double *pi_out = &g_array_index(pd->pi_out,double,0);
+    double *pi_in = &g_array_index(pd->pi_in,double,0);
+    double *subgradient_in = &g_array_index(pd->subgradient_in, double, 0);
 
     pd->beta = 0.0;
     for (int i = 0; i <= pd->nb_jobs; ++i) {
-        double dualdiff = ABS(pd->pi_out[i] - pd->pi_in[i]);
-        double product = dualdiff * ABS(pd->subgradient_in[i]);
+        double dualdiff = ABS(pi_out[i] - pi_in[i]);
+        double product = dualdiff * ABS(subgradient_in[i]);
 
         if (product > 0.000001) {
             pd->beta += product;
@@ -134,12 +139,16 @@ int calculate_beta(NodeData* pd) {
 
 int calculate_hybridfactor(NodeData* pd) {
     int val = 0;
+    
+    double *pi_out = &g_array_index(pd->pi_out,double,0);
+    double *pi_in = &g_array_index(pd->pi_in,double,0);
+    double *subgradient_in = &g_array_index(pd->subgradient_in,double,0);
 
     double aux_norm = 0.0;
     for (int i = 0; i <= pd->nb_jobs; ++i) {
         double aux_double =
-            SQR((pd->beta - 1.0) * (pd->pi_out[i] - pd->pi_in[i]) +
-                pd->beta * (pd->subgradient_in[i] * pd->dualdiffnorm /
+            SQR((pd->beta - 1.0) * (pi_out[i] - pi_in[i]) +
+                pd->beta * (subgradient_in[i] * pd->dualdiffnorm /
                             pd->subgradientnorm));
         if (aux_double > 0.00001) {
             aux_norm += aux_double;
@@ -182,49 +191,55 @@ double compute_dual(NodeData* pd, int i) {
     double usedalpha = pd->alpha;
     double usedbeta = pd->beta;
 
+    double *pi_in = &g_array_index(pd->pi_in,double,0);
+    double *pi_out = &g_array_index(pd->pi_out,double,0);
+    double *subgradient_in = &g_array_index(pd->subgradient_in,double,0);
+
     if (pd->in_mispricing_schedule) {
         usedalpha = pd->alphabar;
         usedbeta = 0.0;
     }
 
     if (pd->hasstabcenter && (usedbeta == 0.0 || usedalpha == 0.0)) {
-        return usedalpha * pd->pi_in[i] + (1.0 - usedalpha) * pd->pi_out[i];
+        return usedalpha * pi_in[i] + (1.0 - usedalpha) * pi_out[i];
     } else if (pd->hasstabcenter && usedbeta > 0.0) {
-        double dual = pd->pi_in[i] +
+        double dual = pi_in[i] +
                       pd->hybridfactor *
-                          (pd->beta * (pd->pi_in[i] + pd->subgradient_in[i] *
+                          (pd->beta * (pi_in[i] + subgradient_in[i] *
                                                           pd->dualdiffnorm /
                                                           pd->subgradientnorm) +
-                           (1.0 - pd->beta) * pd->pi_out[i] - pd->pi_in[i]);
+                           (1.0 - pd->beta) * pi_out[i] - pi_in[i]);
         return CC_MAX(dual, 0.0);
     }
 
-    return pd->pi_out[i];
+    return pi_out[i];
 }
 
 int row_getDual(NodeData* pd, int i) {
     int val = 0;
     assert(i <= pd->nb_jobs);
 
-    pd->pi_sep[i] = compute_dual(pd, i);
+    g_array_index(pd->pi_sep,double,i) = compute_dual(pd, i);
 
     return val;
 }
 
 static void compute_subgradient(const OptimalSolution<double>& sol,
                                 NodeData*                      pd) {
-    fill_dbl(pd->subgradient_in, pd->nb_jobs, 1.0);
-    pd->subgradient_in[pd->nb_jobs] = 0.0;
+    double *subgradient_in = &g_array_index(pd->subgradient_in,double,0);
+    double *rhs = &g_array_index(pd->rhs,double,0);
+    fill_dbl(subgradient_in, pd->nb_jobs, 1.0);
+    subgradient_in[pd->nb_jobs] = 0.0;
 
     for (guint i = 0; i < sol.jobs->len; i++) {
         Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-        pd->subgradient_in[tmp_j->job] += pd->rhs[pd->nb_jobs] * 1.0;
+        subgradient_in[tmp_j->job] += rhs[pd->nb_jobs] * 1.0;
     }
 
     pd->subgradientnorm = 0.0;
 
     for (int i = 0; i < pd->nb_jobs; ++i) {
-        double sqr = SQR(pd->subgradient_in[i]);
+        double sqr = SQR(subgradient_in[i]);
 
         if (sqr > 0.00001) {
             pd->subgradientnorm += sqr;
@@ -237,10 +252,14 @@ static void compute_subgradient(const OptimalSolution<double>& sol,
 int update_subgradientproduct(NodeData* pd) {
     int val = 0;
 
+    double *pi_in = &g_array_index(pd->pi_in,double,0);
+    double *pi_out = &g_array_index(pd->pi_out,double,0);
+    double *subgradient_in = &g_array_index(pd->subgradient_in,double,0);
+
     pd->subgradientproduct = 0.0;
     for (int i = 0; i < pd->nb_jobs; ++i) {
         pd->subgradientproduct -=
-            (pd->pi_out[i] - pd->pi_in[i]) * pd->subgradient_in[i];
+            (pi_out[i] - pi_in[i]) * subgradient_in[i];
     }
     // printf("subgradientproduct %f\n", pd->subgradientproduct);
 
@@ -250,8 +269,11 @@ int update_subgradientproduct(NodeData* pd) {
 int update_stabcenter(const OptimalSolution<double>& sol, NodeData* pd) {
     int val = 0;
 
+    double *pi_sep = &g_array_index(pd->pi_sep,double,0);
+    double *pi_in = &g_array_index(pd->pi_in,double,0);
+
     if (pd->eta_sep > pd->eta_in) {
-        memcpy(pd->pi_in, pd->pi_sep, (pd->nb_jobs + 1) * sizeof(double));
+        memcpy(pi_in, pi_sep, (pd->nb_jobs + 1) * sizeof(double));
         compute_subgradient(sol, pd);
         pd->eta_in = pd->eta_sep;
         pd->hasstabcenter = 1;
@@ -293,8 +315,8 @@ int solve_pricing(NodeData* pd, parms* parms, int evaluate) {
 
     OptimalSolution<double> sol;
 
-    sol = pd->solver->pricing_algorithm(pd->pi);
-    pd->reduced_cost = compute_reduced_cost(sol, pd->pi, pd->nb_jobs);
+    sol = pd->solver->pricing_algorithm(&g_array_index(pd->pi, double, 0));
+    pd->reduced_cost = compute_reduced_cost(sol, &g_array_index(pd->pi,double,0), pd->nb_jobs);
 
     if (pd->reduced_cost > 0.000001) {
         val = construct_sol(pd, &sol);
@@ -315,19 +337,23 @@ int solve_stab(NodeData* pd, parms* parms) {
     bool          mispricing = true;
     double        result_sep;
     pd->update = 0;
+    double *pi_sep = &g_array_index(pd->pi_sep,double,0);
+    double *pi_out = &g_array_index(pd->pi_out,double,0);
+    double *pi_in = &g_array_index(pd->pi_in,double,0);
+    double *rhs = &g_array_index(pd->rhs,double,0);
 
     do {
         k += 1.0;
         alpha =
             pd->hasstabcenter ? CC_MAX(0, 1.0 - k * (1.0 - pd->alpha)) : 0.0;
-        compute_pi_eta_sep(pd->nb_jobs, pd->pi_sep, &(pd->eta_sep), alpha,
-                           pd->pi_in, &(pd->eta_in), pd->pi_out,
+        compute_pi_eta_sep(pd->nb_jobs, pi_sep, &(pd->eta_sep), alpha,
+                           pi_in, &(pd->eta_in), pi_out,
                            &(pd->eta_out));
         OptimalSolution<double> sol;
-        sol = solver->pricing_algorithm(pd->pi_sep);
+        sol = solver->pricing_algorithm(pi_sep);
 
-        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->nb_jobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->nb_jobs);
+        result_sep = compute_lagrange(sol, rhs, pi_sep, pd->nb_jobs);
+        pd->reduced_cost = compute_reduced_cost(sol, pi_out, pd->nb_jobs);
 
         if (pd->reduced_cost >= 0.000001) {
             val = construct_sol(pd, &sol);
@@ -340,7 +366,7 @@ int solve_stab(NodeData* pd, parms* parms) {
     if (result_sep > pd->eta_in) {
         pd->hasstabcenter = 1;
         pd->eta_in = result_sep;
-        memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->nb_jobs + 1));
+        memcpy(pi_in, pi_sep, sizeof(double) * (pd->nb_jobs + 1));
     }
 
     if (pd->iterations % pd->nb_jobs == 0) {
@@ -362,22 +388,27 @@ int solve_stab_dynamic(NodeData* pd, parms* parms) {
     double        result_sep;
     bool          mispricing = true;
     pd->update = 0;
+    double *pi_sep = &g_array_index(pd->pi_sep,double,0);
+    double *pi_out = &g_array_index(pd->pi_out,double,0);
+    double *pi_in = &g_array_index(pd->pi_in,double,0);
+    double *subgradient_in = &g_array_index(pd->subgradient_in,double,0);
+    double *rhs = &g_array_index(pd->rhs,double,0);
 
     do {
         k += 1.0;
         alpha =
             pd->hasstabcenter ? CC_MAX(0.0, 1.0 - k * (1 - pd->alpha)) : 0.0;
-        compute_pi_eta_sep(pd->nb_jobs, pd->pi_sep, &(pd->eta_sep), alpha,
-                           pd->pi_in, &(pd->eta_in), pd->pi_out,
+        compute_pi_eta_sep(pd->nb_jobs, pi_sep, &(pd->eta_sep), alpha,
+                           pi_in, &(pd->eta_in), pi_out,
                            &(pd->eta_out));
         OptimalSolution<double> sol;
-        sol = solver->pricing_algorithm(pd->pi_sep);
-        result_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->nb_jobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->nb_jobs);
+        sol = solver->pricing_algorithm(pi_sep);
+        result_sep = compute_lagrange(sol, rhs, pi_sep, pd->nb_jobs);
+        pd->reduced_cost = compute_reduced_cost(sol, pi_out, pd->nb_jobs);
 
         if (pd->reduced_cost >= 0.000001) {
             compute_subgradient(sol, pd);
-            adjust_alpha(pd->pi_out, pd->pi_in, pd->subgradient_in, pd->nb_jobs,
+            adjust_alpha(pi_out, pi_in, subgradient_in, pd->nb_jobs,
                          alpha);
             val = construct_sol(pd, &sol);
             CCcheck_val_2(val, "Failed in construct_sol_stab");
@@ -390,7 +421,7 @@ int solve_stab_dynamic(NodeData* pd, parms* parms) {
     if (result_sep > pd->eta_in) {
         pd->hasstabcenter = 1;
         pd->eta_in = result_sep;
-        memcpy(pd->pi_in, pd->pi_sep, sizeof(double) * (pd->nb_jobs + 1));
+        memcpy(pi_in, pi_sep, sizeof(double) * (pd->nb_jobs + 1));
     }
 
     if (pd->iterations % pd->nb_jobs == 0) {
@@ -409,6 +440,9 @@ int solve_stab_hybrid(NodeData* pd, parms* parms) {
     PricerSolver* solver = pd->solver;
     pd->update = 0;
     bool stabilized = false;
+    double *pi_sep = &g_array_index(pd->pi_sep,double,0);
+    double *pi_out = &g_array_index(pd->pi_out,double,0);
+    double *rhs = &g_array_index(pd->rhs,double,0);
 
     do {
         update_node(pd);
@@ -417,14 +451,14 @@ int solve_stab_hybrid(NodeData* pd, parms* parms) {
         stabilized = is_stabilized(pd);
 
         for (int i = 0; i <= pd->nb_jobs; ++i) {
-            pd->pi_sep[i] = compute_dual(pd, i);
+            pi_sep[i] = compute_dual(pd, i);
         }
 
         OptimalSolution<double> sol;
-        sol = solver->pricing_algorithm(pd->pi_sep);
+        sol = solver->pricing_algorithm(pi_sep);
 
-        pd->eta_sep = compute_lagrange(sol, pd->rhs, pd->pi_sep, pd->nb_jobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pd->pi_out, pd->nb_jobs);
+        pd->eta_sep = compute_lagrange(sol, rhs, pi_sep, pd->nb_jobs);
+        pd->reduced_cost = compute_reduced_cost(sol, pi_out, pd->nb_jobs);
 
         update_stabcenter(sol, pd);
 
@@ -458,7 +492,7 @@ int solve_stab_hybrid(NodeData* pd, parms* parms) {
 
 int solve_farkas_dbl(NodeData* pd) {
     int                     val = 0;
-    OptimalSolution<double> s = pd->solver->farkas_pricing(pd->pi);
+    OptimalSolution<double> s = pd->solver->farkas_pricing(&g_array_index(pd->pi,double,0));
     pd->update = 0;
 
     if (s.obj > -0.00001) {
