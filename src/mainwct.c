@@ -72,7 +72,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
     char*  ptr;
     int    debug = dbg_lvl();
 
-    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:r:")) != EOF) {
+    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:r:h:")) != EOF) {
         switch (c) {
             case 'd':
                 ++(debug);
@@ -139,6 +139,11 @@ static int parseargs(int ac, char** av, Parms* parms) {
             case 'm':
                 c = strtol(optarg, &ptr, 10);
                 val = parms_set_mip_solver(parms, c);
+                CCcheck_val(val, "Failed in set mip solver");
+                break;
+            case 'h':
+                c = strtol(optarg, &ptr, 10);
+                val = parms_set_use_heuristic(parms, c);
                 CCcheck_val(val, "Failed in set mip solver");
                 break;
             case 'r':
@@ -224,7 +229,9 @@ int main(int ac, char** av) {
     /**
      * Finding heuristic solutions to the problem
      */
-    heuristic(&problem);
+    if (parms->use_heuristic == yes_use_heuristic) {
+        heuristic(&problem);
+    }
     GPtrArray *solutions_pool = g_ptr_array_copy(root->localColPool,g_copy_scheduleset,&(problem.nb_jobs));
 
     /**

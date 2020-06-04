@@ -9,6 +9,7 @@ void parms_init(Parms* parms) {
     parms->bb_search_strategy = min_search_strategy;
     parms->strong_branching = min_strong_branching;
     parms->mip_solver = min_mip_solver;
+    parms->use_heuristic = min_use_heuristic;
     parms->reduce_cost_fixing = min_reduced_cost;
     parms->nb_iterations_rvnd = 3;
     parms->scatter_search = 0;
@@ -101,6 +102,10 @@ int parms_set_mip_solver(Parms *parms, int usage) {
     return 0;
 }
 
+int parms_set_use_heuristic(Parms *parms, int usage) {
+    parms->use_heuristic = usage;
+    return 0;
+}
 int parms_set_reduce_cost(Parms *parms, int usage) {
     parms->mip_solver = usage;
     return 0;
