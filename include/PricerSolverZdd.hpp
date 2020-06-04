@@ -1,6 +1,7 @@
 #ifndef PRICER_SOLVER_ZDD_HPP
 #define PRICER_SOLVER_ZDD_HPP
 
+#include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
 #include "MipGraph.hpp"
 #include <NodeBddStructure.hpp>
@@ -48,6 +49,8 @@ class PricerSolverZdd : public PricerSolverBase
         int* get_take() override {
             return NULL;
         }
+
+        OptimalSolution<double> farkas_pricing(double *pi) override;
 
 
         void add_constraint(Job* job, GPtrArray* list, int order) override;

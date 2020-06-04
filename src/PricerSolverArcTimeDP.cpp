@@ -453,6 +453,12 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     return sol;
 }
 
+OptimalSolution<double> PricerSolverArcTimeDp::farkas_pricing(double* _pi) {
+    OptimalSolution<double> opt_sol;
+
+    return opt_sol;
+}
+
 void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     const double* columns, const GPtrArray* schedule_sets, int num_columns) {
     std::fill(lp_x, lp_x + get_nb_edges(), 0);

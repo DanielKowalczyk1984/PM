@@ -48,6 +48,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void make_schedule_set_feasible(GPtrArray* set) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
+    OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    forward_evaluator(double* _pi);
     void                    backward_evaluator(double* _pi);
 

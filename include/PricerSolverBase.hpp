@@ -62,6 +62,7 @@ struct PricerSolverBase {
      * Pricing Algorithm
      */
     virtual OptimalSolution<double> pricing_algorithm(double* _pi) = 0;
+    virtual OptimalSolution<double> farkas_pricing(double* _pi) = 0;
 
     /**
      * Reduced cost fixing

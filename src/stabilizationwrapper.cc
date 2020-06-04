@@ -1,6 +1,9 @@
 #include <stabilization.h>
 #include <wctprivate.h>
+#include <cstdio>
 #include "PricerSolverBase.hpp"
+#include "lp.h"
+#include "scheduleset.h"
 
 template <typename T = double>
 int construct_sol(NodeData* pd, OptimalSolution<T>* sol) {
@@ -455,13 +458,19 @@ int solve_stab_hybrid(NodeData* pd, parms* parms) {
 
 int solve_farkas_dbl(NodeData* pd) {
     int                     val = 0;
-    OptimalSolution<double> s = pd->solver->pricing_algorithm(pd->pi);
+    OptimalSolution<double> s = pd->solver->farkas_pricing(pd->pi);
+    pd->update = 0;
 
-    if (s.obj < -0.00001) {
+    if (s.obj > -0.00001) {
+        val = construct_sol(pd, &s);
+        wctlp_write(pd->RMP, "RMP.lp");
+
         CCcheck_val_2(val, "Failed in constructing jobs");
+        pd->update = 1;
     } else {
         pd->nb_new_sets = 0;
     }
+
 
 CLEAN:
     return val;

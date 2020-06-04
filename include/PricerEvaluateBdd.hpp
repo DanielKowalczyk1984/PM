@@ -2,6 +2,7 @@
 #define PRICER_EVALUATE_BDD_HPP
 #include <ForwardBDD.hpp>
 #include <BackwardBDD.hpp>
+#include <FarkasZDD.hpp>
 
 struct ForwardBddSimpleDouble : ForwardBddSimple<ForwardBddSimpleDouble, double> {
     ForwardBddSimpleDouble(double *_pi, int _num_jobs)
@@ -27,6 +28,13 @@ struct BackwardBddSimpleDouble : BackwardBddSimple<BackwardBddSimpleDouble, doub
     BackwardBddSimpleDouble() : BackwardBddSimple<BackwardBddSimpleDouble, double>() {};
 };
 
+struct BackwardBddFarkasDouble : BackwardBddFarkas<BackwardBddFarkasDouble, double> {
+    BackwardBddFarkasDouble(double *_pi, int _num_jobs)
+    : BackwardBddFarkas<BackwardBddFarkasDouble, double>(_pi, _num_jobs) {};
+    explicit BackwardBddFarkasDouble(int _num_jobs)
+    : BackwardBddFarkas<BackwardBddFarkasDouble, double> (_num_jobs) {};
+    BackwardBddFarkasDouble() : BackwardBddFarkas<BackwardBddFarkasDouble, double>() {};
+};
 struct BackwardBddCycleDouble : BackwardBddCycle<BackwardBddCycleDouble, double> {
     BackwardBddCycleDouble(double *_pi, int _num_jobs)
     : BackwardBddCycle<BackwardBddCycleDouble, double>(_pi, _num_jobs) {};

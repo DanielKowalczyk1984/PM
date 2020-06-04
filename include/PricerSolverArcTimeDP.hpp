@@ -38,6 +38,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void disjunctive_inequality(double* x, Solution* sol) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
+    OptimalSolution<double> farkas_pricing(double* pi) override;
 
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;

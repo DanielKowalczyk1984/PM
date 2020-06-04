@@ -10,6 +10,7 @@
 
 #include <lp.h>
 #include <util.h>
+#include "gurobi_c.h"
 
 const double int_tolerance = 0.00001;
 
@@ -97,10 +98,7 @@ int wctlp_optimize(wctlp* lp, int* status) {
             goto CLEAN;
         }
     } else if (*status == GRB_INFEASIBLE) {
-        printf("infeasible LP relaxation\n");
-        wctlp_write(lp, "model_rmp.lp");
         wctlp_compute_IIS(lp);
-        wctlp_write(lp, "model_rmp_iss.ilp");
     }
 
 CLEAN:
@@ -268,7 +266,7 @@ int wctlp_pi_inf(wctlp* lp, double* pi) {
         return val;
     }
 
-    val = GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_FARKASDUAL, 0, nrows, pi);
+    val = GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_PI, 0, nrows, pi);
     CHECK_VAL_GRB(val, "Failed to get the dual prices", lp->env);
     return val;
 }

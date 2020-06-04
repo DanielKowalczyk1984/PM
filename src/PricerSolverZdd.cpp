@@ -1,5 +1,6 @@
 #include "PricerSolverZdd.hpp"
 #include <NodeBddStructure.hpp>
+#include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 #include "boost/graph/graphviz.hpp"
 
@@ -138,6 +139,12 @@ void PricerSolverZdd::init_table() {
             }
         }
     }
+}
+
+OptimalSolution<double> PricerSolverZdd::farkas_pricing(double *pi) {
+    OptimalSolution<double> sol;
+
+    return sol;
 }
 
 void PricerSolverZdd::remove_layers_init() {

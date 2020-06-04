@@ -14,6 +14,7 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
     evaluator = BackwardBddSimpleDouble(nb_jobs);
     reversed_evaluator = ForwardBddSimpleDouble(nb_jobs);
+    farkas_evaluator = BackwardBddFarkasDouble(nb_jobs);
 }
 
 PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
@@ -33,6 +34,11 @@ OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
     return decision_diagram->evaluate_backward(evaluator);
 }
 
+OptimalSolution<double> PricerSolverBddBackwardSimple::farkas_pricing(
+    double* _pi) {
+    farkas_evaluator.initialize_pi(_pi);
+    return decision_diagram->evaluate_backward(farkas_evaluator);
+}
 void PricerSolverBddBackwardSimple::compute_labels(double* _pi) {
     evaluator.initialize_pi(_pi);
     reversed_evaluator.initialize_pi(_pi);
@@ -91,6 +97,7 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
     evaluator = BackwardBddCycleDouble(nb_jobs);
     reversed_evaluator = ForwardBddCycleDouble(nb_jobs);
+    farkas_evaluator = BackwardBddFarkasDouble(nb_jobs);
 }
 
 PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
@@ -102,12 +109,19 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
     evaluator = BackwardBddCycleDouble(nb_jobs);
     reversed_evaluator = ForwardBddCycleDouble(nb_jobs);
+    farkas_evaluator = BackwardBddFarkasDouble(nb_jobs);
 }
 
 OptimalSolution<double> PricerSolverBddBackwardCycle::pricing_algorithm(
     double* _pi) {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_backward(evaluator);
+}
+
+OptimalSolution<double> PricerSolverBddBackwardCycle::farkas_pricing(
+    double* _pi) {
+    farkas_evaluator.initialize_pi(_pi);
+    return decision_diagram->evaluate_backward(farkas_evaluator);
 }
 
 void PricerSolverBddBackwardCycle::compute_labels(double* _pi) {

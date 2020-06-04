@@ -281,6 +281,13 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     return opt_sol;
 }
 
+OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing(double* _pi) {
+    OptimalSolution<double> opt_sol;
+
+    return opt_sol;
+}
+
+
 void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     const double* columns, const GPtrArray* schedule_sets, int num_columns) {
     std::fill(lp_x, lp_x + nb_jobs * (Hmax + 1), 0.0);

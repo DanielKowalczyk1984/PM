@@ -20,6 +20,11 @@ OptimalSolution<double> PricerSolverBddSimple::pricing_algorithm(double* _pi) {
     return decision_diagram->evaluate_forward(evaluator);
 }
 
+OptimalSolution<double> PricerSolverBddSimple::farkas_pricing(double* _pi) {
+    farkas_evaluator.initialize_pi(_pi);
+    return decision_diagram->evaluate_backward(farkas_evaluator);
+}
+
 void PricerSolverBddSimple::compute_labels(double* _pi) {
     evaluator.initialize_pi(_pi);
     reversed_evaluator.initialize_pi(_pi);
@@ -84,6 +89,11 @@ PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray* _jobs, int _num_machines,
 OptimalSolution<double> PricerSolverBddCycle::pricing_algorithm(double* _pi) {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
+}
+
+OptimalSolution<double> PricerSolverBddCycle::farkas_pricing(double* _pi) {
+    farkas_evaluator.initialize_pi(_pi);
+    return decision_diagram->evaluate_backward(farkas_evaluator);
 }
 
 void PricerSolverBddCycle::compute_labels(double* _pi) {

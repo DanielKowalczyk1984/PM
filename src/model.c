@@ -1,5 +1,7 @@
 #include <wct.h>
-
+#include "job.h"
+#include "scheduleset.h"
+static int add_artificial_var_to_rmp(NodeData* pd);
 int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     int          val = 0;
     double       test_incumbent = .0;
@@ -74,6 +76,22 @@ CLEAN:
     return val;
 }
 
+static int add_artificial_var_to_rmp(NodeData* pd) {
+    int        val = 0;
+    int        nb_jobs = pd->nb_jobs;
+
+    for (int ii = 0; ii < nb_jobs; ii++) {
+        ScheduleSet *set = scheduleset_alloc(nb_jobs);
+        Job *tmp_j = (Job*) g_ptr_array_index(pd->jobarray, ii);
+        g_ptr_array_add(set->job_list, tmp_j);
+        set->total_processing_time = tmp_j->processing_time;
+        set->total_weighted_completion_time = value_Fj(tmp_j->processing_time, tmp_j);
+        g_ptr_array_add(pd->localColPool, set);
+    }
+
+    return val;
+}
+
 int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     int        val = 0;
     int        row_ind;
@@ -135,21 +153,22 @@ int build_rmp(NodeData* pd, int construct) {
      * add assignment constraints
      */
     for (int i = 0; i < nb_jobs; i++) {
-        val = wctlp_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL, wctlp_GREATER_EQUAL,
-                           1.0, (char*)NULL);
+        val = wctlp_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL,
+                           wctlp_GREATER_EQUAL, 1.0, (char*)NULL);
         CCcheck_val_2(val, "Failed wctlp_addrow");
     }
 
     /**
      * add number of machines constraint (convexification)
      */
-    val = wctlp_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL, wctlp_GREATER_EQUAL,
-                       -(double)nb_machines, (char*)NULL);
+    val = wctlp_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL,
+                       wctlp_GREATER_EQUAL, -(double)nb_machines, (char*)NULL);
     CCcheck_val_2(val, "Failed to add convexification constraint");
 
     wctlp_get_nb_rows(pd->RMP, &nb_row);
 
     /** add columns from localColPool */
+    add_artificial_var_to_rmp(pd);
     g_ptr_array_foreach(pd->localColPool, g_add_col_to_lp, pd);
 
     /**

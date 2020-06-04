@@ -1,94 +1,74 @@
-#include <solution.h>
-#include <interval.h>
-#include <tdzdd/DdEval.hpp>
-#include <cfloat>
-#include <vector>
-#include <OptimalSolution.hpp>
-#include <tdzdd/dd/NodeTable.hpp>
+#include <BackwardBDD.hpp>
 
-template <typename T>
-class PricerFarkasZDD {
+template<typename E, typename T>
+class BackwardBddFarkas: public BackwardBddBase<E, T> {
 public:
-    T    obj;
-    bool take;
+ using BackwardBddBase<E, T>::pi;
+ using BackwardBddBase<E, T>::num_jobs;
 
-    PricerFarkasZDD() : obj(0), take(0) {};
 
-    ~PricerFarkasZDD() {};
 
-    void init_terminal_node(int one) { obj = one ? 0.0 : 1871286761.0; }
 
-    void init_node() { take = false; }
-};
+    BackwardBddFarkas() : BackwardBddBase<E, T>() {
+    };
+    BackwardBddFarkas(T *_pi, int _num_jobs) : BackwardBddBase<E, T>(_pi,
+                _num_jobs) {
+    };
+    explicit BackwardBddFarkas(int _num_jobs) : BackwardBddBase<E, T>(_num_jobs) {
+    };
 
-/**
- * Farkas
- */
-template <typename E, typename T>
-class FarkasZDD
-    : public tdzdd::DdEval<E, PricerFarkasZDD<T>, Optimal_Solution<T>> {
-    T   *pi;
-    GPtrArray *interval_list;
-    int nlayers;
-    int nbjobs;
-    job_interval_pair *tmp_pair;
-    Job *tmp_j;
-    interval *tmp_interval;
+    void evalNode(NodeBdd<T> &n) const override {
+        Job *tmp_j = n.get_job();
+        NodeBdd<T> *p0 = n.child[0];
+        NodeBdd<T> *p1 = n.child[1];
+        T result = pi[tmp_j->job];
 
-public:
-    FarkasZDD(T *_pi, GPtrArray *_interval_list, int _nbjobs)
-        : pi(_pi),
-          interval_list(_interval_list),
-          nbjobs(_nbjobs) {};
+        T obj0 = p0->backward_label[0].get_f();
+        T obj1 = p1->backward_label[0].get_f() + result;
 
-    void evalTerminal(PricerFarkasZDD<T>& n) { n.obj = pi[nbjobs]; }
-
-    void evalNode(PricerFarkasZDD<T> *n,
-                  int                 i,
-                  tdzdd::DdValues<PricerFarkasZDD<T>, 2>& values) const
-    {
-        int j = nlayers - i;
-        assert(j >= 0 && j <= nbjobs - 1);
-        tmp_pair = (job_interval_pair *) g_ptr_array_index(interval_list, j);
-        tmp_j = tmp_pair->j;
-        PricerFarkasZDD<T> *n0 = values.get_ptr(0);
-        PricerFarkasZDD<T> *n1 = values.get_ptr(1);
-
-        if (n0->obj < n1->obj + pi[tmp_j->job]) {
-            n->obj = n0->obj;
-            n->take = false;
+        if (obj0 < obj1) {
+            n.backward_label[0].update_solution(obj1, nullptr, true);
         } else {
-            n->obj = n1->obj + pi[tmp_j->job];
-            n->take = true;
+            n.backward_label[0].update_solution(obj0, nullptr, false);
         }
+
     }
 
-    void initializenode(PricerFarkasZDD<T>& n) { n.take = false; }
+    void initializenode(NodeBdd<T> &n) const override {
+        n.backward_label[0].update_solution(-DBL_MAX / 2, nullptr, false);
+    }
 
-    Optimal_Solution<T> get_objective(
-        tdzdd::NodeTableHandler<2>            diagram,
-        tdzdd::DataTable<PricerFarkasZDD<T>> *data_table,
-        const tdzdd::NodeId                  *f)
-    {
-        Optimal_Solution<T> sol;
-        sol.obj = (*data_table)[f->row()][f->col()].obj;
-        sol.jobs = g_ptr_array_new();
-        tdzdd::NodeId cur_node = *f;
-        int           j = nlayers - cur_node.row();
+    void initializerootnode(NodeBdd<T> &n) const override {
+        n.backward_label[0].f = -pi[num_jobs];
+    }
 
-        while (cur_node.row() != 0) {
-            if ((*data_table)[cur_node.row()][cur_node.col()].take) {
-                g_ptr_array_add(sol.jobs, tmp_j);
-                sol.C_max += tmp_j->processingime;
-                sol.cost += value_Fj(sol.C_max, tmp_j);
-                cur_node = diagram.privateEntity().child(cur_node, 1);
+    OptimalSolution<T> get_objective(NodeBdd<T> &n) const {
+        OptimalSolution<T> sol(-pi[num_jobs]);
+
+        NodeBdd<T> *aux_node = &n;
+        Job *aux_job =  n.get_job();
+
+        while (aux_job) {
+            if (aux_node->backward_label[0].get_high()) {
+                sol.push_job_back_farkas(aux_job, pi[aux_job->job]);
+                aux_node = aux_node->child[1];
+                aux_job = aux_node->get_job();
             } else {
-                cur_node = diagram.privateEntity().child(cur_node, 0);
+                aux_node = aux_node->child[0];
+                aux_job = aux_node->get_job();
             }
 
-            j = nlayers - cur_node.row();
         }
 
         return sol;
     }
+
+    OptimalSolution<T> getValue(NodeBdd<T> const &n) override {
+        OptimalSolution<T> sol;
+        return sol;
+    }
+
 };
+/**
+ * Farkas
+ */
