@@ -3,11 +3,13 @@
 #include <NodeBddStructure.hpp>
 #include "MipGraph.hpp"
 #include "PricerSolverBase.hpp"
+#include "ModelInterface.hpp"
 #include <vector>
 
 class PricerSolverBdd : public PricerSolverBase {
    public:
     std::unique_ptr<DdStructure<>> decision_diagram;
+    ReformulationModel reformulation_model;
     size_t                         size_graph;
 
     int nb_removed_edges = 0;

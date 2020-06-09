@@ -11,6 +11,7 @@ using namespace std;
 PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
                                  GPtrArray* _ordered_jobs, const char* p_name)
     : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name),
+        reformulation_model(jobs->len, _num_machines),
       size_graph(0),
       nb_removed_edges(0),
       nb_removed_nodes(0),
@@ -41,7 +42,8 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
 PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
                                  GPtrArray* _ordered_jobs, int* _take_jobs,
                                  int _Hmax, const char* p_name)
-    : PricerSolverBase(_jobs, _nb_machines, _ordered_jobs, p_name) {
+    : PricerSolverBase(_jobs, _nb_machines, _ordered_jobs, p_name),
+    reformulation_model(jobs->len, num_machines) {
     PricerConstructTI ps(ordered_jobs, _take_jobs, _Hmax);
     decision_diagram = std::unique_ptr<DdStructure<>>(new DdStructure<>(ps));
     remove_layers_init();
@@ -573,7 +575,7 @@ void PricerSolverBdd::cleanup_arcs() {
                   << "\n";
         remove_layers();
         remove_edges();
-        init_table();
+        // init_table();
     }
 }
 
@@ -641,7 +643,7 @@ void PricerSolverBdd::topdown_filtering() {
         remove_layers();
         remove_edges();
         cleanup_arcs();
-        init_table();
+        // init_table();
         // continue;
     }
 }
@@ -690,7 +692,7 @@ void PricerSolverBdd::bottum_up_filtering() {
         remove_layers();
         remove_edges();
         cleanup_arcs();
-        init_table();
+        // init_table();
         // continue;
     }
 }
@@ -760,7 +762,7 @@ void PricerSolverBdd::check_infeasible_arcs() {
         remove_layers();
         remove_edges();
         cleanup_arcs();
-        init_table();
+        // init_table();
     }
 }
 
@@ -917,7 +919,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
         remove_layers();
         remove_edges();
         cleanup_arcs();
-        init_table();
+        // init_table();
         construct_mipgraph();
     }
 }
@@ -932,7 +934,7 @@ void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
     decision_diagram->zddSubset(constr);
     outf.close();
     decision_diagram->compressBdd();
-    init_table();
+    // init_table();
     cout << decision_diagram->size() << '\n';
     construct_mipgraph();
     NodeTableEntity<>& table1 = decision_diagram->getDiagram().privateEntity();

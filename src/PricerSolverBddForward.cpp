@@ -66,7 +66,7 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
         std::cout << "Total number of edges removed " << nb_removed_edges << "\n";
         remove_layers();
         remove_edges();
-        init_table();
+        // init_table();
     }
 }
 
@@ -215,6 +215,6 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
         std::cout << "Total number of edges removed " << nb_removed_edges << "\n";
         remove_layers();
         remove_edges();
-        init_table();
+        // init_table();
     }
 }
