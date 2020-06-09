@@ -184,7 +184,7 @@ private:
                 } else {
                     assert(newId[j].row() == counter);
                     size_t k = newId[j].col();
-                    nt[k] = tt[j];
+                    nt[k] = std::move(tt[j]);
                     nt[k].set_head_node();
                     nt[k].child[0] = &(output.node(nt[k].branch[0]));
                     nt[k].child[1] = &(output.node(nt[k].branch[1]));
@@ -301,8 +301,8 @@ private:
                 else {
                     assert(newId[j].row() == i);
                     size_t k = newId[j].col();
-                    nt[k] = tt[j];
                     nt[k].set_head_node();
+                    nt[k] = std::move(tt[j]);
                     nt[k].child[0] = &(output.node(nt[k].branch[0]));
                     nt[k].child[1] = &(output.node(nt[k].branch[1]));
                 }
