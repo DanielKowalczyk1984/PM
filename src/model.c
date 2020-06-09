@@ -1,7 +1,6 @@
 #include <wct.h>
 #include "job.h"
 #include "scheduleset.h"
-static int add_artificial_var_to_rmp(NodeData* pd);
 int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     int          val = 0;
     double       test_incumbent = .0;
@@ -75,7 +74,7 @@ CLEAN:
     return val;
 }
 
-static int add_artificial_var_to_rmp(NodeData* pd) {
+int add_artificial_var_to_rmp(NodeData* pd) {
     int        val = 0;
     int        nb_jobs = pd->nb_jobs;
 
@@ -198,6 +197,7 @@ int build_rmp(NodeData* pd, int construct) {
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
     val = wctlp_get_rhs(pd->RMP, &g_array_index(pd->rhs,double,0));
     CCcheck_val_2(val, "Failed to get RHS");
+
 CLEAN:
 
     if (val) {

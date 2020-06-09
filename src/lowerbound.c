@@ -2,6 +2,8 @@
 #include <wct.h>
 #include "lp.h"
 #include "scheduleset.h"
+#include "util.h"
+#include "wctparms.h"
 #include "wctprivate.h"
 
 static const double min_nb_del_row_ratio = 0.9;
@@ -145,25 +147,26 @@ int delete_infeasible_cclasses(NodeData* pd) {
         }
     }
 
+
     int it = 0;
-    int first_del = -1;
-    int last_del = -1;
+    int first_del = pd->nb_jobs-1;
+    int last_del = pd->nb_jobs-1;
     for (i = pd->nb_jobs; i < count; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, it);
         if (tmp_schedule->del != 1) {
-            if (first_del != -1) {
+            if (first_del != pd->nb_jobs-1) {
                 /** Delete recently found deletion range.*/
                 val = wctlp_deletecols(pd->RMP, first_del, last_del);
                 CCcheck_val_2(val, "Failed in wctlp_deletecols");
                 g_ptr_array_remove_range(pd->localColPool, first_del,
                                          last_del - first_del + 1);
                 it = it - (last_del - first_del);
-                first_del = last_del = -1;
+                first_del = last_del = pd->nb_jobs-1;
             } else {
                 it++;
             }
         } else {
-            if (first_del == -1) {
+            if (first_del == pd->nb_jobs-1) {
                 first_del = it;
                 last_del = first_del;
             } else {
@@ -173,7 +176,7 @@ int delete_infeasible_cclasses(NodeData* pd) {
         }
     }
 
-    if (first_del != -1) {
+    if (first_del != pd->nb_jobs-1) {
         wctlp_deletecols(pd->RMP, first_del, last_del);
         CCcheck_val_2(val, "Failed in wctlp_deletecols");
         g_ptr_array_remove_range(pd->localColPool, first_del,
@@ -192,6 +195,7 @@ int delete_infeasible_cclasses(NodeData* pd) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
         tmp_schedule->id = i;
     }
+    printf("tset");
     pd->zero_count = 0;
 
 CLEAN:
@@ -332,57 +336,13 @@ CLEAN:
     return val;
 }
 
-int compute_lower_bound(Problem* problem, NodeData* pd) {
-    int    j, val = 0;
-    int    break_while_loop = 1;
-    int    nb_non_improvements = 0;
-    int    status = GRB_LOADED;
+int solve_relaxation(Problem* problem, NodeData *pd) {
+    int val = 0;
+    int status;
+    Parms *parms = &(problem->parms);
     double real_time_solve_lp;
-    double real_time_pricing;
-    Parms* parms = &(problem->parms);
 
-    if (dbg_lvl() > 1) {
-        printf(
-            "Starting compute_lower_bound with lb %d and ub %d at depth %d(id "
-            "= "
-            "%d, opt_track = %d)\n",
-            pd->lower_bound, pd->upper_bound, pd->depth, pd->id, pd->opt_track);
-    }
-
-    CCutil_start_resume_time(&(problem->tot_lb));
-
-    /**
-     * Construction of new solution if localPoolColPool is empty
-     */
-    if (pd->localColPool->len == 0) {
-        // add_solution_to_colpool(problem->opt_sol, pd);
-    }
-    reset_nb_layers(pd->jobarray);
-
-    if (!pd->RMP) {
-        val = build_rmp(pd, 0);
-        CCcheck_val(val, "build_lp failed");
-    }
-
-    pd->retirementage = (int)sqrt(pd->nb_jobs) + 30;
-    check_schedules(pd);
-    delete_infeasible_cclasses(pd);
-
-    /** Init alpha */
-    switch (parms->stab_technique) {
-        case stab_wentgnes:
-            pd->alpha = parms->alpha;
-            break;
-
-        case stab_dynamic:
-            pd->alpha = 0.0;
-            break;
-
-        case no_stab:
-            break;
-    }
-
-    /** Compute LP relaxation */
+    /** Compjute LP relaxation */
     real_time_solve_lp = getRealTime();
     CCutil_start_resume_time(&(problem->tot_solve_lp));
     val = wctlp_optimize(pd->RMP, &status);
@@ -422,6 +382,62 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             break;
     }
 
+    CLEAN:
+
+    return val;
+}
+
+int compute_lower_bound(Problem* problem, NodeData* pd) {
+    int    j, val = 0;
+    int    break_while_loop = 1;
+    int    nb_non_improvements = 0;
+    int    status = GRB_LOADED;
+    double real_time_pricing;
+    Parms* parms = &(problem->parms);
+
+    if (dbg_lvl() > 1) {
+        printf(
+            "Starting compute_lower_bound with lb %d and ub %d at depth %d(id "
+            "= "
+            "%d, opt_track = %d)\n",
+            pd->lower_bound, pd->upper_bound, pd->depth, pd->id, pd->opt_track);
+    }
+
+    CCutil_start_resume_time(&(problem->tot_lb));
+
+    /**
+     * Construction of new solution if localPoolColPool is empty
+     */
+    if (pd->localColPool->len == 0) {
+        // add_solution_to_colpool(problem->opt_sol, pd);
+    }
+    reset_nb_layers(pd->jobarray);
+
+    if (!pd->RMP) {
+        val = build_rmp(pd, 0);
+        CCcheck_val(val, "build_lp failed");
+    }
+
+    pd->retirementage = (int)sqrt(pd->nb_jobs) + 30;
+    // check_schedules(pd);
+    // delete_infeasible_cclasses(pd);
+
+    /** Init alpha */
+    switch (parms->stab_technique) {
+        case stab_wentgnes:
+            pd->alpha = parms->alpha;
+            break;
+
+        case stab_dynamic:
+            pd->alpha = 0.0;
+            break;
+
+        case no_stab:
+            break;
+    }
+
+    // solve_relaxation(problem, pd);
+
     break_while_loop = 0;
     CCutil_suspend_timer(&(problem->tot_cputime));
     CCutil_resume_timer(&(problem->tot_cputime));
@@ -443,6 +459,8 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
          */
         real_time_pricing = getRealTime();
         CCutil_start_resume_time(&problem->tot_pricing);
+        val = wctlp_status(pd->RMP, &status);
+        CCcheck_val_2(val, "Failed in status");
 
         switch (status) {
             case GRB_OPTIMAL:
@@ -522,52 +540,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 break;
         }
 
-        /** Compute LP relaxation */
-        real_time_solve_lp = getRealTime();
-        CCutil_start_resume_time(&(problem->tot_solve_lp));
-        val = wctlp_optimize(pd->RMP, &status);
-        CCcheck_val_2(val, "wctlp_optimize failed");
-        CCutil_suspend_timer(&(problem->tot_solve_lp));
-        real_time_solve_lp = getRealTime() - real_time_solve_lp;
-        problem->real_time_solve_lp += real_time_solve_lp;
-
-        if (dbg_lvl() > 1) {
-            printf("Simplex took %f seconds.\n", real_time_solve_lp);
-            fflush(stdout);
-            print_ages(pd);
-        }
-
-        switch (status) {
-            case GRB_OPTIMAL:
-                /**
-                 * grow ages of the different columns
-                 */
-                val = grow_ages(pd);
-                CCcheck_val_2(val, "Failed in grow_ages");
-
-                /** get the dual variables and make them feasible */
-                /** Compute the objective function */
-
-                if (pd->update) {
-                    val = wctlp_pi(pd->RMP, &g_array_index(pd->pi, double, 0) );
-                    CCcheck_val_2(val, "wctlp_pi failed");
-                    val = compute_objective(pd, parms);
-                    CCcheck_val_2(val, "Failed in compute_objective");
-                    memcpy(&g_array_index(pd->pi_out,double,0), &g_array_index(pd->pi, double, 0),
-                           sizeof(double) * (pd->nb_jobs + 1));
-                    // if (!(pd->iterations % (4*pd->nb_jobs))) {
-                    //     reduce_cost_fixing(pd);
-                    // }
-                }
-
-                break;
-
-            case GRB_INFEASIBLE:
-                /** get the dual variables and make them feasible */
-                val = wctlp_pi_inf(pd->RMP, &g_array_index(pd->pi, double, 0) );
-                CCcheck_val_2(val, "wctlp_pi failed");
-                break;
-        }
+        solve_relaxation(problem, pd);
 
         CCutil_suspend_timer(&(problem->tot_cputime));
         CCutil_resume_timer(&(problem->tot_cputime));
