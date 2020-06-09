@@ -92,6 +92,7 @@ int calculate_nb_layers(NodeData *pd, int k);
 int check_schedules(NodeData *pd);
 int delete_infeasible_cclasses(NodeData *pd);
 int delete_old_cclasses(NodeData* pd);
+int solve_relaxation(Problem* problem, NodeData *pd);
 
 void make_pi_feasible(NodeData *pd);
 void make_pi_feasible_farkas_pricing(NodeData *pd);
@@ -114,6 +115,7 @@ int build_rmp(NodeData *pd, int construct);
 int grab_integer_solution(NodeData *pd, double *x, double tolerance);
 int add_scheduleset_to_rmp(ScheduleSet *set, NodeData *pd);
 int get_solution_lp_lowerbound(NodeData *pd);
+int add_artificial_var_to_rmp(NodeData* pd);
 
 
 /**
