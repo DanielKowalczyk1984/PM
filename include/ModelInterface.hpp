@@ -119,6 +119,14 @@ public:
     ReformulationModel(ReformulationModel && op) noexcept;              // movable and noncopyable
     ReformulationModel& operator=(ReformulationModel && op) noexcept;
 
+    inline int get_nb_constraints() {
+        return nb_constraints;
+    };
+
+    inline ConstraintBase* get_constraint(int c) {
+        return constraint_array[c].get();
+    };
+
 };
 
 

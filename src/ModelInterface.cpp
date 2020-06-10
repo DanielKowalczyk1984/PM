@@ -2,12 +2,13 @@
 #include <memory>
 
 ReformulationModel::ReformulationModel(int nb_assignments, int nb_machines) : constraint_array(nb_assignments + 1, nullptr) {
-    int counter = 0;
-    for(auto &it: constraint_array) {
-        it=  std::make_shared<ConstraintAssignment>(counter++);
+    nb_constraints = 0;
+    for(int i = 0; i < nb_assignments; i++) {
+        constraint_array[i] = std::make_shared<ConstraintAssignment>(i);
+        nb_constraints++;
     }
 
-    constraint_array[counter] = std::make_shared<ConstraintConvex>((double) nb_machines);
+    constraint_array[nb_constraints] = std::make_shared<ConstraintConvex>((double) -nb_machines);
 
 }
 
