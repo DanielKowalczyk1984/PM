@@ -62,6 +62,8 @@ struct _NodeData {
     double *x_e;
     double *coeff;
     GArray *pi;
+    GArray *id_row;
+    GArray *coeff_row;
     int nb_rows;
     int nb_cols;
 
@@ -88,6 +90,7 @@ struct _NodeData {
     double  LP_lower_bound_dual;
     double  LP_lower_bound_BB;
     GArray *rhs;
+    GArray *lhs_coeff;
     int     nb_non_improvements;
     int iterations;
     /** Wentges smoothing technique */

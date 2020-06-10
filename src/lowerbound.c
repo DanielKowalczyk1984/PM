@@ -505,7 +505,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
 
         if (pd->update) {
             for (j = 0; j < pd->nb_new_sets; j++) {
-                val = add_scheduleset_to_rmp(pd->newsets + j, pd);
+                val = add_lhs_scheduleset_to_rmp(pd->newsets + j, pd);
                 CCcheck_val_2(val, "wctlp_addcol failed");
                 g_ptr_array_add(pd->localColPool, pd->newsets + j);
             }

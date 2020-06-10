@@ -142,6 +142,9 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->x_e = (double*)NULL;
     pd->coeff = (double*)NULL;
     pd->pi = (GArray*)NULL;
+    pd->lhs_coeff = (GArray *) NULL;
+    pd->id_row = (GArray *) NULL;
+    pd->coeff_row = (GArray *) NULL;
     pd->nb_rows = 0;
     pd->nb_cols = 0;
     /**init stab data */
@@ -228,6 +231,9 @@ void lp_node_data_free(NodeData* pd) {
     g_array_free(pd->subgradient, TRUE);
     g_array_free(pd->subgradient_in, TRUE);
     g_array_free(pd->rhs, TRUE);
+    g_array_free(pd->lhs_coeff, TRUE);
+    g_array_free(pd->id_row, TRUE);
+    g_array_free(pd->coeff_row, TRUE);
     CC_IFFREE(pd->column_status, int);
 
     /**
@@ -472,12 +478,12 @@ int add_solution_to_colpool(Solution* sol, NodeData* pd) {
     for (int i = 0; i < sol->nb_machines; ++i) {
         GPtrArray*   machine = sol->part[i].machine;
         ScheduleSet* tmp = scheduleset_from_solution(machine, pd->nb_jobs);
-        // if(check_schedule_set(tmp, pd)) {
-        //     printf("OK!!!\n");
+        if(check_schedule_set(tmp, pd)) {
+            printf("OK!!!\n");
             
-        // } else {
-        //     printf("not OK!!!\n");
-        // }
+        } else {
+            printf("not OK!!!\n");
+        }
         // g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
         // printf("\n");
         CCcheck_NULL_2(tmp, "Failed to allocate memory");

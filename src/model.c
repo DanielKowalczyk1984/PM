@@ -1,6 +1,9 @@
 #include <wct.h>
 #include "job.h"
+#include "lp.h"
 #include "scheduleset.h"
+#include "util.h"
+#include "wctprivate.h"
 int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     int          val = 0;
     double       test_incumbent = .0;
@@ -90,6 +93,40 @@ int add_artificial_var_to_rmp(NodeData* pd) {
     return val;
 }
 
+int add_lhs_scheduleset_to_rmp(ScheduleSet* set, NodeData *pd) {
+    int val = 0;
+    gsize aux;
+    double* lhs_coeff = &g_array_index(pd->lhs_coeff, double, 0);
+
+    int* aux_int_array = g_array_steal(pd->id_row, &aux);
+    CC_IFFREE(aux_int_array, int);
+    double* aux_double_array = g_array_steal(pd->coeff_row, &aux);
+    CC_IFFREE(aux_double_array, double);
+
+    for(int j = 0; j < pd->nb_jobs + 1; j++) {
+        if (fabs(lhs_coeff[j]) > 1e-10) {
+            g_array_append_val(pd->id_row, j);
+            g_array_append_val(pd->coeff_row, lhs_coeff[j]);
+        }
+    }
+
+    int* id_constraint = &g_array_index(pd->id_row, int, 0);
+    double* coeff_constraint = &g_array_index(pd->coeff_row, double, 0);
+    int len = pd->id_row->len;
+
+    
+    val = wctlp_get_nb_cols(pd->RMP, &(set->id));
+    CCcheck_val_2(val, "Failed to get the number of cols");
+    pd->nb_cols = set->id;
+    val = wctlp_addcol(pd->RMP, len, id_constraint, coeff_constraint,
+                       (double)set->total_weighted_completion_time, 0.0,
+                       GRB_INFINITY, wctlp_CONT, NULL);
+    CCcheck_val_2(val, "Failed to add column to lp")
+
+    CLEAN:
+    return val;
+}
+
 int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     int        val = 0;
     int        row_ind;
@@ -109,7 +146,7 @@ int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
                        GRB_INFINITY, wctlp_CONT, NULL);
     CCcheck_val_2(val, "Failed to add column to lp")
 
-        for (unsigned i = 0; i < members->len; ++i) {
+    for (unsigned i = 0; i < members->len; ++i) {
         job = (Job*)g_ptr_array_index(members, i);
         row_ind = job->job;
         val = wctlp_getcoeff(lp, &row_ind, &var_ind, &cval);
@@ -118,6 +155,7 @@ int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
         set->num[job->job] += 1;
         val = wctlp_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
         CCcheck_val_2(val, "Failed wctlp_chgcoeff");
+
     }
 
     row_ind = nb_jobs;
@@ -197,6 +235,12 @@ int build_rmp(NodeData* pd, int construct) {
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
     val = wctlp_get_rhs(pd->RMP, &g_array_index(pd->rhs,double,0));
     CCcheck_val_2(val, "Failed to get RHS");
+    pd->lhs_coeff = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
+    CCcheck_NULL_2(pd->lhs_coeff, "Failed to allocate memory");
+    pd->id_row = g_array_sized_new(FALSE, FALSE, sizeof(int), pd->nb_rows);
+    CCcheck_NULL_2(pd->id_row, "Failed to allocate memory");
+    pd->coeff_row = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
+    CCcheck_NULL_2(pd->coeff_row, "Failed to allocate memory");
 
 CLEAN:
 
@@ -210,6 +254,7 @@ CLEAN:
         g_array_free(pd->subgradient, TRUE);
         g_array_free(pd->subgradient_in, TRUE);
         g_array_free(pd->rhs, TRUE);
+        g_array_free(pd->lhs_coeff, TRUE);
     }
 
     CC_IFFREE(covered, int);
