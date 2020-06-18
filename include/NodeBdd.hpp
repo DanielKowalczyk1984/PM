@@ -130,12 +130,9 @@ class NodeBdd : public NodeBase
         {
             if (!_terminal_node) {
                 weight = _weight;
-                NodeBase::set_root_node(_root_node);
             } else {
                 NodeBase::set_job(nullptr);
                 weight = -1;
-                NodeBase::set_root_node(_root_node);
-                NodeBase::set_terminal_node(_terminal_node);
             }
 
             return this;
