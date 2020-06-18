@@ -49,7 +49,11 @@
         "tuple": "cpp",
         "utility": "cpp",
         "variant": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "cmath": "c",
+        "random": "c",
+        "limits": "cpp",
+        "numeric": "cpp"
     },
     "julia.environmentPath": "${workspaceRoot}/scripts/Julia/DAG-cluster-cover",
     "cquery.cacheDirectory": "${workspaceFolder}/.vscode/cquery_cached_index/"
