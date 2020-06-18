@@ -59,14 +59,14 @@ double compute_lagrange(OptimalSolution<double>& sol, double* rhs, double* pi,
 
 static double compute_reduced_cost(OptimalSolution<double>& sol, double* pi,
                                    int nb_jobs) {
-    double result = pi[nb_jobs];
+    double result = sol.cost + pi[nb_jobs];
 
     for (guint i = 0; i < sol.jobs->len; ++i) {
         Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
         result -= pi[tmp_j->job];
     }
 
-    return result + sol.cost;
+    return result; 
 }
 
 void update_alpha(NodeData* pd) {
@@ -340,7 +340,7 @@ int solve_stab(NodeData* pd, parms* parms) {
     double *pi_sep = &g_array_index(pd->pi_sep,double,0);
     double *pi_out = &g_array_index(pd->pi_out,double,0);
     double *pi_in = &g_array_index(pd->pi_in,double,0);
-    double *rhs = &g_array_index(pd->rhs,double,0);
+    double *lhs_coeff = &g_array_index(pd->lhs_coeff,double,0);
 
     do {
         k += 1.0;
@@ -352,8 +352,11 @@ int solve_stab(NodeData* pd, parms* parms) {
         OptimalSolution<double> sol;
         sol = solver->pricing_algorithm(pi_sep);
 
-        result_sep = compute_lagrange(sol, rhs, pi_sep, pd->nb_jobs);
-        pd->reduced_cost = compute_reduced_cost(sol, pi_out, pd->nb_jobs);
+        // result_sep = compute_lagrange(sol, rhs, pi_sep, pd->nb_jobs);
+        result_sep = pd->solver->compute_lagrange(sol, pi_sep);
+        // pd->reduced_cost = compute_reduced_cost(sol, pi_out, pd->nb_jobs);
+        pd->reduced_cost = pd->solver->compute_reduced_cost(sol, pi_out, lhs_coeff);
+
 
         if (pd->reduced_cost <= -0.000001) {
             val = construct_sol(pd, &sol);
