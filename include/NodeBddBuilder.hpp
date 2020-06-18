@@ -32,7 +32,7 @@
 
 #include "NodeBddSweeper.hpp"
 #include "NodeBranchId.hpp"
-#include "node_duration.hpp"
+#include "NodeBdd.hpp"
 #include "NodeBddTable.hpp"
 #include "NodeBddSpec.hpp"
 #include "util/MemoryPool.hpp"

@@ -3,7 +3,7 @@
 // #include <tdzdd/DdEval.hpp>
 #include "NodeBddEval.hpp"
 #include <OptimalSolution.hpp>
-#include <node_duration.hpp>
+#include <NodeBdd.hpp>
 
 
 template<typename E, typename T> class ForwardBddBase : public 

@@ -6,7 +6,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/unordered_set.hpp>
 #include <NodeBddTable.hpp>
-#include <node_duration.hpp>
+#include <NodeBdd.hpp>
 #include "ZddNode.hpp"
 #include <gurobi_c++.h>
 #include <scheduleset.h>

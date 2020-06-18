@@ -6,7 +6,7 @@
 #include <ostream>
 #include <stdexcept>
 
-#include <node_duration.hpp>
+#include <NodeBdd.hpp>
 #include <NodeBddTable.hpp>
 #include "util/MyHashTable.hpp"
 // #include "tdzdd/util/MyList.hpp"
