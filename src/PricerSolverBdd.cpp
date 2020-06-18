@@ -1,17 +1,20 @@
 #include "PricerSolverBdd.hpp"
+#include <algorithm>
 #include <iostream>
 #include <list>
 #include <vector>
+#include "ModelInterface.hpp"
+#include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "gurobi_c.h"
+#include "util.h"
 
 using namespace std;
 
 PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
                                  GPtrArray* _ordered_jobs, const char* p_name)
     : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name),
-        reformulation_model(jobs->len, _num_machines),
       size_graph(0),
       nb_removed_edges(0),
       nb_removed_nodes(0),
@@ -42,8 +45,7 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
 PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
                                  GPtrArray* _ordered_jobs, int* _take_jobs,
                                  int _Hmax, const char* p_name)
-    : PricerSolverBase(_jobs, _nb_machines, _ordered_jobs, p_name),
-    reformulation_model(jobs->len, num_machines) {
+    : PricerSolverBase(_jobs, _nb_machines, _ordered_jobs, p_name) {
     PricerConstructTI ps(ordered_jobs, _take_jobs, _Hmax);
     decision_diagram = std::unique_ptr<DdStructure<>>(new DdStructure<>(ps));
     remove_layers_init();
@@ -142,7 +144,6 @@ void PricerSolverBdd::init_table() {
                     reinterpret_cast<job_interval_pair*>(
                         g_ptr_array_index(ordered_jobs, layer));
                 it.set_job(tmp_pair->j);
-                it.set_layer(layer);
                 int   w = it.get_weight();
                 int   p = it.get_job()->processing_time;
                 auto& n0 = table.node(it.branch[0]);
@@ -151,11 +152,73 @@ void PricerSolverBdd::init_table() {
                 it.child[1] = n1.init_node(w + p);
             } else {
                 it.set_job(nullptr, true);
-                it.set_layer(nb_layers);
             }
         }
     }
 }
+
+// double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol, double *pi, double *lhs){
+//     double result = sol.cost;
+//     std::fill(lhs, lhs+reformulation_model.get_nb_constraints() + 1 , 0.0);
+
+//     for (guint j = 0; j < sol.jobs->len; j++) {
+//         Job* tmp_j = (Job*) g_ptr_array_index(sol.jobs, j);
+//         VariableKeyBase k(tmp_j->job,0);
+//         for(int c = 0; c < nb_jobs; c++) {
+//             double dual = pi[c];
+//             ConstraintBase *constr = reformulation_model.get_constraint(c);
+//             double coeff = constr->get_var_coeff(&k);
+
+//             if(fabs(coeff) > 1e-10) {
+//                 result -= coeff*dual;
+//                 lhs[c] += coeff;
+//             }
+//         }
+//     }
+
+//     double dual = pi[nb_jobs];
+//     ConstraintBase *constr = reformulation_model.get_constraint(nb_jobs);
+//     VariableKeyBase k(0,0);
+//     double coeff = constr->get_var_coeff(&k);
+//     result -= coeff*dual;
+//     lhs[nb_jobs] += coeff;
+
+//     return result;
+// }
+
+// double PricerSolverBdd::compute_lagrange(const OptimalSolution<> &sol, double *pi) {
+//     double result = sol.cost;
+//     double dual_bound = 0.0;
+
+//     for (guint j = 0; j < sol.jobs->len; j++) {
+//         Job* tmp_j = (Job*) g_ptr_array_index(sol.jobs, j);
+//         VariableKeyBase k(tmp_j->job,0);
+//         for(int c = 0; c < nb_jobs; c++) {
+//             double dual = pi[c];
+//             ConstraintBase *constr = reformulation_model.get_constraint(c);
+//             double coeff = constr->get_var_coeff(&k);
+
+//             if(fabs(coeff) > 1e-10) {
+//                 result -= coeff*dual;
+//             }
+//         }
+//     }
+
+//     result = CC_MIN(0, result);
+
+//     for(int c = 0; c < nb_jobs; c++) {
+//         double dual = pi[c];
+//         ConstraintBase *constr = reformulation_model.get_constraint(c);
+//         double rhs = constr->get_rhs();
+
+//         dual_bound += rhs*dual;
+//     }
+
+//     result = -reformulation_model.get_constraint(nb_jobs)->get_rhs() * result;
+//     result = dual_bound + result;
+
+//     return result;
+// }
 
 void PricerSolverBdd::remove_layers_init() {
     int                first_del = -1;

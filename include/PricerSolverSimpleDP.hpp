@@ -66,6 +66,18 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         
     }
 
+    // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override {
+    //     double result = 0.0;
+
+    //     return result;
+    // }
+
+    // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override {
+    //     double result = 0;
+
+    //     return result;
+    // }
+
 };
 
 #endif  // PRICER_SOLVER_SIMPLE_DP_HPP

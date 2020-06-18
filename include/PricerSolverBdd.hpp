@@ -2,14 +2,13 @@
 #define PRICER_SOLVER_BDD_HPP
 #include <NodeBddStructure.hpp>
 #include "MipGraph.hpp"
+#include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
-#include "ModelInterface.hpp"
 #include <vector>
 
 class PricerSolverBdd : public PricerSolverBase {
    public:
     std::unique_ptr<DdStructure<>> decision_diagram;
-    ReformulationModel reformulation_model;
     size_t                         size_graph;
 
     int nb_removed_edges = 0;
@@ -74,6 +73,9 @@ class PricerSolverBdd : public PricerSolverBase {
     void update_reduced_costs_arcs() override {
 
     }
+
+    // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override;
+    // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override;
 };
 // int g_compare_duration(gconstpointer a, gconstpointer b);
 

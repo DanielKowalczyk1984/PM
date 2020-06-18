@@ -1,4 +1,5 @@
 #include "MipGraph.hpp"
+#include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
 
 class PricerSolverArcTimeDp : public PricerSolverBase {
@@ -88,4 +89,16 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void update_reduced_costs_arcs() override {
 
     }
+
+    // double compute_reduced_cost(const OptimalSolution<>&s, double *pi, double *lhs) override {
+    //     double result = 0.0;
+
+    //     return result;
+    // }
+
+    // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override {
+    //     double result = 0.0;
+
+    //     return result;
+    // }
 };
