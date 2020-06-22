@@ -59,7 +59,7 @@ class PricerSolverZdd : public PricerSolverBase
 
         }
 
-        void update_reduced_costs_arcs() override {
+        void update_reduced_costs_arcs(double *_pi, bool farkas = false) override {
             
         }
 

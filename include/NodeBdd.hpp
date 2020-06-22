@@ -17,6 +17,9 @@ class NodeBdd : public NodeBase
         Label<NodeBdd<T>,T> backward_label[2];
 
         NodeBdd<T>* child[2];
+        std::shared_ptr<NodeId> ptr_node_id;
+        double cost[2];
+        double reduced_cost[2];
 
         bool calc_yes;
         bool calc_no;
@@ -38,6 +41,9 @@ class NodeBdd : public NodeBase
             weight(0),
             forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
+            ptr_node_id(nullptr),
+            cost{0.0,0.0},
+            reduced_cost{0.0,0.0},
             calc_yes(true),
             calc_no(true),
             key(-1),
@@ -56,6 +62,9 @@ class NodeBdd : public NodeBase
             weight(_weight),
             forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
+            ptr_node_id(nullptr),
+            cost{0.0,0.0},
+            reduced_cost{0.0,0.0},
             calc_yes(true),
             calc_no(true),
             key(-1),
@@ -82,6 +91,9 @@ class NodeBdd : public NodeBase
             weight(0),
             forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
+            ptr_node_id(nullptr),
+            cost{0.0,0.0},
+            reduced_cost{0.0,0.0},
             calc_yes(true),
             calc_no(true),
             key(-1),
@@ -108,6 +120,20 @@ class NodeBdd : public NodeBase
         int get_weight()
         {
             return weight;
+        }
+
+        void reset_reduced_costs() {
+            reduced_cost[0] = 0.0;
+            reduced_cost[1] = cost[1];
+        }
+
+        void reset_reduced_costs_farkas() {
+            reduced_cost[0] = 0.0;
+            reduced_cost[1] = 0.0;
+        }
+
+        void adjust_reduced_costs(double _x, int i) {
+            reduced_cost[i] -= _x;
         }
 
         bool operator!=(NodeBdd const& o) const

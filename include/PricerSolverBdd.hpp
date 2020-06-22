@@ -4,6 +4,8 @@
 #include "MipGraph.hpp"
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
+#include "ModelInterface.hpp"
+#include <memory>
 #include <vector>
 
 class PricerSolverBdd : public PricerSolverBase {
@@ -17,6 +19,8 @@ class PricerSolverBdd : public PricerSolverBase {
     MipGraph                  mip_graph;
     std::unique_ptr<double[]> lp_x;
     std::unique_ptr<double[]> solution_x;
+    std::vector<std::vector<std::shared_ptr<NodeId>>> node_ids;
+    OriginalModel<> original_model;
     int H_min;
 
     PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
@@ -62,6 +66,7 @@ class PricerSolverBdd : public PricerSolverBase {
     int* get_take() override {
         return NULL;
     };
+    void update_reduced_costs_arcs(double *_pi, bool farkas = false) override ;
     private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);
     void add_inequality(std::vector<int> v1);
@@ -70,9 +75,6 @@ class PricerSolverBdd : public PricerSolverBase {
 
     }
 
-    void update_reduced_costs_arcs() override {
-
-    }
 
     // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override;
     // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override;

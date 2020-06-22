@@ -116,7 +116,7 @@ double PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) {
 
 double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol, double *pi, double *lhs){
     double result = sol.cost;
-    std::fill(lhs, lhs+reformulation_model.get_nb_constraints() + 1 , 0.0);
+    std::fill(lhs, lhs+reformulation_model.get_nb_constraints() , 0.0);
 
     for (guint j = 0; j < sol.jobs->len; j++) {
         Job* tmp_j = (Job*) g_ptr_array_index(sol.jobs, j);
@@ -135,7 +135,7 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol, doub
 
     double dual = pi[nb_jobs];
     ConstraintBase *constr = reformulation_model.get_constraint(nb_jobs);
-    VariableKeyBase k(0,0);
+    VariableKeyBase k(0,0,true);
     double coeff = constr->get_var_coeff(&k);
     result -= coeff*dual;
     lhs[nb_jobs] += coeff;

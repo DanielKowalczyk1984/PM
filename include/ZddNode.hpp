@@ -140,6 +140,7 @@ class NodeZdd : public NodeBase
 {
     public:
         NodeZdd<T>* child[2];
+        std::shared_ptr<NodeId> ptr_node_id;
         std::vector<std::shared_ptr<SubNodeZdd<T>>>  list;
         /**
          * Constructor

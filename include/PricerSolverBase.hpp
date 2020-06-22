@@ -117,7 +117,7 @@ struct PricerSolverBase {
      */
 
     virtual void update_constraints() = 0;
-    virtual void update_reduced_costs_arcs() = 0;
+    virtual void update_reduced_costs_arcs(double *_pi, bool farkas = false) = 0;
     virtual double  compute_reduced_cost(const OptimalSolution<>& sol, double *pi, double *lhs);
     virtual double  compute_lagrange(const OptimalSolution<>& sol, double *pi);
     // virtual void compute_lhs_coeff(GArray *lhs_coeff, ScheduleSet* set) = 0;

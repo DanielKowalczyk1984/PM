@@ -8,7 +8,7 @@ ReformulationModel::ReformulationModel(int nb_assignments, int nb_machines) : co
         nb_constraints++;
     }
 
-    constraint_array[nb_constraints] = std::make_shared<ConstraintConvex>((double) -nb_machines);
+    constraint_array[nb_constraints++] = std::make_shared<ConstraintConvex>((double) -nb_machines);
 
 }
 
