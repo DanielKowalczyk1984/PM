@@ -255,14 +255,12 @@ void make_pi_feasible(NodeData* pd) {
 void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
     ScheduleSet* x = (ScheduleSet*)data;
     NodeData*    pd = (NodeData*)user_data;
-    Job*         tmp_j;
 
     int    i;
     double colsum = .0;
 
     for (i = 0; i < x->job_list->len; ++i) {
         double *tmp = &g_array_index(pd->pi, double, i);
-        tmp_j = (Job*)g_ptr_array_index(x->job_list, i);
         if (signbit(*tmp)) {
             *tmp = 0.0;
         }
@@ -276,7 +274,6 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
     if (colsum > x->total_weighted_completion_time) {
         double newcolsum = .0;
         for (i = 0; i < x->job_list->len; ++i) {
-            tmp_j = (Job*)g_ptr_array_index(x->job_list, i);
             double *tmp = &g_array_index(pd->pi, double, i);
             *tmp /= colsum;
             *tmp *= x->total_weighted_completion_time;
