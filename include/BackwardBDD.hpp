@@ -3,17 +3,33 @@
 #include "NodeBddEval.hpp"
 #include <OptimalSolution.hpp>
 #include <NodeBdd.hpp>
+#include "ModelInterface.hpp"
 
 template<typename E, typename T>
 class BackwardBddBase : public Eval<E, NodeBdd<T>, OptimalSolution<T> > {
+  OriginalModel<>* original_model;
+  double *pi;
+  
   public:
-    BackwardBddBase()
+    BackwardBddBase(OriginalModel<>* model) : original_model(model), pi(nullptr)
     {
-    };
+    }
 
-    BackwardBddBase(const BackwardBddBase<E, T> &src) {
-    
-    };
+    BackwardBddBase() : original_model(nullptr), pi(nullptr)
+    {
+    }
+
+    BackwardBddBase(const BackwardBddBase<E, T> &src) 
+    {
+    }
+
+    void set_pi(double* _pi) {
+        pi = _pi;
+    }
+
+    const double* get_pi() const {
+        return pi;
+    }
 
     virtual void initializenode(NodeBdd<T> &n) const  = 0;
     virtual void initializerootnode(NodeBdd<T> &n) const  = 0;
@@ -27,9 +43,20 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
     BackwardBddSimple() : BackwardBddBase<E, T>() {
     };
 
+    BackwardBddSimple(OriginalModel<>* model) : BackwardBddBase<E,T>(model) {
+
+    };
+
     void evalNode(NodeBdd<T> &n) const override {
         NodeBdd<T> *p0 = n.child[0];
         NodeBdd<T> *p1 = n.child[1];
+
+        n.reset_reduced_costs();
+        const double* dual = BackwardBddBase<E,T>::get_pi();
+        
+        for(auto& it : n.coeff_list[1]) {
+            n.adjust_reduced_costs(it->get_coeff()*dual[it->get_row()], it->get_high());
+        }
 
         T obj0 = p0->backward_label[0].get_f() + n.reduced_cost[0];
         T obj1 = p1->backward_label[0].get_f() + n.reduced_cost[1];
@@ -85,11 +112,21 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
     BackwardBddCycle() : BackwardBddBase<E, T>() {
     };
 
+    BackwardBddCycle(OriginalModel<>* model) : BackwardBddBase<E, T>(model) {
+
+    };
+
     void evalNode(NodeBdd<T> &n) const override {
         Job *tmp_j = n.get_job();
         int weight{n.get_weight()};
         NodeBdd<T> *p0  {n.child[0]};
         NodeBdd<T> *p1  {n.child[1]};
+        n.reset_reduced_costs();
+        const double *dual = BackwardBddBase<E,T>::get_pi();
+        
+        for(auto& it : n.coeff_list[1]) {
+            n.adjust_reduced_costs(it->get_coeff()*dual[it->get_row()], it->get_high());
+        }
 
         Job *prev_job{p1->backward_label[0].get_prev_job()};
 

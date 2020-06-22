@@ -4,15 +4,32 @@
 #include "NodeBddEval.hpp"
 #include <OptimalSolution.hpp>
 #include <NodeBdd.hpp>
+#include "ModelInterface.hpp"
 
 
 template<typename E, typename T> class ForwardBddBase : public 
     Eval<E, NodeBdd<T>, OptimalSolution<T>> {
+OriginalModel<>* original_model;
+double *pi;
+
 public:
-    ForwardBddBase(){
+    ForwardBddBase() : original_model(nullptr), pi(nullptr){
+    
+    }
+
+    ForwardBddBase(OriginalModel<>* _model) : original_model(_model), pi(nullptr){
+    
     }
 
     ForwardBddBase(const ForwardBddBase<E, T> &src) {
+    }
+
+    void set_pi(double *_pi) {
+        pi = _pi;
+    }
+
+    const double* get_pi() const {
+        return pi;
     }
 
     virtual void initializenode(NodeBdd<T>& n) const = 0;
@@ -52,6 +69,10 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
     ForwardBddCycle(): ForwardBddBase<E, T>(){
     }
 
+    ForwardBddCycle(OriginalModel<>* model): ForwardBddBase<E, T>(model){
+    
+    }
+
     ForwardBddCycle(const ForwardBddCycle<E, T> &src) {
 
     }
@@ -82,6 +103,12 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
         T g;
         NodeBdd<T>* p0 = n.child[0];
         NodeBdd<T>* p1 = n.child[1];
+        n.reset_reduced_costs();
+        const double* dual = ForwardBddBase<E,T>::get_pi();
+        
+        for(auto& it : n.coeff_list[1]) {
+            n.adjust_reduced_costs(it->get_coeff()*dual[it->get_row()], it->get_high());
+        }
         result = n.reduced_cost[1];
 
         /**
@@ -143,7 +170,12 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
 
 template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<E, T> {
   public:
-    ForwardBddSimple(){
+    ForwardBddSimple() : ForwardBddBase<E, T>(){
+    
+    };
+
+    ForwardBddSimple(OriginalModel<>* model) : ForwardBddBase<E, T>(model){
+    
     }
 
     ForwardBddSimple(const ForwardBddSimple<E, T> &src) {
@@ -168,6 +200,12 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         T g;
         NodeBdd<T>* p0 = n.child[0];
         NodeBdd<T>* p1 = n.child[1];
+        n.reset_reduced_costs();
+        const double* dual = ForwardBddBase<E,T>::get_pi();
+        
+        for(auto& it : n.coeff_list[1]) {
+            n.adjust_reduced_costs(it->get_coeff()*dual[it->get_row()], it->get_high());
+        }
 
         /**
          * High edge calculation
