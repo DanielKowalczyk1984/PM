@@ -8,29 +8,11 @@
 
 template<typename E, typename T> class ForwardBddBase : public 
     Eval<E, NodeBdd<T>, OptimalSolution<T>> {
-protected:
-    T *pi;
-    int num_jobs;
 public:
-    ForwardBddBase(T *_pi, int _num_jobs): pi(_pi), num_jobs(_num_jobs) {
-    }
-
-    ForwardBddBase(int _num_jobs)
-    :  pi(nullptr), num_jobs(_num_jobs){
-    }
-
     ForwardBddBase(){
-        pi = nullptr;
-        num_jobs = 0;
     }
 
     ForwardBddBase(const ForwardBddBase<E, T> &src) {
-        pi = src.pi;
-        num_jobs = src.num_jobs;
-    }
-
-    void initialize_pi(T *_pi){
-        pi = _pi;
     }
 
     virtual void initializenode(NodeBdd<T>& n) const = 0;
@@ -40,14 +22,15 @@ public:
     virtual void evalNode(NodeBdd<T>& n) const = 0;
 
     OptimalSolution<T> get_objective(NodeBdd<T> &n) const {
-        OptimalSolution<T> sol(pi[num_jobs]);
+        OptimalSolution<T> sol(0);
         Label<NodeBdd<T>,T> *ptr_node = &(n.forward_label[0]);
 
         while(ptr_node->get_previous() != nullptr) {
             Label<NodeBdd<T>,T> *aux_prev_node = ptr_node->get_previous();
             Job *aux_job = aux_prev_node->get_job();
             sol.C_max += aux_job->processing_time;
-            sol.push_job_back(aux_job, aux_prev_node->get_weight(), pi[aux_job->job]);
+            auto node = aux_prev_node->get_node();
+            sol.push_job_back(aux_job, aux_prev_node->get_weight(), node->reduced_cost[1]);
             ptr_node = aux_prev_node;
         }
 
@@ -64,26 +47,18 @@ public:
 
 template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E, T> {
   public:
-    using ForwardBddBase<E, T>::pi;
-    using ForwardBddBase<E, T>::num_jobs;
 
-    ForwardBddCycle(T *_pi, int _num_jobs) : ForwardBddBase<E, T>(_pi, _num_jobs) {}
-
-    explicit ForwardBddCycle(int _num_jobs) : ForwardBddBase<E, T>(_num_jobs) {}
 
     ForwardBddCycle(): ForwardBddBase<E, T>(){
-        pi = nullptr;
-        num_jobs = 0;
     }
 
     ForwardBddCycle(const ForwardBddCycle<E, T> &src) {
-        pi = src.pi;
-        num_jobs = src.num_jobs;
+
     }
 
     void initializenode(NodeBdd<T>& n) const override {
         if(n.get_weight() == 0) {
-            n.forward_label[0].update_solution(pi[num_jobs], nullptr, false);
+            n.forward_label[0].update_solution(0, nullptr, false);
             n.forward_label[1].update_solution(DBL_MAX/2, nullptr, false);
         } else {
             n.forward_label[0].update_solution(DBL_MAX/2, nullptr, false);
@@ -92,7 +67,7 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
     }
 
     void initializerootnode(NodeBdd<T> &n) const override {
-        n.forward_label[0].f = pi[num_jobs];
+        n.forward_label[0].f = 0;
         n.forward_label[1].set_f(DBL_MAX/2);
     }
 
@@ -107,7 +82,7 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
         T g;
         NodeBdd<T>* p0 = n.child[0];
         NodeBdd<T>* p1 = n.child[1];
-        result = value_Fj(weight + tmp_j->processing_time, tmp_j) - pi[tmp_j->job];
+        result = n.reduced_cost[1];
 
         /**
          * High edge calculation
@@ -147,18 +122,20 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
          * Low edge calculation
          */
         aux1 = p0->forward_label[0].get_previous_job();
-        if(n.forward_label[0].get_f() < p0->forward_label[0].get_f()) {
+        g = n.forward_label[0].get_f() + n.reduced_cost[0];
+        auto g1 = n.forward_label[1].get_f() + n.reduced_cost[0];
+        if(g < p0->forward_label[0].get_f()) {
             if(prev != aux1) {
                 p0->forward_label[1].update_solution(p0->forward_label[0]);
             }
-            p0->forward_label[0].update_solution(n.forward_label[0]);
-            if(n.forward_label[1].get_f() < p0->forward_label[1].get_f()) {
-                p0->forward_label[1].update_solution(n.forward_label[1]);
+            p0->forward_label[0].update_solution(g, n.forward_label[0]);
+            if(g1 < p0->forward_label[1].get_f()) {
+                p0->forward_label[1].update_solution(g1, n.forward_label[1]);
             }
-        } else if ((n.forward_label[0].get_f() < p0->forward_label[1].get_f()) && (aux1 != prev)){
-            p0->forward_label[1].update_solution(n.forward_label[0]);
-        } else if ((n.forward_label[1].get_f() < p0->forward_label[1].get_f())) {
-            p0->forward_label[1].update_solution(n.forward_label[1]);
+        } else if ((g < p0->forward_label[1].get_f()) && (aux1 != prev)){
+            p0->forward_label[1].update_solution(g, n.forward_label[0]);
+        } else if ((g1 < p0->forward_label[1].get_f())) {
+            p0->forward_label[1].update_solution(g1, n.forward_label[1]);
         }
     }
 };
@@ -166,56 +143,36 @@ template<typename E, typename T> class ForwardBddCycle : public ForwardBddBase<E
 
 template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<E, T> {
   public:
-    using ForwardBddBase<E, T>::pi;
-    using ForwardBddBase<E, T>::num_jobs;
-    ForwardBddSimple(T *_pi, int _num_jobs): ForwardBddBase<E, T>(_pi, _num_jobs) {
-    }
-
-    explicit ForwardBddSimple(int _num_jobs)
-    :  ForwardBddBase<E, T>(_num_jobs){
-    }
-
     ForwardBddSimple(){
-        pi = nullptr;
-        num_jobs = 0;
     }
 
     ForwardBddSimple(const ForwardBddSimple<E, T> &src) {
-        pi = src.pi;
-        num_jobs = src.num_jobs;
     }
 
     void initializenode(NodeBdd<T>& n) const override {
         if(n.get_weight() == 0) {
-            n.forward_label[0].update_solution(pi[num_jobs], nullptr, false);
+            n.forward_label[0].update_solution(0, nullptr, false);
         } else {
             n.forward_label[0].update_solution(DBL_MAX/2, nullptr, false);
         }
     }
 
     void initializerootnode(NodeBdd<T> &n) const override {
-        n.forward_label[0].f = pi[num_jobs];
-    }
-
-    void initialize_pi(T *_pi){
-        pi = _pi;
+        n.forward_label[0].f = 0;
     }
 
     void evalNode(NodeBdd<T> &n) const override {
         Job *tmp_j = n.get_job();
         assert(tmp_j != nullptr);
-        T result;
 
-        int      weight = n.get_weight();
         T g;
         NodeBdd<T>* p0 = n.child[0];
         NodeBdd<T>* p1 = n.child[1];
-        result = value_Fj(weight + tmp_j->processing_time, tmp_j) - pi[tmp_j->job];
 
         /**
          * High edge calculation
          */
-        g = n.forward_label[0].get_f() + result;
+        g = n.forward_label[0].get_f() + n.reduced_cost[1];
         if(g < p1->forward_label[0].get_f()) {
             p1->forward_label[0].update_solution(g, &(n.forward_label[0]), true);
         }
@@ -223,8 +180,10 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
         /**
          * Low edge calculation
          */
-        if(n.forward_label[0].get_f() < p0->forward_label[0].get_f()) {
-            p0->forward_label[0].update_solution(n.forward_label[0]);
+        g = n.forward_label[0].get_f() + n.reduced_cost[0];
+        double result = g;
+        if(g < p0->forward_label[0].get_f()) {
+            p0->forward_label[0].update_solution(result, n.forward_label[0]);
         }
     }
 };

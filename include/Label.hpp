@@ -102,6 +102,13 @@ class Label
             high = _high;
         }
 
+        void update_solution(T _f,Label<N,T>& _node)
+        {
+            f = _f;
+            prev = _node.prev;
+            high = _node.high;
+        }
+
         void update_solution(Label<N,T>& _node)
         {
             f = _node.f;

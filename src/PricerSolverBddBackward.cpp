@@ -12,9 +12,9 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = BackwardBddSimpleDouble(nb_jobs);
-    reversed_evaluator = ForwardBddSimpleDouble(nb_jobs);
-    farkas_evaluator = BackwardBddFarkasDouble(nb_jobs);
+    evaluator = BackwardBddSimpleDouble();
+    reversed_evaluator = ForwardBddSimpleDouble();
+    farkas_evaluator = BackwardBddFarkasDouble();
 }
 
 PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
@@ -24,25 +24,23 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = BackwardBddSimpleDouble(nb_jobs);
-    reversed_evaluator = ForwardBddSimpleDouble(nb_jobs);
+    evaluator = BackwardBddSimpleDouble();
+    reversed_evaluator = ForwardBddSimpleDouble();
 }
 
 OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
     double* _pi) {
-    evaluator.initialize_pi(_pi);
+    update_reduced_costs_arcs(_pi);
     return decision_diagram->evaluate_backward(evaluator);
 }
 
 OptimalSolution<double> PricerSolverBddBackwardSimple::farkas_pricing(
     double* _pi) {
-    farkas_evaluator.initialize_pi(_pi);
+    update_reduced_costs_arcs(_pi, true);
     return decision_diagram->evaluate_backward(farkas_evaluator);
 }
 void PricerSolverBddBackwardSimple::compute_labels(double* _pi) {
-    evaluator.initialize_pi(_pi);
-    reversed_evaluator.initialize_pi(_pi);
-
+    update_reduced_costs_arcs(_pi);
     decision_diagram->compute_labels_backward(evaluator);
     decision_diagram->compute_labels_forward(reversed_evaluator);
 }
@@ -51,19 +49,16 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
                                                    double LB) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     compute_labels(pi);
-    double reduced_cost = table.node(1).forward_label[0].get_f();
+    double reduced_cost = table.node(1).forward_label[0].get_f() + pi[nb_jobs];
     bool removed_edges = false;
     int nb_edges_removed_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            int    w = it.get_weight();
-            Job*   job = it.get_job();
             double result = it.forward_label[0].get_f() +
                             it.child[1]->backward_label[0].get_f() +
-                            value_Fj(w + job->processing_time, job) -
-                            pi[job->job] - pi[nb_jobs];
+                            it.reduced_cost[1] + pi[nb_jobs];
 
             if (LB + (double)(num_machines - 1) * reduced_cost + result >
                     UB + 0.0001 &&
@@ -95,9 +90,9 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = BackwardBddCycleDouble(nb_jobs);
-    reversed_evaluator = ForwardBddCycleDouble(nb_jobs);
-    farkas_evaluator = BackwardBddFarkasDouble(nb_jobs);
+    evaluator = BackwardBddCycleDouble();
+    reversed_evaluator = ForwardBddCycleDouble();
+    farkas_evaluator = BackwardBddFarkasDouble();
 }
 
 PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
@@ -107,27 +102,25 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = BackwardBddCycleDouble(nb_jobs);
-    reversed_evaluator = ForwardBddCycleDouble(nb_jobs);
-    farkas_evaluator = BackwardBddFarkasDouble(nb_jobs);
+    evaluator = BackwardBddCycleDouble();
+    reversed_evaluator = ForwardBddCycleDouble();
+    farkas_evaluator = BackwardBddFarkasDouble();
 }
 
 OptimalSolution<double> PricerSolverBddBackwardCycle::pricing_algorithm(
     double* _pi) {
-    evaluator.initialize_pi(_pi);
+    update_reduced_costs_arcs(_pi);
     return decision_diagram->evaluate_backward(evaluator);
 }
 
 OptimalSolution<double> PricerSolverBddBackwardCycle::farkas_pricing(
     double* _pi) {
-    farkas_evaluator.initialize_pi(_pi);
+    update_reduced_costs_arcs(_pi, true);
     return decision_diagram->evaluate_backward(farkas_evaluator);
 }
 
 void PricerSolverBddBackwardCycle::compute_labels(double* _pi) {
-    evaluator.initialize_pi(_pi);
-    reversed_evaluator.initialize_pi(_pi);
-
+    update_reduced_costs_arcs(_pi);
     decision_diagram->compute_labels_backward(evaluator);
     decision_diagram->compute_labels_forward(reversed_evaluator);
 }
@@ -136,7 +129,7 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
                                                   double LB) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     compute_labels(pi);
-    double reduced_cost = table.node(1).forward_label[0].get_f();
+    double reduced_cost = table.node(1).forward_label[0].get_f() + pi[nb_jobs];
     bool removed_edges = false;
     int nb_removed_edges_evaluate = 0;
 
@@ -144,7 +137,6 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
     /** check for each node the Lagrangian dual */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            int    w = it.get_weight();
             Job*   job = it.get_job();
             double result;
 
@@ -152,26 +144,22 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
                 it.child[1]->backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[0].get_f() +
                          it.child[1]->backward_label[0].get_f() +
-                         value_Fj(w + job->processing_time, job) -
-                         pi[job->job] - pi[nb_jobs];
+                         it.reduced_cost[1] + pi[nb_jobs];
 
             } else if (it.forward_label[0].get_previous_job() == job &&
                        it.child[1]->backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[1].get_f() +
                          it.child[1]->backward_label[0].get_f() +
-                         value_Fj(w + job->processing_time, job) -
-                         pi[job->job] - pi[nb_jobs];
+                         it.reduced_cost[1] + pi[nb_jobs];
             } else if (it.forward_label[0].get_previous_job() != job &&
                        it.child[1]->backward_label[0].get_prev_job() == job) {
                 result = it.forward_label[0].get_f() +
                          it.child[1]->backward_label[1].get_f() +
-                         value_Fj(w + job->processing_time, job) -
-                         pi[job->job] - pi[nb_jobs];
+                         it.reduced_cost[1] + pi[nb_jobs];
             } else {
                 result = it.forward_label[1].get_f() +
                          it.child[1]->backward_label[1].get_f() +
-                         value_Fj(w + job->processing_time, job) -
-                         pi[job->job] - pi[nb_jobs];
+                         it.reduced_cost[1] + pi[nb_jobs];
             }
 
             if (LB + (double)(num_machines - 1) * reduced_cost + result >

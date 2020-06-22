@@ -314,12 +314,16 @@ int solve_pricing(NodeData* pd, parms* parms, int evaluate) {
     int val = 0;
 
     OptimalSolution<double> sol;
+    pd->update = 0;
+    double *pi = &g_array_index(pd->pi, double, 0);
+    double *lhs = &g_array_index(pd->lhs_coeff, double, 0);
 
-    sol = pd->solver->pricing_algorithm(&g_array_index(pd->pi, double, 0));
-    pd->reduced_cost = compute_reduced_cost(sol, &g_array_index(pd->pi,double,0), pd->nb_jobs);
+    sol = pd->solver->pricing_algorithm(pi);
+    pd->reduced_cost = pd->solver->compute_reduced_cost(sol, pi, lhs);
 
     if (pd->reduced_cost < -0.000001) {
         val = construct_sol(pd, &sol);
+        pd->update = 1;
         CCcheck_val_2(val, "Failed in construction")
     } else {
         pd->nb_new_sets = 0;
