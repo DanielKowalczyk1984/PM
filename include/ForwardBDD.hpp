@@ -194,9 +194,6 @@ template<typename E, typename T> class ForwardBddSimple : public ForwardBddBase<
     }
 
     void evalNode(NodeBdd<T> &n) const override {
-        Job *tmp_j = n.get_job();
-        assert(tmp_j != nullptr);
-
         T g;
         NodeBdd<T>* p0 = n.child[0];
         NodeBdd<T>* p1 = n.child[1];
