@@ -1,5 +1,6 @@
 #include "PricerSolverBddBackward.hpp"
 #include <iostream>
+#include "BackwardBDD.hpp"
 
 /**
  * backward bdd pricersolver for the flow formulation that takes care of the
@@ -12,8 +13,8 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = BackwardBddSimpleDouble();
-    reversed_evaluator = ForwardBddSimpleDouble();
+    evaluator = BackwardBddSimpleDouble(&original_model);
+    reversed_evaluator = ForwardBddSimpleDouble(&original_model);
     farkas_evaluator = BackwardBddFarkasDouble();
 }
 
@@ -24,13 +25,13 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = BackwardBddSimpleDouble();
-    reversed_evaluator = ForwardBddSimpleDouble();
+    evaluator = BackwardBddSimpleDouble(&original_model);
+    reversed_evaluator = ForwardBddSimpleDouble(&original_model);
 }
 
 OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
     double* _pi) {
-    update_reduced_costs_arcs(_pi);
+    evaluator.set_pi(_pi);
     return decision_diagram->evaluate_backward(evaluator);
 }
 
@@ -40,7 +41,8 @@ OptimalSolution<double> PricerSolverBddBackwardSimple::farkas_pricing(
     return decision_diagram->evaluate_backward(farkas_evaluator);
 }
 void PricerSolverBddBackwardSimple::compute_labels(double* _pi) {
-    update_reduced_costs_arcs(_pi);
+    evaluator.set_pi(_pi);
+    reversed_evaluator.set_pi(_pi);
     decision_diagram->compute_labels_backward(evaluator);
     decision_diagram->compute_labels_forward(reversed_evaluator);
 }
@@ -90,8 +92,8 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = BackwardBddCycleDouble();
-    reversed_evaluator = ForwardBddCycleDouble();
+    evaluator = BackwardBddCycleDouble(&original_model);
+    reversed_evaluator = ForwardBddCycleDouble(&original_model);
     farkas_evaluator = BackwardBddFarkasDouble();
 }
 
@@ -102,14 +104,14 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = BackwardBddCycleDouble();
-    reversed_evaluator = ForwardBddCycleDouble();
+    evaluator = BackwardBddCycleDouble(&original_model);
+    reversed_evaluator = ForwardBddCycleDouble(&original_model);
     farkas_evaluator = BackwardBddFarkasDouble();
 }
 
 OptimalSolution<double> PricerSolverBddBackwardCycle::pricing_algorithm(
     double* _pi) {
-    update_reduced_costs_arcs(_pi);
+    evaluator.set_pi(_pi);
     return decision_diagram->evaluate_backward(evaluator);
 }
 
@@ -120,7 +122,8 @@ OptimalSolution<double> PricerSolverBddBackwardCycle::farkas_pricing(
 }
 
 void PricerSolverBddBackwardCycle::compute_labels(double* _pi) {
-    update_reduced_costs_arcs(_pi);
+    evaluator.set_pi(_pi);
+    reversed_evaluator.set_pi(_pi);
     decision_diagram->compute_labels_backward(evaluator);
     decision_diagram->compute_labels_forward(reversed_evaluator);
 }

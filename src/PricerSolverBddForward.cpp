@@ -11,12 +11,12 @@ PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray*  _jobs,
     std::cout << "Constructing BDD with Forward Simple evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = ForwardBddSimpleDouble();
-    reversed_evaluator = BackwardBddSimpleDouble();
+    evaluator = ForwardBddSimpleDouble(&original_model);
+    reversed_evaluator = BackwardBddSimpleDouble(&original_model);
 }
 
 OptimalSolution<double> PricerSolverBddSimple::pricing_algorithm(double* _pi) {
-    update_reduced_costs_arcs(_pi);
+    evaluator.set_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
 
@@ -26,8 +26,8 @@ OptimalSolution<double> PricerSolverBddSimple::farkas_pricing(double* _pi) {
 }
 
 void PricerSolverBddSimple::compute_labels(double* _pi) {
-    update_reduced_costs_arcs(_pi);
-
+    evaluator.set_pi(_pi);
+    reversed_evaluator.set_pi(_pi);
     decision_diagram->compute_labels_forward(evaluator);
     decision_diagram->compute_labels_backward(reversed_evaluator);
 }
@@ -77,12 +77,12 @@ PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray* _jobs, int _num_machines,
     std::cout << "Constructing BDD with Forward Cycle evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = ForwardBddCycleDouble();
-    reversed_evaluator = BackwardBddCycleDouble();
+    evaluator = ForwardBddCycleDouble(&original_model);
+    reversed_evaluator = BackwardBddCycleDouble(&original_model);
 }
 
 OptimalSolution<double> PricerSolverBddCycle::pricing_algorithm(double* _pi) {
-    update_reduced_costs_arcs(_pi);
+    evaluator.set_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
 
@@ -92,8 +92,8 @@ OptimalSolution<double> PricerSolverBddCycle::farkas_pricing(double* _pi) {
 }
 
 void PricerSolverBddCycle::compute_labels(double* _pi) {
-    update_reduced_costs_arcs(_pi);
-
+    evaluator.set_pi(_pi);
+    reversed_evaluator.set_pi(_pi);
     decision_diagram->compute_labels_forward(evaluator);
     decision_diagram->compute_labels_backward(reversed_evaluator);
 }
