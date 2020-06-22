@@ -53,7 +53,11 @@
         "cmath": "c",
         "random": "c",
         "limits": "cpp",
-        "numeric": "cpp"
+        "numeric": "cpp",
+        "functional": "cpp",
+        "memory": "cpp",
+        "optional": "cpp",
+        "sstream": "cpp"
     },
     "julia.environmentPath": "${workspaceRoot}/scripts/Julia/DAG-cluster-cover",
     "cquery.cacheDirectory": "${workspaceFolder}/.vscode/cquery_cached_index/"
