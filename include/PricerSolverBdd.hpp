@@ -67,6 +67,7 @@ class PricerSolverBdd : public PricerSolverBase {
         return NULL;
     };
     void update_reduced_costs_arcs(double *_pi, bool farkas = false) override ;
+    void init_coeff_constraints();
     private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);
     void add_inequality(std::vector<int> v1);
