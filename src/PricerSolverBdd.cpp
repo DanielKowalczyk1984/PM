@@ -44,35 +44,7 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
     bottum_up_filtering();
     topdown_filtering();
     construct_mipgraph();
-    NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
-    /** init table */
-
-    for (int i = decision_diagram->topLevel(); i > 0; i--) {
-        for (auto &it : table[i]) {
-            for (int c= 0; c < nb_jobs; c++) {
-                ConstraintBase *constr = original_model.get_constraint(c);
-                VariableKeyBase key_aux(it.get_job()->job, it.get_weight());
-                double coeff = constr->get_var_coeff(&key_aux);
-                if (fabs(coeff) > 1e-10) {
-                    std::shared_ptr<BddCoeff> ptr_coeff(new BddCoeff(it.get_job()->job, it.get_weight(), coeff));
-                    original_model.add_coeff_list(c, ptr_coeff);
-                }
-            }
-        }
-    }
-    
-    auto& root = decision_diagram->root();
-    auto& root_node = table.node(root);
-    VariableKeyBase key_aux(root_node.get_job()->job, root_node.get_weight(), true);
-    ConstraintBase* constr = original_model.get_constraint(nb_jobs);
-    double coeff = constr->get_var_coeff(&key_aux);
-    if (fabs(coeff) > 1e-10) {
-        std::shared_ptr<BddCoeff> ptr_coeff(new BddCoeff(root_node.get_job()->job, root_node.get_weight(),coeff, true, true));
-        original_model.add_coeff_list(nb_jobs, ptr_coeff);
-        std::shared_ptr<BddCoeff> ptr_coeff_low(new BddCoeff(root_node.get_job()->job, root_node.get_weight(),coeff, false, true));
-        original_model.add_coeff_list(nb_jobs, ptr_coeff_low);
-    }
-
+    init_coeff_constraints();
     std::cout << "Ending construction\n";
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
@@ -95,6 +67,7 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
     bottum_up_filtering();
     topdown_filtering();
     construct_mipgraph();
+    init_coeff_constraints();
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
 }
@@ -167,6 +140,37 @@ void PricerSolverBdd::construct_mipgraph() {
     std::cout << "Number of edges = " << num_edges(mip_graph) << '\n';
 }
 
+void PricerSolverBdd::init_coeff_constraints () {
+    NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
+
+    for (int i = decision_diagram->topLevel(); i > 0; i--) {
+        for (auto &it : table[i]) {
+            for (int c= 0; c < nb_jobs; c++) {
+                ConstraintBase *constr = original_model.get_constraint(c);
+                VariableKeyBase key_aux(it.get_job()->job, it.get_weight());
+                double coeff = constr->get_var_coeff(&key_aux);
+                if (fabs(coeff) > 1e-10) {
+                    std::shared_ptr<BddCoeff> ptr_coeff(new BddCoeff(it.get_job()->job, it.get_weight(), coeff, c));
+                    original_model.add_coeff_list(c, ptr_coeff);
+                    it.add_coeff_list(ptr_coeff, 1);
+                }
+            }
+        }
+    }
+    
+    auto& root = decision_diagram->root();
+    auto& root_node = table.node(root);
+    VariableKeyBase key_aux(root_node.get_job()->job, root_node.get_weight(), true);
+    ConstraintBase* constr = original_model.get_constraint(nb_jobs);
+    double coeff = constr->get_var_coeff(&key_aux);
+    if (fabs(coeff) > 1e-10) {
+        std::shared_ptr<BddCoeff> ptr_coeff(new BddCoeff(root_node.get_job()->job, root_node.get_weight(),coeff, true, true));
+        original_model.add_coeff_list(nb_jobs, ptr_coeff);
+        std::shared_ptr<BddCoeff> ptr_coeff_low(new BddCoeff(root_node.get_job()->job, root_node.get_weight(),coeff, false, true));
+        original_model.add_coeff_list(nb_jobs, ptr_coeff_low);
+    }
+}
+
 void PricerSolverBdd::init_table() {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     /** init table */
@@ -222,7 +226,6 @@ void PricerSolverBdd::update_reduced_costs_arcs(double *_pi, bool farkas) {
             auto coeff = it->get_coeff();
             node.adjust_reduced_costs(coeff*_pi[c], it->get_high());
         }
-
     }
 }
 
