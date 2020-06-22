@@ -148,12 +148,14 @@ public:
 
 class BddCoeff : public VariableKeyBase {
     private:
+    int row;
     double coeff;
     bool high;
 
     public:
-    BddCoeff(int _j, int _t, double _coeff, bool _high = true, bool _root = false) : 
+    BddCoeff(int _j, int _t, double _coeff, int _row = -1, bool _high = true, bool _root = false) : 
         VariableKeyBase(_j, _t, _root),
+        row(_row),
         coeff(_coeff),
         high(_high) { } ;
     ~BddCoeff() = default;
@@ -166,6 +168,10 @@ class BddCoeff : public VariableKeyBase {
 
     inline bool get_high() {
         return high;
+    }
+
+    inline int get_row() {
+        return row;
     }
 
 };
