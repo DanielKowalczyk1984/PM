@@ -160,6 +160,37 @@ int wctlp_addrow(wctlp* lp, int nb_zero, int* column_indices, double* cval,
     return val;
 }
 
+int wctlp_addrows(wctlp* lp, int nb_rows, int nb_zero, int *start, int* column_indices, double* coeff_val,
+                 char* sense, double* rhs, char** name) {
+    int  val = 0;
+    // char inequality_sense;
+
+    // switch (sense) {
+    //     case wctlp_EQUAL:
+    //         inequality_sense = GRB_EQUAL;
+    //         break;
+
+    //     case wctlp_LESS_EQUAL:
+    //         inequality_sense = GRB_LESS_EQUAL;
+    //         break;
+
+    //     case wctlp_GREATER_EQUAL:
+    //         inequality_sense = GRB_GREATER_EQUAL;
+    //         break;
+
+    //     default:
+    //         fprintf(stderr, "Unknown variable sense: %c\n", sense);
+    //         val = 1;
+    //         return val;
+    // }
+
+    val = GRBaddconstrs(lp->model, nb_rows, nb_zero, start, column_indices, coeff_val, sense, rhs, name);
+    CHECK_VAL_GRB(val, "Failed GRBadd", lp->env);
+    val = GRBupdatemodel(lp->model);
+    CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
+    return val;
+}
+
 int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval,
                  double obj, double lb, double ub, char sense, char* name) {
     int  val = 0;
@@ -186,6 +217,37 @@ int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval,
 
     val = GRBaddvar(lp->model, nb_zero, column_indices, cval, obj, lb, ub,
                     inequality_sense, name);
+    CHECK_VAL_GRB(val, "Failed adding GRBaddvar", lp->env);
+    val = GRBupdatemodel(lp->model);
+    CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
+    return val;
+}
+
+int wctlp_addcols(wctlp* lp, int num_vars, int nb_zero, int*start, int* row_indices, double* coeff_val,
+                 double* obj, double* lb, double* ub, char* vtype, char** name) {
+    int  val = 0;
+    // char inequality_sense;
+
+    // switch (sense) {
+    //     case wctlp_CONT:
+    //         inequality_sense = GRB_CONTINUOUS;
+    //         break;
+
+    //     case wctlp_BIN:
+    //         inequality_sense = GRB_BINARY;
+    //         break;
+
+    //     case wctlp_INT:
+    //         inequality_sense = GRB_INTEGER;
+    //         break;
+
+    //     default:
+    //         fprintf(stderr, "Unknown variable sense: %c\n", sense);
+    //         val = 1;
+    //         return val;
+    // }
+
+    val = GRBaddvars(lp->model, num_vars, nb_zero, start, row_indices, coeff_val, obj, lb, ub, vtype, name);
     CHECK_VAL_GRB(val, "Failed adding GRBaddvar", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);

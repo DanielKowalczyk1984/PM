@@ -110,7 +110,9 @@ int wctlp_addcol(wctlp * lp,
                  double  ub,
                  char    vartype,
                  char *  name);
+int wctlp_addrows(wctlp* lp, int nb_rows, int nb_zero, int *start, int* column_indices, double* coeff_val, char* sense, double* rhs, char** name); 
 int wctlp_deletecols(wctlp *lp, int first_column_ind, int last_column_ind);
+int wctlp_addcols(wctlp* lp, int num_vars, int nb_zero, int*start, int* row_indices, double* coeff_val, double* obj, double* lb, double* ub, char* vtype, char** name);
 
 int wctlp_set_coltypes(wctlp *lp, char sense);
 int wctlp_setbound(wctlp *lp, int col, char lower_or_upper, double bound);
