@@ -179,32 +179,89 @@ int build_rmp(NodeData* pd, int construct) {
     int      nb_jobs = problem->nb_jobs;
     int      nb_machines = problem->nb_machines;
     Parms*   parms = &(problem->parms);
-    int*     covered = CC_SAFE_MALLOC(nb_jobs, int);
-    CCcheck_NULL_2(covered, "Failed to allocate memory to covered");
-    fill_int(covered, nb_jobs, 0);
+    double* lb = NULL;
+    double* ub = NULL;
+    double* obj = NULL;
+    char* vtype = NULL;
+    int* start_vars = NULL;
+    int* rows_ind = NULL;
+    double* coeff_vals = NULL;
+    int* start = CC_SAFE_MALLOC(nb_jobs, int);
+    double* rhs = CC_SAFE_MALLOC(nb_jobs, double);
+    char* sense = CC_SAFE_MALLOC(nb_jobs, char);
     val = wctlp_init(&(pd->RMP), NULL);
     CCcheck_val_2(val, "wctlp_init failed");
+
+    fill_int(start, nb_jobs, 0);
+    fill_dbl(rhs, nb_jobs, 1.0);
+    fill_char(sense, nb_jobs, GRB_GREATER_EQUAL);
 
     /**
      * add assignment constraints
      */
-    for (int i = 0; i < nb_jobs; i++) {
-        val = wctlp_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL,
-                           wctlp_GREATER_EQUAL, 1.0, (char*)NULL);
-        CCcheck_val_2(val, "Failed wctlp_addrow");
-    }
+    wctlp_get_nb_rows(pd->RMP, &(pd->id_assignment_constraint));
+    wctlp_addrows(pd->RMP, nb_jobs, 0, start, NULL, NULL, sense, rhs, NULL);
 
     /**
      * add number of machines constraint (convexification)
      */
+    wctlp_get_nb_rows(pd->RMP, &(pd->id_convex_constraint));
     val = wctlp_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL,
                        wctlp_GREATER_EQUAL, -(double)nb_machines, (char*)NULL);
     CCcheck_val_2(val, "Failed to add convexification constraint");
+    wctlp_get_nb_rows(pd->RMP, &(pd->id_valid_cuts));
+    pd->nb_rows = pd->id_valid_cuts;
 
-    wctlp_get_nb_rows(pd->RMP, &(pd->nb_rows));
+
+
+    /**
+     * construct artificial variables in RMP
+     */
+    wctlp_get_nb_cols(pd->RMP, &(pd->id_art_var_assignment));
+    pd->id_art_var_convex = nb_jobs;
+    pd->id_art_var_cuts = nb_jobs + 1;
+    pd->id_next_var_cuts = pd->id_art_var_cuts;
+    int nb_vars = nb_jobs + 1 + pd->max_nb_cuts;
+    pd->id_pseudo_schedules = nb_vars;
+
+    lb = CC_SAFE_MALLOC(nb_vars, double);
+    CCcheck_NULL_2(lb, "Failed to allocate memory");
+    ub = CC_SAFE_MALLOC(nb_vars, double);
+    CCcheck_NULL_2(ub, "Failed to allocate memory");
+    obj = CC_SAFE_MALLOC(nb_vars, double);
+    CCcheck_NULL_2(obj, "Failed to allocate memory");
+    vtype = CC_SAFE_MALLOC(nb_vars, char);
+    CCcheck_NULL_2(vtype, "Failed to allocate memory");
+    start_vars = CC_SAFE_MALLOC(nb_vars + 1, int);
+    CCcheck_NULL_2(start_vars, "Failed to allocate memory");
+    
+    for(int j = 0; j < nb_vars; j++) {
+        lb[j] = 0.0;
+        ub[j] = GRB_INFINITY;
+        vtype[j] = GRB_CONTINUOUS;
+        start_vars[j] = nb_jobs + 1;
+        obj[j] = (pd->upper_bound + 1.0) * 100;
+    }
+    start_vars[nb_vars] = nb_jobs + 1;
+
+
+    rows_ind = CC_SAFE_MALLOC(nb_jobs + 1, int);
+    CCcheck_NULL_2(rows_ind, "Failed to allocate memory");
+    coeff_vals = CC_SAFE_MALLOC(nb_jobs + 1, double);
+    CCcheck_NULL_2(coeff_vals, "Failed to allocate memory");
+    
+    for(int j = 0; j < nb_jobs + 1; j++) {
+        rows_ind[j] = j;
+        start_vars[j] = j;
+        coeff_vals[j] = 1.0;
+    }
+
+    val = wctlp_addcols(pd->RMP, nb_vars, nb_jobs+1, start_vars, rows_ind, coeff_vals, obj, lb, ub, vtype, NULL);
+    CCcheck_val(val, "failed construct cols");
+    val = wctlp_get_nb_cols(pd->RMP, &(pd->id_pseudo_schedules));
 
     /** add columns from localColPool */
-    add_artificial_var_to_rmp(pd);
+    // add_artificial_var_to_rmp(pd);
     g_ptr_array_foreach(pd->localColPool, g_add_col_to_lp, pd);
 
     /**
@@ -256,8 +313,16 @@ CLEAN:
         g_array_free(pd->rhs, TRUE);
         g_array_free(pd->lhs_coeff, TRUE);
     }
-
-    CC_IFFREE(covered, int);
+    CC_IFFREE(sense, char);
+    CC_IFFREE(rhs, double);
+    CC_IFFREE(start, int);
+    CC_IFFREE(lb, double);
+    CC_IFFREE(ub, double);
+    CC_IFFREE(vtype, char);
+    CC_IFFREE(obj, double);
+    CC_IFFREE(start_vars, int);
+    CC_IFFREE(rows_ind, int);
+    CC_IFFREE(coeff_vals, double);
     return val;
 }
 

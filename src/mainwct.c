@@ -229,20 +229,11 @@ int main(int ac, char** av) {
     problem.first_size_graph = get_nb_edges(root->solver);
 
     /**
-     * Build rmp problem
-     */
-    build_rmp(&(problem.root_pd), 0);
-
-    /**
      * Finding heuristic solutions to the problem or start without feasible
      * solutions
      */
     if (parms->use_heuristic == yes_use_heuristic) {
         heuristic(&problem);
-        for (int i = root->nb_jobs; i < root->localColPool->len; i++) {
-            add_scheduleset_to_rmp(g_ptr_array_index(root->localColPool, i),
-                                   root);
-        }
     } else {
         problem.opt_sol =
             solution_alloc(root->local_intervals->len, root->nb_machines,
@@ -260,6 +251,7 @@ int main(int ac, char** av) {
     /**
      * Solve initial relaxation
      */
+    build_rmp(&(problem.root_pd), 0);
     solve_relaxation(&problem, root);
     GPtrArray* solutions_pool = g_ptr_array_copy(
         root->localColPool, g_copy_scheduleset, &(problem.nb_jobs));

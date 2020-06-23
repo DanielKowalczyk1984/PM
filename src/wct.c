@@ -147,6 +147,17 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->coeff_row = (GArray *) NULL;
     pd->nb_rows = 0;
     pd->nb_cols = 0;
+    // init info cut generation
+    pd->max_nb_cuts = 2000;
+    pd->id_convex_constraint = 0;
+    pd->id_assignment_constraint = 0;
+    pd->id_valid_cuts = 0;
+    pd->id_art_var_assignment = 0;
+    pd->id_art_var_convex = 0;
+    pd->id_art_var_cuts = 0;
+    pd->id_pseudo_schedules = 0;
+
+
     /**init stab data */
     pd->pi_in = (GArray*)NULL;
     pd->pi_out = (GArray*)NULL;
@@ -240,6 +251,16 @@ void lp_node_data_free(NodeData* pd) {
      * free all the schedules from the localColPool
      */
     g_ptr_array_free(pd->localColPool, TRUE);
+    pd->nb_rows = 0;
+    pd->nb_cols = 0;
+    pd->max_nb_cuts = 2000;
+    pd->id_convex_constraint = 0;
+    pd->id_assignment_constraint = 0;
+    pd->id_valid_cuts = 0;
+    pd->id_art_var_assignment = 0;
+    pd->id_art_var_convex = 0;
+    pd->id_art_var_cuts = 0;
+    pd->id_pseudo_schedules = 0;
 }
 
 void children_data_free(NodeData* pd) {

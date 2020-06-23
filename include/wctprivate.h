@@ -67,6 +67,18 @@ struct _NodeData {
     int nb_rows;
     int nb_cols;
 
+    // cut generation information 
+    int max_nb_cuts;
+    int id_convex_constraint;
+    int id_assignment_constraint;
+    int id_valid_cuts;
+
+    int id_art_var_convex;
+    int id_art_var_assignment;
+    int id_art_var_cuts;
+    int id_next_var_cuts;
+    int id_pseudo_schedules;
+
     // PricerSolver
     PricerSolver *solver;
 

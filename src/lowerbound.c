@@ -43,7 +43,7 @@ static int grow_ages(NodeData* pd) {
     int val = 0;
     int nb_cols;
     wctlp_get_nb_cols(pd->RMP, &nb_cols);
-    assert(nb_cols == pd->localColPool->len);
+    assert(nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
     CC_IFFREE(pd->column_status, int);
     pd->column_status = (int*)CC_SAFE_MALLOC(nb_cols, int);
     CCcheck_NULL_2(pd->column_status, "Failed to allocate column_status");
@@ -79,14 +79,14 @@ int delete_old_cclasses(NodeData* pd) {
         int first_del = -1;
         int last_del = -1;
         wctlp_get_nb_cols(pd->RMP, &nb_col);
-        assert(nb_col == count);
+        assert(nb_col - pd->id_pseudo_schedules == count);
         for (i = 0; i < count; ++i) {
             tmp_schedule =
                 (ScheduleSet*)g_ptr_array_index(pd->localColPool, it);
             if (tmp_schedule->age <= pd->retirementage) {
                 if (first_del != -1) {
                     /** Delete recently found deletion range.*/
-                    val = wctlp_deletecols(pd->RMP, first_del, last_del);
+                    val = wctlp_deletecols(pd->RMP, first_del + pd->id_pseudo_schedules, last_del + pd->id_pseudo_schedules);
                     CCcheck_val_2(val, "Failed in wctlp_deletecols");
                     g_ptr_array_remove_range(pd->localColPool, first_del,
                                              last_del - first_del + 1);
@@ -107,7 +107,7 @@ int delete_old_cclasses(NodeData* pd) {
         }
 
         if (first_del != -1) {
-            wctlp_deletecols(pd->RMP, first_del, last_del);
+            wctlp_deletecols(pd->RMP, first_del + pd->id_pseudo_schedules, last_del + pd->id_pseudo_schedules);
             CCcheck_val_2(val, "Failed in wctlp_deletecols");
             g_ptr_array_remove_range(pd->localColPool, first_del,
                                      last_del - first_del + 1);
@@ -119,10 +119,10 @@ int delete_old_cclasses(NodeData* pd) {
         }
 
         wctlp_get_nb_cols(pd->RMP, &nb_col);
-        assert(pd->localColPool->len == nb_col);
+        assert(pd->localColPool->len == nb_col - pd->id_pseudo_schedules);
         for (i = 0; i < pd->localColPool->len; ++i) {
             tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
-            tmp_schedule->id = i;
+            tmp_schedule->id = i + pd->id_pseudo_schedules;
         }
         pd->zero_count = 0;
     }
@@ -151,22 +151,24 @@ int delete_infeasible_cclasses(NodeData* pd) {
     int it = 0;
     int first_del = pd->nb_jobs-1;
     int last_del = pd->nb_jobs-1;
+    wctlp_get_nb_cols(pd->RMP, &nb_col);
+    assert(nb_col - pd->id_pseudo_schedules == count);
     for (i = pd->nb_jobs; i < count; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, it);
         if (tmp_schedule->del != 1) {
-            if (first_del != pd->nb_jobs-1) {
+            if (first_del != -1) {
                 /** Delete recently found deletion range.*/
-                val = wctlp_deletecols(pd->RMP, first_del, last_del);
+                val = wctlp_deletecols(pd->RMP, first_del + pd->id_pseudo_schedules, last_del + pd->id_pseudo_schedules);
                 CCcheck_val_2(val, "Failed in wctlp_deletecols");
                 g_ptr_array_remove_range(pd->localColPool, first_del,
                                          last_del - first_del + 1);
                 it = it - (last_del - first_del);
-                first_del = last_del = pd->nb_jobs-1;
+                first_del = last_del = -1;
             } else {
                 it++;
             }
         } else {
-            if (first_del == pd->nb_jobs-1) {
+            if (first_del == -1) {
                 first_del = it;
                 last_del = first_del;
             } else {
@@ -176,8 +178,8 @@ int delete_infeasible_cclasses(NodeData* pd) {
         }
     }
 
-    if (first_del != pd->nb_jobs-1) {
-        wctlp_deletecols(pd->RMP, first_del, last_del);
+    if (first_del != -1) {
+        wctlp_deletecols(pd->RMP, first_del + pd->id_pseudo_schedules, last_del + pd->id_pseudo_schedules);
         CCcheck_val_2(val, "Failed in wctlp_deletecols");
         g_ptr_array_remove_range(pd->localColPool, first_del,
                                  last_del - first_del + 1);
@@ -189,13 +191,13 @@ int delete_infeasible_cclasses(NodeData* pd) {
     }
 
     wctlp_get_nb_cols(pd->RMP, &nb_col);
-    assert(pd->localColPool->len == nb_col);
+    assert(pd->localColPool->len == nb_col - pd->id_pseudo_schedules);
     printf("number of cols = %d\n", nb_col);
     for (i = 0; i < pd->localColPool->len; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
-        tmp_schedule->id = i;
+        tmp_schedule->id = i + pd->id_pseudo_schedules;
     }
-    printf("tset");
+
     pd->zero_count = 0;
 
 CLEAN:
@@ -308,11 +310,11 @@ int compute_objective(NodeData* pd, Parms* parms) {
     for (i = 0; i < pd->nb_jobs + 1; i++) {
         pd->LP_lower_bound_dual += tmp[i] * tmp_rhs[i];
     }
-    pd->LP_lower_bound_dual -= 0.0001;
+    pd->LP_lower_bound_dual -= 1e-9;
 
     /** Get the LP lower bound and compute the lower bound of WCT */
     val = wctlp_objval(pd->RMP, &(pd->LP_lower_bound));
-    pd->LP_lower_bound -= 0.0001;
+    pd->LP_lower_bound -= 1e-9;
     CCcheck_val_2(val, "wctlp_objval failed");
     pd->lower_bound =
         ((int)ceil(pd->LP_lower_bound_dual) < (int)ceil(pd->LP_lower_bound))
@@ -445,11 +447,11 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
         /**
          * Delete old columns
          */
-        // if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
-        //     status == GRB_OPTIMAL) {
-        //     val = delete_old_cclasses(pd);
-        //     CCcheck_val_2(val, "Failed in delete_old_cclasses");
-        // }
+        if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
+            status == GRB_OPTIMAL) {
+            val = delete_old_cclasses(pd);
+            CCcheck_val_2(val, "Failed in delete_old_cclasses");
+        }
 
         /**
          * Solve the pricing problem
@@ -491,6 +493,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 break;
 
             case GRB_INFEASIBLE:
+                printf("farkas farkas\n");
                 val = solve_farkas_dbl(pd);
                 CCcheck_val_2(val, "Failed in solving farkas");
                 break;
@@ -507,6 +510,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 g_ptr_array_add(pd->localColPool, pd->newsets + j);
             }
             pd->newsets = NULL;
+            pd->nb_new_sets = 0;
             nb_non_improvements = 0;
         } else {
             nb_non_improvements++;
@@ -519,8 +523,8 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     case stab_dynamic:
                     case stab_hybrid:
                         break_while_loop =
-                            (CC_ABS(pd->eta_out - pd->eta_in) < 0.00001) ||
-                            nb_non_improvements > 5;  // || (ceil(pd->eta_in - 0.00001) >=
+                            (CC_ABS(pd->eta_out - pd->eta_in) < 1e-8); 
+                            // || nb_non_improvements > 5;  // || (ceil(pd->eta_in - 0.00001) >=
                                     // pd->eta_out);
                         break;
 
