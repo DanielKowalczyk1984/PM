@@ -2,8 +2,14 @@
 #define _MODEL_INTERFACE
 
 
+#include <bits/c++config.h>
 #include "wctparms.h"
+#include <boost/container_hash/hash_fwd.hpp>
+#include <boost/functional/hash.hpp>
+#include <functional>
+#include <map>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 #include <list>
 #include <NodeId.hpp>
@@ -22,11 +28,11 @@ class VariableKeyBase {
         VariableKeyBase() : j(-1), t(-1), root(false) {
 
         }
-        inline int get_j() {
+        inline int get_j() const {
             return j;
         }
 
-        inline int get_t() {
+        inline int get_t() const {
             return t;
         }
 
@@ -129,7 +135,6 @@ class ConstraintConvex : public ConstraintBase {
 class ReformulationModel {
 private:
     std::vector<std::shared_ptr<ConstraintBase>> constraint_array;
-    int nb_constraints;
 public:
     ReformulationModel(int nb_assignments, int nb_machines);
     ~ReformulationModel();
@@ -137,12 +142,16 @@ public:
     ReformulationModel& operator=(ReformulationModel && op) noexcept;
 
     inline int get_nb_constraints() const {
-        return nb_constraints;
+        return constraint_array.size();
     };
 
     inline ConstraintBase* get_constraint(int c) const {
         return constraint_array[c].get();
     };
+
+    inline void add_constraint(ConstraintBase* _constr) {
+        constraint_array.push_back(std::shared_ptr<ConstraintBase>(_constr));
+    } 
 
 };
 
@@ -150,23 +159,35 @@ class BddCoeff : public VariableKeyBase {
     private:
     int row;
     double coeff;
+    double value;
     bool high;
 
     public:
-    BddCoeff(int _j, int _t, double _coeff, int _row = -1, bool _high = true, bool _root = false) : 
+    BddCoeff(int _j, int _t, double _coeff, double _value = 0.0, int _row = -1, bool _high = true, bool _root = false) : 
         VariableKeyBase(_j, _t, _root),
         row(_row),
         coeff(_coeff),
+        value(_value),
         high(_high) { } ;
     ~BddCoeff() = default;
-    BddCoeff(BddCoeff && op) = default;              // movable and noncopyable
+    BddCoeff(const BddCoeff&) = default;
+    BddCoeff& operator=(const BddCoeff&) = default;
+    BddCoeff(BddCoeff && op) = default;
     BddCoeff& operator=(BddCoeff && op) = default;
 
     inline double get_coeff() {
         return coeff;
-    } 
+    }
 
-    inline bool get_high() {
+    inline double get_value() {
+        return value;
+    }
+
+    inline void set_value(double _value) {
+        value = _value;
+    }
+
+    inline bool get_high() const {
         return high;
     }
 
@@ -174,7 +195,111 @@ class BddCoeff : public VariableKeyBase {
         return row;
     }
 
+    friend bool operator==(const BddCoeff& lhs, const BddCoeff & rhs) {
+        return lhs.get_j() == rhs.get_j() && lhs.get_t() == rhs.get_t() && lhs.get_high() == rhs.get_high();
+    }
 };
+
+namespace std {
+template <>
+struct hash<BddCoeff> {
+    std::size_t operator()(BddCoeff const& s) const noexcept {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, s.get_j());
+        boost::hash_combine(seed, s.get_t());
+        boost::hash_combine(seed, s.get_high());
+        
+        return seed;  // or use boost::hash_combine
+    }
+};
+}  // namespace std
+
+
+
+class GenericData {
+    private:
+    
+    typedef std::unordered_map<BddCoeff, double> coeff_hash_table;
+    coeff_hash_table coeff;
+
+
+    public:
+
+    GenericData() {} 
+    ~GenericData() = default;
+    GenericData(GenericData && op) = default;              // movable and noncopyable
+    GenericData& operator=(GenericData && op) = default;
+
+    coeff_hash_table::iterator find(const BddCoeff & key) {
+        return coeff.find(key);
+    }
+
+    coeff_hash_table::iterator end() {
+        return coeff.end();
+    }
+
+    void add_coeff_hash_table(int _j, int _t, bool _high, double _coeff) {
+        BddCoeff key(_j,_t, _coeff, 0.0, -1, _high);
+
+        auto it = coeff.find(key);
+        if (it == coeff.end()) {
+            coeff[key] = _coeff;
+        } else {
+            coeff[key] += _coeff;
+        }
+    }
+
+    friend bool operator==(const GenericData& lhs, const GenericData& rhs) {
+        if (lhs.coeff.size() != rhs.coeff.size()) {
+            return false;
+        }
+
+        for(auto& it1: lhs.coeff) {
+            auto it2 = rhs.coeff.find(it1.first);
+            if(it2 == rhs.coeff.end()) {
+                return false;
+            }
+
+            if(fabs(it1.second - (*it2).second) > 1e-6) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    friend bool operator!=(const GenericData& lhs, GenericData & rhs) { return !(lhs == rhs); }
+};
+class ConstraintGeneric : public ConstraintBase {
+    private:
+    std::unique_ptr<GenericData> data;
+    
+    public:
+    ConstraintGeneric(GenericData* _data, double _rhs, char _sense = '>') : ConstraintBase(_sense, _rhs), data(_data) {
+    
+    }
+
+    ConstraintGeneric(double _rhs, char _sense = '>') : ConstraintBase(_sense, _rhs) {
+
+    }
+
+    ~ConstraintGeneric() = default;
+    ConstraintGeneric(ConstraintGeneric && op) = default;              // movable and noncopyable
+    ConstraintGeneric& operator=(ConstraintGeneric && op) = default;
+
+    double get_var_coeff(VariableKeyBase *key) override {
+        BddCoeff* aux = static_cast<BddCoeff*>(key);
+        auto it = data->find(*aux);
+        if (it == data->end()) {
+            return 0.0;
+        } else {
+            return (*it).second;
+        }
+    }
+
+};
+
+
 template<typename T = BddCoeff>
 class OriginalConstraint {
     private:

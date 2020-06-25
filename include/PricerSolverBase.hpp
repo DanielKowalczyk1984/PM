@@ -22,6 +22,7 @@ struct PricerSolverBase {
     std::unique_ptr<GRBEnv> env;
     std::unique_ptr<GRBModel> model;
     ReformulationModel reformulation_model;
+    bool is_integer_solution;
 
 
    public:
@@ -87,6 +88,48 @@ struct PricerSolverBase {
      */
 
     virtual void add_constraint(Job* job, GPtrArray* list, int order) = 0;
+    virtual void add_constraints() {
+        GenericData* data = new GenericData();
+
+        std::vector<int> v_j{3, 3, 4, 4};
+        std::vector<int> v_t{71, 110, 71, 152};
+        std::vector<double> v_coeff(4, -1.0);
+
+        for(int j = 0; j < 4; j++) {
+            data->add_coeff_hash_table(v_j[j], v_t[j], true, v_coeff[j]);
+        }
+        
+        ConstraintGeneric *constr = new ConstraintGeneric(data, -1.0, '>');
+
+        reformulation_model.add_constraint(constr);
+
+        GenericData* data1 = new GenericData();
+
+        std::vector<int> v_j1{1, 0, 0, 4, 0};
+        std::vector<int> v_t1{0, 60, 71, 71,184};
+        std::vector<double> v_coeff1(5, -1.0);
+
+        for(int j = 0; j < 5; j++) {
+            data->add_coeff_hash_table(v_j1[j], v_t1[j], true, v_coeff1[j]);
+        }
+
+        ConstraintGeneric* constr1 = new ConstraintGeneric(data1, -2.0, '>');
+
+        reformulation_model.add_constraint(constr1);
+        GenericData* data2 = new GenericData();
+
+        std::vector<int> v_j2{1, 3, 3, 4, 4};
+        std::vector<int> v_t2{0, 71, 0, 71, 152};
+        std::vector<double> v_coeff2(5, -1.0);
+
+        for(int j = 0; j < 5; j++) {
+            data->add_coeff_hash_table(v_j2[j], v_t2[j], true, v_coeff2[j]);
+        }
+
+        ConstraintGeneric* constr2 = new ConstraintGeneric(data2, -2.0, '>');
+
+        reformulation_model.add_constraint(constr2);
+    };
 
     virtual void disjunctive_inequality(double* x, Solution* sol) = 0;
 
@@ -120,6 +163,18 @@ struct PricerSolverBase {
     virtual void update_reduced_costs_arcs(double *_pi, bool farkas = false) = 0;
     virtual double  compute_reduced_cost(const OptimalSolution<>& sol, double *pi, double *lhs);
     virtual double  compute_lagrange(const OptimalSolution<>& sol, double *pi);
+
+    inline void set_is_integer_solution(bool _is_solution) {
+        is_integer_solution = _is_solution;
+    }
+
+    inline bool get_is_integer_solution() {
+        return is_integer_solution;
+    }
+
+    inline ReformulationModel* get_reformulation_model() {
+        return &reformulation_model;
+    }
     // virtual void compute_lhs_coeff(GArray *lhs_coeff, ScheduleSet* set) = 0;
      
 

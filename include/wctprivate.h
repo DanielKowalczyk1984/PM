@@ -316,6 +316,7 @@ int solve_stab_dynamic(NodeData *pd, Parms *parms);
 int solve_stab_hybrid(NodeData *pd, Parms *parms);
 int solve_farkas_dbl(NodeData *pd);
 int solve_farkas_dbl_DP(NodeData *pd);
+void generate_cuts(NodeData* pd);
 #ifdef __cplusplus
 }
 #endif
