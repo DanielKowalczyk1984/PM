@@ -188,7 +188,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->column_status = (int*)NULL;
     /*Initialization max and retirement age*/
     pd->maxiterations = 1000000;
-    pd->retirementage = 1000000;
+    pd->retirementage = 100;
     /*initialization of branches*/
     pd->branch_job = -1;
     pd->parent = (NodeData*)NULL;
@@ -500,6 +500,7 @@ int add_solution_to_colpool(Solution* sol, NodeData* pd) {
         GPtrArray*   machine = sol->part[i].machine;
         ScheduleSet* tmp = scheduleset_from_solution(machine, pd->nb_jobs);
         CCcheck_NULL_2(tmp, "Failed to allocate memory");
+        tmp->id = pd->localColPool->len;
         g_ptr_array_add(pd->localColPool, tmp);
     }
 

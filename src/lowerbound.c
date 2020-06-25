@@ -45,9 +45,9 @@ static int grow_ages(NodeData* pd) {
     wctlp_get_nb_cols(pd->RMP, &nb_cols);
     assert(nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
     CC_IFFREE(pd->column_status, int);
-    pd->column_status = (int*)CC_SAFE_MALLOC(nb_cols, int);
+    pd->column_status = (int*)CC_SAFE_MALLOC(nb_cols - pd->id_pseudo_schedules, int);
     CCcheck_NULL_2(pd->column_status, "Failed to allocate column_status");
-    val = wctlp_basis_cols(pd->RMP, pd->column_status, 0);
+    val = wctlp_basis_cols(pd->RMP, pd->column_status, pd->id_pseudo_schedules);
     CCcheck_val_2(val, "Failed in wctlp_basis_cols");
     pd->zero_count = 0;
 
@@ -57,7 +57,7 @@ CLEAN:
     return val;
 }
 
-int delete_old_cclasses(NodeData* pd) {
+int delete_old_schedules(NodeData* pd) {
     int          val = 0;
     int          min_numdel = pd->nb_jobs * min_nb_del_row_ratio;
     int          nb_col;
@@ -122,7 +122,7 @@ int delete_old_cclasses(NodeData* pd) {
         assert(pd->localColPool->len == nb_col - pd->id_pseudo_schedules);
         for (i = 0; i < pd->localColPool->len; ++i) {
             tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
-            tmp_schedule->id = i + pd->id_pseudo_schedules;
+            tmp_schedule->id = i;
         }
         pd->zero_count = 0;
     }
@@ -131,7 +131,7 @@ CLEAN:
     return val;
 }
 
-int delete_infeasible_cclasses(NodeData* pd) {
+int delete_infeasible_schedules(NodeData* pd) {
     int          val = 0;
     int          nb_col;
     guint        i;
@@ -140,22 +140,14 @@ int delete_infeasible_cclasses(NodeData* pd) {
     /** pd->zero_count can be deprecated! */
     pd->zero_count = 0;
 
-    for (i = pd->nb_jobs; i < pd->localColPool->len; ++i) {
-        tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
-        if (tmp_schedule->age > 0) {
-            pd->zero_count++;
-        }
-    }
-
-
     int it = 0;
-    int first_del = pd->nb_jobs-1;
-    int last_del = pd->nb_jobs-1;
+    int first_del = -1;
+    int last_del = -1;
     wctlp_get_nb_cols(pd->RMP, &nb_col);
     assert(nb_col - pd->id_pseudo_schedules == count);
-    for (i = pd->nb_jobs; i < count; ++i) {
+    for (i = 0; i < count; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, it);
-        if (tmp_schedule->del != 1) {
+        if (tmp_schedule->del != 0) {
             if (first_del != -1) {
                 /** Delete recently found deletion range.*/
                 val = wctlp_deletecols(pd->RMP, first_del + pd->id_pseudo_schedules, last_del + pd->id_pseudo_schedules);
@@ -192,10 +184,10 @@ int delete_infeasible_cclasses(NodeData* pd) {
 
     wctlp_get_nb_cols(pd->RMP, &nb_col);
     assert(pd->localColPool->len == nb_col - pd->id_pseudo_schedules);
-    printf("number of cols = %d\n", nb_col);
+    printf("number of cols = %d\n", nb_col - pd->id_pseudo_schedules);
     for (i = 0; i < pd->localColPool->len; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
-        tmp_schedule->id = i + pd->id_pseudo_schedules;
+        tmp_schedule->id = i;
     }
 
     pd->zero_count = 0;
@@ -418,8 +410,8 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     }
 
     pd->retirementage = (int)sqrt(pd->nb_jobs) + 30;
-    // check_schedules(pd);
-    // delete_infeasible_cclasses(pd);
+    check_schedules(pd);
+    delete_infeasible_schedules(pd);
 
     /** Init alpha */
     switch (parms->stab_technique) {
@@ -449,7 +441,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
          */
         if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
             status == GRB_OPTIMAL) {
-            val = delete_old_cclasses(pd);
+            val = delete_old_schedules(pd);
             CCcheck_val_2(val, "Failed in delete_old_cclasses");
         }
 
@@ -507,6 +499,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             for (j = 0; j < pd->nb_new_sets; j++) {
                 val = add_lhs_scheduleset_to_rmp(pd->newsets + j, pd);
                 CCcheck_val_2(val, "wctlp_addcol failed");
+                pd->newsets[j].id = pd->localColPool->len;
                 g_ptr_array_add(pd->localColPool, pd->newsets + j);
             }
             pd->newsets = NULL;
@@ -571,7 +564,6 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     CCutil_start_resume_time(&(problem->tot_reduce_cost_fixing));
                     reduce_cost_fixing(pd);
                     CCutil_suspend_timer(&(problem->tot_reduce_cost_fixing));
-                    // print_interval_pair(pd->ordered_jobs);
                 }
 
                 /**
@@ -581,9 +573,12 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 CCcheck_val_2(val, "wctlp_optimize failed");
                 val = compute_objective(pd, parms);
                 CCcheck_val_2(val, "Failed in compute_objective");
-                // construct_lp_sol_from_rmp(pd);
+                check_schedules(pd);
+                delete_infeasible_schedules(pd);
+                solve_relaxation(problem, pd);
+                construct_lp_sol_from_rmp(pd);
+                generate_cuts(pd);
                 memcpy(&g_array_index(pd->pi_out,double,0), &g_array_index(pd->pi, double, 0) , sizeof(double) * (pd->nb_jobs + 1));
-                printf("size evolution %lu\n", get_nb_vertices(pd->solver));
                 break;
 
             case GRB_INFEASIBLE:
@@ -641,12 +636,13 @@ int print_x(NodeData* pd) {
         case GRB_OPTIMAL:
             val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
             CCcheck_val_2(val, "Failed to get nb cols");
-            pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols, double);
+            assert(pd->localColPool->len == nb_cols - pd->id_pseudo_schedules);
+            pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols - pd->id_pseudo_schedules, double);
             CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
-            val = wctlp_x(pd->RMP, pd->lambda, 0);
+            val = wctlp_x(pd->RMP, pd->lambda, pd->id_pseudo_schedules);
             CCcheck_val_2(val, "Failed in wctlp_x");
 
-            for (int i = 0; i < nb_cols; ++i) {
+            for (int i = 0; i < pd->localColPool->len; ++i) {
                 GPtrArray* tmp =
                     ((ScheduleSet*)g_ptr_array_index(pd->localColPool, i))
                         ->job_list;
@@ -680,13 +676,14 @@ int calculate_nb_layers(NodeData* pd, int k) {
         case GRB_OPTIMAL:
             val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
             CCcheck_val_2(val, "Failed to get nb cols");
+            assert(pd->localColPool->len == nb_cols - pd->id_pseudo_schedules);
             pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols, double);
             CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
             val = wctlp_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in wctlp_x");
 
-            for (unsigned i = 0; i < nb_cols; ++i) {
-                if (pd->lambda[i] > 0.00001) {
+            for (unsigned i = 0; i < pd->localColPool->len; ++i) {
+                if (pd->lambda[i + pd->id_pseudo_schedules] > 0.00001) {
                     ScheduleSet* tmp =
                         (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
                     for (int j = 0; j < (int)tmp->job_list->len - k; ++j) {
@@ -751,16 +748,14 @@ int check_schedules(NodeData* pd) {
 
     val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed to get nb cols");
-    assert(nb_cols == pd->localColPool->len);
-    printf("number of cols check %d\n", nb_cols);
-    for (unsigned i = 0; i < nb_cols; ++i) {
+    assert(nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
+    printf("number of cols check %d\n", nb_cols - pd->id_pseudo_schedules);
+    for (unsigned i = 0; i < pd->localColPool->len; ++i) {
         ScheduleSet* tmp = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
         if (check_schedule_set(tmp, pd) == 1) {
-            tmp->del = 0;
-        } else {
             tmp->del = 1;
-            // printf("deleted column\n");
-            // print_schedule(tmp, 1);
+        } else {
+            tmp->del = 0;
         }
     }
 

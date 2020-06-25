@@ -137,10 +137,9 @@ int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     wctlp*     lp = pd->RMP;
     Job*       job;
 
-    val = wctlp_get_nb_cols(lp, &(set->id));
-    pd->nb_cols = set->id;
+    val = wctlp_get_nb_cols(lp, &(pd->nb_cols));
     CCcheck_val_2(val, "Failed to get the number of cols");
-    var_ind = set->id;
+    var_ind = pd->nb_cols;
     val = wctlp_addcol(lp, 0, NULL, NULL,
                        (double)set->total_weighted_completion_time, 0.0,
                        GRB_INFINITY, wctlp_CONT, NULL);
