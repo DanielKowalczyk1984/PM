@@ -14,7 +14,8 @@ PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
       problem_name(p_name),
       env(new GRBEnv()),
       model(new GRBModel(*env)),
-      reformulation_model(jobs->len, _num_machines)
+      reformulation_model(jobs->len, _num_machines),
+      is_integer_solution(false)
        {
     model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
     model->set(GRB_IntParam_Threads, 1);
@@ -34,7 +35,8 @@ PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
       problem_name(p_name),
       env(new GRBEnv()),
       model(new GRBModel(*env)),
-      reformulation_model(jobs->len, _num_machines)
+      reformulation_model(jobs->len, _num_machines),
+      is_integer_solution(false)
        {
     model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
     model->set(GRB_IntParam_Threads, 1);
@@ -121,7 +123,10 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol, doub
     for (guint j = 0; j < sol.jobs->len; j++) {
         Job* tmp_j = (Job*) g_ptr_array_index(sol.jobs, j);
         VariableKeyBase k(tmp_j->job,0);
-        for(int c = 0; c < nb_jobs; c++) {
+        for(int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+            if (c == nb_jobs) {
+                continue;
+            }
             double dual = pi[c];
             ConstraintBase *constr = reformulation_model.get_constraint(c);
             double coeff = constr->get_var_coeff(&k);
@@ -150,7 +155,10 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<> &sol, double *
     for (guint j = 0; j < sol.jobs->len; j++) {
         Job* tmp_j = (Job*) g_ptr_array_index(sol.jobs, j);
         VariableKeyBase k(tmp_j->job,0);
-        for(int c = 0; c < nb_jobs; c++) {
+        for(int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+            if (c == nb_jobs) {
+                continue;
+            }
             double dual = pi[c];
             ConstraintBase *constr = reformulation_model.get_constraint(c);
             double coeff = constr->get_var_coeff(&k);
@@ -163,7 +171,10 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<> &sol, double *
 
     result = CC_MIN(0, result);
 
-    for(int c = 0; c < nb_jobs; c++) {
+    for(int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+        if (c == nb_jobs) {
+            continue;
+        }
         double dual = pi[c];
         ConstraintBase *constr = reformulation_model.get_constraint(c);
         double rhs = constr->get_rhs();

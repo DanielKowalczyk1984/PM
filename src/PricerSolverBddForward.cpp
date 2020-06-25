@@ -6,8 +6,10 @@
 PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray*  _jobs,
                                              int         _num_machines,
                                              GPtrArray*  _ordered_jobs,
-                                             const char* p_name)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name) {
+                                             const char* p_name,
+                                             int _Hmax,
+                                             int* _take_jobs)
+    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name, _Hmax, _take_jobs) {
     std::cout << "Constructing BDD with Forward Simple evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
@@ -72,8 +74,10 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
  */
 PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray* _jobs, int _num_machines,
                                            GPtrArray*  _ordered_jobs,
-                                           const char* p_name)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name) {
+                                           const char* p_name,
+                                           int _Hmax,
+                                           int* _take_jobs)
+    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name, _Hmax, _take_jobs) {
     std::cout << "Constructing BDD with Forward Cycle evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';

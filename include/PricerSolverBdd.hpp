@@ -20,14 +20,14 @@ class PricerSolverBdd : public PricerSolverBase {
     std::unique_ptr<double[]> lp_x;
     std::unique_ptr<double[]> solution_x;
     std::vector<std::vector<std::shared_ptr<NodeId>>> node_ids;
+    std::vector<std::vector<double>> lp_x_edge[2];
+    std::vector<BddCoeff> lp_sol;
     OriginalModel<> original_model;
     int H_min;
+    int H_max;
 
     PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
-                    GPtrArray* _ordered_jobs, const char* p_name);
-    PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
-                    GPtrArray* _ordered_jobs, int* _take_jobs, int _Hmax,
-                    const char* _p_name);
+                    GPtrArray* _ordered_jobs, const char* p_name, int _Hmax, int* _take_jobs);
     void         init_table() override;
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
     void check_infeasible_arcs();

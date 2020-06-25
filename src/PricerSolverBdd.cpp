@@ -5,6 +5,7 @@
 #include <list>
 #include <memory>
 #include <vector>
+#include "MipGraph.hpp"
 #include "ModelInterface.hpp"
 #include "NodeId.hpp"
 #include "OptimalSolution.hpp"
@@ -18,22 +19,28 @@
 using namespace std;
 
 PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
-                                 GPtrArray* _ordered_jobs, const char* p_name)
+                                 GPtrArray* _ordered_jobs, const char* p_name, int _Hmax, int* _take_jobs)
     : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name),
       size_graph(0),
       nb_removed_edges(0),
       nb_removed_nodes(0),
+      node_ids(nb_jobs, vector<std::shared_ptr<NodeId>>(_Hmax + 1, nullptr)),
+      lp_x_edge{dbl_matrix(nb_jobs, vector<double>(_Hmax + 1, 0.0)),dbl_matrix(nb_jobs, vector<double>(_Hmax + 1, 0.0))},
       original_model(reformulation_model),
-      H_min(0)
+      H_min(0),
+      H_max(_Hmax)
 
 {
     /**
      * Construction of decision diagram
      */
-    PricerConstruct ps(ordered_jobs);
-    decision_diagram = std::unique_ptr<DdStructure<>>(new DdStructure<>(ps));
-    int Hmax = ((job_interval_pair* )g_ptr_array_index(ordered_jobs, ordered_jobs->len - 1))->I->b;
-    node_ids.assign(nb_jobs, vector<std::shared_ptr<NodeId>>(Hmax + 1, nullptr));
+    if (_take_jobs) {
+        PricerConstructTI ps(ordered_jobs, _take_jobs, _Hmax);
+        decision_diagram = std::unique_ptr<DdStructure<>>(new DdStructure<>(ps));
+    } else {
+        PricerConstruct ps(ordered_jobs);
+        decision_diagram = std::unique_ptr<DdStructure<>>(new DdStructure<>(ps));
+    }
     remove_layers_init();
     decision_diagram->compressBdd();
     size_graph = decision_diagram->size();
@@ -46,28 +53,6 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
     construct_mipgraph();
     init_coeff_constraints();
     std::cout << "Ending construction\n";
-    lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
-    solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
-}
-
-PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _nb_machines,
-                                 GPtrArray* _ordered_jobs, int* _take_jobs,
-                                 int _Hmax, const char* p_name)
-    : PricerSolverBase(_jobs, _nb_machines, _ordered_jobs, p_name),
-    original_model(reformulation_model) {
-    PricerConstructTI ps(ordered_jobs, _take_jobs, _Hmax);
-    decision_diagram = std::unique_ptr<DdStructure<>>(new DdStructure<>(ps));
-    remove_layers_init();
-    decision_diagram->compressBdd();
-    node_ids.assign(nb_jobs, vector<std::shared_ptr<NodeId>>(_Hmax + 1, nullptr));
-    init_table();
-    calculate_H_min();
-    cleanup_arcs();
-    // check_infeasible_arcs();
-    bottum_up_filtering();
-    topdown_filtering();
-    construct_mipgraph();
-    init_coeff_constraints();
     lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
 }
@@ -145,12 +130,16 @@ void PricerSolverBdd::init_coeff_constraints () {
 
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto &it : table[i]) {
-            for (int c= 0; c < nb_jobs; c++) {
+            for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+                if (c == nb_jobs) {
+                    continue;
+                }
+
                 ConstraintBase *constr = original_model.get_constraint(c);
                 VariableKeyBase key_aux(it.get_job()->job, it.get_weight());
                 double coeff = constr->get_var_coeff(&key_aux);
                 if (fabs(coeff) > 1e-10) {
-                    std::shared_ptr<BddCoeff> ptr_coeff(new BddCoeff(it.get_job()->job, it.get_weight(), coeff, c));
+                    std::shared_ptr<BddCoeff> ptr_coeff(new BddCoeff(it.get_job()->job, it.get_weight(), coeff, 0.0, c));
                     original_model.add_coeff_list(c, ptr_coeff);
                     it.add_coeff_list(ptr_coeff, 1);
                 }
@@ -542,13 +531,13 @@ void PricerSolverBdd::build_mip() {
                     edge_var_list[*it.first].x.get(GRB_DoubleAttr_X);
             }
 
-            ColorWriterEdgeX  edge_writer(mip_graph, solution_x.get());
-            ColorWriterVertex vertex_writer(mip_graph, table);
-            string            file_name = "lp_solution_" + problem_name + "_" +
-                               std::to_string(num_machines) + ".gv";
-            std::ofstream outf(file_name);
-            boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
-            outf.close();
+            // ColorWriterEdgeX  edge_writer(mip_graph, solution_x.get());
+            // ColorWriterVertex vertex_writer(mip_graph, table);
+            // string            file_name = "lp_solution_" + problem_name + "_" +
+            //                    std::to_string(num_machines) + ".gv";
+            // std::ofstream outf(file_name);
+            // boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
+            // outf.close();
         }
 
         ColorWriterEdgeIndex edge_writer_index(mip_graph);
@@ -577,7 +566,11 @@ void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     cleanup_arcs();
 
     construct_mipgraph();
-    for (int c = 0; c < nb_jobs; c++) {
+    for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+        if (c == nb_jobs) {
+            continue;
+        }
+
         auto coeff_list = original_model.get_coeff_list(c);
         auto iter = coeff_list->begin();
 
@@ -638,7 +631,7 @@ void PricerSolverBdd::cleanup_arcs() {
     /** remove the unnecessary nodes of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& iter : table[i]) {
-            if (iter.get_weight() + iter.backward_distance[0] < H_min) {
+            if (iter.get_weight() + iter.backward_distance[0] < H_min && iter.branch[0] != 0) {
                 iter.calc_no = false;
                 removed_edges = true;
                 nb_edges_removed_tmp++;
@@ -1034,9 +1027,18 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 const GPtrArray* schedule_sets,
                                                 int              num_columns) {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
-    std::fill(lp_x.get(), lp_x.get() + get_nb_edges(), 0);
+    for (int j = 0; j < nb_jobs; j++) {
+        fill(lp_x_edge[0][j].begin(), lp_x_edge[0][j].end(), 0.0);
+        fill(lp_x_edge[1][j].begin(), lp_x_edge[1][j].end(), 0.0);
+    }
+
+    set_is_integer_solution(true);
     for (int i = 0; i < num_columns; ++i) {
-        if (columns[i] > 0.00001) {
+        if (columns[i] > 1e-6) {
+            if (columns[i] < 1.0 - 1e-8) {
+                set_is_integer_solution(false);
+            }
+
             size_t       counter = 0;
             ScheduleSet* tmp =
                 (ScheduleSet*)g_ptr_array_index(schedule_sets, i);
@@ -1052,18 +1054,36 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
                 NodeBdd<>& tmp_node = table.node(tmp_nodeid);
 
                 if (tmp_j == tmp_node.get_job()) {
-                    lp_x[tmp_node.high_edge_key] += columns[i];
+                    lp_x_edge[1][tmp_node.get_job()->job][tmp_node.get_weight()] += columns[i];
                     tmp_nodeid = tmp_node.branch[1];
                     counter++;
                 } else {
-                    lp_x[tmp_node.low_edge_key] += columns[i];
+                    lp_x_edge[0][tmp_node.get_job()->job][tmp_node.get_weight()] += columns[i];
                     tmp_nodeid = tmp_node.branch[0];
                 }
             }
         }
     }
 
-    ColorWriterEdgeX  edge_writer(mip_graph, lp_x.get());
+    lp_sol.clear();
+    for(int i = decision_diagram->topLevel(); i > 0; i--) {
+        for(auto& it : table[i]) {
+            double value = lp_x_edge[1][it.get_job()->job][it.get_weight()];
+            if (value > 1e-6) {
+                lp_sol.push_back(BddCoeff(it.get_job()->job, it.get_weight(),0.0,value));
+            }
+            value = lp_x_edge[0][it.get_job()->job][it.get_weight()];
+            if (value > 1e-6) {
+                lp_sol.push_back(BddCoeff(it.get_job()->job, it.get_weight(),0.0,value,-1,false));
+            }
+        }
+    }
+
+    if(get_is_integer_solution()) {
+        std::cout << "FOUND INTEGER SOLUTION" << "\n";
+    }
+
+    ColorWriterEdgeX  edge_writer(mip_graph, &table, &lp_x_edge[1], &lp_x_edge[0]);
     ColorWriterVertex vertex_writer(mip_graph, table);
     string            file_name = "lp_solution_" + problem_name + "_" +
                        std::to_string(num_machines) + ".gv";
@@ -1108,13 +1128,13 @@ void PricerSolverBdd::project_solution(Solution* sol) {
 void PricerSolverBdd::represent_solution(Solution* sol) {
     project_solution(sol);
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
-    ColorWriterEdgeX   edge_writer(mip_graph, solution_x.get());
-    ColorWriterVertex  vertex_writer(mip_graph, table);
-    string             file_name =
-        "solution_" + problem_name + "_" + std::to_string(num_machines) + ".gv";
-    std::ofstream outf(file_name);
-    boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
-    outf.close();
+    // ColorWriterEdgeX   edge_writer(mip_graph, solution_x.get());
+    // ColorWriterVertex  vertex_writer(mip_graph, table);
+    // string             file_name =
+    //     "solution_" + problem_name + "_" + std::to_string(num_machines) + ".gv";
+    // std::ofstream outf(file_name);
+    // boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
+    // outf.close();
 }
 
 bool PricerSolverBdd::check_schedule_set(GPtrArray* set) {

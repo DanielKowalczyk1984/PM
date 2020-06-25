@@ -5,20 +5,21 @@
 #include "PricerSolverSimpleDP.hpp"
 #include "PricerSolverZddBackward.hpp"
 #include "PricerSolverZddForward.hpp"
+#include "solver.h"
 
 extern "C" {
 #include <scheduleset.h>
 
 PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
-                            GPtrArray* ordered_jobs, parms* parms) {
+                            GPtrArray* ordered_jobs, parms* parms, int _Hmax, int* _take_jobs) {
     switch (parms->pricing_solver) {
         case bdd_solver_simple:
             return new PricerSolverBddSimple(jobs, _num_machines, ordered_jobs,
-                                             parms->pname);
+                                             parms->pname, _Hmax, _take_jobs);
             break;
         case bdd_solver_cycle:
             return new PricerSolverBddCycle(jobs, _num_machines, ordered_jobs,
-                                            parms->pname);
+                                            parms->pname, _Hmax, _take_jobs);
             break;
         case zdd_solver_cycle:
             return new PricerSolverZddCycle(jobs, _num_machines, ordered_jobs,
@@ -30,11 +31,11 @@ PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
             break;
         case bdd_solver_backward_simple:
             return new PricerSolverBddBackwardSimple(
-                jobs, _num_machines, ordered_jobs, parms->pname);
+                jobs, _num_machines, ordered_jobs, parms->pname, _Hmax, _take_jobs);
             break;
         case bdd_solver_backward_cycle:
             return new PricerSolverBddBackwardCycle(jobs, _num_machines,
-                                                    ordered_jobs, parms->pname);
+                                                    ordered_jobs, parms->pname, _Hmax, _take_jobs);
             break;
         case zdd_solver_backward_simple:
             return new PricerSolverZddBackwardSimple(
@@ -45,7 +46,7 @@ PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
                                                     ordered_jobs, parms->pname);
         default:
             return new PricerSolverBddBackwardCycle(jobs, _num_machines,
-                                                    ordered_jobs, parms->pname);
+                                                    ordered_jobs, parms->pname, _Hmax, _take_jobs);
     }
 }
 
@@ -73,7 +74,7 @@ PricerSolverBase* newSolverTIBdd(GPtrArray* _jobs, int _num_machines,
                                  GPtrArray* _ordered_jobs, int* _take_jobs,
                                  int _Hmax, Parms* parms) {
     return new PricerSolverBddBackwardCycle(_jobs, _num_machines, _ordered_jobs,
-                                            _take_jobs, _Hmax, parms->pname);
+                                            parms->pname, _Hmax, _take_jobs);
 }
 
 void print_dot_file(PricerSolver* solver, char* name) {
@@ -153,9 +154,9 @@ int construct_lp_sol_from_rmp(NodeData* pd) {
 
     val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed to get nb cols");
-    pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols, double);
+    pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols - pd->id_pseudo_schedules, double);
     CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
-    val = wctlp_x(pd->RMP, pd->lambda, 0);
+    val = wctlp_x(pd->RMP, pd->lambda, pd->id_pseudo_schedules);
     CCcheck_val_2(val, "Failed in wctlp_x");
     pd->solver->construct_lp_sol_from_rmp(pd->lambda, pd->localColPool,
                                           pd->localColPool->len);
@@ -166,6 +167,14 @@ CLEAN:
 
 void disjunctive_inequality(NodeData* pd, Solution* sol) {
     pd->solver->disjunctive_inequality(pd->x_e, sol);
+}
+
+void generate_cuts(NodeData* pd) {
+    // 1. add cuts to reformulation model
+    PricerSolver* pricing_solver = pd->solver;
+    pricing_solver->add_constraints();
+    // 2. add cuts to lp relaxation wctlp
+    // 3. adjust the pricing solver (add constraints to original model)
 }
 
 void represent_solution(NodeData* pd, Solution* sol) {

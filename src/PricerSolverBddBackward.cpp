@@ -8,25 +8,14 @@
  */
 PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs,
-    const char* p_name)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name) {
+    const char* p_name, int _Hmax, int* _take_jobs)
+    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name, _Hmax,  _take_jobs) {
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
     evaluator = BackwardBddSimpleDouble(&original_model);
     reversed_evaluator = ForwardBddSimpleDouble(&original_model);
     farkas_evaluator = BackwardBddFarkasDouble();
-}
-
-PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
-    GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs, int* _take_jobs, int _Hmax,
-    const char* p_name)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs,_take_jobs,_Hmax, p_name) {
-    std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
-    std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
-    std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = BackwardBddSimpleDouble(&original_model);
-    reversed_evaluator = ForwardBddSimpleDouble(&original_model);
 }
 
 OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
@@ -87,21 +76,9 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
  */
 PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs,
-    const char* p_name)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name) {
+    const char* p_name, int _Hmax, int* _take_jobs)
+    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name, _Hmax, _take_jobs) {
     std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
-    std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
-    std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = BackwardBddCycleDouble(&original_model);
-    reversed_evaluator = ForwardBddCycleDouble(&original_model);
-    farkas_evaluator = BackwardBddFarkasDouble();
-}
-
-PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
-    GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs, int* _take_jobs, int _Hmax,
-    const char* p_name)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs,_take_jobs,_Hmax, p_name) {
-    std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
     evaluator = BackwardBddCycleDouble(&original_model);
