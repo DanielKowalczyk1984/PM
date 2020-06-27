@@ -103,7 +103,7 @@ int add_lhs_scheduleset_to_rmp(ScheduleSet* set, NodeData *pd) {
     double* aux_double_array = g_array_steal(pd->coeff_row, &aux);
     CC_IFFREE(aux_double_array, double);
 
-    for(int j = 0; j < pd->nb_jobs + 1; j++) {
+    for(int j = 0; j < pd->nb_rows; j++) {
         if (fabs(lhs_coeff[j]) > 1e-10) {
             g_array_append_val(pd->id_row, j);
             g_array_append_val(pd->coeff_row, lhs_coeff[j]);
@@ -266,37 +266,49 @@ int build_rmp(NodeData* pd, int construct) {
     /**
      * Some aux variables for column generation
      */
+
+    double* dbl_values = CC_SAFE_MALLOC(pd->nb_rows, double);
+    fill_dbl(dbl_values, pd->nb_rows, 0.0); 
+    int* int_values = CC_SAFE_MALLOC(pd->nb_rows, int);
+    fill_int(int_values, pd->nb_rows, 0);
     pd->pi = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi, "Failed to allocate memory");
+    g_array_append_vals(pd->pi, dbl_values, pd->nb_rows);
     pd->pi_in = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi_in, "Failed to allocate memory");
-    fill_dbl(&g_array_index(pd->pi_in,double,0), pd->nb_rows, 0.0);
+    g_array_append_vals(pd->pi_in, dbl_values, pd->nb_rows);
     pd->eta_in = 0.0;
     pd->pi_out = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi_out, "Failed to allocate memory");
+    g_array_append_vals(pd->pi_out, dbl_values, pd->nb_rows);
     pd->eta_out = 0.0;
-    fill_dbl(&g_array_index(pd->pi_out,double,0), pd->nb_rows, 0.0);
     pd->pi_sep = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi_sep, "Failed to allocate memory");
-    fill_dbl(&g_array_index(pd->pi_sep,double,0), pd->nb_rows, 0.0);
+    g_array_append_vals(pd->pi_sep, dbl_values, pd->nb_rows);
     pd->subgradient_in = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->subgradient_in, "Failed to allocate memory");
+    g_array_append_vals(pd->subgradient_in, dbl_values, pd->nb_rows);
     pd->subgradient = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->subgradient, "Failed to allocate memory");
+    g_array_append_vals(pd->subgradient, dbl_values, pd->nb_rows);
     if (parms->pricing_solver < dp_solver) {
         pd->x_e = CC_SAFE_MALLOC(2 * get_nb_vertices(pd->solver), double);
         CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
     }
     pd->rhs = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
+    g_array_append_vals(pd->rhs, dbl_values, pd->nb_rows);
     val = wctlp_get_rhs(pd->RMP, &g_array_index(pd->rhs,double,0));
     CCcheck_val_2(val, "Failed to get RHS");
     pd->lhs_coeff = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->lhs_coeff, "Failed to allocate memory");
+    g_array_append_vals(pd->lhs_coeff, dbl_values, pd->nb_rows);
     pd->id_row = g_array_sized_new(FALSE, FALSE, sizeof(int), pd->nb_rows);
     CCcheck_NULL_2(pd->id_row, "Failed to allocate memory");
+    g_array_append_vals(pd->id_row, int_values, pd->nb_rows);
     pd->coeff_row = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->coeff_row, "Failed to allocate memory");
+    g_array_append_vals(pd->coeff_row, dbl_values, pd->nb_rows);
 
 CLEAN:
 
@@ -322,6 +334,8 @@ CLEAN:
     CC_IFFREE(start_vars, int);
     CC_IFFREE(rows_ind, int);
     CC_IFFREE(coeff_vals, double);
+    CC_IFFREE(dbl_values, double);
+    CC_IFFREE(int_values, int);
     return val;
 }
 
