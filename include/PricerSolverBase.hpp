@@ -5,9 +5,11 @@
 #include <solution.h>
 #include <MIP_defs.hpp>
 #include <gurobi_c++.h>
+#include <cstddef>
 #include <memory>
 #include "scheduleset.h"
 #include "ModelInterface.hpp"
+#include "wctprivate.h"
 
 
 
@@ -88,48 +90,12 @@ struct PricerSolverBase {
      */
 
     virtual void add_constraint(Job* job, GPtrArray* list, int order) = 0;
+    virtual void insert_constraints_lp(NodeData* pd) = 0;
     virtual void add_constraints() {
-        GenericData* data = new GenericData();
-
-        std::vector<int> v_j{3, 3, 4, 4};
-        std::vector<int> v_t{71, 110, 71, 152};
-        std::vector<double> v_coeff(4, -1.0);
-
-        for(int j = 0; j < 4; j++) {
-            data->add_coeff_hash_table(v_j[j], v_t[j], true, v_coeff[j]);
-        }
-        
-        ConstraintGeneric *constr = new ConstraintGeneric(data, -1.0, '>');
-
-        reformulation_model.add_constraint(constr);
-
-        GenericData* data1 = new GenericData();
-
-        std::vector<int> v_j1{1, 0, 0, 4, 0};
-        std::vector<int> v_t1{0, 60, 71, 71,184};
-        std::vector<double> v_coeff1(5, -1.0);
-
-        for(int j = 0; j < 5; j++) {
-            data->add_coeff_hash_table(v_j1[j], v_t1[j], true, v_coeff1[j]);
-        }
-
-        ConstraintGeneric* constr1 = new ConstraintGeneric(data1, -2.0, '>');
-
-        reformulation_model.add_constraint(constr1);
-        GenericData* data2 = new GenericData();
-
-        std::vector<int> v_j2{1, 3, 3, 4, 4};
-        std::vector<int> v_t2{0, 71, 0, 71, 152};
-        std::vector<double> v_coeff2(5, -1.0);
-
-        for(int j = 0; j < 5; j++) {
-            data->add_coeff_hash_table(v_j2[j], v_t2[j], true, v_coeff2[j]);
-        }
-
-        ConstraintGeneric* constr2 = new ConstraintGeneric(data2, -2.0, '>');
-
-        reformulation_model.add_constraint(constr2);
     };
+    
+
+    virtual void update_coeff_constraints() = 0;
 
     virtual void disjunctive_inequality(double* x, Solution* sol) = 0;
 

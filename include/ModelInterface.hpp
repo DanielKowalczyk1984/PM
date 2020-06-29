@@ -6,7 +6,9 @@
 #include "wctparms.h"
 #include <boost/container_hash/hash_fwd.hpp>
 #include <boost/functional/hash.hpp>
+#include <cstddef>
 #include <functional>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <unordered_map>
@@ -17,11 +19,12 @@ class VariableKeyBase {
     private:
         int j;
         int t;
+        bool high;
         bool root;
 
 
     public:
-        VariableKeyBase(int _j, int _t, bool _root = false) : j(_j), t(_t), root(_root) {
+        VariableKeyBase(int _j, int _t, bool _high = true, bool _root = false) : j(_j), t(_t), high(_high),  root(_root) {
 
         }
 
@@ -40,6 +43,10 @@ class VariableKeyBase {
             return root;
         }
 
+        inline bool get_high() const {
+            return high;
+        }
+
         inline void set_j(int _j) {
             j = _j;
         }
@@ -50,6 +57,10 @@ class VariableKeyBase {
 
         inline void set_root(bool _root) {
             root = _root;
+        }
+
+        inline void set_high(bool _high) {
+            high = _high;
         }
 
         VariableKeyBase(const VariableKeyBase&) = default;
@@ -101,7 +112,7 @@ class ConstraintAssignment : public ConstraintBase {
         }
 
         double get_var_coeff(VariableKeyBase *key) {
-            if (key->get_j() == job) {
+            if (key->get_j() == job && key->get_high()) {
                 return 1.0;
             }
 
@@ -123,7 +134,7 @@ class ConstraintConvex : public ConstraintBase {
     }
 
     double get_var_coeff(VariableKeyBase *key) {
-        if(key->get_t() == 0 && key->get_root()) {
+        if(key->get_t() == 0 ) {
             return -1.0;
         }
 
@@ -160,15 +171,14 @@ class BddCoeff : public VariableKeyBase {
     int row;
     double coeff;
     double value;
-    bool high;
 
     public:
     BddCoeff(int _j, int _t, double _coeff, double _value = 0.0, int _row = -1, bool _high = true, bool _root = false) : 
-        VariableKeyBase(_j, _t, _root),
+        VariableKeyBase(_j, _t, _high, _root),
         row(_row),
         coeff(_coeff),
-        value(_value),
-        high(_high) { } ;
+        value(_value) { } ;
+    BddCoeff() = default;
     ~BddCoeff() = default;
     BddCoeff(const BddCoeff&) = default;
     BddCoeff& operator=(const BddCoeff&) = default;
@@ -185,10 +195,6 @@ class BddCoeff : public VariableKeyBase {
 
     inline void set_value(double _value) {
         value = _value;
-    }
-
-    inline bool get_high() const {
-        return high;
     }
 
     inline int get_row() {
@@ -249,6 +255,13 @@ class GenericData {
         }
     }
 
+    void list_coeff() {
+        for(auto &it: coeff) {
+            std::cout << it.second << " ";
+        }
+        std::cout << "\n";
+    }
+
     friend bool operator==(const GenericData& lhs, const GenericData& rhs) {
         if (lhs.coeff.size() != rhs.coeff.size()) {
             return false;
@@ -295,6 +308,10 @@ class ConstraintGeneric : public ConstraintBase {
         } else {
             return (*it).second;
         }
+    }
+
+    void list_coeff() {
+        data->list_coeff();
     }
 
 };
@@ -358,6 +375,14 @@ class OriginalModel{
 
     inline std::list<std::shared_ptr<T>>* get_coeff_list(int c) {
         return constraint_array[c].get_coeff_list();
+    }
+
+    inline void add_constraint(ConstraintBase* _constr) {
+        constraint_array.push_back(OriginalConstraint<>(_constr));
+    }
+
+    inline size_t get_nb_constraints() {
+        return constraint_array.size();
     }
 
 

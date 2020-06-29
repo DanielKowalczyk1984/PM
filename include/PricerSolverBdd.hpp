@@ -5,6 +5,7 @@
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
 #include "ModelInterface.hpp"
+#include "wctprivate.h"
 #include <memory>
 #include <vector>
 
@@ -68,13 +69,18 @@ class PricerSolverBdd : public PricerSolverBase {
     };
     void update_reduced_costs_arcs(double *_pi, bool farkas = false) override ;
     void init_coeff_constraints();
+    void insert_constraints_lp(NodeData *pd) override;
     private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);
     void add_inequality(std::vector<int> v1);
 
+    double compute_reduced_cost(const OptimalSolution<>& sol, double *pi, double *lhs) override;
+    double compute_lagrange(const OptimalSolution<> &sol, double *pi) override;
     void update_constraints() override {
 
     }
+
+    void update_coeff_constraints() override;
 
 
     // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override;

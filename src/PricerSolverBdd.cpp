@@ -1,12 +1,15 @@
 #include "PricerSolverBdd.hpp"
 #include <algorithm>
 #include <complex>
+#include <cstddef>
+#include <cstdio>
 #include <iostream>
 #include <list>
 #include <memory>
 #include <vector>
 #include "MipGraph.hpp"
 #include "ModelInterface.hpp"
+#include "NodeBdd.hpp"
 #include "NodeId.hpp"
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
@@ -14,7 +17,10 @@
 #include "gurobi_c.h"
 #include "interval.h"
 #include "job.h"
+#include "lp.h"
+#include "scheduleset.h"
 #include "util.h"
+#include "wctprivate.h"
 
 using namespace std;
 
@@ -160,6 +166,40 @@ void PricerSolverBdd::init_coeff_constraints () {
     }
 }
 
+void PricerSolverBdd::update_coeff_constraints() {
+    int nb_constr = original_model.get_nb_constraints();
+    int nb_new_constr = reformulation_model.get_nb_constraints() - nb_constr;
+
+    for(int j = nb_constr; j < reformulation_model.get_nb_constraints(); j++) {
+        original_model.add_constraint(reformulation_model.get_constraint(j));
+    }
+
+    NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
+    for (int i = decision_diagram->topLevel(); i > 0; i--) {
+        for (auto &it : table[i]) {
+            for (int c = 0; c < nb_new_constr; c++) {
+                ConstraintBase* constr = original_model.get_constraint(nb_constr + c);
+                BddCoeff key_high{it.get_job()->job, it.get_weight(),0.0,0.0,nb_constr + c};
+                auto coeff_high = constr->get_var_coeff(&key_high);
+                if(fabs(coeff_high) > 1e-10) {
+                    std::shared_ptr<BddCoeff> ptr_coeff(new BddCoeff(it.get_job()->job, it.get_weight(), coeff_high, 0.0,nb_constr + c));
+                    original_model.add_coeff_list(c, ptr_coeff);
+                    it.add_coeff_list(ptr_coeff, 1);
+                }
+
+                BddCoeff key_low{it.get_job()->job, it.get_weight(),0.0,0.0,nb_constr + c,false};
+                auto coeff_low = constr->get_var_coeff(&key_high);
+                if(fabs(coeff_low) > 1e-10) {
+                    std::shared_ptr<BddCoeff> ptr_coeff(new BddCoeff(it.get_job()->job, it.get_weight(), coeff_low, 0.0, nb_constr + c, false));
+                    original_model.add_coeff_list(c, ptr_coeff);
+                    it.add_coeff_list(ptr_coeff, 0);
+                }
+            }
+        }
+    }
+
+}
+
 void PricerSolverBdd::init_table() {
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
     /** init table */
@@ -218,6 +258,208 @@ void PricerSolverBdd::update_reduced_costs_arcs(double *_pi, bool farkas) {
     }
 }
 
+void PricerSolverBdd::insert_constraints_lp(NodeData *pd) {
+    wctlp_get_nb_rows(pd->RMP, &(pd->nb_rows));
+    int nb_new_constraints = reformulation_model.get_nb_constraints() - pd->nb_rows;
+
+    assert(nb_new_constraints <= (pd->id_pseudo_schedules - pd->id_next_var_cuts));
+    std::vector<int> starts(nb_new_constraints + 1);
+    std::vector<char> sense (nb_new_constraints);
+    std::vector<double> rhs(nb_new_constraints);
+    std::vector<int> column_ind;
+    std::vector<double> coeff;
+
+    int pos = 0;
+    for (int c = 0 ; c < nb_new_constraints; c++) {
+        ConstraintBase* constr = reformulation_model.get_constraint(pd->nb_rows + c);
+
+        sense[c] = constr->get_sense();
+        
+        starts[c] = pos;
+
+        if (constr->get_rhs() != 0.0) {
+            pos++;
+            column_ind.push_back(pd->id_next_var_cuts++);
+            if (constr->get_sense() == '>') {
+                coeff.push_back(1.0);
+            } else {
+                coeff.push_back(-1.0);
+            }
+        }
+        rhs[c] = constr->get_rhs();
+
+        for(guint i = 0; i < pd->localColPool->len; i++) {
+            ScheduleSet* aux_schedule_set = (ScheduleSet*) g_ptr_array_index(pd->localColPool, i);
+            GPtrArray* jobs = aux_schedule_set->job_list;
+            
+            NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
+            NodeId             tmp_nodeid(decision_diagram->root());
+
+            double coeff_val = 0.0;
+            guint counter = 0;
+            while (tmp_nodeid > 1) {
+                NodeBdd<>& tmp_node = table.node(tmp_nodeid);
+                Job* tmp_j;
+
+                if (counter < jobs->len) {
+                    tmp_j = (Job*) g_ptr_array_index(jobs, counter);
+                } else {
+                    tmp_j = nullptr;
+                }
+
+                VariableKeyBase key(tmp_node.get_job()->job, tmp_node.get_weight(),tmp_j == tmp_node.get_job());
+                if (key.get_high()) {
+                    coeff_val += constr->get_var_coeff(&key);
+                    tmp_nodeid = tmp_node.branch[1];
+                    counter++; 
+                }  else {
+                    coeff_val += constr->get_var_coeff(&key);
+                    tmp_nodeid = tmp_node.branch[0];
+                }
+            }
+
+
+            assert(tmp_nodeid == 1);
+
+            if (fabs(coeff_val) > 1e-6) {
+                column_ind.push_back(pd->id_pseudo_schedules + i);
+                coeff.push_back(coeff_val);
+                pos++;
+            }
+        }
+    }
+
+    starts[nb_new_constraints] = pos;
+
+    wctlp_addrows(pd->RMP, nb_new_constraints, coeff.size(), starts.data(), column_ind.data(), coeff.data(), sense.data(), rhs.data(), nullptr);
+    wctlp_get_nb_rows(pd->RMP, &(pd->nb_rows));
+
+    vector<double> new_values(nb_new_constraints, 0.0);
+    vector<int> new_values_int(nb_new_constraints, 0);
+    g_array_append_vals(pd->pi, new_values.data(), new_values.size());
+    g_array_append_vals(pd->pi_in, new_values.data(), new_values.size());
+    g_array_append_vals(pd->pi_out, new_values.data(), new_values.size());
+    g_array_append_vals(pd->pi_sep, new_values.data(), new_values.size());
+    g_array_append_vals(pd->subgradient_in, new_values.data(), new_values.size());
+    g_array_append_vals(pd->subgradient, new_values.data(), new_values.size());
+    g_array_append_vals(pd->rhs, new_values.data(), new_values.size());
+    wctlp_get_rhs(pd->RMP, &g_array_index(pd->rhs, double, 0));
+    g_array_append_vals(pd->lhs_coeff, new_values.data(), new_values.size());
+    g_array_append_vals(pd->id_row, new_values_int.data(), new_values_int.size());
+    g_array_append_vals(pd->coeff_row, new_values.data(), new_values.size());
+}
+
+double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol, double *pi, double *lhs){
+    double result = sol.cost;
+    std::fill(lhs, lhs+reformulation_model.get_nb_constraints() , 0.0);
+
+    NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
+    NodeId             tmp_nodeid(decision_diagram->root());
+
+    unsigned int counter = 0;
+    while (tmp_nodeid > 1) {
+        NodeBdd<>& tmp_node = table.node(tmp_nodeid);
+        Job* tmp_j = nullptr;
+        
+        if (counter < sol.jobs->len) {
+            tmp_j = (Job*) g_ptr_array_index(sol.jobs, counter);
+        } else {
+            tmp_j = nullptr;
+        }
+
+        VariableKeyBase key(tmp_node.get_job()->job, tmp_node.get_weight(), tmp_j == tmp_node.get_job());
+        if (key.get_high()) {
+            tmp_nodeid = tmp_node.branch[1];
+            counter++;
+        } else {
+            tmp_nodeid = tmp_node.branch[0];
+        }
+
+        for(int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+            if (c == nb_jobs) {
+                continue;
+            }
+            double dual = pi[c];
+            ConstraintBase *constr = reformulation_model.get_constraint(c);
+            double coeff = constr->get_var_coeff(&key);
+
+            
+
+            if(fabs(coeff) > 1e-10) {
+                result -= coeff*dual;
+                lhs[c] += coeff;
+            }
+        }
+    }
+
+    double dual = pi[nb_jobs];
+    ConstraintBase *constr = reformulation_model.get_constraint(nb_jobs);
+    VariableKeyBase k(0,0,true);
+    double coeff = constr->get_var_coeff(&k);
+    result -= coeff*dual;
+    lhs[nb_jobs] += coeff;
+
+    return result;
+}
+
+double PricerSolverBdd::compute_lagrange(const OptimalSolution<> &sol, double *pi) {
+    double result = sol.cost;
+    double dual_bound = 0.0;
+
+    NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
+    NodeId             tmp_nodeid(decision_diagram->root());
+
+    unsigned int counter = 0;
+    while (tmp_nodeid > 1) {
+        NodeBdd<>& tmp_node = table.node(tmp_nodeid);
+        Job* tmp_j = nullptr;
+        
+        if (counter < sol.jobs->len) {
+            tmp_j = (Job*) g_ptr_array_index(sol.jobs, counter);
+        } else {
+            tmp_j = nullptr;
+        }
+
+        VariableKeyBase key(tmp_node.get_job()->job, tmp_node.get_weight(), tmp_j == tmp_node.get_job());
+        if (key.get_high()) {
+            counter++;
+            tmp_nodeid = tmp_node.branch[1];
+        } else {
+            tmp_nodeid = tmp_node.branch[0];
+        }
+
+        for(int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+            if (c == nb_jobs) {
+                continue;
+            }
+            double dual = pi[c];
+            ConstraintBase *constr = reformulation_model.get_constraint(c);
+            double coeff = constr->get_var_coeff(&key);
+
+            if(fabs(coeff) > 1e-10) {
+                result -= coeff*dual;
+            }
+        }
+    }
+
+    result = CC_MIN(0, result);
+
+    for(int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+        if (c == nb_jobs) {
+            continue;
+        }
+        double dual = pi[c];
+        ConstraintBase *constr = reformulation_model.get_constraint(c);
+        double rhs = constr->get_rhs();
+
+        dual_bound += rhs*dual;
+    }
+
+    result = -reformulation_model.get_constraint(nb_jobs)->get_rhs() * result;
+    result = dual_bound + result;
+
+    return result;
+}
 void PricerSolverBdd::remove_layers_init() {
     int                first_del = -1;
     int                last_del = -1;

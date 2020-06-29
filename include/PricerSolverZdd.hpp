@@ -4,6 +4,7 @@
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
 #include "MipGraph.hpp"
+#include "wctprivate.h"
 #include <NodeBddStructure.hpp>
 
 class PricerSolverZdd : public PricerSolverBase
@@ -61,6 +62,14 @@ class PricerSolverZdd : public PricerSolverBase
 
         void update_reduced_costs_arcs(double *_pi, bool farkas = false) override {
             
+        }
+
+        void insert_constraints_lp(NodeData* pd) override {
+
+        }
+
+        void update_coeff_constraints() override {
+
         }
 
         // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override {

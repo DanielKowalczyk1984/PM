@@ -173,6 +173,8 @@ void generate_cuts(NodeData* pd) {
     // 1. add cuts to reformulation model
     PricerSolver* pricing_solver = pd->solver;
     pricing_solver->add_constraints();
+    pricing_solver->insert_constraints_lp(pd);
+    pricing_solver->update_coeff_constraints();
     // 2. add cuts to lp relaxation wctlp
     // 3. adjust the pricing solver (add constraints to original model)
 }

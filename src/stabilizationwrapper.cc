@@ -303,7 +303,7 @@ static void compute_pi_eta_sep(int nb_constr, double* pi_sep, double* eta_sep,
     int    i;
     double beta = 1.0 - alpha;
 
-    for (i = 0; i <= nb_constr; ++i) {
+    for (i = 0; i < nb_constr; ++i) {
         pi_sep[i] = alpha * pi_in[i] + beta * pi_out[i];
     }
 
@@ -350,7 +350,7 @@ int solve_stab(NodeData* pd, parms* parms) {
         k += 1.0;
         alpha =
             pd->hasstabcenter ? CC_MAX(0, 1.0 - k * (1.0 - pd->alpha)) : 0.0;
-        compute_pi_eta_sep(pd->nb_jobs, pi_sep, &(pd->eta_sep), alpha,
+        compute_pi_eta_sep(pd->nb_rows, pi_sep, &(pd->eta_sep), alpha,
                            pi_in, &(pd->eta_in), pi_out,
                            &(pd->eta_out));
         OptimalSolution<double> sol;
@@ -373,7 +373,7 @@ int solve_stab(NodeData* pd, parms* parms) {
     if (result_sep > pd->eta_in) {
         pd->hasstabcenter = 1;
         pd->eta_in = result_sep;
-        memcpy(pi_in, pi_sep, sizeof(double) * (pd->nb_jobs + 1));
+        memcpy(pi_in, pi_sep, sizeof(double) * (pd->nb_rows));
     }
 
     if (pd->iterations % pd->nb_jobs == 0) {
@@ -405,7 +405,7 @@ int solve_stab_dynamic(NodeData* pd, parms* parms) {
         k += 1.0;
         alpha =
             pd->hasstabcenter ? CC_MAX(0.0, 1.0 - k * (1 - pd->alpha)) : 0.0;
-        compute_pi_eta_sep(pd->nb_jobs, pi_sep, &(pd->eta_sep), alpha,
+        compute_pi_eta_sep(pd->nb_rows, pi_sep, &(pd->eta_sep), alpha,
                            pi_in, &(pd->eta_in), pi_out,
                            &(pd->eta_out));
         OptimalSolution<double> sol;
@@ -428,7 +428,7 @@ int solve_stab_dynamic(NodeData* pd, parms* parms) {
     if (result_sep > pd->eta_in) {
         pd->hasstabcenter = 1;
         pd->eta_in = result_sep;
-        memcpy(pi_in, pi_sep, sizeof(double) * (pd->nb_jobs + 1));
+        memcpy(pi_in, pi_sep, sizeof(double) * (pd->nb_rows));
     }
 
     if (pd->iterations % pd->nb_jobs == 0) {

@@ -66,6 +66,14 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         
     }
 
+    void insert_constraints_lp(NodeData *pd) override {
+
+    }
+
+    void update_coeff_constraints() override {
+
+    }
+
     // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override {
     //     double result = 0.0;
 
