@@ -507,7 +507,6 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     wctlp_write(pd->RMP, "cutRMP.lp");
                 }
                 pd->newsets = NULL;
-                pd->nb_new_sets = 0;
                 nb_non_improvements = 0;
             } else {
                 nb_non_improvements++;
@@ -528,6 +527,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                         case no_stab:
                             break_while_loop =
                                 (pd->nb_new_sets == 0 || nb_non_improvements > 5);
+                            pd->nb_new_sets = 0;
                             break;
                     }
 
@@ -535,6 +535,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
 
                 case GRB_INFEASIBLE:
                     break_while_loop = (pd->nb_new_sets == 0);
+                    pd->nb_new_sets = 0;
                     break;
             }
 

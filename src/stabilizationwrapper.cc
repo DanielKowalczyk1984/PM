@@ -321,7 +321,7 @@ int solve_pricing(NodeData* pd, parms* parms, int evaluate) {
     sol = pd->solver->pricing_algorithm(pi);
     pd->reduced_cost = pd->solver->compute_reduced_cost(sol, pi, lhs);
 
-    if (pd->reduced_cost < -0.000001) {
+    if (pd->reduced_cost < -1e-6) {
         val = construct_sol(pd, &sol);
         pd->update = 1;
         CCcheck_val_2(val, "Failed in construction")
