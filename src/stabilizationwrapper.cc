@@ -18,8 +18,7 @@ int construct_sol(NodeData* pd, OptimalSolution<T>* sol) {
     }
     newset->job_list = sol->jobs;
     sol->jobs = nullptr;
-    newset->edge_list = sol->e_list;
-    sol->e_list = nullptr;
+    newset->edge_list = nullptr;
 
     newset->total_weighted_completion_time = sol->cost;
     newset->total_processing_time = sol->C_max;
