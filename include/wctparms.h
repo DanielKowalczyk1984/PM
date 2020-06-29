@@ -80,6 +80,12 @@ enum reduced_cost_fixing_param {
     no_reduced_cost = 1,
 };
 
+enum use_heuristic {
+    min_use_heuristic = 0,
+    yes_use_heuristic = min_use_heuristic,
+    no_use_heuristic = 1,
+};
+
 typedef struct parms {
     /**
      * General parameters
@@ -93,6 +99,7 @@ typedef struct parms {
     double alpha;
     int pricing_solver;
     int mip_solver;
+    int use_heuristic;
 
     enum reduced_cost_fixing_param reduce_cost_fixing;
 
@@ -136,6 +143,7 @@ int parms_set_search_strategy(Parms *parms, int strategy);
 int parms_set_branching_strategy(Parms *parms, int strategy);
 int parms_set_strong_branching(Parms *parms, int strong);
 int parms_set_mip_solver(Parms *parms, int usage);
+int parms_set_use_heuristic(Parms *parms, int usage);
 int parms_set_reduce_cost(Parms *parms, int usage);
 int parms_set_nb_iterations_rvnd(Parms *parms, int nb_sol);
 

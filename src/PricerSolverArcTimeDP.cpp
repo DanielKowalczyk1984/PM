@@ -1,4 +1,7 @@
 #include "PricerSolverArcTimeDP.hpp"
+#include <iostream>
+#include "gurobi_c++.h"
+#include "gurobi_c.h"
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray* _jobs,
                                              int _num_machines, int _Hmax,
@@ -239,6 +242,19 @@ void PricerSolverArcTimeDp::build_mip() {
     model->write("ati_" + problem_name + "_" + std::to_string(num_machines) +
                  ".lp");
     model->optimize();
+
+    if (model->get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
+    for (int j = 0; j < n ; j++) {
+        for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
+            for (auto& it : graph[j][t]) {
+                auto a = arctime_x[it->job][j][t].get(GRB_DoubleAttr_X);
+                if(a > 0) {
+                    std::cout << j << " " << t << " " <<  ((Job*) jobs->pdata[j])->processing_time << "\n";
+                }
+            }
+        }
+    }
+    }
     return;
 }
 
@@ -405,7 +421,7 @@ void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
 }
 
 OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
-    OptimalSolution<double> sol(-_pi[n]);
+    OptimalSolution<double> sol(_pi[n]);
     std::vector<Job*>       v;
 
     forward_evaluator(_pi);
@@ -421,7 +437,7 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
             sol.C_max += vector_jobs[aux_job]->processing_time;
             sol.cost += value_Fj(aux_T + vector_jobs[aux_job]->processing_time,
                                  vector_jobs[aux_job]);
-            sol.obj += _pi[aux_job] -
+            sol.obj += -_pi[aux_job] +
                        value_Fj(aux_T + vector_jobs[aux_job]->processing_time,
                                 vector_jobs[aux_job]);
         }
@@ -435,6 +451,12 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     }
 
     return sol;
+}
+
+OptimalSolution<double> PricerSolverArcTimeDp::farkas_pricing(double* _pi) {
+    OptimalSolution<double> opt_sol;
+
+    return opt_sol;
 }
 
 void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(

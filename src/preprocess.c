@@ -138,7 +138,6 @@ int preprocess_data(Problem* problem) {
 
 static int calculate_T(interval_pair* pair, int k, GPtrArray* interval_array) {
     interval* I = (interval*)g_ptr_array_index(interval_array, k);
-    interval* tmp;
     Job*      i = pair->a;
     Job*      j = pair->b;
     pair->left = I->a;
@@ -151,16 +150,17 @@ static int calculate_T(interval_pair* pair, int k, GPtrArray* interval_array) {
             return pair->left;
         }
 
-        for (int t = k - 1; t >= 0; t--) {
-            tmp = (interval*)g_ptr_array_index(interval_array, t);
-            pair->left = tmp->a + j->processing_time - i->processing_time;
+        // for (int t = k - 1; t >= 0; t--) {
+        //     tmp = (interval*)g_ptr_array_index(interval_array, t);
+        //     pair->left = tmp->a + j->processing_time - i->processing_time;
 
-            if (value_diff_Fij(pair->left, i, j) <= 0 && pair->left >= tmp->a &&
-                pair->left <= tmp->b - i->processing_time) {
-                break;
-            }
-        }
+        //     if (value_diff_Fij(pair->left, i, j) <= 0 && pair->left >= tmp->a &&
+        //         pair->left <= tmp->b - i->processing_time) {
+        //         break;
+        //     }
+        // }
 
+        pair->left = i->due_time + (int) ceil((double) (j->weight * i->processing_time)/i->weight) - i->processing_time;
         return pair->left;
     }
 }
@@ -205,13 +205,13 @@ static GPtrArray* array_time_slots(interval* I, GList* pairs) {
         GList* i = pairs;
         while (i) {
             tmp = (interval_pair*)i->data;
-            if (*tmp_int >= tmp->left && *tmp_int <= tmp->right) {
+            if ((*tmp_int >= tmp->left && *tmp_int <= tmp->right) || (*tmp_int + tmp->b->processing_time >= I->b)) {
                 GList* remove = i;
                 i = g_list_next(i);
                 pairs = g_list_remove_link(pairs, remove);
                 g_list_free_full(remove, interval_pair_free);
             } else {
-                tmp->right += *tmp_int - prev;
+                tmp->right = *tmp_int + tmp->b->processing_time;
                 i = g_list_next(i);
             }
         }
@@ -293,7 +293,7 @@ int find_division(Problem* problem) {
                 j1 = (Job*)g_ptr_array_index(tmp_interval->sigma, j);
                 j2 = (Job*)g_ptr_array_index(tmp_interval->sigma, k);
                 tmp_pair = (interval_pair){j1, j2};
-                if (!check_interval(&tmp_pair, i, tmp_array)) {
+                if (!check_interval(&tmp_pair, i, tmp_array) && !( j1->due_time >= tmp_interval->b ) && !(j2->due_time >= tmp_interval->b)) {
                     pair = CC_SAFE_MALLOC(1, interval_pair);
                     *pair =
                         (interval_pair){j1, j2, tmp_pair.left, tmp_pair.right};

@@ -131,8 +131,8 @@ public:
      * Initialization.
      * @param level the maximum level of the DD.
      */
-    virtual void initialize(int level) {
-    }
+    // virtual void initialize(int level) {
+    // }
 
     /**
      * Makes a result value.
@@ -145,8 +145,8 @@ public:
      * Destructs i-th level of data storage.
      * @param i the level to be destructerd.
      */
-    virtual void destructLevel(int i) {
-    }
+    // virtual void destructLevel(int i) {
+    // }
 
     virtual void initializenode(T& n) const = 0 ;
 

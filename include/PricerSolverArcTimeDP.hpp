@@ -1,4 +1,5 @@
 #include "MipGraph.hpp"
+#include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
 
 class PricerSolverArcTimeDp : public PricerSolverBase {
@@ -38,6 +39,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void disjunctive_inequality(double* x, Solution* sol) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
+    OptimalSolution<double> farkas_pricing(double* pi) override;
 
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
@@ -79,4 +81,31 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     int* get_take() override {
         return NULL;
     }
+
+    void update_constraints() override {
+
+    }
+
+    void update_reduced_costs_arcs(double *_pi, bool farkas = false) override {
+
+    }
+
+    void insert_constraints_lp(NodeData *pd) override {
+
+    }
+
+    void update_coeff_constraints() override {
+
+    }
+    // double compute_reduced_cost(const OptimalSolution<>&s, double *pi, double *lhs) override {
+    //     double result = 0.0;
+
+    //     return result;
+    // }
+
+    // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override {
+    //     double result = 0.0;
+
+    //     return result;
+    // }
 };

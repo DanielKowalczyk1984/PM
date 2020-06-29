@@ -28,14 +28,14 @@ class Label
             prev(nullptr),
             high(false),
             head_node(nullptr),
-            f(-DBL_MAX),
+            f(DBL_MAX),
             prev_job(nullptr) {};
 
         explicit Label(N* _head_node) :
             prev(nullptr),
             high(false),
             head_node(_head_node),
-            f(-DBL_MAX),
+            f(DBL_MAX),
             prev_job(nullptr) {};
 
         Label<N,T>(const Label<N,T>& src) = default;
@@ -65,7 +65,7 @@ class Label
 
         void reset()
         {
-            f = -DBL_MAX;
+            f = DBL_MAX;
             prev = nullptr;
             high = false;
         }
@@ -100,6 +100,13 @@ class Label
             f = _f;
             prev = _prev;
             high = _high;
+        }
+
+        void update_solution(T _f,Label<N,T>& _node)
+        {
+            f = _f;
+            prev = _node.prev;
+            high = _node.high;
         }
 
         void update_solution(Label<N,T>& _node)

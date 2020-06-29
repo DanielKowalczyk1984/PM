@@ -467,6 +467,7 @@ int heuristic(Problem* prob) {
     prob->global_upper_bound = prob->opt_sol->tw + prob->off;
     CCutil_stop_timer(&(prob->tot_heuristic), 0);
     prune_duplicated_sets(&(prob->root_pd));
+    prob->root_pd.upper_bound = prob->global_upper_bound;
 CLEAN:
     solution_free(&sol);
     local_search_data_free(&data);

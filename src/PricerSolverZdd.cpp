@@ -1,5 +1,6 @@
 #include "PricerSolverZdd.hpp"
 #include <NodeBddStructure.hpp>
+#include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 #include "boost/graph/graphviz.hpp"
 
@@ -120,7 +121,6 @@ void PricerSolverZdd::init_table() {
         for (auto& it : table[i]) {
             if (i != 0) {
                 it.set_job(tmp_pair->j);
-                it.set_layer(layer);
                 auto& n0 = table.node(it.branch[0]);
                 auto& n1 = table.node(it.branch[1]);
                 int   p = it.get_job()->processing_time;
@@ -133,11 +133,15 @@ void PricerSolverZdd::init_table() {
                 }
             } else {
                 it.set_job(nullptr, true);
-                it.set_layer(nb_layers);
-                it.set_root_node(true);
             }
         }
     }
+}
+
+OptimalSolution<double> PricerSolverZdd::farkas_pricing(double *pi) {
+    OptimalSolution<double> sol;
+
+    return sol;
 }
 
 void PricerSolverZdd::remove_layers_init() {

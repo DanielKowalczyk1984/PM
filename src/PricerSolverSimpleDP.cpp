@@ -71,8 +71,8 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     for (int t = 0; t < Hmax + 1; t++) {
         auto it = forward_graph[t].begin();
         while (it != forward_graph[t].end()) {
-            double result = F[t - (*it)->processing_time] - value_Fj(t, *it) +
-                            pi[(*it)->job] + backward_F[t] + pi[nb_jobs];
+            double result = -F[t - (*it)->processing_time] - value_Fj(t, *it) +
+                            pi[(*it)->job] - backward_F[t] + pi[nb_jobs];
             if (LB - result - (num_machines - 1) * F[Hmax] > UB + 0.00001) {
                 size_graph--;
                 forward_graph[t].erase(it);
@@ -191,53 +191,53 @@ void PricerSolverSimpleDp::build_mip() {
 
 void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     /** Initialisation */
-    F[0] = -_pi[nb_jobs];
+    F[0] = _pi[nb_jobs];
     A[0] = nullptr;
 
     for (int t = 1; t < Hmax + 1; t++) {
-        F[t] = -DBL_MAX / 2;
+        F[t] = DBL_MAX / 2;
         A[t] = nullptr;
     }
 
     /** Recursion */
     for (int t = 1; t < Hmax + 1; t++) {
         for (auto& it : forward_graph[t]) {
-            if (F[t - it->processing_time] -
-                    static_cast<double>(value_Fj(t, it)) + _pi[it->job] >=
+            if (F[t - it->processing_time] +
+                    static_cast<double>(value_Fj(t, it)) - _pi[it->job] <=
                 F[t]) {
                 F[t] =
-                    F[t - it->processing_time] - value_Fj(t, it) + _pi[it->job];
+                    F[t - it->processing_time] + value_Fj(t, it) - _pi[it->job];
                 A[t] = it;
             }
         }
 
-        if (F[t - 1] >= F[t]) {
+        if (F[t - 1] <= F[t]) {
             F[t] = F[t - 1];
         }
     }
 }
 
 void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
-    backward_F[Hmax] = -_pi[nb_jobs];
+    backward_F[Hmax] = _pi[nb_jobs];
 
     for (int t = 0; t < Hmax; t++) {
-        backward_F[t] = -DBL_MAX / 2;
+        backward_F[t] = DBL_MAX / 2;
     }
 
     for (int t = Hmax - 1; t >= 0; t--) {
         for (auto& it : backward_graph[t]) {
             Job* job = it;
             int  tt = t + job->processing_time;
-            if (backward_F[tt] - static_cast<double>(value_Fj(tt, job)) +
-                    _pi[job->job] >=
+            if (backward_F[tt] + static_cast<double>(value_Fj(tt, job)) -
+                    _pi[job->job] <=
                 backward_F[t]) {
-                backward_F[t] = backward_F[tt] -
-                                static_cast<double>(value_Fj(tt, job)) +
+                backward_F[t] = backward_F[tt] +
+                                static_cast<double>(value_Fj(tt, job)) -
                                 _pi[job->job];
             }
         }
 
-        if (backward_F[t + 1] >= backward_F[t]) {
+        if (backward_F[t + 1] <= backward_F[t]) {
             backward_F[t] = backward_F[t + 1];
         }
     }
@@ -252,10 +252,10 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     forward_evaluator(_pi);
 
     /** Find optimal solution */
-    opt_sol.obj = -DBL_MAX;
+    opt_sol.obj = DBL_MAX;
 
     for (int i = 0; i < Hmax + 1; i++) {
-        if (F[i] > opt_sol.obj) {
+        if (F[i] < opt_sol.obj) {
             opt_sol.C_max = i;
             opt_sol.obj = F[i];
         }
@@ -280,6 +280,13 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     /** Free the memory */
     return opt_sol;
 }
+
+OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing(double* _pi) {
+    OptimalSolution<double> opt_sol;
+
+    return opt_sol;
+}
+
 
 void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     const double* columns, const GPtrArray* schedule_sets, int num_columns) {

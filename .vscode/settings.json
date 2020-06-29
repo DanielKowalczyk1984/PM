@@ -32,6 +32,7 @@
         "misprice",
         "mispricing",
         "pdata",
+        "pessoa",
         "printit",
         "rvnd",
         "szeit",
@@ -50,7 +51,15 @@
         "tuple": "cpp",
         "utility": "cpp",
         "variant": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "cmath": "c",
+        "random": "c",
+        "limits": "cpp",
+        "numeric": "cpp",
+        "functional": "cpp",
+        "memory": "cpp",
+        "optional": "cpp",
+        "sstream": "cpp"
     },
     "julia.environmentPath": "${workspaceRoot}/scripts/Julia/DAG-cluster-cover",
 >>>>>>> release/test_filter

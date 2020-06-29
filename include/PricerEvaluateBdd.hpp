@@ -2,37 +2,30 @@
 #define PRICER_EVALUATE_BDD_HPP
 #include <ForwardBDD.hpp>
 #include <BackwardBDD.hpp>
+#include <FarkasZDD.hpp>
+#include "ModelInterface.hpp"
 
 struct ForwardBddSimpleDouble : ForwardBddSimple<ForwardBddSimpleDouble, double> {
-    ForwardBddSimpleDouble(double *_pi, int _num_jobs)
-    : ForwardBddSimple<ForwardBddSimpleDouble, double>(_pi, _num_jobs) {};
-    explicit ForwardBddSimpleDouble(int _num_jobs)
-    : ForwardBddSimple<ForwardBddSimpleDouble, double> (_num_jobs) {};
     ForwardBddSimpleDouble() : ForwardBddSimple<ForwardBddSimpleDouble, double>() {};
+    ForwardBddSimpleDouble(OriginalModel<>*model) : ForwardBddSimple<ForwardBddSimpleDouble, double>(model) {};
 };
 
 struct ForwardBddCycleDouble : ForwardBddCycle<ForwardBddCycleDouble, double> {
-    ForwardBddCycleDouble(double *_pi, int _num_jobs)
-    : ForwardBddCycle<ForwardBddCycleDouble, double>(_pi, _num_jobs) {};
-    explicit ForwardBddCycleDouble(int _num_jobs)
-    : ForwardBddCycle<ForwardBddCycleDouble, double> (_num_jobs) {};
     ForwardBddCycleDouble() : ForwardBddCycle<ForwardBddCycleDouble, double>() {};
+    ForwardBddCycleDouble(OriginalModel<>* model) : ForwardBddCycle<ForwardBddCycleDouble, double>(model) {};
 };
 
 struct BackwardBddSimpleDouble : BackwardBddSimple<BackwardBddSimpleDouble, double> {
-    BackwardBddSimpleDouble(double *_pi, int _num_jobs)
-    : BackwardBddSimple<BackwardBddSimpleDouble, double>(_pi, _num_jobs) {};
-    explicit BackwardBddSimpleDouble(int _num_jobs)
-    : BackwardBddSimple<BackwardBddSimpleDouble, double> (_num_jobs) {};
     BackwardBddSimpleDouble() : BackwardBddSimple<BackwardBddSimpleDouble, double>() {};
+    BackwardBddSimpleDouble(OriginalModel<>* model) : BackwardBddSimple<BackwardBddSimpleDouble, double>(model) {};
 };
 
+struct BackwardBddFarkasDouble : BackwardBddFarkas<BackwardBddFarkasDouble, double> {
+    BackwardBddFarkasDouble() : BackwardBddFarkas<BackwardBddFarkasDouble, double>() {};
+};
 struct BackwardBddCycleDouble : BackwardBddCycle<BackwardBddCycleDouble, double> {
-    BackwardBddCycleDouble(double *_pi, int _num_jobs)
-    : BackwardBddCycle<BackwardBddCycleDouble, double>(_pi, _num_jobs) {};
-    explicit BackwardBddCycleDouble(int _num_jobs)
-    : BackwardBddCycle<BackwardBddCycleDouble, double> (_num_jobs) {};
     BackwardBddCycleDouble() : BackwardBddCycle<BackwardBddCycleDouble, double>() {};
+    BackwardBddCycleDouble(OriginalModel<>* model) : BackwardBddCycle<BackwardBddCycleDouble, double>(model) {};
 };
 
 #endif // PRICER_EVALUATE_BDD_HPP

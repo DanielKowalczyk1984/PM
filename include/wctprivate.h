@@ -61,7 +61,24 @@ struct _NodeData {
     double *lambda;
     double *x_e;
     double *coeff;
-    double *pi;
+    GArray *pi;
+    GArray *id_row;
+    GArray *coeff_row;
+    int nb_rows;
+    int nb_cols;
+
+    // cut generation information 
+    int max_nb_cuts;
+    int id_convex_constraint;
+    int id_assignment_constraint;
+    int id_valid_cuts;
+
+    int id_art_var_convex;
+    int id_art_var_assignment;
+    int id_art_var_cuts;
+    int id_next_var_cuts;
+    int id_pseudo_schedules;
+
     // PricerSolver
     PricerSolver *solver;
 
@@ -84,13 +101,14 @@ struct _NodeData {
     double  LP_lower_bound;
     double  LP_lower_bound_dual;
     double  LP_lower_bound_BB;
-    double *rhs;
+    GArray *rhs;
+    GArray *lhs_coeff;
     int     nb_non_improvements;
     int iterations;
     /** Wentges smoothing technique */
-    double *pi_in;
+    GArray *pi_in;
     double dualdiffnorm;
-    double *subgradient;
+    GArray *subgradient;
     double hybridfactor;
     double subgradientnorm;
     double  alpha;
@@ -102,9 +120,9 @@ struct _NodeData {
     double  eta_in;
     int in_mispricing_schedule;
     double subgradientproduct;
-    double *pi_out;
-    double *pi_sep;
-    double *subgradient_in;
+    GArray *pi_out;
+    GArray *pi_sep;
+    GArray *subgradient_in;
     double  eta_out;
     double  eta_sep;
     double reduced_cost;
@@ -298,6 +316,7 @@ int solve_stab_dynamic(NodeData *pd, Parms *parms);
 int solve_stab_hybrid(NodeData *pd, Parms *parms);
 int solve_farkas_dbl(NodeData *pd);
 int solve_farkas_dbl_DP(NodeData *pd);
+void generate_cuts(NodeData* pd);
 #ifdef __cplusplus
 }
 #endif

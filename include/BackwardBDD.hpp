@@ -1,32 +1,34 @@
 #ifndef BACKWARD_BDD_HPP
 #define BACKWARD_BDD_HPP
-// #include <tdzdd/DdEval.hpp>
 #include "NodeBddEval.hpp"
 #include <OptimalSolution.hpp>
-#include <node_duration.hpp>
+#include <NodeBdd.hpp>
+#include "ModelInterface.hpp"
 
 template<typename E, typename T>
 class BackwardBddBase : public Eval<E, NodeBdd<T>, OptimalSolution<T> > {
-  protected:
-    T *pi;
-    int num_jobs;
+  OriginalModel<>* original_model;
+  double *pi;
+  
   public:
-    BackwardBddBase(T *_pi, int _num_jobs) : pi(_pi), num_jobs(_num_jobs) {
-    };
+    BackwardBddBase(OriginalModel<>* model) : original_model(model), pi(nullptr)
+    {
+    }
 
-    BackwardBddBase(int _num_jobs) : pi(nullptr), num_jobs(_num_jobs) {
+    BackwardBddBase() : original_model(nullptr), pi(nullptr)
+    {
+    }
 
-    };
+    BackwardBddBase(const BackwardBddBase<E, T> &src) 
+    {
+    }
 
-    BackwardBddBase() : pi(nullptr), num_jobs(0) {
-    };
-
-    BackwardBddBase(const BackwardBddBase<E, T> &src) : pi(src.pi),
-        num_jobs(src.num_jobs) {
-    };
-
-    void initialize_pi(T *_pi) {
+    void set_pi(double* _pi) {
         pi = _pi;
+    }
+
+    const double* get_pi() const {
+        return pi;
     }
 
     virtual void initializenode(NodeBdd<T> &n) const  = 0;
@@ -38,28 +40,28 @@ class BackwardBddBase : public Eval<E, NodeBdd<T>, OptimalSolution<T> > {
 template<typename E, typename T>
 class BackwardBddSimple : public BackwardBddBase<E, T> {
   public:
-    using BackwardBddBase<E, T>::pi;
-    using BackwardBddBase<E, T>::num_jobs;
-
     BackwardBddSimple() : BackwardBddBase<E, T>() {
     };
-    BackwardBddSimple(T *_pi, int _num_jobs) : BackwardBddBase<E, T>(_pi,
-                _num_jobs) {
-    };
-    explicit BackwardBddSimple(int _num_jobs) : BackwardBddBase<E, T>(_num_jobs) {
+
+    BackwardBddSimple(OriginalModel<>* model) : BackwardBddBase<E,T>(model) {
+
     };
 
     void evalNode(NodeBdd<T> &n) const override {
-        Job *tmp_j = n.get_job();
-        int weight = n.get_weight();
         NodeBdd<T> *p0 = n.child[0];
         NodeBdd<T> *p1 = n.child[1];
-        T result = -value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job];
 
-        T obj0 = p0->backward_label[0].get_f();
-        T obj1 = p1->backward_label[0].get_f() + result;
+        n.reset_reduced_costs();
+        const double* dual = BackwardBddBase<E,T>::get_pi();
+        
+        for(auto& it : n.coeff_list[1]) {
+            n.adjust_reduced_costs(it->get_coeff()*dual[it->get_row()], it->get_high());
+        }
 
-        if (obj0 < obj1) {
+        T obj0 = p0->backward_label[0].get_f() + n.reduced_cost[0];
+        T obj1 = p1->backward_label[0].get_f() + n.reduced_cost[1];
+
+        if (obj0 > obj1) {
             n.backward_label[0].update_solution(obj1, nullptr, true);
         } else {
             n.backward_label[0].update_solution(obj0, nullptr, false);
@@ -68,29 +70,28 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
     }
 
     void initializenode(NodeBdd<T> &n) const override {
-        n.backward_label[0].update_solution(-DBL_MAX / 2, nullptr, false);
+        n.backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
     }
 
     void initializerootnode(NodeBdd<T> &n) const override {
-        n.backward_label[0].f = -pi[num_jobs];
+        n.backward_label[0].f = 0;
     }
 
     OptimalSolution<T> get_objective(NodeBdd<T> &n) const {
-        OptimalSolution<T> sol(-pi[num_jobs]);
+        OptimalSolution<T> sol(0.0);
 
         NodeBdd<T> *aux_node = &n;
         Job *aux_job =  n.get_job();
 
         while (aux_job) {
             if (aux_node->backward_label[0].get_high()) {
-                sol.push_job_back(aux_job, pi[aux_job->job]);
+                sol.push_job_back(aux_job, aux_node->reduced_cost[1]);
                 aux_node = aux_node->child[1];
                 aux_job = aux_node->get_job();
             } else {
                 aux_node = aux_node->child[0];
                 aux_job = aux_node->get_job();
             }
-
         }
 
         return sol;
@@ -108,15 +109,11 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
 template<typename E, typename T>
 class BackwardBddCycle : public BackwardBddBase<E, T> {
   public:
-    using BackwardBddBase<E, T>::pi;
-    using BackwardBddBase<E, T>::num_jobs;
-
     BackwardBddCycle() : BackwardBddBase<E, T>() {
     };
-    BackwardBddCycle(T *_pi, int _num_jobs) : BackwardBddBase<E, T>(_pi,
-                _num_jobs) {
-    };
-    explicit BackwardBddCycle(int _num_jobs) : BackwardBddBase<E, T>(_num_jobs) {
+
+    BackwardBddCycle(OriginalModel<>* model) : BackwardBddBase<E, T>(model) {
+
     };
 
     void evalNode(NodeBdd<T> &n) const override {
@@ -124,65 +121,70 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         int weight{n.get_weight()};
         NodeBdd<T> *p0  {n.child[0]};
         NodeBdd<T> *p1  {n.child[1]};
-        T result { -value_Fj(weight + tmp_j->processing_time, tmp_j) + pi[tmp_j->job]};
+        n.reset_reduced_costs();
+        const double *dual = BackwardBddBase<E,T>::get_pi();
+        
+        for(auto& it : n.coeff_list[1]) {
+            n.adjust_reduced_costs(it->get_coeff()*dual[it->get_row()], it->get_high());
+        }
 
         Job *prev_job{p1->backward_label[0].get_prev_job()};
 
-        n.backward_label[0].update_label(&(p0->backward_label[0]));
-        n.backward_label[1].update_label(&(p0->backward_label[1]));
+        n.backward_label[0].update_label(&(p0->backward_label[0]),p0->backward_label[0].get_f() + n.reduced_cost[0],false);
+        n.backward_label[1].update_label(&(p0->backward_label[1]),p0->backward_label[1].get_f() + n.reduced_cost[0],false);
         bool diff =  bool_diff_Fij(weight, prev_job, tmp_j);
         bool diff1 = bool_diff_Fij(weight, p1->backward_label[0].get_prev_job(), tmp_j);
-        bool diff2 = bool_diff_Fij(weight, p1->backward_label[1].get_prev_job(), tmp_j);
 
         if (prev_job != tmp_j && diff) {
-            T obj1 {p1->backward_label[0].get_f() + result};
-            T obj2 {p1->backward_label[1].get_f() + result};
+            T obj1 {p1->backward_label[0].get_f() + n.reduced_cost[1]};
+            T obj2 {p1->backward_label[1].get_f() + n.reduced_cost[1]};
 
-            if (obj1 > n.backward_label[0].get_f()) {
+            if (obj1 < n.backward_label[0].get_f()) {
                 if (tmp_j != n.backward_label[0].get_prev_job()) {
-                    n.backward_label[1].update_label(&(p0->backward_label[0]));
+                    n.backward_label[1].update_label(&(p0->backward_label[0]), p0->backward_label[0].get_f() + n.reduced_cost[0], false);
                 }
 
                 n.backward_label[0].update_label(&(p1->backward_label[0]), obj1, true);
-            } else if (obj1 > n.backward_label[1].get_f() &&
+            } else if (obj1 < n.backward_label[1].get_f() &&
                        tmp_j != n.backward_label[0].get_prev_job() && diff1) {
                 n.backward_label[1].update_label(&(p1->backward_label[0]), obj1, true);
-            } else if (obj2 > n.backward_label[1].get_f() &&
-                       tmp_j != n.backward_label[0].get_prev_job() && diff2) {
+            } else if (obj2 < n.backward_label[1].get_f() &&
+                       tmp_j != n.backward_label[0].get_prev_job()) {
                 n.backward_label[1].update_label(&(p1->backward_label[1]), obj2, true);
             }
         } else {
-            T obj1 = p1->backward_label[1].get_f() + result;
+            T obj1 = p1->backward_label[1].get_f() + n.reduced_cost[1];
 
-            if (obj1 > n.backward_label[0].get_f() && diff2) {
+            if (obj1 < n.backward_label[0].get_f() ) {
                 if (tmp_j != n.backward_label[0].get_prev_job()) {
-                    n.backward_label[1].update_label(&(p0->backward_label[0]));
+                    n.backward_label[1].update_label(&(p0->backward_label[0]), p0->backward_label[0].get_f() + n.reduced_cost[0], false);
                 }
 
                 n.backward_label[0].update_label(&(p1->backward_label[1]), obj1, true);
-            } else if (obj1 > n.backward_label[1].get_f() &&
-                       tmp_j != n.backward_label[0].get_prev_job() && diff2) {
+            } else if (obj1 < n.backward_label[1].get_f() &&
+                       tmp_j != n.backward_label[0].get_prev_job() ) {
                 n.backward_label[1].update_label(&(p1->backward_label[1]), obj1, true);
             }
         }
     }
 
     void initializenode(NodeBdd<T> &n) const override {
-        n.backward_label[0].update_solution(-DBL_MAX / 2, nullptr, false);
+        n.backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
     }
 
     void initializerootnode(NodeBdd<T> &n) const override {
-        n.backward_label[0].f = -pi[num_jobs];
+        n.backward_label[0].f = 0.0;
     }
 
     OptimalSolution<T> get_objective(NodeBdd<T> &n) const {
-        OptimalSolution<T> sol(-pi[num_jobs]);
+        OptimalSolution<T> sol(0.0);
         Label<NodeBdd<T>,T> *aux_label = &(n.backward_label[0]);
 
         while (aux_label) {
             if (aux_label->get_high()) {
                 Job *aux_job = aux_label->get_job();
-                sol.push_job_back(aux_job, pi[aux_job->job]);
+                auto node = aux_label->get_node();
+                sol.push_job_back(aux_job, node->reduced_cost[1]);
             }
 
             aux_label = aux_label->get_previous();

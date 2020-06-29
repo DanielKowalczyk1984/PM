@@ -28,7 +28,7 @@
 #include <cassert>
 #include <ostream>
 
-#include "node_duration.hpp"
+#include "NodeBdd.hpp"
 #include "NodeBranchId.hpp"
 #include "NodeBddTable.hpp"
 #include "util/MyVector.hpp"

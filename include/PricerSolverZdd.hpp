@@ -1,8 +1,10 @@
 #ifndef PRICER_SOLVER_ZDD_HPP
 #define PRICER_SOLVER_ZDD_HPP
 
+#include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
 #include "MipGraph.hpp"
+#include "wctprivate.h"
 #include <NodeBddStructure.hpp>
 
 class PricerSolverZdd : public PricerSolverBase
@@ -49,8 +51,38 @@ class PricerSolverZdd : public PricerSolverBase
             return NULL;
         }
 
+        OptimalSolution<double> farkas_pricing(double *pi) override;
+
 
         void add_constraint(Job* job, GPtrArray* list, int order) override;
+
+        void update_constraints() override {
+
+        }
+
+        void update_reduced_costs_arcs(double *_pi, bool farkas = false) override {
+            
+        }
+
+        void insert_constraints_lp(NodeData* pd) override {
+
+        }
+
+        void update_coeff_constraints() override {
+
+        }
+
+        // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override {
+        //     double result = 0;
+
+        //     return result;
+        // }
+
+        // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override {
+        //     double result =0;
+
+        //     return result;
+        // }
 };
 
 
