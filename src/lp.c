@@ -10,6 +10,7 @@
 
 #include <lp.h>
 #include <util.h>
+#include "gurobi_c.h"
 
 const double int_tolerance = 0.00001;
 
@@ -97,10 +98,7 @@ int wctlp_optimize(wctlp* lp, int* status) {
             goto CLEAN;
         }
     } else if (*status == GRB_INFEASIBLE) {
-        printf("infeasible LP relaxation\n");
-        wctlp_write(lp, "model_rmp.lp");
         wctlp_compute_IIS(lp);
-        wctlp_write(lp, "model_rmp_iss.ilp");
     }
 
 CLEAN:
@@ -162,6 +160,37 @@ int wctlp_addrow(wctlp* lp, int nb_zero, int* column_indices, double* cval,
     return val;
 }
 
+int wctlp_addrows(wctlp* lp, int nb_rows, int nb_zero, int *start, int* column_indices, double* coeff_val,
+                 char* sense, double* rhs, char** name) {
+    int  val = 0;
+    // char inequality_sense;
+
+    // switch (sense) {
+    //     case wctlp_EQUAL:
+    //         inequality_sense = GRB_EQUAL;
+    //         break;
+
+    //     case wctlp_LESS_EQUAL:
+    //         inequality_sense = GRB_LESS_EQUAL;
+    //         break;
+
+    //     case wctlp_GREATER_EQUAL:
+    //         inequality_sense = GRB_GREATER_EQUAL;
+    //         break;
+
+    //     default:
+    //         fprintf(stderr, "Unknown variable sense: %c\n", sense);
+    //         val = 1;
+    //         return val;
+    // }
+
+    val = GRBaddconstrs(lp->model, nb_rows, nb_zero, start, column_indices, coeff_val, sense, rhs, name);
+    CHECK_VAL_GRB(val, "Failed GRBadd", lp->env);
+    val = GRBupdatemodel(lp->model);
+    CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
+    return val;
+}
+
 int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval,
                  double obj, double lb, double ub, char sense, char* name) {
     int  val = 0;
@@ -188,6 +217,37 @@ int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval,
 
     val = GRBaddvar(lp->model, nb_zero, column_indices, cval, obj, lb, ub,
                     inequality_sense, name);
+    CHECK_VAL_GRB(val, "Failed adding GRBaddvar", lp->env);
+    val = GRBupdatemodel(lp->model);
+    CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
+    return val;
+}
+
+int wctlp_addcols(wctlp* lp, int num_vars, int nb_zero, int*start, int* row_indices, double* coeff_val,
+                 double* obj, double* lb, double* ub, char* vtype, char** name) {
+    int  val = 0;
+    // char inequality_sense;
+
+    // switch (sense) {
+    //     case wctlp_CONT:
+    //         inequality_sense = GRB_CONTINUOUS;
+    //         break;
+
+    //     case wctlp_BIN:
+    //         inequality_sense = GRB_BINARY;
+    //         break;
+
+    //     case wctlp_INT:
+    //         inequality_sense = GRB_INTEGER;
+    //         break;
+
+    //     default:
+    //         fprintf(stderr, "Unknown variable sense: %c\n", sense);
+    //         val = 1;
+    //         return val;
+    // }
+
+    val = GRBaddvars(lp->model, num_vars, nb_zero, start, row_indices, coeff_val, obj, lb, ub, vtype, name);
     CHECK_VAL_GRB(val, "Failed adding GRBaddvar", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
@@ -268,7 +328,7 @@ int wctlp_pi_inf(wctlp* lp, double* pi) {
         return val;
     }
 
-    val = GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_FARKASDUAL, 0, nrows, pi);
+    val = GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_PI, 0, nrows, pi);
     CHECK_VAL_GRB(val, "Failed to get the dual prices", lp->env);
     return val;
 }
@@ -301,6 +361,33 @@ int wctlp_x(wctlp* lp, double* x, int first) {
     return val;
 }
 
+int wctlp_rc(wctlp* lp, double* rc, int first) {
+    int val = 0;
+    int nb_cols;
+    int solstat;
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_STATUS, &solstat);
+    CHECK_VAL_GRB(val, "Failed to the status of model", lp->env);
+
+    if (solstat == GRB_INFEASIBLE) {
+        fprintf(stderr, "Problem is infeasible\n");
+        val = 1;
+        return val;
+    }
+
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, &nb_cols);
+    CHECK_VAL_GRB(val, "", lp->env);
+
+    if (nb_cols == 0) {
+        fprintf(stderr, "Lp has no variables\n");
+        val = 1;
+        return val;
+    }
+
+    val = GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_RC, first, nb_cols - first,
+                             rc);
+    CHECK_VAL_GRB(val, "Failed in GRB_DBL_ATTR_X", lp->env);
+    return val;
+}
 int wctlp_basis_cols(wctlp* lp, int* column_status, int first) {
     int val = 0;
     int nb_cols, i;

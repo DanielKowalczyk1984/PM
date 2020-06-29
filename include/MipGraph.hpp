@@ -6,7 +6,8 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/unordered_set.hpp>
 #include <NodeBddTable.hpp>
-#include <node_duration.hpp>
+#include <NodeBdd.hpp>
+#include <vector>
 #include "ZddNode.hpp"
 #include <gurobi_c++.h>
 #include <scheduleset.h>
@@ -46,33 +47,38 @@ typedef property_map<MipGraph, vertex_distance_t>::type VarsNodeAccessor;
 typedef property_map<MipGraph, edge_index_t>::type EdgeIndexAccessor;
 typedef property_map<MipGraph, edge_weight_t>::type EdgeTypeAccessor;
 typedef property_map<MipGraph, edge_weight2_t>::type EdgeVarAccessor;
-
+typedef std::vector<std::vector<double>> dbl_matrix;
 class ColorWriterEdgeX {
 private:
     const MipGraph& g;
-    const double *x;
+    const NodeTableEntity<>* table;
+    const dbl_matrix* lp_x_high;
+    const dbl_matrix* lp_x_low;
 
 public:
-    explicit ColorWriterEdgeX(MipGraph& _g, double *_x) : g{_g}, x{_x} {
+    explicit ColorWriterEdgeX(MipGraph& _g, NodeTableEntity<>* _table, dbl_matrix* _lp_high, dbl_matrix* _lp_low) : g{_g},table(_table), lp_x_high(_lp_high), lp_x_low(_lp_low) {
 
     }
 
     void operator()(std::ostream &output, Edge _edge) {
-        int index = get(boost::edge_index_t(),g,_edge);
-        bool high =  get(boost::edge_weight_t(),g,_edge);       
-        if(x[index] > 0.00001) {
-            if(high) {
-                output << "[label = "<< x[index] << ",color = red]";
+        auto high =  get(boost::edge_weight_t(),g,_edge);
+        auto node_id = get(boost::vertex_name_t(),g,source(_edge,g));
+        auto node = table->node(node_id);
+        int t = node.get_weight();
+        int j = node.get_job()->job;
+        if(high) {
+            if ((*lp_x_high)[j][t] > 0.00001) {
+                output << "[label = "<< (*lp_x_high)[j][t] << ",color = red]";
             } else {
-                output << "[label = "<< x[index] <<",color = red, style = dashed]";
+                output << "[label = "<< (*lp_x_high)[j][t] <<"]";
             }
-        } else {
-            if(high) {
-                output << "[label = "<< x[index] <<"]";
+        } else  {
+            if((*lp_x_low)[j][t] > 0.00001) {
+                output << "[label = "<< (*lp_x_low)[j][t] <<",color = red, style = dashed]";
             } else {
-                output << "[label = "<< x[index] <<",style=dashed]";
+                output << "[label = "<< (*lp_x_low)[j][t] <<",style=dashed]";
             }
-        }
+        }     
     }
 };
 

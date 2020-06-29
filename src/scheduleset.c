@@ -144,6 +144,22 @@ void g_sum_processing_time(gpointer data, gpointer user_data) {
     g_ptr_array_add(set->job_list, j);
 }
 
+void g_sum_recalculate(gpointer data, gpointer user_data) {
+    Job*         j = (Job*)data;
+    ScheduleSet* set = (ScheduleSet*)user_data;
+
+    set->total_processing_time += j->processing_time;
+    set->total_weighted_completion_time +=
+        value_Fj(set->total_processing_time, j);
+}
+
+void scheduleset_recalculate(ScheduleSet *set) {
+    set->total_processing_time = 0;
+    set->total_weighted_completion_time = 0;
+
+    g_ptr_array_foreach(set->job_list, g_sum_recalculate, set);
+}
+
 ScheduleSet* scheduleset_from_solution(GPtrArray* machine, int nb_jobs) {
     ScheduleSet* tmp;
 

@@ -48,6 +48,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void make_schedule_set_feasible(GPtrArray* set) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
+    OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    forward_evaluator(double* _pi);
     void                    backward_evaluator(double* _pi);
 
@@ -56,6 +57,35 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         take = NULL;
         return tmp;
     }
+
+    void update_constraints() override {
+
+    }
+
+    void update_reduced_costs_arcs(double *_pi, bool farkas = false) override {
+        
+    }
+
+    void insert_constraints_lp(NodeData *pd) override {
+
+    }
+
+    void update_coeff_constraints() override {
+
+    }
+
+    // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override {
+    //     double result = 0.0;
+
+    //     return result;
+    // }
+
+    // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override {
+    //     double result = 0;
+
+    //     return result;
+    // }
+
 };
 
 #endif  // PRICER_SOLVER_SIMPLE_DP_HPP

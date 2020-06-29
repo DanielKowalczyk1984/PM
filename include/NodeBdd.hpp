@@ -1,10 +1,12 @@
 #ifndef NODE_DURATION_HPP
 #define NODE_DURATION_HPP
+#include <list>
 #include <memory>
 #include <OptimalSolution.hpp>
 #include<boost/dynamic_bitset.hpp>
 #include "NodeBase.hpp"
 #include "Label.hpp"
+#include "ModelInterface.hpp"
 
 template<typename T = double>
 class NodeBdd : public NodeBase
@@ -15,8 +17,12 @@ class NodeBdd : public NodeBase
     public:
         Label<NodeBdd<T>,T> forward_label[2];
         Label<NodeBdd<T>,T> backward_label[2];
+        std::list<std::shared_ptr<BddCoeff>> coeff_list[2];
 
         NodeBdd<T>* child[2];
+        std::shared_ptr<NodeId> ptr_node_id;
+        double cost[2];
+        double reduced_cost[2];
 
         bool calc_yes;
         bool calc_no;
@@ -38,6 +44,9 @@ class NodeBdd : public NodeBase
             weight(0),
             forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
+            ptr_node_id(nullptr),
+            cost{0.0,0.0},
+            reduced_cost{0.0,0.0},
             calc_yes(true),
             calc_no(true),
             key(-1),
@@ -56,6 +65,9 @@ class NodeBdd : public NodeBase
             weight(_weight),
             forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
+            ptr_node_id(nullptr),
+            cost{0.0,0.0},
+            reduced_cost{0.0,0.0},
             calc_yes(true),
             calc_no(true),
             key(-1),
@@ -82,6 +94,9 @@ class NodeBdd : public NodeBase
             weight(0),
             forward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
             backward_label{Label<NodeBdd<T>,T>(this), Label<NodeBdd,T>(this)},
+            ptr_node_id(nullptr),
+            cost{0.0,0.0},
+            reduced_cost{0.0,0.0},
             calc_yes(true),
             calc_no(true),
             key(-1),
@@ -110,6 +125,24 @@ class NodeBdd : public NodeBase
             return weight;
         }
 
+        void reset_reduced_costs() {
+            reduced_cost[0] = 0.0;
+            reduced_cost[1] = cost[1];
+        }
+
+        void reset_reduced_costs_farkas() {
+            reduced_cost[0] = 0.0;
+            reduced_cost[1] = 0.0;
+        }
+
+        void add_coeff_list(std::shared_ptr<BddCoeff> ptr, int high) {
+            coeff_list[high].push_back(ptr);
+        }
+
+        void adjust_reduced_costs(double _x, int i) {
+            reduced_cost[i] -= _x;
+        }
+
         bool operator!=(NodeBdd const& o) const
         {
             return !operator==(o);
@@ -130,12 +163,9 @@ class NodeBdd : public NodeBase
         {
             if (!_terminal_node) {
                 weight = _weight;
-                NodeBase::set_root_node(_root_node);
             } else {
                 NodeBase::set_job(nullptr);
                 weight = -1;
-                NodeBase::set_root_node(_root_node);
-                NodeBase::set_terminal_node(_terminal_node);
             }
 
             return this;

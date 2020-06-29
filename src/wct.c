@@ -134,20 +134,36 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->lower_scaled_bound = 1;
     pd->LP_lower_bound = 0.0;
     pd->partial_sol = 0.0;
-    pd->rhs = (double*)NULL;
+    pd->rhs = (GArray*)NULL;
     /*Initialization  of the LP*/
     pd->RMP = (wctlp*)NULL;
     pd->MIP = (wctlp*)NULL;
     pd->lambda = (double*)NULL;
     pd->x_e = (double*)NULL;
     pd->coeff = (double*)NULL;
-    pd->pi = (double*)NULL;
+    pd->pi = (GArray*)NULL;
+    pd->lhs_coeff = (GArray *) NULL;
+    pd->id_row = (GArray *) NULL;
+    pd->coeff_row = (GArray *) NULL;
+    pd->nb_rows = 0;
+    pd->nb_cols = 0;
+    // init info cut generation
+    pd->max_nb_cuts = 2000;
+    pd->id_convex_constraint = 0;
+    pd->id_assignment_constraint = 0;
+    pd->id_valid_cuts = 0;
+    pd->id_art_var_assignment = 0;
+    pd->id_art_var_convex = 0;
+    pd->id_art_var_cuts = 0;
+    pd->id_pseudo_schedules = 0;
+
+
     /**init stab data */
-    pd->pi_in = (double*)NULL;
-    pd->pi_out = (double*)NULL;
-    pd->pi_sep = (double*)NULL;
-    pd->subgradient = (double*)NULL;
-    pd->subgradient_in = (double*)NULL;
+    pd->pi_in = (GArray*)NULL;
+    pd->pi_out = (GArray*)NULL;
+    pd->pi_sep = (GArray*)NULL;
+    pd->subgradient = (GArray*)NULL;
+    pd->subgradient_in = (GArray*)NULL;
     pd->reduced_cost = 0.0;
     pd->alpha = 0.8;
     pd->update = 1;
@@ -172,7 +188,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->column_status = (int*)NULL;
     /*Initialization max and retirement age*/
     pd->maxiterations = 1000000;
-    pd->retirementage = 1000000;
+    pd->retirementage = 100;
     /*initialization of branches*/
     pd->branch_job = -1;
     pd->parent = (NodeData*)NULL;
@@ -217,21 +233,34 @@ void lp_node_data_free(NodeData* pd) {
      * free all the data associated with the LP
      */
     CC_IFFREE(pd->coeff, double);
-    CC_IFFREE(pd->pi, double);
+    g_array_free(pd->pi,TRUE);
     CC_IFFREE(pd->lambda, double);
     CC_IFFREE(pd->x_e, double);
-    CC_IFFREE(pd->pi_out, double);
-    CC_IFFREE(pd->pi_in, double);
-    CC_IFFREE(pd->pi_sep, double);
-    CC_IFFREE(pd->subgradient, double);
-    CC_IFFREE(pd->subgradient_in, double);
-    CC_IFFREE(pd->rhs, double);
+    g_array_free(pd->pi_out, TRUE);
+    g_array_free(pd->pi_in, TRUE);
+    g_array_free(pd->pi_sep, TRUE);
+    g_array_free(pd->subgradient, TRUE);
+    g_array_free(pd->subgradient_in, TRUE);
+    g_array_free(pd->rhs, TRUE);
+    g_array_free(pd->lhs_coeff, TRUE);
+    g_array_free(pd->id_row, TRUE);
+    g_array_free(pd->coeff_row, TRUE);
     CC_IFFREE(pd->column_status, int);
 
     /**
      * free all the schedules from the localColPool
      */
     g_ptr_array_free(pd->localColPool, TRUE);
+    pd->nb_rows = 0;
+    pd->nb_cols = 0;
+    pd->max_nb_cuts = 2000;
+    pd->id_convex_constraint = 0;
+    pd->id_assignment_constraint = 0;
+    pd->id_valid_cuts = 0;
+    pd->id_art_var_assignment = 0;
+    pd->id_art_var_convex = 0;
+    pd->id_art_var_cuts = 0;
+    pd->id_pseudo_schedules = 0;
 }
 
 void children_data_free(NodeData* pd) {
@@ -470,15 +499,8 @@ int add_solution_to_colpool(Solution* sol, NodeData* pd) {
     for (int i = 0; i < sol->nb_machines; ++i) {
         GPtrArray*   machine = sol->part[i].machine;
         ScheduleSet* tmp = scheduleset_from_solution(machine, pd->nb_jobs);
-        // if(check_schedule_set(tmp, pd)) {
-        //     printf("OK!!!\n");
-            
-        // } else {
-        //     printf("not OK!!!\n");
-        // }
-        // g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
-        // printf("\n");
         CCcheck_NULL_2(tmp, "Failed to allocate memory");
+        tmp->id = pd->localColPool->len;
         g_ptr_array_add(pd->localColPool, tmp);
     }
 

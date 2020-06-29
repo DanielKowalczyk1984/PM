@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 typedef struct PricerSolverBase PricerSolver;
-PricerSolver *newSolver(GPtrArray *jobs, int _num_machines, GPtrArray *ordered_jobs, Parms *parms);
+PricerSolver *newSolver(GPtrArray *jobs, int _num_machines, GPtrArray *ordered_jobs, Parms *parms, int _Hmax, int* _take_jobs);
 PricerSolver *newSolverDp(GPtrArray *_jobs, int _num_machines, int _Hmax, Parms *parms);
 PricerSolver* newSolverTIBdd(GPtrArray* _jobs, int _num_machines,
                                  GPtrArray* _ordered_jobs, int* _take_jobs,

@@ -1,7 +1,7 @@
 #ifndef NODE_BDD_DUMPER_HPP
 #define NODE_BDD_DUMPER_HPP
 
-#include "node_duration.hpp"
+#include "NodeBdd.hpp"
 #include "util/MyHashTable.hpp"
 #include "util/MyVector.hpp"
 #include "util/MyList.hpp"

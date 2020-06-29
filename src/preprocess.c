@@ -138,7 +138,6 @@ int preprocess_data(Problem* problem) {
 
 static int calculate_T(interval_pair* pair, int k, GPtrArray* interval_array) {
     interval* I = (interval*)g_ptr_array_index(interval_array, k);
-    interval* tmp;
     Job*      i = pair->a;
     Job*      j = pair->b;
     pair->left = I->a;

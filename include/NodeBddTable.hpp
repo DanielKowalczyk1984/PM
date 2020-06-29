@@ -3,7 +3,7 @@
 
 #include "util/MyVector.hpp"
 #include "util/DataTable.hpp"
-#include "node_duration.hpp"
+#include "NodeBdd.hpp"
 
 template<typename T>
 using data_table_node = DataTable<T>;

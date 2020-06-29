@@ -421,7 +421,7 @@ void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
 }
 
 OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
-    OptimalSolution<double> sol(-_pi[n]);
+    OptimalSolution<double> sol(_pi[n]);
     std::vector<Job*>       v;
 
     forward_evaluator(_pi);
@@ -437,7 +437,7 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
             sol.C_max += vector_jobs[aux_job]->processing_time;
             sol.cost += value_Fj(aux_T + vector_jobs[aux_job]->processing_time,
                                  vector_jobs[aux_job]);
-            sol.obj += _pi[aux_job] -
+            sol.obj += -_pi[aux_job] +
                        value_Fj(aux_T + vector_jobs[aux_job]->processing_time,
                                 vector_jobs[aux_job]);
         }
@@ -451,6 +451,12 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     }
 
     return sol;
+}
+
+OptimalSolution<double> PricerSolverArcTimeDp::farkas_pricing(double* _pi) {
+    OptimalSolution<double> opt_sol;
+
+    return opt_sol;
 }
 
 void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(

@@ -6,7 +6,7 @@
 #include <ostream>
 #include <stdexcept>
 
-#include <node_duration.hpp>
+#include <NodeBdd.hpp>
 #include <NodeBddTable.hpp>
 #include "util/MyHashTable.hpp"
 // #include "tdzdd/util/MyList.hpp"
@@ -184,8 +184,11 @@ private:
                 } else {
                     assert(newId[j].row() == counter);
                     size_t k = newId[j].col();
-                    nt[k] = tt[j];
+                    nt[k] = std::move(tt[j]);
                     nt[k].set_head_node();
+                    if(nt[k].ptr_node_id != nullptr) {
+                        *(nt[k].ptr_node_id) = newId[j];
+                    }
                     nt[k].child[0] = &(output.node(nt[k].branch[0]));
                     nt[k].child[1] = &(output.node(nt[k].branch[1]));
                 }
@@ -301,8 +304,8 @@ private:
                 else {
                     assert(newId[j].row() == i);
                     size_t k = newId[j].col();
-                    nt[k] = tt[j];
                     nt[k].set_head_node();
+                    nt[k] = std::move(tt[j]);
                     nt[k].child[0] = &(output.node(nt[k].branch[0]));
                     nt[k].child[1] = &(output.node(nt[k].branch[1]));
                 }

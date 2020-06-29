@@ -2,7 +2,11 @@
 #define PRICER_SOLVER_BDD_HPP
 #include <NodeBddStructure.hpp>
 #include "MipGraph.hpp"
+#include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
+#include "ModelInterface.hpp"
+#include "wctprivate.h"
+#include <memory>
 #include <vector>
 
 class PricerSolverBdd : public PricerSolverBase {
@@ -16,13 +20,15 @@ class PricerSolverBdd : public PricerSolverBase {
     MipGraph                  mip_graph;
     std::unique_ptr<double[]> lp_x;
     std::unique_ptr<double[]> solution_x;
+    std::vector<std::vector<std::shared_ptr<NodeId>>> node_ids;
+    std::vector<std::vector<double>> lp_x_edge[2];
+    std::vector<BddCoeff> lp_sol;
+    OriginalModel<> original_model;
     int H_min;
+    int H_max;
 
     PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
-                    GPtrArray* _ordered_jobs, const char* p_name);
-    PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
-                    GPtrArray* _ordered_jobs, int* _take_jobs, int _Hmax,
-                    const char* _p_name);
+                    GPtrArray* _ordered_jobs, const char* p_name, int _Hmax, int* _take_jobs);
     void         init_table() override;
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
     void check_infeasible_arcs();
@@ -61,9 +67,24 @@ class PricerSolverBdd : public PricerSolverBase {
     int* get_take() override {
         return NULL;
     };
+    void update_reduced_costs_arcs(double *_pi, bool farkas = false) override ;
+    void init_coeff_constraints();
+    void insert_constraints_lp(NodeData *pd) override;
     private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);
     void add_inequality(std::vector<int> v1);
+
+    double compute_reduced_cost(const OptimalSolution<>& sol, double *pi, double *lhs) override;
+    double compute_lagrange(const OptimalSolution<> &sol, double *pi) override;
+    void update_constraints() override {
+
+    }
+
+    void update_coeff_constraints() override;
+
+
+    // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override;
+    // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override;
 };
 // int g_compare_duration(gconstpointer a, gconstpointer b);
 

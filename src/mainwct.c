@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <wct.h>
 #include <wctparms.h>
+#include "wctprivate.h"
 static void usage(char* f) {
     fprintf(stderr, "Usage %s: [-see below-] adjlist_file NrMachines\n", f);
     fprintf(stderr, "   -d      turn on the debugging\n");
@@ -72,7 +73,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
     char*  ptr;
     int    debug = dbg_lvl();
 
-    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:r:")) != EOF) {
+    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:r:h:")) != EOF) {
         switch (c) {
             case 'd':
                 ++(debug);
@@ -139,6 +140,11 @@ static int parseargs(int ac, char** av, Parms* parms) {
             case 'm':
                 c = strtol(optarg, &ptr, 10);
                 val = parms_set_mip_solver(parms, c);
+                CCcheck_val(val, "Failed in set mip solver");
+                break;
+            case 'h':
+                c = strtol(optarg, &ptr, 10);
+                val = parms_set_use_heuristic(parms, c);
                 CCcheck_val(val, "Failed in set mip solver");
                 break;
             case 'r':
@@ -214,24 +220,46 @@ int main(int ac, char** av) {
     if (parms->pricing_solver < dp_solver) {
         CCutil_start_timer(&(problem.tot_build_dd));
         root->solver = newSolver(root->jobarray, root->nb_machines,
-                                 root->ordered_jobs, parms);
+                                 root->ordered_jobs, parms,root->H_max, NULL);
         CCutil_stop_timer(&(problem.tot_build_dd), 0);
     } else {
         root->solver =
             newSolverDp(root->jobarray, root->nb_machines, root->H_max, parms);
     }
     problem.first_size_graph = get_nb_edges(root->solver);
+
     /**
-     * Finding heuristic solutions to the problem
+     * Finding heuristic solutions to the problem or start without feasible
+     * solutions
      */
-    heuristic(&problem);
-    GPtrArray *solutions_pool = g_ptr_array_copy(root->localColPool,g_copy_scheduleset,&(problem.nb_jobs));
+    if (parms->use_heuristic == yes_use_heuristic) {
+        heuristic(&problem);
+    } else {
+        problem.opt_sol =
+            solution_alloc(root->local_intervals->len, root->nb_machines,
+                           root->nb_jobs, problem.off);
+        Solution* sol = problem.opt_sol;
+        CCcheck_NULL_2(sol, "Failed to allocate memory");
+        val = construct_edd(&problem, sol);
+        CCcheck_val_2(val, "Failed construct edd");
+        printf("Solution Constructed with EDD heuristic:\n");
+        solution_print(sol);
+        solution_canonical_order(sol, root->local_intervals);
+        printf("Solution in canonical order: \n");
+        solution_print(sol);
+    }
+    /**
+     * Solve initial relaxation
+     */
+    build_rmp(&(problem.root_pd), 0);
+    solve_relaxation(&problem, root);
+    GPtrArray* solutions_pool = g_ptr_array_copy(
+        root->localColPool, g_copy_scheduleset, &(problem.nb_jobs));
 
     /**
      * Calculation of LB at the root node with column generation
      */
     if (problem.opt_sol->tw + problem.opt_sol->off != 0) {
-        build_rmp(&(problem.root_pd), 0);
         CCutil_start_timer(&(problem.tot_lb_root));
         compute_lower_bound(&problem, &(problem.root_pd));
         if (parms->pricing_solver < dp_solver) {
@@ -246,14 +274,15 @@ int main(int ac, char** av) {
         if (parms->pricing_solver == dp_bdd_solver) {
             int* take = get_take(root->solver);
             lp_node_data_free(root);
-            root->localColPool = g_ptr_array_copy(solutions_pool, g_copy_scheduleset, &(problem.nb_jobs));
+            root->localColPool = g_ptr_array_copy(
+                solutions_pool, g_copy_scheduleset, &(problem.nb_jobs));
+            build_rmp(root, 0);
             freeSolver(root->solver);
             root->solver =
-                newSolverTIBdd(root->jobarray, root->nb_machines,
-                               root->ordered_jobs, take, problem.H_max, parms);
-            
+                newSolver(root->jobarray, root->nb_machines,
+                               root->ordered_jobs, parms, problem.H_max, take);
+
             CC_IFFREE(take, int);
-            build_rmp(root, 0);
             CCutil_start_timer(&(problem.tot_lb_root));
             compute_lower_bound(&problem, root);
             CCutil_stop_timer(&(problem.tot_lb_root), 1);

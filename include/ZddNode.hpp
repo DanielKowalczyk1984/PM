@@ -140,6 +140,7 @@ class NodeZdd : public NodeBase
 {
     public:
         NodeZdd<T>* child[2];
+        std::shared_ptr<NodeId> ptr_node_id;
         std::vector<std::shared_ptr<SubNodeZdd<T>>>  list;
         /**
          * Constructor
@@ -210,8 +211,8 @@ class NodeZdd : public NodeBase
             // if(!_terminal_node) {
                 list.push_back(std::make_shared<SubNodeZdd<>>(_weight,_node_id,this));
                 // printf("test test %p\n", this);
-                set_root_node(_root_node);
-                set_terminal_node(_terminal_node);
+                // set_root_node(_root_node);
+                // set_terminal_node(_terminal_node);
             // } else {
             //     list.push_back(std::make_shared<SubNodeZdd<>>(_weight,_node_id));
             //     set_root_node(_root_node);
