@@ -504,7 +504,6 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     CCcheck_val_2(val, "wctlp_addcol failed");
                     pd->newsets[j].id = pd->localColPool->len;
                     g_ptr_array_add(pd->localColPool, pd->newsets + j);
-                    wctlp_write(pd->RMP, "cutRMP.lp");
                 }
                 pd->newsets = NULL;
                 nb_non_improvements = 0;
@@ -519,7 +518,8 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                         case stab_dynamic:
                         case stab_hybrid:
                             break_while_loop =
-                                (CC_ABS(pd->eta_out - pd->eta_in) < 1e-8); 
+                                (CC_ABS(pd->eta_out - pd->eta_in) < 1e-8);
+                            pd->nb_new_sets = 0;
                                 // || nb_non_improvements > 5;  // || (ceil(pd->eta_in - 0.00001) >=
                                         // pd->eta_out);
                             break;
@@ -613,9 +613,6 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             printf("LP value = %f \n", pd->LP_lower_bound + pd->problem->off);
         }
     } while (it < 2);
-
-    wctlp_write(pd->RMP, "test_cut.lp");
-
 
     problem->global_lower_bound =
         CC_MAX(pd->lower_bound + pd->problem->off, problem->global_lower_bound);

@@ -115,9 +115,9 @@ int add_lhs_scheduleset_to_rmp(ScheduleSet* set, NodeData *pd) {
     int len = pd->id_row->len;
 
     
-    val = wctlp_get_nb_cols(pd->RMP, &(set->id));
+    val = wctlp_get_nb_cols(pd->RMP, &(pd->nb_cols));
     CCcheck_val_2(val, "Failed to get the number of cols");
-    pd->nb_cols = set->id;
+    set->id = pd->nb_cols;
     val = wctlp_addcol(pd->RMP, len, id_constraint, coeff_constraint,
                        (double)set->total_weighted_completion_time, 0.0,
                        GRB_INFINITY, wctlp_CONT, NULL);

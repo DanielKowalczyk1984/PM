@@ -359,7 +359,7 @@ int solve_stab(NodeData* pd, parms* parms) {
         pd->reduced_cost = pd->solver->compute_reduced_cost(sol, pi_out, lhs_coeff);
 
 
-        if (pd->reduced_cost <= -0.000001) {
+        if (pd->reduced_cost < -1e-6) {
             val = construct_sol(pd, &sol);
             CCcheck_val_2(val, "Failed in construct_sol_stab");
             pd->update = 1;
