@@ -10,15 +10,12 @@
 #include <vector>
 
 class PricerSolverBdd : public PricerSolverBase {
-   public:
     std::unique_ptr<DdStructure<>> decision_diagram;
     size_t                         size_graph;
-
     int nb_removed_edges = 0;
     int nb_removed_nodes = 0;
 
     MipGraph                  mip_graph;
-    std::unique_ptr<double[]> lp_x;
     std::unique_ptr<double[]> solution_x;
     std::vector<std::vector<std::shared_ptr<NodeId>>> node_ids;
     std::vector<std::vector<double>> lp_x_edge[2];
@@ -26,6 +23,8 @@ class PricerSolverBdd : public PricerSolverBase {
     OriginalModel<> original_model;
     int H_min;
     int H_max;
+   public:
+
 
     PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
                     GPtrArray* _ordered_jobs, const char* p_name, int _Hmax, int* _take_jobs);
@@ -64,12 +63,27 @@ class PricerSolverBdd : public PricerSolverBase {
     int    get_num_layers() override;
     void   print_num_paths() override;
     void   add_constraint(Job* job, GPtrArray* list, int order) override;
-    int* get_take() override {
-        return NULL;
-    };
+    
     void update_reduced_costs_arcs(double *_pi, bool farkas = false) override ;
     void init_coeff_constraints();
     void insert_constraints_lp(NodeData *pd) override;
+
+    inline DdStructure<>* get_decision_diagram() {
+        return decision_diagram.get();
+    }
+
+    inline int get_nb_removed_edges() {
+        return nb_removed_edges;
+    }
+
+    inline void add_nb_removed_edges() {
+        nb_removed_edges++;
+    }
+
+    inline int* get_take() override {
+        return NULL;
+    };
+
     private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);
     void add_inequality(std::vector<int> v1);
