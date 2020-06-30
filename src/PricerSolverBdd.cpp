@@ -59,7 +59,6 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
     construct_mipgraph();
     init_coeff_constraints();
     std::cout << "Ending construction\n";
-    lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
 }
 
@@ -141,7 +140,7 @@ void PricerSolverBdd::init_coeff_constraints () {
                     continue;
                 }
 
-                ConstraintBase *constr = original_model.get_constraint(c);
+                ConstraintBase *constr = reformulation_model.get_constraint(c);
                 VariableKeyBase key_aux(it.get_job()->job, it.get_weight());
                 double coeff = constr->get_var_coeff(&key_aux);
                 if (fabs(coeff) > 1e-10) {
@@ -274,19 +273,18 @@ void PricerSolverBdd::insert_constraints_lp(NodeData *pd) {
         ConstraintBase* constr = reformulation_model.get_constraint(pd->nb_rows + c);
 
         sense[c] = constr->get_sense();
-        
         starts[c] = pos;
+        rhs[c] = constr->get_rhs();
 
-        if (constr->get_rhs() != 0.0) {
+        if (rhs[c] != 0.0) {
             pos++;
             column_ind.push_back(pd->id_next_var_cuts++);
-            if (constr->get_sense() == '>') {
+            if (sense[c] == '>') {
                 coeff.push_back(1.0);
             } else {
                 coeff.push_back(-1.0);
             }
         }
-        rhs[c] = constr->get_rhs();
 
         for(guint i = 0; i < pd->localColPool->len; i++) {
             ScheduleSet* aux_schedule_set = (ScheduleSet*) g_ptr_array_index(pd->localColPool, i);
@@ -295,16 +293,14 @@ void PricerSolverBdd::insert_constraints_lp(NodeData *pd) {
             NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
             NodeId             tmp_nodeid(decision_diagram->root());
 
-            double coeff_val = 0.0;
-            guint counter = 0;
+            auto coeff_val = 0.0;
+            auto counter = 0u;
             while (tmp_nodeid > 1) {
                 NodeBdd<>& tmp_node = table.node(tmp_nodeid);
-                Job* tmp_j;
+                Job* tmp_j = nullptr;
 
                 if (counter < jobs->len) {
                     tmp_j = (Job*) g_ptr_array_index(jobs, counter);
-                } else {
-                    tmp_j = nullptr;
                 }
 
                 VariableKeyBase key(tmp_node.get_job()->job, tmp_node.get_weight(),tmp_j == tmp_node.get_job());
@@ -363,27 +359,31 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol, doubl
         
         if (counter < sol.jobs->len) {
             tmp_j = (Job*) g_ptr_array_index(sol.jobs, counter);
-        } else {
-            tmp_j = nullptr;
         }
 
         VariableKeyBase key(tmp_node.get_job()->job, tmp_node.get_weight(), tmp_j == tmp_node.get_job());
         if (key.get_high()) {
             tmp_nodeid = tmp_node.branch[1];
             counter++;
+            double dual = pi[key.get_j()];
+            ConstraintBase *constr = reformulation_model.get_constraint(key.get_j());
+            double coeff = constr->get_var_coeff(&key);
+
+            if(fabs(coeff) > 1e-10) {
+                result -= coeff*dual;
+                lhs[key.get_j()] += coeff;
+            }
         } else {
             tmp_nodeid = tmp_node.branch[0];
         }
 
-        for(int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+        for(int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints(); c++) {
             if (c == nb_jobs) {
                 continue;
             }
             double dual = pi[c];
             ConstraintBase *constr = reformulation_model.get_constraint(c);
             double coeff = constr->get_var_coeff(&key);
-
-            
 
             if(fabs(coeff) > 1e-10) {
                 result -= coeff*dual;
@@ -416,19 +416,24 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<> &sol, double *p
         
         if (counter < sol.jobs->len) {
             tmp_j = (Job*) g_ptr_array_index(sol.jobs, counter);
-        } else {
-            tmp_j = nullptr;
         }
 
         VariableKeyBase key(tmp_node.get_job()->job, tmp_node.get_weight(), tmp_j == tmp_node.get_job());
         if (key.get_high()) {
             counter++;
             tmp_nodeid = tmp_node.branch[1];
+            double dual = pi[key.get_j()];
+            ConstraintBase *constr = reformulation_model.get_constraint(key.get_j());
+            double coeff = constr->get_var_coeff(&key);
+
+            if(fabs(coeff) > 1e-10) {
+                result -= coeff*dual;
+            }
         } else {
             tmp_nodeid = tmp_node.branch[0];
         }
 
-        for(int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+        for(int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints(); c++) {
             if (c == nb_jobs) {
                 continue;
             }
@@ -496,7 +501,7 @@ void PricerSolverBdd::remove_layers_init() {
     }
 
     nb_layers = ordered_jobs->len;
-    printf("The new number of layers = %u\n", nb_layers);
+    printf("The new number of layers \t\t\t= %u\n", nb_layers);
 }
 
 void PricerSolverBdd::remove_layers() {
@@ -545,7 +550,7 @@ void PricerSolverBdd::remove_layers() {
     }
 
     nb_layers = ordered_jobs->len;
-    printf("The new number of layers = %u\n", nb_layers);
+    printf("The new number of layers \t\t\t= %u\n", nb_layers);
 }
 
 void PricerSolverBdd::remove_edges() {
@@ -571,7 +576,7 @@ void PricerSolverBdd::remove_edges() {
     decision_diagram->compressBdd();
     nb_removed_nodes -= size_graph;
     size_graph = decision_diagram->size();
-    printf("The new size of BDD = %lu\n", size_graph);
+    printf("The new size of BDD \t\t\t\t= %lu\n", size_graph);
     std::cout
         << "-------------------------------------------------------------\n";
 }
@@ -890,9 +895,9 @@ void PricerSolverBdd::cleanup_arcs() {
     }
 
     if (removed_edges) {
-        std::cout << "Number of edges removed by cleanup arcs = "
+        std::cout << "Number of edges removed by cleanup arcs \t= "
                   << nb_edges_removed_tmp << "\n";
-        std::cout << "Number of edges removed in total = " << nb_removed_edges
+        std::cout << "Number of edges removed in total \t\t= " << nb_removed_edges
                   << "\n";
         remove_layers();
         remove_edges();
@@ -956,10 +961,10 @@ void PricerSolverBdd::topdown_filtering() {
     }
 
     if (removed_edges) {
-        std::cout << "removing edges based on top-down iteration\n";
-        std::cout << "Number edges removed top-bottom = "
+        std::cout << "Removing edges based on top-down iteration\n";
+        std::cout << "Number edges removed top-bottom \t\t= "
                   << nb_edges_removed_tmp << "\n";
-        std::cout << "Number edges removed total = " << nb_removed_edges
+        std::cout << "Number edges removed total \t\t\t= " << nb_removed_edges
                   << "\n";
         remove_layers();
         remove_edges();
@@ -1006,9 +1011,9 @@ void PricerSolverBdd::bottum_up_filtering() {
 
     if (removed_edges) {
         std::cout << "removing edges based on bottum-up iteration\n";
-        std::cout << "Number edges removed bottum-up iteration = "
+        std::cout << "Number edges removed bottum-up iteration \t\t= "
                   << nb_edges_removed_tmp << "\n";
-        std::cout << "Number edges removed total = " << nb_removed_edges
+        std::cout << "Number edges removed total \t\t\t= " << nb_removed_edges
                   << "\n";
         remove_layers();
         remove_edges();
