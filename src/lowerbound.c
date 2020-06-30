@@ -184,7 +184,10 @@ int delete_infeasible_schedules(NodeData* pd) {
 
     wctlp_get_nb_cols(pd->RMP, &nb_col);
     assert(pd->localColPool->len == nb_col - pd->id_pseudo_schedules);
-    printf("number of cols = %d\n", nb_col - pd->id_pseudo_schedules);
+    if (dbg_lvl() > 1) {
+        printf("number of cols = %d\n", nb_col - pd->id_pseudo_schedules);
+    }
+
     for (i = 0; i < pd->localColPool->len; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
         tmp_schedule->id = i;
@@ -759,7 +762,9 @@ int check_schedules(NodeData* pd) {
     val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed to get nb cols");
     assert(nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
-    printf("number of cols check %d\n", nb_cols - pd->id_pseudo_schedules);
+    if (dbg_lvl() > 1) {
+        printf("number of cols check %d\n", nb_cols - pd->id_pseudo_schedules);
+    }
     for (unsigned i = 0; i < pd->localColPool->len; ++i) {
         ScheduleSet* tmp = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
         if (check_schedule_set(tmp, pd) == 1) {
