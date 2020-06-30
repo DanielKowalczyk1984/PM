@@ -593,7 +593,7 @@ bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
 
         if (std::find(graph[j][t].begin(), graph[j][t].end(), vector_jobs[i]) ==
             graph[j][t].end()) {
-            return false;
+            return true;
         }
 
         if (tmp_j == nullptr) {
@@ -606,7 +606,7 @@ bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
         }
     }
 
-    return true;
+    return false;
 }
 
 void PricerSolverArcTimeDp::make_schedule_set_feasible(GPtrArray *set) {
