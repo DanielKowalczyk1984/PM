@@ -28,7 +28,7 @@ class VariableKeyBase {
 
         }
 
-        VariableKeyBase() : j(-1), t(-1), root(false) {
+        VariableKeyBase() : j(-1), t(-1), high(false), root(false) {
 
         }
         inline int get_j() const {
