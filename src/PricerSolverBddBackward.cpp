@@ -9,7 +9,8 @@
 PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs,
     const char* p_name, int _Hmax, int* _take_jobs)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name, _Hmax,  _take_jobs) {
+    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name, _Hmax,
+                      _take_jobs) {
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
@@ -38,11 +39,12 @@ void PricerSolverBddBackwardSimple::compute_labels(double* _pi) {
 
 void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
                                                    double LB) {
-    NodeTableEntity<>& table = get_decision_diagram()->getDiagram().privateEntity();
+    NodeTableEntity<>& table =
+        get_decision_diagram()->getDiagram().privateEntity();
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label[0].get_f() + pi[nb_jobs];
-    bool removed_edges = false;
-    int nb_edges_removed_evaluate = 0;
+    bool   removed_edges = false;
+    int    nb_edges_removed_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
@@ -62,9 +64,10 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
         }
     }
 
-    if(removed_edges) {
-        std::cout << "Number of edges removed by evaluate_nodes \t= "<< nb_edges_removed_evaluate << "\n";
-        std::cout << "Total number of edges removed \t\t\t= " << get_nb_removed_edges() << "\n";
+    if (removed_edges) {
+        // std::cout << "Number of edges removed by evaluate_nodes \t= "<<
+        // nb_edges_removed_evaluate << "\n"; std::cout << "Total number of
+        // edges removed \t\t\t= " << get_nb_removed_edges() << "\n";
         remove_layers();
         remove_edges();
         // init_table();
@@ -77,7 +80,8 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
 PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs,
     const char* p_name, int _Hmax, int* _take_jobs)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name, _Hmax, _take_jobs) {
+    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name, _Hmax,
+                      _take_jobs) {
     std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
@@ -107,12 +111,12 @@ void PricerSolverBddBackwardCycle::compute_labels(double* _pi) {
 
 void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
                                                   double LB) {
-    NodeTableEntity<>& table = get_decision_diagram()->getDiagram().privateEntity();
+    NodeTableEntity<>& table =
+        get_decision_diagram()->getDiagram().privateEntity();
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label[0].get_f() + pi[nb_jobs];
-    bool removed_edges = false;
-    int nb_removed_edges_evaluate = 0;
-
+    bool   removed_edges = false;
+    int    nb_removed_edges_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
@@ -153,12 +157,12 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
         }
     }
 
-    if(removed_edges) {
-        std::cout << "Number of edges removed by evaluate_nodes \t= "<< nb_removed_edges_evaluate << "\n";
-        std::cout << "Total number of edges removed \t\t\t= " << get_nb_removed_edges() << "\n";
+    if (removed_edges) {
+        // std::cout << "Number of edges removed by evaluate_nodes \t= "<<
+        // nb_removed_edges_evaluate << "\n"; std::cout << "Total number of
+        // edges removed \t\t\t= " << get_nb_removed_edges() << "\n";
         remove_layers();
         remove_edges();
         // init_table();
     }
-
 }

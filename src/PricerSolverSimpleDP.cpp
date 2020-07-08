@@ -16,7 +16,7 @@ PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray* _jobs, int _num_machines,
       F(new double[Hmax + 1]),
       backward_F(new double[Hmax + 1]),
       TI_x(new GRBVar[nb_jobs * (Hmax + 1)]),
-      take((int *)malloc(nb_jobs*(Hmax + 1)*sizeof(int))),
+      take((int*)malloc(nb_jobs * (Hmax + 1) * sizeof(int))),
       lp_x(new double[nb_jobs * (Hmax + 1)]{}),
       solution_x(new double[nb_jobs * (Hmax + 1)]{}) {
     fill_int(take, nb_jobs * (Hmax + 1), 0);
@@ -50,7 +50,7 @@ PricerSolverSimpleDp::~PricerSolverSimpleDp() {
     delete[] backward_graph;
     delete[] forward_graph;
     delete[] TI_x;
-    if(take) {
+    if (take) {
         free(take);
     }
     delete[] lp_x;
@@ -71,11 +71,11 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     for (int t = 0; t < Hmax + 1; t++) {
         auto it = forward_graph[t].begin();
         while (it != forward_graph[t].end()) {
-            double result = -F[t - (*it)->processing_time] - value_Fj(t, *it) +
-                            pi[(*it)->job] - backward_F[t] + pi[nb_jobs];
-            if (LB - result - (num_machines - 1) * F[Hmax] > UB + 0.00001) {
+            double result = F[t - (*it)->processing_time] + value_Fj(t, *it) -
+                            pi[(*it)->job] + backward_F[t];
+            if (LB + result + (num_machines - 1) * F[Hmax] > UB + 1e-6) {
                 size_graph--;
-                forward_graph[t].erase(it);
+                it = forward_graph[t].erase(it);
             } else {
                 it++;
             }
@@ -86,12 +86,11 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
         auto iter = backward_graph[t].begin();
         while (iter != backward_graph[t].end()) {
             double result =
-                F[t] - value_Fj(t + (*iter)->processing_time, *iter) +
-                pi[(*iter)->job] + backward_F[t + (*iter)->processing_time] +
-                pi[nb_jobs];
-            if (LB - result - (num_machines - 1) * F[Hmax] > UB + 0.00001) {
-                // backward_graph[t].erase(iter);
+                F[t] + value_Fj(t + (*iter)->processing_time, *iter) -
+                pi[(*iter)->job] + backward_F[t + (*iter)->processing_time];
+            if (LB + result + (num_machines - 1) * F[Hmax] > UB + 1e-6) {
                 take[(*iter)->job * (Hmax + 1) + t] = false;
+                // iter = backward_graph[t].erase(iter);
             } else {
                 take[(*iter)->job * (Hmax + 1) + t] = true;
             }
@@ -111,10 +110,10 @@ void PricerSolverSimpleDp::build_mip() {
         std::cout << "Building Mip model for the TI formulation\n";
 
         /** Constructing variables */
-        for (int t = 0; t <= Hmax; t++) {
+        for (int t = 0; t < Hmax + 1; t++) {
             for (auto& it : backward_graph[t]) {
                 double cost = value_Fj(t + it->processing_time, it);
-                double ub = take[((*it).job) * (Hmax + 1) + t] ? 1.0 : 0.0;
+                double ub = take[(it->job) * (Hmax + 1) + t] ? 1.0 : 0.0;
                 TI_x[it->job * (Hmax + 1) + t] =
                     model->addVar(0.0, ub, cost, GRB_BINARY);
             }
@@ -143,14 +142,15 @@ void PricerSolverSimpleDp::build_mip() {
 
         model->update();
 
-        std::unique_ptr<GRBLinExpr[]> interval_constr(new GRBLinExpr[Hmax]());
-        std::unique_ptr<char[]>       interval_sense(new char[Hmax]);
-        std::unique_ptr<double[]>     interval_rhs(new double[Hmax]);
+        std::unique_ptr<GRBLinExpr[]> interval_constr(
+            new GRBLinExpr[Hmax + 1]());
+        std::unique_ptr<char[]>   interval_sense(new char[Hmax + 1]);
+        std::unique_ptr<double[]> interval_rhs(new double[Hmax + 1]);
 
         for (int t = 0; t <= Hmax; t++) {
             auto add_constraint = false;
             for (auto& it : backward_graph[t]) {
-                for (int s = std::max(0, t - it->processing_time + 1); s <= t;
+                for (int s = std::max(0, t - it->processing_time); s <= t;
                      s++) {
                     if (std::find(backward_graph[s].begin(),
                                   backward_graph[s].end(),
@@ -184,7 +184,7 @@ void PricerSolverSimpleDp::build_mip() {
     }
 
     model->write("ti_" + problem_name + "_" + std::to_string(num_machines) +
-                 ".lp");
+                 "correct.lp");
     model->optimize();
     return;
 }
@@ -218,7 +218,7 @@ void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
 }
 
 void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
-    backward_F[Hmax] = _pi[nb_jobs];
+    backward_F[Hmax] = 0.0;
 
     for (int t = 0; t < Hmax; t++) {
         backward_F[t] = DBL_MAX / 2;
@@ -286,7 +286,6 @@ OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing(double* _pi) {
 
     return opt_sol;
 }
-
 
 void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     const double* columns, const GPtrArray* schedule_sets, int num_columns) {
@@ -382,11 +381,25 @@ int PricerSolverSimpleDp::get_num_layers() {
 void PricerSolverSimpleDp::print_num_paths() {}
 
 bool PricerSolverSimpleDp::check_schedule_set(GPtrArray* set) {
+    // int t = 0;
+    // for(unsigned int j = 0; j < set->len; j++) {
+    //     Job* tmp_j = (Job*) g_ptr_array_index(set, j);
+    //     t += tmp_j->processing_time;
+
+    //     if (t > Hmax) {
+    //         return false;
+    //     }
+
+    //     auto it = std::find(forward_graph[t].begin(),
+    //     forward_graph[t].end(),tmp_j); if (it == forward_graph[t].end()) {
+    //         return false;
+    //     }
+
+    // }
+
     return true;
 }
 
-void PricerSolverSimpleDp::make_schedule_set_feasible(GPtrArray *set) {
-    
-}
+void PricerSolverSimpleDp::make_schedule_set_feasible(GPtrArray* set) {}
 
 void PricerSolverSimpleDp::disjunctive_inequality(double* x, Solution* sol) {}

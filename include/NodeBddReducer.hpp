@@ -12,29 +12,27 @@
 // #include "tdzdd/util/MyList.hpp"
 #include "util/MyVector.hpp"
 
-template<typename T, bool BDD, bool ZDD>
+template <typename T, bool BDD, bool ZDD>
 class DdReducer {
-    NodeTableEntity<T>& input;
-    TableHandler<T> oldDiagram;
-    TableHandler<T> newDiagram;
-    NodeTableEntity<T>& output;
-    MyVector<MyVector<NodeId> > newIdTable;
+    NodeTableEntity<T>&          input;
+    TableHandler<T>              oldDiagram;
+    TableHandler<T>              newDiagram;
+    NodeTableEntity<T>&          output;
+    MyVector<MyVector<NodeId> >  newIdTable;
     MyVector<MyVector<NodeId*> > rootPtr;
-    int counter = 1;
+    int                          counter = 1;
 
     struct ReducNodeInfo {
         NodeBdd<T> children;
-        size_t column;
+        size_t     column;
 
-        size_t hash() const {
-            return children.hash();
-        }
+        size_t hash() const { return children.hash(); }
 
         bool operator==(ReducNodeInfo const& o) const {
             return children == o.children;
         }
 
-        friend std::ostream& operator<<(std::ostream& os,
+        friend std::ostream& operator<<(std::ostream&        os,
                                         ReducNodeInfo const& o) {
             return os << "(" << o.children << " -> " << o.column << ")";
         }
@@ -42,15 +40,15 @@ class DdReducer {
 
     bool readyForSequentialReduction;
 
-public:
-    explicit DdReducer(TableHandler<T>& diagram, bool useMP = false) :
-            input(diagram.privateEntity()),
-            oldDiagram(diagram),
-            newDiagram(input.numRows()),
-            output(newDiagram.privateEntity()),
-            newIdTable(input.numRows()),
-            rootPtr(input.numRows()),
-            readyForSequentialReduction(false) {
+   public:
+    explicit DdReducer(TableHandler<T>& diagram, bool useMP = false)
+        : input(diagram.privateEntity()),
+          oldDiagram(diagram),
+          newDiagram(input.numRows()),
+          output(newDiagram.privateEntity()),
+          newIdTable(input.numRows()),
+          rootPtr(input.numRows()),
+          readyForSequentialReduction(false) {
         diagram = newDiagram;
 
         input.initTerminals();
@@ -61,27 +59,29 @@ public:
         newIdTable[0][1] = 1;
     }
 
-private:
+   private:
     /**
      * Applies the node deletion rules.
      * It is required before serial reduction (Algorithm-R)
      * in order to make lower-level index safe.
      */
     void makeReadyForSequentialReduction() {
-        if (readyForSequentialReduction) return;
+        if (readyForSequentialReduction)
+            return;
 
         for (int i = 2; i < input.numRows(); ++i) {
             size_t const m = input[i].size();
-            T* const tt = input[i].data();
+            T* const     tt = input[i].data();
 
             for (size_t j = 0; j < m; ++j) {
                 for (int b = 0; b < 2; ++b) {
                     NodeId& f = tt[j].branch[b];
-                    if (f.row() == 0) continue;
+                    if (f.row() == 0)
+                        continue;
 
                     NodeId f0 = input.child(f, 0);
                     NodeId deletable = 0;
-                    bool del = true;
+                    bool   del = true;
 
                     for (int bb = ZDD ? 1 : 0; bb < 2; ++bb) {
                         if (input.child(f, bb) != deletable) {
@@ -100,14 +100,12 @@ private:
         readyForSequentialReduction = true;
     }
 
-public:
+   public:
     /**
      * Sets a root node.
      * @param root reference to a root node ID storage.
      */
-    void setRoot(NodeId& root) {
-        rootPtr[root.row()].push_back(&root);
-    }
+    void setRoot(NodeId& root) { rootPtr[root.row()].push_back(&root); }
 
     /**
      * Reduces one level.
@@ -115,14 +113,14 @@ public:
      * @param useMP use an algorithm for multiple processors.
      */
     void reduce(int i) {
-        if(BDD) {
+        if (BDD) {
             algorithmZdd(i);
         } else if (ZDD) {
             algorithmR(i);
         }
     }
 
-private:
+   private:
     /**
      * Reduces one level using Algorithm-R.
      * @param i level.
@@ -130,7 +128,7 @@ private:
     void algorithmR(int i) {
         makeReadyForSequentialReduction();
         size_t const m = input[i].size();
-        T* const tt = input[i].data();
+        T* const     tt = input[i].data();
 
         MyVector<NodeId>& newId = newIdTable[i];
         newId.resize(m);
@@ -139,13 +137,16 @@ private:
             NodeId& f0 = tt[j].branch[0];
             NodeId& f1 = tt[j].branch[1];
 
-            if (f0.row() != 0) f0 = newIdTable[f0.row()][f0.col()];
-            if (f1.row() != 0) f1 = newIdTable[f1.row()][f1.col()];
+            if (f0.row() != 0)
+                f0 = newIdTable[f0.row()][f0.col()];
+            if (f1.row() != 0)
+                f1 = newIdTable[f1.row()][f1.col()];
 
             if (ZDD && f1 == 0) {
                 newId[j] = f0;
             } else {
-                newId[j] = NodeId(counter + 1, m); // tail of f0-equivalent list
+                newId[j] =
+                    NodeId(counter + 1, m);  // tail of f0-equivalent list
             }
         }
 
@@ -159,7 +160,9 @@ private:
 
         for (size_t j = 0; j < m; ++j) {
             assert(newId[j].row() <= counter + 1);
-            if (newId[j].row() <= counter){ continue;}
+            if (newId[j].row() <= counter) {
+                continue;
+            }
 
             NodeId& g0 = tt[j].branch[0];
             assert(newId[j].row() == counter + 1);
@@ -171,7 +174,7 @@ private:
             input[*t].clear();
         }
 
-        if(mm > 0u) {
+        if (mm > 0u) {
             output.initRow(counter, mm);
             T* nt = output[counter].data();
 
@@ -179,7 +182,7 @@ private:
                 // NodeId const& f0 = tt[j].branch[0];
                 NodeId const& f1 = tt[j].branch[1];
 
-                if (ZDD && f1 == 0) { // forwarded
+                if (ZDD && f1 == 0) {  // forwarded
                     assert(newId[j].row() < counter);
                 } else {
                     assert(newId[j].row() == counter);
@@ -210,7 +213,7 @@ private:
     void algorithmZdd(int i) {
         makeReadyForSequentialReduction();
         size_t const m = input[i].size();
-        T* const tt = input[i].data();
+        T* const     tt = input[i].data();
         NodeId const mark(i, m);
 
         MyVector<NodeId>& newId = newIdTable[i];
@@ -220,22 +223,22 @@ private:
             NodeId& f0 = tt[j].branch[0];
             NodeId& f1 = tt[j].branch[1];
 
-            if (f0.row() != 0) f0 = newIdTable[f0.row()][f0.col()];
-            if (f1.row() != 0) f1 = newIdTable[f1.row()][f1.col()];
+            if (f0.row() != 0)
+                f0 = newIdTable[f0.row()][f0.col()];
+            if (f1.row() != 0)
+                f1 = newIdTable[f1.row()][f1.col()];
 
             if (ZDD && f1 == 0) {
                 newId[j] = f0;
-            }
-            else {
+            } else {
                 NodeId& f00 = input.child(f0, 0);
                 NodeId& f01 = input.child(f0, 1);
 
-                if (f01 != mark) {        // the first touch from this level
-                    f01 = mark;        // mark f0 as touched
-                    newId[j] = NodeId(i + 1, m); // tail of f0-equivalent list
-                }
-                else {
-                    newId[j] = f00;         // next of f0-equivalent list
+                if (f01 != mark) {  // the first touch from this level
+                    f01 = mark;     // mark f0 as touched
+                    newId[j] = NodeId(i + 1, m);  // tail of f0-equivalent list
+                } else {
+                    newId[j] = f00;  // next of f0-equivalent list
                 }
                 f00 = NodeId(i + 1, j);  // new head of f0-equivalent list
             }
@@ -252,27 +255,27 @@ private:
         for (size_t j = 0; j < m; ++j) {
             NodeId const f(i, j);
             assert(newId[j].row() <= i + 1);
-            if (newId[j].row() <= i) continue;
+            if (newId[j].row() <= i)
+                continue;
 
-            for (size_t k = j; k < m;) { // for each g in f0-equivalent list
+            for (size_t k = j; k < m;) {  // for each g in f0-equivalent list
                 assert(j <= k);
                 NodeId const g(i, k);
-                NodeId& g0 = tt[k].branch[0];
-                NodeId& g1 = tt[k].branch[1];
-                NodeId& g10 = input.child(g1, 0);
-                NodeId& g11 = input.child(g1, 1);
+                NodeId&      g0 = tt[k].branch[0];
+                NodeId&      g1 = tt[k].branch[1];
+                NodeId&      g10 = input.child(g1, 0);
+                NodeId&      g11 = input.child(g1, 1);
                 assert(g1 != mark);
                 assert(newId[k].row() == i + 1);
                 size_t next = newId[k].col();
 
-                if (g11 != f) { // the first touch to g1 in f0-equivalent list
-                    g11 = f; // mark g1 as touched
-                    g10 = g; // record g as a canonical node for <f0,g1>
+                if (g11 != f) {  // the first touch to g1 in f0-equivalent list
+                    g11 = f;     // mark g1 as touched
+                    g10 = g;     // record g as a canonical node for <f0,g1>
                     newId[k] = NodeId(i, mm++, g0.hasEmpty());
-                }
-                else {
-                    g0 = g10;       // make a forward link
-                    g1 = mark;      // mark g as forwarded
+                } else {
+                    g0 = g10;   // make a forward link
+                    g1 = mark;  // mark g as forwarded
                     newId[k] = 0;
                 }
 
@@ -285,7 +288,7 @@ private:
             input[*t].clear();
         }
 
-        if(mm > 0u) {
+        if (mm > 0u) {
             output.initRow(i, mm);
             T* nt = output[i].data();
 
@@ -293,15 +296,13 @@ private:
                 NodeId const& f0 = tt[j].branch[0];
                 NodeId const& f1 = tt[j].branch[1];
 
-                if (f1 == mark) { // forwarded
+                if (f1 == mark) {  // forwarded
                     assert(f0.row() == i);
                     assert(newId[j] == 0);
                     newId[j] = newId[f0.col()];
-                }
-                else if (ZDD && f1 == 0) { // forwarded
+                } else if (ZDD && f1 == 0) {  // forwarded
                     assert(newId[j].row() < i);
-                }
-                else {
+                } else {
                     assert(newId[j].row() == i);
                     size_t k = newId[j].col();
                     nt[k].set_head_node();
@@ -313,7 +314,7 @@ private:
 
             counter++;
         }
-        
+
         for (size_t k = 0; k < rootPtr[i].size(); ++k) {
             NodeId& root = *rootPtr[i][k];
             root = newId[root.col()];
@@ -330,35 +331,34 @@ private:
         size_t jj = 0;
 
         {
-            //MyList<ReducNodeInfo> rni;
-            //MyHashTable<ReducNodeInfo const*> uniq(m * 2);
+            // MyList<ReducNodeInfo> rni;
+            // MyHashTable<ReducNodeInfo const*> uniq(m * 2);
             MyHashTable<NodeBdd<T> const*> uniq(m * 2);
 
             for (size_t j = 0; j < m; ++j) {
                 NodeBdd<T>* const p0 = input[i].data();
-                NodeBdd<T>& f = input[i][j];
+                NodeBdd<T>&       f = input[i][j];
 
                 // make f canonical
                 NodeId& f0 = f.branch[0];
                 f0 = newIdTable[f0.row()][f0.col()];
                 NodeId deletable = BDD ? f0 : 0;
-                bool del = BDD || ZDD || (f0 == 0);
+                bool   del = BDD || ZDD || (f0 == 0);
                 for (int b = 1; b < 2; ++b) {
                     NodeId& ff = f.branch[b];
                     ff = newIdTable[ff.row()][ff.col()];
-                    if (ff != deletable) del = false;
+                    if (ff != deletable)
+                        del = false;
                 }
 
-                if (del) { // f is redundant
+                if (del) {  // f is redundant
                     newIdTable[i][j] = f0;
-                }
-                else {
+                } else {
                     NodeBdd<T> const* pp = uniq.add(&f);
 
                     if (pp == &f) {
                         newIdTable[i][j] = NodeId(i, jj++, f0.hasEmpty());
-                    }
-                    else {
+                    } else {
                         newIdTable[i][j] = newIdTable[i][pp - p0];
                     }
                 }
@@ -377,8 +377,10 @@ private:
             if (ff.row() == i) {
                 output[i][ff.col()] = input[i][j];
                 output[i][ff.col()].set_head_node();
-                output[i][ff.col()].child[0] = &(output.node(output[i][ff.col()].branch[0]));
-                output[i][ff.col()].child[1] = &(output.node(output[i][ff.col()].branch[1]));
+                output[i][ff.col()].child[0] =
+                    &(output.node(output[i][ff.col()].branch[0]));
+                output[i][ff.col()].child[1] =
+                    &(output.node(output[i][ff.col()].branch[1]));
             }
         }
 
@@ -391,7 +393,4 @@ private:
     }
 };
 
-
-
-
-#endif // NODE_BDD_REDUCER_HPP
+#endif  // NODE_BDD_REDUCER_HPP
