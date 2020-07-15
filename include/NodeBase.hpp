@@ -50,9 +50,9 @@ class NodeBase {
         }
     }
 
-    Job* get_job() { return job; }
+    Job* get_job() const { return job; }
 
-    inline int get_nb_job() { return job->job; }
+    inline int get_nb_job() const { return job->job; }
 
     size_t hash() const {
         size_t h = branch[0].code();
