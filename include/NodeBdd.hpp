@@ -7,6 +7,7 @@
 #include "Label.hpp"
 #include "ModelInterface.hpp"
 #include "NodeBase.hpp"
+#include "gurobi_c++.h"
 
 template <typename T = double>
 class NodeBdd : public NodeBase {
@@ -23,6 +24,7 @@ class NodeBdd : public NodeBase {
     std::shared_ptr<NodeId> ptr_node_id;
     double                  cost[2];
     double                  reduced_cost[2];
+    double                  lp_x[2];
 
     bool                    calc_yes;
     bool                    calc_no;
@@ -30,10 +32,14 @@ class NodeBdd : public NodeBase {
     int                     high_edge_key;
     int                     low_edge_key;
     bool                    visited;
+    bool                    lp_visited;
+    int                     lp_key;
     boost::dynamic_bitset<> all;
     int                     backward_distance[2];
     int                     in_degree_0;
     int                     in_degree_1;
+    GRBVar                  y[2];
+    GRBVar                  r[2];
 
     /**
      * Constructor
@@ -46,12 +52,15 @@ class NodeBdd : public NodeBase {
           ptr_node_id(nullptr),
           cost{0.0, 0.0},
           reduced_cost{0.0, 0.0},
+          lp_x{0.0, 0.0},
           calc_yes(true),
           calc_no(true),
           key(-1),
           high_edge_key(-1),
           low_edge_key(-1),
           visited(false),
+          lp_visited(false),
+          lp_key(-1),
           in_degree_0(0),
           in_degree_1(0) {
         child[0] = nullptr;
@@ -67,12 +76,15 @@ class NodeBdd : public NodeBase {
           ptr_node_id(nullptr),
           cost{0.0, 0.0},
           reduced_cost{0.0, 0.0},
+          lp_x{0.0, 0.0},
           calc_yes(true),
           calc_no(true),
           key(-1),
           high_edge_key(-1),
           low_edge_key(-1),
           visited(false),
+          lp_visited(false),
+          lp_key(-1),
           in_degree_0(0),
           in_degree_1(0) {
         child[0] = nullptr;
@@ -94,12 +106,15 @@ class NodeBdd : public NodeBase {
           ptr_node_id(nullptr),
           cost{0.0, 0.0},
           reduced_cost{0.0, 0.0},
+          lp_x{0.0, 0.0},
           calc_yes(true),
           calc_no(true),
           key(-1),
           high_edge_key(-1),
           low_edge_key(-1),
           visited(false),
+          lp_visited(false),
+          lp_key(-1),
           in_degree_0(0),
           in_degree_1(0) {
         child[0] = nullptr;
@@ -113,7 +128,7 @@ class NodeBdd : public NodeBase {
 
     void set_weight(int _weight) { weight = _weight; }
 
-    int get_weight() { return weight; }
+    int get_weight() const { return weight; }
 
     void reset_reduced_costs() {
         reduced_cost[0] = 0.0;
@@ -121,8 +136,13 @@ class NodeBdd : public NodeBase {
     }
 
     void reset_reduced_costs_farkas() {
-        reduced_cost[0] = 0.0;
-        reduced_cost[1] = 0.0;
+        reduced_cost[0] = reduced_cost[1] = 0.0;
+    }
+
+    void reset_lp_x() {
+        lp_x[0] = lp_x[1] = 0.0;
+        lp_visited = false;
+        lp_key = -1;
     }
 
     void add_coeff_list(std::shared_ptr<BddCoeff>& ptr, int high) {
