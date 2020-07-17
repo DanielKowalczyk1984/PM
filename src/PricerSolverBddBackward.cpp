@@ -147,7 +147,7 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
             }
 
             if (LB + (double)(num_machines - 1) * reduced_cost + result >
-                    UB + 0.0001 &&
+                    UB + 1e-4 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 removed_edges = true;
