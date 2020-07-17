@@ -26,7 +26,7 @@ int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
         return -1;
     } else if (C_a > C_b) {
         return 1;
-    } 
+    }
 
     return 0;
 }

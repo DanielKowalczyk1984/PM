@@ -58,7 +58,8 @@ void problem_init(Problem* problem) {
     CCutil_init_timer(&(problem->tot_solve_lp), "tot_solve_lp");
     CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
     CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
-    CCutil_init_timer(&(problem->tot_reduce_cost_fixing), "tot_reduce_cost_fixing");
+    CCutil_init_timer(&(problem->tot_reduce_cost_fixing),
+                      "tot_reduce_cost_fixing");
     /** initialize colPool */
     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     /** initialize the time */
@@ -133,6 +134,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->dbl_est_lower_bound = 0.0;
     pd->lower_scaled_bound = 1;
     pd->LP_lower_bound = 0.0;
+    pd->LP_lower_min = DBL_MAX;
     pd->partial_sol = 0.0;
     pd->rhs = (GArray*)NULL;
     /*Initialization  of the LP*/
@@ -142,9 +144,9 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->x_e = (double*)NULL;
     pd->coeff = (double*)NULL;
     pd->pi = (GArray*)NULL;
-    pd->lhs_coeff = (GArray *) NULL;
-    pd->id_row = (GArray *) NULL;
-    pd->coeff_row = (GArray *) NULL;
+    pd->lhs_coeff = (GArray*)NULL;
+    pd->id_row = (GArray*)NULL;
+    pd->coeff_row = (GArray*)NULL;
     pd->nb_rows = 0;
     pd->nb_cols = 0;
     // init info cut generation
@@ -156,7 +158,6 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->id_art_var_convex = 0;
     pd->id_art_var_cuts = 0;
     pd->id_pseudo_schedules = 0;
-
 
     /**init stab data */
     pd->pi_in = (GArray*)NULL;
@@ -175,6 +176,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->dualdiffnorm = 0.0;
     pd->hybridfactor = 0.0;
     pd->subgradientproduct = 0.0;
+    pd->update_stab_center = 0;
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver*)NULL;
     pd->nb_non_improvements = 0;
@@ -233,7 +235,7 @@ void lp_node_data_free(NodeData* pd) {
      * free all the data associated with the LP
      */
     CC_IFFREE(pd->coeff, double);
-    g_array_free(pd->pi,TRUE);
+    g_array_free(pd->pi, TRUE);
     CC_IFFREE(pd->lambda, double);
     CC_IFFREE(pd->x_e, double);
     g_array_free(pd->pi_out, TRUE);

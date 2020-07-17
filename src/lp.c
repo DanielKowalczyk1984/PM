@@ -160,9 +160,10 @@ int wctlp_addrow(wctlp* lp, int nb_zero, int* column_indices, double* cval,
     return val;
 }
 
-int wctlp_addrows(wctlp* lp, int nb_rows, int nb_zero, int *start, int* column_indices, double* coeff_val,
-                 char* sense, double* rhs, char** name) {
-    int  val = 0;
+int wctlp_addrows(wctlp* lp, int nb_rows, int nb_zero, int* start,
+                  int* column_indices, double* coeff_val, char* sense,
+                  double* rhs, char** name) {
+    int val = 0;
     // char inequality_sense;
 
     // switch (sense) {
@@ -184,7 +185,8 @@ int wctlp_addrows(wctlp* lp, int nb_rows, int nb_zero, int *start, int* column_i
     //         return val;
     // }
 
-    val = GRBaddconstrs(lp->model, nb_rows, nb_zero, start, column_indices, coeff_val, sense, rhs, name);
+    val = GRBaddconstrs(lp->model, nb_rows, nb_zero, start, column_indices,
+                        coeff_val, sense, rhs, name);
     CHECK_VAL_GRB(val, "Failed GRBadd", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
@@ -223,9 +225,10 @@ int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval,
     return val;
 }
 
-int wctlp_addcols(wctlp* lp, int num_vars, int nb_zero, int*start, int* row_indices, double* coeff_val,
-                 double* obj, double* lb, double* ub, char* vtype, char** name) {
-    int  val = 0;
+int wctlp_addcols(wctlp* lp, int num_vars, int nb_zero, int* start,
+                  int* row_indices, double* coeff_val, double* obj, double* lb,
+                  double* ub, char* vtype, char** name) {
+    int val = 0;
     // char inequality_sense;
 
     // switch (sense) {
@@ -247,7 +250,8 @@ int wctlp_addcols(wctlp* lp, int num_vars, int nb_zero, int*start, int* row_indi
     //         return val;
     // }
 
-    val = GRBaddvars(lp->model, num_vars, nb_zero, start, row_indices, coeff_val, obj, lb, ub, vtype, name);
+    val = GRBaddvars(lp->model, num_vars, nb_zero, start, row_indices,
+                     coeff_val, obj, lb, ub, vtype, name);
     CHECK_VAL_GRB(val, "Failed adding GRBaddvar", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
@@ -290,6 +294,27 @@ int wctlp_deletecols(wctlp* lp, int first, int last) {
     CHECK_VAL_GRB2(val, "Failed to update the model", lp->env);
 CLEAN:
     CC_IFFREE(dellist, int);
+    return val;
+}
+
+int wctlp_chg_upperbounds(wctlp* lp, int first, int last, double ub) {
+    int     val = 0;
+    int     nb_del = last - first + 1;
+    int     i;
+    double* ub_array = CC_SAFE_MALLOC(nb_del, double);
+    CCcheck_NULL_2(ub_array, "Failed to allocated memory to dellist");
+
+    for (i = 0; i < nb_del; ++i) {
+        ub_array[i] = ub;
+    }
+
+    val =
+        GRBsetdblattrarray(lp->model, GRB_DBL_ATTR_UB, first, nb_del, ub_array);
+    CHECK_VAL_GRB2(val, "Failed to delete cols", lp->env);
+    GRBupdatemodel(lp->model);
+    CHECK_VAL_GRB2(val, "Failed to update the model", lp->env);
+CLEAN:
+    CC_IFFREE(ub_array, double);
     return val;
 }
 
