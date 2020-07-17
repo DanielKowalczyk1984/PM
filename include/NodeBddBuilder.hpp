@@ -30,19 +30,18 @@
 #include <ostream>
 #include <stdexcept>
 
-#include "NodeBddSweeper.hpp"
-#include "NodeBranchId.hpp"
 #include "NodeBdd.hpp"
-#include "NodeBddTable.hpp"
 #include "NodeBddSpec.hpp"
+#include "NodeBddSweeper.hpp"
+#include "NodeBddTable.hpp"
+#include "NodeBranchId.hpp"
 #include "util/MemoryPool.hpp"
 #include "util/MyHashTable.hpp"
 #include "util/MyList.hpp"
 #include "util/MyVector.hpp"
 
-
 class BuilderBase {
-protected:
+   protected:
     static int const headerSize = 1;
 
     /* SpecNode
@@ -56,25 +55,17 @@ protected:
         int64_t code;
     };
 
-    static NodeId*& srcPtr(SpecNode* p) {
-        return p[0].srcPtr;
-    }
+    static NodeId*& srcPtr(SpecNode* p) { return p[0].srcPtr; }
 
-    static int64_t& code(SpecNode* p) {
-        return p[0].code;
-    }
+    static int64_t& code(SpecNode* p) { return p[0].code; }
 
     static NodeId& nodeId(SpecNode* p) {
         return *reinterpret_cast<NodeId*>(&p[0].code);
     }
 
-    static void* state(SpecNode* p) {
-        return p + headerSize;
-    }
+    static void* state(SpecNode* p) { return p + headerSize; }
 
-    static void const* state(SpecNode const* p) {
-        return p + headerSize;
-    }
+    static void const* state(SpecNode const* p) { return p + headerSize; }
 
     static int getSpecNodeSize(int n) {
         if (n < 0)
@@ -82,14 +73,12 @@ protected:
         return headerSize + (n + sizeof(SpecNode) - 1) / sizeof(SpecNode);
     }
 
-    template<typename SPEC>
+    template <typename SPEC>
     struct Hasher {
         SPEC const& spec;
-        int const level;
+        int const   level;
 
-        Hasher(SPEC const& spec, int level) :
-                spec(spec), level(level) {
-        }
+        Hasher(SPEC const& spec, int level) : spec(spec), level(level) {}
 
         size_t operator()(SpecNode const* p) const {
             return spec.hash_code(state(p), level);
@@ -104,38 +93,40 @@ protected:
 /**
  * Basic breadth-first DD builder.
  */
-template< typename S, typename T = NodeBdd<double>>
-class DdBuilder: BuilderBase {
-    typedef S Spec;
-    typedef MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
-    static int const AR = Spec::ARITY;
+template <typename S, typename T = NodeBdd<double>>
+class DdBuilder : BuilderBase {
+    typedef S                                                  Spec;
+    typedef MyHashTable<SpecNode*, Hasher<Spec>, Hasher<Spec>> UniqTable;
+    static int const                                           AR = Spec::ARITY;
 
-    Spec spec;
-    int const specNodeSize;
+    Spec                spec;
+    int const           specNodeSize;
     NodeTableEntity<T>& output;
-    DdSweeper<T> sweeper;
+    DdSweeper<T>        sweeper;
 
-    MyVector<MyList<SpecNode> > snodeTable;
+    MyVector<MyList<SpecNode>> snodeTable;
 
-    MyVector<char> oneStorage;
-    void* const one;
+    MyVector<char>         oneStorage;
+    void* const            one;
     MyVector<NodeBranchId> oneSrcPtr;
 
     void init(int n) {
         snodeTable.resize(n + 1);
-        if (n >= output.numRows()) output.setNumRows(n + 1);
+        if (n >= output.numRows())
+            output.setNumRows(n + 1);
         oneSrcPtr.clear();
     }
 
-public:
-    DdBuilder(Spec const& spec, TableHandler<T>& output, int n = 0) :
-            spec(spec),
-            specNodeSize(getSpecNodeSize(spec.datasize())),
-            output(output.privateEntity()),
-            sweeper(this->output, oneSrcPtr),
-            oneStorage(spec.datasize()),
-            one(oneStorage.data()) {
-        if (n >= 1) init(n);
+   public:
+    DdBuilder(Spec const& spec, TableHandler<T>& output, int n = 0)
+        : spec(spec),
+          specNodeSize(getSpecNodeSize(spec.datasize())),
+          output(output.privateEntity()),
+          sweeper(this->output, oneSrcPtr),
+          oneStorage(spec.datasize()),
+          one(oneStorage.data()) {
+        if (n >= 1)
+            init(n);
     }
 
     ~DdBuilder() {
@@ -164,14 +155,13 @@ public:
     int initialize(NodeId& root) {
         sweeper.setRoot(root);
         MyVector<char> tmp(spec.datasize());
-        void* const tmpState = tmp.data();
-        int n = spec.get_root(tmpState);
+        void* const    tmpState = tmp.data();
+        int            n = spec.get_root(tmpState);
 
         if (n <= 0) {
             root = n ? 1 : 0;
             n = 0;
-        }
-        else {
+        } else {
             init(n);
             schedule(&root, n, tmpState);
         }
@@ -191,56 +181,56 @@ public:
     void construct(int i) {
         assert(0 < i && size_t(i) < snodeTable.size());
 
-        MyList<SpecNode> &snodes = snodeTable[i];
-        size_t j0 = output[i].size();
-        size_t m = j0;
-        int lowestChild = i - 1;
-        size_t deadCount = 0;
+        MyList<SpecNode>& snodes = snodeTable[i];
+        size_t            j0 = output[i].size();
+        size_t            m = j0;
+        int               lowestChild = i - 1;
+        size_t            deadCount = 0;
 
         {
             Hasher<Spec> hasher(spec, i);
-            UniqTable uniq(snodes.size() * 2, hasher, hasher);
+            UniqTable    uniq(snodes.size() * 2, hasher, hasher);
 
             for (MyList<SpecNode>::iterator t = snodes.begin();
-                    t != snodes.end(); ++t) {
-                SpecNode* p = *t;
+                 t != snodes.end(); ++t) {
+                SpecNode*  p = *t;
                 SpecNode*& p0 = uniq.add(p);
 
                 if (p0 == p) {
                     nodeId(p) = *srcPtr(p) = NodeId(i, m++);
-                }
-                else {
+                } else {
                     switch (spec.merge_states(state(p0), state(p))) {
-                    case 1:
-                        nodeId(p0) = 0; // forward to 0-terminal
-                        nodeId(p) = *srcPtr(p) = NodeId(i, m++);
-                        p0 = p;
-                        break;
-                    case 2:
-                        *srcPtr(p) = 0;
-                        nodeId(p) = 1; // unused
-                        break;
-                    default:
-                        *srcPtr(p) = nodeId(p0);
-                        nodeId(p) = 1; // unused
-                        break;
+                        case 1:
+                            nodeId(p0) = 0;  // forward to 0-terminal
+                            nodeId(p) = *srcPtr(p) = NodeId(i, m++);
+                            p0 = p;
+                            break;
+                        case 2:
+                            *srcPtr(p) = 0;
+                            nodeId(p) = 1;  // unused
+                            break;
+                        default:
+                            *srcPtr(p) = nodeId(p0);
+                            nodeId(p) = 1;  // unused
+                            break;
                     }
                 }
             }
-//#ifdef DEBUG
-//            MessageHandler mh;
-//            mh << "table_size[" << i << "] = " << uniq.tableSize() << "\n";
-//#endif
+            //#ifdef DEBUG
+            //            MessageHandler mh;
+            //            mh << "table_size[" << i << "] = " << uniq.tableSize()
+            //            << "\n";
+            //#endif
         }
 
         output[i].resize(m);
-        T* const outi = output[i].data();
-        size_t jj = j0;
+        T* const  outi = output[i].data();
+        size_t    jj = j0;
         SpecNode* pp = snodeTable[i - 1].alloc_front(specNodeSize);
 
         for (; !snodes.empty(); snodes.pop_front()) {
             SpecNode* p = snodes.front();
-            T & q = outi[jj];
+            T&        q = outi[jj];
 
             if (nodeId(p) == 1) {
                 spec.destruct(state(p));
@@ -261,58 +251,57 @@ public:
                 if (ii == 0) {
                     q.branch[b] = 0;
                     spec.destruct(state(pp));
-                }
-                else if (ii < 0) {
-                    if (oneSrcPtr.empty()) { // the first 1-terminal candidate
+                } else if (ii < 0) {
+                    if (oneSrcPtr.empty()) {  // the first 1-terminal candidate
                         spec.get_copy(one, state(pp));
                         q.branch[b] = 1;
                         oneSrcPtr.push_back(NodeBranchId(i, jj, b));
-                    }
-                    else {
+                    } else {
                         switch (spec.merge_states(one, state(pp))) {
-                        case 1:
-                            while (!oneSrcPtr.empty()) {
-                                NodeBranchId const& nbi = oneSrcPtr.back();
-                                assert(nbi.row >= i);
-                                output[nbi.row][nbi.col].branch[nbi.val] = 0;
-                                oneSrcPtr.pop_back();
-                            }
-                            spec.destruct(one);
-                            spec.get_copy(one, state(pp));
-                            q.branch[b] = 1;
-                            oneSrcPtr.push_back(NodeBranchId(i, jj, b));
-                            break;
-                        case 2:
-                            q.branch[b] = 0;
-                            break;
-                        default:
-                            q.branch[b] = 1;
-                            oneSrcPtr.push_back(NodeBranchId(i, jj, b));
-                            break;
+                            case 1:
+                                while (!oneSrcPtr.empty()) {
+                                    NodeBranchId const& nbi = oneSrcPtr.back();
+                                    assert(nbi.row >= i);
+                                    output[nbi.row][nbi.col].branch[nbi.val] =
+                                        0;
+                                    oneSrcPtr.pop_back();
+                                }
+                                spec.destruct(one);
+                                spec.get_copy(one, state(pp));
+                                q.branch[b] = 1;
+                                oneSrcPtr.push_back(NodeBranchId(i, jj, b));
+                                break;
+                            case 2:
+                                q.branch[b] = 0;
+                                break;
+                            default:
+                                q.branch[b] = 1;
+                                oneSrcPtr.push_back(NodeBranchId(i, jj, b));
+                                break;
                         }
                     }
                     spec.destruct(state(pp));
                     allZero = false;
-                }
-                else if (ii == i - 1) {
+                } else if (ii == i - 1) {
                     srcPtr(pp) = &q.branch[b];
                     pp = snodeTable[ii].alloc_front(specNodeSize);
                     allZero = false;
-                }
-                else {
+                } else {
                     assert(ii < i - 1);
                     SpecNode* ppp = snodeTable[ii].alloc_front(specNodeSize);
                     spec.get_copy(state(ppp), state(pp));
                     spec.destruct(state(pp));
                     srcPtr(ppp) = &q.branch[b];
-                    if (ii < lowestChild) lowestChild = ii;
+                    if (ii < lowestChild)
+                        lowestChild = ii;
                     allZero = false;
                 }
             }
 
             spec.destruct(state(p));
             ++jj;
-            if (allZero) ++deadCount;
+            if (allZero)
+                ++deadCount;
         }
 
         snodeTable[i - 1].pop_front();
@@ -328,38 +317,38 @@ public:
 /**
  * Breadth-first ZDD subset builder.
  */
-template<typename T, typename S>
-class ZddSubsetter: BuilderBase {
-//typedef typename std::remove_const<typename std::remove_reference<S>::type>::type Spec;
-    typedef S Spec;
-    typedef MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
-    static int const AR = Spec::ARITY;
+template <typename T, typename S>
+class ZddSubsetter : BuilderBase {
+    // typedef typename std::remove_const<typename
+    // std::remove_reference<S>::type>::type Spec;
+    typedef S                                                  Spec;
+    typedef MyHashTable<SpecNode*, Hasher<Spec>, Hasher<Spec>> UniqTable;
+    static int const                                           AR = Spec::ARITY;
 
-    Spec spec;
-    int const specNodeSize;
-    NodeTableEntity<T> const& input;
-    NodeTableEntity<T>& output;
-    DataTable<MyListOnPool<SpecNode> > work;
-    DdSweeper<T> sweeper;
+    Spec                              spec;
+    int const                         specNodeSize;
+    NodeTableEntity<T> const&         input;
+    NodeTableEntity<T>&               output;
+    DataTable<MyListOnPool<SpecNode>> work;
+    DdSweeper<T>                      sweeper;
 
-    MyVector<char> oneStorage;
-    void* const one;
+    MyVector<char>         oneStorage;
+    void* const            one;
     MyVector<NodeBranchId> oneSrcPtr;
 
     MemoryPools pools;
 
-public:
+   public:
     ZddSubsetter(TableHandler<T> const& input, Spec const& s,
-                 TableHandler<T>& output) :
-            spec(s),
-            specNodeSize(getSpecNodeSize(spec.datasize())),
-            input(*input),
-            output(output.privateEntity()),
-            work(input->numRows()),
-            sweeper(this->output, oneSrcPtr),
-            oneStorage(spec.datasize()),
-            one(oneStorage.data()) {
-    }
+                 TableHandler<T>& output)
+        : spec(s),
+          specNodeSize(getSpecNodeSize(spec.datasize())),
+          input(*input),
+          output(output.privateEntity()),
+          work(input->numRows()),
+          sweeper(this->output, oneSrcPtr),
+          oneStorage(spec.datasize()),
+          one(oneStorage.data()) {}
 
     ~ZddSubsetter() {
         if (!oneSrcPtr.empty()) {
@@ -375,8 +364,8 @@ public:
     int initialize(NodeId& root) {
         sweeper.setRoot(root);
         MyVector<char> tmp(spec.datasize());
-        void* const tmpState = tmp.data();
-        int n = spec.get_root(tmpState);
+        void* const    tmpState = tmp.data();
+        int            n = spec.get_root(tmpState);
 
         int k = (root == 1) ? -1 : root.row();
 
@@ -384,8 +373,7 @@ public:
             if (n < k) {
                 assert(k >= 1);
                 k = downTable(root, 0, n);
-            }
-            else {
+            } else {
                 assert(n >= 1);
                 n = downSpec(tmpState, n, 0, k);
             }
@@ -395,16 +383,15 @@ public:
             assert(n == 0 || k == 0 || (n == -1 && k == -1));
             root = NodeId(0, n != 0 && k != 0);
             n = 0;
-        }
-        else {
+        } else {
             assert(n == k);
             assert(n == root.row());
 
             pools.resize(n + 1);
             work[n].resize(input[n].size());
 
-            SpecNode* p0 = work[n][root.col()].alloc_front(pools[n],
-                    specNodeSize);
+            SpecNode* p0 =
+                work[n][root.col()].alloc_front(pools[n], specNodeSize);
             spec.get_copy(state(p0), tmpState);
             srcPtr(p0) = &root;
         }
@@ -427,51 +414,50 @@ public:
         assert(output.numRows() - pools.size() == 0);
 
         Hasher<Spec> const hasher(spec, i);
-        MyVector<char> tmp(spec.datasize());
-        void* const tmpState = tmp.data();
-        size_t const m = input[i].size();
-        size_t mm = 0;
-        int lowestChild = i - 1;
-        size_t deadCount = 0;
+        MyVector<char>     tmp(spec.datasize());
+        void* const        tmpState = tmp.data();
+        size_t const       m = input[i].size();
+        size_t             mm = 0;
+        int                lowestChild = i - 1;
+        size_t             deadCount = 0;
 
-        if (work[i].empty()) work[i].resize(m);
+        if (work[i].empty())
+            work[i].resize(m);
         assert(work[i].size() == m);
 
         for (size_t j = 0; j < m; ++j) {
-            MyListOnPool<SpecNode> &list = work[i][j];
-            size_t n = list.size();
+            MyListOnPool<SpecNode>& list = work[i][j];
+            size_t                  n = list.size();
 
             if (n >= 2) {
                 UniqTable uniq(n * 2, hasher, hasher);
 
                 for (MyListOnPool<SpecNode>::iterator t = list.begin();
-                        t != list.end(); ++t) {
-                    SpecNode* p = *t;
+                     t != list.end(); ++t) {
+                    SpecNode*  p = *t;
                     SpecNode*& p0 = uniq.add(p);
 
                     if (p0 == p) {
                         nodeId(p) = *srcPtr(p) = NodeId(i, mm++);
-                    }
-                    else {
+                    } else {
                         switch (spec.merge_states(state(p0), state(p))) {
-                        case 1:
-                            nodeId(p0) = 0; // forward to 0-terminal
-                            nodeId(p) = *srcPtr(p) = NodeId(i, mm++);
-                            p0 = p;
-                            break;
-                        case 2:
-                            *srcPtr(p) = 0;
-                            nodeId(p) = 1; // unused
-                            break;
-                        default:
-                            *srcPtr(p) = nodeId(p0);
-                            nodeId(p) = 1; // unused
-                            break;
+                            case 1:
+                                nodeId(p0) = 0;  // forward to 0-terminal
+                                nodeId(p) = *srcPtr(p) = NodeId(i, mm++);
+                                p0 = p;
+                                break;
+                            case 2:
+                                *srcPtr(p) = 0;
+                                nodeId(p) = 1;  // unused
+                                break;
+                            default:
+                                *srcPtr(p) = nodeId(p0);
+                                nodeId(p) = 1;  // unused
+                                break;
                         }
                     }
                 }
-            }
-            else if (n == 1) {
+            } else if (n == 1) {
                 SpecNode* p = list.front();
                 nodeId(p) = *srcPtr(p) = NodeId(i, mm++);
             }
@@ -479,15 +465,15 @@ public:
 
         output.initRow(i, mm);
         T* const outi = output[i].data();
-        size_t jj = 0;
+        size_t   jj = 0;
 
         for (size_t j = 0; j < m; ++j) {
-            MyListOnPool<SpecNode> &list = work[i][j];
+            MyListOnPool<SpecNode>& list = work[i][j];
 
             for (MyListOnPool<SpecNode>::iterator t = list.begin();
-                    t != list.end(); ++t) {
+                 t != list.end(); ++t) {
                 SpecNode* p = *t;
-                T& q = outi[jj];
+                T&        q = outi[jj];
 
                 if (nodeId(p) == 1) {
                     spec.destruct(state(p));
@@ -511,8 +497,7 @@ public:
                         if (ii < kk) {
                             assert(kk >= 1);
                             kk = downTable(f, 0, ii);
-                        }
-                        else {
+                        } else {
                             assert(ii >= 1);
                             ii = downSpec(tmpState, ii, 0, kk);
                         }
@@ -521,49 +506,51 @@ public:
                     if (ii <= 0 || kk <= 0) {
                         if (ii == 0 || kk == 0) {
                             q.branch[b] = 0;
-                        }
-                        else {
-                            if (oneSrcPtr.empty()) { // the first 1-terminal candidate
+                        } else {
+                            if (oneSrcPtr.empty()) {  // the first 1-terminal
+                                                      // candidate
                                 spec.get_copy(one, tmpState);
                                 q.branch[b] = 1;
                                 oneSrcPtr.push_back(NodeBranchId(i, jj, b));
-                            }
-                            else {
+                            } else {
                                 switch (spec.merge_states(one, tmpState)) {
-                                case 1:
-                                    while (!oneSrcPtr.empty()) {
-                                        NodeBranchId const& nbi =
+                                    case 1:
+                                        while (!oneSrcPtr.empty()) {
+                                            NodeBranchId const& nbi =
                                                 oneSrcPtr.back();
-                                        assert(nbi.row >= i);
-                                        output[nbi.row][nbi.col].branch[nbi.val] =
-                                                0;
-                                        oneSrcPtr.pop_back();
-                                    }
-                                    spec.destruct(one);
-                                    spec.get_copy(one, tmpState);
-                                    q.branch[b] = 1;
-                                    oneSrcPtr.push_back(NodeBranchId(i, jj, b));
-                                    break;
-                                case 2:
-                                    q.branch[b] = 0;
-                                    break;
-                                default:
-                                    q.branch[b] = 1;
-                                    oneSrcPtr.push_back(NodeBranchId(i, jj, b));
-                                    break;
+                                            assert(nbi.row >= i);
+                                            output[nbi.row][nbi.col]
+                                                .branch[nbi.val] = 0;
+                                            oneSrcPtr.pop_back();
+                                        }
+                                        spec.destruct(one);
+                                        spec.get_copy(one, tmpState);
+                                        q.branch[b] = 1;
+                                        oneSrcPtr.push_back(
+                                            NodeBranchId(i, jj, b));
+                                        break;
+                                    case 2:
+                                        q.branch[b] = 0;
+                                        break;
+                                    default:
+                                        q.branch[b] = 1;
+                                        oneSrcPtr.push_back(
+                                            NodeBranchId(i, jj, b));
+                                        break;
                                 }
                             }
                             allZero = false;
                         }
-                    }
-                    else {
+                    } else {
                         assert(ii == f.row() && ii == kk && ii < i);
-                        if (work[ii].empty()) work[ii].resize(input[ii].size());
-                        SpecNode* pp = work[ii][f.col()].alloc_front(pools[ii],
-                                specNodeSize);
+                        if (work[ii].empty())
+                            work[ii].resize(input[ii].size());
+                        SpecNode* pp = work[ii][f.col()].alloc_front(
+                            pools[ii], specNodeSize);
                         spec.get_copy(state(pp), tmpState);
                         srcPtr(pp) = &q.branch[b];
-                        if (ii < lowestChild) lowestChild = ii;
+                        if (ii < lowestChild)
+                            lowestChild = ii;
                         allZero = false;
                     }
 
@@ -572,7 +559,8 @@ public:
 
                 spec.destruct(state(p));
                 ++jj;
-                if (allZero) ++deadCount;
+                if (allZero)
+                    ++deadCount;
             }
         }
 
@@ -582,9 +570,10 @@ public:
         sweeper.update(i, lowestChild, deadCount);
     }
 
-private:
+   private:
     int downTable(NodeId& f, int b, int zerosupLevel) const {
-        if (zerosupLevel < 0) zerosupLevel = 0;
+        if (zerosupLevel < 0)
+            zerosupLevel = 0;
 
         f = input.child(f, b);
         while (f.row() > zerosupLevel) {
@@ -594,7 +583,8 @@ private:
     }
 
     int downSpec(void* p, int level, int b, int zerosupLevel) {
-        if (zerosupLevel < 0) zerosupLevel = 0;
+        if (zerosupLevel < 0)
+            zerosupLevel = 0;
         assert(level > zerosupLevel);
 
         int i = spec.get_child(p, level, b);
@@ -605,6 +595,4 @@ private:
     }
 };
 
-#endif // NODE_BDD_BUILDER_HPP
-
-
+#endif  // NODE_BDD_BUILDER_HPP

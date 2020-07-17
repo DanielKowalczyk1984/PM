@@ -109,8 +109,8 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
           };
 
     void evalNode(NodeBdd<T>& n) const override {
-        Job*        tmp_j = n.get_job();
-        int         weight{n.get_weight()};
+        auto tmp_j = n.get_job();
+        // int         weight{n.get_weight()};
         NodeBdd<T>* p0{n.child[0]};
         NodeBdd<T>* p1{n.child[1]};
         n.reset_reduced_costs();

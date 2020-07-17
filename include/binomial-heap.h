@@ -64,13 +64,13 @@ typedef enum {
  * A value stored in a @ref BinomialHeap.
  */
 
-typedef void *BinomialHeapValue;
+typedef void* BinomialHeapValue;
 
 /**
  * A null @ref BinomialHeapValue.
  */
 
-#define BINOMIAL_HEAP_NULL ((void *)0)
+#define BINOMIAL_HEAP_NULL ((void*)0)
 
 /**
  * Type of function used to compare values in a binomial heap.
@@ -101,7 +101,7 @@ typedef struct _BinomialHeap BinomialHeap;
  *                         to allocate the memory.
  */
 
-BinomialHeap *binomial_heap_new(BinomialHeapType        heap_type,
+BinomialHeap* binomial_heap_new(BinomialHeapType        heap_type,
                                 BinomialHeapCompareFunc compare_func);
 
 /**
@@ -110,7 +110,7 @@ BinomialHeap *binomial_heap_new(BinomialHeapType        heap_type,
  * @param heap             The heap to destroy.
  */
 
-void binomial_heap_free(BinomialHeap *heap);
+void binomial_heap_free(BinomialHeap* heap);
 
 /**
  * Insert a value into a binomial heap.
@@ -122,7 +122,7 @@ void binomial_heap_free(BinomialHeap *heap);
  *                         entry.
  */
 
-int binomial_heap_insert(BinomialHeap *heap, BinomialHeapValue value);
+int binomial_heap_insert(BinomialHeap* heap, BinomialHeapValue value);
 
 /**
  * Remove the first value from a binomial heap.
@@ -132,7 +132,7 @@ int binomial_heap_insert(BinomialHeap *heap, BinomialHeapValue value);
  *                         @ref BINOMIAL_HEAP_NULL if the heap is empty.
  */
 
-BinomialHeapValue binomial_heap_pop(BinomialHeap *heap);
+BinomialHeapValue binomial_heap_pop(BinomialHeap* heap);
 
 /**
  * Find the number of values stored in a binomial heap.
@@ -141,7 +141,7 @@ BinomialHeapValue binomial_heap_pop(BinomialHeap *heap);
  * @return                 The number of values in the heap.
  */
 
-unsigned int binomial_heap_num_entries(BinomialHeap *heap);
+unsigned int binomial_heap_num_entries(BinomialHeap* heap);
 
 #ifdef __cplusplus
 }

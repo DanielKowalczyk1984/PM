@@ -244,16 +244,18 @@ void PricerSolverArcTimeDp::build_mip() {
     model->optimize();
 
     if (model->get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
-    for (int j = 0; j < n ; j++) {
-        for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
-            for (auto& it : graph[j][t]) {
-                auto a = arctime_x[it->job][j][t].get(GRB_DoubleAttr_X);
-                if(a > 0) {
-                    std::cout << j << " " << t << " " <<  ((Job*) jobs->pdata[j])->processing_time << "\n";
+        for (int j = 0; j < n; j++) {
+            for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
+                for (auto& it : graph[j][t]) {
+                    auto a = arctime_x[it->job][j][t].get(GRB_DoubleAttr_X);
+                    if (a > 0) {
+                        std::cout << j << " " << t << " "
+                                  << ((Job*)jobs->pdata[j])->processing_time
+                                  << "\n";
+                    }
                 }
             }
         }
-    }
     }
     return;
 }
@@ -609,8 +611,6 @@ bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
     return false;
 }
 
-void PricerSolverArcTimeDp::make_schedule_set_feasible(GPtrArray *set) {
-    
-}
+void PricerSolverArcTimeDp::make_schedule_set_feasible(GPtrArray* set) {}
 
 void PricerSolverArcTimeDp::disjunctive_inequality(double* x, Solution* sol) {}

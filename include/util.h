@@ -32,8 +32,8 @@ extern "C" {
 #define CC_ABS(a) (((a) >= 0) ? (a) : -(a))
 
 #ifndef SQR
-#define SQR(x)        ((x)*(x))
-#define SQRT(x)       (sqrt(x))
+#define SQR(x) ((x) * (x))
+#define SQRT(x) (sqrt(x))
 #endif
 
 #define CCcheck_val_2(val, msg)                                                \
@@ -138,35 +138,36 @@ void set_dbg_lvl(int dbglvl);
 /****************************************************************************/
 
 #define CC_SAFE_MALLOC(nnum, type) \
-    (type *)CCutil_allocrus(((size_t)(nnum)) * sizeof(type))
+    (type*)CCutil_allocrus(((size_t)(nnum)) * sizeof(type))
 
 #define CC_SAFE_REALLOC(ptr, nnum, type) \
-    (type *)CCutil_reallocrus((void *)ptr, ((size_t)(nnum)) * sizeof(type))
+    (type*)CCutil_reallocrus((void*)ptr, ((size_t)(nnum)) * sizeof(type))
 
-#define CC_FREE(object, type)             \
-    {                                     \
-        CCutil_freerus((void *)(object)); \
-        object = (type *)NULL;            \
+#define CC_FREE(object, type)            \
+    {                                    \
+        CCutil_freerus((void*)(object)); \
+        object = (type*)NULL;            \
     }
 
-#define CC_IFFREE(object, type)                \
-    {                                          \
-        if ((object)) CC_FREE((object), type); \
+#define CC_IFFREE(object, type)      \
+    {                                \
+        if ((object))                \
+            CC_FREE((object), type); \
     }
 
-void *CCutil_allocrus(size_t size);
-void *CCutil_reallocrus(void *ptr, size_t size);
-void CCutil_freerus(void *p);
+void* CCutil_allocrus(size_t size);
+void* CCutil_reallocrus(void* ptr, size_t size);
+void  CCutil_freerus(void* p);
 
-int CCutil_reallocrus_scale(
-    void **pptr, int *pnnum, int count, double scale, size_t size);
-int CCutil_reallocrus_count(void **pptr, int count, size_t size);
+int CCutil_reallocrus_scale(void** pptr, int* pnnum, int count, double scale,
+                            size_t size);
+int CCutil_reallocrus_count(void** pptr, int count, size_t size);
 
-int pmcfile_exists(const char *filename);
+int pmcfile_exists(const char* filename);
 
-int pmcdir_exists(const char *dirname);
+int pmcdir_exists(const char* dirname);
 
-int pmcdir_create(const char *dirname);
+int pmcdir_create(const char* dirname);
 
 /****************************************************************************/
 /*                                                                          */
@@ -175,36 +176,36 @@ int pmcdir_create(const char *dirname);
 /****************************************************************************/
 
 CC_SFILE
-*CCutil_sopen(const char *f, const char *s),
-    *CCutil_sdopen(int d, const char *s);
+*CCutil_sopen(const char* f, const char* s),
+    *CCutil_sdopen(int d, const char* s);
 
-int CCutil_swrite(CC_SFILE *f, char *buf, int size),
-    CCutil_swrite_bits(CC_SFILE *f, int x, int xbits),
-    CCutil_swrite_ubits(CC_SFILE *f, unsigned int x, int xbits),
-    CCutil_swrite_char(CC_SFILE *f, char x),
-    CCutil_swrite_string(CC_SFILE *f, const char *x),
-    CCutil_swrite_short(CC_SFILE *f, short x),
-    CCutil_swrite_ushort(CC_SFILE *f, unsigned short x),
-    CCutil_swrite_int(CC_SFILE *f, int x),
-    CCutil_swrite_uint(CC_SFILE *f, unsigned int x),
-    CCutil_swrite_double(CC_SFILE *f, double x),
-    CCutil_sread(CC_SFILE *f, char *buf, int size),
-    CCutil_sread_bits(CC_SFILE *f, int *x, int xbits),
-    CCutil_sread_ubits(CC_SFILE *f, unsigned int *x, int xbits),
-    CCutil_sread_char(CC_SFILE *f, char *x),
-    CCutil_sread_string(CC_SFILE *f, char *x, int maxlen),
-    CCutil_sread_short(CC_SFILE *f, short *x),
-    CCutil_sread_ushort(CC_SFILE *f, unsigned short *x),
-    CCutil_sread_short_r(CC_SFILE *f, short *x),
-    CCutil_sread_int(CC_SFILE *f, int *x),
-    CCutil_sread_uint(CC_SFILE *f, unsigned int *x),
-    CCutil_sread_int_r(CC_SFILE *f, int *x),
-    CCutil_sread_double(CC_SFILE *f, double *x),
-    CCutil_sread_double_r(CC_SFILE *f, double *x), CCutil_sflush(CC_SFILE *f),
-    CCutil_stell(CC_SFILE *f), CCutil_sseek(CC_SFILE *f, int offset),
-    CCutil_srewind(CC_SFILE *f), CCutil_sclose(CC_SFILE *f),
-    CCutil_sbits(unsigned int x), CCutil_sdelete_file(const char *fname),
-    CCutil_sdelete_file_backup(const char *fname);
+int CCutil_swrite(CC_SFILE*f, char*buf, int size),
+    CCutil_swrite_bits(CC_SFILE*f, int x, int xbits),
+    CCutil_swrite_ubits(CC_SFILE*f, unsigned int x, int xbits),
+    CCutil_swrite_char(CC_SFILE*f, char x),
+    CCutil_swrite_string(CC_SFILE*f, const char*x),
+    CCutil_swrite_short(CC_SFILE*f, short x),
+    CCutil_swrite_ushort(CC_SFILE*f, unsigned short x),
+    CCutil_swrite_int(CC_SFILE*f, int x),
+    CCutil_swrite_uint(CC_SFILE*f, unsigned int x),
+    CCutil_swrite_double(CC_SFILE*f, double x),
+    CCutil_sread(CC_SFILE*f, char*buf, int size),
+    CCutil_sread_bits(CC_SFILE*f, int*x, int xbits),
+    CCutil_sread_ubits(CC_SFILE*f, unsigned int*x, int xbits),
+    CCutil_sread_char(CC_SFILE*f, char*x),
+    CCutil_sread_string(CC_SFILE*f, char*x, int maxlen),
+    CCutil_sread_short(CC_SFILE*f, short*x),
+    CCutil_sread_ushort(CC_SFILE*f, unsigned short*x),
+    CCutil_sread_short_r(CC_SFILE*f, short*x),
+    CCutil_sread_int(CC_SFILE*f, int*x),
+    CCutil_sread_uint(CC_SFILE*f, unsigned int*x),
+    CCutil_sread_int_r(CC_SFILE*f, int*x),
+    CCutil_sread_double(CC_SFILE*f, double*x),
+    CCutil_sread_double_r(CC_SFILE*f, double*x), CCutil_sflush(CC_SFILE*f),
+    CCutil_stell(CC_SFILE*f), CCutil_sseek(CC_SFILE*f, int offset),
+    CCutil_srewind(CC_SFILE*f), CCutil_sclose(CC_SFILE*f),
+    CCutil_sbits(unsigned int x), CCutil_sdelete_file(const char*fname),
+    CCutil_sdelete_file_backup(const char*fname);
 
 /****************************************************************************/
 /*                                                                          */
@@ -212,19 +213,17 @@ int CCutil_swrite(CC_SFILE *f, char *buf, int size),
 /*                                                                          */
 /****************************************************************************/
 
-void CCutil_int_array_quicksort(int *len, int n);
-void CCutil_int_array_quicksort_0(int *len, int n);
-void CCutil_int_perm_quicksort(int *perm, int *len, int n);
-void CCutil_double_perm_quicksort(int *perm, double *len, int n);
-void CCutil_int_perm_quicksort_0(int *perm, int *len, int n);
+void CCutil_int_array_quicksort(int* len, int n);
+void CCutil_int_array_quicksort_0(int* len, int n);
+void CCutil_int_perm_quicksort(int* perm, int* len, int n);
+void CCutil_double_perm_quicksort(int* perm, double* len, int n);
+void CCutil_int_perm_quicksort_0(int* perm, int* len, int n);
 
-int CCutil_quickselect(int *len, int p, int n, int m);
-int quickselect(int *V, int N, int k);
+int CCutil_quickselect(int* len, int p, int n, int m);
+int quickselect(int* V, int N, int k);
 
-int bisearch(int *       sorted,
-             const void *target,
-             int         size,
-             int (*compare)(const void *key1, const void *key2));
+int bisearch(int* sorted, const void* target, int size,
+             int (*compare)(const void* key1, const void* key2));
 
 /****************************************************************************/
 /*                                                                          */
@@ -232,21 +231,21 @@ int bisearch(int *       sorted,
 /*                                                                          */
 /****************************************************************************/
 
-char *CCutil_strchr(char *s, int c), *CCutil_strrchr(char *s, int c),
-    *CCutil_strdup(const char *s), *CCutil_strdup2(const char *s);
+char *CCutil_strchr(char*s, int c), *CCutil_strrchr(char*s, int c),
+    *CCutil_strdup(const char*s), *CCutil_strdup2(const char*s);
 
-const char *CCutil_strchr_c(const char *s, int c),
-    *CCutil_strrchr_c(const char *s, int c);
+const char *CCutil_strchr_c(const char*s, int c),
+    *CCutil_strrchr_c(const char*s, int c);
 
 unsigned int CCutil_nextprime(unsigned int x);
 
 int CCutil_our_gcd(int a, int b), CCutil_our_lcm(int a, int b),
-    CCutil_print_command(int ac, char **av);
+    CCutil_print_command(int ac, char**av);
 
-void CCutil_readstr(FILE *f, char *s, int len), CCutil_printlabel(void);
+void CCutil_readstr(FILE*f, char*s, int len), CCutil_printlabel(void);
 
 /* Construction of the header of the program*/
-int program_header(int ac, char **av);
+int  program_header(int ac, char** av);
 void dump_uname(void);
 
 void print_line(void);
@@ -265,13 +264,13 @@ typedef struct CCutil_timer {
 } CCutil_timer;
 
 double CCutil_zeit(void), CCutil_real_zeit(void),
-    CCutil_stop_timer(CCutil_timer *t, int printit),
-    CCutil_total_timer(CCutil_timer *t, int printit);
+    CCutil_stop_timer(CCutil_timer*t, int printit),
+    CCutil_total_timer(CCutil_timer*t, int printit);
 
-void CCutil_init_timer(CCutil_timer *t, const char *name),
-    CCutil_start_timer(CCutil_timer *t), CCutil_suspend_timer(CCutil_timer *t),
-    CCutil_resume_timer(CCutil_timer *t),
-    CCutil_start_resume_time(CCutil_timer *t);
+void CCutil_init_timer(CCutil_timer*t, const char*name),
+    CCutil_start_timer(CCutil_timer*t), CCutil_suspend_timer(CCutil_timer*t),
+    CCutil_resume_timer(CCutil_timer*t),
+    CCutil_start_resume_time(CCutil_timer*t);
 double getRealTime(void);
 double getCPUTime(void);
 
@@ -281,8 +280,8 @@ double getCPUTime(void);
 /*                                                                          */
 /****************************************************************************/
 
-int CCrandom_int_perm(int *perm, int n);
-int CCrandom_dbl_perm(double *perm, int n);
+int CCrandom_int_perm(int* perm, int n);
+int CCrandom_dbl_perm(double* perm, int n);
 
 /****************************************************************************/
 /*                                                                          */
@@ -290,12 +289,12 @@ int CCrandom_dbl_perm(double *perm, int n);
 /*                                                                          */
 /****************************************************************************/
 
-void fill_int(int *dst, int n, int v);
-void fill_dbl(double *dst, int n, double v);
-void fill_float(float *dst, int n, float v);
-void fill_char(char *dst, int n, char v);
-void acopy_int(const int *src, int *dst, int n);
-void acopy_dbl(const double *src, double *dst, int n);
+void fill_int(int* dst, int n, int v);
+void fill_dbl(double* dst, int n, double v);
+void fill_float(float* dst, int n, float v);
+void fill_char(char* dst, int n, char v);
+void acopy_int(const int* src, int* dst, int n);
+void acopy_dbl(const double* src, double* dst, int n);
 
 int bin_coeff(int n, int r);
 

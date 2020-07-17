@@ -60,7 +60,7 @@ class NodeId {
 
     bool operator==(NodeId const& o) const { return code() == o.code(); }
 
-    bool operator==(NodeId const && o) const {return code() == o.code();}
+    bool operator==(NodeId const&& o) const { return code() == o.code(); }
 
     bool operator!=(NodeId const& o) const { return !(*this == o); }
 

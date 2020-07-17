@@ -4,21 +4,21 @@
 
 class PricerSolverArcTimeDp : public PricerSolverBase {
    private:
-    int                       Hmax;
-    int                       n;
-    size_t                    size_graph;
-    std::vector<Job*>**       graph;
-    std::vector<Job*>**       reversed_graph;
-    std::vector<Job*>         vector_jobs;
-    Job                       j0;
-    double**                  forward_F;
-    double**                  backward_F;
-    Job***                    A;
-    int**                     B;
-    GRBVar***                 arctime_x;
-    int                       num_edges_removed;
-    double*                   lp_x;
-    double*                   solution_x;
+    int                 Hmax;
+    int                 n;
+    size_t              size_graph;
+    std::vector<Job*>** graph;
+    std::vector<Job*>** reversed_graph;
+    std::vector<Job*>   vector_jobs;
+    Job                 j0;
+    double**            forward_F;
+    double**            backward_F;
+    Job***              A;
+    int**               B;
+    GRBVar***           arctime_x;
+    int                 num_edges_removed;
+    double*             lp_x;
+    double*             solution_x;
 
    public:
     PricerSolverArcTimeDp(GPtrArray* _jobs, int _num_machines, int _Hmax,
@@ -51,7 +51,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     int    get_num_layers() override;
     void   print_num_paths() override;
     bool   check_schedule_set(GPtrArray* set) override;
-    void make_schedule_set_feasible(GPtrArray *set) override;
+    void   make_schedule_set_feasible(GPtrArray* set) override;
 
     void forward_evaluator(double* pi);
     void backward_evaluator(double* _pi);
@@ -78,32 +78,24 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
     }
 
-    int* get_take() override {
-        return NULL;
-    }
+    int* get_take() override { return NULL; }
 
-    void update_constraints() override {
+    void update_constraints() override {}
 
-    }
+    void update_reduced_costs_arcs(double* _pi, bool farkas = false) override {}
 
-    void update_reduced_costs_arcs(double *_pi, bool farkas = false) override {
+    void insert_constraints_lp(NodeData* pd) override {}
 
-    }
-
-    void insert_constraints_lp(NodeData *pd) override {
-
-    }
-
-    void update_coeff_constraints() override {
-
-    }
-    // double compute_reduced_cost(const OptimalSolution<>&s, double *pi, double *lhs) override {
+    void update_coeff_constraints() override {}
+    // double compute_reduced_cost(const OptimalSolution<>&s, double *pi, double
+    // *lhs) override {
     //     double result = 0.0;
 
     //     return result;
     // }
 
-    // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override {
+    // double compute_lagrange(const OptimalSolution<> &sol, double *pi)
+    // override {
     //     double result = 0.0;
 
     //     return result;

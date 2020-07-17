@@ -69,7 +69,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
                 if (state + tmp_j->processing_time > tmp_interval->a &&
                     state + tmp_j->processing_time <= tmp_interval->b) {
-                    if (tmp == tmp_j ) {
+                    if (tmp == tmp_j) {
                         continue;
                     }
                     val = i;
@@ -128,10 +128,9 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
         Job*      tmp_j = (Job*)tmp_pair->j;
 
         if (level - 1 == 0 && value) {
-            return (state + tmp_j->processing_time <= tmp_interval->b)? -1 :
-            0;
+            return (state + tmp_j->processing_time <= tmp_interval->b) ? -1 : 0;
         } else if (level - 1 == 0) {
-            return ( state <= tmp_interval->b) ? -1 : 0;
+            return (state <= tmp_interval->b) ? -1 : 0;
         }
 
         if (value) {

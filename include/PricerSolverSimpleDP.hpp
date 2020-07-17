@@ -58,34 +58,27 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         return tmp;
     }
 
-    void update_constraints() override {
+    void update_constraints() override {}
 
-    }
+    void update_reduced_costs_arcs(double* _pi, bool farkas = false) override {}
 
-    void update_reduced_costs_arcs(double *_pi, bool farkas = false) override {
-        
-    }
+    void insert_constraints_lp(NodeData* pd) override {}
 
-    void insert_constraints_lp(NodeData *pd) override {
+    void update_coeff_constraints() override {}
 
-    }
-
-    void update_coeff_constraints() override {
-
-    }
-
-    // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override {
+    // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi,
+    // double *lhs) override {
     //     double result = 0.0;
 
     //     return result;
     // }
 
-    // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override {
+    // double compute_lagrange(const OptimalSolution<> &sol, double *pi)
+    // override {
     //     double result = 0;
 
     //     return result;
     // }
-
 };
 
 #endif  // PRICER_SOLVER_SIMPLE_DP_HPP

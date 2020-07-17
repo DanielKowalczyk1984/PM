@@ -220,7 +220,7 @@ int main(int ac, char** av) {
     if (parms->pricing_solver < dp_solver) {
         CCutil_start_timer(&(problem.tot_build_dd));
         root->solver = newSolver(root->jobarray, root->nb_machines,
-                                 root->ordered_jobs, parms,root->H_max, NULL);
+                                 root->ordered_jobs, parms, root->H_max, NULL);
         CCutil_stop_timer(&(problem.tot_build_dd), 0);
     } else {
         root->solver =
@@ -279,8 +279,8 @@ int main(int ac, char** av) {
             build_rmp(root, 0);
             freeSolver(root->solver);
             root->solver =
-                newSolver(root->jobarray, root->nb_machines,
-                               root->ordered_jobs, parms, problem.H_max, take);
+                newSolver(root->jobarray, root->nb_machines, root->ordered_jobs,
+                          parms, problem.H_max, take);
 
             CC_IFFREE(take, int);
             CCutil_start_timer(&(problem.tot_lb_root));

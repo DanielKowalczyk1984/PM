@@ -108,24 +108,18 @@
  * @tparam T data type of work area for each node.
  * @tparam R data type of return value.
  */
-template<typename E, typename T, typename R = T>
+template <typename E, typename T, typename R = T>
 class Eval {
-public:
-    E& entity() {
-        return *static_cast<E*>(this);
-    }
+   public:
+    E& entity() { return *static_cast<E*>(this); }
 
-    E const& entity() const {
-        return *static_cast<E const*>(this);
-    }
+    E const& entity() const { return *static_cast<E const*>(this); }
 
     /**
      * Returns preference to show messages.
      * @return true if messages are preferred.
      */
-    virtual bool showMessages() const {
-        return false;
-    }
+    virtual bool showMessages() const { return false; }
 
     /**
      * Initialization.
@@ -148,9 +142,9 @@ public:
     // virtual void destructLevel(int i) {
     // }
 
-    virtual void initializenode(T& n) const = 0 ;
+    virtual void initializenode(T& n) const = 0;
 
-    virtual void initializerootnode(T& n) const = 0 ;
+    virtual void initializerootnode(T& n) const = 0;
 
     virtual void evalNode(T& n) const = 0;
 

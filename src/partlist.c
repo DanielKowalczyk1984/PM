@@ -15,10 +15,10 @@ void partlist_free(PartList* part) {
         if (part->machine != (GPtrArray*)NULL) {
             g_ptr_array_free(part->machine, TRUE);
         }
-        if (part->Q != (GPtrArray**) NULL) {
+        if (part->Q != (GPtrArray**)NULL) {
             CC_IFFREE(part->Q, GPtrArray*);
         }
-        if (part->Q_in != (GPtrArray**) NULL) {
+        if (part->Q_in != (GPtrArray**)NULL) {
             CC_IFFREE(part->Q_in, GPtrArray*);
         }
     }

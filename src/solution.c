@@ -26,9 +26,9 @@ void solution_init(Solution* sol) {
 void solution_free(Solution** sol) {
     if (*sol) {
         for (int i = 0; i < (*sol)->nb_machines; ++i) {
-            for(int j = 0; j < (*sol)->nb_intervals; ++j) {
-                g_ptr_array_free((*sol)->part[i].Q[j],TRUE);
-                g_ptr_array_free((*sol)->part[i].Q_in[j],TRUE);
+            for (int j = 0; j < (*sol)->nb_intervals; ++j) {
+                g_ptr_array_free((*sol)->part[i].Q[j], TRUE);
+                g_ptr_array_free((*sol)->part[i].Q_in[j], TRUE);
             }
             partlist_free((*sol)->part + i);
         }
@@ -42,7 +42,8 @@ void solution_free(Solution** sol) {
     }
 }
 
-Solution* solution_alloc(int nb_interval,int nb_machines, int nb_jobs, int off) {
+Solution* solution_alloc(int nb_interval, int nb_machines, int nb_jobs,
+                         int off) {
     int       val = 0;
     int       i;
     Solution* sol = CC_SAFE_MALLOC(1, Solution);
@@ -61,7 +62,7 @@ Solution* solution_alloc(int nb_interval,int nb_machines, int nb_jobs, int off) 
         partlist_init(sol->part + i);
         sol->part[i].Q = CC_SAFE_MALLOC(nb_interval, GPtrArray*);
         sol->part[i].Q_in = CC_SAFE_MALLOC(nb_interval, GPtrArray*);
-        for(int j = 0; j < nb_interval; j++) {
+        for (int j = 0; j < nb_interval; j++) {
             sol->part[i].Q[j] = g_ptr_array_new();
             sol->part[i].Q_in[j] = g_ptr_array_new();
         }
@@ -74,7 +75,7 @@ Solution* solution_alloc(int nb_interval,int nb_machines, int nb_jobs, int off) 
     fill_int(sol->c, sol->nb_jobs, 0);
     sol->u = CC_SAFE_MALLOC(nb_jobs, int);
     CCcheck_NULL_2(sol->u, "Failed to allocate memory")
-    fill_int(sol->u, nb_jobs, 0);
+        fill_int(sol->u, nb_jobs, 0);
     sol->u_in = CC_SAFE_MALLOC(nb_jobs, int);
     CCcheck_NULL_2(sol->u_in, "Failed to allocate memory");
     fill_int(sol->u_in, nb_jobs, -1);
@@ -124,7 +125,8 @@ void solution_print(Solution* sol) {
 
 int solution_copy(Solution* dest, Solution* src) {
     int val = 0;
-    dest = solution_alloc(src->nb_intervals, src->nb_machines, src->nb_jobs, src->off);
+    dest = solution_alloc(src->nb_intervals, src->nb_machines, src->nb_jobs,
+                          src->off);
     CCcheck_val_2(val, "Failed in  solution_alloc");
     dest->tw = src->tw;
     dest->b = src->b;
@@ -164,14 +166,18 @@ int solution_update(Solution* dest, Solution* src) {
         dest->part[i].tw = src->part[i].tw;
         dest->part[i].c = src->part[i].c;
 
-        for(int j = 0; j < src->nb_intervals; j++) {
-            g_ptr_array_remove_range(dest->part[i].Q[j], 0, dest->part[i].Q[j]->len);
-            g_ptr_array_remove_range(dest->part[i].Q_in[j], 0, dest->part[i].Q_in[j]->len);
-            for(int k = 0; k < src->part[i].Q[j]->len;k++) {
-                g_ptr_array_add(dest->part[i].Q[j], g_ptr_array_index(src->part[i].Q[j],k));
+        for (int j = 0; j < src->nb_intervals; j++) {
+            g_ptr_array_remove_range(dest->part[i].Q[j], 0,
+                                     dest->part[i].Q[j]->len);
+            g_ptr_array_remove_range(dest->part[i].Q_in[j], 0,
+                                     dest->part[i].Q_in[j]->len);
+            for (int k = 0; k < src->part[i].Q[j]->len; k++) {
+                g_ptr_array_add(dest->part[i].Q[j],
+                                g_ptr_array_index(src->part[i].Q[j], k));
             }
-            for(int k = 0; k < src->part[i].Q_in[j]->len;k++) {
-                g_ptr_array_add(dest->part[i].Q_in[j], g_ptr_array_index(src->part[i].Q_in[j],k));
+            for (int k = 0; k < src->part[i].Q_in[j]->len; k++) {
+                g_ptr_array_add(dest->part[i].Q_in[j],
+                                g_ptr_array_index(src->part[i].Q_in[j], k));
             }
         }
     }
@@ -226,13 +232,13 @@ void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
                                           int m) {
     if (m < sol->nb_machines) {
         GPtrArray* machine = sol->part[m].machine;
-        for(int i = 0; i < sol->nb_intervals;i++) {
-            g_ptr_array_free(sol->part[m].Q[i],TRUE);
+        for (int i = 0; i < sol->nb_intervals; i++) {
+            g_ptr_array_free(sol->part[m].Q[i], TRUE);
             sol->part[m].Q[i] = g_ptr_array_new();
-            g_ptr_array_free(sol->part[m].Q_in[i],TRUE);
+            g_ptr_array_free(sol->part[m].Q_in[i], TRUE);
             sol->part[m].Q_in[i] = g_ptr_array_new();
         }
-        int        iter = 0;
+        int iter = 0;
 
         for (unsigned i = 0; i < machine->len; ++i) {
             Job*      tmp = (Job*)g_ptr_array_index(machine, i);
@@ -240,18 +246,19 @@ void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
             while (!(sol->c[tmp->job] <= I->b && I->a < sol->c[tmp->job])) {
                 iter++;
                 I = (interval*)g_ptr_array_index(intervals, iter);
-                if(iter == intervals->len) {
+                if (iter == intervals->len) {
                     iter--;
                     I = (interval*)g_ptr_array_index(intervals, iter);
                     break;
                 }
             }
-            sol->u[tmp->job] = iter; 
+            sol->u[tmp->job] = iter;
             g_ptr_array_add(sol->part[m].Q[iter], tmp);
-            if(sol->c[tmp->job] - tmp->processing_time > I->a || (iter == 0 && sol->c[tmp->job] - tmp->processing_time == 0 )) {
+            if (sol->c[tmp->job] - tmp->processing_time > I->a ||
+                (iter == 0 && sol->c[tmp->job] - tmp->processing_time == 0)) {
                 g_ptr_array_add(sol->part[m].Q_in[iter], tmp);
                 sol->u_in[tmp->job] = iter;
-            } 
+            }
         }
     }
 }
@@ -342,14 +349,14 @@ void solution_calculate_partition_all(Solution* sol, GPtrArray* intervals) {
 // }
 static int next_interval_reversed(int u, PartList* part) {
     u--;
-    while(u != -1) {
-        GPtrArray *Q = part->Q_in[u];
-        if(Q->len > 0) return u;
+    while (u != -1) {
+        GPtrArray* Q = part->Q_in[u];
+        if (Q->len > 0)
+            return u;
         u--;
     }
 
     return -1;
-
 }
 int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
     int val = 0;
@@ -358,76 +365,94 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
     sol->tw = 0;
 
     for (int it = 0; it < sol->nb_machines; ++it) {
-        PartList *part = sol->part + it;
+        PartList*  part = sol->part + it;
         GPtrArray* machine = part->machine;
         int        last = machine->len - 1;
         Job*       i = (Job*)g_ptr_array_index(machine, last);
         int        u = sol->u[i->job];
         while (u != -1) {
-            interval *I = (interval *) g_ptr_array_index(intervals, u);
-            GPtrArray *Q = part->Q[u];
-            GPtrArray *Q_in = part->Q_in[u];
-            if(Q_in->len > 0) {
-                if(Q_in->len + 1 == Q->len) {
-                    Job *first = (Job *) g_ptr_array_index(Q_in, 0);
-                    int C = sol->c[first->job] - first->processing_time;
-                    #ifndef NDEBUG
-                    Job *last = (Job *) g_ptr_array_index(Q_in, Q_in->len - 1);
-                    int C_last = sol->c[last->job];
-                    #endif
-                    g_ptr_array_sort_with_data(Q_in, g_compare_interval_data, I);
-                    for(int j = 0; j < Q_in->len;j++) {
-                        Job *tmp = g_ptr_array_index(Q_in, j);
+            interval*  I = (interval*)g_ptr_array_index(intervals, u);
+            GPtrArray* Q = part->Q[u];
+            GPtrArray* Q_in = part->Q_in[u];
+            if (Q_in->len > 0) {
+                if (Q_in->len + 1 == Q->len) {
+                    Job* first = (Job*)g_ptr_array_index(Q_in, 0);
+                    int  C = sol->c[first->job] - first->processing_time;
+#ifndef NDEBUG
+                    Job* last = (Job*)g_ptr_array_index(Q_in, Q_in->len - 1);
+                    int  C_last = sol->c[last->job];
+#endif
+                    g_ptr_array_sort_with_data(Q_in, g_compare_interval_data,
+                                               I);
+                    for (int j = 0; j < Q_in->len; j++) {
+                        Job* tmp = g_ptr_array_index(Q_in, j);
                         g_ptr_array_index(Q, j + 1) = tmp;
                         C += tmp->processing_time;
                         sol->c[tmp->job] = C;
                     }
                     assert(C == C_last);
-                    Job *tmp_out = (Job*) g_ptr_array_index(Q, 0);
-                    Job *tmp_in = (Job*) g_ptr_array_index(Q_in, 0);
-                    if(g_compare_interval_data(&tmp_out, &tmp_in,I) < 0) {
-                        assert(sol->c[tmp_in->job] - tmp_in->processing_time == sol->c[tmp_out->job]);
+                    Job* tmp_out = (Job*)g_ptr_array_index(Q, 0);
+                    Job* tmp_in = (Job*)g_ptr_array_index(Q_in, 0);
+                    if (g_compare_interval_data(&tmp_out, &tmp_in, I) < 0) {
+                        assert(sol->c[tmp_in->job] - tmp_in->processing_time ==
+                               sol->c[tmp_out->job]);
                         u = next_interval_reversed(u, part);
                     } else {
-                        Job *tmp = NULL;
-                        CC_SWAP(g_ptr_array_index(Q, 0), g_ptr_array_index(Q, 1), tmp);
+                        Job* tmp = NULL;
+                        CC_SWAP(g_ptr_array_index(Q, 0),
+                                g_ptr_array_index(Q, 1), tmp);
                         g_ptr_array_index(Q_in, 0) = tmp_out;
-                        sol->c[tmp_in->job] = sol->c[tmp_out->job] - tmp_out->processing_time + tmp_in->processing_time;
-                        sol->c[tmp_out->job] = sol->c[tmp_in->job] + tmp_out->processing_time;
+                        sol->c[tmp_in->job] = sol->c[tmp_out->job] -
+                                              tmp_out->processing_time +
+                                              tmp_in->processing_time;
+                        sol->c[tmp_out->job] =
+                            sol->c[tmp_in->job] + tmp_out->processing_time;
 
-                        if(sol->c[tmp_in->job] <= I->b && sol->c[tmp_in->job] > I->a) {
+                        if (sol->c[tmp_in->job] <= I->b &&
+                            sol->c[tmp_in->job] > I->a) {
                             sol->u[tmp_out->job] = u;
                             sol->u_in[tmp_out->job] = u;
                             sol->u[tmp_in->job] = u;
                             int C = sol->c[tmp_in->job];
-                            assert(C == sol->c[tmp_out->job] - tmp_out->processing_time);
-                            g_ptr_array_sort_with_data(Q_in, g_compare_interval_data, I);
-                            for(int j = 0; j < Q_in->len;j++) {
-                                Job *tmp = g_ptr_array_index(Q_in, j);
+                            assert(C == sol->c[tmp_out->job] -
+                                            tmp_out->processing_time);
+                            g_ptr_array_sort_with_data(
+                                Q_in, g_compare_interval_data, I);
+                            for (int j = 0; j < Q_in->len; j++) {
+                                Job* tmp = g_ptr_array_index(Q_in, j);
                                 g_ptr_array_index(Q, j + 1) = tmp;
                                 C += tmp->processing_time;
                                 sol->c[tmp->job] = C;
                             }
                             u = next_interval_reversed(u, part);
                         } else {
-                            if(sol->c[tmp_out->job] <= I->b && sol->c[tmp_out->job] - tmp_out->processing_time > I->a) {
+                            if (sol->c[tmp_out->job] <= I->b &&
+                                sol->c[tmp_out->job] -
+                                        tmp_out->processing_time >
+                                    I->a) {
                                 sol->u[tmp_out->job] = u;
-                                sol->u_in[tmp_out->job] = u; 
+                                sol->u_in[tmp_out->job] = u;
                             } else {
-                                // assert(sol->c[tmp_out->job] <= I->b && sol->c[tmp_out->job] > I->a);
+                                // assert(sol->c[tmp_out->job] <= I->b &&
+                                // sol->c[tmp_out->job] > I->a);
                                 sol->u[tmp_out->job] = u;
                                 sol->u[tmp_out->job] = -1;
                                 g_ptr_array_remove(Q_in, tmp_out);
                             }
                             g_ptr_array_remove(Q, tmp_in);
                             int old_u = u - 1;
-                            while(old_u != -1) {
-                                interval* tmp_I = (interval*)g_ptr_array_index(intervals, old_u);
-                                if(sol->c[tmp_in->job] <= tmp_I->b && sol->c[tmp_in->job] > tmp_I->a) {
+                            while (old_u != -1) {
+                                interval* tmp_I = (interval*)g_ptr_array_index(
+                                    intervals, old_u);
+                                if (sol->c[tmp_in->job] <= tmp_I->b &&
+                                    sol->c[tmp_in->job] > tmp_I->a) {
                                     g_ptr_array_add(part->Q[old_u], tmp_in);
                                     sol->u[tmp_in->job] = old_u;
-                                    if(sol->c[tmp_in->job] - tmp_in->processing_time > tmp_I->a) {
-                                        g_ptr_array_add(part->Q_in[old_u], tmp_in);
+                                    if (sol->c[tmp_in->job] -
+                                            tmp_in->processing_time >
+                                        tmp_I->a) {
+                                        g_ptr_array_add(part->Q_in[old_u],
+                                                        tmp_in);
                                         sol->u_in[tmp_in->job] = old_u;
                                     }
                                     break;
@@ -438,10 +463,11 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                     }
                 } else {
                     assert(u == 0);
-                    g_qsort_with_data(Q->pdata, Q->len, sizeof(Job*), g_compare_interval_data, I);
+                    g_qsort_with_data(Q->pdata, Q->len, sizeof(Job*),
+                                      g_compare_interval_data, I);
                     int C = 0;
-                    for(int j = 0; j < Q->len;j++) {
-                        Job *tmp = g_ptr_array_index(Q, j);
+                    for (int j = 0; j < Q->len; j++) {
+                        Job* tmp = g_ptr_array_index(Q, j);
                         C += tmp->processing_time;
                         sol->c[tmp->job] = C;
                     }
@@ -457,11 +483,11 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
         part->tw = 0;
         part->c = 0;
 
-        for(int uu = 0; uu < intervals->len; uu++) {
-            GPtrArray *Q = part->Q[uu];
-            if(Q->len > 0) {
-                for(int k = 0; k < Q->len; k++) {
-                    Job *tmp = g_ptr_array_index(Q, k);
+        for (int uu = 0; uu < intervals->len; uu++) {
+            GPtrArray* Q = part->Q[uu];
+            if (Q->len > 0) {
+                for (int k = 0; k < Q->len; k++) {
+                    Job* tmp = g_ptr_array_index(Q, k);
                     g_ptr_array_add(machine, g_ptr_array_index(Q, k));
                     part->c += tmp->processing_time;
                     assert(part->c == sol->c[tmp->job]);

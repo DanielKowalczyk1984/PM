@@ -423,7 +423,8 @@ int heuristic(Problem* prob) {
     solution_print(sol);
 
     if (prob->opt_sol == NULL) {
-        prob->opt_sol = solution_alloc(intervals->len,nb_machines, nb_jobs, prob->off);
+        prob->opt_sol =
+            solution_alloc(intervals->len, nb_machines, nb_jobs, prob->off);
         CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
         solution_update(prob->opt_sol, sol);
     }
@@ -431,7 +432,7 @@ int heuristic(Problem* prob) {
     for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0;
          ++i) {
         // fprintf(stderr, "iteration %d\n", i);
-        sol1 = solution_alloc(intervals->len,nb_machines, nb_jobs, prob->off);
+        sol1 = solution_alloc(intervals->len, nb_machines, nb_jobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
         CCcheck_val_2(val, "Failed in construct random solution");
