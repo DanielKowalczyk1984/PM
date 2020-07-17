@@ -170,8 +170,9 @@ static int calculate_T(interval_pair* pair, int k, GPtrArray* interval_array) {
     }
 }
 
-static int check_interval(interval_pair* pair, int k,
-                          GPtrArray* interval_array) {
+static int check_interval(interval_pair* pair,
+                          int            k,
+                          GPtrArray*     interval_array) {
     interval* I = (interval*)g_ptr_array_index(interval_array, k);
     Job*      j = pair->b;
     return (I->a + j->processing_time >= I->b ||

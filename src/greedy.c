@@ -3,8 +3,11 @@
 
 // static int add_feasible_solution(problem *problem, solution *new_sol);
 static int  solution_set_c(Solution* sol);
-static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
-                         GRand* rand_uniform);
+static void perturb_swap(Solution*          sol,
+                         local_search_data* data,
+                         int                l1,
+                         int                l2,
+                         GRand*             rand_uniform);
 void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform);
 void permutation_solution(GRand* rand_uniform, Solution* sol);
 
@@ -255,8 +258,11 @@ void RVND(Solution* sol, local_search_data* data) {
     free_all(sol);
 }
 
-static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
-                         GRand* rand_uniform) {
+static void perturb_swap(Solution*          sol,
+                         local_search_data* data,
+                         int                l1,
+                         int                l2,
+                         GRand*             rand_uniform) {
     int       m1, m2;
     unsigned  i1 = 0, i2 = 0;
     int       nb_machines = sol->nb_machines;

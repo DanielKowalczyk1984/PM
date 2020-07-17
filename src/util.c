@@ -28,7 +28,9 @@ void print_line() {
         "-------------\n");
 }
 
-int bisearch(int* sorted, const void* target, int size,
+int bisearch(int*        sorted,
+             const void* target,
+             int         size,
              int (*compare)(const void* key1, const void* key2)) {
     int left, right;
     left = 0;

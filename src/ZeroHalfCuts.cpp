@@ -7,9 +7,11 @@
 #include "gurobi_c++.h"
 #include "gurobi_c.h"
 
-ZeroHalfCuts::ZeroHalfCuts(int _nb_jobs, int _nb_machines,
-                           ReformulationModel* _rmp_model, NodeId& _root,
-                           NodeTableEntity<>* _table)
+ZeroHalfCuts::ZeroHalfCuts(int                 _nb_jobs,
+                           int                 _nb_machines,
+                           ReformulationModel* _rmp_model,
+                           NodeId&             _root,
+                           NodeTableEntity<>*  _table)
     : env(std::make_unique<GRBEnv>()),
       model(std::make_unique<GRBModel>(*env)),
       nb_jobs(_nb_jobs),

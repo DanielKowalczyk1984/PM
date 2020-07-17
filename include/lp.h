@@ -95,17 +95,43 @@ int wctlp_rc(wctlp*, double* rc, int first);
 
 int wctlp_basis_cols(wctlp* lp, int* column_status, int first);
 int wctlp_change_obj(wctlp* lp, int start, int len, double* values);
-int wctlp_addrow(wctlp* lp, int nb_non_zero, int* column_indices, double* cval,
-                 char sense, double rhs, char* name);
-int wctlp_addcol(wctlp* lp, int nb_non_zero, int* column_indices, double* cval,
-                 double obj, double lb, double ub, char vartype, char* name);
-int wctlp_addrows(wctlp* lp, int nb_rows, int nb_zero, int* start,
-                  int* column_indices, double* coeff_val, char* sense,
-                  double* rhs, char** name);
+int wctlp_addrow(wctlp*  lp,
+                 int     nb_non_zero,
+                 int*    column_indices,
+                 double* cval,
+                 char    sense,
+                 double  rhs,
+                 char*   name);
+int wctlp_addcol(wctlp*  lp,
+                 int     nb_non_zero,
+                 int*    column_indices,
+                 double* cval,
+                 double  obj,
+                 double  lb,
+                 double  ub,
+                 char    vartype,
+                 char*   name);
+int wctlp_addrows(wctlp*  lp,
+                  int     nb_rows,
+                  int     nb_zero,
+                  int*    start,
+                  int*    column_indices,
+                  double* coeff_val,
+                  char*   sense,
+                  double* rhs,
+                  char**  name);
 int wctlp_deletecols(wctlp* lp, int first_column_ind, int last_column_ind);
-int wctlp_addcols(wctlp* lp, int num_vars, int nb_zero, int* start,
-                  int* row_indices, double* coeff_val, double* obj, double* lb,
-                  double* ub, char* vtype, char** name);
+int wctlp_addcols(wctlp*  lp,
+                  int     num_vars,
+                  int     nb_zero,
+                  int*    start,
+                  int*    row_indices,
+                  double* coeff_val,
+                  double* obj,
+                  double* lb,
+                  double* ub,
+                  char*   vtype,
+                  char**  name);
 
 int wctlp_set_coltypes(wctlp* lp, char sense);
 int wctlp_setbound(wctlp* lp, int col, char lower_or_upper, double bound);
@@ -122,9 +148,14 @@ int wctlp_chg_lb_var(wctlp* lp, int var, double lb);
 int wctlp_pi_inf(wctlp* lp, double* pi);
 int wctlp_get_nb_rows(wctlp* lp, int* nb_rows);
 int wctlp_get_nb_cols(wctlp* lp, int* nb_cols);
-int wctlp_chgcoeff(wctlp* lp, int cnt, int* column_indices, int* var_indices,
+int wctlp_chgcoeff(wctlp*  lp,
+                   int     cnt,
+                   int*    column_indices,
+                   int*    var_indices,
                    double* cval);
-int wctlp_getcoeff(wctlp* lp, int* column_indices, int* var_indices,
+int wctlp_getcoeff(wctlp*  lp,
+                   int*    column_indices,
+                   int*    var_indices,
                    double* cval);
 
 double lp_int_tolerance(void);

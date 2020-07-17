@@ -47,7 +47,8 @@ struct _BinomialHeap {
     unsigned int            roots_length;
 };
 
-static int binomial_heap_cmp(BinomialHeap* heap, BinomialHeapValue data1,
+static int binomial_heap_cmp(BinomialHeap*     heap,
+                             BinomialHeapValue data1,
                              BinomialHeapValue data2) {
     if (heap->heap_type == BINOMIAL_HEAP_TYPE_MIN) {
         return heap->compare_func(data1, data2);

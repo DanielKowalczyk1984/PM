@@ -7,8 +7,10 @@
 /**
  * Pricersolver for the TI index formulation
  */
-PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray* _jobs, int _num_machines,
-                                           int _Hmax, const char* p_name)
+PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray*  _jobs,
+                                           int         _num_machines,
+                                           int         _Hmax,
+                                           const char* p_name)
     : PricerSolverBase(_jobs, _num_machines, p_name),
       Hmax(_Hmax),
       size_graph(0u),
@@ -288,7 +290,9 @@ OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing(double* _pi) {
 }
 
 void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
-    const double* columns, const GPtrArray* schedule_sets, int num_columns) {
+    const double*    columns,
+    const GPtrArray* schedule_sets,
+    int              num_columns) {
     std::fill(lp_x, lp_x + nb_jobs * (Hmax + 1), 0.0);
     for (int k = 0; k < num_columns; k++) {
         if (columns[k] > 0.00001) {
@@ -322,8 +326,9 @@ void PricerSolverSimpleDp::represent_solution(Solution* sol) {
     project_solution(sol);
 }
 
-void PricerSolverSimpleDp::add_constraint(Job* job, GPtrArray* list,
-                                          int order) {}
+void PricerSolverSimpleDp::add_constraint(Job*       job,
+                                          GPtrArray* list,
+                                          int        order) {}
 
 void PricerSolverSimpleDp::iterate_zdd() {}
 

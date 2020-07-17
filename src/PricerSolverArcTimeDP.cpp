@@ -3,8 +3,9 @@
 #include "gurobi_c++.h"
 #include "gurobi_c.h"
 
-PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray* _jobs,
-                                             int _num_machines, int _Hmax,
+PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
+                                             int         _num_machines,
+                                             int         _Hmax,
                                              const char* p_name)
     : PricerSolverBase(_jobs, _num_machines, p_name),
       Hmax(_Hmax),
@@ -462,7 +463,9 @@ OptimalSolution<double> PricerSolverArcTimeDp::farkas_pricing(double* _pi) {
 }
 
 void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
-    const double* columns, const GPtrArray* schedule_sets, int num_columns) {
+    const double*    columns,
+    const GPtrArray* schedule_sets,
+    int              num_columns) {
     std::fill(lp_x, lp_x + get_nb_edges(), 0);
     for (int k = 0; k < num_columns; k++) {
         if (columns[k]) {
@@ -534,8 +537,9 @@ void PricerSolverArcTimeDp::represent_solution(Solution* sol) {
     project_solution(sol);
 }
 
-void PricerSolverArcTimeDp::add_constraint(Job* job, GPtrArray* list,
-                                           int order) {}
+void PricerSolverArcTimeDp::add_constraint(Job*       job,
+                                           GPtrArray* list,
+                                           int        order) {}
 
 void PricerSolverArcTimeDp::iterate_zdd() {}
 

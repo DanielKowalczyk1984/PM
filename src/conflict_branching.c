@@ -1,13 +1,21 @@
 #include <wct.h>
 
 /** help functions for conflict branching */
-static int create_same_conflict(Problem* problem, NodeData* parent_pd,
-                                NodeData** child, Job* v1, Job* v2);
-static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
-                                  NodeData** child, Job* v1, Job* v2);
+static int create_same_conflict(Problem*   problem,
+                                NodeData*  parent_pd,
+                                NodeData** child,
+                                Job*       v1,
+                                Job*       v2);
+static int create_differ_conflict(Problem*   problem,
+                                  NodeData*  parent_pd,
+                                  NodeData** child,
+                                  Job*       v1,
+                                  Job*       v2);
 
-static int transfer_same_cclasses(NodeData* pd, GPtrArray* colPool, Job* v1,
-                                  Job* v2) {
+static int transfer_same_cclasses(NodeData*  pd,
+                                  GPtrArray* colPool,
+                                  Job*       v1,
+                                  Job*       v2) {
     int          val = 0;
     int          i;
     ScheduleSet* tmp;
@@ -60,8 +68,11 @@ CLEAN:
     return val;
 }
 
-static int create_same_conflict(Problem* problem, NodeData* parent_pd,
-                                NodeData** child, Job* v1, Job* v2) {
+static int create_same_conflict(Problem*   problem,
+                                NodeData*  parent_pd,
+                                NodeData** child,
+                                Job*       v1,
+                                Job*       v2) {
     int val = 0;
     // Parms *parms = &(problem->parms);
     NodeData* pd = CC_SAFE_MALLOC(1, NodeData);
@@ -128,8 +139,11 @@ CLEAN:
     return val;
 }
 
-static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
-                                  NodeData** child, Job* v1, Job* v2) {
+static int create_differ_conflict(Problem*   problem,
+                                  NodeData*  parent_pd,
+                                  NodeData** child,
+                                  Job*       v1,
+                                  Job*       v2) {
     int       val = 0;
     int       i;
     int       nb_cols;
@@ -240,9 +254,13 @@ CLEAN:
     return val;
 }
 
-static int find_strongest_children_conflict(
-    int* strongest_v1, int* strongest_v2, NodeData* pd, Problem* problem,
-    HeapContainer* cand_heap, int* nodepair_refs, double* nodepair_weights) {
+static int find_strongest_children_conflict(int*           strongest_v1,
+                                            int*           strongest_v2,
+                                            NodeData*      pd,
+                                            Problem*       problem,
+                                            HeapContainer* cand_heap,
+                                            int*           nodepair_refs,
+                                            double*        nodepair_weights) {
     int    val = 0;
     int    max_non_improving_branches = 4; /* pd->nb_jobs / 100 + 1; */
     int    remaining_branches = max_non_improving_branches;

@@ -128,8 +128,13 @@ int wctlp_change_obj(wctlp* lp, int start, int len, double* values) {
     return val;
 }
 
-int wctlp_addrow(wctlp* lp, int nb_zero, int* column_indices, double* cval,
-                 char sense, double rhs, char* name) {
+int wctlp_addrow(wctlp*  lp,
+                 int     nb_zero,
+                 int*    column_indices,
+                 double* cval,
+                 char    sense,
+                 double  rhs,
+                 char*   name) {
     int  val = 0;
     char inequality_sense;
 
@@ -160,9 +165,15 @@ int wctlp_addrow(wctlp* lp, int nb_zero, int* column_indices, double* cval,
     return val;
 }
 
-int wctlp_addrows(wctlp* lp, int nb_rows, int nb_zero, int* start,
-                  int* column_indices, double* coeff_val, char* sense,
-                  double* rhs, char** name) {
+int wctlp_addrows(wctlp*  lp,
+                  int     nb_rows,
+                  int     nb_zero,
+                  int*    start,
+                  int*    column_indices,
+                  double* coeff_val,
+                  char*   sense,
+                  double* rhs,
+                  char**  name) {
     int val = 0;
     // char inequality_sense;
 
@@ -193,8 +204,15 @@ int wctlp_addrows(wctlp* lp, int nb_rows, int nb_zero, int* start,
     return val;
 }
 
-int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval,
-                 double obj, double lb, double ub, char sense, char* name) {
+int wctlp_addcol(wctlp*  lp,
+                 int     nb_zero,
+                 int*    column_indices,
+                 double* cval,
+                 double  obj,
+                 double  lb,
+                 double  ub,
+                 char    sense,
+                 char*   name) {
     int  val = 0;
     char inequality_sense;
 
@@ -225,9 +243,17 @@ int wctlp_addcol(wctlp* lp, int nb_zero, int* column_indices, double* cval,
     return val;
 }
 
-int wctlp_addcols(wctlp* lp, int num_vars, int nb_zero, int* start,
-                  int* row_indices, double* coeff_val, double* obj, double* lb,
-                  double* ub, char* vtype, char** name) {
+int wctlp_addcols(wctlp*  lp,
+                  int     num_vars,
+                  int     nb_zero,
+                  int*    start,
+                  int*    row_indices,
+                  double* coeff_val,
+                  double* obj,
+                  double* lb,
+                  double* ub,
+                  char*   vtype,
+                  char**  name) {
     int val = 0;
     // char inequality_sense;
 
@@ -258,7 +284,10 @@ int wctlp_addcols(wctlp* lp, int num_vars, int nb_zero, int* start,
     return val;
 }
 
-int wctlp_chgcoeff(wctlp* lp, int cnt, int* column_indices, int* var_indices,
+int wctlp_chgcoeff(wctlp*  lp,
+                   int     cnt,
+                   int*    column_indices,
+                   int*    var_indices,
                    double* cval) {
     int val = 0;
     val = GRBchgcoeffs(lp->model, cnt, column_indices, var_indices, cval);
@@ -268,7 +297,9 @@ int wctlp_chgcoeff(wctlp* lp, int cnt, int* column_indices, int* var_indices,
     return val;
 }
 
-int wctlp_getcoeff(wctlp* lp, int* column_indices, int* var_indices,
+int wctlp_getcoeff(wctlp*  lp,
+                   int*    column_indices,
+                   int*    var_indices,
                    double* cval) {
     int val;
     val = GRBgetcoeff(lp->model, *column_indices, *var_indices, cval);

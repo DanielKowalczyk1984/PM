@@ -10,9 +10,12 @@
 extern "C" {
 #include <scheduleset.h>
 
-PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
-                            GPtrArray* ordered_jobs, parms* parms, int _Hmax,
-                            int* _take_jobs) {
+PricerSolverBase* newSolver(GPtrArray* jobs,
+                            int        _num_machines,
+                            GPtrArray* ordered_jobs,
+                            parms*     parms,
+                            int        _Hmax,
+                            int*       _take_jobs) {
     switch (parms->pricing_solver) {
         case bdd_solver_simple:
             return new PricerSolverBddSimple(jobs, _num_machines, ordered_jobs,
@@ -54,8 +57,10 @@ PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
     }
 }
 
-PricerSolverBase* newSolverDp(GPtrArray* _jobs, int _num_machines, int _Hmax,
-                              parms* parms) {
+PricerSolverBase* newSolverDp(GPtrArray* _jobs,
+                              int        _num_machines,
+                              int        _Hmax,
+                              parms*     parms) {
     switch (parms->pricing_solver) {
         case dp_solver:
             return new PricerSolverSimpleDp(_jobs, _num_machines, _Hmax,
@@ -74,9 +79,12 @@ PricerSolverBase* newSolverDp(GPtrArray* _jobs, int _num_machines, int _Hmax,
     }
 }
 
-PricerSolverBase* newSolverTIBdd(GPtrArray* _jobs, int _num_machines,
-                                 GPtrArray* _ordered_jobs, int* _take_jobs,
-                                 int _Hmax, Parms* parms) {
+PricerSolverBase* newSolverTIBdd(GPtrArray* _jobs,
+                                 int        _num_machines,
+                                 GPtrArray* _ordered_jobs,
+                                 int*       _take_jobs,
+                                 int        _Hmax,
+                                 Parms*     parms) {
     return new PricerSolverBddBackwardCycle(_jobs, _num_machines, _ordered_jobs,
                                             parms->pname, _Hmax, _take_jobs);
 }

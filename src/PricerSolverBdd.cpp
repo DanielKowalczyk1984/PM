@@ -30,9 +30,12 @@
 
 using namespace std;
 
-PricerSolverBdd::PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
-                                 GPtrArray* _ordered_jobs, const char* p_name,
-                                 int _Hmax, int* _take_jobs)
+PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
+                                 int         _num_machines,
+                                 GPtrArray*  _ordered_jobs,
+                                 const char* p_name,
+                                 int         _Hmax,
+                                 int*        _take_jobs)
     : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name),
       size_graph(0),
       nb_removed_edges(0),
@@ -401,7 +404,8 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
 }
 
 double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
-                                             double* pi, double* lhs) {
+                                             double*                  pi,
+                                             double*                  lhs) {
     double result = sol.cost;
     auto&  table = *decision_diagram->getDiagram();
     auto   tmp_nodeid(decision_diagram->root());

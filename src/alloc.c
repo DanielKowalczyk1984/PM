@@ -53,7 +53,10 @@ void* CCutil_reallocrus(void* ptr, size_t size) {
     }
 }
 
-int CCutil_reallocrus_scale(void** pptr, int* pn_num, int count, double scale,
+int CCutil_reallocrus_scale(void** pptr,
+                            int*   pn_num,
+                            int    count,
+                            double scale,
                             size_t size) {
     int   newsize = (int)(((double)*pn_num) * scale);
     void* ptr;

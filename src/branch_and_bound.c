@@ -5,8 +5,12 @@ static int collect_diff_child_conflict(NodeData* cd);
 static int remove_finished_subtree_conflict(NodeData* child);
 static int compare_nodes_bfs(BinomialHeapValue a, BinomialHeapValue b);
 static int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b);
-static int get_int_heap_key(double dbl_heap_key, int v1, int v2,
-                            int nb_machines, int nb_jobs, double error);
+static int get_int_heap_key(double dbl_heap_key,
+                            int    v1,
+                            int    v2,
+                            int    nb_machines,
+                            int    nb_jobs,
+                            double error);
 static int get_int_heap_key_0(double dbl_heap_key, int v1, int v2);
 
 static int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b) {
@@ -42,8 +46,12 @@ static int x_frac(const double x, double error) {
 }
 
 MAYBE_UNUSED
-static int get_int_heap_key(double dbl_heap_key, int v1, int v2,
-                            int nb_machines, int nb_jobs, double error) {
+static int get_int_heap_key(double dbl_heap_key,
+                            int    v1,
+                            int    v2,
+                            int    nb_machines,
+                            int    nb_jobs,
+                            double error) {
     int    val = INT_MAX - 1;
     double temp;
 
@@ -100,8 +108,10 @@ void init_BB_tree(Problem* problem) {
     }
 }
 
-int insert_frac_pairs_into_heap(NodeData* pd, int* nodepair_refs,
-                                double* nodepair_weights, int nb_pairs,
+int insert_frac_pairs_into_heap(NodeData*      pd,
+                                int*           nodepair_refs,
+                                double*        nodepair_weights,
+                                int            nb_pairs,
                                 HeapContainer* heap) {
     int          val = 0;
     int          i;

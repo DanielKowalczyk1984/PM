@@ -35,8 +35,10 @@ CLEAN:
 
 extern "C" {
 
-double compute_lagrange(OptimalSolution<double>& sol, double* rhs, double* pi,
-                        int nb_jobs) {
+double compute_lagrange(OptimalSolution<double>& sol,
+                        double*                  rhs,
+                        double*                  pi,
+                        int                      nb_jobs) {
     double result = 0.0;
     double a = 0.0;
 
@@ -280,8 +282,11 @@ int update_stabcenter(const OptimalSolution<double>& sol, NodeData* pd) {
     return val;
 }
 
-static void adjust_alpha(double* pi_out, double* pi_in, double* subgradient,
-                         int nb_jobs, double& alpha) {
+static void adjust_alpha(double* pi_out,
+                         double* pi_in,
+                         double* subgradient,
+                         int     nb_jobs,
+                         double& alpha) {
     double sum = 0.0;
 
     for (int i = 0; i < nb_jobs; ++i) {
@@ -295,9 +300,14 @@ static void adjust_alpha(double* pi_out, double* pi_in, double* subgradient,
     }
 }
 
-static void compute_pi_eta_sep(int nb_constr, double* pi_sep, double* eta_sep,
-                               double alpha, double* pi_in, double* eta_in,
-                               double* pi_out, double* eta_out) {
+static void compute_pi_eta_sep(int     nb_constr,
+                               double* pi_sep,
+                               double* eta_sep,
+                               double  alpha,
+                               double* pi_in,
+                               double* eta_in,
+                               double* pi_out,
+                               double* eta_out) {
     int    i;
     double beta = 1.0 - alpha;
 

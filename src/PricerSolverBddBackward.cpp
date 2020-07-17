@@ -7,9 +7,17 @@
  * consecutive jobs
  */
 PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
-    GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs,
-    const char* p_name, int _Hmax, int* _take_jobs)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name, _Hmax,
+    GPtrArray*  _jobs,
+    int         _num_machines,
+    GPtrArray*  _ordered_jobs,
+    const char* p_name,
+    int         _Hmax,
+    int*        _take_jobs)
+    : PricerSolverBdd(_jobs,
+                      _num_machines,
+                      _ordered_jobs,
+                      p_name,
+                      _Hmax,
                       _take_jobs) {
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
@@ -37,8 +45,9 @@ void PricerSolverBddBackwardSimple::compute_labels(double* _pi) {
     get_decision_diagram()->compute_labels_forward(reversed_evaluator);
 }
 
-void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
-                                                   double LB) {
+void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi,
+                                                   int     UB,
+                                                   double  LB) {
     NodeTableEntity<>& table =
         get_decision_diagram()->getDiagram().privateEntity();
     compute_labels(pi);
@@ -78,9 +87,17 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi, int UB,
  * Simple backward bdd pricersolver for the flow formulation
  */
 PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
-    GPtrArray* _jobs, int _num_machines, GPtrArray* _ordered_jobs,
-    const char* p_name, int _Hmax, int* _take_jobs)
-    : PricerSolverBdd(_jobs, _num_machines, _ordered_jobs, p_name, _Hmax,
+    GPtrArray*  _jobs,
+    int         _num_machines,
+    GPtrArray*  _ordered_jobs,
+    const char* p_name,
+    int         _Hmax,
+    int*        _take_jobs)
+    : PricerSolverBdd(_jobs,
+                      _num_machines,
+                      _ordered_jobs,
+                      p_name,
+                      _Hmax,
                       _take_jobs) {
     std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
@@ -109,8 +126,9 @@ void PricerSolverBddBackwardCycle::compute_labels(double* _pi) {
     get_decision_diagram()->compute_labels_forward(reversed_evaluator);
 }
 
-void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi, int UB,
-                                                  double LB) {
+void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
+                                                  int     UB,
+                                                  double  LB) {
     NodeTableEntity<>& table =
         get_decision_diagram()->getDiagram().privateEntity();
     compute_labels(pi);

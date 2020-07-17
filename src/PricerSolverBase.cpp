@@ -4,7 +4,8 @@
 /**
  * PricerSolverBase default COnstructor
  **/
-PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
+PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
+                                   int         _num_machines,
                                    const char* p_name)
     : jobs(_jobs),
       nb_jobs(_jobs->len),
@@ -24,8 +25,10 @@ PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
     model->set(GRB_DoubleParam_TimeLimit, 1800);
 }
 
-PricerSolverBase::PricerSolverBase(GPtrArray* _jobs, int _num_machines,
-                                   GPtrArray* _ordered_jobs, const char* p_name)
+PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
+                                   int         _num_machines,
+                                   GPtrArray*  _ordered_jobs,
+                                   const char* p_name)
     : jobs(_jobs),
       nb_jobs(_jobs->len),
       num_machines(_num_machines),
@@ -115,7 +118,8 @@ double PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) {
 }
 
 double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
-                                              double* pi, double* lhs) {
+                                              double*                  pi,
+                                              double*                  lhs) {
     double result = sol.cost;
     std::fill(lhs, lhs + reformulation_model.get_nb_constraints(), 0.0);
 

@@ -42,7 +42,9 @@ void solution_free(Solution** sol) {
     }
 }
 
-Solution* solution_alloc(int nb_interval, int nb_machines, int nb_jobs,
+Solution* solution_alloc(int nb_interval,
+                         int nb_machines,
+                         int nb_jobs,
                          int off) {
     int       val = 0;
     int       i;
@@ -228,8 +230,9 @@ void solution_calculate_all(Solution* sol) {
     }
 }
 
-void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
-                                          int m) {
+void solution_calculate_partition_machine(Solution*  sol,
+                                          GPtrArray* intervals,
+                                          int        m) {
     if (m < sol->nb_machines) {
         GPtrArray* machine = sol->part[m].machine;
         for (int i = 0; i < sol->nb_intervals; i++) {

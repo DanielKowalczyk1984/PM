@@ -83,8 +83,9 @@ void free_all(Solution* sol) {
 
 int compare_process_list(gconstpointer a, gconstpointer b);
 int compare_process_list_b(gconstpointer a, gconstpointer b);
-int local_search_compare_lateness(gconstpointer a, gconstpointer b,
-                                  gpointer data);
+int local_search_compare_lateness(gconstpointer a,
+                                  gconstpointer b,
+                                  gpointer      data);
 
 static void destroy_slope_t(gpointer data) {
     slope_t* tmp = (slope_t*)data;
@@ -140,8 +141,9 @@ int compare_process_list_b(gconstpointer a, gconstpointer b) {
     return 0;
 }
 
-int local_search_compare_lateness(gconstpointer a, gconstpointer b,
-                                  gpointer data) {
+int local_search_compare_lateness(gconstpointer a,
+                                  gconstpointer b,
+                                  gpointer      data) {
     int* data_x = (int*)data;
     Job* x = *(Job* const*)a;
     Job* y = *(Job* const*)b;
@@ -155,8 +157,13 @@ int local_search_compare_lateness(gconstpointer a, gconstpointer b,
     return 0;
 }
 
-static void local_search_add_slope_t(local_search_data* data, int b1, int b2,
-                                     int c, int alpha, int i, int j) {
+static void local_search_add_slope_t(local_search_data* data,
+                                     int                b1,
+                                     int                b2,
+                                     int                c,
+                                     int                alpha,
+                                     int                i,
+                                     int                j) {
     slope_t* tmp = CC_SAFE_MALLOC(1, slope_t);
     tmp->alpha = alpha;
     tmp->c = c;
@@ -276,7 +283,8 @@ int local_search_create_W(Solution* sol, local_search_data* data) {
 }
 
 static int local_search_create_processing_list(Solution*          sol,
-                                               local_search_data* data, int l) {
+                                               local_search_data* data,
+                                               int                l) {
     int val = 0;
 
     for (int i = 0; i < data->nmachines; ++i) {
@@ -336,7 +344,8 @@ static int local_search_create_processing_list_2(Solution*          sol,
 
 static int local_search_create_processing_list_swap(Solution*          sol,
                                                     local_search_data* data,
-                                                    int l1, int l2) {
+                                                    int                l1,
+                                                    int                l2) {
     int val = 0;
 
     for (int i = 0; i < data->nmachines; ++i) {
@@ -387,7 +396,9 @@ static int local_search_create_processing_list_swap(Solution*          sol,
 }
 
 static int local_search_create_processing_list_insertion_inter(
-    Solution* sol, local_search_data* data, int l) {
+    Solution*          sol,
+    local_search_data* data,
+    int                l) {
     int val = 0;
 
     for (int i = 0; i < data->nmachines; ++i) {
@@ -418,7 +429,10 @@ static int local_search_create_processing_list_insertion_inter(
 }
 
 static int local_search_create_processing_list_swap_inter(
-    Solution* sol, local_search_data* data, int l1, int l2) {
+    Solution*          sol,
+    local_search_data* data,
+    int                l1,
+    int                l2) {
     int val = 0;
 
     for (int i = 0; i < data->nmachines; ++i) {
@@ -560,8 +574,12 @@ int local_search_create_g(Solution* sol, local_search_data* data) {
     return val;
 }
 
-static void local_search_update_insertion(Solution* sol, int i_best, int j_best,
-                                          int k_best, int l, int improvement) {
+static void local_search_update_insertion(Solution* sol,
+                                          int       i_best,
+                                          int       j_best,
+                                          int       k_best,
+                                          int       l,
+                                          int       improvement) {
     Job* tmp;
 #ifndef NDEBUG
     int old = sol->tw;
@@ -588,10 +606,13 @@ static void local_search_update_insertion(Solution* sol, int i_best, int j_best,
     assert(old - sol->tw == improvement);
 }
 
-static void local_search_update_insertion_inter(Solution* sol, int i_best,
-                                                int j_best, int k_best,
-                                                int kk_best, int l,
-                                                int improvement) {
+static void local_search_update_insertion_inter(Solution* sol,
+                                                int       i_best,
+                                                int       j_best,
+                                                int       k_best,
+                                                int       kk_best,
+                                                int       l,
+                                                int       improvement) {
     Job* tmp;
 #ifndef NDEBUG
     int old = sol->tw;
@@ -630,9 +651,13 @@ static void local_search_update_insertion_inter(Solution* sol, int i_best,
     sol->part[kk_best].used = 1;
 }
 
-static void local_search_update_swap(Solution* sol, int i_best, int j_best,
-                                     int k_best, int l1, int l2,
-                                     int improvement) {
+static void local_search_update_swap(Solution* sol,
+                                     int       i_best,
+                                     int       j_best,
+                                     int       k_best,
+                                     int       l1,
+                                     int       l2,
+                                     int       improvement) {
     Job*      tmp;
     gpointer  swap;
     PartList* part = sol->part + k_best;
@@ -684,9 +709,14 @@ static void local_search_update_swap(Solution* sol, int i_best, int j_best,
     part->used = 1;
 }
 
-static void local_search_update_inter_swap(Solution* sol, int i_best,
-                                           int j_best, int k_best, int kk_best,
-                                           int l1, int l2, int improvement) {
+static void local_search_update_inter_swap(Solution* sol,
+                                           int       i_best,
+                                           int       j_best,
+                                           int       k_best,
+                                           int       kk_best,
+                                           int       l1,
+                                           int       l2,
+                                           int       improvement) {
     Job*      tmp;
     gpointer  swap;
     PartList* part1 = sol->part + k_best;
@@ -749,8 +779,9 @@ static void local_search_update_inter_swap(Solution* sol, int i_best,
     part2->used = 1;
 }
 
-void local_search_forward_insertion(Solution* sol, local_search_data* data,
-                                    int l) {
+void local_search_forward_insertion(Solution*          sol,
+                                    local_search_data* data,
+                                    int                l) {
     int    pos, p, c, tmp;
     int    update;
     Job*   tmp_j;
@@ -880,8 +911,9 @@ void local_search_forward_insertion(Solution* sol, local_search_data* data,
     }
 }
 
-void local_search_backward_insertion(Solution* sol, local_search_data* data,
-                                     int l) {
+void local_search_backward_insertion(Solution*          sol,
+                                     local_search_data* data,
+                                     int                l) {
     int    c;
     int    pos;
     int    t;
@@ -1024,8 +1056,10 @@ void local_search_backward_insertion(Solution* sol, local_search_data* data,
     }
 }
 
-void local_search_swap_intra(Solution* sol, local_search_data* data, int l1,
-                             int l2) {
+void local_search_swap_intra(Solution*          sol,
+                             local_search_data* data,
+                             int                l1,
+                             int                l2) {
     int    pos, p, c, t;
     int    update;
     GList* it;
@@ -1215,8 +1249,9 @@ void local_search_swap_intra(Solution* sol, local_search_data* data, int l1,
     }
 }
 
-void local_search_insertion_inter(Solution* sol, local_search_data* data,
-                                  int l) {
+void local_search_insertion_inter(Solution*          sol,
+                                  local_search_data* data,
+                                  int                l) {
     int    pos, p, c, t;
     int    update;
     GList* it;
@@ -1377,8 +1412,10 @@ void local_search_insertion_inter(Solution* sol, local_search_data* data,
     }
 }
 
-void local_search_swap_inter(Solution* sol, local_search_data* data, int l1,
-                             int l2) {
+void local_search_swap_inter(Solution*          sol,
+                             local_search_data* data,
+                             int                l1,
+                             int                l2) {
     int    pos, p, c, t;
     int    update;
     GList* it;
