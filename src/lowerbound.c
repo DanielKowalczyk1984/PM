@@ -1,5 +1,6 @@
 #include <solver.h>
 #include <wct.h>
+#include "gurobi_c.h"
 #include "lp.h"
 #include "scheduleset.h"
 #include "util.h"
@@ -27,8 +28,8 @@ void g_grow_ages(gpointer data, gpointer user_data) {
     ScheduleSet* x = (ScheduleSet*)data;
     NodeData*    pd = (NodeData*)user_data;
 
-    if (pd->column_status[x->id] == wctlp_LOWER ||
-        pd->column_status[x->id] == wctlp_FREE) {
+    if (pd->column_status[x->id + pd->id_pseudo_schedules] == wctlp_LOWER ||
+        pd->column_status[x->id + pd->id_pseudo_schedules] == wctlp_FREE) {
         x->age++;
 
         if (x->age > pd->retirementage) {
@@ -45,10 +46,9 @@ static int grow_ages(NodeData* pd) {
     wctlp_get_nb_cols(pd->RMP, &nb_cols);
     assert(nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
     CC_IFFREE(pd->column_status, int);
-    pd->column_status =
-        (int*)CC_SAFE_MALLOC(nb_cols - pd->id_pseudo_schedules, int);
+    pd->column_status = (int*)CC_SAFE_MALLOC(nb_cols, int);
     CCcheck_NULL_2(pd->column_status, "Failed to allocate column_status");
-    val = wctlp_basis_cols(pd->RMP, pd->column_status, pd->id_pseudo_schedules);
+    val = wctlp_basis_cols(pd->RMP, pd->column_status, 0);
     CCcheck_val_2(val, "Failed in wctlp_basis_cols");
     pd->zero_count = 0;
 
@@ -161,6 +161,7 @@ int delete_infeasible_schedules(NodeData* pd) {
                 CCcheck_val_2(val, "Failed in wctlp_deletecols");
                 g_ptr_array_remove_range(pd->localColPool, first_del,
                                          last_del - first_del + 1);
+                pd->zero_count += last_del - first_del + 1;
                 it = it - (last_del - first_del);
                 first_del = last_del = -1;
                 pd->depth = 1;
@@ -185,16 +186,21 @@ int delete_infeasible_schedules(NodeData* pd) {
         g_ptr_array_remove_range(pd->localColPool, first_del,
                                  last_del - first_del + 1);
         pd->depth = 1;
+        pd->zero_count += last_del - first_del + 1;
     }
 
-    if (dbg_lvl() > 1) {
+    if (pd->zero_count > 0) {
+        solve_relaxation(pd->problem, pd);
+    }
+
+    if (dbg_lvl() > -1) {
         printf("Deleted %d out of %d columns with age > %d.\n", pd->zero_count,
                count, pd->retirementage);
     }
 
     wctlp_get_nb_cols(pd->RMP, &nb_col);
     assert(pd->localColPool->len == nb_col - pd->id_pseudo_schedules);
-    if (dbg_lvl() > 1) {
+    if (dbg_lvl() > -1) {
         printf("number of cols = %d\n", nb_col - pd->id_pseudo_schedules);
     }
 
@@ -330,13 +336,16 @@ int compute_objective(NodeData* pd, Parms* parms) {
             : (int)ceil(pd->LP_lower_bound);
     pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound, pd->LP_lower_bound_dual);
     pd->eta_out = pd->LP_lower_bound_BB;
+    pd->LP_lower_min = CC_MIN(pd->LP_lower_min, pd->LP_lower_bound_BB);
 
     if (pd->iterations % pd->nb_jobs == 0) {
         printf(
             "Current primal LP objective: %19.16f  (LP_dual-bound %19.16f, "
             "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
-            pd->LP_lower_bound, pd->LP_lower_bound_dual, pd->lower_bound,
-            pd->eta_in, pd->eta_out);
+            pd->LP_lower_bound + pd->problem->off,
+            pd->LP_lower_bound_dual + pd->problem->off,
+            pd->lower_bound + pd->problem->off, pd->eta_in + pd->problem->off,
+            pd->eta_out + pd->problem->off);
     }
 
 CLEAN:
@@ -516,23 +525,22 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             real_time_pricing = getRealTime() - real_time_pricing;
             problem->real_time_pricing += real_time_pricing;
 
+            if (parms->reduce_cost_fixing == yes_reduced_cost &&
+                pd->iterations % pd->nb_jobs == 0 && pd->iterations > 0 &&
+                status == GRB_OPTIMAL && pd->update_stab_center) {
+                CCutil_start_resume_time(&(problem->tot_reduce_cost_fixing));
+                reduce_cost_fixing(pd);
+                check_schedules(pd);
+                delete_infeasible_schedules(pd);
+                CCutil_suspend_timer(&(problem->tot_reduce_cost_fixing));
+            }
+
             if (pd->update) {
                 for (j = 0; j < pd->nb_new_sets; j++) {
                     val = add_lhs_scheduleset_to_rmp(pd->newsets + j, pd);
                     CCcheck_val_2(val, "wctlp_addcol failed");
                     pd->newsets[j].id = pd->localColPool->len;
                     g_ptr_array_add(pd->localColPool, pd->newsets + j);
-                    if (parms->reduce_cost_fixing == yes_reduced_cost &&
-                        pd->iterations % pd->nb_jobs == 0 &&
-                        pd->iterations > 0) {
-                        CCutil_start_resume_time(
-                            &(problem->tot_reduce_cost_fixing));
-                        reduce_cost_fixing(pd);
-                        check_schedules(pd);
-                        delete_infeasible_schedules(pd);
-                        CCutil_suspend_timer(
-                            &(problem->tot_reduce_cost_fixing));
-                    }
                 }
                 pd->newsets = NULL;
                 nb_non_improvements = 0;
@@ -547,7 +555,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                         case stab_dynamic:
                         case stab_hybrid:
                             break_while_loop =
-                                (CC_ABS(pd->eta_out - pd->eta_in) < 1e-6);
+                                (CC_ABS(pd->eta_out - pd->eta_in) < 1e-4);
                             pd->nb_new_sets = 0;
                             // || nb_non_improvements > 5;  // ||
                             // (ceil(pd->eta_in - 0.00001) >= pd->eta_out);
