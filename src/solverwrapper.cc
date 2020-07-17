@@ -11,7 +11,8 @@ extern "C" {
 #include <scheduleset.h>
 
 PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
-                            GPtrArray* ordered_jobs, parms* parms, int _Hmax, int* _take_jobs) {
+                            GPtrArray* ordered_jobs, parms* parms, int _Hmax,
+                            int* _take_jobs) {
     switch (parms->pricing_solver) {
         case bdd_solver_simple:
             return new PricerSolverBddSimple(jobs, _num_machines, ordered_jobs,
@@ -30,12 +31,14 @@ PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
                                           parms->pname);
             break;
         case bdd_solver_backward_simple:
-            return new PricerSolverBddBackwardSimple(
-                jobs, _num_machines, ordered_jobs, parms->pname, _Hmax, _take_jobs);
+            return new PricerSolverBddBackwardSimple(jobs, _num_machines,
+                                                     ordered_jobs, parms->pname,
+                                                     _Hmax, _take_jobs);
             break;
         case bdd_solver_backward_cycle:
             return new PricerSolverBddBackwardCycle(jobs, _num_machines,
-                                                    ordered_jobs, parms->pname, _Hmax, _take_jobs);
+                                                    ordered_jobs, parms->pname,
+                                                    _Hmax, _take_jobs);
             break;
         case zdd_solver_backward_simple:
             return new PricerSolverZddBackwardSimple(
@@ -46,7 +49,8 @@ PricerSolverBase* newSolver(GPtrArray* jobs, int _num_machines,
                                                     ordered_jobs, parms->pname);
         default:
             return new PricerSolverBddBackwardCycle(jobs, _num_machines,
-                                                    ordered_jobs, parms->pname, _Hmax, _take_jobs);
+                                                    ordered_jobs, parms->pname,
+                                                    _Hmax, _take_jobs);
     }
 }
 
@@ -94,7 +98,7 @@ int evaluate_nodes(NodeData* pd) {
     int    UB = pd->problem->opt_sol->tw;
     double LB = pd->LP_lower_bound;
 
-    pd->solver->evaluate_nodes( &g_array_index(pd->pi, double, 0), UB, LB);
+    pd->solver->evaluate_nodes(&g_array_index(pd->pi, double, 0), UB, LB);
 
     return val;
 }
@@ -102,9 +106,9 @@ int evaluate_nodes(NodeData* pd) {
 int reduce_cost_fixing(NodeData* pd) {
     int    val = 0;
     int    UB = pd->problem->opt_sol->tw;
-    double LB = pd->LP_lower_bound;
+    double LB = pd->eta_in;
 
-    pd->solver->reduce_cost_fixing(&g_array_index(pd->pi, double, 0) , UB, LB);
+    pd->solver->reduce_cost_fixing(&g_array_index(pd->pi, double, 0), UB, LB);
     pd->problem->size_graph_after_reduced_cost_fixing =
         get_nb_edges(pd->solver);
     return val;
@@ -154,7 +158,8 @@ int construct_lp_sol_from_rmp(NodeData* pd) {
 
     val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed to get nb cols");
-    pd->lambda = CC_SAFE_REALLOC(pd->lambda, nb_cols - pd->id_pseudo_schedules, double);
+    pd->lambda =
+        CC_SAFE_REALLOC(pd->lambda, nb_cols - pd->id_pseudo_schedules, double);
     CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
     val = wctlp_x(pd->RMP, pd->lambda, pd->id_pseudo_schedules);
     CCcheck_val_2(val, "Failed in wctlp_x");
@@ -187,8 +192,8 @@ int check_schedule_set(ScheduleSet* set, NodeData* pd) {
     return static_cast<int>(pd->solver->check_schedule_set(set->job_list));
 }
 
-void make_schedule_set_feasible(NodeData *pd, ScheduleSet *set) {
-    PricerSolver *solver = pd->solver;
+void make_schedule_set_feasible(NodeData* pd, ScheduleSet* set) {
+    PricerSolver* solver = pd->solver;
     solver->make_schedule_set_feasible(set->job_list);
 }
 
