@@ -133,11 +133,12 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         n.backward_label[1].update_label(
             &(p0->backward_label[1]),
             p0->backward_label[1].get_f() + n.reduced_cost[0], false);
-        bool diff = bool_diff_Fij(weight, prev_job, tmp_j);
-        bool diff1 =
-            bool_diff_Fij(weight, p1->backward_label[0].get_prev_job(), tmp_j);
+        // bool diff = bool_diff_Fij(weight, prev_job, tmp_j);
+        // bool diff1 =
+        //     bool_diff_Fij(weight, p1->backward_label[0].get_prev_job(),
+        //     tmp_j);
 
-        if (prev_job != tmp_j && diff) {
+        if (prev_job != tmp_j) {
             T obj1{p1->backward_label[0].get_f() + n.reduced_cost[1]};
             T obj2{p1->backward_label[1].get_f() + n.reduced_cost[1]};
 
@@ -152,7 +153,7 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
                 n.backward_label[0].update_label(&(p1->backward_label[0]), obj1,
                                                  true);
             } else if (obj1 < n.backward_label[1].get_f() &&
-                       tmp_j != n.backward_label[0].get_prev_job() && diff1) {
+                       tmp_j != n.backward_label[0].get_prev_job()) {
                 n.backward_label[1].update_label(&(p1->backward_label[0]), obj1,
                                                  true);
             } else if (obj2 < n.backward_label[1].get_f() &&
