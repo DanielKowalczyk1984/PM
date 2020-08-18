@@ -1,9 +1,12 @@
 #include "ZeroHalfCuts.hpp"
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include "ModelInterface.hpp"
 #include "NodeBddTable.hpp"
 #include "NodeId.hpp"
+#include "fmt/core.h"
+#include "fmt/format.h"
 #include "gurobi_c++.h"
 #include "gurobi_c.h"
 
@@ -45,21 +48,24 @@ bool ZeroHalfCuts::add_cuts() {
 }
 
 void ZeroHalfCuts::generate_model() {
-    auto& root_node = table->node(root);
-    root_node.lp_key = sigma.size();
-    sigma.push_back(model->addVar(0.0, 1.0, 0.0, 'B'));
-    node_ids.push_back(root);
     try {
         for (int i = 0; i < nb_jobs; i++) {
-            jobs_var[i] = model->addVar(0.0, 1.0, 0.0, 'B');
+            jobs_var[i] =
+                model->addVar(0.0, 1.0, 0.0, 'B', fmt::format("jobs_{}", i));
         }
 
+        auto& root_node = table->node(root);
+        root_node.lp_key = sigma.size();
+        sigma.push_back(model->addVar(0.0, 1.0, 0.0, 'B',
+                                      fmt::format("sigma_{}", sigma.size())));
+        node_ids.push_back(root);
         dfs(root);
 
         GRBLinExpr          expr = 0;
         std::vector<double> coeffs(nb_jobs, 1.0);
-        double m = nb_machines % 2 ? 0.0 : static_cast<double>(nb_machines);
-        GRBVar q = model->addVar(0.0, GRB_INFINITY, 0.0, 'I');
+        double              m =
+            nb_machines % 2 == 0 ? 0.0 : static_cast<double>(nb_machines);
+        q = model->addVar(0.0, GRB_INFINITY, 0.0, 'I');
 
         expr.addTerms(coeffs.data(), jobs_var.data(), nb_jobs);
         expr += m * sigma[0] - m * sigma[terminal_key] - 2.0 * q;
@@ -67,8 +73,8 @@ void ZeroHalfCuts::generate_model() {
         model->update();
 
     } catch (GRBException& e) {
-        std::cout << "Error code = " << e.getErrorCode() << std::endl;
-        std::cout << e.getMessage() << std::endl;
+        fmt::print("Error code = {0} {1:-^{2}} {3}", e.getErrorCode(), "", 40,
+                   e.getMessage());
     }
 }
 
@@ -89,44 +95,42 @@ void ZeroHalfCuts::generate_cuts() {
             return;
         }
 
-        // Print best selected set
-        std::cout << "Selected elements in best solution:" << std::endl << "\t";
-
         // Print number of solutions stored
         auto nb_solutions = model->get(GRB_IntAttr_SolCount);
-        std::cout << "Number of solutions found: " << nb_solutions << std::endl;
+        fmt::print("Number of solutions found: {}\n", nb_solutions);
 
-        for (size_t i = 0; i < nb_solutions; i++) {
-            // model->set(GRB_IntParam_SolutionNumber, i);
-            // int j = 0;
-            // for (auto& it : jobs_var) {
-            //     auto x = it.get(GRB_DoubleAttr_Xn);
-            //     if (x > 1e-4) {
-            //         std::cout << j << " ";
-            //     }
-            //     ++j;
-            // }
-            // std::cout << "\n";
-            // j = 0;
-            // for (auto& it : sigma) {
-            //     auto x = it.get(GRB_DoubleAttr_Xn);
-            //     if (x > 1e-4) {
-            //         auto& node = table->node(node_ids[j]);
-            //         if (node_ids[j] > 1) {
-            //             std::cout << node.get_nb_job() << " "
-            //                       << node.get_weight() << "\n";
-            //         } else {
-            //             std::cout << "terminal node\n";
-            //         }
-            //     }
-            //     ++j;
-            // }
-            // std::cout << "--------------------------------------------\n";
+        for (auto i = 0; i < nb_solutions; i++) {
+            model->set(GRB_IntParam_SolutionNumber, i);
+            int j = 0;
+            std::for_each(jobs_var.cbegin(), jobs_var.cend(),
+                          [&j](const auto& it) {
+                              auto x = it.get(GRB_DoubleAttr_Xn);
+                              if (x > 1e-4) {
+                                  fmt::print("{} ", j);
+                              }
+                              j++;
+                          });
+            fmt::print("{}\n", q.get(GRB_DoubleAttr_Xn));
+            int k = 0;
+            std::for_each(sigma.cbegin(), sigma.cend(), [&](const auto& it) {
+                auto x = it.get(GRB_DoubleAttr_Xn);
+                if (x > 1e-4) {
+                    auto& node = table->node(node_ids[k]);
+                    if (node_ids[k] > 1) {
+                        fmt::print("{} {}\n", node.get_nb_job(),
+                                   node.get_weight());
+                    } else {
+                        fmt::print("TERMINAL NODE\n");
+                    }
+                }
+                k++;
+            });
+            fmt::print("{0:-^{1}}\n", "", 40);
         }
 
     } catch (GRBException& e) {
-        std::cout << "Error code = " << e.getErrorCode() << std::endl;
-        std::cout << e.getMessage() << std::endl;
+        fmt::print("Error code = {0} {1:-^{2}} {3}", e.getErrorCode(), "", 40,
+                   e.getMessage());
     }
 }
 
@@ -142,14 +146,20 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
                 if (node.branch[i] == 1) {
                     terminal_key = child.lp_key;
                 }
-                sigma.push_back(model->addVar(0.0, 1.0, 0.0, 'B'));
+
+                sigma.push_back(model->addVar(
+                    0.0, 1.0, 0.0, 'B', fmt::format("sigma_{}", sigma.size())));
                 node_ids.push_back(node.branch[i]);
                 auto& s_source = sigma[node.lp_key];
                 auto& s_head = sigma.back();
+                auto  str_y = fmt::format("y_{}_{}", node.get_nb_job(),
+                                         node.get_weight());
+                auto  str_r = fmt::format("r_{}_{}", node.get_nb_job(),
+                                         node.get_weight());
                 auto& y = node.y[i] =
-                    model->addVar(0.0, GRB_INFINITY, node.lp_x[i], 'B');
+                    model->addVar(0.0, GRB_INFINITY, node.lp_x[i], 'B', str_y);
                 auto& r = node.r[i] =
-                    model->addVar(0.0, GRB_INFINITY, 0.0, 'I');
+                    model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
                 GRBLinExpr expr = s_head - s_source - y - 2.0 * r;
                 if (i) {
                     expr += jobs_var[node.get_nb_job()];
@@ -159,10 +169,68 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
             } else {
                 auto& s_source = sigma[node.lp_key];
                 auto& s_head = sigma[child.lp_key];
+                auto  str_y = fmt::format("y_{}_{}", node.get_nb_job(),
+                                         node.get_weight());
+                auto  str_r = fmt::format("r_{}_{}", node.get_nb_job(),
+                                         node.get_weight());
                 auto& y = node.y[i] =
-                    model->addVar(0.0, GRB_INFINITY, node.lp_x[i], 'B');
+                    model->addVar(0.0, GRB_INFINITY, node.lp_x[i], 'B', str_y);
                 auto& r = node.r[i] =
-                    model->addVar(0.0, GRB_INFINITY, 0.0, 'I');
+                    model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
+                GRBLinExpr expr = s_head - s_source - y - 2.0 * r;
+                if (i) {
+                    expr += jobs_var[node.get_nb_job()];
+                }
+
+                model->addConstr(expr, '=', 0.0);
+            }
+        }
+    }
+}
+
+void ZeroHalfCuts::dfs_evaluate(const NodeId& v) {
+    auto& node = table->node(v);
+    node.lp_visited = true;
+
+    for (int i = 0; i < 2; i++) {
+        if (node.lp_x[i] > 1e-6) {
+            auto& child = table->node(node.branch[i]);
+            if (!child.lp_visited) {
+                child.lp_key = sigma.size();
+                if (node.branch[i] == 1) {
+                    terminal_key = child.lp_key;
+                }
+
+                sigma.push_back(model->addVar(
+                    0.0, 1.0, 0.0, 'B', fmt::format("sigma_{}", sigma.size())));
+                node_ids.push_back(node.branch[i]);
+                auto& s_source = sigma[node.lp_key];
+                auto& s_head = sigma.back();
+                auto  str_y = fmt::format("y_{}_{}", node.get_nb_job(),
+                                         node.get_weight());
+                auto  str_r = fmt::format("r_{}_{}", node.get_nb_job(),
+                                         node.get_weight());
+                auto& y = node.y[i] =
+                    model->addVar(0.0, GRB_INFINITY, node.lp_x[i], 'B', str_y);
+                auto& r = node.r[i] =
+                    model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
+                GRBLinExpr expr = s_head - s_source - y - 2.0 * r;
+                if (i) {
+                    expr += jobs_var[node.get_nb_job()];
+                }
+                model->addConstr(expr, '=', 0.0);
+                dfs(node.branch[i]);
+            } else {
+                auto& s_source = sigma[node.lp_key];
+                auto& s_head = sigma[child.lp_key];
+                auto  str_y = fmt::format("y_{}_{}", node.get_nb_job(),
+                                         node.get_weight());
+                auto  str_r = fmt::format("r_{}_{}", node.get_nb_job(),
+                                         node.get_weight());
+                auto& y = node.y[i] =
+                    model->addVar(0.0, GRB_INFINITY, node.lp_x[i], 'B', str_y);
+                auto& r = node.r[i] =
+                    model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
                 GRBLinExpr expr = s_head - s_source - y - 2.0 * r;
                 if (i) {
                     expr += jobs_var[node.get_nb_job()];
