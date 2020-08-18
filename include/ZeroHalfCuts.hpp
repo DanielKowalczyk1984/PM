@@ -10,8 +10,11 @@
 
 class ZeroHalfCuts {
    public:
-    ZeroHalfCuts(int _nb_jobs, int _nb_machines, ReformulationModel* _rmp_model,
-                 NodeId& _root, NodeTableEntity<>* _table);
+    ZeroHalfCuts(int                 _nb_jobs,
+                 int                 _nb_machines,
+                 ReformulationModel* _rmp_model,
+                 NodeId&             _root,
+                 NodeTableEntity<>*  _table);
     ZeroHalfCuts(ZeroHalfCuts&&) = default;
     ZeroHalfCuts(const ZeroHalfCuts&) = delete;
     ZeroHalfCuts& operator=(ZeroHalfCuts&&) = default;
@@ -32,10 +35,12 @@ class ZeroHalfCuts {
     std::vector<GRBVar>       sigma{};
     std::vector<NodeId>       node_ids{};
     std::vector<GRBVar>       jobs_var;
+    GRBVar                    q;
     int                       terminal_key;
 
     void generate_model();
     void dfs(const NodeId& v);
+    void dfs_evaluate(const NodeId& v);
 };
 
 #endif  // __ZEROHALFCUTS_H__
