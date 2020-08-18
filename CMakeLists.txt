@@ -5,7 +5,8 @@ project(PM)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Define a local module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR})
+add_subdirectory(fmt EXCLUDE_FROM_ALL)
 
 # Find Glib
 find_package(Glib)
@@ -26,7 +27,7 @@ add_definitions(-Wall
                 -Wcast-align
                 -Wwrite-strings)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++14 -m64")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++20 -m64")
 set(
   CMAKE_C_FLAGS_RELEASE
   "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
@@ -37,11 +38,12 @@ set(
   "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
   )
 
-set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
+set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/fmt/include)
 file(GLOB SOURCE_FILES
           "src/*.cc"
           "src/*.cpp"
           "src/*.c")
+
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}
@@ -57,9 +59,10 @@ target_link_libraries(${PROJECT_NAME}
                              ${GLIB_LIBRARIES}
                              ${Boost_LIBRARIES}
                              -lm
-                             -lpthread)
+                             -lpthread
+                             fmt::fmt)
 
-# Include CppCcheck
+                             # Include CppCcheck
 include(CppcheckTargets)
 include(customCppCheck)
 
