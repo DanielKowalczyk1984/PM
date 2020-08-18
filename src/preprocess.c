@@ -81,7 +81,7 @@ void calculate_Hmax(Problem* problem) {
     problem->H_min = (int)ceil(tmp / problem->nb_machines);
     g_ptr_array_free(duration, TRUE);
     printf(
-        "H_max = %d, H_min = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
+        "H_max = %d, H_min = %d,  pmax = %d, pmin = %d, p_sum = %d, off = %d\n",
         problem->H_max, problem->H_min, problem->pmax, problem->pmin,
         problem->p_sum, problem->off);
 }
