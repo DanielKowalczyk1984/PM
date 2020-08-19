@@ -5,8 +5,8 @@
 #include "OptimalSolution.hpp"
 #include "ZddNode.hpp"
 
-template <typename E, typename T>
-class BackwardZDDBase : public Eval<E, NodeZdd<T>, OptimalSolution<T>> {
+template <typename T = double>
+class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
    protected:
     T*  pi;
     int num_jobs;
@@ -14,29 +14,31 @@ class BackwardZDDBase : public Eval<E, NodeZdd<T>, OptimalSolution<T>> {
    public:
     BackwardZDDBase(T* _pi, int _num_jobs) : pi(_pi), num_jobs(_num_jobs){};
     explicit BackwardZDDBase(int _num_jobs)
-        : pi(nullptr), num_jobs(_num_jobs){};
-    BackwardZDDBase() : pi(nullptr), num_jobs(0){};
+        : pi(nullptr),
+          num_jobs(_num_jobs){};
+    BackwardZDDBase()
+        : Eval<NodeZdd<T>, OptimalSolution<T>>(),
+          pi(nullptr),
+          num_jobs(0){};
     ~BackwardZDDBase(){};
 
     void initialize_pi(T* _pi) { pi = _pi; }
 
-    virtual void               initializenode(NodeZdd<T>& n) const = 0;
-    virtual void               initializerootnode(NodeZdd<T>& n) const = 0;
-    virtual void               evalNode(NodeZdd<T>& n) const = 0;
-    virtual OptimalSolution<T> getValue(NodeZdd<T> const& n) = 0;
+    virtual void initializenode(NodeZdd<T>& n) const = 0;
+    virtual void initializerootnode(NodeZdd<T>& n) const = 0;
+    virtual void evalNode(NodeZdd<T>& n) const = 0;
 };
 
-template <typename E, typename T>
-class BackwardZddSimple : public BackwardZDDBase<E, T> {
+template <typename T = double>
+class BackwardZddSimple : public BackwardZDDBase<T> {
    public:
-    using BackwardZDDBase<E, T>::pi;
-    using BackwardZDDBase<E, T>::num_jobs;
+    using BackwardZDDBase<T>::pi;
+    using BackwardZDDBase<T>::num_jobs;
 
-    BackwardZddSimple() : BackwardZDDBase<E, T>(){};
+    BackwardZddSimple() : BackwardZDDBase<T>(){};
     BackwardZddSimple(T* _pi, int _num_jobs)
-        : BackwardZDDBase<E, T>(_pi, _num_jobs){};
-    explicit BackwardZddSimple(int _num_jobs)
-        : BackwardZDDBase<E, T>(_num_jobs){};
+        : BackwardZDDBase<T>(_pi, _num_jobs){};
+    explicit BackwardZddSimple(int _num_jobs) : BackwardZDDBase<T>(_num_jobs){};
 
     void evalNode(NodeZdd<T>& n) const override {
         Job* tmp_j = n.get_job();
@@ -96,24 +98,18 @@ class BackwardZddSimple : public BackwardZDDBase<E, T> {
 
         return sol;
     }
-
-    OptimalSolution<T> getValue(NodeZdd<T> const& n) override {
-        OptimalSolution<T> sol;
-        return sol;
-    }
 };
 
-template <typename E, typename T>
-class BackwardZddCycle : public BackwardZDDBase<E, T> {
+template <typename T = double>
+class BackwardZddCycle : public BackwardZDDBase<T> {
    public:
-    using BackwardZDDBase<E, T>::pi;
-    using BackwardZDDBase<E, T>::num_jobs;
+    using BackwardZDDBase<T>::pi;
+    using BackwardZDDBase<T>::num_jobs;
 
-    BackwardZddCycle() : BackwardZDDBase<E, T>(){};
+    BackwardZddCycle() : BackwardZDDBase<T>(){};
     BackwardZddCycle(T* _pi, int _num_jobs)
-        : BackwardZDDBase<E, T>(_pi, _num_jobs){};
-    explicit BackwardZddCycle(int _num_jobs)
-        : BackwardZDDBase<E, T>(_num_jobs){};
+        : BackwardZDDBase<T>(_pi, _num_jobs){};
+    explicit BackwardZddCycle(int _num_jobs) : BackwardZDDBase<T>(_num_jobs){};
 
     void evalNode(NodeZdd<T>& n) const override {
         Job* tmp_j = n.get_job();
@@ -202,11 +198,6 @@ class BackwardZddCycle : public BackwardZDDBase<E, T> {
             aux_label = aux_label->get_previous();
         }
 
-        return sol;
-    }
-
-    OptimalSolution<T> getValue(NodeZdd<T> const& n) override {
-        OptimalSolution<T> sol;
         return sol;
     }
 };

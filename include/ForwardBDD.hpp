@@ -6,18 +6,23 @@
 #include "ModelInterface.hpp"
 #include "NodeBddEval.hpp"
 
-template <typename E, typename T>
-class ForwardBddBase : public Eval<E, NodeBdd<T>, OptimalSolution<T>> {
+template <typename T = double>
+class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     OriginalModel<>* original_model;
     double*          pi;
 
    public:
-    ForwardBddBase() : original_model(nullptr), pi(nullptr) {}
+    ForwardBddBase()
+        : Eval<NodeBdd<T>, OptimalSolution<T>>(),
+          original_model(nullptr),
+          pi(nullptr) {}
 
     ForwardBddBase(OriginalModel<>* _model)
-        : original_model(_model), pi(nullptr) {}
+        : Eval<NodeBdd<T>, OptimalSolution<T>>(),
+          original_model(_model),
+          pi(nullptr) {}
 
-    ForwardBddBase(const ForwardBddBase<E, T>& src) {}
+    ForwardBddBase(const ForwardBddBase<T>& src) {}
 
     void set_pi(double* _pi) { pi = _pi; }
 
@@ -45,22 +50,16 @@ class ForwardBddBase : public Eval<E, NodeBdd<T>, OptimalSolution<T>> {
 
         return sol;
     }
-
-    OptimalSolution<T> getValue(NodeBdd<T> const& n) {
-        OptimalSolution<T> sol;
-
-        return sol;
-    }
 };
 
-template <typename E, typename T>
-class ForwardBddCycle : public ForwardBddBase<E, T> {
+template <typename T = double>
+class ForwardBddCycle : public ForwardBddBase<T> {
    public:
-    ForwardBddCycle() : ForwardBddBase<E, T>() {}
+    ForwardBddCycle() : ForwardBddBase<T>() {}
 
-    ForwardBddCycle(OriginalModel<>* model) : ForwardBddBase<E, T>(model) {}
+    ForwardBddCycle(OriginalModel<>* model) : ForwardBddBase<T>(model) {}
 
-    ForwardBddCycle(const ForwardBddCycle<E, T>& src) {}
+    ForwardBddCycle(const ForwardBddCycle<T>& src) {}
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {
@@ -88,7 +87,7 @@ class ForwardBddCycle : public ForwardBddBase<E, T> {
         NodeBdd<T>* p0 = n.child[0];
         NodeBdd<T>* p1 = n.child[1];
         n.reset_reduced_costs();
-        const double* dual = ForwardBddBase<E, T>::get_pi();
+        const double* dual = ForwardBddBase<T>::get_pi();
 
         for (auto it = n.coeff_list[1].begin(); it != n.coeff_list[1].end();
              it++) {
@@ -165,17 +164,17 @@ class ForwardBddCycle : public ForwardBddBase<E, T> {
     }
 };
 
-template <typename E, typename T>
-class ForwardBddSimple : public ForwardBddBase<E, T> {
+template <typename T = double>
+class ForwardBddSimple : public ForwardBddBase<T> {
    public:
     ForwardBddSimple()
-        : ForwardBddBase<E, T>(){
+        : ForwardBddBase<T>(){
 
           };
 
-    ForwardBddSimple(OriginalModel<>* model) : ForwardBddBase<E, T>(model) {}
+    ForwardBddSimple(OriginalModel<>* model) : ForwardBddBase<T>(model) {}
 
-    ForwardBddSimple(const ForwardBddSimple<E, T>& src) {}
+    ForwardBddSimple(const ForwardBddSimple<T>& src) {}
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {
@@ -194,7 +193,7 @@ class ForwardBddSimple : public ForwardBddBase<E, T> {
         NodeBdd<T>* p0 = n.child[0];
         NodeBdd<T>* p1 = n.child[1];
         n.reset_reduced_costs();
-        const double* dual = ForwardBddBase<E, T>::get_pi();
+        const double* dual = ForwardBddBase<T>::get_pi();
 
         for (auto it = n.coeff_list[1].begin(); it != n.coeff_list[1].end();
              it++) {
