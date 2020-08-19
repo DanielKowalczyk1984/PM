@@ -313,8 +313,8 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     //     return evaluate(ZddCardinality<std::string,ARITY>());
     // }
 
-    template <typename S, typename R>
-    R evaluate_backward(Eval<S, T, R> const& evaluator) {
+    template <typename R>
+    R evaluate_backward(Eval<T, R> const& evaluator) {
         int                 n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -335,8 +335,8 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         return evaluator.get_objective(work.node(root()));
     }
 
-    template <typename S, typename R>
-    void compute_labels_backward(Eval<S, T, R> const& evaluator) {
+    template <typename R>
+    void compute_labels_backward(Eval<T, R> const& evaluator) {
         int                 n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -354,8 +354,8 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         }
     }
 
-    template <typename S, typename R>
-    R evaluate_forward(Eval<S, T, R> const& evaluator) {
+    template <typename R>
+    R evaluate_forward(Eval<T, R> const& evaluator) {
         int                 n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -390,8 +390,8 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         return evaluator.get_objective(work.node(1));
     }
 
-    template <typename S, typename R>
-    void compute_labels_forward(Eval<S, T, R> const& evaluator) {
+    template <typename R>
+    void compute_labels_forward(Eval<T, R> const& evaluator) {
         int                 n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
@@ -432,7 +432,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
 
             Selection() : val(false) {}
 
-            Selection(NodeId node, bool val) : node(node), val(val) {}
+            Selection(NodeId _node, bool _val) : node(_node), val(_val) {}
 
             bool operator==(Selection const& o) const {
                 return node == o.node && val == o.val;
@@ -445,8 +445,11 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         std::set<int>          itemset;
 
        public:
-        const_iterator(DdStructure const& dd, bool begin)
-            : dd(dd), cursor(begin ? -1 : -2), path(), itemset() {
+        const_iterator(DdStructure const& _dd, bool begin)
+            : dd(_dd),
+              cursor(begin ? -1 : -2),
+              path(),
+              itemset() {
             if (begin)
                 next(dd.root_);
         }
@@ -542,7 +545,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     /**
      * Implements DdSpec.
      */
-    int getChild(NodeId& f, int level, int value) const {
+    int getChild(NodeId& f, [[maybe_unused]] int level, int value) const {
         assert(level > 0 && level == f.row());
         assert(0 <= value && value < 2);
         f = child(f, value);

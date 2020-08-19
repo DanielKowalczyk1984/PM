@@ -18,9 +18,9 @@ typedef struct _partlist {
 void partlist_free(PartList* part);
 void partlist_init(PartList* part);
 // void joblist_init(joblist *vlist);
-void partition_init(PartList* part, int nb_part, int nb_jobs);
-int  partition_order(const void* a, const void* b, void* data);
-int  find_vertex(const void* a, const void* b);
+// void partition_init(PartList* part, int nb_part, int nb_jobs);
+int partition_order(const void* a, const void* b, void* data);
+int find_vertex(const void* a, const void* b);
 
 int partlist_more_totweight(PartList* c1, PartList* c2);
 #ifdef __cplusplus

@@ -1,6 +1,6 @@
 #include <job.h>
 
-void g_print_job(gpointer data, gpointer user_data) {
+void g_print_job(gpointer data, MAYBE_UNUSED gpointer user_data) {
     Job* a = (Job*)data;
     printf("%d ", a->job);
 }
@@ -37,13 +37,13 @@ void g_set_jobarray_job(gpointer data, gpointer user_data) {
     (*i)++;
 }
 
-void g_print_jobarray(gpointer data, gpointer user_data) {
+void g_print_jobarray(gpointer data, MAYBE_UNUSED gpointer user_data) {
     Job* j = (Job*)data;
     g_print("Job %d: %d %d %d %f\n", j->job, j->processing_time, j->due_time,
             j->weight, (double)j->weight / j->processing_time);
 }
 
-void g_print_machine(gpointer data, gpointer user_data) {
+void g_print_machine(gpointer data, MAYBE_UNUSED gpointer user_data) {
     Job* j = (Job*)data;
     g_print("%d ", j->job);
 }

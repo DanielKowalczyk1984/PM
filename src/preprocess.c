@@ -12,7 +12,7 @@ void g_problem_summary_init(gpointer data, gpointer user_data) {
     prob->dmin = CC_MIN(prob->pmin, j->due_time);
 }
 
-gint g_job_compare_edd(const void* a, const void* b, void* data) {
+gint g_job_compare_edd(const void* a, const void* b, MAYBE_UNUSED void* data) {
     const Job* x = *((Job* const*)a);
     const Job* y = *((Job* const*)b);
 
@@ -296,7 +296,8 @@ int find_division(Problem* problem) {
             for (size_t k = j + 1; k < tmp_interval->sigma->len; k++) {
                 j1 = (Job*)g_ptr_array_index(tmp_interval->sigma, j);
                 j2 = (Job*)g_ptr_array_index(tmp_interval->sigma, k);
-                tmp_pair = (interval_pair){j1, j2};
+                tmp_pair =
+                    (interval_pair){j1, j2, tmp_interval->a, tmp_interval->b};
                 if (!check_interval(&tmp_pair, i, tmp_array) &&
                     !(j1->due_time >= tmp_interval->b) &&
                     !(j2->due_time >= tmp_interval->b)) {

@@ -99,7 +99,9 @@ class MyVector {
 
     template <typename U>
     MyVector(std::vector<U> const& o)
-        : capacity_(o.size()), size_(o.size()), array_(allocate(capacity_)) {
+        : capacity_(o.size()),
+          size_(o.size()),
+          array_(allocate(capacity_)) {
         for (Size i = 0; i < size_; ++i) {
             new (array_ + i) T(o[i]);
         }
@@ -392,7 +394,7 @@ class MyVector {
         U* ptr;
 
        public:
-        reverse_iterator_(U* ptr) : ptr(ptr) {}
+        reverse_iterator_(U* _ptr) : ptr(_ptr) {}
 
         U& operator*() const { return *ptr; }
 

@@ -23,12 +23,12 @@ class NodeBase {
 
           };
 
-    NodeBase(int& _num_layer, bool& _root_node, bool& _terminal_node)
-        : job(nullptr),
-          branch{NodeId(), NodeId()},
-          variable_key{VariableKeyBase(), VariableKeyBase()} {}
+    // NodeBase(int& _num_layer, bool& _root_node, bool& _terminal_node)
+    //     : job(nullptr),
+    //       branch{NodeId(), NodeId()},
+    //       variable_key{VariableKeyBase(), VariableKeyBase()} {}
 
-    NodeBase(int i, int j)
+    NodeBase(size_t i, size_t j)
         : job(nullptr),
           branch{i, j},
           variable_key{VariableKeyBase(), VariableKeyBase()} {}
@@ -43,7 +43,7 @@ class NodeBase {
     NodeBase& operator=(const NodeBase& src) = default;
     NodeBase& operator=(NodeBase&& src) = default;
 
-    void set_job(Job* _job, bool _terminal_node = false) {
+    void set_job(Job* _job) {
         job = _job;
         if (_job != nullptr) {
             variable_key[1].set_j(job->job);

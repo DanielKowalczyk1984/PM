@@ -26,7 +26,7 @@ void solution_init(Solution* sol) {
 void solution_free(Solution** sol) {
     if (*sol) {
         for (int i = 0; i < (*sol)->nb_machines; ++i) {
-            for (int j = 0; j < (*sol)->nb_intervals; ++j) {
+            for (guint j = 0; j < (*sol)->nb_intervals; ++j) {
                 g_ptr_array_free((*sol)->part[i].Q[j], TRUE);
                 g_ptr_array_free((*sol)->part[i].Q_in[j], TRUE);
             }
@@ -42,10 +42,10 @@ void solution_free(Solution** sol) {
     }
 }
 
-Solution* solution_alloc(int nb_interval,
-                         int nb_machines,
-                         int nb_jobs,
-                         int off) {
+Solution* solution_alloc(guint nb_interval,
+                         int   nb_machines,
+                         int   nb_jobs,
+                         int   off) {
     int       val = 0;
     int       i;
     Solution* sol = CC_SAFE_MALLOC(1, Solution);
@@ -64,7 +64,7 @@ Solution* solution_alloc(int nb_interval,
         partlist_init(sol->part + i);
         sol->part[i].Q = CC_SAFE_MALLOC(nb_interval, GPtrArray*);
         sol->part[i].Q_in = CC_SAFE_MALLOC(nb_interval, GPtrArray*);
-        for (int j = 0; j < nb_interval; j++) {
+        for (guint j = 0; j < nb_interval; j++) {
             sol->part[i].Q[j] = g_ptr_array_new();
             sol->part[i].Q_in[j] = g_ptr_array_new();
         }
@@ -109,7 +109,7 @@ gint g_sort_jobs_weight(gconstpointer a, gconstpointer b, void* data) {
     return -(*v - *w);
 }
 
-static void g_print_jobs(gpointer j, gpointer data) {
+static void g_print_jobs(gpointer j, MAYBE_UNUSED gpointer data) {
     Job* tmp = (Job*)j;
     printf("%d ", tmp->job);
 }
@@ -168,16 +168,16 @@ int solution_update(Solution* dest, Solution* src) {
         dest->part[i].tw = src->part[i].tw;
         dest->part[i].c = src->part[i].c;
 
-        for (int j = 0; j < src->nb_intervals; j++) {
+        for (guint j = 0; j < src->nb_intervals; j++) {
             g_ptr_array_remove_range(dest->part[i].Q[j], 0,
                                      dest->part[i].Q[j]->len);
             g_ptr_array_remove_range(dest->part[i].Q_in[j], 0,
                                      dest->part[i].Q_in[j]->len);
-            for (int k = 0; k < src->part[i].Q[j]->len; k++) {
+            for (guint k = 0; k < src->part[i].Q[j]->len; k++) {
                 g_ptr_array_add(dest->part[i].Q[j],
                                 g_ptr_array_index(src->part[i].Q[j], k));
             }
-            for (int k = 0; k < src->part[i].Q_in[j]->len; k++) {
+            for (guint k = 0; k < src->part[i].Q_in[j]->len; k++) {
                 g_ptr_array_add(dest->part[i].Q_in[j],
                                 g_ptr_array_index(src->part[i].Q_in[j], k));
             }
@@ -190,7 +190,7 @@ int solution_update(Solution* dest, Solution* src) {
     return val;
 }
 
-void g_reset_num_layers(gpointer data, gpointer user_data) {
+void g_reset_num_layers(gpointer data, MAYBE_UNUSED gpointer user_data) {
     Job* j = (Job*)data;
     j->num_layers = 0;
 }
@@ -235,13 +235,13 @@ void solution_calculate_partition_machine(Solution*  sol,
                                           int        m) {
     if (m < sol->nb_machines) {
         GPtrArray* machine = sol->part[m].machine;
-        for (int i = 0; i < sol->nb_intervals; i++) {
+        for (guint i = 0; i < sol->nb_intervals; i++) {
             g_ptr_array_free(sol->part[m].Q[i], TRUE);
             sol->part[m].Q[i] = g_ptr_array_new();
             g_ptr_array_free(sol->part[m].Q_in[i], TRUE);
             sol->part[m].Q_in[i] = g_ptr_array_new();
         }
-        int iter = 0;
+        guint iter = 0;
 
         for (unsigned i = 0; i < machine->len; ++i) {
             Job*      tmp = (Job*)g_ptr_array_index(machine, i);
@@ -387,7 +387,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
 #endif
                     g_ptr_array_sort_with_data(Q_in, g_compare_interval_data,
                                                I);
-                    for (int j = 0; j < Q_in->len; j++) {
+                    for (guint j = 0; j < Q_in->len; j++) {
                         Job* tmp = g_ptr_array_index(Q_in, j);
                         g_ptr_array_index(Q, j + 1) = tmp;
                         C += tmp->processing_time;
@@ -416,16 +416,16 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                             sol->u[tmp_out->job] = u;
                             sol->u_in[tmp_out->job] = u;
                             sol->u[tmp_in->job] = u;
-                            int C = sol->c[tmp_in->job];
+                            int aux_C = sol->c[tmp_in->job];
                             assert(C == sol->c[tmp_out->job] -
                                             tmp_out->processing_time);
                             g_ptr_array_sort_with_data(
                                 Q_in, g_compare_interval_data, I);
-                            for (int j = 0; j < Q_in->len; j++) {
-                                Job* tmp = g_ptr_array_index(Q_in, j);
-                                g_ptr_array_index(Q, j + 1) = tmp;
-                                C += tmp->processing_time;
-                                sol->c[tmp->job] = C;
+                            for (guint j = 0; j < Q_in->len; j++) {
+                                Job* aux_tmp = g_ptr_array_index(Q_in, j);
+                                g_ptr_array_index(Q, j + 1) = aux_tmp;
+                                aux_C += aux_tmp->processing_time;
+                                sol->c[aux_tmp->job] = aux_C;
                             }
                             u = next_interval_reversed(u, part);
                         } else {
@@ -469,7 +469,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                     g_qsort_with_data(Q->pdata, Q->len, sizeof(Job*),
                                       g_compare_interval_data, I);
                     int C = 0;
-                    for (int j = 0; j < Q->len; j++) {
+                    for (guint j = 0; j < Q->len; j++) {
                         Job* tmp = g_ptr_array_index(Q, j);
                         C += tmp->processing_time;
                         sol->c[tmp->job] = C;
@@ -486,10 +486,10 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
         part->tw = 0;
         part->c = 0;
 
-        for (int uu = 0; uu < intervals->len; uu++) {
+        for (guint uu = 0; uu < intervals->len; uu++) {
             GPtrArray* Q = part->Q[uu];
             if (Q->len > 0) {
-                for (int k = 0; k < Q->len; k++) {
+                for (guint k = 0; k < Q->len; k++) {
                     Job* tmp = g_ptr_array_index(Q, k);
                     g_ptr_array_add(machine, g_ptr_array_index(Q, k));
                     part->c += tmp->processing_time;
@@ -514,8 +514,8 @@ int solution_arctime_order(Solution* sol) {
     for (int it = 0; it < sol->nb_machines; it++) {
         GPtrArray* tmp = sol->part[it].machine;
         int        C = ((Job*)g_ptr_array_index(tmp, 0))->processing_time;
-        int        i = 0;
-        int        j = 1;
+        guint      i = 0;
+        guint      j = 1;
 
         while (i < tmp->len - 2 && j < tmp->len - 1) {
             Job* tmp_i = (Job*)g_ptr_array_index(tmp, i);

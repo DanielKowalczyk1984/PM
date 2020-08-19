@@ -258,11 +258,11 @@ void RVND(Solution* sol, local_search_data* data) {
     free_all(sol);
 }
 
-static void perturb_swap(Solution*          sol,
-                         local_search_data* data,
-                         int                l1,
-                         int                l2,
-                         GRand*             rand_uniform) {
+static void perturb_swap(Solution*    sol,
+                         MAYBE_UNUSED local_search_data* data,
+                         int                             l1,
+                         int                             l2,
+                         GRand*                          rand_uniform) {
     int       m1, m2;
     unsigned  i1 = 0, i2 = 0;
     int       nb_machines = sol->nb_machines;

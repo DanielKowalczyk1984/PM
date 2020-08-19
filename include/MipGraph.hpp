@@ -24,16 +24,21 @@ struct VarsNode {
 };
 
 typedef property<
-    vertex_index_t, int,
-    property<vertex_name_t, NodeId,
-             property<vertex_degree_t, int,
-                      property<vertex_distance_t, VarsNode,
+    vertex_index_t,
+    int,
+    property<vertex_name_t,
+             NodeId,
+             property<vertex_degree_t,
+                      int,
+                      property<vertex_distance_t,
+                               VarsNode,
                                property<vertex_color_t,
                                         std::shared_ptr<SubNodeZdd<>>>>>>>
     VertexProperty;
 
 typedef property<
-    edge_index_t, int,
+    edge_index_t,
+    int,
     property<edge_weight_t, bool, property<edge_weight2_t, VarsEdge>>>
     EdgeProperty;
 
@@ -58,7 +63,8 @@ class ColorWriterEdgeX {
 
    public:
     explicit ColorWriterEdgeX(MipGraph& _g, NodeTableEntity<>* _table)
-        : g{_g}, table(_table) {}
+        : g{_g},
+          table(_table) {}
 
     void operator()(std::ostream& output, Edge _edge) {
         auto  high = get(boost::edge_weight_t(), g, _edge);
@@ -108,7 +114,8 @@ class ColorWriterVertex {
 
    public:
     ColorWriterVertex(MipGraph& _g, NodeTableEntity<>& _table)
-        : g{_g}, table{_table} {}
+        : g{_g},
+          table{_table} {}
 
     void operator()(std::ostream& output, Vertex _vertex) {
         NodeId tmp_nodeid = get(boost::vertex_name_t(), g, _vertex);

@@ -185,7 +185,7 @@ class MyList {
         Cell* front;
 
        public:
-        iterator(Cell* front) : front(front) {}
+        iterator(Cell* _front) : front(_front) {}
 
         T* operator*() const { return dataStart(front); }
 
@@ -205,7 +205,7 @@ class MyList {
         Cell const* front;
 
        public:
-        const_iterator(Cell const* front) : front(front) {}
+        const_iterator(Cell const* _front) : front(_front) {}
 
         T const* operator*() const { return *dataStart(front); }
 
@@ -406,7 +406,7 @@ class MyListOnPool {
         Cell* front;
 
        public:
-        iterator(Cell* front) : front(front) {}
+        iterator(Cell* _front) : front(_front) {}
 
         T* operator*() const { return dataStart(front); }
 
@@ -424,7 +424,7 @@ class MyListOnPool {
         Cell const* front;
 
        public:
-        const_iterator(Cell const* front) : front(front) {}
+        const_iterator(Cell const* _front) : front(_front) {}
 
         T const* operator*() const { return dataStart(front); }
 

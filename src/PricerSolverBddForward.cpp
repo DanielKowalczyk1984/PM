@@ -18,8 +18,6 @@ PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray*  _jobs,
     std::cout << "Constructing BDD with Forward Simple evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = ForwardBddSimpleDouble();
-    reversed_evaluator = BackwardBddSimpleDouble();
 }
 
 OptimalSolution<double> PricerSolverBddSimple::pricing_algorithm(double* _pi) {
@@ -53,9 +51,8 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
             double result = it.forward_label[0].get_f() +
                             it.child[1]->backward_label[0].get_f() +
                             it.reduced_cost[1] + pi[nb_jobs];
-
-            if (LB + (double)(num_machines - 1) * reduced_cost + result >
-                    UB + 0.0001 &&
+            auto aux_nb_machines = static_cast<double>(num_machines - 1);
+            if (LB + aux_nb_machines * reduced_cost + result > UB + 0.0001 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 add_nb_removed_edges();
@@ -95,8 +92,6 @@ PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray*  _jobs,
     std::cout << "Constructing BDD with Forward Cycle evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
-    evaluator = ForwardBddCycleDouble();
-    reversed_evaluator = BackwardBddCycleDouble();
 }
 
 OptimalSolution<double> PricerSolverBddCycle::pricing_algorithm(double* _pi) {
@@ -151,8 +146,8 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                          it.reduced_cost[1] + pi[nb_jobs];
             }
 
-            if (LB + (double)(num_machines - 1) * reduced_cost + result >
-                    UB + 0.0001 &&
+            auto aux_nb_machines = static_cast<double>(num_machines - 1);
+            if (LB + aux_nb_machines * reduced_cost + result > UB + 0.0001 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 removed_edges = true;

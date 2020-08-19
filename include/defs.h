@@ -31,7 +31,7 @@ extern "C" {
 //#define NDEBUG
 
 #ifdef __GNUC__
-#define MAYBE_UNUSED __attribute__((used))
+#define MAYBE_UNUSED __attribute__((unused))
 #else
 #define MAYBE_UNUSED
 #endif

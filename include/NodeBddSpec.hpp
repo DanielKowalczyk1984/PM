@@ -188,21 +188,31 @@ class StatelessDdSpec : public DdSpecBase<S, AR> {
         return this->entity().getChild(level, value);
     }
 
-    void get_copy(void* to, void const* from) {}
+    void get_copy([[maybe_unused]] void*       to,
+                  [[maybe_unused]] void const* from) {}
 
-    int merge_states(void* p1, void* p2) { return 0; }
+    int merge_states([[maybe_unused]] void* p1, [[maybe_unused]] void* p2) {
+        return 0;
+    }
 
-    void destruct(void* p) {}
+    void destruct([[maybe_unused]] void* p) {}
 
-    void destructLevel(int level) {}
+    // void destructLevel(int level) {}
 
-    size_t hash_code(void const* p, int level) const { return 0; }
+    size_t hash_code([[maybe_unused]] void const* p,
+                     [[maybe_unused]] int         level) const {
+        return 0;
+    }
 
-    bool equal_to(void const* p, void const* q, int level) const {
+    bool equal_to([[maybe_unused]] void const* p,
+                  [[maybe_unused]] void const* q,
+                  [[maybe_unused]] int         level) const {
         return true;
     }
 
-    void print_state(std::ostream& os, void const* p, int level) const {
+    void print_state(std::ostream&                os,
+                     [[maybe_unused]] void const* p,
+                     [[maybe_unused]] int         level) const {
         os << "*";
     }
 };
@@ -260,7 +270,9 @@ class DdSpec : public DdSpecBase<S, AR> {
         this->entity().getCopy(to, state(from));
     }
 
-    int mergeStates(State& s1, State& s2) { return 0; }
+    int mergeStates([[maybe_unused]] State& s1, [[maybe_unused]] State& s2) {
+        return 0;
+    }
 
     int merge_states(void* p1, void* p2) {
         return this->entity().mergeStates(state(p1), state(p2));
@@ -268,11 +280,11 @@ class DdSpec : public DdSpecBase<S, AR> {
 
     void destruct(void* p) { state(p).~State(); }
 
-    void destructLevel(int level) {}
+    // void destructLevel(int level) {}
 
     size_t hashCode(State const& s) const { return this->rawHashCode(s); }
 
-    size_t hashCodeAtLevel(State const& s, int level) const {
+    size_t hashCodeAtLevel(State const& s, [[maybe_unused]] int level) const {
         return this->entity().hashCode(s);
     }
 
@@ -284,7 +296,9 @@ class DdSpec : public DdSpecBase<S, AR> {
         return this->rawEqualTo(s1, s2);
     }
 
-    bool equalToAtLevel(State const& s1, State const& s2, int level) const {
+    bool equalToAtLevel(State const&         s1,
+                        State const&         s2,
+                        [[maybe_unused]] int level) const {
         return this->entity().equalTo(s1, s2);
     }
 
@@ -294,7 +308,9 @@ class DdSpec : public DdSpecBase<S, AR> {
 
     void printState(std::ostream& os, State const& s) const { os << s; }
 
-    void printStateAtLevel(std::ostream& os, State const& s, int level) const {
+    void printStateAtLevel(std::ostream&        os,
+                           State const&         s,
+                           [[maybe_unused]] int level) const {
         this->entity().printState(os, s);
     }
 
@@ -380,15 +396,17 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
         }
     }
 
-    int mergeStates(T* a1, T* a2) { return 0; }
+    int mergeStates([[maybe_unused]] T* a1, [[maybe_unused]] T* a2) {
+        return 0;
+    }
 
     int merge_states(void* p1, void* p2) {
         return this->entity().mergeStates(state(p1), state(p2));
     }
 
-    void destruct(void* p) {}
+    void destruct([[maybe_unused]] void* p) {}
 
-    void destructLevel(int level) {}
+    // void destructLevel(int level) {}
 
     size_t hash_code(void const* p, int level) const {
         Word const* pa = static_cast<Word const*>(p);
@@ -422,7 +440,9 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
         os << "]";
     }
 
-    void printStateAtLevel(std::ostream& os, State const* a, int level) const {
+    void printStateAtLevel(std::ostream&        os,
+                           State const*         a,
+                           [[maybe_unused]] int level) const {
         this->entity().printState(os, a);
     }
 
@@ -522,7 +542,10 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
         }
     }
 
-    int mergeStates(S_State& s1, A_State* a1, S_State& s2, A_State* a2) {
+    int mergeStates([[maybe_unused]] S_State& s1,
+                    [[maybe_unused]] A_State* a1,
+                    [[maybe_unused]] S_State& s2,
+                    [[maybe_unused]] A_State* a2) {
         return 0;
     }
 
@@ -531,13 +554,13 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
                                           a_state(p2));
     }
 
-    void destruct(void* p) {}
+    void destruct([[maybe_unused]] void* p) {}
 
-    void destructLevel(int level) {}
+    // void destructLevel(int level) {}
 
     size_t hashCode(S_State const& s) const { return this->rawHashCode(s); }
 
-    size_t hashCodeAtLevel(S_State const& s, int level) const {
+    size_t hashCodeAtLevel(S_State const& s, [[maybe_unused]] int level) const {
         return this->entity().hashCode(s);
     }
 
@@ -558,7 +581,9 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
         return this->rawEqualTo(s1, s2);
     }
 
-    bool equalToAtLevel(S_State const& s1, S_State const& s2, int level) const {
+    bool equalToAtLevel(S_State const&       s1,
+                        S_State const&       s2,
+                        [[maybe_unused]] int level) const {
         return this->entity().equalTo(s1, s2);
     }
 
@@ -577,7 +602,8 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
         return true;
     }
 
-    void printState(std::ostream& os, S_State const& s,
+    void printState(std::ostream&  os,
+                    S_State const& s,
                     A_State const* a) const {
         os << "[" << s << ":";
         for (int i = 0; i < arraySize; ++i) {
@@ -588,8 +614,10 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
         os << "]";
     }
 
-    void printStateAtLevel(std::ostream& os, S_State const& s, A_State const* a,
-                           int level) const {
+    void printStateAtLevel(std::ostream&        os,
+                           S_State const&       s,
+                           A_State const*       a,
+                           [[maybe_unused]] int level) const {
         this->entity().printState(os, s, a);
     }
 

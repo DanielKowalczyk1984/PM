@@ -18,7 +18,7 @@ PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray*  _jobs,
       F(new double[Hmax + 1]),
       backward_F(new double[Hmax + 1]),
       TI_x(new GRBVar[nb_jobs * (Hmax + 1)]),
-      take((int*)malloc(nb_jobs * (Hmax + 1) * sizeof(int))),
+      take(static_cast<int*>(malloc(nb_jobs * (Hmax + 1) * sizeof(int)))),
       lp_x(new double[nb_jobs * (Hmax + 1)]{}),
       solution_x(new double[nb_jobs * (Hmax + 1)]{}) {
     fill_int(take, nb_jobs * (Hmax + 1), 0);
@@ -59,7 +59,9 @@ PricerSolverSimpleDp::~PricerSolverSimpleDp() {
     delete[] solution_x;
 }
 
-void PricerSolverSimpleDp::evaluate_nodes(double* pi, int UB, double LB) {
+void PricerSolverSimpleDp::evaluate_nodes(double*                 pi,
+                                          [[maybe_unused]] int    UB,
+                                          [[maybe_unused]] double LB) {
     forward_evaluator(pi);
     backward_evaluator(pi);
     return;
@@ -283,7 +285,8 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     return opt_sol;
 }
 
-OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing(double* _pi) {
+OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing([
+    [maybe_unused]] double* _pi) {
     OptimalSolution<double> opt_sol;
 
     return opt_sol;
@@ -326,13 +329,13 @@ void PricerSolverSimpleDp::represent_solution(Solution* sol) {
     project_solution(sol);
 }
 
-void PricerSolverSimpleDp::add_constraint(Job*       job,
-                                          GPtrArray* list,
-                                          int        order) {}
+void PricerSolverSimpleDp::add_constraint([[maybe_unused]] Job*       job,
+                                          [[maybe_unused]] GPtrArray* list,
+                                          [[maybe_unused]] int        order) {}
 
 void PricerSolverSimpleDp::iterate_zdd() {}
 
-void PricerSolverSimpleDp::create_dot_zdd(const char* name) {
+void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name) {
     boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS>
         graph;
     for (int t = 0; t <= Hmax; t++) {
@@ -385,7 +388,7 @@ int PricerSolverSimpleDp::get_num_layers() {
 
 void PricerSolverSimpleDp::print_num_paths() {}
 
-bool PricerSolverSimpleDp::check_schedule_set(GPtrArray* set) {
+bool PricerSolverSimpleDp::check_schedule_set([[maybe_unused]] GPtrArray* set) {
     // int t = 0;
     // for(unsigned int j = 0; j < set->len; j++) {
     //     Job* tmp_j = (Job*) g_ptr_array_index(set, j);
@@ -405,6 +408,5 @@ bool PricerSolverSimpleDp::check_schedule_set(GPtrArray* set) {
     return true;
 }
 
-void PricerSolverSimpleDp::make_schedule_set_feasible(GPtrArray* set) {}
-
-void PricerSolverSimpleDp::disjunctive_inequality(double* x, Solution* sol) {}
+void PricerSolverSimpleDp::make_schedule_set_feasible([
+    [maybe_unused]] GPtrArray* set) {}

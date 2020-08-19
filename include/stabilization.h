@@ -16,13 +16,14 @@ int    calculate_beta(NodeData* pd);
 int    calculate_hybridfactor(NodeData* pd);
 int    update_hybrid(NodeData* pd);
 int    update_node(NodeData* pd);
-int    get_dual_row(NodeData* pd, int i);
 int    row_getDual(NodeData* pd, int i);
 int    update_subgradientproduct(NodeData* pd);
 int    update_stabcenter(const OptimalSolution<double>& sol, NodeData* pd);
 double compute_dual(NodeData* pd, int i);
-double compute_lagrange(OptimalSolution<double>& sol, double* rhs, double* pi,
-                        int nbjobs);
+double compute_lagrange(OptimalSolution<double>& sol,
+                        double*                  rhs,
+                        double*                  pi,
+                        int                      nbjobs);
 
 #ifdef __cplusplus
 }

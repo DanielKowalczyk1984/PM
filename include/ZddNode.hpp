@@ -133,11 +133,11 @@ class NodeZdd : public NodeBase {
         child[1] = nullptr;
     };
 
-    NodeZdd(int& _num_layer, bool& _root_node, bool& _terminal_node)
-        : NodeBase(_num_layer, _root_node, _terminal_node), list() {
-        child[0] = nullptr;
-        child[1] = nullptr;
-    };
+    // NodeZdd(int& _num_layer, bool& _root_node, bool& _terminal_node)
+    //     : NodeBase(_num_layer, _root_node, _terminal_node), list() {
+    //     child[0] = nullptr;
+    //     child[1] = nullptr;
+    // };
 
     void set_head_node() {
         for (auto& it : list) {
@@ -147,7 +147,7 @@ class NodeZdd : public NodeBase {
         }
     }
 
-    NodeZdd(int i, int j) : NodeBase(i, j) {}
+    NodeZdd(int i, int j) : NodeBase(i, j), child{nullptr, nullptr}, list() {}
 
     NodeZdd<T>(const NodeZdd<T>& src) = default;
     NodeZdd<T>(NodeZdd<T>&& src) = default;
@@ -176,8 +176,10 @@ class NodeZdd : public NodeBase {
         return os << ")";
     }
 
-    void add_sub_node(int _weight, NodeId _node_id, bool _root_node = false,
-                      bool _terminal_node = false) {
+    void add_sub_node(int                   _weight,
+                      NodeId                _node_id,
+                      [[maybe_unused]] bool _root_node = false,
+                      [[maybe_unused]] bool _terminal_node = false) {
         // if(!_terminal_node) {
         list.push_back(std::make_shared<SubNodeZdd<>>(_weight, _node_id, this));
         // printf("test test %p\n", this);

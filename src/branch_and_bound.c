@@ -114,7 +114,6 @@ int insert_frac_pairs_into_heap(NodeData*      pd,
                                 int            nb_pairs,
                                 HeapContainer* heap) {
     int          val = 0;
-    int          i;
     int          ref_key;
     int          nb_cols;
     double*      mean_error = CC_SAFE_MALLOC(nb_pairs, double);
@@ -130,23 +129,20 @@ int insert_frac_pairs_into_heap(NodeData*      pd,
     wctlp_get_nb_cols(pd->RMP, &nb_cols);
     assert(nb_cols == pd->localColPool->len);
 
-    for (i = 0; i < nb_cols; ++i) {
-        int j;
-
+    for (int i = 0; i < nb_cols; ++i) {
         if (pd->lambda[i] <= 0.0 + lp_int_tolerance() ||
             pd->lambda[i] >= 1.0 - lp_int_tolerance()) {
             continue;
         }
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
 
-        for (j = 0; j < tmp_schedule->job_list->len; ++j) {
+        for (guint j = 0; j < tmp_schedule->job_list->len; ++j) {
             tmp_j1 = (Job*)g_ptr_array_index(tmp_schedule->job_list, j);
             int v1 = tmp_j1->job;
-            int k;
             ref_key = nodepair_ref_key(v1, v1);
             nodepair_weights[ref_key] += pd->lambda[i];
 
-            for (k = j + 1; k < tmp_schedule->job_list->len; ++k) {
+            for (guint k = j + 1; k < tmp_schedule->job_list->len; ++k) {
                 assert(k != j);
                 tmp_j2 = (Job*)g_ptr_array_index(tmp_schedule->job_list, k);
                 int v2 = tmp_j2->job;
@@ -398,14 +394,14 @@ int prune_duplicated_sets(NodeData* pd) {
     scheduleset_unify(pd->localColPool);
 
     if (dbg_lvl() > 1) {
-        for (int i = 0; i < pd->localColPool->len; ++i) {
+        for (guint i = 0; i < pd->localColPool->len; ++i) {
             ScheduleSet* tmp =
                 (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
             GPtrArray* tmp_a = tmp->job_list;
 
             printf("TRANSSORT SET ");
 
-            for (int j = 0; j < tmp_a->len; ++j) {
+            for (guint j = 0; j < tmp_a->len; ++j) {
                 Job* tmp_j = (Job*)g_ptr_array_index(tmp_a, j);
                 printf(" %d", tmp_j->job);
             }

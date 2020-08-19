@@ -124,7 +124,8 @@ struct MyHashDefault<uint64_t> : MyHashDefaultForInt<uint64_t> {};
  * The default value @p T() cannot be added in the table.
  * @param T type of elements.
  */
-template <typename T, typename Hash = MyHashDefault<T>,
+template <typename T,
+          typename Hash = MyHashDefault<T>,
           typename Equal = MyHashDefault<T> >
 class MyHashTable : MyHashConstant {
    protected:
@@ -160,7 +161,8 @@ class MyHashTable : MyHashConstant {
      * @param hash hash function.
      * @param equal equality function
      */
-    MyHashTable(size_t n, Hash const& hash = Hash(),
+    MyHashTable(size_t       n,
+                Hash const&  hash = Hash(),
                 Equal const& equal = Equal())
         : hashFunc(hash),
           eqFunc(equal),
@@ -405,7 +407,8 @@ class MyHashTable : MyHashConstant {
 
        public:
         explicit const_iterator(Entry const* from, Entry const* to)
-            : ptr(from), end(to) {
+            : ptr(from),
+              end(to) {
             while (ptr < end && *ptr == Entry()) {
                 ++ptr;
             }
@@ -456,9 +459,9 @@ struct MyHashMapEntry {
 
     MyHashMapEntry() : key(), value() {}
 
-    MyHashMapEntry(K const& key) : key(key), value() {}
+    MyHashMapEntry(K const& _key) : key(_key), value() {}
 
-    MyHashMapEntry(K const& key, V const& value) : key(key), value(value) {}
+    MyHashMapEntry(K const& _key, V const& _value) : key(_key), value(_value) {}
 
     /**
      * Check key's equivalence between another object.
@@ -492,7 +495,8 @@ class MyHashMapHashWrapper {
 
    public:
     MyHashMapHashWrapper(Hash const& hash, Equal const& equal)
-        : hashFunc(hash), eqFunc(equal) {}
+        : hashFunc(hash),
+          eqFunc(equal) {}
 
     size_t operator()(MyHashMapEntry<K, V> const& o) const {
         return hashFunc(o.key);
@@ -510,14 +514,17 @@ class MyHashMapHashWrapper {
  * @param K type of keys.
  * @param V type of values.
  */
-template <typename K, typename V, typename Hash = MyHashDefault<K>,
+template <typename K,
+          typename V,
+          typename Hash = MyHashDefault<K>,
           typename Equal = MyHashDefault<K> >
 struct MyHashMap
     : public MyHashTable<MyHashMapEntry<K, V>,
                          MyHashMapHashWrapper<K, V, Hash, Equal>,
                          MyHashMapHashWrapper<K, V, Hash, Equal> > {
     typedef MyHashMapEntry<K, V> Entry;
-    typedef MyHashTable<Entry, MyHashMapHashWrapper<K, V, Hash, Equal>,
+    typedef MyHashTable<Entry,
+                        MyHashMapHashWrapper<K, V, Hash, Equal>,
                         MyHashMapHashWrapper<K, V, Hash, Equal> >
         Table;
 
@@ -535,7 +542,8 @@ struct MyHashMap
      * @param equal equality function.
      */
     MyHashMap(size_t n, Hash const& hash = Hash(), Equal const& equal = Equal())
-        : Table(n, MyHashMapHashWrapper<K, V, Hash, Equal>(hash, equal),
+        : Table(n,
+                MyHashMapHashWrapper<K, V, Hash, Equal>(hash, equal),
                 MyHashMapHashWrapper<K, V, Hash, Equal>(hash, equal)) {}
 
     /**

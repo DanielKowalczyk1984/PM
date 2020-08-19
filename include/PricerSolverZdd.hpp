@@ -19,8 +19,10 @@ class PricerSolverZdd : public PricerSolverBase {
     std::unique_ptr<double[]> lp_x;
     std::unique_ptr<double[]> solution_x;
 
-    PricerSolverZdd(GPtrArray* _jobs, int _num_machines,
-                    GPtrArray* _ordered_jobs, const char* p_name);
+    PricerSolverZdd(GPtrArray*  _jobs,
+                    int         _num_machines,
+                    GPtrArray*  _ordered_jobs,
+                    const char* p_name);
     void         init_table() override;
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
@@ -37,7 +39,6 @@ class PricerSolverZdd : public PricerSolverBase {
     void   project_solution(Solution* sol) override;
     bool   check_schedule_set(GPtrArray* set) override;
     void   make_schedule_set_feasible(GPtrArray* set) override;
-    void   disjunctive_inequality(double* x, Solution* sol) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;
@@ -56,9 +57,11 @@ class PricerSolverZdd : public PricerSolverBase {
 
     void update_constraints() override {}
 
-    void update_reduced_costs_arcs(double* _pi, bool farkas = false) override {}
+    void update_reduced_costs_arcs(
+        [[maybe_unused]] double* _pi,
+        [[maybe_unused]] bool    farkas = false) override {}
 
-    void insert_constraints_lp(NodeData* pd) override {}
+    void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
 
     void update_coeff_constraints() override {}
 

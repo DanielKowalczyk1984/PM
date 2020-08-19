@@ -9,7 +9,7 @@
 
 static const double min_nb_del_row_ratio = 0.9;
 
-void g_print_ages_col(gpointer data, gpointer user_data) {
+void g_print_ages_col(gpointer data, MAYBE_UNUSED gpointer user_data) {
     ScheduleSet* x = (ScheduleSet*)data;
 
     printf(" %4d", x->age);
@@ -220,10 +220,9 @@ void g_make_pi_feasible(gpointer data, gpointer user_data) {
     NodeData*    pd = (NodeData*)user_data;
     Job*         tmp_j;
 
-    int    i;
     double colsum = .0;
 
-    for (i = 0; i < x->job_list->len; ++i) {
+    for (guint i = 0; i < x->job_list->len; ++i) {
         tmp_j = (Job*)g_ptr_array_index(x->job_list, i);
         if (signbit((double)pd->pi->data[tmp_j->job])) {
             pd->pi->data[tmp_j->job] = 0.0;
@@ -242,7 +241,7 @@ void g_make_pi_feasible(gpointer data, gpointer user_data) {
 
     if (colsum > x->total_weighted_completion_time) {
         double newcolsum = .0;
-        for (i = 0; i < x->job_list->len; ++i) {
+        for (guint i = 0; i < x->job_list->len; ++i) {
             tmp_j = (Job*)g_ptr_array_index(x->job_list, i);
             g_array_index(pd->pi, double, tmp_j->job) /= colsum;
             g_array_index(pd->pi, double, tmp_j->job) *=
@@ -271,10 +270,9 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
     ScheduleSet* x = (ScheduleSet*)data;
     NodeData*    pd = (NodeData*)user_data;
 
-    int    i;
     double colsum = .0;
 
-    for (i = 0; i < x->job_list->len; ++i) {
+    for (guint i = 0; i < x->job_list->len; ++i) {
         double* tmp = &g_array_index(pd->pi, double, i);
         if (signbit(*tmp)) {
             *tmp = 0.0;
@@ -288,7 +286,7 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
 
     if (colsum > x->total_weighted_completion_time) {
         double newcolsum = .0;
-        for (i = 0; i < x->job_list->len; ++i) {
+        for (guint i = 0; i < x->job_list->len; ++i) {
             double* tmp = &g_array_index(pd->pi, double, i);
             *tmp /= colsum;
             *tmp *= x->total_weighted_completion_time;
@@ -312,7 +310,7 @@ void make_pi_feasible_farkas_pricing(NodeData* pd) {
     g_ptr_array_foreach(pd->localColPool, g_make_pi_feasible_farkas, pd);
 }
 
-int compute_objective(NodeData* pd, Parms* parms) {
+int compute_objective(NodeData* pd) {
     int val = 0;
     int i;
     pd->LP_lower_bound_dual = .0;
@@ -355,7 +353,6 @@ CLEAN:
 int solve_relaxation(Problem* problem, NodeData* pd) {
     int    val = 0;
     int    status;
-    Parms* parms = &(problem->parms);
     double real_time_solve_lp;
 
     /** Compjute LP relaxation */
@@ -385,7 +382,7 @@ int solve_relaxation(Problem* problem, NodeData* pd) {
             val = wctlp_pi(pd->RMP, &g_array_index(pd->pi, double, 0));
             CCcheck_val_2(val, "wctlp_pi failed");
             /** Compute the objective function */
-            val = compute_objective(pd, parms);
+            val = compute_objective(pd);
             CCcheck_val_2(val, "Failed in compute_objective");
             memcpy(&g_array_index(pd->pi_out, double, 0),
                    &g_array_index(pd->pi, double, 0),
@@ -432,7 +429,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     reset_nb_layers(pd->jobarray);
 
     if (!pd->RMP) {
-        val = build_rmp(pd, 0);
+        val = build_rmp(pd);
         CCcheck_val(val, "build_lp failed");
     }
 
@@ -490,23 +487,23 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     if (pd->iterations < pd->maxiterations) {
                         switch (parms->stab_technique) {
                             case stab_wentgnes:
-                                val = solve_stab(pd, parms);
+                                val = solve_stab(pd);
                                 CCcheck_val_2(val, "Failed in solve_stab");
                                 break;
 
                             case stab_dynamic:
-                                val = solve_stab_dynamic(pd, parms);
+                                val = solve_stab_dynamic(pd);
                                 CCcheck_val_2(val, "Failed in solve_stab");
                                 break;
 
                             case stab_hybrid:
-                                val = solve_stab_hybrid(pd, parms);
+                                val = solve_stab_hybrid(pd);
                                 CCcheck_val_2(val,
                                               "Failed in solve_stab_hybrid");
                                 break;
 
                             case no_stab:
-                                val = solve_pricing(pd, parms, 0);
+                                val = solve_pricing(pd);
                                 CCcheck_val_2(val, "Failed in solving pricing");
                                 break;
                         }
@@ -617,12 +614,12 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                      */
                     val = wctlp_optimize(pd->RMP, &status);
                     CCcheck_val_2(val, "wctlp_optimize failed");
-                    val = compute_objective(pd, parms);
+                    val = compute_objective(pd);
                     CCcheck_val_2(val, "Failed in compute_objective");
                     check_schedules(pd);
                     delete_infeasible_schedules(pd);
                     solve_relaxation(problem, pd);
-                    compute_objective(pd, parms);
+                    compute_objective(pd);
                     construct_lp_sol_from_rmp(pd);
                     if (it == 0) {
                         generate_cuts(pd);
@@ -697,7 +694,7 @@ int print_x(NodeData* pd) {
             val = wctlp_x(pd->RMP, pd->lambda, pd->id_pseudo_schedules);
             CCcheck_val_2(val, "Failed in wctlp_x");
 
-            for (int i = 0; i < pd->localColPool->len; ++i) {
+            for (guint i = 0; i < pd->localColPool->len; ++i) {
                 GPtrArray* tmp =
                     ((ScheduleSet*)g_ptr_array_index(pd->localColPool, i))
                         ->job_list;

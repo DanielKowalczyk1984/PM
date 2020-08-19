@@ -134,13 +134,14 @@ void PricerSolverZdd::init_table() {
                     iter->y = n1.add_weight(w + p, it.branch[1]);
                 }
             } else {
-                it.set_job(nullptr, true);
+                it.set_job(nullptr);
             }
         }
     }
 }
 
-OptimalSolution<double> PricerSolverZdd::farkas_pricing(double* pi) {
+OptimalSolution<double> PricerSolverZdd::farkas_pricing([
+    [maybe_unused]] double* pi) {
     OptimalSolution<double> sol;
 
     return sol;
@@ -266,13 +267,13 @@ void PricerSolverZdd::build_mip() {
                               source(*it.first, mip_graph));
                 Job*  job = n->get_job();
 
-                double cost =
-                    (double)value_Fj(n->weight + job->processing_time, job);
+                double cost = value_Fj(n->weight + job->processing_time, job);
                 edge_var_list[*it.first].x =
                     model->addVar(0.0, 1.0, cost, GRB_CONTINUOUS);
             } else {
-                edge_var_list[*it.first].x = model->addVar(
-                    0.0, (double)num_machines, 0.0, GRB_CONTINUOUS);
+                edge_var_list[*it.first].x =
+                    model->addVar(0.0, static_cast<double>(num_machines), 0.0,
+                                  GRB_CONTINUOUS);
             }
         }
 
@@ -329,9 +330,9 @@ void PricerSolverZdd::build_mip() {
             }
 
             if (node_id == decision_diagram->root()) {
-                rhs_flow[vertex_key] = -(double)num_machines;
+                rhs_flow[vertex_key] = static_cast<double>(-num_machines);
             } else if (node_id.row() == 0) {
-                rhs_flow[vertex_key] = (double)num_machines;
+                rhs_flow[vertex_key] = static_cast<double>(num_machines);
             } else {
                 rhs_flow[vertex_key] = 0.0;
             }
@@ -404,9 +405,10 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                 Job* tmp_j;
 
                 if (counter < tmp->job_list->len) {
-                    tmp_j = (Job*)g_ptr_array_index(tmp->job_list, counter);
+                    tmp_j = static_cast<Job*>(
+                        g_ptr_array_index(tmp->job_list, counter));
                 } else {
-                    tmp_j = (Job*)nullptr;
+                    tmp_j = nullptr;
                 }
 
                 NodeZdd<>& tmp_node = table.node(tmp_nodeid);
@@ -449,9 +451,9 @@ void PricerSolverZdd::project_solution(Solution* sol) {
             Job* tmp_j;
 
             if (counter < tmp->len) {
-                tmp_j = (Job*)g_ptr_array_index(tmp, counter);
+                tmp_j = static_cast<Job*>(g_ptr_array_index(tmp, counter));
             } else {
-                tmp_j = (Job*)nullptr;
+                tmp_j = nullptr;
             }
 
             NodeZdd<>& tmp_node = table.node(tmp_nodeid);
@@ -530,9 +532,8 @@ bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
     return (weight == set->len);
 }
 
-void PricerSolverZdd::make_schedule_set_feasible(GPtrArray* set) {}
-
-void PricerSolverZdd::disjunctive_inequality(double* x, Solution* sol) {}
+void PricerSolverZdd::make_schedule_set_feasible([
+    [maybe_unused]] GPtrArray* set) {}
 
 void PricerSolverZdd::iterate_zdd() {
     DdStructure<NodeZdd<double>>::const_iterator it = decision_diagram->begin();

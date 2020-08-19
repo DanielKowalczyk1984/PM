@@ -67,7 +67,9 @@ class NodeBdd : public NodeBase {
         child[1] = nullptr;
     };
 
-    NodeBdd(int& _weight, int& _num_layer, bool& _root_node,
+    NodeBdd(int&  _weight,
+            int&  _num_layer,
+            bool& _root_node,
             bool& _terminal_node)
         : NodeBase(_num_layer, _root_node, _terminal_node),
           weight(_weight),
@@ -163,8 +165,9 @@ class NodeBdd : public NodeBase {
         return os << ")";
     }
 
-    NodeBdd<T>* init_node(int _weight, bool _root_node = false,
-                          bool _terminal_node = false) {
+    NodeBdd<T>* init_node(int                   _weight,
+                          [[maybe_unused]] bool _root_node = false,
+                          bool                  _terminal_node = false) {
         if (!_terminal_node) {
             weight = _weight;
         } else {

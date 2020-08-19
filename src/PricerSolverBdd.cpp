@@ -91,7 +91,7 @@ void PricerSolverBdd::calculate_H_min() {
         i--;
     } while (m < num_machines - 1);
 
-    H_min = (int)floor(tmp / num_machines);
+    H_min = static_cast<int>(floor(tmp / num_machines));
 
     g_ptr_array_free(duration, TRUE);
 }
@@ -278,7 +278,7 @@ void PricerSolverBdd::init_table() {
 
             } else {
                 auto& node = table.node(NodeId(i, it));
-                node.set_job(nullptr, true);
+                node.set_job(nullptr);
             }
         }
     }
@@ -341,8 +341,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
         for (auto i = 0u; i < pd->localColPool->len; i++) {
             auto aux_schedule_set =
                 (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
-            auto jobs = aux_schedule_set->job_list;
-
+            auto  jobs_list = aux_schedule_set->job_list;
             auto& table = decision_diagram->getDiagram().privateEntity();
             auto  tmp_nodeid(decision_diagram->root());
 
@@ -352,8 +351,8 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
                 auto& tmp_node = table.node(tmp_nodeid);
                 Job*  tmp_j = nullptr;
 
-                if (counter < jobs->len) {
-                    tmp_j = (Job*)g_ptr_array_index(jobs, counter);
+                if (counter < jobs_list->len) {
+                    tmp_j = (Job*)g_ptr_array_index(jobs_list, counter);
                 }
 
                 VariableKeyBase key(tmp_node.get_nb_job(),
@@ -669,9 +668,9 @@ void PricerSolverBdd::print_representation_file() {
                                  target(*it.first, mip_graph)));
         auto  high = edge_type_list[*it.first];
         if (high) {
-            auto cost = (double)value_Fj(
-                head.get_weight() + head.get_job()->processing_time,
-                head.get_job());
+            double cost =
+                value_Fj(head.get_weight() + head.get_job()->processing_time,
+                         head.get_job());
             out_file_mip << head.key << " " << n.key << " " << cost << "\n";
             index_edge[head.get_nb_job()].push_back(edge_index_list[*it.first]);
         } else {
@@ -747,15 +746,16 @@ void PricerSolverBdd::build_mip() {
         /** Constructing variables */
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
             if (edge_type_list[*it.first]) {
-                auto& n = table.node(get(boost::vertex_name_t(), mip_graph,
+                auto&  n = table.node(get(boost::vertex_name_t(), mip_graph,
                                          source(*it.first, mip_graph)));
-                auto  C = n.get_weight() + n.get_job()->processing_time;
-                auto  cost = (double)value_Fj(C, n.get_job());
+                auto   C = n.get_weight() + n.get_job()->processing_time;
+                double cost = value_Fj(C, n.get_job());
                 edge_var_list[*it.first].x =
                     model->addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
-                edge_var_list[*it.first].x = model->addVar(
-                    0.0, (double)num_machines, 0.0, GRB_CONTINUOUS);
+                edge_var_list[*it.first].x =
+                    model->addVar(0.0, static_cast<double>(num_machines), 0.0,
+                                  GRB_CONTINUOUS);
             }
         }
 
@@ -811,9 +811,9 @@ void PricerSolverBdd::build_mip() {
             }
 
             if (node_id == decision_diagram->root()) {
-                rhs_flow[vertex_key] = -(double)num_machines;
+                rhs_flow[vertex_key] = static_cast<double>(-num_machines);
             } else if (node_id == 1) {
-                rhs_flow[vertex_key] = (double)num_machines;
+                rhs_flow[vertex_key] = static_cast<double>(num_machines);
             } else {
                 rhs_flow[vertex_key] = 0.0;
             }
@@ -1237,13 +1237,13 @@ void PricerSolverBdd::equivalent_paths_filtering() {
         while (!queue.empty()) {
             auto currVertex = queue.front();
             queue.pop_front();
-            auto it = boost::in_edges(table.node(currVertex).key, mip_graph);
+            auto iter = boost::in_edges(table.node(currVertex).key, mip_graph);
 
-            for (; it.first != it.second; it.first++) {
+            for (; iter.first != iter.second; iter.first++) {
                 auto  adjVertex = get(boost::vertex_name_t(), mip_graph,
-                                     source(*it.first, mip_graph));
+                                     source(*iter.first, mip_graph));
                 auto& n = table.node(adjVertex);
-                auto  high = edge_type_list[*it.first];
+                auto  high = edge_type_list[*iter.first];
 
                 if (!visited[n.key]) {
                     visited[n.key] = true;
@@ -1512,172 +1512,8 @@ bool PricerSolverBdd::check_schedule_set(GPtrArray* set) {
     return (tmp_nodeid == 1);
 }
 
-void PricerSolverBdd::make_schedule_set_feasible(GPtrArray* set) {}
-
-void PricerSolverBdd::disjunctive_inequality(double* x, Solution* sol) {
-    auto& table = decision_diagram->getDiagram().privateEntity();
-    auto  branch_key = -1;
-    auto  model_inequality{std::make_unique<GRBModel>(*env)};
-    auto  edge_type_list{get(boost::edge_weight_t(), mip_graph)};
-    auto  edge_var_list{get(boost::edge_weight2_t(), mip_graph)};
-    auto  edge_index_list{get(boost::edge_index_t(), mip_graph)};
-    auto  node_var_list{get(boost::vertex_distance_t(), mip_graph)};
-    auto  node_id_list{get(boost::vertex_name_t(), mip_graph)};
-    /**
-     * Determine the branch key for the disjunctive program
-     */
-    int count = 0;
-
-    for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-        auto high = edge_type_list[*it.first];
-        auto index = edge_index_list[*it.first];
-
-        if (high) {
-            if (x[index] > 0.00001 && x[index] < 0.99999 && count < 1) {
-                branch_key = index;
-                count++;
-            }
-        }
-    }
-
-    printf("branch key = %d\n", branch_key);
-
-    try {
-        /**
-         * Add variables
-         */
-        auto s =
-            model_inequality->addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
-        auto t =
-            model_inequality->addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
-
-        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            edge_var_list[*it.first].alpha = model_inequality->addVar(
-                -GRB_INFINITY, GRB_INFINITY,
-                solution_x[edge_index_list[*it.first]], GRB_CONTINUOUS);
-        }
-
-        for (auto it = vertices(mip_graph); it.first != it.second; it.first++) {
-            node_var_list[*it.first].omega[0] = model_inequality->addVar(
-                -GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
-            node_var_list[*it.first].omega[1] = model_inequality->addVar(
-                -GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
-        }
-
-        std::unique_ptr<GRBVar[]> pi_0(new GRBVar[nb_jobs]);
-        std::unique_ptr<GRBVar[]> pi_1(new GRBVar[nb_jobs]);
-
-        for (int j = 0; j < nb_jobs; j++) {
-            pi_0[j] = model_inequality->addVar(-GRB_INFINITY, GRB_INFINITY, 0.0,
-                                               GRB_CONTINUOUS);
-            pi_1[j] = model_inequality->addVar(-GRB_INFINITY, GRB_INFINITY, 0.0,
-                                               GRB_CONTINUOUS);
-        }
-
-        auto alpha = model_inequality->addVar(-GRB_INFINITY, GRB_INFINITY, -1.0,
-                                              GRB_CONTINUOUS);
-        model_inequality->update();
-        /**
-         * Compute the constraints
-         */
-        auto                          num_edges = boost::num_edges(mip_graph);
-        std::unique_ptr<GRBLinExpr[]> constraints_0(
-            new GRBLinExpr[num_edges + 1]);
-        std::unique_ptr<GRBLinExpr[]> constraints_1(
-            new GRBLinExpr[num_edges + 1]);
-        auto                      normalization = GRBLinExpr();
-        std::unique_ptr<char[]>   sense(new char[num_edges + 1]);
-        std::unique_ptr<double[]> rhs(new double[num_edges + 1]);
-
-        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            auto edge_key = edge_index_list[*it.first];
-            auto high = edge_type_list[*it.first];
-            auto tail = source(*it.first, mip_graph);
-            auto head = target(*it.first, mip_graph);
-            constraints_0[edge_key] = edge_var_list[*it.first].alpha -
-                                      node_var_list[tail].omega[0] +
-                                      node_var_list[head].omega[0];
-            constraints_1[edge_key] = edge_var_list[*it.first].alpha -
-                                      node_var_list[tail].omega[1] +
-                                      node_var_list[head].omega[1];
-
-            if (high) {
-                auto& n = node_id_list[tail];
-                constraints_0[edge_key] -= pi_0[table.node(n).get_nb_job()];
-                constraints_1[edge_key] -= pi_1[table.node(n).get_nb_job()];
-            }
-
-            if (edge_key == branch_key) {
-                constraints_0[edge_key] += s;
-                constraints_1[edge_key] -= t;
-            }
-
-            normalization += (x[edge_key]) * edge_var_list[*it.first].alpha;
-            sense[edge_key] = GRB_GREATER_EQUAL;
-            rhs[edge_key] = 0.0;
-        }
-
-        normalization -= alpha;
-        sense[num_edges] = GRB_GREATER_EQUAL;
-        rhs[num_edges] = 0.0;
-        auto root_key = table.node(decision_diagram->root()).key;
-        auto terminal_key = table.node(NodeId(1)).key;
-        constraints_0[num_edges] += -alpha;
-        constraints_1[num_edges] += -alpha;
-
-        for (int j = 0; j < nb_jobs; j++) {
-            constraints_0[num_edges] += pi_0[j];
-            constraints_1[num_edges] += pi_1[j];
-        }
-
-        constraints_0[num_edges] +=
-            num_machines * node_var_list[root_key].omega[0] -
-            num_machines * node_var_list[terminal_key].omega[0];
-        constraints_1[num_edges] +=
-            num_machines * node_var_list[root_key].omega[1] -
-            num_machines * node_var_list[terminal_key].omega[1] + t;
-        /**
-         * Add the constraints to the model
-         */
-        std::unique_ptr<GRBConstr[]> constrs0(
-            model_inequality->addConstrs(constraints_0.get(), sense.get(),
-                                         rhs.get(), nullptr, num_edges + 1));
-        std::unique_ptr<GRBConstr[]> constrs1(
-            model_inequality->addConstrs(constraints_1.get(), sense.get(),
-                                         rhs.get(), nullptr, num_edges + 1));
-        model_inequality->addConstr(normalization, GRB_EQUAL, -1.0);
-        model_inequality->update();
-        model_inequality->optimize();
-        double min = DBL_MAX;
-
-        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            double sol = (edge_var_list[*it.first]).alpha.get(GRB_DoubleAttr_X);
-
-            if (CC_ABS(sol) > 0.00001) {
-                if (min > CC_ABS(sol)) {
-                    min = CC_ABS(sol);
-                }
-            }
-        }
-
-        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            double sol = (edge_var_list[*it.first]).alpha.get(GRB_DoubleAttr_X);
-
-            if (CC_ABS(sol) > 0.00001) {
-                std::cout << "(" << edge_index_list[*it.first] << ","
-                          << sol / min << ") ";
-            }
-        }
-
-        std::cout << "\n";
-        printf("test %f\n", alpha.get(GRB_DoubleAttr_X) / min);
-    } catch (GRBException& e) {
-        cout << "Error code = " << e.getErrorCode() << endl;
-        cout << e.getMessage() << endl;
-    } catch (...) {
-        cout << "Exception during optimization" << endl;
-    }
-}
+void PricerSolverBdd::make_schedule_set_feasible([
+    [maybe_unused]] GPtrArray* set) {}
 
 void PricerSolverBdd::iterate_zdd() {
     DdStructure<NodeBdd<double>>::const_iterator it = decision_diagram->begin();

@@ -90,12 +90,6 @@ int is_stabilized(NodeData* pd) {
     return pd->alpha > 0.0;
 }
 
-int get_dual_row(NodeData* pd, int i) {
-    int val = 0;
-
-    return val;
-}
-
 int calculate_dualdiffnorm(NodeData* pd) {
     int     val = 0;
     double* pi_out = &g_array_index(pd->pi_out, double, 0);
@@ -318,7 +312,7 @@ static void compute_pi_eta_sep(int     nb_constr,
     *eta_sep = alpha * (*eta_in) + beta * (*eta_out);
 }
 
-int solve_pricing(NodeData* pd, parms* parms, int evaluate) {
+int solve_pricing(NodeData* pd) {
     int val = 0;
 
     OptimalSolution<double> sol;
@@ -341,7 +335,7 @@ CLEAN:
     return val;
 }
 
-int solve_stab(NodeData* pd, parms* parms) {
+int solve_stab(NodeData* pd) {
     int           val = 0;
     PricerSolver* solver = pd->solver;
     double        k = 0.0;
@@ -395,7 +389,7 @@ CLEAN:
     return val;
 }
 
-int solve_stab_dynamic(NodeData* pd, parms* parms) {
+int solve_stab_dynamic(NodeData* pd) {
     int           val = 0;
     PricerSolver* solver = pd->solver;
     double        k = 0.0;
@@ -449,7 +443,7 @@ CLEAN:
     return val;
 }
 
-int solve_stab_hybrid(NodeData* pd, parms* parms) {
+int solve_stab_hybrid(NodeData* pd) {
     int           val = 0;
     PricerSolver* solver = pd->solver;
     pd->update = 0;

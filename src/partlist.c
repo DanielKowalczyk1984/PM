@@ -33,10 +33,10 @@ void partlist_init(PartList* part) {
     }
 }
 
-void partition_init(PartList* part, int nb_part, int nb_jobs) {
-    int i;
+// void partition_init(PartList* part, int nb_part, MAYBE_UNUSED int nb_jobs) {
+//     int i;
 
-    for (i = 0; i < nb_part; i++) {
-        partlist_init(&part[i]);
-    }
-}
+//     for (i = 0; i < nb_part; i++) {
+//         partlist_init(&part[i]);
+//     }
+// }

@@ -51,8 +51,8 @@ void PricerSolverZddBackwardSimple::evaluate_nodes(double* pi,
                                 iter->y->backward_label[0].get_f() -
                                 value_Fj(w + job->processing_time, job) +
                                 pi[job->job] + pi[nb_jobs];
-
-                if (LB - (double)(num_machines - 1) * reduced_cost - result >
+                auto aux_nb_machines = static_cast<double>(num_machines - 1);
+                if (LB - aux_nb_machines * reduced_cost - result >
                         UB - 1 + 0.0001 &&
                     (iter->calc_yes)) {
                     iter->calc_yes = false;
@@ -109,14 +109,14 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                 int  w = iter->get_weight();
                 Job* job = it.get_job();
 
+                auto aux_nb_machines = static_cast<double>(num_machines - 1);
                 if (iter->forward_label[0].get_previous_job() != job &&
                     iter->y->backward_label[0].get_prev_job() != job) {
                     double result = iter->forward_label[0].get_f() +
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + job->processing_time, job) +
                                     pi[job->job] + pi[nb_jobs];
-                    if (LB - (double)(num_machines - 1) * reduced_cost -
-                                result >
+                    if (LB - aux_nb_machines * reduced_cost - result >
                             UB + 0.0001 &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
@@ -128,8 +128,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + job->processing_time, job) +
                                     pi[job->job] + pi[nb_jobs];
-                    if (LB - (double)(num_machines - 1) * reduced_cost -
-                                result >
+                    if (LB - aux_nb_machines * reduced_cost - result >
                             UB + 0.0001 &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
@@ -141,8 +140,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                                     iter->y->backward_label[1].get_f() -
                                     value_Fj(w + job->processing_time, job) +
                                     pi[job->job] + pi[nb_jobs];
-                    if (LB - (double)(num_machines - 1) * reduced_cost -
-                                result >
+                    if (LB - aux_nb_machines * reduced_cost - result >
                             UB + 0.0001 &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
@@ -153,8 +151,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                                     iter->y->backward_label[1].get_f() -
                                     value_Fj(w + job->processing_time, job) +
                                     pi[job->job] + pi[nb_jobs];
-                    if (LB - (double)(num_machines - 1) * reduced_cost -
-                                result >
+                    if (LB - aux_nb_machines * reduced_cost - result >
                             UB + 0.0001 &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;

@@ -27,9 +27,12 @@ class PricerSolverBdd : public PricerSolverBase {
     int                                                         H_max;
 
    public:
-    PricerSolverBdd(GPtrArray* _jobs, int _num_machines,
-                    GPtrArray* _ordered_jobs, const char* p_name, int _Hmax,
-                    int* _take_jobs);
+    PricerSolverBdd(GPtrArray*  _jobs,
+                    int         _num_machines,
+                    GPtrArray*  _ordered_jobs,
+                    const char* p_name,
+                    int         _Hmax,
+                    int*        _take_jobs);
     void         init_table() override;
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
     void         check_infeasible_arcs();
@@ -54,7 +57,6 @@ class PricerSolverBdd : public PricerSolverBase {
     void   project_solution(Solution* sol) override;
     bool   check_schedule_set(GPtrArray* set) override;
     void   make_schedule_set_feasible(GPtrArray* set) override;
-    void   disjunctive_inequality(double* x, Solution* sol) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;
@@ -84,8 +86,9 @@ class PricerSolverBdd : public PricerSolverBase {
     void add_inequality(std::vector<int> v1, std::vector<int> v2);
     void add_inequality(std::vector<int> v1);
 
-    double compute_reduced_cost(const OptimalSolution<>& sol, double* pi,
-                                double* lhs) override;
+    double compute_reduced_cost(const OptimalSolution<>& sol,
+                                double*                  pi,
+                                double*                  lhs) override;
     double compute_lagrange(const OptimalSolution<>& sol, double* pi) override;
     void   update_constraints() override {}
 

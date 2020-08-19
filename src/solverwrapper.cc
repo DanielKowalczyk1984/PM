@@ -178,10 +178,6 @@ CLEAN:
     return val;
 }
 
-void disjunctive_inequality(NodeData* pd, Solution* sol) {
-    pd->solver->disjunctive_inequality(pd->x_e, sol);
-}
-
 void generate_cuts(NodeData* pd) {
     // 1. add cuts to reformulation model
     PricerSolver* pricing_solver = pd->solver;
