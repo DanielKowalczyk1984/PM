@@ -77,6 +77,7 @@ find_package(Gurobi)
 # Find Boost
 # find_package(Boost)
 
+add_subdirectory(or_utils)
 
 #
 # Set the project standard and warnings
@@ -103,16 +104,16 @@ verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
 #                 -Wcast-align
 #                 -Wwrite-strings)
 
-# set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++20 -m64")
-# set(
-#   CMAKE_C_FLAGS_RELEASE
-#   "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
-#   )
-# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++14 -O0 -m64")
-# set(
-#   CMAKE_C_FLAGS_DEBUG
-#   "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
-#   )
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++20 -m64")
+set(
+  CMAKE_C_FLAGS_RELEASE
+  "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+  )
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++14 -O0 -m64")
+set(
+  CMAKE_C_FLAGS_DEBUG
+  "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+  )
 
 #
 # Set the build/user include directories
@@ -146,6 +147,7 @@ else()
         ${CONAN_INCLUDE_DIRS_FMT}
         ${GUROBI_INCLUDE_DIR}
         ${CONAN_INCLUDE_DIRS_FMT}
+        ORUtils::ORUtils
 			PRIVATE
 				${CMAKE_CURRENT_SOURCE_DIR}/src
     )
@@ -155,6 +157,7 @@ else()
     target_link_libraries(${PROJECT_NAME}_LIB
                                  ${GUROBI_LIBRARY}
                                  ${GUROBI_CXX_LIBRARY}
+                                 ORUtils::ORUtils
                              -lm
                              -lpthread)
     
