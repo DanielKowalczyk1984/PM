@@ -3,7 +3,6 @@
 // #include <tdzdd/DdEval.hpp>
 #include <NodeBdd.hpp>
 #include <OptimalSolution.hpp>
-#include "ModelInterface.hpp"
 #include "NodeBddEval.hpp"
 
 template <typename T = double>
@@ -15,11 +14,6 @@ class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     ForwardBddBase()
         : Eval<NodeBdd<T>, OptimalSolution<T>>(),
           original_model(nullptr),
-          pi(nullptr) {}
-
-    ForwardBddBase(OriginalModel<>* _model)
-        : Eval<NodeBdd<T>, OptimalSolution<T>>(),
-          original_model(_model),
           pi(nullptr) {}
 
     ForwardBddBase(const ForwardBddBase<T>& src) {}
@@ -56,8 +50,6 @@ template <typename T = double>
 class ForwardBddCycle : public ForwardBddBase<T> {
    public:
     ForwardBddCycle() : ForwardBddBase<T>() {}
-
-    ForwardBddCycle(OriginalModel<>* model) : ForwardBddBase<T>(model) {}
 
     ForwardBddCycle(const ForwardBddCycle<T>& src) {}
 
@@ -171,8 +163,6 @@ class ForwardBddSimple : public ForwardBddBase<T> {
         : ForwardBddBase<T>(){
 
           };
-
-    ForwardBddSimple(OriginalModel<>* model) : ForwardBddBase<T>(model) {}
 
     ForwardBddSimple(const ForwardBddSimple<T>& src) {}
 

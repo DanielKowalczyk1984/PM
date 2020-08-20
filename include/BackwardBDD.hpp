@@ -2,7 +2,6 @@
 #define BACKWARD_BDD_HPP
 #include <NodeBdd.hpp>
 #include <OptimalSolution.hpp>
-#include "ModelInterface.hpp"
 #include "NodeBddEval.hpp"
 
 template <typename T = double>
@@ -11,10 +10,6 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     double*          pi;
 
    public:
-    BackwardBddBase(OriginalModel<>* model)
-        : original_model(model),
-          pi(nullptr) {}
-
     BackwardBddBase()
         : Eval<NodeBdd<T>, OptimalSolution<T>>(),
           original_model(nullptr),
@@ -39,11 +34,6 @@ template <typename T = double>
 class BackwardBddSimple : public BackwardBddBase<T> {
    public:
     BackwardBddSimple() : BackwardBddBase<T>(){};
-
-    BackwardBddSimple(OriginalModel<>* model)
-        : BackwardBddBase<T>(model){
-
-          };
 
     void evalNode(NodeBdd<T>& n) const override {
         NodeBdd<T>* p0 = n.child[0];
@@ -109,11 +99,6 @@ template <typename T = double>
 class BackwardBddCycle : public BackwardBddBase<T> {
    public:
     BackwardBddCycle() : BackwardBddBase<T>(){};
-
-    BackwardBddCycle(OriginalModel<>* model)
-        : BackwardBddBase<T>(model){
-
-          };
 
     void evalNode(NodeBdd<T>& n) const override {
         auto tmp_j = n.get_job();
