@@ -20,10 +20,6 @@ int    row_getDual(NodeData* pd, int i);
 int    update_subgradientproduct(NodeData* pd);
 int    update_stabcenter(const OptimalSolution<double>& sol, NodeData* pd);
 double compute_dual(NodeData* pd, int i);
-double compute_lagrange(OptimalSolution<double>& sol,
-                        double*                  rhs,
-                        double*                  pi,
-                        int                      nbjobs);
 
 #ifdef __cplusplus
 }
