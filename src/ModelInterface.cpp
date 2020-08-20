@@ -9,7 +9,7 @@ ReformulationModel::ReformulationModel(int nb_assignments, int nb_machines)
     }
 
     constraint_array[nb_assignments] =
-        std::make_shared<ConstraintConvex>((double)-nb_machines);
+        std::make_shared<ConstraintConvex>(static_cast<double>(-nb_machines));
 
     // GenericData* data = new GenericData();
 

@@ -35,7 +35,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         job_interval_pair* tmp_pair =
             (job_interval_pair*)g_ptr_array_index(pair_list, layer);
         interval* tmp_interval = tmp_pair->I;
-        Job*      tmp_j = (Job*)tmp_pair->j;
+        Job*      tmp_j = tmp_pair->j;
 
         if (value) {
             state = state + tmp_j->processing_time;
@@ -109,7 +109,9 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
 
    public:
     explicit PricerConstructTI(GPtrArray* _pair_list, int* _take_job, int _Hmax)
-        : pair_list(_pair_list), take_job(_take_job), Hmax(_Hmax) {
+        : pair_list(_pair_list),
+          take_job(_take_job),
+          Hmax(_Hmax) {
         nb_layers = pair_list->len;
     };
 
@@ -125,7 +127,7 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
         job_interval_pair* tmp_pair =
             (job_interval_pair*)g_ptr_array_index(pair_list, layer);
         interval* tmp_interval = tmp_pair->I;
-        Job*      tmp_j = (Job*)tmp_pair->j;
+        Job*      tmp_j = tmp_pair->j;
 
         if (level - 1 == 0 && value) {
             return (state + tmp_j->processing_time <= tmp_interval->b) ? -1 : 0;
@@ -225,8 +227,11 @@ class ConflictConstraints
     }
 
    public:
-    ConflictConstraints(int _nb_jobs, int* elist_same, int edge_count_same,
-                        int* elist_differ, int edge_count_differ)
+    ConflictConstraints(int  _nb_jobs,
+                        int* elist_same,
+                        int  edge_count_same,
+                        int* elist_differ,
+                        int  edge_count_differ)
         : nb_jobs(_nb_jobs) {
         differsets.resize(_nb_jobs);
         samesets.resize(_nb_jobs);
@@ -313,14 +318,14 @@ class ConflictConstraints
         size_t it = state.add.find_first();
 
         while (it != boost::dynamic_bitset<>::npos) {
-            val += 1213657 * static_cast<size_t>(it);
+            val += 1213657 * it;
             it = state.add.find_next(it);
         }
 
         it = state.remove.find_first();
 
         while (it != boost::dynamic_bitset<>::npos) {
-            val += 487239 * static_cast<size_t>(it);
+            val += 487239 * it;
             it = state.remove.find_next(it);
         }
 
@@ -349,7 +354,9 @@ class scheduling : public DdSpec<scheduling, int, 2> {
 
    public:
     scheduling(Job* _job, GPtrArray* _list_layers, int _order)
-        : job(_job), list_layers(_list_layers), order(_order) {
+        : job(_job),
+          list_layers(_list_layers),
+          order(_order) {
         nb_layers = list_layers->len;
     };
 

@@ -38,7 +38,7 @@ class DdDumper {
         SPEC const& spec;
         int const   level;
 
-        Hasher(SPEC const& spec, int level) : spec(spec), level(level) {}
+        Hasher(SPEC const& _spec, int _level) : spec(_spec), level(_level) {}
 
         size_t operator()(SpecNode const* p) const {
             return spec.hash_code(state(p), level);
@@ -272,7 +272,7 @@ class DdDumper {
         os << "}\n";
 
         uniqTable[i - 1].clear();
-        spec.destructLevel(i);
+        // spec.destructLevel(i);
     }
 };
 

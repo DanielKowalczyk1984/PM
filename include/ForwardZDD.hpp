@@ -7,8 +7,8 @@
 #include "ZddNode.hpp"
 using namespace std;
 
-template <typename E, typename T>
-class ForwardZddBase : public Eval<E, NodeZdd<T>, OptimalSolution<T>> {
+template <typename T = double>
+class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
    protected:
     T*  pi;
     int num_jobs;
@@ -16,17 +16,20 @@ class ForwardZddBase : public Eval<E, NodeZdd<T>, OptimalSolution<T>> {
    public:
     ForwardZddBase(T* _pi, int _num_jobs) : pi(_pi), num_jobs(_num_jobs) {}
 
-    ForwardZddBase(int _num_jobs) : pi(nullptr), num_jobs(_num_jobs) {}
+    ForwardZddBase(int _num_jobs)
+        : Eval<NodeZdd<T>, OptimalSolution<T>>(),
+          pi(nullptr),
+          num_jobs(_num_jobs) {}
 
-    ForwardZddBase() {
+    ForwardZddBase() : Eval<NodeZdd<T>, OptimalSolution<T>>() {
         pi = nullptr;
         num_jobs = 0;
     }
 
-    ForwardZddBase(const ForwardZddBase<E, T>& src) {
-        pi = src.pi;
-        num_jobs = src.num_jobs;
-    }
+    // ForwardZddBase(const ForwardZddBase<T>& src) {
+    //     pi = src.pi;
+    //     num_jobs = src.num_jobs;
+    // }
 
     void initialize_pi(T* _pi) { pi = _pi; }
 
@@ -59,27 +62,32 @@ class ForwardZddBase : public Eval<E, NodeZdd<T>, OptimalSolution<T>> {
 
         return sol;
     }
+
+    ForwardZddBase<T>(const ForwardZddBase<T>&) = default;
+    ForwardZddBase<T>(ForwardZddBase<T>&&) = default;
+    ForwardZddBase<T>& operator=(const ForwardZddBase<T>&) = default;
+    ForwardZddBase<T>& operator=(ForwardZddBase<T>&&) = default;
 };
 
-template <typename E, typename T>
-class ForwardZddCycle : public ForwardZddBase<E, T> {
+template <typename T = double>
+class ForwardZddCycle : public ForwardZddBase<T> {
    public:
-    using ForwardZddBase<E, T>::pi;
-    using ForwardZddBase<E, T>::num_jobs;
+    using ForwardZddBase<T>::pi;
+    using ForwardZddBase<T>::num_jobs;
     ForwardZddCycle(T* _pi, int _num_jobs)
-        : ForwardZddBase<E, T>(_pi, _num_jobs) {}
+        : ForwardZddBase<T>(_pi, _num_jobs) {}
 
-    explicit ForwardZddCycle(int _num_jobs) : ForwardZddBase<E, T>(_num_jobs) {}
+    explicit ForwardZddCycle(int _num_jobs) : ForwardZddBase<T>(_num_jobs) {}
 
-    ForwardZddCycle() : ForwardZddBase<E, T>() {
+    ForwardZddCycle() : ForwardZddBase<T>() {
         pi = nullptr;
         num_jobs = 0;
     }
 
-    ForwardZddCycle(const ForwardZddCycle<E, T>& src) {
-        pi = src.pi;
-        num_jobs = src.num_jobs;
-    }
+    // ForwardZddCycle(const ForwardZddCycle<T>& src) {
+    //     pi = src.pi;
+    //     num_jobs = src.num_jobs;
+    // }
 
     void initializenode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
@@ -185,33 +193,31 @@ class ForwardZddCycle : public ForwardZddBase<E, T> {
         }
     }
 
-    OptimalSolution<T> getValue(NodeZdd<T> const& n) {
-        OptimalSolution<T> sol;
-
-        return sol;
-    }
+    ForwardZddCycle<T>(const ForwardZddCycle<T>&) = default;
+    ForwardZddCycle<T>(ForwardZddCycle<T>&&) = default;
+    ForwardZddCycle<T>& operator=(const ForwardZddCycle<T>&) = default;
+    ForwardZddCycle<T>& operator=(ForwardZddCycle<T>&&) = default;
 };
 
-template <typename E, typename T>
-class ForwardZddSimple : public ForwardZddBase<E, T> {
+template <typename T = double>
+class ForwardZddSimple : public ForwardZddBase<T> {
    public:
-    using ForwardZddBase<E, T>::pi;
-    using ForwardZddBase<E, T>::num_jobs;
+    using ForwardZddBase<T>::pi;
+    using ForwardZddBase<T>::num_jobs;
     ForwardZddSimple(T* _pi, int _num_jobs)
-        : ForwardZddBase<E, T>(_pi, _num_jobs) {}
+        : ForwardZddBase<T>(_pi, _num_jobs) {}
 
-    explicit ForwardZddSimple(int _num_jobs)
-        : ForwardZddBase<E, T>(_num_jobs) {}
+    explicit ForwardZddSimple(int _num_jobs) : ForwardZddBase<T>(_num_jobs) {}
 
     ForwardZddSimple() {
         pi = nullptr;
         num_jobs = 0;
     }
 
-    ForwardZddSimple(const ForwardZddSimple<E, T>& src) {
-        pi = src.pi;
-        num_jobs = src.num_jobs;
-    }
+    // ForwardZddSimple(const ForwardZddSimple<T>& src) {
+    //     pi = src.pi;
+    //     num_jobs = src.num_jobs;
+    // }
 
     void initializenode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
@@ -264,11 +270,10 @@ class ForwardZddSimple : public ForwardZddBase<E, T> {
             }
         }
     }
-
-    OptimalSolution<T> getValue(NodeZdd<T> const& n) {
-        OptimalSolution<T> sol;
-        return sol;
-    }
+    ForwardZddSimple<T>(const ForwardZddSimple<T>&) = default;
+    ForwardZddSimple<T>(ForwardZddSimple<T>&&) = default;
+    ForwardZddSimple<T>& operator=(const ForwardZddSimple<T>&) = default;
+    ForwardZddSimple<T>& operator=(ForwardZddSimple<T>&&) = default;
 };
 
 #endif  // DURATION_ZDD_HPP

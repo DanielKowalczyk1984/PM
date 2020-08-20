@@ -1,14 +1,14 @@
-#include <wct.h>
 #include "job.h"
 #include "lp.h"
 #include "scheduleset.h"
 #include "util.h"
+#include "wct.h"
 #include "wctprivate.h"
+
 int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     int          val = 0;
     double       test_incumbent = .0;
     double       incumbent;
-    int          i;
     int          tot_weighted = 0;
     ScheduleSet* tmp_schedule;
     Job*         tmp_j;
@@ -24,18 +24,17 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     pd->nb_best = 0;
 
     assert(pd->nb_cols == pd->localColPool->len);
-    for (i = 0; i < pd->localColPool->len; ++i) {
+    for (guint i = 0; i < pd->localColPool->len; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
         test_incumbent += x[i];
 
         if (x[i] >= 1.0 - tolerance) {
             int j = pd->nb_best;
-            int k;
             scheduleset_init(pd->bestcolors + j);
 
             g_ptr_array_set_size(pd->bestcolors[j].job_list,
                                  tmp_schedule->job_list->len);
-            for (k = 0; k < tmp_schedule->job_list->len; ++k) {
+            for (guint k = 0; k < tmp_schedule->job_list->len; ++k) {
                 tmp_j = (Job*)g_ptr_array_index(tmp_schedule->job_list, k);
                 g_ptr_array_add(pd->bestcolors[j].job_list, tmp_j);
                 pd->bestcolors[j].total_processing_time +=
@@ -170,7 +169,7 @@ void g_add_col_to_lp(gpointer data, gpointer user_data) {
     add_scheduleset_to_rmp(tmp, pd);
 }
 
-int build_rmp(NodeData* pd, int construct) {
+int build_rmp(NodeData* pd) {
     int      val = 0;
     Problem* problem = pd->problem;
     int      nb_jobs = problem->nb_jobs;
@@ -354,7 +353,7 @@ int get_solution_lp_lowerbound(NodeData* pd) {
     assert(pd->nb_cols == pd->localColPool->len);
     wctlp_x(pd->RMP, pd->lambda, 0);
 
-    for (unsigned i = 0; i < pd->nb_cols; ++i) {
+    for (int i = 0; i < pd->nb_cols; ++i) {
         ScheduleSet* tmp =
             ((ScheduleSet*)g_ptr_array_index(pd->localColPool, i));
         if (pd->lambda[i]) {

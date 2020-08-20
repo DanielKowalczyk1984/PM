@@ -93,8 +93,8 @@ static void destroy_slope_t(gpointer data) {
 }
 
 static int compute_g(GList** it, int t) {
-    slope_t* x = (slope_t*)(*it)->data;
-    return x->c + x->alpha * (t - x->b1);
+    slope_t* x = ((*it) != NULL) ? (slope_t*)(*it)->data : NULL;
+    return (x != NULL) ? x->c + x->alpha * (t - x->b1) : 0;
 }
 
 static void compute_it(GList** it, int c) {
@@ -174,7 +174,7 @@ static void local_search_add_slope_t(local_search_data* data,
 
 local_search_data* local_search_data_init(int njobs, int nb_machines) {
     int                val = 0;
-    local_search_data* data;
+    local_search_data* data = (local_search_data*)NULL;
     int                i, j;
     data = CC_SAFE_MALLOC(1, local_search_data);
     CCcheck_NULL_2(data, "Failed to allocate memory");
@@ -202,7 +202,7 @@ local_search_data* local_search_data_init(int njobs, int nb_machines) {
 
 CLEAN:
 
-    if (val) {
+    if (val && data) {
         for (i = 0; i < nb_machines; ++i) {
             for (j = 0; j < njobs; ++j) {
                 g_list_free_full(data->g[i][j], destroy_slope_t);
@@ -574,12 +574,12 @@ int local_search_create_g(Solution* sol, local_search_data* data) {
     return val;
 }
 
-static void local_search_update_insertion(Solution* sol,
-                                          int       i_best,
-                                          int       j_best,
-                                          int       k_best,
-                                          int       l,
-                                          int       improvement) {
+static void local_search_update_insertion(Solution*        sol,
+                                          int              i_best,
+                                          int              j_best,
+                                          int              k_best,
+                                          int              l,
+                                          MAYBE_UNUSED int improvement) {
     Job* tmp;
 #ifndef NDEBUG
     int old = sol->tw;
@@ -606,13 +606,13 @@ static void local_search_update_insertion(Solution* sol,
     assert(old - sol->tw == improvement);
 }
 
-static void local_search_update_insertion_inter(Solution* sol,
-                                                int       i_best,
-                                                int       j_best,
-                                                int       k_best,
-                                                int       kk_best,
-                                                int       l,
-                                                int       improvement) {
+static void local_search_update_insertion_inter(Solution*        sol,
+                                                int              i_best,
+                                                int              j_best,
+                                                int              k_best,
+                                                int              kk_best,
+                                                int              l,
+                                                MAYBE_UNUSED int improvement) {
     Job* tmp;
 #ifndef NDEBUG
     int old = sol->tw;
@@ -651,13 +651,13 @@ static void local_search_update_insertion_inter(Solution* sol,
     sol->part[kk_best].used = 1;
 }
 
-static void local_search_update_swap(Solution* sol,
-                                     int       i_best,
-                                     int       j_best,
-                                     int       k_best,
-                                     int       l1,
-                                     int       l2,
-                                     int       improvement) {
+static void local_search_update_swap(Solution*        sol,
+                                     int              i_best,
+                                     int              j_best,
+                                     int              k_best,
+                                     int              l1,
+                                     int              l2,
+                                     MAYBE_UNUSED int improvement) {
     Job*      tmp;
     gpointer  swap;
     PartList* part = sol->part + k_best;
@@ -709,14 +709,14 @@ static void local_search_update_swap(Solution* sol,
     part->used = 1;
 }
 
-static void local_search_update_inter_swap(Solution* sol,
-                                           int       i_best,
-                                           int       j_best,
-                                           int       k_best,
-                                           int       kk_best,
-                                           int       l1,
-                                           int       l2,
-                                           int       improvement) {
+static void local_search_update_inter_swap(Solution*        sol,
+                                           int              i_best,
+                                           int              j_best,
+                                           int              k_best,
+                                           int              kk_best,
+                                           int              l1,
+                                           int              l2,
+                                           MAYBE_UNUSED int improvement) {
     Job*      tmp;
     gpointer  swap;
     PartList* part1 = sol->part + k_best;
@@ -1099,7 +1099,7 @@ void local_search_swap_intra(Solution*          sol,
                     B2_2[i][j] = 0;
                 } else {
                     tmp_j = (Job*)g_ptr_array_index(machine, j + l2 - 1);
-                    int c = sol->c[tmp_j->job];
+                    c = sol->c[tmp_j->job];
                     compute_it(&it, c);
                     B2_2[i][j] = compute_g(&it, c);
                 }
@@ -1181,7 +1181,7 @@ void local_search_swap_intra(Solution*          sol,
             }
 
             for (int i = 0; i < pos - l1 + 1; ++i) {
-                int c = p;
+                c = p;
 
                 if (i != 0) {
                     c += sol->c[((Job*)g_ptr_array_index(machine, i - 1))->job];

@@ -1,14 +1,13 @@
-#include <wctprivate.h>
 #include "PricerSolverArcTimeDP.hpp"
 #include "PricerSolverBddBackward.hpp"
 #include "PricerSolverBddForward.hpp"
 #include "PricerSolverSimpleDP.hpp"
 #include "PricerSolverZddBackward.hpp"
 #include "PricerSolverZddForward.hpp"
-#include "solver.h"
+#include "wctprivate.h"
 
 extern "C" {
-#include <scheduleset.h>
+#include "scheduleset.h"
 
 PricerSolverBase* newSolver(GPtrArray* jobs,
                             int        _num_machines,
@@ -79,26 +78,45 @@ PricerSolverBase* newSolverDp(GPtrArray* _jobs,
     }
 }
 
-PricerSolverBase* newSolverTIBdd(GPtrArray* _jobs,
-                                 int        _num_machines,
-                                 GPtrArray* _ordered_jobs,
-                                 int*       _take_jobs,
-                                 int        _Hmax,
-                                 Parms*     parms) {
-    return new PricerSolverBddBackwardCycle(_jobs, _num_machines, _ordered_jobs,
-                                            parms->pname, _Hmax, _take_jobs);
-}
-
-void print_dot_file(PricerSolver* solver, char* name) {
-    solver->create_dot_zdd(name);
-}
-
 void freeSolver(PricerSolver* src) {
     delete src;
 }
 
+void deletePricerSolver(PricerSolver* solver) {
+    if (solver) {
+        delete solver;
+    }
+}
+
 int* get_take(PricerSolver* solver) {
     return solver->get_take();
+}
+
+void iterate_zdd(PricerSolver* solver) {
+    solver->iterate_zdd();
+}
+
+int get_num_layers(PricerSolver* solver) {
+    return solver->get_num_layers();
+}
+
+size_t get_nb_vertices(PricerSolver* solver) {
+    return solver->get_nb_vertices();
+}
+
+size_t get_nb_edges(PricerSolver* solver) {
+    return solver->get_nb_edges();
+}
+
+void print_number_paths(PricerSolver* solver) {
+    solver->print_num_paths();
+}
+void print_dot_file(PricerSolver* solver, char* name) {
+    solver->create_dot_zdd(name);
+}
+
+void print_number_nodes_edges(PricerSolver* solver) {
+    solver->print_number_nodes_edges();
 }
 
 int evaluate_nodes(NodeData* pd) {
@@ -130,36 +148,6 @@ int build_solve_mip(NodeData* pd) {
     return val;
 }
 
-void print_number_nodes_edges(PricerSolver* solver) {
-    solver->print_number_nodes_edges();
-}
-
-void deletePricerSolver(PricerSolver* solver) {
-    if (solver) {
-        delete solver;
-    }
-}
-
-void iterate_zdd(PricerSolver* solver) {
-    solver->iterate_zdd();
-}
-
-void print_number_paths(PricerSolver* solver) {
-    solver->print_num_paths();
-}
-
-int get_num_layers(PricerSolver* solver) {
-    return solver->get_num_layers();
-}
-
-size_t get_nb_vertices(PricerSolver* solver) {
-    return solver->get_nb_vertices();
-}
-
-size_t get_nb_edges(PricerSolver* solver) {
-    return solver->get_nb_edges();
-}
-
 int construct_lp_sol_from_rmp(NodeData* pd) {
     int val = 0;
     int nb_cols;
@@ -176,10 +164,6 @@ int construct_lp_sol_from_rmp(NodeData* pd) {
 
 CLEAN:
     return val;
-}
-
-void disjunctive_inequality(NodeData* pd, Solution* sol) {
-    pd->solver->disjunctive_inequality(pd->x_e, sol);
 }
 
 void generate_cuts(NodeData* pd) {

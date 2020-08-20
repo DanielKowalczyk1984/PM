@@ -1,9 +1,9 @@
 #include <BackwardBDD.hpp>
 
-template <typename E, typename T>
-class BackwardBddFarkas : public BackwardBddBase<E, T> {
+template <typename T = double>
+class BackwardBddFarkas : public BackwardBddBase<T> {
    public:
-    BackwardBddFarkas() : BackwardBddBase<E, T>(){};
+    BackwardBddFarkas() : BackwardBddBase<T>(){};
 
     void evalNode(NodeBdd<T>& n) const override {
         // Job *tmp_j = n.get_job();
@@ -46,11 +46,6 @@ class BackwardBddFarkas : public BackwardBddBase<E, T> {
             }
         }
 
-        return sol;
-    }
-
-    OptimalSolution<T> getValue(NodeBdd<T> const& n) override {
-        OptimalSolution<T> sol;
         return sol;
     }
 };

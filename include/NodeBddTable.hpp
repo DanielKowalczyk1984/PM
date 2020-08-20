@@ -231,44 +231,45 @@ class NodeTableEntity : public data_table_node<T> {
             int                 lowest = i;
             my_vector<bool>     myLower(n + 1);
 
-            // #ifdef _OPENMP
-            //             if (useMP) {
-            // #pragma omp parallel for schedule(static)
-            //                 for (intmax_t j = 0; j < intmax_t(m); ++j) {
-            //                     for (int b = 0; b < 2; ++b) {
-            //                         int const ii = node[j].branch[b].row();
-            //                         if (ii == 0) continue;
-            //                         if (ii < lowest) {
-            // #pragma omp critical
-            //                             if (ii < lowest) lowest = ii;
-            //                         }
-            //                         if (!lowerMark[ii]) {
-            //                             myLower[ii] = true;
-            //                             lowerMark[ii] = true;
-            //                         }
-            //                     }
-            //                 }
-            //             }
-            //             else
-            // #endif
-            for (size_t j = 0; j < m; ++j) {
-                for (int b = 0; b < 2; ++b) {
-                    int const ii = node[j].branch[b].row();
-
-                    if (ii == 0) {
-                        continue;
-                    }
-
-                    if (ii < lowest) {
-                        lowest = ii;
-                    }
-
-                    if (!lowerMark[ii]) {
-                        myLower[ii] = true;
-                        lowerMark[ii] = true;
+            if (useMP) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+                for (intmax_t j = 0; j < intmax_t(m); ++j) {
+                    for (int b = 0; b < 2; ++b) {
+                        int const ii = node[j].branch[b].row();
+                        if (ii == 0)
+                            continue;
+                        if (ii < lowest) {
+#pragma omp critical
+                            if (ii < lowest)
+                                lowest = ii;
+                        }
+                        if (!lowerMark[ii]) {
+                            myLower[ii] = true;
+                            lowerMark[ii] = true;
+                        }
                     }
                 }
-            }
+#endif
+            } else
+                for (size_t j = 0; j < m; ++j) {
+                    for (int b = 0; b < 2; ++b) {
+                        int const ii = node[j].branch[b].row();
+
+                        if (ii == 0) {
+                            continue;
+                        }
+
+                        if (ii < lowest) {
+                            lowest = ii;
+                        }
+
+                        if (!lowerMark[ii]) {
+                            myLower[ii] = true;
+                            lowerMark[ii] = true;
+                        }
+                    }
+                }
 
             higherLevelTable[lowest].push_back(i);
             my_vector<int>& lower = lowerLevelTable[i];
@@ -402,7 +403,8 @@ class TableHandler {
         explicit Object(int n) : refCount(1), entity(n) {}
 
         explicit Object(NodeTableEntity<T> const& _entity)
-            : refCount(1), entity(_entity) {}
+            : refCount(1),
+              entity(_entity) {}
 
         void ref() {
             ++refCount;

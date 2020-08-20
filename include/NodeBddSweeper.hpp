@@ -56,8 +56,8 @@ class DdSweeper {
      * Constructor.
      * @param diagram the diagram to sweep.
      */
-    explicit DdSweeper(NodeTableEntity<T>& diagram)
-        : diagram(diagram),
+    explicit DdSweeper(NodeTableEntity<T>& _diagram)
+        : diagram(_diagram),
           oneSrcPtr(0),
           allCount(0),
           maxCount(0),
@@ -68,9 +68,9 @@ class DdSweeper {
      * @param diagram the diagram to sweep.
      * @param oneSrcPtr collection of node branch IDs.
      */
-    DdSweeper(NodeTableEntity<T>& diagram, MyVector<NodeBranchId>& oneSrcPtr)
-        : diagram(diagram),
-          oneSrcPtr(&oneSrcPtr),
+    DdSweeper(NodeTableEntity<T>& _diagram, MyVector<NodeBranchId>& _oneSrcPtr)
+        : diagram(_diagram),
+          oneSrcPtr(&_oneSrcPtr),
           allCount(0),
           maxCount(0),
           rootPtr(0) {}

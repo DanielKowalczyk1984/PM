@@ -1,6 +1,6 @@
 #include <interval.h>
 
-void g_print_interval(gpointer data, gpointer user_data) {
+void g_print_interval(gpointer data, MAYBE_UNUSED gpointer user_data) {
     interval* a = (interval*)data;
     printf("interval %d: (%d %d]: ", a->key, a->a, a->b);
     g_ptr_array_foreach(a->sigma, g_print_job, NULL);

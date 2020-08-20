@@ -51,11 +51,11 @@ class MemoryPool {
    public:
     MemoryPool() : blockList(0), nextUnit(BLOCK_UNITS) {}
 
-    MemoryPool(MemoryPool const& o) : blockList(0), nextUnit(BLOCK_UNITS) {
-        //        if (o.blockList != 0) throw std::runtime_error(
-        //                "MemoryPool can't be copied unless it is empty!");
-        //                //FIXME
-    }
+    // MemoryPool(MemoryPool const& o) : blockList(0), nextUnit(BLOCK_UNITS) {
+    //        if (o.blockList != 0) throw std::runtime_error(
+    //                "MemoryPool can't be copied unless it is empty!");
+    //                //FIXME
+    // }
 
     //    MemoryPool& operator=(MemoryPool const& o) {
     //        if (o.blockList != 0) throw std::runtime_error(
@@ -168,7 +168,7 @@ class MemoryPool {
 
         Allocator() throw() : pool(0) {}
 
-        Allocator(MemoryPool& pool) throw() : pool(&pool) {}
+        Allocator(MemoryPool& _pool) throw() : pool(&_pool) {}
 
         Allocator(Allocator const& o) throw() : pool(o.pool) {}
 

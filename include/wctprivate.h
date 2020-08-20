@@ -1,12 +1,13 @@
 #ifndef WCT_PRIVATE_H
 #define WCT_PRIVATE_H
 
-#include <binomial-heap.h>
-#include <interval.h>
-#include <lp.h>
-#include <solver.h>
-#include <util.h>
-#include <MIP_defs.hpp>
+#include "MIP_defs.hpp"
+#include "binomial-heap.h"
+#include "interval.h"
+#include "lp.h"
+#include "scheduleset.h"
+#include "solver.h"
+#include "util.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -106,6 +107,7 @@ struct _NodeData {
     GArray* lhs_coeff;
     int     nb_non_improvements;
     int     iterations;
+
     /** Wentges smoothing technique */
     GArray* pi_in;
     double  dualdiffnorm;
@@ -299,7 +301,6 @@ int  evaluate_nodes(NodeData* pd);
 int  reduce_cost_fixing(NodeData* pd);
 int  build_solve_mip(NodeData* pd);
 int  construct_lp_sol_from_rmp(NodeData* pd);
-void disjunctive_inequality(NodeData* pd, Solution* sol);
 void represent_solution(NodeData* pd, Solution* sol);
 void make_schedule_set_feasible(NodeData* pd, ScheduleSet* set);
 int  check_schedule_set(ScheduleSet* set, NodeData* pd);
@@ -310,10 +311,10 @@ void get_mip_statistics(NodeData* pd, enum MIP_Attr c);
 /**
  * pricing algorithms
  */
-int  solve_pricing(NodeData* pd, Parms* parms, int evaluate);
-int  solve_stab(NodeData* pd, Parms* parms);
-int  solve_stab_dynamic(NodeData* pd, Parms* parms);
-int  solve_stab_hybrid(NodeData* pd, Parms* parms);
+int  solve_pricing(NodeData* pd);
+int  solve_stab(NodeData* pd);
+int  solve_stab_dynamic(NodeData* pd);
+int  solve_stab_hybrid(NodeData* pd);
 int  solve_farkas_dbl(NodeData* pd);
 int  solve_farkas_dbl_DP(NodeData* pd);
 void generate_cuts(NodeData* pd);

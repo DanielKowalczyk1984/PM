@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
-#include <defs.h>
-#include <heap.h>
-#include <wctprivate.h>
+#include "defs.h"
+#include "heap.h"
+#include "wctprivate.h"
 
 /**
  * io.c
@@ -42,8 +42,11 @@ int construct_spt(Problem* prob, Solution* sol);
 int construct_random(Problem* prob, Solution* sol, GRand* rand_uniform);
 
 int heuristic(Problem* prob);
-int partlist_to_scheduleset(PartList* part, int nb_part, int nb_jobs,
-                            ScheduleSet** classes, int* column_count);
+int partlist_to_scheduleset(PartList*     part,
+                            int           nb_part,
+                            int           nb_jobs,
+                            ScheduleSet** classes,
+                            int*          column_count);
 
 /**
  * branch_and_bound.c
@@ -69,8 +72,10 @@ int sequential_cbfs_branch_and_bound_conflict(Problem* problem);
 void      insert_node_for_exploration(NodeData* pd, Problem* problem);
 NodeData* get_next_node(Problem* problem);
 
-int insert_frac_pairs_into_heap(NodeData* pd, int* nodepair_refs,
-                                double* nodepair_weights, int nb_pairs,
+int insert_frac_pairs_into_heap(NodeData*      pd,
+                                int*           nodepair_refs,
+                                double*        nodepair_weights,
+                                int            nb_pairs,
                                 HeapContainer* heap);
 
 /**
@@ -83,7 +88,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem);
  */
 
 int compute_lower_bound(Problem* problem, NodeData* pd);
-int compute_objective(NodeData* pd, Parms* parms);
+int compute_objective(NodeData* pd);
 int print_x(NodeData* pd);
 int calculate_x_e(NodeData* pd);
 int calculate_nb_layers(NodeData* pd, int k);
@@ -109,7 +114,7 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data);
 
 void g_add_col_to_lp(gpointer data, gpointer user_data);
 
-int build_rmp(NodeData* pd, int construct);
+int build_rmp(NodeData* pd);
 int grab_integer_solution(NodeData* pd, double* x, double tolerance);
 int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd);
 int add_lhs_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd);

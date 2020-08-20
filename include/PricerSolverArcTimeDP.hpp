@@ -1,5 +1,3 @@
-#include "MipGraph.hpp"
-#include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
 
 class PricerSolverArcTimeDp : public PricerSolverBase {
@@ -21,13 +19,19 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     double*             solution_x;
 
    public:
-    PricerSolverArcTimeDp(GPtrArray* _jobs, int _num_machines, int _Hmax,
+    PricerSolverArcTimeDp(GPtrArray*  _jobs,
+                          int         _num_machines,
+                          int         _Hmax,
                           const char* p_name);
     ~PricerSolverArcTimeDp();
     void init_table() override;
 
-    void reduce_cost_fixing(double* pi, int UB, double LB) override;
-    void evaluate_nodes(double* pi, int UB, double LB) override;
+    void reduce_cost_fixing([[maybe_unused]] double* pi,
+                            [[maybe_unused]] int     UB,
+                            [[maybe_unused]] double  LB) override;
+    void evaluate_nodes([[maybe_unused]] double* pi,
+                        [[maybe_unused]] int     UB,
+                        [[maybe_unused]] double  LB) override;
 
     void build_mip() override;
     void construct_lp_sol_from_rmp(const double*    columns,
@@ -36,7 +40,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void represent_solution(Solution* sol) override;
     void project_solution(Solution* sol) override;
     void add_constraint(Job* job, GPtrArray* list, int order) override;
-    void disjunctive_inequality(double* x, Solution* sol) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* pi) override;
@@ -82,9 +85,11 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     void update_constraints() override {}
 
-    void update_reduced_costs_arcs(double* _pi, bool farkas = false) override {}
+    void update_reduced_costs_arcs(
+        [[maybe_unused]] double* _pi,
+        [[maybe_unused]] bool    farkas = false) override {}
 
-    void insert_constraints_lp(NodeData* pd) override {}
+    void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
 
     void update_coeff_constraints() override {}
     // double compute_reduced_cost(const OptimalSolution<>&s, double *pi, double

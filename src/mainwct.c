@@ -8,13 +8,12 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#include <defs.h>
 #include <regex.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <wct.h>
-#include <wctparms.h>
+#include "wct.h"
+#include "wctparms.h"
 #include "wctprivate.h"
 static void usage(char* f) {
     fprintf(stderr, "Usage %s: [-see below-] adjlist_file NrMachines\n", f);
@@ -81,13 +80,13 @@ static int parseargs(int ac, char** av, Parms* parms) {
                 break;
 
             case 'f':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_nb_iterations_rvnd(parms, c);
                 CCcheck_val(val, "Failed number feasible solutions");
                 break;
 
             case 's':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_search_strategy(parms, c);
                 CCcheck_val(val, "Failed set_branching_strategy");
                 break;
@@ -105,50 +104,50 @@ static int parseargs(int ac, char** av, Parms* parms) {
                 break;
 
             case 'B':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_branchandbound(parms, c);
                 CCcheck_val(val, "Failed parms_set_branchandbound");
                 break;
 
             case 'S':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_stab_technique(parms, c);
                 CCcheck_val(val, "Failed in parms_set_stab_technique");
                 break;
 
             case 'p':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_print(parms, c);
                 CCcheck_val(val, "Failed in print");
                 break;
 
             case 'b':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_branching_strategy(parms, c);
                 CCcheck_val(val, "Failed in set branching strategy");
                 break;
             case 'a':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_pricing_solver(parms, c);
                 CCcheck_val(val, "Failed in set alpha");
                 break;
             case 'Z':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_strong_branching(parms, c);
                 CCcheck_val(val, "Failed in set strong branching");
                 break;
             case 'm':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_mip_solver(parms, c);
                 CCcheck_val(val, "Failed in set mip solver");
                 break;
             case 'h':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_use_heuristic(parms, c);
                 CCcheck_val(val, "Failed in set mip solver");
                 break;
             case 'r':
-                c = strtol(optarg, &ptr, 10);
+                c = atoi(optarg);
                 val = parms_set_reduce_cost(parms, c);
                 CCcheck_val(val, "Failed in set reduce cost fixing");
                 break;
@@ -174,7 +173,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
             val = 1;
             goto CLEAN;
         }
-        c = strtol(av[optind++], &ptr, 10);
+        c = atoi(av[optind++]);
         val = parms_set_nb_machines(parms, c);
         CCcheck_val(val, "Failed in parms_set_nb_machines");
     }
@@ -251,7 +250,7 @@ int main(int ac, char** av) {
     /**
      * Solve initial relaxation
      */
-    build_rmp(&(problem.root_pd), 0);
+    build_rmp(&(problem.root_pd));
     solve_relaxation(&problem, root);
     GPtrArray* solutions_pool = g_ptr_array_copy(
         root->localColPool, g_copy_scheduleset, &(problem.nb_jobs));
@@ -276,7 +275,7 @@ int main(int ac, char** av) {
             lp_node_data_free(root);
             root->localColPool = g_ptr_array_copy(
                 solutions_pool, g_copy_scheduleset, &(problem.nb_jobs));
-            build_rmp(root, 0);
+            build_rmp(root);
             freeSolver(root->solver);
             root->solver =
                 newSolver(root->jobarray, root->nb_machines, root->ordered_jobs,

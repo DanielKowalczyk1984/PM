@@ -17,13 +17,12 @@ static int transfer_same_cclasses(NodeData*  pd,
                                   Job*       v1,
                                   Job*       v2) {
     int          val = 0;
-    int          i;
     ScheduleSet* tmp;
     Job*         tmp_j;
     /* Transfer independent sets: */
     g_ptr_array_set_size(pd->localColPool, colPool->len);
 
-    for (i = 0; i < colPool->len; ++i) {
+    for (guint i = 0; i < colPool->len; ++i) {
         ScheduleSet* it = (ScheduleSet*)g_ptr_array_index(colPool, i);
         int          construct = 1;
         gboolean     v1_in;
@@ -38,7 +37,7 @@ static int transfer_same_cclasses(NodeData*  pd,
             g_ptr_array_add(pd->localColPool, tmp);
         }
 
-        for (int j = 0; j < it->job_list->len && construct; ++j) {
+        for (guint j = 0; j < it->job_list->len && construct; ++j) {
             tmp_j = (Job*)g_ptr_array_index(it->job_list, j);
             tmp->total_processing_time += tmp_j->processing_time;
             g_hash_table_insert(tmp->table, tmp_j, NULL);
@@ -107,7 +106,7 @@ static int create_same_conflict(Problem*   problem,
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 1);
 
-        if ((size_t)pd->nb_jobs != get_num_layers(pd->solver)) {
+        if (pd->nb_jobs != get_num_layers(pd->solver)) {
             pd->status = infeasible;
 
             if (pd->solver) {
@@ -180,7 +179,7 @@ static int create_differ_conflict(Problem*   problem,
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 0);
 
-        if ((size_t)pd->nb_jobs != get_num_layers(pd->solver)) {
+        if (pd->nb_jobs != get_num_layers(pd->solver)) {
             pd->status = infeasible;
 
             if (pd->solver) {
@@ -213,7 +212,7 @@ static int create_differ_conflict(Problem*   problem,
             CCcheck_NULL_3(tmp, "Failed to allocate memory");
             g_ptr_array_add(pd->localColPool, tmp);
 
-            for (int j = 0; j < it->job_list->len; j++) {
+            for (guint j = 0; j < it->job_list->len; j++) {
                 tmp_j = (Job*)g_ptr_array_index(it->job_list, j);
                 tmp->total_processing_time += tmp_j->processing_time;
                 g_hash_table_insert(tmp->table, tmp_j, NULL);
@@ -441,7 +440,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     }
 
     if (!pd->RMP) {
-        val = build_rmp(pd, 0);
+        val = build_rmp(pd);
         CCcheck_val_2(val, "Failed at build_lp");
     }
 

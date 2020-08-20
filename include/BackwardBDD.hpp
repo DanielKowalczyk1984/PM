@@ -2,48 +2,45 @@
 #define BACKWARD_BDD_HPP
 #include <NodeBdd.hpp>
 #include <OptimalSolution.hpp>
-#include "ModelInterface.hpp"
 #include "NodeBddEval.hpp"
 
-template <typename E, typename T>
-class BackwardBddBase : public Eval<E, NodeBdd<T>, OptimalSolution<T> > {
+template <typename T = double>
+class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     OriginalModel<>* original_model;
     double*          pi;
 
    public:
-    BackwardBddBase(OriginalModel<>* model)
-        : original_model(model), pi(nullptr) {}
+    BackwardBddBase()
+        : Eval<NodeBdd<T>, OptimalSolution<T>>(),
+          original_model(nullptr),
+          pi(nullptr) {}
 
-    BackwardBddBase() : original_model(nullptr), pi(nullptr) {}
-
-    BackwardBddBase(const BackwardBddBase<E, T>& src) {}
+    // BackwardBddBase(const BackwardBddBase<T>& src) {}
 
     void set_pi(double* _pi) { pi = _pi; }
 
     const double* get_pi() const { return pi; }
 
-    virtual void               initializenode(NodeBdd<T>& n) const = 0;
-    virtual void               initializerootnode(NodeBdd<T>& n) const = 0;
-    virtual void               evalNode(NodeBdd<T>& n) const = 0;
-    virtual OptimalSolution<T> getValue(NodeBdd<T> const& n) = 0;
+    virtual void initializenode(NodeBdd<T>& n) const = 0;
+    virtual void initializerootnode(NodeBdd<T>& n) const = 0;
+    virtual void evalNode(NodeBdd<T>& n) const = 0;
+    BackwardBddBase<T>(const BackwardBddBase<T>&) = default;
+    BackwardBddBase<T>(BackwardBddBase<T>&&) = default;
+    BackwardBddBase<T>& operator=(const BackwardBddBase<T>&) = default;
+    BackwardBddBase<T>& operator=(BackwardBddBase<T>&&) = default;
 };
 
-template <typename E, typename T>
-class BackwardBddSimple : public BackwardBddBase<E, T> {
+template <typename T = double>
+class BackwardBddSimple : public BackwardBddBase<T> {
    public:
-    BackwardBddSimple() : BackwardBddBase<E, T>(){};
-
-    BackwardBddSimple(OriginalModel<>* model)
-        : BackwardBddBase<E, T>(model){
-
-          };
+    BackwardBddSimple() : BackwardBddBase<T>(){};
 
     void evalNode(NodeBdd<T>& n) const override {
         NodeBdd<T>* p0 = n.child[0];
         NodeBdd<T>* p1 = n.child[1];
 
         n.reset_reduced_costs();
-        const double* dual = BackwardBddBase<E, T>::get_pi();
+        const double* dual = BackwardBddBase<T>::get_pi();
 
         for (auto it = n.coeff_list[1].begin(); it != n.coeff_list[1].end();
              it++) {
@@ -92,21 +89,16 @@ class BackwardBddSimple : public BackwardBddBase<E, T> {
         return sol;
     }
 
-    OptimalSolution<T> getValue(NodeBdd<T> const& n) override {
-        OptimalSolution<T> sol;
-        return sol;
-    }
+    BackwardBddSimple<T>(const BackwardBddSimple<T>&) = default;
+    BackwardBddSimple<T>(BackwardBddSimple<T>&&) = default;
+    BackwardBddSimple<T>& operator=(const BackwardBddSimple<T>&) = default;
+    BackwardBddSimple<T>& operator=(BackwardBddSimple<T>&&) = default;
 };
 
-template <typename E, typename T>
-class BackwardBddCycle : public BackwardBddBase<E, T> {
+template <typename T = double>
+class BackwardBddCycle : public BackwardBddBase<T> {
    public:
-    BackwardBddCycle() : BackwardBddBase<E, T>(){};
-
-    BackwardBddCycle(OriginalModel<>* model)
-        : BackwardBddBase<E, T>(model){
-
-          };
+    BackwardBddCycle() : BackwardBddBase<T>(){};
 
     void evalNode(NodeBdd<T>& n) const override {
         auto tmp_j = n.get_job();
@@ -114,7 +106,7 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
         NodeBdd<T>* p0{n.child[0]};
         NodeBdd<T>* p1{n.child[1]};
         n.reset_reduced_costs();
-        const double* dual = BackwardBddBase<E, T>::get_pi();
+        const double* dual = BackwardBddBase<T>::get_pi();
 
         for (auto it = n.coeff_list[1].begin(); it != n.coeff_list[1].end();
              it++) {
@@ -206,11 +198,10 @@ class BackwardBddCycle : public BackwardBddBase<E, T> {
 
         return sol;
     }
-
-    OptimalSolution<T> getValue(NodeBdd<T> const& n) override {
-        OptimalSolution<T> sol;
-        return sol;
-    }
+    BackwardBddCycle<T>(const BackwardBddCycle<T>&) = default;
+    BackwardBddCycle<T>(BackwardBddCycle<T>&&) = default;
+    BackwardBddCycle<T>& operator=(const BackwardBddCycle<T>&) = default;
+    BackwardBddCycle<T>& operator=(BackwardBddCycle<T>&&) = default;
 };
 
 #endif  // BACKWARD_BDD_HPP

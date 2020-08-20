@@ -29,8 +29,10 @@ struct PricerSolverBase {
      * Default constructors
      */
     PricerSolverBase(GPtrArray* _jobs, int _num_machines, const char* p_name);
-    PricerSolverBase(GPtrArray* _jobs, int _num_machines,
-                     GPtrArray* _ordered_jobs, const char* p_name);
+    PricerSolverBase(GPtrArray*  _jobs,
+                     int         _num_machines,
+                     GPtrArray*  _ordered_jobs,
+                     const char* p_name);
     /**
      * Copy constructor
      */
@@ -94,8 +96,6 @@ struct PricerSolverBase {
 
     virtual void update_coeff_constraints() = 0;
 
-    virtual void disjunctive_inequality(double* x, Solution* sol) = 0;
-
     /**
      * Some getters
      */
@@ -126,7 +126,8 @@ struct PricerSolverBase {
     virtual void   update_reduced_costs_arcs(double* _pi,
                                              bool    farkas = false) = 0;
     virtual double compute_reduced_cost(const OptimalSolution<>& sol,
-                                        double* pi, double* lhs);
+                                        double*                  pi,
+                                        double*                  lhs);
     virtual double compute_lagrange(const OptimalSolution<>& sol, double* pi);
 
     inline void set_is_integer_solution(bool _is_solution) {

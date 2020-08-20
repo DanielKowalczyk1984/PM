@@ -78,7 +78,7 @@ class BuilderBase {
         SPEC const& spec;
         int const   level;
 
-        Hasher(SPEC const& spec, int level) : spec(spec), level(level) {}
+        Hasher(SPEC const& _spec, int _level) : spec(_spec), level(_level) {}
 
         size_t operator()(SpecNode const* p) const {
             return spec.hash_code(state(p), level);
@@ -118,12 +118,12 @@ class DdBuilder : BuilderBase {
     }
 
    public:
-    DdBuilder(Spec const& spec, TableHandler<T>& output, int n = 0)
-        : spec(spec),
-          specNodeSize(getSpecNodeSize(spec.datasize())),
-          output(output.privateEntity()),
+    DdBuilder(Spec const& _spec, TableHandler<T>& _output, int n = 0)
+        : spec(_spec),
+          specNodeSize(getSpecNodeSize(_spec.datasize())),
+          output(_output.privateEntity()),
           sweeper(this->output, oneSrcPtr),
-          oneStorage(spec.datasize()),
+          oneStorage(_spec.datasize()),
           one(oneStorage.data()) {
         if (n >= 1)
             init(n);
@@ -305,7 +305,7 @@ class DdBuilder : BuilderBase {
         }
 
         snodeTable[i - 1].pop_front();
-        spec.destructLevel(i);
+        // spec.destructLevel(i);
         sweeper.update(i, lowestChild, deadCount);
     }
 };
@@ -339,13 +339,14 @@ class ZddSubsetter : BuilderBase {
     MemoryPools pools;
 
    public:
-    ZddSubsetter(TableHandler<T> const& input, Spec const& s,
-                 TableHandler<T>& output)
+    ZddSubsetter(TableHandler<T> const& _input,
+                 Spec const&            s,
+                 TableHandler<T>&       _output)
         : spec(s),
           specNodeSize(getSpecNodeSize(spec.datasize())),
-          input(*input),
-          output(output.privateEntity()),
-          work(input->numRows()),
+          input(*_input),
+          output(_output.privateEntity()),
+          work(_input->numRows()),
           sweeper(this->output, oneSrcPtr),
           oneStorage(spec.datasize()),
           one(oneStorage.data()) {}
@@ -566,7 +567,7 @@ class ZddSubsetter : BuilderBase {
 
         work[i].clear();
         pools[i].clear();
-        spec.destructLevel(i);
+        // spec.destructLevel(i);
         sweeper.update(i, lowestChild, deadCount);
     }
 

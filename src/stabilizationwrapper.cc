@@ -1,9 +1,8 @@
-#include <stabilization.h>
-#include <wctprivate.h>
-#include <cstdio>
 #include "PricerSolverBase.hpp"
-#include "lp.h"
+#include "fmt/core.h"
 #include "scheduleset.h"
+#include "stabilization.h"
+#include "wctprivate.h"
 
 template <typename T = double>
 int construct_sol(NodeData* pd, OptimalSolution<T>* sol) {
@@ -33,43 +32,6 @@ CLEAN:
     return val;
 }
 
-extern "C" {
-
-double compute_lagrange(OptimalSolution<double>& sol,
-                        double*                  rhs,
-                        double*                  pi,
-                        int                      nb_jobs) {
-    double result = 0.0;
-    double a = 0.0;
-
-    for (unsigned i = 0; i < sol.jobs->len; ++i) {
-        Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-        result += pi[tmp_j->job];
-    }
-
-    for (int i = 0; i < nb_jobs; ++i) {
-        a += rhs[i] * pi[i];
-    }
-
-    result = CC_MIN(0.0, sol.cost - result);
-    result = -rhs[nb_jobs] * result;
-    result += a;
-
-    return result;
-}
-
-// static double compute_reduced_cost(OptimalSolution<double>& sol, double* pi,
-//                                    int nb_jobs) {
-//     double result = sol.cost + pi[nb_jobs];
-
-//     for (guint i = 0; i < sol.jobs->len; ++i) {
-//         Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs, i));
-//         result -= pi[tmp_j->job];
-//     }
-
-//     return result;
-// }
-
 void update_alpha(NodeData* pd) {
     if (pd->subgradientproduct > 0.0) {
         pd->alpha = CC_MAX(0, pd->alpha - 0.1);
@@ -88,12 +50,6 @@ int is_stabilized(NodeData* pd) {
         return pd->alphabar > 0.0;
     }
     return pd->alpha > 0.0;
-}
-
-int get_dual_row(NodeData* pd, int i) {
-    int val = 0;
-
-    return val;
 }
 
 int calculate_dualdiffnorm(NodeData* pd) {
@@ -318,15 +274,16 @@ static void compute_pi_eta_sep(int     nb_constr,
     *eta_sep = alpha * (*eta_in) + beta * (*eta_out);
 }
 
-int solve_pricing(NodeData* pd, parms* parms, int evaluate) {
+extern "C" {
+
+int solve_pricing(NodeData* pd) {
     int val = 0;
 
-    OptimalSolution<double> sol;
     pd->update = 0;
     double* pi = &g_array_index(pd->pi, double, 0);
     double* lhs = &g_array_index(pd->lhs_coeff, double, 0);
 
-    sol = pd->solver->pricing_algorithm(pi);
+    OptimalSolution<> sol = pd->solver->pricing_algorithm(pi);
     pd->reduced_cost = pd->solver->compute_reduced_cost(sol, pi, lhs);
 
     if (pd->reduced_cost < -1e-6) {
@@ -341,7 +298,7 @@ CLEAN:
     return val;
 }
 
-int solve_stab(NodeData* pd, parms* parms) {
+int solve_stab(NodeData* pd) {
     int           val = 0;
     PricerSolver* solver = pd->solver;
     double        k = 0.0;
@@ -360,8 +317,7 @@ int solve_stab(NodeData* pd, parms* parms) {
             pd->hasstabcenter ? CC_MAX(0, 1.0 - k * (1.0 - pd->alpha)) : 0.0;
         compute_pi_eta_sep(pd->nb_rows, pi_sep, &(pd->eta_sep), alpha, pi_in,
                            &(pd->eta_in), pi_out, &(pd->eta_out));
-        OptimalSolution<double> sol;
-        sol = solver->pricing_algorithm(pi_sep);
+        OptimalSolution<double> sol = solver->pricing_algorithm(pi_sep);
 
         result_sep = pd->solver->compute_lagrange(sol, pi_sep);
         pd->reduced_cost =
@@ -385,17 +341,17 @@ int solve_stab(NodeData* pd, parms* parms) {
     }
 
     if (pd->iterations % pd->nb_jobs == 0) {
-        printf(
-            "alpha = %f, result of primal bound and Lagragian "
-            "bound: out =%f, in = %f\n",
-            pd->alpha, pd->eta_out, pd->eta_in);
+        fmt::print(
+            R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
+)",
+            4, pd->alpha, pd->eta_out, pd->eta_in);
     }
 
 CLEAN:
     return val;
 }
 
-int solve_stab_dynamic(NodeData* pd, parms* parms) {
+int solve_stab_dynamic(NodeData* pd) {
     int           val = 0;
     PricerSolver* solver = pd->solver;
     double        k = 0.0;
@@ -439,17 +395,17 @@ int solve_stab_dynamic(NodeData* pd, parms* parms) {
     }
 
     if (pd->iterations % pd->nb_jobs == 0) {
-        printf(
-            " alpha = %f, result of primal bound and Lagragian bound: out =%f, "
-            "in = %f\n",
-            pd->alpha, pd->eta_out, pd->eta_in);
+        fmt::print(
+            R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
+)",
+            4, pd->alpha, pd->eta_out, pd->eta_in);
     }
 
 CLEAN:
     return val;
 }
 
-int solve_stab_hybrid(NodeData* pd, parms* parms) {
+int solve_stab_hybrid(NodeData* pd) {
     int           val = 0;
     PricerSolver* solver = pd->solver;
     pd->update = 0;
@@ -496,10 +452,10 @@ int solve_stab_hybrid(NodeData* pd, parms* parms) {
     } while (pd->in_mispricing_schedule && stabilized);
 
     if (pd->iterations % pd->nb_jobs == 0) {
-        printf(
-            " alpha = %f, result of primal bound and Lagragian bound: out =%f, "
-            "in = %f\n",
-            pd->alpha, pd->eta_out, pd->eta_in);
+        fmt::print(
+            R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
+)",
+            4, pd->alpha, pd->eta_out, pd->eta_in);
     }
 
     return val;

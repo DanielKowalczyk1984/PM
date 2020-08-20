@@ -1,7 +1,5 @@
 #include "PricerSolverArcTimeDP.hpp"
 #include <iostream>
-#include "gurobi_c++.h"
-#include "gurobi_c.h"
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
                                              int         _num_machines,
@@ -142,7 +140,9 @@ void PricerSolverArcTimeDp::init_table() {
     std::cout << "Number of arcs in ATI formulation = " << size_graph << '\n';
 }
 
-void PricerSolverArcTimeDp::evaluate_nodes(double* pi, int UB, double LB) {
+void PricerSolverArcTimeDp::evaluate_nodes(double*                 pi,
+                                           [[maybe_unused]] int    UB,
+                                           [[maybe_unused]] double LB) {
     forward_evaluator(pi);
     backward_evaluator(pi);
 
@@ -251,7 +251,8 @@ void PricerSolverArcTimeDp::build_mip() {
                     auto a = arctime_x[it->job][j][t].get(GRB_DoubleAttr_X);
                     if (a > 0) {
                         std::cout << j << " " << t << " "
-                                  << ((Job*)jobs->pdata[j])->processing_time
+                                  << (static_cast<Job*>(jobs->pdata[j]))
+                                         ->processing_time
                                   << "\n";
                     }
                 }
@@ -456,7 +457,8 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     return sol;
 }
 
-OptimalSolution<double> PricerSolverArcTimeDp::farkas_pricing(double* _pi) {
+OptimalSolution<double> PricerSolverArcTimeDp::farkas_pricing([
+    [maybe_unused]] double* _pi) {
     OptimalSolution<double> opt_sol;
 
     return opt_sol;
@@ -537,13 +539,13 @@ void PricerSolverArcTimeDp::represent_solution(Solution* sol) {
     project_solution(sol);
 }
 
-void PricerSolverArcTimeDp::add_constraint(Job*       job,
-                                           GPtrArray* list,
-                                           int        order) {}
+void PricerSolverArcTimeDp::add_constraint([[maybe_unused]] Job*       job,
+                                           [[maybe_unused]] GPtrArray* list,
+                                           [[maybe_unused]] int        order) {}
 
 void PricerSolverArcTimeDp::iterate_zdd() {}
 
-void PricerSolverArcTimeDp::create_dot_zdd(const char* name) {}
+void PricerSolverArcTimeDp::create_dot_zdd([[maybe_unused]] const char* name) {}
 
 void PricerSolverArcTimeDp::print_number_nodes_edges() {}
 
@@ -615,6 +617,5 @@ bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
     return false;
 }
 
-void PricerSolverArcTimeDp::make_schedule_set_feasible(GPtrArray* set) {}
-
-void PricerSolverArcTimeDp::disjunctive_inequality(double* x, Solution* sol) {}
+void PricerSolverArcTimeDp::make_schedule_set_feasible([
+    [maybe_unused]] GPtrArray* set) {}

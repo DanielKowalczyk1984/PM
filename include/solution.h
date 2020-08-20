@@ -18,7 +18,7 @@ typedef struct _solution {
     int       b;
     int       nb_jobs;
     int       nb_machines;
-    int       nb_intervals;
+    guint     nb_intervals;
     int       off;
 } Solution;
 
@@ -30,8 +30,10 @@ void solution_init(Solution* sol);
  * free all dynamic allocated memory of solution type
  */
 void      solution_free(Solution** sol);
-Solution* solution_alloc(int nb_intervals, int nb_machines, int nb_jobs,
-                         int off);
+Solution* solution_alloc(guint nb_intervals,
+                         int   nb_machines,
+                         int   nb_jobs,
+                         int   off);
 
 /**
  * functions to work on solution type data
@@ -51,8 +53,9 @@ void g_reset_num_layers(gpointer data, gpointer user_data);
 int  solution_canonical_order(Solution* sol, GPtrArray* intervals);
 void solution_calculate_all(Solution* sol);
 void solution_calculate_partition_all(Solution* sol, GPtrArray* intervals);
-void solution_calculate_partition_machine(Solution* sol, GPtrArray* intervals,
-                                          int m);
+void solution_calculate_partition_machine(Solution*  sol,
+                                          GPtrArray* intervals,
+                                          int        m);
 void solution_calculate_machine(Solution* sol, int m);
 int  solution_arctime_order(Solution* sol);
 #ifdef __cplusplus
