@@ -1,7 +1,7 @@
 #ifndef LABEL_HPP
 #define LABEL_HPP
 
-#include "OptimalSolution.hpp"
+#include "job.h"
 
 template <typename N, typename T>
 class Label {
