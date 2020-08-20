@@ -2,8 +2,8 @@
 #define INTERVAL_H
 
 #include <glib.h>
-#include <job.h>
-#include <util.h>
+#include "job.h"
+#include "util.h"
 
 typedef struct _interval {
     int        a;
@@ -27,8 +27,12 @@ typedef struct _job_interval_pair {
     int       key;
 } job_interval_pair;
 
-void      interval_init(interval* p, int a, int b, int key, GPtrArray* jobarray,
-                        int njobs);
+void      interval_init(interval*  p,
+                        int        a,
+                        int        b,
+                        int        key,
+                        GPtrArray* jobarray,
+                        int        njobs);
 interval* interval_alloc(int a, int b, int key, GPtrArray* jobarray, int njobs);
 interval* interval_copy(interval* src);
 void      interval_free(interval* p);
