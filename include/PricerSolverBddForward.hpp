@@ -11,9 +11,12 @@ class PricerSolverBddSimple : public PricerSolverBdd {
     BackwardBddFarkasDouble farkas_evaluator;
 
    public:
-    PricerSolverBddSimple(GPtrArray* _jobs, int _num_machines,
-                          GPtrArray* _ordered_jobs, const char* p_name,
-                          int _Hmax, int* _take_jobs);
+    PricerSolverBddSimple(GPtrArray*  _jobs,
+                          int         _num_machines,
+                          GPtrArray*  _ordered_jobs,
+                          const char* p_name,
+                          int         _Hmax,
+                          int*        _take_jobs);
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    compute_labels(double* _pi);
@@ -27,9 +30,12 @@ class PricerSolverBddCycle : public PricerSolverBdd {
     BackwardBddFarkasDouble farkas_evaluator;
 
    public:
-    PricerSolverBddCycle(GPtrArray* _jobs, int _num_machines,
-                         GPtrArray* _ordered_jobs, const char* p_name,
-                         int _Hmax, int* _take_jobs);
+    PricerSolverBddCycle(GPtrArray*  _jobs,
+                         int         _num_machines,
+                         GPtrArray*  _ordered_jobs,
+                         const char* p_name,
+                         int         _Hmax,
+                         int*        _take_jobs);
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    compute_labels(double* _pi);
