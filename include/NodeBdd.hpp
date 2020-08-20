@@ -1,11 +1,8 @@
 #ifndef NODE_DURATION_HPP
 #define NODE_DURATION_HPP
-#include <OptimalSolution.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <list>
 #include <memory>
 #include "Label.hpp"
-#include "ModelInterface.hpp"
 #include "NodeBase.hpp"
 #include "gurobi_c++.h"
 
