@@ -1,7 +1,5 @@
 #include "PricerSolverArcTimeDP.hpp"
 #include <iostream>
-#include "gurobi_c++.h"
-#include "gurobi_c.h"
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
                                              int         _num_machines,
