@@ -159,7 +159,10 @@ void* CCutil_allocrus(size_t size);
 void* CCutil_reallocrus(void* ptr, size_t size);
 void  CCutil_freerus(void* p);
 
-int CCutil_reallocrus_scale(void** pptr, int* pnnum, int count, double scale,
+int CCutil_reallocrus_scale(void** pptr,
+                            int*   pnnum,
+                            int    count,
+                            double scale,
                             size_t size);
 int CCutil_reallocrus_count(void** pptr, int count, size_t size);
 
@@ -222,7 +225,9 @@ void CCutil_int_perm_quicksort_0(int* perm, int* len, int n);
 int CCutil_quickselect(int* len, int p, int n, int m);
 int quickselect(int* V, int N, int k);
 
-int bisearch(int* sorted, const void* target, int size,
+int bisearch(int*        sorted,
+             const void* target,
+             int         size,
              int (*compare)(const void* key1, const void* key2));
 
 /****************************************************************************/
