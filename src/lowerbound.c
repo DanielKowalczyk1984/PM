@@ -1,9 +1,9 @@
-#include <solver.h>
-#include <wct.h>
 #include "gurobi_c.h"
 #include "lp.h"
 #include "scheduleset.h"
+#include "solver.h"
 #include "util.h"
+#include "wct.h"
 #include "wctparms.h"
 #include "wctprivate.h"
 

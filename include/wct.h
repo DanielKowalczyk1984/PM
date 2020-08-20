@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
-#include <defs.h>
-#include <heap.h>
-#include <wctprivate.h>
+#include "defs.h"
+#include "heap.h"
+#include "wctprivate.h"
 
 /**
  * io.c

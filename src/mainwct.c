@@ -8,13 +8,12 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#include <defs.h>
 #include <regex.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <wct.h>
-#include <wctparms.h>
+#include "wct.h"
+#include "wctparms.h"
 #include "wctprivate.h"
 static void usage(char* f) {
     fprintf(stderr, "Usage %s: [-see below-] adjlist_file NrMachines\n", f);

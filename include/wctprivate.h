@@ -1,12 +1,13 @@
 #ifndef WCT_PRIVATE_H
 #define WCT_PRIVATE_H
 
-#include <binomial-heap.h>
-#include <interval.h>
-#include <lp.h>
-#include <solver.h>
-#include <util.h>
-#include <MIP_defs.hpp>
+#include "MIP_defs.hpp"
+#include "binomial-heap.h"
+#include "interval.h"
+#include "lp.h"
+#include "scheduleset.h"
+#include "solver.h"
+#include "util.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -106,6 +107,7 @@ struct _NodeData {
     GArray* lhs_coeff;
     int     nb_non_improvements;
     int     iterations;
+
     /** Wentges smoothing technique */
     GArray* pi_in;
     double  dualdiffnorm;

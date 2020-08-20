@@ -1,4 +1,5 @@
 #include <wct.h>
+#include "scheduleset.h"
 
 static int collect_same_child_conflict(NodeData* cd);
 static int collect_diff_child_conflict(NodeData* cd);

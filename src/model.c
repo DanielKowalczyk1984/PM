@@ -1,9 +1,10 @@
-#include <wct.h>
 #include "job.h"
 #include "lp.h"
 #include "scheduleset.h"
 #include "util.h"
+#include "wct.h"
 #include "wctprivate.h"
+
 int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     int          val = 0;
     double       test_incumbent = .0;
