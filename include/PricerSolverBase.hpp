@@ -12,7 +12,7 @@
 #include "wctprivate.h"
 
 struct PricerSolverBase {
-   protected:
+   public:
     GPtrArray*                jobs;
     int                       nb_jobs;
     int                       num_machines;
@@ -23,8 +23,6 @@ struct PricerSolverBase {
     std::unique_ptr<GRBModel> model;
     ReformulationModel        reformulation_model;
     bool                      is_integer_solution;
-
-   public:
     /**
      * Default constructors
      */
