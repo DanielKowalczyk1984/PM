@@ -1,5 +1,4 @@
 file(GLOB SOURCE_FILES
-          "src/*.cc"
           "src/*.cpp"
           src/branch_and_bound.c
           src/conflict_branching.c
