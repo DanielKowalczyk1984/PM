@@ -26,7 +26,7 @@ OptimalSolution<double> PricerSolverBddSimple::pricing_algorithm(double* _pi) {
 }
 
 OptimalSolution<double> PricerSolverBddSimple::farkas_pricing(double* _pi) {
-    update_reduced_costs_arcs(_pi, true);
+    farkas_evaluator.set_pi(_pi);
     return get_decision_diagram()->evaluate_backward(farkas_evaluator);
 }
 
@@ -100,7 +100,7 @@ OptimalSolution<double> PricerSolverBddCycle::pricing_algorithm(double* _pi) {
 }
 
 OptimalSolution<double> PricerSolverBddCycle::farkas_pricing(double* _pi) {
-    update_reduced_costs_arcs(_pi, true);
+    farkas_evaluator.set_pi(_pi);
     return get_decision_diagram()->evaluate_backward(farkas_evaluator);
 }
 

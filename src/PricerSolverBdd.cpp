@@ -284,29 +284,6 @@ void PricerSolverBdd::init_table() {
     }
 }
 
-void PricerSolverBdd::update_reduced_costs_arcs(double* _pi, bool farkas) {
-    auto& table = decision_diagram->getDiagram().privateEntity();
-    for (auto i = decision_diagram->topLevel(); i > 0; i--) {
-        for (auto& it : table[i]) {
-            if (farkas) {
-                it.reset_reduced_costs_farkas();
-            } else {
-                it.reset_reduced_costs();
-            }
-        }
-    }
-
-    for (auto c = 0; c < nb_jobs; c++) {
-        auto coeff_list = original_model.get_coeff_list(c);
-        for (auto& it : *coeff_list) {
-            auto  node_id = node_ids[it->get_j()][it->get_t()].lock();
-            auto& node = table.node(*node_id);
-            auto  coeff = it->get_coeff();
-            node.adjust_reduced_costs(coeff * _pi[c], it->get_high());
-        }
-    }
-}
-
 void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     wctlp_get_nb_rows(pd->RMP, &(pd->nb_rows));
     int nb_new_constraints =

@@ -6,6 +6,18 @@ class BackwardBddFarkas : public BackwardBddBase<T> {
     BackwardBddFarkas() : BackwardBddBase<T>(){};
 
     void evalNode(NodeBdd<T>& n) const override {
+        n.reset_reduced_costs_farkas();
+
+        const double* dual = BackwardBddBase<T>::get_pi();
+        for (auto it = n.coeff_list[1].begin(); it != n.coeff_list[1].end();
+             it++) {
+            auto aux = it->lock();
+            if (aux) {
+                n.adjust_reduced_costs(aux->get_coeff() * dual[aux->get_row()],
+                                       aux->get_high());
+            }
+        }
+
         // Job *tmp_j = n.get_job();
         NodeBdd<T>* p0 = n.child[0];
         NodeBdd<T>* p1 = n.child[1];

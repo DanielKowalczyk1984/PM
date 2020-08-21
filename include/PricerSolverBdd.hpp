@@ -68,7 +68,6 @@ class PricerSolverBdd : public PricerSolverBase {
     void   print_num_paths() override;
     void   add_constraint(Job* job, GPtrArray* list, int order) override;
 
-    void update_reduced_costs_arcs(double* _pi, bool farkas = false) override;
     void init_coeff_constraints();
     void insert_constraints_lp(NodeData* pd) override;
 

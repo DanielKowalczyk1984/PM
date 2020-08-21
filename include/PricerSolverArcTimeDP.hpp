@@ -85,10 +85,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     void update_constraints() override {}
 
-    void update_reduced_costs_arcs(
-        [[maybe_unused]] double* _pi,
-        [[maybe_unused]] bool    farkas = false) override {}
-
     void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
 
     void update_coeff_constraints() override {}
