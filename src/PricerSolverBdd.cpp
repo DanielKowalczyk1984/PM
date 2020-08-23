@@ -365,12 +365,13 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     vector<double> new_values(nb_new_constraints, 0.0);
     vector<int>    new_values_int(nb_new_constraints, 0);
     g_array_append_vals(pd->pi, new_values.data(), new_values.size());
-    g_array_append_vals(pd->pi_in, new_values.data(), new_values.size());
-    g_array_append_vals(pd->pi_out, new_values.data(), new_values.size());
-    g_array_append_vals(pd->pi_sep, new_values.data(), new_values.size());
-    g_array_append_vals(pd->subgradient_in, new_values.data(),
-                        new_values.size());
-    g_array_append_vals(pd->subgradient, new_values.data(), new_values.size());
+    // g_array_append_vals(pd->pi_in, new_values.data(), new_values.size());
+    // g_array_append_vals(pd->pi_out, new_values.data(), new_values.size());
+    // g_array_append_vals(pd->pi_sep, new_values.data(), new_values.size());
+    // g_array_append_vals(pd->subgradient_in, new_values.data(),
+    // new_values.size());
+    // g_array_append_vals(pd->subgradient, new_values.data(),
+    // new_values.size());
     g_array_append_vals(pd->rhs, new_values.data(), new_values.size());
     wctlp_get_rhs(pd->RMP, &g_array_index(pd->rhs, double, 0));
     g_array_append_vals(pd->lhs_coeff, new_values.data(), new_values.size());

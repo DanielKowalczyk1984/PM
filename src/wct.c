@@ -160,22 +160,8 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->id_pseudo_schedules = 0;
 
     /**init stab data */
-    pd->pi_in = (GArray*)NULL;
-    pd->pi_out = (GArray*)NULL;
-    pd->pi_sep = (GArray*)NULL;
-    pd->subgradient = (GArray*)NULL;
-    pd->subgradient_in = (GArray*)NULL;
-    pd->reduced_cost = 0.0;
-    pd->alpha = 0.8;
     pd->update = 1;
     pd->iterations = 0;
-    pd->hasstabcenter = 0;
-    pd->beta = 0.0;
-    pd->node_stab = -1;
-    pd->subgradientnorm = 0.0;
-    pd->dualdiffnorm = 0.0;
-    pd->hybridfactor = 0.0;
-    pd->subgradientproduct = 0.0;
     pd->update_stab_center = 0;
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver*)NULL;
@@ -238,11 +224,6 @@ void lp_node_data_free(NodeData* pd) {
     g_array_free(pd->pi, TRUE);
     CC_IFFREE(pd->lambda, double);
     CC_IFFREE(pd->x_e, double);
-    g_array_free(pd->pi_out, TRUE);
-    g_array_free(pd->pi_in, TRUE);
-    g_array_free(pd->pi_sep, TRUE);
-    g_array_free(pd->subgradient, TRUE);
-    g_array_free(pd->subgradient_in, TRUE);
     g_array_free(pd->rhs, TRUE);
     g_array_free(pd->lhs_coeff, TRUE);
     g_array_free(pd->id_row, TRUE);
@@ -300,6 +281,9 @@ void temporary_data_free(NodeData* pd) {
     if (pd->solver) {
         freeSolver(pd->solver);
         pd->solver = (PricerSolver*)NULL;
+    }
+    if (pd->solver_stab) {
+        delete_pricing_stabilization(pd->solver_stab);
     }
 }
 

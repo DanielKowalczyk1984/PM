@@ -5,6 +5,7 @@
 #include "binomial-heap.h"
 #include "interval.h"
 #include "lp.h"
+#include "pricingstabilizationwrapper.h"
 #include "scheduleset.h"
 #include "solver.h"
 #include "util.h"
@@ -109,28 +110,11 @@ struct _NodeData {
     int     iterations;
 
     /** Wentges smoothing technique */
-    GArray* pi_in;
-    double  dualdiffnorm;
-    GArray* subgradient;
-    double  hybridfactor;
-    double  subgradientnorm;
-    double  alpha;
-    double  alphabar;
-    double  beta;
-    int     k;
-    int     node_stab;
-    int     hasstabcenter;
-    double  eta_in;
-    int     in_mispricing_schedule;
-    double  subgradientproduct;
-    int     update_stab_center;
-    GArray* pi_out;
-    GArray* pi_sep;
-    GArray* subgradient_in;
-    double  eta_out;
-    double  eta_sep;
-    double  reduced_cost;
-    int     update;
+    PricingStabilization* solver_stab;
+    double                eta_in;
+    int                   update_stab_center;
+    double                eta_out;
+    int                   update;
 
     // Best Solution
     ScheduleSet* bestcolors;
@@ -311,9 +295,9 @@ void get_mip_statistics(NodeData* pd, enum MIP_Attr c);
 /**
  * pricing algorithms
  */
-int  solve_pricing(NodeData* pd);
-int  solve_stab(NodeData* pd);
-int  solve_stab_dynamic(NodeData* pd);
+int solve_pricing(NodeData* pd);
+// int  solve_stab(NodeData* pd);
+// int  solve_stab_dynamic(NodeData* pd);
 int  solve_stab_hybrid(NodeData* pd);
 int  solve_farkas_dbl(NodeData* pd);
 int  solve_farkas_dbl_DP(NodeData* pd);

@@ -273,25 +273,8 @@ int build_rmp(NodeData* pd) {
     pd->pi = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi, "Failed to allocate memory");
     g_array_append_vals(pd->pi, dbl_values, pd->nb_rows);
-    pd->pi_in = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
-    CCcheck_NULL_2(pd->pi_in, "Failed to allocate memory");
-    g_array_append_vals(pd->pi_in, dbl_values, pd->nb_rows);
     pd->eta_in = 0.0;
-    pd->pi_out = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
-    CCcheck_NULL_2(pd->pi_out, "Failed to allocate memory");
-    g_array_append_vals(pd->pi_out, dbl_values, pd->nb_rows);
     pd->eta_out = 0.0;
-    pd->pi_sep = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
-    CCcheck_NULL_2(pd->pi_sep, "Failed to allocate memory");
-    g_array_append_vals(pd->pi_sep, dbl_values, pd->nb_rows);
-    pd->subgradient_in =
-        g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
-    CCcheck_NULL_2(pd->subgradient_in, "Failed to allocate memory");
-    g_array_append_vals(pd->subgradient_in, dbl_values, pd->nb_rows);
-    pd->subgradient =
-        g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
-    CCcheck_NULL_2(pd->subgradient, "Failed to allocate memory");
-    g_array_append_vals(pd->subgradient, dbl_values, pd->nb_rows);
     if (parms->pricing_solver < dp_solver) {
         pd->x_e = CC_SAFE_MALLOC(2 * get_nb_vertices(pd->solver), double);
         CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
@@ -319,11 +302,11 @@ CLEAN:
         wctlp_free(&(pd->RMP));
         CC_IFFREE(pd->coeff, double);
         g_array_free(pd->pi, TRUE);
-        g_array_free(pd->pi_in, TRUE);
-        g_array_free(pd->pi_out, TRUE);
-        g_array_free(pd->pi_sep, TRUE);
-        g_array_free(pd->subgradient, TRUE);
-        g_array_free(pd->subgradient_in, TRUE);
+        // g_array_free(pd->pi_in, TRUE);
+        // g_array_free(pd->pi_out, TRUE);
+        // g_array_free(pd->pi_sep, TRUE);
+        // g_array_free(pd->subgradient, TRUE);
+        // g_array_free(pd->subgradient_in, TRUE);
         g_array_free(pd->rhs, TRUE);
         g_array_free(pd->lhs_coeff, TRUE);
     }
