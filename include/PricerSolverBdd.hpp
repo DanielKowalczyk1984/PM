@@ -89,7 +89,12 @@ class PricerSolverBdd : public PricerSolverBase {
                                 double*                  pi,
                                 double*                  lhs) override;
     double compute_lagrange(const OptimalSolution<>& sol, double* pi) override;
-    void   update_constraints() override {}
+
+    double compute_subgradient(const OptimalSolution<>& sol,
+                               double*                  pi,
+                               double*                  sub_gradient) override;
+
+    void update_constraints() override {}
 
     void update_coeff_constraints() override;
 

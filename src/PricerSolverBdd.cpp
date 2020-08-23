@@ -439,6 +439,63 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
     return result;
 }
 
+double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
+                                            double*                  pi,
+                                            double* sub_gradient) {
+    double result = sol.cost;
+    auto&  table = *decision_diagram->getDiagram();
+    auto   tmp_nodeid(decision_diagram->root());
+    auto   counter = 0u;
+    auto   nb_constraints = reformulation_model.get_nb_constraints();
+    auto   convex_rhs = -reformulation_model.get_constraint(nb_jobs)->get_rhs();
+
+    for (size_t i = 0; i < nb_constraints; i++) {
+        auto constr = reformulation_model.get_constraint(i);
+        sub_gradient[i] = constr->get_rhs();
+    }
+
+    while (tmp_nodeid > 1) {
+        auto& tmp_node = table.node(tmp_nodeid);
+        Job*  tmp_j = nullptr;
+
+        if (counter < sol.jobs->len) {
+            tmp_j = (Job*)g_ptr_array_index(sol.jobs, counter);
+        }
+
+        VariableKeyBase key(tmp_node.get_nb_job(), tmp_node.get_weight(),
+                            tmp_j == tmp_node.get_job());
+        if (key.get_high()) {
+            tmp_nodeid = tmp_node.branch[1];
+            counter++;
+            auto dual = pi[key.get_j()];
+            auto constr = reformulation_model.get_constraint(key.get_j());
+            auto coeff = constr->get_var_coeff(&key);
+
+            if (fabs(coeff) > 1e-10) {
+                sub_gradient[key.get_j()] -= coeff * dual * convex_rhs;
+            }
+        } else {
+            tmp_nodeid = tmp_node.branch[0];
+        }
+
+        for (int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints();
+             c++) {
+            auto dual = pi[c];
+            auto constr = reformulation_model.get_constraint(c);
+            auto coeff = constr->get_var_coeff(&key);
+
+            if (fabs(coeff) > 1e-10) {
+                sub_gradient[c] -= coeff * dual * convex_rhs;
+            }
+        }
+    }
+
+    sub_gradient[nb_jobs] = 0.0;
+    assert(tmp_nodeid == 1);
+
+    return result;
+}
+
 double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
                                          double*                  pi) {
     double result = sol.cost;
@@ -504,7 +561,7 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
     result = -reformulation_model.get_constraint(nb_jobs)->get_rhs() * result;
     result = dual_bound + result;
 
-    assert(tmp_nodeid == 1);
+    // assert(tmp_nodeid == 1);
 
     return result;
 }
