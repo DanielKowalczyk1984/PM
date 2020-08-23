@@ -1,20 +1,81 @@
 #include "PricingStabilization.hpp"
+#include <fmt/core.h>
 #include <cmath>
+#include "pricingstabilizationwrapper.h"
+#include "solver.h"
+#include "wctparms.h"
 
-PricingStabilization::PricingStabilization(PricerSolverBase* _solver)
-    : pi_in(_solver->nb_jobs + 1),
+/**
+ * @brief Construct a new Pricing Stabilization Base:: Pricing Stabilization
+ * Base object
+ *
+ * @param _solver
+ */
+PricingStabilizationBase::PricingStabilizationBase(PricerSolverBase* _solver)
+    : solver(_solver) {}
+
+/**
+@brief solve the pricing problem without stabilization
+ *
+ * @param _eta_out
+ * @param _pi_out
+ * @param _lhs
+ */
+void PricingStabilizationBase::solve(double  _eta_out,
+                                     double* _pi_out,
+                                     double* _lhs) {
+    sol = solver->pricing_algorithm(_pi_out);
+    reduced_cost = solver->compute_reduced_cost(sol, _pi_out, _lhs);
+}
+
+OptimalSolution<>& PricingStabilizationBase::get_sol() {
+    return sol;
+}
+
+double PricingStabilizationBase::get_reduced_cost() {
+    return reduced_cost;
+}
+
+double PricingStabilizationBase::get_eta_in() {
+    return 0.0;
+}
+
+int PricingStabilizationBase::stopping_criteria() {
+    return reduced_cost < -1e-6;
+}
+
+PricingStabilizationBase::~PricingStabilizationBase() {}
+
+/**
+ * @brief Wentgnes stabilization technique
+ *
+ */
+
+/**
+ * @brief Construct a new Pricing Stabilization Stat:: Pricing Stabilization
+ * Stat object
+ *
+ * @param _solver
+ */
+PricingStabilizationStat::PricingStabilizationStat(PricerSolverBase* _solver)
+    : PricingStabilizationBase(_solver),
+      pi_in(_solver->nb_jobs + 1, 0.0),
       pi_out(_solver->nb_jobs + 1),
-      pi_sep(_solver->nb_jobs + 1),
-      solver(_solver) {}
+      pi_sep(_solver->nb_jobs + 1) {}
 
-PricingStabilization::~PricingStabilization() {}
+PricingStabilizationStat::~PricingStabilizationStat() {}
 
-int PricingStabilization::solve_stab(double  _eta_out,
+/**
+@brief Solve pricing problem with Wentgnes stabilization
+ *
+ * @param _eta_out
+ * @param _pi_out
+ * @param _lhs_coeff
+ */
+void PricingStabilizationStat::solve(double  _eta_out,
                                      double* _pi_out,
                                      double* _lhs_coeff) {
-    int    val = 0;
-    double k = 0.0;
-    double alpha_bar;
+    k = 0.0;
     bool   mispricing = true;
     double result_sep;
     update = 0;
@@ -25,8 +86,8 @@ int PricingStabilization::solve_stab(double  _eta_out,
 
     do {
         k += 1.0;
-        alpha_bar = hasstabcenter ? CC_MAX(0, 1.0 - k * (1.0 - alpha)) : 0.0;
-        compute_pi_eta_sep(alpha_bar);
+        alphabar = hasstabcenter ? CC_MAX(0, 1.0 - k * (1.0 - alpha)) : 0.0;
+        compute_pi_eta_sep(alphabar);
         OptimalSolution<> aux_sol =
             std::move(solver->pricing_algorithm(pi_sep.data()));
 
@@ -36,19 +97,16 @@ int PricingStabilization::solve_stab(double  _eta_out,
 
         if (reduced_cost < -1e-6) {
             sol = std::move(aux_sol);
-            CCcheck_val_2(val, "Failed in construct_sol_stab");
             update = 1;
             mispricing = false;
         }
-    } while (mispricing && alpha_bar > 0); /** mispricing check */
+    } while (mispricing && alphabar > 0); /** mispricing check */
 
     if (result_sep > eta_in) {
         hasstabcenter = 1;
         eta_in = result_sep;
         pi_in = pi_sep;
-        update_stab_center = 1;
-    } else {
-        update_stab_center = 0;
+        // update_stab_center = 1;
     }
 
     if (iterations % solver->nb_jobs == 0) {
@@ -57,34 +115,156 @@ int PricingStabilization::solve_stab(double  _eta_out,
 )",
             4, alpha, eta_out, eta_in);
     }
-
-CLEAN:
-    return val;
 }
 
-OptimalSolution<>& PricingStabilization::get_sol() {
-    return sol;
-}
-
-double PricingStabilization::get_reduced_cost() {
-    return reduced_cost;
-}
-
-double PricingStabilization::get_eta_in() {
+double PricingStabilizationStat::get_eta_in() {
     return eta_in;
 }
 
-double PricingStabilization::get_diff_eta_in_eta_out() {
-    return std::abs(eta_out - eta_in);
+int PricingStabilizationStat::stopping_criteria() {
+    return (std::abs(eta_out - eta_in) >= 1e-4);
 }
 
-extern "C" double call_C_get_diff_eta(PricingStabilization* p) {
-    return p->get_diff_eta_in_eta_out();
+/**
+ * Dynamic stabilization technique
+ */
+
+PricingStabilizationDynamic::PricingStabilizationDynamic(
+    PricerSolverBase* _solver)
+    : PricingStabilizationStat(_solver),
+      subgradient(_solver->nb_jobs + 1, 0.0)
+
+{}
+
+PricingStabilizationDynamic::~PricingStabilizationDynamic() {}
+
+void PricingStabilizationDynamic::solve(double  _eta_out,
+                                        double* _pi_out,
+                                        double* _lhs) {
+    k = 0.0;
+    double result_sep;
+    bool   mispricing = true;
+    update = 0;
+
+    std::copy(_pi_out, _pi_out + solver->nb_jobs + 1, pi_out.begin());
+    eta_out = _eta_out;
+    iterations++;
+    do {
+        k += 1.0;
+        alphabar = hasstabcenter ? CC_MAX(0.0, 1.0 - k * (1 - alpha)) : 0.0;
+        compute_pi_eta_sep(alphabar);
+        OptimalSolution<double> aux_sol =
+            std::move(solver->pricing_algorithm(pi_sep.data()));
+        result_sep = solver->compute_lagrange(aux_sol, pi_sep.data());
+        reduced_cost =
+            solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs);
+
+        if (reduced_cost <= -1e-6) {
+            solver->compute_subgradient(aux_sol, pi_sep.data(),
+                                        subgradient.data());
+            adjust_alpha();
+            sol = std::move(aux_sol);
+            alpha = alphabar;
+            update = 1;
+            mispricing = false;
+        }
+    } while (mispricing && alphabar > 0.0);
+
+    if (result_sep > eta_in) {
+        hasstabcenter = 1;
+        eta_in = result_sep;
+        pi_in = pi_sep;
+    }
+
+    if (iterations % solver->nb_jobs == 0) {
+        fmt::print(
+            R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
+)",
+            4, alpha, eta_out, eta_in);
+    }
 }
 
-extern "C" PricingStabilization* new_pricing_stabilization(
-    PricerSolver* solver) {
-    return new PricingStabilization(solver);
+/**
+@brief Construct a new Pricing Stabilization Hybrid:: Pricing Stabilization
+Hybrid object
+ *
+ * @param pricer_solver
+ */
+PricingStabilizationHybrid::PricingStabilizationHybrid(
+    PricerSolverBase* pricer_solver)
+    : PricingStabilizationDynamic(pricer_solver),
+      subgradient_in(pricer_solver->nb_jobs + 1) {}
+
+PricingStabilizationHybrid::~PricingStabilizationHybrid() {}
+
+void PricingStabilizationHybrid::solve(double  _eta_out,
+                                       double* _pi_out,
+                                       double* _lhs) {
+    update = 0;
+    bool stabilized = false;
+    std::copy(_pi_out, _pi_out + solver->nb_jobs + 1, pi_out.begin());
+    eta_out = _eta_out;
+    iterations++;
+
+    do {
+        update_hybrid();
+
+        stabilized = is_stabilized();
+
+        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
+             ++i) {
+            pi_sep[i] = compute_dual(i);
+        }
+
+        OptimalSolution<double> aux_sol;
+        aux_sol = solver->pricing_algorithm(pi_sep.data());
+
+        eta_sep = solver->compute_lagrange(aux_sol, pi_sep.data());
+        reduced_cost =
+            solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs);
+
+        update_stabcenter(aux_sol);
+
+        if (reduced_cost < -1e-6) {
+            if (in_mispricing_schedule) {
+                in_mispricing_schedule = 0;
+            }
+            sol = std::move(aux_sol);
+            update_subgradientproduct();
+            update_alpha();
+        } else {
+            if (stabilized) {
+                in_mispricing_schedule = 1;
+                update_alpha_misprice();
+            } else {
+                in_mispricing_schedule = 0;
+            }
+        }
+    } while (in_mispricing_schedule && stabilized);
+
+    if (iterations % solver->nb_jobs == 0) {
+        fmt::print(
+            R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
+)",
+            4, alpha, eta_out, eta_in);
+    }
+}
+
+extern "C" PricingStabilizationBase* new_pricing_stabilization(
+    PricerSolver* solver,
+    Parms*        parms) {
+    switch (parms->stab_technique) {
+        case stab_wentgnes:
+            return new PricingStabilizationStat(solver);
+        case stab_dynamic:
+            return new PricingStabilizationDynamic(solver);
+        case stab_hybrid:
+            return new PricingStabilizationHybrid(solver);
+        case no_stab:
+            return new PricingStabilizationBase(solver);
+        default:
+            return new PricingStabilizationStat(solver);
+    }
 }
 
 extern "C" void delete_pricing_stabilization(
@@ -92,4 +272,16 @@ extern "C" void delete_pricing_stabilization(
     if (pricing_stab_solver) {
         delete pricing_stab_solver;
     }
+}
+
+extern "C" double call_get_reduced_cost(PricingStabilizationBase* p) {
+    return p->get_reduced_cost();
+}
+
+extern "C" double call_get_eta_in(PricingStabilizationBase* solver) {
+    return solver->get_eta_in();
+}
+
+extern "C" int call_stopping_criteria(PricingStabilizationBase* solver) {
+    return solver->stopping_criteria();
 }
