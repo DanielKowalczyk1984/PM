@@ -159,16 +159,22 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
     for (guint j = 0; j < sol.jobs->len; j++) {
         Job*            tmp_j = (Job*)g_ptr_array_index(sol.jobs, j);
         VariableKeyBase k(tmp_j->job, 0);
-        for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
-            if (c == nb_jobs) {
-                continue;
-            }
-            double          dual = pi[c];
-            ConstraintBase* constr = reformulation_model.get_constraint(c);
-            double          coeff = constr->get_var_coeff(&k);
+        double          dual = pi[tmp_j->job];
+        ConstraintBase* constr = reformulation_model.get_constraint(tmp_j->job);
+        double          coeff = constr->get_var_coeff(&k);
 
-            if (fabs(coeff) > 1e-10) {
-                result -= coeff * dual;
+        if (fabs(coeff) > 1e-10) {
+            result -= coeff * dual;
+        }
+
+        for (int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints();
+             c++) {
+            double          dual_ = pi[c];
+            ConstraintBase* constr_ = reformulation_model.get_constraint(c);
+            double          coeff_ = constr->get_var_coeff(&k);
+
+            if (fabs(coeff_) > 1e-10) {
+                result -= coeff_ * dual_;
             }
         }
     }
