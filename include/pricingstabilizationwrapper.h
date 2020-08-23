@@ -3,19 +3,21 @@
 
 // #include "PricingStabilization.hpp"
 #include "solver.h"
+#include "wctparms.h"
 
 #ifdef __cplusplus
 extern "C" {
 
 #endif  // __cplusplus
 
-typedef struct PricingStabilization PricingStabilization;
+typedef struct PricingStabilizationBase PricingStabilization;
 
-PricingStabilization* new_pricing_stabilization(PricerSolver* solver);
+PricingStabilization* new_pricing_stabilization(PricerSolver* solver,
+                                                Parms*        parms);
 void   delete_pricing_stabilization(PricingStabilization* pricing_stab_solver);
-double get_diff_eta_out_eta_in(PricingStabilization* pricing_stabilization);
-double call_C_get_diff_eta(PricingStabilization* p);
-
+double call_get_eta_in(PricingStabilization* pricing_stabilization);
+double call_get_reduced_cost(PricingStabilization* p);
+int    call_stopping_criteria(PricingStabilization* p);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
