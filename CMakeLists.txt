@@ -20,9 +20,7 @@ message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 # Prevent building in the source directory
 #
 
-if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
-  message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there.\n")
-endif()
+include(ConfigSafeGuards)
 
 #
 # Enable package managers
@@ -30,6 +28,12 @@ endif()
 
 include(cmake/Conan.cmake)
 include(cmake/Vcpkg.cmake)
+
+#
+# code coverage
+#
+
+find_package(codecov)
 
 #
 # Create library, setup header and source files
@@ -61,21 +65,10 @@ else()
 endif()
 message(STATUS "Added all header and implementation files.\n")
 
-# add json export compile commands
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Define a local module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR})
-# add_subdirectory(fmt EXCLUDE_FROM_ALL)
-
-# Find Glib
-# find_package(Glib)
-
 # Find Gurobi
 find_package(Gurobi)
 
-# Find Boost
-# find_package(Boost)
+find_package(Glib)
 
 add_subdirectory(or_utils)
 
@@ -104,12 +97,12 @@ verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
 #                 -Wcast-align
 #                 -Wwrite-strings)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++20 -m64")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O5 -std=c++17 -m64")
 set(
   CMAKE_C_FLAGS_RELEASE
   "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
   )
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++14 -O0 -m64")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++20 -O0 -m64")
 set(
   CMAKE_C_FLAGS_DEBUG
   "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
@@ -143,10 +136,9 @@ else()
 			PUBLIC 
 				$<INSTALL_INTERFACE:include>    
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        ${CONAN_INCLUDE_DIRS_GLIB}
         ${CONAN_INCLUDE_DIRS_FMT}
         ${GUROBI_INCLUDE_DIR}
-        ${CONAN_INCLUDE_DIRS_FMT}
+        ${GLIB_INCLUDE_DIRS}
         ORUtils::ORUtils
 			PRIVATE
 				${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -157,13 +149,12 @@ else()
     target_link_libraries(${PROJECT_NAME}_LIB
                                  ${GUROBI_LIBRARY}
                                  ${GUROBI_CXX_LIBRARY}
-                                 ORUtils::ORUtils
+                                 ${GLIB_LIBRARIES}
+                            ORUtils::ORUtils
                              -lm
                              -lpthread)
     
     target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_LIB)
-    
-    include_directories(${GUROBI_INCLUDE_DIR} ${CONAN_INCLUDE_DIRS_GLIB} ${CONAN_INCLUDE_DIRS_FMT})
 	endif()
 endif()
 
@@ -186,25 +177,6 @@ verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.\n")
 #
 
 add_clang_format_target()
-
-
-# add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-# target_include_directories(${PROJECT_NAME}
-#                            PUBLIC ${TdZDD_INCLUDE_DIR}
-#                                   ${GUROBI_INCLUDE_DIR}
-#                                   ${GLIB_INCLUDE_DIRS}
-#                                   ${Boost_INCLUDE_DIRS}
-#                                   ${COMMON_INCLUDES})
-
-# target_link_libraries(${PROJECT_NAME}
-#                       PUBLIC ${GUROBI_LIBRARY}
-#                              ${GUROBI_CXX_LIBRARY}
-#                              ${GLIB_LIBRARIES}
-#                              ${Boost_LIBRARIES}
-#                              -lm
-#                              -lpthread
-#                              fmt::fmt)
-
 
 #
 # Quick `ConfigVersion.cmake` creation
