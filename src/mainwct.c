@@ -225,6 +225,7 @@ int main(int ac, char** av) {
         root->solver =
             newSolverDp(root->jobarray, root->nb_machines, root->H_max, parms);
     }
+    root->solver_stab = new_pricing_stabilization(root->solver, parms);
     problem.first_size_graph = get_nb_edges(root->solver);
 
     /**
