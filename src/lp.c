@@ -444,6 +444,7 @@ int wctlp_rc(wctlp* lp, double* rc, int first) {
     CHECK_VAL_GRB(val, "Failed in GRB_DBL_ATTR_X", lp->env);
     return val;
 }
+
 int wctlp_basis_cols(wctlp* lp, int* column_status, int first) {
     int val = 0;
     int nb_cols, i;
