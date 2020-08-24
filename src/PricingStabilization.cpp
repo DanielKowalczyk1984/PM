@@ -83,7 +83,9 @@ void PricingStabilizationStat::solve(double  _eta_out,
     double result_sep;
     update = 0;
 
-    std::copy(_pi_out, _pi_out + solver->nb_jobs + 1, pi_out.begin());
+    std::copy(_pi_out,
+              _pi_out + solver->reformulation_model.get_nb_constraints(),
+              pi_out.begin());
     eta_out = _eta_out;
     iterations++;
     update_stab_center = false;
@@ -150,7 +152,9 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
     bool   mispricing = true;
     update = 0;
 
-    std::copy(_pi_out, _pi_out + solver->nb_jobs + 1, pi_out.begin());
+    std::copy(_pi_out,
+              _pi_out + solver->reformulation_model.get_nb_constraints(),
+              pi_out.begin());
     eta_out = _eta_out;
     iterations++;
     update_stab_center = false;
@@ -208,7 +212,9 @@ void PricingStabilizationHybrid::solve(double  _eta_out,
                                        double* _lhs) {
     update = 0;
     bool stabilized = false;
-    std::copy(_pi_out, _pi_out + solver->nb_jobs + 1, pi_out.begin());
+    std::copy(_pi_out,
+              _pi_out + solver->reformulation_model.get_nb_constraints(),
+              pi_out.begin());
     eta_out = _eta_out;
     iterations++;
 
