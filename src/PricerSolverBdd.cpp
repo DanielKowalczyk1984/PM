@@ -1,4 +1,5 @@
 #include "PricerSolverBdd.hpp"
+#include <fmt/core.h>
 #include <algorithm>
 #include <boost/concept_archetype.hpp>
 #include <complex>
@@ -441,7 +442,6 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
 }
 
 double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
-                                            double*                  pi,
                                             double* sub_gradient) {
     double result = sol.cost;
     auto&  table = *decision_diagram->getDiagram();
@@ -468,12 +468,11 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
         if (key.get_high()) {
             tmp_nodeid = tmp_node.branch[1];
             counter++;
-            auto dual = pi[key.get_j()];
             auto constr = reformulation_model.get_constraint(key.get_j());
             auto coeff = constr->get_var_coeff(&key);
 
             if (fabs(coeff) > 1e-10) {
-                sub_gradient[key.get_j()] -= coeff * dual * convex_rhs;
+                sub_gradient[key.get_j()] -= coeff * convex_rhs;
             }
         } else {
             tmp_nodeid = tmp_node.branch[0];
@@ -481,17 +480,19 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
 
         for (int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints();
              c++) {
-            auto dual = pi[c];
+            // auto dual = pi[c];
             auto constr = reformulation_model.get_constraint(c);
             auto coeff = constr->get_var_coeff(&key);
 
             if (fabs(coeff) > 1e-10) {
-                sub_gradient[c] -= coeff * dual * convex_rhs;
+                sub_gradient[c] -= coeff * convex_rhs;
             }
         }
     }
 
-    sub_gradient[nb_jobs] = 0.0;
+    sub_gradient[nb_jobs] += convex_rhs;
+    assert(sub_gradient[nb_jobs] == 0.0);
+    // sub_gradient[nb_jobs] = 0.0;
     assert(tmp_nodeid == 1);
 
     return result;

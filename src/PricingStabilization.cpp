@@ -26,6 +26,7 @@ void PricingStabilizationBase::solve(double  _eta_out,
                                      double* _lhs) {
     sol = solver->pricing_algorithm(_pi_out);
     reduced_cost = solver->compute_reduced_cost(sol, _pi_out, _lhs);
+    update_stab_center = true;
 }
 
 OptimalSolution<>& PricingStabilizationBase::get_sol() {
@@ -34,6 +35,10 @@ OptimalSolution<>& PricingStabilizationBase::get_sol() {
 
 double PricingStabilizationBase::get_reduced_cost() {
     return reduced_cost;
+}
+
+bool PricingStabilizationBase::get_update_stab_center() {
+    return update_stab_center;
 }
 
 double PricingStabilizationBase::get_eta_in() {
@@ -83,6 +88,7 @@ void PricingStabilizationStat::solve(double  _eta_out,
     std::copy(_pi_out, _pi_out + solver->nb_jobs + 1, pi_out.begin());
     eta_out = _eta_out;
     iterations++;
+    update_stab_center = false;
 
     do {
         k += 1.0;
@@ -106,7 +112,7 @@ void PricingStabilizationStat::solve(double  _eta_out,
         hasstabcenter = 1;
         eta_in = result_sep;
         pi_in = pi_sep;
-        // update_stab_center = 1;
+        update_stab_center = true;
     }
 
     if (iterations % solver->nb_jobs == 0) {
@@ -149,6 +155,8 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
     std::copy(_pi_out, _pi_out + solver->nb_jobs + 1, pi_out.begin());
     eta_out = _eta_out;
     iterations++;
+    update_stab_center = false;
+
     do {
         k += 1.0;
         alphabar = hasstabcenter ? CC_MAX(0.0, 1.0 - k * (1 - alpha)) : 0.0;
@@ -160,8 +168,7 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs);
 
         if (reduced_cost <= -1e-6) {
-            solver->compute_subgradient(aux_sol, pi_sep.data(),
-                                        subgradient.data());
+            solver->compute_subgradient(aux_sol, subgradient.data());
             adjust_alpha();
             sol = std::move(aux_sol);
             alpha = alphabar;
@@ -174,6 +181,7 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
         hasstabcenter = 1;
         eta_in = result_sep;
         pi_in = pi_sep;
+        update_stab_center = true;
     }
 
     if (iterations % solver->nb_jobs == 0) {
@@ -284,4 +292,8 @@ extern "C" double call_get_eta_in(PricingStabilizationBase* solver) {
 
 extern "C" int call_stopping_criteria(PricingStabilizationBase* solver) {
     return solver->stopping_criteria();
+}
+
+extern "C" int call_get_update_stab_center(PricingStabilizationBase* solver) {
+    return solver->get_update_stab_center();
 }

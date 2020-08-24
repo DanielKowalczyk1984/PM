@@ -127,8 +127,7 @@ struct PricerSolverBase {
     virtual double compute_lagrange(const OptimalSolution<>& sol, double* pi);
 
     virtual double compute_subgradient(const OptimalSolution<>& sol,
-                                       double*                  pi,
-                                       double*                  subgradient){};
+                                       double*                  subgradient);
 
     inline void set_is_integer_solution(bool _is_solution) {
         is_integer_solution = _is_solution;

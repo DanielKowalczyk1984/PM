@@ -197,3 +197,39 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
 
     return result;
 }
+
+double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
+                                             double* subgradient) {
+    auto nb_constraints = reformulation_model.get_nb_constraints();
+    auto convex_rhs = -reformulation_model.get_constraint(nb_jobs)->get_rhs();
+
+    for (size_t i = 0; i < nb_constraints; i++) {
+        auto constr = reformulation_model.get_constraint(i);
+        subgradient[i] = constr->get_rhs();
+    }
+
+    for (guint j = 0; j < sol.jobs->len; j++) {
+        Job*            tmp_j = (Job*)g_ptr_array_index(sol.jobs, j);
+        VariableKeyBase k(tmp_j->job, 0);
+        ConstraintBase* constr = reformulation_model.get_constraint(tmp_j->job);
+        double          coeff = constr->get_var_coeff(&k);
+
+        if (fabs(coeff) > 1e-10) {
+            subgradient[k.get_j()] -= coeff * convex_rhs;
+        }
+
+        for (int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints();
+             c++) {
+            ConstraintBase* constr_ = reformulation_model.get_constraint(c);
+            double          coeff_ = constr->get_var_coeff(&k);
+
+            if (fabs(coeff_) > 1e-10) {
+                subgradient[c] -= coeff_ * convex_rhs;
+            }
+        }
+    }
+
+    subgradient[nb_jobs] += convex_rhs;
+
+    return 0.0;
+}

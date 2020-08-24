@@ -26,7 +26,9 @@ class PricingStabilizationBase {
 
     OptimalSolution<>& get_sol();
     double             get_reduced_cost();
+    int                update_stab_center{};
 
+    bool           get_update_stab_center();
     virtual double get_eta_in();
     virtual void   solve(double eta_out, double* _pi_out, double* _lhs);
     virtual int    stopping_criteria();
@@ -107,7 +109,7 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
                        double* _lhs_coeff) override;
 
     void compute_subgradient(const OptimalSolution<double>& sol) {
-        solver->compute_subgradient(sol, pi_sep.data(), subgradient.data());
+        solver->compute_subgradient(sol, subgradient.data());
 
         // subgradientnorm = 0.0;
 
@@ -384,6 +386,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
             compute_subgradient_norm(sol);
             eta_in = eta_sep;
             hasstabcenter = 1;
+            update_stab_center = true;
         }
     }
 
@@ -392,7 +395,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
         // 0); double* rhs = &g_array_index(pd->rhs, double, 0);
         // fill_dbl(subgradient_in, pd->nb_rows, 1.0);
         // subgradient_in[pd->nb_jobs] = 0.0;
-        solver->compute_subgradient(sol, pi_sep.data(), subgradient_in.data());
+        solver->compute_subgradient(sol, subgradient_in.data());
 
         // for (guint i = 0; i < sol.jobs->len; i++) {
         //     Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs,
