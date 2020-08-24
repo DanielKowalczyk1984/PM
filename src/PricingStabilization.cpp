@@ -1,8 +1,6 @@
 #include "PricingStabilization.hpp"
 #include <fmt/core.h>
 #include <cmath>
-#include "pricingstabilizationwrapper.h"
-#include "solver.h"
 #include "wctparms.h"
 
 /**

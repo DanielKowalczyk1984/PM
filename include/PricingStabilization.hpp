@@ -5,9 +5,6 @@
 #include <vector>
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
-#include "fmt/core.h"
-#include "pricingstabilizationwrapper.h"
-#include "solver.h"
 
 class PricingStabilizationBase {
    public:
