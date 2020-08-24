@@ -1,5 +1,6 @@
 #include "gurobi_c.h"
 #include "lp.h"
+#include "pricingstabilizationwrapper.h"
 #include "scheduleset.h"
 #include "solver.h"
 #include "util.h"
@@ -28,8 +29,8 @@ void g_grow_ages(gpointer data, gpointer user_data) {
     ScheduleSet* x = (ScheduleSet*)data;
     NodeData*    pd = (NodeData*)user_data;
 
-    if (pd->column_status[x->id + pd->id_pseudo_schedules] == wctlp_LOWER ||
-        pd->column_status[x->id + pd->id_pseudo_schedules] == wctlp_FREE) {
+    if (pd->column_status[x->id] == wctlp_LOWER ||
+        pd->column_status[x->id] == wctlp_FREE) {
         x->age++;
 
         if (x->age > pd->retirementage) {
@@ -46,9 +47,9 @@ static int grow_ages(NodeData* pd) {
     wctlp_get_nb_cols(pd->RMP, &nb_cols);
     assert(nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
     CC_IFFREE(pd->column_status, int);
-    pd->column_status = (int*)CC_SAFE_MALLOC(nb_cols, int);
+    pd->column_status = (int*)CC_SAFE_MALLOC(pd->localColPool->len, int);
     CCcheck_NULL_2(pd->column_status, "Failed to allocate column_status");
-    val = wctlp_basis_cols(pd->RMP, pd->column_status, 0);
+    val = wctlp_basis_cols(pd->RMP, pd->column_status, pd->id_pseudo_schedules);
     CCcheck_val_2(val, "Failed in wctlp_basis_cols");
     pd->zero_count = 0;
 
@@ -342,7 +343,8 @@ int compute_objective(NodeData* pd) {
             "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
             pd->LP_lower_bound + pd->problem->off,
             pd->LP_lower_bound_dual + pd->problem->off,
-            pd->lower_bound + pd->problem->off, pd->eta_in + pd->problem->off,
+            pd->lower_bound + pd->problem->off,
+            call_get_eta_in(pd->solver_stab) + pd->problem->off,
             pd->eta_out + pd->problem->off);
     }
 
@@ -384,9 +386,6 @@ int solve_relaxation(Problem* problem, NodeData* pd) {
             /** Compute the objective function */
             val = compute_objective(pd);
             CCcheck_val_2(val, "Failed in compute_objective");
-            memcpy(&g_array_index(pd->pi_out, double, 0),
-                   &g_array_index(pd->pi, double, 0),
-                   sizeof(double) * (pd->nb_rows));
             pd->eta_out = pd->LP_lower_bound_dual;
             break;
 
@@ -437,29 +436,15 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     check_schedules(pd);
     delete_infeasible_schedules(pd);
 
-    /** Init alpha */
-    switch (parms->stab_technique) {
-        case stab_wentgnes:
-            pd->alpha = parms->alpha;
-            break;
-
-        case stab_dynamic:
-            pd->alpha = 0.0;
-            break;
-
-        case no_stab:
-            break;
-    }
-
     // solve_relaxation(problem, pd);
     int it = 0;
     do {
         pd->depth = 0;
-        break_while_loop = 0;
+        break_while_loop = 1;
         CCutil_suspend_timer(&(problem->tot_cputime));
         CCutil_resume_timer(&(problem->tot_cputime));
 
-        while ((pd->iterations < pd->maxiterations) && !break_while_loop &&
+        while ((pd->iterations < pd->maxiterations) && break_while_loop &&
                problem->tot_cputime.cum_zeit <=
                    problem->parms.branching_cpu_limit) {
             /**
@@ -484,31 +469,8 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     pd->iterations++;
                     pd->status = infeasible;
 
-                    if (pd->iterations < pd->maxiterations) {
-                        switch (parms->stab_technique) {
-                            case stab_wentgnes:
-                                val = solve_stab(pd);
-                                CCcheck_val_2(val, "Failed in solve_stab");
-                                break;
-
-                            case stab_dynamic:
-                                val = solve_stab_dynamic(pd);
-                                CCcheck_val_2(val, "Failed in solve_stab");
-                                break;
-
-                            case stab_hybrid:
-                                val = solve_stab_hybrid(pd);
-                                CCcheck_val_2(val,
-                                              "Failed in solve_stab_hybrid");
-                                break;
-
-                            case no_stab:
-                                val = solve_pricing(pd);
-                                CCcheck_val_2(val, "Failed in solving pricing");
-                                break;
-                        }
-                    }
-
+                    val = solve_pricing(pd);
+                    CCcheck_val_2(val, "Failed in solving pricing");
                     break;
 
                 case GRB_INFEASIBLE:
@@ -522,15 +484,16 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             real_time_pricing = getRealTime() - real_time_pricing;
             problem->real_time_pricing += real_time_pricing;
 
-            if (parms->reduce_cost_fixing == yes_reduced_cost &&
-                pd->iterations % pd->nb_jobs == 0 && pd->iterations > 0 &&
-                status == GRB_OPTIMAL && pd->update_stab_center) {
-                CCutil_start_resume_time(&(problem->tot_reduce_cost_fixing));
-                reduce_cost_fixing(pd);
-                check_schedules(pd);
-                delete_infeasible_schedules(pd);
-                CCutil_suspend_timer(&(problem->tot_reduce_cost_fixing));
-            }
+            // if (parms->reduce_cost_fixing == yes_reduced_cost &&
+            //     pd->iterations % pd->nb_jobs == 0 && pd->iterations > 0 &&
+            //     status == GRB_OPTIMAL &&
+            //     call_get_update_stab_center(pd->solver_stab)) {
+            //     CCutil_start_resume_time(&(problem->tot_reduce_cost_fixing));
+            //     reduce_cost_fixing(pd);
+            //     check_schedules(pd);
+            //     delete_infeasible_schedules(pd);
+            //     CCutil_suspend_timer(&(problem->tot_reduce_cost_fixing));
+            // }
 
             if (pd->update) {
                 for (j = 0; j < pd->nb_new_sets; j++) {
@@ -547,23 +510,11 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
 
             switch (status) {
                 case GRB_OPTIMAL:
-                    switch (parms->stab_technique) {
-                        case stab_wentgnes:
-                        case stab_dynamic:
-                        case stab_hybrid:
-                            break_while_loop =
-                                (CC_ABS(pd->eta_out - pd->eta_in) < 1e-4);
-                            pd->nb_new_sets = 0;
-                            // || nb_non_improvements > 5;  // ||
-                            // (ceil(pd->eta_in - 0.00001) >= pd->eta_out);
-                            break;
-
-                        case no_stab:
-                            break_while_loop = (pd->nb_new_sets == 0 ||
-                                                nb_non_improvements > 5);
-                            pd->nb_new_sets = 0;
-                            break;
-                    }
+                    break_while_loop =
+                        (call_stopping_criteria(pd->solver_stab));
+                    pd->nb_new_sets = 0;
+                    // || nb_non_improvements > 5;  // ||
+                    // (ceil(pd->eta_in - 0.00001) >= pd->eta_out);
 
                     break;
 
@@ -626,9 +577,6 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     }
                     solve_relaxation(problem, pd);
                     it++;
-                    memcpy(&g_array_index(pd->pi_out, double, 0),
-                           &g_array_index(pd->pi, double, 0),
-                           sizeof(double) * (pd->pi->len));
                     break;
 
                 case GRB_INFEASIBLE:
