@@ -6,7 +6,8 @@
  **/
 PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
                                    int         _num_machines,
-                                   const char* p_name)
+                                   const char* p_name,
+                                   double      _UB)
     : jobs(_jobs),
       nb_jobs(_jobs->len),
       num_machines(_num_machines),
@@ -16,7 +17,8 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
       env(new GRBEnv()),
       model(new GRBModel(*env)),
       reformulation_model(jobs->len, _num_machines),
-      is_integer_solution(false) {
+      is_integer_solution(false),
+      UB(_UB) {
     model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
     model->set(GRB_IntParam_Threads, 1);
     model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
@@ -28,7 +30,8 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
 PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
                                    int         _num_machines,
                                    GPtrArray*  _ordered_jobs,
-                                   const char* p_name)
+                                   const char* p_name,
+                                   double      _UB)
     : jobs(_jobs),
       nb_jobs(_jobs->len),
       num_machines(_num_machines),
@@ -38,7 +41,8 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
       env(new GRBEnv()),
       model(new GRBModel(*env)),
       reformulation_model(jobs->len, _num_machines),
-      is_integer_solution(false) {
+      is_integer_solution(false),
+      UB(_UB) {
     model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
     model->set(GRB_IntParam_Threads, 1);
     model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);

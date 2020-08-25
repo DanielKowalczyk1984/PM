@@ -32,7 +32,8 @@ class PricerSolverBdd : public PricerSolverBase {
                     GPtrArray*  _ordered_jobs,
                     const char* p_name,
                     int         _Hmax,
-                    int*        _take_jobs);
+                    int*        _take_jobs,
+                    double      _UB);
     void         init_table() override;
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
     void         check_infeasible_arcs();

@@ -22,7 +22,8 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     PricerSolverArcTimeDp(GPtrArray*  _jobs,
                           int         _num_machines,
                           int         _Hmax,
-                          const char* p_name);
+                          const char* p_name,
+                          double      _UB);
     ~PricerSolverArcTimeDp();
     void init_table() override;
 

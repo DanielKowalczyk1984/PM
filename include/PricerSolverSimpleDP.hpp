@@ -21,7 +21,8 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     PricerSolverSimpleDp(GPtrArray*  _jobs,
                          int         _num_machines,
                          int         _Hmax,
-                         const char* p_name);
+                         const char* p_name,
+                         double      _UB);
     ~PricerSolverSimpleDp();
     void init_table() override;
 

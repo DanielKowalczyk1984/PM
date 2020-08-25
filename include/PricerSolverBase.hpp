@@ -23,14 +23,20 @@ struct PricerSolverBase {
     std::unique_ptr<GRBModel> model;
     ReformulationModel        reformulation_model;
     bool                      is_integer_solution;
+    double                    constLB;
+    double                    UB;
     /**
      * Default constructors
      */
-    PricerSolverBase(GPtrArray* _jobs, int _num_machines, const char* p_name);
+    PricerSolverBase(GPtrArray*  _jobs,
+                     int         _num_machines,
+                     const char* p_name,
+                     double      _UB);
     PricerSolverBase(GPtrArray*  _jobs,
                      int         _num_machines,
                      GPtrArray*  _ordered_jobs,
-                     const char* p_name);
+                     const char* p_name,
+                     double      _UB);
     /**
      * Copy constructor
      */

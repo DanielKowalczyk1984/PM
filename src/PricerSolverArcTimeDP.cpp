@@ -4,8 +4,9 @@
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
                                              int         _num_machines,
                                              int         _Hmax,
-                                             const char* p_name)
-    : PricerSolverBase(_jobs, _num_machines, p_name),
+                                             const char* p_name,
+                                             double      _UB)
+    : PricerSolverBase(_jobs, _num_machines, p_name, _UB),
       Hmax(_Hmax),
       n(_jobs->len),
       size_graph(0u),

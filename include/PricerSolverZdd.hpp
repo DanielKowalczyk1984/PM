@@ -22,7 +22,8 @@ class PricerSolverZdd : public PricerSolverBase {
     PricerSolverZdd(GPtrArray*  _jobs,
                     int         _num_machines,
                     GPtrArray*  _ordered_jobs,
-                    const char* p_name);
+                    const char* p_name,
+                    double      _UB);
     void         init_table() override;
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
