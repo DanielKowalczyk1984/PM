@@ -1,4 +1,5 @@
 # %%
+from PyQt5.QtWidgets import QFileDialog
 import re
 import pandas as pd
 import numpy as np
@@ -7,18 +8,24 @@ import sys
 from shutil import copy, copyfile
 from pathlib import Path
 
-try:
-    from tkinter import Tk
-    from tkFileDialog import askopenfilenames
-except:
-    from tkinter import Tk
-    from tkinter import filedialog
-
 workdir = Path.cwd().parent
 results = workdir.joinpath(Path("./results"))
+# %%
+%gui qt
+
+
+def gui_fname(dir=None):
+    """Select a file via a dialog and return the file name."""
+    if dir is None:
+        dir = './'
+    fname = QFileDialog.getOpenFileName(None, "Select data file...",
+                                        dir, filter="CSV Files (*.csv)")
+    print(fname)
+    return fname[0]
+
 
 # %%
-file_name = filedialog.askopenfilename()
+file_name = gui_fname()
 file_path = Path(file_name)
 data = pd.read_csv(file_name)
 match = re.search(r'CG_overall\_(\d{4})(\d{2})(\d{2})\.csv', file_name)
