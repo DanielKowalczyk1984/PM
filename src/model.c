@@ -236,7 +236,7 @@ int build_rmp(NodeData* pd) {
         ub[j] = GRB_INFINITY;
         vtype[j] = GRB_CONTINUOUS;
         start_vars[j] = nb_jobs + 1;
-        obj[j] = (pd->upper_bound + 1.0) * 100;
+        obj[j] = (pd->problem->opt_sol->tw + 1) * 100;
     }
     start_vars[nb_vars] = nb_jobs + 1;
 
