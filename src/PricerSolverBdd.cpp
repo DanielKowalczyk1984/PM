@@ -36,8 +36,9 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
                                  GPtrArray*  _ordered_jobs,
                                  const char* p_name,
                                  int         _Hmax,
-                                 int*        _take_jobs)
-    : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name),
+                                 int*        _take_jobs,
+                                 double      _UB)
+    : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name, _UB),
       size_graph(0),
       nb_removed_edges(0),
       nb_removed_nodes(0),
@@ -1538,7 +1539,7 @@ bool PricerSolverBdd::check_schedule_set(GPtrArray* set) {
         }
     }
 
-    return (tmp_nodeid == 1);
+    return (tmp_nodeid == 1 && counter == set->len);
 }
 
 void PricerSolverBdd::make_schedule_set_feasible([
