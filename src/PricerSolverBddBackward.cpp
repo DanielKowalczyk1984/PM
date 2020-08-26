@@ -51,18 +51,19 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi,
     NodeTableEntity<>& table =
         get_decision_diagram()->getDiagram().privateEntity();
     compute_labels(pi);
-    double reduced_cost = table.node(1).forward_label[0].get_f() + pi[nb_jobs];
-    bool   removed_edges = false;
-    int    nb_edges_removed_evaluate = 0;
+    double reduced_cost =
+        table.node(1).forward_label[0].get_f() + pi[convex_constr_id];
+    bool removed_edges = false;
+    int  nb_edges_removed_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             double result = it.forward_label[0].get_f() +
                             it.child[1]->backward_label[0].get_f() +
-                            it.reduced_cost[1] + pi[nb_jobs];
+                            it.reduced_cost[1] + pi[convex_constr_id];
 
-            auto aux_nb_machines = static_cast<double>(num_machines - 1);
+            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
             if (LB + aux_nb_machines * reduced_cost + result > UB + 0.0001 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
@@ -98,7 +99,7 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi) {
                             it.child[1]->backward_label[0].get_f() +
                             it.reduced_cost[1];
 
-            auto aux_nb_machines = static_cast<double>(num_machines - 1);
+            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
 
             if (constLB + aux_nb_machines * reduced_cost + result > UB + 1e-4 &&
                 (it.calc_yes)) {
@@ -203,7 +204,7 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
             //              it.reduced_cost[1] + pi[nb_jobs];
             // }
 
-            auto aux_nb_machines = static_cast<double>(num_machines - 1);
+            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
             if (constLB + aux_nb_machines * reduced_cost + result > UB + 1e-4 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
@@ -265,9 +266,9 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
             //              it.reduced_cost[1] + pi[nb_jobs];
             // }
 
-            auto aux_nb_machines = static_cast<double>(num_machines - 1);
+            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
             if (constLB + aux_nb_machines * reduced_cost + result >
-                    UB - 1.0 + 1e-10 &&
+                    UB - 1.0 + 1e-4 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 removed_edges = true;

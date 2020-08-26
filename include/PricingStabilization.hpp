@@ -69,7 +69,7 @@ class PricingStabilizationStat : public PricingStabilizationBase {
         int    i;
         double beta_bar = 1.0 - _alpha_bar;
 
-        for (i = 0; i < solver->nb_jobs + 1; ++i) {
+        for (i = 0; i < solver->convex_constr_id + 1; ++i) {
             pi_sep[i] = _alpha_bar * pi_in[i] + (1.0 - _alpha_bar) * pi_out[i];
         }
 
@@ -135,142 +135,6 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
             alphabar = std::min<double>(0.9, alphabar + (1 - alphabar) * 0.05);
         }
     }
-
-    // double hybridfactor{};
-    // double beta{};
-
-    // void update_alpha() {
-    //     if (subgradientproduct > 0.0) {
-    //         alpha = std::max<double>(0, alpha - 0.1);
-    //     } else {
-    //         alpha = std::min<double>(0.99, alpha + (1 - alpha) * 0.1);
-    //     }
-    // }
-
-    // void update_alpha_misprice() {
-    //     k++;
-    //     alphabar = std::max<double>(0.0, 1 - k * (1.0 - alpha));
-    // }
-
-    // int is_stabilized() {
-    //     if (in_mispricing_schedule) {
-    //         return alphabar > 0.0;
-    //     }
-    //     return alpha > 0.0;
-    // }
-
-    // int calculate_dualdiffnorm() {
-    //     int val = 0;
-
-    //     dualdiffnorm = 0.0;
-
-    //     for (int i = 0; i < nb_rows; ++i) {
-    //         double dualdiff = SQR(pi_in[i] - pi_out[i]);
-    //         if (dualdiff > 0.00001) {
-    //             dualdiffnorm += dualdiff;
-    //         }
-    //     }
-
-    //     dualdiffnorm = SQRT(dualdiffnorm);
-
-    //     return val;
-    // }
-
-    // int calculate_beta() {
-    //     int val = 0;
-
-    //     beta = 0.0;
-    //     for (int i = 0; i < nb_rows; ++i) {
-    //         double dualdiff = ABS(pi_out[i] - pi_in[i]);
-    //         double product = dualdiff * ABS(subgradient_in[i]);
-
-    //         if (product > 0.000001) {
-    //             beta += product;
-    //         }
-    //     }
-
-    //     if (subgradientnorm > 0.00001) {
-    //         beta = beta / (subgradientnorm * dualdiffnorm);
-    //     }
-
-    //     return val;
-    // }
-
-    // int calculate_hybridfactor() {
-    //     int val = 0;
-
-    //     double aux_norm = 0.0;
-    //     for (int i = 0; i < nb_rows; ++i) {
-    //         double aux_double = SQR(
-    //             (beta - 1.0) * (pi_out[i] - pi_in[i]) +
-    //             beta * (subgradient_in[i] * dualdiffnorm / subgradientnorm));
-    //         if (aux_double > 0.00001) {
-    //             aux_norm += aux_double;
-    //         }
-    //     }
-    //     aux_norm = SQRT(aux_norm);
-
-    //     hybridfactor = ((1 - alpha) * dualdiffnorm) / aux_norm;
-
-    //     return val;
-    // }
-
-    // double compute_dual(int i) {
-    //     double usedalpha = alpha;
-    //     double usedbeta = beta;
-
-    //     if (in_mispricing_schedule) {
-    //         usedalpha = alphabar;
-    //         usedbeta = 0.0;
-    //     }
-
-    //     if (hasstabcenter && (usedbeta == 0.0 || usedalpha == 0.0)) {
-    //         return usedalpha * pi_in[i] + (1.0 - usedalpha) * pi_out[i];
-    //     } else if (hasstabcenter && usedbeta > 0.0) {
-    //         double dual =
-    //             pi_in[i] +
-    //             hybridfactor *
-    //                 (beta * (pi_in[i] + subgradient_in[i] * dualdiffnorm /
-    //                                         subgradientnorm) +
-    //                  (1.0 - beta) * pi_out[i] - pi_in[i]);
-    //         return CC_MAX(dual, 0.0);
-    //     }
-
-    //     return pi_out[i];
-    // }
-
-    // int row_getDual(int i) {
-    //     int val = 0;
-    //     assert(i < nb_rows);
-
-    //     pi_sep[i] = compute_dual(i);
-
-    //     return val;
-    // }
-
-    // int update_subgradientproduct() {
-    //     int val = 0;
-
-    //     subgradientproduct = 0.0;
-    //     for (int i = 0; i < nb_rows; ++i) {
-    //         subgradientproduct -= (pi_out[i] - pi_in[i]) * subgradient_in[i];
-    //     }
-
-    //     return val;
-    // }
-
-    // int update_stabcenter(const OptimalSolution<double>& sol) {
-    //     int val = 0;
-
-    //     if (eta_sep > eta_in) {
-    //         pi_in = pi_sep;
-    //         compute_subgradient(sol);
-    //         eta_in = eta_sep;
-    //         hasstabcenter = 1;
-    //     }
-
-    //     return val;
-    // }
 };
 
 class PricingStabilizationHybrid : public PricingStabilizationDynamic {
@@ -317,7 +181,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
     void calculate_beta() {
         beta = 0.0;
-        for (int i = 0; i < solver->nb_jobs; ++i) {
+        for (int i = 0; i < solver->convex_constr_id; ++i) {
             double dualdiff = ABS(pi_out[i] - pi_in[i]);
             double product = dualdiff * std::abs(subgradient_in[i]);
 
@@ -333,7 +197,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
     void calculate_hybridfactor() {
         double aux_norm = 0.0;
-        for (int i = 0; i < solver->nb_jobs; ++i) {
+        for (int i = 0; i < solver->convex_constr_id; ++i) {
             double aux_double = SQR(
                 (beta - 1.0) * (pi_out[i] - pi_in[i]) +
                 beta * (subgradient_in[i] * dualdiffnorm / subgradientnorm));

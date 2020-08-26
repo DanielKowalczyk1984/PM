@@ -11,9 +11,11 @@ class PricerSolverZdd : public PricerSolverBase {
    public:
     std::unique_ptr<DdStructure<NodeZdd<double>>> decision_diagram;
     size_t                                        size_graph;
+    int                                           nb_removed_edges = 0;
+    int                                           nb_removed_nodes = 0;
 
-    int nb_removed_edges = 0;
-    int nb_removed_nodes = 0;
+    GPtrArray* ordered_jobs;
+    int        nb_layers;
 
     MipGraph                  mip_graph;
     std::unique_ptr<double[]> lp_x;

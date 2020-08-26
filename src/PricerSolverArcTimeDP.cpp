@@ -164,9 +164,8 @@ void PricerSolverArcTimeDp::build_mip() {
             for (auto& it : graph[j][t]) {
                 double cost = value_Fj(t + vector_jobs[j]->processing_time,
                                        vector_jobs[j]);
-                double UB =
-                    (it->job == vector_jobs[j]->job) ? num_machines : 1.0;
-                auto s =
+                double UB = (it->job == vector_jobs[j]->job) ? convex_rhs : 1.0;
+                auto   s =
                     (it->job == vector_jobs[j]->job) ? GRB_INTEGER : GRB_BINARY;
                 arctime_x[it->job][j][t] = model->addVar(0.0, UB, cost, s);
             }
@@ -176,9 +175,10 @@ void PricerSolverArcTimeDp::build_mip() {
     model->update();
 
     /** Assignment variables */
-    std::unique_ptr<GRBLinExpr[]> assignment(new GRBLinExpr[nb_jobs]());
-    std::unique_ptr<char[]>       sense(new char[nb_jobs]);
-    std::unique_ptr<double[]>     rhs(new double[nb_jobs]);
+    std::unique_ptr<GRBLinExpr[]> assignment(
+        new GRBLinExpr[convex_constr_id]());
+    std::unique_ptr<char[]>   sense(new char[convex_constr_id]);
+    std::unique_ptr<double[]> rhs(new double[convex_constr_id]);
 
     for (unsigned i = 0; i < jobs->len; ++i) {
         sense[i] = GRB_GREATER_EQUAL;
@@ -194,7 +194,7 @@ void PricerSolverArcTimeDp::build_mip() {
     }
 
     std::unique_ptr<GRBConstr[]> assignment_constrs(model->addConstrs(
-        assignment.get(), sense.get(), rhs.get(), nullptr, nb_jobs));
+        assignment.get(), sense.get(), rhs.get(), nullptr, convex_constr_id));
 
     for (int i = 0; i < n; i++) {
         for (int t = 0; t <= Hmax - vector_jobs[i]->processing_time; t++) {
@@ -229,7 +229,7 @@ void PricerSolverArcTimeDp::build_mip() {
     for (auto& it : reversed_graph[n][0]) {
         expr += arctime_x[n][it->job][0];
     }
-    model->addConstr(expr, GRB_EQUAL, num_machines);
+    model->addConstr(expr, GRB_EQUAL, convex_rhs);
 
     for (int j = 0; j < n + 1; j++) {
         for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
@@ -246,7 +246,7 @@ void PricerSolverArcTimeDp::build_mip() {
         }
     }
 
-    model->write("ati_" + problem_name + "_" + std::to_string(num_machines) +
+    model->write("ati_" + problem_name + "_" + std::to_string(convex_rhs) +
                  ".lp");
     model->optimize();
 
@@ -281,7 +281,7 @@ void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
                     value_Fj(t + tmp->processing_time, tmp) - pi[tmp->job] +
                     backward_F[tmp->job][t + tmp->processing_time];
                 if (result + pi[n] +
-                        (num_machines - 1) * (forward_F[n][Hmax] + pi[n]) + LB >
+                        (convex_rhs - 1) * (forward_F[n][Hmax] + pi[n]) + LB >
                     UB - 1 + 0.00001) {
                     size_graph--;
                     num_edges_removed++;

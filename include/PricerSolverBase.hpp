@@ -13,11 +13,10 @@
 
 struct PricerSolverBase {
    public:
-    GPtrArray*                jobs;
-    int                       nb_jobs;
-    int                       num_machines;
-    GPtrArray*                ordered_jobs;
-    int                       nb_layers;
+    GPtrArray* jobs;
+    int        convex_constr_id;
+    int        convex_rhs;
+
     std::string               problem_name;
     std::unique_ptr<GRBEnv>   env;
     std::unique_ptr<GRBModel> model;
@@ -30,11 +29,6 @@ struct PricerSolverBase {
      */
     PricerSolverBase(GPtrArray*  _jobs,
                      int         _num_machines,
-                     const char* p_name,
-                     double      _UB);
-    PricerSolverBase(GPtrArray*  _jobs,
-                     int         _num_machines,
-                     GPtrArray*  _ordered_jobs,
                      const char* p_name,
                      double      _UB);
     /**

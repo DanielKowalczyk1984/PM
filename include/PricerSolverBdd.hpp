@@ -16,6 +16,9 @@ class PricerSolverBdd : public PricerSolverBase {
     int                            nb_removed_edges = 0;
     int                            nb_removed_nodes = 0;
 
+    GPtrArray* ordered_jobs;
+    int        nb_layers;
+
     MipGraph                                                    mip_graph;
     std::unique_ptr<double[]>                                   solution_x;
     std::vector<std::vector<std::weak_ptr<NodeId>>>             node_ids;

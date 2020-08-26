@@ -38,11 +38,13 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
                                  int         _Hmax,
                                  int*        _take_jobs,
                                  double      _UB)
-    : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name, _UB),
+    : PricerSolverBase(_jobs, _num_machines, p_name, _UB),
       size_graph(0),
       nb_removed_edges(0),
       nb_removed_nodes(0),
-      node_ids(nb_jobs, vector<std::weak_ptr<NodeId>>(_Hmax + 1)),
+      ordered_jobs(_ordered_jobs),
+      nb_layers(ordered_jobs->len),
+      node_ids(convex_constr_id, vector<std::weak_ptr<NodeId>>(_Hmax + 1)),
       original_model(reformulation_model),
       H_min(0),
       H_max(_Hmax)
@@ -76,7 +78,7 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
 void PricerSolverBdd::calculate_H_min() {
     auto p_sum = 0.0;
     auto duration = g_ptr_array_new();
-    for (auto j = 0; j < nb_jobs; j++) {
+    for (auto j = 0; j < convex_constr_id; j++) {
         auto job = (Job*)g_ptr_array_index(jobs, j);
         g_ptr_array_add(duration, job);
         p_sum += job->processing_time;
@@ -85,15 +87,15 @@ void PricerSolverBdd::calculate_H_min() {
 
     auto m = 0;
     auto tmp = p_sum;
-    auto i = nb_jobs;
+    auto i = convex_constr_id;
     do {
         auto job = (Job*)g_ptr_array_index(duration, i - 1);
         tmp -= job->processing_time;
         m++;
         i--;
-    } while (m < num_machines - 1);
+    } while (m < convex_rhs - 1);
 
-    H_min = static_cast<int>(floor(tmp / num_machines));
+    H_min = static_cast<int>(floor(tmp / convex_rhs));
 
     g_ptr_array_free(duration, TRUE);
 }
@@ -148,7 +150,7 @@ void PricerSolverBdd::init_coeff_constraints() {
         for (auto& it : table[i]) {
             for (auto c = 0; c < reformulation_model.get_nb_constraints();
                  c++) {
-                if (c == nb_jobs) {
+                if (c == convex_constr_id) {
                     continue;
                 }
 
@@ -169,16 +171,16 @@ void PricerSolverBdd::init_coeff_constraints() {
     auto&           root_node = table.node(root);
     VariableKeyBase key_aux(root_node.get_nb_job(), root_node.get_weight(),
                             true);
-    auto            constr = original_model.get_constraint(nb_jobs);
+    auto            constr = original_model.get_constraint(convex_constr_id);
     auto            coeff = constr->get_var_coeff(&key_aux);
     if (fabs(coeff) > 1e-10) {
         auto ptr_coeff_high{std::make_shared<BddCoeff>(
             root_node.get_nb_job(), root_node.get_weight(), coeff, true, true)};
-        original_model.add_coeff_list(nb_jobs, ptr_coeff_high);
+        original_model.add_coeff_list(convex_constr_id, ptr_coeff_high);
         auto ptr_coeff_low{std::make_shared<BddCoeff>(root_node.get_nb_job(),
                                                       root_node.get_weight(),
                                                       coeff, false, true)};
-        original_model.add_coeff_list(nb_jobs, ptr_coeff_low);
+        original_model.add_coeff_list(convex_constr_id, ptr_coeff_low);
     }
 }
 
@@ -232,7 +234,7 @@ void PricerSolverBdd::init_table() {
     /** init table */
     auto& root = table.node(decision_diagram->root());
     root.init_node(0, true);
-    root.all = boost::dynamic_bitset<>{nb_jobs, 0};
+    root.all = boost::dynamic_bitset<>{convex_constr_id, 0};
 
     for (auto i = decision_diagram->topLevel(); i >= 0; i--) {
         for (auto it = 0u; it < table[i].size(); it++) {
@@ -409,9 +411,9 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
             tmp_nodeid = tmp_node.branch[0];
         }
 
-        for (int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints();
-             c++) {
-            if (c == nb_jobs) {
+        for (int c = convex_constr_id + 1;
+             c < reformulation_model.get_nb_constraints(); c++) {
+            if (c == convex_constr_id) {
                 continue;
             }
             auto dual = pi[c];
@@ -425,12 +427,12 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
         }
     }
 
-    auto            dual = pi[nb_jobs];
-    auto            constr = reformulation_model.get_constraint(nb_jobs);
+    auto dual = pi[convex_constr_id];
+    auto constr = reformulation_model.get_constraint(convex_constr_id);
     VariableKeyBase k(0, 0, true);
     auto            coeff = constr->get_var_coeff(&k);
     result -= coeff * dual;
-    lhs[nb_jobs] += coeff;
+    lhs[convex_constr_id] += coeff;
 
     return result;
 }
@@ -442,7 +444,8 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
     auto   tmp_nodeid(decision_diagram->root());
     auto   counter = 0u;
     auto   nb_constraints = reformulation_model.get_nb_constraints();
-    auto   convex_rhs = -reformulation_model.get_constraint(nb_jobs)->get_rhs();
+    auto   convex_rhs =
+        -reformulation_model.get_constraint(convex_constr_id)->get_rhs();
 
     for (size_t i = 0; i < nb_constraints; i++) {
         auto constr = reformulation_model.get_constraint(i);
@@ -472,8 +475,8 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
             tmp_nodeid = tmp_node.branch[0];
         }
 
-        for (int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints();
-             c++) {
+        for (int c = convex_constr_id + 1;
+             c < reformulation_model.get_nb_constraints(); c++) {
             // auto dual = pi[c];
             auto constr = reformulation_model.get_constraint(c);
             auto coeff = constr->get_var_coeff(&key);
@@ -484,8 +487,8 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
         }
     }
 
-    sub_gradient[nb_jobs] += convex_rhs;
-    assert(sub_gradient[nb_jobs] == 0.0);
+    sub_gradient[convex_constr_id] += convex_rhs;
+    assert(sub_gradient[convex_constr_id] == 0.0);
     // sub_gradient[nb_jobs] = 0.0;
     assert(tmp_nodeid == 1);
 
@@ -526,9 +529,9 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
             tmp_nodeid = tmp_node.branch[0];
         }
 
-        for (int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints();
-             c++) {
-            if (c == nb_jobs) {
+        for (int c = convex_constr_id + 1;
+             c < reformulation_model.get_nb_constraints(); c++) {
+            if (c == convex_constr_id) {
                 continue;
             }
             auto dual = pi[c];
@@ -544,7 +547,7 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
     result = CC_MIN(0, result);
 
     for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
-        if (c == nb_jobs) {
+        if (c == convex_constr_id) {
             continue;
         }
         auto dual = pi[c];
@@ -554,7 +557,8 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
         dual_bound += rhs * dual;
     }
 
-    result = -reformulation_model.get_constraint(nb_jobs)->get_rhs() * result;
+    result = -reformulation_model.get_constraint(convex_constr_id)->get_rhs() *
+             result;
     result = dual_bound + result;
 
     // assert(tmp_nodeid == 1);
@@ -681,15 +685,15 @@ void PricerSolverBdd::print_representation_file() {
     auto  vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
     auto  edge_type_list(get(boost::edge_weight_t(), mip_graph));
     auto  edge_index_list(get(boost::edge_index_t(), mip_graph));
-    auto  index_edge{std::make_unique<std::vector<int>[]>(nb_jobs)};
+    auto  index_edge{std::make_unique<std::vector<int>[]>(convex_constr_id)};
 
     auto outfile_file_mip_str =
-        problem_name + "_" + std::to_string(num_machines) + ".txt";
+        problem_name + "_" + std::to_string(convex_rhs) + ".txt";
     std::ofstream out_file_mip(outfile_file_mip_str);
 
     out_file_mip << boost::num_vertices(mip_graph) << " "
-                 << boost::num_edges(mip_graph) << " " << nb_jobs << " "
-                 << num_machines << "\n\n";
+                 << boost::num_edges(mip_graph) << " " << convex_constr_id
+                 << " " << convex_rhs << "\n\n";
 
     for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
         auto& head = table.node(get(boost::vertex_name_t(), mip_graph,
@@ -710,7 +714,7 @@ void PricerSolverBdd::print_representation_file() {
 
     out_file_mip << "\n";
 
-    for (int i = 0; i < nb_jobs; i++) {
+    for (int i = 0; i < convex_constr_id; i++) {
         out_file_mip << index_edge[i].size() << " ";
         for (auto& it : index_edge[i]) {
             out_file_mip << it << " ";
@@ -761,7 +765,7 @@ void PricerSolverBdd::add_inequality(std::vector<int> v1) {
             expr1 += edge_var_list[*it.first].x;
         }
     }
-    model->addConstr(expr1, GRB_EQUAL, num_machines);
+    model->addConstr(expr1, GRB_EQUAL, convex_rhs);
 }
 void PricerSolverBdd::build_mip() {
     try {
@@ -783,17 +787,16 @@ void PricerSolverBdd::build_mip() {
                 edge_var_list[*it.first].x =
                     model->addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
-                edge_var_list[*it.first].x =
-                    model->addVar(0.0, static_cast<double>(num_machines), 0.0,
-                                  GRB_CONTINUOUS);
+                edge_var_list[*it.first].x = model->addVar(
+                    0.0, static_cast<double>(convex_rhs), 0.0, GRB_CONTINUOUS);
             }
         }
 
         model->update();
         /** Assignment constraints */
-        auto assignment{std::make_unique<GRBLinExpr[]>(nb_jobs)};
-        auto sense{std::make_unique<char[]>(nb_jobs)};
-        auto rhs{std::make_unique<double[]>(nb_jobs)};
+        auto assignment{std::make_unique<GRBLinExpr[]>(convex_constr_id)};
+        auto sense{std::make_unique<char[]>(convex_constr_id)};
+        auto rhs{std::make_unique<double[]>(convex_constr_id)};
 
         for (unsigned i = 0; i < jobs->len; ++i) {
             sense[i] = GRB_EQUAL;
@@ -810,8 +813,9 @@ void PricerSolverBdd::build_mip() {
             }
         }
 
-        std::unique_ptr<GRBConstr[]> assignment_constrs(model->addConstrs(
-            assignment.get(), sense.get(), rhs.get(), nullptr, nb_jobs));
+        std::unique_ptr<GRBConstr[]> assignment_constrs(
+            model->addConstrs(assignment.get(), sense.get(), rhs.get(), nullptr,
+                              convex_constr_id));
         model->update();
         /** Flow constraints */
         auto num_vertices = boost::num_vertices(mip_graph);
@@ -841,9 +845,9 @@ void PricerSolverBdd::build_mip() {
             }
 
             if (node_id == decision_diagram->root()) {
-                rhs_flow[vertex_key] = static_cast<double>(-num_machines);
+                rhs_flow[vertex_key] = static_cast<double>(-convex_rhs);
             } else if (node_id == 1) {
-                rhs_flow[vertex_key] = static_cast<double>(num_machines);
+                rhs_flow[vertex_key] = static_cast<double>(convex_rhs);
             } else {
                 rhs_flow[vertex_key] = 0.0;
             }
@@ -885,8 +889,8 @@ void PricerSolverBdd::build_mip() {
 
         ColorWriterEdgeIndex edge_writer_index(mip_graph);
         ColorWriterVertex    vertex_writer(mip_graph, table);
-        auto                 file_name = "index_" + problem_name + "_" +
-                         std::to_string(num_machines) + ".gv";
+        auto                 file_name =
+            "index_" + problem_name + "_" + std::to_string(convex_rhs) + ".gv";
         std::ofstream outf_index(file_name);
         boost::write_graphviz(outf_index, mip_graph, vertex_writer,
                               edge_writer_index);
@@ -1037,7 +1041,7 @@ void PricerSolverBdd::topdown_filtering() {
     for (auto i = decision_diagram->topLevel(); i >= 0; i--) {
         for (auto& it : table[i]) {
             it.visited = false;
-            it.all = boost::dynamic_bitset<>{nb_jobs, 0};
+            it.all = boost::dynamic_bitset<>{convex_constr_id, 0};
             it.calc_yes = true;
         }
     }
@@ -1050,7 +1054,7 @@ void PricerSolverBdd::topdown_filtering() {
                 n0.all &= it.all;
             } else {
                 n0.visited = true;
-                n0.all = boost::dynamic_bitset<>{nb_jobs, 0};
+                n0.all = boost::dynamic_bitset<>{convex_constr_id, 0};
                 n0.all |= it.all;
             }
 
@@ -1064,7 +1068,7 @@ void PricerSolverBdd::topdown_filtering() {
                     n1.all &= it.all;
                 }
             } else {
-                n1.all = boost::dynamic_bitset<>{nb_jobs, 0};
+                n1.all = boost::dynamic_bitset<>{convex_constr_id, 0};
                 n1.all |= it.all;
                 n1.all[it.get_nb_job()] = 1;
                 n1.visited = true;
@@ -1105,13 +1109,13 @@ void PricerSolverBdd::bottum_up_filtering() {
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             it.visited = false;
-            it.all = boost::dynamic_bitset<>{nb_jobs, 0};
+            it.all = boost::dynamic_bitset<>{convex_constr_id, 0};
             it.calc_yes = true;
         }
     }
 
-    table.node(0).all = boost::dynamic_bitset<>{nb_jobs, 0};
-    table.node(1).all = boost::dynamic_bitset<>{nb_jobs, 0};
+    table.node(0).all = boost::dynamic_bitset<>{convex_constr_id, 0};
+    table.node(1).all = boost::dynamic_bitset<>{convex_constr_id, 0};
     table.node(0).all.flip();
 
     for (auto i = 1; i <= decision_diagram->topLevel(); i++) {
@@ -1156,7 +1160,7 @@ void PricerSolverBdd::check_infeasible_arcs() {
     for (auto i = decision_diagram->topLevel(); i >= 0; i--) {
         for (auto& it : table[i]) {
             it.visited = false;
-            it.all = boost::dynamic_bitset<>{nb_jobs, 0};
+            it.all = boost::dynamic_bitset<>{convex_constr_id, 0};
             it.calc_yes = true;
             it.calc_no = true;
         }
@@ -1224,7 +1228,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
     for (auto i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             it.visited = false;
-            it.all = boost::dynamic_bitset<>{nb_jobs, 0};
+            it.all = boost::dynamic_bitset<>{convex_constr_id, 0};
             it.calc_yes = true;
             it.calc_no = true;
             auto& n0 = table.node(it.branch[0]);
@@ -1256,7 +1260,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
             new dynamic_bitset<>[num_vertices]);
         std::unique_ptr<int[]> C(new int[num_vertices]);
         for (auto i = 0u; i < num_vertices; i++) {
-            all[i] = dynamic_bitset<>(nb_jobs, 0);
+            all[i] = dynamic_bitset<>(convex_constr_id, 0);
             C[i] = 0;
         }
 
@@ -1437,8 +1441,8 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
         }
     }
 
-    ZeroHalfCuts generator =
-        ZeroHalfCuts(nb_jobs, num_machines, &reformulation_model,
+    auto generator =
+        ZeroHalfCuts(convex_constr_id, convex_rhs, &reformulation_model,
                      decision_diagram->root(), &table);
 
     // generator.generate_cuts();
@@ -1467,7 +1471,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
     ColorWriterEdgeX  edge_writer(mip_graph, &table);
     ColorWriterVertex vertex_writer(mip_graph, table);
     auto              file_name = "lp_solution_" + problem_name + "_" +
-                     std::to_string(num_machines) + ".gv";
+                     std::to_string(convex_rhs) + ".gv";
     std::ofstream outf(file_name);
     boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
     outf.close();

@@ -9,10 +9,12 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
                                  GPtrArray*  _ordered_jobs,
                                  const char* p_name,
                                  double      _UB)
-    : PricerSolverBase(_jobs, _num_machines, _ordered_jobs, p_name, _UB),
+    : PricerSolverBase(_jobs, _num_machines, p_name, _UB),
       size_graph(0),
       nb_removed_edges(0),
-      nb_removed_nodes(0)
+      nb_removed_nodes(0),
+      ordered_jobs(_ordered_jobs),
+      nb_layers(_ordered_jobs->len)
 
 {
     /**
@@ -272,17 +274,17 @@ void PricerSolverZdd::build_mip() {
                 edge_var_list[*it.first].x =
                     model->addVar(0.0, 1.0, cost, GRB_CONTINUOUS);
             } else {
-                edge_var_list[*it.first].x =
-                    model->addVar(0.0, static_cast<double>(num_machines), 0.0,
-                                  GRB_CONTINUOUS);
+                edge_var_list[*it.first].x = model->addVar(
+                    0.0, static_cast<double>(convex_rhs), 0.0, GRB_CONTINUOUS);
             }
         }
 
         model->update();
         /** Assignment constraints */
-        std::unique_ptr<GRBLinExpr[]> assignment(new GRBLinExpr[nb_jobs]());
-        std::unique_ptr<char[]>       sense(new char[nb_jobs]);
-        std::unique_ptr<double[]>     rhs(new double[nb_jobs]);
+        std::unique_ptr<GRBLinExpr[]> assignment(
+            new GRBLinExpr[convex_constr_id]());
+        std::unique_ptr<char[]>   sense(new char[convex_constr_id]);
+        std::unique_ptr<double[]> rhs(new double[convex_constr_id]);
 
         for (unsigned i = 0; i < jobs->len; ++i) {
             sense[i] = GRB_GREATER_EQUAL;
@@ -299,8 +301,9 @@ void PricerSolverZdd::build_mip() {
             }
         }
 
-        std::unique_ptr<GRBConstr[]> assignment_constrs(model->addConstrs(
-            assignment.get(), sense.get(), rhs.get(), nullptr, nb_jobs));
+        std::unique_ptr<GRBConstr[]> assignment_constrs(
+            model->addConstrs(assignment.get(), sense.get(), rhs.get(), nullptr,
+                              convex_constr_id));
         model->update();
         /** Flow constraints */
         size_t num_vertices = boost::num_vertices(mip_graph);
@@ -331,9 +334,9 @@ void PricerSolverZdd::build_mip() {
             }
 
             if (node_id == decision_diagram->root()) {
-                rhs_flow[vertex_key] = static_cast<double>(-num_machines);
+                rhs_flow[vertex_key] = static_cast<double>(-convex_rhs);
             } else if (node_id.row() == 0) {
-                rhs_flow[vertex_key] = static_cast<double>(num_machines);
+                rhs_flow[vertex_key] = static_cast<double>(convex_rhs);
             } else {
                 rhs_flow[vertex_key] = 0.0;
             }
@@ -343,8 +346,8 @@ void PricerSolverZdd::build_mip() {
             model->addConstrs(flow_conservation_constr.get(), sense_flow.get(),
                               rhs_flow.get(), nullptr, num_vertices));
         model->update();
-        model->write("zdd_" + problem_name + "_" +
-                     std::to_string(num_machines) + ".lp");
+        model->write("zdd_" + problem_name + "_" + std::to_string(convex_rhs) +
+                     ".lp");
         model->optimize();
     } catch (GRBException& e) {
         std::cout << "Error code = " << e.getErrorCode() << "\n";

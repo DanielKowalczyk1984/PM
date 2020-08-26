@@ -9,10 +9,8 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
                                    const char* p_name,
                                    double      _UB)
     : jobs(_jobs),
-      nb_jobs(_jobs->len),
-      num_machines(_num_machines),
-      ordered_jobs(nullptr),
-      nb_layers(0),
+      convex_constr_id(_jobs->len),
+      convex_rhs(_num_machines),
       problem_name(p_name),
       env(new GRBEnv()),
       model(new GRBModel(*env)),
@@ -24,30 +22,6 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
     model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
     model->set(GRB_IntParam_Presolve, 2);
     model->set(GRB_DoubleParam_MIPGap, 1e-6);
-    model->set(GRB_DoubleParam_TimeLimit, 1800);
-}
-
-PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
-                                   int         _num_machines,
-                                   GPtrArray*  _ordered_jobs,
-                                   const char* p_name,
-                                   double      _UB)
-    : jobs(_jobs),
-      nb_jobs(_jobs->len),
-      num_machines(_num_machines),
-      ordered_jobs(_ordered_jobs),
-      nb_layers(ordered_jobs->len),
-      problem_name(p_name),
-      env(new GRBEnv()),
-      model(new GRBModel(*env)),
-      reformulation_model(jobs->len, _num_machines),
-      is_integer_solution(false),
-      UB(_UB) {
-    model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-    model->set(GRB_IntParam_Threads, 1);
-    model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-    model->set(GRB_IntParam_Presolve, 2);
-    model->set(GRB_DoubleParam_MIPGap, 0.0);
     model->set(GRB_DoubleParam_TimeLimit, 1800);
 }
 
@@ -141,7 +115,7 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
         Job*            tmp_j = (Job*)g_ptr_array_index(sol.jobs, j);
         VariableKeyBase k(tmp_j->job, 0);
         for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
-            if (c == nb_jobs) {
+            if (c == convex_constr_id) {
                 continue;
             }
             double          dual = pi[c];
@@ -155,12 +129,13 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
         }
     }
 
-    double          dual = pi[nb_jobs];
-    ConstraintBase* constr = reformulation_model.get_constraint(nb_jobs);
+    double          dual = pi[convex_constr_id];
+    ConstraintBase* constr =
+        reformulation_model.get_constraint(convex_constr_id);
     VariableKeyBase k(0, 0, true);
     double          coeff = constr->get_var_coeff(&k);
     result -= coeff * dual;
-    lhs[nb_jobs] += coeff;
+    lhs[convex_constr_id] += coeff;
 
     return result;
 }
@@ -181,8 +156,8 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
             result -= coeff * dual;
         }
 
-        for (int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints();
-             c++) {
+        for (int c = convex_constr_id + 1;
+             c < reformulation_model.get_nb_constraints(); c++) {
             double          dual_ = pi[c];
             ConstraintBase* constr_ = reformulation_model.get_constraint(c);
             double          coeff_ = constr->get_var_coeff(&k);
@@ -196,7 +171,7 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
     result = CC_MIN(0, result);
 
     for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
-        if (c == nb_jobs) {
+        if (c == convex_constr_id) {
             continue;
         }
         double          dual = pi[c];
@@ -206,7 +181,8 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
         dual_bound += rhs * dual;
     }
 
-    result = -reformulation_model.get_constraint(nb_jobs)->get_rhs() * result;
+    result = -reformulation_model.get_constraint(convex_constr_id)->get_rhs() *
+             result;
     result = dual_bound + result;
 
     return result;
@@ -215,7 +191,8 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
 double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
                                              double* subgradient) {
     auto nb_constraints = reformulation_model.get_nb_constraints();
-    auto convex_rhs = -reformulation_model.get_constraint(nb_jobs)->get_rhs();
+    auto convex_rhs =
+        -reformulation_model.get_constraint(convex_constr_id)->get_rhs();
 
     for (size_t i = 0; i < nb_constraints; i++) {
         auto constr = reformulation_model.get_constraint(i);
@@ -232,8 +209,8 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
             subgradient[k.get_j()] -= coeff * convex_rhs;
         }
 
-        for (int c = nb_jobs + 1; c < reformulation_model.get_nb_constraints();
-             c++) {
+        for (int c = convex_constr_id + 1;
+             c < reformulation_model.get_nb_constraints(); c++) {
             ConstraintBase* constr_ = reformulation_model.get_constraint(c);
             double          coeff_ = constr->get_var_coeff(&k);
 
@@ -243,7 +220,7 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
         }
     }
 
-    subgradient[nb_jobs] += convex_rhs;
+    subgradient[convex_constr_id] += convex_rhs;
 
     return 0.0;
 }
