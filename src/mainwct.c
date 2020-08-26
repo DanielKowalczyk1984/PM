@@ -203,7 +203,8 @@ int main(int ac, char** av) {
     }
 
     /**
-     * Reading and preprocessing the data
+     * @brief Reading and preprocessing the data
+     *
      */
     start_time = CCutil_zeit();
     val = read_problem(&problem);
@@ -214,23 +215,9 @@ int main(int ac, char** av) {
            CCutil_zeit() - start_time);
 
     /**
-     * Build DD at the root node
-     */
-    if (parms->pricing_solver < dp_solver) {
-        CCutil_start_timer(&(problem.tot_build_dd));
-        root->solver = newSolver(root->jobarray, root->nb_machines,
-                                 root->ordered_jobs, parms, root->H_max, NULL);
-        CCutil_stop_timer(&(problem.tot_build_dd), 0);
-    } else {
-        root->solver =
-            newSolverDp(root->jobarray, root->nb_machines, root->H_max, parms);
-    }
-    root->solver_stab = new_pricing_stabilization(root->solver, parms);
-    problem.first_size_graph = get_nb_edges(root->solver);
-
-    /**
-     * Finding heuristic solutions to the problem or start without feasible
-     * solutions
+     *@brief Finding heuristic solutions to the problem or start without
+     *feasible solutions
+     *
      */
     if (parms->use_heuristic == yes_use_heuristic) {
         heuristic(&problem);
@@ -248,8 +235,32 @@ int main(int ac, char** av) {
         printf("Solution in canonical order: \n");
         solution_print(sol);
     }
+
     /**
-     * Solve initial relaxation
+     * @brief Build DD at the root node
+     *
+     */
+    if (parms->pricing_solver < dp_solver) {
+        CCutil_start_timer(&(problem.tot_build_dd));
+        root->solver =
+            newSolver(root->jobarray, root->nb_machines, root->ordered_jobs,
+                      parms, root->H_max, NULL, problem.opt_sol->tw);
+        CCutil_stop_timer(&(problem.tot_build_dd), 0);
+    } else {
+        root->solver = newSolverDp(root->jobarray, root->nb_machines,
+                                   root->H_max, parms, problem.opt_sol->tw);
+    }
+    problem.first_size_graph = get_nb_edges(root->solver);
+
+    /**
+     * @brief Initial stabilization
+     *
+     */
+    root->solver_stab = new_pricing_stabilization(root->solver, parms);
+
+    /**
+     * @brief Solve initial relaxation
+     *
      */
     build_rmp(&(problem.root_pd));
     solve_relaxation(&problem, root);
@@ -257,7 +268,8 @@ int main(int ac, char** av) {
         root->localColPool, g_copy_scheduleset, &(problem.nb_jobs));
 
     /**
-     * Calculation of LB at the root node with column generation
+     * @brief Calculation of LB at the root node with column generation
+     *
      */
     if (problem.opt_sol->tw + problem.opt_sol->off != 0) {
         CCutil_start_timer(&(problem.tot_lb_root));
@@ -280,7 +292,7 @@ int main(int ac, char** av) {
             freeSolver(root->solver);
             root->solver =
                 newSolver(root->jobarray, root->nb_machines, root->ordered_jobs,
-                          parms, problem.H_max, take);
+                          parms, problem.H_max, take, problem.opt_sol->tw);
 
             CC_IFFREE(take, int);
             CCutil_start_timer(&(problem.tot_lb_root));
