@@ -68,6 +68,11 @@ void PricerSolverSimpleDp::evaluate_nodes(double*                 pi,
     return;
 }
 
+void PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
+    forward_evaluator(pi);
+    backward_evaluator(pi);
+}
+
 void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     evaluate_nodes(pi, UB, LB);
     int counter = 0;

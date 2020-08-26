@@ -79,6 +79,7 @@ struct PricerSolverBase {
 
     virtual void reduce_cost_fixing(double* pi, int UB, double LB) = 0;
     virtual void evaluate_nodes(double* pi, int UB, double LB) = 0;
+    virtual void evaluate_nodes(double* pi) = 0;
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;
@@ -105,6 +106,8 @@ struct PricerSolverBase {
      */
     virtual void iterate_zdd() = 0;
     virtual void print_num_paths() = 0;
+    double       get_UB();
+    void         update_UB(double _UB);
 
     virtual int    get_num_remove_nodes() = 0;
     virtual int    get_num_remove_edges() = 0;

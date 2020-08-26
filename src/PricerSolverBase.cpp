@@ -55,6 +55,16 @@ PricerSolverBase::~PricerSolverBase() {}
 
 void PricerSolverBase::print_num_paths() {}
 
+double PricerSolverBase::get_UB() {
+    return UB;
+}
+
+void PricerSolverBase::update_UB(double _UB) {
+    if (_UB < UB) {
+        UB = _UB;
+    }
+}
+
 int PricerSolverBase::get_int_attr_model(enum MIP_Attr c) {
     int val = -1;
     switch (c) {
@@ -236,4 +246,12 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
     subgradient[nb_jobs] += convex_rhs;
 
     return 0.0;
+}
+
+extern "C" double call_get_UB(PricerSolverBase* solver) {
+    return solver->get_UB();
+}
+
+extern "C" void call_update_UB(PricerSolverBase* solver, double _UB) {
+    solver->update_UB(_UB);
 }

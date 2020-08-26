@@ -150,6 +150,11 @@ void PricerSolverArcTimeDp::evaluate_nodes(double*                 pi,
     return;
 }
 
+void PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
+    forward_evaluator(pi);
+    backward_evaluator(pi);
+}
+
 void PricerSolverArcTimeDp::build_mip() {
     std::cout << "Building Mip model for the arcTI formulation\n";
 

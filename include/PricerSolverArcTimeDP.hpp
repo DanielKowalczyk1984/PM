@@ -34,6 +34,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
                         [[maybe_unused]] int     UB,
                         [[maybe_unused]] double  LB) override;
 
+    void evaluate_nodes([[maybe_unused]] double* pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(const double*    columns,
                                    const GPtrArray* schedule_sets,

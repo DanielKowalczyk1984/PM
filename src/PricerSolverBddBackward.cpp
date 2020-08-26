@@ -1,4 +1,5 @@
 #include "PricerSolverBddBackward.hpp"
+#include <fmt/core.h>
 #include <iostream>
 #include "BackwardBDD.hpp"
 
@@ -12,13 +13,15 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     GPtrArray*  _ordered_jobs,
     const char* p_name,
     int         _Hmax,
-    int*        _take_jobs)
+    int*        _take_jobs,
+    double      _UB)
     : PricerSolverBdd(_jobs,
                       _num_machines,
                       _ordered_jobs,
                       p_name,
                       _Hmax,
-                      _take_jobs) {
+                      _take_jobs,
+                      _UB) {
     std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
@@ -80,6 +83,43 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi,
     }
 }
 
+void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi) {
+    NodeTableEntity<>& table =
+        get_decision_diagram()->getDiagram().privateEntity();
+    compute_labels(pi);
+    double reduced_cost = table.node(1).forward_label[0].get_f();
+    bool   removed_edges = false;
+    int    nb_edges_removed_evaluate = 0;
+
+    /** check for each node the Lagrangian dual */
+    for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
+        for (auto& it : table[i]) {
+            double result = it.forward_label[0].get_f() +
+                            it.child[1]->backward_label[0].get_f() +
+                            it.reduced_cost[1];
+
+            auto aux_nb_machines = static_cast<double>(num_machines - 1);
+
+            if (constLB + aux_nb_machines * reduced_cost + result > UB + 1e-4 &&
+                (it.calc_yes)) {
+                it.calc_yes = false;
+                removed_edges = true;
+                add_nb_removed_edges();
+                nb_edges_removed_evaluate++;
+            }
+        }
+    }
+
+    if (removed_edges) {
+        // std::cout << "Number of edges removed by evaluate_nodes \t= "<<
+        // nb_edges_removed_evaluate << "\n"; std::cout << "Total number of
+        // edges removed \t\t\t= " << get_nb_removed_edges() << "\n";
+        remove_layers();
+        remove_edges();
+        // init_table();
+    }
+}
+
 /**
  * Simple backward bdd pricersolver for the flow formulation
  */
@@ -89,13 +129,15 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     GPtrArray*  _ordered_jobs,
     const char* p_name,
     int         _Hmax,
-    int*        _take_jobs)
+    int*        _take_jobs,
+    double      _UB)
     : PricerSolverBdd(_jobs,
                       _num_machines,
                       _ordered_jobs,
                       p_name,
                       _Hmax,
-                      _take_jobs) {
+                      _take_jobs,
+                      _UB) {
     std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
     std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges BDD = " << get_nb_edges() << '\n';
@@ -126,9 +168,10 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
     NodeTableEntity<>& table =
         get_decision_diagram()->getDiagram().privateEntity();
     compute_labels(pi);
-    double reduced_cost = table.node(1).forward_label[0].get_f() + pi[nb_jobs];
-    bool   removed_edges = false;
-    int    nb_removed_edges_evaluate = 0;
+    double reduced_cost =
+        table.node(get_decision_diagram()->root()).backward_label[0].get_f();
+    bool removed_edges = false;
+    int  nb_removed_edges_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
@@ -136,30 +179,32 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
             Job*   job = it.get_job();
             double result;
 
-            if (it.forward_label[0].get_previous_job() != job &&
-                it.child[1]->backward_label[0].get_prev_job() != job) {
-                result = it.forward_label[0].get_f() +
-                         it.child[1]->backward_label[0].get_f() +
-                         it.reduced_cost[1] + pi[nb_jobs];
+            // if (it.forward_label[0].get_previous_job() != job &&
+            //     it.child[1]->backward_label[0].get_prev_job() != job) {
+            result = it.forward_label[0].get_f() +
+                     it.child[1]->backward_label[0].get_f() +
+                     it.reduced_cost[1];
 
-            } else if (it.forward_label[0].get_previous_job() == job &&
-                       it.child[1]->backward_label[0].get_prev_job() != job) {
-                result = it.forward_label[1].get_f() +
-                         it.child[1]->backward_label[0].get_f() +
-                         it.reduced_cost[1] + pi[nb_jobs];
-            } else if (it.forward_label[0].get_previous_job() != job &&
-                       it.child[1]->backward_label[0].get_prev_job() == job) {
-                result = it.forward_label[0].get_f() +
-                         it.child[1]->backward_label[1].get_f() +
-                         it.reduced_cost[1] + pi[nb_jobs];
-            } else {
-                result = it.forward_label[1].get_f() +
-                         it.child[1]->backward_label[1].get_f() +
-                         it.reduced_cost[1] + pi[nb_jobs];
-            }
+            // } else if (it.forward_label[0].get_previous_job() == job &&
+            //            it.child[1]->backward_label[0].get_prev_job() != job)
+            //            {
+            //     result = it.forward_label[1].get_f() +
+            //              it.child[1]->backward_label[0].get_f() +
+            //              it.reduced_cost[1] + pi[nb_jobs];
+            // } else if (it.forward_label[0].get_previous_job() != job &&
+            //            it.child[1]->backward_label[0].get_prev_job() == job)
+            //            {
+            //     result = it.forward_label[0].get_f() +
+            //              it.child[1]->backward_label[1].get_f() +
+            //              it.reduced_cost[1] + pi[nb_jobs];
+            // } else {
+            //     result = it.forward_label[1].get_f() +
+            //              it.child[1]->backward_label[1].get_f() +
+            //              it.reduced_cost[1] + pi[nb_jobs];
+            // }
 
             auto aux_nb_machines = static_cast<double>(num_machines - 1);
-            if (LB + aux_nb_machines * reduced_cost + result > UB + 1e-4 &&
+            if (constLB + aux_nb_machines * reduced_cost + result > UB + 1e-4 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 removed_edges = true;
@@ -170,11 +215,80 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
     }
 
     if (removed_edges) {
-        // std::cout << "Number of edges removed by evaluate_nodes \t= "<<
-        // nb_removed_edges_evaluate << "\n"; std::cout << "Total number of
-        // edges removed \t\t\t= " << get_nb_removed_edges() << "\n";
+        std::cout << "Number of edges removed by evaluate_nodes \t= "
+                  << nb_removed_edges_evaluate << "\n";
+        std::cout << "Total number of edges removed \t\t\t = "
+                  << get_nb_removed_edges() << "\n ";
+        std::cout << "Number of edges = " << get_nb_edges() << "\n";
         remove_layers();
         remove_edges();
+        // init_table();
+    }
+}
+
+void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
+    NodeTableEntity<>& table =
+        get_decision_diagram()->getDiagram().privateEntity();
+    compute_labels(pi);
+    double reduced_cost =
+        table.node(get_decision_diagram()->root()).backward_label[0].get_f();
+    bool removed_edges = false;
+    int  nb_removed_edges_evaluate = 0;
+
+    /** check for each node the Lagrangian dual */
+    for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
+        for (auto& it : table[i]) {
+            Job*   job = it.get_job();
+            double result;
+
+            // if (it.forward_label[0].get_previous_job() != job &&
+            //     it.child[1]->backward_label[0].get_prev_job() != job) {
+            result = it.forward_label[0].get_f() +
+                     it.child[1]->backward_label[0].get_f() +
+                     it.reduced_cost[1];
+
+            // } else if (it.forward_label[0].get_previous_job() == job &&
+            //            it.child[1]->backward_label[0].get_prev_job() != job)
+            //            {
+            //     result = it.forward_label[1].get_f() +
+            //              it.child[1]->backward_label[0].get_f() +
+            //              it.reduced_cost[1] + pi[nb_jobs];
+            // } else if (it.forward_label[0].get_previous_job() != job &&
+            //            it.child[1]->backward_label[0].get_prev_job() == job)
+            //            {
+            //     result = it.forward_label[0].get_f() +
+            //              it.child[1]->backward_label[1].get_f() +
+            //              it.reduced_cost[1] + pi[nb_jobs];
+            // } else {
+            //     result = it.forward_label[1].get_f() +
+            //              it.child[1]->backward_label[1].get_f() +
+            //              it.reduced_cost[1] + pi[nb_jobs];
+            // }
+
+            auto aux_nb_machines = static_cast<double>(num_machines - 1);
+            if (constLB + aux_nb_machines * reduced_cost + result >
+                    UB - 1.0 + 1e-10 &&
+                (it.calc_yes)) {
+                it.calc_yes = false;
+                removed_edges = true;
+                add_nb_removed_edges();
+                nb_removed_edges_evaluate++;
+            }
+        }
+    }
+
+    if (removed_edges) {
+        std::cout << "Number of edges removed by evaluate_nodes \t= "
+                  << nb_removed_edges_evaluate << "\n";
+        std::cout << "Total number of edges removed \t\t\t = "
+                  << get_nb_removed_edges() << "\n ";
+        std::cout << "Number of edges = " << get_nb_edges() << "\n";
+        remove_layers();
+        remove_edges();
+        bottum_up_filtering();
+        topdown_filtering();
+        cleanup_arcs();
+        construct_mipgraph();
         // init_table();
     }
 }

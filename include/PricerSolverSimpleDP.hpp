@@ -29,6 +29,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void evaluate_nodes([[maybe_unused]] double* pi,
                         [[maybe_unused]] int     UB,
                         [[maybe_unused]] double  LB) override;
+    void evaluate_nodes([[maybe_unused]] double* pi) override;
     void reduce_cost_fixing([[maybe_unused]] double* pi,
                             [[maybe_unused]] int     UB,
                             [[maybe_unused]] double  LB) override;

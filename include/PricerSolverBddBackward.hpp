@@ -19,6 +19,7 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
     OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    compute_labels(double* _pi);
     void evaluate_nodes(double* pi, int UB, double LB) override;
+    void evaluate_nodes(double* pi) final;
 };
 
 class PricerSolverBddBackwardCycle : public PricerSolverBdd {
@@ -40,4 +41,5 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
     OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    compute_labels(double* _pi);
     void evaluate_nodes(double* pi, int UB, double LB) override;
+    void evaluate_nodes(double* pi) final;
 };
