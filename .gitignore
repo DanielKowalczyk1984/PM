@@ -76,7 +76,7 @@ linuxdebug/*
 build_arch/*
 debug/*
 release/*
-build/*
+build*/*
 third_party
 build_ubuntu
 solutions
