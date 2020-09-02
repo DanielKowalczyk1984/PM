@@ -24,6 +24,7 @@ class PricingStabilizationBase {
     OptimalSolution<>& get_sol();
     double             get_reduced_cost();
     int                update_stab_center{};
+    int                iterations{};
 
     bool           get_update_stab_center();
     virtual double get_eta_in();
@@ -51,7 +52,6 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     double eta_out{};
     double eta_sep{};
 
-    int iterations{};
     int update{};
 
     int k{};
@@ -248,6 +248,8 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
             eta_in = eta_sep;
             hasstabcenter = 1;
             update_stab_center = true;
+            solver->calculate_constLB(pi_sep.data());
+            solver->evaluate_nodes(pi_sep.data());
         }
     }
 

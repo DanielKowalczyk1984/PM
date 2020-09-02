@@ -22,9 +22,14 @@ PricingStabilizationBase::PricingStabilizationBase(PricerSolverBase* _solver)
 void PricingStabilizationBase::solve(double  _eta_out,
                                      double* _pi_out,
                                      double* _lhs) {
-    sol = solver->pricing_algorithm(_pi_out);
+    solver->calculate_constLB(_pi_out);
+    sol = std::move(solver->pricing_algorithm(_pi_out));
     reduced_cost = solver->compute_reduced_cost(sol, _pi_out, _lhs);
-    update_stab_center = true;
+    iterations++;
+    if (iterations % 10 == 0 && _eta_out - 1e-2 <= solver->UB) {
+        solver->calculate_constLB(_pi_out);
+        solver->evaluate_nodes(_pi_out);
+    }
 }
 
 OptimalSolution<>& PricingStabilizationBase::get_sol() {
@@ -62,9 +67,9 @@ PricingStabilizationBase::~PricingStabilizationBase() {}
  */
 PricingStabilizationStat::PricingStabilizationStat(PricerSolverBase* _solver)
     : PricingStabilizationBase(_solver),
-      pi_in(_solver->nb_jobs + 1, 0.0),
-      pi_out(_solver->nb_jobs + 1),
-      pi_sep(_solver->nb_jobs + 1) {}
+      pi_in(_solver->convex_constr_id + 1, 0.0),
+      pi_out(_solver->convex_constr_id + 1),
+      pi_sep(_solver->convex_constr_id + 1) {}
 
 PricingStabilizationStat::~PricingStabilizationStat() {}
 
@@ -113,9 +118,13 @@ void PricingStabilizationStat::solve(double  _eta_out,
         eta_in = result_sep;
         pi_in = pi_sep;
         update_stab_center = true;
+        if (iterations % 10 == 0 && eta_out - 1e-2 <= solver->UB) {
+            solver->calculate_constLB(pi_sep.data());
+            solver->evaluate_nodes(pi_sep.data());
+        }
     }
 
-    if (iterations % solver->nb_jobs == 0) {
+    if (iterations % solver->convex_constr_id == 0) {
         fmt::print(
             R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
 )",
@@ -138,7 +147,7 @@ int PricingStabilizationStat::stopping_criteria() {
 PricingStabilizationDynamic::PricingStabilizationDynamic(
     PricerSolverBase* _solver)
     : PricingStabilizationStat(_solver),
-      subgradient(_solver->nb_jobs + 1, 0.0)
+      subgradient(_solver->convex_constr_id + 1, 0.0)
 
 {}
 
@@ -184,9 +193,13 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
         eta_in = result_sep;
         pi_in = pi_sep;
         update_stab_center = true;
+        if (iterations % 10 == 0 && eta_out - 1e-2 <= solver->UB) {
+            solver->calculate_constLB(pi_sep.data());
+            solver->evaluate_nodes(pi_sep.data());
+        }
     }
 
-    if (iterations % solver->nb_jobs == 0) {
+    if (iterations % solver->convex_constr_id == 0) {
         fmt::print(
             R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
 )",
@@ -203,7 +216,7 @@ Hybrid object
 PricingStabilizationHybrid::PricingStabilizationHybrid(
     PricerSolverBase* pricer_solver)
     : PricingStabilizationDynamic(pricer_solver),
-      subgradient_in(pricer_solver->nb_jobs + 1) {}
+      subgradient_in(pricer_solver->convex_constr_id + 1) {}
 
 PricingStabilizationHybrid::~PricingStabilizationHybrid() {}
 
@@ -254,7 +267,7 @@ void PricingStabilizationHybrid::solve(double  _eta_out,
         }
     } while (in_mispricing_schedule && stabilized);
 
-    if (iterations % solver->nb_jobs == 0) {
+    if (iterations % solver->convex_constr_id == 0) {
         fmt::print(
             R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
 )",
@@ -262,9 +275,9 @@ void PricingStabilizationHybrid::solve(double  _eta_out,
     }
 }
 
-extern "C" PricingStabilizationBase* new_pricing_stabilization(
-    PricerSolver* solver,
-    Parms*        parms) {
+extern "C" {
+PricingStabilizationBase* new_pricing_stabilization(PricerSolver* solver,
+                                                    Parms*        parms) {
     switch (parms->stab_technique) {
         case stab_wentgnes:
             return new PricingStabilizationStat(solver);
@@ -279,25 +292,25 @@ extern "C" PricingStabilizationBase* new_pricing_stabilization(
     }
 }
 
-extern "C" void delete_pricing_stabilization(
-    PricingStabilization* pricing_stab_solver) {
+void delete_pricing_stabilization(PricingStabilization* pricing_stab_solver) {
     if (pricing_stab_solver) {
         delete pricing_stab_solver;
     }
 }
 
-extern "C" double call_get_reduced_cost(PricingStabilizationBase* p) {
+double call_get_reduced_cost(PricingStabilizationBase* p) {
     return p->get_reduced_cost();
 }
 
-extern "C" double call_get_eta_in(PricingStabilizationBase* solver) {
+double call_get_eta_in(PricingStabilizationBase* solver) {
     return solver->get_eta_in();
 }
 
-extern "C" int call_stopping_criteria(PricingStabilizationBase* solver) {
+int call_stopping_criteria(PricingStabilizationBase* solver) {
     return solver->stopping_criteria();
 }
 
-extern "C" int call_get_update_stab_center(PricingStabilizationBase* solver) {
+int call_get_update_stab_center(PricingStabilizationBase* solver) {
     return solver->get_update_stab_center();
+}
 }
