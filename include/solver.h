@@ -30,6 +30,7 @@ void   deletePricerSolver(PricerSolver* solver);
 int*   get_take(PricerSolver* solver);
 double call_get_UB(PricerSolver* solver);
 void   call_update_UB(PricerSolver* solver, double _UB);
+void   call_evaluate_nodes(PricerSolver* solver, double* pi);
 
 void iterate_zdd(PricerSolver* solver);
 
