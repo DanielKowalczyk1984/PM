@@ -22,9 +22,11 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
                       _Hmax,
                       _take_jobs,
                       _UB) {
-    std::cout << "Constructing BDD with Backward Simple evaluator:" << '\n';
-    std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
-    std::cout << "number edges BDD = " << get_nb_edges() << '\n';
+    fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", 60,
+               "Backward Simple Evaluator");
+    fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", 60,
+               get_nb_vertices());
+    fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", 60, get_nb_edges());
 }
 
 OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
@@ -90,7 +92,7 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi) {
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label[0].get_f();
     bool   removed_edges = false;
-    int    nb_edges_removed_evaluate = 0;
+    int    nb_removed_edges_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
@@ -106,18 +108,23 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi) {
                 it.calc_yes = false;
                 removed_edges = true;
                 add_nb_removed_edges();
-                nb_edges_removed_evaluate++;
+                nb_removed_edges_evaluate++;
             }
         }
     }
 
     if (removed_edges) {
-        // std::cout << "Number of edges removed by evaluate_nodes \t= "<<
-        // nb_edges_removed_evaluate << "\n"; std::cout << "Total number of
-        // edges removed \t\t\t= " << get_nb_removed_edges() << "\n";
+        fmt::print("Number of edges removed by evaluate nodes {{0}:<{1}}\n",
+                   nb_removed_edges_evaluate, 30);
+        fmt::print("Total number of edges removed {{0}:<{1}}\n",
+                   get_nb_removed_edges(), 30);
+        fmt::print("Number of edges {{0}:<{1}}\n", get_nb_edges(), 30);
         remove_layers();
         remove_edges();
-        // init_table();
+        bottum_up_filtering();
+        topdown_filtering();
+        cleanup_arcs();
+        construct_mipgraph();
     }
 }
 
@@ -139,9 +146,11 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
                       _Hmax,
                       _take_jobs,
                       _UB) {
-    std::cout << "Constructing BDD with Backward Cycle evaluator" << '\n';
-    std::cout << "number vertices BDD = " << get_nb_vertices() << '\n';
-    std::cout << "number edges BDD = " << get_nb_edges() << '\n';
+    fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", 60,
+               "Backward Cycle Evaluator");
+    fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", 60,
+               get_nb_vertices());
+    fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", 60, get_nb_edges());
 }
 
 OptimalSolution<double> PricerSolverBddBackwardCycle::pricing_algorithm(
@@ -216,11 +225,11 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
     }
 
     if (removed_edges) {
-        std::cout << "Number of edges removed by evaluate_nodes \t= "
-                  << nb_removed_edges_evaluate << "\n";
-        std::cout << "Total number of edges removed \t\t\t = "
-                  << get_nb_removed_edges() << "\n ";
-        std::cout << "Number of edges = " << get_nb_edges() << "\n";
+        fmt::print("Number of edges removed by evaluate nodes {{0}:<{1}}\n",
+                   nb_removed_edges_evaluate, 30);
+        fmt::print("Total number of edges removed {{0}:<{1}}\n",
+                   get_nb_removed_edges(), 30);
+        fmt::print("Number of edges {{0}:<{1}}\n", get_nb_edges(), 30);
         remove_layers();
         remove_edges();
         // init_table();
@@ -279,17 +288,18 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
     }
 
     if (removed_edges) {
-        std::cout << "Number of edges removed by evaluate_nodes \t= "
-                  << nb_removed_edges_evaluate << "\n";
-        std::cout << "Total number of edges removed \t\t\t = "
-                  << get_nb_removed_edges() << "\n ";
-        std::cout << "Number of edges = " << get_nb_edges() << "\n";
+        fmt::print("{0: <{2}}{1}\n",
+                   "Number of edges removed by evaluate "
+                   "nodes",
+                   nb_removed_edges_evaluate, 60);
+        fmt::print("{0: <{2}}{1}\n", "Total number of edges removed",
+                   get_nb_removed_edges(), 60);
+        fmt::print("{0: <{2}}{1}\n", "Number of edges", get_nb_edges(), 60);
         remove_layers();
         remove_edges();
         bottum_up_filtering();
         topdown_filtering();
         cleanup_arcs();
         construct_mipgraph();
-        // init_table();
     }
 }

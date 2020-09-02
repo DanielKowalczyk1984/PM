@@ -601,7 +601,7 @@ void PricerSolverBdd::remove_layers_init() {
     }
 
     nb_layers = ordered_jobs->len;
-    printf("The new number of layers \t\t\t= %u\n", nb_layers);
+    fmt::print("{0: <{2}}{1}\n", "The new number of layers", nb_layers, 60);
 }
 
 void PricerSolverBdd::remove_layers() {
@@ -650,7 +650,7 @@ void PricerSolverBdd::remove_layers() {
     }
 
     nb_layers = ordered_jobs->len;
-    printf("The new number of layers \t\t\t= %u\n", nb_layers);
+    fmt::print("{0: <{2}}{1}\n", "The new number of layers", nb_layers, 60);
 }
 
 void PricerSolverBdd::remove_edges() {
@@ -1022,10 +1022,10 @@ void PricerSolverBdd::cleanup_arcs() {
     }
 
     if (removed_edges) {
-        std::cout << "Number of edges removed by cleanup arcs \t= "
-                  << nb_edges_removed_tmp << "\n";
-        std::cout << "Number of edges removed in total \t\t= "
-                  << nb_removed_edges << "\n";
+        fmt::print("{0: <{2}}{1}\n", "Number of edges removed by clean up",
+                   nb_edges_removed_tmp, 60);
+        fmt::print("{0: <{2}}{1}\n", "Total number of edges removed",
+                   get_nb_removed_edges(), 60);
         remove_layers();
         remove_edges();
         // init_table();
