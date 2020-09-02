@@ -417,8 +417,8 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                             sol->u_in[tmp_out->job] = u;
                             sol->u[tmp_in->job] = u;
                             int aux_C = sol->c[tmp_in->job];
-                            assert(C == sol->c[tmp_out->job] -
-                                            tmp_out->processing_time);
+                            // assert(C == sol->c[tmp_out->job] -
+                            //                 tmp_out->processing_time);
                             g_ptr_array_sort_with_data(
                                 Q_in, g_compare_interval_data, I);
                             for (guint j = 0; j < Q_in->len; j++) {
