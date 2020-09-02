@@ -225,10 +225,29 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
     return 0.0;
 }
 
-extern "C" double call_get_UB(PricerSolverBase* solver) {
+void PricerSolverBase::calculate_constLB(double* pi) {
+    constLB = 0.0;
+
+    for (int i = 0; i < reformulation_model.get_nb_constraints(); i++) {
+        if (i == convex_constr_id) {
+            continue;
+        }
+        auto constr = reformulation_model.get_constraint(i);
+        constLB += constr->get_rhs() * pi[i];
+    }
+}
+
+extern "C" {
+double call_get_UB(PricerSolverBase* solver) {
     return solver->get_UB();
 }
 
-extern "C" void call_update_UB(PricerSolverBase* solver, double _UB) {
+void call_update_UB(PricerSolverBase* solver, double _UB) {
     solver->update_UB(_UB);
+}
+
+void call_evaluate_nodes(PricerSolverBase* solver, double* pi) {
+    solver->calculate_constLB(pi);
+    solver->evaluate_nodes(pi);
+}
 }

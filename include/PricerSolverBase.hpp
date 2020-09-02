@@ -141,6 +141,9 @@ struct PricerSolverBase {
     inline ReformulationModel* get_reformulation_model() {
         return &reformulation_model;
     }
+
+    void calculate_constLB(double* pi);
+
     // virtual void compute_lhs_coeff(GArray *lhs_coeff, ScheduleSet* set) = 0;
 };
 
