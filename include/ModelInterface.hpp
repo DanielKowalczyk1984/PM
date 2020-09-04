@@ -23,9 +23,13 @@ class VariableKeyBase {
 
    public:
     VariableKeyBase(int _j, int _t, bool _high = true, bool _root = false)
-        : j(_j), t(_t), high(_high), root(_root) {}
+        : j(_j),
+          t(_t),
+          high(_high),
+          root(_root) {}
 
     VariableKeyBase() : j(-1), t(-1), high(false), root(false) {}
+
     inline int get_j() const { return j; }
 
     inline int get_t() const { return t; }
@@ -69,7 +73,9 @@ class ConstraintBase {
     virtual ~ConstraintBase() = default;
 
     ConstraintBase(char _sense, double _rhs)
-        : sense(_sense), rhs(_rhs), can_be_deleted(false) {}
+        : sense(_sense),
+          rhs(_rhs),
+          can_be_deleted(false) {}
 
     virtual double get_var_coeff(VariableKeyBase*) = 0;
 };
@@ -138,8 +144,13 @@ class BddCoeff : public VariableKeyBase {
     double value;
 
    public:
-    BddCoeff(int _j, int _t, double _coeff, double _value = 0.0, int _row = -1,
-             bool _high = true, bool _root = false)
+    BddCoeff(int    _j,
+             int    _t,
+             double _coeff,
+             double _value = 0.0,
+             int    _row = -1,
+             bool   _high = true,
+             bool   _root = false)
         : VariableKeyBase(_j, _t, _high, _root),
           row(_row),
           coeff(_coeff),
@@ -243,10 +254,12 @@ class ConstraintGeneric : public ConstraintBase {
 
    public:
     ConstraintGeneric(GenericData* _data, double _rhs, char _sense = '>')
-        : ConstraintBase(_sense, _rhs), data(_data) {}
+        : ConstraintBase(_sense, _rhs),
+          data(_data) {}
 
     ConstraintGeneric(double _rhs, char _sense = '>')
-        : ConstraintBase(_sense, _rhs), data(nullptr) {}
+        : ConstraintBase(_sense, _rhs),
+          data(nullptr) {}
 
     ~ConstraintGeneric() = default;
     ConstraintGeneric(ConstraintGeneric&& op) =
