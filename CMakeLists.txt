@@ -205,5 +205,8 @@ include(customCppCheck)
 
 # Include dev-tools
 include(dev-tools)
+
+# include Doxygen
+include(cmake/Doxygen.cmake)
 # set_property(TARGET ${PROJECT_NAME}
             #  PROPERTY OUTPUT_NAME "${PROJECT_NAME}$<CONFIG>${_output}" )
