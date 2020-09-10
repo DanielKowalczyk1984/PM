@@ -37,6 +37,7 @@ class NodeBdd : public NodeBase {
     int                     in_degree_1;
     GRBVar                  y[2];
     GRBVar                  r[2];
+    double                  coeff_cut[2];
 
     /**
      * Constructor
@@ -59,7 +60,8 @@ class NodeBdd : public NodeBase {
           lp_visited(false),
           lp_key(-1),
           in_degree_0(0),
-          in_degree_1(0) {
+          in_degree_1(0),
+          coeff_cut{0.0, 0.0} {
         child[0] = nullptr;
         child[1] = nullptr;
     };
@@ -85,7 +87,8 @@ class NodeBdd : public NodeBase {
           lp_visited(false),
           lp_key(-1),
           in_degree_0(0),
-          in_degree_1(0) {
+          in_degree_1(0),
+          coeff_cut{0.0, 0.0} {
         child[0] = nullptr;
         child[1] = nullptr;
     }
@@ -115,7 +118,8 @@ class NodeBdd : public NodeBase {
           lp_visited(false),
           lp_key(-1),
           in_degree_0(0),
-          in_degree_1(0) {
+          in_degree_1(0),
+          coeff_cut{0.0, 0.0} {
         child[0] = nullptr;
         child[1] = nullptr;
     }
