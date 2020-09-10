@@ -250,4 +250,12 @@ void call_evaluate_nodes(PricerSolverBase* solver, double* pi) {
     solver->calculate_constLB(pi);
     solver->evaluate_nodes(pi);
 }
+
+int call_is_integer_solution(PricerSolverBase* solver) {
+    return solver->get_is_integer_solution();
+}
+
+int call_get_added_cuts(PricerSolverBase* solver) {
+    return solver->added_cuts;
+}
 }

@@ -24,6 +24,7 @@ struct PricerSolverBase {
     bool                      is_integer_solution;
     double                    constLB;
     double                    UB;
+    bool                      added_cuts{};
     /**
      * Default constructors
      */
