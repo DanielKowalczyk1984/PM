@@ -1,8 +1,7 @@
 #ifndef PRICER_SOLVER_BDD_FORWARD_HPP
 #define PRICER_SOLVER_BDD_FORWARD_HPP
-#include "PricerSolverBdd.hpp"
-// #include "PricerEvaluate.hpp"
 #include "PricerEvaluateBdd.hpp"
+#include "PricerSolverBdd.hpp"
 
 class PricerSolverBddSimple : public PricerSolverBdd {
    private:
