@@ -19,6 +19,7 @@ double call_get_eta_in(PricingStabilization* pricing_stabilization);
 double call_get_reduced_cost(PricingStabilization* p);
 int    call_stopping_criteria(PricingStabilization* p);
 int    call_get_update_stab_center(PricingStabilization* p);
+void   call_update_duals(PricingStabilization* solver);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
