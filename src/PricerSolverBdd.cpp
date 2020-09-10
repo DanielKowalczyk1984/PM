@@ -1441,12 +1441,6 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
         }
     }
 
-    auto generator =
-        ZeroHalfCuts(convex_constr_id, convex_rhs, &reformulation_model,
-                     decision_diagram->root(), &table);
-
-    // generator.generate_cuts();
-
     lp_sol.clear();
     for (auto i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
@@ -1464,8 +1458,24 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
     }
 
     if (get_is_integer_solution()) {
+        added_cuts = false;
         std::cout << "FOUND INTEGER SOLUTION"
                   << "\n";
+        getchar();
+    } else {
+        auto generator =
+            ZeroHalfCuts(convex_constr_id, convex_rhs, &reformulation_model,
+                         decision_diagram->root(), &table);
+
+        generator.generate_cuts();
+
+        added_cuts = false;
+        auto cut_list = generator.get_cut_list();
+        for (auto& it : cut_list) {
+            reformulation_model.add_constraint(std::move(it));
+        }
+
+        added_cuts = (cut_list.size() > 0);
     }
 
     ColorWriterEdgeX  edge_writer(mip_graph, &table);
