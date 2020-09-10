@@ -135,6 +135,10 @@ class ReformulationModel {
     inline void add_constraint(ConstraintBase* _constr) {
         constraint_array.push_back(std::shared_ptr<ConstraintBase>(_constr));
     }
+
+    inline void add_constraint(std::shared_ptr<ConstraintBase>&& _constr) {
+        constraint_array.push_back(std::shared_ptr<ConstraintBase>(_constr));
+    }
 };
 
 class BddCoeff : public VariableKeyBase {
@@ -220,7 +224,8 @@ class GenericData {
 
     void list_coeff() {
         for (auto& it : coeff) {
-            std::cout << it.second << " ";
+            std::cout << it.second << " (" << it.first.get_j() << ","
+                      << it.first.get_t() << "," << it.first.get_high() << ") ";
         }
         std::cout << "\n";
     }
