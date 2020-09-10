@@ -70,7 +70,7 @@ class PricingStabilizationStat : public PricingStabilizationBase {
         int    i;
         double beta_bar = 1.0 - _alpha_bar;
 
-        for (i = 0; i < solver->convex_constr_id + 1; ++i) {
+        for (i = 0; i < solver->reformulation_model.get_nb_constraints(); ++i) {
             pi_sep[i] = _alpha_bar * pi_in[i] + (1.0 - _alpha_bar) * pi_out[i];
         }
 

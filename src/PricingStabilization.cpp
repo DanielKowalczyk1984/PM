@@ -26,10 +26,10 @@ void PricingStabilizationBase::solve(double  _eta_out,
     sol = std::move(solver->pricing_algorithm(_pi_out));
     reduced_cost = solver->compute_reduced_cost(sol, _pi_out, _lhs);
     iterations++;
-    // if (iterations % 50 == 0 && _eta_out - 1e-2 <= solver->UB) {
-    //     solver->calculate_constLB(_pi_out);
-    //     solver->evaluate_nodes(_pi_out);
-    // }
+    if (iterations % 20 == 0 && _eta_out - 1e-2 <= solver->UB) {
+        solver->calculate_constLB(_pi_out);
+        solver->evaluate_nodes(_pi_out);
+    }
 }
 
 OptimalSolution<>& PricingStabilizationBase::get_sol() {
