@@ -143,14 +143,14 @@ void ZeroHalfCuts::construct_cut() {
     }
 
     auto rhs = sigma[0].get(GRB_DoubleAttr_Xn) > 1e-6
-                   ? floor(static_cast<double>(nb_machines) / 2.0)
+                   ? static_cast<double>(nb_machines) 
                    : 0.0;
     rhs += sigma[terminal_key].get(GRB_DoubleAttr_Xn) > 1e-6
-               ? -floor(static_cast<double>(nb_machines) / 2.0)
+               ? -static_cast<double>(nb_machines)
                : 0.0;
     std::shared_ptr<ConstraintGeneric> constr{
         std::make_shared<ConstraintGeneric>(
-            data, -floor((2.0 * q.get(GRB_DoubleAttr_Xn) + 1) / 2.0) - rhs)};
+            data, -floor((2.0 * q.get(GRB_DoubleAttr_Xn) + 1 + rhs) / 2.0))};
     cut_list.push_back(std::move(constr));
 }
 
