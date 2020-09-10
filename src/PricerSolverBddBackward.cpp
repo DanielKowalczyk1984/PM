@@ -1,7 +1,6 @@
 #include "PricerSolverBddBackward.hpp"
 #include <fmt/core.h>
 #include <iostream>
-#include "BackwardBDD.hpp"
 
 /**
  * backward bdd pricersolver for the flow formulation that takes care of the
