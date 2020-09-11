@@ -1444,6 +1444,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
     lp_sol.clear();
     for (auto i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
+            it.lp_visited = false;
             auto value = it.lp_x[1];
             if (value > 1e-6) {
                 lp_sol.push_back(
@@ -1461,7 +1462,6 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
         added_cuts = false;
         std::cout << "FOUND INTEGER SOLUTION"
                   << "\n";
-        getchar();
     } else {
         auto generator =
             ZeroHalfCuts(convex_constr_id, convex_rhs, &reformulation_model,
