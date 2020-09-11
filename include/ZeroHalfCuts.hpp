@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include "ModelInterface.hpp"
+#include "NodeBdd.hpp"
 #include "NodeBddTable.hpp"
 #include "NodeId.hpp"
 #include "gurobi_c++.h"
@@ -31,20 +32,22 @@ class ZeroHalfCuts {
     int                                             nb_jobs;
     int                                             nb_machines;
     ReformulationModel*                             rmp_model;
-    NodeId&                                         root;
+    NodeId                                          root;
     NodeTableEntity<>*                              table;
-    std::vector<GRBVar>                             sigma{};
     std::vector<NodeId>                             node_ids{};
+    std::vector<NodeId>                             node_ids_lift{};
     std::vector<GRBVar>                             jobs_var;
     GRBVar                                          q;
-    int                                             terminal_key;
     std::vector<std::shared_ptr<ConstraintGeneric>> cut_list;
 
     void generate_model();
     void init_table();
     void init_coeff_cut();
+    void init_coeff_node(NodeBdd<>& node);
     void construct_cut();
+    void lift_operator();
     void dfs(const NodeId& v);
+    void dfs_lift(const NodeId& v);
     void dfs_evaluate(const NodeId& v);
 };
 
