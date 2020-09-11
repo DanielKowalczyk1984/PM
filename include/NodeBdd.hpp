@@ -37,6 +37,7 @@ class NodeBdd : public NodeBase {
     int                     in_degree_1;
     GRBVar                  y[2];
     GRBVar                  r[2];
+    GRBVar                  sigma;
     double                  coeff_cut[2];
 
     /**
