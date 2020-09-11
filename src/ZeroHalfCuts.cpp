@@ -8,7 +8,6 @@
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "gurobi_c++.h"
-#include "gurobi_c.h"
 
 ZeroHalfCuts::ZeroHalfCuts(int                 _nb_jobs,
                            int                 _nb_machines,
@@ -284,26 +283,6 @@ void ZeroHalfCuts::generate_cuts() {
             //         }
             //         node_ids_lift.push_back(node.branch[0]);
             //         dfs_lift(node.branch[0]);
-            //     }
-            // }
-            // for (auto& iter : node_ids) {
-            //     auto& node = table->node(iter);
-            //     if (iter > 1) {
-            //         fmt::print("test {} {} {} {}\n", node.get_nb_job(),
-            //                    node.get_weight(), node.coeff_cut[0],
-            //                    node.coeff_cut[1]);
-            //         // for (int k = 0; k < 2; k++) {
-            //         //     for (auto& iter_aux : node.in_edges[k]) {
-            //         //         auto ptr = iter_aux.lock();
-            //         //         if (ptr) {
-            //         //             auto& aux_node = table->node(*ptr);
-            //         //             fmt::print("test in edges {} {} {}\n",
-            //         //                        aux_node.get_nb_job(),
-            //         //                        aux_node.get_weight(),
-            //         //                        aux_node.coeff_cut[k]);
-            //         //         }
-            //         //     }
-            //         // }
             //     }
             // }
             construct_cut();
