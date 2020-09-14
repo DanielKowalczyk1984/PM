@@ -27,6 +27,8 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
 
 PricerSolverBase::~PricerSolverBase() {}
 
+void PricerSolverBase::add_constraints() {}
+
 void PricerSolverBase::print_num_paths() {}
 
 double PricerSolverBase::get_UB() {

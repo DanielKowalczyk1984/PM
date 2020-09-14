@@ -1458,6 +1458,17 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
         }
     }
 
+    ColorWriterEdgeX  edge_writer(mip_graph, &table);
+    ColorWriterVertex vertex_writer(mip_graph, table);
+    auto              file_name = "lp_solution_" + problem_name + "_" +
+                     std::to_string(convex_rhs) + ".gv";
+    std::ofstream outf(file_name);
+    boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
+    outf.close();
+}
+
+void PricerSolverBdd::add_constraints() {
+    auto& table = decision_diagram->getDiagram().privateEntity();
     if (get_is_integer_solution()) {
         added_cuts = false;
         std::cout << "FOUND INTEGER SOLUTION"
@@ -1477,14 +1488,6 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
 
         added_cuts = (cut_list.size() > 0);
     }
-
-    ColorWriterEdgeX  edge_writer(mip_graph, &table);
-    ColorWriterVertex vertex_writer(mip_graph, table);
-    auto              file_name = "lp_solution_" + problem_name + "_" +
-                     std::to_string(convex_rhs) + ".gv";
-    std::ofstream outf(file_name);
-    boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
-    outf.close();
 }
 
 void PricerSolverBdd::project_solution(Solution* sol) {

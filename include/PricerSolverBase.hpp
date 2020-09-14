@@ -90,9 +90,7 @@ struct PricerSolverBase {
 
     virtual void add_constraint(Job* job, GPtrArray* list, int order) = 0;
     virtual void insert_constraints_lp(NodeData* pd) = 0;
-    virtual void add_constraints(){
-
-    };
+    virtual void add_constraints();
 
     virtual void update_coeff_constraints() = 0;
 

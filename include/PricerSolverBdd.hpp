@@ -71,6 +71,7 @@ class PricerSolverBdd : public PricerSolverBase {
     int    get_num_layers() override;
     void   print_num_paths() override;
     void   add_constraint(Job* job, GPtrArray* list, int order) override;
+    void   add_constraints() override;
 
     void init_coeff_constraints();
     void insert_constraints_lp(NodeData* pd) override;
