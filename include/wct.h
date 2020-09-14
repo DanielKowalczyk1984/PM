@@ -95,6 +95,7 @@ int calculate_nb_layers(NodeData* pd, int k);
 int check_schedules(NodeData* pd);
 int delete_infeasible_schedules(NodeData* pd);
 int delete_old_schedules(NodeData* pd);
+int delete_unused_rows(NodeData* pd);
 int solve_relaxation(Problem* problem, NodeData* pd);
 
 void make_pi_feasible(NodeData* pd);
