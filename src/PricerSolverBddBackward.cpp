@@ -275,8 +275,7 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
             // }
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (constLB + aux_nb_machines * reduced_cost + result >
-                    UB - 1.0 + 1e-4 &&
+            if (constLB + aux_nb_machines * reduced_cost + result > UB + 1e-2 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 removed_edges = true;
