@@ -29,6 +29,12 @@ PricerSolverBase::~PricerSolverBase() {}
 
 void PricerSolverBase::add_constraints() {}
 
+void PricerSolverBase::remove_constraints(int* list_index, int nb_del) {
+    for (size_t i = 0; i < nb_del; i++) {
+        auto constr = reformulation_model.get_constraint(list_index[i]);
+    }
+}
+
 void PricerSolverBase::print_num_paths() {}
 
 double PricerSolverBase::get_UB() {
