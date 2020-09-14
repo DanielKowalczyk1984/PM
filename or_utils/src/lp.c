@@ -14,7 +14,7 @@
 
 const double int_tolerance = 0.00001;
 
-int wctlp_init(wctlp** lp, const char* name) {
+int lp_interface_init(wctlp** lp, const char* name) {
     int val = 0;
     (*lp) = (wctlp*)CC_SAFE_MALLOC(1, wctlp);
     CCcheck_NULL(lp, "Out of memory for lp");
@@ -46,7 +46,7 @@ int wctlp_init(wctlp** lp, const char* name) {
     return val;
 }
 
-void wctlp_free(wctlp** lp) {
+void lp_interface_free(wctlp** lp) {
     if (*lp) {
         if ((*lp)->model) {
             GRBfreemodel((*lp)->model);
@@ -61,7 +61,7 @@ void wctlp_free(wctlp** lp) {
     }
 }
 
-int wctlp_optimize(wctlp* lp, int* status) {
+int lp_interface_optimize(wctlp* lp, int* status) {
     int val;
     val = GRBoptimize((lp)->model);
     CHECK_VAL_GRB(val, "GRBoptimize failed", lp->env);
@@ -98,28 +98,28 @@ int wctlp_optimize(wctlp* lp, int* status) {
             goto CLEAN;
         }
     } else if (*status == GRB_INFEASIBLE) {
-        wctlp_compute_IIS(lp);
+        lp_interface_compute_IIS(lp);
     }
 
 CLEAN:
     return val;
 }
 
-int wctlp_status(wctlp* lp, int* status) {
+int lp_interface_status(wctlp* lp, int* status) {
     int val = 0;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_STATUS, status);
     CHECK_VAL_GRB(val, "GRBgetintattr failed", lp->env);
     return val;
 }
 
-int wctlp_objval(wctlp* lp, double* obj) {
+int lp_interface_objval(wctlp* lp, double* obj) {
     int val = 0;
     val = GRBgetdblattr(lp->model, GRB_DBL_ATTR_OBJVAL, obj);
     CHECK_VAL_GRB(val, "GRBgetdblattr OBJVAL failed", lp->env);
     return val;
 }
 
-int wctlp_change_obj(wctlp* lp, int start, int len, double* values) {
+int lp_interface_change_obj(wctlp* lp, int start, int len, double* values) {
     int val = 0;
     val = GRBsetdblattrarray(lp->model, GRB_DBL_ATTR_OBJ, start, len, values);
     CHECK_VAL_GRB(val, "Failed in GRBsetdblattrarray", lp->env);
@@ -128,26 +128,26 @@ int wctlp_change_obj(wctlp* lp, int start, int len, double* values) {
     return val;
 }
 
-int wctlp_addrow(wctlp*  lp,
-                 int     nb_zero,
-                 int*    column_indices,
-                 double* cval,
-                 char    sense,
-                 double  rhs,
-                 char*   name) {
+int lp_interface_addrow(wctlp*  lp,
+                        int     nb_zero,
+                        int*    column_indices,
+                        double* cval,
+                        char    sense,
+                        double  rhs,
+                        char*   name) {
     int  val = 0;
     char inequality_sense;
 
     switch (sense) {
-        case wctlp_EQUAL:
+        case lp_interface_EQUAL:
             inequality_sense = GRB_EQUAL;
             break;
 
-        case wctlp_LESS_EQUAL:
+        case lp_interface_LESS_EQUAL:
             inequality_sense = GRB_LESS_EQUAL;
             break;
 
-        case wctlp_GREATER_EQUAL:
+        case lp_interface_GREATER_EQUAL:
             inequality_sense = GRB_GREATER_EQUAL;
             break;
 
@@ -165,15 +165,15 @@ int wctlp_addrow(wctlp*  lp,
     return val;
 }
 
-int wctlp_addrows(wctlp*  lp,
-                  int     nb_rows,
-                  int     nb_zero,
-                  int*    start,
-                  int*    column_indices,
-                  double* coeff_val,
-                  char*   sense,
-                  double* rhs,
-                  char**  name) {
+int lp_interface_addrows(wctlp*  lp,
+                         int     nb_rows,
+                         int     nb_zero,
+                         int*    start,
+                         int*    column_indices,
+                         double* coeff_val,
+                         char*   sense,
+                         double* rhs,
+                         char**  name) {
     int val = 0;
     // char inequality_sense;
 
@@ -182,11 +182,11 @@ int wctlp_addrows(wctlp*  lp,
     //         inequality_sense = GRB_EQUAL;
     //         break;
 
-    //     case wctlp_LESS_EQUAL:
+    //     case lp_interface_LESS_EQUAL:
     //         inequality_sense = GRB_LESS_EQUAL;
     //         break;
 
-    //     case wctlp_GREATER_EQUAL:
+    //     case lp_interface_GREATER_EQUAL:
     //         inequality_sense = GRB_GREATER_EQUAL;
     //         break;
 
@@ -204,28 +204,28 @@ int wctlp_addrows(wctlp*  lp,
     return val;
 }
 
-int wctlp_addcol(wctlp*  lp,
-                 int     nb_zero,
-                 int*    column_indices,
-                 double* cval,
-                 double  obj,
-                 double  lb,
-                 double  ub,
-                 char    sense,
-                 char*   name) {
+int lp_interface_addcol(wctlp*  lp,
+                        int     nb_zero,
+                        int*    column_indices,
+                        double* cval,
+                        double  obj,
+                        double  lb,
+                        double  ub,
+                        char    sense,
+                        char*   name) {
     int  val = 0;
     char inequality_sense;
 
     switch (sense) {
-        case wctlp_CONT:
+        case lp_interface_CONT:
             inequality_sense = GRB_CONTINUOUS;
             break;
 
-        case wctlp_BIN:
+        case lp_interface_BIN:
             inequality_sense = GRB_BINARY;
             break;
 
-        case wctlp_INT:
+        case lp_interface_INT:
             inequality_sense = GRB_INTEGER;
             break;
 
@@ -243,30 +243,30 @@ int wctlp_addcol(wctlp*  lp,
     return val;
 }
 
-int wctlp_addcols(wctlp*  lp,
-                  int     num_vars,
-                  int     nb_zero,
-                  int*    start,
-                  int*    row_indices,
-                  double* coeff_val,
-                  double* obj,
-                  double* lb,
-                  double* ub,
-                  char*   vtype,
-                  char**  name) {
+int lp_interface_addcols(wctlp*  lp,
+                         int     num_vars,
+                         int     nb_zero,
+                         int*    start,
+                         int*    row_indices,
+                         double* coeff_val,
+                         double* obj,
+                         double* lb,
+                         double* ub,
+                         char*   vtype,
+                         char**  name) {
     int val = 0;
     // char inequality_sense;
 
     // switch (sense) {
-    //     case wctlp_CONT:
+    //     case lp_interface_CONT:
     //         inequality_sense = GRB_CONTINUOUS;
     //         break;
 
-    //     case wctlp_BIN:
+    //     case lp_interface_BIN:
     //         inequality_sense = GRB_BINARY;
     //         break;
 
-    //     case wctlp_INT:
+    //     case lp_interface_INT:
     //         inequality_sense = GRB_INTEGER;
     //         break;
 
@@ -284,11 +284,11 @@ int wctlp_addcols(wctlp*  lp,
     return val;
 }
 
-int wctlp_chgcoeff(wctlp*  lp,
-                   int     cnt,
-                   int*    column_indices,
-                   int*    var_indices,
-                   double* cval) {
+int lp_interface_chgcoeff(wctlp*  lp,
+                          int     cnt,
+                          int*    column_indices,
+                          int*    var_indices,
+                          double* cval) {
     int val = 0;
     val = GRBchgcoeffs(lp->model, cnt, column_indices, var_indices, cval);
     CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
@@ -297,10 +297,10 @@ int wctlp_chgcoeff(wctlp*  lp,
     return val;
 }
 
-int wctlp_getcoeff(wctlp*  lp,
-                   int*    column_indices,
-                   int*    var_indices,
-                   double* cval) {
+int lp_interface_getcoeff(wctlp*  lp,
+                          int*    column_indices,
+                          int*    var_indices,
+                          double* cval) {
     int val;
     val = GRBgetcoeff(lp->model, *column_indices, *var_indices, cval);
     CHECK_VAL_GRB(val, "Failed to change the coefficient", lp->env);
@@ -308,7 +308,7 @@ int wctlp_getcoeff(wctlp*  lp,
     return val;
 }
 
-int wctlp_deletecols(wctlp* lp, int first, int last) {
+int lp_interface_deletecols(wctlp* lp, int first, int last) {
     int  val = 0;
     int  nb_del = last - first + 1;
     int  i;
@@ -328,7 +328,27 @@ CLEAN:
     return val;
 }
 
-int wctlp_chg_upperbounds(wctlp* lp, int first, int last, double ub) {
+int lp_interface_deleterows(wctlp* lp, int first, int last) {
+    int  val = 0;
+    int  nb_del = last - first + 1;
+    int  i;
+    int* dellist = CC_SAFE_MALLOC(nb_del, int);
+    CCcheck_NULL_2(dellist, "Failed to allocated memory to dellist");
+
+    for (i = 0; i < nb_del; ++i) {
+        dellist[i] = first + i;
+    }
+
+    val = GRBdelconstrs(lp->model, nb_del, dellist);
+    CHECK_VAL_GRB2(val, "Failed to delete cols", lp->env);
+    GRBupdatemodel(lp->model);
+    CHECK_VAL_GRB2(val, "Failed to update the model", lp->env);
+CLEAN:
+    CC_IFFREE(dellist, int);
+    return val;
+}
+
+int lp_interface_chg_upperbounds(wctlp* lp, int first, int last, double ub) {
     int     val = 0;
     int     nb_del = last - first + 1;
     int     i;
@@ -349,7 +369,7 @@ CLEAN:
     return val;
 }
 
-int wctlp_pi(wctlp* lp, double* pi) {
+int lp_interface_pi(wctlp* lp, double* pi) {
     int val = 0;
     int nrows;
     int solstat;
@@ -369,7 +389,29 @@ int wctlp_pi(wctlp* lp, double* pi) {
     return val;
 }
 
-int wctlp_pi_inf(wctlp* lp, double* pi) {
+int lp_interface_slack(wctlp* lp, double* slack) {
+    int val = 0;
+    int nrows;
+    int solstat;
+
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_STATUS, &solstat);
+    CHECK_VAL_GRB(val, "failed to get atribute status gurobi", lp->env);
+    val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMCONSTRS, &nrows);
+    CHECK_VAL_GRB(val, "failed to get the number of rows in gurobi", lp->env);
+
+    if (nrows == 0) {
+        fprintf(stderr, "No rows in the model\n");
+        val = 1;
+        return val;
+    }
+
+    val = GRBgetdblattrarray(lp->model, GRB_DBL_ATTR_SLACK, 0, nrows, slack);
+    CHECK_VAL_GRB(val, "Failed to get the slack in gurobi\n", lp->env);
+
+    return val;
+}
+
+int lp_interface_pi_inf(wctlp* lp, double* pi) {
     int val = 0;
     int nrows;
     int solstat;
@@ -389,7 +431,7 @@ int wctlp_pi_inf(wctlp* lp, double* pi) {
     return val;
 }
 
-int wctlp_x(wctlp* lp, double* x, int first) {
+int lp_interface_x(wctlp* lp, double* x, int first) {
     int val = 0;
     int nb_cols;
     int solstat;
@@ -417,7 +459,7 @@ int wctlp_x(wctlp* lp, double* x, int first) {
     return val;
 }
 
-int wctlp_rc(wctlp* lp, double* rc, int first) {
+int lp_interface_rc(wctlp* lp, double* rc, int first) {
     int val = 0;
     int nb_cols;
     int solstat;
@@ -445,7 +487,7 @@ int wctlp_rc(wctlp* lp, double* rc, int first) {
     return val;
 }
 
-int wctlp_basis_cols(wctlp* lp, int* column_status, int first) {
+int lp_interface_basis_cols(wctlp* lp, int* column_status, int first) {
     int val = 0;
     int nb_cols, i;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, &nb_cols);
@@ -457,19 +499,19 @@ int wctlp_basis_cols(wctlp* lp, int* column_status, int first) {
     for (i = 0; i < nb_cols - first; ++i) {
         switch (column_status[i]) {
             case GRB_BASIC:
-                column_status[i] = wctlp_BASIC;
+                column_status[i] = lp_interface_BASIC;
                 break;
 
             case GRB_NONBASIC_LOWER:
-                column_status[i] = wctlp_LOWER;
+                column_status[i] = lp_interface_LOWER;
                 break;
 
             case GRB_NONBASIC_UPPER:
-                column_status[i] = wctlp_UPPER;
+                column_status[i] = lp_interface_UPPER;
                 break;
 
             case GRB_SUPERBASIC:
-                column_status[i] = wctlp_FREE;
+                column_status[i] = lp_interface_FREE;
                 break;
 
             default:
@@ -482,20 +524,20 @@ int wctlp_basis_cols(wctlp* lp, int* column_status, int first) {
     return val;
 }
 
-int wctlp_set_coltypes(wctlp* lp, char sense) {
+int lp_interface_set_coltypes(wctlp* lp, char sense) {
     int  nb_vars, i, val = 0;
     char inequality_sense;
 
     switch (sense) {
-        case wctlp_CONT:
+        case lp_interface_CONT:
             inequality_sense = GRB_CONTINUOUS;
             break;
 
-        case wctlp_BIN:
+        case lp_interface_BIN:
             inequality_sense = GRB_BINARY;
             break;
 
-        case wctlp_INT:
+        case lp_interface_INT:
             inequality_sense = GRB_INTEGER;
             break;
 
@@ -519,7 +561,7 @@ int wctlp_set_coltypes(wctlp* lp, char sense) {
     return val;
 }
 
-int wctlp_get_rhs(wctlp* lp, double* rhs) {
+int lp_interface_get_rhs(wctlp* lp, double* rhs) {
     int val = 0;
     int nb_constr;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMCONSTRS, &nb_constr);
@@ -529,7 +571,7 @@ int wctlp_get_rhs(wctlp* lp, double* rhs) {
     return val;
 }
 
-int wctlp_setbound(wctlp* lp, int col, char lb_or_ub, double bound) {
+int lp_interface_setbound(wctlp* lp, int col, char lb_or_ub, double bound) {
     int val = 0;
 
     if (lb_or_ub == 'L') {
@@ -544,21 +586,21 @@ int wctlp_setbound(wctlp* lp, int col, char lb_or_ub, double bound) {
     return val;
 }
 
-int wctlp_obj_sense(wctlp* lp, int sense) {
+int lp_interface_obj_sense(wctlp* lp, int sense) {
     int val = 0;
     val = GRBsetintattr(lp->model, GRB_INT_ATTR_MODELSENSE, sense);
     CHECK_VAL_GRB(val, "Failed to set obj sense", lp->env);
     return val;
 }
 
-int wctlp_write(wctlp* lp, const char* fname) {
+int lp_interface_write(wctlp* lp, const char* fname) {
     int val = 0;
     val = GRBwrite(lp->model, fname);
     CHECK_VAL_GRB(val, "failed GRBwrite", lp->env);
     return val;
 }
 
-int wctlp_setnodelimit(wctlp* lp, int mip_node_limit) {
+int lp_interface_setnodelimit(wctlp* lp, int mip_node_limit) {
     int rval = GRBsetdblparam(GRBgetenv(lp->model), GRB_DBL_PAR_NODELIMIT,
                               mip_node_limit);
     CHECK_VAL_GRB2(rval, "GRBsetdblparam NODELIMIT failed", lp->env);
@@ -566,30 +608,30 @@ CLEAN:
     return rval;
 }
 
-void wctlp_warmstart_free(wctlp_warmstart** w) {
-    if (*w != (wctlp_warmstart*)NULL) {
+void lp_interface_warmstart_free(lp_interface_warmstart** w) {
+    if (*w != (lp_interface_warmstart*)NULL) {
         CC_IFFREE((*w)->column_status, int);
         CC_IFFREE((*w)->rstat, int);
         CC_IFFREE((*w)->d_norm, double);
-        CC_FREE(*w, wctlp_warmstart);
+        CC_FREE(*w, lp_interface_warmstart);
     }
 }
 
-int wctlp_get_nb_rows(wctlp* lp, int* nb_rows) {
+int lp_interface_get_nb_rows(wctlp* lp, int* nb_rows) {
     int val = 0;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMCONSTRS, nb_rows);
     CHECK_VAL_GRB(val, "Failed to get the number of variables", lp->env);
     return val;
 }
 
-int wctlp_get_nb_cols(wctlp* lp, int* nb_cols) {
+int lp_interface_get_nb_cols(wctlp* lp, int* nb_cols) {
     int val = 0;
     val = GRBgetintattr(lp->model, GRB_INT_ATTR_NUMVARS, nb_cols);
     CHECK_VAL_GRB(val, "Failed to get the number of variables", lp->env);
     return val;
 }
 
-void wctlp_printerrorcode(int c) {
+void lp_interface_printerrorcode(int c) {
     switch (c) {
         case GRB_ERROR_OUT_OF_MEMORY:
             printf("Available memory was exhausted\n");
@@ -672,7 +714,7 @@ double lp_int_tolerance() {
     return int_tolerance;
 }
 
-int wctlp_compute_IIS(wctlp* lp) {
+int lp_interface_compute_IIS(wctlp* lp) {
     int val = 0;
     int status;
 
