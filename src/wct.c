@@ -144,6 +144,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->x_e = (double*)NULL;
     pd->coeff = (double*)NULL;
     pd->pi = (GArray*)NULL;
+    pd->slack = (GArray*)NULL;
     pd->lhs_coeff = (GArray*)NULL;
     pd->id_row = (GArray*)NULL;
     pd->coeff_row = (GArray*)NULL;
@@ -214,14 +215,19 @@ void lp_node_data_free(NodeData* pd) {
      * free all the gurobi data associated with the LP relaxation
      */
     if (pd->RMP) {
-        wctlp_free(&(pd->RMP));
+        lp_interface_free(&(pd->RMP));
     }
 
     /**
      * free all the data associated with the LP
      */
     CC_IFFREE(pd->coeff, double);
-    g_array_free(pd->pi, TRUE);
+    if (pd->pi) {
+        g_array_free(pd->pi, TRUE);
+    }
+    if (pd->slack) {
+        g_array_free(pd->slack, TRUE);
+    }
     CC_IFFREE(pd->lambda, double);
     CC_IFFREE(pd->x_e, double);
     g_array_free(pd->rhs, TRUE);

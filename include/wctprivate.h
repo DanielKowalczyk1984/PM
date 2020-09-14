@@ -66,6 +66,7 @@ struct _NodeData {
     GArray* pi;
     GArray* id_row;
     GArray* coeff_row;
+    GArray* slack;
     int     nb_rows;
     int     nb_cols;
 
