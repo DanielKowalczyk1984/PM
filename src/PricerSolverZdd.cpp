@@ -1,4 +1,5 @@
 #include "PricerSolverZdd.hpp"
+#include <fmt/core.h>
 #include <NodeBddStructure.hpp>
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
@@ -187,7 +188,7 @@ void PricerSolverZdd::remove_layers_init() {
     }
 
     nb_layers = ordered_jobs->len;
-    printf("The new number of layers = %u\n", nb_layers);
+    fmt::print("The new number of layers = {}\n", nb_layers);
 }
 
 void PricerSolverZdd::remove_layers() {
@@ -242,7 +243,7 @@ void PricerSolverZdd::remove_layers() {
     }
 
     nb_layers = ordered_jobs->len;
-    printf("The new number of layers = %u\n", nb_layers);
+    fmt::print("The new number of layers = {}\n", nb_layers);
 }
 
 void PricerSolverZdd::remove_edges() {
@@ -250,12 +251,12 @@ void PricerSolverZdd::remove_edges() {
     decision_diagram->reduceZdd();
     nb_removed_nodes -= size_graph;
     size_graph = decision_diagram->size();
-    printf("The new size of ZDD = %lu\n", size_graph);
+    fmt::print("The new size of ZDD = {}\n", size_graph);
 }
 
 void PricerSolverZdd::build_mip() {
     try {
-        printf("Building Mip model for the extended formulation:\n");
+        fmt::print("Building Mip model for the extended formulation:\n");
         NodeIdAccessor vertex_nodeid_list(
             get(boost::vertex_name_t(), mip_graph));
         NodeMipIdAccessor vertex_mip_id_list(
@@ -561,8 +562,8 @@ void PricerSolverZdd::create_dot_zdd(const char* name) {
 }
 
 void PricerSolverZdd::print_number_nodes_edges() {
-    printf("removed edges = %d, removed nodes = %d\n", nb_removed_edges,
-           nb_removed_nodes);
+    fmt::print("removed edges = %d, removed nodes = {}\n", nb_removed_edges,
+               nb_removed_nodes);
 }
 
 int PricerSolverZdd::get_num_remove_nodes() {

@@ -2,6 +2,7 @@
 #define _MODEL_INTERFACE
 
 #include <bits/c++config.h>
+#include <fmt/core.h>
 #include <NodeId.hpp>
 #include <boost/container_hash/hash_fwd.hpp>
 #include <boost/functional/hash.hpp>
@@ -230,10 +231,10 @@ class GenericData {
 
     void list_coeff() {
         for (auto& it : coeff) {
-            std::cout << it.second << " (" << it.first.get_j() << ","
-                      << it.first.get_t() << "," << it.first.get_high() << ") ";
+            fmt::print("{} ({},{},{})", it.second, it.first.get_j(),
+                       it.first.get_t(), it.first.get_high());
         }
-        std::cout << "\n";
+        fmt::print("\n");
     }
 
     friend bool operator==(const GenericData& lhs, const GenericData& rhs) {

@@ -59,7 +59,7 @@ void PricerSolverSimple::evaluate_nodes(double* pi, int UB, double LB) {
         }
     }
 
-    printf("removed edges = %d\n", nb_removed_edges);
+    fmt::print("removed edges = {}\n", nb_removed_edges);
 }
 
 void PricerSolverSimple::evaluate_nodes(double* pi) {
@@ -92,7 +92,7 @@ void PricerSolverSimple::evaluate_nodes(double* pi) {
         }
     }
 
-    printf("removed edges = %d\n", nb_removed_edges);
+    fmt::print("removed edges = {}\n", nb_removed_edges);
 }
 
 PricerSolverZddCycle::PricerSolverZddCycle(GPtrArray*  _jobs,
@@ -189,7 +189,7 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
         }
     }
 
-    printf("removed edges = %d\n", nb_removed_edges);
+    fmt::print("removed edges = {}\n", nb_removed_edges);
 }
 
 void PricerSolverZddCycle::evaluate_nodes(double* pi) {
@@ -260,5 +260,5 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi) {
         }
     }
 
-    printf("removed edges = %d\n", nb_removed_edges);
+    fmt::print("removed edges = {}\n", nb_removed_edges);
 }

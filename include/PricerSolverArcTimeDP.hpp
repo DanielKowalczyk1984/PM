@@ -14,7 +14,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     Job***              A;
     int**               B;
     GRBVar***           arctime_x;
-    int                 num_edges_removed;
+    int                 nb_edges_removed;
     double*             lp_x;
     double*             solution_x;
 

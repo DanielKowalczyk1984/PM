@@ -1,4 +1,5 @@
 #include "PricerSolverArcTimeDP.hpp"
+#include <fmt/core.h>
 #include <iostream>
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
@@ -11,7 +12,7 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
       n(_jobs->len),
       size_graph(0u),
       vector_jobs(),
-      num_edges_removed{},
+      nb_edges_removed{},
       lp_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}),
       solution_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}) {
     for (int i = 0; i < n; ++i) {
@@ -138,7 +139,7 @@ void PricerSolverArcTimeDp::init_table() {
         }
     }
 
-    std::cout << "Number of arcs in ATI formulation = " << size_graph << '\n';
+    fmt::print("Number of arcs in ATI formulation = {}\n", size_graph);
 }
 
 void PricerSolverArcTimeDp::evaluate_nodes(double*                 pi,
@@ -156,7 +157,7 @@ void PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
 }
 
 void PricerSolverArcTimeDp::build_mip() {
-    std::cout << "Building Mip model for the arcTI formulation\n";
+    fmt::print("Building Mip model for the arcTI formulation\n");
 
     /** Constructing variables */
     for (int j = 0; j < n + 1; j++) {
@@ -256,10 +257,9 @@ void PricerSolverArcTimeDp::build_mip() {
                 for (auto& it : graph[j][t]) {
                     auto a = arctime_x[it->job][j][t].get(GRB_DoubleAttr_X);
                     if (a > 0) {
-                        std::cout << j << " " << t << " "
-                                  << (static_cast<Job*>(jobs->pdata[j]))
-                                         ->processing_time
-                                  << "\n";
+                        fmt::print("{} {} {}\n", j, t,
+                                   (static_cast<Job*>(jobs->pdata[j]))
+                                       ->processing_time);
                     }
                 }
             }
@@ -284,7 +284,7 @@ void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
                         (convex_rhs - 1) * (forward_F[n][Hmax] + pi[n]) + LB >
                     UB - 1 + 0.00001) {
                     size_graph--;
-                    num_edges_removed++;
+                    nb_edges_removed++;
                     // Job* tmp_j = (*it);
                     auto pend = std::find(reversed_graph[(*it)->job][t].begin(),
                                           reversed_graph[(*it)->job][t].end(),
@@ -298,8 +298,9 @@ void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
         }
     }
 
-    std::cout << "size_graph after reduced cost fixing = " << size_graph
-              << " and edges removed = " << num_edges_removed << "\n";
+    fmt::print(
+        "size_graph after reduced cost fixing = {} and edges removed = {}\n",
+        size_graph, nb_edges_removed);
 
     return;
 }
@@ -560,7 +561,7 @@ int PricerSolverArcTimeDp::get_num_remove_nodes() {
 }
 
 int PricerSolverArcTimeDp::get_num_remove_edges() {
-    return num_edges_removed;
+    return nb_edges_removed;
 }
 
 size_t PricerSolverArcTimeDp::get_nb_edges() {

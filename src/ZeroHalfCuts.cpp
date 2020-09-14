@@ -197,14 +197,14 @@ void ZeroHalfCuts::generate_cuts() {
 
         if (status == GRB_INF_OR_UNBD || status == GRB_INFEASIBLE ||
             status == GRB_UNBOUNDED) {
-            std::cout << "The model cannot be solved "
-                      << "because it is infeasible or unbounded" << std::endl;
+            fmt::print(
+                "The model cannot be solved because it is infeasible or "
+                "unbounded\n");
             return;
         }
 
         if (status != GRB_OPTIMAL) {
-            std::cout << "Optimization was stopped with status " << status
-                      << std::endl;
+            fmt::print("Optimization was stopped with status {}", status);
         }
 
         // Print number of solutions stored

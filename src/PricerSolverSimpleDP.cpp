@@ -1,4 +1,5 @@
 #include "PricerSolverSimpleDP.hpp"
+#include <fmt/core.h>
 #include <scheduleset.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
@@ -47,7 +48,7 @@ void PricerSolverSimpleDp::init_table() {
         }
     }
 
-    std::cout << "Number of arcs in TI formulation = " << size_graph << '\n';
+    fmt::print("Number of arcs in TI formulation = {}\n", size_graph);
 }
 
 PricerSolverSimpleDp::~PricerSolverSimpleDp() {
@@ -111,14 +112,13 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
         counter += backward_graph[t].size();
     }
 
-    std::cout << "new size of TI formulation = " << size_graph << " " << counter
-              << " " << x << "\n";
+    fmt::print("new size of TI formulation = {} {} {}", size_graph, counter, x);
     return;
 }
 
 void PricerSolverSimpleDp::build_mip() {
     try {
-        std::cout << "Building Mip model for the TI formulation\n";
+        fmt::print("Building Mip model for the TI formulation\n");
 
         /** Constructing variables */
         for (int t = 0; t < Hmax + 1; t++) {

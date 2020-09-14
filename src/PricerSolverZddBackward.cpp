@@ -1,4 +1,5 @@
 #include "PricerSolverZddBackward.hpp"
+#include <fmt/core.h>
 
 /**
  *  bdd solver pricersolver for the flow formulation
@@ -63,7 +64,7 @@ void PricerSolverZddBackwardSimple::evaluate_nodes(double* pi,
         }
     }
 
-    printf("removed edges = %d\n", nb_removed_edges);
+    fmt::print("removed edges = {}\n", nb_removed_edges);
 }
 
 void PricerSolverZddBackwardSimple::evaluate_nodes(double* pi) {
@@ -96,7 +97,7 @@ void PricerSolverZddBackwardSimple::evaluate_nodes(double* pi) {
         }
     }
 
-    printf("removed edges = %d\n", nb_removed_edges);
+    fmt::print("removed edges = {}\n", nb_removed_edges);
 }
 
 PricerSolverZddBackwardCycle::PricerSolverZddBackwardCycle(
@@ -195,7 +196,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
         }
     }
 
-    printf("removed edges = %d\n", nb_removed_edges);
+    fmt::print("removed edges = {}\n", nb_removed_edges);
 }
 
 void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
@@ -268,5 +269,5 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
         }
     }
 
-    printf("removed edges = %d\n", nb_removed_edges);
+    fmt::print("removed edges = {}\n", nb_removed_edges);
 }

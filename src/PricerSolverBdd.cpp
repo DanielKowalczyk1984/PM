@@ -71,7 +71,7 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
     topdown_filtering();
     construct_mipgraph();
     init_coeff_constraints();
-    std::cout << "Ending construction\n";
+    fmt::print("Ending construction\n");
     solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
 }
 
@@ -676,9 +676,6 @@ void PricerSolverBdd::remove_edges() {
     decision_diagram->compressBdd();
     nb_removed_nodes -= size_graph;
     size_graph = decision_diagram->size();
-    // printf("The new size of BDD \t\t\t\t= %lu\n", size_graph);
-    // std::cout
-    //     << "-------------------------------------------------------------\n";
 }
 
 void PricerSolverBdd::print_representation_file() {
@@ -770,7 +767,7 @@ void PricerSolverBdd::add_inequality(std::vector<int> v1) {
 }
 void PricerSolverBdd::build_mip() {
     try {
-        printf("Building Mip model for the extended formulation:\n");
+        fmt::print("Building Mip model for the extended formulation:\n");
         auto& table = decision_diagram->getDiagram().privateEntity();
         auto  vertex_index_list(get(boost::vertex_index_t(), mip_graph));
         auto  vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
@@ -898,16 +895,16 @@ void PricerSolverBdd::build_mip() {
         outf_index.close();
 
     } catch (GRBException& e) {
-        cout << "Error code = " << e.getErrorCode() << endl;
-        cout << e.getMessage() << endl;
+        fmt::print("Error code = {}\n", e.getErrorCode());
+        fmt::print(e.getMessage());
     } catch (...) {
-        cout << "Exception during optimization" << endl;
+        fmt::print("Exception during optimization\n");
     }
 }
 
 void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     /** Remove Layers */
-    std::cout << "Starting Reduced cost fixing\n";
+    fmt::print("Starting Reduced cost fixing\n");
     evaluate_nodes(pi, UB, LB);
     bottum_up_filtering();
     topdown_filtering();
@@ -1208,11 +1205,9 @@ void PricerSolverBdd::check_infeasible_arcs() {
     }
 
     if (removed_edges) {
-        std::cout << "removing edges based on order\n";
-        std::cout << "Number edges removed order = " << nb_edges_removed_tmp
-                  << "\n";
-        std::cout << "Number edges removed total = " << nb_removed_edges
-                  << "\n";
+        fmt::print("removing edges based on order\n");
+        fmt::print("Number edges removed order = {}\n", nb_edges_removed_tmp);
+        fmt::print("Number edges removed total = {}\n", nb_removed_edges);
         remove_layers();
         remove_edges();
         cleanup_arcs();
@@ -1365,21 +1360,19 @@ void PricerSolverBdd::equivalent_paths_filtering() {
     }
 
     if (removed_edges) {
-        std::cout << "Number of edges removed by equivalent_path_filtering = "
-                  << nb_edges_removed_tmp << "\n"
-                  << "Number of edges removed in total = "
-                  << "\n";
+        fmt::print(
+            "Number of edges removed by equivalent_path_filtering = {}\nNumber "
+            "of edges removed in total = {}\n",
+            nb_edges_removed_tmp, nb_removed_edges);
 
         remove_layers();
         remove_edges();
         cleanup_arcs();
-        // init_table();
         construct_mipgraph();
     }
 }
 
 void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
-    cout << decision_diagram->size() << '\n';
     scheduling         constr(job, list, order);
     std::ofstream      outf("min1.gv");
     NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
@@ -1388,8 +1381,6 @@ void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
     decision_diagram->zddSubset(constr);
     outf.close();
     decision_diagram->compressBdd();
-    // init_table();
-    cout << decision_diagram->size() << '\n';
     construct_mipgraph();
     auto&             table1 = decision_diagram->getDiagram().privateEntity();
     ColorWriterVertex vertex_writer1(mip_graph, table1);
@@ -1472,8 +1463,7 @@ void PricerSolverBdd::add_constraints() {
     auto& table = decision_diagram->getDiagram().privateEntity();
     if (get_is_integer_solution()) {
         added_cuts = false;
-        std::cout << "FOUND INTEGER SOLUTION"
-                  << "\n";
+        fmt::print("FOUND INTEGER SOLUTION\n");
     } else {
         auto generator =
             ZeroHalfCuts(convex_constr_id, convex_rhs, &reformulation_model,
@@ -1570,10 +1560,10 @@ void PricerSolverBdd::iterate_zdd() {
         std::set<int>::const_iterator i = (*it).begin();
 
         for (; i != (*it).end(); ++i) {
-            std::cout << nb_layers - *i << " ";
+            fmt::print("{} ", nb_layers - *i);
         }
 
-        std::cout << '\n';
+        fmt::print("\n");
     }
 }
 
@@ -1585,8 +1575,8 @@ void PricerSolverBdd::create_dot_zdd(const char* name) {
 }
 
 void PricerSolverBdd::print_number_nodes_edges() {
-    printf("removed edges = %d, removed nodes = %d\n", nb_removed_edges,
-           nb_removed_nodes);
+    fmt::print("removed edges = %d, removed nodes = %d\n", nb_removed_edges,
+               nb_removed_nodes);
 }
 
 int PricerSolverBdd::get_num_remove_nodes() {
