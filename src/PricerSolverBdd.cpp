@@ -289,7 +289,7 @@ void PricerSolverBdd::init_table() {
 }
 
 void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
-    wctlp_get_nb_rows(pd->RMP, &(pd->nb_rows));
+    lp_interface_get_nb_rows(pd->RMP, &(pd->nb_rows));
     int nb_new_constraints =
         reformulation_model.get_nb_constraints() - pd->nb_rows;
 
@@ -361,16 +361,17 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
 
     starts[nb_new_constraints] = pos;
 
-    wctlp_addrows(pd->RMP, nb_new_constraints, coeff.size(), starts.data(),
-                  column_ind.data(), coeff.data(), sense.data(), rhs.data(),
-                  nullptr);
-    wctlp_get_nb_rows(pd->RMP, &(pd->nb_rows));
+    lp_interface_addrows(pd->RMP, nb_new_constraints, coeff.size(),
+                         starts.data(), column_ind.data(), coeff.data(),
+                         sense.data(), rhs.data(), nullptr);
+    lp_interface_get_nb_rows(pd->RMP, &(pd->nb_rows));
 
     vector<double> new_values(nb_new_constraints, 0.0);
     vector<int>    new_values_int(nb_new_constraints, 0);
     g_array_append_vals(pd->pi, new_values.data(), new_values.size());
+    g_array_append_vals(pd->slack, new_values.data(), new_values.size());
     g_array_append_vals(pd->rhs, new_values.data(), new_values.size());
-    wctlp_get_rhs(pd->RMP, &g_array_index(pd->rhs, double, 0));
+    lp_interface_get_rhs(pd->RMP, &g_array_index(pd->rhs, double, 0));
     g_array_append_vals(pd->lhs_coeff, new_values.data(), new_values.size());
     g_array_append_vals(pd->id_row, new_values_int.data(),
                         new_values_int.size());

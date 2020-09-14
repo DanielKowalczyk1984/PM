@@ -65,7 +65,7 @@ int solve_farkas_dbl(NodeData* pd) {
 
     if (s.obj < 1e-6) {
         val = construct_sol(pd, &s);
-        wctlp_write(pd->RMP, "RMP.lp");
+        lp_interface_write(pd->RMP, "RMP.lp");
 
         CCcheck_val_2(val, "Failed in constructing jobs");
         pd->update = 1;

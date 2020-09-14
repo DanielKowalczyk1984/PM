@@ -156,15 +156,15 @@ int construct_lp_sol_from_rmp(NodeData* pd) {
     int val = 0;
     int nb_cols;
 
-    val = wctlp_get_nb_cols(pd->RMP, &nb_cols);
+    val = lp_interface_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed to get nb cols");
     assert(nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
 
     pd->lambda =
         CC_SAFE_REALLOC(pd->lambda, nb_cols - pd->id_pseudo_schedules, double);
     CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
-    val = wctlp_x(pd->RMP, pd->lambda, pd->id_pseudo_schedules);
-    CCcheck_val_2(val, "Failed in wctlp_x");
+    val = lp_interface_x(pd->RMP, pd->lambda, pd->id_pseudo_schedules);
+    CCcheck_val_2(val, "Failed in lp_interface_x");
     pd->solver->construct_lp_sol_from_rmp(pd->lambda, pd->localColPool,
                                           pd->localColPool->len);
 

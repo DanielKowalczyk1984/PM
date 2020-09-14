@@ -127,7 +127,7 @@ int insert_frac_pairs_into_heap(NodeData*      pd,
     CCcheck_NULL_2(mean_counter, "Failed to allocate memory");
     fill_dbl(mean_error, nb_pairs, 0.0);
     fill_int(mean_counter, nb_pairs, 0);
-    wctlp_get_nb_cols(pd->RMP, &nb_cols);
+    lp_interface_get_nb_cols(pd->RMP, &nb_cols);
     assert(nb_cols == pd->localColPool->len);
 
     for (int i = 0; i < nb_cols; ++i) {
