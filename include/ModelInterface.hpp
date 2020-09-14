@@ -72,10 +72,10 @@ class ConstraintBase {
     ConstraintBase& operator=(ConstraintBase&&) = default;
     virtual ~ConstraintBase() = default;
 
-    ConstraintBase(char _sense, double _rhs)
+    ConstraintBase(char _sense, double _rhs, bool _can_be_delete = false)
         : sense(_sense),
           rhs(_rhs),
-          can_be_deleted(false) {}
+          can_be_deleted(_can_be_delete) {}
 
     virtual double get_var_coeff(VariableKeyBase*) = 0;
 };
@@ -138,6 +138,12 @@ class ReformulationModel {
 
     inline void add_constraint(std::shared_ptr<ConstraintBase>&& _constr) {
         constraint_array.push_back(std::shared_ptr<ConstraintBase>(_constr));
+    }
+
+    inline void delete_constraint(int c) {
+        if (constraint_array[c]->get_can_be_deleted()) {
+            constraint_array[c].reset();
+        }
     }
 };
 
@@ -258,12 +264,17 @@ class ConstraintGeneric : public ConstraintBase {
     std::unique_ptr<GenericData> data;
 
    public:
-    ConstraintGeneric(GenericData* _data, double _rhs, char _sense = '>')
-        : ConstraintBase(_sense, _rhs),
+    ConstraintGeneric(GenericData* _data,
+                      double       _rhs,
+                      char         _sense = '>',
+                      bool         _can_be_deleted = true)
+        : ConstraintBase(_sense, _rhs, _can_be_deleted),
           data(_data) {}
 
-    ConstraintGeneric(double _rhs, char _sense = '>')
-        : ConstraintBase(_sense, _rhs),
+    ConstraintGeneric(double _rhs,
+                      char   _sense = '>',
+                      bool   _can_be_deleted = true)
+        : ConstraintBase(_sense, _rhs, _can_be_deleted),
           data(nullptr) {}
 
     ~ConstraintGeneric() = default;
