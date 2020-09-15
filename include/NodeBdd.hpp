@@ -30,7 +30,6 @@ class NodeBdd : public NodeBase {
     int                     low_edge_key;
     bool                    visited;
     bool                    lp_visited;
-    int                     lp_key;
     boost::dynamic_bitset<> all;
     int                     backward_distance[2];
     int                     in_degree_0;
@@ -59,7 +58,6 @@ class NodeBdd : public NodeBase {
           low_edge_key(-1),
           visited(false),
           lp_visited(false),
-          lp_key(-1),
           in_degree_0(0),
           in_degree_1(0),
           coeff_cut{0.0, 0.0} {
@@ -86,7 +84,6 @@ class NodeBdd : public NodeBase {
           low_edge_key(-1),
           visited(false),
           lp_visited(false),
-          lp_key(-1),
           in_degree_0(0),
           in_degree_1(0),
           coeff_cut{0.0, 0.0} {
@@ -117,7 +114,6 @@ class NodeBdd : public NodeBase {
           low_edge_key(-1),
           visited(false),
           lp_visited(false),
-          lp_key(-1),
           in_degree_0(0),
           in_degree_1(0),
           coeff_cut{0.0, 0.0} {
@@ -146,7 +142,6 @@ class NodeBdd : public NodeBase {
     void reset_lp_x() {
         lp_x[0] = lp_x[1] = 0.0;
         lp_visited = false;
-        lp_key = -1;
     }
 
     void add_coeff_list(std::shared_ptr<BddCoeff>& ptr, int high) {
