@@ -31,6 +31,7 @@ class PricingStabilizationBase {
     virtual void   solve(double eta_out, double* _pi_out, double* _lhs);
     virtual int    stopping_criteria();
     virtual void   update_duals(){};
+    virtual void   remove_constraints(int first, int nb_del);
 };
 
 class PricingStabilizationStat : public PricingStabilizationBase {
@@ -85,6 +86,7 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     virtual double get_eta_in() final;
     virtual int    stopping_criteria() final;
     virtual void   update_duals() override;
+    virtual void   remove_constraints(int first, int nb_del) override;
     // double diff_eta_in_eta_out();
 };
 
@@ -107,6 +109,7 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
                        double* _pi_out,
                        double* _lhs_coeff) override;
     virtual void update_duals() override;
+    virtual void remove_constraints(int first, int nb_del) override;
 
     void compute_subgradient(const OptimalSolution<double>& sol) {
         solver->compute_subgradient(sol, subgradient.data());
@@ -157,6 +160,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
     double       hybridfactor{};
     int          in_mispricing_schedule{};
     virtual void update_duals() override;
+    virtual void remove_constraints(int first, int nb_del) override;
 
    private:
     virtual void solve(double _eta_out, double* _pi_out, double* _lhs) override;

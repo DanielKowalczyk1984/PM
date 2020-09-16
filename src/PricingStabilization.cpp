@@ -52,6 +52,8 @@ int PricingStabilizationBase::stopping_criteria() {
     return reduced_cost < -1e-6;
 }
 
+void PricingStabilizationBase::remove_constraints(int first, int nb_del) {}
+
 PricingStabilizationBase::~PricingStabilizationBase() {}
 
 /**
@@ -148,6 +150,15 @@ void PricingStabilizationStat::update_duals() {
     }
 }
 
+void PricingStabilizationStat::remove_constraints(int first, int nb_del) {
+    auto it_in = pi_in.begin() + first;
+    pi_in.erase(it_in, it_in + nb_del);
+    auto it_out = pi_out.begin() + first;
+    pi_out.erase(it_out, it_out + nb_del);
+    auto it_sep = pi_sep.begin() + first;
+    pi_sep.erase(it_sep, it_sep + nb_del);
+}
+
 /**
  * Dynamic stabilization technique
  */
@@ -225,6 +236,17 @@ void PricingStabilizationDynamic::update_duals() {
     }
 }
 
+void PricingStabilizationDynamic::remove_constraints(int first, int nb_del) {
+    auto it_in = pi_in.begin() + first;
+    pi_in.erase(it_in, it_in + nb_del);
+    auto it_out = pi_out.begin() + first;
+    pi_out.erase(it_out, it_out + nb_del);
+    auto it_sep = pi_sep.begin() + first;
+    pi_sep.erase(it_sep, it_sep + nb_del);
+    auto it_sub = subgradient.begin() + first;
+    subgradient.erase(it_sub, it_sub + nb_del);
+}
+
 /**
 @brief Construct a new Pricing Stabilization Hybrid:: Pricing Stabilization
 Hybrid object
@@ -248,6 +270,19 @@ void PricingStabilizationHybrid::update_duals() {
         subgradient.resize(solver->reformulation_model.get_nb_constraints(),
                            0.0);
     }
+}
+
+void PricingStabilizationHybrid::remove_constraints(int first, int nb_del) {
+    auto it_in = pi_in.begin() + first;
+    pi_in.erase(it_in, it_in + nb_del);
+    auto it_out = pi_out.begin() + first;
+    pi_out.erase(it_out, it_out + nb_del);
+    auto it_sep = pi_sep.begin() + first;
+    pi_sep.erase(it_sep, it_sep + nb_del);
+    auto it_sub = subgradient.begin() + first;
+    subgradient.erase(it_sub, it_sub + nb_del);
+    auto it_sub_in = subgradient_in.begin() + first;
+    subgradient_in.erase(it_sub_in, it_sub_in + nb_del);
 }
 
 void PricingStabilizationHybrid::solve(double  _eta_out,
@@ -346,5 +381,11 @@ int call_get_update_stab_center(PricingStabilizationBase* solver) {
 
 void call_update_duals(PricingStabilizationBase* solver) {
     solver->update_duals();
+}
+
+void call_remove_constraints(PricingStabilizationBase* solver,
+                             int                       first,
+                             int                       nb_del) {
+    solver->remove_constraints(first, nb_del);
 }
 }
