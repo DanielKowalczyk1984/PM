@@ -146,7 +146,7 @@ void ZeroHalfCuts::construct_cut() {
                 if (aux) {
                     auto& aux_node = table->node(*aux);
                     auto  coeff_in = floor(aux_node.coeff_cut[k] / 2);
-                    if (coeff_in < 0.0) {
+                    if (coeff_in < -1e-4) {
                         data->add_coeff_hash_table(aux_node.get_nb_job(),
                                                    aux_node.get_weight(), k,
                                                    -coeff_in);
@@ -183,6 +183,11 @@ void ZeroHalfCuts::construct_cut() {
         std::make_shared<ConstraintGeneric>(
             data, -floor((2.0 * q.get(GRB_DoubleAttr_Xn) + 1 + rhs) / 2.0))};
     data->list_coeff();
+    for (auto& it : cut_list) {
+        if (*constr == *it) {
+            return;
+        }
+    }
     cut_list.push_back(std::move(constr));
 }
 
@@ -211,7 +216,7 @@ void ZeroHalfCuts::generate_cuts() {
         auto nb_solutions = model->get(GRB_IntAttr_SolCount);
         fmt::print("Number of solutions found: {}\n", nb_solutions);
 
-        for (auto i = 0; i < std::min(1, nb_solutions); i++) {
+        for (auto i = 0; i < std::min(5, nb_solutions); i++) {
             model->set(GRB_IntParam_SolutionNumber, i);
             init_coeff_cut();
 
