@@ -1491,6 +1491,15 @@ void PricerSolverBdd::remove_constraints(int first, int nb_del) {
     reformulation_model.delete_constraints(first, nb_del);
 }
 
+void PricerSolverBdd::update_rows_coeff(int first) {
+    for (int k = first; k < original_model.get_nb_constraints(); k++) {
+        auto aux = original_model.get_coeff_list(k);
+        for (auto& it : *aux) {
+            it->set_row(k);
+        }
+    }
+}
+
 void PricerSolverBdd::project_solution(Solution* sol) {
     auto& table = decision_diagram->getDiagram().privateEntity();
     // double*            x = new double[num_edges(mip_graph)]{};

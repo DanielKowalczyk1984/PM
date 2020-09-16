@@ -304,6 +304,7 @@ int  solve_farkas_dbl(NodeData* pd);
 int  solve_farkas_dbl_DP(NodeData* pd);
 void generate_cuts(NodeData* pd);
 int  delete_unused_rows_range(NodeData* pd, int first, int last);
+int  call_update_rows_coeff(NodeData* pd);
 #ifdef __cplusplus
 }
 #endif

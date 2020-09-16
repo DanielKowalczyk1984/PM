@@ -201,6 +201,15 @@ int delete_unused_rows_range(NodeData* pd, int first, int last) {
     return val;
 }
 
+int call_update_rows_coeff(NodeData* pd) {
+    int val = 0;
+
+    PricerSolver* solver = pd->solver;
+    solver->update_rows_coeff(pd->id_valid_cuts);
+
+    return val;
+}
+
 int check_schedule_set(ScheduleSet* set, NodeData* pd) {
     return static_cast<int>(pd->solver->check_schedule_set(set->job_list));
 }

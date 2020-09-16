@@ -188,6 +188,8 @@ class BddCoeff : public VariableKeyBase {
 
     inline void set_value(double _value) { value = _value; }
 
+    inline void set_row(int _row) { row = _row; }
+
     inline int get_row() { return row; }
 
     friend bool operator==(const BddCoeff& lhs, const BddCoeff& rhs) {

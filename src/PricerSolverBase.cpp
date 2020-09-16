@@ -33,6 +33,8 @@ void PricerSolverBase::remove_constraints(int first, int nb_del) {
     reformulation_model.delete_constraints(first, nb_del);
 }
 
+void PricerSolverBase::update_rows_coeff(int first) {}
+
 void PricerSolverBase::print_num_paths() {}
 
 double PricerSolverBase::get_UB() {

@@ -73,6 +73,7 @@ class PricerSolverBdd : public PricerSolverBase {
     void   add_constraint(Job* job, GPtrArray* list, int order) override;
     void   add_constraints() override;
     void   remove_constraints(int first, int nb_del) override;
+    void   update_rows_coeff(int first) override;
 
     void init_coeff_constraints();
     void insert_constraints_lp(NodeData* pd) override;
