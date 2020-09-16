@@ -340,7 +340,7 @@ int lp_interface_deleterows(wctlp* lp, int first, int last) {
     }
 
     val = GRBdelconstrs(lp->model, nb_del, dellist);
-    CHECK_VAL_GRB2(val, "Failed to delete cols", lp->env);
+    CHECK_VAL_GRB2(val, "Failed to delete rows", lp->env);
     GRBupdatemodel(lp->model);
     CHECK_VAL_GRB2(val, "Failed to update the model", lp->env);
 CLEAN:
