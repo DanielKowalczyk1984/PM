@@ -67,17 +67,41 @@ int delete_unused_rows(NodeData* pd) {
     GArray* del_indices = g_array_new(FALSE, FALSE, sizeof(int));
 
     lp_interface_get_nb_rows(pd->RMP, &nb_rows);
-    assert(nb_rows == pd->slack->len);
+    // assert(nb_rows == pd->slack->len);
     lp_interface_slack(pd->RMP, slack);
 
-    for (int i = pd->id_art_var_cuts; i < nb_rows; i++) {
-        if (fabs(slack[i]) > 0.01) {
-            g_array_append_val(del_indices, i);
+    int it = pd->id_valid_cuts;
+    int first_del = -1;
+    int last_del = -1;
+    for (int i = pd->id_valid_cuts; i < nb_rows; i++) {
+        if (fabs(slack[i]) < 0.01) {
+            if (first_del != -1) {
+                val = delete_unused_rows_range(pd, first_del, last_del);
+                CCcheck_val(val, "Failed in deleterows lp_interface");
+                it = (last_del - first_del) + 1;
+                first_del = last_del = -1;
+            } else {
+                it++;
+            }
+        } else {
+            if (first_del == -1) {
+                first_del = it;
+                last_del = first_del;
+            } else {
+                last_del++;
+            }
+            it++;
         }
     }
 
-    GRBdelconstrs(pd->RMP->model, del_indices->len,
-                  &g_array_index(del_indices, int, 0));
+    if (first_del != -1) {
+        delete_unused_rows_range(pd, first_del, last_del);
+    }
+
+    val = lp_interface_get_nb_rows(pd->RMP, &nb_rows);
+    for (int j = pd->id_valid_cuts; j < nb_rows; j++) {
+        printf("test rhs %f\n", g_array_index(pd->rhs, double, j));
+    }
 
     return val;
 }
@@ -607,6 +631,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     construct_lp_sol_from_rmp(pd);
                     if (!call_is_integer_solution(pd->solver)) {
                         delete_unused_rows(pd);
+                        solve_relaxation(problem, pd);
                         generate_cuts(pd);
                         call_update_duals(pd->solver_stab);
                         lp_interface_write(pd->RMP, "test.lp");
