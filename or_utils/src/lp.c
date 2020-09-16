@@ -135,30 +135,30 @@ int lp_interface_addrow(wctlp*  lp,
                         char    sense,
                         double  rhs,
                         char*   name) {
-    int  val = 0;
-    char inequality_sense;
+    int val = 0;
+    // char inequality_sense;
 
-    switch (sense) {
-        case lp_interface_EQUAL:
-            inequality_sense = GRB_EQUAL;
-            break;
+    // switch (sense) {
+    //     case lp_interface_EQUAL:
+    //         inequality_sense = GRB_EQUAL;
+    //         break;
 
-        case lp_interface_LESS_EQUAL:
-            inequality_sense = GRB_LESS_EQUAL;
-            break;
+    //     case lp_interface_LESS_EQUAL:
+    //         inequality_sense = GRB_LESS_EQUAL;
+    //         break;
 
-        case lp_interface_GREATER_EQUAL:
-            inequality_sense = GRB_GREATER_EQUAL;
-            break;
+    //     case lp_interface_GREATER_EQUAL:
+    //         inequality_sense = GRB_GREATER_EQUAL;
+    //         break;
 
-        default:
-            fprintf(stderr, "Unknown variable sense: %c\n", sense);
-            val = 1;
-            return val;
-    }
+    //     default:
+    //         fprintf(stderr, "Unknown variable sense: %c\n", sense);
+    //         val = 1;
+    //         return val;
+    // }
 
-    val = GRBaddconstr(lp->model, nb_zero, column_indices, cval,
-                       inequality_sense, rhs, name);
+    val = GRBaddconstr(lp->model, nb_zero, column_indices, cval, sense, rhs,
+                       name);
     CHECK_VAL_GRB(val, "Failed GRBadd", lp->env);
     val = GRBupdatemodel(lp->model);
     CHECK_VAL_GRB(val, "Failed updating the model", lp->env);
