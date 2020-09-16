@@ -38,6 +38,7 @@ ZeroHalfCuts::ZeroHalfCuts(int                 _nb_jobs,
     model->set(GRB_DoubleParam_Heuristics, 0.5);
     model->set(GRB_IntParam_MIPFocus, 1);
     model->set(GRB_DoubleParam_TimeLimit, 10);
+    model->set(GRB_IntParam_OutputFlag, 0);
 
     generate_model();
 }
