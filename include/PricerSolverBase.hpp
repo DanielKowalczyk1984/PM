@@ -91,7 +91,7 @@ struct PricerSolverBase {
     virtual void add_constraint(Job* job, GPtrArray* list, int order) = 0;
     virtual void insert_constraints_lp(NodeData* pd) = 0;
     virtual void add_constraints();
-    void         remove_constraints(int* list_index, int nb_del);
+    virtual void remove_constraints(int first, int nb_del);
 
     virtual void update_coeff_constraints() = 0;
 

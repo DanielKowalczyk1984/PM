@@ -29,10 +29,8 @@ PricerSolverBase::~PricerSolverBase() {}
 
 void PricerSolverBase::add_constraints() {}
 
-void PricerSolverBase::remove_constraints(int* list_index, int nb_del) {
-    for (size_t i = 0; i < nb_del; i++) {
-        auto constr = reformulation_model.get_constraint(list_index[i]);
-    }
+void PricerSolverBase::remove_constraints(int first, int nb_del) {
+    reformulation_model.delete_constraints(first, nb_del);
 }
 
 void PricerSolverBase::print_num_paths() {}
@@ -126,9 +124,9 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
             if (c == convex_constr_id) {
                 continue;
             }
-            double          dual = pi[c];
-            ConstraintBase* constr = reformulation_model.get_constraint(c);
-            double          coeff = constr->get_var_coeff(&k);
+            auto dual = pi[c];
+            auto constr = reformulation_model.get_constraint(c);
+            auto coeff = constr->get_var_coeff(&k);
 
             if (fabs(coeff) > 1e-10) {
                 result -= coeff * dual;
@@ -137,9 +135,8 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
         }
     }
 
-    double          dual = pi[convex_constr_id];
-    ConstraintBase* constr =
-        reformulation_model.get_constraint(convex_constr_id);
+    double dual = pi[convex_constr_id];
+    auto   constr = reformulation_model.get_constraint(convex_constr_id);
     VariableKeyBase k(0, 0, true);
     double          coeff = constr->get_var_coeff(&k);
     result -= coeff * dual;
@@ -156,9 +153,9 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
     for (guint j = 0; j < sol.jobs->len; j++) {
         Job*            tmp_j = (Job*)g_ptr_array_index(sol.jobs, j);
         VariableKeyBase k(tmp_j->job, 0);
-        double          dual = pi[tmp_j->job];
-        ConstraintBase* constr = reformulation_model.get_constraint(tmp_j->job);
-        double          coeff = constr->get_var_coeff(&k);
+        auto            dual = pi[tmp_j->job];
+        auto            constr = reformulation_model.get_constraint(tmp_j->job);
+        auto            coeff = constr->get_var_coeff(&k);
 
         if (fabs(coeff) > 1e-10) {
             result -= coeff * dual;
@@ -166,9 +163,9 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
 
         for (int c = convex_constr_id + 1;
              c < reformulation_model.get_nb_constraints(); c++) {
-            double          dual_ = pi[c];
-            ConstraintBase* constr_ = reformulation_model.get_constraint(c);
-            double          coeff_ = constr->get_var_coeff(&k);
+            double dual_ = pi[c];
+            auto   constr_ = reformulation_model.get_constraint(c);
+            double coeff_ = constr->get_var_coeff(&k);
 
             if (fabs(coeff_) > 1e-10) {
                 result -= coeff_ * dual_;
@@ -182,9 +179,9 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
         if (c == convex_constr_id) {
             continue;
         }
-        double          dual = pi[c];
-        ConstraintBase* constr = reformulation_model.get_constraint(c);
-        double          rhs = constr->get_rhs();
+        auto dual = pi[c];
+        auto constr = reformulation_model.get_constraint(c);
+        auto rhs = constr->get_rhs();
 
         dual_bound += rhs * dual;
     }
@@ -210,8 +207,8 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
     for (guint j = 0; j < sol.jobs->len; j++) {
         Job*            tmp_j = (Job*)g_ptr_array_index(sol.jobs, j);
         VariableKeyBase k(tmp_j->job, 0);
-        ConstraintBase* constr = reformulation_model.get_constraint(tmp_j->job);
-        double          coeff = constr->get_var_coeff(&k);
+        auto            constr = reformulation_model.get_constraint(tmp_j->job);
+        auto            coeff = constr->get_var_coeff(&k);
 
         if (fabs(coeff) > 1e-10) {
             subgradient[k.get_j()] -= coeff * convex_rhs;
@@ -219,8 +216,8 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
 
         for (int c = convex_constr_id + 1;
              c < reformulation_model.get_nb_constraints(); c++) {
-            ConstraintBase* constr_ = reformulation_model.get_constraint(c);
-            double          coeff_ = constr->get_var_coeff(&k);
+            auto constr_ = reformulation_model.get_constraint(c);
+            auto coeff_ = constr->get_var_coeff(&k);
 
             if (fabs(coeff_) > 1e-10) {
                 subgradient[c] -= coeff_ * convex_rhs;

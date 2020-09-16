@@ -190,7 +190,8 @@ void PricerSolverBdd::update_coeff_constraints() {
 
     for (auto j = nb_constr; j < reformulation_model.get_nb_constraints();
          j++) {
-        original_model.add_constraint(reformulation_model.get_constraint(j));
+        original_model.add_constraint(
+            reformulation_model.get_constraint_ptr(j));
     }
 
     auto& table = decision_diagram->getDiagram().privateEntity();
@@ -205,7 +206,7 @@ void PricerSolverBdd::update_coeff_constraints() {
                     auto ptr_coeff{std::make_shared<BddCoeff>(
                         it.get_nb_job(), it.get_weight(), coeff_high, 0.0,
                         nb_constr + c)};
-                    original_model.add_coeff_list(c, ptr_coeff);
+                    original_model.add_coeff_list(c + nb_constr, ptr_coeff);
                     it.add_coeff_list(ptr_coeff, 1);
                 }
 
@@ -221,7 +222,7 @@ void PricerSolverBdd::update_coeff_constraints() {
                         std::make_shared<BddCoeff>(it.get_nb_job(),
                                                    it.get_weight(), coeff_low,
                                                    0.0, nb_constr + c, false)};
-                    original_model.add_coeff_list(c, ptr_coeff);
+                    original_model.add_coeff_list(c + nb_constr, ptr_coeff);
                     it.add_coeff_list(ptr_coeff, 0);
                 }
             }
@@ -292,6 +293,9 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     lp_interface_get_nb_rows(pd->RMP, &(pd->nb_rows));
     int nb_new_constraints =
         reformulation_model.get_nb_constraints() - pd->nb_rows;
+
+    fmt::print("nb rows initial {} {} {}\n", pd->nb_rows,
+               reformulation_model.get_nb_constraints(), nb_new_constraints);
 
     assert(nb_new_constraints <=
            (pd->id_pseudo_schedules - pd->id_next_var_cuts));
@@ -364,7 +368,10 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     lp_interface_addrows(pd->RMP, nb_new_constraints, coeff.size(),
                          starts.data(), column_ind.data(), coeff.data(),
                          sense.data(), rhs.data(), nullptr);
-    lp_interface_get_nb_rows(pd->RMP, &(pd->nb_rows));
+    lp_interface_write(pd->RMP, "test_build.lp");
+    int test;
+    lp_interface_get_nb_rows(pd->RMP, &(test));
+    pd->nb_rows = test;
 
     vector<double> new_values(nb_new_constraints, 0.0);
     vector<int>    new_values_int(nb_new_constraints, 0);
@@ -376,6 +383,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     g_array_append_vals(pd->id_row, new_values_int.data(),
                         new_values_int.size());
     g_array_append_vals(pd->coeff_row, new_values.data(), new_values.size());
+    // assert(pd->nb_rows == pd->slack->len);
 }
 
 double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
@@ -414,9 +422,6 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
 
         for (int c = convex_constr_id + 1;
              c < reformulation_model.get_nb_constraints(); c++) {
-            if (c == convex_constr_id) {
-                continue;
-            }
             auto dual = pi[c];
             auto constr = reformulation_model.get_constraint(c);
             auto coeff = constr->get_var_coeff(&key);
@@ -1479,6 +1484,11 @@ void PricerSolverBdd::add_constraints() {
 
         added_cuts = (cut_list.size() > 0);
     }
+}
+
+void PricerSolverBdd::remove_constraints(int first, int nb_del) {
+    original_model.delete_constraints(first, nb_del);
+    reformulation_model.delete_constraints(first, nb_del);
 }
 
 void PricerSolverBdd::project_solution(Solution* sol) {
