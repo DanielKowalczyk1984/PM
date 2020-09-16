@@ -46,7 +46,7 @@ int solve_pricing(NodeData* pd) {
 
     if (pd->solver_stab->get_reduced_cost() < -1e-6) {
         pd->update = 1;
-        OptimalSolution<> sol = std::move(pd->solver_stab->get_sol());
+        auto sol = std::move(pd->solver_stab->get_sol());
         val = construct_sol(pd, &sol);
         CCcheck_val_2(val, "Failed in construction");
     } else {
