@@ -186,6 +186,21 @@ void represent_solution(NodeData* pd, Solution* sol) {
     pd->solver->represent_solution(sol);
 }
 
+int delete_unused_rows_range(NodeData* pd, int first, int last) {
+    int val = 0;
+
+    PricerSolver*         pricer_solver = pd->solver;
+    PricingStabilization* stab_solver = pd->solver_stab;
+    lp_interface_deleterows(pd->RMP, first, last);
+    pricer_solver->remove_constraints(first, last - first + 1);
+    call_remove_constraints(stab_solver, first, last - first + 1);
+    g_array_remove_range(pd->pi, first, last - first + 1);
+    g_array_remove_range(pd->rhs, first, last - first + 1);
+    g_array_remove_range(pd->lhs_coeff, first, last - first + 1);
+
+    return val;
+}
+
 int check_schedule_set(ScheduleSet* set, NodeData* pd) {
     return static_cast<int>(pd->solver->check_schedule_set(set->job_list));
 }
