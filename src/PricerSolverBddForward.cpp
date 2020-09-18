@@ -109,11 +109,11 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi) {
     }
 
     if (removed_edges) {
-        fmt::print("Number of edges removed by evaluate nodes {{0}:<{1}}\n",
+        fmt::print("Number of edges removed by evaluate nodes {0:<{1}}\n",
                    nb_removed_edges_evaluate, 30);
-        fmt::print("Total number of edges removed {{0}:<{1}}\n",
+        fmt::print("Total number of edges removed {0:<{1}}\n",
                    get_nb_removed_edges(), 30);
-        fmt::print("Number of edges {{0}:<{1}}\n", get_nb_edges(), 30);
+        fmt::print("Number of edges {0:<{1}}\n", get_nb_edges(), 30);
         remove_layers();
         remove_edges();
         bottum_up_filtering();
@@ -270,11 +270,11 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
     }
 
     if (removed_edges) {
-        fmt::print("Number of edges removed by evaluate nodes {{0}:<{1}}\n",
+        fmt::print("Number of edges removed by evaluate nodes {0: <{1}}\n",
                    nb_removed_edges_evaluate, 30);
-        fmt::print("Total number of edges removed {{0}:<{1}}\n",
+        fmt::print("Total number of edges removed {0: <{1}}\n",
                    get_nb_removed_edges(), 30);
-        fmt::print("Number of edges {{0}:<{1}}\n", get_nb_edges(), 30);
+        fmt::print("Number of edges {0: <{1}}\n", get_nb_edges(), 30);
         remove_layers();
         remove_edges();
         bottum_up_filtering();
@@ -388,11 +388,11 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi) {
     }
 
     if (removed_edges) {
-        fmt::print("Number of edges removed by evaluate nodes {{0}:<{1}}\n",
+        fmt::print("Number of edges removed by evaluate nodes {0: <{1}}\n",
                    nb_removed_edges_evaluate, 30);
-        fmt::print("Total number of edges removed {{0}:<{1}}\n",
+        fmt::print("Total number of edges removed {0: <{1}}\n",
                    get_nb_removed_edges(), 30);
-        fmt::print("Number of edges {{0}:<{1}}\n", get_nb_edges(), 30);
+        fmt::print("Number of edges {0: <{1}}\n", get_nb_edges(), 30);
         remove_layers();
         remove_edges();
         bottum_up_filtering();

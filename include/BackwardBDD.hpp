@@ -121,8 +121,7 @@ class BackwardBddCycle : public BackwardBddBase<T> {
     BackwardBddCycle() : BackwardBddBase<T>(){};
 
     void evalNode(NodeBdd<T>& n) const override {
-        auto tmp_j = n.get_job();
-        // int         weight{n.get_weight()};
+        auto       tmp_j = n.get_job();
         auto       p0{n.child[0]};
         auto       p1{n.child[1]};
         const auto dual = BackwardBddBase<T>::get_pi();

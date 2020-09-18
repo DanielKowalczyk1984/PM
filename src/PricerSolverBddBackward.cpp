@@ -113,11 +113,11 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi) {
     }
 
     if (removed_edges) {
-        fmt::print("Number of edges removed by evaluate nodes {{0}:<{1}}\n",
+        fmt::print("Number of edges removed by evaluate nodes {0:<{1}}\n",
                    nb_removed_edges_evaluate, 30);
-        fmt::print("Total number of edges removed {{0}:<{1}}\n",
+        fmt::print("Total number of edges removed {0:<{1}}\n",
                    get_nb_removed_edges(), 30);
-        fmt::print("Number of edges {{0}:<{1}}\n", get_nb_edges(), 30);
+        fmt::print("Number of edges {0:<{1}}\n", get_nb_edges(), 30);
         remove_layers();
         remove_edges();
         bottum_up_filtering();
@@ -199,21 +199,22 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
             //            {
             //     result = it.forward_label[1].get_f() +
             //              it.child[1]->backward_label[0].get_f() +
-            //              it.reduced_cost[1] + pi[nb_jobs];
+            //              it.reduced_cost[1];
             // } else if (it.forward_label[0].get_previous_job() != job &&
             //            it.child[1]->backward_label[0].get_prev_job() == job)
             //            {
             //     result = it.forward_label[0].get_f() +
             //              it.child[1]->backward_label[1].get_f() +
-            //              it.reduced_cost[1] + pi[nb_jobs];
+            //              it.reduced_cost[1];
             // } else {
             //     result = it.forward_label[1].get_f() +
             //              it.child[1]->backward_label[1].get_f() +
-            //              it.reduced_cost[1] + pi[nb_jobs];
+            //              it.reduced_cost[1];
             // }
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (constLB + aux_nb_machines * reduced_cost + result > UB + 1e-4 &&
+            if (constLB + aux_nb_machines * reduced_cost + result >
+                    UB + 10.0 + 1e-4 &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 removed_edges = true;
@@ -224,11 +225,11 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
     }
 
     if (removed_edges) {
-        fmt::print("Number of edges removed by evaluate nodes {{0}:<{1}}\n",
+        fmt::print("Number of edges removed by evaluate nodes {0: <{1}}\n",
                    nb_removed_edges_evaluate, 30);
-        fmt::print("Total number of edges removed {{0}:<{1}}\n",
+        fmt::print("Total number of edges removed {0: <{1}}\n",
                    get_nb_removed_edges(), 30);
-        fmt::print("Number of edges {{0}:<{1}}\n", get_nb_edges(), 30);
+        fmt::print("Number of edges {0: <{1}}\n", get_nb_edges(), 30);
         remove_layers();
         remove_edges();
         // init_table();
@@ -250,29 +251,27 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
             Job*   job = it.get_job();
             double result;
 
-            // if (it.forward_label[0].get_previous_job() != job &&
-            //     it.child[1]->backward_label[0].get_prev_job() != job) {
-            result = it.forward_label[0].get_f() +
-                     it.child[1]->backward_label[0].get_f() +
-                     it.reduced_cost[1];
+            if (it.forward_label[0].get_previous_job() != job &&
+                it.child[1]->backward_label[0].get_prev_job() != job) {
+                result = it.forward_label[0].get_f() +
+                         it.child[1]->backward_label[0].get_f() +
+                         it.reduced_cost[1];
 
-            // } else if (it.forward_label[0].get_previous_job() == job &&
-            //            it.child[1]->backward_label[0].get_prev_job() != job)
-            //            {
-            //     result = it.forward_label[1].get_f() +
-            //              it.child[1]->backward_label[0].get_f() +
-            //              it.reduced_cost[1] + pi[nb_jobs];
-            // } else if (it.forward_label[0].get_previous_job() != job &&
-            //            it.child[1]->backward_label[0].get_prev_job() == job)
-            //            {
-            //     result = it.forward_label[0].get_f() +
-            //              it.child[1]->backward_label[1].get_f() +
-            //              it.reduced_cost[1] + pi[nb_jobs];
-            // } else {
-            //     result = it.forward_label[1].get_f() +
-            //              it.child[1]->backward_label[1].get_f() +
-            //              it.reduced_cost[1] + pi[nb_jobs];
-            // }
+            } else if (it.forward_label[0].get_previous_job() == job &&
+                       it.child[1]->backward_label[0].get_prev_job() != job) {
+                result = it.forward_label[1].get_f() +
+                         it.child[1]->backward_label[0].get_f() +
+                         it.reduced_cost[1];
+            } else if (it.forward_label[0].get_previous_job() != job &&
+                       it.child[1]->backward_label[0].get_prev_job() == job) {
+                result = it.forward_label[0].get_f() +
+                         it.child[1]->backward_label[1].get_f() +
+                         it.reduced_cost[1];
+            } else {
+                result = it.forward_label[1].get_f() +
+                         it.child[1]->backward_label[1].get_f() +
+                         it.reduced_cost[1];
+            }
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
             if (constLB + aux_nb_machines * reduced_cost + result > UB + 1e-2 &&
