@@ -95,7 +95,8 @@ class Label {
             f = _f;
             prev_job = get_job();
         } else {
-            f = _n->f;
+            // f = _n->f;
+            f = _f;
             prev_job = _n->prev_job;
         }
 
