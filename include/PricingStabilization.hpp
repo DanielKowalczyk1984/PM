@@ -19,19 +19,33 @@ class PricingStabilizationBase {
    public:
     PricerSolverBase* solver;
     OptimalSolution<> sol;
-    double            reduced_cost{};
+
+    double reduced_cost{};
+    double eta_in{};
+    double eta_sep{};
+    double eta_out{};
+
+    std::vector<double> pi_in;
+    std::vector<double> pi_sep;
+
+    int update_stab_center{};
+    int iterations{};
+    int previous_fix{};
+
+    bool continueLP{};
 
     OptimalSolution<>& get_sol();
+    bool               get_update_stab_center();
     double             get_reduced_cost();
-    int                update_stab_center{};
-    int                iterations{};
-
-    bool           get_update_stab_center();
-    virtual double get_eta_in();
-    virtual void   solve(double eta_out, double* _pi_out, double* _lhs);
-    virtual int    stopping_criteria();
-    virtual void   update_duals(){};
-    virtual void   remove_constraints(int first, int nb_del);
+    virtual double     get_eta_in();
+    virtual double     get_eta_sep();
+    virtual void       solve(double eta_out, double* _pi_out, double* _lhs);
+    virtual int        stopping_criteria();
+    virtual void       update_duals(){};
+    virtual void       reduced_cost_fixing();
+    virtual void       remove_constraints(int first, int nb_del);
+    virtual void       update_continueLP(int _continueLP);
+    virtual int        do_reduced_cost_fixing();
 };
 
 class PricingStabilizationStat : public PricingStabilizationBase {
@@ -44,15 +58,10 @@ class PricingStabilizationStat : public PricingStabilizationBase {
         default;
     virtual ~PricingStabilizationStat();
 
-    std::vector<double> pi_in;
     std::vector<double> pi_out;
-    std::vector<double> pi_sep;
 
     double alpha{0.8};
     double alphabar{};
-    double eta_in{};
-    double eta_out{};
-    double eta_sep{};
 
     int update{};
 

@@ -23,6 +23,11 @@ void   call_update_duals(PricingStabilization* pricing_stabilization);
 void   call_remove_constraints(PricingStabilization* pricing_stabilization,
                                int                   first,
                                int                   nb_del);
+int    call_do_reduced_fixing(PricingStabilization* solver);
+void   call_reduced_cost_fixing(PricingStabilization* solver);
+void   call_update_continueLP(PricingStabilization* solver, double _eta_out);
+int    call_get_continueLP(PricingStabilization* solver);
+double call_get_eta_sep(PricingStabilization* solver);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

@@ -3,6 +3,7 @@
 #include "fmt/core.h"
 #include "scheduleset.h"
 #include "stabilization.h"
+#include "wct.h"
 #include "wctprivate.h"
 
 template <typename T = double>
@@ -44,7 +45,29 @@ int solve_pricing(NodeData* pd) {
 
     pd->solver_stab->solve(pd->eta_out, pi, lhs);
 
-    if (pd->solver_stab->get_reduced_cost() < -1e-6) {
+    if (call_get_update_stab_center(pd->solver_stab)) {
+        if (call_do_reduced_fixing(pd->solver_stab)) {
+            call_reduced_cost_fixing(pd->solver_stab);
+            check_schedules(pd);
+            delete_infeasible_schedules(pd);
+            double obj;
+            lp_interface_objval(pd->RMP, &obj);
+            call_update_continueLP(pd->solver_stab, obj);
+        }
+    } else {
+        if (!call_get_continueLP(pd->solver_stab)) {
+            //             call_reduced_cost_fixing(pd->solver_stab);
+            // {}            // check_schedules(pd);
+            //             delete_infeasible_schedules(pd);
+            //             double obj;
+            //             lp_interface_objval(pd->RMP, &obj);
+            //             call_update_continueLP(pd->solver_stab, obj);
+        }
+    }
+
+    if (pd->solver_stab->get_reduced_cost() < -1e-6 &&
+        call_get_continueLP(pd->solver_stab) &&
+        (call_get_eta_in(pd->solver_stab) < pd->upper_bound - 1.0 + 1e-6)) {
         pd->update = 1;
         auto sol = std::move(pd->solver_stab->get_sol());
         val = construct_sol(pd, &sol);
