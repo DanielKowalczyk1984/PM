@@ -27,7 +27,11 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
 
 PricerSolverBase::~PricerSolverBase() {}
 
-void PricerSolverBase::add_constraints() {}
+int PricerSolverBase::add_constraints() {
+    int val = 0;
+
+    return val;
+}
 
 void PricerSolverBase::remove_constraints(int first, int nb_del) {
     reformulation_model.delete_constraints(first, nb_del);

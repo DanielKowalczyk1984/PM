@@ -282,14 +282,10 @@ void temporary_data_free(NodeData* pd);
 /**
  * solver zdd
  */
-int  evaluate_nodes(NodeData* pd);
-int  reduce_cost_fixing(NodeData* pd);
 int  build_solve_mip(NodeData* pd);
 int  construct_lp_sol_from_rmp(NodeData* pd);
-void represent_solution(NodeData* pd, Solution* sol);
-void make_schedule_set_feasible(NodeData* pd, ScheduleSet* set);
 int  check_schedule_set(ScheduleSet* set, NodeData* pd);
-void add_constraint(NodeData* pd, Job* job, int order);
+void make_schedule_set_feasible(NodeData* pd, ScheduleSet* set);
 
 void get_mip_statistics(NodeData* pd, enum MIP_Attr c);
 
@@ -297,14 +293,10 @@ void get_mip_statistics(NodeData* pd, enum MIP_Attr c);
  * pricing algorithms
  */
 int solve_pricing(NodeData* pd);
-// int  solve_stab(NodeData* pd);
-// int  solve_stab_dynamic(NodeData* pd);
-int  solve_stab_hybrid(NodeData* pd);
-int  solve_farkas_dbl(NodeData* pd);
-int  solve_farkas_dbl_DP(NodeData* pd);
-void generate_cuts(NodeData* pd);
-int  delete_unused_rows_range(NodeData* pd, int first, int last);
-int  call_update_rows_coeff(NodeData* pd);
+int solve_farkas_dbl(NodeData* pd);
+int generate_cuts(NodeData* pd);
+int delete_unused_rows_range(NodeData* pd, int first, int last);
+int call_update_rows_coeff(NodeData* pd);
 #ifdef __cplusplus
 }
 #endif
