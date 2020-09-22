@@ -56,12 +56,12 @@ int solve_pricing(NodeData* pd) {
         }
     } else {
         if (!call_get_continueLP(pd->solver_stab)) {
-            //             call_reduced_cost_fixing(pd->solver_stab);
-            // {}            // check_schedules(pd);
-            //             delete_infeasible_schedules(pd);
-            //             double obj;
-            //             lp_interface_objval(pd->RMP, &obj);
-            //             call_update_continueLP(pd->solver_stab, obj);
+            call_reduced_cost_fixing(pd->solver_stab);
+            check_schedules(pd);
+            delete_infeasible_schedules(pd);
+            double obj;
+            lp_interface_objval(pd->RMP, &obj);
+            call_update_continueLP(pd->solver_stab, obj);
         }
     }
 
