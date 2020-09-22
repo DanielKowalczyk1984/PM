@@ -40,10 +40,6 @@ void PricingStabilizationBase::solve(double  _eta_out,
         update_stab_center = true;
     }
     iterations++;
-    // if (iterations % 20 == 0 && _eta_out - 1e-2 <= solver->UB) {
-    // solver->calculate_constLB(_pi_out);
-    // solver->evaluate_nodes(_pi_out);
-    // }
 }
 
 OptimalSolution<>& PricingStabilizationBase::get_sol() {
@@ -70,6 +66,13 @@ int PricingStabilizationBase::stopping_criteria() {
     return reduced_cost < -1e-6;
 }
 
+void PricingStabilizationBase::update_duals() {
+    if (solver->reformulation_model.get_nb_constraints() != pi_sep.size()) {
+        pi_sep.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
+        pi_in.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
+    }
+}
+
 void PricingStabilizationBase::reduced_cost_fixing() {
     previous_fix = iterations;
     solver->calculate_constLB(pi_sep.data());
@@ -93,7 +96,6 @@ void PricingStabilizationBase::update_continueLP(int _continueLP) {
 
 int PricingStabilizationBase::do_reduced_cost_fixing() {
     if (iterations == 1 || !continueLP || previous_fix <= iterations - 20) {
-        fmt::print("reduced cost fixing test\n");
         return 1;
     }
     return 0;
@@ -141,9 +143,7 @@ void PricingStabilizationStat::solve(double  _eta_out,
 
     do {
         k += 1.0;
-        alphabar = (hasstabcenter && !(eta_in < eta_out - 0.02))
-                       ? CC_MAX(0, 1.0 - k * (1.0 - alpha))
-                       : 0.0;
+        alphabar = (hasstabcenter) ? CC_MAX(0, 1.0 - k * (1.0 - alpha)) : 0.0;
         compute_pi_eta_sep(alphabar);
         solver->calculate_constLB(pi_sep.data());
         OptimalSolution<> aux_sol =
@@ -152,6 +152,14 @@ void PricingStabilizationStat::solve(double  _eta_out,
         eta_sep = solver->compute_lagrange(aux_sol, pi_sep.data());
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs_coeff);
+
+        auto test =
+            solver->compute_reduced_cost(aux_sol, pi_sep.data(), _lhs_coeff) -
+            pi_sep[solver->convex_constr_id];
+
+        fmt::print("test = {} \n", solver->convex_rhs * test + solver->constLB);
+        fmt::print("eta_sep = {}\n", eta_sep);
+        getchar();
 
         continueLP = (eta_sep < eta_out - 1e-2);
 
@@ -167,10 +175,6 @@ void PricingStabilizationStat::solve(double  _eta_out,
         eta_in = eta_sep;
         pi_in = pi_sep;
         update_stab_center = true;
-        // if (iterations % 50 == 0 && eta_out - 1e-2 <= solver->UB) {
-        //     solver->calculate_constLB(pi_sep.data());
-        //     solver->evaluate_nodes(pi_sep.data());
-        // }
     }
 
     if (iterations % solver->convex_constr_id == 0) {
@@ -186,7 +190,7 @@ double PricingStabilizationStat::get_eta_in() {
 }
 
 int PricingStabilizationStat::stopping_criteria() {
-    return (std::abs(eta_out - eta_in) >= 1e-4);
+    return (eta_out - eta_in >= 1e-4);
 }
 
 void PricingStabilizationStat::update_duals() {
