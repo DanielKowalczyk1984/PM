@@ -216,7 +216,7 @@ void PricerSolverBdd::update_coeff_constraints() {
                                  0.0,
                                  nb_constr + c,
                                  false};
-                auto     coeff_low = constr->get_var_coeff(&key_high);
+                auto     coeff_low = constr->get_var_coeff(&key_low);
                 if (fabs(coeff_low) > 1e-10) {
                     std::shared_ptr<BddCoeff> ptr_coeff{
                         std::make_shared<BddCoeff>(it.get_nb_job(),
@@ -1464,11 +1464,12 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
     outf.close();
 }
 
-void PricerSolverBdd::add_constraints() {
+int PricerSolverBdd::add_constraints() {
     auto& table = decision_diagram->getDiagram().privateEntity();
     if (get_is_integer_solution()) {
         added_cuts = false;
         fmt::print("FOUND INTEGER SOLUTION\n");
+        return 0;
     } else {
         auto generator =
             ZeroHalfCuts(convex_constr_id, convex_rhs, &reformulation_model,
@@ -1483,6 +1484,7 @@ void PricerSolverBdd::add_constraints() {
         }
 
         added_cuts = (cut_list.size() > 0);
+        return added_cuts;
     }
 }
 
