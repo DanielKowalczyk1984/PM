@@ -63,7 +63,7 @@ double PricingStabilizationBase::get_eta_sep() {
 }
 
 int PricingStabilizationBase::stopping_criteria() {
-    return reduced_cost < -1e-6;
+    return eta_in - eta_out < -1e-6;
 }
 
 void PricingStabilizationBase::update_duals() {
@@ -152,14 +152,6 @@ void PricingStabilizationStat::solve(double  _eta_out,
         eta_sep = solver->compute_lagrange(aux_sol, pi_sep.data());
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs_coeff);
-
-        auto test =
-            solver->compute_reduced_cost(aux_sol, pi_sep.data(), _lhs_coeff) -
-            pi_sep[solver->convex_constr_id];
-
-        fmt::print("test = {} \n", solver->convex_rhs * test + solver->constLB);
-        fmt::print("eta_sep = {}\n", eta_sep);
-        getchar();
 
         continueLP = (eta_sep < eta_out - 1e-2);
 
