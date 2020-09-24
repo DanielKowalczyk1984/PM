@@ -1,4 +1,5 @@
 #include "PricerSolverSimpleDP.hpp"
+#include <fmt/core.h>
 #include <scheduleset.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
@@ -10,18 +11,20 @@
 PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray*  _jobs,
                                            int         _num_machines,
                                            int         _Hmax,
-                                           const char* p_name)
-    : PricerSolverBase(_jobs, _num_machines, p_name),
+                                           const char* p_name,
+                                           double      _UB)
+    : PricerSolverBase(_jobs, _num_machines, p_name, _UB),
       Hmax(_Hmax),
       size_graph(0u),
       A(new Job*[Hmax + 1]),
       F(new double[Hmax + 1]),
       backward_F(new double[Hmax + 1]),
-      TI_x(new GRBVar[nb_jobs * (Hmax + 1)]),
-      take(static_cast<int*>(malloc(nb_jobs * (Hmax + 1) * sizeof(int)))),
-      lp_x(new double[nb_jobs * (Hmax + 1)]{}),
-      solution_x(new double[nb_jobs * (Hmax + 1)]{}) {
-    fill_int(take, nb_jobs * (Hmax + 1), 0);
+      TI_x(new GRBVar[convex_constr_id * (Hmax + 1)]),
+      take(static_cast<int*>(
+          malloc(convex_constr_id * (Hmax + 1) * sizeof(int)))),
+      lp_x(new double[convex_constr_id * (Hmax + 1)]{}),
+      solution_x(new double[convex_constr_id * (Hmax + 1)]{}) {
+    fill_int(take, convex_constr_id * (Hmax + 1), 0);
     init_table();
 }
 
@@ -30,7 +33,7 @@ void PricerSolverSimpleDp::init_table() {
     forward_graph = new std::vector<Job*>[Hmax + 1];
 
     for (int t = 0; t < Hmax + 1; t++) {
-        for (int i = 1; i < nb_jobs + 1; i++) {
+        for (int i = 1; i < convex_constr_id + 1; i++) {
             int  j = i - 1;
             Job* job = reinterpret_cast<Job*>(g_ptr_array_index(jobs, j));
 
@@ -45,7 +48,7 @@ void PricerSolverSimpleDp::init_table() {
         }
     }
 
-    std::cout << "Number of arcs in TI formulation = " << size_graph << '\n';
+    fmt::print("Number of arcs in TI formulation = {}\n", size_graph);
 }
 
 PricerSolverSimpleDp::~PricerSolverSimpleDp() {
@@ -67,6 +70,11 @@ void PricerSolverSimpleDp::evaluate_nodes(double*                 pi,
     return;
 }
 
+void PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
+    forward_evaluator(pi);
+    backward_evaluator(pi);
+}
+
 void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     evaluate_nodes(pi, UB, LB);
     int counter = 0;
@@ -77,7 +85,7 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
         while (it != forward_graph[t].end()) {
             double result = F[t - (*it)->processing_time] + value_Fj(t, *it) -
                             pi[(*it)->job] + backward_F[t];
-            if (LB + result + (num_machines - 1) * F[Hmax] > UB + 1e-6) {
+            if (LB + result + (convex_rhs - 1) * F[Hmax] > UB + 1e-6) {
                 size_graph--;
                 it = forward_graph[t].erase(it);
             } else {
@@ -92,7 +100,7 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
             double result =
                 F[t] + value_Fj(t + (*iter)->processing_time, *iter) -
                 pi[(*iter)->job] + backward_F[t + (*iter)->processing_time];
-            if (LB + result + (num_machines - 1) * F[Hmax] > UB + 1e-6) {
+            if (LB + result + (convex_rhs - 1) * F[Hmax] > UB + 1e-6) {
                 take[(*iter)->job * (Hmax + 1) + t] = false;
                 // iter = backward_graph[t].erase(iter);
             } else {
@@ -104,14 +112,13 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
         counter += backward_graph[t].size();
     }
 
-    std::cout << "new size of TI formulation = " << size_graph << " " << counter
-              << " " << x << "\n";
+    fmt::print("new size of TI formulation = {} {} {}", size_graph, counter, x);
     return;
 }
 
 void PricerSolverSimpleDp::build_mip() {
     try {
-        std::cout << "Building Mip model for the TI formulation\n";
+        fmt::print("Building Mip model for the TI formulation\n");
 
         /** Constructing variables */
         for (int t = 0; t < Hmax + 1; t++) {
@@ -126,9 +133,10 @@ void PricerSolverSimpleDp::build_mip() {
         model->update();
 
         /** Assignment variables */
-        std::unique_ptr<GRBLinExpr[]> assignment(new GRBLinExpr[nb_jobs]());
-        std::unique_ptr<char[]>       sense(new char[nb_jobs]);
-        std::unique_ptr<double[]>     rhs(new double[nb_jobs]);
+        std::unique_ptr<GRBLinExpr[]> assignment(
+            new GRBLinExpr[convex_constr_id]());
+        std::unique_ptr<char[]>   sense(new char[convex_constr_id]);
+        std::unique_ptr<double[]> rhs(new double[convex_constr_id]);
 
         for (unsigned i = 0; i < jobs->len; ++i) {
             sense[i] = GRB_EQUAL;
@@ -141,8 +149,9 @@ void PricerSolverSimpleDp::build_mip() {
             }
         }
 
-        std::unique_ptr<GRBConstr[]> assignment_constrs(model->addConstrs(
-            assignment.get(), sense.get(), rhs.get(), nullptr, nb_jobs));
+        std::unique_ptr<GRBConstr[]> assignment_constrs(
+            model->addConstrs(assignment.get(), sense.get(), rhs.get(), nullptr,
+                              convex_constr_id));
 
         model->update();
 
@@ -167,7 +176,7 @@ void PricerSolverSimpleDp::build_mip() {
 
             if (add_constraint) {
                 interval_sense[t] = GRB_LESS_EQUAL;
-                interval_rhs[t] = num_machines;
+                interval_rhs[t] = convex_rhs;
 
                 model->addConstr(interval_constr[t], interval_sense[t],
                                  interval_rhs[t]);
@@ -187,7 +196,7 @@ void PricerSolverSimpleDp::build_mip() {
         }
     }
 
-    model->write("ti_" + problem_name + "_" + std::to_string(num_machines) +
+    model->write("ti_" + problem_name + "_" + std::to_string(convex_rhs) +
                  "correct.lp");
     model->optimize();
     return;
@@ -195,7 +204,7 @@ void PricerSolverSimpleDp::build_mip() {
 
 void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     /** Initialisation */
-    F[0] = _pi[nb_jobs];
+    F[0] = _pi[convex_constr_id];
     A[0] = nullptr;
 
     for (int t = 1; t < Hmax + 1; t++) {
@@ -296,7 +305,7 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     const double*    columns,
     const GPtrArray* schedule_sets,
     int              num_columns) {
-    std::fill(lp_x, lp_x + nb_jobs * (Hmax + 1), 0.0);
+    std::fill(lp_x, lp_x + convex_constr_id * (Hmax + 1), 0.0);
     for (int k = 0; k < num_columns; k++) {
         if (columns[k] > 0.00001) {
             ScheduleSet* tmp =
@@ -312,7 +321,7 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
 }
 
 void PricerSolverSimpleDp::project_solution(Solution* sol) {
-    std::fill(solution_x, solution_x + nb_jobs * (Hmax + 1), 0.0);
+    std::fill(solution_x, solution_x + convex_constr_id * (Hmax + 1), 0.0);
 
     for (int it = 0; it < sol->nb_machines; it++) {
         GPtrArray* tmp = sol->part[it].machine;
@@ -348,7 +357,7 @@ void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name) {
         }
     }
     auto file_name = "TI_representation_" + problem_name + "_" +
-                     std::to_string(num_machines) + ".gv";
+                     std::to_string(convex_rhs) + ".gv";
     auto otf = std::ofstream(file_name);
     boost::write_graphviz(otf, graph);
     otf.close();

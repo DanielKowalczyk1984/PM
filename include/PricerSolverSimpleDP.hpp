@@ -21,13 +21,15 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     PricerSolverSimpleDp(GPtrArray*  _jobs,
                          int         _num_machines,
                          int         _Hmax,
-                         const char* p_name);
+                         const char* p_name,
+                         double      _UB);
     ~PricerSolverSimpleDp();
     void init_table() override;
 
     void evaluate_nodes([[maybe_unused]] double* pi,
                         [[maybe_unused]] int     UB,
                         [[maybe_unused]] double  LB) override;
+    void evaluate_nodes([[maybe_unused]] double* pi) override;
     void reduce_cost_fixing([[maybe_unused]] double* pi,
                             [[maybe_unused]] int     UB,
                             [[maybe_unused]] double  LB) override;
@@ -65,27 +67,9 @@ class PricerSolverSimpleDp : public PricerSolverBase {
 
     void update_constraints() override {}
 
-    void update_reduced_costs_arcs(
-        [[maybe_unused]] double* _pi,
-        [[maybe_unused]] bool    farkas = false) override {}
-
     void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
 
     void update_coeff_constraints() override {}
-
-    // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi,
-    // double *lhs) override {
-    //     double result = 0.0;
-
-    //     return result;
-    // }
-
-    // double compute_lagrange(const OptimalSolution<> &sol, double *pi)
-    // override {
-    //     double result = 0;
-
-    //     return result;
-    // }
 };
 
 #endif  // PRICER_SOLVER_SIMPLE_DP_HPP

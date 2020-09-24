@@ -68,7 +68,7 @@ class Label {
         return get_previous() == nullptr ? nullptr : get_previous()->get_job();
     }
 
-    void update_solution(T _f, Label<N, T>*&& _prev, bool&& _high) {
+    void update_solution(T _f, Label<N, T>*&& _prev, bool&& _high = false) {
         f = _f;
         prev = _prev;
         high = _high;
@@ -95,7 +95,8 @@ class Label {
             f = _f;
             prev_job = get_job();
         } else {
-            f = _n->f;
+            // f = _n->f;
+            f = _f;
             prev_job = _n->prev_job;
         }
 

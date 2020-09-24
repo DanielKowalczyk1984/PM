@@ -5,14 +5,20 @@
 #include "PricerSolverBase.hpp"
 #include "wctprivate.h"
 
-class SeparationSolver {
-    PricerSolverBase* pricer_solver;
-
+class SeperationSolver {
    public:
-    SeparationSolver(PricerSolverBase* _pricer_solver)
-        : pricer_solver(_pricer_solver) {
-        ReformulationModel* rmp = pricer_solver->get_reformulation_model();
-    }
+    SeperationSolver(PricerSolverBase* _solver);
+    SeperationSolver(SeperationSolver&&) = default;
+    SeperationSolver(const SeperationSolver&) = default;
+    SeperationSolver& operator=(SeperationSolver&&) = default;
+    SeperationSolver& operator=(const SeperationSolver&) = default;
+    ~SeperationSolver();
+
+   private:
+    PricerSolverBase*            solver;
+    std::vector<ConstraintBase*> cuts;
+
+    int max_nb_cuts;
 };
 
 #endif

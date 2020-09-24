@@ -81,12 +81,15 @@ class ForwardBddCycle : public ForwardBddBase<T> {
         n.reset_reduced_costs();
         const double* dual = ForwardBddBase<T>::get_pi();
 
-        for (auto it = n.coeff_list[1].begin(); it != n.coeff_list[1].end();
-             it++) {
-            auto aux = it->lock();
-            if (aux) {
-                n.adjust_reduced_costs(aux->get_coeff() * dual[aux->get_row()],
-                                       aux->get_high());
+        for (int k = 0; k < 2; k++) {
+            for (auto it = n.coeff_list[k].begin(); it != n.coeff_list[k].end();
+                 it++) {
+                auto aux = it->lock();
+                if (aux) {
+                    n.adjust_reduced_costs(
+                        aux->get_coeff() * dual[aux->get_row()],
+                        aux->get_high());
+                }
             }
         }
         result = n.reduced_cost[1];
@@ -96,10 +99,13 @@ class ForwardBddCycle : public ForwardBddBase<T> {
          */
         Job* prev = n.forward_label[0].get_previous_job();
         Job* aux1 = p1->forward_label[0].get_previous_job();
-        diff = (prev == nullptr) ? true
-                                 : (value_diff_Fij(weight, tmp_j, prev) >= 0);
+        // // diff = (prev == nullptr) ? true
+        //                          : (value_diff_Fij(weight, tmp_j, prev) >=
+        //                          0);
 
-        if (prev != tmp_j && diff) {
+        if (prev != tmp_j
+            // && diff
+        ) {
             g = n.forward_label[0].get_f() + result;
             if (g < p1->forward_label[0].get_f()) {
                 if (aux1 != tmp_j) {
@@ -114,24 +120,22 @@ class ForwardBddCycle : public ForwardBddBase<T> {
         } else {
             g = n.forward_label[1].get_f() + result;
             prev = n.forward_label[1].get_previous_job();
-            diff = (prev == nullptr)
-                       ? true
-                       : (value_diff_Fij(weight, tmp_j, prev) >= 0);
+            // diff = (prev == nullptr)
+            //    ? true
+            //    : (value_diff_Fij(weight, tmp_j, prev) >= 0);
 
-            if (diff) {
-                if (g < p1->forward_label[0].get_f()) {
-                    if (aux1 != tmp_j) {
-                        p1->forward_label[1].update_solution(
-                            p1->forward_label[0]);
-                    }
-                    p1->forward_label[0].update_solution(
-                        g, &(n.forward_label[1]), true);
-                } else if ((g < p1->forward_label[1].get_f()) &&
-                           (aux1 != tmp_j)) {
-                    p1->forward_label[1].update_solution(
-                        g, &(n.forward_label[1]), true);
+            // if (diff) {
+            if (g < p1->forward_label[0].get_f()) {
+                if (aux1 != tmp_j) {
+                    p1->forward_label[1].update_solution(p1->forward_label[0]);
                 }
+                p1->forward_label[0].update_solution(g, &(n.forward_label[1]),
+                                                     true);
+            } else if ((g < p1->forward_label[1].get_f()) && (aux1 != tmp_j)) {
+                p1->forward_label[1].update_solution(g, &(n.forward_label[1]),
+                                                     true);
             }
+            // }
         }
 
         /**
@@ -185,12 +189,15 @@ class ForwardBddSimple : public ForwardBddBase<T> {
         n.reset_reduced_costs();
         const double* dual = ForwardBddBase<T>::get_pi();
 
-        for (auto it = n.coeff_list[1].begin(); it != n.coeff_list[1].end();
-             it++) {
-            auto aux = it->lock();
-            if (aux) {
-                n.adjust_reduced_costs(aux->get_coeff() * dual[aux->get_row()],
-                                       aux->get_high());
+        for (int k = 0; k < 2; k++) {
+            for (auto it = n.coeff_list[k].begin(); it != n.coeff_list[k].end();
+                 it++) {
+                auto aux = it->lock();
+                if (aux) {
+                    n.adjust_reduced_costs(
+                        aux->get_coeff() * dual[aux->get_row()],
+                        aux->get_high());
+                }
             }
         }
 

@@ -1,5 +1,6 @@
 #ifndef BACKWARD_BDD_HPP
 #define BACKWARD_BDD_HPP
+#include <fmt/core.h>
 #include <NodeBdd.hpp>
 #include <OptimalSolution.hpp>
 #include "NodeBddEval.hpp"
@@ -40,15 +41,34 @@ class BackwardBddSimple : public BackwardBddBase<T> {
         NodeBdd<T>* p1 = n.child[1];
 
         n.reset_reduced_costs();
+
         const double* dual = BackwardBddBase<T>::get_pi();
 
-        for (auto it = n.coeff_list[1].begin(); it != n.coeff_list[1].end();
-             it++) {
-            auto aux = it->lock();
+        auto func = [&](auto it) {
+            auto aux = it.lock();
             if (aux) {
                 n.adjust_reduced_costs(aux->get_coeff() * dual[aux->get_row()],
                                        aux->get_high());
+                return false;
+            } else {
+                return true;
             }
+        };
+
+        for (int k = 0; k < 2; k++) {
+            auto it = std::remove_if(n.coeff_list[k].begin(),
+                                     n.coeff_list[k].end(), func);
+            // for (auto it = n.coeff_list[k].begin(); it !=
+            // n.coeff_list[k].end();
+            //      it++) {
+            //     auto aux = it->lock();
+            //     if (aux) {
+            //         n.adjust_reduced_costs(
+            //             aux->get_coeff() * dual[aux->get_row()],
+            //             aux->get_high());
+            //     }
+            // }
+            n.coeff_list[k].erase(it, n.coeff_list[k].end());
         }
 
         T obj0 = p0->backward_label[0].get_f() + n.reduced_cost[0];
@@ -101,23 +121,30 @@ class BackwardBddCycle : public BackwardBddBase<T> {
     BackwardBddCycle() : BackwardBddBase<T>(){};
 
     void evalNode(NodeBdd<T>& n) const override {
-        auto tmp_j = n.get_job();
-        // int         weight{n.get_weight()};
-        NodeBdd<T>* p0{n.child[0]};
-        NodeBdd<T>* p1{n.child[1]};
-        n.reset_reduced_costs();
-        const double* dual = BackwardBddBase<T>::get_pi();
+        auto       tmp_j = n.get_job();
+        auto       p0{n.child[0]};
+        auto       p1{n.child[1]};
+        const auto dual = BackwardBddBase<T>::get_pi();
 
-        for (auto it = n.coeff_list[1].begin(); it != n.coeff_list[1].end();
-             it++) {
-            auto aux = it->lock();
+        n.reset_reduced_costs();
+        auto func = [&](auto it) {
+            auto aux = it.lock();
             if (aux) {
                 n.adjust_reduced_costs(aux->get_coeff() * dual[aux->get_row()],
                                        aux->get_high());
+                return false;
+            } else {
+                return true;
             }
+        };
+
+        for (auto k = 0; k < 2; k++) {
+            auto it = std::remove_if(n.coeff_list[k].begin(),
+                                     n.coeff_list[k].end(), func);
+            n.coeff_list[k].erase(it, n.coeff_list[k].end());
         }
 
-        Job* prev_job{p1->backward_label[0].get_prev_job()};
+        auto prev_job{p1->backward_label[0].get_prev_job()};
 
         n.backward_label[0].update_label(
             &(p0->backward_label[0]),

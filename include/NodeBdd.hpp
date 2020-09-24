@@ -30,13 +30,14 @@ class NodeBdd : public NodeBase {
     int                     low_edge_key;
     bool                    visited;
     bool                    lp_visited;
-    int                     lp_key;
     boost::dynamic_bitset<> all;
     int                     backward_distance[2];
     int                     in_degree_0;
     int                     in_degree_1;
     GRBVar                  y[2];
     GRBVar                  r[2];
+    GRBVar                  sigma;
+    double                  coeff_cut[2];
 
     /**
      * Constructor
@@ -57,38 +58,12 @@ class NodeBdd : public NodeBase {
           low_edge_key(-1),
           visited(false),
           lp_visited(false),
-          lp_key(-1),
           in_degree_0(0),
-          in_degree_1(0) {
+          in_degree_1(0),
+          coeff_cut{0.0, 0.0} {
         child[0] = nullptr;
         child[1] = nullptr;
     };
-
-    NodeBdd(int&  _weight,
-            int&  _num_layer,
-            bool& _root_node,
-            bool& _terminal_node)
-        : NodeBase(_num_layer, _root_node, _terminal_node),
-          weight(_weight),
-          forward_label{Label<NodeBdd<T>, T>(this), Label<NodeBdd, T>(this)},
-          backward_label{Label<NodeBdd<T>, T>(this), Label<NodeBdd, T>(this)},
-          ptr_node_id(nullptr),
-          cost{0.0, 0.0},
-          reduced_cost{0.0, 0.0},
-          lp_x{0.0, 0.0},
-          calc_yes(true),
-          calc_no(true),
-          key(-1),
-          high_edge_key(-1),
-          low_edge_key(-1),
-          visited(false),
-          lp_visited(false),
-          lp_key(-1),
-          in_degree_0(0),
-          in_degree_1(0) {
-        child[0] = nullptr;
-        child[1] = nullptr;
-    }
 
     void set_head_node() {
         forward_label[0].set_head_node(this);
@@ -113,9 +88,9 @@ class NodeBdd : public NodeBase {
           low_edge_key(-1),
           visited(false),
           lp_visited(false),
-          lp_key(-1),
           in_degree_0(0),
-          in_degree_1(0) {
+          in_degree_1(0),
+          coeff_cut{0.0, 0.0} {
         child[0] = nullptr;
         child[1] = nullptr;
     }
@@ -141,7 +116,6 @@ class NodeBdd : public NodeBase {
     void reset_lp_x() {
         lp_x[0] = lp_x[1] = 0.0;
         lp_visited = false;
-        lp_key = -1;
     }
 
     void add_coeff_list(std::shared_ptr<BddCoeff>& ptr, int high) {

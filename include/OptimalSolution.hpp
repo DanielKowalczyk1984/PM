@@ -15,7 +15,10 @@ class OptimalSolution {
     OptimalSolution() : obj(0), cost(0), C_max(0), jobs(g_ptr_array_new()) {}
 
     explicit OptimalSolution(T _obj)
-        : obj(_obj), cost(0), C_max(0), jobs(g_ptr_array_new()) {}
+        : obj(_obj),
+          cost(0),
+          C_max(0),
+          jobs(g_ptr_array_new()) {}
 
     /** Copy constructor */
     OptimalSolution(const OptimalSolution& other)
@@ -54,7 +57,9 @@ class OptimalSolution {
         obj = other.obj;
         cost = other.cost;
         C_max = other.C_max;
-        g_ptr_array_free(jobs, TRUE);
+        if (jobs) {
+            g_ptr_array_free(jobs, TRUE);
+        }
         jobs = other.jobs;
         other.jobs = nullptr;
         return *this;

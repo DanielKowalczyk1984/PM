@@ -14,7 +14,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     Job***              A;
     int**               B;
     GRBVar***           arctime_x;
-    int                 num_edges_removed;
+    int                 nb_edges_removed;
     double*             lp_x;
     double*             solution_x;
 
@@ -22,7 +22,8 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     PricerSolverArcTimeDp(GPtrArray*  _jobs,
                           int         _num_machines,
                           int         _Hmax,
-                          const char* p_name);
+                          const char* p_name,
+                          double      _UB);
     ~PricerSolverArcTimeDp();
     void init_table() override;
 
@@ -33,6 +34,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
                         [[maybe_unused]] int     UB,
                         [[maybe_unused]] double  LB) override;
 
+    void evaluate_nodes([[maybe_unused]] double* pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(const double*    columns,
                                    const GPtrArray* schedule_sets,
@@ -84,10 +86,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     int* get_take() override { return NULL; }
 
     void update_constraints() override {}
-
-    void update_reduced_costs_arcs(
-        [[maybe_unused]] double* _pi,
-        [[maybe_unused]] bool    farkas = false) override {}
 
     void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
 

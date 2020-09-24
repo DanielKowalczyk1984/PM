@@ -448,19 +448,19 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
         compute_lower_bound(problem, pd);
     }
 
-    wctlp_get_nb_cols(pd->RMP, &nb_cols);
+    lp_interface_get_nb_cols(pd->RMP, &nb_cols);
     assert(pd->localColPool->len == nb_cols);
     x = CC_SAFE_MALLOC(nb_cols, double);
     CCcheck_NULL_2(x, "Failed to allocate memory to x");
-    val = wctlp_optimize(pd->RMP, &status);
-    CCcheck_val_2(val, "Failed at wctlp_optimize");
+    val = lp_interface_optimize(pd->RMP, &status);
+    CCcheck_val_2(val, "Failed at lp_interface_optimize");
 
     if (status == GRB_INFEASIBLE) {
         goto CLEAN;
     }
 
-    val = wctlp_x(pd->RMP, x, 0);
-    CCcheck_val_2(val, "Failed at wctlp_x");
+    val = lp_interface_x(pd->RMP, x, 0);
+    CCcheck_val_2(val, "Failed at lp_interface_x");
     CC_IFFREE(pd->lambda, double);
     pd->lambda = CC_SAFE_MALLOC(nb_cols, double);
     CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");

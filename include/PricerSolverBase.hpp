@@ -12,27 +12,26 @@
 #include "wctprivate.h"
 
 struct PricerSolverBase {
-   protected:
-    GPtrArray*                jobs;
-    int                       nb_jobs;
-    int                       num_machines;
-    GPtrArray*                ordered_jobs;
-    int                       nb_layers;
+   public:
+    GPtrArray* jobs;
+    int        convex_constr_id;
+    int        convex_rhs;
+
     std::string               problem_name;
     std::unique_ptr<GRBEnv>   env;
     std::unique_ptr<GRBModel> model;
     ReformulationModel        reformulation_model;
     bool                      is_integer_solution;
-
-   public:
+    double                    constLB;
+    double                    UB;
+    bool                      added_cuts{};
     /**
      * Default constructors
      */
-    PricerSolverBase(GPtrArray* _jobs, int _num_machines, const char* p_name);
     PricerSolverBase(GPtrArray*  _jobs,
                      int         _num_machines,
-                     GPtrArray*  _ordered_jobs,
-                     const char* p_name);
+                     const char* p_name,
+                     double      _UB);
     /**
      * Copy constructor
      */
@@ -75,6 +74,7 @@ struct PricerSolverBase {
 
     virtual void reduce_cost_fixing(double* pi, int UB, double LB) = 0;
     virtual void evaluate_nodes(double* pi, int UB, double LB) = 0;
+    virtual void evaluate_nodes(double* pi) = 0;
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;
@@ -90,9 +90,9 @@ struct PricerSolverBase {
 
     virtual void add_constraint(Job* job, GPtrArray* list, int order) = 0;
     virtual void insert_constraints_lp(NodeData* pd) = 0;
-    virtual void add_constraints(){
-
-    };
+    virtual int  add_constraints();
+    virtual void remove_constraints(int first, int nb_del);
+    virtual void update_rows_coeff(int first);
 
     virtual void update_coeff_constraints() = 0;
 
@@ -101,6 +101,8 @@ struct PricerSolverBase {
      */
     virtual void iterate_zdd() = 0;
     virtual void print_num_paths() = 0;
+    double       get_UB();
+    void         update_UB(double _UB);
 
     virtual int    get_num_remove_nodes() = 0;
     virtual int    get_num_remove_edges() = 0;
@@ -123,12 +125,13 @@ struct PricerSolverBase {
      */
 
     virtual void   update_constraints() = 0;
-    virtual void   update_reduced_costs_arcs(double* _pi,
-                                             bool    farkas = false) = 0;
     virtual double compute_reduced_cost(const OptimalSolution<>& sol,
                                         double*                  pi,
                                         double*                  lhs);
     virtual double compute_lagrange(const OptimalSolution<>& sol, double* pi);
+
+    virtual double compute_subgradient(const OptimalSolution<>& sol,
+                                       double*                  subgradient);
 
     inline void set_is_integer_solution(bool _is_solution) {
         is_integer_solution = _is_solution;
@@ -139,6 +142,9 @@ struct PricerSolverBase {
     inline ReformulationModel* get_reformulation_model() {
         return &reformulation_model;
     }
+
+    void calculate_constLB(double* pi);
+
     // virtual void compute_lhs_coeff(GArray *lhs_coeff, ScheduleSet* set) = 0;
 };
 

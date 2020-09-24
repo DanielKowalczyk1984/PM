@@ -23,11 +23,6 @@ class NodeBase {
 
           };
 
-    // NodeBase(int& _num_layer, bool& _root_node, bool& _terminal_node)
-    //     : job(nullptr),
-    //       branch{NodeId(), NodeId()},
-    //       variable_key{VariableKeyBase(), VariableKeyBase()} {}
-
     NodeBase(size_t i, size_t j)
         : job(nullptr),
           branch{i, j},

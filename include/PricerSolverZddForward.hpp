@@ -9,11 +9,15 @@ class PricerSolverSimple : public PricerSolverZdd {
     BackwardZddSimpleDouble reversed_evaluator;
 
    public:
-    PricerSolverSimple(GPtrArray* _jobs, int _num_machines,
-                       GPtrArray* _ordered_jobs, const char* p_name);
+    PricerSolverSimple(GPtrArray*  _jobs,
+                       int         _num_machines,
+                       GPtrArray*  _ordered_jobs,
+                       const char* p_name,
+                       double      _UB);
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     void                    compute_labels(double* _pi);
     void evaluate_nodes(double* pi, int UB, double LB) override;
+    void evaluate_nodes(double* pi) final;
 };
 
 class PricerSolverZddCycle : public PricerSolverZdd {
@@ -22,11 +26,15 @@ class PricerSolverZddCycle : public PricerSolverZdd {
     BackwardZddCycleDouble reversed_evaluator;
 
    public:
-    PricerSolverZddCycle(GPtrArray* _jobs, int _num_machines,
-                         GPtrArray* _ordered_jobs, const char* p_name);
+    PricerSolverZddCycle(GPtrArray*  _jobs,
+                         int         _num_machines,
+                         GPtrArray*  _ordered_jobs,
+                         const char* p_name,
+                         double      _UB);
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     void                    compute_labels(double* _pi);
     void evaluate_nodes(double* pi, int UB, double LB) override;
+    void evaluate_nodes(double* pi) final;
 };
 
 #endif  // PRICER_SOLVER_ZDD_FORWARD_HPP

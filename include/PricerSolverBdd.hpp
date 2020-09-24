@@ -16,6 +16,9 @@ class PricerSolverBdd : public PricerSolverBase {
     int                            nb_removed_edges = 0;
     int                            nb_removed_nodes = 0;
 
+    GPtrArray* ordered_jobs;
+    int        nb_layers;
+
     MipGraph                                                    mip_graph;
     std::unique_ptr<double[]>                                   solution_x;
     std::vector<std::vector<std::weak_ptr<NodeId>>>             node_ids;
@@ -32,7 +35,8 @@ class PricerSolverBdd : public PricerSolverBase {
                     GPtrArray*  _ordered_jobs,
                     const char* p_name,
                     int         _Hmax,
-                    int*        _take_jobs);
+                    int*        _take_jobs,
+                    double      _UB);
     void         init_table() override;
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
     void         check_infeasible_arcs();
@@ -67,8 +71,10 @@ class PricerSolverBdd : public PricerSolverBase {
     int    get_num_layers() override;
     void   print_num_paths() override;
     void   add_constraint(Job* job, GPtrArray* list, int order) override;
+    int    add_constraints() override;
+    void   remove_constraints(int first, int nb_del) override;
+    void   update_rows_coeff(int first) override;
 
-    void update_reduced_costs_arcs(double* _pi, bool farkas = false) override;
     void init_coeff_constraints();
     void insert_constraints_lp(NodeData* pd) override;
 
@@ -90,7 +96,11 @@ class PricerSolverBdd : public PricerSolverBase {
                                 double*                  pi,
                                 double*                  lhs) override;
     double compute_lagrange(const OptimalSolution<>& sol, double* pi) override;
-    void   update_constraints() override {}
+
+    double compute_subgradient(const OptimalSolution<>& sol,
+                               double*                  sub_gradient) override;
+
+    void update_constraints() override {}
 
     void update_coeff_constraints() override;
 
