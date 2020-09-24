@@ -1,6 +1,6 @@
 #include <interval.h>
 
-void g_print_interval(gpointer data, gpointer user_data) {
+void g_print_interval(gpointer data, MAYBE_UNUSED gpointer user_data) {
     interval* a = (interval*)data;
     printf("interval %d: (%d %d]: ", a->key, a->a, a->b);
     g_ptr_array_foreach(a->sigma, g_print_job, NULL);
@@ -54,8 +54,12 @@ gint g_compare_interval_data(gconstpointer a, gconstpointer b, gpointer data) {
     }
 }
 
-void interval_init(interval* p, int a, int b, int key, GPtrArray* jobarray,
-                   int nb_jobs) {
+void interval_init(interval*  p,
+                   int        a,
+                   int        b,
+                   int        key,
+                   GPtrArray* jobarray,
+                   int        nb_jobs) {
     p->a = a;
     p->b = b;
     p->key = key;
@@ -76,8 +80,11 @@ void interval_init(interval* p, int a, int b, int key, GPtrArray* jobarray,
     }
 }
 
-interval* interval_alloc(int a, int b, int key, GPtrArray* jobarray,
-                         int nb_jobs) {
+interval* interval_alloc(int        a,
+                         int        b,
+                         int        key,
+                         GPtrArray* jobarray,
+                         int        nb_jobs) {
     interval* p = CC_SAFE_MALLOC(1, interval);
     CCcheck_NULL_3(p, "Failed to allocate memory")
         interval_init(p, a, b, key, jobarray, nb_jobs);

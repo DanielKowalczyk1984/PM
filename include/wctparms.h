@@ -68,7 +68,7 @@ enum Strong_Branching {
     no_strong_branching = 1,
 };
 
-enum MIP_solver{
+enum MIP_solver {
     min_mip_solver = 0,
     no_mip_solver = min_mip_solver,
     use_mip_solver = 1,
@@ -97,9 +97,9 @@ typedef struct parms {
     int    nb_iterations_rvnd;
     double branching_cpu_limit;
     double alpha;
-    int pricing_solver;
-    int mip_solver;
-    int use_heuristic;
+    int    pricing_solver;
+    int    mip_solver;
+    int    use_heuristic;
 
     enum reduced_cost_fixing_param reduce_cost_fixing;
 
@@ -119,55 +119,55 @@ typedef struct parms {
     int delete_edge_lists;
     int delete_cclasses;
 
-    char *jobfile;
+    char* jobfile;
     char* pname;
-    char *outfile;
-    char *cclasses_infile;
-    char *cclasses_outfile;
-    char *color_infile;
-    char *backupdir;
+    char* outfile;
+    char* cclasses_infile;
+    char* cclasses_outfile;
+    char* color_infile;
+    char* backupdir;
 
     int upper_bounds_only;
     int nb_machines;
 } Parms;
 
 /*Initialization and free memory*/
-void parms_init(Parms *parms);
-void parms_free(Parms *parms);
+void parms_init(Parms* parms);
+void parms_free(Parms* parms);
 
 /*Functions for setting some parameters*/
-int parms_set_init_upper_bound(Parms *parms, int bound);
-int parms_set_branching_cpu_limit(Parms *parms, double limit);
-int parms_set_alpha(Parms *parms, double alpha);
-int parms_set_search_strategy(Parms *parms, int strategy);
-int parms_set_branching_strategy(Parms *parms, int strategy);
-int parms_set_strong_branching(Parms *parms, int strong);
-int parms_set_mip_solver(Parms *parms, int usage);
-int parms_set_use_heuristic(Parms *parms, int usage);
-int parms_set_reduce_cost(Parms *parms, int usage);
-int parms_set_nb_iterations_rvnd(Parms *parms, int nb_sol);
+int parms_set_init_upper_bound(Parms* parms, int bound);
+int parms_set_branching_cpu_limit(Parms* parms, double limit);
+int parms_set_alpha(Parms* parms, double alpha);
+int parms_set_search_strategy(Parms* parms, int strategy);
+int parms_set_branching_strategy(Parms* parms, int strategy);
+int parms_set_strong_branching(Parms* parms, int strong);
+int parms_set_mip_solver(Parms* parms, int usage);
+int parms_set_use_heuristic(Parms* parms, int usage);
+int parms_set_reduce_cost(Parms* parms, int usage);
+int parms_set_nb_iterations_rvnd(Parms* parms, int nb_sol);
 
 /**
  * column generation
  */
-int parms_set_branchandbound(Parms *parms, int bound);
-int parms_set_stab_technique(Parms *parms, int stab_technique);
-int parms_set_print(Parms *parms, int print);
-int parms_set_pricing_solver(Parms *parms, int solver);
+int parms_set_branchandbound(Parms* parms, int bound);
+int parms_set_stab_technique(Parms* parms, int stab_technique);
+int parms_set_print(Parms* parms, int print);
+int parms_set_pricing_solver(Parms* parms, int solver);
 
 /**
  * scatter search
  */
-int parms_set_scatter_search(Parms *parms, int scatter);
-int parms_set_combine_method(Parms *parms, int combine_method);
-int parms_set_scatter_search_cpu_limit(Parms *parms, double limit);
+int parms_set_scatter_search(Parms* parms, int scatter);
+int parms_set_combine_method(Parms* parms, int combine_method);
+int parms_set_scatter_search_cpu_limit(Parms* parms, double limit);
 
 /*Functions for defining the filesname*/
-int parms_set_outfile(Parms *parms, const char *fname);
-int parms_set_file(Parms *parms, const char *fname);
+int parms_set_outfile(Parms* parms, const char* fname);
+int parms_set_file(Parms* parms, const char* fname);
 int parms_set_pname(Parms* parms, char* fname);
-int parms_set_backupdir(Parms *parms, const char *fname);
-int parms_set_nb_machines(Parms *parms, int nb_machines);
+int parms_set_backupdir(Parms* parms, const char* fname);
+int parms_set_nb_machines(Parms* parms, int nb_machines);
 
 #ifdef __cplusplus
 }

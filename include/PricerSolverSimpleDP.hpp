@@ -18,13 +18,21 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     double*                   solution_x;
 
    public:
-    PricerSolverSimpleDp(GPtrArray* _jobs, int _num_machines, int _Hmax,
-                         const char* p_name);
+    PricerSolverSimpleDp(GPtrArray*  _jobs,
+                         int         _num_machines,
+                         int         _Hmax,
+                         const char* p_name,
+                         double      _UB);
     ~PricerSolverSimpleDp();
     void init_table() override;
 
-    void evaluate_nodes(double* pi, int UB, double LB) override;
-    void reduce_cost_fixing(double* pi, int UB, double LB) override;
+    void evaluate_nodes([[maybe_unused]] double* pi,
+                        [[maybe_unused]] int     UB,
+                        [[maybe_unused]] double  LB) override;
+    void evaluate_nodes([[maybe_unused]] double* pi) override;
+    void reduce_cost_fixing([[maybe_unused]] double* pi,
+                            [[maybe_unused]] int     UB,
+                            [[maybe_unused]] double  LB) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(const double*    columns,
                                    const GPtrArray* schedule_sets,
@@ -42,7 +50,6 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     size_t get_nb_vertices() override;
     int    get_num_layers() override;
     void   print_num_paths() override;
-    void   disjunctive_inequality(double* x, Solution* sol) override;
 
     bool check_schedule_set(GPtrArray* set) override;
     void make_schedule_set_feasible(GPtrArray* set) override;
@@ -58,34 +65,11 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         return tmp;
     }
 
-    void update_constraints() override {
+    void update_constraints() override {}
 
-    }
+    void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
 
-    void update_reduced_costs_arcs(double *_pi, bool farkas = false) override {
-        
-    }
-
-    void insert_constraints_lp(NodeData *pd) override {
-
-    }
-
-    void update_coeff_constraints() override {
-
-    }
-
-    // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi, double *lhs) override {
-    //     double result = 0.0;
-
-    //     return result;
-    // }
-
-    // double compute_lagrange(const OptimalSolution<> &sol, double *pi) override {
-    //     double result = 0;
-
-    //     return result;
-    // }
-
+    void update_coeff_constraints() override {}
 };
 
 #endif  // PRICER_SOLVER_SIMPLE_DP_HPP

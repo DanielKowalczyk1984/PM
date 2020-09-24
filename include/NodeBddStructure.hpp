@@ -32,9 +32,9 @@
 #include <stdexcept>
 #include <vector>
 
-#include "NodeBddTable.hpp"
 #include "NodeBddBuilder.hpp"
 #include "NodeBddReducer.hpp"
+#include "NodeBddTable.hpp"
 
 #include "NodeBddEval.hpp"
 #include "NodeBddSpec.hpp"
@@ -43,26 +43,25 @@
  * Ordered n-ary decision diagram structure.
  * @tparam ARITY arity of the nodes.
  */
-template<typename T = NodeBdd<double>>
-class DdStructure: public DdSpec<DdStructure<T>, NodeId> {
-    TableHandler<T> diagram; ///< The diagram structure.
-    NodeId root_;                    ///< Root node ID.
+template <typename T = NodeBdd<double>>
+class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
+    TableHandler<T> diagram;  ///< The diagram structure.
+    NodeId          root_;    ///< Root node ID.
 
-public:
+   public:
     /**
      * Default constructor.
      */
-    DdStructure() : root_(0) { }
+    DdStructure() : root_(0) {}
 
     /**
      * Universal ZDD constructor.
      * @param n the number of variables.
      */
-    explicit DdStructure(int n) :
-            diagram(n + 1), root_(1) {
+    explicit DdStructure(int n) : diagram(n + 1), root_(1) {
         assert(n >= 0);
         NodeTableEntity<T>& table = diagram.privateEntity();
-        NodeId f(1);
+        NodeId              f(1);
 
         for (int i = 1; i <= n; ++i) {
             table.initRow(i, 1);
@@ -79,16 +78,16 @@ public:
      * DD construction.
      * @param spec DD spec.
      */
-    template<typename SPEC>
+    template <typename SPEC>
     explicit DdStructure(DdSpecBase<SPEC> const& spec) {
         construct_(spec.entity());
     }
 
-private:
-    template<typename SPEC>
+   private:
+    template <typename SPEC>
     void construct_(SPEC const& spec) {
         DdBuilder<SPEC, T> zc(spec, diagram);
-        int n = zc.initialize(root_);
+        int                n = zc.initialize(root_);
 
         if (n > 0) {
             for (int i = n; i > 0; --i) {
@@ -97,26 +96,27 @@ private:
         }
     }
 
-public:
+   public:
     /**
      * ZDD subsetting.
      * @param spec ZDD spec.
      */
-    template<typename SPEC>
+    template <typename SPEC>
     void zddSubset(SPEC const& spec) {
 #ifdef _OPENMP
-        if (useMP) zddSubsetMP_(spec.entity());
+        if (useMP)
+            zddSubsetMP_(spec.entity());
         else
 #endif
-        zddSubset_(spec.entity());
+            zddSubset_(spec.entity());
     }
 
-private:
-    template<typename SPEC>
+   private:
+    template <typename SPEC>
     void zddSubset_(SPEC const& spec) {
-        TableHandler<T> tmpTable;
-        ZddSubsetter<T,SPEC> zs(diagram, spec, tmpTable);
-        int n = zs.initialize(root_);
+        TableHandler<T>       tmpTable;
+        ZddSubsetter<T, SPEC> zs(diagram, spec, tmpTable);
+        int                   n = zs.initialize(root_);
 
         if (n > 0) {
             for (int i = n; i > 0; --i) {
@@ -128,22 +128,18 @@ private:
         diagram = tmpTable;
     }
 
-public:
+   public:
     /**
      * Gets the root node.
      * @return root node ID.
      */
-    NodeId& root() {
-        return root_;
-    }
+    NodeId& root() { return root_; }
 
     /**
      * Gets the root node.
      * @return root node ID.
      */
-    NodeId root() const {
-        return root_;
-    }
+    NodeId root() const { return root_; }
 
     /**
      * Gets a child node.
@@ -151,49 +147,37 @@ public:
      * @param b branch number.
      * @return child node ID.
      */
-    NodeId child(NodeId f, int b) const {
-        return diagram->child(f, b);
-    }
+    NodeId child(NodeId f, int b) const { return diagram->child(f, b); }
 
     /**
      * Gets the diagram.
      * @return the node table handler.
      */
-    TableHandler<T>& getDiagram() {
-        return diagram;
-    }
+    TableHandler<T>& getDiagram() { return diagram; }
 
     /**
      * Gets the diagram.
      * @return the node table handler.
      */
-    TableHandler<T> const& getDiagram() const {
-        return diagram;
-    }
+    TableHandler<T> const& getDiagram() const { return diagram; }
 
     /**
      * Gets the level of the root node.
      * @return the level of root ZDD variable.
      */
-    int topLevel() const {
-        return root_.row();
-    }
+    int topLevel() const { return root_.row(); }
 
     /**
      * Gets the number of nonterminal nodes.
      * @return the number of nonterminal nodes.
      */
-    size_t size() const {
-        return diagram->size();
-    }
+    size_t size() const { return diagram->size(); }
 
     /**
      * Checks if DD is a 0-terminal only.
      * @return true if DD is a 0-terminal only.
      */
-    bool empty() const {
-        return root_ == 0;
-    }
+    bool empty() const { return root_ == 0; }
 
     /**
      * Checks structural equivalence with another DD.
@@ -201,13 +185,17 @@ public:
      */
     bool operator==(DdStructure const& o) const {
         int n = root_.row();
-        if (n != o.root_.row()) return false;
-        if (n == 0) return root_ == o.root_;
-        if (root_ == o.root_ && &*diagram == &*o.diagram) return true;
-        if (size() > o.size()) return o.operator==(*this);
+        if (n != o.root_.row())
+            return false;
+        if (n == 0)
+            return root_ == o.root_;
+        if (root_ == o.root_ && &*diagram == &*o.diagram)
+            return true;
+        if (size() > o.size())
+            return o.operator==(*this);
 
-        MyHashMap<InitializedNode,size_t> uniq;
-        DataTable<NodeId> equiv(n + 1);
+        MyHashMap<InitializedNode, size_t> uniq;
+        DataTable<NodeId>                  equiv(n + 1);
         {
             size_t om = (*o.diagram)[0].size();
             equiv[0].resize(om);
@@ -247,48 +235,38 @@ public:
      * Checks structural inequivalence with another DD.
      * @return true if they have the different structure.
      */
-    bool operator!=(DdStructure const& o) const {
-        return !operator==(o);
-    }
+    bool operator!=(DdStructure const& o) const { return !operator==(o); }
 
     /**
      * QDD reduction.
      * No node deletion rule is applied.
      */
-    void qddReduce() {
-        reduce<false,false>();
-    }
+    void qddReduce() { reduce<false, false>(); }
 
     /**
      * BDD reduction.
      * The node of which two edges points to the identical node is deleted.
      */
-    void bddReduce() {
-        reduce<true,false>();
-    }
+    void bddReduce() { reduce<true, false>(); }
 
     /**
      * ZDD reduction.
      * The node of which 1-edge points to the 0-terminal is deleted.
      */
-    void compressBdd() {
-        reduce<false,true>();
-    }
+    void compressBdd() { reduce<false, true>(); }
 
-    void reduceZdd() {
-        reduce<true,true>();
-    }
+    void reduceZdd() { reduce<true, true>(); }
 
     /**
      * BDD/ZDD reduction.
      * @tparam BDD enable BDD reduction.
      * @tparam ZDD enable ZDD reduction.
      */
-    template<bool BDD, bool ZDD>
+    template <bool BDD, bool ZDD>
     void reduce() {
         int n = root_.row();
 
-        DdReducer<T,BDD,ZDD> zr(diagram);
+        DdReducer<T, BDD, ZDD> zr(diagram);
         zr.setRoot(root_);
 
         for (int i = 1; i <= n; ++i) {
@@ -296,7 +274,7 @@ public:
         }
     }
 
-public:
+   public:
     // /**
     //  * Transforms a BDD into a ZDD.
     //  * @param numVars the number of variables.
@@ -327,17 +305,17 @@ public:
     // }
 
     // /**
-    //  * Counts the number of sets in the family of sets represented by this ZDD.
+    //  * Counts the number of sets in the family of sets represented by this
+    //  ZDD.
     //  * @return the number of itemsets.
     //  */
     // std::string zddCardinality() const {
     //     return evaluate(ZddCardinality<std::string,ARITY>());
     // }
 
-
-    template <typename S, typename R>
-    R evaluate_backward(Eval<S, T, R> const &evaluator) {
-        int            n = root_.row();
+    template <typename R>
+    R evaluate_backward(Eval<T, R> const& evaluator) {
+        int                 n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
         if (this->size() == 0) {
@@ -348,7 +326,7 @@ public:
 
         evaluator.initializerootnode(work.node(1));
         for (int i = 1; i <= n; ++i) {
-            for (auto &it : work[i]) {
+            for (auto& it : work[i]) {
                 evaluator.initializenode(it);
                 evaluator.evalNode(it);
             }
@@ -357,9 +335,9 @@ public:
         return evaluator.get_objective(work.node(root()));
     }
 
-    template <typename S, typename R>
-    void compute_labels_backward(Eval<S, T, R> const &evaluator) {
-        int            n = root_.row();
+    template <typename R>
+    void compute_labels_backward(Eval<T, R> const& evaluator) {
+        int                 n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
         if (this->size() == 0) {
@@ -369,19 +347,19 @@ public:
 
         evaluator.initializerootnode(work.node(1));
         for (int i = 1; i <= n; ++i) {
-            for (auto &it : work[i]) {
+            for (auto& it : work[i]) {
                 evaluator.initializenode(it);
                 evaluator.evalNode(it);
             }
         }
     }
 
-    template<typename S, typename R>
-    R evaluate_forward(Eval<S, T, R> const &evaluator) {
-        int n = root_.row();
+    template <typename R>
+    R evaluate_forward(Eval<T, R> const& evaluator) {
+        int                 n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
-        if (this->size() == 0){
+        if (this->size() == 0) {
             printf("empty DDstructure\n");
             R retval;
             return retval;
@@ -392,7 +370,7 @@ public:
          */
         evaluator.initializerootnode(work.node(root()));
         for (int i = n - 1; i >= 0; i--) {
-            for(auto &it : work[i]){
+            for (auto& it : work[i]) {
                 evaluator.initializenode(it);
             }
         }
@@ -400,8 +378,8 @@ public:
         /**
          * Compute all the node of DD
          */
-        for (int i = n ; i > 0; i--) {
-            for (auto &it: work[i]) {
+        for (int i = n; i > 0; i--) {
+            for (auto& it : work[i]) {
                 evaluator.evalNode(it);
             }
         }
@@ -412,12 +390,12 @@ public:
         return evaluator.get_objective(work.node(1));
     }
 
-    template<typename S, typename R>
-    void compute_labels_forward(Eval<S, T, R> const &evaluator) {
-        int n = root_.row();
+    template <typename R>
+    void compute_labels_forward(Eval<T, R> const& evaluator) {
+        int                 n = root_.row();
         NodeTableEntity<T>& work = getDiagram().privateEntity();
 
-        if (this->size() == 0){
+        if (this->size() == 0) {
             printf("empty DDstructure\n");
             return;
         }
@@ -427,7 +405,7 @@ public:
          */
         evaluator.initializerootnode(work.node(root()));
         for (int i = n - 1; i >= 0; i--) {
-            for(auto &it : work[i]){
+            for (auto& it : work[i]) {
                 evaluator.initializenode(it);
             }
         }
@@ -435,8 +413,8 @@ public:
         /**
          * Compute all the node of DD
          */
-        for (int i = n ; i > 0; i--) {
-            for (auto &it: work[i]) {
+        for (int i = n; i > 0; i--) {
+            for (auto& it : work[i]) {
                 evaluator.evalNode(it);
             }
         }
@@ -450,30 +428,30 @@ public:
     class const_iterator {
         struct Selection {
             NodeId node;
-            bool val;
+            bool   val;
 
-            Selection() :
-                    val(false) {
-            }
+            Selection() : val(false) {}
 
-            Selection(NodeId node, bool val) :
-                    node(node), val(val) {
-            }
+            Selection(NodeId _node, bool _val) : node(_node), val(_val) {}
 
             bool operator==(Selection const& o) const {
                 return node == o.node && val == o.val;
             }
         };
 
-        DdStructure const& dd;
-        int cursor;
+        DdStructure const&     dd;
+        int                    cursor;
         std::vector<Selection> path;
-        std::set<int> itemset;
+        std::set<int>          itemset;
 
-    public:
-        const_iterator(DdStructure const& dd, bool begin) :
-                dd(dd), cursor(begin ? -1 : -2), path(), itemset() {
-            if (begin) next(dd.root_);
+       public:
+        const_iterator(DdStructure const& _dd, bool begin)
+            : dd(_dd),
+              cursor(begin ? -1 : -2),
+              path(),
+              itemset() {
+            if (begin)
+                next(dd.root_);
         }
 
         const_iterator& operator++() {
@@ -481,13 +459,9 @@ public:
             return *this;
         }
 
-        std::set<int> const& operator*() const {
-            return itemset;
-        }
+        std::set<int> const& operator*() const { return itemset; }
 
-        std::set<int> const* operator->() const {
-            return &itemset;
-        }
+        std::set<int> const* operator->() const { return &itemset; }
 
         bool operator==(const_iterator const& o) const {
             return cursor == o.cursor && path == o.path;
@@ -497,7 +471,7 @@ public:
             return !operator==(o);
         }
 
-    private:
+       private:
         void next(NodeId f) {
             itemset.clear();
 
@@ -509,19 +483,18 @@ public:
                         cursor = path.size();
                         path.push_back(Selection(f, false));
                         f = s.branch[0];
-                    }
-                    else {
+                    } else {
                         path.push_back(Selection(f, true));
                         f = s.branch[1];
                     }
                 }
 
-                if (f == 1) break; /* found */
+                if (f == 1)
+                    break; /* found */
 
                 for (; cursor >= 0; --cursor) { /* up */
                     Selection& sel = path[cursor];
-                    T const& ss =
-                            (*dd.diagram)[sel.node.row()][sel.node.col()];
+                    T const& ss = (*dd.diagram)[sel.node.row()][sel.node.col()];
                     if (sel.val == false && ss.branch[1] != 0) {
                         f = sel.node;
                         sel.val = true;
@@ -552,18 +525,14 @@ public:
      * Supports binary ZDDs only.
      * @return iterator to the first instance.
      */
-    const_iterator begin() const {
-        return const_iterator(*this, true);
-    }
+    const_iterator begin() const { return const_iterator(*this, true); }
 
     /**
      * Returns an iterator to the element following the last instance.
      * Supports binary ZDDs only.
      * @return iterator to the instance following the last instance.
      */
-    const_iterator end() const {
-        return const_iterator(*this, false);
-    }
+    const_iterator end() const { return const_iterator(*this, false); }
 
     /**
      * Implements DdSpec.
@@ -576,7 +545,7 @@ public:
     /**
      * Implements DdSpec.
      */
-    int getChild(NodeId& f, int level, int value) const {
+    int getChild(NodeId& f, [[maybe_unused]] int level, int value) const {
         assert(level > 0 && level == f.row());
         assert(0 <= value && value < 2);
         f = child(f, value);
@@ -586,9 +555,7 @@ public:
     /**
      * Implements DdSpec.
      */
-    size_t hashCode(NodeId const& f) const {
-        return f.hash();
-    }
+    size_t hashCode(NodeId const& f) const { return f.hash(); }
 
     /**
      * Dumps the node table in Sapporo ZDD format.
@@ -596,7 +563,7 @@ public:
      * @param os the output stream.
      */
     void dumpSapporo(std::ostream& os) const {
-        int const n = diagram->numRows() - 1;
+        int const    n = diagram->numRows() - 1;
         size_t const l = size();
 
         os << "_i " << n << "\n";
@@ -604,10 +571,10 @@ public:
         os << "_n " << l << "\n";
 
         DataTable<size_t> nodeId(diagram->numRows());
-        size_t k = 0;
+        size_t            k = 0;
 
         for (int i = 1; i <= n; ++i) {
-            size_t const m = (*diagram)[i].size();
+            size_t const           m = (*diagram)[i].size();
             NodeBdd<double> const* p = (*diagram)[i].data();
             nodeId[i].resize(m);
 
@@ -620,11 +587,9 @@ public:
                     NodeId fc = p->branch[c];
                     if (fc == 0) {
                         os << " F";
-                    }
-                    else if (fc == 1) {
+                    } else if (fc == 1) {
                         os << " T";
-                    }
-                    else {
+                    } else {
                         os << " " << nodeId[fc.row()][fc.col()];
                     }
                 }

@@ -3,8 +3,11 @@
 
 // static int add_feasible_solution(problem *problem, solution *new_sol);
 static int  solution_set_c(Solution* sol);
-static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
-                         GRand* rand_uniform);
+static void perturb_swap(Solution*          sol,
+                         local_search_data* data,
+                         int                l1,
+                         int                l2,
+                         GRand*             rand_uniform);
 void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform);
 void permutation_solution(GRand* rand_uniform, Solution* sol);
 
@@ -26,7 +29,7 @@ int compare_completion_time(BinomialHeapValue a, BinomialHeapValue b) {
         return -1;
     } else if (C_a > C_b) {
         return 1;
-    } 
+    }
 
     return 0;
 }
@@ -255,8 +258,11 @@ void RVND(Solution* sol, local_search_data* data) {
     free_all(sol);
 }
 
-static void perturb_swap(Solution* sol, local_search_data* data, int l1, int l2,
-                         GRand* rand_uniform) {
+static void perturb_swap(Solution*    sol,
+                         MAYBE_UNUSED local_search_data* data,
+                         int                             l1,
+                         int                             l2,
+                         GRand*                          rand_uniform) {
     int       m1, m2;
     unsigned  i1 = 0, i2 = 0;
     int       nb_machines = sol->nb_machines;
@@ -423,7 +429,8 @@ int heuristic(Problem* prob) {
     solution_print(sol);
 
     if (prob->opt_sol == NULL) {
-        prob->opt_sol = solution_alloc(intervals->len,nb_machines, nb_jobs, prob->off);
+        prob->opt_sol =
+            solution_alloc(intervals->len, nb_machines, nb_jobs, prob->off);
         CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
         solution_update(prob->opt_sol, sol);
     }
@@ -431,7 +438,7 @@ int heuristic(Problem* prob) {
     for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0;
          ++i) {
         // fprintf(stderr, "iteration %d\n", i);
-        sol1 = solution_alloc(intervals->len,nb_machines, nb_jobs, prob->off);
+        sol1 = solution_alloc(intervals->len, nb_machines, nb_jobs, prob->off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(prob, sol1, rand_uniform);
         CCcheck_val_2(val, "Failed in construct random solution");

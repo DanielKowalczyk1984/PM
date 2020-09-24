@@ -12,7 +12,7 @@ void g_problem_summary_init(gpointer data, gpointer user_data) {
     prob->dmin = CC_MIN(prob->pmin, j->due_time);
 }
 
-gint g_job_compare_edd(const void* a, const void* b, void* data) {
+gint g_job_compare_edd(const void* a, const void* b, MAYBE_UNUSED void* data) {
     const Job* x = *((Job* const*)a);
     const Job* y = *((Job* const*)b);
 
@@ -37,11 +37,11 @@ gint g_job_compare_edd(const void* a, const void* b, void* data) {
     return (0);
 }
 
-gint g_compare_duration(gconstpointer a,gconstpointer b) {
+gint g_compare_duration(gconstpointer a, gconstpointer b) {
     const Job* x = *((Job* const*)a);
     const Job* y = *((Job* const*)b);
 
-    if(x->processing_time < y->processing_time) {
+    if (x->processing_time < y->processing_time) {
         return -1;
     } else {
         return 1;
@@ -56,21 +56,21 @@ void calculate_Hmax(Problem* problem) {
     temp = problem->p_sum - problem->pmax;
     temp_dbl = (double)temp;
     temp_dbl = floor(temp_dbl / problem->nb_machines);
-    problem->H_max = pd->H_max= (int)temp_dbl + problem->pmax;
+    problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax;
     problem->H_min = (int)ceil(temp_dbl / problem->nb_machines) - problem->pmax;
 
-    GPtrArray *duration = g_ptr_array_new();
-    for(int j = 0; j < problem->nb_jobs;j++) {
+    GPtrArray* duration = g_ptr_array_new();
+    for (int j = 0; j < problem->nb_jobs; j++) {
         Job* job = g_ptr_array_index(problem->g_job_array, j);
         g_ptr_array_add(duration, job);
     }
-    g_ptr_array_sort(duration,g_compare_duration);
+    g_ptr_array_sort(duration, g_compare_duration);
 
-    int m = 0;
-    int i = problem->nb_jobs - 1;
+    int    m = 0;
+    int    i = problem->nb_jobs - 1;
     double tmp = problem->p_sum;
     problem->H_min = problem->p_sum;
-    do{ 
+    do {
         Job* job = g_ptr_array_index(duration, i);
         tmp -= job->processing_time;
         m++;
@@ -78,11 +78,12 @@ void calculate_Hmax(Problem* problem) {
 
     } while (m < problem->nb_machines - 1);
 
-    problem->H_min = (int) ceil(tmp/problem->nb_machines);
+    problem->H_min = (int)ceil(tmp / problem->nb_machines);
     g_ptr_array_free(duration, TRUE);
-    printf("H_max = %d, H_min = %d,  pmax = %d, pmin = %d, psum = %d, off = %d\n",
-           problem->H_max, problem->H_min, problem->pmax, problem->pmin, problem->p_sum,
-           problem->off);
+    printf(
+        "H_max = %d, H_min = %d,  pmax = %d, pmin = %d, p_sum = %d, off = %d\n",
+        problem->H_max, problem->H_min, problem->pmax, problem->pmin,
+        problem->p_sum, problem->off);
 }
 
 void determine_jobs_order_interval(Problem* problem) {
@@ -154,19 +155,24 @@ static int calculate_T(interval_pair* pair, int k, GPtrArray* interval_array) {
         //     tmp = (interval*)g_ptr_array_index(interval_array, t);
         //     pair->left = tmp->a + j->processing_time - i->processing_time;
 
-        //     if (value_diff_Fij(pair->left, i, j) <= 0 && pair->left >= tmp->a &&
+        //     if (value_diff_Fij(pair->left, i, j) <= 0 && pair->left >= tmp->a
+        //     &&
         //         pair->left <= tmp->b - i->processing_time) {
         //         break;
         //     }
         // }
 
-        pair->left = i->due_time + (int) ceil((double) (j->weight * i->processing_time)/i->weight) - i->processing_time;
+        pair->left =
+            i->due_time +
+            (int)ceil((double)(j->weight * i->processing_time) / i->weight) -
+            i->processing_time;
         return pair->left;
     }
 }
 
-static int check_interval(interval_pair* pair, int k,
-                          GPtrArray* interval_array) {
+static int check_interval(interval_pair* pair,
+                          int            k,
+                          GPtrArray*     interval_array) {
     interval* I = (interval*)g_ptr_array_index(interval_array, k);
     Job*      j = pair->b;
     return (I->a + j->processing_time >= I->b ||
@@ -178,12 +184,11 @@ static GPtrArray* array_time_slots(interval* I, GList* pairs) {
     interval_pair* tmp;
     interval_pair* min_data;
     GList*         min;
-    int *          tmp_int, prev;
+    int*           tmp_int;
 
     tmp_int = CC_SAFE_MALLOC(1, int);
     *tmp_int = I->a;
     g_ptr_array_add(array, tmp_int);
-    prev = *tmp_int;
 
     while (pairs) {
         min = pairs;
@@ -205,7 +210,8 @@ static GPtrArray* array_time_slots(interval* I, GList* pairs) {
         GList* i = pairs;
         while (i) {
             tmp = (interval_pair*)i->data;
-            if ((*tmp_int >= tmp->left && *tmp_int <= tmp->right) || (*tmp_int + tmp->b->processing_time >= I->b)) {
+            if ((*tmp_int >= tmp->left && *tmp_int <= tmp->right) ||
+                (*tmp_int + tmp->b->processing_time >= I->b)) {
                 GList* remove = i;
                 i = g_list_next(i);
                 pairs = g_list_remove_link(pairs, remove);
@@ -215,8 +221,6 @@ static GPtrArray* array_time_slots(interval* I, GList* pairs) {
                 i = g_list_next(i);
             }
         }
-
-        prev = *tmp_int;
     }
 
     tmp_int = CC_SAFE_MALLOC(1, int);
@@ -292,8 +296,11 @@ int find_division(Problem* problem) {
             for (size_t k = j + 1; k < tmp_interval->sigma->len; k++) {
                 j1 = (Job*)g_ptr_array_index(tmp_interval->sigma, j);
                 j2 = (Job*)g_ptr_array_index(tmp_interval->sigma, k);
-                tmp_pair = (interval_pair){j1, j2};
-                if (!check_interval(&tmp_pair, i, tmp_array) && !( j1->due_time >= tmp_interval->b ) && !(j2->due_time >= tmp_interval->b)) {
+                tmp_pair =
+                    (interval_pair){j1, j2, tmp_interval->a, tmp_interval->b};
+                if (!check_interval(&tmp_pair, i, tmp_array) &&
+                    !(j1->due_time >= tmp_interval->b) &&
+                    !(j2->due_time >= tmp_interval->b)) {
                     pair = CC_SAFE_MALLOC(1, interval_pair);
                     *pair =
                         (interval_pair){j1, j2, tmp_pair.left, tmp_pair.right};

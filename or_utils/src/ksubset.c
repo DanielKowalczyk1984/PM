@@ -173,8 +173,12 @@ void ksubset_rec_free(ksubset_rec* set) {
     CC_IFFREE(set->rv, ulong);
 }
 
-void ksubset_rec_generate(void* data, ksubset_rec* set, ulong kmin, ulong kmax,
-                          ulong rq, ulong nq,
+void ksubset_rec_generate(void*        data,
+                          ksubset_rec* set,
+                          ulong        kmin,
+                          ulong        kmax,
+                          ulong        rq,
+                          ulong        nq,
                           void (*visit)(const void*, const void*, ulong)) {
     set->ct = 0;
     set->rct = 0;

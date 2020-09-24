@@ -1,4 +1,5 @@
 # %%
+from PyQt5.QtWidgets import QFileDialog
 import re
 import pandas as pd
 import numpy as np
@@ -9,12 +10,25 @@ from pathlib import Path
 
 workdir = Path.cwd().parent
 results = workdir.joinpath(Path("./results"))
+# %%
+%gui qt
+
+
+def gui_fname(dir=None):
+    """Select a file via a dialog and return the file name."""
+    if dir is None:
+        dir = './'
+    fname = QFileDialog.getOpenFileName(None, "Select data file...",
+                                        dir, filter="CSV Files (*.csv)")
+    print(fname)
+    return fname[0]
+
 
 # %%
-file_name = "CG_overall_20200507.csv"
-file_path = workdir.joinpath(file_name)
-data = pd.read_csv(file_path)
-match = re.search(r'.*\_(\d{4})(\d{2})(\d{2})\.csv', file_name)
+file_name = gui_fname()
+file_path = Path(file_name)
+data = pd.read_csv(file_name)
+match = re.search(r'CG_overall\_(\d{4})(\d{2})(\d{2})\.csv', file_name)
 year = match.group(1)
 month = match.group(2)
 day = match.group(3)
@@ -24,7 +38,7 @@ results_path = results.joinpath("./CG_results_"+year+month+day)
 if results_path.exists() == False:
     os.mkdir(results_path)
 
-copy(file_path, results_path.joinpath(file_name))
+copy(file_path, results_path.joinpath(match.group(0)))
 tex_file = str()
 
 template_dir_path = results.joinpath("./template_dir")

@@ -22,41 +22,34 @@ typedef struct _processing_list_data {
 typedef struct _local_search_data {
     int                    nmachines;
     int                    njobs;
-    int **                 W;
-    GList ***              g;
-    processing_list_data **processing_list_1;
-    processing_list_data **processing_list_2;
+    int**                  W;
+    GList***               g;
+    processing_list_data** processing_list_1;
+    processing_list_data** processing_list_2;
     int                    updated;
 } local_search_data;
 
 void alloc_all(Solution* sol);
 void free_all(Solution* sol);
 
-local_search_data *local_search_data_init(int njobs, int nmachines);
-void local_search_data_free(local_search_data **data);
+local_search_data* local_search_data_init(int njobs, int nmachines);
+void               local_search_data_free(local_search_data** data);
 
 /** Preperation of the data */
-int local_search_create_W(Solution *sol, local_search_data *data);
-int local_search_create_g(Solution *sol, local_search_data *data);
+int local_search_create_W(Solution* sol, local_search_data* data);
+int local_search_create_g(Solution* sol, local_search_data* data);
 /** Search for the best intra insertion */
-void local_search_forward_insertion(Solution *         sol,
-                                    local_search_data *data,
-                                    int                l);
-void local_search_backward_insertion(Solution *         sol,
-                                     local_search_data *data,
-                                     int                l);
-void local_search_swap_intra(Solution *         sol,
-                             local_search_data *data,
-                             int                l1,
-                             int                l2);
-void local_search_insertion_inter(Solution *         sol,
-                                  local_search_data *data,
-                                  int                l);
-void local_search_swap_inter(Solution *         sol,
-                             local_search_data *data,
-                             int                l1,
-                             int                l2);
-void RVND(Solution *sol, local_search_data *data);
+void local_search_forward_insertion(Solution* sol, local_search_data* data,
+                                    int l);
+void local_search_backward_insertion(Solution* sol, local_search_data* data,
+                                     int l);
+void local_search_swap_intra(Solution* sol, local_search_data* data, int l1,
+                             int l2);
+void local_search_insertion_inter(Solution* sol, local_search_data* data,
+                                  int l);
+void local_search_swap_inter(Solution* sol, local_search_data* data, int l1,
+                             int l2);
+void RVND(Solution* sol, local_search_data* data);
 
 #ifdef __cplusplus
 }

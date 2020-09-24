@@ -38,38 +38,35 @@
 
 find_package(PkgConfig)
 pkg_check_modules(PC_GLIB QUIET glib-2.0)
-find_library(GLIB_LIBRARIES
-             NAMES glib-2.0
-             HINTS ${PC_GLIB_LIBDIR} ${PC_GLIB_LIBRARY_DIRS})
+find_library(
+  GLIB_LIBRARIES
+  NAMES glib-2.0
+  HINTS ${PC_GLIB_LIBDIR} ${PC_GLIB_LIBRARY_DIRS})
 # Files in glib's main include path may include glibconfig.h, which, for some
 # odd reason, is normally in $LIBDIR/glib-2.0/include.
 get_filename_component(_GLIB_LIBRARY_DIR ${GLIB_LIBRARIES} PATH)
-find_path(GLIBCONFIG_INCLUDE_DIR
-          NAMES glibconfig.h
-          HINTS ${PC_LIBDIR} ${PC_LIBRARY_DIRS} ${_GLIB_LIBRARY_DIR}
-          PATH_SUFFIXES glib-2.0/include)
+find_path(
+  GLIBCONFIG_INCLUDE_DIR
+  NAMES glibconfig.h
+  HINTS ${PC_LIBDIR} ${PC_LIBRARY_DIRS} ${_GLIB_LIBRARY_DIR}
+  PATH_SUFFIXES glib-2.0/include)
 
-find_path(GLIB_INCLUDE_DIR
-          NAMES glib.h
-          HINTS ${PC_GLIB_INCLUDEDIR} ${PC_GLIB_INCLUDE_DIRS}
-          PATH_SUFFIXES glib-2.0)
+find_path(
+  GLIB_INCLUDE_DIR
+  NAMES glib.h
+  HINTS ${PC_GLIB_INCLUDEDIR} ${PC_GLIB_INCLUDE_DIRS}
+  PATH_SUFFIXES glib-2.0)
 set(GLIB_INCLUDE_DIRS ${GLIB_INCLUDE_DIR} ${GLIBCONFIG_INCLUDE_DIR})
 
 # Version detection
 file(READ "${GLIBCONFIG_INCLUDE_DIR}/glibconfig.h" GLIBCONFIG_H_CONTENTS)
-string(REGEX MATCH
-             "#define GLIB_MAJOR_VERSION ([0-9]+)"
-             _dummy
+string(REGEX MATCH "#define GLIB_MAJOR_VERSION ([0-9]+)" _dummy
              "${GLIBCONFIG_H_CONTENTS}")
 set(GLIB_VERSION_MAJOR "${CMAKE_MATCH_1}")
-string(REGEX MATCH
-             "#define GLIB_MINOR_VERSION ([0-9]+)"
-             _dummy
+string(REGEX MATCH "#define GLIB_MINOR_VERSION ([0-9]+)" _dummy
              "${GLIBCONFIG_H_CONTENTS}")
 set(GLIB_VERSION_MINOR "${CMAKE_MATCH_1}")
-string(REGEX MATCH
-             "#define GLIB_MICRO_VERSION ([0-9]+)"
-             _dummy
+string(REGEX MATCH "#define GLIB_MICRO_VERSION ([0-9]+)" _dummy
              "${GLIBCONFIG_H_CONTENTS}")
 set(GLIB_VERSION_MICRO "${CMAKE_MATCH_1}")
 set(GLIB_VERSION
@@ -80,34 +77,37 @@ set(GLIB_VERSION
 # glib ones.
 foreach(_component ${GLIB_FIND_COMPONENTS})
   if(${_component} STREQUAL "gio")
-    find_library(GLIB_GIO_LIBRARIES NAMES gio-2.0 HINTS ${_GLIB_LIBRARY_DIR})
+    find_library(
+      GLIB_GIO_LIBRARIES
+      NAMES gio-2.0
+      HINTS ${_GLIB_LIBRARY_DIR})
     set(ADDITIONAL_REQUIRED_VARS ${ADDITIONAL_REQUIRED_VARS} GLIB_GIO_LIBRARIES)
   elseif(${_component} STREQUAL "gobject")
-    find_library(GLIB_GOBJECT_LIBRARIES
-                 NAMES gobject-2.0
-                 HINTS ${_GLIB_LIBRARY_DIR})
+    find_library(
+      GLIB_GOBJECT_LIBRARIES
+      NAMES gobject-2.0
+      HINTS ${_GLIB_LIBRARY_DIR})
     set(ADDITIONAL_REQUIRED_VARS ${ADDITIONAL_REQUIRED_VARS}
-        GLIB_GOBJECT_LIBRARIES)
+                                 GLIB_GOBJECT_LIBRARIES)
   elseif(${_component} STREQUAL "gmodule")
-    find_library(GLIB_GMODULE_LIBRARIES
-                 NAMES gmodule-2.0
-                 HINTS ${_GLIB_LIBRARY_DIR})
+    find_library(
+      GLIB_GMODULE_LIBRARIES
+      NAMES gmodule-2.0
+      HINTS ${_GLIB_LIBRARY_DIR})
     set(ADDITIONAL_REQUIRED_VARS ${ADDITIONAL_REQUIRED_VARS}
-        GLIB_GMODULE_LIBRARIES)
+                                 GLIB_GMODULE_LIBRARIES)
   elseif(${_component} STREQUAL "gthread")
-    find_library(GLIB_GTHREAD_LIBRARIES
-                 NAMES gthread-2.0
-                 HINTS ${_GLIB_LIBRARY_DIR})
+    find_library(
+      GLIB_GTHREAD_LIBRARIES
+      NAMES gthread-2.0
+      HINTS ${_GLIB_LIBRARY_DIR})
     set(ADDITIONAL_REQUIRED_VARS ${ADDITIONAL_REQUIRED_VARS}
-        GLIB_GTHREAD_LIBRARIES)
+                                 GLIB_GTHREAD_LIBRARIES)
   endif()
 endforeach()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Glib
-                                  REQUIRED_VARS
-                                  GLIB_INCLUDE_DIRS
-                                  GLIB_LIBRARIES
-                                  ${ADDITIONAL_REQUIRED_VARS}
-                                  VERSION_VAR
-                                  GLIB_VERSION)
+find_package_handle_standard_args(
+  Glib
+  REQUIRED_VARS GLIB_INCLUDE_DIRS GLIB_LIBRARIES ${ADDITIONAL_REQUIRED_VARS}
+  VERSION_VAR GLIB_VERSION)

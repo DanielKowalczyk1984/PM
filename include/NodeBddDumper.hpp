@@ -3,16 +3,16 @@
 
 #include "NodeBdd.hpp"
 #include "util/MyHashTable.hpp"
-#include "util/MyVector.hpp"
 #include "util/MyList.hpp"
+#include "util/MyVector.hpp"
 
 /**
  * DD dumper.
  * A node table is printed in Graphviz (dot) format.
  */
-template<typename S,typename T = NodeBdd<double>>
+template <typename S, typename T = NodeBdd<double>>
 class DdDumper {
-    typedef S Spec;
+    typedef S        Spec;
     static int const AR = Spec::ARITY;
     static int const headerSize = 1;
 
@@ -25,30 +25,20 @@ class DdDumper {
         NodeId nodeId;
     };
 
-    static NodeId& nodeId(SpecNode* p) {
-        return p->nodeId;
-    }
+    static NodeId& nodeId(SpecNode* p) { return p->nodeId; }
 
-    static NodeId nodeId(SpecNode const* p) {
-        return p->nodeId;
-    }
+    static NodeId nodeId(SpecNode const* p) { return p->nodeId; }
 
-    static void* state(SpecNode* p) {
-        return p + headerSize;
-    }
+    static void* state(SpecNode* p) { return p + headerSize; }
 
-    static void const* state(SpecNode const* p) {
-        return p + headerSize;
-    }
+    static void const* state(SpecNode const* p) { return p + headerSize; }
 
-    template<typename SPEC>
+    template <typename SPEC>
     struct Hasher {
         SPEC const& spec;
-        int const level;
+        int const   level;
 
-        Hasher(SPEC const& spec, int level) :
-                spec(spec), level(level) {
-        }
+        Hasher(SPEC const& _spec, int _level) : spec(_spec), level(_level) {}
 
         size_t operator()(SpecNode const* p) const {
             return spec.hash_code(state(p), level);
@@ -59,7 +49,7 @@ class DdDumper {
         }
     };
 
-    typedef MyHashTable<SpecNode*,Hasher<Spec>,Hasher<Spec> > UniqTable;
+    typedef MyHashTable<SpecNode*, Hasher<Spec>, Hasher<Spec>> UniqTable;
 
     static int getSpecNodeSize(int n) {
         if (n < 0)
@@ -67,22 +57,21 @@ class DdDumper {
         return headerSize + (n + sizeof(SpecNode) - 1) / sizeof(SpecNode);
     }
 
-    Spec spec;
+    Spec      spec;
     int const specNodeSize;
-    char* oneState;
-    NodeId oneId;
+    char*     oneState;
+    NodeId    oneId;
 
-    MyVector<MyList<SpecNode> > snodeTable;
-    MyVector<UniqTable> uniqTable;
-    MyVector<Hasher<Spec> > hasher;
+    MyVector<MyList<SpecNode>> snodeTable;
+    MyVector<UniqTable>        uniqTable;
+    MyVector<Hasher<Spec>>     hasher;
 
-public:
-    explicit DdDumper(Spec const& s) :
-            spec(s),
-            specNodeSize(getSpecNodeSize(spec.datasize())),
-            oneState(0),
-            oneId(1) {
-    }
+   public:
+    explicit DdDumper(Spec const& s)
+        : spec(s),
+          specNodeSize(getSpecNodeSize(spec.datasize())),
+          oneState(0),
+          oneId(1) {}
 
     ~DdDumper() {
         if (oneState) {
@@ -99,8 +88,7 @@ public:
     void dump(std::ostream& os, std::string title) {
         if (oneState) {
             spec.destruct(oneState);
-        }
-        else {
+        } else {
             oneState = new char[spec.datasize()];
         }
         int n = spec.get_root(oneState);
@@ -112,14 +100,13 @@ public:
                 os << "  labelloc=\"t\";\n";
                 os << "  label=\"" << title << "\";\n";
             }
-        }
-        else if (n < 0) {
+        } else if (n < 0) {
             os << "  \"^\" [shape=none,label=\"" << title << "\"];\n";
-            os << "  \"^\" -> \"" << oneId << "\" [style=dashed" << "];\n";
+            os << "  \"^\" -> \"" << oneId << "\" [style=dashed"
+               << "];\n";
             os << "  \"" << oneId << "\" ";
             os << "[shape=square,label=\"⊤\"];\n";
-        }
-        else {
+        } else {
             NodeId root(n, 0);
 
             for (int i = n; i >= 1; --i) {
@@ -132,7 +119,8 @@ public:
             }
 
             os << "  \"^\" [shape=none,label=\"" << title << "\"];\n";
-            os << "  \"^\" -> \"" << root << "\" [style=dashed" << "];\n";
+            os << "  \"^\" -> \"" << root << "\" [style=dashed"
+               << "];\n";
 
             snodeTable.init(n + 1);
             SpecNode* p = snodeTable[n].alloc_front(specNodeSize);
@@ -165,13 +153,13 @@ public:
         os.flush();
     }
 
-private:
+   private:
     void dumpStep(std::ostream& os, int i) {
-        MyList<SpecNode> &snodes = snodeTable[i];
-        size_t const m = snodes.size();
-        MyVector<char> tmp(spec.datasize());
-        void* const tmpState = tmp.data();
-        MyVector<T> nodeList(m);
+        MyList<SpecNode>& snodes = snodeTable[i];
+        size_t const      m = snodes.size();
+        MyVector<char>    tmp(spec.datasize());
+        void* const       tmpState = tmp.data();
+        MyVector<T>       nodeList(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j, snodes.pop_front()) {
             NodeId f(i, j);
@@ -195,57 +183,53 @@ private:
 
                 if (ii == 0) {
                     child = 0;
-                }
-                else if (ii < 0) {
-                    if (oneId == 1) { // the first 1-terminal candidate
+                } else if (ii < 0) {
+                    if (oneId == 1) {  // the first 1-terminal candidate
                         oneId = 2;
                         spec.destruct(oneState);
                         spec.get_copy(oneState, tmpState);
                         child = oneId;
-                    }
-                    else {
+                    } else {
                         switch (spec.merge_states(oneState, tmpState)) {
-                        case 1:
-                            oneId = oneId.code() + 1;
-                            spec.destruct(oneState);
-                            spec.get_copy(oneState, tmpState);
-                            child = oneId;
-                            break;
-                        case 2:
-                            child = 0;
-                            break;
-                        default:
-                            child = oneId;
-                            break;
+                            case 1:
+                                oneId = oneId.code() + 1;
+                                spec.destruct(oneState);
+                                spec.get_copy(oneState, tmpState);
+                                child = oneId;
+                                break;
+                            case 2:
+                                child = 0;
+                                break;
+                            default:
+                                child = oneId;
+                                break;
                         }
                     }
-                }
-                else {
+                } else {
                     SpecNode* pp = snodeTable[ii].alloc_front(specNodeSize);
-                    size_t jj = snodeTable[ii].size() - 1;
+                    size_t    jj = snodeTable[ii].size() - 1;
                     spec.get_copy(state(pp), tmpState);
 
                     SpecNode*& pp0 = uniqTable[ii].add(pp);
                     if (pp0 == pp) {
                         nodeId(pp) = child = NodeId(ii, jj);
-                    }
-                    else {
+                    } else {
                         switch (spec.merge_states(state(pp0), state(pp))) {
-                        case 1:
-                            nodeId(pp0) = 0;
-                            nodeId(pp) = child = NodeId(ii, jj);
-                            pp0 = pp;
-                            break;
-                        case 2:
-                            child = 0;
-                            spec.destruct(state(pp));
-                            snodeTable[ii].pop_front();
-                            break;
-                        default:
-                            child = nodeId(pp0);
-                            spec.destruct(state(pp));
-                            snodeTable[ii].pop_front();
-                            break;
+                            case 1:
+                                nodeId(pp0) = 0;
+                                nodeId(pp) = child = NodeId(ii, jj);
+                                pp0 = pp;
+                                break;
+                            case 2:
+                                child = 0;
+                                spec.destruct(state(pp));
+                                snodeTable[ii].pop_front();
+                                break;
+                            default:
+                                child = nodeId(pp0);
+                                spec.destruct(state(pp));
+                                snodeTable[ii].pop_front();
+                                break;
                         }
                     }
                 }
@@ -260,16 +244,17 @@ private:
             for (int b = 0; b < AR; ++b) {
                 NodeId f(i, j);
                 NodeId child = nodeList[j].branch[b];
-                if (child == 0) continue;
-                if (child == 1) child = oneId;
+                if (child == 0)
+                    continue;
+                if (child == 1)
+                    child = oneId;
 
                 os << "  \"" << f << "\" -> \"" << child << "\"";
 
                 os << " [style=";
                 if (b == 0) {
                     os << "dashed";
-                }
-                else {
+                } else {
                     os << "solid";
                     if (AR > 2) {
                         os << ",color="
@@ -287,10 +272,8 @@ private:
         os << "}\n";
 
         uniqTable[i - 1].clear();
-        spec.destructLevel(i);
+        // spec.destructLevel(i);
     }
 };
 
-
-
-#endif // NODE_BDD_DUMPER_HPP
+#endif  // NODE_BDD_DUMPER_HPP

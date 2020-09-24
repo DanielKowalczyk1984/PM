@@ -12,8 +12,13 @@
 #include <graph.h>
 #include <util.h>
 
-static int permute_nodes(int* invorder, int nb_nodes, int nb_edges, int* elist,
-                         int* weights, int** pielist, int** pi_weights);
+static int permute_nodes(int*  invorder,
+                         int   nb_nodes,
+                         int   nb_edges,
+                         int*  elist,
+                         int*  weights,
+                         int** pielist,
+                         int** pi_weights);
 
 static void adjNode_SWAP(adjNode* n1, adjNode* n2, adjNode* temp);
 #define fill(x)                                 \
@@ -147,7 +152,10 @@ void reset_color(adjGraph* G) {
     }
 }
 
-int adjGraph_build(adjGraph* G, int nb_nodes, int nb_edges, const int elist[],
+int adjGraph_build(adjGraph* G,
+                   int       nb_nodes,
+                   int       nb_edges,
+                   const int elist[],
                    const int weights[]) {
     int      val = 0;
     int      i;
@@ -583,7 +591,10 @@ void adjGraph_freequick(adjGraph* G) {
     }
 }
 
-int read_adjlist(char* f, int* pvcount, int* pecount, int** pelist,
+int read_adjlist(char* f,
+                 int*  pvcount,
+                 int*  pecount,
+                 int** pelist,
                  int** weightlist) {
     int         val = 0;
     int         nb_nodes = 0, nb_edges = 0, count = 0, prob = 0;
@@ -766,7 +777,8 @@ CLEAN:
     return val;
 }
 
-int adjGraph_delete_unweighted(adjGraph* G, int** new_node_weights,
+int adjGraph_delete_unweighted(adjGraph* G,
+                               int**     new_node_weights,
                                const int node_weights[]) {
     int  val = 0;
     int  i, a_i;
@@ -855,7 +867,8 @@ static void adjNode_SWAP(adjNode* n1, adjNode* n2, adjNode* temp) {
     }
 }
 
-void adjGraph_quicksort(adjNode* nodelist, int nb_nodes,
+void adjGraph_quicksort(adjNode* nodelist,
+                        int      nb_nodes,
                         int (*compareFunction)(adjNode*, adjNode*)) {
     int     i, j;
     adjNode t, temp;
@@ -900,7 +913,9 @@ void adjGraph_sort_adjlists_by_id(adjGraph* G) {
     }
 }
 
-void adjGraph_quicksort_perm(adjNode* nodelist, int* perm, int nb_nodes,
+void adjGraph_quicksort_perm(adjNode* nodelist,
+                             int*     perm,
+                             int      nb_nodes,
                              int (*compareFunction)(adjNode*, adjNode*)) {
     int     i, j;
     int     temp;
@@ -972,8 +987,13 @@ int adjGraph_print(int nb_edges, const int elist[]) {
     return 0;
 }
 
-static int permute_nodes(int* invorder, int nb_nodes, int nb_edges, int* elist,
-                         int* weights, int** pielist, int** pi_weights) {
+static int permute_nodes(int*  invorder,
+                         int   nb_nodes,
+                         int   nb_edges,
+                         int*  elist,
+                         int*  weights,
+                         int** pielist,
+                         int** pi_weights) {
     int  i, val = 0;
     int *ielist = (int*)NULL, *inv_weights = (int*)NULL;
     *pielist = (int*)NULL;

@@ -27,18 +27,16 @@
 
 #include <cassert>
 #include <cstring>
-#include <vector>
 #include <iostream>
+#include <vector>
 
-template<typename T, typename Size = size_t>
+template <typename T, typename Size = size_t>
 class MyVector {
     Size capacity_;  ///< Size of the array.
     Size size_;      ///< Current number of elements.
-    T* array_;         ///< Start address of the array.
+    T*   array_;     ///< Start address of the array.
 
-    static T* allocate(Size n) {
-        return std::allocator<T>().allocate(n);
-    }
+    static T* allocate(Size n) { return std::allocator<T>().allocate(n); }
 
     static void deallocate(T* p, Size n) {
         std::allocator<T>().deallocate(p, n);
@@ -46,49 +44,44 @@ class MyVector {
 
     void ensureCapacity(Size capacity) {
         if (capacity_ < capacity) {
-//            reserve(std::max(Size(16), capacity * 4));
+            //            reserve(std::max(Size(16), capacity * 4));
             reserve(capacity * 2);
         }
     }
 
     void moveElement(T& from, T& to) {
-        //new (&to) T(std::move(from));
+        // new (&to) T(std::move(from));
         new (&to) T(from);
         from.~T();
     }
 
-public:
-    MyVector()
-            : capacity_(0), size_(0), array_(0) {
-    }
+   public:
+    MyVector() : capacity_(0), size_(0), array_(0) {}
 
-    MyVector(Size n)
-            : capacity_(0), size_(0), array_(0) {
-        resize(n);
-    }
+    MyVector(Size n) : capacity_(0), size_(0), array_(0) { resize(n); }
 
-    MyVector(Size n, T const& val)
-            : capacity_(0), size_(0), array_(0) {
+    MyVector(Size n, T const& val) : capacity_(0), size_(0), array_(0) {
         reserve(n);
         for (Size i = 0; i < n; ++i) {
             push_back(val);
         }
     }
 
-//    template<typename ... Args>
-//    MyVector(Size n, Args const&... args)
-//            : capacity_(0), size_(0), array_(0) {
-//        resize(n, args...);
-//    }
+    //    template<typename ... Args>
+    //    MyVector(Size n, Args const&... args)
+    //            : capacity_(0), size_(0), array_(0) {
+    //        resize(n, args...);
+    //    }
 
-//    MyVector(Size size, T&& val)
-//    : capacity_(0), size_(0), array_(0) {
-//        resize(size, std::move(val));
-//    }
+    //    MyVector(Size size, T&& val)
+    //    : capacity_(0), size_(0), array_(0) {
+    //        resize(size, std::move(val));
+    //    }
 
     MyVector(MyVector const& o)
-            : capacity_(o.size_), size_(o.size_),
-              array_(capacity_ ? allocate(capacity_) : 0) {
+        : capacity_(o.size_),
+          size_(o.size_),
+          array_(capacity_ ? allocate(capacity_) : 0) {
         for (Size i = 0; i < size_; ++i) {
             new (array_ + i) T(o[i]);
         }
@@ -104,15 +97,17 @@ public:
         return *this;
     }
 
-    template<typename U>
+    template <typename U>
     MyVector(std::vector<U> const& o)
-            : capacity_(o.size()), size_(o.size()), array_(allocate(capacity_)) {
+        : capacity_(o.size()),
+          size_(o.size()),
+          array_(allocate(capacity_)) {
         for (Size i = 0; i < size_; ++i) {
             new (array_ + i) T(o[i]);
         }
     }
 
-    template<typename U>
+    template <typename U>
     MyVector& operator=(std::vector<U> const& o) {
         resize(0);
         reserve(o.size());
@@ -123,39 +118,40 @@ public:
         return *this;
     }
 
-//    template<typename U>
-//    MyVector(MyVector<U> const& o)
-//            : capacity_(o.size_), size_(o.size_), array_(allocate(capacity_)) {
-//        for (Size i = 0; i < size_; ++i) {
-//            new (array_ + i) T(o[i]);
-//        }
-//    }
-//
-//    template<typename U>
-//    MyVector& operator=(MyVector<U> const& o) {
-//        resize(0);
-//        reserve(o.size_);
-//        size_ = o.size_;
-//        for (Size i = 0; i < size_; ++i) {
-//            new (array_ + i) T(o[i]);
-//        }
-//        return *this;
-//    }
+    //    template<typename U>
+    //    MyVector(MyVector<U> const& o)
+    //            : capacity_(o.size_), size_(o.size_),
+    //            array_(allocate(capacity_)) {
+    //        for (Size i = 0; i < size_; ++i) {
+    //            new (array_ + i) T(o[i]);
+    //        }
+    //    }
+    //
+    //    template<typename U>
+    //    MyVector& operator=(MyVector<U> const& o) {
+    //        resize(0);
+    //        reserve(o.size_);
+    //        size_ = o.size_;
+    //        for (Size i = 0; i < size_; ++i) {
+    //            new (array_ + i) T(o[i]);
+    //        }
+    //        return *this;
+    //    }
 
-//    MyVector(MyVector&& o) {
-//        *this = std::move(o);
-//    }
+    //    MyVector(MyVector&& o) {
+    //        *this = std::move(o);
+    //    }
 
-//    MyVector & operator=(MyVector&& o) {
-//        throw std::runtime_error("!!!");
-//        capacity_ = o.capacity_;
-//        size_ = o.size_;
-//        array_ = o.array_;
-//        o.capacity_ = 0;
-//        o.size_ = 0;
-//        o.array_ = 0;
-//        return *this;
-//    }
+    //    MyVector & operator=(MyVector&& o) {
+    //        throw std::runtime_error("!!!");
+    //        capacity_ = o.capacity_;
+    //        size_ = o.size_;
+    //        array_ = o.array_;
+    //        o.capacity_ = 0;
+    //        o.size_ = 0;
+    //        o.array_ = 0;
+    //        return *this;
+    //    }
 
     void swap(MyVector& o) {
         std::swap(capacity_, o.capacity_);
@@ -163,33 +159,25 @@ public:
         std::swap(array_, o.array_);
     }
 
-    ~MyVector() {
-        clear();
-    }
+    ~MyVector() { clear(); }
 
     /**
      * Gets the current capacity of the storage.
      * @return the storage capacity.
      */
-    Size capacity() const {
-        return capacity_;
-    }
+    Size capacity() const { return capacity_; }
 
     /**
      * Gets the number of elements.
      * @return the number of elements.
      */
-    Size size() const {
-        return size_;
-    }
+    Size size() const { return size_; }
 
     /**
      * Checks emptiness.
      * @return true if empty.
      */
-    bool empty() const {
-        return size_ == 0;
-    }
+    bool empty() const { return size_ == 0; }
 
     /**
      * Reserves the memory.
@@ -231,8 +219,7 @@ public:
         assert(n >= 0);
         if (n == 0) {
             clear();
-        }
-        else if (capacity_ * 10 <= n * 11 && n <= capacity_) {
+        } else if (capacity_ * 10 <= n * 11 && n <= capacity_) {
             while (n < size_) {
                 array_[--size_].~T();
             }
@@ -240,8 +227,7 @@ public:
             while (size_ < n) {
                 new (array_ + size_++) T();
             }
-        }
-        else {
+        } else {
             while (n < size_) {
                 array_[--size_].~T();
             }
@@ -315,21 +301,22 @@ public:
      * Removes the last element.
      */
     void pop_back() {
-        if (size_ > 0) array_[--size_].~T();
+        if (size_ > 0)
+            array_[--size_].~T();
     }
 
-//    /*
-//     * Adds an element constructed in place to the end of the array.
-//     * The array is automatically extended,
-//     * which may cause data move.
-//     * @param args arguments to element's constructor.
-//     */
-//    template<typename ... Args>
-//    void emplace_back(Args const&... args) {
-//        ensureCapacity(size_ + 1);
-//        new (array_ + size_) T(args...);
-//        ++size_;
-//    }
+    //    /*
+    //     * Adds an element constructed in place to the end of the array.
+    //     * The array is automatically extended,
+    //     * which may cause data move.
+    //     * @param args arguments to element's constructor.
+    //     */
+    //    template<typename ... Args>
+    //    void emplace_back(Args const&... args) {
+    //        ensureCapacity(size_ + 1);
+    //        new (array_ + size_) T(args...);
+    //        ++size_;
+    //    }
 
     /**
      * Accesses to the last element.
@@ -373,61 +360,45 @@ public:
      * Gets a pointer to the first element.
      * @return pointer to the first element.
      */
-    T* data() const {
-        return array_;
-    }
+    T* data() const { return array_; }
 
-    typedef T* iterator;
+    typedef T*       iterator;
     typedef T const* const_iterator;
 
     /**
      * Gets a pointer to the first element.
      * @return pointer to the first element.
      */
-    iterator begin() {
-        return array_;
-    }
+    iterator begin() { return array_; }
 
     /**
      * Gets a pointer to the first element.
      * @return pointer to the first element.
      */
-    const_iterator begin() const {
-        return array_;
-    }
+    const_iterator begin() const { return array_; }
 
     /**
      * Gets a pointer to the end of elements.
      * @return pointer to the end of elements.
      */
-    iterator end() {
-        return array_ + size_;
-    }
+    iterator end() { return array_ + size_; }
 
     /**
      * Gets a pointer to the end of elements.
      * @return pointer to the end of elements.
      */
-    const_iterator end() const {
-        return array_ + size_;
-    }
+    const_iterator end() const { return array_ + size_; }
 
-    template<typename U>
+    template <typename U>
     class reverse_iterator_ {
         U* ptr;
 
-    public:
-        reverse_iterator_(U* ptr)
-                : ptr(ptr) {
-        }
+       public:
+        reverse_iterator_(U* _ptr) : ptr(_ptr) {}
 
-        U& operator*() const {
-            return *ptr;
-        }
+        U& operator*() const { return *ptr; }
 
-        U* operator->() const {
-            return ptr;
-        }
+        U* operator->() const { return ptr; }
 
         reverse_iterator_& operator++() {
             --ptr;
@@ -443,16 +414,14 @@ public:
         }
     };
 
-    typedef reverse_iterator_<T> reverse_iterator;
+    typedef reverse_iterator_<T>       reverse_iterator;
     typedef reverse_iterator_<T const> const_reverse_iterator;
 
     /**
      * Returns a reverse iterator to the beginning.
      * @return reverse iterator to the beginning.
      */
-    reverse_iterator rbegin() {
-        return reverse_iterator(array_ + size_ - 1);
-    }
+    reverse_iterator rbegin() { return reverse_iterator(array_ + size_ - 1); }
 
     /**
      * Returns a reverse iterator to the beginning.
@@ -466,9 +435,7 @@ public:
      * Returns a reverse iterator to the end.
      * @return reverse iterator to the end.
      */
-    reverse_iterator rend() {
-        return reverse_iterator(array_ - 1);
-    }
+    reverse_iterator rend() { return reverse_iterator(array_ - 1); }
 
     /**
      * Returns a reverse iterator to the end.
@@ -506,9 +473,11 @@ public:
      * @return true if equivalent.
      */
     bool operator==(MyVector const& o) const {
-        if (size_ != o.size_) return false;
+        if (size_ != o.size_)
+            return false;
         for (Size i = 0; i < size_; ++i) {
-            if (!(array_[i] == o.array_[i])) return false;
+            if (!(array_[i] == o.array_[i]))
+                return false;
         }
         return true;
     }
@@ -523,7 +492,8 @@ public:
         bool cont = false;
         os << "(";
         for (T const* t = o.begin(); t != o.end(); ++t) {
-            if (cont) os << ",";
+            if (cont)
+                os << ",";
             os << *t;
             cont = true;
         }
@@ -531,18 +501,15 @@ public:
     }
 };
 
+#endif  // MY_VECTOR_HPP
 
-#endif // MY_VECTOR_HPP
-
-
-
-//template<typename T, typename Size>
-//void swap(MyVector<T,Size>& v1, MyVector<T,Size>& v2) {
+// template<typename T, typename Size>
+// void swap(MyVector<T,Size>& v1, MyVector<T,Size>& v2) {
 //    v1.swap(v2);
 //}
 
-//template<typename T, int dimension>
-//struct MyMultiVector: public MyVector<MyMultiVector<T,dimension - 1> > {
+// template<typename T, int dimension>
+// struct MyMultiVector: public MyVector<MyMultiVector<T,dimension - 1> > {
 //    MyMultiVector() {
 //    }
 //
@@ -551,8 +518,8 @@ public:
 //    }
 //};
 //
-//template<typename T>
-//struct MyMultiVector<T,1> : public MyVector<T> {
+// template<typename T>
+// struct MyMultiVector<T,1> : public MyVector<T> {
 //    MyMultiVector() {
 //    }
 //

@@ -1,21 +1,28 @@
 #include <wct.h>
 
 /** help functions for conflict branching */
-static int create_same_conflict(Problem* problem, NodeData* parent_pd,
-                                NodeData** child, Job* v1, Job* v2);
-static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
-                                  NodeData** child, Job* v1, Job* v2);
+static int create_same_conflict(Problem*   problem,
+                                NodeData*  parent_pd,
+                                NodeData** child,
+                                Job*       v1,
+                                Job*       v2);
+static int create_differ_conflict(Problem*   problem,
+                                  NodeData*  parent_pd,
+                                  NodeData** child,
+                                  Job*       v1,
+                                  Job*       v2);
 
-static int transfer_same_cclasses(NodeData* pd, GPtrArray* colPool, Job* v1,
-                                  Job* v2) {
+static int transfer_same_cclasses(NodeData*  pd,
+                                  GPtrArray* colPool,
+                                  Job*       v1,
+                                  Job*       v2) {
     int          val = 0;
-    int          i;
     ScheduleSet* tmp;
     Job*         tmp_j;
     /* Transfer independent sets: */
     g_ptr_array_set_size(pd->localColPool, colPool->len);
 
-    for (i = 0; i < colPool->len; ++i) {
+    for (guint i = 0; i < colPool->len; ++i) {
         ScheduleSet* it = (ScheduleSet*)g_ptr_array_index(colPool, i);
         int          construct = 1;
         gboolean     v1_in;
@@ -30,7 +37,7 @@ static int transfer_same_cclasses(NodeData* pd, GPtrArray* colPool, Job* v1,
             g_ptr_array_add(pd->localColPool, tmp);
         }
 
-        for (int j = 0; j < it->job_list->len && construct; ++j) {
+        for (guint j = 0; j < it->job_list->len && construct; ++j) {
             tmp_j = (Job*)g_ptr_array_index(it->job_list, j);
             tmp->total_processing_time += tmp_j->processing_time;
             g_hash_table_insert(tmp->table, tmp_j, NULL);
@@ -60,8 +67,11 @@ CLEAN:
     return val;
 }
 
-static int create_same_conflict(Problem* problem, NodeData* parent_pd,
-                                NodeData** child, Job* v1, Job* v2) {
+static int create_same_conflict(Problem*   problem,
+                                NodeData*  parent_pd,
+                                NodeData** child,
+                                Job*       v1,
+                                Job*       v2) {
     int val = 0;
     // Parms *parms = &(problem->parms);
     NodeData* pd = CC_SAFE_MALLOC(1, NodeData);
@@ -96,7 +106,7 @@ static int create_same_conflict(Problem* problem, NodeData* parent_pd,
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 1);
 
-        if ((size_t)pd->nb_jobs != get_num_layers(pd->solver)) {
+        if (pd->nb_jobs != get_num_layers(pd->solver)) {
             pd->status = infeasible;
 
             if (pd->solver) {
@@ -128,8 +138,11 @@ CLEAN:
     return val;
 }
 
-static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
-                                  NodeData** child, Job* v1, Job* v2) {
+static int create_differ_conflict(Problem*   problem,
+                                  NodeData*  parent_pd,
+                                  NodeData** child,
+                                  Job*       v1,
+                                  Job*       v2) {
     int       val = 0;
     int       i;
     int       nb_cols;
@@ -166,7 +179,7 @@ static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 0);
 
-        if ((size_t)pd->nb_jobs != get_num_layers(pd->solver)) {
+        if (pd->nb_jobs != get_num_layers(pd->solver)) {
             pd->status = infeasible;
 
             if (pd->solver) {
@@ -199,7 +212,7 @@ static int create_differ_conflict(Problem* problem, NodeData* parent_pd,
             CCcheck_NULL_3(tmp, "Failed to allocate memory");
             g_ptr_array_add(pd->localColPool, tmp);
 
-            for (int j = 0; j < it->job_list->len; j++) {
+            for (guint j = 0; j < it->job_list->len; j++) {
                 tmp_j = (Job*)g_ptr_array_index(it->job_list, j);
                 tmp->total_processing_time += tmp_j->processing_time;
                 g_hash_table_insert(tmp->table, tmp_j, NULL);
@@ -240,9 +253,13 @@ CLEAN:
     return val;
 }
 
-static int find_strongest_children_conflict(
-    int* strongest_v1, int* strongest_v2, NodeData* pd, Problem* problem,
-    HeapContainer* cand_heap, int* nodepair_refs, double* nodepair_weights) {
+static int find_strongest_children_conflict(int*           strongest_v1,
+                                            int*           strongest_v2,
+                                            NodeData*      pd,
+                                            Problem*       problem,
+                                            HeapContainer* cand_heap,
+                                            int*           nodepair_refs,
+                                            double*        nodepair_weights) {
     int    val = 0;
     int    max_non_improving_branches = 4; /* pd->nb_jobs / 100 + 1; */
     int    remaining_branches = max_non_improving_branches;
@@ -423,7 +440,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     }
 
     if (!pd->RMP) {
-        val = build_rmp(pd, 0);
+        val = build_rmp(pd);
         CCcheck_val_2(val, "Failed at build_lp");
     }
 
@@ -431,19 +448,19 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
         compute_lower_bound(problem, pd);
     }
 
-    wctlp_get_nb_cols(pd->RMP, &nb_cols);
+    lp_interface_get_nb_cols(pd->RMP, &nb_cols);
     assert(pd->localColPool->len == nb_cols);
     x = CC_SAFE_MALLOC(nb_cols, double);
     CCcheck_NULL_2(x, "Failed to allocate memory to x");
-    val = wctlp_optimize(pd->RMP, &status);
-    CCcheck_val_2(val, "Failed at wctlp_optimize");
+    val = lp_interface_optimize(pd->RMP, &status);
+    CCcheck_val_2(val, "Failed at lp_interface_optimize");
 
     if (status == GRB_INFEASIBLE) {
         goto CLEAN;
     }
 
-    val = wctlp_x(pd->RMP, x, 0);
-    CCcheck_val_2(val, "Failed at wctlp_x");
+    val = lp_interface_x(pd->RMP, x, 0);
+    CCcheck_val_2(val, "Failed at lp_interface_x");
     CC_IFFREE(pd->lambda, double);
     pd->lambda = CC_SAFE_MALLOC(nb_cols, double);
     CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");

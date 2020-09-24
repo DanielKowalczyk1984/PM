@@ -29,8 +29,8 @@
 #include <ostream>
 
 #include "NodeBdd.hpp"
-#include "NodeBranchId.hpp"
 #include "NodeBddTable.hpp"
+#include "NodeBranchId.hpp"
 #include "util/MyVector.hpp"
 
 /**
@@ -38,49 +38,48 @@
  * Removes the nodes that are identified as equivalent to the 0-terminal
  * while top-down DD construction.
  */
-template<typename T = NodeBdd<double>>
+template <typename T = NodeBdd<double>>
 class DdSweeper {
     static size_t const SWEEP_RATIO = 20;
 
-    NodeTableEntity<T>& diagram;
+    NodeTableEntity<T>&     diagram;
     MyVector<NodeBranchId>* oneSrcPtr;
 
-    MyVector<int> sweepLevel;
+    MyVector<int>    sweepLevel;
     MyVector<size_t> deadCount;
-    size_t allCount;
-    size_t maxCount;
-    NodeId* rootPtr;
+    size_t           allCount;
+    size_t           maxCount;
+    NodeId*          rootPtr;
 
-public:
+   public:
     /**
      * Constructor.
      * @param diagram the diagram to sweep.
      */
-    explicit DdSweeper(NodeTableEntity<T>& diagram) :
-            diagram(diagram), oneSrcPtr(0), allCount(0), maxCount(0), rootPtr(0) {
-    }
+    explicit DdSweeper(NodeTableEntity<T>& _diagram)
+        : diagram(_diagram),
+          oneSrcPtr(0),
+          allCount(0),
+          maxCount(0),
+          rootPtr(0) {}
 
     /**
      * Constructor.
      * @param diagram the diagram to sweep.
      * @param oneSrcPtr collection of node branch IDs.
      */
-    DdSweeper(NodeTableEntity<T>& diagram,
-              MyVector<NodeBranchId>& oneSrcPtr) :
-            diagram(diagram),
-            oneSrcPtr(&oneSrcPtr),
-            allCount(0),
-            maxCount(0),
-            rootPtr(0) {
-    }
+    DdSweeper(NodeTableEntity<T>& _diagram, MyVector<NodeBranchId>& _oneSrcPtr)
+        : diagram(_diagram),
+          oneSrcPtr(&_oneSrcPtr),
+          allCount(0),
+          maxCount(0),
+          rootPtr(0) {}
 
     /**
      * Set the root pointer.
      * @param root reference to the root ID storage.
      */
-    void setRoot(NodeId& root) {
-        rootPtr = &root;
-    }
+    void setRoot(NodeId& root) { rootPtr = &root; }
 
     /**
      * Updates status and sweeps the DD if necessary.
@@ -91,7 +90,8 @@ public:
     void update(int current, int child, size_t count) {
         assert(1 <= current);
         assert(0 <= child);
-        if (current <= 1) return;
+        if (current <= 1)
+            return;
 
         if (size_t(current) >= sweepLevel.size()) {
             sweepLevel.resize(current + 1);
@@ -99,7 +99,8 @@ public:
         }
 
         for (int i = child; i <= current; ++i) {
-            if (sweepLevel[i] > 0) break;
+            if (sweepLevel[i] > 0)
+                break;
             sweepLevel[i] = current + 1;
         }
 
@@ -111,11 +112,12 @@ public:
             deadCount[k] += deadCount[i];
             deadCount[i] = 0;
         }
-        if (maxCount < allCount) maxCount = allCount;
-        if (deadCount[k] * SWEEP_RATIO < maxCount) return;
+        if (maxCount < allCount)
+            maxCount = allCount;
+        if (deadCount[k] * SWEEP_RATIO < maxCount)
+            return;
 
-        MyVector<MyVector<NodeId> > newId(diagram.numRows());
-
+        MyVector<MyVector<NodeId>> newId(diagram.numRows());
 
         for (int i = k; i < diagram.numRows(); ++i) {
             size_t m = diagram[i].size();
@@ -124,19 +126,20 @@ public:
             size_t jj = 0;
 
             for (size_t j = 0; j < m; ++j) {
-                T& p = diagram[i][j];
+                T&   p = diagram[i][j];
                 bool dead = true;
 
                 for (int b = 0; b < 2; ++b) {
                     NodeId& f = p.branch[b];
-                    if (f.row() >= k) f = newId[f.row()][f.col()];
-                    if (f != 0) dead = false;
+                    if (f.row() >= k)
+                        f = newId[f.row()][f.col()];
+                    if (f != 0)
+                        dead = false;
                 }
 
                 if (dead) {
                     newId[i][j] = 0;
-                }
-                else {
+                } else {
                     newId[i][j] = NodeId(i, jj);
                     diagram[i][jj] = p;
                     ++jj;
@@ -163,7 +166,4 @@ public:
     }
 };
 
-
-#endif // NODE_BDD_SWEEPER_HPP
-
-
+#endif  // NODE_BDD_SWEEPER_HPP

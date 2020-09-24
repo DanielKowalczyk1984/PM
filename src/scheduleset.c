@@ -114,20 +114,21 @@ CLEAN:
 }
 
 gpointer g_copy_scheduleset(gconstpointer src, gpointer data) {
-    int *nb_jobs = (int*)data;
-    const ScheduleSet* src_schedule = (const ScheduleSet*) src;
-    ScheduleSet* aux = scheduleset_alloc(*nb_jobs);
+    int*               nb_jobs = (int*)data;
+    const ScheduleSet* src_schedule = (const ScheduleSet*)src;
+    ScheduleSet*       aux = scheduleset_alloc(*nb_jobs);
 
-    memcpy(aux->num, src_schedule->num, *nb_jobs*sizeof(int));
+    memcpy(aux->num, src_schedule->num, *nb_jobs * sizeof(int));
     aux->del = src_schedule->del;
     aux->age = src_schedule->age;
     aux->total_processing_time = src_schedule->total_processing_time;
-    aux->total_weighted_completion_time = src_schedule->total_weighted_completion_time;
+    aux->total_weighted_completion_time =
+        src_schedule->total_weighted_completion_time;
     aux->id = src_schedule->id;
-    for(int i = 0; i < src_schedule->job_list->len; i++) {
+    for (guint i = 0; i < src_schedule->job_list->len; i++) {
         g_ptr_array_add(aux->job_list, src_schedule->job_list->pdata[i]);
     }
-    for(int i = 0; i < src_schedule->edge_list->len;i++) {
+    for (guint i = 0; i < src_schedule->edge_list->len; i++) {
         g_ptr_array_add(aux->edge_list, src_schedule->edge_list->pdata[i]);
     }
     return aux;
@@ -153,7 +154,7 @@ void g_sum_recalculate(gpointer data, gpointer user_data) {
         value_Fj(set->total_processing_time, j);
 }
 
-void scheduleset_recalculate(ScheduleSet *set) {
+void scheduleset_recalculate(ScheduleSet* set) {
     set->total_processing_time = 0;
     set->total_weighted_completion_time = 0;
 
@@ -197,7 +198,6 @@ void scheduleset_SWAP(ScheduleSet* c1, ScheduleSet* c2, ScheduleSet* t) {
 }
 
 int scheduleset_less(ScheduleSet* c1, ScheduleSet* c2) {
-    int        i;
     GPtrArray* tmp1 = c1->job_list;
     GPtrArray* tmp2 = c2->job_list;
 
@@ -205,7 +205,7 @@ int scheduleset_less(ScheduleSet* c1, ScheduleSet* c2) {
         return tmp1->len - tmp2->len;
     }
 
-    for (i = 0; i < tmp1->len; ++i) {
+    for (guint i = 0; i < tmp1->len; ++i) {
         Job* tmp_j1 = (Job*)g_ptr_array_index(tmp1, i);
         Job* tmp_j2 = (Job*)g_ptr_array_index(tmp2, i);
         if (tmp_j1->job != tmp_j2->job) {
@@ -217,7 +217,6 @@ int scheduleset_less(ScheduleSet* c1, ScheduleSet* c2) {
 }
 
 gint g_scheduleset_less(gconstpointer a, gconstpointer b) {
-    int                i;
     const ScheduleSet* c1 = *((ScheduleSet* const*)a);
     const ScheduleSet* c2 = *((ScheduleSet* const*)b);
     GPtrArray*         tmp1 = c1->job_list;
@@ -227,7 +226,7 @@ gint g_scheduleset_less(gconstpointer a, gconstpointer b) {
         return tmp1->len - tmp2->len;
     }
 
-    for (i = 0; i < tmp1->len; ++i) {
+    for (guint i = 0; i < tmp1->len; ++i) {
         Job* tmp_j1 = (Job*)g_ptr_array_index(tmp1, i);
         Job* tmp_j2 = (Job*)g_ptr_array_index(tmp2, i);
         if (tmp_j1->job != tmp_j2->job) {
@@ -238,7 +237,7 @@ gint g_scheduleset_less(gconstpointer a, gconstpointer b) {
     return 0;
 }
 
-void g_scheduleset_print(gpointer data, gpointer user_data) {
+void g_scheduleset_print(gpointer data, MAYBE_UNUSED gpointer user_data) {
     ScheduleSet* tmp = (ScheduleSet*)data;
     GPtrArray*   tmp_a = tmp->job_list;
     printf("Machine %d: ", tmp->id);

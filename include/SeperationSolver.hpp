@@ -1,21 +1,24 @@
 #ifndef SEPARATION_SOLVER_HPP
 #define SEPARATION_SOLVER_HPP
 
-#include "PricerSolverBase.hpp"
 #include "ModelInterface.hpp"
+#include "PricerSolverBase.hpp"
 #include "wctprivate.h"
 
-class SeparationSolver {
-    PricerSolverBase* pricer_solver;
-    
-    public:
+class SeperationSolver {
+   public:
+    SeperationSolver(PricerSolverBase* _solver);
+    SeperationSolver(SeperationSolver&&) = default;
+    SeperationSolver(const SeperationSolver&) = default;
+    SeperationSolver& operator=(SeperationSolver&&) = default;
+    SeperationSolver& operator=(const SeperationSolver&) = default;
+    ~SeperationSolver();
 
-    SeparationSolver(PricerSolverBase* _pricer_solver) : pricer_solver(_pricer_solver) {
-        ReformulationModel* rmp = pricer_solver->get_reformulation_model();
+   private:
+    PricerSolverBase*            solver;
+    std::vector<ConstraintBase*> cuts;
 
-    }
-    
-
+    int max_nb_cuts;
 };
 
 #endif

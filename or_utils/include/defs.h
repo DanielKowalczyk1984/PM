@@ -31,7 +31,7 @@ extern "C" {
 //#define NDEBUG
 
 #ifdef __GNUC__
-#define MAYBE_UNUSED __attribute__((used))
+#define MAYBE_UNUSED __attribute__((unused))
 #else
 #define MAYBE_UNUSED
 #endif
@@ -122,28 +122,28 @@ extern "C" {
 
 #ifdef CC_PROTO_PRINTF
 /* assume that if you're missing printf, you're missing a bunch */
-extern int printf(const char *, ...), fprintf(FILE *, const char *, ...),
-    fflush(FILE *), scanf(const char *, ...),
-    sscanf(const char *, const char *, ...), fscanf(FILE *, const char *, ...),
-    fclose(FILE *), ungetc(int, FILE *), _filbuf(FILE *), time(int *);
+extern int printf(const char*, ...), fprintf(FILE*, const char*, ...),
+    fflush(FILE*), scanf(const char*, ...),
+    sscanf(const char*, const char*, ...), fscanf(FILE*, const char*, ...),
+    fclose(FILE*), ungetc(int, FILE*), _filbuf(FILE*), time(int*);
 #ifdef CC_NETREADY
-extern int socket(int, int, int), connect(int, const struct sockaddr *, int),
-    accept(int, struct sockaddr *, int *),
-    bind(int, const struct sockaddr *, int), listen(int, int);
+extern int socket(int, int, int), connect(int, const struct sockaddr*, int),
+    accept(int, struct sockaddr*, int*), bind(int, const struct sockaddr*, int),
+    listen(int, int);
 #endif
-extern void *memset(void *, int, size_t), perror(const char *);
+extern void *memset(void*, int, size_t), perror(const char*);
 #endif
 
 #ifdef CC_PROTO_RENAME
-extern int rename(const char *, const char *);
+extern int rename(const char*, const char*);
 #endif
 
 #ifdef CC_PROTO_GETHOSTNAME
-extern int gethostname(char *, int);
+extern int gethostname(char*, int);
 #endif
 
 #ifdef CC_PROTO_GETRUSAGE
-extern int getrusage(int, struct rusage *);
+extern int getrusage(int, struct rusage*);
 #endif
 
 #ifdef CC_PROTO___VFORK

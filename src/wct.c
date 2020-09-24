@@ -58,7 +58,8 @@ void problem_init(Problem* problem) {
     CCutil_init_timer(&(problem->tot_solve_lp), "tot_solve_lp");
     CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
     CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
-    CCutil_init_timer(&(problem->tot_reduce_cost_fixing), "tot_reduce_cost_fixing");
+    CCutil_init_timer(&(problem->tot_reduce_cost_fixing),
+                      "tot_reduce_cost_fixing");
     /** initialize colPool */
     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     /** initialize the time */
@@ -133,6 +134,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->dbl_est_lower_bound = 0.0;
     pd->lower_scaled_bound = 1;
     pd->LP_lower_bound = 0.0;
+    pd->LP_lower_min = DBL_MAX;
     pd->partial_sol = 0.0;
     pd->rhs = (GArray*)NULL;
     /*Initialization  of the LP*/
@@ -142,9 +144,10 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->x_e = (double*)NULL;
     pd->coeff = (double*)NULL;
     pd->pi = (GArray*)NULL;
-    pd->lhs_coeff = (GArray *) NULL;
-    pd->id_row = (GArray *) NULL;
-    pd->coeff_row = (GArray *) NULL;
+    pd->slack = (GArray*)NULL;
+    pd->lhs_coeff = (GArray*)NULL;
+    pd->id_row = (GArray*)NULL;
+    pd->coeff_row = (GArray*)NULL;
     pd->nb_rows = 0;
     pd->nb_cols = 0;
     // init info cut generation
@@ -157,24 +160,10 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->id_art_var_cuts = 0;
     pd->id_pseudo_schedules = 0;
 
-
     /**init stab data */
-    pd->pi_in = (GArray*)NULL;
-    pd->pi_out = (GArray*)NULL;
-    pd->pi_sep = (GArray*)NULL;
-    pd->subgradient = (GArray*)NULL;
-    pd->subgradient_in = (GArray*)NULL;
-    pd->reduced_cost = 0.0;
-    pd->alpha = 0.8;
     pd->update = 1;
     pd->iterations = 0;
-    pd->hasstabcenter = 0;
-    pd->beta = 0.0;
-    pd->node_stab = -1;
-    pd->subgradientnorm = 0.0;
-    pd->dualdiffnorm = 0.0;
-    pd->hybridfactor = 0.0;
-    pd->subgradientproduct = 0.0;
+    pd->update_stab_center = 0;
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver*)NULL;
     pd->nb_non_improvements = 0;
@@ -226,21 +215,21 @@ void lp_node_data_free(NodeData* pd) {
      * free all the gurobi data associated with the LP relaxation
      */
     if (pd->RMP) {
-        wctlp_free(&(pd->RMP));
+        lp_interface_free(&(pd->RMP));
     }
 
     /**
      * free all the data associated with the LP
      */
     CC_IFFREE(pd->coeff, double);
-    g_array_free(pd->pi,TRUE);
+    if (pd->pi) {
+        g_array_free(pd->pi, TRUE);
+    }
+    if (pd->slack) {
+        g_array_free(pd->slack, TRUE);
+    }
     CC_IFFREE(pd->lambda, double);
     CC_IFFREE(pd->x_e, double);
-    g_array_free(pd->pi_out, TRUE);
-    g_array_free(pd->pi_in, TRUE);
-    g_array_free(pd->pi_sep, TRUE);
-    g_array_free(pd->subgradient, TRUE);
-    g_array_free(pd->subgradient_in, TRUE);
     g_array_free(pd->rhs, TRUE);
     g_array_free(pd->lhs_coeff, TRUE);
     g_array_free(pd->id_row, TRUE);
@@ -298,6 +287,9 @@ void temporary_data_free(NodeData* pd) {
     if (pd->solver) {
         freeSolver(pd->solver);
         pd->solver = (PricerSolver*)NULL;
+    }
+    if (pd->solver_stab) {
+        delete_pricing_stabilization(pd->solver_stab);
     }
 }
 

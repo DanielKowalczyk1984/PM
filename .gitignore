@@ -76,13 +76,13 @@ linuxdebug/*
 build_arch/*
 debug/*
 release/*
-build/*
+build*/*
 third_party
 build_ubuntu
 solutions
 *.log
 compile_commands.json
-
+docs/*
 # Created by https://www.gitignore.io/api/visualstudiocode
 # Edit at https://www.gitignore.io/?templates=visualstudiocode
 

@@ -27,12 +27,12 @@
 
 #include <cassert>
 #include <cstring>
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
 
 // namespace tdzdd {
 
-template<typename T, size_t BLOCK_ELEMENTS = 1000>
+template <typename T, size_t BLOCK_ELEMENTS = 1000>
 class MyList {
     static int const headerCells = 1;
 
@@ -40,7 +40,7 @@ class MyList {
         Cell* next;
     };
 
-    Cell* front_;
+    Cell*  front_;
     size_t size_;
 
     static size_t numCells(size_t n) {
@@ -56,57 +56,46 @@ class MyList {
         return reinterpret_cast<Cell*>(reinterpret_cast<size_t>(p) & mask);
     }
 
-    static bool flagged(Cell* p) {
-        return reinterpret_cast<size_t>(p) & 1;
-    }
+    static bool flagged(Cell* p) { return reinterpret_cast<size_t>(p) & 1; }
 
-    static Cell*& blockStart(Cell* p) {
-        return p[-1].next;
-    }
+    static Cell*& blockStart(Cell* p) { return p[-1].next; }
 
-    static T* dataStart(Cell* p) {
-        return reinterpret_cast<T*>(p + 1);
-    }
+    static T* dataStart(Cell* p) { return reinterpret_cast<T*>(p + 1); }
 
-public:
-    MyList()
-            : front_(0), size_(0) {
-    }
+   public:
+    MyList() : front_(0), size_(0) {}
 
-    MyList(MyList const& o)
-            : front_(0), size_(0) {
-        if (o.size_ != 0) throw std::runtime_error(
-                "MyList can't be copied unless it is empty!"); //FIXME
+    MyList(MyList const& o) : front_(0), size_(0) {
+        if (o.size_ != 0)
+            throw std::runtime_error(
+                "MyList can't be copied unless it is empty!");  // FIXME
     }
 
     MyList& operator=(MyList const& o) {
-        if (o.size_ != 0) throw std::runtime_error(
-                "MyList can't be copied unless it is empty!"); //FIXME
+        if (o.size_ != 0)
+            throw std::runtime_error(
+                "MyList can't be copied unless it is empty!");  // FIXME
         clear();
         return *this;
     }
 
-//    MyList(MyList&& o) {
-//        *this = std::move(o);
-//    }
+    //    MyList(MyList&& o) {
+    //        *this = std::move(o);
+    //    }
 
-//    MyList& operator=(MyList&& o) {
-//        front_ = o.front_;
-//        o.front_ = 0;
-//        return *this;
-//    }
+    //    MyList& operator=(MyList&& o) {
+    //        front_ = o.front_;
+    //        o.front_ = 0;
+    //        return *this;
+    //    }
 
-    virtual ~MyList() {
-        clear();
-    }
+    virtual ~MyList() { clear(); }
 
     /**
      * Returns the number of elements.
      * @return the number of elements.
      */
-    size_t size() const {
-        return size_;
-    }
+    size_t size() const { return size_; }
 
     /**
      * Checks emptiness.
@@ -139,17 +128,13 @@ public:
      * Accesses the first element.
      * @return pointer to the first element.
      */
-    T* front() {
-        return dataStart(front_);
-    }
+    T* front() { return dataStart(front_); }
 
     /**
      * Accesses the first element.
      * @return pointer to the first element.
      */
-    T const* front() const {
-        return dataStart(front_);
-    }
+    T const* front() const { return dataStart(front_); }
 
     /**
      * Allocates a contiguous memory block for one or more new elements
@@ -163,13 +148,12 @@ public:
 
         if (front_ == 0 || front_ < blockStart(front_) + headerCells + n) {
             size_t const m = headerCells + n * BLOCK_ELEMENTS;
-            Cell* newBlock = new Cell[m];
-            Cell* newFront = newBlock + m - n;
+            Cell*        newBlock = new Cell[m];
+            Cell*        newFront = newBlock + m - n;
             blockStart(newFront) = newBlock;
             newFront->next = setFlag(front_);
             front_ = newFront;
-        }
-        else {
+        } else {
             Cell* newFront = front_ - n;
             blockStart(newFront) = blockStart(front_);
             newFront->next = front_;
@@ -184,14 +168,13 @@ public:
      * Removes a memory block at the beginning.
      */
     void pop_front() {
-        //front().~T(); I don't care about destruction!
+        // front().~T(); I don't care about destruction!
         Cell* next = front_->next;
 
         if (flagged(next)) {
             delete[] blockStart(front_);
             front_ = clearFlag(next);
-        }
-        else {
+        } else {
             blockStart(next) = blockStart(front_);
             front_ = next;
         }
@@ -201,119 +184,91 @@ public:
     class iterator {
         Cell* front;
 
-    public:
-        iterator(Cell* front)
-                : front(front) {
-        }
+       public:
+        iterator(Cell* _front) : front(_front) {}
 
-        T* operator*() const {
-            return dataStart(front);
-        }
+        T* operator*() const { return dataStart(front); }
 
-        T* operator->() const {
-            return dataStart(front);
-        }
+        T* operator->() const { return dataStart(front); }
 
         iterator& operator++() {
             front = clearFlag(front->next);
             return *this;
         }
 
-        bool operator==(iterator const& o) const {
-            return front == o.front;
-        }
+        bool operator==(iterator const& o) const { return front == o.front; }
 
-        bool operator!=(iterator const& o) const {
-            return front != o.front;
-        }
+        bool operator!=(iterator const& o) const { return front != o.front; }
     };
 
     class const_iterator {
         Cell const* front;
 
-    public:
-        const_iterator(Cell const* front)
-                : front(front) {
-        }
+       public:
+        const_iterator(Cell const* _front) : front(_front) {}
 
-        T const* operator*() const {
-            return *dataStart(front);
-        }
+        T const* operator*() const { return *dataStart(front); }
 
-        T const* operator->() const {
-            return dataStart(front);
-        }
+        T const* operator->() const { return dataStart(front); }
 
         const_iterator& operator++() {
             front = clearFlag(front->next);
             return *this;
         }
 
-        bool operator==(iterator const& o) const {
-            return front == o.front;
-        }
+        bool operator==(iterator const& o) const { return front == o.front; }
 
-        bool operator!=(iterator const& o) const {
-            return front != o.front;
-        }
+        bool operator!=(iterator const& o) const { return front != o.front; }
     };
 
     /**
      * Returns an iterator to the beginning.
      * @return iterator to the beginning.
      */
-    iterator begin() {
-        return iterator(front_);
-    }
+    iterator begin() { return iterator(front_); }
 
     /**
      * Returns an iterator to the beginning.
      * @return iterator to the beginning.
      */
-    const_iterator begin() const {
-        return const_iterator(front_);
-    }
+    const_iterator begin() const { return const_iterator(front_); }
 
     /**
      * Returns an iterator to the end.
      * @return iterator to the end.
      */
-    iterator end() {
-        return iterator(0);
-    }
+    iterator end() { return iterator(0); }
 
     /**
      * Returns an iterator to the end.
      * @return iterator to the end.
      */
-    const_iterator end() const {
-        return const_iterator(0);
-    }
+    const_iterator end() const { return const_iterator(0); }
 
-//    /**
-//     * Get the hash code of this object.
-//     * @return the hash code.
-//     */
-//    size_t hash() const {
-//        size_t h = size_;
-//        for (size_t i = 0; i < size_; ++i) {
-//            h = h * 31 + array_[i].hash();
-//        }
-//        return h;
-//    }
-//
-//    /**
-//     * Check equivalence between another object.
-//     * @param o another object.
-//     * @return true if equivalent.
-//     */
-//    bool operator==(MyList const& o) const {
-//        if (size_ != o.size_) return false;
-//        for (size_t i = 0; i < size_; ++i) {
-//            if (!(array_[i] == o.array_[i])) return false;
-//        }
-//        return true;
-//    }
+    //    /**
+    //     * Get the hash code of this object.
+    //     * @return the hash code.
+    //     */
+    //    size_t hash() const {
+    //        size_t h = size_;
+    //        for (size_t i = 0; i < size_; ++i) {
+    //            h = h * 31 + array_[i].hash();
+    //        }
+    //        return h;
+    //    }
+    //
+    //    /**
+    //     * Check equivalence between another object.
+    //     * @param o another object.
+    //     * @return true if equivalent.
+    //     */
+    //    bool operator==(MyList const& o) const {
+    //        if (size_ != o.size_) return false;
+    //        for (size_t i = 0; i < size_; ++i) {
+    //            if (!(array_[i] == o.array_[i])) return false;
+    //        }
+    //        return true;
+    //    }
 
     /**
      * Sends an object to an output stream.
@@ -325,7 +280,8 @@ public:
         bool cont = false;
         os << "(";
         for (const_iterator t = o.begin(); t != o.end(); ++t) {
-            if (cont) os << ",";
+            if (cont)
+                os << ",";
             os << **t;
             cont = true;
         }
@@ -333,42 +289,35 @@ public:
     }
 };
 
-template<typename T>
+template <typename T>
 class MyListOnPool {
     struct Cell {
         Cell* next;
     };
 
-    Cell* front_;
+    Cell*  front_;
     size_t size_;
 
     static size_t dataCells(size_t n) {
         return (n + sizeof(Cell) - 1) / sizeof(Cell);
     }
 
-    static size_t workCells(size_t n) {
-        return 1 + dataCells(n);
-    }
+    static size_t workCells(size_t n) { return 1 + dataCells(n); }
 
-    static T* dataStart(Cell* p) {
-        return reinterpret_cast<T*>(p + 1);
-    }
+    static T* dataStart(Cell* p) { return reinterpret_cast<T*>(p + 1); }
 
     static T const* dataStart(Cell const* p) {
         return reinterpret_cast<T const*>(p + 1);
     }
 
-public:
-    MyListOnPool()
-            : front_(0), size_(0) {
-    }
+   public:
+    MyListOnPool() : front_(0), size_(0) {}
 
-    MyListOnPool(MyListOnPool const& o) {
-        *this = o;
-    }
+    MyListOnPool(MyListOnPool const& o) { *this = o; }
 
     MyListOnPool& operator=(MyListOnPool const& o) {
-        if (!o.empty()) throw std::runtime_error(
+        if (!o.empty())
+            throw std::runtime_error(
                 "MyListOnPool: Can't copy a nonempty object.");
 
         front_ = 0;
@@ -376,29 +325,25 @@ public:
         return *this;
     }
 
-//    MyListOnPool(MyListOnPool&& o) {
-//        *this = std::move(o);
-//    }
-//
-//    MyListOnPool& operator=(MyListOnPool&& o) {
-//        front_ = o.front_;
-//        size_ = o.size_;
-//        o.front_ = 0;
-//        o.size_ = 0;
-//        return *this;
-//    }
+    //    MyListOnPool(MyListOnPool&& o) {
+    //        *this = std::move(o);
+    //    }
+    //
+    //    MyListOnPool& operator=(MyListOnPool&& o) {
+    //        front_ = o.front_;
+    //        size_ = o.size_;
+    //        o.front_ = 0;
+    //        o.size_ = 0;
+    //        return *this;
+    //    }
 
-    virtual ~MyListOnPool() {
-        clear();
-    }
+    virtual ~MyListOnPool() { clear(); }
 
     /**
      * Returns the number of elements.
      * @return the number of elements.
      */
-    size_t size() const {
-        return size_;
-    }
+    size_t size() const { return size_; }
 
     /**
      * Checks emptiness.
@@ -422,17 +367,13 @@ public:
      * Accesses the first element.
      * @return pointer to the first element.
      */
-    T* front() {
-        return dataStart(front_);
-    }
+    T* front() { return dataStart(front_); }
 
     /**
      * Accesses the first element.
      * @return pointer to the first element.
      */
-    T const* front() const {
-        return dataStart(front_);
-    }
+    T const* front() const { return dataStart(front_); }
 
     /**
      * Allocates a contiguous memory block for one or more new elements
@@ -442,10 +383,10 @@ public:
      * @param numElements the number of elements.
      * @return pointer to the memory block.
      */
-    template<typename Pool>
+    template <typename Pool>
     T* alloc_front(Pool& pool, size_t numElements = 1) {
         size_t const n = workCells(numElements * sizeof(T));
-        Cell* newFront = pool.template allocate<Cell>(n);
+        Cell*        newFront = pool.template allocate<Cell>(n);
         newFront->next = front_;
         front_ = newFront;
         ++size_;
@@ -464,40 +405,28 @@ public:
     class iterator {
         Cell* front;
 
-    public:
-        iterator(Cell* front)
-                : front(front) {
-        }
+       public:
+        iterator(Cell* _front) : front(_front) {}
 
-        T* operator*() const {
-            return dataStart(front);
-        }
+        T* operator*() const { return dataStart(front); }
 
         iterator& operator++() {
             front = front->next;
             return *this;
         }
 
-        bool operator==(iterator const& o) const {
-            return front == o.front;
-        }
+        bool operator==(iterator const& o) const { return front == o.front; }
 
-        bool operator!=(iterator const& o) const {
-            return front != o.front;
-        }
+        bool operator!=(iterator const& o) const { return front != o.front; }
     };
 
     class const_iterator {
         Cell const* front;
 
-    public:
-        const_iterator(Cell const* front)
-                : front(front) {
-        }
+       public:
+        const_iterator(Cell const* _front) : front(_front) {}
 
-        T const* operator*() const {
-            return dataStart(front);
-        }
+        T const* operator*() const { return dataStart(front); }
 
         const_iterator& operator++() {
             front = front->next;
@@ -517,58 +446,50 @@ public:
      * Returns an iterator to the beginning.
      * @return iterator to the beginning.
      */
-    iterator begin() {
-        return iterator(front_);
-    }
+    iterator begin() { return iterator(front_); }
 
     /**
      * Returns an iterator to the beginning.
      * @return iterator to the beginning.
      */
-    const_iterator begin() const {
-        return const_iterator(front_);
-    }
+    const_iterator begin() const { return const_iterator(front_); }
 
     /**
      * Returns an iterator to the end.
      * @return iterator to the end.
      */
-    iterator end() {
-        return iterator(0);
-    }
+    iterator end() { return iterator(0); }
 
     /**
      * Returns an iterator to the end.
      * @return iterator to the end.
      */
-    const_iterator end() const {
-        return const_iterator(0);
-    }
+    const_iterator end() const { return const_iterator(0); }
 
-//    /**
-//     * Get the hash code of this object.
-//     * @return the hash code.
-//     */
-//    size_t hash() const {
-//        size_t h = size_;
-//        for (size_t i = 0; i < size_; ++i) {
-//            h = h * 31 + array_[i].hash();
-//        }
-//        return h;
-//    }
-//
-//    /**
-//     * Check equivalence between another object.
-//     * @param o another object.
-//     * @return true if equivalent.
-//     */
-//    bool operator==(MyListOnPool const& o) const {
-//        if (size_ != o.size_) return false;
-//        for (size_t i = 0; i < size_; ++i) {
-//            if (!(array_[i] == o.array_[i])) return false;
-//        }
-//        return true;
-//    }
+    //    /**
+    //     * Get the hash code of this object.
+    //     * @return the hash code.
+    //     */
+    //    size_t hash() const {
+    //        size_t h = size_;
+    //        for (size_t i = 0; i < size_; ++i) {
+    //            h = h * 31 + array_[i].hash();
+    //        }
+    //        return h;
+    //    }
+    //
+    //    /**
+    //     * Check equivalence between another object.
+    //     * @param o another object.
+    //     * @return true if equivalent.
+    //     */
+    //    bool operator==(MyListOnPool const& o) const {
+    //        if (size_ != o.size_) return false;
+    //        for (size_t i = 0; i < size_; ++i) {
+    //            if (!(array_[i] == o.array_[i])) return false;
+    //        }
+    //        return true;
+    //    }
 
     /**
      * Sends an object to an output stream.
@@ -580,7 +501,8 @@ public:
         bool cont = false;
         os << "(";
         for (const_iterator t = o.begin(); t != o.end(); ++t) {
-            if (cont) os << ",";
+            if (cont)
+                os << ",";
             os << **t;
             cont = true;
         }
@@ -588,4 +510,4 @@ public:
     }
 };
 
-#endif // MY_LIST_HPP
+#endif  // MY_LIST_HPP

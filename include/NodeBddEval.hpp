@@ -108,24 +108,18 @@
  * @tparam T data type of work area for each node.
  * @tparam R data type of return value.
  */
-template<typename E, typename T, typename R = T>
+template <typename T, typename R = T>
 class Eval {
-public:
-    E& entity() {
-        return *static_cast<E*>(this);
-    }
+   public:
+    // E& entity() { return *static_cast<E*>(this); }
 
-    E const& entity() const {
-        return *static_cast<E const*>(this);
-    }
+    // E const& entity() const { return *static_cast<E const*>(this); }
 
     /**
      * Returns preference to show messages.
      * @return true if messages are preferred.
      */
-    virtual bool showMessages() const {
-        return false;
-    }
+    virtual bool showMessages() const { return false; }
 
     /**
      * Initialization.
@@ -139,7 +133,6 @@ public:
      * @param v work area value for the root node.
      * @return final value of the evaluation.
      */
-    virtual R getValue(T const& v) = 0;
 
     /**
      * Destructs i-th level of data storage.
@@ -148,11 +141,17 @@ public:
     // virtual void destructLevel(int i) {
     // }
 
-    virtual void initializenode(T& n) const = 0 ;
+    virtual void initializenode(T& n) const = 0;
 
-    virtual void initializerootnode(T& n) const = 0 ;
+    virtual void initializerootnode(T& n) const = 0;
 
     virtual void evalNode(T& n) const = 0;
 
     virtual R get_objective(T& n) const = 0;
+    Eval<T, R>() = default;
+
+    Eval<T, R>(const Eval<T, R>&) = default;
+    Eval<T, R>(Eval<T, R>&&) = default;
+    Eval<T, R>& operator=(const Eval<T, R>&) = default;
+    Eval<T, R>& operator=(Eval<T, R>&&) = default;
 };

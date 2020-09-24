@@ -97,16 +97,16 @@ int parms_set_search_strategy(Parms* parms, int strategy) {
     return 0;
 }
 
-int parms_set_mip_solver(Parms *parms, int usage) {
+int parms_set_mip_solver(Parms* parms, int usage) {
     parms->mip_solver = usage;
     return 0;
 }
 
-int parms_set_use_heuristic(Parms *parms, int usage) {
+int parms_set_use_heuristic(Parms* parms, int usage) {
     parms->use_heuristic = usage;
     return 0;
 }
-int parms_set_reduce_cost(Parms *parms, int usage) {
+int parms_set_reduce_cost(Parms* parms, int usage) {
     parms->mip_solver = usage;
     return 0;
 }
