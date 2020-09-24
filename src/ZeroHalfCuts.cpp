@@ -147,7 +147,7 @@ void ZeroHalfCuts::construct_cut() {
                 if (aux) {
                     auto& aux_node = table->node(*aux);
                     auto  coeff_in = floor(aux_node.coeff_cut[k] / 2);
-                    if (coeff_in < -1e-4 && !aux_node.lp_visited) {
+                    if (coeff_in < -1e-4) {
                         data->add_coeff_hash_table(aux_node.get_nb_job(),
                                                    aux_node.get_weight(), k,
                                                    -coeff_in);
@@ -169,8 +169,7 @@ void ZeroHalfCuts::construct_cut() {
     };
 
     std::for_each(node_ids.begin(), node_ids.end(), add_coeff_constr);
-    // std::for_each(node_ids_lift.begin(), node_ids_lift.end(),
-    // add_coeff_constr);
+    std::for_each(node_ids_lift.begin(), node_ids_lift.end(), add_coeff_constr);
     // std::for_each(node_ids.begin(), node_ids.end(), print_node_ids);
     // fmt::print("\n");
 
@@ -185,9 +184,9 @@ void ZeroHalfCuts::construct_cut() {
     std::shared_ptr<ConstraintGeneric> constr{
         std::make_shared<ConstraintGeneric>(
             data, -floor((2.0 * q.get(GRB_DoubleAttr_Xn) + 1 + rhs) / 2.0))};
-    data->list_coeff();
-    fmt::print("RHS = {}\n",
-               -floor((2.0 * q.get(GRB_DoubleAttr_Xn) + 1 + rhs) / 2.0));
+    // data->list_coeff();
+    // fmt::print("RHS = {}\n",
+    //            -floor((2.0 * q.get(GRB_DoubleAttr_Xn) + 1 + rhs) / 2.0));
     for (auto& it : cut_list) {
         if (*constr == *it) {
             return;
@@ -224,6 +223,10 @@ void ZeroHalfCuts::generate_cuts() {
         for (auto i = 0; i < std::min(1, nb_solutions); i++) {
             model->set(GRB_IntParam_SolutionNumber, i);
             init_coeff_cut();
+            auto sol = model->get(GRB_DoubleAttr_ObjVal);
+            if (sol > 1.0 - 1e-6) {
+                break;
+            }
 
             bool add = true;
             auto calc_coeff_cut = [&](const auto& it) {
@@ -236,7 +239,7 @@ void ZeroHalfCuts::generate_cuts() {
                         auto y =
                             jobs_var[node.get_nb_job()].get(GRB_DoubleAttr_Xn);
                     } else {
-                        add = false;
+                        add = true;
                     }
 
                     for (int j = 0; j < 2; j++) {
@@ -287,23 +290,24 @@ void ZeroHalfCuts::generate_cuts() {
             //         auto& child = table->node(node.branch[0]);
             //         for (int j = 0; j < 2; j++) {
             //             child.coeff_cut[j] += 1.0;
-            //             if (j) {
-            //                 auto y = jobs_var[child.get_nb_job()].get(
-            //                     GRB_DoubleAttr_Xn);
-            //                 if (y > 1e-4) {
-            //                     child.coeff_cut[j] += 1.0;
-            //                 }
-            //             }
+            //             // if (j) {
+            //             //     auto y = jobs_var[child.get_nb_job()].get(
+            //             //         GRB_DoubleAttr_Xn);
+            //             //     if (y > 1e-4) {
+            //             //         child.coeff_cut[j] += 1.0;
+            //             //     }
+            //             // }
             //             for (auto& it : child.in_edges[j]) {
             //                 auto aux = it.lock();
             //                 if (aux) {
             //                     auto& aux_node = table->node(*aux);
             //                     aux_node.coeff_cut[j] -= 1.0;
-            //                     auto y = jobs_var[aux_node.get_nb_job()].get(
-            //                         GRB_DoubleAttr_Xn);
-            //                     if (y == 1.0 && !aux_node.lp_visited) {
-            //                         aux_node.coeff_cut[j] += 1.0;
-            //                     }
+            //                     // auto y =
+            //                     jobs_var[aux_node.get_nb_job()].get(
+            //                     //     GRB_DoubleAttr_Xn);
+            //                     // if (y == 1.0 && !aux_node.lp_visited) {
+            //                     //     aux_node.coeff_cut[j] += 1.0;
+            //                     // }
             //                 }
             //             }
             //         }
@@ -382,7 +386,7 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
     auto& node = table->node(v);
 
     for (int k = 0; k < 2; k++) {
-        if (node.branch[k] <= 0) {
+        if (node.branch[k] <= 1) {
             continue;
         }
         auto& child_node = table->node(node.branch[k]);
@@ -390,10 +394,11 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
         if (node.lp_x[k] == 0.0 && !child_node.lp_visited) {
             child_node.coeff_cut[0] += 1.0;
             child_node.coeff_cut[1] += 1.0;
-            auto y = jobs_var[child_node.get_nb_job()].get(GRB_DoubleAttr_Xn);
-            if (y == 1.0) {
-                child_node.coeff_cut[1] += 1.0;
-            }
+            // auto y =
+            // jobs_var[child_node.get_nb_job()].get(GRB_DoubleAttr_Xn); if (y
+            // == 1.0) {
+            //     child_node.coeff_cut[1] += 1.0;
+            // }
 
             for (int j = 0; j < 2; j++) {
                 for (auto& it : child_node.in_edges[j]) {
@@ -401,14 +406,14 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
                     if (aux) {
                         auto& aux_node = table->node(*aux);
                         aux_node.coeff_cut[j] -= 1.0;
-                        if (j) {
-                            auto y_parrent =
-                                jobs_var[aux_node.get_nb_job()].get(
-                                    GRB_DoubleAttr_Xn);
-                            if (y == 1.0) {
-                                aux_node.coeff_cut[j] += 1.0;
-                            }
-                        }
+                        // if (j) {
+                        //     auto y_parrent =
+                        //         jobs_var[aux_node.get_nb_job()].get(
+                        //             GRB_DoubleAttr_Xn);
+                        //     if (y == 1.0) {
+                        //         aux_node.coeff_cut[j] += 1.0;
+                        //     }
+                        // }
                     }
                 }
             }
