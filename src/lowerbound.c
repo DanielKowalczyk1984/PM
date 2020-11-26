@@ -502,11 +502,11 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
             /**
              * Delete old columns
              */
-            // if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
-            //     status == GRB_OPTIMAL) {
-            //     val = delete_old_schedules(pd);
-            //     CCcheck_val_2(val, "Failed in delete_old_cclasses");
-            // }
+            if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
+                status == GRB_OPTIMAL) {
+                val = delete_old_schedules(pd);
+                CCcheck_val_2(val, "Failed in delete_old_cclasses");
+            }
             solve_relaxation(problem, pd);
 
             /**
@@ -595,11 +595,11 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 compute_objective(pd);
                 val = construct_lp_sol_from_rmp(pd);
                 CCcheck_val_2(val, "Failed in construct lp sol from rmp\n");
-                // delete_old_schedules(pd);
-                // solve_relaxation(problem, pd);
+                delete_old_schedules(pd);
+                solve_relaxation(problem, pd);
+                delete_unused_rows(pd);
+                solve_relaxation(problem, pd);
                 if (!call_is_integer_solution(pd->solver)) {
-                    // delete_unused_rows(pd);
-                    // solve_relaxation(problem, pd);
                     has_cuts = (generate_cuts(pd) > 0);
                     call_update_duals(pd->solver_stab);
                     // lp_interface_write(pd->RMP, "test.lp");
