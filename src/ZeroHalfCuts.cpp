@@ -32,13 +32,13 @@ ZeroHalfCuts::ZeroHalfCuts(int                 _nb_jobs,
     // do a systematic search for the k-best solutions
     model->set(GRB_IntParam_PoolSearchMode, 2);
     model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-    model->set(GRB_IntParam_Threads, 1);
+    model->set(GRB_IntParam_Threads, 4);
     model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
     model->set(GRB_IntParam_Presolve, 2);
     model->set(GRB_DoubleParam_Heuristics, 0.5);
     model->set(GRB_IntParam_MIPFocus, 1);
-    model->set(GRB_DoubleParam_TimeLimit, 10);
-    model->set(GRB_IntParam_OutputFlag, 0);
+    model->set(GRB_DoubleParam_TimeLimit, 50);
+    model->set(GRB_IntParam_OutputFlag, 1);
 
     generate_model();
 }
@@ -213,20 +213,17 @@ void ZeroHalfCuts::generate_cuts() {
         }
 
         if (status != GRB_OPTIMAL) {
-            fmt::print("Optimization was stopped with status {}", status);
+            fmt::print("Optimization was stopped with status {}\n", status);
         }
 
         // Print number of solutions stored
         auto nb_solutions = model->get(GRB_IntAttr_SolCount);
         fmt::print("Number of solutions found: {}\n", nb_solutions);
 
-        for (auto i = 0; i < std::min(1, nb_solutions); i++) {
+        for (auto i = 0; i < std::min(100, nb_solutions); i++) {
             model->set(GRB_IntParam_SolutionNumber, i);
             init_coeff_cut();
             auto sol = model->get(GRB_DoubleAttr_ObjVal);
-            if (sol > 1.0 - 1e-6) {
-                break;
-            }
 
             bool add = true;
             auto calc_coeff_cut = [&](const auto& it) {
@@ -236,8 +233,8 @@ void ZeroHalfCuts::generate_cuts() {
                     if (it > 1) {
                         node.coeff_cut[0] += 1.0;
                         node.coeff_cut[1] += 1.0;
-                        auto y =
-                            jobs_var[node.get_nb_job()].get(GRB_DoubleAttr_Xn);
+                        fmt::print("Node {} {}\n", node.get_nb_job(),
+                                   node.get_weight());
                     } else {
                         add = true;
                     }
@@ -248,20 +245,6 @@ void ZeroHalfCuts::generate_cuts() {
                             if (aux) {
                                 auto& aux_node = table->node(*aux);
                                 aux_node.coeff_cut[j] -= 1.0;
-                                // if (j) {
-                                //     auto y =
-                                //         jobs_var[aux_node.get_nb_job()].get(
-                                //             GRB_DoubleAttr_Xn);
-                                //     auto x = 0.0;
-                                //     if (aux_node.lp_visited) {
-                                //         x = aux_node.sigma.get(
-                                //             GRB_DoubleAttr_Xn);
-                                //     }
-
-                                //     if (y > 1.0 - 1e-4 && x < 1e-4) {
-                                //         aux_node.coeff_cut[j] += 1.0;
-                                //     }
-                                // }
                             }
                         }
                     }
@@ -277,6 +260,14 @@ void ZeroHalfCuts::generate_cuts() {
                     }
                 }
             }
+
+            for (auto i = 0; i < nb_jobs; i++) {
+                auto x = jobs_var[i].get(GRB_DoubleAttr_Xn);
+                if (x > 1e-4) {
+                    fmt::print("{} ", i);
+                }
+            }
+            fmt::print("\n");
 
             std::for_each(node_ids.begin(), node_ids.end(), calc_coeff_cut);
 
@@ -317,7 +308,9 @@ void ZeroHalfCuts::generate_cuts() {
             // }
             if (add)
                 construct_cut();
+            fmt::print("---------------------------------------------\n");
         }
+        getchar();
 
     } catch (GRBException& e) {
         fmt::print("Error code = {0} {1:-^{2}} {3}", e.getErrorCode(), "", 40,
@@ -394,11 +387,6 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
         if (node.lp_x[k] == 0.0 && !child_node.lp_visited) {
             child_node.coeff_cut[0] += 1.0;
             child_node.coeff_cut[1] += 1.0;
-            // auto y =
-            // jobs_var[child_node.get_nb_job()].get(GRB_DoubleAttr_Xn); if (y
-            // == 1.0) {
-            //     child_node.coeff_cut[1] += 1.0;
-            // }
 
             for (int j = 0; j < 2; j++) {
                 for (auto& it : child_node.in_edges[j]) {
@@ -406,14 +394,6 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
                     if (aux) {
                         auto& aux_node = table->node(*aux);
                         aux_node.coeff_cut[j] -= 1.0;
-                        // if (j) {
-                        //     auto y_parrent =
-                        //         jobs_var[aux_node.get_nb_job()].get(
-                        //             GRB_DoubleAttr_Xn);
-                        //     if (y == 1.0) {
-                        //         aux_node.coeff_cut[j] += 1.0;
-                        //     }
-                        // }
                     }
                 }
             }
