@@ -65,8 +65,6 @@ message(STATUS "Added all header and implementation files.\n")
 # Find Gurobi
 find_package(Gurobi)
 
-find_package(Glib)
-
 add_subdirectory(or_utils)
 
 #
@@ -92,7 +90,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O5 -std=c++17 -m64")
 set(CMAKE_C_FLAGS_RELEASE
     "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++20 -O0 -m64")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17 -O0 -m64")
 set(CMAKE_C_FLAGS_DEBUG
     "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
