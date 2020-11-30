@@ -104,3 +104,4 @@ docs/*
 *.lp
 wt*_solutions
 .clangd/*
+.cache/
