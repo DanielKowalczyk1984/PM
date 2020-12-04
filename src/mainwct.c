@@ -264,8 +264,8 @@ int main(int ac, char** av) {
      * @brief Solve initial relaxation
      *
      */
-    build_rmp(&(problem.root_pd));
-    solve_relaxation(&problem, root);
+    build_rmp(root);
+    solve_relaxation(root);
     GPtrArray* solutions_pool = g_ptr_array_copy(
         root->localColPool, g_copy_scheduleset, &(problem.nb_jobs));
 

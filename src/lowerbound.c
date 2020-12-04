@@ -255,7 +255,7 @@ int delete_infeasible_schedules(NodeData* pd) {
     }
 
     if (pd->zero_count > 0) {
-        solve_relaxation(pd->problem, pd);
+        solve_relaxation(pd);
     }
 
 CLEAN:
@@ -401,7 +401,7 @@ CLEAN:
     return val;
 }
 
-int solve_relaxation(Problem* problem, NodeData* pd) {
+int solve_relaxation(NodeData* pd) {
     int         val = 0;
     int         status;
     double      real_time_solve_lp;
@@ -506,7 +506,7 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 val = delete_old_schedules(pd);
                 CCcheck_val_2(val, "Failed in delete_old_cclasses");
             }
-            solve_relaxation(problem, pd);
+            solve_relaxation(pd);
 
             /**
              * Solve the pricing problem
@@ -590,14 +590,14 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 /**
                  * Compute the objective function
                  */
-                solve_relaxation(problem, pd);
+                solve_relaxation(pd);
                 compute_objective(pd);
                 val = construct_lp_sol_from_rmp(pd);
                 CCcheck_val_2(val, "Failed in construct lp sol from rmp\n");
                 delete_old_schedules(pd);
-                solve_relaxation(problem, pd);
+                solve_relaxation(pd);
                 // delete_unused_rows(pd);
-                solve_relaxation(problem, pd);
+                solve_relaxation(pd);
                 if (!call_is_integer_solution(pd->solver)) {
                     has_cuts = (generate_cuts(pd) > 0);
                     call_update_duals(pd->solver_stab);
