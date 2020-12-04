@@ -125,7 +125,7 @@ void print_number_nodes_edges(PricerSolver* solver) {
 
 int evaluate_nodes(NodeData* pd) {
     int    val = 0;
-    int    UB = pd->problem->opt_sol->tw;
+    int    UB = pd->opt_sol->tw;
     double LB = pd->LP_lower_bound;
 
     pd->solver->evaluate_nodes(&g_array_index(pd->pi, double, 0), UB, LB);
@@ -135,7 +135,7 @@ int evaluate_nodes(NodeData* pd) {
 
 int reduce_cost_fixing(NodeData* pd) {
     int    val = 0;
-    int    UB = pd->problem->opt_sol->tw;
+    int    UB = pd->opt_sol->tw;
     double LB = pd->LP_lower_bound_dual;
 
     pd->solver->reduce_cost_fixing(&g_array_index(pd->pi, double, 0), UB, LB);

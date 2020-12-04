@@ -163,14 +163,10 @@ struct _NodeData {
      */
     NodeData* parent;
 
-    /**
-     * ptr to the data overview
-     */
-    Problem* problem;
-
     /** Some additional pointers to data needed */
     Parms*      parms;
     Statistics* stat;
+    Solution*   opt_sol;
 
     char pname[MAX_PNAME_LEN];
 };

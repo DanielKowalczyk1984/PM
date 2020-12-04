@@ -214,7 +214,6 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->diff_children_wide = (NodeData**)NULL;
 
     pd->parms = &(prob->parms);
-    pd->problem = prob;
 }
 
 void lp_node_data_free(NodeData* pd) {
