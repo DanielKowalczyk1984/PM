@@ -74,7 +74,8 @@ static int create_same_conflict(Problem*   problem,
                                 Job*       v2) {
     int val = 0;
     // Parms *parms = &(problem->parms);
-    NodeData* pd = CC_SAFE_MALLOC(1, NodeData);
+    NodeData*   pd = CC_SAFE_MALLOC(1, NodeData);
+    Statistics* statistics = parent_pd->stat;
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     nodedata_init(pd, problem);
     /** Init B&B data */
@@ -99,10 +100,11 @@ static int create_same_conflict(Problem*   problem,
     pd->parent = parent_pd;
     pd->debugcolors = parent_pd->debugcolors;
     pd->ndebugcolors = parent_pd->ndebugcolors;
+    pd->stat = parent_pd->stat;
 
     /* Construction of solver*/
     if (pd->parent) {
-        CCutil_start_resume_time(&(problem->tot_build_dd));
+        CCutil_start_resume_time(&(statistics->tot_build_dd));
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 1);
 
@@ -115,12 +117,12 @@ static int create_same_conflict(Problem*   problem,
             }
 
             *child = pd;
-            CCutil_suspend_timer(&(problem->tot_build_dd));
+            CCutil_suspend_timer(&(statistics->tot_build_dd));
             goto CLEAN;
         }
 
         // init_tables(pd->solver);
-        CCutil_suspend_timer(&(problem->tot_build_dd));
+        CCutil_suspend_timer(&(statistics->tot_build_dd));
     }
 
     val = transfer_same_cclasses(pd, parent_pd->localColPool, v1, v2);
@@ -143,10 +145,11 @@ static int create_differ_conflict(Problem*   problem,
                                   NodeData** child,
                                   Job*       v1,
                                   Job*       v2) {
-    int       val = 0;
-    int       i;
-    int       nb_cols;
-    NodeData* pd = CC_SAFE_MALLOC(1, NodeData);
+    int         val = 0;
+    int         i;
+    int         nb_cols;
+    NodeData*   pd = CC_SAFE_MALLOC(1, NodeData);
+    Statistics* statistics = parent_pd->stat;
     // Parms *parms = &(problem->parms);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     ScheduleSet *it, *tmp;
@@ -175,7 +178,7 @@ static int create_differ_conflict(Problem*   problem,
 
     /* Construction of solver*/
     if (pd->parent) {
-        CCutil_start_resume_time(&(problem->tot_build_dd));
+        CCutil_start_resume_time(&(statistics->tot_build_dd));
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 0);
 
@@ -188,12 +191,12 @@ static int create_differ_conflict(Problem*   problem,
             }
 
             *child = pd;
-            CCutil_suspend_timer(&(problem->tot_build_dd));
+            CCutil_suspend_timer(&(statistics->tot_build_dd));
             goto CLEAN;
         }
 
         // init_tables(pd->solver);
-        CCutil_suspend_timer(&(problem->tot_build_dd));
+        CCutil_suspend_timer(&(statistics->tot_build_dd));
     }
 
     /* Transfer independent sets by removing v2 if both v1 and v2 are currently

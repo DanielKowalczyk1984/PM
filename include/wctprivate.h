@@ -2,6 +2,7 @@
 #define WCT_PRIVATE_H
 
 #include "MIP_defs.hpp"
+#include "Statistics.h"
 #include "binomial-heap.h"
 #include "interval.h"
 #include "lp.h"
@@ -52,6 +53,7 @@ struct _NodeData {
     GPtrArray* jobarray;
     int        H_max;
     int        H_min;
+    int        off;
     /** data about the intervals */
     GPtrArray* local_intervals;
     GPtrArray* ordered_jobs;
@@ -166,6 +168,10 @@ struct _NodeData {
      */
     Problem* problem;
 
+    /** Some additional pointers to data needed */
+    Parms*      parms;
+    Statistics* stat;
+
     char pname[MAX_PNAME_LEN];
 };
 
@@ -225,44 +231,7 @@ struct _Problem {
     int           mult_key;
     int           found;
     /*Cpu time measurement + Statistics*/
-    int    nb_explored_nodes;
-    int    nb_generated_nodes;
-    int    nb_generated_col;
-    int    nb_generated_col_root;
-    size_t first_size_graph;
-    size_t size_graph_after_reduced_cost_fixing;
-
-    CCutil_timer tot_build_dd;
-    CCutil_timer tot_cputime;
-    CCutil_timer tot_branch_and_bound;
-    CCutil_timer tot_strong_branching;
-    CCutil_timer tot_lb_root;
-    CCutil_timer tot_lb;
-    CCutil_timer tot_solve_lp;
-    CCutil_timer tot_pricing;
-    CCutil_timer tot_heuristic;
-    CCutil_timer tot_reduce_cost_fixing;
-
-    double real_time_build_dd;
-    double real_time_total;
-    double real_time_branch_and_bound;
-    double real_time_strong_branching;
-    double real_time_lb_root;
-    double real_time_lb;
-    double real_time_solve_lp;
-    double real_time_pricing;
-    double real_time_heuristic;
-    int    mip_nb_vars;
-    int    mip_nb_constr;
-    double mip_obj_bound;
-    double mip_obj_bound_lp;
-    double mip_rel_gap;
-    double mip_run_time;
-    int    mip_status;
-    double mip_nb_iter_simplex;
-    double mip_nb_nodes;
-    int    mip_reduced_cost_fixing;
-    // double       real_time;
+    Statistics stat;
 };
 
 /*Initialization and free memory for the problem*/

@@ -393,11 +393,12 @@ void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform) {
 }
 
 int heuristic(Problem* prob) {
-    int    val = 0;
-    int    nb_jobs = prob->nb_jobs;
-    int    nb_machines = prob->nb_machines;
-    GRand* rand_uniform = g_rand_new_with_seed(2011);
-    Parms* parms = &(prob->parms);
+    int         val = 0;
+    int         nb_jobs = prob->nb_jobs;
+    int         nb_machines = prob->nb_machines;
+    GRand*      rand_uniform = g_rand_new_with_seed(2011);
+    Parms*      parms = &(prob->parms);
+    Statistics* statistics = &(prob->stat);
     g_random_set_seed(1984);
     int                ILS = prob->nb_jobs / 2;
     int                IR = parms->nb_iterations_rvnd;
@@ -407,7 +408,7 @@ int heuristic(Problem* prob) {
     local_search_data* data = (local_search_data*)NULL;
     local_search_data* data_RS = (local_search_data*)NULL;
 
-    CCutil_start_resume_time(&(prob->tot_heuristic));
+    CCutil_start_resume_time(&(statistics->tot_heuristic));
     sol = solution_alloc(intervals->len, nb_machines, nb_jobs, prob->off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(prob, sol);
@@ -472,7 +473,7 @@ int heuristic(Problem* prob) {
     printf("Solution after some improvements with Random Variable Search:\n");
     solution_print(prob->opt_sol);
     prob->global_upper_bound = prob->opt_sol->tw + prob->off;
-    CCutil_stop_timer(&(prob->tot_heuristic), 0);
+    CCutil_stop_timer(&(statistics->tot_heuristic), 0);
     prune_duplicated_sets(&(prob->root_pd));
     prob->root_pd.upper_bound = prob->global_upper_bound;
 CLEAN:

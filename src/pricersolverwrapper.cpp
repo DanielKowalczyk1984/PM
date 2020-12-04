@@ -139,8 +139,7 @@ int reduce_cost_fixing(NodeData* pd) {
     double LB = pd->LP_lower_bound_dual;
 
     pd->solver->reduce_cost_fixing(&g_array_index(pd->pi, double, 0), UB, LB);
-    pd->problem->size_graph_after_reduced_cost_fixing =
-        get_nb_edges(pd->solver);
+    pd->stat->size_graph_after_reduced_cost_fixing = get_nb_edges(pd->solver);
     return val;
 }
 
@@ -227,35 +226,35 @@ void add_constraint(NodeData* pd, Job* job, int order) {
 }
 
 void get_mip_statistics(NodeData* pd, enum MIP_Attr c) {
-    Problem*          problem = pd->problem;
     PricerSolverBase* solver = pd->solver;
+    Statistics*       statistics = pd->stat;
     switch (c) {
         case MIP_Attr_Nb_Vars:
-            problem->mip_nb_vars = solver->get_int_attr_model(c);
+            statistics->mip_nb_vars = solver->get_int_attr_model(c);
             break;
         case MIP_Attr_Nb_Constr:
-            problem->mip_nb_constr = solver->get_int_attr_model(c);
+            statistics->mip_nb_constr = solver->get_int_attr_model(c);
             break;
         case MIP_Attr_Obj_Bound:
-            problem->mip_obj_bound = solver->get_dbl_attr_model(c);
+            statistics->mip_obj_bound = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Obj_Bound_LP:
-            problem->mip_obj_bound_lp = solver->get_dbl_attr_model(c);
+            statistics->mip_obj_bound_lp = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Mip_Gap:
-            problem->mip_rel_gap = solver->get_dbl_attr_model(c);
+            statistics->mip_rel_gap = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Run_Time:
-            problem->mip_run_time = solver->get_dbl_attr_model(c);
+            statistics->mip_run_time = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Status:
-            problem->mip_status = solver->get_int_attr_model(c);
+            statistics->mip_status = solver->get_int_attr_model(c);
             break;
         case MIP_Attr_Nb_Simplex_Iter:
-            problem->mip_nb_iter_simplex = solver->get_dbl_attr_model(c);
+            statistics->mip_nb_iter_simplex = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Nb_Nodes:
-            problem->mip_nb_nodes = solver->get_dbl_attr_model(c);
+            statistics->mip_nb_nodes = solver->get_dbl_attr_model(c);
             break;
     }
 }

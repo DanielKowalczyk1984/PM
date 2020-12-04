@@ -172,23 +172,22 @@ void g_add_col_to_lp(gpointer data, gpointer user_data) {
 }
 
 int build_rmp(NodeData* pd) {
-    int      val = 0;
-    Problem* problem = pd->problem;
-    int      nb_jobs = problem->nb_jobs;
-    int      nb_machines = problem->nb_machines;
-    Parms*   parms = &(problem->parms);
-    double*  lb = NULL;
-    double*  ub = NULL;
-    double*  obj = NULL;
-    char*    vtype = NULL;
-    int*     start_vars = NULL;
-    int*     rows_ind = NULL;
-    double*  coeff_vals = NULL;
-    int*     int_values = NULL;
-    double*  dbl_values = NULL;
-    int*     start = CC_SAFE_MALLOC(nb_jobs, int);
-    double*  rhs = CC_SAFE_MALLOC(nb_jobs, double);
-    char*    sense = CC_SAFE_MALLOC(nb_jobs, char);
+    int     val = 0;
+    int     nb_jobs = pd->nb_jobs;
+    int     nb_machines = pd->nb_machines;
+    Parms*  parms = pd->parms;
+    double* lb = NULL;
+    double* ub = NULL;
+    double* obj = NULL;
+    char*   vtype = NULL;
+    int*    start_vars = NULL;
+    int*    rows_ind = NULL;
+    double* coeff_vals = NULL;
+    int*    int_values = NULL;
+    double* dbl_values = NULL;
+    int*    start = CC_SAFE_MALLOC(nb_jobs, int);
+    double* rhs = CC_SAFE_MALLOC(nb_jobs, double);
+    char*   sense = CC_SAFE_MALLOC(nb_jobs, char);
     val = lp_interface_init(&(pd->RMP), NULL);
     CCcheck_val_2(val, "lp_interface_init failed");
 

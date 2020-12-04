@@ -1,4 +1,5 @@
 #include <wct.h>
+#include "gurobi_c.h"
 
 int debug = 0;
 
@@ -41,50 +42,54 @@ void problem_init(Problem* problem) {
     problem->nb_data_nodes++;
     /*parms of the problem*/
     parms_init(&(problem->parms));
+    /** statistics of the problem */
+    statistics_init(&(problem->stat));
     /*heap initialization*/
     problem->unexplored_states = g_ptr_array_new();
     problem->non_empty_level_pqs = g_queue_new();
     problem->last_explored = -1;
     problem->found = 0;
-    problem->nb_explored_nodes = 0;
-    problem->nb_generated_col = 0;
+    // problem->nb_explored_nodes = 0;
+    // p->nb_generated_col = 0;
     /*CPU timer initialisation*/
-    CCutil_init_timer(&(problem->tot_build_dd), "tot_build_dd");
-    CCutil_init_timer(&(problem->tot_cputime), "tot_cputime");
-    CCutil_init_timer(&(problem->tot_branch_and_bound), "tot_branch_and_bound");
-    CCutil_init_timer(&(problem->tot_strong_branching), "tot_strong_branching");
-    CCutil_init_timer(&(problem->tot_lb_root), "tot_lb_root");
-    CCutil_init_timer(&(problem->tot_lb), "tot_lb");
-    CCutil_init_timer(&(problem->tot_solve_lp), "tot_solve_lp");
-    CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
-    CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
-    CCutil_init_timer(&(problem->tot_reduce_cost_fixing),
-                      "tot_reduce_cost_fixing");
+    // CCutil_init_timer(&(problem->tot_build_dd), "tot_build_dd");
+    // CCutil_init_timer(&(problem->tot_cputime), "tot_cputime");
+    // CCutil_init_timer(&(problem->tot_branch_and_bound),
+    // "tot_branch_and_bound");
+    // CCutil_init_timer(&(problem->tot_strong_branching),
+    // "tot_strong_branching"); CCutil_init_timer(&(problem->tot_lb_root),
+    // "tot_lb_root");
+    // CCutil_init_timer(&(problem->tot_lb), "tot_lb");
+    // CCutil_init_timer(&(problem->tot_solve_lp), "tot_solve_lp");
+    // CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
+    // CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
+    // CCutil_init_timer(&(problem->tot_reduce_cost_fixing),
+    //                   "tot_reduce_cost_fixing");
     /** initialize colPool */
     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     /** initialize the time */
-    problem->real_time_build_dd = 0.0;
-    problem->real_time_total = getRealTime();
-    problem->real_time_branch_and_bound = 0.0;
-    problem->real_time_strong_branching = 0.0;
-    problem->real_time_lb_root = 0.0;
-    problem->real_time_lb = 0.0;
-    problem->real_time_pricing = 0.0;
-    problem->real_time_heuristic = 0.0;
-    CCutil_start_timer(&(problem->tot_cputime));
-    problem->first_size_graph = 0;
-    problem->size_graph_after_reduced_cost_fixing = 0;
+    // problem->real_time_build_dd = 0.0;
+    // problem->real_time_total = getRealTime();
+    // problem->real_time_branch_and_bound = 0.0;
+    // problem->real_time_strong_branching = 0.0;
+    // problem->real_time_lb_root = 0.0;
+    // problem->real_time_lb = 0.0;
+    // problem->real_time_pricing = 0.0;
+    // problem->real_time_heuristic = 0.0;
+    // CCutil_start_timer(&(problem->tot_cputime));
+    // problem->first_size_graph = 0;
+    // problem->size_graph_after_reduced_cost_fixing = 0;
     /** Mip statistics */
-    problem->mip_nb_vars = 0;
-    problem->mip_nb_constr = 0;
-    problem->mip_obj_bound = 0.0;
-    problem->mip_obj_bound_lp = 0.0;
-    problem->mip_rel_gap = 0.0;
-    problem->mip_run_time = 110.0;
-    problem->mip_status = 0;
-    problem->mip_nb_iter_simplex = 0;
-    problem->mip_nb_nodes = 0;
-    problem->mip_reduced_cost_fixing = 0;
+    // problem->mip_nb_vars = 0;
+    // problem->mip_nb_constr = 0;
+    // problem->mip_obj_bound = 0.0;
+    // problem->mip_obj_bound_lp = 0.0;
+    // problem->mip_rel_gap = 0.0;
+    // problem->mip_run_time = 110.0;
+    // problem->mip_status = 0;
+    // problem->mip_nb_iter_simplex = 0;
+    // problem->mip_nb_nodes = 0;
+    // problem->mip_reduced_cost_fixing = 0;
 }
 
 void problem_free(Problem* problem) {
@@ -123,6 +128,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->orig_node_ids = (int*)NULL;
     pd->H_max = 0;
     pd->H_min = 0;
+    pd->off = prob->off;
     pd->local_intervals = g_ptr_array_new_with_free_func(g_interval_free);
     pd->ordered_jobs = g_ptr_array_new_with_free_func(g_free);
     pd->jobarray = (GPtrArray*)NULL;
@@ -207,6 +213,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->same_children_wide = (NodeData**)NULL;
     pd->diff_children_wide = (NodeData**)NULL;
 
+    pd->parms = &(prob->parms);
     pd->problem = prob;
 }
 
@@ -386,9 +393,10 @@ CLEAN:
 }
 
 int compute_schedule(Problem* problem) {
-    int       val = 0;
-    NodeData* root_pd = &(problem->root_pd);
-    Parms*    parms = &(problem->parms);
+    int         val = 0;
+    NodeData*   root_pd = &(problem->root_pd);
+    Parms*      parms = &(problem->parms);
+    Statistics* statistics = &(problem->stat);
     problem->mult_key = 1.0;
     problem->root_upper_bound = problem->global_upper_bound;
     problem->root_lower_bound = problem->global_lower_bound;
@@ -402,7 +410,7 @@ int compute_schedule(Problem* problem) {
         val = prefill_heap(root_pd, problem);
         CCcheck_val(val, "Failed in prefill_heap");
     } else {
-        CCutil_start_timer(&(problem->tot_lb_root));
+        CCutil_start_timer(&(statistics->tot_lb_root));
         val = compute_lower_bound(problem, root_pd);
         CCcheck_val_2(val, "Failed in compute_lower_bound");
 
@@ -416,8 +424,8 @@ int compute_schedule(Problem* problem) {
         }
 
         CCcheck_val_2(val, "Failed in compute_lower_bound");
-        problem->nb_generated_col_root = problem->nb_generated_col;
-        CCutil_stop_timer(&(problem->tot_lb_root), 0);
+        statistics->nb_generated_col_root = statistics->nb_generated_col;
+        CCutil_stop_timer(&(statistics->tot_lb_root), 0);
 
         switch (parms->bb_branch_strategy) {
             case conflict_strategy:
@@ -437,7 +445,7 @@ int compute_schedule(Problem* problem) {
            problem->global_lower_bound);
 
     if (problem->global_lower_bound != problem->global_upper_bound) {
-        CCutil_start_resume_time(&(problem->tot_branch_and_bound));
+        CCutil_start_resume_time(&(statistics->tot_branch_and_bound));
 
         switch (parms->bb_branch_strategy) {
             case conflict_strategy:
@@ -451,7 +459,7 @@ int compute_schedule(Problem* problem) {
                 break;
         }
 
-        CCutil_stop_timer(&(problem->tot_branch_and_bound), 0);
+        CCutil_stop_timer(&(statistics->tot_branch_and_bound), 0);
         printf("Compute schedule finished with LB %d and UB %d\n",
                root_pd->lower_bound, problem->global_upper_bound);
     } else {

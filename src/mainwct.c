@@ -188,11 +188,12 @@ CLEAN:
 }
 
 int main(int ac, char** av) {
-    int       val = 0;
-    double    start_time;
-    Problem   problem;
-    NodeData* root = &(problem.root_pd);
-    Parms*    parms = &(problem.parms);
+    int         val = 0;
+    double      start_time;
+    Problem     problem;
+    NodeData*   root = &(problem.root_pd);
+    Parms*      parms = &(problem.parms);
+    Statistics* statistics = &(problem.stat);
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header");
     problem_init(&problem);
@@ -241,22 +242,23 @@ int main(int ac, char** av) {
      *
      */
     if (parms->pricing_solver < dp_solver) {
-        CCutil_start_timer(&(problem.tot_build_dd));
+        CCutil_start_timer(&(statistics->tot_build_dd));
         root->solver =
             newSolver(root->jobarray, root->nb_machines, root->ordered_jobs,
                       parms, root->H_max, NULL, problem.opt_sol->tw);
-        CCutil_stop_timer(&(problem.tot_build_dd), 0);
+        CCutil_stop_timer(&(statistics->tot_build_dd), 0);
     } else {
         root->solver = newSolverDp(root->jobarray, root->nb_machines,
                                    root->H_max, parms, problem.opt_sol->tw);
     }
-    problem.first_size_graph = get_nb_edges(root->solver);
+    problem.stat.first_size_graph = get_nb_edges(root->solver);
 
     /**
      * @brief Initial stabilization
      *
      */
     root->solver_stab = new_pricing_stabilization(root->solver, parms);
+    root->stat = &(problem.stat);
 
     /**
      * @brief Solve initial relaxation
@@ -272,7 +274,7 @@ int main(int ac, char** av) {
      *
      */
     if (problem.opt_sol->tw + problem.opt_sol->off != 0) {
-        CCutil_start_timer(&(problem.tot_lb_root));
+        CCutil_start_timer(&(statistics->tot_lb_root));
         compute_lower_bound(&problem, &(problem.root_pd));
         if (parms->pricing_solver < dp_solver) {
             solution_canonical_order(problem.opt_sol, root->local_intervals);
@@ -281,7 +283,7 @@ int main(int ac, char** av) {
         problem.rel_error =
             (double)(problem.global_upper_bound - problem.global_lower_bound) /
             (problem.global_lower_bound + 0.00001);
-        CCutil_stop_timer(&(problem.tot_lb_root), 1);
+        CCutil_stop_timer(&(statistics->tot_lb_root), 1);
 
         if (parms->pricing_solver == dp_bdd_solver) {
             int* take = get_take(root->solver);
@@ -295,9 +297,9 @@ int main(int ac, char** av) {
                           parms, problem.H_max, take, problem.opt_sol->tw);
 
             CC_IFFREE(take, int);
-            CCutil_start_timer(&(problem.tot_lb_root));
+            CCutil_start_timer(&(statistics->tot_lb_root));
             compute_lower_bound(&problem, root);
-            CCutil_stop_timer(&(problem.tot_lb_root), 1);
+            CCutil_stop_timer(&(statistics->tot_lb_root), 1);
         }
     }
 

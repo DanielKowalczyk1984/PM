@@ -124,6 +124,7 @@ int preprocess_data(Problem* problem) {
 
     g_ptr_array_foreach(problem->g_job_array, g_set_jobarray_job, &i);
     root->jobarray = problem->g_job_array;
+    root->off = problem->off;
 
     /** Find the intervals of the instance at the root node */
     find_division(problem);

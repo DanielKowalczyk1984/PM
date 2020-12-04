@@ -564,9 +564,10 @@ void free_elist(NodeData* cd, Parms* parms) {
 int branching_msg(NodeData* pd, Problem* problem) {
     BinomialHeap* heap = problem->br_heap_a;
     NodeData*     root = &(problem->root_pd);
+    Statistics*   statistics = &(problem->stat);
 
     if (pd->lower_bound < pd->upper_bound) {
-        CCutil_suspend_timer(&problem->tot_cputime);
+        CCutil_suspend_timer(&statistics->tot_cputime);
         printf(
             "Branching with lb %d (LP %f) at depth %d (id = %d, "
             "time = %f, unprocessed nodes = %u, nb_jobs= %d, upper bound = %d, "
@@ -574,13 +575,13 @@ int branching_msg(NodeData* pd, Problem* problem) {
             "ZDD "
             "size= %zu, nb_cols = %u ).\n",
             pd->lower_bound, pd->LP_lower_bound_BB, pd->depth, pd->id,
-            problem->tot_cputime.cum_zeit, binomial_heap_num_entries(heap),
+            statistics->tot_cputime.cum_zeit, binomial_heap_num_entries(heap),
             pd->nb_jobs, problem->global_upper_bound, root->lower_bound,
             pd->v1->job, pd->v2->job, pd->edge_count_differ,
             pd->edge_count_same, get_nb_vertices(pd->solver),
             pd->localColPool->len);
-        CCutil_resume_timer(&problem->tot_cputime);
-        problem->nb_explored_nodes++;
+        CCutil_resume_timer(&statistics->tot_cputime);
+        (problem->stat).nb_explored_nodes++;
     }
 
     return 0;
@@ -591,13 +592,14 @@ int sequential_branching_conflict(Problem* problem) {
     NodeData*     pd;
     BinomialHeap* br_heap = problem->br_heap_a;
     Parms*        parms = &(problem->parms);
+    Statistics*   statistics = &(problem->stat);
     printf("ENTERED SEQUENTIAL BRANCHING CONFLICT:\n");
-    CCutil_suspend_timer(&problem->tot_branch_and_bound);
+    CCutil_suspend_timer(&statistics->tot_branch_and_bound);
 
     while ((pd = (NodeData*)binomial_heap_pop(br_heap)) &&
-           problem->tot_branch_and_bound.cum_zeit <
+           statistics->tot_branch_and_bound.cum_zeit <
                parms->branching_cpu_limit) {
-        CCutil_resume_timer(&problem->tot_branch_and_bound);
+        CCutil_resume_timer(&statistics->tot_branch_and_bound);
         pd->upper_bound = problem->global_upper_bound;
 
         if (pd->lower_bound >= pd->upper_bound ||
@@ -638,10 +640,10 @@ int sequential_branching_conflict(Problem* problem) {
             }
         }
 
-        CCutil_suspend_timer(&problem->tot_branch_and_bound);
+        CCutil_suspend_timer(&statistics->tot_branch_and_bound);
     }
 
-    CCutil_resume_timer(&problem->tot_branch_and_bound);
+    CCutil_resume_timer(&statistics->tot_branch_and_bound);
 
     if (pd) {
         printf("Branching timeout of %f second reached\n",
@@ -653,8 +655,9 @@ CLEAN:
 }
 
 int branching_msg_cbfs(NodeData* pd, Problem* problem) {
-    int       nb_nodes = 0;
-    NodeData* root = &(problem->root_pd);
+    int         nb_nodes = 0;
+    NodeData*   root = &(problem->root_pd);
+    Statistics* statistics = &(problem->stat);
 
     for (unsigned int i = 0; i < problem->unexplored_states->len; ++i) {
         BinomialHeap* heap =
@@ -663,7 +666,7 @@ int branching_msg_cbfs(NodeData* pd, Problem* problem) {
     }
 
     if (pd->lower_bound < pd->upper_bound) {
-        CCutil_suspend_timer(&problem->tot_cputime);
+        CCutil_suspend_timer(&statistics->tot_cputime);
         printf(
             "Branching with lb %d (LP %f) at depth %d (id = %d, "
             "time = %f, unprocessed nodes = %d, nb_jobs= %d, upper bound = %d, "
@@ -671,28 +674,29 @@ int branching_msg_cbfs(NodeData* pd, Problem* problem) {
             "ZDD "
             "size = %zu, nb_cols = %u ).\n",
             pd->lower_bound, pd->LP_lower_bound, pd->depth, pd->id,
-            problem->tot_cputime.cum_zeit, nb_nodes, pd->nb_jobs,
+            statistics->tot_cputime.cum_zeit, nb_nodes, pd->nb_jobs,
             problem->global_upper_bound, root->lower_bound, pd->v1->job,
             pd->v2->job, pd->edge_count_differ, pd->edge_count_same,
             get_nb_vertices(pd->solver), pd->localColPool->len);
-        CCutil_resume_timer(&problem->tot_cputime);
-        problem->nb_explored_nodes++;
+        CCutil_resume_timer(&statistics->tot_cputime);
+        (problem->stat).nb_explored_nodes++;
     }
 
     return 0;
 }
 
 int sequential_cbfs_branch_and_bound_conflict(Problem* problem) {
-    int       val = 0;
-    NodeData* pd;
-    Parms*    parms = &(problem->parms);
+    int         val = 0;
+    NodeData*   pd;
+    Parms*      parms = &(problem->parms);
+    Statistics* statistics = &(problem->stat);
     printf("ENTERED SEQUENTIAL BRANCHING CONFLICT + CBFS SEARCHING:\n");
-    CCutil_suspend_timer(&problem->tot_branch_and_bound);
+    CCutil_suspend_timer(&statistics->tot_branch_and_bound);
 
     while ((pd = get_next_node(problem)) &&
-           problem->tot_branch_and_bound.cum_zeit <
+           statistics->tot_branch_and_bound.cum_zeit <
                parms->branching_cpu_limit) {
-        CCutil_resume_timer(&problem->tot_branch_and_bound);
+        CCutil_resume_timer(&statistics->tot_branch_and_bound);
         pd->upper_bound = problem->global_upper_bound;
 
         if (pd->lower_bound >= pd->upper_bound ||
@@ -729,10 +733,10 @@ int sequential_cbfs_branch_and_bound_conflict(Problem* problem) {
             }
         }
 
-        CCutil_suspend_timer(&problem->tot_branch_and_bound);
+        CCutil_suspend_timer(&statistics->tot_branch_and_bound);
     }
 
-    CCutil_resume_timer(&problem->tot_branch_and_bound);
+    CCutil_resume_timer(&statistics->tot_branch_and_bound);
 
     if (pd) {
         printf("Branching timeout of %f second reached\n",
