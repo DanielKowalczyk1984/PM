@@ -76,7 +76,7 @@ int read_problem(Problem* problem) {
             curjob++;
         }
 
-        problem->nb_jobs = pd->nb_jobs = nb_jobs;
+        problem->nb_jobs = pd->nb_jobs = nb_jobs = parms->nb_jobs;
         problem->nb_machines = pd->nb_machines = parms->nb_machines;
     } else {
         fprintf(stderr, "Unable to open file %s\n", parms->jobfile);
@@ -144,26 +144,26 @@ int print_to_csv(Problem* problem) {
         get_mip_statistics(pd, i);
     }
 
-    fprintf(
-        file,
-        "%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
-        "%u/%u,%d,%d,%f,%d,%d,%d,%lu,%lu,%d,%d,%f,%f,%f,%f,%d,%f,%f\n",
-        pd->pname, statistics->real_time_total,
-        statistics->tot_cputime.cum_zeit, statistics->tot_lb.cum_zeit,
-        statistics->tot_lb_root.cum_zeit, statistics->tot_heuristic.cum_zeit,
-        statistics->tot_build_dd.cum_zeit, statistics->tot_pricing.cum_zeit,
-        statistics->tot_reduce_cost_fixing.cum_zeit, problem->rel_error,
-        problem->global_lower_bound, problem->global_upper_bound,
-        problem->root_rel_error, statistics->nb_generated_col, date.day,
-        date.month, date.year, parms->nb_iterations_rvnd, parms->stab_technique,
-        parms->alpha, parms->pricing_solver, problem->nb_jobs,
-        problem->nb_machines, statistics->first_size_graph,
-        statistics->size_graph_after_reduced_cost_fixing,
-        statistics->mip_nb_vars, statistics->mip_nb_constr,
-        statistics->mip_obj_bound, statistics->mip_obj_bound_lp,
-        statistics->mip_rel_gap, statistics->mip_run_time,
-        statistics->mip_status, statistics->mip_nb_iter_simplex,
-        statistics->mip_nb_nodes);
+    fprintf(file,
+            "%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
+            "%u/%u,%d,%d,%f,%d,%d,%d,%lu,%lu,%d,%d,%f,%f,%f,%f,%d,%f,%f\n",
+            pd->pname, statistics->real_time_total,
+            statistics->tot_cputime.cum_zeit, statistics->tot_lb.cum_zeit,
+            statistics->tot_lb_root.cum_zeit,
+            statistics->tot_heuristic.cum_zeit,
+            statistics->tot_build_dd.cum_zeit, statistics->tot_pricing.cum_zeit,
+            statistics->tot_reduce_cost_fixing.cum_zeit, statistics->rel_error,
+            statistics->global_lower_bound, statistics->global_upper_bound,
+            statistics->root_rel_error, statistics->nb_generated_col, date.day,
+            date.month, date.year, parms->nb_iterations_rvnd,
+            parms->stab_technique, parms->alpha, parms->pricing_solver,
+            problem->nb_jobs, parms->nb_machines, statistics->first_size_graph,
+            statistics->size_graph_after_reduced_cost_fixing,
+            statistics->mip_nb_vars, statistics->mip_nb_constr,
+            statistics->mip_obj_bound, statistics->mip_obj_bound_lp,
+            statistics->mip_rel_gap, statistics->mip_run_time,
+            statistics->mip_status, statistics->mip_nb_iter_simplex,
+            statistics->mip_nb_nodes);
     fclose(file);
 CLEAN:
     CC_FREE(file_name, char);

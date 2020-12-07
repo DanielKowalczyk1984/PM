@@ -128,6 +128,7 @@ typedef struct parms {
     char* backupdir;
 
     int upper_bounds_only;
+    int nb_jobs;
     int nb_machines;
 } Parms;
 
