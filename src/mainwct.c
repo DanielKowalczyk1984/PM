@@ -188,16 +188,19 @@ CLEAN:
 }
 
 int main(int ac, char** av) {
-    int         val = 0;
-    double      start_time;
-    Problem     problem;
+    int     val = 0;
+    double  start_time;
+    Problem problem;
+    problem_init(&problem);
+
     NodeData*   root = &(problem.root_pd);
     Parms*      parms = &(problem.parms);
     Statistics* statistics = &(problem.stat);
+
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header");
-    problem_init(&problem);
-    val = parseargs(ac, av, &(problem.parms));
+
+    val = parseargs(ac, av, parms);
     CCcheck_val_2(val, "Failed in parseargs");
     if (dbg_lvl() > 1) {
         printf("Debugging turned on\n");
@@ -210,6 +213,7 @@ int main(int ac, char** av) {
     start_time = CCutil_zeit();
     val = read_problem(&problem);
     CCcheck_val_2(val, "read_adjlist failed");
+
     val = preprocess_data(&problem);
     CCcheck_val_2(val, "Failed at preprocess_data");
     printf("Reading and preprocessing of the data took %f seconds\n",
@@ -251,7 +255,7 @@ int main(int ac, char** av) {
         root->solver = newSolverDp(root->jobarray, root->nb_machines,
                                    root->H_max, parms, problem.opt_sol->tw);
     }
-    problem.stat.first_size_graph = get_nb_edges(root->solver);
+    statistics->first_size_graph = get_nb_edges(root->solver);
 
     /**
      * @brief Initial stabilization
