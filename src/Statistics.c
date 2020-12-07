@@ -1,6 +1,12 @@
 #include "Statistics.h"
 
 void statistics_init(Statistics* stat) {
+    stat->global_upper_bound = INT_MAX;
+    stat->global_lower_bound = 0;
+    stat->rel_error = DBL_MAX;
+    stat->root_lower_bound = 0.0;
+    stat->root_upper_bound = INT_MAX;
+    stat->root_rel_error = DBL_MAX;
     stat->nb_explored_nodes = 0;
     stat->nb_generated_nodes = 0;
     stat->nb_generated_col = 0;

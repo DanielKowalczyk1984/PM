@@ -3,6 +3,14 @@
 #include "util.h"
 
 struct _Statistics {
+    int    global_upper_bound;
+    int    global_lower_bound;
+    double rel_error;
+
+    int    root_upper_bound;
+    int    root_lower_bound;
+    double root_rel_error;
+
     int    nb_explored_nodes;
     int    nb_generated_nodes;
     int    nb_generated_col;
