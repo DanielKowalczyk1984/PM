@@ -143,9 +143,9 @@ int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     val = lp_interface_addcol(lp, 0, NULL, NULL,
                               (double)set->total_weighted_completion_time, 0.0,
                               GRB_INFINITY, lp_interface_CONT, NULL);
-    CCcheck_val_2(val, "Failed to add column to lp")
+    CCcheck_val_2(val, "Failed to add column to lp");
 
-        for (unsigned i = 0; i < members->len; ++i) {
+    for (unsigned i = 0; i < members->len; ++i) {
         job = (Job*)g_ptr_array_index(members, i);
         row_ind = job->job;
         val = lp_interface_getcoeff(lp, &row_ind, &var_ind, &cval);
