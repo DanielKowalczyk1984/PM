@@ -76,7 +76,7 @@ int read_problem(Problem* problem) {
             curjob++;
         }
 
-        problem->nb_jobs = pd->nb_jobs = nb_jobs = parms->nb_jobs;
+        problem->nb_jobs = pd->nb_jobs = parms->nb_jobs = nb_jobs;
         problem->nb_machines = pd->nb_machines = parms->nb_machines;
     } else {
         fprintf(stderr, "Unable to open file %s\n", parms->jobfile);

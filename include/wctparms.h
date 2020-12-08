@@ -62,6 +62,14 @@ enum BBSearchStrategy {
     cbfs_ahv_strategy = 3,
 };
 
+enum BBExploreStrategy {
+    min_bb_explore_strategy = 0,
+    bb_dfs_strategy = min_bb_explore_strategy,
+    bb_bfs_strategy = 1,
+    bb_brfs_strategy = 2,
+    bb_cbfs_strategy = 3,
+};
+
 enum Strong_Branching {
     min_strong_branching = 0,
     use_strong_branching = min_strong_branching,
@@ -92,6 +100,7 @@ typedef struct parms {
      */
     int    init_upper_bound;
     int    bb_search_strategy;
+    int    bb_explore_strategy;
     int    bb_branch_strategy;
     int    strong_branching;
     int    nb_iterations_rvnd;
@@ -152,6 +161,7 @@ int parms_set_nb_iterations_rvnd(Parms* parms, int nb_sol);
  * column generation
  */
 int parms_set_branchandbound(Parms* parms, int bound);
+int parms_set_bb_strategy(Parms* parms, int strategy);
 int parms_set_stab_technique(Parms* parms, int stab_technique);
 int parms_set_print(Parms* parms, int print);
 int parms_set_pricing_solver(Parms* parms, int solver);
