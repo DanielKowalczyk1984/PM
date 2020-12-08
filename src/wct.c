@@ -1,4 +1,5 @@
 #include <wct.h>
+#include "branch-and-boundwrapper.h"
 #include "gurobi_c.h"
 
 int debug = 0;
@@ -29,12 +30,12 @@ void problem_init(Problem* problem) {
     /*B&B info*/
     problem->nb_data_nodes = 0;
     problem->global_upper_bound = INT_MAX;
-    problem->root_lower_bound = 0.0;
     problem->global_lower_bound = 0;
+    problem->rel_error = DBL_MAX;
+    problem->root_lower_bound = 0.0;
     problem->root_upper_bound = INT_MAX;
     problem->root_rel_error = DBL_MAX;
     problem->status = no_sol;
-    problem->rel_error = DBL_MAX;
     problem->br_heap_a = (BinomialHeap*)NULL;
     /*data of the problem*/
     nodedata_init(&(problem->root_pd), problem);
@@ -49,47 +50,8 @@ void problem_init(Problem* problem) {
     problem->non_empty_level_pqs = g_queue_new();
     problem->last_explored = -1;
     problem->found = 0;
-    // problem->nb_explored_nodes = 0;
-    // p->nb_generated_col = 0;
-    /*CPU timer initialisation*/
-    // CCutil_init_timer(&(problem->tot_build_dd), "tot_build_dd");
-    // CCutil_init_timer(&(problem->tot_cputime), "tot_cputime");
-    // CCutil_init_timer(&(problem->tot_branch_and_bound),
-    // "tot_branch_and_bound");
-    // CCutil_init_timer(&(problem->tot_strong_branching),
-    // "tot_strong_branching"); CCutil_init_timer(&(problem->tot_lb_root),
-    // "tot_lb_root");
-    // CCutil_init_timer(&(problem->tot_lb), "tot_lb");
-    // CCutil_init_timer(&(problem->tot_solve_lp), "tot_solve_lp");
-    // CCutil_init_timer(&(problem->tot_pricing), "tot_pricing");
-    // CCutil_init_timer(&(problem->tot_heuristic), "tot_heuristic");
-    // CCutil_init_timer(&(problem->tot_reduce_cost_fixing),
-    //                   "tot_reduce_cost_fixing");
     /** initialize colPool */
     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
-    /** initialize the time */
-    // problem->real_time_build_dd = 0.0;
-    // problem->real_time_total = getRealTime();
-    // problem->real_time_branch_and_bound = 0.0;
-    // problem->real_time_strong_branching = 0.0;
-    // problem->real_time_lb_root = 0.0;
-    // problem->real_time_lb = 0.0;
-    // problem->real_time_pricing = 0.0;
-    // problem->real_time_heuristic = 0.0;
-    // CCutil_start_timer(&(problem->tot_cputime));
-    // problem->first_size_graph = 0;
-    // problem->size_graph_after_reduced_cost_fixing = 0;
-    /** Mip statistics */
-    // problem->mip_nb_vars = 0;
-    // problem->mip_nb_constr = 0;
-    // problem->mip_obj_bound = 0.0;
-    // problem->mip_obj_bound_lp = 0.0;
-    // problem->mip_rel_gap = 0.0;
-    // problem->mip_run_time = 110.0;
-    // problem->mip_status = 0;
-    // problem->mip_nb_iter_simplex = 0;
-    // problem->mip_nb_nodes = 0;
-    // problem->mip_reduced_cost_fixing = 0;
 }
 
 void problem_free(Problem* problem) {
@@ -346,7 +308,7 @@ static int prefill_heap(NodeData* pd, Problem* problem) {
 
     if (pd->status < LP_bound_computed) {
         printf("Found a node with LP not computed!\n");
-        val = compute_lower_bound(problem, pd);
+        val = compute_lower_bound(pd);
         CCcheck_val_2(val, "Failed at compute_lower_bound");
         insert_into_heap = 1;
     }
@@ -410,7 +372,7 @@ int compute_schedule(Problem* problem) {
         CCcheck_val(val, "Failed in prefill_heap");
     } else {
         CCutil_start_timer(&(statistics->tot_lb_root));
-        val = compute_lower_bound(problem, root_pd);
+        val = compute_lower_bound(root_pd);
         CCcheck_val_2(val, "Failed in compute_lower_bound");
 
         if (root_pd->lower_bound > problem->global_lower_bound) {
