@@ -66,6 +66,7 @@ message(STATUS "Added all header and implementation files.\n")
 find_package(Gurobi)
 
 add_subdirectory(or_utils)
+add_subdirectory(branch-and-bound)
 
 #
 # Set the project standard and warnings
@@ -121,6 +122,7 @@ else()
              ${GUROBI_INCLUDE_DIR}
              ${GLIB_INCLUDE_DIRS}
              ORUtils::ORUtils
+             branch-and-bound
       PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
     conan_target_link_libraries(${PROJECT_NAME}_LIB)
@@ -131,6 +133,7 @@ else()
       ${GUROBI_CXX_LIBRARY}
       ${GLIB_LIBRARIES}
       ORUtils::ORUtils
+      branch-and-bound
       -lm
       -lpthread)
 
