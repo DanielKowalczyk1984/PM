@@ -9,7 +9,7 @@ void g_problem_summary_init(gpointer data, gpointer user_data) {
     prob->pmax = CC_MAX(prob->pmax, j->processing_time);
     prob->pmin = CC_MIN(prob->pmin, j->processing_time);
     prob->dmax = CC_MAX(prob->dmax, j->due_time);
-    prob->dmin = CC_MIN(prob->pmin, j->due_time);
+    prob->dmin = CC_MIN(prob->dmin, j->due_time);
 }
 
 gint g_job_compare_edd(const void* a, const void* b, MAYBE_UNUSED void* data) {
@@ -57,7 +57,8 @@ void calculate_Hmax(Problem* problem) {
     temp_dbl = (double)temp;
     temp_dbl = floor(temp_dbl / problem->nb_machines);
     problem->H_max = pd->H_max = (int)temp_dbl + problem->pmax;
-    problem->H_min = (int)ceil(temp_dbl / problem->nb_machines) - problem->pmax;
+    problem->H_min = pd->H_min =
+        (int)ceil(temp_dbl / problem->nb_machines) - problem->pmax;
 
     GPtrArray* duration = g_ptr_array_new();
     for (int j = 0; j < problem->nb_jobs; j++) {
@@ -78,7 +79,7 @@ void calculate_Hmax(Problem* problem) {
 
     } while (m < problem->nb_machines - 1);
 
-    problem->H_min = (int)ceil(tmp / problem->nb_machines);
+    problem->H_min = pd->H_min = (int)ceil(tmp / problem->nb_machines);
     g_ptr_array_free(duration, TRUE);
     printf(
         "H_max = %d, H_min = %d,  pmax = %d, pmin = %d, p_sum = %d, off = %d\n",
