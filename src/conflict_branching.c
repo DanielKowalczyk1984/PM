@@ -301,7 +301,7 @@ static int find_strongest_children_conflict(int*           strongest_v1,
 
                 if (same_children->status != infeasible) {
                     same_children->maxiterations = 20;
-                    compute_lower_bound(problem, same_children);
+                    compute_lower_bound(same_children);
                 }
 
                 val = create_differ_conflict(
@@ -312,7 +312,7 @@ static int find_strongest_children_conflict(int*           strongest_v1,
 
                 if (diff_children->status != infeasible) {
                     diff_children->maxiterations = 20;
-                    compute_lower_bound(problem, diff_children);
+                    compute_lower_bound(diff_children);
                 }
 
                 dbl_child_lb = (same_children->LP_lower_bound <
@@ -448,7 +448,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     }
 
     if (!pd->localColPool->len) {
-        compute_lower_bound(problem, pd);
+        compute_lower_bound(pd);
     }
 
     lp_interface_get_nb_cols(pd->RMP, &nb_cols);
@@ -496,7 +496,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     CCcheck_val_2(val, "Failed in set_id_and_name");
 
     if (pd->same_children->status != infeasible) {
-        val = compute_lower_bound(problem, pd->same_children);
+        val = compute_lower_bound(pd->same_children);
         CCcheck_val_2(val, "Failed in compute_lower_bound");
     }
 
@@ -507,7 +507,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     CCcheck_val_2(val, "Failed in set_id_and_name");
 
     if (pd->diff_children->status != infeasible) {
-        val = compute_lower_bound(problem, pd->diff_children);
+        val = compute_lower_bound(pd->diff_children);
         CCcheck_val_2(val, "Failed in compute_lower_bound");
     }
 

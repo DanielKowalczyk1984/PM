@@ -87,7 +87,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem);
  * lowerbound.c
  */
 
-int compute_lower_bound(Problem* problem, NodeData* pd);
+int compute_lower_bound(NodeData* pd);
 int compute_objective(NodeData* pd);
 int print_x(NodeData* pd);
 int calculate_x_e(NodeData* pd);

@@ -451,7 +451,7 @@ CLEAN:
     return val;
 }
 
-int compute_lower_bound(Problem* problem, NodeData* pd) {
+int compute_lower_bound(NodeData* pd) {
     int         j, val = 0;
     int         has_cols = 1;
     int         has_cuts = 0;
@@ -574,9 +574,9 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 /**
                  * change status of problem
                  */
-                if (problem->status == no_sol) {
-                    problem->status = lp_feasible;
-                }
+                // if (problem->status == no_sol) {
+                //     problem->status = lp_feasible;
+                // }
 
                 if (dbg_lvl() > 1) {
                     printf(
@@ -634,16 +634,16 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     }
     // } while (pd->depth == 1);
 
-    problem->global_lower_bound =
-        CC_MAX(pd->lower_bound + pd->off, problem->global_lower_bound);
+    statistics->global_lower_bound =
+        CC_MAX(pd->lower_bound + pd->off, statistics->global_lower_bound);
 
-    if (pd == &(problem->root_pd)) {
-        problem->root_lower_bound = problem->global_lower_bound;
-        problem->root_upper_bound = problem->global_upper_bound;
-        problem->root_rel_error =
-            (double)(problem->global_upper_bound -
-                     problem->global_lower_bound) /
-            ((double)problem->global_lower_bound + 0.000001);
+    if (pd->depth == 0) {
+        statistics->root_lower_bound = statistics->global_lower_bound;
+        statistics->root_upper_bound = statistics->global_upper_bound;
+        statistics->root_rel_error =
+            (double)(statistics->global_upper_bound -
+                     statistics->global_lower_bound) /
+            ((double)statistics->global_lower_bound + 0.000001);
     }
 
     fflush(stdout);
