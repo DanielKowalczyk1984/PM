@@ -1455,13 +1455,13 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
         }
     }
 
-    ColorWriterEdgeX  edge_writer(mip_graph, &table);
-    ColorWriterVertex vertex_writer(mip_graph, table);
-    auto              file_name = "lp_solution_" + problem_name + "_" +
-                     std::to_string(convex_rhs) + ".gv";
-    std::ofstream outf(file_name);
-    boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
-    outf.close();
+    // ColorWriterEdgeX  edge_writer(mip_graph, &table);
+    // ColorWriterVertex vertex_writer(mip_graph, table);
+    // auto              file_name = "lp_solution_" + problem_name + "_" +
+    //                  std::to_string(convex_rhs) + ".gv";
+    // std::ofstream outf(file_name);
+    // boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
+    // outf.close();
 }
 
 int PricerSolverBdd::add_constraints() {
@@ -1571,8 +1571,8 @@ bool PricerSolverBdd::check_schedule_set(GPtrArray* set) {
     return (tmp_nodeid == 1 && counter == set->len);
 }
 
-void PricerSolverBdd::make_schedule_set_feasible([
-    [maybe_unused]] GPtrArray* set) {}
+void PricerSolverBdd::make_schedule_set_feasible(
+    [[maybe_unused]] GPtrArray* set) {}
 
 void PricerSolverBdd::iterate_zdd() {
     DdStructure<NodeBdd<double>>::const_iterator it = decision_diagram->begin();
