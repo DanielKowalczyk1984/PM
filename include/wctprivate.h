@@ -41,15 +41,12 @@ struct _NodeData {
     // The id and depth of the node in the B&B tree
     int id;
     int depth;
-    int test;
 
     NodeDataStatus status;
 
     // The instance information
-    int  nb_jobs;
-    int  nb_machines;
-    int* orig_node_ids;
-    // data for meta heuristic
+    int        nb_jobs;
+    int        nb_machines;
     GPtrArray* jobarray;
     int        H_max;
     int        H_min;
@@ -57,7 +54,6 @@ struct _NodeData {
     /** data about the intervals */
     GPtrArray* local_intervals;
     GPtrArray* ordered_jobs;
-    int**      sump;
 
     // The column generation lp information
     wctlp*  RMP;
