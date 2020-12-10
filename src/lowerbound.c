@@ -407,7 +407,7 @@ int solve_relaxation(NodeData* pd) {
     double      real_time_solve_lp;
     Statistics* statistics = pd->stat;
 
-    /** Compjute LP relaxation */
+    /** Compute LP relaxation */
     real_time_solve_lp = getRealTime();
     CCutil_start_resume_time(&(statistics->tot_solve_lp));
     val = lp_interface_optimize(pd->RMP, &status);
@@ -428,8 +428,8 @@ int solve_relaxation(NodeData* pd) {
     switch (status) {
         case LP_INTERFACE_OPTIMAL:
             /** grow ages of the different columns */
-            // val = grow_ages(pd);
-            // CCcheck_val_2(val, "Failed in grow_ages");
+            val = grow_ages(pd);
+            CCcheck_val_2(val, "Failed in grow_ages");
             /** get the dual variables and make them feasible */
             val = lp_interface_pi(pd->RMP, &g_array_index(pd->pi, double, 0));
             CCcheck_val_2(val, "lp_interface_pi failed");
@@ -591,27 +591,28 @@ int compute_lower_bound(NodeData* pd) {
                  * Compute the objective function
                  */
                 solve_relaxation(pd);
-                compute_objective(pd);
+                // compute_objective(pd);
                 val = construct_lp_sol_from_rmp(pd);
                 CCcheck_val_2(val, "Failed in construct lp sol from rmp\n");
                 delete_old_schedules(pd);
                 solve_relaxation(pd);
                 // delete_unused_rows(pd);
-                solve_relaxation(pd);
+                // solve_relaxation(pd);
+                construct_lp_sol_from_rmp(pd);
                 if (!call_is_integer_solution(pd->solver)) {
                     has_cuts = (generate_cuts(pd) > 0);
                     call_update_duals(pd->solver_stab);
+                    test++;
                     // lp_interface_write(pd->RMP, "test.lp");
                 }
                 break;
 
             case GRB_INFEASIBLE:
                 pd->status = infeasible;
-                pd->test = 0;
                 lp_interface_write(pd->RMP, "infeasible_RMP.lp");
                 lp_interface_compute_IIS(pd->RMP);
         }
-    } while (has_cuts);
+    } while (has_cuts && test < 5);
 
     if (dbg_lvl() > -1) {
         printf("iterations = %d\n", pd->iterations);
