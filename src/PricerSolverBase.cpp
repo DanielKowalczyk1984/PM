@@ -270,3 +270,7 @@ int call_get_added_cuts(PricerSolverBase* solver) {
     return solver->added_cuts;
 }
 }
+
+inline std::vector<BddCoeff>& PricerSolverBase::get_lp_sol() {
+    return lp_sol;
+};

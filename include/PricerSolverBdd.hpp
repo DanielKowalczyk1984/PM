@@ -22,7 +22,6 @@ class PricerSolverBdd : public PricerSolverBase {
     MipGraph                                                    mip_graph;
     std::unique_ptr<double[]>                                   solution_x;
     std::vector<std::vector<std::weak_ptr<NodeId>>>             node_ids;
-    std::vector<BddCoeff>                                       lp_sol;
     OriginalModel<>                                             original_model;
     std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_in;
     std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_out;

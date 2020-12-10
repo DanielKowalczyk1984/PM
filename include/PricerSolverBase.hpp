@@ -25,6 +25,7 @@ struct PricerSolverBase {
     double                    constLB;
     double                    UB;
     bool                      added_cuts{};
+    std::vector<BddCoeff>     lp_sol;
     /**
      * Default constructors
      */
@@ -142,6 +143,8 @@ struct PricerSolverBase {
     inline ReformulationModel* get_reformulation_model() {
         return &reformulation_model;
     }
+
+    inline std::vector<BddCoeff>& get_lp_sol();
 
     void calculate_constLB(double* pi);
 
