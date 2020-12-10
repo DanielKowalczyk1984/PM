@@ -87,14 +87,12 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     sprintf(pd->pname, "temporary");
     /*Initialization node instance data*/
     pd->nb_jobs = 0;
-    pd->orig_node_ids = (int*)NULL;
     pd->H_max = 0;
     pd->H_min = 0;
     pd->off = prob->off;
     pd->local_intervals = g_ptr_array_new_with_free_func(g_interval_free);
     pd->ordered_jobs = g_ptr_array_new_with_free_func(g_free);
     pd->jobarray = (GPtrArray*)NULL;
-    pd->sump = (int**)NULL;
     /** Initialization data */
     pd->upper_bound = INT_MAX;
     pd->lower_bound = 0;
@@ -264,12 +262,6 @@ void temporary_data_free(NodeData* pd) {
 void nodedata_free(NodeData* pd) {
     schedulesets_free(&(pd->bestcolors), &(pd->nb_best));
     temporary_data_free(pd);
-    if (pd->sump) {
-        for (unsigned i = 0; i < pd->local_intervals->len; ++i) {
-            CC_IFFREE(pd->sump[i], int);
-        }
-        CC_IFFREE(pd->sump, int*)
-    }
 
     g_ptr_array_free(pd->local_intervals, TRUE);
     g_ptr_array_free(pd->ordered_jobs, TRUE);
@@ -277,7 +269,6 @@ void nodedata_free(NodeData* pd) {
     CC_IFFREE(pd->elist_differ, int);
     CC_IFFREE(pd->v1_wide, int);
     CC_IFFREE(pd->v2_wide, int);
-    CC_IFFREE(pd->orig_node_ids, int);
     CC_IFFREE(pd->v1_wide, int);
     CC_IFFREE(pd->v2_wide, int);
 }

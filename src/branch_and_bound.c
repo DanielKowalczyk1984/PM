@@ -557,7 +557,6 @@ void free_elist(NodeData* cd, Parms* parms) {
         CC_IFFREE(cd->elist_differ, int);
         CC_IFFREE(cd->v1_wide, int);
         CC_IFFREE(cd->v2_wide, int);
-        CC_IFFREE(cd->orig_node_ids, int);
     }
 }
 
