@@ -273,18 +273,13 @@ int build_rmp(NodeData* pd) {
     int_values = CC_SAFE_MALLOC(pd->nb_rows, int);
     CCcheck_NULL_2(int_values, "Failed to allocate memory");
     fill_int(int_values, pd->nb_rows, 0);
+
     pd->pi = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi, "Failed to allocate memory");
     g_array_append_vals(pd->pi, dbl_values, pd->nb_rows);
     pd->slack = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->slack, "Failed to allocate memory");
     g_array_append_vals(pd->slack, dbl_values, pd->nb_rows);
-    pd->eta_in = 0.0;
-    pd->eta_out = 0.0;
-    if (parms->pricing_solver < dp_solver) {
-        pd->x_e = CC_SAFE_MALLOC(2 * get_nb_vertices(pd->solver), double);
-        CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
-    }
     pd->rhs = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
     g_array_append_vals(pd->rhs, dbl_values, pd->nb_rows);
@@ -302,11 +297,17 @@ int build_rmp(NodeData* pd) {
     CCcheck_NULL_2(pd->coeff_row, "Failed to allocate memory");
     g_array_append_vals(pd->coeff_row, dbl_values, pd->nb_rows);
 
+    pd->eta_in = 0.0;
+    pd->eta_out = 0.0;
+    if (parms->pricing_solver < dp_solver) {
+        pd->x_e = CC_SAFE_MALLOC(2 * get_nb_vertices(pd->solver), double);
+        CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
+    }
+
 CLEAN:
 
     if (val) {
         lp_interface_free(&(pd->RMP));
-        CC_IFFREE(pd->coeff, double);
         g_array_free(pd->pi, TRUE);
         // g_array_free(pd->pi_in, TRUE);
         // g_array_free(pd->pi_out, TRUE);
