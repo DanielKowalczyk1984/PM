@@ -60,13 +60,16 @@ struct _NodeData {
     wctlp*  MIP;
     double* lambda;
     double* x_e;
-    double* coeff;
+
     GArray* pi;
+    GArray* slack;
+    GArray* rhs;
+    GArray* lhs_coeff;
     GArray* id_row;
     GArray* coeff_row;
-    GArray* slack;
-    int     nb_rows;
-    int     nb_cols;
+
+    int nb_rows;
+    int nb_cols;
 
     // cut generation information
     int max_nb_cuts;
@@ -93,20 +96,20 @@ struct _NodeData {
     int*         column_status;
     GPtrArray*   localColPool;
 
-    int     lower_bound;
-    int     upper_bound;
-    int     lower_scaled_bound;
-    double  partial_sol;
-    double  dbl_safe_lower_bound;
-    double  dbl_est_lower_bound;
-    double  LP_lower_bound;
-    double  LP_lower_bound_dual;
-    double  LP_lower_bound_BB;
-    double  LP_lower_min;
-    GArray* rhs;
-    GArray* lhs_coeff;
-    int     nb_non_improvements;
-    int     iterations;
+    int lower_bound;
+    int upper_bound;
+    int lower_scaled_bound;
+
+    double partial_sol;
+    double dbl_safe_lower_bound;
+    double dbl_est_lower_bound;
+    double LP_lower_bound;
+    double LP_lower_bound_dual;
+    double LP_lower_bound_BB;
+    double LP_lower_min;
+
+    int nb_non_improvements;
+    int iterations;
 
     /** Wentges smoothing technique */
     PricingStabilization* solver_stab;
@@ -231,8 +234,9 @@ void problem_init(Problem* problem);
 void problem_free(Problem* problem);
 
 /*Initialize pmc data*/
-void nodedata_init(NodeData* pd, Problem* prob);
-int  set_id_and_name(NodeData* pd, int id, const char* fname);
+void      nodedata_init(NodeData* pd, Problem* prob);
+int       set_id_and_name(NodeData* pd, int id, const char* fname);
+NodeData* new_node_data(NodeData* pd);
 
 /*Free the Nodedata*/
 void lp_node_data_free(NodeData* pd);
