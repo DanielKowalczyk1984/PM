@@ -184,7 +184,7 @@ class BddCoeff : public VariableKeyBase {
 
     inline double get_coeff() { return coeff; }
 
-    inline double get_value() { return value; }
+    inline double get_value() const { return value; }
 
     inline void set_value(double _value) { value = _value; }
 
@@ -195,6 +195,12 @@ class BddCoeff : public VariableKeyBase {
     friend bool operator==(const BddCoeff& lhs, const BddCoeff& rhs) {
         return lhs.get_j() == rhs.get_j() && lhs.get_t() == rhs.get_t() &&
                lhs.get_high() == rhs.get_high();
+    };
+
+    friend std::ostream& operator<<(std::ostream& os, const BddCoeff& object) {
+        return os << "(j = " << object.get_j() << ", t = " << object.get_t()
+                  << ", x = " << object.get_value()
+                  << ", high = " << object.get_high() << " )\n";
     }
 };
 
