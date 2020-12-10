@@ -11,6 +11,7 @@ class BranchBoundTree {
     BranchBoundTree(BranchBoundTree&&) = default;
     BranchBoundTree& operator=(BranchBoundTree&&) = default;
     ~BranchBoundTree(){};
+    BTree* get_ptr_tree() { return tree.get(); }
 
    private:
     std::unique_ptr<BTree> tree;

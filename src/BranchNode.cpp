@@ -1,4 +1,5 @@
 #include "BranchNode.hpp"
+#include "PricerSolverBase.hpp"
 #include "solver.h"
 #include "wct.h"
 #include "wctprivate.h"
@@ -7,11 +8,16 @@ BranchNodeBase::BranchNodeBase(NodeData* _pd, bool _isRoot)
     : State(_isRoot),
       pd(_pd) {}
 
-void BranchNodeBase::branch(BTree* bt) {}
+void BranchNodeBase::branch(BTree* bt) {
+    PricerSolver* solver = pd->solver;
+    for (auto& it : solver->lp_sol) {
+        std::cout << it;
+    }
+}
 
 void BranchNodeBase::computeBounds(BTree* bt) {
-    // build_rmp(pd);
-    // solve_relaxation(pd);
+    build_rmp(pd);
+    solve_relaxation(pd);
     compute_lower_bound(pd);
     lowerBound = pd->LP_lower_bound;
     objValue = pd->opt_sol->tw;
@@ -20,7 +26,6 @@ void BranchNodeBase::computeBounds(BTree* bt) {
 void BranchNodeBase::assessDominance(State* otherState) {}
 
 bool BranchNodeBase::isTerminalState() {
-    construct_lp_sol_from_rmp(pd);
     return false;
 }
 
