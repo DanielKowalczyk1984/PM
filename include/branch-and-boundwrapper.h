@@ -28,6 +28,7 @@ BranchBoundTree* new_branch_bound_tree(NodeData* data,
                                        int       _probtype,
                                        int       _isIntProb);
 void             delete_branch_bound_tree(BranchBoundTree* tree);
+void             call_branch_and_bound_explore(BranchBoundTree* tree);
 
 #ifdef __cplusplus
 }
