@@ -265,10 +265,6 @@ void call_evaluate_nodes(PricerSolverBase* solver, double* pi) {
 int call_is_integer_solution(PricerSolverBase* solver) {
     return solver->get_is_integer_solution();
 }
-
-int call_get_added_cuts(PricerSolverBase* solver) {
-    return solver->added_cuts;
-}
 }
 
 inline std::vector<BddCoeff>& PricerSolverBase::get_lp_sol() {

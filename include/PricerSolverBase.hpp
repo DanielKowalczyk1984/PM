@@ -14,18 +14,23 @@
 struct PricerSolverBase {
    public:
     GPtrArray* jobs;
-    int        convex_constr_id;
-    int        convex_rhs;
 
-    std::string               problem_name;
+    int convex_constr_id;
+    int convex_rhs;
+
+    std::string problem_name;
+
     std::unique_ptr<GRBEnv>   env;
     std::unique_ptr<GRBModel> model;
-    ReformulationModel        reformulation_model;
-    bool                      is_integer_solution;
-    double                    constLB;
-    double                    UB;
-    bool                      added_cuts{};
-    std::vector<BddCoeff>     lp_sol;
+
+    ReformulationModel reformulation_model;
+
+    bool is_integer_solution;
+
+    double constLB;
+    double UB;
+
+    std::vector<BddCoeff> lp_sol;
     /**
      * Default constructors
      */
