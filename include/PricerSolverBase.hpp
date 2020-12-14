@@ -87,8 +87,6 @@ struct PricerSolverBase {
     virtual void construct_lp_sol_from_rmp(const double*    columns,
                                            const GPtrArray* schedule_sets,
                                            int              num_columns) = 0;
-    virtual void represent_solution(Solution* sol) = 0;
-    virtual void project_solution(Solution* sol) = 0;
 
     /**
      * Constraint on the solver
