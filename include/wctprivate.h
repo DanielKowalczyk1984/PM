@@ -57,9 +57,8 @@ struct _NodeData {
 
     // The column generation lp information
     wctlp*  RMP;
-    wctlp*  MIP;
     double* lambda;
-    double* x_e;
+    // double* x_e;
 
     GArray* pi;
     GArray* slack;
@@ -87,10 +86,7 @@ struct _NodeData {
     PricerSolver* solver;
 
     // Columns
-    // int          nb_columns;
-    // scheduleset *cclasses;
-    int zero_count;
-    // int          gallocated;
+    int          zero_count;
     ScheduleSet* newsets;
     int          nb_new_sets;
     int*         column_status;
@@ -98,11 +94,7 @@ struct _NodeData {
 
     int lower_bound;
     int upper_bound;
-    int lower_scaled_bound;
 
-    double partial_sol;
-    double dbl_safe_lower_bound;
-    double dbl_est_lower_bound;
     double LP_lower_bound;
     double LP_lower_bound_dual;
     double LP_lower_bound_BB;
@@ -113,19 +105,12 @@ struct _NodeData {
 
     /** Wentges smoothing technique */
     PricingStabilization* solver_stab;
-    double                eta_in;
-    int                   update_stab_center;
-    double                eta_out;
     int                   update;
 
     // Best Solution
     ScheduleSet* bestcolors;
     int          best_objective;
     int          nb_best;
-
-    const ScheduleSet* debugcolors;
-    int                ndebugcolors;
-    int                opt_track;
 
     // maxiterations and retireage
     int maxiterations;

@@ -28,8 +28,8 @@ static int compare_nodes_dfs(BinomialHeapValue a, BinomialHeapValue b) {
 }
 
 static int compare_nodes_bfs(BinomialHeapValue a, BinomialHeapValue b) {
-    double* lp_a = &(((NodeData*)a)->eta_in);
-    double* lp_b = &(((NodeData*)b)->eta_in);
+    double* lp_a = &(((NodeData*)a)->LP_lower_bound);
+    double* lp_b = &(((NodeData*)b)->LP_lower_bound);
 
     if (*lp_a < *lp_b) {
         return -1;
@@ -420,8 +420,8 @@ int skip_nodedata(NodeData* pd, Problem* problem) {
     if (dbg_lvl() > 0) {
         printf(
             "Skipping with lb %d and ub %d at depth %d (id = %d, "
-            "opt_track = %d, unprocessed nodes = %u).\n",
-            pd->lower_bound, pd->upper_bound, pd->depth, pd->id, pd->opt_track,
+            " unprocessed nodes = %u).\n",
+            pd->lower_bound, pd->upper_bound, pd->depth, pd->id,
             binomial_heap_num_entries(br_heap));
     }
 
@@ -602,7 +602,7 @@ int sequential_branching_conflict(Problem* problem) {
         pd->upper_bound = problem->global_upper_bound;
 
         if (pd->lower_bound >= pd->upper_bound ||
-            pd->eta_in > pd->upper_bound - 1) {
+            pd->LP_lower_bound > pd->upper_bound - 1) {
             skip_nodedata(pd, problem);
             remove_finished_subtree_conflict(pd);
         } else {
@@ -699,7 +699,7 @@ int sequential_cbfs_branch_and_bound_conflict(Problem* problem) {
         pd->upper_bound = problem->global_upper_bound;
 
         if (pd->lower_bound >= pd->upper_bound ||
-            pd->eta_in > pd->upper_bound - 1) {
+            pd->LP_lower_bound > pd->upper_bound - 1) {
             skip_nodedata(pd, problem);
             remove_finished_subtree_conflict(pd);
         } else {

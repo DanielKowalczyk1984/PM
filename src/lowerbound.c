@@ -366,7 +366,6 @@ int compute_objective(NodeData* pd) {
     double* tmp = &g_array_index(pd->pi, double, 0);
     double* tmp_rhs = &g_array_index(pd->rhs, double, 0);
 
-    pd->eta_out = 0.0;
     for (i = 0; i < pd->nb_rows; i++) {
         // if (i != pd->nb_jobs) {
         // pd->eta_out += tmp[i] * tmp_rhs[i];
@@ -384,9 +383,7 @@ int compute_objective(NodeData* pd) {
             ? (int)ceil(pd->LP_lower_bound_dual)
             : (int)ceil(pd->LP_lower_bound);
     pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound, pd->LP_lower_bound_dual);
-    // pd->eta_out = pd->LP_lower_bound_BB;
     pd->LP_lower_min = CC_MIN(pd->LP_lower_min, pd->LP_lower_bound_BB);
-    pd->eta_out = pd->LP_lower_bound;
 
     // if (pd->iterations % pd->nb_jobs == 0) {
     printf(
@@ -394,7 +391,7 @@ int compute_objective(NodeData* pd) {
         "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
         pd->LP_lower_bound + pd->off, pd->LP_lower_bound_dual + pd->off,
         pd->lower_bound + pd->off, call_get_eta_in(pd->solver_stab) + pd->off,
-        pd->eta_out + pd->off);
+        pd->LP_lower_bound + pd->off);
     // }
 
 CLEAN:
@@ -465,8 +462,8 @@ int compute_lower_bound(NodeData* pd) {
         printf(
             "Starting compute_lower_bound with lb %d and ub %d at depth %d(id "
             "= "
-            "%d, opt_track = %d)\n",
-            pd->lower_bound, pd->upper_bound, pd->depth, pd->id, pd->opt_track);
+            "%d)\n",
+            pd->lower_bound, pd->upper_bound, pd->depth, pd->id);
     }
 
     CCutil_start_resume_time(&(statistics->tot_lb));
@@ -582,9 +579,9 @@ int compute_lower_bound(NodeData* pd) {
                     printf(
                         "Found lb = %d (%f) upper_bound = %d (id= %d, "
                         "iterations = "
-                        "%d,opt_track = %d).\n",
+                        "%d).\n",
                         pd->lower_bound, pd->LP_lower_bound, pd->upper_bound,
-                        pd->id, pd->iterations, pd->opt_track);
+                        pd->id, pd->iterations);
                 }
 
                 /**
@@ -744,9 +741,9 @@ int calculate_x_e(NodeData* pd) {
     int status;
 
     val = lp_interface_status(pd->RMP, &status);
-    CCcheck_val_2(val, "Failed in lp_interface_status")
+    CCcheck_val_2(val, "Failed in lp_interface_status");
 
-        switch (status) {
+    switch (status) {
         case GRB_OPTIMAL:
             val = lp_interface_get_nb_cols(pd->RMP, &nb_cols);
             CCcheck_val_2(val, "Failed to get nb cols");
@@ -754,13 +751,14 @@ int calculate_x_e(NodeData* pd) {
             CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
             val = lp_interface_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in lp_interface_x");
-            pd->x_e =
-                CC_SAFE_REALLOC(pd->x_e, get_nb_edges(pd->solver), double);
-            CCcheck_NULL_2(pd->x_e, "Failed to reallocate memory to  pd->x_e");
+            // pd->x_e =
+            //     CC_SAFE_REALLOC(pd->x_e, get_nb_edges(pd->solver), double);
+            // CCcheck_NULL_2(pd->x_e, "Failed to reallocate memory to
+            // pd->x_e");
 
-            for (unsigned i = 0; i < get_nb_edges(pd->solver); ++i) {
-                pd->x_e[i] = 0.0;
-            }
+            // for (unsigned i = 0; i < get_nb_edges(pd->solver); ++i) {
+            //     pd->x_e[i] = 0.0;
+            // }
             construct_lp_sol_from_rmp(pd);
             break;
     }

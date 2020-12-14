@@ -1,6 +1,8 @@
 #include <wct.h>
 #include "branch-and-boundwrapper.h"
 #include "gurobi_c.h"
+#include "util.h"
+#include "wctprivate.h"
 
 int debug = 0;
 
@@ -96,19 +98,13 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     /** Initialization data */
     pd->upper_bound = INT_MAX;
     pd->lower_bound = 0;
-    pd->dbl_safe_lower_bound = 0.0;
-    pd->dbl_est_lower_bound = 0.0;
-    pd->lower_scaled_bound = 1;
     pd->LP_lower_bound = 0.0;
     pd->LP_lower_min = DBL_MAX;
-    pd->partial_sol = 0.0;
     pd->rhs = (GArray*)NULL;
     /*Initialization  of the LP*/
     pd->RMP = (wctlp*)NULL;
-    pd->MIP = (wctlp*)NULL;
     pd->lambda = (double*)NULL;
-    pd->x_e = (double*)NULL;
-    pd->coeff = (double*)NULL;
+    // pd->x_e = (double*)NULL;
     pd->pi = (GArray*)NULL;
     pd->slack = (GArray*)NULL;
     pd->lhs_coeff = (GArray*)NULL;
@@ -129,16 +125,13 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     /**init stab data */
     pd->update = 1;
     pd->iterations = 0;
-    pd->update_stab_center = 0;
     /*Initialization pricing_problem*/
     pd->solver = (PricerSolver*)NULL;
     pd->nb_non_improvements = 0;
     pd->zero_count = 0;
     pd->bestcolors = (ScheduleSet*)NULL;
     pd->nb_best = 0;
-    pd->debugcolors = (ScheduleSet*)NULL;
-    pd->ndebugcolors = 0;
-    pd->opt_track = 0;
+    /**Column schedules */
     pd->localColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     pd->column_status = (int*)NULL;
     /*Initialization max and retirement age*/
@@ -176,6 +169,46 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->parms = &(prob->parms);
 }
 
+NodeData* new_node_data(NodeData* pd) {
+    NodeData* aux = CC_SAFE_MALLOC(1, NodeData);
+
+    aux->parms = pd->parms;
+    aux->stat = pd->stat;
+    aux->opt_sol = pd->opt_sol;
+
+    /** Status copy */
+    aux->status = pd->status;
+
+    /** Instance copy */
+    aux->jobarray = pd->jobarray;
+    aux->nb_jobs = pd->nb_jobs;
+    aux->nb_machines = pd->nb_machines;
+    aux->H_max = pd->H_max;
+    aux->H_min = pd->H_min;
+    aux->off = pd->off;
+
+    /** Ids for model */
+    aux->max_nb_cuts = pd->max_nb_cuts;
+    aux->id_convex_constraint = pd->id_convex_constraint;
+    aux->id_assignment_constraint = pd->id_assignment_constraint;
+    aux->id_valid_cuts = pd->id_valid_cuts;
+
+    aux->id_art_var_convex = pd->id_art_var_convex;
+    aux->id_art_var_assignment = pd->id_art_var_assignment;
+    aux->id_art_var_cuts = pd->id_art_var_cuts;
+    aux->id_next_var_cuts = pd->id_next_var_cuts;
+    aux->id_pseudo_schedules = pd->id_pseudo_schedules;
+
+    aux->localColPool =
+        g_ptr_array_copy(pd->localColPool, g_copy_scheduleset, &(pd->nb_jobs));
+    aux->local_intervals =
+        g_ptr_array_copy(pd->local_intervals, g_copy_interval, NULL);
+    aux->ordered_jobs =
+        g_ptr_array_copy(pd->ordered_jobs, g_copy_interval_pair, NULL);
+
+    return aux;
+}
+
 void lp_node_data_free(NodeData* pd) {
     /**
      * free all the gurobi data associated with the LP relaxation
@@ -187,7 +220,6 @@ void lp_node_data_free(NodeData* pd) {
     /**
      * free all the data associated with the LP
      */
-    CC_IFFREE(pd->coeff, double);
     if (pd->pi) {
         g_array_free(pd->pi, TRUE);
     }
@@ -195,7 +227,6 @@ void lp_node_data_free(NodeData* pd) {
         g_array_free(pd->slack, TRUE);
     }
     CC_IFFREE(pd->lambda, double);
-    CC_IFFREE(pd->x_e, double);
     g_array_free(pd->rhs, TRUE);
     g_array_free(pd->lhs_coeff, TRUE);
     g_array_free(pd->id_row, TRUE);

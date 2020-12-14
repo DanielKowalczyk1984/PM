@@ -27,8 +27,8 @@ static int transfer_same_cclasses(NodeData*  pd,
         int          construct = 1;
         gboolean     v1_in;
         gboolean     v2_in;
-        v1_in = g_hash_table_contains(it->table, v1);
-        v2_in = g_hash_table_contains(it->table, v2);
+        // v1_in = g_hash_table_contains(it->table, v1);
+        // v2_in = g_hash_table_contains(it->table, v2);
 
         if ((v1_in == 1 && v2_in == 0) || (v1_in == 0 && v2_in == 1)) {
             construct = 0;
@@ -40,7 +40,7 @@ static int transfer_same_cclasses(NodeData*  pd,
         for (guint j = 0; j < it->job_list->len && construct; ++j) {
             tmp_j = (Job*)g_ptr_array_index(it->job_list, j);
             tmp->total_processing_time += tmp_j->processing_time;
-            g_hash_table_insert(tmp->table, tmp_j, NULL);
+            // g_hash_table_insert(tmp->table, tmp_j, NULL);
             g_ptr_array_add(tmp->job_list, tmp_j);
             tmp->total_weighted_completion_time +=
                 value_Fj(tmp->total_processing_time, tmp_j);
@@ -96,10 +96,9 @@ static int create_same_conflict(Problem*   problem,
     pd->lower_bound = parent_pd->lower_bound;
     pd->LP_lower_bound = parent_pd->LP_lower_bound;
     pd->LP_lower_bound_dual = parent_pd->LP_lower_bound_dual;
-    pd->dbl_safe_lower_bound = parent_pd->dbl_safe_lower_bound;
     pd->parent = parent_pd;
-    pd->debugcolors = parent_pd->debugcolors;
-    pd->ndebugcolors = parent_pd->ndebugcolors;
+    // pd->debugcolors = parent_pd->debugcolors;
+    // pd->ndebugcolors = parent_pd->ndebugcolors;
     pd->stat = parent_pd->stat;
 
     /* Construction of solver*/
@@ -171,7 +170,6 @@ static int create_differ_conflict(Problem*   problem,
     pd->lower_bound = parent_pd->lower_bound;
     pd->LP_lower_bound = parent_pd->LP_lower_bound;
     pd->LP_lower_bound_dual = parent_pd->LP_lower_bound_dual;
-    pd->dbl_safe_lower_bound = parent_pd->dbl_safe_lower_bound;
     /* Create  graph with extra edge (v1,v2) */
     pd->edge_count_differ = parent_pd->edge_count_differ + 1;
     pd->edge_count_same = parent_pd->edge_count_same;
@@ -206,8 +204,9 @@ static int create_differ_conflict(Problem*   problem,
 
     for (i = 0; i < nb_cols; ++i) {
         it = (ScheduleSet*)g_ptr_array_index(parent_pd->localColPool, i);
-        gboolean v1_in = g_hash_table_contains(it->table, v1);
-        gboolean v2_in = g_hash_table_contains(it->table, v2);
+        // gboolean v1_in = g_hash_table_contains(it->table, v1);
+        // gboolean v2_in = g_hash_table_contains(it->table, v2);
+        gboolean v1_in, v2_in;
         int      construct = (v1_in && v2_in) ? 0 : 1;
 
         if (construct) {
@@ -218,7 +217,7 @@ static int create_differ_conflict(Problem*   problem,
             for (guint j = 0; j < it->job_list->len; j++) {
                 tmp_j = (Job*)g_ptr_array_index(it->job_list, j);
                 tmp->total_processing_time += tmp_j->processing_time;
-                g_hash_table_insert(tmp->table, tmp_j, NULL);
+                // g_hash_table_insert(tmp->table, tmp_j, NULL);
                 g_ptr_array_add(tmp->job_list, tmp_j);
                 tmp->total_weighted_completion_time +=
                     value_Fj(tmp->total_processing_time, tmp_j);
@@ -513,7 +512,8 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
 
     if (pd->same_children->status != infeasible &&
         pd->diff_children->status != infeasible) {
-        if (pd->same_children->eta_in <= pd->diff_children->eta_in) {
+        if (pd->same_children->LP_lower_bound <=
+            pd->diff_children->LP_lower_bound) {
             pd->same_children->choose = 1;
         } else {
             pd->diff_children->choose = 1;

@@ -297,13 +297,6 @@ int build_rmp(NodeData* pd) {
     CCcheck_NULL_2(pd->coeff_row, "Failed to allocate memory");
     g_array_append_vals(pd->coeff_row, dbl_values, pd->nb_rows);
 
-    pd->eta_in = 0.0;
-    pd->eta_out = 0.0;
-    if (parms->pricing_solver < dp_solver) {
-        pd->x_e = CC_SAFE_MALLOC(2 * get_nb_vertices(pd->solver), double);
-        CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
-    }
-
 CLEAN:
 
     if (val) {
