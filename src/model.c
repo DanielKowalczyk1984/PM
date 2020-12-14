@@ -151,7 +151,7 @@ int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
         val = lp_interface_getcoeff(lp, &row_ind, &var_ind, &cval);
         CCcheck_val_2(val, "Failed lp_interface_getcoeff");
         cval += 1.0;
-        set->num[job->job] += 1;
+        // set->num[job->job] += 1;
         val = lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
         CCcheck_val_2(val, "Failed lp_interface_chgcoeff");
     }
@@ -352,8 +352,8 @@ int get_solution_lp_lowerbound(NodeData* pd) {
             printf("\n");
             for (unsigned j = 0; j < tmp->job_list->len; ++j) {
                 tmp_j = (Job*)g_ptr_array_index(tmp->job_list, j);
-                printf("%d (%d) ", tmp->num[tmp_j->job],
-                       tmp_j->processing_time);
+                // printf("%d (%d) ", tmp->num[tmp_j->job],
+                //    tmp_j->processing_time);
             }
             printf("\n");
         }
