@@ -271,8 +271,6 @@ int main(int ac, char** av) {
     root->solver_stab = new_pricing_stabilization(root->solver, parms);
     root->stat = &(problem.stat);
     root->opt_sol = problem.opt_sol;
-    printf("test test test %p", root->opt_sol);
-    getchar();
 
     /**
      * @brief Solve initial relaxation
