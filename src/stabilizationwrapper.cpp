@@ -13,13 +13,8 @@ int construct_sol(NodeData* pd, OptimalSolution<T>* sol) {
     ScheduleSet* newset = scheduleset_alloc_bis(pd->nb_jobs);
     CCcheck_NULL_3(newset, "Failed to allocate memory newset");
 
-    for (unsigned i = 0; i < sol->jobs->len; ++i) {
-        Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol->jobs, i));
-        g_hash_table_add(newset->table, tmp_j);
-    }
     newset->job_list = sol->jobs;
     sol->jobs = nullptr;
-    newset->edge_list = nullptr;
 
     newset->total_weighted_completion_time = sol->cost;
     newset->total_processing_time = sol->C_max;
