@@ -82,6 +82,32 @@ PricerSolverBase* newSolverDp(GPtrArray* _jobs,
     }
 }
 
+// PricerSolverBase* copy_pricer_solver(PricerSolverBase* src, Parms* parms) {
+//     switch (parms->pricing_solver) {
+//         case bdd_solver_simple:
+//             break;
+//         case bdd_solver_cycle:
+//             break;
+//         case zdd_solver_cycle:
+//             break;
+//         case zdd_solver_simple:
+//             break;
+//         case bdd_solver_backward_simple:
+//             break;
+//         case bdd_solver_backward_cycle:
+//             break;
+//         case zdd_solver_backward_simple:
+//             break;
+//         case zdd_solver_backward_cycle:
+//             break;
+//         case dp_solver:
+//             break;
+//         case ati_solver:
+//         case dp_bdd_solver:
+//         default:
+//     }
+// }
+
 void freeSolver(PricerSolver* src) {
     delete src;
 }
@@ -185,10 +211,6 @@ int generate_cuts(NodeData* pd) {
     // 2. add cuts to lp relaxation wctlp
     // 3. adjust the pricing solver (add constraints to original model)
     return val;
-}
-
-void represent_solution(NodeData* pd, Solution* sol) {
-    pd->solver->represent_solution(sol);
 }
 
 int delete_unused_rows_range(NodeData* pd, int first, int last) {

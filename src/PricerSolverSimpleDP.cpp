@@ -294,8 +294,8 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     return opt_sol;
 }
 
-OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing([
-    [maybe_unused]] double* _pi) {
+OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing(
+    [[maybe_unused]] double* _pi) {
     OptimalSolution<double> opt_sol;
 
     return opt_sol;
@@ -318,24 +318,6 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
             }
         }
     }
-}
-
-void PricerSolverSimpleDp::project_solution(Solution* sol) {
-    std::fill(solution_x, solution_x + convex_constr_id * (Hmax + 1), 0.0);
-
-    for (int it = 0; it < sol->nb_machines; it++) {
-        GPtrArray* tmp = sol->part[it].machine;
-        int        t = 0;
-        for (size_t l = 0; l < tmp->len; l++) {
-            Job* tmp_j = (Job*)g_ptr_array_index(tmp, l);
-            solution_x[(tmp_j->job) * (Hmax + 1) + t] += 1.0;
-            t += tmp_j->processing_time;
-        }
-    }
-}
-
-void PricerSolverSimpleDp::represent_solution(Solution* sol) {
-    project_solution(sol);
 }
 
 void PricerSolverSimpleDp::add_constraint([[maybe_unused]] Job*       job,
@@ -417,5 +399,5 @@ bool PricerSolverSimpleDp::check_schedule_set([[maybe_unused]] GPtrArray* set) {
     return true;
 }
 
-void PricerSolverSimpleDp::make_schedule_set_feasible([
-    [maybe_unused]] GPtrArray* set) {}
+void PricerSolverSimpleDp::make_schedule_set_feasible(
+    [[maybe_unused]] GPtrArray* set) {}
