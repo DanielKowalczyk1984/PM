@@ -53,6 +53,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      * Default constructor.
      */
     DdStructure() : root_(0) {}
+    DdStructure<T>(const DdStructure<T>&) = default;
+    DdStructure<T>(DdStructure<T>&&) = default;
+    DdStructure<T>& operator=(const DdStructure<T>&) = default;
+    DdStructure<T>& operator=(DdStructure<T>&&) = default;
 
     /**
      * Universal ZDD constructor.
