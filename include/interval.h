@@ -23,8 +23,6 @@ typedef struct _interval_pair {
 typedef struct _job_interval_pair {
     Job*      j;
     interval* I;
-    int       take;
-    int       key;
 } job_interval_pair;
 
 void      interval_init(interval*  p,
@@ -32,9 +30,14 @@ void      interval_init(interval*  p,
                         int        b,
                         int        key,
                         GPtrArray* jobarray,
-                        int        njobs);
-interval* interval_alloc(int a, int b, int key, GPtrArray* jobarray, int njobs);
-interval* interval_copy(interval* src);
+                        int        nb_jobs);
+interval* interval_alloc(int        a,
+                         int        b,
+                         int        key,
+                         GPtrArray* jobarray,
+                         int        nb_jobs);
+gpointer  g_copy_interval(gconstpointer, gpointer);
+gpointer  g_copy_interval_pair(gconstpointer src, gpointer data);
 void      interval_free(interval* p);
 void      g_interval_free(void* p);
 
