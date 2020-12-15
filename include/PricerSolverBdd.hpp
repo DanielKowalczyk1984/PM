@@ -39,6 +39,16 @@ class PricerSolverBdd : public PricerSolverBase {
                     int*        _take_jobs,
                     double      _UB);
 
+    PricerSolverBdd(const PricerSolverBdd& src)
+        : PricerSolverBase(src),
+          decision_diagram(new DdStructure<>(*src.decision_diagram)),
+          size_graph(src.size_graph),
+          nb_removed_edges(src.nb_removed_edges),
+          nb_removed_nodes(src.nb_removed_nodes),
+          ordered_jobs(src.ordered_jobs),
+          mip_graph(src.mip_graph),
+          original_model(src.original_model) {}
+
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
     void check_infeasible_arcs();

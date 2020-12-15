@@ -17,6 +17,7 @@ class PricerSolverBddSimple : public PricerSolverBdd {
                           int         _Hmax,
                           int*        _take_jobs,
                           double      _UB);
+    PricerSolverBddSimple(const PricerSolverBddSimple&) = default;
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    compute_labels(double* _pi);
@@ -38,6 +39,7 @@ class PricerSolverBddCycle : public PricerSolverBdd {
                          int         _Hmax,
                          int*        _take_jobs,
                          double      _UB);
+    PricerSolverBddCycle(const PricerSolverBddCycle&) = default;
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    compute_labels(double* _pi);

@@ -20,6 +20,8 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
     void                    compute_labels(double* _pi);
     void evaluate_nodes(double* pi, int UB, double LB) override;
     void evaluate_nodes(double* pi) final;
+    PricerSolverBddBackwardSimple(const PricerSolverBddBackwardSimple&) =
+        default;
 };
 
 class PricerSolverBddBackwardCycle : public PricerSolverBdd {
@@ -42,4 +44,5 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
     void                    compute_labels(double* _pi);
     void evaluate_nodes(double* pi, int UB, double LB) override;
     void evaluate_nodes(double* pi) final;
+    PricerSolverBddBackwardCycle(const PricerSolverBddBackwardCycle&) = default;
 };

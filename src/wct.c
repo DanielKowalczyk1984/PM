@@ -177,9 +177,6 @@ NodeData* new_node_data(NodeData* pd) {
     aux->stat = pd->stat;
     aux->opt_sol = pd->opt_sol;
 
-    /** Status copy */
-    aux->status = pd->status;
-
     /** Instance copy */
     aux->jobarray = pd->jobarray;
     aux->nb_jobs = pd->nb_jobs;
@@ -187,6 +184,14 @@ NodeData* new_node_data(NodeData* pd) {
     aux->H_max = pd->H_max;
     aux->H_min = pd->H_min;
     aux->off = pd->off;
+
+    /** copy info about intervals */
+    aux->local_intervals =
+        g_ptr_array_copy(pd->local_intervals, g_copy_interval, NULL);
+    aux->ordered_jobs =
+        g_ptr_array_copy(pd->ordered_jobs, g_copy_interval_pair, NULL);
+
+    /** info about RMP */
 
     /** Ids for model */
     aux->max_nb_cuts = pd->max_nb_cuts;
@@ -200,12 +205,18 @@ NodeData* new_node_data(NodeData* pd) {
     aux->id_next_var_cuts = pd->id_next_var_cuts;
     aux->id_pseudo_schedules = pd->id_pseudo_schedules;
 
+    /** copy info about solver */
+    aux->solver = copy_pricer_solver(pd->solver, pd->parms);
+
     aux->localColPool =
         g_ptr_array_copy(pd->localColPool, g_copy_scheduleset, &(pd->nb_jobs));
-    aux->local_intervals =
-        g_ptr_array_copy(pd->local_intervals, g_copy_interval, NULL);
-    aux->ordered_jobs =
-        g_ptr_array_copy(pd->ordered_jobs, g_copy_interval_pair, NULL);
+
+    /** copy info about best_schedule */
+    aux->best_schedule =
+        g_ptr_array_copy(pd->best_schedule, g_copy_scheduleset, NULL);
+
+    aux->maxiterations = pd->maxiterations;
+    aux->retirementage = pd->retirementage;
 
     return aux;
 }
