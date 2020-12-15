@@ -238,23 +238,24 @@ static int collect_same_child_conflict(NodeData* cd) {
     int rval = 0;
     int c;
 
-    for (c = 0; c < cd->nb_same; ++c) {
-        if (cd->same_children[c].nb_best &&
-            (!cd->nb_best ||
-             cd->same_children[c].best_objective < cd->upper_bound)) {
-            if (cd->nb_best) {
-                schedulesets_free(&(cd->bestcolors), &(cd->nb_best));
-            }
+    // for (c = 0; c < cd->nb_same; ++c) {
+    //     if (cd->same_children[c].nb_best &&
+    //         (!cd->nb_best ||
+    //          cd->same_children[c].best_objective < cd->upper_bound)) {
+    //         // if (cd->nb_best) {
+    //         //     schedulesets_free(&(cd->bestcolors), &(cd->nb_best));
+    //         // }
 
-            cd->upper_bound = cd->best_objective =
-                cd->same_children[c].best_objective;
-            cd->nb_best = cd->same_children[c].nb_best;
-            cd->same_children[c].nb_best = 0;
-            cd->bestcolors = cd->same_children[c].bestcolors;
-            cd->same_children[c].bestcolors = (ScheduleSet*)NULL;
-            /** Check if the solution is feasible, i.e. every job is covered */
-        }
-    }
+    //         cd->upper_bound = cd->best_objective =
+    //             cd->same_children[c].best_objective;
+    //         cd->nb_best = cd->same_children[c].nb_best;
+    //         cd->same_children[c].nb_best = 0;
+    //         // cd->bestcolors = cd->same_children[c].bestcolors;
+    //         // cd->same_children[c].bestcolors = (ScheduleSet*)NULL;
+    //         /** Check if the solution is feasible, i.e. every job is covered
+    //         */
+    //     }
+    // }
 
     return rval;
 }
@@ -263,23 +264,24 @@ static int collect_diff_child_conflict(NodeData* cd) {
     int rval = 0;
     int c;
 
-    for (c = 0; c < cd->nb_diff; ++c) {
-        if (cd->diff_children[c].nb_best &&
-            (!cd->nb_best ||
-             cd->diff_children[c].best_objective < cd->upper_bound)) {
-            if (cd->nb_best) {
-                schedulesets_free(&(cd->bestcolors), &(cd->nb_best));
-            }
+    // for (c = 0; c < cd->nb_diff; ++c) {
+    //     if (cd->diff_children[c].nb_best &&
+    //         (!cd->nb_best ||
+    //          cd->diff_children[c].best_objective < cd->upper_bound)) {
+    //         // if (cd->nb_best) {
+    //         //     schedulesets_free(&(cd->bestcolors), &(cd->nb_best));
+    //         // }
 
-            cd->upper_bound = cd->best_objective =
-                cd->diff_children[c].best_objective;
-            cd->nb_best = cd->diff_children[c].nb_best;
-            cd->diff_children[c].nb_best = 0;
-            cd->bestcolors = cd->diff_children[c].bestcolors;
-            cd->diff_children[c].bestcolors = (ScheduleSet*)NULL;
-            /** Check if the solution is feasible, i.e. every job is covered */
-        }
-    }
+    //         cd->upper_bound = cd->best_objective =
+    //             cd->diff_children[c].best_objective;
+    //         cd->nb_best = cd->diff_children[c].nb_best;
+    //         cd->diff_children[c].nb_best = 0;
+    //         // cd->bestcolors = cd->diff_children[c].bestcolors;
+    //         // cd->diff_children[c].bestcolors = (ScheduleSet*)NULL;
+    //         /** Check if the solution is feasible, i.e. every job is covered
+    //         */
+    //     }
+    // }
 
     return rval;
 }

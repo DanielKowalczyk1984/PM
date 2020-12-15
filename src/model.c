@@ -7,7 +7,6 @@
 
 int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     int          val = 0;
-    double       test_incumbent = .0;
     double       incumbent;
     int          tot_weighted = 0;
     ScheduleSet* tmp_schedule;
@@ -17,36 +16,26 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     CCcheck_val_2(val, "lp_interface_objval failed");
     val = lp_interface_get_nb_cols(pd->RMP, &pd->nb_cols);
     CCcheck_val_2(val, "Failed get nb_cols");
+    assert(pd->nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
 
-    schedulesets_free(&(pd->bestcolors), &(pd->nb_best));
-    pd->bestcolors = CC_SAFE_MALLOC(pd->nb_machines, ScheduleSet);
-    CCcheck_NULL_2(pd->bestcolors, "Failed to realloc pd->bestcolors");
-    pd->nb_best = 0;
+    g_ptr_array_free(pd->best_schedule, TRUE);
+    pd->best_schedule = g_ptr_array_new_with_free_func(g_scheduleset_free);
 
-    assert(pd->nb_cols == pd->localColPool->len);
     for (guint i = 0; i < pd->localColPool->len; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
-        test_incumbent += x[i];
 
-        if (x[i] >= 1.0 - tolerance) {
-            int j = pd->nb_best;
-            scheduleset_init(pd->bestcolors + j);
+        if (x[i + pd->id_pseudo_schedules] >= 1.0 - tolerance) {
+            ScheduleSet* aux = CC_SAFE_MALLOC(1, ScheduleSet);
+            CCcheck_NULL_2(aux, "Failed to allocate memory");
+            scheduleset_init_bis(aux);
+            aux->job_list =
+                g_ptr_array_copy(tmp_schedule->job_list, NULL, NULL);
+            scheduleset_recalculate(aux);
+            g_ptr_array_add(pd->best_schedule, aux);
 
-            g_ptr_array_set_size(pd->bestcolors[j].job_list,
-                                 tmp_schedule->job_list->len);
-            for (guint k = 0; k < tmp_schedule->job_list->len; ++k) {
-                tmp_j = (Job*)g_ptr_array_index(tmp_schedule->job_list, k);
-                g_ptr_array_add(pd->bestcolors[j].job_list, tmp_j);
-                pd->bestcolors[j].total_processing_time +=
-                    tmp_j->processing_time;
-                pd->bestcolors[j].total_weighted_completion_time +=
-                    value_Fj(pd->bestcolors[j].total_processing_time, tmp_j);
-            }
+            tot_weighted += aux->total_weighted_completion_time;
 
-            pd->nb_best++;
-            tot_weighted += pd->bestcolors[j].total_weighted_completion_time;
-
-            if (pd->nb_best > pd->nb_machines) {
+            if (pd->best_schedule->len > pd->nb_machines) {
                 printf(
                     "ERROR: \"Integral\" solution turned out to be not "
                     "integral!\n");
@@ -59,7 +48,7 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
 
     /** Write a check function */
     printf("Intermediate schedule:\n");
-    print_schedule(pd->bestcolors, pd->nb_best);
+    // print_schedule(pd->bestcolors, pd->nb_best);
     printf("with total weight %d\n", tot_weighted);
     assert(fabs((double)tot_weighted - incumbent) <= 0.00001);
 

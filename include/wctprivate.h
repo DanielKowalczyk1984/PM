@@ -108,9 +108,8 @@ struct _NodeData {
     int                   update;
 
     // Best Solution
-    ScheduleSet* bestcolors;
-    int          best_objective;
-    int          nb_best;
+    GPtrArray* best_schedule;
+    int        best_objective;
 
     // maxiterations and retireage
     int maxiterations;

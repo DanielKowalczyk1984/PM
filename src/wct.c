@@ -129,8 +129,9 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->solver = (PricerSolver*)NULL;
     pd->nb_non_improvements = 0;
     pd->zero_count = 0;
-    pd->bestcolors = (ScheduleSet*)NULL;
-    pd->nb_best = 0;
+    // pd->bestcolors = (ScheduleSet*)NULL;
+    pd->best_schedule = g_ptr_array_new_with_free_func(g_scheduleset_free);
+    // pd->nb_best = 0;
     /**Column schedules */
     pd->localColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     pd->column_status = (int*)NULL;
@@ -291,11 +292,12 @@ void temporary_data_free(NodeData* pd) {
 }
 
 void nodedata_free(NodeData* pd) {
-    schedulesets_free(&(pd->bestcolors), &(pd->nb_best));
+    // schedulesets_free(&(pd->bestcolors), &(pd->nb_best));
     temporary_data_free(pd);
 
     g_ptr_array_free(pd->local_intervals, TRUE);
     g_ptr_array_free(pd->ordered_jobs, TRUE);
+    g_ptr_array_free(pd->best_schedule, TRUE);
     CC_IFFREE(pd->elist_same, int);
     CC_IFFREE(pd->elist_differ, int);
     CC_IFFREE(pd->v1_wide, int);
@@ -456,7 +458,7 @@ int compute_schedule(Problem* problem) {
                              ((double)problem->global_lower_bound);
         problem->status = optimal;
         printf("The optimal schedule is given by:\n");
-        print_schedule(root_pd->bestcolors, root_pd->nb_best);
+        // print_schedule(root_pd->bestcolors, root_pd->nb_best);
         printf("with total weighted completion time %d\n",
                root_pd->upper_bound);
     } else {
@@ -467,7 +469,7 @@ int compute_schedule(Problem* problem) {
         problem->status = meta_heuristic;
         problem->global_lower_bound = root_pd->lower_bound;
         printf("The suboptimal schedule is given by:\n");
-        print_schedule(root_pd->bestcolors, root_pd->nb_best);
+        // print_schedule(root_pd->bestcolors, root_pd->nb_best);
         printf("with total weighted completion time\n");
     }
 
