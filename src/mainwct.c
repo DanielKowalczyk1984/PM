@@ -323,7 +323,6 @@ int main(int ac, char** av) {
     g_ptr_array_free(solutions_pool, TRUE);
 
     if (parms->mip_solver) {
-        // represent_solution(root, problem.opt_sol);
         build_solve_mip(root);
     }
 
