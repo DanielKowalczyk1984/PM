@@ -8,13 +8,13 @@ extern "C" {
 #include <util.h>
 
 typedef struct _Job {
-    int  job;
-    int  weight;
-    int  processing_time;
-    int  release_time;
-    int  due_time;
-    int  num_layers;
-    int* pos_interval;
+    int job;
+    int weight;
+    int processing_time;
+    int release_time;
+    int due_time;
+    int num_layers;
+    // int* pos_interval;
 } Job;
 
 inline int value_Fj(int C, Job* j) {

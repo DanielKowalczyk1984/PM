@@ -60,11 +60,8 @@ void calculate_Hmax(Problem* problem) {
     problem->H_min = pd->H_min =
         (int)ceil(temp_dbl / problem->nb_machines) - problem->pmax;
 
-    GPtrArray* duration = g_ptr_array_new();
-    for (int j = 0; j < problem->nb_jobs; j++) {
-        Job* job = g_ptr_array_index(problem->g_job_array, j);
-        g_ptr_array_add(duration, job);
-    }
+    GPtrArray* duration = g_ptr_array_copy(problem->g_job_array, NULL, NULL);
+    g_ptr_array_set_free_func(duration, NULL);
     g_ptr_array_sort(duration, g_compare_duration);
 
     int    m = 0;
@@ -94,14 +91,14 @@ void determine_jobs_order_interval(Problem* problem) {
 
     for (unsigned i = 0; i < problem->g_job_array->len; ++i) {
         Job* tmp_j = (Job*)g_ptr_array_index(problem->g_job_array, i);
-        tmp_j->pos_interval = CC_SAFE_MALLOC(local_intervals->len, int);
+        // tmp_j->pos_interval = CC_SAFE_MALLOC(local_intervals->len, int);
         for (unsigned j = 0; j < local_intervals->len; ++j) {
             tmp_interval = (interval*)g_ptr_array_index(local_intervals, j);
             GPtrArray* sigma = tmp_interval->sigma;
             for (unsigned k = 0; k < sigma->len; ++k) {
                 Job* tmp = (Job*)g_ptr_array_index(sigma, k);
                 if (tmp == tmp_j) {
-                    tmp_j->pos_interval[j] = k;
+                    // tmp_j->pos_interval[j] = k;
                     break;
                 }
             }
@@ -134,7 +131,7 @@ int preprocess_data(Problem* problem) {
     create_ordered_jobs_array(root->local_intervals, root->ordered_jobs);
 
     /** Determine the position of each job in the interval */
-    determine_jobs_order_interval(problem);
+    // determine_jobs_order_interval(problem);
 
     return val;
 }

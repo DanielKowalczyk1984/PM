@@ -6,12 +6,12 @@ void g_print_job(gpointer data, MAYBE_UNUSED gpointer user_data) {
     printf("%d ", a->job);
 }
 
-void g_job_free(void* set) {
-    Job* tmp = (Job*)set;
-    if (tmp) {
-        CC_IFFREE(tmp->pos_interval, int);
-        CC_IFFREE(tmp, Job);
-    }
+void g_job_free(void* _job) {
+    Job* tmp = (Job*)_job;
+    // if (tmp) {
+    // CC_IFFREE(tmp->pos_interval, int);
+    CC_IFFREE(tmp, Job);
+    // }
 }
 
 Job* job_alloc(int* p, int* w, int* d) {
@@ -20,7 +20,7 @@ Job* job_alloc(int* p, int* w, int* d) {
     j->due_time = *d;
     j->weight = *w;
     j->num_layers = 0;
-    j->pos_interval = (int*)NULL;
+    // j->pos_interval = (int*)NULL;
     return j;
 }
 

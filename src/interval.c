@@ -84,8 +84,8 @@ interval* interval_alloc(int        a,
                          GPtrArray* jobarray,
                          int        nb_jobs) {
     interval* p = CC_SAFE_MALLOC(1, interval);
-    CCcheck_NULL_3(p, "Failed to allocate memory")
-        interval_init(p, a, b, key, jobarray, nb_jobs);
+    CCcheck_NULL_3(p, "Failed to allocate memory");
+    interval_init(p, a, b, key, jobarray, nb_jobs);
 CLEAN:
     return p;
 }
