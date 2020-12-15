@@ -11,7 +11,7 @@ class BranchNodeBase : public State {
     BranchNodeBase(const BranchNodeBase&) = default;
     BranchNodeBase& operator=(BranchNodeBase&&) = default;
     BranchNodeBase& operator=(const BranchNodeBase&) = default;
-    virtual ~BranchNodeBase(){};
+    virtual ~BranchNodeBase() { nodedata_free(pd); };
 
     virtual void   branch(BTree* bt) final;
     virtual void   computeBounds(BTree* bt) final;

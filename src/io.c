@@ -40,7 +40,7 @@ int read_problem(Problem* problem) {
     NodeData*   pd;
     Parms*      parms;
     parms = &(problem->parms);
-    pd = &(problem->root_pd);
+    pd = (problem->root_pd);
     FILE* in = fopen(parms->jobfile, "r");
     curjob = 0;
 
@@ -101,7 +101,7 @@ CLEAN:
 
 int print_to_csv(Problem* problem) {
     int         val = 0;
-    NodeData*   pd = &(problem->root_pd);
+    NodeData*   pd = problem->root_pd;
     Parms*      parms = &(problem->parms);
     Statistics* statistics = &(problem->stat);
     FILE*       file = (FILE*)NULL;

@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "branch-and-boundwrapper.h"
 #include "util.h"
 #include "wct.h"
 #include "wctparms.h"
@@ -200,7 +199,7 @@ int main(int ac, char** av) {
     Problem problem;
     problem_init(&problem);
 
-    NodeData*   root = &(problem.root_pd);
+    NodeData*   root = problem.root_pd;
     Parms*      parms = &(problem.parms);
     Statistics* statistics = &(problem.stat);
 
@@ -281,9 +280,8 @@ int main(int ac, char** av) {
     GPtrArray* solutions_pool = g_ptr_array_copy(
         root->localColPool, g_copy_scheduleset, &(problem.nb_jobs));
 
-    BranchBoundTree* tree = new_branch_bound_tree(root, 0, 1);
-    call_branch_and_bound_explore(tree);
-    delete_branch_bound_tree(tree);
+    problem.tree = new_branch_bound_tree(problem.root_pd, 0, 1);
+    call_branch_and_bound_explore(problem.tree);
 
     /**
      * @brief Calculation of LB at the root node with column generation

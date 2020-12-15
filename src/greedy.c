@@ -404,7 +404,7 @@ int heuristic(Problem* prob) {
     int                IR = parms->nb_iterations_rvnd;
     Solution*          sol;
     Solution*          sol1 = (Solution*)NULL;
-    GPtrArray*         intervals = prob->root_pd.local_intervals;
+    GPtrArray*         intervals = prob->root_pd->local_intervals;
     local_search_data* data = (local_search_data*)NULL;
     local_search_data* data_RS = (local_search_data*)NULL;
 
@@ -425,7 +425,7 @@ int heuristic(Problem* prob) {
     local_search_create_g(sol, data);
     RVND(sol, data);
     solution_canonical_order(sol, intervals);
-    add_solution_to_colpool(sol, &(prob->root_pd));
+    add_solution_to_colpool(sol, (prob->root_pd));
     printf("Solution after local search:\n");
     solution_print(sol);
 
@@ -454,7 +454,7 @@ int heuristic(Problem* prob) {
             if (sol1->tw < sol->tw) {
                 solution_update(sol, sol1);
                 solution_canonical_order(sol, intervals);
-                add_solution_to_colpool(sol, &(prob->root_pd));
+                add_solution_to_colpool(sol, (prob->root_pd));
                 j = 0;
             }
 
@@ -474,8 +474,8 @@ int heuristic(Problem* prob) {
     solution_print(prob->opt_sol);
     prob->global_upper_bound = prob->opt_sol->tw + prob->off;
     CCutil_stop_timer(&(statistics->tot_heuristic), 0);
-    prune_duplicated_sets(&(prob->root_pd));
-    prob->root_pd.upper_bound = prob->global_upper_bound;
+    prune_duplicated_sets((prob->root_pd));
+    prob->root_pd->upper_bound = prob->global_upper_bound;
 CLEAN:
     solution_free(&sol);
     local_search_data_free(&data);

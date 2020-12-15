@@ -1,5 +1,7 @@
 #include "BranchNode.hpp"
 #include "PricerSolverBase.hpp"
+#include "branch-and-bound/btree.h"
+// #include "branch-and-boundwrapper.h"
 #include "solver.h"
 #include "wct.h"
 #include "wctprivate.h"
@@ -10,9 +12,12 @@ BranchNodeBase::BranchNodeBase(NodeData* _pd, bool _isRoot)
 
 void BranchNodeBase::branch(BTree* bt) {
     PricerSolver* solver = pd->solver;
-    for (auto& it : solver->lp_sol) {
-        std::cout << it;
-    }
+    // for (auto& it : solver->lp_sol) {
+    //     std::cout << it;
+    // }
+    // auto test = new_node_data(pd);
+    // auto aux_node = new BranchNode(test);
+    // aux_node->computeBounds(bt);
 }
 
 void BranchNodeBase::computeBounds(BTree* bt) {

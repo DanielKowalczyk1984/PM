@@ -597,8 +597,9 @@ int compute_lower_bound(NodeData* pd) {
                 // solve_relaxation(pd);
                 construct_lp_sol_from_rmp(pd);
                 if (!call_is_integer_solution(pd->solver)) {
-                    has_cuts = (generate_cuts(pd) > 0);
-                    call_update_duals(pd->solver_stab);
+                    // has_cuts = (generate_cuts(pd) > 0);
+                    has_cuts = 0;
+                    // call_update_duals(pd->solver_stab);
                     test++;
                     // lp_interface_write(pd->RMP, "test.lp");
                 }

@@ -51,7 +51,7 @@ gint g_compare_duration(gconstpointer a, gconstpointer b) {
 void calculate_Hmax(Problem* problem) {
     int       temp = 0;
     double    temp_dbl = 0.0;
-    NodeData* pd = &(problem->root_pd);
+    NodeData* pd = problem->root_pd;
 
     temp = problem->p_sum - problem->pmax;
     temp_dbl = (double)temp;
@@ -87,7 +87,7 @@ void calculate_Hmax(Problem* problem) {
 void determine_jobs_order_interval(Problem* problem) {
     interval* tmp_interval;
 
-    GPtrArray* local_intervals = problem->root_pd.local_intervals;
+    GPtrArray* local_intervals = problem->root_pd->local_intervals;
 
     for (unsigned i = 0; i < problem->g_job_array->len; ++i) {
         Job* tmp_j = (Job*)g_ptr_array_index(problem->g_job_array, i);
@@ -109,7 +109,7 @@ void determine_jobs_order_interval(Problem* problem) {
 int preprocess_data(Problem* problem) {
     int       val = 0;
     int       i = 0;
-    NodeData* root = &(problem->root_pd);
+    NodeData* root = problem->root_pd;
 
     /** Calculate the statistics of the instance */
     g_ptr_array_foreach(problem->g_job_array, g_problem_summary_init, problem);
@@ -255,7 +255,7 @@ int find_division(Problem* problem) {
     int            counter = 0;
     int            nb_jobs = problem->nb_jobs;
     int            prev;
-    NodeData*      root_pd = &(problem->root_pd);
+    NodeData*      root_pd = problem->root_pd;
     GPtrArray*     tmp_array = g_ptr_array_new_with_free_func(g_interval_free);
     GPtrArray*     jobarray = problem->g_job_array;
     Job*           tmp_j;

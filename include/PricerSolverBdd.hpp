@@ -47,7 +47,23 @@ class PricerSolverBdd : public PricerSolverBase {
           nb_removed_nodes(src.nb_removed_nodes),
           ordered_jobs(src.ordered_jobs),
           mip_graph(src.mip_graph),
-          original_model(src.original_model) {}
+          node_ids(convex_constr_id,
+                   std::vector<std::weak_ptr<NodeId>>(src.H_max + 1)),
+          original_model(src.original_model),
+          H_max(src.H_max),
+          H_min(src.H_min) {
+        remove_layers_init();
+        decision_diagram->compressBdd();
+        size_graph = decision_diagram->size();
+        init_table();
+        calculate_H_min();
+        cleanup_arcs();
+        // check_infeasible_arcs();
+        bottum_up_filtering();
+        topdown_filtering();
+        construct_mipgraph();
+        init_coeff_constraints();
+    }
 
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 

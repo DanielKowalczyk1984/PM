@@ -564,7 +564,7 @@ void free_elist(NodeData* cd, Parms* parms) {
 
 int branching_msg(NodeData* pd, Problem* problem) {
     BinomialHeap* heap = problem->br_heap_a;
-    NodeData*     root = &(problem->root_pd);
+    NodeData*     root = problem->root_pd;
     Statistics*   statistics = &(problem->stat);
 
     if (pd->lower_bound < pd->upper_bound) {
@@ -657,7 +657,7 @@ CLEAN:
 
 int branching_msg_cbfs(NodeData* pd, Problem* problem) {
     int         nb_nodes = 0;
-    NodeData*   root = &(problem->root_pd);
+    NodeData*   root = problem->root_pd;
     Statistics* statistics = &(problem->stat);
 
     for (unsigned int i = 0; i < problem->unexplored_states->len; ++i) {
