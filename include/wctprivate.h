@@ -68,9 +68,9 @@ struct _NodeData {
     NodeDataStatus status;
 
     // The instance information
+    GPtrArray* jobarray;
     int        nb_jobs;
     int        nb_machines;
-    GPtrArray* jobarray;
     int        H_max;
     int        H_min;
     int        off;
