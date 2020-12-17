@@ -27,8 +27,8 @@ static int transfer_same_cclasses(NodeData*  pd,
         int          construct = 1;
         gboolean     v1_in;
         gboolean     v2_in;
-        v1_in = g_hash_table_contains(it->table, v1);
-        v2_in = g_hash_table_contains(it->table, v2);
+        // v1_in = g_hash_table_contains(it->table, v1);
+        // v2_in = g_hash_table_contains(it->table, v2);
 
         if ((v1_in == 1 && v2_in == 0) || (v1_in == 0 && v2_in == 1)) {
             construct = 0;
@@ -40,7 +40,7 @@ static int transfer_same_cclasses(NodeData*  pd,
         for (guint j = 0; j < it->job_list->len && construct; ++j) {
             tmp_j = (Job*)g_ptr_array_index(it->job_list, j);
             tmp->total_processing_time += tmp_j->processing_time;
-            g_hash_table_insert(tmp->table, tmp_j, NULL);
+            // g_hash_table_insert(tmp->table, tmp_j, NULL);
             g_ptr_array_add(tmp->job_list, tmp_j);
             tmp->total_weighted_completion_time +=
                 value_Fj(tmp->total_processing_time, tmp_j);
@@ -74,7 +74,8 @@ static int create_same_conflict(Problem*   problem,
                                 Job*       v2) {
     int val = 0;
     // Parms *parms = &(problem->parms);
-    NodeData* pd = CC_SAFE_MALLOC(1, NodeData);
+    NodeData*   pd = CC_SAFE_MALLOC(1, NodeData);
+    Statistics* statistics = parent_pd->stat;
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     nodedata_init(pd, problem);
     /** Init B&B data */
@@ -95,14 +96,14 @@ static int create_same_conflict(Problem*   problem,
     pd->lower_bound = parent_pd->lower_bound;
     pd->LP_lower_bound = parent_pd->LP_lower_bound;
     pd->LP_lower_bound_dual = parent_pd->LP_lower_bound_dual;
-    pd->dbl_safe_lower_bound = parent_pd->dbl_safe_lower_bound;
     pd->parent = parent_pd;
-    pd->debugcolors = parent_pd->debugcolors;
-    pd->ndebugcolors = parent_pd->ndebugcolors;
+    // pd->debugcolors = parent_pd->debugcolors;
+    // pd->ndebugcolors = parent_pd->ndebugcolors;
+    pd->stat = parent_pd->stat;
 
     /* Construction of solver*/
     if (pd->parent) {
-        CCutil_start_resume_time(&(problem->tot_build_dd));
+        CCutil_start_resume_time(&(statistics->tot_build_dd));
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 1);
 
@@ -115,12 +116,12 @@ static int create_same_conflict(Problem*   problem,
             }
 
             *child = pd;
-            CCutil_suspend_timer(&(problem->tot_build_dd));
+            CCutil_suspend_timer(&(statistics->tot_build_dd));
             goto CLEAN;
         }
 
         // init_tables(pd->solver);
-        CCutil_suspend_timer(&(problem->tot_build_dd));
+        CCutil_suspend_timer(&(statistics->tot_build_dd));
     }
 
     val = transfer_same_cclasses(pd, parent_pd->localColPool, v1, v2);
@@ -143,10 +144,11 @@ static int create_differ_conflict(Problem*   problem,
                                   NodeData** child,
                                   Job*       v1,
                                   Job*       v2) {
-    int       val = 0;
-    int       i;
-    int       nb_cols;
-    NodeData* pd = CC_SAFE_MALLOC(1, NodeData);
+    int         val = 0;
+    int         i;
+    int         nb_cols;
+    NodeData*   pd = CC_SAFE_MALLOC(1, NodeData);
+    Statistics* statistics = parent_pd->stat;
     // Parms *parms = &(problem->parms);
     CCcheck_NULL_2(pd, "Failed to allocate pd");
     ScheduleSet *it, *tmp;
@@ -168,14 +170,13 @@ static int create_differ_conflict(Problem*   problem,
     pd->lower_bound = parent_pd->lower_bound;
     pd->LP_lower_bound = parent_pd->LP_lower_bound;
     pd->LP_lower_bound_dual = parent_pd->LP_lower_bound_dual;
-    pd->dbl_safe_lower_bound = parent_pd->dbl_safe_lower_bound;
     /* Create  graph with extra edge (v1,v2) */
     pd->edge_count_differ = parent_pd->edge_count_differ + 1;
     pd->edge_count_same = parent_pd->edge_count_same;
 
     /* Construction of solver*/
     if (pd->parent) {
-        CCutil_start_resume_time(&(problem->tot_build_dd));
+        CCutil_start_resume_time(&(statistics->tot_build_dd));
         // pd->solver = copySolver(pd->parent->solver);
         // add_one_conflict(pd->solver, parms, pd->v1, pd->v2, 0);
 
@@ -188,12 +189,12 @@ static int create_differ_conflict(Problem*   problem,
             }
 
             *child = pd;
-            CCutil_suspend_timer(&(problem->tot_build_dd));
+            CCutil_suspend_timer(&(statistics->tot_build_dd));
             goto CLEAN;
         }
 
         // init_tables(pd->solver);
-        CCutil_suspend_timer(&(problem->tot_build_dd));
+        CCutil_suspend_timer(&(statistics->tot_build_dd));
     }
 
     /* Transfer independent sets by removing v2 if both v1 and v2 are currently
@@ -203,8 +204,9 @@ static int create_differ_conflict(Problem*   problem,
 
     for (i = 0; i < nb_cols; ++i) {
         it = (ScheduleSet*)g_ptr_array_index(parent_pd->localColPool, i);
-        gboolean v1_in = g_hash_table_contains(it->table, v1);
-        gboolean v2_in = g_hash_table_contains(it->table, v2);
+        // gboolean v1_in = g_hash_table_contains(it->table, v1);
+        // gboolean v2_in = g_hash_table_contains(it->table, v2);
+        gboolean v1_in, v2_in;
         int      construct = (v1_in && v2_in) ? 0 : 1;
 
         if (construct) {
@@ -215,7 +217,7 @@ static int create_differ_conflict(Problem*   problem,
             for (guint j = 0; j < it->job_list->len; j++) {
                 tmp_j = (Job*)g_ptr_array_index(it->job_list, j);
                 tmp->total_processing_time += tmp_j->processing_time;
-                g_hash_table_insert(tmp->table, tmp_j, NULL);
+                // g_hash_table_insert(tmp->table, tmp_j, NULL);
                 g_ptr_array_add(tmp->job_list, tmp_j);
                 tmp->total_weighted_completion_time +=
                     value_Fj(tmp->total_processing_time, tmp_j);
@@ -298,7 +300,7 @@ static int find_strongest_children_conflict(int*           strongest_v1,
 
                 if (same_children->status != infeasible) {
                     same_children->maxiterations = 20;
-                    compute_lower_bound(problem, same_children);
+                    compute_lower_bound(same_children);
                 }
 
                 val = create_differ_conflict(
@@ -309,7 +311,7 @@ static int find_strongest_children_conflict(int*           strongest_v1,
 
                 if (diff_children->status != infeasible) {
                     diff_children->maxiterations = 20;
-                    compute_lower_bound(problem, diff_children);
+                    compute_lower_bound(diff_children);
                 }
 
                 dbl_child_lb = (same_children->LP_lower_bound <
@@ -445,7 +447,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     }
 
     if (!pd->localColPool->len) {
-        compute_lower_bound(problem, pd);
+        compute_lower_bound(pd);
     }
 
     lp_interface_get_nb_cols(pd->RMP, &nb_cols);
@@ -493,7 +495,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     CCcheck_val_2(val, "Failed in set_id_and_name");
 
     if (pd->same_children->status != infeasible) {
-        val = compute_lower_bound(problem, pd->same_children);
+        val = compute_lower_bound(pd->same_children);
         CCcheck_val_2(val, "Failed in compute_lower_bound");
     }
 
@@ -504,13 +506,14 @@ int create_branches_conflict(NodeData* pd, Problem* problem) {
     CCcheck_val_2(val, "Failed in set_id_and_name");
 
     if (pd->diff_children->status != infeasible) {
-        val = compute_lower_bound(problem, pd->diff_children);
+        val = compute_lower_bound(pd->diff_children);
         CCcheck_val_2(val, "Failed in compute_lower_bound");
     }
 
     if (pd->same_children->status != infeasible &&
         pd->diff_children->status != infeasible) {
-        if (pd->same_children->eta_in <= pd->diff_children->eta_in) {
+        if (pd->same_children->LP_lower_bound <=
+            pd->diff_children->LP_lower_bound) {
             pd->same_children->choose = 1;
         } else {
             pd->diff_children->choose = 1;

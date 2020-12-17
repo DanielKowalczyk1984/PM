@@ -20,6 +20,7 @@
         "Kowalczyk",
         "MINATO",
         "NTDDI",
+        "Sauppe",
         "Unported",
         "Vasek",
         "cbfs",
@@ -114,6 +115,7 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "*.ipp": "cpp"
     }
 }

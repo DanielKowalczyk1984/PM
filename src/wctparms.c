@@ -7,6 +7,7 @@ void parms_init(Parms* parms) {
     parms->init_upper_bound = INT_MAX;
     parms->bb_branch_strategy = min_bb_strategy;
     parms->bb_search_strategy = min_search_strategy;
+    parms->bb_explore_strategy = min_bb_explore_strategy;
     parms->strong_branching = min_strong_branching;
     parms->mip_solver = min_mip_solver;
     parms->use_heuristic = min_use_heuristic;
@@ -138,6 +139,11 @@ int parms_set_scatter_search(Parms* parms, int scatter) {
 
 int parms_set_branchandbound(Parms* parms, int bound) {
     parms->branchandbound = bound;
+    return 0;
+}
+
+int parms_set_bb_strategy(Parms* parms, int strategy) {
+    parms->bb_explore_strategy = strategy;
     return 0;
 }
 

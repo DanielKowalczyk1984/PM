@@ -14,17 +14,23 @@
 struct PricerSolverBase {
    public:
     GPtrArray* jobs;
-    int        convex_constr_id;
-    int        convex_rhs;
 
-    std::string               problem_name;
+    int convex_constr_id;
+    int convex_rhs;
+
+    std::string problem_name;
+
     std::unique_ptr<GRBEnv>   env;
     std::unique_ptr<GRBModel> model;
-    ReformulationModel        reformulation_model;
-    bool                      is_integer_solution;
-    double                    constLB;
-    double                    UB;
-    bool                      added_cuts{};
+
+    ReformulationModel reformulation_model;
+
+    bool is_integer_solution;
+
+    double constLB;
+    double UB;
+
+    std::vector<BddCoeff> lp_sol;
     /**
      * Default constructors
      */
@@ -81,8 +87,6 @@ struct PricerSolverBase {
     virtual void construct_lp_sol_from_rmp(const double*    columns,
                                            const GPtrArray* schedule_sets,
                                            int              num_columns) = 0;
-    virtual void represent_solution(Solution* sol) = 0;
-    virtual void project_solution(Solution* sol) = 0;
 
     /**
      * Constraint on the solver
@@ -95,6 +99,12 @@ struct PricerSolverBase {
     virtual void update_rows_coeff(int first);
 
     virtual void update_coeff_constraints() = 0;
+    virtual void calculate_job_time(std::vector<std::vector<double>>& v){};
+    virtual void add_constraint(ConstraintBase* constr) {
+        reformulation_model.add_constraint(constr);
+    };
+
+    virtual void split_job_time(int _job, int _time, bool _left) {}
 
     /**
      * Some getters
@@ -142,6 +152,8 @@ struct PricerSolverBase {
     inline ReformulationModel* get_reformulation_model() {
         return &reformulation_model;
     }
+
+    inline std::vector<BddCoeff>& get_lp_sol();
 
     void calculate_constLB(double* pi);
 

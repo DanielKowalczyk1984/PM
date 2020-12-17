@@ -1,4 +1,5 @@
 #include <interval.h>
+#include "util.h"
 
 void g_print_interval(gpointer data, MAYBE_UNUSED gpointer user_data) {
     interval* a = (interval*)data;
@@ -13,11 +14,11 @@ gint g_compare_interval_data(gconstpointer a, gconstpointer b, gpointer data) {
     interval*  user_data = (interval*)data;
     int        diff = user_data->b - user_data->a;
     double     w_x = (x->due_time >= user_data->b)
-                     ? 0.0
-                     : (double)x->weight / x->processing_time;
-    double w_y = (y->due_time >= user_data->b)
-                     ? 0.0
-                     : (double)y->weight / y->processing_time;
+                         ? 0.0
+                         : (double)x->weight / x->processing_time;
+    double     w_y = (y->due_time >= user_data->b)
+                         ? 0.0
+                         : (double)y->weight / y->processing_time;
 
     if (x->processing_time >= diff) {
         if (y->processing_time < diff) {
@@ -63,13 +64,10 @@ void interval_init(interval*  p,
     p->a = a;
     p->b = b;
     p->key = key;
-    p->sigma = g_ptr_array_new();
+    p->sigma = g_ptr_array_copy(jobarray, NULL, NULL);
+    g_ptr_array_set_free_func(p->sigma, NULL);
     p->begin = 0;
     Job* j;
-
-    for (int i = 0; i < nb_jobs; ++i) {
-        g_ptr_array_add(p->sigma, g_ptr_array_index(jobarray, i));
-    }
 
     g_ptr_array_sort_with_data(p->sigma, g_compare_interval_data, p);
 
@@ -86,27 +84,50 @@ interval* interval_alloc(int        a,
                          GPtrArray* jobarray,
                          int        nb_jobs) {
     interval* p = CC_SAFE_MALLOC(1, interval);
-    CCcheck_NULL_3(p, "Failed to allocate memory")
-        interval_init(p, a, b, key, jobarray, nb_jobs);
+    CCcheck_NULL_3(p, "Failed to allocate memory");
+    interval_init(p, a, b, key, jobarray, nb_jobs);
 CLEAN:
     return p;
 }
 
-interval* interval_copy(interval* src) {
-    interval* ret = CC_SAFE_MALLOC(1, interval);
-    CCcheck_NULL_3(ret, "Failed to allocate memory");
+// interval* interval_copy(interval* src) {
+//     interval* ret = CC_SAFE_MALLOC(1, interval);
+//     CCcheck_NULL_3(ret, "Failed to allocate memory");
 
-    ret->a = src->a;
-    ret->b = src->b;
-    ret->begin = src->begin;
+//     ret->a = src->a;
+//     ret->b = src->b;
+//     ret->begin = src->begin;
 
-    g_ptr_array_sized_new(src->sigma->len);
+//     g_ptr_array_sized_new(src->sigma->len);
 
-    for (unsigned i = 0; i < src->sigma->len; ++i) {
-        g_ptr_array_add(ret->sigma, g_ptr_array_index(src->sigma, i));
-    }
-CLEAN:
-    return ret;
+//     for (unsigned i = 0; i < src->sigma->len; ++i) {
+//         g_ptr_array_add(ret->sigma, g_ptr_array_index(src->sigma, i));
+//     }
+// CLEAN:
+//     return ret;
+// }
+
+gpointer g_copy_interval(gconstpointer src, gpointer data) {
+    interval*       aux = CC_SAFE_MALLOC(1, interval);
+    const interval* src_interval = (const interval*)src;
+
+    aux->a = src_interval->a;
+    aux->b = src_interval->b;
+    aux->begin = src_interval->begin;
+
+    aux->sigma = g_ptr_array_copy(src_interval->sigma, NULL, NULL);
+
+    return aux;
+}
+
+gpointer g_copy_interval_pair(gconstpointer src, gpointer data) {
+    job_interval_pair*       aux = CC_SAFE_MALLOC(1, job_interval_pair);
+    const job_interval_pair* pair = (const job_interval_pair*)src;
+
+    aux->I = pair->I;
+    aux->j = pair->j;
+
+    return aux;
 }
 
 void interval_free(interval* p) {

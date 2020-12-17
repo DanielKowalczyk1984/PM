@@ -65,9 +65,8 @@ message(STATUS "Added all header and implementation files.\n")
 # Find Gurobi
 find_package(Gurobi)
 
-find_package(Glib)
-
-add_subdirectory(or_utils)
+add_subdirectory(or-utils)
+add_subdirectory(branch-and-bound)
 
 #
 # Set the project standard and warnings
@@ -92,7 +91,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O5 -std=c++17 -m64")
 set(CMAKE_C_FLAGS_RELEASE
     "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++20 -O0 -m64")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17 -O0 -m64")
 set(CMAKE_C_FLAGS_DEBUG
     "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
@@ -123,6 +122,7 @@ else()
              ${GUROBI_INCLUDE_DIR}
              ${GLIB_INCLUDE_DIRS}
              ORUtils::ORUtils
+             branch-and-bound
       PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
     conan_target_link_libraries(${PROJECT_NAME}_LIB)
@@ -133,6 +133,7 @@ else()
       ${GUROBI_CXX_LIBRARY}
       ${GLIB_LIBRARIES}
       ORUtils::ORUtils
+      branch-and-bound
       -lm
       -lpthread)
 

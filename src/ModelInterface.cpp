@@ -27,6 +27,6 @@ ReformulationModel::ReformulationModel(int nb_assignments, int nb_machines)
 }
 
 ReformulationModel::~ReformulationModel() = default;
-ReformulationModel::ReformulationModel(ReformulationModel&&) noexcept = default;
-ReformulationModel& ReformulationModel::operator=(
-    ReformulationModel&&) noexcept = default;
+ReformulationModel::ReformulationModel(ReformulationModel&&) = default;
+ReformulationModel& ReformulationModel::operator=(ReformulationModel&&) =
+    default;

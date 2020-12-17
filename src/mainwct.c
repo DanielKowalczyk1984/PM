@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "util.h"
 #include "wct.h"
 #include "wctparms.h"
 #include "wctprivate.h"
@@ -72,7 +73,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
     char*  ptr;
     int    debug = dbg_lvl();
 
-    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:r:h:")) != EOF) {
+    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:r:h:e:")) != EOF) {
         switch (c) {
             case 'd':
                 ++(debug);
@@ -151,6 +152,11 @@ static int parseargs(int ac, char** av, Parms* parms) {
                 val = parms_set_reduce_cost(parms, c);
                 CCcheck_val(val, "Failed in set reduce cost fixing");
                 break;
+            case 'e':
+                c = atoi(optarg);
+                val = parms_set_bb_strategy(parms, c);
+                CCcheck_val(val, "Failed to set strategy");
+                break;
             default:
                 usage(av[0]);
                 val = 1;
@@ -188,15 +194,19 @@ CLEAN:
 }
 
 int main(int ac, char** av) {
-    int       val = 0;
-    double    start_time;
-    Problem   problem;
-    NodeData* root = &(problem.root_pd);
-    Parms*    parms = &(problem.parms);
+    int     val = 0;
+    double  start_time;
+    Problem problem;
+    problem_init(&problem);
+
+    NodeData*   root = problem.root_pd;
+    Parms*      parms = &(problem.parms);
+    Statistics* statistics = &(problem.stat);
+
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header");
-    problem_init(&problem);
-    val = parseargs(ac, av, &(problem.parms));
+
+    val = parseargs(ac, av, parms);
     CCcheck_val_2(val, "Failed in parseargs");
     if (dbg_lvl() > 1) {
         printf("Debugging turned on\n");
@@ -209,6 +219,7 @@ int main(int ac, char** av) {
     start_time = CCutil_zeit();
     val = read_problem(&problem);
     CCcheck_val_2(val, "read_adjlist failed");
+
     val = preprocess_data(&problem);
     CCcheck_val_2(val, "Failed at preprocess_data");
     printf("Reading and preprocessing of the data took %f seconds\n",
@@ -241,70 +252,75 @@ int main(int ac, char** av) {
      *
      */
     if (parms->pricing_solver < dp_solver) {
-        CCutil_start_timer(&(problem.tot_build_dd));
+        CCutil_start_timer(&(statistics->tot_build_dd));
         root->solver =
             newSolver(root->jobarray, root->nb_machines, root->ordered_jobs,
                       parms, root->H_max, NULL, problem.opt_sol->tw);
-        CCutil_stop_timer(&(problem.tot_build_dd), 0);
+        CCutil_stop_timer(&(statistics->tot_build_dd), 0);
     } else {
         root->solver = newSolverDp(root->jobarray, root->nb_machines,
                                    root->H_max, parms, problem.opt_sol->tw);
     }
-    problem.first_size_graph = get_nb_edges(root->solver);
+    statistics->first_size_graph = get_nb_edges(root->solver);
 
     /**
      * @brief Initial stabilization
      *
      */
     root->solver_stab = new_pricing_stabilization(root->solver, parms);
+    root->stat = &(problem.stat);
+    root->opt_sol = problem.opt_sol;
 
     /**
      * @brief Solve initial relaxation
      *
      */
-    build_rmp(&(problem.root_pd));
-    solve_relaxation(&problem, root);
+    // build_rmp(root);
+    // solve_relaxation(root);
     GPtrArray* solutions_pool = g_ptr_array_copy(
         root->localColPool, g_copy_scheduleset, &(problem.nb_jobs));
+
+    problem.tree = new_branch_bound_tree(problem.root_pd, 0, 1);
+    call_branch_and_bound_explore(problem.tree);
 
     /**
      * @brief Calculation of LB at the root node with column generation
      *
      */
-    if (problem.opt_sol->tw + problem.opt_sol->off != 0) {
-        CCutil_start_timer(&(problem.tot_lb_root));
-        compute_lower_bound(&problem, &(problem.root_pd));
-        if (parms->pricing_solver < dp_solver) {
-            solution_canonical_order(problem.opt_sol, root->local_intervals);
-        }
-        // represent_solution(root, problem.opt_sol);
-        problem.rel_error =
-            (double)(problem.global_upper_bound - problem.global_lower_bound) /
-            (problem.global_lower_bound + 0.00001);
-        CCutil_stop_timer(&(problem.tot_lb_root), 1);
+    // if (problem.opt_sol->tw + problem.opt_sol->off != 0) {
+    //     CCutil_start_timer(&(statistics->tot_lb_root));
+    // compute_lower_bound(&problem, &(problem.root_pd));
+    //     if (parms->pricing_solver < dp_solver) {
+    //         solution_canonical_order(problem.opt_sol, root->local_intervals);
+    //     }
+    //     // represent_solution(root, problem.opt_sol);
+    //     problem.rel_error =
+    //         (double)(problem.global_upper_bound - problem.global_lower_bound)
+    //         / (problem.global_lower_bound + 0.00001);
+    //     CCutil_stop_timer(&(statistics->tot_lb_root), 1);
 
-        if (parms->pricing_solver == dp_bdd_solver) {
-            int* take = get_take(root->solver);
-            lp_node_data_free(root);
-            root->localColPool = g_ptr_array_copy(
-                solutions_pool, g_copy_scheduleset, &(problem.nb_jobs));
-            build_rmp(root);
-            freeSolver(root->solver);
-            root->solver =
-                newSolver(root->jobarray, root->nb_machines, root->ordered_jobs,
-                          parms, problem.H_max, take, problem.opt_sol->tw);
+    //     if (parms->pricing_solver == dp_bdd_solver) {
+    //         int* take = get_take(root->solver);
+    //         lp_node_data_free(root);
+    //         root->localColPool = g_ptr_array_copy(
+    //             solutions_pool, g_copy_scheduleset, &(problem.nb_jobs));
+    //         build_rmp(root);
+    //         freeSolver(root->solver);
+    //         root->solver =
+    //             newSolver(root->jobarray, root->nb_machines,
+    //             root->ordered_jobs,
+    //                       parms, problem.H_max, take, problem.opt_sol->tw);
 
-            CC_IFFREE(take, int);
-            CCutil_start_timer(&(problem.tot_lb_root));
-            compute_lower_bound(&problem, root);
-            CCutil_stop_timer(&(problem.tot_lb_root), 1);
-        }
-    }
+    //         CC_IFFREE(take, int);
+    //         CCutil_start_timer(&(statistics->tot_lb_root));
+    //         compute_lower_bound(&problem, root);
+    //         CCutil_stop_timer(&(statistics->tot_lb_root), 1);
+    //     }
+    // }
 
     g_ptr_array_free(solutions_pool, TRUE);
 
     if (parms->mip_solver) {
-        // represent_solution(root, problem.opt_sol);
         build_solve_mip(root);
     }
 

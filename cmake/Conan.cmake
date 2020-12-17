@@ -4,7 +4,9 @@ if(${PROJECT_NAME}_ENABLE_CONAN)
   #
 
   set(CONAN_REQUIRES "boost/1.73.0
-                      fmt/7.0.3")
+                      fmt/7.0.3
+                      glib/2.67.0")
+
   set(${PROJECT_NAME}_CONAN_OPTIONS "")
 
   #

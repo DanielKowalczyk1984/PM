@@ -169,7 +169,7 @@ void PricingStabilizationStat::solve(double  _eta_out,
         update_stab_center = true;
     }
 
-    if (iterations % solver->convex_constr_id == 0) {
+    if (iterations % 2 * solver->convex_constr_id == 0) {
         fmt::print(
             R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
 )",
@@ -260,7 +260,7 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
         }
     }
 
-    if (iterations % solver->convex_constr_id == 0) {
+    if (iterations % 2 * solver->convex_constr_id == 0) {
         fmt::print(
             R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
 )",
@@ -374,7 +374,7 @@ void PricingStabilizationHybrid::solve(double  _eta_out,
         }
     } while (in_mispricing_schedule && stabilized);
 
-    if (iterations % solver->convex_constr_id == 0) {
+    if (iterations % 2 * solver->convex_constr_id == 0) {
         fmt::print(
             R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
 )",
