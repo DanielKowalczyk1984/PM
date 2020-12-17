@@ -82,15 +82,17 @@ PricerSolverBase* newSolverDp(GPtrArray* _jobs,
     }
 }
 
-PricerSolverBase* copy_pricer_solver(PricerSolverBase* src, Parms* parms) {
+PricerSolverBase* copy_pricer_solver(PricerSolverBase* src,
+                                     GPtrArray*        array,
+                                     Parms*            parms) {
     switch (parms->pricing_solver) {
         case bdd_solver_simple:
             return new PricerSolverBddSimple(
-                *dynamic_cast<PricerSolverBddSimple*>(src));
+                *dynamic_cast<PricerSolverBddSimple*>(src), array);
             break;
         case bdd_solver_cycle:
             return new PricerSolverBddCycle(
-                *dynamic_cast<PricerSolverBddCycle*>(src));
+                *dynamic_cast<PricerSolverBddCycle*>(src), array);
             break;
         case zdd_solver_cycle:
             return new PricerSolverZddCycle(
@@ -102,11 +104,11 @@ PricerSolverBase* copy_pricer_solver(PricerSolverBase* src, Parms* parms) {
             break;
         case bdd_solver_backward_simple:
             return new PricerSolverBddBackwardSimple(
-                *dynamic_cast<PricerSolverBddBackwardSimple*>(src));
+                *dynamic_cast<PricerSolverBddBackwardSimple*>(src), array);
             break;
         case bdd_solver_backward_cycle:
             return new PricerSolverBddBackwardCycle(
-                *dynamic_cast<PricerSolverBddBackwardCycle*>(src));
+                *dynamic_cast<PricerSolverBddBackwardCycle*>(src), array);
             break;
         case zdd_solver_backward_simple:
             return new PricerSolverZddBackwardSimple(
@@ -126,11 +128,11 @@ PricerSolverBase* copy_pricer_solver(PricerSolverBase* src, Parms* parms) {
             break;
         case dp_bdd_solver:
             return new PricerSolverBddBackwardCycle(
-                *dynamic_cast<PricerSolverBddBackwardCycle*>(src));
+                *dynamic_cast<PricerSolverBddBackwardCycle*>(src), array);
             break;
         default:
             return new PricerSolverBddCycle(
-                *dynamic_cast<PricerSolverBddCycle*>(src));
+                *dynamic_cast<PricerSolverBddCycle*>(src), array);
     }
 }
 

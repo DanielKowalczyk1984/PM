@@ -25,7 +25,9 @@ PricerSolver* newSolverDp(GPtrArray* _jobs,
                           Parms*     parms,
                           double     _UB);
 
-PricerSolver* copy_pricer_solver(PricerSolver* src, Parms* parms);
+PricerSolver* copy_pricer_solver(PricerSolver* src,
+                                 GPtrArray*    array,
+                                 Parms*        parms);
 
 void   freeSolver(PricerSolver* src);
 void   deletePricerSolver(PricerSolver* solver);

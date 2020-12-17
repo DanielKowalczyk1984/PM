@@ -269,6 +269,7 @@ NodeData* new_node_data(NodeData* pd) {
     aux->parms = pd->parms;
     aux->stat = pd->stat;
     aux->opt_sol = pd->opt_sol;
+    aux->depth = pd->depth + 1;
 
     /** Instance copy */
     aux->jobarray = pd->jobarray;
@@ -299,7 +300,7 @@ NodeData* new_node_data(NodeData* pd) {
     aux->id_pseudo_schedules = pd->id_pseudo_schedules;
 
     /** copy info about solver */
-    aux->solver = copy_pricer_solver(pd->solver, pd->parms);
+    aux->solver = copy_pricer_solver(pd->solver, aux->ordered_jobs, pd->parms);
 
     aux->localColPool =
         g_ptr_array_copy(pd->localColPool, g_copy_scheduleset, &(pd->nb_jobs));
