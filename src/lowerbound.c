@@ -385,14 +385,15 @@ int compute_objective(NodeData* pd) {
     pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound, pd->LP_lower_bound_dual);
     pd->LP_lower_min = CC_MIN(pd->LP_lower_min, pd->LP_lower_bound_BB);
 
-    // if (pd->iterations % pd->nb_jobs == 0) {
-    printf(
-        "Current primal LP objective: %19.16f  (LP_dual-bound %19.16f, "
-        "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
-        pd->LP_lower_bound + pd->off, pd->LP_lower_bound_dual + pd->off,
-        pd->lower_bound + pd->off, call_get_eta_in(pd->solver_stab) + pd->off,
-        pd->LP_lower_bound + pd->off);
-    // }
+    if (pd->iterations % 2 * pd->nb_jobs == 0) {
+        printf(
+            "Current primal LP objective: %19.16f  (LP_dual-bound %19.16f, "
+            "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
+            pd->LP_lower_bound + pd->off, pd->LP_lower_bound_dual + pd->off,
+            pd->lower_bound + pd->off,
+            call_get_eta_in(pd->solver_stab) + pd->off,
+            pd->LP_lower_bound + pd->off);
+    }
 
 CLEAN:
     return val;
