@@ -65,7 +65,7 @@ message(STATUS "Added all header and implementation files.\n")
 # Find Gurobi
 find_package(Gurobi)
 
-add_subdirectory(or_utils)
+add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 
 #
