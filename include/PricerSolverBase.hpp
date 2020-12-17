@@ -99,6 +99,12 @@ struct PricerSolverBase {
     virtual void update_rows_coeff(int first);
 
     virtual void update_coeff_constraints() = 0;
+    virtual void calculate_job_time(std::vector<std::vector<double>>& v){};
+    virtual void add_constraint(ConstraintBase* constr) {
+        reformulation_model.add_constraint(constr);
+    };
+
+    virtual void split_job_time(int _job, int _time, bool _left) {}
 
     /**
      * Some getters

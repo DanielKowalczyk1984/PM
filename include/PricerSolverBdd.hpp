@@ -39,31 +39,8 @@ class PricerSolverBdd : public PricerSolverBase {
                     int*        _take_jobs,
                     double      _UB);
 
-    PricerSolverBdd(const PricerSolverBdd& src)
-        : PricerSolverBase(src),
-          decision_diagram(new DdStructure<>(*src.decision_diagram)),
-          size_graph(src.size_graph),
-          nb_removed_edges(src.nb_removed_edges),
-          nb_removed_nodes(src.nb_removed_nodes),
-          ordered_jobs(src.ordered_jobs),
-          mip_graph(src.mip_graph),
-          node_ids(convex_constr_id,
-                   std::vector<std::weak_ptr<NodeId>>(src.H_max + 1)),
-          original_model(src.original_model),
-          H_max(src.H_max),
-          H_min(src.H_min) {
-        remove_layers_init();
-        decision_diagram->compressBdd();
-        size_graph = decision_diagram->size();
-        init_table();
-        calculate_H_min();
-        cleanup_arcs();
-        // check_infeasible_arcs();
-        bottum_up_filtering();
-        topdown_filtering();
-        construct_mipgraph();
-        init_coeff_constraints();
-    }
+    PricerSolverBdd(const PricerSolverBdd& src, GPtrArray* _ordered_jobs);
+    PricerSolverBdd(const PricerSolverBdd& src);
 
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
@@ -89,6 +66,8 @@ class PricerSolverBdd : public PricerSolverBase {
                                      const GPtrArray* schedule_sets,
                                      int              num_columns) override;
     void   make_schedule_set_feasible(GPtrArray* set) override;
+    void   calculate_job_time(std::vector<std::vector<double>>& v) override;
+    void   split_job_time(int _job, int _time, bool _left) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;

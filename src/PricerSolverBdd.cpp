@@ -43,7 +43,6 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
       nb_removed_edges(0),
       nb_removed_nodes(0),
       ordered_jobs(_ordered_jobs),
-      //   nb_layers(ordered_jobs->len),
       node_ids(convex_constr_id, vector<std::weak_ptr<NodeId>>(_Hmax + 1)),
       original_model(reformulation_model),
       H_min(0),
@@ -72,6 +71,60 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
     construct_mipgraph();
     init_coeff_constraints();
     fmt::print("Ending construction\n");
+}
+
+PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src,
+                                 GPtrArray*             _ordered_jobs)
+    : PricerSolverBase(src),
+      size_graph(src.size_graph),
+      nb_removed_edges(src.nb_removed_edges),
+      nb_removed_nodes(src.nb_removed_nodes),
+      ordered_jobs(_ordered_jobs),
+      mip_graph(src.mip_graph),
+      node_ids(convex_constr_id,
+               std::vector<std::weak_ptr<NodeId>>(src.H_max + 1)),
+      original_model(src.original_model),
+      H_max(src.H_max),
+      H_min(src.H_min) {
+    PricerConstruct ps(_ordered_jobs);
+    decision_diagram = std::make_unique<DdStructure<>>(ps);
+    remove_layers_init();
+    decision_diagram->compressBdd();
+    size_graph = decision_diagram->size();
+    init_table();
+    calculate_H_min();
+    cleanup_arcs();
+    // check_infeasible_arcs();
+    bottum_up_filtering();
+    topdown_filtering();
+    construct_mipgraph();
+    init_coeff_constraints();
+}
+
+PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src)
+    : PricerSolverBase(src),
+      decision_diagram(new DdStructure<>(*src.decision_diagram)),
+      size_graph(src.size_graph),
+      nb_removed_edges(src.nb_removed_edges),
+      nb_removed_nodes(src.nb_removed_nodes),
+      ordered_jobs(src.ordered_jobs),
+      mip_graph(src.mip_graph),
+      node_ids(convex_constr_id,
+               std::vector<std::weak_ptr<NodeId>>(src.H_max + 1)),
+      original_model(src.original_model),
+      H_max(src.H_max),
+      H_min(src.H_min) {
+    remove_layers_init();
+    decision_diagram->compressBdd();
+    size_graph = decision_diagram->size();
+    init_table();
+    calculate_H_min();
+    cleanup_arcs();
+    // check_infeasible_arcs();
+    bottum_up_filtering();
+    topdown_filtering();
+    construct_mipgraph();
+    init_coeff_constraints();
 }
 
 void PricerSolverBdd::calculate_H_min() {
@@ -1461,6 +1514,54 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
     // std::ofstream outf(file_name);
     // boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
     // outf.close();
+}
+
+void PricerSolverBdd::calculate_job_time(std::vector<std::vector<double>>& v) {
+    for (auto& it : lp_sol) {
+        if (it.get_high()) {
+            v[it.get_j()][it.get_t()] += it.get_value();
+        }
+    }
+}
+
+void PricerSolverBdd::split_job_time(int _job, int _time, bool _left = false) {
+    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto  removed_edges = false;
+
+    for (auto i = decision_diagram->topLevel(); i > 0; i--) {
+        for (auto& it : table[i]) {
+            it.calc_yes = true;
+            if (it.get_weight() > _time && _left && it.calc_yes &&
+                it.get_nb_job() == _job) {
+                it.calc_yes = false;
+                removed_edges = true;
+            }
+
+            if (it.get_weight() <= _time && !_left && it.calc_yes &&
+                it.get_nb_job() == _job) {
+                it.calc_yes = false;
+                removed_edges = true;
+            }
+        }
+    }
+
+    if (removed_edges) {
+        remove_layers();
+        remove_edges();
+        bottum_up_filtering();
+        topdown_filtering();
+        cleanup_arcs();
+        construct_mipgraph();
+
+        auto table_bis = decision_diagram->getDiagram().privateEntity();
+        ColorWriterVertex vertex_writer(mip_graph, table_bis);
+        auto              file_name = "split_solution_" + problem_name + "_" +
+                         std::to_string(_job) + "_" + std::to_string(_time) +
+                         "_" + std::to_string(_left) + ".gv";
+        std::ofstream outf(file_name);
+        boost::write_graphviz(outf, mip_graph, vertex_writer);
+        outf.close();
+    }
 }
 
 int PricerSolverBdd::add_constraints() {
