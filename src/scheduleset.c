@@ -21,7 +21,7 @@ void iterator(gpointer key, gpointer value, gpointer user_data) {
 
 void scheduleset_init(ScheduleSet* set) {
     if (set) {
-        set->num = (int*)NULL;
+        // set->num = (int*)NULL;
         set->del = 0;
         set->age = 0;
         set->total_processing_time = 0;
@@ -29,14 +29,13 @@ void scheduleset_init(ScheduleSet* set) {
         set->id = -1;
         set->total_weighted_completion_time = 0;
         set->job_list = g_ptr_array_new();
-        set->edge_list = g_ptr_array_new();
-        set->table = g_hash_table_new(g_direct_hash, g_direct_equal);
+        // set->table = g_hash_table_new(g_direct_hash, g_direct_equal);
     }
 }
 
 void scheduleset_init_bis(ScheduleSet* set) {
     if (set) {
-        set->num = (int*)NULL;
+        // set->num = (int*)NULL;
         set->del = 0;
         set->age = 0;
         set->total_processing_time = 0;
@@ -44,34 +43,30 @@ void scheduleset_init_bis(ScheduleSet* set) {
         set->id = -1;
         set->total_weighted_completion_time = 0;
         set->job_list = NULL;
-        set->edge_list = NULL;
-        set->table = g_hash_table_new(g_direct_hash, g_direct_equal);
+        // set->table = g_hash_table_new(g_direct_hash, g_direct_equal);
     }
 }
 
 void scheduleset_free(ScheduleSet* set) {
     if (set) {
-        CC_IFFREE(set->num, int);
+        // CC_IFFREE(set->num, int);
         if (set->job_list) {
             g_ptr_array_free(set->job_list, TRUE);
         }
-        if (set->edge_list) {
-            g_ptr_array_free(set->edge_list, TRUE);
-        }
-        g_hash_table_destroy(set->table);
+        // g_hash_table_destroy(set->table);
 
         set->total_processing_time = 0;
         set->age = 0;
         set->del = 0;
         set->total_weighted_completion_time = 0;
-        CC_IFFREE(set->num, int);
+        // CC_IFFREE(set->num, int);
     }
 }
 
 void g_scheduleset_free(void* set) {
     ScheduleSet* tmp = (ScheduleSet*)set;
     if (tmp) {
-        CC_IFFREE(tmp->num, int);
+        // CC_IFFREE(tmp->num, int);
 
         tmp->total_processing_time = 0;
         tmp->age = 0;
@@ -82,10 +77,7 @@ void g_scheduleset_free(void* set) {
         if (tmp->job_list) {
             g_ptr_array_free(tmp->job_list, TRUE);
         }
-        if (tmp->edge_list) {
-            g_ptr_array_free(tmp->edge_list, TRUE);
-        }
-        g_hash_table_destroy(tmp->table);
+        // g_hash_table_destroy(tmp->table);
         CC_IFFREE(tmp, ScheduleSet);
     }
 }
@@ -95,8 +87,8 @@ ScheduleSet* scheduleset_alloc(int nb_jobs) {
     tmp = CC_SAFE_MALLOC(1, ScheduleSet);
     CCcheck_NULL_3(tmp, "Failed to allocate memory");
     scheduleset_init(tmp);
-    tmp->num = CC_SAFE_MALLOC(nb_jobs, int);
-    fill_int(tmp->num, nb_jobs, 0);
+    // tmp->num = CC_SAFE_MALLOC(nb_jobs, int);
+    // fill_int(tmp->num, nb_jobs, 0);
 
 CLEAN:
     return tmp;
@@ -105,9 +97,10 @@ CLEAN:
 ScheduleSet* scheduleset_alloc_bis(int nb_jobs) {
     ScheduleSet* tmp;
     tmp = CC_SAFE_MALLOC(1, ScheduleSet);
-    CCcheck_NULL_3(tmp, "Failed to allocate memory") scheduleset_init_bis(tmp);
-    tmp->num = CC_SAFE_MALLOC(nb_jobs, int);
-    fill_int(tmp->num, nb_jobs, 0);
+    CCcheck_NULL_3(tmp, "Failed to allocate memory");
+    scheduleset_init_bis(tmp);
+    // tmp->num = CC_SAFE_MALLOC(nb_jobs, int);
+    // fill_int(tmp->num, nb_jobs, 0);
 
 CLEAN:
     return tmp;
@@ -116,21 +109,19 @@ CLEAN:
 gpointer g_copy_scheduleset(gconstpointer src, gpointer data) {
     int*               nb_jobs = (int*)data;
     const ScheduleSet* src_schedule = (const ScheduleSet*)src;
-    ScheduleSet*       aux = scheduleset_alloc(*nb_jobs);
+    ScheduleSet*       aux = scheduleset_alloc_bis(*nb_jobs);
 
-    memcpy(aux->num, src_schedule->num, *nb_jobs * sizeof(int));
+    // memcpy(aux->num, src_schedule->num, *nb_jobs * sizeof(int));
     aux->del = src_schedule->del;
     aux->age = src_schedule->age;
     aux->total_processing_time = src_schedule->total_processing_time;
     aux->total_weighted_completion_time =
         src_schedule->total_weighted_completion_time;
     aux->id = src_schedule->id;
-    for (guint i = 0; i < src_schedule->job_list->len; i++) {
-        g_ptr_array_add(aux->job_list, src_schedule->job_list->pdata[i]);
-    }
-    for (guint i = 0; i < src_schedule->edge_list->len; i++) {
-        g_ptr_array_add(aux->edge_list, src_schedule->edge_list->pdata[i]);
-    }
+    // for (guint i = 0; i < src_schedule->job_list->len; i++) {
+    //     g_ptr_array_add(aux->job_list, src_schedule->job_list->pdata[i]);
+    // }
+    aux->job_list = g_ptr_array_copy(src_schedule->job_list, NULL, NULL);
     return aux;
 }
 
@@ -141,7 +132,7 @@ void g_sum_processing_time(gpointer data, gpointer user_data) {
     set->total_processing_time += j->processing_time;
     set->total_weighted_completion_time +=
         value_Fj(set->total_processing_time, j);
-    (set->num[j->job])++;
+    // (set->num[j->job])++;
     g_ptr_array_add(set->job_list, j);
 }
 
@@ -168,9 +159,9 @@ ScheduleSet* scheduleset_from_solution(GPtrArray* machine, int nb_jobs) {
     CCcheck_NULL_3(tmp, "failed to allocate memory")
 
         scheduleset_init(tmp);
-    tmp->num = CC_SAFE_MALLOC(nb_jobs, int);
-    CCcheck_NULL(tmp->num, "Failed to allocate memory")
-        fill_int(tmp->num, nb_jobs, 0);
+    // tmp->num = CC_SAFE_MALLOC(nb_jobs, int);
+    // CCcheck_NULL(tmp->num, "Failed to allocate memory");
+    // fill_int(tmp->num, nb_jobs, 0);
     g_ptr_array_foreach(machine, g_sum_processing_time, tmp);
 
 CLEAN:
@@ -248,13 +239,13 @@ void g_scheduleset_print(gpointer data, MAYBE_UNUSED gpointer user_data) {
            tmp->total_weighted_completion_time, tmp_a->len);
 }
 
-void g_compute_nb_layers_schedule(gpointer data, gpointer user_data) {
-    Job*         j = (Job*)data;
-    ScheduleSet* tmp = (ScheduleSet*)user_data;
-    if (tmp->num[j->job] > 1) {
-        j->num_layers = 1;
-    }
-}
+// void g_compute_nb_layers_schedule(gpointer data, gpointer user_data) {
+//     Job*         j = (Job*)data;
+//     ScheduleSet* tmp = (ScheduleSet*)user_data;
+//     if (tmp->num[j->job] > 1) {
+//         j->num_layers = 1;
+//     }
+// }
 
 int print_schedule(ScheduleSet* cclasses, int nb_columns) {
     int i;

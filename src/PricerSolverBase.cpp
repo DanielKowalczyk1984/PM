@@ -265,8 +265,27 @@ void call_evaluate_nodes(PricerSolverBase* solver, double* pi) {
 int call_is_integer_solution(PricerSolverBase* solver) {
     return solver->get_is_integer_solution();
 }
+}
 
-int call_get_added_cuts(PricerSolverBase* solver) {
-    return solver->added_cuts;
-}
-}
+inline std::vector<BddCoeff>& PricerSolverBase::get_lp_sol() {
+    return lp_sol;
+};
+
+PricerSolverBase::PricerSolverBase(const PricerSolverBase& other)
+    : jobs(other.jobs),
+      convex_constr_id(other.convex_constr_id),
+      convex_rhs(other.convex_rhs),
+      problem_name(other.problem_name),
+      env(new GRBEnv()),
+      model(new GRBModel(*env)),
+      reformulation_model(other.reformulation_model),
+      is_integer_solution(other.is_integer_solution),
+      constLB(other.constLB),
+      UB(other.UB) {
+    model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
+    model->set(GRB_IntParam_Threads, 1);
+    model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
+    model->set(GRB_IntParam_Presolve, 2);
+    model->set(GRB_DoubleParam_MIPGap, 1e-6);
+    model->set(GRB_DoubleParam_TimeLimit, 1800);
+};

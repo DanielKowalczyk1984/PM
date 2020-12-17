@@ -26,6 +26,16 @@ class PricerSolverZdd : public PricerSolverBase {
                     GPtrArray*  _ordered_jobs,
                     const char* p_name,
                     double      _UB);
+
+    PricerSolverZdd(const PricerSolverZdd& src)
+        : PricerSolverBase(src),
+          decision_diagram(new DdStructure<NodeZdd<>>(*src.decision_diagram)),
+          size_graph(src.size_graph),
+          nb_removed_edges(src.nb_removed_edges),
+          nb_removed_nodes(src.nb_removed_nodes),
+          ordered_jobs(src.ordered_jobs),
+          mip_graph(src.mip_graph) {}
+
     void         init_table() override;
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
@@ -38,8 +48,6 @@ class PricerSolverZdd : public PricerSolverBase {
     void   construct_lp_sol_from_rmp(const double*    columns,
                                      const GPtrArray* schedule_sets,
                                      int              num_columns) override;
-    void   represent_solution(Solution* sol) override;
-    void   project_solution(Solution* sol) override;
     bool   check_schedule_set(GPtrArray* set) override;
     void   make_schedule_set_feasible(GPtrArray* set) override;
     void   iterate_zdd() override;

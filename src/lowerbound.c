@@ -255,7 +255,7 @@ int delete_infeasible_schedules(NodeData* pd) {
     }
 
     if (pd->zero_count > 0) {
-        solve_relaxation(pd->problem, pd);
+        solve_relaxation(pd);
     }
 
 CLEAN:
@@ -366,7 +366,6 @@ int compute_objective(NodeData* pd) {
     double* tmp = &g_array_index(pd->pi, double, 0);
     double* tmp_rhs = &g_array_index(pd->rhs, double, 0);
 
-    pd->eta_out = 0.0;
     for (i = 0; i < pd->nb_rows; i++) {
         // if (i != pd->nb_jobs) {
         // pd->eta_out += tmp[i] * tmp_rhs[i];
@@ -384,38 +383,36 @@ int compute_objective(NodeData* pd) {
             ? (int)ceil(pd->LP_lower_bound_dual)
             : (int)ceil(pd->LP_lower_bound);
     pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound, pd->LP_lower_bound_dual);
-    // pd->eta_out = pd->LP_lower_bound_BB;
     pd->LP_lower_min = CC_MIN(pd->LP_lower_min, pd->LP_lower_bound_BB);
-    pd->eta_out = pd->LP_lower_bound;
 
-    // if (pd->iterations % pd->nb_jobs == 0) {
-    printf(
-        "Current primal LP objective: %19.16f  (LP_dual-bound %19.16f, "
-        "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
-        pd->LP_lower_bound + pd->problem->off,
-        pd->LP_lower_bound_dual + pd->problem->off,
-        pd->lower_bound + pd->problem->off,
-        call_get_eta_in(pd->solver_stab) + pd->problem->off,
-        pd->eta_out + pd->problem->off);
-    // }
+    if (pd->iterations % 2 * pd->nb_jobs == 0) {
+        printf(
+            "Current primal LP objective: %19.16f  (LP_dual-bound %19.16f, "
+            "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
+            pd->LP_lower_bound + pd->off, pd->LP_lower_bound_dual + pd->off,
+            pd->lower_bound + pd->off,
+            call_get_eta_in(pd->solver_stab) + pd->off,
+            pd->LP_lower_bound + pd->off);
+    }
 
 CLEAN:
     return val;
 }
 
-int solve_relaxation(Problem* problem, NodeData* pd) {
-    int    val = 0;
-    int    status;
-    double real_time_solve_lp;
+int solve_relaxation(NodeData* pd) {
+    int         val = 0;
+    int         status;
+    double      real_time_solve_lp;
+    Statistics* statistics = pd->stat;
 
-    /** Compjute LP relaxation */
+    /** Compute LP relaxation */
     real_time_solve_lp = getRealTime();
-    CCutil_start_resume_time(&(problem->tot_solve_lp));
+    CCutil_start_resume_time(&(statistics->tot_solve_lp));
     val = lp_interface_optimize(pd->RMP, &status);
     CCcheck_val_2(val, "lp_interface_optimize failed");
-    CCutil_suspend_timer(&(problem->tot_solve_lp));
+    CCutil_suspend_timer(&(statistics->tot_solve_lp));
     real_time_solve_lp = getRealTime() - real_time_solve_lp;
-    problem->real_time_solve_lp += real_time_solve_lp;
+    statistics->real_time_solve_lp += real_time_solve_lp;
 
     if (dbg_lvl() > 1) {
         printf("Simplex took %f seconds.\n", real_time_solve_lp);
@@ -429,8 +426,8 @@ int solve_relaxation(Problem* problem, NodeData* pd) {
     switch (status) {
         case LP_INTERFACE_OPTIMAL:
             /** grow ages of the different columns */
-            // val = grow_ages(pd);
-            // CCcheck_val_2(val, "Failed in grow_ages");
+            val = grow_ages(pd);
+            CCcheck_val_2(val, "Failed in grow_ages");
             /** get the dual variables and make them feasible */
             val = lp_interface_pi(pd->RMP, &g_array_index(pd->pi, double, 0));
             CCcheck_val_2(val, "lp_interface_pi failed");
@@ -452,24 +449,25 @@ CLEAN:
     return val;
 }
 
-int compute_lower_bound(Problem* problem, NodeData* pd) {
-    int    j, val = 0;
-    int    has_cols = 1;
-    int    has_cuts = 0;
-    int    nb_non_improvements = 0;
-    int    status = GRB_LOADED;
-    double real_time_pricing;
-    Parms* parms = &(problem->parms);
+int compute_lower_bound(NodeData* pd) {
+    int         j, val = 0;
+    int         has_cols = 1;
+    int         has_cuts = 0;
+    int         nb_non_improvements = 0;
+    int         status = GRB_LOADED;
+    double      real_time_pricing;
+    Parms*      parms = pd->parms;
+    Statistics* statistics = pd->stat;
 
     if (dbg_lvl() > 1) {
         printf(
             "Starting compute_lower_bound with lb %d and ub %d at depth %d(id "
             "= "
-            "%d, opt_track = %d)\n",
-            pd->lower_bound, pd->upper_bound, pd->depth, pd->id, pd->opt_track);
+            "%d)\n",
+            pd->lower_bound, pd->upper_bound, pd->depth, pd->id);
     }
 
-    CCutil_start_resume_time(&(problem->tot_lb));
+    CCutil_start_resume_time(&(statistics->tot_lb));
 
     /**
      * Construction of new solution if localPoolColPool is empty
@@ -494,11 +492,10 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     do {
         has_cols = 1;
         has_cuts = 0;
-        CCutil_suspend_timer(&(problem->tot_cputime));
-        CCutil_resume_timer(&(problem->tot_cputime));
+        CCutil_suspend_timer(&(statistics->tot_cputime));
+        CCutil_resume_timer(&(statistics->tot_cputime));
         while ((pd->iterations < pd->maxiterations) && has_cols &&
-               problem->tot_cputime.cum_zeit <=
-                   problem->parms.branching_cpu_limit) {
+               statistics->tot_cputime.cum_zeit <= parms->branching_cpu_limit) {
             /**
              * Delete old columns
              */
@@ -507,13 +504,13 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 val = delete_old_schedules(pd);
                 CCcheck_val_2(val, "Failed in delete_old_cclasses");
             }
-            solve_relaxation(problem, pd);
+            solve_relaxation(pd);
 
             /**
              * Solve the pricing problem
              */
             real_time_pricing = getRealTime();
-            CCutil_start_resume_time(&problem->tot_pricing);
+            CCutil_start_resume_time(&statistics->tot_pricing);
             val = lp_interface_status(pd->RMP, &status);
             CCcheck_val_2(val, "Failed in status");
 
@@ -532,9 +529,9 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     break;
             }
 
-            CCutil_suspend_timer(&problem->tot_pricing);
+            CCutil_suspend_timer(&statistics->tot_pricing);
             real_time_pricing = getRealTime() - real_time_pricing;
-            problem->real_time_pricing += real_time_pricing;
+            statistics->real_time_pricing += real_time_pricing;
 
             if (pd->update) {
                 for (j = 0; j < pd->nb_new_sets; j++) {
@@ -566,8 +563,8 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                     break;
             }
 
-            CCutil_suspend_timer(&(problem->tot_cputime));
-            CCutil_resume_timer(&(problem->tot_cputime));
+            CCutil_suspend_timer(&(statistics->tot_cputime));
+            CCutil_resume_timer(&(statistics->tot_cputime));
         }
 
         switch (status) {
@@ -575,53 +572,55 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
                 /**
                  * change status of problem
                  */
-                if (problem->status == no_sol) {
-                    problem->status = lp_feasible;
-                }
+                // if (problem->status == no_sol) {
+                //     problem->status = lp_feasible;
+                // }
 
                 if (dbg_lvl() > 1) {
                     printf(
                         "Found lb = %d (%f) upper_bound = %d (id= %d, "
                         "iterations = "
-                        "%d,opt_track = %d).\n",
+                        "%d).\n",
                         pd->lower_bound, pd->LP_lower_bound, pd->upper_bound,
-                        pd->id, pd->iterations, pd->opt_track);
+                        pd->id, pd->iterations);
                 }
 
                 /**
                  * Compute the objective function
                  */
-                solve_relaxation(problem, pd);
-                compute_objective(pd);
+                solve_relaxation(pd);
+                // compute_objective(pd);
                 val = construct_lp_sol_from_rmp(pd);
                 CCcheck_val_2(val, "Failed in construct lp sol from rmp\n");
                 delete_old_schedules(pd);
-                solve_relaxation(problem, pd);
-                delete_unused_rows(pd);
-                solve_relaxation(problem, pd);
+                solve_relaxation(pd);
+                // delete_unused_rows(pd);
+                // solve_relaxation(pd);
+                construct_lp_sol_from_rmp(pd);
                 if (!call_is_integer_solution(pd->solver)) {
-                    has_cuts = (generate_cuts(pd) > 0);
-                    call_update_duals(pd->solver_stab);
+                    // has_cuts = (generate_cuts(pd) > 0);
+                    has_cuts = 0;
+                    // call_update_duals(pd->solver_stab);
+                    test++;
                     // lp_interface_write(pd->RMP, "test.lp");
                 }
                 break;
 
             case GRB_INFEASIBLE:
                 pd->status = infeasible;
-                pd->test = 0;
                 lp_interface_write(pd->RMP, "infeasible_RMP.lp");
                 lp_interface_compute_IIS(pd->RMP);
         }
-    } while (has_cuts);
+    } while (has_cuts && test < 5);
 
     if (dbg_lvl() > -1) {
         printf("iterations = %d\n", pd->iterations);
-        printf("lowerbound %d\n", pd->lower_bound + pd->problem->off);
-        printf("LP value = %f \n", pd->LP_lower_bound + pd->problem->off);
+        printf("lowerbound %d\n", pd->lower_bound + pd->off);
+        printf("LP value = %f \n", pd->LP_lower_bound + pd->off);
     }
 
     if (pd->iterations < pd->maxiterations &&
-        problem->tot_cputime.cum_zeit <= problem->parms.branching_cpu_limit) {
+        statistics->tot_cputime.cum_zeit <= parms->branching_cpu_limit) {
     } else {
         switch (status) {
             case GRB_OPTIMAL:
@@ -635,21 +634,21 @@ int compute_lower_bound(Problem* problem, NodeData* pd) {
     }
     // } while (pd->depth == 1);
 
-    problem->global_lower_bound =
-        CC_MAX(pd->lower_bound + pd->problem->off, problem->global_lower_bound);
+    statistics->global_lower_bound =
+        CC_MAX(pd->lower_bound + pd->off, statistics->global_lower_bound);
 
-    if (pd == &(problem->root_pd)) {
-        problem->root_lower_bound = problem->global_lower_bound;
-        problem->root_upper_bound = problem->global_upper_bound;
-        problem->root_rel_error =
-            (double)(problem->global_upper_bound -
-                     problem->global_lower_bound) /
-            ((double)problem->global_lower_bound + 0.000001);
+    if (pd->depth == 0) {
+        statistics->root_lower_bound = statistics->global_lower_bound;
+        statistics->root_upper_bound = statistics->global_upper_bound;
+        statistics->root_rel_error =
+            (double)(statistics->global_upper_bound -
+                     statistics->global_lower_bound) /
+            ((double)statistics->global_lower_bound + 0.000001);
     }
 
     fflush(stdout);
-    problem->nb_generated_col += pd->iterations;
-    CCutil_suspend_timer(&(problem->tot_lb));
+    statistics->nb_generated_col += pd->iterations;
+    CCutil_suspend_timer(&(statistics->tot_lb));
 
 CLEAN:
     return val;
@@ -744,9 +743,9 @@ int calculate_x_e(NodeData* pd) {
     int status;
 
     val = lp_interface_status(pd->RMP, &status);
-    CCcheck_val_2(val, "Failed in lp_interface_status")
+    CCcheck_val_2(val, "Failed in lp_interface_status");
 
-        switch (status) {
+    switch (status) {
         case GRB_OPTIMAL:
             val = lp_interface_get_nb_cols(pd->RMP, &nb_cols);
             CCcheck_val_2(val, "Failed to get nb cols");
@@ -754,13 +753,14 @@ int calculate_x_e(NodeData* pd) {
             CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
             val = lp_interface_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in lp_interface_x");
-            pd->x_e =
-                CC_SAFE_REALLOC(pd->x_e, get_nb_edges(pd->solver), double);
-            CCcheck_NULL_2(pd->x_e, "Failed to reallocate memory to  pd->x_e");
+            // pd->x_e =
+            //     CC_SAFE_REALLOC(pd->x_e, get_nb_edges(pd->solver), double);
+            // CCcheck_NULL_2(pd->x_e, "Failed to reallocate memory to
+            // pd->x_e");
 
-            for (unsigned i = 0; i < get_nb_edges(pd->solver); ++i) {
-                pd->x_e[i] = 0.0;
-            }
+            // for (unsigned i = 0; i < get_nb_edges(pd->solver); ++i) {
+            //     pd->x_e[i] = 0.0;
+            // }
             construct_lp_sol_from_rmp(pd);
             break;
     }

@@ -13,21 +13,22 @@
 class PricerSolverBdd : public PricerSolverBase {
     std::unique_ptr<DdStructure<>> decision_diagram;
     size_t                         size_graph;
-    int                            nb_removed_edges = 0;
-    int                            nb_removed_nodes = 0;
+    int                            nb_removed_edges{};
+    int                            nb_removed_nodes{};
 
     GPtrArray* ordered_jobs;
-    int        nb_layers;
 
-    MipGraph                                                    mip_graph;
-    std::unique_ptr<double[]>                                   solution_x;
-    std::vector<std::vector<std::weak_ptr<NodeId>>>             node_ids;
-    std::vector<BddCoeff>                                       lp_sol;
-    OriginalModel<>                                             original_model;
+    MipGraph mip_graph;
+
+    std::vector<std::vector<std::weak_ptr<NodeId>>> node_ids;
+
+    OriginalModel<> original_model;
+
     std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_in;
     std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_out;
-    int                                                         H_min;
-    int                                                         H_max;
+
+    int H_min;
+    int H_max;
 
    public:
     PricerSolverBdd(GPtrArray*  _jobs,
@@ -37,46 +38,50 @@ class PricerSolverBdd : public PricerSolverBase {
                     int         _Hmax,
                     int*        _take_jobs,
                     double      _UB);
-    void         init_table() override;
-    virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
-    void         check_infeasible_arcs();
-    void         topdown_filtering();
-    void         bottum_up_filtering();
-    void         equivalent_paths_filtering();
-    void         print_representation_file();
-    void         calculate_H_min();
-    void         cleanup_arcs();
 
-    void reduce_cost_fixing(double* pi, int UB, double LB) override;
+    PricerSolverBdd(const PricerSolverBdd& src, GPtrArray* _ordered_jobs);
+    PricerSolverBdd(const PricerSolverBdd& src);
+
+    virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
+
+    void check_infeasible_arcs();
+    void topdown_filtering();
+    void bottum_up_filtering();
+    void equivalent_paths_filtering();
+    void print_representation_file();
+    void calculate_H_min();
+    void cleanup_arcs();
+
     void remove_layers();
     void remove_edges();
     void remove_layers_init();
+    void construct_mipgraph();
+    void init_coeff_constraints();
 
-    void   construct_mipgraph();
+    bool   check_schedule_set(GPtrArray* set) override;
+    void   init_table() override;
+    void   reduce_cost_fixing(double* pi, int UB, double LB) override;
     void   build_mip() override;
     void   construct_lp_sol_from_rmp(const double*    columns,
                                      const GPtrArray* schedule_sets,
                                      int              num_columns) override;
-    void   represent_solution(Solution* sol) override;
-    void   project_solution(Solution* sol) override;
-    bool   check_schedule_set(GPtrArray* set) override;
     void   make_schedule_set_feasible(GPtrArray* set) override;
+    void   calculate_job_time(std::vector<std::vector<double>>& v) override;
+    void   split_job_time(int _job, int _time, bool _left) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;
-    int    get_num_remove_nodes() override;
-    int    get_num_remove_edges() override;
-    size_t get_nb_edges() override;
-    size_t get_nb_vertices() override;
-    int    get_num_layers() override;
-    void   print_num_paths() override;
     void   add_constraint(Job* job, GPtrArray* list, int order) override;
-    int    add_constraints() override;
+    void   print_num_paths() override;
     void   remove_constraints(int first, int nb_del) override;
     void   update_rows_coeff(int first) override;
-
-    void init_coeff_constraints();
-    void insert_constraints_lp(NodeData* pd) override;
+    void   insert_constraints_lp(NodeData* pd) override;
+    int    get_num_remove_nodes() override;
+    int    get_num_remove_edges() override;
+    int    get_num_layers() override;
+    int    add_constraints() override;
+    size_t get_nb_edges() override;
+    size_t get_nb_vertices() override;
 
     inline DdStructure<>* get_decision_diagram() {
         return decision_diagram.get();
@@ -103,11 +108,6 @@ class PricerSolverBdd : public PricerSolverBase {
     void update_constraints() override {}
 
     void update_coeff_constraints() override;
-
-    // double compute_reduced_cost(const OptimalSolution<> &sol, double *pi,
-    // double *lhs) override; double compute_lagrange(const OptimalSolution<>
-    // &sol, double *pi) override;
 };
-// int g_compare_duration(gconstpointer a, gconstpointer b);
 
 #endif  // PRICER_SOLVER_BDD_HPP

@@ -7,7 +7,6 @@
 
 int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     int          val = 0;
-    double       test_incumbent = .0;
     double       incumbent;
     int          tot_weighted = 0;
     ScheduleSet* tmp_schedule;
@@ -17,36 +16,26 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     CCcheck_val_2(val, "lp_interface_objval failed");
     val = lp_interface_get_nb_cols(pd->RMP, &pd->nb_cols);
     CCcheck_val_2(val, "Failed get nb_cols");
+    assert(pd->nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
 
-    schedulesets_free(&(pd->bestcolors), &(pd->nb_best));
-    pd->bestcolors = CC_SAFE_MALLOC(pd->nb_machines, ScheduleSet);
-    CCcheck_NULL_2(pd->bestcolors, "Failed to realloc pd->bestcolors");
-    pd->nb_best = 0;
+    g_ptr_array_free(pd->best_schedule, TRUE);
+    pd->best_schedule = g_ptr_array_new_with_free_func(g_scheduleset_free);
 
-    assert(pd->nb_cols == pd->localColPool->len);
     for (guint i = 0; i < pd->localColPool->len; ++i) {
         tmp_schedule = (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
-        test_incumbent += x[i];
 
-        if (x[i] >= 1.0 - tolerance) {
-            int j = pd->nb_best;
-            scheduleset_init(pd->bestcolors + j);
+        if (x[i + pd->id_pseudo_schedules] >= 1.0 - tolerance) {
+            ScheduleSet* aux = CC_SAFE_MALLOC(1, ScheduleSet);
+            CCcheck_NULL_2(aux, "Failed to allocate memory");
+            scheduleset_init_bis(aux);
+            aux->job_list =
+                g_ptr_array_copy(tmp_schedule->job_list, NULL, NULL);
+            scheduleset_recalculate(aux);
+            g_ptr_array_add(pd->best_schedule, aux);
 
-            g_ptr_array_set_size(pd->bestcolors[j].job_list,
-                                 tmp_schedule->job_list->len);
-            for (guint k = 0; k < tmp_schedule->job_list->len; ++k) {
-                tmp_j = (Job*)g_ptr_array_index(tmp_schedule->job_list, k);
-                g_ptr_array_add(pd->bestcolors[j].job_list, tmp_j);
-                pd->bestcolors[j].total_processing_time +=
-                    tmp_j->processing_time;
-                pd->bestcolors[j].total_weighted_completion_time +=
-                    value_Fj(pd->bestcolors[j].total_processing_time, tmp_j);
-            }
+            tot_weighted += aux->total_weighted_completion_time;
 
-            pd->nb_best++;
-            tot_weighted += pd->bestcolors[j].total_weighted_completion_time;
-
-            if (pd->nb_best > pd->nb_machines) {
+            if (pd->best_schedule->len > pd->nb_machines) {
                 printf(
                     "ERROR: \"Integral\" solution turned out to be not "
                     "integral!\n");
@@ -59,7 +48,7 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
 
     /** Write a check function */
     printf("Intermediate schedule:\n");
-    print_schedule(pd->bestcolors, pd->nb_best);
+    // print_schedule(pd->bestcolors, pd->nb_best);
     printf("with total weight %d\n", tot_weighted);
     assert(fabs((double)tot_weighted - incumbent) <= 0.00001);
 
@@ -143,15 +132,15 @@ int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     val = lp_interface_addcol(lp, 0, NULL, NULL,
                               (double)set->total_weighted_completion_time, 0.0,
                               GRB_INFINITY, lp_interface_CONT, NULL);
-    CCcheck_val_2(val, "Failed to add column to lp")
+    CCcheck_val_2(val, "Failed to add column to lp");
 
-        for (unsigned i = 0; i < members->len; ++i) {
+    for (unsigned i = 0; i < members->len; ++i) {
         job = (Job*)g_ptr_array_index(members, i);
         row_ind = job->job;
         val = lp_interface_getcoeff(lp, &row_ind, &var_ind, &cval);
         CCcheck_val_2(val, "Failed lp_interface_getcoeff");
         cval += 1.0;
-        set->num[job->job] += 1;
+        // set->num[job->job] += 1;
         val = lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
         CCcheck_val_2(val, "Failed lp_interface_chgcoeff");
     }
@@ -172,23 +161,22 @@ void g_add_col_to_lp(gpointer data, gpointer user_data) {
 }
 
 int build_rmp(NodeData* pd) {
-    int      val = 0;
-    Problem* problem = pd->problem;
-    int      nb_jobs = problem->nb_jobs;
-    int      nb_machines = problem->nb_machines;
-    Parms*   parms = &(problem->parms);
-    double*  lb = NULL;
-    double*  ub = NULL;
-    double*  obj = NULL;
-    char*    vtype = NULL;
-    int*     start_vars = NULL;
-    int*     rows_ind = NULL;
-    double*  coeff_vals = NULL;
-    int*     int_values = NULL;
-    double*  dbl_values = NULL;
-    int*     start = CC_SAFE_MALLOC(nb_jobs, int);
-    double*  rhs = CC_SAFE_MALLOC(nb_jobs, double);
-    char*    sense = CC_SAFE_MALLOC(nb_jobs, char);
+    int     val = 0;
+    int     nb_jobs = pd->nb_jobs;
+    int     nb_machines = pd->nb_machines;
+    Parms*  parms = pd->parms;
+    double* lb = NULL;
+    double* ub = NULL;
+    double* obj = NULL;
+    char*   vtype = NULL;
+    int*    start_vars = NULL;
+    int*    rows_ind = NULL;
+    double* coeff_vals = NULL;
+    int*    int_values = NULL;
+    double* dbl_values = NULL;
+    int*    start = CC_SAFE_MALLOC(nb_jobs, int);
+    double* rhs = CC_SAFE_MALLOC(nb_jobs, double);
+    char*   sense = CC_SAFE_MALLOC(nb_jobs, char);
     val = lp_interface_init(&(pd->RMP), NULL);
     CCcheck_val_2(val, "lp_interface_init failed");
 
@@ -240,7 +228,7 @@ int build_rmp(NodeData* pd) {
         ub[j] = GRB_INFINITY;
         vtype[j] = GRB_CONTINUOUS;
         start_vars[j] = nb_jobs + 1;
-        obj[j] = (pd->problem->opt_sol->tw + 1) * 100;
+        obj[j] = (pd->opt_sol->tw + 1) * 100;
     }
     start_vars[nb_vars] = nb_jobs + 1;
 
@@ -274,18 +262,13 @@ int build_rmp(NodeData* pd) {
     int_values = CC_SAFE_MALLOC(pd->nb_rows, int);
     CCcheck_NULL_2(int_values, "Failed to allocate memory");
     fill_int(int_values, pd->nb_rows, 0);
+
     pd->pi = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->pi, "Failed to allocate memory");
     g_array_append_vals(pd->pi, dbl_values, pd->nb_rows);
     pd->slack = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->slack, "Failed to allocate memory");
     g_array_append_vals(pd->slack, dbl_values, pd->nb_rows);
-    pd->eta_in = 0.0;
-    pd->eta_out = 0.0;
-    if (parms->pricing_solver < dp_solver) {
-        pd->x_e = CC_SAFE_MALLOC(2 * get_nb_vertices(pd->solver), double);
-        CCcheck_NULL_2(pd->x_e, "Failed to allocate memory");
-    }
     pd->rhs = g_array_sized_new(FALSE, FALSE, sizeof(double), pd->nb_rows);
     CCcheck_NULL_2(pd->rhs, "Failed to allocate memory");
     g_array_append_vals(pd->rhs, dbl_values, pd->nb_rows);
@@ -307,7 +290,6 @@ CLEAN:
 
     if (val) {
         lp_interface_free(&(pd->RMP));
-        CC_IFFREE(pd->coeff, double);
         g_array_free(pd->pi, TRUE);
         // g_array_free(pd->pi_in, TRUE);
         // g_array_free(pd->pi_out, TRUE);
@@ -352,8 +334,8 @@ int get_solution_lp_lowerbound(NodeData* pd) {
             printf("\n");
             for (unsigned j = 0; j < tmp->job_list->len; ++j) {
                 tmp_j = (Job*)g_ptr_array_index(tmp->job_list, j);
-                printf("%d (%d) ", tmp->num[tmp_j->job],
-                       tmp_j->processing_time);
+                // printf("%d (%d) ", tmp->num[tmp_j->job],
+                //    tmp_j->processing_time);
             }
             printf("\n");
         }

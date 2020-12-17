@@ -144,8 +144,8 @@ void PricerSolverZdd::init_table() {
     }
 }
 
-OptimalSolution<double> PricerSolverZdd::farkas_pricing([
-    [maybe_unused]] double* pi) {
+OptimalSolution<double> PricerSolverZdd::farkas_pricing(
+    [[maybe_unused]] double* pi) {
     OptimalSolution<double> sol;
 
     return sol;
@@ -439,77 +439,6 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
     // outf.close();
 }
 
-void PricerSolverZdd::project_solution(Solution* sol) {
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
-    // double* x = new double[num_edges(mip_graph)]{};
-    std::fill(solution_x.get(), solution_x.get() + get_nb_edges(), 0.0);
-
-    for (int i = 0; i < sol->nb_machines; ++i) {
-        size_t                        counter = 0;
-        GPtrArray*                    tmp = sol->part[i].machine;
-        NodeId                        tmp_nodeid(decision_diagram->root());
-        std::shared_ptr<SubNodeZdd<>> tmp_sub_node =
-            table.node(tmp_nodeid).list[0];
-
-        while (tmp_nodeid > 1) {
-            Job* tmp_j;
-
-            if (counter < tmp->len) {
-                tmp_j = static_cast<Job*>(g_ptr_array_index(tmp, counter));
-            } else {
-                tmp_j = nullptr;
-            }
-
-            NodeZdd<>& tmp_node = table.node(tmp_nodeid);
-
-            if (tmp_j == tmp_node.get_job()) {
-                solution_x[tmp_sub_node->high_edge_key] += 1.0;
-                tmp_nodeid = tmp_node.branch[1];
-                tmp_sub_node = tmp_sub_node->y;
-                counter++;
-            } else {
-                solution_x[tmp_sub_node->low_edge_key] += 1.0;
-                tmp_nodeid = tmp_node.branch[0];
-                tmp_sub_node = tmp_sub_node->n;
-            }
-        }
-    }
-}
-
-void PricerSolverZdd::represent_solution(Solution* sol) {
-    // double* x = new double[num_edges(g)] {};
-    // for(int i = 0; i < sol->nb_machines; ++i) {
-    //         size_t counter = 0;
-    //         GPtrArray *tmp = sol->part[i].machine;
-    //         NodeId tmp_nodeid(decision_diagram->root());
-    //         while(tmp_nodeid > 1){
-    //             Job *tmp_j;
-    //             if(counter < tmp->len) {
-    //                 tmp_j = (Job *) g_ptr_array_index(tmp, counter);
-    //             } else {
-    //                 tmp_j = (Job *) nullptr;
-    //             }
-    //             Node<>& tmp_node = table.node(tmp_nodeid);
-    //             if(tmp_j == tmp_node.get_job()) {
-    //                 x[tmp_node.high_edge_key] += 1.0;
-    //                 tmp_nodeid = tmp_node.branch[1];
-    //                 counter++;
-    //             } else {
-    //                 x[tmp_node.low_edge_key] += 1.0;
-    //                 tmp_nodeid = tmp_node.branch[0];
-    //             }
-    //         }
-    // }
-    project_solution(sol);
-    // NodeTableEntity<NodeZdd<>>& table =
-    // decision_diagram->getDiagram().privateEntity(); ColorWriterEdge
-    // edge_writer(g, x); ColorWriterVertex vertex_writer(g, table);
-    // std::ofstream outf("solution.gv"); boost::write_graphviz(outf, g,
-    // vertex_writer, edge_writer); outf.close();
-    // delete[] x;
-}
-
 bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
     guint                       weight = 0;
     NodeTableEntity<NodeZdd<>>& table =
@@ -537,8 +466,8 @@ bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
     return (weight == set->len);
 }
 
-void PricerSolverZdd::make_schedule_set_feasible([
-    [maybe_unused]] GPtrArray* set) {}
+void PricerSolverZdd::make_schedule_set_feasible(
+    [[maybe_unused]] GPtrArray* set) {}
 
 void PricerSolverZdd::iterate_zdd() {
     DdStructure<NodeZdd<double>>::const_iterator it = decision_diagram->begin();

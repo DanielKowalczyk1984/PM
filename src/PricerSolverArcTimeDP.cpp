@@ -357,7 +357,8 @@ void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
                         : value_Fj(t + (*it)->processing_time, *it) -
                               _pi[(*it)->job];
                 int tt = ((*it)->job != n) ? (*it)->processing_time
-                                           : (*it)->job == i ? 1 : 0;
+                         : (*it)->job == i ? 1
+                                           : 0;
                 backward_F[i][t] =
                     backward_F[(*it)->job][t + tt] + reduced_cost;
                 it++;
@@ -369,7 +370,8 @@ void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
                                   _pi[(*it)->job];
 
                     tt = ((*it)->job != n) ? (*it)->processing_time
-                                           : (*it)->job == i ? 1 : 0;
+                         : (*it)->job == i ? 1
+                                           : 0;
                     double result =
                         backward_F[(*it)->job][t + tt] + reduced_cost;
 
@@ -464,8 +466,8 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     return sol;
 }
 
-OptimalSolution<double> PricerSolverArcTimeDp::farkas_pricing([
-    [maybe_unused]] double* _pi) {
+OptimalSolution<double> PricerSolverArcTimeDp::farkas_pricing(
+    [[maybe_unused]] double* _pi) {
     OptimalSolution<double> opt_sol;
 
     return opt_sol;
@@ -506,44 +508,6 @@ void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
             }
         }
     }
-}
-
-void PricerSolverArcTimeDp::project_solution(Solution* sol) {
-    // double* x = new double[(n + 1) * (n + 1) * (Hmax + 1)]{};
-    std::fill(solution_x, solution_x + get_nb_edges(), 0.0);
-
-    for (int it = 0; it < sol->nb_machines; it++) {
-        GPtrArray* tmp = sol->part[it].machine;
-        size_t     counter = 0;
-        int        i = n;
-        int        t = 0;
-        while (t < Hmax + 1) {
-            Job* tmp_j;
-            int  j;
-            if (counter < tmp->len) {
-                tmp_j = (Job*)g_ptr_array_index(tmp, counter);
-                j = tmp_j->job;
-            } else {
-                tmp_j = nullptr;
-                j = n;
-            }
-            solution_x[i * (n + 1) * (Hmax + 1) + j * (Hmax + 1) + t] += 1.0;
-
-            if (tmp_j == nullptr) {
-                i = n;
-                t += 1;
-            } else {
-                i = j;
-                t += tmp_j->processing_time;
-                counter++;
-            }
-        }
-    }
-}
-
-void PricerSolverArcTimeDp::represent_solution(Solution* sol) {
-    solution_arctime_order(sol);
-    project_solution(sol);
 }
 
 void PricerSolverArcTimeDp::add_constraint([[maybe_unused]] Job*       job,
@@ -624,5 +588,5 @@ bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
     return false;
 }
 
-void PricerSolverArcTimeDp::make_schedule_set_feasible([
-    [maybe_unused]] GPtrArray* set) {}
+void PricerSolverArcTimeDp::make_schedule_set_feasible(
+    [[maybe_unused]] GPtrArray* set) {}

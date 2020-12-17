@@ -23,6 +23,20 @@ class PricerSolverSimpleDp : public PricerSolverBase {
                          int         _Hmax,
                          const char* p_name,
                          double      _UB);
+    PricerSolverSimpleDp(const PricerSolverSimpleDp& src)
+        : PricerSolverBase(src),
+          Hmax(src.Hmax),
+          size_graph(src.size_graph),
+          A(new Job*[Hmax + 1]),
+          F(new double[Hmax + 1]),
+          backward_F(new double[Hmax + 1]),
+          TI_x(new GRBVar[convex_constr_id * (Hmax + 1)]),
+          take(static_cast<int*>(
+              malloc(convex_constr_id * (Hmax + 1) * sizeof(int)))),
+          lp_x(new double[convex_constr_id * (Hmax + 1)]{}),
+          solution_x(new double[convex_constr_id * (Hmax + 1)]) {
+        init_table();
+    };
     ~PricerSolverSimpleDp();
     void init_table() override;
 
@@ -37,8 +51,6 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void construct_lp_sol_from_rmp(const double*    columns,
                                    const GPtrArray* schedule_sets,
                                    int              num_columns) override;
-    void represent_solution(Solution* sol) override;
-    void project_solution(Solution* sol) override;
 
     void   add_constraint(Job* job, GPtrArray* list, int order) override;
     void   iterate_zdd() override;

@@ -1,4 +1,5 @@
 #include "PricerSolverBase.hpp"
+#include "solver.h"
 
 class PricerSolverArcTimeDp : public PricerSolverBase {
    private:
@@ -25,6 +26,24 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
                           const char* p_name,
                           double      _UB);
     ~PricerSolverArcTimeDp();
+    PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
+        : PricerSolverBase(src),
+          Hmax(src.Hmax),
+          n(src.n),
+          vector_jobs(),
+          nb_edges_removed(src.nb_edges_removed),
+          lp_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}),
+          solution_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}) {
+        for (auto i = 0; i < n; ++i) {
+            vector_jobs.push_back(
+                reinterpret_cast<Job*>(g_ptr_array_index(jobs, i)));
+        }
+        job_init(&j0, 0, 0, 0);
+        j0.job = n;
+        vector_jobs.push_back(&j0);
+
+        init_table();
+    }
     void init_table() override;
 
     void reduce_cost_fixing([[maybe_unused]] double* pi,
@@ -39,8 +58,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void construct_lp_sol_from_rmp(const double*    columns,
                                    const GPtrArray* schedule_sets,
                                    int              num_columns) override;
-    void represent_solution(Solution* sol) override;
-    void project_solution(Solution* sol) override;
     void add_constraint(Job* job, GPtrArray* list, int order) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;

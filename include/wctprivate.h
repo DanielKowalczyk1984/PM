@@ -2,7 +2,9 @@
 #define WCT_PRIVATE_H
 
 #include "MIP_defs.hpp"
+#include "Statistics.h"
 #include "binomial-heap.h"
+// #include "branch-and-boundwrapper.h"
 #include "interval.h"
 #include "lp.h"
 #include "pricingstabilizationwrapper.h"
@@ -36,39 +38,60 @@ typedef struct _Problem Problem;
  */
 typedef struct _NodeData NodeData;
 
+typedef struct BranchNodeBase  BranchNode;
+typedef struct BranchBoundTree BranchBoundTree;
+
+BranchNode* new_branch_node(int _isRoot, NodeData* data);
+void        delete_branch_node(BranchNode* node);
+size_t      call_getDepth(BranchNode* state);
+int         call_getDomClassID(BranchNode* state);
+double      call_getObjValue(BranchNode* state);
+double      call_getLB(BranchNode* state);
+double      call_getUB(BranchNode* state);
+int         call_getID(BranchNode* state);
+int         call_getParentID(BranchNode* state);
+void        call_setID(BranchNode* state, int i);
+int         isDominated(BranchNode* state);
+int         wasProcessed(BranchNode* state);
+
+BranchBoundTree* new_branch_bound_tree(NodeData* data,
+                                       int       _probtype,
+                                       int       _isIntProb);
+void             delete_branch_bound_tree(BranchBoundTree* tree);
+void             call_branch_and_bound_explore(BranchBoundTree* tree);
+
 struct _NodeData {
     // The id and depth of the node in the B&B tree
     int id;
     int depth;
-    int test;
 
     NodeDataStatus status;
 
     // The instance information
-    int  nb_jobs;
-    int  nb_machines;
-    int* orig_node_ids;
-    // data for meta heuristic
     GPtrArray* jobarray;
+    int        nb_jobs;
+    int        nb_machines;
     int        H_max;
     int        H_min;
+    int        off;
     /** data about the intervals */
     GPtrArray* local_intervals;
     GPtrArray* ordered_jobs;
-    int**      sump;
 
     // The column generation lp information
     wctlp*  RMP;
-    wctlp*  MIP;
     double* lambda;
-    double* x_e;
-    double* coeff;
+    // double* x_e;
+
     GArray* pi;
+    GArray* slack;
+    GArray* rhs;
+    GArray* lhs_coeff;
     GArray* id_row;
     GArray* coeff_row;
-    GArray* slack;
-    int     nb_rows;
-    int     nb_cols;
+
+    int nb_rows;
+    int nb_cols;
 
     // cut generation information
     int max_nb_cuts;
@@ -86,45 +109,30 @@ struct _NodeData {
     PricerSolver* solver;
 
     // Columns
-    // int          nb_columns;
-    // scheduleset *cclasses;
-    int zero_count;
-    // int          gallocated;
+    int          zero_count;
     ScheduleSet* newsets;
     int          nb_new_sets;
     int*         column_status;
     GPtrArray*   localColPool;
 
-    int     lower_bound;
-    int     upper_bound;
-    int     lower_scaled_bound;
-    double  partial_sol;
-    double  dbl_safe_lower_bound;
-    double  dbl_est_lower_bound;
-    double  LP_lower_bound;
-    double  LP_lower_bound_dual;
-    double  LP_lower_bound_BB;
-    double  LP_lower_min;
-    GArray* rhs;
-    GArray* lhs_coeff;
-    int     nb_non_improvements;
-    int     iterations;
+    int lower_bound;
+    int upper_bound;
+
+    double LP_lower_bound;
+    double LP_lower_bound_dual;
+    double LP_lower_bound_BB;
+    double LP_lower_min;
+
+    int nb_non_improvements;
+    int iterations;
 
     /** Wentges smoothing technique */
     PricingStabilization* solver_stab;
-    double                eta_in;
-    int                   update_stab_center;
-    double                eta_out;
     int                   update;
 
     // Best Solution
-    ScheduleSet* bestcolors;
-    int          best_objective;
-    int          nb_best;
-
-    const ScheduleSet* debugcolors;
-    int                ndebugcolors;
-    int                opt_track;
+    GPtrArray* best_schedule;
+    int        best_objective;
 
     // maxiterations and retireage
     int maxiterations;
@@ -161,10 +169,10 @@ struct _NodeData {
      */
     NodeData* parent;
 
-    /**
-     * ptr to the data overview
-     */
-    Problem* problem;
+    /** Some additional pointers to data needed */
+    Parms*      parms;
+    Statistics* stat;
+    Solution*   opt_sol;
 
     char pname[MAX_PNAME_LEN];
 };
@@ -182,8 +190,9 @@ typedef enum {
 } problem_status;
 
 struct _Problem {
-    Parms    parms;
-    NodeData root_pd;
+    Parms            parms;
+    NodeData*        root_pd;
+    BranchBoundTree* tree;
     /** Job data in EDD order */
     GPtrArray* g_job_array;
     GPtrArray* list_solutions;
@@ -225,44 +234,7 @@ struct _Problem {
     int           mult_key;
     int           found;
     /*Cpu time measurement + Statistics*/
-    int    nb_explored_nodes;
-    int    nb_generated_nodes;
-    int    nb_generated_col;
-    int    nb_generated_col_root;
-    size_t first_size_graph;
-    size_t size_graph_after_reduced_cost_fixing;
-
-    CCutil_timer tot_build_dd;
-    CCutil_timer tot_cputime;
-    CCutil_timer tot_branch_and_bound;
-    CCutil_timer tot_strong_branching;
-    CCutil_timer tot_lb_root;
-    CCutil_timer tot_lb;
-    CCutil_timer tot_solve_lp;
-    CCutil_timer tot_pricing;
-    CCutil_timer tot_heuristic;
-    CCutil_timer tot_reduce_cost_fixing;
-
-    double real_time_build_dd;
-    double real_time_total;
-    double real_time_branch_and_bound;
-    double real_time_strong_branching;
-    double real_time_lb_root;
-    double real_time_lb;
-    double real_time_solve_lp;
-    double real_time_pricing;
-    double real_time_heuristic;
-    int    mip_nb_vars;
-    int    mip_nb_constr;
-    double mip_obj_bound;
-    double mip_obj_bound_lp;
-    double mip_rel_gap;
-    double mip_run_time;
-    int    mip_status;
-    double mip_nb_iter_simplex;
-    double mip_nb_nodes;
-    int    mip_reduced_cost_fixing;
-    // double       real_time;
+    Statistics stat;
 };
 
 /*Initialization and free memory for the problem*/
@@ -270,8 +242,10 @@ void problem_init(Problem* problem);
 void problem_free(Problem* problem);
 
 /*Initialize pmc data*/
-void nodedata_init(NodeData* pd, Problem* prob);
-int  set_id_and_name(NodeData* pd, int id, const char* fname);
+void      nodedata_init(NodeData* pd, Problem* prob);
+void      nodedata_init_null(NodeData* pd);
+int       set_id_and_name(NodeData* pd, int id, const char* fname);
+NodeData* new_node_data(NodeData* pd);
 
 /*Free the Nodedata*/
 void lp_node_data_free(NodeData* pd);

@@ -32,7 +32,7 @@ ZeroHalfCuts::ZeroHalfCuts(int                 _nb_jobs,
     // do a systematic search for the k-best solutions
     model->set(GRB_IntParam_PoolSearchMode, 2);
     model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-    model->set(GRB_IntParam_Threads, 4);
+    model->set(GRB_IntParam_Threads, 1);
     model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
     model->set(GRB_IntParam_Presolve, 2);
     model->set(GRB_DoubleParam_Heuristics, 0.5);
@@ -169,21 +169,29 @@ void ZeroHalfCuts::construct_cut() {
     };
 
     std::for_each(node_ids.begin(), node_ids.end(), add_coeff_constr);
-    std::for_each(node_ids_lift.begin(), node_ids_lift.end(), add_coeff_constr);
-    // std::for_each(node_ids.begin(), node_ids.end(), print_node_ids);
-    // fmt::print("\n");
+    // std::for_each(node_ids_lift.begin(), node_ids_lift.end(),
+    // add_coeff_constr); std::for_each(node_ids.begin(), node_ids.end(),
+    // print_node_ids); fmt::print("\n");
 
     auto& root_node = table->node(root);
     auto& terminal_node = table->node(1);
-    auto  rhs = (root_node.sigma.get(GRB_DoubleAttr_Xn) > 1e-6)
-                   ? static_cast<double>(nb_machines)
-                   : 0.0;
+    auto  rhs = 0.0;
+    rhs += (root_node.sigma.get(GRB_DoubleAttr_Xn) > 1e-6)
+               ? static_cast<double>(nb_machines)
+               : 0.0;
     rhs += (terminal_node.sigma.get(GRB_DoubleAttr_Xn) > 1e-6)
                ? -static_cast<double>(nb_machines)
                : 0.0;
+
+    for (auto& it : jobs_var) {
+        auto x = it.get(GRB_DoubleAttr_Xn);
+        if (x > 1e-6) {
+            rhs += 1.0;
+        }
+    }
+    // fmt::print("test rhs = {}\n", rhs);
     std::shared_ptr<ConstraintGeneric> constr{
-        std::make_shared<ConstraintGeneric>(
-            data, -floor((2.0 * q.get(GRB_DoubleAttr_Xn) + 1 + rhs) / 2.0))};
+        std::make_shared<ConstraintGeneric>(data, -floor(rhs / 2.0))};
     // data->list_coeff();
     // fmt::print("RHS = {}\n",
     //            -floor((2.0 * q.get(GRB_DoubleAttr_Xn) + 1 + rhs) / 2.0));
@@ -220,12 +228,12 @@ void ZeroHalfCuts::generate_cuts() {
         auto nb_solutions = model->get(GRB_IntAttr_SolCount);
         fmt::print("Number of solutions found: {}\n", nb_solutions);
 
-        for (auto i = 0; i < std::min(100, nb_solutions); i++) {
+        for (auto i = 0; i < nb_solutions; i++) {
             model->set(GRB_IntParam_SolutionNumber, i);
             init_coeff_cut();
             auto sol = model->get(GRB_DoubleAttr_ObjVal);
 
-            bool add = true;
+            bool add = false;
             auto calc_coeff_cut = [&](const auto& it) {
                 auto& node = table->node(it);
                 auto  x = node.sigma.get(GRB_DoubleAttr_Xn);
@@ -233,9 +241,8 @@ void ZeroHalfCuts::generate_cuts() {
                     if (it > 1) {
                         node.coeff_cut[0] += 1.0;
                         node.coeff_cut[1] += 1.0;
-                        fmt::print("Node {} {}\n", node.get_nb_job(),
-                                   node.get_weight());
-                    } else {
+                        // fmt::print("Node {} {}\n", node.get_nb_job(),
+                        //    node.get_weight());
                         add = true;
                     }
 
@@ -261,13 +268,13 @@ void ZeroHalfCuts::generate_cuts() {
                 }
             }
 
-            for (auto i = 0; i < nb_jobs; i++) {
-                auto x = jobs_var[i].get(GRB_DoubleAttr_Xn);
-                if (x > 1e-4) {
-                    fmt::print("{} ", i);
-                }
-            }
-            fmt::print("\n");
+            // for (auto i = 0; i < nb_jobs; i++) {
+            //     auto x = jobs_var[i].get(GRB_DoubleAttr_Xn);
+            //     if (x > 1e-4) {
+            //         fmt::print("{} ", i);
+            //     }
+            // }
+            // fmt::print("\n");
 
             std::for_each(node_ids.begin(), node_ids.end(), calc_coeff_cut);
 
@@ -308,9 +315,9 @@ void ZeroHalfCuts::generate_cuts() {
             // }
             if (add)
                 construct_cut();
-            fmt::print("---------------------------------------------\n");
+            // fmt::print("---------------------------------------------\n");
         }
-        getchar();
+        // getchar();
 
     } catch (GRBException& e) {
         fmt::print("Error code = {0} {1:-^{2}} {3}", e.getErrorCode(), "", 40,
@@ -347,7 +354,7 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
                     model->addVar(0.0, GRB_INFINITY, node.lp_x[i], 'B', str_y);
                 auto& r = node.r[i] =
                     model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
-                GRBLinExpr expr = s_head - s_source - y - 2.0 * r;
+                GRBLinExpr expr = -s_head + s_source - y - 2.0 * r;
                 if (i) {
                     expr += jobs_var[node.get_nb_job()];
                 }
@@ -364,7 +371,7 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
                     model->addVar(0.0, GRB_INFINITY, node.lp_x[i], 'B', str_y);
                 auto& r = node.r[i] =
                     model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
-                GRBLinExpr expr = s_head - s_source - y - 2.0 * r;
+                GRBLinExpr expr = -s_head + s_source - y - 2.0 * r;
                 if (i) {
                     expr += jobs_var[node.get_nb_job()];
                 }

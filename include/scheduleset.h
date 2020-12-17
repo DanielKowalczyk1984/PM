@@ -8,15 +8,14 @@ extern "C" {
 #include <solution.h>
 
 typedef struct scheduleset {
-    int         age;
-    int         del;
-    int         total_processing_time;
-    int         total_weighted_completion_time;
-    GHashTable* table;
-    GPtrArray*  job_list;
-    GPtrArray*  edge_list;
-    int*        num;
-    int         id;
+    int age;
+    int del;
+    int total_processing_time;
+    int total_weighted_completion_time;
+    // GHashTable* table;
+    GPtrArray* job_list;
+    // int*       num;
+    int id;
 } ScheduleSet;
 
 void         scheduleset_SWAP(ScheduleSet* c1, ScheduleSet* c2, ScheduleSet* t);
@@ -38,9 +37,9 @@ gpointer g_copy_scheduleset(gconstpointer src, gpointer data);
 void     g_sum_recalculate(gpointer data, gpointer user_data);
 
 /** new approach for columns */
-void         g_scheduleset_free(void* set);
-void         g_sum_processing_time(gpointer data, gpointer user_data);
-void         g_compute_nb_layers_schedule(gpointer data, gpointer user_data);
+void g_scheduleset_free(void* set);
+void g_sum_processing_time(gpointer data, gpointer user_data);
+// void         g_compute_nb_layers_schedule(gpointer data, gpointer user_data);
 ScheduleSet* scheduleset_from_solution(GPtrArray* machine, int nb_jobs);
 ScheduleSet* scheduleset_alloc(int nb_jobs);
 void         scheduleset_recalculate(ScheduleSet* set);

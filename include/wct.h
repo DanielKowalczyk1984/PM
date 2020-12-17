@@ -87,7 +87,7 @@ int create_branches_conflict(NodeData* pd, Problem* problem);
  * lowerbound.c
  */
 
-int compute_lower_bound(Problem* problem, NodeData* pd);
+int compute_lower_bound(NodeData* pd);
 int compute_objective(NodeData* pd);
 int print_x(NodeData* pd);
 int calculate_x_e(NodeData* pd);
@@ -96,7 +96,7 @@ int check_schedules(NodeData* pd);
 int delete_infeasible_schedules(NodeData* pd);
 int delete_old_schedules(NodeData* pd);
 int delete_unused_rows(NodeData* pd);
-int solve_relaxation(Problem* problem, NodeData* pd);
+int solve_relaxation(NodeData* pd);
 
 void make_pi_feasible(NodeData* pd);
 void make_pi_feasible_farkas_pricing(NodeData* pd);

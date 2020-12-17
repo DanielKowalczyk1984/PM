@@ -82,6 +82,60 @@ PricerSolverBase* newSolverDp(GPtrArray* _jobs,
     }
 }
 
+PricerSolverBase* copy_pricer_solver(PricerSolverBase* src,
+                                     GPtrArray*        array,
+                                     Parms*            parms) {
+    switch (parms->pricing_solver) {
+        case bdd_solver_simple:
+            return new PricerSolverBddSimple(
+                *dynamic_cast<PricerSolverBddSimple*>(src), array);
+            break;
+        case bdd_solver_cycle:
+            return new PricerSolverBddCycle(
+                *dynamic_cast<PricerSolverBddCycle*>(src), array);
+            break;
+        case zdd_solver_cycle:
+            return new PricerSolverZddCycle(
+                *dynamic_cast<PricerSolverZddCycle*>(src));
+            break;
+        case zdd_solver_simple:
+            return new PricerSolverSimple(
+                *dynamic_cast<PricerSolverSimple*>(src));
+            break;
+        case bdd_solver_backward_simple:
+            return new PricerSolverBddBackwardSimple(
+                *dynamic_cast<PricerSolverBddBackwardSimple*>(src), array);
+            break;
+        case bdd_solver_backward_cycle:
+            return new PricerSolverBddBackwardCycle(
+                *dynamic_cast<PricerSolverBddBackwardCycle*>(src), array);
+            break;
+        case zdd_solver_backward_simple:
+            return new PricerSolverZddBackwardSimple(
+                *dynamic_cast<PricerSolverZddBackwardSimple*>(src));
+            break;
+        case zdd_solver_backward_cycle:
+            return new PricerSolverZddBackwardCycle(
+                *dynamic_cast<PricerSolverZddBackwardCycle*>(src));
+            break;
+        case dp_solver:
+            return new PricerSolverSimpleDp(
+                *dynamic_cast<PricerSolverSimpleDp*>(src));
+            break;
+        case ati_solver:
+            return new PricerSolverArcTimeDp(
+                *dynamic_cast<PricerSolverArcTimeDp*>(src));
+            break;
+        case dp_bdd_solver:
+            return new PricerSolverBddBackwardCycle(
+                *dynamic_cast<PricerSolverBddBackwardCycle*>(src), array);
+            break;
+        default:
+            return new PricerSolverBddCycle(
+                *dynamic_cast<PricerSolverBddCycle*>(src), array);
+    }
+}
+
 void freeSolver(PricerSolver* src) {
     delete src;
 }
@@ -125,7 +179,7 @@ void print_number_nodes_edges(PricerSolver* solver) {
 
 int evaluate_nodes(NodeData* pd) {
     int    val = 0;
-    int    UB = pd->problem->opt_sol->tw;
+    int    UB = pd->opt_sol->tw;
     double LB = pd->LP_lower_bound;
 
     pd->solver->evaluate_nodes(&g_array_index(pd->pi, double, 0), UB, LB);
@@ -135,12 +189,14 @@ int evaluate_nodes(NodeData* pd) {
 
 int reduce_cost_fixing(NodeData* pd) {
     int    val = 0;
-    int    UB = pd->problem->opt_sol->tw;
+    int    UB = pd->opt_sol->tw;
     double LB = pd->LP_lower_bound_dual;
 
     pd->solver->reduce_cost_fixing(&g_array_index(pd->pi, double, 0), UB, LB);
-    pd->problem->size_graph_after_reduced_cost_fixing =
-        get_nb_edges(pd->solver);
+    if (pd->depth == 0) {
+        pd->stat->size_graph_after_reduced_cost_fixing =
+            get_nb_edges(pd->solver);
+    }
     return val;
 }
 
@@ -185,10 +241,6 @@ int generate_cuts(NodeData* pd) {
     return val;
 }
 
-void represent_solution(NodeData* pd, Solution* sol) {
-    pd->solver->represent_solution(sol);
-}
-
 int delete_unused_rows_range(NodeData* pd, int first, int last) {
     int val = 0;
 
@@ -227,35 +279,35 @@ void add_constraint(NodeData* pd, Job* job, int order) {
 }
 
 void get_mip_statistics(NodeData* pd, enum MIP_Attr c) {
-    Problem*          problem = pd->problem;
     PricerSolverBase* solver = pd->solver;
+    Statistics*       statistics = pd->stat;
     switch (c) {
         case MIP_Attr_Nb_Vars:
-            problem->mip_nb_vars = solver->get_int_attr_model(c);
+            statistics->mip_nb_vars = solver->get_int_attr_model(c);
             break;
         case MIP_Attr_Nb_Constr:
-            problem->mip_nb_constr = solver->get_int_attr_model(c);
+            statistics->mip_nb_constr = solver->get_int_attr_model(c);
             break;
         case MIP_Attr_Obj_Bound:
-            problem->mip_obj_bound = solver->get_dbl_attr_model(c);
+            statistics->mip_obj_bound = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Obj_Bound_LP:
-            problem->mip_obj_bound_lp = solver->get_dbl_attr_model(c);
+            statistics->mip_obj_bound_lp = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Mip_Gap:
-            problem->mip_rel_gap = solver->get_dbl_attr_model(c);
+            statistics->mip_rel_gap = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Run_Time:
-            problem->mip_run_time = solver->get_dbl_attr_model(c);
+            statistics->mip_run_time = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Status:
-            problem->mip_status = solver->get_int_attr_model(c);
+            statistics->mip_status = solver->get_int_attr_model(c);
             break;
         case MIP_Attr_Nb_Simplex_Iter:
-            problem->mip_nb_iter_simplex = solver->get_dbl_attr_model(c);
+            statistics->mip_nb_iter_simplex = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Nb_Nodes:
-            problem->mip_nb_nodes = solver->get_dbl_attr_model(c);
+            statistics->mip_nb_nodes = solver->get_dbl_attr_model(c);
             break;
     }
 }

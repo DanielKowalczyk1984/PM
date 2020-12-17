@@ -25,6 +25,10 @@ PricerSolver* newSolverDp(GPtrArray* _jobs,
                           Parms*     parms,
                           double     _UB);
 
+PricerSolver* copy_pricer_solver(PricerSolver* src,
+                                 GPtrArray*    array,
+                                 Parms*        parms);
+
 void   freeSolver(PricerSolver* src);
 void   deletePricerSolver(PricerSolver* solver);
 int*   get_take(PricerSolver* solver);
@@ -32,7 +36,6 @@ double call_get_UB(PricerSolver* solver);
 void   call_update_UB(PricerSolver* solver, double _UB);
 void   call_evaluate_nodes(PricerSolver* solver, double* pi);
 int    call_is_integer_solution(PricerSolver* solver);
-int call_get_added_cuts(PricerSolver* solver);
 
 void iterate_zdd(PricerSolver* solver);
 

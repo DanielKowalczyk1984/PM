@@ -1,0 +1,7 @@
+[submodule "or-utils"]
+	path = or-utils
+	url = git@gitlab.kuleuven.be:u0056096/or-utils.git
+
+[submodule "branch-and-bound"]
+	path = branch-and-bound
+	url = git@gitlab.kuleuven.be:u0056096/branch-and-bound.git

@@ -123,9 +123,10 @@ class ReformulationModel {
    public:
     ReformulationModel(int nb_assignments, int nb_machines);
     ~ReformulationModel();
-    ReformulationModel(
-        ReformulationModel&& op) noexcept;  // movable and noncopyable
-    ReformulationModel& operator=(ReformulationModel&& op) noexcept;
+    ReformulationModel(ReformulationModel&& op);  // movable and noncopyable
+    ReformulationModel& operator=(ReformulationModel&& op);
+    ReformulationModel(const ReformulationModel&) = default;
+    ReformulationModel& operator=(const ReformulationModel&) = default;
 
     inline int get_nb_constraints() const { return constraint_array.size(); };
 
@@ -184,7 +185,7 @@ class BddCoeff : public VariableKeyBase {
 
     inline double get_coeff() { return coeff; }
 
-    inline double get_value() { return value; }
+    inline double get_value() const { return value; }
 
     inline void set_value(double _value) { value = _value; }
 
@@ -195,6 +196,12 @@ class BddCoeff : public VariableKeyBase {
     friend bool operator==(const BddCoeff& lhs, const BddCoeff& rhs) {
         return lhs.get_j() == rhs.get_j() && lhs.get_t() == rhs.get_t() &&
                lhs.get_high() == rhs.get_high();
+    };
+
+    friend std::ostream& operator<<(std::ostream& os, const BddCoeff& object) {
+        return os << "(j = " << object.get_j() << ", t = " << object.get_t()
+                  << ", x = " << object.get_value()
+                  << ", high = " << object.get_high() << " )\n";
     }
 };
 
@@ -273,7 +280,7 @@ class GenericData {
 };
 class ConstraintGeneric : public ConstraintBase {
    private:
-    std::unique_ptr<GenericData> data;
+    std::shared_ptr<GenericData> data;
 
    public:
     ConstraintGeneric(GenericData* _data,
@@ -290,9 +297,10 @@ class ConstraintGeneric : public ConstraintBase {
           data(nullptr) {}
 
     ~ConstraintGeneric() = default;
-    ConstraintGeneric(ConstraintGeneric&& op) =
-        default;  // movable and noncopyable
+    ConstraintGeneric(ConstraintGeneric&& op) = default;
     ConstraintGeneric& operator=(ConstraintGeneric&& op) = default;
+    ConstraintGeneric& operator=(const ConstraintGeneric&) = default;
+    ConstraintGeneric(const ConstraintGeneric&) = default;
 
     double get_var_coeff(VariableKeyBase* key) override {
         BddCoeff* aux = static_cast<BddCoeff*>(key);
@@ -332,9 +340,10 @@ class OriginalConstraint {
         : constr(_constr){};
     OriginalConstraint() : constr(){};
     ~OriginalConstraint() = default;
-    OriginalConstraint(OriginalConstraint&& op) =
-        default;  // movable and noncopyable
-    OriginalConstraint& operator=(OriginalConstraint&& op) = default;
+    OriginalConstraint(OriginalConstraint&&) = default;
+    OriginalConstraint& operator=(OriginalConstraint&&) = default;
+    OriginalConstraint<T>(const OriginalConstraint<T>&) = default;
+    OriginalConstraint<T>& operator=(const OriginalConstraint<T>&) = default;
 
     inline std::list<std::shared_ptr<T>>* get_coeff_list() {
         return &coeff_list;
@@ -375,6 +384,8 @@ class OriginalModel {
     ~OriginalModel() = default;
     OriginalModel(OriginalModel&& op) = default;  // movable and noncopyable
     OriginalModel& operator=(OriginalModel&& op) = default;
+    OriginalModel<T>(const OriginalModel<T>&) = default;
+    OriginalModel<T>& operator=(const OriginalModel<T>&) = default;
 
     void add_coeff_list(int c, std::shared_ptr<T> coeff) {
         constraint_array[c].add_coeff_to_list(coeff);
