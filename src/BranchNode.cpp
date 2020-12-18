@@ -99,7 +99,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
         auto left_gain = 0.0;
         auto right_gain = 0.0;
-        for (auto t = 0; t < pd->H_max; t++) {
+        for (auto t = 0; t < pd->H_max + 1; t++) {
             if (t < middle_time[i]) {
                 left_gain += x_job_time[i][t];
             } else {
@@ -136,7 +136,7 @@ void BranchNodeBase::branch(BTree* bt) {
             approx = right_gain;
             right_gain = right->LP_lower_bound;
             fmt::print(
-                "STRONG BRANCHING RIGHT PROBE: j = {}, t= {},"
+                "STRONG BRANCHING RIGHT PROBE: j = {}, t = {},"
                 " DWM LB = {:9.2f} ({})\n\n",
                 i, middle_time[i], right_gain, approx);
             if (right_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance) {
@@ -216,7 +216,7 @@ void BranchNodeBase::branch(BTree* bt) {
         auto left = new_node_data(pd);
         auto left_solver = left->solver;
         auto left_node_branch = new BranchNodeBase(left);
-        left->solver->split_job_time(best_job, best_time, false);
+        left_solver->split_job_time(best_job, best_time, false);
         bt->processState(left_node_branch);
 
         auto right = new_node_data(pd);
@@ -225,10 +225,11 @@ void BranchNodeBase::branch(BTree* bt) {
         right_solver->split_job_time(best_job, best_time, true);
         bt->processState(right_node_branch);
     }
-    fmt::print("Number of Nodes in B&B tree = {}", bt->get_nb_nodes());
-    getchar();
 
-    fmt::print("Branching choice: j= {}, t= {}\n", best_job, best_time);
+    fmt::print("Number of Nodes in B&B tree = {}\n", bt->get_nb_nodes());
+    fmt::print("Number of nodes explored = {}\n",
+               bt->tStats->get_nodes_explored());
+    fmt::print("Branching choice: j = {}, t = {}\n", best_job, best_time);
 }
 
 void BranchNodeBase::computeBounds(BTree* bt) {
