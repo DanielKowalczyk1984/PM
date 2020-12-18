@@ -24,6 +24,7 @@ void problem_init(Problem* problem) {
     problem->tree = (BranchBoundTree*)NULL;
     /** Job data */
     problem->g_job_array = g_ptr_array_new_with_free_func(g_job_free);
+    problem->intervals = g_ptr_array_new_with_free_func(g_interval_free);
     problem->opt_sol = (Solution*)NULL;
     /** Job summary */
     problem->nb_jobs = 0;
@@ -80,6 +81,7 @@ void problem_free(Problem* problem) {
     g_ptr_array_free(problem->g_job_array, TRUE);
     g_ptr_array_free(problem->unexplored_states, TRUE);
     g_ptr_array_free(problem->ColPool, TRUE);
+    g_ptr_array_free(problem->intervals, TRUE);
     g_queue_free(problem->non_empty_level_pqs);
     solution_free(&(problem->opt_sol));
 }
@@ -96,7 +98,6 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->H_max = 0;
     pd->H_min = 0;
     pd->off = prob->off;
-    pd->local_intervals = g_ptr_array_new_with_free_func(g_interval_free);
     pd->ordered_jobs = g_ptr_array_new_with_free_func(g_free);
     pd->jobarray = (GPtrArray*)NULL;
     /** Initialization data */
@@ -185,7 +186,6 @@ void nodedata_init_null(NodeData* pd) {
     pd->H_max = 0;
     pd->H_min = 0;
     pd->off = 0;
-    pd->local_intervals = (GPtrArray*)NULL;
     pd->ordered_jobs = (GPtrArray*)NULL;
     pd->jobarray = (GPtrArray*)NULL;
     /** Initialization data */
@@ -281,8 +281,6 @@ NodeData* new_node_data(NodeData* pd) {
     aux->off = pd->off;
 
     /** copy info about intervals */
-    aux->local_intervals =
-        g_ptr_array_copy(pd->local_intervals, g_copy_interval, NULL);
     aux->ordered_jobs =
         g_ptr_array_copy(pd->ordered_jobs, g_copy_interval_pair, NULL);
 
@@ -301,8 +299,9 @@ NodeData* new_node_data(NodeData* pd) {
     aux->id_pseudo_schedules = pd->id_pseudo_schedules;
 
     /** copy info about solver */
-    aux->solver = newSolver(pd->jobarray, pd->nb_machines, pd->ordered_jobs,
-                            pd->parms, pd->H_max, NULL, pd->opt_sol->tw);
+
+    aux->solver = newSolver(aux->jobarray, aux->nb_machines, aux->ordered_jobs,
+                            aux->parms, aux->H_max, NULL, aux->opt_sol->tw);
 
     aux->localColPool =
         g_ptr_array_copy(pd->localColPool, g_copy_scheduleset, &(pd->nb_jobs));
@@ -423,7 +422,6 @@ void temporary_data_free(NodeData* pd) {
 void nodedata_free(NodeData* pd) {
     temporary_data_free(pd);
 
-    g_ptr_array_free(pd->local_intervals, TRUE);
     g_ptr_array_free(pd->ordered_jobs, TRUE);
     g_ptr_array_free(pd->best_schedule, TRUE);
     CC_IFFREE(pd->elist_same, int);

@@ -234,7 +234,7 @@ int main(int ac, char** av) {
         heuristic(&problem);
     } else {
         problem.opt_sol =
-            solution_alloc(root->local_intervals->len, root->nb_machines,
+            solution_alloc(problem.intervals->len, root->nb_machines,
                            root->nb_jobs, problem.off);
         Solution* sol = problem.opt_sol;
         CCcheck_NULL_2(sol, "Failed to allocate memory");
@@ -242,7 +242,7 @@ int main(int ac, char** av) {
         CCcheck_val_2(val, "Failed construct edd");
         printf("Solution Constructed with EDD heuristic:\n");
         solution_print(sol);
-        solution_canonical_order(sol, root->local_intervals);
+        solution_canonical_order(sol, problem.intervals);
         printf("Solution in canonical order: \n");
         solution_print(sol);
     }

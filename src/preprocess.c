@@ -87,7 +87,7 @@ void calculate_Hmax(Problem* problem) {
 void determine_jobs_order_interval(Problem* problem) {
     interval* tmp_interval;
 
-    GPtrArray* local_intervals = problem->root_pd->local_intervals;
+    GPtrArray* local_intervals = problem->intervals;
 
     for (unsigned i = 0; i < problem->g_job_array->len; ++i) {
         Job* tmp_j = (Job*)g_ptr_array_index(problem->g_job_array, i);
@@ -128,7 +128,7 @@ int preprocess_data(Problem* problem) {
     find_division(problem);
 
     /** Create all node of the ZDD */
-    create_ordered_jobs_array(root->local_intervals, root->ordered_jobs);
+    create_ordered_jobs_array(problem->intervals, root->ordered_jobs);
 
     /** Determine the position of each job in the interval */
     // determine_jobs_order_interval(problem);
@@ -308,7 +308,7 @@ int find_division(Problem* problem) {
             GPtrArray* slots;
             slots = array_time_slots(tmp_interval, pairs);
             for (unsigned j = 1; j < slots->len; ++j) {
-                g_ptr_array_add(root_pd->local_intervals,
+                g_ptr_array_add(problem->intervals,
                                 interval_alloc(*((int*)slots->pdata[j - 1]),
                                                *((int*)slots->pdata[j]),
                                                counter, jobarray, nb_jobs));
@@ -316,7 +316,7 @@ int find_division(Problem* problem) {
             }
             g_ptr_array_free(slots, TRUE);
         } else {
-            g_ptr_array_add(root_pd->local_intervals,
+            g_ptr_array_add(problem->intervals,
                             interval_alloc(tmp_interval->a, tmp_interval->b,
                                            counter, jobarray, nb_jobs));
             counter++;

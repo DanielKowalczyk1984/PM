@@ -404,7 +404,7 @@ int heuristic(Problem* prob) {
     int                IR = parms->nb_iterations_rvnd;
     Solution*          sol;
     Solution*          sol1 = (Solution*)NULL;
-    GPtrArray*         intervals = prob->root_pd->local_intervals;
+    GPtrArray*         intervals = prob->intervals;
     local_search_data* data = (local_search_data*)NULL;
     local_search_data* data_RS = (local_search_data*)NULL;
 

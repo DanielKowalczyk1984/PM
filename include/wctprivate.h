@@ -75,7 +75,6 @@ struct _NodeData {
     int        H_min;
     int        off;
     /** data about the intervals */
-    GPtrArray* local_intervals;
     GPtrArray* ordered_jobs;
 
     // The column generation lp information
@@ -207,6 +206,8 @@ struct _Problem {
     int H_max;
     int off;
     int nb_machines;
+
+    GPtrArray* intervals;
 
     int    nb_data_nodes;
     int    global_upper_bound;
