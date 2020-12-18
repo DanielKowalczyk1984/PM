@@ -47,14 +47,16 @@ static int grow_ages(NodeData* pd) {
     lp_interface_get_nb_cols(pd->RMP, &nb_cols);
     assert(nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
     CC_IFFREE(pd->column_status, int);
-    pd->column_status = (int*)CC_SAFE_MALLOC(pd->localColPool->len, int);
-    CCcheck_NULL_2(pd->column_status, "Failed to allocate column_status");
-    val = lp_interface_basis_cols(pd->RMP, pd->column_status,
-                                  pd->id_pseudo_schedules);
-    CCcheck_val_2(val, "Failed in lp_interface_basis_cols");
-    pd->zero_count = 0;
+    if (pd->localColPool->len > 0) {
+        pd->column_status = (int*)CC_SAFE_MALLOC(pd->localColPool->len, int);
+        CCcheck_NULL_2(pd->column_status, "Failed to allocate column_status");
+        val = lp_interface_basis_cols(pd->RMP, pd->column_status,
+                                      pd->id_pseudo_schedules);
+        CCcheck_val_2(val, "Failed in lp_interface_basis_cols");
+        pd->zero_count = 0;
 
-    g_ptr_array_foreach(pd->localColPool, g_grow_ages, pd);
+        g_ptr_array_foreach(pd->localColPool, g_grow_ages, pd);
+    }
 
 CLEAN:
     return val;
@@ -385,7 +387,7 @@ int compute_objective(NodeData* pd) {
     pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound, pd->LP_lower_bound_dual);
     pd->LP_lower_min = CC_MIN(pd->LP_lower_min, pd->LP_lower_bound_BB);
 
-    if (pd->iterations % 2 * pd->nb_jobs == 0) {
+    if (pd->iterations % (pd->nb_jobs) == 0) {
         printf(
             "Current primal LP objective: %19.16f  (LP_dual-bound %19.16f, "
             "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
@@ -590,19 +592,21 @@ int compute_lower_bound(NodeData* pd) {
                  */
                 solve_relaxation(pd);
                 // compute_objective(pd);
-                val = construct_lp_sol_from_rmp(pd);
-                CCcheck_val_2(val, "Failed in construct lp sol from rmp\n");
-                delete_old_schedules(pd);
-                solve_relaxation(pd);
-                // delete_unused_rows(pd);
-                // solve_relaxation(pd);
-                construct_lp_sol_from_rmp(pd);
-                if (!call_is_integer_solution(pd->solver)) {
-                    // has_cuts = (generate_cuts(pd) > 0);
-                    has_cuts = 0;
-                    // call_update_duals(pd->solver_stab);
-                    test++;
-                    // lp_interface_write(pd->RMP, "test.lp");
+                if (pd->localColPool->len > 0) {
+                    val = construct_lp_sol_from_rmp(pd);
+                    CCcheck_val_2(val, "Failed in construct lp sol from rmp\n");
+                    delete_old_schedules(pd);
+                    solve_relaxation(pd);
+                    // delete_unused_rows(pd);
+                    // solve_relaxation(pd);
+                    construct_lp_sol_from_rmp(pd);
+                    if (!call_is_integer_solution(pd->solver)) {
+                        // has_cuts = (generate_cuts(pd) > 0);
+                        has_cuts = 0;
+                        // call_update_duals(pd->solver_stab);
+                        test++;
+                        // lp_interface_write(pd->RMP, "test.lp");
+                    }
                 }
                 break;
 
@@ -634,10 +638,9 @@ int compute_lower_bound(NodeData* pd) {
     }
     // } while (pd->depth == 1);
 
-    statistics->global_lower_bound =
-        CC_MAX(pd->lower_bound + pd->off, statistics->global_lower_bound);
-
     if (pd->depth == 0) {
+        statistics->global_lower_bound =
+            CC_MAX(pd->lower_bound + pd->off, statistics->global_lower_bound);
         statistics->root_lower_bound = statistics->global_lower_bound;
         statistics->root_upper_bound = statistics->global_upper_bound;
         statistics->root_rel_error =
