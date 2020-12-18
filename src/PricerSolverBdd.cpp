@@ -1507,6 +1507,10 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
         }
     }
 
+    if (is_integer_solution) {
+        fmt::print("FOUND INTEGER SOLUTION\n\n");
+    }
+
     // ColorWriterEdgeX  edge_writer(mip_graph, &table);
     // ColorWriterVertex vertex_writer(mip_graph, table);
     // auto              file_name = "lp_solution_" + problem_name + "_" +
@@ -1553,14 +1557,15 @@ void PricerSolverBdd::split_job_time(int _job, int _time, bool _left = false) {
         cleanup_arcs();
         construct_mipgraph();
 
-        auto table_bis = decision_diagram->getDiagram().privateEntity();
-        ColorWriterVertex vertex_writer(mip_graph, table_bis);
-        auto              file_name = "split_solution_" + problem_name + "_" +
-                         std::to_string(_job) + "_" + std::to_string(_time) +
-                         "_" + std::to_string(_left) + ".gv";
-        std::ofstream outf(file_name);
-        boost::write_graphviz(outf, mip_graph, vertex_writer);
-        outf.close();
+        // auto table_bis = decision_diagram->getDiagram().privateEntity();
+        // ColorWriterVertex vertex_writer(mip_graph, table_bis);
+        // auto              file_name = "split_solution_" + problem_name + "_"
+        // +
+        //                  std::to_string(_job) + "_" + std::to_string(_time) +
+        //                  "_" + std::to_string(_left) + ".gv";
+        // std::ofstream outf(file_name);
+        // boost::write_graphviz(outf, mip_graph, vertex_writer);
+        // outf.close();
     }
 }
 
