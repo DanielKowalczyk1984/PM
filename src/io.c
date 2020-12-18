@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <wct.h>
+#include "Statistics.h"
 static int get_problem_name(char* pname, const char* end_file_name) {
     int         rval = 0;
     int         len = 0;
@@ -39,13 +40,14 @@ int read_problem(Problem* problem) {
     char*       buf2 = (char*)NULL;
     NodeData*   pd;
     Parms*      parms;
+    Statistics* statistics = &(problem->stat);
     parms = &(problem->parms);
     pd = (problem->root_pd);
     FILE* in = fopen(parms->jobfile, "r");
     curjob = 0;
 
     if (in != (FILE*)NULL) {
-        get_problem_name(pd->pname, parms->jobfile);
+        get_problem_name(statistics->pname, parms->jobfile);
 
         if (fgets(buf, 254, in) != NULL) {
             p = buf;
@@ -147,7 +149,7 @@ int print_to_csv(Problem* problem) {
     fprintf(file,
             "%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
             "%u/%u,%d,%d,%f,%d,%d,%d,%lu,%lu,%d,%d,%f,%f,%f,%f,%d,%f,%f\n",
-            pd->pname, statistics->real_time_total,
+            statistics->pname, statistics->real_time_total,
             statistics->tot_cputime.cum_zeit, statistics->tot_lb.cum_zeit,
             statistics->tot_lb_root.cum_zeit,
             statistics->tot_heuristic.cum_zeit,

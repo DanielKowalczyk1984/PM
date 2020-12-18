@@ -48,6 +48,7 @@ struct _Statistics {
     double mip_nb_iter_simplex;
     double mip_nb_nodes;
     int    mip_reduced_cost_fixing;
+    char   pname[MAX_PNAME_LEN];
 };
 
 typedef struct _Statistics Statistics;
