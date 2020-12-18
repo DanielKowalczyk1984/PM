@@ -191,7 +191,6 @@ int delete_infeasible_schedules(NodeData* pd) {
     ScheduleSet* tmp_schedule;
     /** pd->zero_count can be deprecated! */
     pd->zero_count = 0;
-    pd->depth = 0;
 
     int it = 0;
     int first_del = -1;
@@ -213,7 +212,6 @@ int delete_infeasible_schedules(NodeData* pd) {
                 pd->zero_count += last_del - first_del + 1;
                 it = it - (last_del - first_del);
                 first_del = last_del = -1;
-                pd->depth = 1;
             } else {
                 it++;
             }
@@ -234,7 +232,6 @@ int delete_infeasible_schedules(NodeData* pd) {
         CCcheck_val_2(val, "Failed in lp_interface_deletecols");
         g_ptr_array_remove_range(pd->localColPool, first_del,
                                  last_del - first_del + 1);
-        pd->depth = 1;
         pd->zero_count += last_del - first_del + 1;
     }
 
