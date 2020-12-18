@@ -1,6 +1,7 @@
 #include <wct.h>
 #include "gurobi_c.h"
 #include "pricingstabilizationwrapper.h"
+#include "solver.h"
 #include "util.h"
 #include "wctprivate.h"
 
@@ -300,7 +301,8 @@ NodeData* new_node_data(NodeData* pd) {
     aux->id_pseudo_schedules = pd->id_pseudo_schedules;
 
     /** copy info about solver */
-    aux->solver = copy_pricer_solver(pd->solver, aux->ordered_jobs, pd->parms);
+    aux->solver = newSolver(pd->jobarray, pd->nb_machines, pd->ordered_jobs,
+                            pd->parms, pd->H_max, NULL, pd->opt_sol->tw);
 
     aux->localColPool =
         g_ptr_array_copy(pd->localColPool, g_copy_scheduleset, &(pd->nb_jobs));
