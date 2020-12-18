@@ -32,6 +32,7 @@ BranchBoundTree::BranchBoundTree(NodeData* root,
 
     BranchNodeBase* node = new BranchNode(root, true);
     tree->setGlobalUB(double(root->opt_sol->tw));
+    // tree->setRetainStates(false);
     node->setID(root->id);
     node->setDepth(root->depth);
     tree->processState(node, true);

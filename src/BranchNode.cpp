@@ -31,7 +31,7 @@ void BranchNodeBase::branch(BTree* bt) {
     // relaxation solution
     std::vector<std::vector<double>> x_job_time(nb_jobs);
     for (auto i = 0; i < nb_jobs; i++) {
-        x_job_time[i].resize(pd->H_max, 0.0);
+        x_job_time[i].resize(pd->H_max + 1, 0.0);
     }
 
     solver->calculate_job_time(x_job_time);
@@ -51,18 +51,20 @@ void BranchNodeBase::branch(BTree* bt) {
         auto prev = -1;
         auto accum = 0.0;
         auto dist_zero = 0.0;
-        for (auto t = 0; t < pd->H_max; t++) {
+        auto job = (Job*)g_ptr_array_index(solver->jobs, i);
+        for (auto t = 0; t < pd->H_max + 1; t++) {
             accum += x_job_time[i][t];
             if ((accum >= (1.0 - TargetBrTimeValue)) &&
                 (x_job_time[i][t] > 1e-3) && (prev != -1) &&
                 (middle_time[i] == -1)) {
-                middle_time[i] = (t + prev + 1) / 2;
+                middle_time[i] = (t + job->processing_time + prev + 1) / 2;
                 branch_scores[i] = double(middle_time[i]) * accum - dist_zero;
             }
             if (middle_time[i] != -1)
                 branch_scores[i] +=
-                    double(t - middle_time[i] + 1) * x_job_time[i][t];
-            dist_zero += double(t) * x_job_time[i][t];
+                    double(t + job->processing_time - middle_time[i] + 1) *
+                    x_job_time[i][t];
+            dist_zero += double(t + job->processing_time) * x_job_time[i][t];
             if (x_job_time[i][t] > 1e-3)
                 prev = t;
         }
@@ -135,7 +137,7 @@ void BranchNodeBase::branch(BTree* bt) {
             right_gain = right->LP_lower_bound;
             fmt::print(
                 "STRONG BRANCHING RIGHT PROBE: j = {}, t= {},"
-                " DWM LB = {:9.2f} {()}\n\n",
+                " DWM LB = {:9.2f} ({})\n\n",
                 i, middle_time[i], right_gain, approx);
             if (right_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance) {
                 fathom_right = true;
@@ -148,6 +150,8 @@ void BranchNodeBase::branch(BTree* bt) {
                 bt->processState(left_node_branch);
                 bt->processState(right_node_branch);
                 bt->setStateComputesBounds(false);
+                fmt::print("Number of Nodes in B&B tree = {}",
+                           bt->get_nb_nodes());
                 return;
             }
 
@@ -221,6 +225,8 @@ void BranchNodeBase::branch(BTree* bt) {
         right_solver->split_job_time(best_job, best_time, true);
         bt->processState(right_node_branch);
     }
+    fmt::print("Number of Nodes in B&B tree = {}", bt->get_nb_nodes());
+    getchar();
 
     fmt::print("Branching choice: j= {}, t= {}\n", best_job, best_time);
 }
