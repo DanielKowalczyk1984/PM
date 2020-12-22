@@ -154,14 +154,17 @@ struct _NodeData {
     int       nb_duetime;
     NodeData* releasetime_child;
     int       nb_releasetime;
-    int       branch_job;
-    int       completiontime;
     /** wide branching conflict */
     int*       v1_wide;
     int*       v2_wide;
     int        nb_wide;
     NodeData** same_children_wide;
     NodeData** diff_children_wide;
+
+    /** Branch info */
+    int branch_job;
+    int completiontime;
+    int less;
 
     /**
      * ptr to the parent node
