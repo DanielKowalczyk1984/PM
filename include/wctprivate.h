@@ -198,6 +198,7 @@ struct _Problem {
     /** Job data in EDD order */
     GPtrArray* g_job_array;
     GPtrArray* list_solutions;
+
     /** Summary of jobs */
     int nb_jobs;
     int p_sum;
@@ -225,9 +226,6 @@ struct _Problem {
 
     /* All partial schedules*/
     GPtrArray* ColPool;
-    /** Maximum number of artificial columns */
-    int maxArtificials;
-    /** Actual number of artificial columns */
     /* Best Solution*/
     Solution* opt_sol;
     /*heap variables*/
