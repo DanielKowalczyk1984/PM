@@ -384,7 +384,7 @@ int compute_objective(NodeData* pd) {
     pd->LP_lower_bound_BB = CC_MIN(pd->LP_lower_bound, pd->LP_lower_bound_dual);
     pd->LP_lower_min = CC_MIN(pd->LP_lower_min, pd->LP_lower_bound_BB);
 
-    if (pd->iterations % (pd->nb_jobs) == 0) {
+    if (pd->iterations % (pd->nb_jobs) == 0 && dbg_lvl() > 0) {
         printf(
             "Current primal LP objective: %19.16f  (LP_dual-bound %19.16f, "
             "lowerbound = %d, eta_in = %f, eta_out = %f).\n",
