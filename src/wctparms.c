@@ -13,34 +13,21 @@ void parms_init(Parms* parms) {
     parms->use_heuristic = min_use_heuristic;
     parms->reduce_cost_fixing = min_reduced_cost;
     parms->nb_iterations_rvnd = 3;
-    parms->scatter_search = 0;
     parms->branchandbound = no;
     parms->stab_technique = no_stab;
     parms->print = min_print_size;
     parms->delete_edge_lists = 1;
-    parms->delete_cclasses = 0;
     parms->jobfile = (char*)NULL;
     parms->pname = (char*)NULL;
-    parms->outfile = (char*)NULL;
-    parms->cclasses_outfile = (char*)NULL;
-    parms->cclasses_infile = (char*)NULL;
-    parms->color_infile = (char*)NULL;
-    parms->backupdir = (char*)NULL;
     parms->upper_bounds_only = 0;
     parms->branching_cpu_limit = 3600.0;
-    parms->scatter_search_cpu_limit = 40.0;
     parms->alpha = 0.8;
     parms->pricing_solver = bdd_solver_backward_cycle;
 }
 
 void parms_free(Parms* parms) {
-    CC_IFFREE(parms->color_infile, char);
     CC_IFFREE(parms->jobfile, char);
     CC_IFFREE(parms->pname, char);
-    CC_IFFREE(parms->outfile, char);
-    CC_IFFREE(parms->cclasses_outfile, char);
-    CC_IFFREE(parms->cclasses_infile, char);
-    CC_IFFREE(parms->backupdir, char);
 }
 
 static int copy_string(char** dst, const char* src) {
@@ -55,11 +42,6 @@ CLEAN:
     return val;
 }
 
-/*Functions for setting the name of the files*/
-int parms_set_outfile(Parms* parms, const char* fname) {
-    return copy_string(&(parms->outfile), fname);
-}
-
 int parms_set_file(Parms* parms, const char* fname) {
     return copy_string(&(parms->jobfile), fname);
 }
@@ -69,10 +51,6 @@ int parms_set_pname(Parms* parms, char* fname) {
     CC_IFFREE(fname, char);
     return val;
 }
-int parms_set_backupdir(Parms* parms, const char* fname) {
-    return copy_string(&(parms->backupdir), fname);
-}
-
 /*Functions for setting the branching parameters*/
 int parms_set_init_upper_bound(Parms* parms, int bound) {
     parms->init_upper_bound = bound;
@@ -127,16 +105,6 @@ int parms_set_nb_iterations_rvnd(Parms* parms, int nb_iterations) {
     return 0;
 }
 
-int parms_set_combine_method(Parms* parms, int combine_method) {
-    parms->combine_method = combine_method;
-    return 0;
-}
-
-int parms_set_scatter_search(Parms* parms, int scatter) {
-    parms->scatter_search = scatter;
-    return 0;
-}
-
 int parms_set_branchandbound(Parms* parms, int bound) {
     parms->branchandbound = bound;
     return 0;
@@ -144,11 +112,6 @@ int parms_set_branchandbound(Parms* parms, int bound) {
 
 int parms_set_bb_strategy(Parms* parms, int strategy) {
     parms->bb_explore_strategy = strategy;
-    return 0;
-}
-
-int parms_set_scatter_search_cpu_limit(Parms* parms, double limit) {
-    parms->scatter_search_cpu_limit = limit;
     return 0;
 }
 

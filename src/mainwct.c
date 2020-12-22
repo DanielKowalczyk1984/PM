@@ -73,7 +73,7 @@ static int parseargs(int ac, char** av, Parms* parms) {
     char*  ptr;
     int    debug = dbg_lvl();
 
-    while ((c = getopt(ac, av, "df:s:l:L:B:S:D:p:b:Z:a:m:r:h:e:")) != EOF) {
+    while ((c = getopt(ac, av, "df:s:l:B:S:D:p:b:Z:a:m:r:h:e:")) != EOF) {
         switch (c) {
             case 'd':
                 ++(debug);
@@ -96,12 +96,6 @@ static int parseargs(int ac, char** av, Parms* parms) {
                 f = strtod(optarg, &ptr);
                 val = parms_set_branching_cpu_limit(parms, f);
                 CCcheck_val(val, "Failed parms_set_branching_cpu_limit");
-                break;
-
-            case 'L':
-                f = strtod(optarg, &ptr);
-                val = parms_set_scatter_search_cpu_limit(parms, f);
-                CCcheck_val(val, "Failed parms_set_scatter_search_cpu_limit");
                 break;
 
             case 'B':

@@ -54,7 +54,7 @@ enum print {
     use_print = 1,
 };
 
-enum BBSearchStrategy {
+enum BBBranchStrategy {
     min_bb_strategy = 0,
     conflict_strategy = min_bb_strategy,
     ahv_strategy = 1,
@@ -113,12 +113,6 @@ typedef struct parms {
     enum reduced_cost_fixing_param reduce_cost_fixing;
 
     /**
-     * scatter search
-     */
-    int    combine_method;
-    int    scatter_search;
-    double scatter_search_cpu_limit;
-    /**
      * column generation
      */
     int branchandbound;
@@ -126,15 +120,9 @@ typedef struct parms {
     int print;
 
     int delete_edge_lists;
-    int delete_cclasses;
 
     char* jobfile;
     char* pname;
-    char* outfile;
-    char* cclasses_infile;
-    char* cclasses_outfile;
-    char* color_infile;
-    char* backupdir;
 
     int upper_bounds_only;
     int nb_jobs;
@@ -158,26 +146,21 @@ int parms_set_reduce_cost(Parms* parms, int usage);
 int parms_set_nb_iterations_rvnd(Parms* parms, int nb_sol);
 
 /**
- * column generation
+ * Column Generation parameters
+ */
+int parms_set_pricing_solver(Parms* parms, int solver);
+int parms_set_stab_technique(Parms* parms, int stab_technique);
+
+/**
+ * Branch-and-Bound parameters
  */
 int parms_set_branchandbound(Parms* parms, int bound);
 int parms_set_bb_strategy(Parms* parms, int strategy);
-int parms_set_stab_technique(Parms* parms, int stab_technique);
 int parms_set_print(Parms* parms, int print);
-int parms_set_pricing_solver(Parms* parms, int solver);
-
-/**
- * scatter search
- */
-int parms_set_scatter_search(Parms* parms, int scatter);
-int parms_set_combine_method(Parms* parms, int combine_method);
-int parms_set_scatter_search_cpu_limit(Parms* parms, double limit);
 
 /*Functions for defining the filesname*/
-int parms_set_outfile(Parms* parms, const char* fname);
 int parms_set_file(Parms* parms, const char* fname);
 int parms_set_pname(Parms* parms, char* fname);
-int parms_set_backupdir(Parms* parms, const char* fname);
 int parms_set_nb_machines(Parms* parms, int nb_machines);
 
 #ifdef __cplusplus
