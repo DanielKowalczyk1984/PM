@@ -658,9 +658,10 @@ void PricerSolverBdd::remove_layers_init() {
                                  last_del - first_del + 1);
     }
 
-    // nb_layers = ordered_jobs->len;
-    fmt::print("{0: <{2}}{1}\n", "The new number of layers", ordered_jobs->len,
-               60);
+    if (dbg_lvl() > 0) {
+        fmt::print("{0: <{2}}{1}\n", "The new number of layers",
+                   ordered_jobs->len, 60);
+    }
 }
 
 void PricerSolverBdd::remove_layers() {
@@ -708,9 +709,10 @@ void PricerSolverBdd::remove_layers() {
                                  last_del - first_del + 1);
     }
 
-    // nb_layers = ordered_jobs->len;
-    fmt::print("{0: <{2}}{1}\n", "The new number of layers", ordered_jobs->len,
-               60);
+    if (dbg_lvl() > 0) {
+        fmt::print("{0: <{2}}{1}\n", "The new number of layers",
+                   ordered_jobs->len, 60);
+    }
 }
 
 void PricerSolverBdd::remove_edges() {
@@ -961,7 +963,9 @@ void PricerSolverBdd::build_mip() {
 
 void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     /** Remove Layers */
-    fmt::print("Starting Reduced cost fixing\n");
+    if (dbg_lvl() > 0) {
+        fmt::print("Starting Reduced cost fixing\n");
+    }
     evaluate_nodes(pi, UB, LB);
     bottum_up_filtering();
     topdown_filtering();
@@ -1077,13 +1081,14 @@ void PricerSolverBdd::cleanup_arcs() {
     }
 
     if (removed_edges) {
-        fmt::print("{0: <{2}}{1}\n", "Number of edges removed by clean up",
-                   nb_edges_removed_tmp, 60);
-        fmt::print("{0: <{2}}{1}\n", "Total number of edges removed",
-                   get_nb_removed_edges(), 60);
+        if (dbg_lvl() > 0) {
+            fmt::print("{0: <{2}}{1}\n", "Number of edges removed by clean up",
+                       nb_edges_removed_tmp, 60);
+            fmt::print("{0: <{2}}{1}\n", "Total number of edges removed",
+                       get_nb_removed_edges(), 60);
+        }
         remove_layers();
         remove_edges();
-        // init_table();
     }
 }
 
@@ -1534,17 +1539,18 @@ void PricerSolverBdd::split_job_time(int _job, int _time, bool _left = false) {
 
     for (auto i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            it.calc_yes = true;
-            if (it.get_weight() > _time && _left && it.calc_yes &&
-                it.get_nb_job() == _job) {
-                it.calc_yes = false;
-                removed_edges = true;
-            }
-
-            if (it.get_weight() <= _time && !_left && it.calc_yes &&
-                it.get_nb_job() == _job) {
-                it.calc_yes = false;
-                removed_edges = true;
+            if (_left) {
+                if (it.get_weight() + it.get_job()->processing_time > _time &&
+                    it.get_nb_job() == _job) {
+                    it.calc_yes = false;
+                    removed_edges = true;
+                }
+            } else {
+                if (it.get_weight() + it.get_job()->processing_time <= _time &&
+                    it.get_nb_job() == _job) {
+                    it.calc_yes = false;
+                    removed_edges = true;
+                }
             }
         }
     }
