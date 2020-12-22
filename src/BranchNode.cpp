@@ -3,7 +3,6 @@
 #include <cstdio>
 #include "PricerSolverBase.hpp"
 #include "branch-and-bound/btree.h"
-// #include "branch-and-boundwrapper.h"
 #include "solver.h"
 #include "wct.h"
 #include "wctprivate.h"
@@ -23,6 +22,12 @@ void BranchNodeBase::branch(BTree* bt) {
     if (strong_branching) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
     }
+
+    fmt::print(
+        "BRANCHING NODE with branch_job = {} and middle_time = {} , depth = "
+        "less = {}"
+        "{}\n\n",
+        pd->branch_job, pd->completiontime, depth, pd->less);
 
     auto fathom_left = false;
     auto fathom_right = false;
@@ -54,19 +59,25 @@ void BranchNodeBase::branch(BTree* bt) {
         auto job = (Job*)g_ptr_array_index(solver->jobs, i);
         for (auto t = 0; t < pd->H_max + 1; t++) {
             accum += x_job_time[i][t];
+
             if ((accum >= (1.0 - TargetBrTimeValue)) &&
                 (x_job_time[i][t] > 1e-3) && (prev != -1) &&
                 (middle_time[i] == -1)) {
-                middle_time[i] = (t + job->processing_time + prev + 1) / 2;
+                middle_time[i] = (t + job->processing_time + prev) / 2;
                 branch_scores[i] = double(middle_time[i]) * accum - dist_zero;
             }
-            if (middle_time[i] != -1)
+
+            if (middle_time[i] != -1) {
                 branch_scores[i] +=
                     double(t + job->processing_time - middle_time[i] + 1) *
                     x_job_time[i][t];
+            }
+
             dist_zero += double(t + job->processing_time) * x_job_time[i][t];
-            if (x_job_time[i][t] > 1e-3)
-                prev = t;
+
+            if (x_job_time[i][t] > 1e-3) {
+                prev = t + job->processing_time;
+            }
         }
     }
 
@@ -99,8 +110,9 @@ void BranchNodeBase::branch(BTree* bt) {
 
         auto left_gain = 0.0;
         auto right_gain = 0.0;
+        auto job = (Job*)g_ptr_array_index(pd->jobarray, i);
         for (auto t = 0; t < pd->H_max + 1; t++) {
-            if (t < middle_time[i]) {
+            if (t + job->processing_time < middle_time[i]) {
                 left_gain += x_job_time[i][t];
             } else {
                 right_gain += x_job_time[i][t];
@@ -108,6 +120,14 @@ void BranchNodeBase::branch(BTree* bt) {
         }
 
         if (strong_branching) {
+            auto min_gain = std::min(right_gain, left_gain);
+
+            if (min_gain > best_min_gain) {
+                best_min_gain = min_gain;
+                best_job = i;
+                best_time = middle_time[i];
+            }
+        } else {
             auto left = new_node_data(pd);
             auto left_solver = left->solver;
             auto left_node_branch = new BranchNodeBase(left);
@@ -119,7 +139,7 @@ void BranchNodeBase::branch(BTree* bt) {
             fmt::print(
                 "STRONG BRANCHING LEFT PROBE: j = {}, t = {},"
                 " DWM LB = {:9.2f} ({})\n\n",
-                i, middle_time[i], left_gain, approx);
+                i, middle_time[i], left_gain, approx + pd->off);
             if (left_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance) {
                 fathom_left = true;
             }
@@ -138,7 +158,7 @@ void BranchNodeBase::branch(BTree* bt) {
             fmt::print(
                 "STRONG BRANCHING RIGHT PROBE: j = {}, t = {},"
                 " DWM LB = {:9.2f} ({})\n\n",
-                i, middle_time[i], right_gain, approx);
+                i, middle_time[i], right_gain, approx + pd->off);
             if (right_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance) {
                 fathom_right = true;
             }
@@ -181,14 +201,6 @@ void BranchNodeBase::branch(BTree* bt) {
             if (right_node_branch) {
                 delete right_node_branch;
             }
-        } else {
-            auto min_gain = std::min(right_gain, left_gain);
-
-            if (min_gain > best_min_gain) {
-                best_min_gain = min_gain;
-                best_job = i;
-                best_time = middle_time[i];
-            }
         }
     }
 
@@ -208,11 +220,6 @@ void BranchNodeBase::branch(BTree* bt) {
 
     /** Process the branching nodes insert them in the tree */
     if (strong_branching) {
-        bt->setStateComputesBounds(true);
-        bt->processState(best_left);
-        bt->processState(best_right);
-        bt->setStateComputesBounds(false);
-    } else {
         auto left = new_node_data(pd);
         auto left_solver = left->solver;
         auto left_node_branch = new BranchNodeBase(left);
@@ -224,12 +231,30 @@ void BranchNodeBase::branch(BTree* bt) {
         auto right_node_branch = new BranchNodeBase(right);
         right_solver->split_job_time(best_job, best_time, true);
         bt->processState(right_node_branch);
+        auto job = (Job*)g_ptr_array_index(pd->solver->jobs, best_job);
+        fmt::print("NO STRONG BRANCHING {} {} {}\n\n", best_job, best_time,
+                   best_min_gain);
+        left->branch_job = right->branch_job = best_job;
+        left->completiontime = right->completiontime = best_time;
+        left->less = 0;
+        right->less = 1;
+    } else {
+        bt->setStateComputesBounds(true);
+        bt->processState(best_left);
+        bt->processState(best_right);
+        bt->setStateComputesBounds(false);
+        best_left->pd->branch_job = best_right->pd->branch_job = best_job;
+        best_left->pd->completiontime = best_right->pd->completiontime =
+            best_time;
+        best_left->pd->less = 0;
+        best_right->pd->less = 1;
     }
 
     fmt::print("Number of Nodes in B&B tree = {}\n", bt->get_nb_nodes());
     fmt::print("Number of nodes explored = {}\n",
                bt->tStats->get_nodes_explored());
-    fmt::print("Branching choice: j = {}, t = {}\n", best_job, best_time);
+    fmt::print("Branching choice: j = {}, t = {}, best_gain = {}\n", best_job,
+               best_time, best_min_gain);
 }
 
 void BranchNodeBase::computeBounds(BTree* bt) {
