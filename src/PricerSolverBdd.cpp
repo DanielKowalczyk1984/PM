@@ -70,7 +70,9 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
     topdown_filtering();
     construct_mipgraph();
     init_coeff_constraints();
-    fmt::print("Ending construction\n");
+    if (dbg_lvl() > 0) {
+        fmt::print("ENDING CONSTRUCTION\n\n");
+    }
 }
 
 PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src,
@@ -1579,7 +1581,6 @@ int PricerSolverBdd::add_constraints() {
     auto& table = decision_diagram->getDiagram().privateEntity();
     if (get_is_integer_solution()) {
         bool added_cuts = false;
-        fmt::print("FOUND INTEGER SOLUTION\n");
         return added_cuts;
     } else {
         auto generator =

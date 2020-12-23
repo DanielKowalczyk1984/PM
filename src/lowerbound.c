@@ -614,7 +614,7 @@ int compute_lower_bound(NodeData* pd) {
         }
     } while (has_cuts && test < 5);
 
-    if (dbg_lvl() > -1) {
+    if (dbg_lvl() > 0 || pd->id == 0) {
         printf("iterations = %d\n", pd->iterations);
         printf("lowerbound %d\n", pd->lower_bound + pd->off);
         printf("LP value = %f \n", pd->LP_lower_bound + pd->off);
