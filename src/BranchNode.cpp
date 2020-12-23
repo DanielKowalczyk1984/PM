@@ -19,15 +19,14 @@ void BranchNodeBase::branch(BTree* bt) {
     auto strong_branching =
         ((pd->opt_sol->tw - pd->LP_lower_bound) < (1.0 + IntegerTolerance));
 
-    if (strong_branching) {
+    if (!strong_branching) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
     }
 
     fmt::print(
-        "BRANCHING NODE with branch_job = {} and middle_time = {} , depth = "
-        "less = {}"
-        "{}\n\n",
-        pd->branch_job, pd->completiontime, depth, pd->less);
+        "BRANCHING NODE with branch_job = {} and middle_time = {} , less = {}, "
+        "depth = {}\n\n",
+        pd->branch_job, pd->completiontime, pd->less, depth);
 
     auto fathom_left = false;
     auto fathom_right = false;
@@ -138,9 +137,11 @@ void BranchNodeBase::branch(BTree* bt) {
             left_gain = left->LP_lower_bound;
             fmt::print(
                 "STRONG BRANCHING LEFT PROBE: j = {}, t = {},"
-                " DWM LB = {:9.2f} ({})\n\n",
-                i, middle_time[i], left_gain, approx + pd->off);
-            if (left_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance) {
+                " DWM LB = {:9.2f} in iterations {} ({})\n\n",
+                i, middle_time[i], left_gain + pd->off, left->iterations,
+                approx);
+            if (left_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance ||
+                left_solver->get_is_integer_solution()) {
                 fathom_left = true;
             }
 
@@ -157,9 +158,11 @@ void BranchNodeBase::branch(BTree* bt) {
             right_gain = right->LP_lower_bound;
             fmt::print(
                 "STRONG BRANCHING RIGHT PROBE: j = {}, t = {},"
-                " DWM LB = {:9.2f} ({})\n\n",
-                i, middle_time[i], right_gain, approx + pd->off);
-            if (right_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance) {
+                " DWM LB = {:9.2f} in iterations {} ({})\n\n",
+                i, middle_time[i], right_gain + pd->off, right->iterations,
+                approx);
+            if (right_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance ||
+                right_solver->get_is_integer_solution()) {
                 fathom_right = true;
             }
 
@@ -167,11 +170,13 @@ void BranchNodeBase::branch(BTree* bt) {
             if (fathom_left || fathom_right) {
                 /** Process everything */
                 bt->setStateComputesBounds(true);
+                left->branch_job = right->branch_job = i;
+                left->completiontime = right->completiontime = middle_time[i];
+                left->less = 0;
+                right->less = 1;
                 bt->processState(left_node_branch);
                 bt->processState(right_node_branch);
                 bt->setStateComputesBounds(false);
-                fmt::print("Number of Nodes in B&B tree = {}",
-                           bt->get_nb_nodes());
                 return;
             }
 
@@ -231,9 +236,9 @@ void BranchNodeBase::branch(BTree* bt) {
         auto right_node_branch = new BranchNodeBase(right);
         right_solver->split_job_time(best_job, best_time, true);
         bt->processState(right_node_branch);
-        auto job = (Job*)g_ptr_array_index(pd->solver->jobs, best_job);
-        fmt::print("NO STRONG BRANCHING {} {} {}\n\n", best_job, best_time,
-                   best_min_gain);
+        // auto job = (Job*)g_ptr_array_index(pd->solver->jobs, best_job);
+        // fmt::print("NO STRONG BRANCHING {} {} {}\n\n", best_job, best_time,
+        //            best_min_gain);
         left->branch_job = right->branch_job = best_job;
         left->completiontime = right->completiontime = best_time;
         left->less = 0;
@@ -262,13 +267,14 @@ void BranchNodeBase::computeBounds(BTree* bt) {
     solve_relaxation(pd);
     compute_lower_bound(pd);
     lowerBound = pd->LP_lower_bound;
-    objValue = pd->opt_sol->tw;
+    objValue = pd->LP_lower_bound;
 }
 
 void BranchNodeBase::assessDominance(State* otherState) {}
 
 bool BranchNodeBase::isTerminalState() {
-    return false;
+    auto solver = pd->solver;
+    return solver->get_is_integer_solution();
 }
 
 void BranchNodeBase::applyFinalPruningTests(BTree* bt) {}
