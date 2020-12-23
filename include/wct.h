@@ -6,7 +6,6 @@ extern "C" {
 #endif
 
 #include "defs.h"
-#include "heap.h"
 #include "wctprivate.h"
 
 /**
@@ -48,41 +47,7 @@ int partlist_to_scheduleset(PartList*     part,
                             ScheduleSet** classes,
                             int*          column_count);
 
-/**
- * branch_and_bound.c
- */
-
-/*Help functions for branching*/
-int  insert_into_branching_heap(NodeData* pd, Problem* problem);
-int  skip_nodedata(NodeData* pd, Problem* problem);
-int  branching_msg(NodeData* pd, Problem* problem);
-int  branching_msg_cbfs(NodeData* pd, Problem* problem);
-void free_elist(NodeData* cd, Parms* parms);
-int  prune_duplicated_sets(NodeData* pd);
-
-/** Initialize BB tree */
-void init_BB_tree(Problem* problem);
-
-/** Conflict Branching functions */
-int sequential_branching_conflict(Problem* problem);
-/** Conflict Branching CBFS exploration */
-int sequential_cbfs_branch_and_bound_conflict(Problem* problem);
-
-/** help function for cbfs */
-void      insert_node_for_exploration(NodeData* pd, Problem* problem);
-NodeData* get_next_node(Problem* problem);
-
-int insert_frac_pairs_into_heap(NodeData*      pd,
-                                int*           nodepair_refs,
-                                double*        nodepair_weights,
-                                int            nb_pairs,
-                                HeapContainer* heap);
-
-/**
- * conflict_branching.c
- */
-int create_branches_conflict(NodeData* pd, Problem* problem);
-
+int prune_duplicated_sets(NodeData* pd);
 /**
  * lowerbound.c
  */
@@ -100,8 +65,7 @@ int solve_relaxation(NodeData* pd);
 
 void make_pi_feasible(NodeData* pd);
 void make_pi_feasible_farkas_pricing(NodeData* pd);
-
-int add_newsets(NodeData* pd);
+int  add_newsets(NodeData* pd);
 
 /** Help functions Glib */
 void g_print_ages_col(gpointer data, gpointer user_data);
@@ -126,22 +90,6 @@ int add_artificial_var_to_rmp(NodeData* pd);
  * wct.c
  */
 
-void adapt_global_upper_bound(Problem* problem, int new_upper_bound);
-/** compute row-index v1 and column-index v2 from array-index.*/
-static inline void inodepair_ref_key(int* v1, int* v2, int index) {
-    *v2 = (int)floor(sqrt(2 * ((double)index) + 0.25) - 0.5);
-    *v1 = index - (*v2 * (*v2 + 1) / 2);
-}
-
-/** help functions for heap strong branching */
-static inline int nodepair_ref_key(int v1, int v2) {
-    /* We store only the elements of the upper right triangle within the
-     v_count x v_count matrix. */
-    assert(v1 <= v2);
-    return v2 * (v2 + 1) / 2 + v1;
-}
-
-int compute_schedule(Problem* problem);
 int add_solution_to_colpool(Solution* sol, NodeData* pd);
 int add_solution_to_colpool_and_lp(Solution* sol, NodeData* pd);
 

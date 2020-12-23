@@ -3,8 +3,6 @@ file(
   SOURCE_FILES
   "src/*.cpp"
   src/Statistics.c
-  src/branch_and_bound.c
-  src/conflict_branching.c
   src/greedy.c
   src/interval.c
   src/io.c

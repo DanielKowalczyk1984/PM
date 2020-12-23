@@ -138,28 +138,28 @@ struct _NodeData {
     int retirementage;
 
     /** Branching strategies */
-    int choose;
-    /** conflict */
-    int*      elist_same;
-    int       edge_count_same;
-    int*      elist_differ;
-    int       edge_count_differ;
-    NodeData* same_children;
-    int       nb_same;
-    NodeData* diff_children;
-    int       nb_diff;
-    Job *     v1, *v2;
-    /** ahv branching */
-    NodeData* duetime_child;
-    int       nb_duetime;
-    NodeData* releasetime_child;
-    int       nb_releasetime;
-    /** wide branching conflict */
-    int*       v1_wide;
-    int*       v2_wide;
-    int        nb_wide;
-    NodeData** same_children_wide;
-    NodeData** diff_children_wide;
+    // int choose;
+    // /** conflict */
+    // int*      elist_same;
+    // int       edge_count_same;
+    // int*      elist_differ;
+    // int       edge_count_differ;
+    // NodeData* same_children;
+    // int       nb_same;
+    // NodeData* diff_children;
+    // int       nb_diff;
+    // Job *     v1, *v2;
+    // /** ahv branching */
+    // NodeData* duetime_child;
+    // int       nb_duetime;
+    // NodeData* releasetime_child;
+    // int       nb_releasetime;
+    // /** wide branching conflict */
+    // int*       v1_wide;
+    // int*       v2_wide;
+    // int        nb_wide;
+    // NodeData** same_children_wide;
+    // NodeData** diff_children_wide;
 
     /** Branch info */
     int branch_job;
@@ -251,7 +251,6 @@ NodeData* new_node_data(NodeData* pd);
 
 /*Free the Nodedata*/
 void lp_node_data_free(NodeData* pd);
-void children_data_free(NodeData* pd);
 void nodedata_free(NodeData* pd);
 void temporary_data_free(NodeData* pd);
 

@@ -134,9 +134,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->solver = (PricerSolver*)NULL;
     pd->nb_non_improvements = 0;
     pd->zero_count = 0;
-    // pd->bestcolors = (ScheduleSet*)NULL;
     pd->best_schedule = g_ptr_array_new_with_free_func(g_scheduleset_free);
-    // pd->nb_best = 0;
     /**Column schedules */
     pd->localColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     pd->column_status = (int*)NULL;
@@ -145,33 +143,9 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->retirementage = 100;
     /*initialization of branches*/
     pd->branch_job = -1;
-    pd->parent = (NodeData*)NULL;
-    pd->choose = 0;
-    /** ahv branching */
-    pd->duetime_child = (NodeData*)NULL;
-    pd->nb_duetime = 0;
-    pd->releasetime_child = (NodeData*)NULL;
-    pd->nb_releasetime = 0;
-    pd->branch_job = -1;
+    pd->less = -1;
     pd->completiontime = 0;
-    /** conflict branching */
-    pd->elist_same = (int*)NULL;
-    pd->edge_count_same = 0;
-    pd->elist_differ = (int*)NULL;
-    pd->edge_count_differ = 0;
-    pd->same_children = (NodeData*)NULL;
-    pd->nb_same = 0;
-    pd->diff_children = (NodeData*)NULL;
-    pd->nb_diff = 0;
-    pd->v1 = (Job*)NULL;
-    pd->v2 = (Job*)NULL;
-    /** Wide branching */
-    pd->v1_wide = (int*)NULL;
-    pd->v2_wide = (int*)NULL;
-    pd->nb_wide = 0;
-    pd->same_children_wide = (NodeData**)NULL;
-    pd->diff_children_wide = (NodeData**)NULL;
-
+    pd->parent = (NodeData*)NULL;
     pd->parms = &(prob->parms);
 }
 
@@ -234,32 +208,8 @@ void nodedata_init_null(NodeData* pd) {
     /*initialization of branches*/
     pd->branch_job = -1;
     pd->parent = (NodeData*)NULL;
-    pd->choose = 0;
-    /** ahv branching */
-    pd->duetime_child = (NodeData*)NULL;
-    pd->nb_duetime = 0;
-    pd->releasetime_child = (NodeData*)NULL;
-    pd->nb_releasetime = 0;
-    pd->branch_job = -1;
     pd->completiontime = 0;
-    /** conflict branching */
-    pd->elist_same = (int*)NULL;
-    pd->edge_count_same = 0;
-    pd->elist_differ = (int*)NULL;
-    pd->edge_count_differ = 0;
-    pd->same_children = (NodeData*)NULL;
-    pd->nb_same = 0;
-    pd->diff_children = (NodeData*)NULL;
-    pd->nb_diff = 0;
-    pd->v1 = (Job*)NULL;
-    pd->v2 = (Job*)NULL;
-    /** Wide branching */
-    pd->v1_wide = (int*)NULL;
-    pd->v2_wide = (int*)NULL;
-    pd->nb_wide = 0;
-    pd->same_children_wide = (NodeData**)NULL;
-    pd->diff_children_wide = (NodeData**)NULL;
-
+    pd->less = -1;
     pd->parms = (Parms*)NULL;
 }
 
@@ -378,36 +328,7 @@ void lp_node_data_free(NodeData* pd) {
     pd->id_pseudo_schedules = 0;
 }
 
-void children_data_free(NodeData* pd) {
-    int i;
-
-    for (i = 0; i < pd->nb_same; ++i) {
-        nodedata_free(&(pd->same_children[i]));
-    }
-
-    for (i = 0; i < pd->nb_duetime; ++i) {
-        nodedata_free(&(pd->duetime_child[i]));
-    }
-
-    CC_IFFREE(pd->same_children, NodeData);
-    CC_IFFREE(pd->duetime_child, NodeData);
-
-    for (i = 0; i < pd->nb_diff; ++i) {
-        nodedata_free(&(pd->diff_children[i]));
-    }
-
-    for (i = 0; i < pd->nb_releasetime; ++i) {
-        nodedata_free(&(pd->releasetime_child[i]));
-    }
-
-    CC_IFFREE(pd->releasetime_child, NodeData);
-    CC_IFFREE(pd->diff_children, NodeData);
-    pd->nb_same = pd->nb_diff = 0;
-    pd->nb_releasetime = pd->nb_duetime = 0;
-}
-
 void temporary_data_free(NodeData* pd) {
-    children_data_free(pd);
     lp_node_data_free(pd);
     // g_ptr_array_free(pd->localColPool, TRUE);
     if (pd->solver) {
@@ -424,12 +345,6 @@ void nodedata_free(NodeData* pd) {
 
     g_ptr_array_free(pd->ordered_jobs, TRUE);
     g_ptr_array_free(pd->best_schedule, TRUE);
-    CC_IFFREE(pd->elist_same, int);
-    CC_IFFREE(pd->elist_differ, int);
-    CC_IFFREE(pd->v1_wide, int);
-    CC_IFFREE(pd->v2_wide, int);
-    CC_IFFREE(pd->v1_wide, int);
-    CC_IFFREE(pd->v2_wide, int);
     CC_IFFREE(pd, NodeData);
 }
 
@@ -448,162 +363,175 @@ int set_id_and_name(NodeData* pd, int id, const char* fname) {
 CLEAN:
     return val;
 }
+static void scheduleset_unify(GPtrArray* array) {
+    int          i;
+    int          it = 1;
+    int          first_del = -1;
+    int          last_del = -1;
+    int          nb_col = array->len;
+    ScheduleSet *temp, *prev;
+    g_ptr_array_sort(array, g_scheduleset_less);
 
-static int prefill_heap(NodeData* pd, Problem* problem) {
+    if (!(array->len)) {
+        return;
+    }
+
+    prev = (ScheduleSet*)g_ptr_array_index(array, 0);
+    /* Find first non-empty set */
+    for (i = 1; i < nb_col; ++i) {
+        temp = (ScheduleSet*)g_ptr_array_index(array, it);
+        if (scheduleset_less(prev, temp)) {
+            if (first_del != -1) {
+                /** Delete recently found deletion range.*/
+                g_ptr_array_remove_range(array, first_del,
+                                         last_del - first_del + 1);
+                it = it - (last_del - first_del);
+                first_del = last_del = -1;
+            } else {
+                it++;
+            }
+            prev = temp;
+        } else {
+            if (first_del == -1) {
+                first_del = it;
+                last_del = first_del;
+            } else {
+                last_del++;
+            }
+            prev = temp;
+            it++;
+        }
+    }
+
+    if (first_del != -1) {
+        g_ptr_array_remove_range(array, first_del, last_del - first_del + 1);
+    }
+}
+
+int prune_duplicated_sets(NodeData* pd) {
     int val = 0;
-    int insert_into_heap = 0;
+    scheduleset_unify(pd->localColPool);
 
-    if (problem->nb_data_nodes <= pd->id) {
-        problem->nb_data_nodes = pd->id + 1;
-    }
+    if (dbg_lvl() > 1) {
+        for (guint i = 0; i < pd->localColPool->len; ++i) {
+            ScheduleSet* tmp =
+                (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
+            GPtrArray* tmp_a = tmp->job_list;
 
-    if (pd->status < LP_bound_computed) {
-        printf("Found a node with LP not computed!\n");
-        val = compute_lower_bound(pd);
-        CCcheck_val_2(val, "Failed at compute_lower_bound");
-        insert_into_heap = 1;
-    }
+            printf("TRANSSORT SET ");
 
-    if (pd->status < finished) {
-        int i;
-
-        if (!pd->nb_same || !pd->nb_diff) {
-            insert_into_heap = 1;
-        }
-
-        for (i = 0; (!insert_into_heap) && i < pd->nb_same; ++i) {
-            if (pd->duetime_child[i].status < LP_bound_computed) {
-                insert_into_heap = 1;
+            for (guint j = 0; j < tmp_a->len; ++j) {
+                Job* tmp_j = (Job*)g_ptr_array_index(tmp_a, j);
+                printf(" %d", tmp_j->job);
             }
-        }
 
-        for (i = 0; (!insert_into_heap) && i < pd->nb_diff; ++i) {
-            if (pd->releasetime_child[i].status < LP_bound_computed) {
-                insert_into_heap = 1;
-            }
+            printf("\n");
         }
     }
 
-    if (insert_into_heap) {
-        val = insert_into_branching_heap(pd, problem);
-        CCcheck_val_2(val, "Failed in insert_into_branching_heap");
-        children_data_free(pd);
-    } else {
-        int i;
-
-        for (i = 0; i < pd->nb_same; ++i) {
-            prefill_heap(pd->duetime_child + i, problem);
-        }
-
-        for (i = 0; i < pd->nb_diff; ++i) {
-            prefill_heap(pd->releasetime_child + i, problem);
-        }
-    }
-
-CLEAN:
     return val;
 }
 
-int compute_schedule(Problem* problem) {
-    int         val = 0;
-    NodeData*   root_pd = problem->root_pd;
-    Parms*      parms = &(problem->parms);
-    Statistics* statistics = &(problem->stat);
-    problem->mult_key = 1.0;
-    problem->root_upper_bound = problem->global_upper_bound;
-    problem->root_lower_bound = problem->global_lower_bound;
-    problem->root_rel_error =
-        (double)(problem->global_upper_bound - problem->global_lower_bound) /
-        ((double)problem->global_lower_bound + 0.00001);
-    prune_duplicated_sets(root_pd);
-    init_BB_tree(problem);
+// int compute_schedule(Problem* problem) {
+//     int         val = 0;
+//     NodeData*   root_pd = problem->root_pd;
+//     Parms*      parms = &(problem->parms);
+//     Statistics* statistics = &(problem->stat);
+//     problem->mult_key = 1.0;
+//     problem->root_upper_bound = problem->global_upper_bound;
+//     problem->root_lower_bound = problem->global_lower_bound;
+//     problem->root_rel_error =
+//         (double)(problem->global_upper_bound - problem->global_lower_bound) /
+//         ((double)problem->global_lower_bound + 0.00001);
+//     prune_duplicated_sets(root_pd);
+//     init_BB_tree(problem);
 
-    if (root_pd->status >= LP_bound_computed) {
-        val = prefill_heap(root_pd, problem);
-        CCcheck_val(val, "Failed in prefill_heap");
-    } else {
-        CCutil_start_timer(&(statistics->tot_lb_root));
-        val = compute_lower_bound(root_pd);
-        CCcheck_val_2(val, "Failed in compute_lower_bound");
+//     if (root_pd->status >= LP_bound_computed) {
+//         val = prefill_heap(root_pd, problem);
+//         CCcheck_val(val, "Failed in prefill_heap");
+//     } else {
+//         CCutil_start_timer(&(statistics->tot_lb_root));
+//         val = compute_lower_bound(root_pd);
+//         CCcheck_val_2(val, "Failed in compute_lower_bound");
 
-        if (root_pd->lower_bound > problem->global_lower_bound) {
-            problem->global_lower_bound = root_pd->lower_bound;
-            problem->root_lower_bound = root_pd->lower_bound;
-            problem->root_rel_error =
-                (double)(problem->root_upper_bound -
-                         problem->root_lower_bound) /
-                ((double)problem->root_lower_bound + 0.00001);
-        }
+//         if (root_pd->lower_bound > problem->global_lower_bound) {
+//             problem->global_lower_bound = root_pd->lower_bound;
+//             problem->root_lower_bound = root_pd->lower_bound;
+//             problem->root_rel_error =
+//                 (double)(problem->root_upper_bound -
+//                          problem->root_lower_bound) /
+//                 ((double)problem->root_lower_bound + 0.00001);
+//         }
 
-        CCcheck_val_2(val, "Failed in compute_lower_bound");
-        statistics->nb_generated_col_root = statistics->nb_generated_col;
-        CCutil_stop_timer(&(statistics->tot_lb_root), 0);
+//         CCcheck_val_2(val, "Failed in compute_lower_bound");
+//         statistics->nb_generated_col_root = statistics->nb_generated_col;
+//         CCutil_stop_timer(&(statistics->tot_lb_root), 0);
 
-        switch (parms->bb_branch_strategy) {
-            case conflict_strategy:
-            case ahv_strategy:
-                val = insert_into_branching_heap(root_pd, problem);
-                CCcheck_val_2(val, "insert_into_branching_heap failed");
-                break;
+//         switch (parms->bb_branch_strategy) {
+//             case conflict_strategy:
+//             case ahv_strategy:
+//                 val = insert_into_branching_heap(root_pd, problem);
+//                 CCcheck_val_2(val, "insert_into_branching_heap failed");
+//                 break;
 
-            case cbfs_conflict_strategy:
-            case cbfs_ahv_strategy:
-                insert_node_for_exploration(root_pd, problem);
-                break;
-        }
-    }
+//             case cbfs_conflict_strategy:
+//             case cbfs_ahv_strategy:
+//                 insert_node_for_exploration(root_pd, problem);
+//                 break;
+//         }
+//     }
 
-    printf("GUB = %d, GLB = %d\n", problem->global_upper_bound,
-           problem->global_lower_bound);
+//     printf("GUB = %d, GLB = %d\n", problem->global_upper_bound,
+//            problem->global_lower_bound);
 
-    if (problem->global_lower_bound != problem->global_upper_bound) {
-        CCutil_start_resume_time(&(statistics->tot_branch_and_bound));
+//     if (problem->global_lower_bound != problem->global_upper_bound) {
+//         CCutil_start_resume_time(&(statistics->tot_branch_and_bound));
 
-        switch (parms->bb_branch_strategy) {
-            case conflict_strategy:
-                val = sequential_branching_conflict(problem);
-                CCcheck_val(val, "Failed in sequential_branching_conflict");
-                break;
+//         switch (parms->bb_branch_strategy) {
+//             case conflict_strategy:
+//                 val = sequential_branching_conflict(problem);
+//                 CCcheck_val(val, "Failed in sequential_branching_conflict");
+//                 break;
 
-            case cbfs_conflict_strategy:
-                val = sequential_cbfs_branch_and_bound_conflict(problem);
-                CCcheck_val_2(val, "Failed in CBFS conflict branching");
-                break;
-        }
+//             case cbfs_conflict_strategy:
+//                 val = sequential_cbfs_branch_and_bound_conflict(problem);
+//                 CCcheck_val_2(val, "Failed in CBFS conflict branching");
+//                 break;
+//         }
 
-        CCutil_stop_timer(&(statistics->tot_branch_and_bound), 0);
-        printf("Compute schedule finished with LB %d and UB %d\n",
-               root_pd->lower_bound, problem->global_upper_bound);
-    } else {
-        problem->found = 1;
-    }
+//         CCutil_stop_timer(&(statistics->tot_branch_and_bound), 0);
+//         printf("Compute schedule finished with LB %d and UB %d\n",
+//                root_pd->lower_bound, problem->global_upper_bound);
+//     } else {
+//         problem->found = 1;
+//     }
 
-    if (root_pd->lower_bound == problem->global_upper_bound) {
-        problem->global_lower_bound = root_pd->lower_bound;
-        problem->rel_error = (double)(problem->global_upper_bound -
-                                      problem->global_lower_bound) /
-                             ((double)problem->global_lower_bound);
-        problem->status = optimal;
-        printf("The optimal schedule is given by:\n");
-        // print_schedule(root_pd->bestcolors, root_pd->nb_best);
-        printf("with total weighted completion time %d\n",
-               root_pd->upper_bound);
-    } else {
-        problem->global_lower_bound = root_pd->lower_bound;
-        problem->rel_error = (double)(problem->global_upper_bound -
-                                      problem->global_lower_bound) /
-                             ((double)problem->global_lower_bound);
-        problem->status = meta_heuristic;
-        problem->global_lower_bound = root_pd->lower_bound;
-        printf("The suboptimal schedule is given by:\n");
-        // print_schedule(root_pd->bestcolors, root_pd->nb_best);
-        printf("with total weighted completion time\n");
-    }
+//     if (root_pd->lower_bound == problem->global_upper_bound) {
+//         problem->global_lower_bound = root_pd->lower_bound;
+//         problem->rel_error = (double)(problem->global_upper_bound -
+//                                       problem->global_lower_bound) /
+//                              ((double)problem->global_lower_bound);
+//         problem->status = optimal;
+//         printf("The optimal schedule is given by:\n");
+//         // print_schedule(root_pd->bestcolors, root_pd->nb_best);
+//         printf("with total weighted completion time %d\n",
+//                root_pd->upper_bound);
+//     } else {
+//         problem->global_lower_bound = root_pd->lower_bound;
+//         problem->rel_error = (double)(problem->global_upper_bound -
+//                                       problem->global_lower_bound) /
+//                              ((double)problem->global_lower_bound);
+//         problem->status = meta_heuristic;
+//         problem->global_lower_bound = root_pd->lower_bound;
+//         printf("The suboptimal schedule is given by:\n");
+//         // print_schedule(root_pd->bestcolors, root_pd->nb_best);
+//         printf("with total weighted completion time\n");
+//     }
 
-    children_data_free(problem->root_pd);
-CLEAN:
-    return val;
-}
+//     children_data_free(problem->root_pd);
+// CLEAN:
+//     return val;
+// }
 
 int add_solution_to_colpool(Solution* sol, NodeData* pd) {
     int val = 0;
