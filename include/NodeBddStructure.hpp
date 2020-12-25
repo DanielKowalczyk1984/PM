@@ -601,7 +601,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
                 os << "\n";
             }
 
-            MyVector<int> const& levels = diagram->lowerLevels(i);
+            auto const& levels = diagram->lowerLevels(i);
             for (int const* t = levels.begin(); t != levels.end(); ++t) {
                 nodeId[*t].clear();
             }

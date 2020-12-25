@@ -29,6 +29,7 @@
 #include <cmath>
 #include <ostream>
 #include <stdexcept>
+#include <unordered_set>
 
 #include "NodeBdd.hpp"
 #include "NodeBddSpec.hpp"
@@ -95,23 +96,23 @@ class BuilderBase {
  */
 template <typename S, typename T = NodeBdd<double>>
 class DdBuilder : BuilderBase {
-    typedef S                                                  Spec;
-    typedef MyHashTable<SpecNode*, Hasher<Spec>, Hasher<Spec>> UniqTable;
-    static int const                                           AR = Spec::ARITY;
+    typedef S                                                         Spec;
+    typedef std::unordered_set<SpecNode*, Hasher<Spec>, Hasher<Spec>> UniqTable;
+    static int const AR = Spec::ARITY;
 
     Spec                spec;
     int const           specNodeSize;
     NodeTableEntity<T>& output;
     DdSweeper<T>        sweeper;
 
-    MyVector<MyList<SpecNode>> snodeTable;
+    std::vector<MyList<SpecNode>> spec_node_table;
 
-    MyVector<char>         oneStorage;
-    void* const            one;
-    MyVector<NodeBranchId> oneSrcPtr;
+    std::vector<char>         oneStorage;
+    void* const               one;
+    std::vector<NodeBranchId> oneSrcPtr;
 
     void init(int n) {
-        snodeTable.resize(n + 1);
+        spec_node_table.resize(n + 1);
         if (n >= output.numRows())
             output.setNumRows(n + 1);
         oneSrcPtr.clear();
@@ -143,7 +144,7 @@ class DdBuilder : BuilderBase {
      * @param s node state of the event.
      */
     void schedule(NodeId* fp, int level, void* s) {
-        SpecNode* p0 = snodeTable[level].alloc_front(specNodeSize);
+        SpecNode* p0 = spec_node_table[level].alloc_front(specNodeSize);
         spec.get_copy(state(p0), s);
         srcPtr(p0) = fp;
     }
@@ -154,9 +155,9 @@ class DdBuilder : BuilderBase {
      */
     int initialize(NodeId& root) {
         sweeper.setRoot(root);
-        MyVector<char> tmp(spec.datasize());
-        void* const    tmpState = tmp.data();
-        int            n = spec.get_root(tmpState);
+        std::vector<char> tmp(spec.datasize());
+        void* const       tmpState = tmp.data();
+        int               n = spec.get_root(tmpState);
 
         if (n <= 0) {
             root = n ? 1 : 0;
@@ -179,9 +180,9 @@ class DdBuilder : BuilderBase {
      * @param i level.
      */
     void construct(int i) {
-        assert(0 < i && size_t(i) < snodeTable.size());
+        assert(0 < i && size_t(i) < spec_node_table.size());
 
-        MyList<SpecNode>& snodes = snodeTable[i];
+        MyList<SpecNode>& spec_nodes = spec_node_table[i];
         size_t            j0 = output[i].size();
         size_t            m = j0;
         int               lowestChild = i - 1;
@@ -189,16 +190,18 @@ class DdBuilder : BuilderBase {
 
         {
             Hasher<Spec> hasher(spec, i);
-            UniqTable    uniq(snodes.size() * 2, hasher, hasher);
+            UniqTable    uniq(spec_nodes.size() * 2, hasher, hasher);
 
-            for (MyList<SpecNode>::iterator t = snodes.begin();
-                 t != snodes.end(); ++t) {
-                SpecNode*  p = *t;
-                SpecNode*& p0 = uniq.add(p);
+            for (MyList<SpecNode>::iterator t = spec_nodes.begin();
+                 t != spec_nodes.end(); ++t) {
+                SpecNode* p = *t;
+                // SpecNode*& p0 = uniq.add(p);
+                auto aux = uniq.insert(p);
 
-                if (p0 == p) {
+                if (aux.second) {
                     nodeId(p) = *srcPtr(p) = NodeId(i, m++);
                 } else {
+                    auto p0 = *(aux.first);
                     switch (spec.merge_states(state(p0), state(p))) {
                         case 1:
                             nodeId(p0) = 0;  // forward to 0-terminal
@@ -226,10 +229,10 @@ class DdBuilder : BuilderBase {
         output[i].resize(m);
         T* const  outi = output[i].data();
         size_t    jj = j0;
-        SpecNode* pp = snodeTable[i - 1].alloc_front(specNodeSize);
+        SpecNode* pp = spec_node_table[i - 1].alloc_front(specNodeSize);
 
-        for (; !snodes.empty(); snodes.pop_front()) {
-            SpecNode* p = snodes.front();
+        for (; !spec_nodes.empty(); spec_nodes.pop_front()) {
+            SpecNode* p = spec_nodes.front();
             T&        q = outi[jj];
 
             if (nodeId(p) == 1) {
@@ -284,11 +287,12 @@ class DdBuilder : BuilderBase {
                     allZero = false;
                 } else if (ii == i - 1) {
                     srcPtr(pp) = &q.branch[b];
-                    pp = snodeTable[ii].alloc_front(specNodeSize);
+                    pp = spec_node_table[ii].alloc_front(specNodeSize);
                     allZero = false;
                 } else {
                     assert(ii < i - 1);
-                    SpecNode* ppp = snodeTable[ii].alloc_front(specNodeSize);
+                    SpecNode* ppp =
+                        spec_node_table[ii].alloc_front(specNodeSize);
                     spec.get_copy(state(ppp), state(pp));
                     spec.destruct(state(pp));
                     srcPtr(ppp) = &q.branch[b];
@@ -304,7 +308,7 @@ class DdBuilder : BuilderBase {
                 ++deadCount;
         }
 
-        snodeTable[i - 1].pop_front();
+        spec_node_table[i - 1].pop_front();
         // spec.destructLevel(i);
         sweeper.update(i, lowestChild, deadCount);
     }
@@ -321,9 +325,9 @@ template <typename T, typename S>
 class ZddSubsetter : BuilderBase {
     // typedef typename std::remove_const<typename
     // std::remove_reference<S>::type>::type Spec;
-    typedef S                                                  Spec;
-    typedef MyHashTable<SpecNode*, Hasher<Spec>, Hasher<Spec>> UniqTable;
-    static int const                                           AR = Spec::ARITY;
+    typedef S                                                         Spec;
+    typedef std::unordered_set<SpecNode*, Hasher<Spec>, Hasher<Spec>> UniqTable;
+    static int const AR = Spec::ARITY;
 
     Spec                              spec;
     int const                         specNodeSize;
@@ -332,9 +336,9 @@ class ZddSubsetter : BuilderBase {
     DataTable<MyListOnPool<SpecNode>> work;
     DdSweeper<T>                      sweeper;
 
-    MyVector<char>         oneStorage;
-    void* const            one;
-    MyVector<NodeBranchId> oneSrcPtr;
+    std::vector<char>         oneStorage;
+    void* const               one;
+    std::vector<NodeBranchId> oneSrcPtr;
 
     MemoryPools pools;
 
@@ -364,9 +368,9 @@ class ZddSubsetter : BuilderBase {
      */
     int initialize(NodeId& root) {
         sweeper.setRoot(root);
-        MyVector<char> tmp(spec.datasize());
-        void* const    tmpState = tmp.data();
-        int            n = spec.get_root(tmpState);
+        std::vector<char> tmp(spec.datasize());
+        void* const       tmpState = tmp.data();
+        int               n = spec.get_root(tmpState);
 
         int k = (root == 1) ? -1 : root.row();
 
@@ -415,7 +419,7 @@ class ZddSubsetter : BuilderBase {
         assert(output.numRows() - pools.size() == 0);
 
         Hasher<Spec> const hasher(spec, i);
-        MyVector<char>     tmp(spec.datasize());
+        std::vector<char>  tmp(spec.datasize());
         void* const        tmpState = tmp.data();
         size_t const       m = input[i].size();
         size_t             mm = 0;
@@ -435,12 +439,14 @@ class ZddSubsetter : BuilderBase {
 
                 for (MyListOnPool<SpecNode>::iterator t = list.begin();
                      t != list.end(); ++t) {
-                    SpecNode*  p = *t;
-                    SpecNode*& p0 = uniq.add(p);
+                    SpecNode* p = *t;
+                    auto      aux = uniq.insert(p);
+                    // SpecNode*& p0 = uniq.add(p);
 
-                    if (p0 == p) {
+                    if (aux.second) {
                         nodeId(p) = *srcPtr(p) = NodeId(i, mm++);
                     } else {
+                        auto p0 = *(aux.first);
                         switch (spec.merge_states(state(p0), state(p))) {
                             case 1:
                                 nodeId(p0) = 0;  // forward to 0-terminal

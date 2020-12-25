@@ -9,19 +9,21 @@
 
 #include <NodeBdd.hpp>
 #include <NodeBddTable.hpp>
+#include <unordered_set>
+#include <vector>
 #include "util/MyHashTable.hpp"
 // #include "tdzdd/util/MyList.hpp"
 #include "util/MyVector.hpp"
 
 template <typename T, bool BDD, bool ZDD>
 class DdReducer {
-    NodeTableEntity<T>&          input;
-    TableHandler<T>              oldDiagram;
-    TableHandler<T>              newDiagram;
-    NodeTableEntity<T>&          output;
-    MyVector<MyVector<NodeId> >  newIdTable;
-    MyVector<MyVector<NodeId*> > rootPtr;
-    int                          counter = 1;
+    NodeTableEntity<T>&               input;
+    TableHandler<T>                   oldDiagram;
+    TableHandler<T>                   newDiagram;
+    NodeTableEntity<T>&               output;
+    std::vector<std::vector<NodeId>>  newIdTable;
+    std::vector<std::vector<NodeId*>> rootPtr;
+    int                               counter = 1;
 
     struct ReducNodeInfo {
         NodeBdd<T> children;
@@ -131,7 +133,7 @@ class DdReducer {
         size_t const m = input[i].size();
         T* const     tt = input[i].data();
 
-        MyVector<NodeId>& newId = newIdTable[i];
+        std::vector<NodeId>& newId = newIdTable[i];
         newId.resize(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j) {
@@ -152,9 +154,9 @@ class DdReducer {
         }
 
         {
-            MyVector<int> const& levels = input.lowerLevels(counter);
-            for (int const* t = levels.begin(); t != levels.end(); ++t) {
-                newIdTable[*t].clear();
+            auto const& levels = input.lowerLevels(counter);
+            for (auto& t : levels) {
+                newIdTable[t].clear();
             }
         }
         size_t mm = 0;
@@ -170,9 +172,9 @@ class DdReducer {
             newId[j] = NodeId(counter, mm++, g0.hasEmpty());
         }
 
-        MyVector<int> const& levels = input.lowerLevels(counter);
-        for (int const* t = levels.begin(); t != levels.end(); ++t) {
-            input[*t].clear();
+        std::vector<int> const& levels = input.lowerLevels(counter);
+        for (auto& t : levels) {
+            input[t].clear();
         }
 
         if (mm > 0u) {
@@ -217,7 +219,7 @@ class DdReducer {
         T* const     tt = input[i].data();
         NodeId const mark(i, m);
 
-        MyVector<NodeId>& newId = newIdTable[i];
+        auto& newId = newIdTable[i];
         newId.resize(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j) {
@@ -246,9 +248,9 @@ class DdReducer {
         }
 
         {
-            MyVector<int> const& levels = input.lowerLevels(i);
-            for (int const* t = levels.begin(); t != levels.end(); ++t) {
-                newIdTable[*t].clear();
+            std::vector<int> const& levels = input.lowerLevels(i);
+            for (auto& t : levels) {
+                newIdTable[t].clear();
             }
         }
         size_t mm = 0;
@@ -284,9 +286,9 @@ class DdReducer {
             }
         }
 
-        MyVector<int> const& levels = input.lowerLevels(i);
-        for (int const* t = levels.begin(); t != levels.end(); ++t) {
-            input[*t].clear();
+        std::vector<int> const& levels = input.lowerLevels(i);
+        for (auto& t : levels) {
+            input[t].clear();
         }
 
         if (mm > 0u) {
@@ -334,7 +336,9 @@ class DdReducer {
         {
             // MyList<ReducNodeInfo> rni;
             // MyHashTable<ReducNodeInfo const*> uniq(m * 2);
-            MyHashTable<NodeBdd<T> const*> uniq(m * 2);
+            std::unordered_set<NodeBdd<T> const*> uniq(
+                m * 2, MyHashDefault<NodeBdd<T> const*>(),
+                MyHashDefault<NodeBdd<T> const*>());
 
             for (size_t j = 0; j < m; ++j) {
                 NodeBdd<T>* const p0 = input[i].data();
@@ -366,9 +370,9 @@ class DdReducer {
             }
         }
 
-        MyVector<int> const& levels = input.lowerLevels(i);
-        for (int const* t = levels.begin(); t != levels.end(); ++t) {
-            newIdTable[*t].clear();
+        std::vector<int> const& levels = input.lowerLevels(i);
+        for (auto& t : levels) {
+            newIdTable[t].clear();
         }
 
         output.initRow(i, jj);
