@@ -22,7 +22,8 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: Install Conan
-      run: pip install conan
+      run: s| 
+        pip3 install conan
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
