@@ -23,7 +23,7 @@ jobs:
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: Install Conan
       run: |
-        pip3 install wheel setuptool 
+        pip3 install wheel setuptools 
         pip3 install conan
         export PATH=$PATH:/home/runner/.local/bin
         sudo ln -s ~/.local/bin/conan /usr/local/bin/conan
