@@ -25,8 +25,9 @@ void BranchNodeBase::branch(BTree* bt) {
 
     fmt::print(
         "BRANCHING NODE with branch_job = {} and middle_time = {} , less = {}, "
-        "depth = {}\n\n",
-        pd->branch_job, pd->completiontime, pd->less, depth);
+        "depth = {} with graph size {}\n\n",
+        pd->branch_job, pd->completiontime, pd->less, depth,
+        solver->get_nb_vertices());
 
     auto fathom_left = false;
     auto fathom_right = false;

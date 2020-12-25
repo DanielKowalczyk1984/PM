@@ -20,7 +20,7 @@ void parms_init(Parms* parms) {
     parms->jobfile = (char*)NULL;
     parms->pname = (char*)NULL;
     parms->upper_bounds_only = 0;
-    parms->branching_cpu_limit = 3600.0;
+    parms->branching_cpu_limit = 7200.0;
     parms->alpha = 0.8;
     parms->pricing_solver = bdd_solver_backward_cycle;
 }
