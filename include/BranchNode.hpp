@@ -25,9 +25,9 @@ class BranchNodeBase : public State {
    private:
     NodeData* pd;
 
-    double TargetBrTimeValue = 0.5;
-    int    NumStrBrCandidates = 16;
-    double IntegerTolerance = 1e-3;
+    static constexpr double TargetBrTimeValue = 0.5;
+    static constexpr int    NumStrBrCandidates = 16;
+    static constexpr double IntegerTolerance = 1e-3;
 };
 
 #endif  // __BRANCHNODE_H__

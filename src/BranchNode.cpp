@@ -167,24 +167,10 @@ void BranchNodeBase::branch(BTree* bt) {
                 fathom_right = true;
             }
 
-            // stop if fathomed in any side
-            if (fathom_left || fathom_right) {
-                /** Process everything */
-                bt->setStateComputesBounds(true);
-                left->branch_job = right->branch_job = i;
-                left->completiontime = right->completiontime = middle_time[i];
-                left->less = 0;
-                right->less = 1;
-                bt->processState(left_node_branch);
-                bt->processState(right_node_branch);
-                bt->setStateComputesBounds(false);
-                return;
-            }
-
             // update the branching choice
             auto min_gain = std::min(right_gain, left_gain);
 
-            if (min_gain > best_min_gain) {
+            if (min_gain > best_min_gain || fathom_left || fathom_right) {
                 best_min_gain = min_gain;
                 best_job = i;
                 best_time = middle_time[i];
@@ -206,6 +192,10 @@ void BranchNodeBase::branch(BTree* bt) {
             }
             if (right_node_branch) {
                 delete right_node_branch;
+            }
+
+            if (fathom_left || fathom_right) {
+                break;
             }
         }
     }
@@ -230,30 +220,32 @@ void BranchNodeBase::branch(BTree* bt) {
         auto left_solver = left->solver;
         auto left_node_branch = new BranchNodeBase(left);
         left_solver->split_job_time(best_job, best_time, false);
+        left->branch_job = best_job;
+        left->completiontime = best_time;
+        left->less = 0;
         bt->processState(left_node_branch);
 
         auto right = new_node_data(pd);
         auto right_solver = right->solver;
         auto right_node_branch = new BranchNodeBase(right);
         right_solver->split_job_time(best_job, best_time, true);
+        right->branch_job = best_job;
+        right->completiontime = best_time;
+        right->less = 1;
         bt->processState(right_node_branch);
         // auto job = (Job*)g_ptr_array_index(pd->solver->jobs, best_job);
         // fmt::print("NO STRONG BRANCHING {} {} {}\n\n", best_job, best_time,
         //            best_min_gain);
-        left->branch_job = right->branch_job = best_job;
-        left->completiontime = right->completiontime = best_time;
-        left->less = 0;
-        right->less = 1;
     } else {
         bt->setStateComputesBounds(true);
-        bt->processState(best_left);
-        bt->processState(best_right);
-        bt->setStateComputesBounds(false);
         best_left->pd->branch_job = best_right->pd->branch_job = best_job;
         best_left->pd->completiontime = best_right->pd->completiontime =
             best_time;
         best_left->pd->less = 0;
         best_right->pd->less = 1;
+        bt->processState(best_left);
+        bt->processState(best_right);
+        bt->setStateComputesBounds(false);
     }
 
     fmt::print("Number of Nodes in B&B tree = {}\n", bt->get_nb_nodes());
