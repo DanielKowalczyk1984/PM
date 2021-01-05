@@ -8,7 +8,7 @@
 template <typename T>
 using data_table_node = DataTable<T>;
 template <typename T>
-using my_vector = MyVector<T>;
+using my_vector = std::vector<T>;
 
 template <typename T = NodeBdd<double>>
 class NodeTableEntity : public data_table_node<T> {
@@ -115,10 +115,10 @@ class NodeTableEntity : public data_table_node<T> {
                     for (int b = 0; b < 2; ++b) {
                         NodeId ff = child(i, j, b);
                         int    ii = ff.row();
-                        child(i + d, j, b) =
-                            (ii == 0)
-                                ? ff
-                                : (ii + d <= 0) ? 1 : NodeId(ii + d, ff.col());
+                        child(i + d, j, b) = (ii == 0) ? ff
+                                             : (ii + d <= 0)
+                                                 ? 1
+                                                 : NodeId(ii + d, ff.col());
                     }
                 }
 

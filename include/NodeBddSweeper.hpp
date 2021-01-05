@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include <ostream>
+#include <vector>
 
 #include "NodeBdd.hpp"
 #include "NodeBddTable.hpp"
@@ -42,14 +43,14 @@ template <typename T = NodeBdd<double>>
 class DdSweeper {
     static size_t const SWEEP_RATIO = 20;
 
-    NodeTableEntity<T>&     diagram;
-    MyVector<NodeBranchId>* oneSrcPtr;
+    NodeTableEntity<T>&        diagram;
+    std::vector<NodeBranchId>* oneSrcPtr;
 
-    MyVector<int>    sweepLevel;
-    MyVector<size_t> deadCount;
-    size_t           allCount;
-    size_t           maxCount;
-    NodeId*          rootPtr;
+    std::vector<int>    sweepLevel;
+    std::vector<size_t> deadCount;
+    size_t              allCount;
+    size_t              maxCount;
+    NodeId*             rootPtr;
 
    public:
     /**
@@ -68,7 +69,8 @@ class DdSweeper {
      * @param diagram the diagram to sweep.
      * @param oneSrcPtr collection of node branch IDs.
      */
-    DdSweeper(NodeTableEntity<T>& _diagram, MyVector<NodeBranchId>& _oneSrcPtr)
+    DdSweeper(NodeTableEntity<T>&        _diagram,
+              std::vector<NodeBranchId>& _oneSrcPtr)
         : diagram(_diagram),
           oneSrcPtr(&_oneSrcPtr),
           allCount(0),
@@ -117,7 +119,7 @@ class DdSweeper {
         if (deadCount[k] * SWEEP_RATIO < maxCount)
             return;
 
-        MyVector<MyVector<NodeId>> newId(diagram.numRows());
+        std::vector<std::vector<NodeId>> newId(diagram.numRows());
 
         for (int i = k; i < diagram.numRows(); ++i) {
             size_t m = diagram[i].size();

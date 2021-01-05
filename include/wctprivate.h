@@ -4,7 +4,6 @@
 #include "MIP_defs.hpp"
 #include "Statistics.h"
 #include "binomial-heap.h"
-// #include "branch-and-boundwrapper.h"
 #include "interval.h"
 #include "lp.h"
 #include "pricingstabilizationwrapper.h"
@@ -57,8 +56,9 @@ int         wasProcessed(BranchNode* state);
 BranchBoundTree* new_branch_bound_tree(NodeData* data,
                                        int       _probtype,
                                        int       _isIntProb);
-void             delete_branch_bound_tree(BranchBoundTree* tree);
-void             call_branch_and_bound_explore(BranchBoundTree* tree);
+
+void delete_branch_bound_tree(BranchBoundTree* tree);
+void call_branch_and_bound_explore(BranchBoundTree* tree);
 
 struct _NodeData {
     // The id and depth of the node in the B&B tree

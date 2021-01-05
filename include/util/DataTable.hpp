@@ -33,7 +33,7 @@
 
 template <typename T>
 class DataTable {
-    MyVector<MyVector<T> > table;
+    std::vector<std::vector<T> > table;
 
     //    DataTable(DataTable const& o);
     //    DataTable& operator=(DataTable const& o);
@@ -170,14 +170,14 @@ class DataTable {
      * @param i row index.
      * @return vector of elements on the row.
      */
-    MyVector<T>& operator[](size_t i) { return table[i]; }
+    std::vector<T>& operator[](size_t i) { return table[i]; }
 
     /**
      * Accesses to a row.
      * @param i row index.
      * @return vector of elements on the row.
      */
-    MyVector<T> const& operator[](size_t i) const { return table[i]; }
+    std::vector<T> const& operator[](size_t i) const { return table[i]; }
 
     friend std::ostream& operator<<(std::ostream& os, DataTable const& o) {
         for (int i = 0; i < o.numRows(); ++i) {
