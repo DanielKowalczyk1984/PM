@@ -566,48 +566,48 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      * Works only for binary DDs.
      * @param os the output stream.
      */
-    void dumpSapporo(std::ostream& os) const {
-        int const    n = diagram->numRows() - 1;
-        size_t const l = size();
+    // void dumpSapporo(std::ostream& os) const {
+    //     int const    n = diagram->numRows() - 1;
+    //     size_t const l = size();
 
-        os << "_i " << n << "\n";
-        os << "_o 1\n";
-        os << "_n " << l << "\n";
+    //     os << "_i " << n << "\n";
+    //     os << "_o 1\n";
+    //     os << "_n " << l << "\n";
 
-        DataTable<size_t> nodeId(diagram->numRows());
-        size_t            k = 0;
+    //     DataTable<size_t> nodeId(diagram->numRows());
+    //     size_t            k = 0;
 
-        for (int i = 1; i <= n; ++i) {
-            size_t const           m = (*diagram)[i].size();
-            NodeBdd<double> const* p = (*diagram)[i].data();
-            nodeId[i].resize(m);
+    //     for (int i = 1; i <= n; ++i) {
+    //         size_t const           m = (*diagram)[i].size();
+    //         NodeBdd<double> const* p = (*diagram)[i].data();
+    //         nodeId[i].resize(m);
 
-            for (size_t j = 0; j < m; ++j, ++p) {
-                k += 2;
-                nodeId[i][j] = k;
-                os << k << " " << i;
+    //         for (size_t j = 0; j < m; ++j, ++p) {
+    //             k += 2;
+    //             nodeId[i][j] = k;
+    //             os << k << " " << i;
 
-                for (int c = 0; c <= 1; ++c) {
-                    NodeId fc = p->branch[c];
-                    if (fc == 0) {
-                        os << " F";
-                    } else if (fc == 1) {
-                        os << " T";
-                    } else {
-                        os << " " << nodeId[fc.row()][fc.col()];
-                    }
-                }
+    //             for (int c = 0; c <= 1; ++c) {
+    //                 NodeId fc = p->branch[c];
+    //                 if (fc == 0) {
+    //                     os << " F";
+    //                 } else if (fc == 1) {
+    //                     os << " T";
+    //                 } else {
+    //                     os << " " << nodeId[fc.row()][fc.col()];
+    //                 }
+    //             }
 
-                os << "\n";
-            }
+    //             os << "\n";
+    //         }
 
-            auto const& levels = diagram->lowerLevels(i);
-            for (int const* t = levels.begin(); t != levels.end(); ++t) {
-                nodeId[*t].clear();
-            }
-        }
+    //         auto const& levels = diagram->lowerLevels(i);
+    //         for (int const* t = levels.begin(); t != levels.end(); ++t) {
+    //             nodeId[*t].clear();
+    //         }
+    //     }
 
-        os << nodeId[root_.row()][root_.col()] << "\n";
-        assert(k == l * 2);
-    }
+    //     os << nodeId[root_.row()][root_.col()] << "\n";
+    //     assert(k == l * 2);
+    // }
 };

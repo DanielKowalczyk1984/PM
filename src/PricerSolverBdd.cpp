@@ -1565,15 +1565,17 @@ void PricerSolverBdd::split_job_time(int _job, int _time, bool _left = false) {
         cleanup_arcs();
         construct_mipgraph();
 
-        // auto table_bis = decision_diagram->getDiagram().privateEntity();
-        // ColorWriterVertex vertex_writer(mip_graph, table_bis);
-        // auto              file_name = "split_solution_" + problem_name + "_"
-        // +
-        //                  std::to_string(_job) + "_" + std::to_string(_time) +
-        //                  "_" + std::to_string(_left) + ".gv";
-        // std::ofstream outf(file_name);
-        // boost::write_graphviz(outf, mip_graph, vertex_writer);
-        // outf.close();
+        if (dbg_lvl() > 0) {
+            auto table_bis = decision_diagram->getDiagram().privateEntity();
+            ColorWriterVertex vertex_writer(mip_graph, table_bis);
+            auto file_name = "split_solution_" + problem_name + "_" +
+                             std::to_string(_job) + "_" +
+                             std::to_string(_time) + "_" +
+                             std::to_string(_left) + ".gv";
+            std::ofstream outf(file_name);
+            boost::write_graphviz(outf, mip_graph, vertex_writer);
+            outf.close();
+        }
     }
 }
 
