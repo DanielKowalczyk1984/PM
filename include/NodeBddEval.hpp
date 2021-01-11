@@ -26,6 +26,8 @@
 
 #include <cassert>
 #include <iostream>
+#include "NodeBddTable.hpp"
+#include "util/DataTable.hpp"
 
 /**
  * Collection of child node values/levels for
@@ -110,6 +112,8 @@
  */
 template <typename T, typename R = T>
 class Eval {
+    NodeTableEntity<T>* table;
+
    public:
     // E& entity() { return *static_cast<E*>(this); }
 
@@ -148,6 +152,10 @@ class Eval {
     virtual void evalNode(T& n) const = 0;
 
     virtual R get_objective(T& n) const = 0;
+
+    void set_table(NodeTableEntity<T>* _table) { table = _table; }
+
+    NodeTableEntity<T>* get_table() const { return table; }
     Eval<T, R>() = default;
 
     Eval<T, R>(const Eval<T, R>&) = default;
