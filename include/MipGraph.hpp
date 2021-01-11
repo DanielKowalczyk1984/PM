@@ -69,7 +69,7 @@ class ColorWriterEdgeX {
     void operator()(std::ostream& output, Edge _edge) {
         auto  high = get(boost::edge_weight_t(), g, _edge);
         auto  node_id = get(boost::vertex_name_t(), g, source(_edge, g));
-        auto  node = table->node(node_id);
+        auto& node = table->node(node_id);
         auto& x = node.lp_x[high];
 
         if (high) {
