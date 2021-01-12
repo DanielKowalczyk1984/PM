@@ -43,7 +43,6 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
       nb_removed_edges(0),
       nb_removed_nodes(0),
       ordered_jobs(_ordered_jobs),
-      node_ids(convex_constr_id, vector<std::weak_ptr<NodeId>>(_Hmax + 1)),
       original_model(reformulation_model),
       H_min(0),
       H_max(_Hmax)
@@ -83,8 +82,6 @@ PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src,
       nb_removed_nodes(src.nb_removed_nodes),
       ordered_jobs(_ordered_jobs),
       mip_graph(src.mip_graph),
-      node_ids(convex_constr_id,
-               std::vector<std::weak_ptr<NodeId>>(src.H_max + 1)),
       original_model(src.original_model),
       H_max(src.H_max),
       H_min(src.H_min) {
@@ -111,8 +108,6 @@ PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src)
       nb_removed_nodes(src.nb_removed_nodes),
       ordered_jobs(src.ordered_jobs),
       mip_graph(src.mip_graph),
-      node_ids(convex_constr_id,
-               std::vector<std::weak_ptr<NodeId>>(src.H_max + 1)),
       original_model(src.original_model),
       H_max(src.H_max),
       H_min(src.H_min) {
@@ -316,8 +311,6 @@ void PricerSolverBdd::init_table() {
                 n1.init_node(w + p);
                 node.cost[0] = 0.0;
                 node.cost[1] = value_Fj(w + p, aux_job);
-
-                node_ids[aux_job->job][w] = node.ptr_node_id;
 
                 n0.in_degree_0++;
                 n0.in_edges[0].push_back(node.ptr_node_id);
