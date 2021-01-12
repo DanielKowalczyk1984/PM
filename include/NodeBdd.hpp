@@ -17,7 +17,6 @@ class NodeBdd : public NodeBase {
     std::vector<std::weak_ptr<BddCoeff>> coeff_list[2];
     std::vector<std::weak_ptr<NodeId>>   in_edges[2];
 
-    NodeBdd<T>*             child[2];
     std::shared_ptr<NodeId> ptr_node_id;
     double                  cost[2];
     double                  reduced_cost[2];
@@ -45,8 +44,8 @@ class NodeBdd : public NodeBase {
     NodeBdd()
         : NodeBase(),
           weight(0),
-          forward_label{Label<NodeBdd<T>, T>(this), Label<NodeBdd, T>(this)},
-          backward_label{Label<NodeBdd<T>, T>(this), Label<NodeBdd, T>(this)},
+          //   forward_label{Label<NodeBdd<T>, T>(), Label<NodeBdd, T>()},
+          //   backward_label{Label<NodeBdd<T>, T>(), Label<NodeBdd, T>()},
           ptr_node_id(nullptr),
           cost{0.0, 0.0},
           reduced_cost{0.0, 0.0},
@@ -60,23 +59,20 @@ class NodeBdd : public NodeBase {
           lp_visited(false),
           in_degree_0(0),
           in_degree_1(0),
-          coeff_cut{0.0, 0.0} {
-        child[0] = nullptr;
-        child[1] = nullptr;
-    };
+          coeff_cut{0.0, 0.0} {};
 
-    void set_head_node() {
-        forward_label[0].set_head_node(this);
-        forward_label[1].set_head_node(this);
-        backward_label[0].set_head_node(this);
-        backward_label[1].set_head_node(this);
-    }
+    // void set_head_node() {
+    //     forward_label[0].set_head_node(this);
+    //     forward_label[1].set_head_node(this);
+    //     backward_label[0].set_head_node(this);
+    //     backward_label[1].set_head_node(this);
+    // }
 
     NodeBdd(int i, int j)
         : NodeBase(i, j),
           weight(0),
-          forward_label{Label<NodeBdd<T>, T>(this), Label<NodeBdd, T>(this)},
-          backward_label{Label<NodeBdd<T>, T>(this), Label<NodeBdd, T>(this)},
+          forward_label{Label<NodeBdd<T>, T>(), Label<NodeBdd, T>()},
+          backward_label{Label<NodeBdd<T>, T>(), Label<NodeBdd, T>()},
           ptr_node_id(nullptr),
           cost{0.0, 0.0},
           reduced_cost{0.0, 0.0},
@@ -90,10 +86,7 @@ class NodeBdd : public NodeBase {
           lp_visited(false),
           in_degree_0(0),
           in_degree_1(0),
-          coeff_cut{0.0, 0.0} {
-        child[0] = nullptr;
-        child[1] = nullptr;
-    }
+          coeff_cut{0.0, 0.0} {}
 
     NodeBdd<T>(const NodeBdd<T>& src) = default;
     NodeBdd<T>(NodeBdd<T>&& src) = default;
@@ -136,17 +129,22 @@ class NodeBdd : public NodeBase {
         return os << ")";
     }
 
-    NodeBdd<T>* init_node(int                   _weight,
-                          [[maybe_unused]] bool _root_node = false,
-                          bool                  _terminal_node = false) {
+    void init_node(int                   _weight,
+                   [[maybe_unused]] bool _root_node = false,
+                   bool                  _terminal_node = false) {
         if (!_terminal_node) {
             weight = _weight;
         } else {
             NodeBase::set_job(nullptr);
             weight = -1;
         }
+    }
 
-        return this;
+    void set_node_id_label(NodeId _id) {
+        for (int j = 0; j < 2; j++) {
+            backward_label[j].set_node_id(_id);
+            forward_label[j].set_node_id(_id);
+        }
     }
 
     friend bool operator<(const NodeBdd<T>& lhs, const NodeBdd<T>& rhs) {
