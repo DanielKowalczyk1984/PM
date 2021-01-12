@@ -36,8 +36,7 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
 
 void PricerSolverZdd::construct_mipgraph() {
     mip_graph.clear();
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
+    auto&             table = *(decision_diagram->getDiagram());
     NodeZddIdAccessor vertex_node_zdd_id_list(
         get(boost::vertex_color_t(), mip_graph));
     NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
@@ -109,8 +108,7 @@ void PricerSolverZdd::construct_mipgraph() {
 }
 
 void PricerSolverZdd::init_table() {
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     /** init table */
     auto& n = table.node(decision_diagram->root());
     n.add_sub_node(0, decision_diagram->root(), true, false);
@@ -144,19 +142,18 @@ void PricerSolverZdd::init_table() {
     }
 }
 
-OptimalSolution<double> PricerSolverZdd::farkas_pricing(
-    [[maybe_unused]] double* pi) {
+OptimalSolution<double> PricerSolverZdd::farkas_pricing([
+    [maybe_unused]] double* pi) {
     OptimalSolution<double> sol;
 
     return sol;
 }
 
 void PricerSolverZdd::remove_layers_init() {
-    int                         first_del = -1;
-    int                         last_del = -1;
-    int                         it = 0;
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
+    int   first_del = -1;
+    int   last_del = -1;
+    int   it = 0;
+    auto& table = *(decision_diagram->getDiagram());
 
     /** remove the unnecessary layers of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
@@ -192,11 +189,10 @@ void PricerSolverZdd::remove_layers_init() {
 }
 
 void PricerSolverZdd::remove_layers() {
-    int                         first_del = -1;
-    int                         last_del = -1;
-    int                         it = 0;
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
+    int   first_del = -1;
+    int   last_del = -1;
+    int   it = 0;
+    auto& table = *(decision_diagram->getDiagram());
 
     /** remove the unnecessary layers of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
@@ -394,8 +390,7 @@ void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
 void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 const GPtrArray* schedule_sets,
                                                 int              num_columns) {
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     std::fill(lp_x.get(), lp_x.get() + get_nb_edges(), 0.0);
     for (int i = 0; i < num_columns; ++i) {
         if (columns[i] > 0.00001) {
@@ -441,8 +436,7 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
 
 bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
     guint                       weight = 0;
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     NodeId tmp_nodeid(decision_diagram->root());
 
     for (unsigned j = 0; j < set->len; ++j) {
@@ -466,8 +460,8 @@ bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
     return (weight == set->len);
 }
 
-void PricerSolverZdd::make_schedule_set_feasible(
-    [[maybe_unused]] GPtrArray* set) {}
+void PricerSolverZdd::make_schedule_set_feasible([
+    [maybe_unused]] GPtrArray* set) {}
 
 void PricerSolverZdd::iterate_zdd() {
     DdStructure<NodeZdd<double>>::const_iterator it = decision_diagram->begin();

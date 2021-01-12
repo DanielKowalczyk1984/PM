@@ -30,8 +30,7 @@ void PricerSolverSimple::compute_labels(double* _pi) {
 }
 
 void PricerSolverSimple::evaluate_nodes(double* pi, int UB, double LB) {
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(decision_diagram->root()).list[0]->backward_label[0].get_f();
@@ -63,8 +62,7 @@ void PricerSolverSimple::evaluate_nodes(double* pi, int UB, double LB) {
 }
 
 void PricerSolverSimple::evaluate_nodes(double* pi) {
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(decision_diagram->root()).list[0]->backward_label[0].get_f();
@@ -122,8 +120,7 @@ void PricerSolverZddCycle::compute_labels(double* _pi) {
 }
 
 void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(decision_diagram->root()).list[0]->backward_label[0].get_f();
@@ -193,8 +190,7 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
 }
 
 void PricerSolverZddCycle::evaluate_nodes(double* pi) {
-    NodeTableEntity<NodeZdd<>>& table =
-        decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(decision_diagram->root()).list[0]->backward_label[0].get_f();

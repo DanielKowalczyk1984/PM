@@ -43,8 +43,7 @@ void PricerSolverBddSimple::compute_labels(double* _pi) {
 }
 
 void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
-    NodeTableEntity<>& table =
-        get_decision_diagram()->getDiagram().privateEntity();
+    auto& table = *(get_decision_diagram()->getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(1).forward_label[0].get_f() + pi[convex_constr_id];
@@ -54,8 +53,9 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
+            auto&  child = table.node(it.branch[1]);
             double result = it.forward_label[0].get_f() +
-                            it.child[1]->backward_label[0].get_f() +
+                            child.backward_label[0].get_f() +
                             it.reduced_cost[1] + pi[convex_constr_id];
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
             if (LB + aux_nb_machines * reduced_cost + result > UB + 0.0001 &&
@@ -84,8 +84,7 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
 }
 
 void PricerSolverBddSimple::evaluate_nodes(double* pi) {
-    NodeTableEntity<>& table =
-        get_decision_diagram()->getDiagram().privateEntity();
+    auto& table = *(get_decision_diagram()->getDiagram());
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label[0].get_f();
     bool   removed_edges = false;
@@ -94,8 +93,9 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi) {
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
+            auto&  child = table.node(it.branch[1]);
             double result = it.forward_label[0].get_f() +
-                            it.child[1]->backward_label[0].get_f() +
+                            child.backward_label[0].get_f() +
                             it.reduced_cost[1];
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
             if (constLB + aux_nb_machines * reduced_cost + result > UB + 1e-4 &&
@@ -166,8 +166,7 @@ void PricerSolverBddCycle::compute_labels(double* _pi) {
 }
 
 void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
-    NodeTableEntity<>& table =
-        get_decision_diagram()->getDiagram().privateEntity();
+    auto& table = *(get_decision_diagram()->getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(1).forward_label[0].get_f() + pi[convex_constr_id];
@@ -179,26 +178,27 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
         for (auto& it : table[i]) {
             Job*   job = it.get_job();
             double result;
+            auto&  child = table.node(it.branch[1]);
 
             if (it.forward_label[0].get_previous_job() != job &&
-                it.child[1]->backward_label[0].get_prev_job() != job) {
+                child.backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[0].get_f() +
-                         it.child[1]->backward_label[0].get_f() +
-                         it.reduced_cost[1] + pi[convex_constr_id];
+                         child.backward_label[0].get_f() + it.reduced_cost[1] +
+                         pi[convex_constr_id];
             } else if (it.forward_label[0].get_previous_job() == job &&
-                       it.child[1]->backward_label[0].get_prev_job() != job) {
+                       child.backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[1].get_f() +
-                         it.child[1]->backward_label[0].get_f() +
-                         it.reduced_cost[1] + pi[convex_constr_id];
+                         child.backward_label[0].get_f() + it.reduced_cost[1] +
+                         pi[convex_constr_id];
             } else if (it.forward_label[0].get_previous_job() != job &&
-                       it.child[1]->backward_label[0].get_prev_job() == job) {
+                       child.backward_label[0].get_prev_job() == job) {
                 result = it.forward_label[0].get_f() +
-                         it.child[1]->backward_label[1].get_f() +
-                         it.reduced_cost[1] + pi[convex_constr_id];
+                         child.backward_label[1].get_f() + it.reduced_cost[1] +
+                         pi[convex_constr_id];
             } else {
                 result = it.forward_label[1].get_f() +
-                         it.child[1]->backward_label[1].get_f() +
-                         it.reduced_cost[1] + pi[convex_constr_id];
+                         child.backward_label[1].get_f() + it.reduced_cost[1] +
+                         pi[convex_constr_id];
             }
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
@@ -285,8 +285,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
 }
 
 void PricerSolverBddCycle::evaluate_nodes(double* pi) {
-    NodeTableEntity<>& table =
-        get_decision_diagram()->getDiagram().privateEntity();
+    auto& table = *(get_decision_diagram()->getDiagram());
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label[0].get_f();
     bool   removed_edges = false;
@@ -297,26 +296,23 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi) {
         for (auto& it : table[i]) {
             Job*   job = it.get_job();
             double result;
+            auto&  child = table.node(it.branch[1]);
 
             if (it.forward_label[0].get_previous_job() != job &&
-                it.child[1]->backward_label[0].get_prev_job() != job) {
+                child.backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[0].get_f() +
-                         it.child[1]->backward_label[0].get_f() +
-                         it.reduced_cost[1];
+                         child.backward_label[0].get_f() + it.reduced_cost[1];
             } else if (it.forward_label[0].get_previous_job() == job &&
-                       it.child[1]->backward_label[0].get_prev_job() != job) {
+                       child.backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[1].get_f() +
-                         it.child[1]->backward_label[0].get_f() +
-                         it.reduced_cost[1];
+                         child.backward_label[0].get_f() + it.reduced_cost[1];
             } else if (it.forward_label[0].get_previous_job() != job &&
-                       it.child[1]->backward_label[0].get_prev_job() == job) {
+                       child.backward_label[0].get_prev_job() == job) {
                 result = it.forward_label[0].get_f() +
-                         it.child[1]->backward_label[1].get_f() +
-                         it.reduced_cost[1];
+                         child.backward_label[1].get_f() + it.reduced_cost[1];
             } else {
                 result = it.forward_label[1].get_f() +
-                         it.child[1]->backward_label[1].get_f() +
-                         it.reduced_cost[1];
+                         child.backward_label[1].get_f() + it.reduced_cost[1];
             }
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
@@ -368,8 +364,8 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi) {
             // auto result_no = it.forward_label[0].get_f() +
             //                  it.child[0]->backward_label[0].get_f() +
             //                  pi[nb_jobs];
-            // auto min =(double)(num_machines - 1) * reduced_cost + result_no;
-            // for (int i = 0; i < num_machines + 1; i++)
+            // auto min =(double)(it.child[1]->num_machines - 1) * reduced_cost
+            // + result_no; for (int i = 0; i < num_machines + 1; i++)
             // {
             //     if (min > )
             //     {

@@ -64,8 +64,8 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      */
     explicit DdStructure(int n) : diagram(n + 1), root_(1) {
         assert(n >= 0);
-        NodeTableEntity<T>& table = diagram.privateEntity();
-        NodeId              f(1);
+        auto&  table = *diagram;
+        NodeId f(1);
 
         for (int i = 1; i <= n; ++i) {
             table.initRow(i, 1);
@@ -318,9 +318,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     // }
 
     template <typename R>
-    R evaluate_backward(Eval<T, R> const& evaluator) {
-        int                 n = root_.row();
-        NodeTableEntity<T>& work = getDiagram().privateEntity();
+    R evaluate_backward(Eval<T, R>& evaluator) {
+        int   n = root_.row();
+        auto& work = *(getDiagram());
+        evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
             printf("empty DDstructure\n");
@@ -340,9 +341,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     }
 
     template <typename R>
-    void compute_labels_backward(Eval<T, R> const& evaluator) {
-        int                 n = root_.row();
-        NodeTableEntity<T>& work = getDiagram().privateEntity();
+    void compute_labels_backward(Eval<T, R>& evaluator) {
+        int   n = root_.row();
+        auto& work = *(getDiagram());
+        evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
             printf("empty DDstructure\n");
@@ -359,9 +361,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     }
 
     template <typename R>
-    R evaluate_forward(Eval<T, R> const& evaluator) {
-        int                 n = root_.row();
-        NodeTableEntity<T>& work = getDiagram().privateEntity();
+    R evaluate_forward(Eval<T, R>& evaluator) {
+        int   n = root_.row();
+        auto& work = *(getDiagram());
+        evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
             printf("empty DDstructure\n");
@@ -395,9 +398,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     }
 
     template <typename R>
-    void compute_labels_forward(Eval<T, R> const& evaluator) {
-        int                 n = root_.row();
-        NodeTableEntity<T>& work = getDiagram().privateEntity();
+    void compute_labels_forward(Eval<T, R>& evaluator) {
+        int   n = root_.row();
+        auto& work = *(getDiagram());
+        evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
             printf("empty DDstructure\n");
