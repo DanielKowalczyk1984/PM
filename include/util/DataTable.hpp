@@ -28,8 +28,8 @@
 #include <cassert>
 #include <cstddef>
 #include <ostream>
-
-#include "MyVector.hpp"
+#include <vector>
+// #include "MyVector.hpp"
 
 template <typename T>
 class DataTable {
@@ -46,23 +46,26 @@ class DataTable {
     DataTable(int n = 0) : table(n) {}
 
     /** Copy constructor */
-    DataTable(const DataTable& other) : table(other.table) {}
+    // DataTable(const DataTable& other) : table(other.table) {}
+    DataTable(const DataTable& other) = default;
 
     /** Move Constructor */
-    DataTable(DataTable&& other) noexcept : table(other.table) {}
+    DataTable(DataTable&& other) = default;
 
     /** Copy Assignment operator */
-    DataTable& operator=(const DataTable& other) {
-        DataTable tmp(other);
-        *this = std::move(tmp);
-        return *this;
-    }
+    DataTable& operator=(const DataTable& other) = default;
+    // {
+    //     DataTable tmp(other);
+    //     *this = std::move(tmp);
+    //     return *this;
+    // }
 
     /** Move assignment operator */
-    DataTable& operator=(DataTable&& other) noexcept {
-        table = other.table;
-        return *this;
-    }
+    DataTable& operator=(DataTable&& other) = default;
+    // noexcept {
+    //     table = other.table;
+    //     return *this;
+    // }
 
     //    template<typename U>
     //    DataTable(DataTable<U> const& o)

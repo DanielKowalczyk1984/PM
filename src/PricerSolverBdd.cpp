@@ -43,7 +43,6 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
       nb_removed_edges(0),
       nb_removed_nodes(0),
       ordered_jobs(_ordered_jobs),
-      node_ids(convex_constr_id, vector<std::weak_ptr<NodeId>>(_Hmax + 1)),
       original_model(reformulation_model),
       H_min(0),
       H_max(_Hmax)
@@ -83,8 +82,6 @@ PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src,
       nb_removed_nodes(src.nb_removed_nodes),
       ordered_jobs(_ordered_jobs),
       mip_graph(src.mip_graph),
-      node_ids(convex_constr_id,
-               std::vector<std::weak_ptr<NodeId>>(src.H_max + 1)),
       original_model(src.original_model),
       H_max(src.H_max),
       H_min(src.H_min) {
@@ -111,8 +108,6 @@ PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src)
       nb_removed_nodes(src.nb_removed_nodes),
       ordered_jobs(src.ordered_jobs),
       mip_graph(src.mip_graph),
-      node_ids(convex_constr_id,
-               std::vector<std::weak_ptr<NodeId>>(src.H_max + 1)),
       original_model(src.original_model),
       H_max(src.H_max),
       H_min(src.H_min) {
@@ -156,7 +151,7 @@ void PricerSolverBdd::calculate_H_min() {
 
 void PricerSolverBdd::construct_mipgraph() {
     mip_graph.clear();
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     auto  vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
     auto  edge_type_list(get(boost::edge_weight_t(), mip_graph));
 
@@ -198,7 +193,7 @@ void PricerSolverBdd::construct_mipgraph() {
 }
 
 void PricerSolverBdd::init_coeff_constraints() {
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
 
     for (auto i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
@@ -248,7 +243,7 @@ void PricerSolverBdd::update_coeff_constraints() {
             reformulation_model.get_constraint_ptr(j));
     }
 
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     for (auto i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             for (int c = 0; c < nb_new_constr; c++) {
@@ -285,10 +280,11 @@ void PricerSolverBdd::update_coeff_constraints() {
 }
 
 void PricerSolverBdd::init_table() {
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     /** init table */
     auto& root = table.node(decision_diagram->root());
     root.init_node(0, true);
+    root.set_node_id_label(decision_diagram->root());
     root.all = boost::dynamic_bitset<>{convex_constr_id, 0};
 
     for (auto i = decision_diagram->topLevel(); i >= 0; i--) {
@@ -297,22 +293,24 @@ void PricerSolverBdd::init_table() {
                 auto layer = ordered_jobs->len - i;
                 auto tmp_pair = static_cast<job_interval_pair*>(
                     g_ptr_array_index(ordered_jobs, layer));
-                auto& node = table.node(NodeId(i, it));
+                auto  node_id = NodeId(i, it);
+                auto& node = table.node(node_id);
                 auto  aux_job = tmp_pair->j;
                 auto  w = node.get_weight();
                 auto  p = aux_job->processing_time;
+                // node.set_node_id_label(node_id);
 
                 auto& n0 = table.node(node.branch[0]);
                 auto& n1 = table.node(node.branch[1]);
+                n0.set_node_id_label(node.branch[0]);
+                n1.set_node_id_label(node.branch[1]);
 
                 node.ptr_node_id = std::make_shared<NodeId>(i, it);
                 node.set_job(aux_job);
-                node.child[0] = n0.init_node(w);
-                node.child[1] = n1.init_node(w + p);
+                n0.init_node(w);
+                n1.init_node(w + p);
                 node.cost[0] = 0.0;
                 node.cost[1] = value_Fj(w + p, aux_job);
-
-                node_ids[aux_job->job][w] = node.ptr_node_id;
 
                 n0.in_degree_0++;
                 n0.in_edges[0].push_back(node.ptr_node_id);
@@ -337,6 +335,7 @@ void PricerSolverBdd::init_table() {
 
             } else {
                 auto& node = table.node(NodeId(i, it));
+                // node.set_node_id_label(NodeId(i, it));
                 node.set_job(nullptr);
             }
         }
@@ -381,7 +380,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
             auto aux_schedule_set =
                 (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
             auto  jobs_list = aux_schedule_set->job_list;
-            auto& table = decision_diagram->getDiagram().privateEntity();
+            auto& table = *(decision_diagram->getDiagram());
             auto  tmp_nodeid(decision_diagram->root());
 
             auto coeff_val = 0.0;
@@ -629,7 +628,7 @@ void PricerSolverBdd::remove_layers_init() {
     auto  first_del = -1;
     auto  last_del = -1;
     auto  it = 0;
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
 
     /** remove the unnecessary layers of the bdd */
     for (auto i = decision_diagram->topLevel(); i > 0; i--) {
@@ -670,7 +669,7 @@ void PricerSolverBdd::remove_layers() {
     auto  first_del = -1;
     auto  last_del = -1;
     auto  it = 0;
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
 
     /** remove the unnecessary layers of the bdd */
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
@@ -718,7 +717,7 @@ void PricerSolverBdd::remove_layers() {
 }
 
 void PricerSolverBdd::remove_edges() {
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
 
     /** remove the unnecessary nodes of the bdd */
     for (auto i = decision_diagram->topLevel(); i > 0; i--) {
@@ -742,7 +741,7 @@ void PricerSolverBdd::remove_edges() {
 }
 
 void PricerSolverBdd::print_representation_file() {
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     auto  vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
     auto  edge_type_list(get(boost::edge_weight_t(), mip_graph));
     auto  edge_index_list(get(boost::edge_index_t(), mip_graph));
@@ -831,7 +830,7 @@ void PricerSolverBdd::add_inequality(std::vector<int> v1) {
 void PricerSolverBdd::build_mip() {
     try {
         fmt::print("Building Mip model for the extended formulation:\n");
-        auto& table = decision_diagram->getDiagram().privateEntity();
+        auto& table = *(decision_diagram->getDiagram());
         auto  vertex_index_list(get(boost::vertex_index_t(), mip_graph));
         auto  vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
         auto  edge_type_list{get(boost::edge_weight_t(), mip_graph)};
@@ -1027,7 +1026,7 @@ void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
 }
 
 void PricerSolverBdd::cleanup_arcs() {
-    NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
+    NodeTableEntity<>& table = *(decision_diagram->getDiagram());
 
     table.node(0).backward_distance[0] = INT_MIN;
     table.node(0).backward_distance[1] = INT_MIN;
@@ -1097,7 +1096,7 @@ void PricerSolverBdd::cleanup_arcs() {
 void PricerSolverBdd::topdown_filtering() {
     auto  removed_edges = false;
     auto  nb_edges_removed_tmp = 0;
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     auto& root = table.node(decision_diagram->root());
     root.init_node(0, true);
     for (auto i = decision_diagram->topLevel(); i >= 0; i--) {
@@ -1167,7 +1166,7 @@ void PricerSolverBdd::topdown_filtering() {
 void PricerSolverBdd::bottum_up_filtering() {
     auto  removed_edges = false;
     auto  nb_edges_removed_tmp = 0;
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             it.visited = false;
@@ -1218,7 +1217,7 @@ void PricerSolverBdd::check_infeasible_arcs() {
     /** init table */
     auto  removed_edges = false;
     auto  nb_edges_removed_tmp = 0;
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     for (auto i = decision_diagram->topLevel(); i >= 0; i--) {
         for (auto& it : table[i]) {
             it.visited = false;
@@ -1284,7 +1283,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
     auto  removed_edges = false;
     auto  nb_edges_removed_tmp = 0;
     auto  edge_type_list(get(boost::edge_weight_t(), mip_graph));
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     for (auto i = decision_diagram->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             it.visited = false;
@@ -1439,14 +1438,14 @@ void PricerSolverBdd::equivalent_paths_filtering() {
 void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
     scheduling         constr(job, list, order);
     std::ofstream      outf("min1.gv");
-    NodeTableEntity<>& table = decision_diagram->getDiagram().privateEntity();
+    NodeTableEntity<>& table = *(decision_diagram->getDiagram());
     ColorWriterVertex  vertex_writer(mip_graph, table);
     boost::write_graphviz(outf, mip_graph, vertex_writer);
     decision_diagram->zddSubset(constr);
     outf.close();
     decision_diagram->compressBdd();
     construct_mipgraph();
-    auto&             table1 = decision_diagram->getDiagram().privateEntity();
+    auto&             table1 = *(decision_diagram->getDiagram());
     ColorWriterVertex vertex_writer1(mip_graph, table1);
     outf = std::ofstream("min2.gv");
     boost::write_graphviz(outf, mip_graph, vertex_writer1);
@@ -1456,7 +1455,7 @@ void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
 void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 const GPtrArray* schedule_sets,
                                                 int              num_columns) {
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     for (auto i = decision_diagram->topLevel(); i >= 0; i--) {
         for (auto& it : table[i]) {
             it.reset_lp_x();
@@ -1536,7 +1535,7 @@ void PricerSolverBdd::calculate_job_time(std::vector<std::vector<double>>& v) {
 }
 
 void PricerSolverBdd::split_job_time(int _job, int _time, bool _left = false) {
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     auto  removed_edges = false;
 
     for (auto i = decision_diagram->topLevel(); i > 0; i--) {
@@ -1565,20 +1564,22 @@ void PricerSolverBdd::split_job_time(int _job, int _time, bool _left = false) {
         cleanup_arcs();
         construct_mipgraph();
 
-        // auto table_bis = decision_diagram->getDiagram().privateEntity();
-        // ColorWriterVertex vertex_writer(mip_graph, table_bis);
-        // auto              file_name = "split_solution_" + problem_name + "_"
-        // +
-        //                  std::to_string(_job) + "_" + std::to_string(_time) +
-        //                  "_" + std::to_string(_left) + ".gv";
-        // std::ofstream outf(file_name);
-        // boost::write_graphviz(outf, mip_graph, vertex_writer);
-        // outf.close();
+        if (dbg_lvl() > 0) {
+            auto&             table_bis = *(decision_diagram->getDiagram());
+            ColorWriterVertex vertex_writer(mip_graph, table_bis);
+            auto file_name = "split_solution_" + problem_name + "_" +
+                             std::to_string(_job) + "_" +
+                             std::to_string(_time) + "_" +
+                             std::to_string(_left) + ".gv";
+            std::ofstream outf(file_name);
+            boost::write_graphviz(outf, mip_graph, vertex_writer);
+            outf.close();
+        }
     }
 }
 
 int PricerSolverBdd::add_constraints() {
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     if (get_is_integer_solution()) {
         bool added_cuts = false;
         return added_cuts;
@@ -1616,7 +1617,7 @@ void PricerSolverBdd::update_rows_coeff(int first) {
 
 bool PricerSolverBdd::check_schedule_set(GPtrArray* set) {
     // guint              weight = 0;
-    auto& table = decision_diagram->getDiagram().privateEntity();
+    auto& table = *(decision_diagram->getDiagram());
     auto  tmp_nodeid(decision_diagram->root());
     auto  counter = 0u;
 

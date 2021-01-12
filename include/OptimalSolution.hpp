@@ -99,6 +99,14 @@ class OptimalSolution {
         cost += value_Fj(C + _job->processing_time, _job);
         obj += _pi;
     }
+
+    void reverse_jobs() {
+        for (int low = 0, high = jobs->len - 1; low < high; low++, high--) {
+            auto temp = g_ptr_array_index(jobs, low);
+            g_ptr_array_index(jobs, low) = g_ptr_array_index(jobs, high);
+            g_ptr_array_index(jobs, high) = temp;
+        }
+    }
 };
 
 #endif  // OPTIMAL_SOLUTION_HPP

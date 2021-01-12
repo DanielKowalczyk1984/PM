@@ -45,10 +45,10 @@ class DdReducer {
 
    public:
     explicit DdReducer(TableHandler<T>& diagram, bool useMP = false)
-        : input(diagram.privateEntity()),
+        : input(*diagram),
           oldDiagram(diagram),
           newDiagram(input.numRows()),
-          output(newDiagram.privateEntity()),
+          output(*newDiagram),
           newIdTable(input.numRows()),
           rootPtr(input.numRows()),
           readyForSequentialReduction(false) {
@@ -190,13 +190,11 @@ class DdReducer {
                 } else {
                     assert(newId[j].row() == counter);
                     size_t k = newId[j].col();
-                    nt[k] = std::move(tt[j]);
-                    nt[k].set_head_node();
+                    nt[k] = tt[j];
+                    nt[k].set_node_id_label(newId[j]);
                     if (nt[k].ptr_node_id != nullptr) {
                         *(nt[k].ptr_node_id) = newId[j];
                     }
-                    nt[k].child[0] = &(output.node(nt[k].branch[0]));
-                    nt[k].child[1] = &(output.node(nt[k].branch[1]));
                 }
             }
 
@@ -308,10 +306,8 @@ class DdReducer {
                 } else {
                     assert(newId[j].row() == i);
                     size_t k = newId[j].col();
-                    nt[k].set_head_node();
-                    nt[k] = std::move(tt[j]);
-                    nt[k].child[0] = &(output.node(nt[k].branch[0]));
-                    nt[k].child[1] = &(output.node(nt[k].branch[1]));
+                    nt[k] = tt[j];
+                    nt[k].set_node_id_label(newId[j]);
                 }
             }
 
@@ -381,7 +377,6 @@ class DdReducer {
             NodeId const& ff = newIdTable[i][j];
             if (ff.row() == i) {
                 output[i][ff.col()] = input[i][j];
-                output[i][ff.col()].set_head_node();
                 output[i][ff.col()].child[0] =
                     &(output.node(output[i][ff.col()].branch[0]));
                 output[i][ff.col()].child[1] =

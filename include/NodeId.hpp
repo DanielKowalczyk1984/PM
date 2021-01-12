@@ -22,9 +22,10 @@ class NodeId {
     uint64_t code_;
 
    public:
-    NodeId() {  // 'code_' is not initialized in the default constructor for
-                // SPEED.
-    }
+    NodeId() = default;
+    // {  // 'code_' is not initialized in the default constructor for
+    //    // SPEED.
+    // }
 
     NodeId(uint64_t code) : code_(code) {}
 

@@ -439,7 +439,7 @@ class TableHandler {
 
     ~TableHandler() { pointer->deref(); }
 
-    NodeTableEntity<T> const& operator*() const { return pointer->entity; }
+    NodeTableEntity<T>& operator*() const { return pointer->entity; }
 
     NodeTableEntity<T> const* operator->() const { return &pointer->entity; }
 
@@ -447,30 +447,30 @@ class TableHandler {
      * Make the table unshared.
      * @return writable reference to the private table.
      */
-    NodeTableEntity<T>& privateEntity() {
-        if (pointer->refCount >= 2) {
-            pointer->deref();
-            pointer = new Object(pointer->entity);
-        }
+    // NodeTableEntity<T>& privateEntity() {
+    //     if (pointer->refCount >= 2) {
+    //         pointer->deref();
+    //         pointer = new Object(pointer->entity);
+    //     }
 
-        return pointer->entity;
-    }
+    //     return pointer->entity;
+    // }
 
     /**
      * Clear and initialize the table.
      * @param n the number of rows.
      * @return writable reference to the private table.
      */
-    NodeTableEntity<T>& init(int n = 1) {
-        if (pointer->refCount == 1) {
-            pointer->entity.init(n);
-        } else {
-            pointer->deref();
-            pointer = new Object(n);
-        }
+    // NodeTableEntity<T>& init(int n = 1) {
+    //     if (pointer->refCount == 1) {
+    //         pointer->entity.init(n);
+    //     } else {
+    //         pointer->deref();
+    //         pointer = new Object(n);
+    //     }
 
-        return pointer->entity;
-    }
+    //     return pointer->entity;
+    // }
 
     /**
      * Clear a row if it is not shared.

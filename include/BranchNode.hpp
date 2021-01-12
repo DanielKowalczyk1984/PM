@@ -1,10 +1,22 @@
 #ifndef __BRANCHNODE_H__
 #define __BRANCHNODE_H__
 
+#include <limits>
 #include "branch-and-bound/state.h"
 #include "wctprivate.h"
 
 class BranchNodeBase : public State {
+    struct BranchCand {
+        double score;
+        int    job;
+
+        BranchCand() : score(1e-3), job(-1){};
+
+        bool operator<(const BranchCand& other) const {
+            return (score < other.score);
+        };
+    };
+
    public:
     BranchNodeBase(NodeData* pd, bool isRoot = false);
     BranchNodeBase(BranchNodeBase&&) = default;

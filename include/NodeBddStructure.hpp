@@ -64,8 +64,8 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      */
     explicit DdStructure(int n) : diagram(n + 1), root_(1) {
         assert(n >= 0);
-        NodeTableEntity<T>& table = diagram.privateEntity();
-        NodeId              f(1);
+        auto&  table = *diagram;
+        NodeId f(1);
 
         for (int i = 1; i <= n; ++i) {
             table.initRow(i, 1);
@@ -318,9 +318,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     // }
 
     template <typename R>
-    R evaluate_backward(Eval<T, R> const& evaluator) {
-        int                 n = root_.row();
-        NodeTableEntity<T>& work = getDiagram().privateEntity();
+    R evaluate_backward(Eval<T, R>& evaluator) {
+        int   n = root_.row();
+        auto& work = *(getDiagram());
+        evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
             printf("empty DDstructure\n");
@@ -340,9 +341,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     }
 
     template <typename R>
-    void compute_labels_backward(Eval<T, R> const& evaluator) {
-        int                 n = root_.row();
-        NodeTableEntity<T>& work = getDiagram().privateEntity();
+    void compute_labels_backward(Eval<T, R>& evaluator) {
+        int   n = root_.row();
+        auto& work = *(getDiagram());
+        evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
             printf("empty DDstructure\n");
@@ -359,9 +361,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     }
 
     template <typename R>
-    R evaluate_forward(Eval<T, R> const& evaluator) {
-        int                 n = root_.row();
-        NodeTableEntity<T>& work = getDiagram().privateEntity();
+    R evaluate_forward(Eval<T, R>& evaluator) {
+        int   n = root_.row();
+        auto& work = *(getDiagram());
+        evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
             printf("empty DDstructure\n");
@@ -395,9 +398,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     }
 
     template <typename R>
-    void compute_labels_forward(Eval<T, R> const& evaluator) {
-        int                 n = root_.row();
-        NodeTableEntity<T>& work = getDiagram().privateEntity();
+    void compute_labels_forward(Eval<T, R>& evaluator) {
+        int   n = root_.row();
+        auto& work = *(getDiagram());
+        evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
             printf("empty DDstructure\n");
@@ -566,48 +570,48 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      * Works only for binary DDs.
      * @param os the output stream.
      */
-    void dumpSapporo(std::ostream& os) const {
-        int const    n = diagram->numRows() - 1;
-        size_t const l = size();
+    // void dumpSapporo(std::ostream& os) const {
+    //     int const    n = diagram->numRows() - 1;
+    //     size_t const l = size();
 
-        os << "_i " << n << "\n";
-        os << "_o 1\n";
-        os << "_n " << l << "\n";
+    //     os << "_i " << n << "\n";
+    //     os << "_o 1\n";
+    //     os << "_n " << l << "\n";
 
-        DataTable<size_t> nodeId(diagram->numRows());
-        size_t            k = 0;
+    //     DataTable<size_t> nodeId(diagram->numRows());
+    //     size_t            k = 0;
 
-        for (int i = 1; i <= n; ++i) {
-            size_t const           m = (*diagram)[i].size();
-            NodeBdd<double> const* p = (*diagram)[i].data();
-            nodeId[i].resize(m);
+    //     for (int i = 1; i <= n; ++i) {
+    //         size_t const           m = (*diagram)[i].size();
+    //         NodeBdd<double> const* p = (*diagram)[i].data();
+    //         nodeId[i].resize(m);
 
-            for (size_t j = 0; j < m; ++j, ++p) {
-                k += 2;
-                nodeId[i][j] = k;
-                os << k << " " << i;
+    //         for (size_t j = 0; j < m; ++j, ++p) {
+    //             k += 2;
+    //             nodeId[i][j] = k;
+    //             os << k << " " << i;
 
-                for (int c = 0; c <= 1; ++c) {
-                    NodeId fc = p->branch[c];
-                    if (fc == 0) {
-                        os << " F";
-                    } else if (fc == 1) {
-                        os << " T";
-                    } else {
-                        os << " " << nodeId[fc.row()][fc.col()];
-                    }
-                }
+    //             for (int c = 0; c <= 1; ++c) {
+    //                 NodeId fc = p->branch[c];
+    //                 if (fc == 0) {
+    //                     os << " F";
+    //                 } else if (fc == 1) {
+    //                     os << " T";
+    //                 } else {
+    //                     os << " " << nodeId[fc.row()][fc.col()];
+    //                 }
+    //             }
 
-                os << "\n";
-            }
+    //             os << "\n";
+    //         }
 
-            auto const& levels = diagram->lowerLevels(i);
-            for (int const* t = levels.begin(); t != levels.end(); ++t) {
-                nodeId[*t].clear();
-            }
-        }
+    //         auto const& levels = diagram->lowerLevels(i);
+    //         for (int const* t = levels.begin(); t != levels.end(); ++t) {
+    //             nodeId[*t].clear();
+    //         }
+    //     }
 
-        os << nodeId[root_.row()][root_.col()] << "\n";
-        assert(k == l * 2);
-    }
+    //     os << nodeId[root_.row()][root_.col()] << "\n";
+    //     assert(k == l * 2);
+    // }
 };

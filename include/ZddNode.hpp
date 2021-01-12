@@ -65,10 +65,10 @@ class SubNodeZdd {
           low_edge_key{-1},
           node_id{_node_id},
           node_ptr{nullptr} {
-        for (unsigned i = 0; i < 2; ++i) {
-            forward_label[i].set_head_node(this);
-            backward_label[i].set_head_node(this);
-        }
+        // for (unsigned i = 0; i < 2; ++i) {
+        //     forward_label[i].set_head_node(this);
+        //     backward_label[i].set_head_node(this);
+        // }
     }
 
     explicit SubNodeZdd(int _weight, NodeId _node_id, NodeZdd<T>* _node_ptr)
@@ -83,10 +83,10 @@ class SubNodeZdd {
           low_edge_key{-1},
           node_id{_node_id},
           node_ptr{_node_ptr} {
-        for (unsigned i = 0; i < 2; ++i) {
-            forward_label[i].set_head_node(this);
-            backward_label[i].set_head_node(this);
-        }
+        // for (unsigned i = 0; i < 2; ++i) {
+        //     forward_label[i].set_head_node(this);
+        //     backward_label[i].set_head_node(this);
+        // }
     }
 
     SubNodeZdd(const SubNodeZdd& other) = default;
@@ -132,20 +132,6 @@ class NodeZdd : public NodeBase {
         child[0] = nullptr;
         child[1] = nullptr;
     };
-
-    // NodeZdd(int& _num_layer, bool& _root_node, bool& _terminal_node)
-    //     : NodeBase(_num_layer, _root_node, _terminal_node), list() {
-    //     child[0] = nullptr;
-    //     child[1] = nullptr;
-    // };
-
-    void set_head_node() {
-        for (auto& it : list) {
-            for (unsigned i = 0; i < 2; ++i) {
-                it->node_ptr = this;
-            }
-        }
-    }
 
     NodeZdd(int i, int j) : NodeBase(i, j), child{nullptr, nullptr}, list() {}
 
@@ -210,6 +196,8 @@ class NodeZdd : public NodeBase {
             it->node_ptr = this;
         }
     }
+
+    void set_node_id_label(NodeId _node_id) {}
 };
 
 #endif  // ZDD_NODE_HPP

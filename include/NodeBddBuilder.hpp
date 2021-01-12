@@ -122,7 +122,7 @@ class DdBuilder : BuilderBase {
     DdBuilder(Spec const& _spec, TableHandler<T>& _output, int n = 0)
         : spec(_spec),
           specNodeSize(getSpecNodeSize(_spec.datasize())),
-          output(_output.privateEntity()),
+          output(*_output),
           sweeper(this->output, oneSrcPtr),
           oneStorage(_spec.datasize()),
           one(oneStorage.data()) {
@@ -349,7 +349,7 @@ class ZddSubsetter : BuilderBase {
         : spec(s),
           specNodeSize(getSpecNodeSize(spec.datasize())),
           input(*_input),
-          output(_output.privateEntity()),
+          output(*_output),
           work(_input->numRows()),
           sweeper(this->output, oneSrcPtr),
           oneStorage(spec.datasize()),

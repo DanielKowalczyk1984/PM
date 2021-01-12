@@ -28,6 +28,7 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
                    get_nb_vertices());
         fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", 60, get_nb_edges());
     }
+    evaluator.set_table(&(*(get_decision_diagram()->getDiagram())));
 }
 
 OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
@@ -51,8 +52,7 @@ void PricerSolverBddBackwardSimple::compute_labels(double* _pi) {
 void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi,
                                                    int     UB,
                                                    double  LB) {
-    NodeTableEntity<>& table =
-        get_decision_diagram()->getDiagram().privateEntity();
+    auto& table = *(get_decision_diagram()->getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(1).forward_label[0].get_f() + pi[convex_constr_id];
@@ -62,8 +62,9 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi,
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
+            auto&  child = table.node(it.branch[1]);
             double result = it.forward_label[0].get_f() +
-                            it.child[1]->backward_label[0].get_f() +
+                            child.backward_label[0].get_f() +
                             it.reduced_cost[1] + pi[convex_constr_id];
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
@@ -88,8 +89,7 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi,
 }
 
 void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi) {
-    NodeTableEntity<>& table =
-        get_decision_diagram()->getDiagram().privateEntity();
+    auto& table = *(get_decision_diagram()->getDiagram());
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label[0].get_f();
     bool   removed_edges = false;
@@ -98,8 +98,9 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi) {
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
+            auto&  child = table.node(it.branch[1]);
             double result = it.forward_label[0].get_f() +
-                            it.child[1]->backward_label[0].get_f() +
+                            child.backward_label[0].get_f() +
                             it.reduced_cost[1];
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
@@ -156,6 +157,7 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
                    get_nb_vertices());
         fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", 60, get_nb_edges());
     }
+    evaluator.set_table(&(*(get_decision_diagram()->getDiagram())));
 }
 
 OptimalSolution<double> PricerSolverBddBackwardCycle::pricing_algorithm(
@@ -180,8 +182,7 @@ void PricerSolverBddBackwardCycle::compute_labels(double* _pi) {
 void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
                                                   int     UB,
                                                   double  LB) {
-    NodeTableEntity<>& table =
-        get_decision_diagram()->getDiagram().privateEntity();
+    auto& table = *(get_decision_diagram()->getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(get_decision_diagram()->root()).backward_label[0].get_f();
@@ -193,12 +194,12 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
         for (auto& it : table[i]) {
             Job*   job = it.get_job();
             double result;
+            auto&  child = table.node(it.branch[1]);
 
             // if (it.forward_label[0].get_previous_job() != job &&
             //     it.child[1]->backward_label[0].get_prev_job() != job) {
             result = it.forward_label[0].get_f() +
-                     it.child[1]->backward_label[0].get_f() +
-                     it.reduced_cost[1];
+                     child.backward_label[0].get_f() + it.reduced_cost[1];
 
             // } else if (it.forward_label[0].get_previous_job() == job &&
             //            it.child[1]->backward_label[0].get_prev_job() != job)
@@ -245,8 +246,7 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
 }
 
 void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
-    NodeTableEntity<>& table =
-        get_decision_diagram()->getDiagram().privateEntity();
+    auto& table = *(get_decision_diagram()->getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(get_decision_diagram()->root()).backward_label[0].get_f();
@@ -258,27 +258,24 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
         for (auto& it : table[i]) {
             Job*   job = it.get_job();
             double result;
+            auto&  child = table.node(it.branch[1]);
 
             if (it.forward_label[0].get_previous_job() != job &&
-                it.child[1]->backward_label[0].get_prev_job() != job) {
+                child.backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[0].get_f() +
-                         it.child[1]->backward_label[0].get_f() +
-                         it.reduced_cost[1];
+                         child.backward_label[0].get_f() + it.reduced_cost[1];
 
             } else if (it.forward_label[0].get_previous_job() == job &&
-                       it.child[1]->backward_label[0].get_prev_job() != job) {
+                       child.backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[1].get_f() +
-                         it.child[1]->backward_label[0].get_f() +
-                         it.reduced_cost[1];
+                         child.backward_label[0].get_f() + it.reduced_cost[1];
             } else if (it.forward_label[0].get_previous_job() != job &&
-                       it.child[1]->backward_label[0].get_prev_job() == job) {
+                       child.backward_label[0].get_prev_job() == job) {
                 result = it.forward_label[0].get_f() +
-                         it.child[1]->backward_label[1].get_f() +
-                         it.reduced_cost[1];
+                         child.backward_label[1].get_f() + it.reduced_cost[1];
             } else {
                 result = it.forward_label[1].get_f() +
-                         it.child[1]->backward_label[1].get_f() +
-                         it.reduced_cost[1];
+                         child.backward_label[1].get_f() + it.reduced_cost[1];
             }
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
