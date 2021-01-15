@@ -156,7 +156,7 @@ class Eval {
     void set_table(NodeTableEntity<T>* _table) { table = _table; }
 
     NodeTableEntity<T>* get_table() const { return table; }
-    Eval<T, R>() = default;
+    Eval<T, R>() : table(nullptr){};
 
     Eval<T, R>(const Eval<T, R>&) = default;
     Eval<T, R>(Eval<T, R>&&) = default;

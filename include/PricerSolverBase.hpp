@@ -20,8 +20,8 @@ struct PricerSolverBase {
 
     std::string problem_name;
 
-    std::unique_ptr<GRBEnv>   env;
-    std::unique_ptr<GRBModel> model;
+    GRBEnv   env;
+    GRBModel model;
 
     ReformulationModel reformulation_model;
 
@@ -66,7 +66,7 @@ struct PricerSolverBase {
     /**
      * init_table
      */
-    virtual void init_table() = 0;
+    // virtual void init_table() = 0;
 
     /**
      * Pricing Algorithm

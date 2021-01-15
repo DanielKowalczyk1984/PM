@@ -44,7 +44,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
         init_table();
     }
-    void init_table() override;
+    void init_table();
 
     void reduce_cost_fixing([[maybe_unused]] double* pi,
                             [[maybe_unused]] int     UB,

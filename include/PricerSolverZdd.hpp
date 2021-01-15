@@ -36,7 +36,7 @@ class PricerSolverZdd : public PricerSolverBase {
           ordered_jobs(src.ordered_jobs),
           mip_graph(src.mip_graph) {}
 
-    void         init_table() override;
+    void         init_table();
     virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
     void reduce_cost_fixing(double* pi, int UB, double LB) override;

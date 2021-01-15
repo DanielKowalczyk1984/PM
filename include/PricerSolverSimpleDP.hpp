@@ -38,7 +38,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         init_table();
     };
     ~PricerSolverSimpleDp();
-    void init_table() override;
+    void init_table();
 
     void evaluate_nodes([[maybe_unused]] double* pi,
                         [[maybe_unused]] int     UB,

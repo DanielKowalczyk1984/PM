@@ -126,11 +126,11 @@ void PricerSolverSimpleDp::build_mip() {
                 double cost = value_Fj(t + it->processing_time, it);
                 double ub = take[(it->job) * (Hmax + 1) + t] ? 1.0 : 0.0;
                 TI_x[it->job * (Hmax + 1) + t] =
-                    model->addVar(0.0, ub, cost, GRB_BINARY);
+                    model.addVar(0.0, ub, cost, GRB_BINARY);
             }
         }
 
-        model->update();
+        model.update();
 
         /** Assignment variables */
         std::unique_ptr<GRBLinExpr[]> assignment(
@@ -150,10 +150,10 @@ void PricerSolverSimpleDp::build_mip() {
         }
 
         std::unique_ptr<GRBConstr[]> assignment_constrs(
-            model->addConstrs(assignment.get(), sense.get(), rhs.get(), nullptr,
-                              convex_constr_id));
+            model.addConstrs(assignment.get(), sense.get(), rhs.get(), nullptr,
+                             convex_constr_id));
 
-        model->update();
+        model.update();
 
         std::unique_ptr<GRBLinExpr[]> interval_constr(
             new GRBLinExpr[Hmax + 1]());
@@ -178,12 +178,12 @@ void PricerSolverSimpleDp::build_mip() {
                 interval_sense[t] = GRB_LESS_EQUAL;
                 interval_rhs[t] = convex_rhs;
 
-                model->addConstr(interval_constr[t], interval_sense[t],
-                                 interval_rhs[t]);
+                model.addConstr(interval_constr[t], interval_sense[t],
+                                interval_rhs[t]);
             }
         }
 
-        model->update();
+        model.update();
 
     } catch (GRBException e) {
         std::cerr << e.getMessage() << '\n';
@@ -196,9 +196,9 @@ void PricerSolverSimpleDp::build_mip() {
         }
     }
 
-    model->write("ti_" + problem_name + "_" + std::to_string(convex_rhs) +
-                 "correct.lp");
-    model->optimize();
+    model.write("ti_" + problem_name + "_" + std::to_string(convex_rhs) +
+                "correct.lp");
+    model.optimize();
     return;
 }
 

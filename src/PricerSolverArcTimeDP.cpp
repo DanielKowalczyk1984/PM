@@ -168,12 +168,12 @@ void PricerSolverArcTimeDp::build_mip() {
                 double UB = (it->job == vector_jobs[j]->job) ? convex_rhs : 1.0;
                 auto   s =
                     (it->job == vector_jobs[j]->job) ? GRB_INTEGER : GRB_BINARY;
-                arctime_x[it->job][j][t] = model->addVar(0.0, UB, cost, s);
+                arctime_x[it->job][j][t] = model.addVar(0.0, UB, cost, s);
             }
         }
     }
 
-    model->update();
+    model.update();
 
     /** Assignment variables */
     std::unique_ptr<GRBLinExpr[]> assignment(
@@ -194,7 +194,7 @@ void PricerSolverArcTimeDp::build_mip() {
         }
     }
 
-    std::unique_ptr<GRBConstr[]> assignment_constrs(model->addConstrs(
+    std::unique_ptr<GRBConstr[]> assignment_constrs(model.addConstrs(
         assignment.get(), sense.get(), rhs.get(), nullptr, convex_constr_id));
 
     for (int i = 0; i < n; i++) {
@@ -209,7 +209,7 @@ void PricerSolverArcTimeDp::build_mip() {
                 expr -=
                     arctime_x[i][it->job][t + vector_jobs[i]->processing_time];
             }
-            model->addConstr(expr, GRB_EQUAL, 0);
+            model.addConstr(expr, GRB_EQUAL, 0);
         }
     }
 
@@ -223,14 +223,14 @@ void PricerSolverArcTimeDp::build_mip() {
             expr -= arctime_x[n][it->job][t + 1];
         }
 
-        model->addConstr(expr, GRB_EQUAL, 0);
+        model.addConstr(expr, GRB_EQUAL, 0);
     }
 
     GRBLinExpr expr{};
     for (auto& it : reversed_graph[n][0]) {
         expr += arctime_x[n][it->job][0];
     }
-    model->addConstr(expr, GRB_EQUAL, convex_rhs);
+    model.addConstr(expr, GRB_EQUAL, convex_rhs);
 
     for (int j = 0; j < n + 1; j++) {
         for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
@@ -247,11 +247,11 @@ void PricerSolverArcTimeDp::build_mip() {
         }
     }
 
-    model->write("ati_" + problem_name + "_" + std::to_string(convex_rhs) +
-                 ".lp");
-    model->optimize();
+    model.write("ati_" + problem_name + "_" + std::to_string(convex_rhs) +
+                ".lp");
+    model.optimize();
 
-    if (model->get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
+    if (model.get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
         for (int j = 0; j < n; j++) {
             for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
                 for (auto& it : graph[j][t]) {
