@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.15)
 project(
   PM
   VERSION 0.1.0
-  LANGUAGES CXX C)
+  LANGUAGES CXX C
+  DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems")
 
 #
 # Set project options
@@ -13,8 +14,9 @@ project(
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake
                       ${CMAKE_SOURCE_DIR})
 
-include(cmake/StandardSettings.cmake)
-include(cmake/Utils.cmake)
+include(StandardSettings)
+include(Utils)
+include(StaticAnalyzers)
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 
 #
@@ -27,8 +29,8 @@ include(ConfigSafeGuards)
 # Enable package managers
 #
 
-include(cmake/Conan.cmake)
-include(cmake/Vcpkg.cmake)
+include(Conan)
+include(Vcpkg)
 
 #
 # code coverage
@@ -78,7 +80,7 @@ else()
   target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 endif()
 
-include(cmake/CompilerWarnings.cmake)
+include(CompilerWarnings)
 set_project_warnings(${PROJECT_NAME})
 
 verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
