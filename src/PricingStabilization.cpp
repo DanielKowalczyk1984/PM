@@ -102,7 +102,7 @@ int PricingStabilizationBase::do_reduced_cost_fixing() {
     return 0;
 }
 
-PricingStabilizationBase::~PricingStabilizationBase() {}
+PricingStabilizationBase::~PricingStabilizationBase() = default;
 
 /**
  * @brief Wentgnes stabilization technique
@@ -119,7 +119,7 @@ PricingStabilizationStat::PricingStabilizationStat(PricerSolverBase* _solver)
     : PricingStabilizationBase(_solver),
       pi_out(_solver->convex_constr_id + 1, 0.0) {}
 
-PricingStabilizationStat::~PricingStabilizationStat() {}
+PricingStabilizationStat::~PricingStabilizationStat() = default;
 
 /**
 @brief Solve pricing problem with Wentgnes stabilization
@@ -214,7 +214,7 @@ PricingStabilizationDynamic::PricingStabilizationDynamic(
 
 {}
 
-PricingStabilizationDynamic::~PricingStabilizationDynamic() {}
+PricingStabilizationDynamic::~PricingStabilizationDynamic() = default;
 
 void PricingStabilizationDynamic::solve(double  _eta_out,
                                         double* _pi_out,
@@ -301,7 +301,7 @@ PricingStabilizationHybrid::PricingStabilizationHybrid(
     : PricingStabilizationDynamic(pricer_solver),
       subgradient_in(pricer_solver->convex_constr_id + 1) {}
 
-PricingStabilizationHybrid::~PricingStabilizationHybrid() {}
+PricingStabilizationHybrid::~PricingStabilizationHybrid() = default;
 
 void PricingStabilizationHybrid::update_duals() {
     if (solver->reformulation_model.get_nb_constraints() != pi_sep.size()) {

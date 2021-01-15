@@ -8,20 +8,19 @@
 
 template <typename T = double>
 class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
-    OriginalModel<>* original_model;
-    double*          pi;
+    double* pi{};
 
    public:
-    ForwardBddBase()
-        : Eval<NodeBdd<T>, OptimalSolution<T>>(),
-          original_model(nullptr),
-          pi(nullptr) {}
+    ForwardBddBase() = default;
 
-    ForwardBddBase(const ForwardBddBase<T>& src) {}
+    ForwardBddBase<T>(const ForwardBddBase<T>& src) = default;
+    ForwardBddBase<T>(ForwardBddBase<T>&&) noexcept = default;
+    ForwardBddBase<T>& operator=(ForwardBddBase<T>&&) noexcept = default;
+    ForwardBddBase<T>& operator=(const ForwardBddBase<T>&) = default;
 
     void set_pi(double* _pi) { pi = _pi; }
 
-    const double* get_pi() const { return pi; }
+    [[nodiscard]] const double* get_pi() const { return pi; }
 
     virtual void initializenode(NodeBdd<T>& n) const = 0;
 
@@ -52,9 +51,12 @@ class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
 template <typename T = double>
 class ForwardBddCycle : public ForwardBddBase<T> {
    public:
-    ForwardBddCycle() : ForwardBddBase<T>() {}
+    ForwardBddCycle() = default;
 
-    ForwardBddCycle(const ForwardBddCycle<T>& src) {}
+    ForwardBddCycle<T>(const ForwardBddCycle<T>& src) = default;
+    ForwardBddCycle<T>(ForwardBddCycle<T>&&) noexcept = default;
+    ForwardBddCycle<T>& operator=(const ForwardBddCycle<T>&) = default;
+    ForwardBddCycle<T>& operator=(ForwardBddCycle<T>&&) noexcept = default;
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {
@@ -167,12 +169,12 @@ class ForwardBddCycle : public ForwardBddBase<T> {
 template <typename T = double>
 class ForwardBddSimple : public ForwardBddBase<T> {
    public:
-    ForwardBddSimple()
-        : ForwardBddBase<T>(){
+    ForwardBddSimple<T>() = default;
 
-          };
-
-    ForwardBddSimple(const ForwardBddSimple<T>& src) {}
+    ForwardBddSimple(const ForwardBddSimple<T>&) = default;
+    ForwardBddSimple<T>& operator=(const ForwardBddSimple<T>&) = default;
+    ForwardBddSimple(ForwardBddSimple<T>&&) noexcept = default;
+    ForwardBddSimple<T>& operator=(ForwardBddSimple<T>&&) noexcept = default;
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {

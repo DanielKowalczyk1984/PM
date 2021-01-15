@@ -7,18 +7,14 @@ template <typename T = double>
 class OptimalSolution {
    public:
     T          obj;
-    int        cost;
-    int        C_max;
-    GPtrArray* jobs;
+    int        cost{};
+    int        C_max{};
+    GPtrArray* jobs{g_ptr_array_new()};
 
     /** Default constructor */
-    OptimalSolution() : obj(0), cost(0), C_max(0), jobs(g_ptr_array_new()) {}
+    OptimalSolution() : obj(0) {}
 
-    explicit OptimalSolution(T _obj)
-        : obj(_obj),
-          cost(0),
-          C_max(0),
-          jobs(g_ptr_array_new()) {}
+    explicit OptimalSolution(T _obj) : obj(_obj), jobs(g_ptr_array_new()) {}
 
     /** Copy constructor */
     OptimalSolution(const OptimalSolution& other)

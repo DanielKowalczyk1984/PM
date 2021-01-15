@@ -59,10 +59,10 @@ class DdSweeper {
      */
     explicit DdSweeper(NodeTableEntity<T>& _diagram)
         : diagram(_diagram),
-          oneSrcPtr(0),
+          oneSrcPtr(nullptr),
           allCount(0),
           maxCount(0),
-          rootPtr(0) {}
+          rootPtr(nullptr) {}
 
     /**
      * Constructor.
@@ -75,7 +75,7 @@ class DdSweeper {
           oneSrcPtr(&_oneSrcPtr),
           allCount(0),
           maxCount(0),
-          rootPtr(0) {}
+          rootPtr(nullptr) {}
 
     /**
      * Set the root pointer.
@@ -152,8 +152,7 @@ class DdSweeper {
         }
 
         if (oneSrcPtr) {
-            for (size_t i = 0; i < oneSrcPtr->size(); ++i) {
-                NodeBranchId& nbi = (*oneSrcPtr)[i];
+            for (auto& nbi : *oneSrcPtr) {
                 if (nbi.row >= k) {
                     NodeId f = newId[nbi.row][nbi.col];
                     nbi.row = f.row();

@@ -1,6 +1,7 @@
 #include "PricerSolverArcTimeDP.hpp"
 #include <fmt/core.h>
 #include <iostream>
+#include "gurobi_c.h"
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
                                              int         _num_machines,
@@ -176,15 +177,9 @@ void PricerSolverArcTimeDp::build_mip() {
     model.update();
 
     /** Assignment variables */
-    std::unique_ptr<GRBLinExpr[]> assignment(
-        new GRBLinExpr[convex_constr_id]());
-    std::unique_ptr<char[]>   sense(new char[convex_constr_id]);
-    std::unique_ptr<double[]> rhs(new double[convex_constr_id]);
-
-    for (unsigned i = 0; i < jobs->len; ++i) {
-        sense[i] = GRB_GREATER_EQUAL;
-        rhs[i] = 1.0;
-    }
+    std::vector<GRBLinExpr> assignment(convex_constr_id, GRBLinExpr());
+    std::vector<char>       sense(convex_constr_id, GRB_GREATER_EQUAL);
+    std::vector<double>     rhs(convex_constr_id, 1.0);
 
     for (int j = 0; j < n; j++) {
         for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
@@ -194,8 +189,9 @@ void PricerSolverArcTimeDp::build_mip() {
         }
     }
 
-    std::unique_ptr<GRBConstr[]> assignment_constrs(model.addConstrs(
-        assignment.get(), sense.get(), rhs.get(), nullptr, convex_constr_id));
+    std::unique_ptr<GRBConstr> assignment_constrs(
+        model.addConstrs(assignment.data(), sense.data(), rhs.data(), nullptr,
+                         convex_constr_id));
 
     for (int i = 0; i < n; i++) {
         for (int t = 0; t <= Hmax - vector_jobs[i]->processing_time; t++) {
@@ -480,11 +476,10 @@ void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     std::fill(lp_x, lp_x + get_nb_edges(), 0);
     for (int k = 0; k < num_columns; k++) {
         if (columns[k]) {
-            size_t       counter = 0;
-            ScheduleSet* tmp =
-                (ScheduleSet*)g_ptr_array_index(schedule_sets, k);
-            int i = n;
-            int t = 0;
+            size_t counter = 0;
+            auto*  tmp = (ScheduleSet*)g_ptr_array_index(schedule_sets, k);
+            int    i = n;
+            int    t = 0;
             while (t < Hmax + 1) {
                 Job* tmp_j = nullptr;
                 int  j = n;

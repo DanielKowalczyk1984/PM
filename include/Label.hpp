@@ -1,58 +1,37 @@
 #ifndef LABEL_HPP
 #define LABEL_HPP
 
+#include <limits>
 #include "NodeId.hpp"
 #include "job.h"
 
 template <typename N, typename T>
 class Label {
    private:
-    Label<N, T>* prev;
-    bool         high;
-    Job*         job;
-    int          weight;
-    N*           head_node;
-    NodeId       node_id;
+    Label<N, T>* prev{nullptr};
+    bool         high{false};
+    Job*         job{nullptr};
+    int          weight{-1};
+    N*           head_node{nullptr};
+    NodeId       node_id{};
 
    public:
-    T    f;
-    Job* prev_job;
+    T    f{std::numeric_limits<double>::max()};
+    Job* prev_job{nullptr};
     /**
      * Constructor
      */
     Label(T& _f, Label<N, T>*& _prev, bool& _high)
         : prev(_prev),
           high(_high),
-          job(nullptr),
-          weight(-1),
-          head_node(nullptr),
-          node_id(0),
-          f(_f),
-          prev_job(nullptr){};
+          f(_f){};
 
-    Label()
-        : prev(nullptr),
-          high(false),
-          job(nullptr),
-          weight(-1),
-          head_node(nullptr),
-          node_id(0),
-          f(DBL_MAX),
-          prev_job(nullptr){};
+    Label() = default;
 
-    // explicit Label(N* _head_node)
-    //     : prev(nullptr),
-    //       high(false),
-    //       head_node(_head_node),
-    //       node_id(),
-    //       f(DBL_MAX),
-    //       prev_job(nullptr){};
-
-    // Label<N, T>() = default;
     Label<N, T>(const Label<N, T>& src) = default;
-    Label<N, T>(Label<N, T>&& src) = default;
+    Label<N, T>(Label<N, T>&& src) noexcept = default;
     Label<N, T>& operator=(const Label<N, T>& src) = default;
-    Label<N, T>& operator=(Label<N, T>&& src) = default;
+    Label<N, T>& operator=(Label<N, T>&& src) noexcept = default;
 
     void set_previous(Label<N, T>* _prev) { prev = _prev; }
 

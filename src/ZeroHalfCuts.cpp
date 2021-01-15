@@ -83,12 +83,11 @@ void ZeroHalfCuts::generate_model() {
 void ZeroHalfCuts::init_table() {
     for (auto i = root.row(); i >= 0; i--) {
         for (auto& it : (*table)[i]) {
-            it.in_degree_0 = 0;
-            it.in_degree_1 = 0;
+            it.in_degree = {};
+            // it.in_degree_1 = 0;
             it.in_edges[0].clear();
             it.in_edges[1].clear();
-            it.coeff_cut[0] = 0.0;
-            it.coeff_cut[1] = 0.0;
+            it.coeff_cut = {};
         }
     }
 
@@ -98,9 +97,9 @@ void ZeroHalfCuts::init_table() {
             auto& n1 = table->node(it.branch[1]);
 
             n0.in_edges[0].push_back(it.ptr_node_id);
-            n0.in_degree_0++;
+            n0.in_degree[0]++;
             n1.in_edges[1].push_back(it.ptr_node_id);
-            n1.in_degree_1++;
+            n1.in_degree[1]++;
         }
     }
 }
@@ -132,7 +131,7 @@ void ZeroHalfCuts::init_coeff_node(NodeBdd<>& node) {
 }
 
 void ZeroHalfCuts::construct_cut() {
-    GenericData* data = new GenericData();
+    auto* data = new GenericData();
 
     auto add_coeff_constr = [&](const auto& it) {
         auto& node = table->node(it);

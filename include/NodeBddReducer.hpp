@@ -17,8 +17,8 @@
 
 template <typename T, bool BDD, bool ZDD>
 class DdReducer {
-    NodeTableEntity<T>&               input;
     TableHandler<T>                   oldDiagram;
+    NodeTableEntity<T>&               input;
     TableHandler<T>                   newDiagram;
     NodeTableEntity<T>&               output;
     std::vector<std::vector<NodeId>>  newIdTable;
@@ -45,8 +45,8 @@ class DdReducer {
 
    public:
     explicit DdReducer(TableHandler<T>& diagram, bool useMP = false)
-        : input(*diagram),
-          oldDiagram(diagram),
+        : oldDiagram(std::move(diagram)),
+          input(*oldDiagram),
           newDiagram(input.numRows()),
           output(*newDiagram),
           newIdTable(input.numRows()),

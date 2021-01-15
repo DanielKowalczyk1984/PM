@@ -1,8 +1,8 @@
 #ifndef NODE_ID_HPP
 #define NODE_ID_HPP
 
-#include <stdint.h>
 #include <cassert>
+#include <cstdint>
 #include <ostream>
 
 int const NODE_ROW_BITS = 20;
@@ -37,9 +37,9 @@ class NodeId {
         setAttr(attr);
     }
 
-    int row() const { return code_ >> NODE_ROW_OFFSET; }
+    [[nodiscard]] int row() const { return code_ >> NODE_ROW_OFFSET; }
 
-    size_t col() const { return code_ & NODE_COL_MAX; }
+    [[nodiscard]] size_t col() const { return code_ & NODE_COL_MAX; }
 
     void setAttr(bool val) {
         if (val) {
@@ -49,15 +49,15 @@ class NodeId {
         }
     }
 
-    bool getAttr() const { return (code_ & NODE_ATTR_MASK) != 0; }
+    [[nodiscard]] bool getAttr() const { return (code_ & NODE_ATTR_MASK) != 0; }
 
-    NodeId withoutAttr() const { return code_ & ~NODE_ATTR_MASK; }
+    [[nodiscard]] NodeId withoutAttr() const { return code_ & ~NODE_ATTR_MASK; }
 
-    bool hasEmpty() const { return code_ == 1 || getAttr(); }
+    [[nodiscard]] bool hasEmpty() const { return code_ == 1 || getAttr(); }
 
-    uint64_t code() const { return code_ & ~NODE_ATTR_MASK; }
+    [[nodiscard]] uint64_t code() const { return code_ & ~NODE_ATTR_MASK; }
 
-    size_t hash() const { return code() * 314159257; }
+    [[nodiscard]] size_t hash() const { return code() * 314159257; }
 
     bool operator==(NodeId const& o) const { return code() == o.code(); }
 

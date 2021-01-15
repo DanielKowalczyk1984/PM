@@ -5,6 +5,7 @@
 #include <scheduleset.h>
 #include <NodeBdd.hpp>
 #include <NodeBddTable.hpp>
+#include <array>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/unordered_set.hpp>
@@ -20,10 +21,10 @@ struct VarsEdge {
 };
 
 struct VarsNode {
-    GRBVar omega[2];
+    std::array<GRBVar, 2> omega;
 };
 
-typedef property<
+using VertexProperty = property<
     vertex_index_t,
     int,
     property<vertex_name_t,
@@ -33,29 +34,27 @@ typedef property<
                       property<vertex_distance_t,
                                VarsNode,
                                property<vertex_color_t,
-                                        std::shared_ptr<SubNodeZdd<>>>>>>>
-    VertexProperty;
+                                        std::shared_ptr<SubNodeZdd<>>>>>>>;
 
-typedef property<
-    edge_index_t,
-    int,
-    property<edge_weight_t, bool, property<edge_weight2_t, VarsEdge>>>
-    EdgeProperty;
+using EdgeProperty =
+    property<edge_index_t,
+             int,
+             property<edge_weight_t, bool, property<edge_weight2_t, VarsEdge>>>;
 
 using MipGraph =
     adjacency_list<vecS, vecS, bidirectionalS, VertexProperty, EdgeProperty>;
 using Edge = graph_traits<MipGraph>::edge_descriptor;
 using Vertex = graph_traits<MipGraph>::vertex_descriptor;
 
-typedef property_map<MipGraph, vertex_index_t>::type    IndexAccessor;
-typedef property_map<MipGraph, vertex_name_t>::type     NodeIdAccessor;
-typedef property_map<MipGraph, vertex_color_t>::type    NodeZddIdAccessor;
-typedef property_map<MipGraph, vertex_degree_t>::type   NodeMipIdAccessor;
-typedef property_map<MipGraph, vertex_distance_t>::type VarsNodeAccessor;
-typedef property_map<MipGraph, edge_index_t>::type      EdgeIndexAccessor;
-typedef property_map<MipGraph, edge_weight_t>::type     EdgeTypeAccessor;
-typedef property_map<MipGraph, edge_weight2_t>::type    EdgeVarAccessor;
-typedef std::vector<std::vector<double>>                dbl_matrix;
+using IndexAccessor = property_map<MipGraph, vertex_index_t>::type;
+using NodeIdAccessor = property_map<MipGraph, vertex_name_t>::type;
+using NodeZddIdAccessor = property_map<MipGraph, vertex_color_t>::type;
+using NodeMipIdAccessor = property_map<MipGraph, vertex_degree_t>::type;
+using VarsNodeAccessor = property_map<MipGraph, vertex_distance_t>::type;
+using EdgeIndexAccessor = property_map<MipGraph, edge_index_t>::type;
+using EdgeTypeAccessor = property_map<MipGraph, edge_weight_t>::type;
+using EdgeVarAccessor = property_map<MipGraph, edge_weight2_t>::type;
+using dbl_matrix = std::vector<std::vector<double>>;
 class ColorWriterEdgeX {
    private:
     const MipGraph&          g;

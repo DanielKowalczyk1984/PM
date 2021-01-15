@@ -25,7 +25,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
                           int         _Hmax,
                           const char* p_name,
                           double      _UB);
-    ~PricerSolverArcTimeDp();
+    ~PricerSolverArcTimeDp() override;
     PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
         : PricerSolverBase(src),
           Hmax(src.Hmax),
@@ -100,7 +100,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
     }
 
-    int* get_take() override { return NULL; }
+    int* get_take() override { return nullptr; }
 
     void update_constraints() override {}
 

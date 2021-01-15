@@ -12,20 +12,20 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
       convex_constr_id(_jobs->len),
       convex_rhs(_num_machines),
       problem_name(p_name),
-      env(new GRBEnv()),
-      model(new GRBModel(*env)),
+      env(GRBEnv()),
+      model(GRBModel(env)),
       reformulation_model(jobs->len, _num_machines),
       is_integer_solution(false),
       UB(_UB) {
-    model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-    model->set(GRB_IntParam_Threads, 1);
-    model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-    model->set(GRB_IntParam_Presolve, 2);
-    model->set(GRB_DoubleParam_MIPGap, 1e-6);
-    model->set(GRB_DoubleParam_TimeLimit, 1800);
+    model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
+    model.set(GRB_IntParam_Threads, 1);
+    model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
+    model.set(GRB_IntParam_Presolve, 2);
+    model.set(GRB_DoubleParam_MIPGap, 1e-6);
+    model.set(GRB_DoubleParam_TimeLimit, 1800);
 }
 
-PricerSolverBase::~PricerSolverBase() {}
+PricerSolverBase::~PricerSolverBase() = default;
 
 int PricerSolverBase::add_constraints() {
     int val = 0;
@@ -55,13 +55,13 @@ int PricerSolverBase::get_int_attr_model(enum MIP_Attr c) {
     int val = -1;
     switch (c) {
         case MIP_Attr_Nb_Vars:
-            val = model->get(GRB_IntAttr_NumVars);
+            val = model.get(GRB_IntAttr_NumVars);
             break;
         case MIP_Attr_Nb_Constr:
-            val = model->get(GRB_IntAttr_NumConstrs);
+            val = model.get(GRB_IntAttr_NumConstrs);
             break;
         case MIP_Attr_Status:
-            val = model->get(GRB_IntAttr_Status);
+            val = model.get(GRB_IntAttr_Status);
             break;
         default:
             break;
@@ -72,27 +72,27 @@ int PricerSolverBase::get_int_attr_model(enum MIP_Attr c) {
 
 double PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) {
     double val = -1.0;
-    int    status = model->get(GRB_IntAttr_Status);
+    int    status = model.get(GRB_IntAttr_Status);
     if (status != GRB_INF_OR_UNBD && status != GRB_INFEASIBLE &&
         status != GRB_UNBOUNDED) {
         switch (c) {
             case MIP_Attr_Obj_Bound:
-                val = model->get(GRB_DoubleAttr_ObjBound);
+                val = model.get(GRB_DoubleAttr_ObjBound);
                 break;
             case MIP_Attr_Obj_Bound_LP:
-                val = model->get(GRB_DoubleAttr_ObjBoundC);
+                val = model.get(GRB_DoubleAttr_ObjBoundC);
                 break;
             case MIP_Attr_Mip_Gap:
-                val = model->get(GRB_DoubleAttr_MIPGap);
+                val = model.get(GRB_DoubleAttr_MIPGap);
                 break;
             case MIP_Attr_Run_Time:
-                val = model->get(GRB_DoubleAttr_Runtime);
+                val = model.get(GRB_DoubleAttr_Runtime);
                 break;
             case MIP_Attr_Nb_Simplex_Iter:
-                val = model->get(GRB_DoubleAttr_IterCount);
+                val = model.get(GRB_DoubleAttr_IterCount);
                 break;
             case MIP_Attr_Nb_Nodes:
-                val = model->get(GRB_DoubleAttr_NodeCount);
+                val = model.get(GRB_DoubleAttr_NodeCount);
                 break;
             default:
                 val = std::numeric_limits<double>::max();
@@ -101,13 +101,13 @@ double PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) {
     } else {
         switch (c) {
             case MIP_Attr_Run_Time:
-                val = model->get(GRB_DoubleAttr_Runtime);
+                val = model.get(GRB_DoubleAttr_Runtime);
                 break;
             case MIP_Attr_Nb_Simplex_Iter:
-                val = model->get(GRB_DoubleAttr_IterCount);
+                val = model.get(GRB_DoubleAttr_IterCount);
                 break;
             case MIP_Attr_Nb_Nodes:
-                val = model->get(GRB_DoubleAttr_NodeCount);
+                val = model.get(GRB_DoubleAttr_NodeCount);
                 break;
             default:
                 val = std::numeric_limits<double>::max();
@@ -171,7 +171,7 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
              c < reformulation_model.get_nb_constraints(); c++) {
             double dual_ = pi[c];
             auto   constr_ = reformulation_model.get_constraint(c);
-            double coeff_ = constr->get_var_coeff(&k);
+            double coeff_ = constr_->get_var_coeff(&k);
 
             if (fabs(coeff_) > 1e-10) {
                 result -= coeff_ * dual_;
@@ -223,7 +223,7 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
         for (int c = convex_constr_id + 1;
              c < reformulation_model.get_nb_constraints(); c++) {
             auto constr_ = reformulation_model.get_constraint(c);
-            auto coeff_ = constr->get_var_coeff(&k);
+            auto coeff_ = constr_->get_var_coeff(&k);
 
             if (fabs(coeff_) > 1e-10) {
                 subgradient[c] -= coeff_ * convex_rhs;
@@ -276,16 +276,16 @@ PricerSolverBase::PricerSolverBase(const PricerSolverBase& other)
       convex_constr_id(other.convex_constr_id),
       convex_rhs(other.convex_rhs),
       problem_name(other.problem_name),
-      env(new GRBEnv()),
-      model(new GRBModel(*env)),
+      env(other.env),
+      model(other.model),
       reformulation_model(other.reformulation_model),
       is_integer_solution(other.is_integer_solution),
       constLB(other.constLB),
       UB(other.UB) {
-    model->set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-    model->set(GRB_IntParam_Threads, 1);
-    model->set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-    model->set(GRB_IntParam_Presolve, 2);
-    model->set(GRB_DoubleParam_MIPGap, 1e-6);
-    model->set(GRB_DoubleParam_TimeLimit, 1800);
+    model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
+    model.set(GRB_IntParam_Threads, 1);
+    model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
+    model.set(GRB_IntParam_Presolve, 2);
+    model.set(GRB_DoubleParam_MIPGap, 1e-6);
+    model.set(GRB_DoubleParam_TimeLimit, 1800);
 };

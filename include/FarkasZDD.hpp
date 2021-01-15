@@ -4,7 +4,7 @@
 template <typename T = double>
 class BackwardBddFarkas : public BackwardBddBase<T> {
    public:
-    BackwardBddFarkas() : BackwardBddBase<T>(){};
+    BackwardBddFarkas<T>() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
         n.reset_reduced_costs_farkas();

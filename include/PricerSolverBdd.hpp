@@ -11,10 +11,10 @@
 #include "wctprivate.h"
 
 class PricerSolverBdd : public PricerSolverBase {
-    std::unique_ptr<DdStructure<>> decision_diagram;
-    size_t                         size_graph;
-    int                            nb_removed_edges{};
-    int                            nb_removed_nodes{};
+    DdStructure<> decision_diagram;
+    size_t        size_graph;
+    int           nb_removed_edges{};
+    int           nb_removed_nodes{};
 
     GPtrArray* ordered_jobs;
 
@@ -22,8 +22,8 @@ class PricerSolverBdd : public PricerSolverBase {
 
     OriginalModel<> original_model;
 
-    std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_in;
-    std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_out;
+    // std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_in;
+    // std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_out;
 
     int H_min;
     int H_max;
@@ -40,7 +40,7 @@ class PricerSolverBdd : public PricerSolverBase {
     PricerSolverBdd(const PricerSolverBdd& src, GPtrArray* _ordered_jobs);
     PricerSolverBdd(const PricerSolverBdd& src);
 
-    virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
+    void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
     void check_infeasible_arcs();
     void topdown_filtering();
@@ -55,9 +55,9 @@ class PricerSolverBdd : public PricerSolverBase {
     void remove_layers_init();
     void construct_mipgraph();
     void init_coeff_constraints();
+    void init_table();
 
     bool   check_schedule_set(GPtrArray* set) override;
-    void   init_table() override;
     void   reduce_cost_fixing(double* pi, int UB, double LB) override;
     void   build_mip() override;
     void   construct_lp_sol_from_rmp(const double*    columns,
@@ -81,15 +81,13 @@ class PricerSolverBdd : public PricerSolverBase {
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
 
-    inline DdStructure<>* get_decision_diagram() {
-        return decision_diagram.get();
-    }
+    inline DdStructure<>& get_decision_diagram() { return decision_diagram; }
 
     inline int get_nb_removed_edges() { return nb_removed_edges; }
 
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 
-    inline int* get_take() override { return NULL; };
+    inline int* get_take() override { return nullptr; };
 
    private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);

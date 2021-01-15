@@ -179,7 +179,7 @@ class DdSpecBase {
 template <typename S, int AR = 2>
 class StatelessDdSpec : public DdSpecBase<S, AR> {
    public:
-    int datasize() const { return 0; }
+    [[nodiscard]] int datasize() const { return 0; }
 
     int get_root(void* p) { return this->entity().getRoot(); }
 
@@ -240,7 +240,7 @@ class StatelessDdSpec : public DdSpecBase<S, AR> {
 template <typename S, typename T, int AR = 2>
 class DdSpec : public DdSpecBase<S, AR> {
    public:
-    typedef T State;
+    using State = T;
 
    private:
     static State& state(void* p) { return *static_cast<State*>(p); }
@@ -250,7 +250,7 @@ class DdSpec : public DdSpecBase<S, AR> {
     }
 
    public:
-    int datasize() const { return sizeof(State); }
+    [[nodiscard]] int datasize() const { return sizeof(State); }
 
     void construct(void* p) { new (p) State(); }
 
@@ -342,13 +342,13 @@ class DdSpec : public DdSpecBase<S, AR> {
 template <typename S, typename T, int AR = 2>
 class PodArrayDdSpec : public DdSpecBase<S, AR> {
    public:
-    typedef T State;
+    using State = T;
 
    private:
-    typedef size_t Word;
+    using Word = size_t;
 
-    int arraySize;
-    int dataWords;
+    int arraySize{};
+    int dataWords{};
 
     static State* state(void* p) { return static_cast<State*>(p); }
 
@@ -367,12 +367,12 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
         dataWords = (n * sizeof(State) + sizeof(Word) - 1) / sizeof(Word);
     }
 
-    int getArraySize() const { return arraySize; }
+    [[nodiscard]] int getArraySize() const { return arraySize; }
 
    public:
     PodArrayDdSpec() : arraySize(-1), dataWords(-1) {}
 
-    int datasize() const {
+    [[nodiscard]] int datasize() const {
         if (dataWords < 0)
             throw std::runtime_error(
                 "Array size is unknown; please set it by setArraySize(int) in "
@@ -475,16 +475,16 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
 template <typename S, typename TS, typename TA, int AR = 2>
 class HybridDdSpec : public DdSpecBase<S, AR> {
    public:
-    typedef TS S_State;
-    typedef TA A_State;
+    using S_State = TS;
+    using A_State = TA;
 
    private:
-    typedef size_t   Word;
+    using Word = size_t;
     static int const S_WORDS =
         (sizeof(S_State) + sizeof(Word) - 1) / sizeof(Word);
 
-    int arraySize;
-    int dataWords;
+    int arraySize{};
+    int dataWords{};
 
     static S_State& s_state(void* p) { return *static_cast<S_State*>(p); }
 
@@ -509,12 +509,12 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
             S_WORDS + (n * sizeof(A_State) + sizeof(Word) - 1) / sizeof(Word);
     }
 
-    int getArraySize() const { return arraySize; }
+    [[nodiscard]] int getArraySize() const { return arraySize; }
 
    public:
     HybridDdSpec() : arraySize(-1), dataWords(-1) {}
 
-    int datasize() const { return dataWords * sizeof(Word); }
+    [[nodiscard]] int datasize() const { return dataWords * sizeof(Word); }
 
     void construct(void* p) { new (p) S_State(); }
 
@@ -631,5 +631,3 @@ template <typename S, typename TS, typename TA, int AR = 2>
 class PodHybridDdSpec : public HybridDdSpec<S, TS, TA, AR> {};
 
 #endif  // NODE_BDD_SPEC_HPP
-
-// } // namespace tdzdd

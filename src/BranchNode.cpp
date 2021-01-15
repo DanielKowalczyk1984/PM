@@ -18,9 +18,9 @@ BranchNodeBase::BranchNodeBase(NodeData* _pd, bool _isRoot)
 }
 
 void BranchNodeBase::branch(BTree* bt) {
-    auto solver = pd->solver;
-    auto nb_jobs = pd->nb_jobs;
-    auto strong_branching =
+    auto* solver = pd->solver;
+    auto  nb_jobs = pd->nb_jobs;
+    auto  strong_branching =
         ((pd->opt_sol->tw - pd->LP_lower_bound) < (1.0 + IntegerTolerance));
 
     if (!strong_branching && dbg_lvl() > 0) {
@@ -61,11 +61,11 @@ void BranchNodeBase::branch(BTree* bt) {
                                             std::numeric_limits<double>::max());
 
     for (auto k = 0; k < nb_jobs; k++) {
-        auto i = ord[k];
-        auto prev = -1;
-        auto accum = 0.0;
-        auto dist_zero = 0.0;
-        auto job = static_cast<Job*>(g_ptr_array_index(solver->jobs, i));
+        auto  i = ord[k];
+        auto  prev = -1;
+        auto  accum = 0.0;
+        auto  dist_zero = 0.0;
+        auto* job = static_cast<Job*>(g_ptr_array_index(solver->jobs, i));
         for (auto t = 0; t < pd->H_max + 1; t++) {
             accum += x_job_time[i][t];
             // avg_completion_time[i] +=
@@ -118,9 +118,9 @@ void BranchNodeBase::branch(BTree* bt) {
             continue;
         }
 
-        auto left_gain = 0.0;
-        auto right_gain = 0.0;
-        auto job = (Job*)g_ptr_array_index(pd->jobarray, i);
+        auto  left_gain = 0.0;
+        auto  right_gain = 0.0;
+        auto* job = (Job*)g_ptr_array_index(pd->jobarray, i);
         for (auto t = 0; t < pd->H_max + 1; t++) {
             if (t + job->processing_time <= middle_time[i]) {
                 left_gain += x_job_time[i][t];
@@ -138,9 +138,9 @@ void BranchNodeBase::branch(BTree* bt) {
                 best_time = middle_time[i];
             }
         } else {
-            auto left = new_node_data(pd);
-            auto left_solver = left->solver;
-            auto left_node_branch = new BranchNodeBase(left);
+            auto* left = new_node_data(pd);
+            auto* left_solver = left->solver;
+            auto* left_node_branch = new BranchNodeBase(left);
             left->solver->split_job_time(i, middle_time[i], true);
             left_node_branch->computeBounds(bt);
 
@@ -160,9 +160,9 @@ void BranchNodeBase::branch(BTree* bt) {
 
             // build the right node and solve its root LP only
 
-            auto right = new_node_data(pd);
-            auto right_solver = right->solver;
-            auto right_node_branch = new BranchNodeBase(right);
+            auto* right = new_node_data(pd);
+            auto* right_solver = right->solver;
+            auto* right_node_branch = new BranchNodeBase(right);
 
             right_solver->split_job_time(i, middle_time[i], false);
             right_node_branch->computeBounds(bt);
@@ -188,25 +188,21 @@ void BranchNodeBase::branch(BTree* bt) {
                 best_min_gain = min_gain;
                 best_job = i;
                 best_time = middle_time[i];
-                if (best_right) {
-                    delete best_right;
-                }
+
+                delete best_right;
+
                 best_right = right_node_branch;
 
-                if (best_left) {
-                    delete best_left;
-                }
+                delete best_left;
+
                 best_left = left_node_branch;
                 right_node_branch = nullptr;
                 left_node_branch = nullptr;
             }
 
-            if (left_node_branch) {
-                delete left_node_branch;
-            }
-            if (right_node_branch) {
-                delete right_node_branch;
-            }
+            delete left_node_branch;
+
+            delete right_node_branch;
 
             if (fathom_left || fathom_right) {
                 break;
@@ -217,13 +213,15 @@ void BranchNodeBase::branch(BTree* bt) {
     if (best_job == -1) {
         fprintf(stderr, "ERROR: no branching found!\n");
         for (auto k = 0; k < nb_jobs; k++) {
-            auto j = ord[k];
-            auto job = (Job*)g_ptr_array_index(solver->jobs, j);
+            auto  j = ord[k];
+            auto* job = (Job*)g_ptr_array_index(solver->jobs, j);
             fprintf(stderr, "j=%d:", j);
-            for (int t = 0; t < pd->H_max; t++)
-                if (x_job_time[j][t] > 1e-12)
+            for (int t = 0; t < pd->H_max; t++) {
+                if (x_job_time[j][t] > 1e-12) {
                     fprintf(stderr, " (%d,%lg)", t + job->processing_time,
                             x_job_time[j][t]);
+                }
+            }
             fprintf(stderr, "\n");
         }
 
@@ -232,18 +230,18 @@ void BranchNodeBase::branch(BTree* bt) {
 
     /** Process the branching nodes insert them in the tree */
     if (strong_branching) {
-        auto left = new_node_data(pd);
-        auto left_solver = left->solver;
-        auto left_node_branch = new BranchNodeBase(left);
+        auto* left = new_node_data(pd);
+        auto* left_solver = left->solver;
+        auto* left_node_branch = new BranchNodeBase(left);
         left_solver->split_job_time(best_job, best_time, false);
         left->branch_job = best_job;
         left->completiontime = best_time;
         left->less = 0;
         bt->processState(left_node_branch);
 
-        auto right = new_node_data(pd);
-        auto right_solver = right->solver;
-        auto right_node_branch = new BranchNodeBase(right);
+        auto* right = new_node_data(pd);
+        auto* right_solver = right->solver;
+        auto* right_node_branch = new BranchNodeBase(right);
         right_solver->split_job_time(best_job, best_time, true);
         right->branch_job = best_job;
         right->completiontime = best_time;
@@ -282,7 +280,7 @@ void BranchNodeBase::computeBounds(BTree* bt) {
 void BranchNodeBase::assessDominance(State* otherState) {}
 
 bool BranchNodeBase::isTerminalState() {
-    auto solver = pd->solver;
+    auto* solver = pd->solver;
     return solver->get_is_integer_solution();
 }
 
@@ -295,9 +293,7 @@ BranchNodeBase* new_branch_node(int _isRoot, NodeData* data) {
 };
 
 void delete_branch_node(BranchNodeBase* node) {
-    if (node) {
-        delete node;
-    }
+    delete node;
 }
 
 size_t call_getDepth(BranchNodeBase* state) {

@@ -123,7 +123,7 @@ class Eval {
      * Returns preference to show messages.
      * @return true if messages are preferred.
      */
-    virtual bool showMessages() const { return false; }
+    [[nodiscard]] virtual bool showMessages() const { return false; }
 
     /**
      * Initialization.
@@ -137,13 +137,6 @@ class Eval {
      * @param v work area value for the root node.
      * @return final value of the evaluation.
      */
-
-    /**
-     * Destructs i-th level of data storage.
-     * @param i the level to be destructerd.
-     */
-    // virtual void destructLevel(int i) {
-    // }
 
     virtual void initializenode(T& n) const = 0;
 
@@ -159,7 +152,7 @@ class Eval {
     Eval<T, R>() : table(nullptr){};
 
     Eval<T, R>(const Eval<T, R>&) = default;
-    Eval<T, R>(Eval<T, R>&&) = default;
+    Eval<T, R>(Eval<T, R>&&) noexcept = default;
     Eval<T, R>& operator=(const Eval<T, R>&) = default;
-    Eval<T, R>& operator=(Eval<T, R>&&) = default;
+    Eval<T, R>& operator=(Eval<T, R>&&) noexcept = default;
 };

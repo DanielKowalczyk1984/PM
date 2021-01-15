@@ -1,5 +1,6 @@
 #ifndef NODE_DURATION_HPP
 #define NODE_DURATION_HPP
+#include <array>
 #include <boost/dynamic_bitset.hpp>
 #include <memory>
 #include "Label.hpp"
@@ -9,57 +10,38 @@
 template <typename T = double>
 class NodeBdd : public NodeBase {
    private:
-    int weight;
+    int weight{};
 
    public:
-    Label<NodeBdd<T>, T>                 forward_label[2];
-    Label<NodeBdd<T>, T>                 backward_label[2];
-    std::vector<std::weak_ptr<BddCoeff>> coeff_list[2];
-    std::vector<std::weak_ptr<NodeId>>   in_edges[2];
+    std::array<Label<NodeBdd<T>, T>, 2>                 forward_label{};
+    std::array<Label<NodeBdd<T>, T>, 2>                 backward_label{};
+    std::array<std::vector<std::weak_ptr<BddCoeff>>, 2> coeff_list{};
+    std::array<std::vector<std::weak_ptr<NodeId>>, 2>   in_edges{};
 
-    std::shared_ptr<NodeId> ptr_node_id;
-    double                  cost[2];
-    double                  reduced_cost[2];
-    double                  lp_x[2];
+    std::shared_ptr<NodeId> ptr_node_id{nullptr};
+    std::array<double, 2>   cost{0.0, 0.0};
+    std::array<double, 2>   reduced_cost{0.0, 0.0};
+    std::array<double, 2>   lp_x{0.0, 0.0};
 
-    bool                    calc_yes;
-    bool                    calc_no;
-    int                     key;
-    int                     high_edge_key;
-    int                     low_edge_key;
-    bool                    visited;
-    bool                    lp_visited;
-    boost::dynamic_bitset<> all;
-    int                     backward_distance[2];
-    int                     in_degree_0;
-    int                     in_degree_1;
-    GRBVar                  y[2];
-    GRBVar                  r[2];
+    bool                    calc_yes{true};
+    bool                    calc_no{true};
+    int                     key{-1};
+    int                     high_edge_key{-1};
+    int                     low_edge_key{-1};
+    bool                    visited{false};
+    bool                    lp_visited{false};
+    boost::dynamic_bitset<> all{};
+    std::array<double, 2>   backward_distance{};
+    std::array<int, 2>      in_degree{};
+    std::array<GRBVar, 2>   y;
+    std::array<GRBVar, 2>   r;
     GRBVar                  sigma;
-    double                  coeff_cut[2];
+    std::array<double, 2>   coeff_cut{0.0, 0.0};
 
     /**
      * Constructor
      */
-    NodeBdd()
-        : NodeBase(),
-          weight(0),
-          //   forward_label{Label<NodeBdd<T>, T>(), Label<NodeBdd, T>()},
-          //   backward_label{Label<NodeBdd<T>, T>(), Label<NodeBdd, T>()},
-          ptr_node_id(nullptr),
-          cost{0.0, 0.0},
-          reduced_cost{0.0, 0.0},
-          lp_x{0.0, 0.0},
-          calc_yes(true),
-          calc_no(true),
-          key(-1),
-          high_edge_key(-1),
-          low_edge_key(-1),
-          visited(false),
-          lp_visited(false),
-          in_degree_0(0),
-          in_degree_1(0),
-          coeff_cut{0.0, 0.0} {};
+    NodeBdd() = default;
 
     // void set_head_node() {
     //     forward_label[0].set_head_node(this);
@@ -68,34 +50,16 @@ class NodeBdd : public NodeBase {
     //     backward_label[1].set_head_node(this);
     // }
 
-    NodeBdd(int i, int j)
-        : NodeBase(i, j),
-          weight(0),
-          forward_label{Label<NodeBdd<T>, T>(), Label<NodeBdd, T>()},
-          backward_label{Label<NodeBdd<T>, T>(), Label<NodeBdd, T>()},
-          ptr_node_id(nullptr),
-          cost{0.0, 0.0},
-          reduced_cost{0.0, 0.0},
-          lp_x{0.0, 0.0},
-          calc_yes(true),
-          calc_no(true),
-          key(-1),
-          high_edge_key(-1),
-          low_edge_key(-1),
-          visited(false),
-          lp_visited(false),
-          in_degree_0(0),
-          in_degree_1(0),
-          coeff_cut{0.0, 0.0} {}
+    NodeBdd(int i, int j) : NodeBase(i, j) {}
 
     NodeBdd<T>(const NodeBdd<T>& src) = default;
-    NodeBdd<T>(NodeBdd<T>&& src) = default;
+    NodeBdd<T>(NodeBdd<T>&& src) noexcept = default;
     NodeBdd<T>& operator=(const NodeBdd<T>& src) = default;
-    NodeBdd<T>& operator=(NodeBdd<T>&& src) = default;
+    NodeBdd<T>& operator=(NodeBdd<T>&& src) noexcept = default;
 
     void set_weight(int _weight) { weight = _weight; }
 
-    int get_weight() const { return weight; }
+    [[nodiscard]] int get_weight() const { return weight; }
 
     void reset_reduced_costs() {
         reduced_cost[0] = 0.0;

@@ -4,6 +4,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include "boost/graph/graphviz.hpp"
+#include "gurobi_c.h"
 
 /**
  * Pricersolver for the TI index formulation
@@ -16,9 +17,9 @@ PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray*  _jobs,
     : PricerSolverBase(_jobs, _num_machines, p_name, _UB),
       Hmax(_Hmax),
       size_graph(0u),
-      A(new Job*[Hmax + 1]),
-      F(new double[Hmax + 1]),
-      backward_F(new double[Hmax + 1]),
+      A(Hmax + 1),
+      F(Hmax + 1),
+      backward_F(Hmax + 1),
       TI_x(new GRBVar[convex_constr_id * (Hmax + 1)]),
       take(static_cast<int*>(
           malloc(convex_constr_id * (Hmax + 1) * sizeof(int)))),
@@ -133,15 +134,9 @@ void PricerSolverSimpleDp::build_mip() {
         model.update();
 
         /** Assignment variables */
-        std::unique_ptr<GRBLinExpr[]> assignment(
-            new GRBLinExpr[convex_constr_id]());
-        std::unique_ptr<char[]>   sense(new char[convex_constr_id]);
-        std::unique_ptr<double[]> rhs(new double[convex_constr_id]);
-
-        for (unsigned i = 0; i < jobs->len; ++i) {
-            sense[i] = GRB_EQUAL;
-            rhs[i] = 1.0;
-        }
+        std::vector<GRBLinExpr> assignment(convex_constr_id, GRBLinExpr());
+        std::vector<char>       sense(convex_constr_id, GRB_EQUAL);
+        std::vector<double>     rhs(convex_constr_id, 1.0);
 
         for (int t = 0; t <= Hmax; t++) {
             for (auto& it : backward_graph[t]) {
@@ -149,16 +144,15 @@ void PricerSolverSimpleDp::build_mip() {
             }
         }
 
-        std::unique_ptr<GRBConstr[]> assignment_constrs(
-            model.addConstrs(assignment.get(), sense.get(), rhs.get(), nullptr,
-                             convex_constr_id));
+        std::unique_ptr<GRBConstr> assignment_constrs(
+            model.addConstrs(assignment.data(), sense.data(), rhs.data(),
+                             nullptr, convex_constr_id));
 
         model.update();
 
-        std::unique_ptr<GRBLinExpr[]> interval_constr(
-            new GRBLinExpr[Hmax + 1]());
-        std::unique_ptr<char[]>   interval_sense(new char[Hmax + 1]);
-        std::unique_ptr<double[]> interval_rhs(new double[Hmax + 1]);
+        std::vector<GRBLinExpr> interval_constr(Hmax + 1, GRBLinExpr());
+        std::vector<char>       interval_sense(Hmax + 1);
+        std::vector<double>     interval_rhs(Hmax + 1);
 
         for (int t = 0; t <= Hmax; t++) {
             auto add_constraint = false;
@@ -284,7 +278,7 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
         t_min -= job->processing_time;
     }
 
-    std::vector<Job*>::reverse_iterator it = v.rbegin();
+    auto it = v.rbegin();
 
     for (; it != v.rend(); ++it) {
         g_ptr_array_add(opt_sol.jobs, *it);
@@ -308,9 +302,8 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     std::fill(lp_x, lp_x + convex_constr_id * (Hmax + 1), 0.0);
     for (int k = 0; k < num_columns; k++) {
         if (columns[k] > 0.00001) {
-            ScheduleSet* tmp =
-                (ScheduleSet*)g_ptr_array_index(schedule_sets, k);
-            int t = 0;
+            auto* tmp = (ScheduleSet*)g_ptr_array_index(schedule_sets, k);
+            int   t = 0;
             for (size_t l = 0; l < tmp->job_list->len; l++) {
                 Job* tmp_j = (Job*)g_ptr_array_index(tmp->job_list, l);
                 lp_x[(tmp_j->job) * (Hmax + 1) + t] += columns[k];

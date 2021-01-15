@@ -5,17 +5,17 @@
 
 class PricerSolverSimpleDp : public PricerSolverBase {
    private:
-    int                       Hmax;
-    size_t                    size_graph;
-    std::unique_ptr<Job*[]>   A;
-    std::unique_ptr<double[]> F;
-    std::unique_ptr<double[]> backward_F;
-    std::vector<Job*>*        backward_graph;
-    std::vector<Job*>*        forward_graph;
-    GRBVar*                   TI_x;
-    int*                      take;
-    double*                   lp_x;
-    double*                   solution_x;
+    int                 Hmax;
+    size_t              size_graph;
+    std::vector<Job*>   A;
+    std::vector<double> F;
+    std::vector<double> backward_F;
+    std::vector<Job*>*  backward_graph;
+    std::vector<Job*>*  forward_graph;
+    GRBVar*             TI_x;
+    int*                take;
+    double*             lp_x;
+    double*             solution_x;
 
    public:
     PricerSolverSimpleDp(GPtrArray*  _jobs,
@@ -27,9 +27,9 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         : PricerSolverBase(src),
           Hmax(src.Hmax),
           size_graph(src.size_graph),
-          A(new Job*[Hmax + 1]),
-          F(new double[Hmax + 1]),
-          backward_F(new double[Hmax + 1]),
+          A(Hmax + 1),
+          F(Hmax + 1),
+          backward_F(Hmax + 1),
           TI_x(new GRBVar[convex_constr_id * (Hmax + 1)]),
           take(static_cast<int*>(
               malloc(convex_constr_id * (Hmax + 1) * sizeof(int)))),
@@ -37,7 +37,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
           solution_x(new double[convex_constr_id * (Hmax + 1)]) {
         init_table();
     };
-    ~PricerSolverSimpleDp();
+    ~PricerSolverSimpleDp() override;
     void init_table();
 
     void evaluate_nodes([[maybe_unused]] double* pi,
@@ -73,7 +73,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
 
     int* get_take() override {
         int* tmp = take;
-        take = NULL;
+        take = nullptr;
         return tmp;
     }
 

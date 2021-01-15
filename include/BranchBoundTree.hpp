@@ -7,10 +7,10 @@
 
 class BranchBoundTree {
    public:
-    BranchBoundTree(NodeData* data, int probType = 0, bool isIntProb = 1);
+    BranchBoundTree(NodeData* data, int probType = 0, bool isIntProb = true);
     BranchBoundTree(BranchBoundTree&&) = default;
     BranchBoundTree& operator=(BranchBoundTree&&) = default;
-    ~BranchBoundTree(){};
+    ~BranchBoundTree() = default;
     BTree* get_ptr_tree() { return tree.get(); }
 
    private:

@@ -27,23 +27,23 @@ PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray*  _jobs,
 
 OptimalSolution<double> PricerSolverBddSimple::pricing_algorithm(double* _pi) {
     evaluator.set_pi(_pi);
-    return get_decision_diagram()->evaluate_forward(evaluator);
+    return get_decision_diagram().evaluate_forward(evaluator);
 }
 
 OptimalSolution<double> PricerSolverBddSimple::farkas_pricing(double* _pi) {
     farkas_evaluator.set_pi(_pi);
-    return get_decision_diagram()->evaluate_backward(farkas_evaluator);
+    return get_decision_diagram().evaluate_backward(farkas_evaluator);
 }
 
 void PricerSolverBddSimple::compute_labels(double* _pi) {
     evaluator.set_pi(_pi);
     reversed_evaluator.set_pi(_pi);
-    get_decision_diagram()->compute_labels_forward(evaluator);
-    get_decision_diagram()->compute_labels_backward(reversed_evaluator);
+    get_decision_diagram().compute_labels_forward(evaluator);
+    get_decision_diagram().compute_labels_backward(reversed_evaluator);
 }
 
 void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
-    auto& table = *(get_decision_diagram()->getDiagram());
+    auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(1).forward_label[0].get_f() + pi[convex_constr_id];
@@ -51,7 +51,7 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
     int  nb_removed_edges_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
-    for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
+    for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             auto&  child = table.node(it.branch[1]);
             double result = it.forward_label[0].get_f() +
@@ -84,14 +84,14 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
 }
 
 void PricerSolverBddSimple::evaluate_nodes(double* pi) {
-    auto& table = *(get_decision_diagram()->getDiagram());
+    auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label[0].get_f();
     bool   removed_edges = false;
     int    nb_removed_edges_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
-    for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
+    for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             auto&  child = table.node(it.branch[1]);
             double result = it.forward_label[0].get_f() +
@@ -150,23 +150,23 @@ PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray*  _jobs,
 
 OptimalSolution<double> PricerSolverBddCycle::pricing_algorithm(double* _pi) {
     evaluator.set_pi(_pi);
-    return get_decision_diagram()->evaluate_forward(evaluator);
+    return get_decision_diagram().evaluate_forward(evaluator);
 }
 
 OptimalSolution<double> PricerSolverBddCycle::farkas_pricing(double* _pi) {
     farkas_evaluator.set_pi(_pi);
-    return get_decision_diagram()->evaluate_backward(farkas_evaluator);
+    return get_decision_diagram().evaluate_backward(farkas_evaluator);
 }
 
 void PricerSolverBddCycle::compute_labels(double* _pi) {
     evaluator.set_pi(_pi);
     reversed_evaluator.set_pi(_pi);
-    get_decision_diagram()->compute_labels_forward(evaluator);
-    get_decision_diagram()->compute_labels_backward(reversed_evaluator);
+    get_decision_diagram().compute_labels_forward(evaluator);
+    get_decision_diagram().compute_labels_backward(reversed_evaluator);
 }
 
 void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
-    auto& table = *(get_decision_diagram()->getDiagram());
+    auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
     double reduced_cost =
         table.node(1).forward_label[0].get_f() + pi[convex_constr_id];
@@ -174,7 +174,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
     int  nb_removed_edges_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
-    for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
+    for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             Job*   job = it.get_job();
             double result;
@@ -285,14 +285,14 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
 }
 
 void PricerSolverBddCycle::evaluate_nodes(double* pi) {
-    auto& table = *(get_decision_diagram()->getDiagram());
+    auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
     double reduced_cost = table.node(1).forward_label[0].get_f();
     bool   removed_edges = false;
     int    nb_removed_edges_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
-    for (int i = get_decision_diagram()->topLevel(); i > 0; i--) {
+    for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             Job*   job = it.get_job();
             double result;

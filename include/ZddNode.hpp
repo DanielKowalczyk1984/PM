@@ -12,59 +12,28 @@ class NodeZdd;
 template <typename T = double>
 class SubNodeZdd {
    public:
-    int weight;
+    int weight{};
 
-    Label<SubNodeZdd<T>, T> forward_label[2];
-    Label<SubNodeZdd<T>, T> backward_label[2];
+    std::array<Label<SubNodeZdd<T>, T>, 2> forward_label{};
+    std::array<Label<SubNodeZdd<T>, T>, 2> backward_label{};
 
-    std::shared_ptr<SubNodeZdd<T>> y;
-    std::shared_ptr<SubNodeZdd<T>> n;
+    std::shared_ptr<SubNodeZdd<T>> y{};
+    std::shared_ptr<SubNodeZdd<T>> n{};
 
-    bool        calc_yes;
-    int         key;
-    int         high_edge_key;
-    int         low_edge_key;
-    NodeId      node_id;
-    NodeZdd<T>* node_ptr;
+    bool        calc_yes{true};
+    int         key{-1};
+    int         high_edge_key{-1};
+    int         low_edge_key{-1};
+    NodeId      node_id{};
+    NodeZdd<T>* node_ptr{nullptr};
 
-    SubNodeZdd()
-        : weight{0},
-          forward_label{},
-          backward_label{},
-          y{nullptr},
-          n{nullptr},
-          calc_yes{true},
-          key{-1},
-          high_edge_key{-1},
-          low_edge_key{-1},
-          node_id{0},
-          node_ptr{nullptr} {}
+    SubNodeZdd() = default;
 
-    explicit SubNodeZdd(int _weight)
-        : weight{_weight},
-          forward_label{},
-          backward_label{},
-          y{nullptr},
-          n{nullptr},
-          calc_yes{true},
-          key{-1},
-          high_edge_key{-1},
-          low_edge_key{-1},
-          node_id{0},
-          node_ptr{nullptr} {}
+    explicit SubNodeZdd(int _weight) : weight{_weight} {}
 
     explicit SubNodeZdd(int _weight, NodeId _node_id)
         : weight{_weight},
-          forward_label{},
-          backward_label{},
-          y{nullptr},
-          n{nullptr},
-          calc_yes{true},
-          key{-1},
-          high_edge_key{-1},
-          low_edge_key{-1},
-          node_id{_node_id},
-          node_ptr{nullptr} {
+          node_id{_node_id} {
         // for (unsigned i = 0; i < 2; ++i) {
         //     forward_label[i].set_head_node(this);
         //     backward_label[i].set_head_node(this);
@@ -73,14 +42,6 @@ class SubNodeZdd {
 
     explicit SubNodeZdd(int _weight, NodeId _node_id, NodeZdd<T>* _node_ptr)
         : weight{_weight},
-          forward_label{},
-          backward_label{},
-          y{nullptr},
-          n{nullptr},
-          calc_yes{true},
-          key{-1},
-          high_edge_key{-1},
-          low_edge_key{-1},
           node_id{_node_id},
           node_ptr{_node_ptr} {
         // for (unsigned i = 0; i < 2; ++i) {
@@ -90,9 +51,9 @@ class SubNodeZdd {
     }
 
     SubNodeZdd(const SubNodeZdd& other) = default;
-    SubNodeZdd(SubNodeZdd&& other) = default;
+    SubNodeZdd(SubNodeZdd&& other) noexcept = default;
     SubNodeZdd<T>& operator=(const SubNodeZdd<T>& other) = default;
-    SubNodeZdd<T>& operator=(SubNodeZdd<T>&& other) = default;
+    SubNodeZdd<T>& operator=(SubNodeZdd<T>&& other) noexcept = default;
 
     friend bool operator<(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs) {
         return lhs.forward_label[0].f < rhs.forward_label[0].f;
@@ -122,23 +83,20 @@ bool compare_sub_nodes(const std::shared_ptr<SubNodeZdd<T>>& lhs,
 template <typename T>
 class NodeZdd : public NodeBase {
    public:
-    NodeZdd<T>*                                 child[2];
+    std::array<NodeZdd<T>*, 2>                  child{};
     std::shared_ptr<NodeId>                     ptr_node_id;
-    std::vector<std::shared_ptr<SubNodeZdd<T>>> list;
+    std::vector<std::shared_ptr<SubNodeZdd<T>>> list{};
     /**
      * Constructor
      */
-    NodeZdd() : NodeBase(), list() {
-        child[0] = nullptr;
-        child[1] = nullptr;
-    };
+    NodeZdd() = default;
 
-    NodeZdd(int i, int j) : NodeBase(i, j), child{nullptr, nullptr}, list() {}
+    NodeZdd(int i, int j) : NodeBase(i, j) {}
 
     NodeZdd<T>(const NodeZdd<T>& src) = default;
-    NodeZdd<T>(NodeZdd<T>&& src) = default;
+    NodeZdd<T>(NodeZdd<T>&& src) noexcept = default;
     NodeZdd<T>& operator=(const NodeZdd<T>& src) = default;
-    NodeZdd<T>& operator=(NodeZdd<T>&& src) = default;
+    NodeZdd<T>& operator=(NodeZdd<T>&& src) noexcept = default;
 
     bool operator==(NodeZdd const& o) const {
         for (int i = 0; i < 2; ++i) {

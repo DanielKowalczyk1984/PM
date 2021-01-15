@@ -7,31 +7,20 @@
 
 class NodeBase {
    private:
-    Job* job;
+    Job* job{nullptr};
 
    public:
-    NodeId          branch[2];
-    VariableKeyBase variable_key[2];
+    std::array<NodeId, 2>          branch{};
+    std::array<VariableKeyBase, 2> variable_key{};
 
     /**
      * Constructor
      */
-    NodeBase()
-        : job(nullptr),
-          branch{NodeId(), NodeId()},
-          variable_key{VariableKeyBase(), VariableKeyBase()} {
+    NodeBase() = default;
 
-          };
+    NodeBase(size_t i, size_t j) : branch{i, j} {}
 
-    NodeBase(size_t i, size_t j)
-        : job(nullptr),
-          branch{i, j},
-          variable_key{VariableKeyBase(), VariableKeyBase()} {}
-
-    NodeBase(NodeId f0, NodeId f1)
-        : job(nullptr),
-          branch{f0, f1},
-          variable_key{VariableKeyBase(), VariableKeyBase()} {}
+    NodeBase(NodeId f0, NodeId f1) : branch{f0, f1} {}
 
     NodeBase(const NodeBase& src) = default;
     NodeBase(NodeBase&& src) = default;
@@ -45,11 +34,11 @@ class NodeBase {
         }
     }
 
-    Job* get_job() const { return job; }
+    [[nodiscard]] Job* get_job() const { return job; }
 
-    inline int get_nb_job() const { return job->job; }
+    [[nodiscard]] inline int get_nb_job() const { return job->job; }
 
-    size_t hash() const {
+    [[nodiscard]] size_t hash() const {
         size_t h = branch[0].code();
         for (int i = 1; i < 2; ++i) {
             h = h * 314159257 + branch[i].code() * 271828171;

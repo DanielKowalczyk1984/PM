@@ -125,7 +125,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         if (n > 0) {
             for (int i = n; i > 0; --i) {
                 zs.subset(i);
-                diagram.derefLevel(i);
+                // diagram.derefLevel(i);
             }
         }
 

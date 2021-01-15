@@ -1,6 +1,7 @@
 #ifndef NODE_BDD_TABLE_HPP
 #define NODE_BDD_TABLE_HPP
 
+#include <memory>
 #include "NodeBdd.hpp"
 #include "util/DataTable.hpp"
 #include "util/MyVector.hpp"
@@ -428,16 +429,18 @@ class TableHandler {
    public:
     explicit TableHandler(int n = 1) : pointer(new Object(n)) {}
 
-    TableHandler(TableHandler const& o) : pointer(o.pointer) { pointer->ref(); }
+    TableHandler<T>(TableHandler<T> const& o) : pointer(o.pointer) {
+        pointer->ref();
+    }
 
-    TableHandler& operator=(TableHandler const& o) {
+    TableHandler<T>& operator=(TableHandler<T> const& o) {
         pointer->deref();
         pointer = o.pointer;
         pointer->ref();
         return *this;
     }
 
-    ~TableHandler() { pointer->deref(); }
+    ~TableHandler<T>() { pointer->deref(); }
 
     NodeTableEntity<T>& operator*() const { return pointer->entity; }
 
@@ -476,11 +479,11 @@ class TableHandler {
      * Clear a row if it is not shared.
      * @param i row index.
      */
-    void derefLevel(int i) {
-        if (pointer->refCount == 1) {
-            pointer->entity[i].clear();
-        }
-    }
+    // void derefLevel(int i) {
+    //     if (pointer->refCount == 1) {
+    //         pointer->entity[i].clear();
+    //     }
+    // }
 };
 
 #endif  // NODE_BDD_TABLE_HPP

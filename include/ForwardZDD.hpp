@@ -64,9 +64,9 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
     }
 
     ForwardZddBase<T>(const ForwardZddBase<T>&) = default;
-    ForwardZddBase<T>(ForwardZddBase<T>&&) = default;
+    ForwardZddBase<T>(ForwardZddBase<T>&&) noexcept = default;
     ForwardZddBase<T>& operator=(const ForwardZddBase<T>&) = default;
-    ForwardZddBase<T>& operator=(ForwardZddBase<T>&&) = default;
+    ForwardZddBase<T>& operator=(ForwardZddBase<T>&&) noexcept = default;
 };
 
 template <typename T = double>
@@ -194,9 +194,9 @@ class ForwardZddCycle : public ForwardZddBase<T> {
     }
 
     ForwardZddCycle<T>(const ForwardZddCycle<T>&) = default;
-    ForwardZddCycle<T>(ForwardZddCycle<T>&&) = default;
+    ForwardZddCycle<T>(ForwardZddCycle<T>&&) noexcept = default;
     ForwardZddCycle<T>& operator=(const ForwardZddCycle<T>&) = default;
-    ForwardZddCycle<T>& operator=(ForwardZddCycle<T>&&) = default;
+    ForwardZddCycle<T>& operator=(ForwardZddCycle<T>&&) noexcept = default;
 };
 
 template <typename T = double>
@@ -271,9 +271,9 @@ class ForwardZddSimple : public ForwardZddBase<T> {
         }
     }
     ForwardZddSimple<T>(const ForwardZddSimple<T>&) = default;
-    ForwardZddSimple<T>(ForwardZddSimple<T>&&) = default;
+    ForwardZddSimple<T>(ForwardZddSimple<T>&&) noexcept = default;
     ForwardZddSimple<T>& operator=(const ForwardZddSimple<T>&) = default;
-    ForwardZddSimple<T>& operator=(ForwardZddSimple<T>&&) = default;
+    ForwardZddSimple<T>& operator=(ForwardZddSimple<T>&&) noexcept = default;
 };
 
 #endif  // DURATION_ZDD_HPP

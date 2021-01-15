@@ -56,7 +56,7 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     PricingStabilizationStat& operator=(PricingStabilizationStat&&) = default;
     PricingStabilizationStat& operator=(const PricingStabilizationStat&) =
         default;
-    virtual ~PricingStabilizationStat();
+    ~PricingStabilizationStat() override;
 
     std::vector<double> pi_out;
 
@@ -88,14 +88,12 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     }
 
    public:
-    virtual void solve(double  _eta_out,
-                       double* _pi_out,
-                       double* _lhs_coeff) override;
+    void solve(double _eta_out, double* _pi_out, double* _lhs_coeff) override;
 
-    virtual double get_eta_in() final;
-    virtual int    stopping_criteria() final;
-    virtual void   update_duals() override;
-    virtual void   remove_constraints(int first, int nb_del) override;
+    double get_eta_in() final;
+    int    stopping_criteria() final;
+    void   update_duals() override;
+    void   remove_constraints(int first, int nb_del) override;
     // double diff_eta_in_eta_out();
 };
 
@@ -108,17 +106,15 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
         default;
     PricingStabilizationDynamic& operator=(const PricingStabilizationDynamic&) =
         default;
-    virtual ~PricingStabilizationDynamic();
+    ~PricingStabilizationDynamic() override;
     std::vector<double> subgradient;
     double              subgradientnorm{};
     double              subgradientproduct{};
     double              dualdiffnorm{};
 
-    virtual void solve(double  _eta_out,
-                       double* _pi_out,
-                       double* _lhs_coeff) override;
-    virtual void update_duals() override;
-    virtual void remove_constraints(int first, int nb_del) override;
+    void solve(double _eta_out, double* _pi_out, double* _lhs_coeff) override;
+    void update_duals() override;
+    void remove_constraints(int first, int nb_del) override;
 
     void compute_subgradient(const OptimalSolution<double>& sol) {
         solver->compute_subgradient(sol, subgradient.data());
@@ -161,18 +157,19 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
         default;
     PricingStabilizationHybrid& operator=(const PricingStabilizationHybrid&) =
         default;
-    virtual ~PricingStabilizationHybrid();
+    ~PricingStabilizationHybrid() override;
 
     std::vector<double> subgradient_in;
 
-    double       beta{};
-    double       hybridfactor{};
-    int          in_mispricing_schedule{};
-    virtual void update_duals() override;
-    virtual void remove_constraints(int first, int nb_del) override;
+    double beta{};
+    double hybridfactor{};
+    int    in_mispricing_schedule{};
+
+    void update_duals() override;
+    void remove_constraints(int first, int nb_del) override;
 
    private:
-    virtual void solve(double _eta_out, double* _pi_out, double* _lhs) override;
+    void solve(double _eta_out, double* _pi_out, double* _lhs) override;
 
     void update_hybrid() {
         if (hasstabcenter && !in_mispricing_schedule && alpha > 0.0) {
