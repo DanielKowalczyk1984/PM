@@ -9,9 +9,9 @@
 PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
                                  int         _num_machines,
                                  GPtrArray*  _ordered_jobs,
-                                 const char* p_name,
-                                 double      _UB)
-    : PricerSolverBase(_jobs, _num_machines, p_name, _UB),
+                                 const char* _p_name,
+                                 double      _ub)
+    : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
       ordered_jobs(_ordered_jobs),
       nb_layers(_ordered_jobs->len)
 

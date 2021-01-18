@@ -6,17 +6,17 @@
  **/
 PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
                                    int         _num_machines,
-                                   const char* p_name,
-                                   double      _UB)
+                                   const char* _p_name,
+                                   double      _ub)
     : jobs(_jobs),
       convex_constr_id(_jobs->len),
       convex_rhs(_num_machines),
-      problem_name(p_name),
+      problem_name(_p_name),
       env(GRBEnv()),
       model(GRBModel(env)),
       reformulation_model(jobs->len, _num_machines),
       is_integer_solution(false),
-      UB(_UB) {
+      UB(_ub) {
     model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
     model.set(GRB_IntParam_Threads, 1);
     model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
@@ -45,9 +45,9 @@ double PricerSolverBase::get_UB() {
     return UB;
 }
 
-void PricerSolverBase::update_UB(double _UB) {
-    if (_UB < UB) {
-        UB = _UB;
+void PricerSolverBase::update_UB(double _ub) {
+    if (_ub < UB) {
+        UB = _ub;
     }
 }
 
@@ -253,8 +253,8 @@ double call_get_UB(PricerSolverBase* solver) {
     return solver->get_UB();
 }
 
-void call_update_UB(PricerSolverBase* solver, double _UB) {
-    solver->update_UB(_UB);
+void call_update_UB(PricerSolverBase* solver, double _ub) {
+    solver->update_UB(_ub);
 }
 
 void call_evaluate_nodes(PricerSolverBase* solver, double* pi) {

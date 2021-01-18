@@ -10,17 +10,17 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     GPtrArray*  _jobs,
     int         _num_machines,
     GPtrArray*  _ordered_jobs,
-    const char* p_name,
-    int         _Hmax,
+    const char* _p_name,
+    int         _hmax,
     int*        _take_jobs,
-    double      _UB)
+    double      _ub)
     : PricerSolverBdd(_jobs,
                       _num_machines,
                       _ordered_jobs,
-                      p_name,
-                      _Hmax,
+                      _p_name,
+                      _hmax,
                       _take_jobs,
-                      _UB) {
+                      _ub) {
     if (dbg_lvl() > 0) {
         fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", 60,
                    "Backward Simple Evaluator");
@@ -139,17 +139,17 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     GPtrArray*  _jobs,
     int         _num_machines,
     GPtrArray*  _ordered_jobs,
-    const char* p_name,
-    int         _Hmax,
+    const char* _p_name,
+    int         _hmax,
     int*        _take_jobs,
-    double      _UB)
+    double      _ub)
     : PricerSolverBdd(_jobs,
                       _num_machines,
                       _ordered_jobs,
-                      p_name,
-                      _Hmax,
+                      _p_name,
+                      _hmax,
                       _take_jobs,
-                      _UB) {
+                      _ub) {
     if (dbg_lvl() > 0) {
         fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", 60,
                    "Backward Cycle Evaluator");

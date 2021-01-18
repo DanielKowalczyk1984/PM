@@ -8,9 +8,9 @@ PricerSolverZddBackwardSimple::PricerSolverZddBackwardSimple(
     GPtrArray*  _jobs,
     int         _num_machines,
     GPtrArray*  _ordered_jobs,
-    const char* p_name,
-    double      _UB)
-    : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, p_name, _UB) {
+    const char* _p_name,
+    double      _ub)
+    : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, _p_name, _ub) {
     std::cout << "Constructing ZDD with Backward Simple evaluator" << '\n';
     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
@@ -102,9 +102,9 @@ PricerSolverZddBackwardCycle::PricerSolverZddBackwardCycle(
     GPtrArray*  _jobs,
     int         _num_machines,
     GPtrArray*  _ordered_jobs,
-    const char* p_name,
-    double      _UB)
-    : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, p_name, _UB) {
+    const char* _p_name,
+    double      _ub)
+    : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, _p_name, _ub) {
     std::cout << "Constructing ZDD with Backward ZddCycle evaluator" << '\n';
     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';

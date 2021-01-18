@@ -11,11 +11,11 @@
  */
 PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray*  _jobs,
                                            int         _num_machines,
-                                           int         _Hmax,
-                                           const char* p_name,
-                                           double      _UB)
-    : PricerSolverBase(_jobs, _num_machines, p_name, _UB),
-      Hmax(_Hmax),
+                                           int         _hmax,
+                                           const char* _p_name,
+                                           double      _ub)
+    : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
+      Hmax(_hmax),
       size_graph(0u),
       A(Hmax + 1),
       F(Hmax + 1),

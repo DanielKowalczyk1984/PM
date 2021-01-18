@@ -31,7 +31,7 @@ class NodeBdd : public NodeBase {
     bool                    visited{false};
     bool                    lp_visited{false};
     boost::dynamic_bitset<> all{};
-    std::array<double, 2>   backward_distance{};
+    std::array<int, 2>      backward_distance{};
     std::array<int, 2>      in_degree{};
     std::array<GRBVar, 2>   y;
     std::array<GRBVar, 2>   r;

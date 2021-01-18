@@ -34,23 +34,23 @@ using namespace std;
 PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
                                  int         _num_machines,
                                  GPtrArray*  _ordered_jobs,
-                                 const char* p_name,
-                                 int         _Hmax,
+                                 const char* _p_name,
+                                 int         _hmax,
                                  int*        _take_jobs,
-                                 double      _UB)
-    : PricerSolverBase(_jobs, _num_machines, p_name, _UB),
+                                 double      _ub)
+    : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
       size_graph(0),
       ordered_jobs(_ordered_jobs),
       original_model(reformulation_model),
       H_min(0),
-      H_max(_Hmax)
+      H_max(_hmax)
 
 {
     /**
      * Construction of decision diagram
      */
     if (_take_jobs) {
-        PricerConstructTI ps(ordered_jobs, _take_jobs, _Hmax);
+        PricerConstructTI ps(ordered_jobs, _take_jobs, _hmax);
         decision_diagram = DdStructure<>(ps);
     } else {
         PricerConstruct ps(ordered_jobs);

@@ -7,17 +7,17 @@
 PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray*  _jobs,
                                              int         _num_machines,
                                              GPtrArray*  _ordered_jobs,
-                                             const char* p_name,
-                                             int         _Hmax,
+                                             const char* _p_name,
+                                             int         _hmax,
                                              int*        _take_jobs,
-                                             double      _UB)
+                                             double      _ub)
     : PricerSolverBdd(_jobs,
                       _num_machines,
                       _ordered_jobs,
-                      p_name,
-                      _Hmax,
+                      _p_name,
+                      _hmax,
                       _take_jobs,
-                      _UB) {
+                      _ub) {
     fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", 60,
                "Forward Simple Evaluator");
     fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", 60,
@@ -130,17 +130,17 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi) {
 PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray*  _jobs,
                                            int         _num_machines,
                                            GPtrArray*  _ordered_jobs,
-                                           const char* p_name,
-                                           int         _Hmax,
+                                           const char* _p_name,
+                                           int         _hmax,
                                            int*        _take_jobs,
-                                           double      _UB)
+                                           double      _ub)
     : PricerSolverBdd(_jobs,
                       _num_machines,
                       _ordered_jobs,
-                      p_name,
-                      _Hmax,
+                      _p_name,
+                      _hmax,
                       _take_jobs,
-                      _UB) {
+                      _ub) {
     fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", 60,
                "Forward Cycle Evaluator");
     fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", 60,
