@@ -29,7 +29,7 @@ class DdReducer {
         NodeBdd<T> children;
         size_t     column;
 
-        size_t hash() const { return children.hash(); }
+        [[nodiscard]] size_t hash() const { return children.hash(); }
 
         bool operator==(ReducNodeInfo const& o) const {
             return children == o.children;
@@ -201,8 +201,8 @@ class DdReducer {
             counter++;
         }
 
-        for (size_t k = 0; k < rootPtr[i].size(); ++k) {
-            NodeId& root = *rootPtr[i][k];
+        for (auto& k : rootPtr[i]) {
+            NodeId& root = *k;
             root = newId[root.col()];
         }
     }
@@ -314,8 +314,8 @@ class DdReducer {
             counter++;
         }
 
-        for (size_t k = 0; k < rootPtr[i].size(); ++k) {
-            NodeId& root = *rootPtr[i][k];
+        for (auto& k : rootPtr[i]) {
+            NodeId& root = *k;
             root = newId[root.col()];
         }
     }

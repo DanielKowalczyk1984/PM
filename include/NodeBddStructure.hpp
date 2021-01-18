@@ -54,9 +54,9 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      */
     DdStructure() : root_(0) {}
     DdStructure<T>(const DdStructure<T>&) = default;
-    DdStructure<T>(DdStructure<T>&&) = default;
+    DdStructure<T>(DdStructure<T>&&) noexcept = default;
     DdStructure<T>& operator=(const DdStructure<T>&) = default;
-    DdStructure<T>& operator=(DdStructure<T>&&) = default;
+    DdStructure<T>& operator=(DdStructure<T>&&) noexcept = default;
 
     /**
      * Universal ZDD constructor.
@@ -143,7 +143,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      * Gets the root node.
      * @return root node ID.
      */
-    NodeId root() const { return root_; }
+    [[nodiscard]] NodeId root() const { return root_; }
 
     /**
      * Gets a child node.
@@ -151,7 +151,9 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      * @param b branch number.
      * @return child node ID.
      */
-    NodeId child(NodeId f, int b) const { return diagram->child(f, b); }
+    [[nodiscard]] NodeId child(NodeId f, int b) const {
+        return diagram->child(f, b);
+    }
 
     /**
      * Gets the diagram.
@@ -169,19 +171,19 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      * Gets the level of the root node.
      * @return the level of root ZDD variable.
      */
-    int topLevel() const { return root_.row(); }
+    [[nodiscard]] int topLevel() const { return root_.row(); }
 
     /**
      * Gets the number of nonterminal nodes.
      * @return the number of nonterminal nodes.
      */
-    size_t size() const { return diagram->size(); }
+    [[nodiscard]] size_t size() const { return diagram->size(); }
 
     /**
      * Checks if DD is a 0-terminal only.
      * @return true if DD is a 0-terminal only.
      */
-    bool empty() const { return root_ == 0; }
+    [[nodiscard]] bool empty() const { return root_ == 0; }
 
     /**
      * Checks structural equivalence with another DD.
@@ -228,7 +230,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
                 }
 
                 size_t* p = uniq.getValue(node);
-                equiv[i][j] = NodeId(i, (p != 0) ? *p : m);
+                equiv[i][j] = NodeId(i, (p != nullptr) ? *p : m);
             }
         }
 
@@ -435,10 +437,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      */
     class const_iterator {
         struct Selection {
-            NodeId node;
-            bool   val;
+            NodeId node{};
+            bool   val{false};
 
-            Selection() : val(false) {}
+            Selection() = default;
 
             Selection(NodeId _node, bool _val) : node(_node), val(_val) {}
 
@@ -563,7 +565,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     /**
      * Implements DdSpec.
      */
-    size_t hashCode(NodeId const& f) const { return f.hash(); }
+    [[nodiscard]] size_t hashCode(NodeId const& f) const { return f.hash(); }
 
     /**
      * Dumps the node table in Sapporo ZDD format.
