@@ -721,13 +721,13 @@ void PricerSolverBdd::remove_edges() {
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& iter : table[i]) {
             if (!iter.calc_yes) {
-                NodeId& cur_node_1 = iter.branch[1];
+                auto& cur_node_1 = iter.branch[1];
                 iter.ptr_node_id.reset();
                 cur_node_1 = 0;
             }
 
             if (!iter.calc_no) {
-                NodeId& cur_node_0 = iter.branch[0];
+                auto& cur_node_0 = iter.branch[0];
                 cur_node_0 = 0;
             }
         }
