@@ -1,7 +1,1 @@
-Checks: >-
-  modernize-*,
-  bugprone-*,
-  clang-analyzer-*,
-  clang-diagnostic-*,
-  -modernize-use-trailing-return-type,
-  performance-*,
+Checks: 'cppcoreguidelines-*,-fuchsia-*,google-*,-zircon-*,-abseil-*,-modernize-use-trailing-return-type'

@@ -37,7 +37,7 @@ class NodeId {
         setAttr(attr);
     }
 
-    [[nodiscard]] int row() const { return code_ >> NODE_ROW_OFFSET; }
+    [[nodiscard]] size_t row() const { return code_ >> NODE_ROW_OFFSET; }
 
     [[nodiscard]] size_t col() const { return code_ & NODE_COL_MAX; }
 

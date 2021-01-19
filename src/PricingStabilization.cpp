@@ -1,6 +1,7 @@
 #include "PricingStabilization.hpp"
 #include <fmt/core.h>
 #include <cmath>
+#include <span>
 #include "util.h"
 #include "wctparms.h"
 
@@ -64,7 +65,7 @@ double PricingStabilizationBase::get_eta_sep() {
 }
 
 int PricingStabilizationBase::stopping_criteria() {
-    return eta_in - eta_out < -1e-6;
+    return eta_out - eta_in > ETA_DIFF_PREC;
 }
 
 void PricingStabilizationBase::update_duals() {
@@ -154,9 +155,9 @@ void PricingStabilizationStat::solve(double  _eta_out,
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs_coeff);
 
-        continueLP = (eta_sep < eta_out - 1e-2);
+        continueLP = (ETA_DIFF_PREC < eta_out - eta_sep);
 
-        if (reduced_cost < -1e-6) {
+        if (reduced_cost < EPS_RC) {
             sol = std::move(aux_sol);
             update = 1;
             mispricing = false;
@@ -183,7 +184,7 @@ double PricingStabilizationStat::get_eta_in() {
 }
 
 int PricingStabilizationStat::stopping_criteria() {
-    return (eta_out - eta_in >= 1e-4);
+    return (eta_out - eta_in > ETA_DIFF_PREC);
 }
 
 void PricingStabilizationStat::update_duals() {
@@ -220,7 +221,7 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
                                         double* _pi_out,
                                         double* _lhs) {
     k = 0.0;
-    double result_sep;
+    double result_sep{};
     bool   mispricing = true;
     update = 0;
 
@@ -240,7 +241,7 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs);
 
-        if (reduced_cost <= -1e-6) {
+        if (reduced_cost < EPS_RC) {
             solver->compute_subgradient(aux_sol, subgradient.data());
             adjust_alpha();
             sol = std::move(aux_sol);
@@ -358,7 +359,7 @@ void PricingStabilizationHybrid::solve(double  _eta_out,
 
         update_stabcenter(aux_sol);
 
-        if (reduced_cost < -1e-6) {
+        if (reduced_cost < EPS_RC) {
             if (in_mispricing_schedule) {
                 in_mispricing_schedule = 0;
             }

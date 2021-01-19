@@ -475,17 +475,19 @@ void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     int              num_columns) {
     std::fill(lp_x, lp_x + get_nb_edges(), 0);
     for (int k = 0; k < num_columns; k++) {
-        if (columns[k]) {
+        if (columns[k] > 0.0) {
             size_t counter = 0;
-            auto*  tmp = (ScheduleSet*)g_ptr_array_index(schedule_sets, k);
-            int    i = n;
-            int    t = 0;
+            auto*  tmp =
+                static_cast<ScheduleSet*>(g_ptr_array_index(schedule_sets, k));
+            int i = n;
+            int t = 0;
             while (t < Hmax + 1) {
                 Job* tmp_j = nullptr;
                 int  j = n;
 
                 if (counter < tmp->job_list->len) {
-                    tmp_j = (Job*)g_ptr_array_index(tmp->job_list, counter);
+                    tmp_j = static_cast<Job*>(
+                        g_ptr_array_index(tmp->job_list, counter));
                     j = tmp_j->job;
                 }
 
@@ -561,7 +563,7 @@ bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
         int  j = n;
 
         if (counter < set->len) {
-            tmp_j = (Job*)g_ptr_array_index(set, counter);
+            tmp_j = static_cast<Job*>(g_ptr_array_index(set, counter));
             j = tmp_j->job;
         }
 

@@ -45,7 +45,7 @@ int solve_pricing(NodeData* pd) {
             call_reduced_cost_fixing(pd->solver_stab);
             check_schedules(pd);
             delete_infeasible_schedules(pd);
-            double obj;
+            double obj{};
             lp_interface_objval(pd->RMP, &obj);
             call_update_continueLP(pd->solver_stab, obj);
         }
@@ -54,7 +54,7 @@ int solve_pricing(NodeData* pd) {
             call_reduced_cost_fixing(pd->solver_stab);
             check_schedules(pd);
             delete_infeasible_schedules(pd);
-            double obj;
+            double obj{};
             lp_interface_objval(pd->RMP, &obj);
             call_update_continueLP(pd->solver_stab, obj);
         }

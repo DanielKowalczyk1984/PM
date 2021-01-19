@@ -7,7 +7,7 @@
 
 class BranchNodeBase : public State {
     struct BranchCand {
-        double score{1e-3};
+        double score{EPS};
         int    job{-1};
 
         BranchCand() = default;
@@ -18,12 +18,14 @@ class BranchNodeBase : public State {
     };
 
    public:
-    BranchNodeBase(NodeData* pd, bool isRoot = false);
+    explicit BranchNodeBase(NodeData* pd, bool isRoot = false);
     BranchNodeBase(BranchNodeBase&&) = default;
     BranchNodeBase(const BranchNodeBase&) = default;
     BranchNodeBase& operator=(BranchNodeBase&&) = default;
     BranchNodeBase& operator=(const BranchNodeBase&) = default;
     ~BranchNodeBase() override { nodedata_free(pd); };
+    static constexpr double EPS = 1e-4;
+    static constexpr double ERROR = 1e-12;
 
     void   branch(BTree* bt) final;
     void   computeBounds(BTree* bt) final;

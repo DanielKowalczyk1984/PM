@@ -302,10 +302,12 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     std::fill(lp_x, lp_x + convex_constr_id * (Hmax + 1), 0.0);
     for (int k = 0; k < num_columns; k++) {
         if (columns[k] > 0.00001) {
-            auto* tmp = (ScheduleSet*)g_ptr_array_index(schedule_sets, k);
-            int   t = 0;
+            auto* tmp =
+                static_cast<ScheduleSet*>(g_ptr_array_index(schedule_sets, k));
+            int t = 0;
             for (size_t l = 0; l < tmp->job_list->len; l++) {
-                Job* tmp_j = (Job*)g_ptr_array_index(tmp->job_list, l);
+                Job* tmp_j =
+                    static_cast<Job*>(g_ptr_array_index(tmp->job_list, l));
                 lp_x[(tmp_j->job) * (Hmax + 1) + t] += columns[k];
                 t += tmp_j->processing_time;
             }
@@ -375,8 +377,8 @@ void PricerSolverSimpleDp::print_num_paths() {}
 bool PricerSolverSimpleDp::check_schedule_set([[maybe_unused]] GPtrArray* set) {
     // int t = 0;
     // for(unsigned int j = 0; j < set->len; j++) {
-    //     Job* tmp_j = (Job*) g_ptr_array_index(set, j);
-    //     t += tmp_j->processing_time;
+    //     Job* tmp_j = static_cast<Job*>() g_ptr_array_index()atic_cast<set,
+    //     j>())); t += tmp_j->processing_time;
 
     //     if (t > Hmax) {
     //         return false;

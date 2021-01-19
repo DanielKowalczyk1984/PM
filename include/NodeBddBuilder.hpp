@@ -69,8 +69,9 @@ class BuilderBase {
     static void const* state(SpecNode const* p) { return p + headerSize; }
 
     static int getSpecNodeSize(int n) {
-        if (n < 0)
+        if (n < 0) {
             throw std::runtime_error("storage size is not initialized!!!");
+        }
         return headerSize + (n + sizeof(SpecNode) - 1) / sizeof(SpecNode);
     }
 
@@ -113,8 +114,9 @@ class DdBuilder : BuilderBase {
 
     void init(int n) {
         spec_node_table.resize(n + 1);
-        if (n >= output.numRows())
+        if (n >= output.numRows()) {
             output.setNumRows(n + 1);
+        }
         oneSrcPtr.clear();
     }
 
@@ -126,8 +128,9 @@ class DdBuilder : BuilderBase {
           sweeper(this->output, oneSrcPtr),
           oneStorage(_spec.datasize()),
           one(oneStorage.data()) {
-        if (n >= 1)
+        if (n >= 1) {
             init(n);
+        }
     }
 
     ~DdBuilder() {
@@ -294,16 +297,18 @@ class DdBuilder : BuilderBase {
                     spec.get_copy(state(ppp), state(pp));
                     spec.destruct(state(pp));
                     srcPtr(ppp) = &q.branch[b];
-                    if (ii < lowestChild)
+                    if (ii < lowestChild) {
                         lowestChild = ii;
+                    }
                     allZero = false;
                 }
             }
 
             spec.destruct(state(p));
             ++jj;
-            if (allZero)
+            if (allZero) {
                 ++deadCount;
+            }
         }
 
         spec_node_table[i - 1].pop_front();
@@ -424,8 +429,9 @@ class ZddSubsetter : BuilderBase {
         int                lowestChild = i - 1;
         size_t             deadCount = 0;
 
-        if (work[i].empty())
+        if (work[i].empty()) {
             work[i].resize(m);
+        }
         assert(work[i].size() == m);
 
         for (size_t j = 0; j < m; ++j) {
@@ -542,14 +548,16 @@ class ZddSubsetter : BuilderBase {
                         }
                     } else {
                         assert(ii == f.row() && ii == kk && ii < i);
-                        if (work[ii].empty())
+                        if (work[ii].empty()) {
                             work[ii].resize(input[ii].size());
+                        }
                         SpecNode* pp = work[ii][f.col()].alloc_front(
                             pools[ii], specNodeSize);
                         spec.get_copy(state(pp), tmpState);
                         srcPtr(pp) = &q.branch[b];
-                        if (ii < lowestChild)
+                        if (ii < lowestChild) {
                             lowestChild = ii;
+                        }
                         allZero = false;
                     }
 
@@ -558,8 +566,9 @@ class ZddSubsetter : BuilderBase {
 
                 spec.destruct(state(p));
                 ++jj;
-                if (allZero)
+                if (allZero) {
                     ++deadCount;
+                }
             }
         }
 
@@ -571,8 +580,9 @@ class ZddSubsetter : BuilderBase {
 
    private:
     int downTable(NodeId& f, int b, int zerosupLevel) const {
-        if (zerosupLevel < 0)
+        if (zerosupLevel < 0) {
             zerosupLevel = 0;
+        }
 
         f = input.child(f, b);
         while (f.row() > zerosupLevel) {
@@ -582,8 +592,9 @@ class ZddSubsetter : BuilderBase {
     }
 
     int downSpec(void* p, int level, int b, int zerosupLevel) {
-        if (zerosupLevel < 0)
+        if (zerosupLevel < 0) {
             zerosupLevel = 0;
+        }
         assert(level > zerosupLevel);
 
         int i = spec.get_child(p, level, b);

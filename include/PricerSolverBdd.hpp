@@ -33,9 +33,9 @@ class PricerSolverBdd : public PricerSolverBase {
                     int         _num_machines,
                     GPtrArray*  _ordered_jobs,
                     const char* p_name,
-                    int         _Hmax,
+                    int         _hmax,
                     int*        _take_jobs,
-                    double      _UB);
+                    double      _ub);
 
     PricerSolverBdd(const PricerSolverBdd& src, GPtrArray* _ordered_jobs);
     PricerSolverBdd(const PricerSolverBdd& src);
@@ -64,7 +64,7 @@ class PricerSolverBdd : public PricerSolverBase {
                                      const GPtrArray* schedule_sets,
                                      int              num_columns) override;
     void   make_schedule_set_feasible(GPtrArray* set) override;
-    void   calculate_job_time(std::vector<std::vector<double>>& v) override;
+    void   calculate_job_time(std::vector<std::vector<double>>* v) override;
     void   split_job_time(int _job, int _time, bool _left) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;

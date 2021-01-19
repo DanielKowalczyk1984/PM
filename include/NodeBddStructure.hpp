@@ -57,6 +57,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     DdStructure<T>(DdStructure<T>&&) noexcept = default;
     DdStructure<T>& operator=(const DdStructure<T>&) = default;
     DdStructure<T>& operator=(DdStructure<T>&&) noexcept = default;
+    ~DdStructure<T>() = default;
 
     /**
      * Universal ZDD constructor.
@@ -191,14 +192,18 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      */
     bool operator==(DdStructure const& o) const {
         int n = root_.row();
-        if (n != o.root_.row())
+        if (n != o.root_.row()) {
             return false;
-        if (n == 0)
+        }
+        if (n == 0) {
             return root_ == o.root_;
-        if (root_ == o.root_ && &*diagram == &*o.diagram)
+        }
+        if (root_ == o.root_ && &*diagram == &*o.diagram) {
             return true;
-        if (size() > o.size())
+        }
+        if (size() > o.size()) {
             return o.operator==(*this);
+        }
 
         MyHashMap<InitializedNode, size_t> uniq;
         DataTable<NodeId>                  equiv(n + 1);
@@ -326,7 +331,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
-            printf("empty DDstructure\n");
+            fmt::print("empty DDstructure\n");
             R retval;
             return retval;
         }
@@ -349,7 +354,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
-            printf("empty DDstructure\n");
+            fmt::print("empty DDstructure\n");
             return;
         }
 
@@ -369,7 +374,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
-            printf("empty DDstructure\n");
+            fmt::print("empty DDstructure\n");
             R retval;
             return retval;
         }
@@ -406,7 +411,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
-            printf("empty DDstructure\n");
+            fmt::print("empty DDstructure\n");
             return;
         }
 
@@ -460,8 +465,9 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
               cursor(begin ? -1 : -2),
               path(),
               itemset() {
-            if (begin)
+            if (begin) {
                 next(dd.root_);
+            }
         }
 
         const_iterator& operator++() {
@@ -499,8 +505,9 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
                     }
                 }
 
-                if (f == 1)
+                if (f == 1) {
                     break; /* found */
+                }
 
                 for (; cursor >= 0; --cursor) { /* up */
                     Selection& sel = path[cursor];
@@ -547,7 +554,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     /**
      * Implements DdSpec.
      */
-    int getRoot(NodeId& f) const {
+    size_t getRoot(NodeId& f) const {
         f = root_;
         return (f == 1) ? -1 : f.row();
     }
@@ -555,7 +562,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     /**
      * Implements DdSpec.
      */
-    int getChild(NodeId& f, [[maybe_unused]] int level, int value) const {
+    size_t getChild(NodeId& f, [[maybe_unused]] int level, int value) const {
         assert(level > 0 && level == f.row());
         assert(0 <= value && value < 2);
         f = child(f, value);

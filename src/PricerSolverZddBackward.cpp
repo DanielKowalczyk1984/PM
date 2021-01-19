@@ -54,7 +54,7 @@ void PricerSolverZddBackwardSimple::evaluate_nodes(double* pi,
                                 pi[job->job] + pi[convex_constr_id];
                 auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
                 if (LB - aux_nb_machines * reduced_cost - result >
-                        UB - 1 + 0.0001 &&
+                        UB - 1 + RC_FIXING &&
                     (iter->calc_yes)) {
                     iter->calc_yes = false;
                     nb_removed_edges++;
@@ -86,7 +86,7 @@ void PricerSolverZddBackwardSimple::evaluate_nodes(double* pi) {
                                 pi[job->job];
                 auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
                 if (constLB + aux_nb_machines * reduced_cost + result >
-                        UB - 1 + 0.0001 &&
+                        UB - 1 + RC_FIXING &&
                     (iter->calc_yes)) {
                     iter->calc_yes = false;
                     nb_removed_edges++;
@@ -148,7 +148,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + p, job) + pi[job->job];
                     if (constLB + aux_nb_machines * reduced_cost + result >
-                            UB + 0.0001 &&
+                            UB + RC_FIXING &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
                         nb_removed_edges++;
@@ -159,7 +159,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + p, job) + pi[job->job];
                     if (constLB + aux_nb_machines * reduced_cost + result >
-                            UB + 0.0001 &&
+                            UB + RC_FIXING &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
                         nb_removed_edges++;
@@ -170,7 +170,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
                                     iter->y->backward_label[1].get_f() -
                                     value_Fj(w + p, job) + pi[job->job];
                     if (constLB + aux_nb_machines * reduced_cost + result >
-                            UB + 0.0001 &&
+                            UB + RC_FIXING &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
                         nb_removed_edges++;
@@ -180,7 +180,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
                                     iter->y->backward_label[1].get_f() -
                                     value_Fj(w + p, job) + pi[job->job];
                     if (constLB + aux_nb_machines * reduced_cost + result >
-                            UB + 0.0001 &&
+                            UB + RC_FIXING &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
                         nb_removed_edges++;
@@ -218,7 +218,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                                     value_Fj(w + p, job) + pi[job->job] +
                                     pi[convex_constr_id];
                     if (LB - aux_nb_machines * reduced_cost - result >
-                            UB + 0.0001 &&
+                            UB + RC_FIXING &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
                         nb_removed_edges++;
@@ -230,7 +230,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                                     value_Fj(w + p, job) + pi[job->job] +
                                     pi[convex_constr_id];
                     if (LB - aux_nb_machines * reduced_cost - result >
-                            UB + 0.0001 &&
+                            UB + RC_FIXING &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
                         nb_removed_edges++;
@@ -242,7 +242,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                                     value_Fj(w + p, job) + pi[job->job] +
                                     pi[convex_constr_id];
                     if (LB - aux_nb_machines * reduced_cost - result >
-                            UB + 0.0001 &&
+                            UB + RC_FIXING &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
                         nb_removed_edges++;
@@ -253,7 +253,7 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                                     value_Fj(w + p, job) + pi[job->job] +
                                     pi[convex_constr_id];
                     if (LB - aux_nb_machines * reduced_cost - result >
-                            UB + 0.0001 &&
+                            UB + RC_FIXING &&
                         (iter->calc_yes)) {
                         iter->calc_yes = false;
                         nb_removed_edges++;

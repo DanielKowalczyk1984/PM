@@ -75,9 +75,9 @@ add_subdirectory(branch-and-bound)
 #
 
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
-  target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
+  target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 else()
-  target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+  target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 endif()
 
 include(CompilerWarnings)
@@ -89,11 +89,11 @@ verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
 # -Wmissing-declarations -Wpointer-arith -Wcast-qual -Wcast-align
 # -Wwrite-strings)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O5 -std=c++17 -m64")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O5 -std=c++20 -stdlib=libc++ -m64")
 set(CMAKE_C_FLAGS_RELEASE
     "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17 -O0 -m64")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++20 -O0 -m64")
 set(CMAKE_C_FLAGS_DEBUG
     "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )

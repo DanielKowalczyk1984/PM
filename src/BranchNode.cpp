@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <iterator>
 #include <limits>
+#include <span>
 #include "PricerSolverBase.hpp"
 #include "branch-and-bound/btree.h"
 #include "solver.h"
@@ -44,7 +45,7 @@ void BranchNodeBase::branch(BTree* bt) {
         x_job_time[i].resize(pd->H_max + 1, 0.0);
     }
 
-    solver->calculate_job_time(x_job_time);
+    solver->calculate_job_time(&x_job_time);
 
     // initialize the order for evaluating the branching jobs
     std::vector<int> ord(nb_jobs);
@@ -77,7 +78,7 @@ void BranchNodeBase::branch(BTree* bt) {
             // }
 
             if ((accum >= (1.0 - TargetBrTimeValue)) &&
-                (x_job_time[i][t] > 1e-3) && (prev != -1) &&
+                (x_job_time[i][t] > EPS) && (prev != -1) &&
                 (middle_time[i] == -1)) {
                 middle_time[i] = (t + job->processing_time + prev) / 2;
                 branch_scores[i] = double(middle_time[i]) * accum - dist_zero;
@@ -91,7 +92,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
             dist_zero += double(t + job->processing_time) * x_job_time[i][t];
 
-            if (x_job_time[i][t] > 1e-3) {
+            if (x_job_time[i][t] > EPS) {
                 prev = t + job->processing_time;
             }
         }
@@ -120,7 +121,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
         auto  left_gain = 0.0;
         auto  right_gain = 0.0;
-        auto* job = (Job*)g_ptr_array_index(pd->jobarray, i);
+        auto* job = static_cast<Job*>(g_ptr_array_index(pd->jobarray, i));
         for (auto t = 0; t < pd->H_max + 1; t++) {
             if (t + job->processing_time <= middle_time[i]) {
                 left_gain += x_job_time[i][t];
@@ -211,18 +212,18 @@ void BranchNodeBase::branch(BTree* bt) {
     }
 
     if (best_job == -1) {
-        fprintf(stderr, "ERROR: no branching found!\n");
+        fmt::print(stderr, "ERROR: no branching found!\n");
         for (auto k = 0; k < nb_jobs; k++) {
             auto  j = ord[k];
             auto* job = (Job*)g_ptr_array_index(solver->jobs, j);
-            fprintf(stderr, "j=%d:", j);
+            fmt::print(stderr, "j={}:", j);
             for (int t = 0; t < pd->H_max; t++) {
-                if (x_job_time[j][t] > 1e-12) {
-                    fprintf(stderr, " (%d,%lg)", t + job->processing_time,
-                            x_job_time[j][t]);
+                if (x_job_time[j][t] > ERROR) {
+                    fmt::print(stderr, " ({},{})", t + job->processing_time,
+                               x_job_time[j][t]);
                 }
             }
-            fprintf(stderr, "\n");
+            fmt::print(stderr, "\n");
         }
 
         exit(-1);

@@ -1,6 +1,7 @@
 #include "PricerSolverZdd.hpp"
 #include <fmt/core.h>
 #include <NodeBddStructure.hpp>
+#include <cstddef>
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 #include "boost/graph/graphviz.hpp"
@@ -12,8 +13,7 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
                                  const char* _p_name,
                                  double      _ub)
     : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
-      ordered_jobs(_ordered_jobs),
-      nb_layers(_ordered_jobs->len)
+      ordered_jobs(_ordered_jobs)
 
 {
     /**
@@ -70,8 +70,8 @@ void PricerSolverZdd::construct_mipgraph() {
 
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
 #ifndef NDEBUG
-        auto job = ((job_interval_pair*)g_ptr_array_index(
-                        ordered_jobs, ordered_jobs->len - i))
+        auto job = (static_cast<job_interval_pair*>(
+                        g_ptr_array_index(ordered_jobs, ordered_jobs->len - i)))
                        ->j;
 #endif  // NDEBUG
 
@@ -114,9 +114,9 @@ void PricerSolverZdd::init_table() {
         table.node(decision_diagram->root()).list.pop_back();
     }
 
-    for (int i = decision_diagram->topLevel(); i >= 0; i--) {
-        int   layer = nb_layers - i;
-        auto* tmp_pair = reinterpret_cast<job_interval_pair*>(
+    for (size_t i = decision_diagram->topLevel(); i >= 0; i--) {
+        size_t layer = ordered_jobs->len - i;
+        auto*  tmp_pair = static_cast<job_interval_pair*>(
             g_ptr_array_index(ordered_jobs, layer));
 
         for (auto& it : table[i]) {
@@ -181,8 +181,7 @@ void PricerSolverZdd::remove_layers_init() {
                                  last_del - first_del + 1);
     }
 
-    nb_layers = ordered_jobs->len;
-    fmt::print("The new number of layers = {}\n", nb_layers);
+    fmt::print("The new number of layers = {}\n", ordered_jobs->len);
 }
 
 void PricerSolverZdd::remove_layers() {
@@ -237,8 +236,7 @@ void PricerSolverZdd::remove_layers() {
                                  last_del - first_del + 1);
     }
 
-    nb_layers = ordered_jobs->len;
-    fmt::print("The new number of layers = {}\n", nb_layers);
+    fmt::print("The new number of layers = {}\n", ordered_jobs->len);
 }
 
 void PricerSolverZdd::remove_edges() {
@@ -383,15 +381,16 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
     auto& table = *(decision_diagram->getDiagram());
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
     for (int i = 0; i < num_columns; ++i) {
-        if (columns[i] > 0.00001) {
+        if (columns[i] > EPS) {
             size_t counter = 0;
-            auto*  tmp = (ScheduleSet*)g_ptr_array_index(schedule_sets, i);
-            NodeId tmp_nodeid(decision_diagram->root());
+            auto*  tmp =
+                static_cast<ScheduleSet*>(g_ptr_array_index(schedule_sets, i));
+            NodeId                        tmp_nodeid(decision_diagram->root());
             std::shared_ptr<SubNodeZdd<>> tmp_sub_node =
                 table.node(tmp_nodeid).list[0];
 
             while (tmp_nodeid > 1) {
-                Job* tmp_j;
+                Job* tmp_j{};
 
                 if (counter < tmp->job_list->len) {
                     tmp_j = static_cast<Job*>(
@@ -429,7 +428,7 @@ bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
     NodeId tmp_nodeid(decision_diagram->root());
 
     for (unsigned j = 0; j < set->len; ++j) {
-        Job* tmp_j = (Job*)g_ptr_array_index(set, j);
+        Job* tmp_j = static_cast<Job*>(g_ptr_array_index(set, j));
         while (tmp_nodeid > 1) {
             NodeZdd<>& tmp_node = table.node(tmp_nodeid);
 
@@ -459,7 +458,7 @@ void PricerSolverZdd::iterate_zdd() {
         auto i = (*it).begin();
 
         for (; i != (*it).end(); ++i) {
-            std::cout << nb_layers - *i << " ";
+            std::cout << ordered_jobs->len - *i << " ";
         }
 
         std::cout << '\n';

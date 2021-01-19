@@ -15,7 +15,6 @@ class PricerSolverZdd : public PricerSolverBase {
     int                                           nb_removed_nodes{};
 
     GPtrArray* ordered_jobs;
-    int        nb_layers;
 
     MipGraph            mip_graph;
     std::vector<double> lp_x;

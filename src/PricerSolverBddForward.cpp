@@ -1,4 +1,5 @@
 #include "PricerSolverBddForward.hpp"
+#include <span>
 #include "fmt/core.h"
 
 /**
@@ -18,11 +19,11 @@ PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray*  _jobs,
                       _hmax,
                       _take_jobs,
                       _ub) {
-    fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", 60,
+    fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", ALIGN,
                "Forward Simple Evaluator");
-    fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", 60,
+    fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", ALIGN,
                get_nb_vertices());
-    fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", 60, get_nb_edges());
+    fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", ALIGN, get_nb_edges());
 }
 
 OptimalSolution<double> PricerSolverBddSimple::pricing_algorithm(double* _pi) {
@@ -58,7 +59,7 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
                             child.backward_label[0].get_f() +
                             it.reduced_cost[1] + pi[convex_constr_id];
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (LB + aux_nb_machines * reduced_cost + result > UB + 0.0001 &&
+            if (LB + aux_nb_machines * reduced_cost + result > UB + RC_FIXING &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 add_nb_removed_edges();
@@ -70,10 +71,10 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
 
     if (removed_edges) {
         fmt::print("Number of edges removed by evaluate nodes {{0}:<{1}}\n",
-                   nb_removed_edges_evaluate, 30);
+                   nb_removed_edges_evaluate, ALIGN_HALF);
         fmt::print("Total number of edges removed {{0}:<{1}}\n",
-                   get_nb_removed_edges(), 30);
-        fmt::print("Number of edges {{0}:<{1}}\n", get_nb_edges(), 30);
+                   get_nb_removed_edges(), ALIGN_HALF);
+        fmt::print("Number of edges {{0}:<{1}}\n", get_nb_edges(), ALIGN_HALF);
         remove_layers();
         remove_edges();
         bottum_up_filtering();
@@ -98,7 +99,8 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi) {
                             child.backward_label[0].get_f() +
                             it.reduced_cost[1];
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (constLB + aux_nb_machines * reduced_cost + result > UB + 1e-4 &&
+            if (constLB + aux_nb_machines * reduced_cost + result >
+                    UB + RC_FIXING &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 add_nb_removed_edges();
@@ -110,10 +112,10 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi) {
 
     if (removed_edges) {
         fmt::print("Number of edges removed by evaluate nodes {0:<{1}}\n",
-                   nb_removed_edges_evaluate, 30);
+                   nb_removed_edges_evaluate, ALIGN_HALF);
         fmt::print("Total number of edges removed {0:<{1}}\n",
-                   get_nb_removed_edges(), 30);
-        fmt::print("Number of edges {0:<{1}}\n", get_nb_edges(), 30);
+                   get_nb_removed_edges(), ALIGN_HALF);
+        fmt::print("Number of edges {0:<{1}}\n", get_nb_edges(), ALIGN_HALF);
         remove_layers();
         remove_edges();
         bottum_up_filtering();
@@ -141,11 +143,11 @@ PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray*  _jobs,
                       _hmax,
                       _take_jobs,
                       _ub) {
-    fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", 60,
+    fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", ALIGN,
                "Forward Cycle Evaluator");
-    fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", 60,
+    fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", ALIGN,
                get_nb_vertices());
-    fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", 60, get_nb_edges());
+    fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", ALIGN, get_nb_edges());
 }
 
 OptimalSolution<double> PricerSolverBddCycle::pricing_algorithm(double* _pi) {
@@ -177,7 +179,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
     for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             Job*   job = it.get_job();
-            double result;
+            double result{};
             auto&  child = table.node(it.branch[1]);
 
             if (it.forward_label[0].get_previous_job() != job &&
@@ -202,7 +204,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
             }
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (LB + aux_nb_machines * reduced_cost + result > UB + 0.0001 &&
+            if (LB + aux_nb_machines * reduced_cost + result > UB + RC_FIXING &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 removed_edges = true;
@@ -271,10 +273,10 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
 
     if (removed_edges) {
         fmt::print("Number of edges removed by evaluate nodes {0: <{1}}\n",
-                   nb_removed_edges_evaluate, 30);
+                   nb_removed_edges_evaluate, ALIGN_HALF);
         fmt::print("Total number of edges removed {0: <{1}}\n",
-                   get_nb_removed_edges(), 30);
-        fmt::print("Number of edges {0: <{1}}\n", get_nb_edges(), 30);
+                   get_nb_removed_edges(), ALIGN_HALF);
+        fmt::print("Number of edges {0: <{1}}\n", get_nb_edges(), ALIGN_HALF);
         remove_layers();
         remove_edges();
         bottum_up_filtering();
@@ -295,7 +297,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi) {
     for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             Job*   job = it.get_job();
-            double result;
+            double result{};
             auto&  child = table.node(it.branch[1]);
 
             if (it.forward_label[0].get_previous_job() != job &&
@@ -316,7 +318,8 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi) {
             }
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (constLB + aux_nb_machines * reduced_cost + result > UB + 1e-4 &&
+            if (constLB + aux_nb_machines * reduced_cost + result >
+                    UB + RC_FIXING &&
                 (it.calc_yes)) {
                 it.calc_yes = false;
                 removed_edges = true;
@@ -385,10 +388,10 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi) {
 
     if (removed_edges) {
         fmt::print("Number of edges removed by evaluate nodes {0: <{1}}\n",
-                   nb_removed_edges_evaluate, 30);
+                   nb_removed_edges_evaluate, ALIGN_HALF);
         fmt::print("Total number of edges removed {0: <{1}}\n",
-                   get_nb_removed_edges(), 30);
-        fmt::print("Number of edges {0: <{1}}\n", get_nb_edges(), 30);
+                   get_nb_removed_edges(), ALIGN_HALF);
+        fmt::print("Number of edges {0: <{1}}\n", get_nb_edges(), ALIGN_HALF);
         remove_layers();
         remove_edges();
         bottum_up_filtering();
