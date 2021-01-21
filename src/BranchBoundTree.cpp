@@ -27,13 +27,13 @@ BranchBoundTree::BranchBoundTree(NodeData* root,
             break;
     }
 
-    auto* node = new BranchNode(root, true);
+    auto node = std::make_unique<BranchNodeBase>(root, true);
     tree->setGlobalUB(double(root->opt_sol->tw));
     tree->setRetainStates(false);
-    node->setID(root->id);
-    node->setDepth(root->depth);
+    node->set_id(root->id);
+    node->set_depth(root->depth);
 
-    tree->processState(node, true);
+    tree->processState(std::move(node), true);
 }
 
 extern "C" {

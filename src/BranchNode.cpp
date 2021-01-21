@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <span>
 #include "PricerSolverBase.hpp"
 #include "branch-and-bound/btree.h"
@@ -15,7 +16,7 @@
 BranchNodeBase::BranchNodeBase(NodeData* _pd, bool _isRoot)
     : State(_isRoot),
       pd(_pd) {
-    setDepth(pd->depth);
+    set_depth(pd->depth);
 }
 
 void BranchNodeBase::branch(BTree* bt) {
@@ -32,7 +33,7 @@ void BranchNodeBase::branch(BTree* bt) {
         "BRANCHING NODE with branch_job = {} and middle_time = {} , less = "
         "{}, "
         "depth = {} with graph size {} and DWM LB = {}\n\n",
-        pd->branch_job, pd->completiontime, pd->less, depth,
+        pd->branch_job, pd->completiontime, pd->less, get_depth(),
         solver->get_nb_vertices(), pd->LP_lower_bound);
 
     auto fathom_left = false;
@@ -108,12 +109,12 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
-    auto            best_min_gain = 0.0;
-    auto            best_job = -1;
-    auto            best_time = 0;
-    std::span       jobsarray{pd->jobarray->pdata, pd->jobarray->len};
-    BranchNodeBase* best_right = nullptr;
-    BranchNodeBase* best_left = nullptr;
+    auto      best_min_gain = 0.0;
+    auto      best_job = -1;
+    auto      best_time = 0;
+    std::span jobsarray{pd->jobarray->pdata, pd->jobarray->len};
+    std::unique_ptr<BranchNodeBase> best_right = nullptr;
+    std::unique_ptr<BranchNodeBase> best_left = nullptr;
     for (auto& it : best_cand) {
         auto i = it.job;
         if (i == -1) {
@@ -142,7 +143,8 @@ void BranchNodeBase::branch(BTree* bt) {
         } else {
             auto* left = new_node_data(pd);
             auto* left_solver = left->solver;
-            auto* left_node_branch = new BranchNodeBase(left);
+            auto  left_node_branch = std::make_unique<BranchNodeBase>(left);
+            // std::unique_ptr<BranchNodeBase>(new BranchNodeBase(left));
             left->solver->split_job_time(i, middle_time[i], true);
             left_node_branch->computeBounds(bt);
 
@@ -164,7 +166,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
             auto* right = new_node_data(pd);
             auto* right_solver = right->solver;
-            auto* right_node_branch = new BranchNodeBase(right);
+            auto  right_node_branch = std::make_unique<BranchNodeBase>(right);
 
             right_solver->split_job_time(i, middle_time[i], false);
             right_node_branch->computeBounds(bt);
@@ -191,20 +193,9 @@ void BranchNodeBase::branch(BTree* bt) {
                 best_job = i;
                 best_time = middle_time[i];
 
-                delete best_right;
-
-                best_right = right_node_branch;
-
-                delete best_left;
-
-                best_left = left_node_branch;
-                right_node_branch = nullptr;
-                left_node_branch = nullptr;
+                best_right = std::move(right_node_branch);
+                best_left = std::move(left_node_branch);
             }
-
-            delete left_node_branch;
-
-            delete right_node_branch;
 
             if (fathom_left || fathom_right) {
                 break;
@@ -234,21 +225,21 @@ void BranchNodeBase::branch(BTree* bt) {
     if (strong_branching) {
         auto* left = new_node_data(pd);
         auto* left_solver = left->solver;
-        auto* left_node_branch = new BranchNodeBase(left);
+        auto  left_node_branch = std::make_unique<BranchNodeBase>(left);
         left_solver->split_job_time(best_job, best_time, false);
         left->branch_job = best_job;
         left->completiontime = best_time;
         left->less = 0;
-        bt->processState(left_node_branch);
+        bt->processState(std::move(left_node_branch));
 
         auto* right = new_node_data(pd);
         auto* right_solver = right->solver;
-        auto* right_node_branch = new BranchNodeBase(right);
+        auto  right_node_branch = std::make_unique<BranchNodeBase>(right);
         right_solver->split_job_time(best_job, best_time, true);
         right->branch_job = best_job;
         right->completiontime = best_time;
         right->less = 1;
-        bt->processState(right_node_branch);
+        bt->processState(std::move(right_node_branch));
         // auto job = (Job*)g_ptr_array_index(pd->solver->jobs, best_job);
         // fmt::print("NO STRONG BRANCHING {} {} {}\n\n", best_job, best_time,
         //            best_min_gain);
@@ -259,8 +250,8 @@ void BranchNodeBase::branch(BTree* bt) {
             best_time;
         best_left->pd->less = 0;
         best_right->pd->less = 1;
-        bt->processState(best_left);
-        bt->processState(best_right);
+        bt->processState(std::move(best_left));
+        bt->processState(std::move(best_right));
         bt->setStateComputesBounds(false);
     }
 
@@ -275,8 +266,10 @@ void BranchNodeBase::computeBounds(BTree* bt) {
     build_rmp(pd);
     solve_relaxation(pd);
     compute_lower_bound(pd);
-    lowerBound = pd->LP_lower_bound;
-    objValue = pd->LP_lower_bound;
+    // lowerBound = pd->LP_lower_bound;
+    // objValue = pd->LP_lower_bound;
+    set_lb(pd->LP_lower_bound);
+    setObjValue(pd->LP_lower_bound);
 }
 
 void BranchNodeBase::assessDominance(State* otherState) {}
@@ -290,16 +283,8 @@ void BranchNodeBase::applyFinalPruningTests(BTree* bt) {}
 
 extern "C" {
 
-BranchNodeBase* new_branch_node(int _isRoot, NodeData* data) {
-    return new BranchNodeBase(data, _isRoot);
-};
-
-void delete_branch_node(BranchNodeBase* node) {
-    delete node;
-}
-
 size_t call_getDepth(BranchNodeBase* state) {
-    return state->getDepth();
+    return state->get_depth();
 };
 int call_getDomClassID(BranchNodeBase* state) {
     return state->getDomClassID();
@@ -320,7 +305,7 @@ int call_getParentID(BranchNodeBase* state) {
     return state->getParentID();
 }
 void call_setID(BranchNodeBase* state, int i) {
-    state->setID(i);
+    state->set_id(i);
 }
 bool call_isDominated(BranchNodeBase* state) {
     return state->isDominated();

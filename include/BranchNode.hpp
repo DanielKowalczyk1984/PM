@@ -2,6 +2,7 @@
 #define __BRANCHNODE_H__
 
 #include <limits>
+#include <memory>
 #include "branch-and-bound/state.h"
 #include "wctprivate.h"
 
@@ -27,14 +28,15 @@ class BranchNodeBase : public State {
     static constexpr double EPS = 1e-4;
     static constexpr double ERROR = 1e-12;
 
-    void   branch(BTree* bt) final;
-    void   computeBounds(BTree* bt) final;
-    void   assessDominance(State* otherState) final;
-    bool   isTerminalState() final;
-    void   applyFinalPruningTests(BTree* bt) final;
-    State* clone() final { return nullptr; };  // "copy constructor"
-    void   print() const final{};
-    bool   operator<(const State& other) final { return false; };
+    void branch(BTree* bt) final;
+    void computeBounds(BTree* bt) final;
+    void assessDominance(State* otherState) final;
+    bool isTerminalState() final;
+    void applyFinalPruningTests(BTree* bt) final;
+    // std::unique_ptr<State> clone() { return nullptr; };  // "copy
+    // constructor"
+    void print() const final{};
+    bool operator<(const State& other) final { return false; };
 
    private:
     NodeData* pd;
