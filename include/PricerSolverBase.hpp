@@ -14,7 +14,7 @@
 
 struct PricerSolverBase {
    public:
-    GPtrArray* jobs;
+    std::span<void*> jobs;
 
     int convex_constr_id;
     int convex_rhs;

@@ -9,6 +9,13 @@
 
 template <typename T = double>
 class NodeBdd : public NodeBase {
+    struct data {
+        double cost{};
+        double rc_cost{};
+        double lp_x{};
+        double coeff_cut{};
+    };
+
    private:
     int weight{};
 
@@ -19,15 +26,13 @@ class NodeBdd : public NodeBase {
     std::array<std::vector<std::weak_ptr<NodeId>>, 2>   in_edges{};
 
     std::shared_ptr<NodeId> ptr_node_id{nullptr};
+    std::array<data, 2>     info{};
     std::array<double, 2>   cost{0.0, 0.0};
     std::array<double, 2>   reduced_cost{0.0, 0.0};
     std::array<double, 2>   lp_x{0.0, 0.0};
 
-    bool                    calc_yes{true};
-    bool                    calc_no{true};
+    std::array<bool, 2>     calc{true, true};
     int                     key{-1};
-    int                     high_edge_key{-1};
-    int                     low_edge_key{-1};
     bool                    visited{false};
     bool                    lp_visited{false};
     boost::dynamic_bitset<> all{};
@@ -62,24 +67,33 @@ class NodeBdd : public NodeBase {
     [[nodiscard]] int get_weight() const { return weight; }
 
     void reset_reduced_costs() {
-        reduced_cost[0] = 0.0;
-        reduced_cost[1] = cost[1];
+        // reduced_cost[0] = 0.0;
+        // reduced_cost[1] = cost[1];
+        reduced_cost = cost;
     }
 
-    void reset_reduced_costs_farkas() {
-        reduced_cost[0] = reduced_cost[1] = 0.0;
-    }
+    void reset_reduced_costs_farkas() { reduced_cost = {0.0, 0.0}; }
 
     void reset_lp_x() {
-        lp_x[0] = lp_x[1] = 0.0;
+        lp_x = {0.0, 0.0};
         lp_visited = false;
     }
 
-    void add_coeff_list(std::shared_ptr<BddCoeff>& ptr, int high) {
-        coeff_list[high].push_back(ptr);
+    void add_coeff_list(const std::shared_ptr<BddCoeff>& ptr, bool high) {
+        if (high) {
+            coeff_list[1].push_back(ptr);
+        } else {
+            coeff_list[0].push_back(ptr);
+        }
     }
 
-    void adjust_reduced_costs(double _x, int i) { reduced_cost[i] -= _x; }
+    void adjust_reduced_costs(double _x, bool high) {
+        if (high) {
+            reduced_cost[1] -= _x;
+        } else {
+            reduced_cost[0] -= _x;
+        }
+    }
 
     bool operator!=(NodeBdd const& o) const { return !operator==(o); }
 

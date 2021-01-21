@@ -1,3 +1,4 @@
+#include <memory>
 #include "PricerSolverArcTimeDP.hpp"
 #include "PricerSolverBddBackward.hpp"
 #include "PricerSolverBddForward.hpp"
@@ -182,7 +183,8 @@ int evaluate_nodes(NodeData* pd) {
     int    UB = pd->opt_sol->tw;
     double LB = pd->LP_lower_bound;
 
-    pd->solver->evaluate_nodes(&g_array_index(pd->pi, double, 0), UB, LB);
+    auto* aux_pi = static_cast<double*>(static_cast<void*>(pd->pi->data));
+    pd->solver->evaluate_nodes(aux_pi, UB, LB);
 
     return val;
 }
@@ -192,7 +194,8 @@ int reduce_cost_fixing(NodeData* pd) {
     int    UB = pd->opt_sol->tw;
     double LB = pd->LP_lower_bound_dual;
 
-    pd->solver->reduce_cost_fixing(&g_array_index(pd->pi, double, 0), UB, LB);
+    auto* aux_pi = static_cast<double*>(static_cast<void*>(pd->pi->data));
+    pd->solver->reduce_cost_fixing(aux_pi, UB, LB);
     if (pd->depth == 0) {
         pd->stat->size_graph_after_reduced_cost_fixing =
             get_nb_edges(pd->solver);

@@ -46,8 +46,10 @@ void PricerSolverBddSimple::compute_labels(double* _pi) {
 void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
     auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
-    double reduced_cost =
-        table.node(1).forward_label[0].get_f() + pi[convex_constr_id];
+    auto      nb_constraints{reformulation_model.get_nb_constraints()};
+    std::span aux_pi{pi, nb_constraints};
+    double    reduced_cost =
+        table.node(1).forward_label[0].get_f() + aux_pi[convex_constr_id];
     bool removed_edges = false;
     int  nb_removed_edges_evaluate = 0;
 
@@ -57,11 +59,11 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
             auto&  child = table.node(it.branch[1]);
             double result = it.forward_label[0].get_f() +
                             child.backward_label[0].get_f() +
-                            it.reduced_cost[1] + pi[convex_constr_id];
+                            it.reduced_cost[1] + aux_pi[convex_constr_id];
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
             if (LB + aux_nb_machines * reduced_cost + result > UB + RC_FIXING &&
-                (it.calc_yes)) {
-                it.calc_yes = false;
+                (it.calc[1])) {
+                it.calc[1] = false;
                 add_nb_removed_edges();
                 removed_edges = true;
                 nb_removed_edges_evaluate++;
@@ -101,8 +103,8 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi) {
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
             if (constLB + aux_nb_machines * reduced_cost + result >
                     UB + RC_FIXING &&
-                (it.calc_yes)) {
-                it.calc_yes = false;
+                (it.calc[1])) {
+                it.calc[1] = false;
                 add_nb_removed_edges();
                 removed_edges = true;
                 nb_removed_edges_evaluate++;
@@ -170,8 +172,10 @@ void PricerSolverBddCycle::compute_labels(double* _pi) {
 void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
     auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
-    double reduced_cost =
-        table.node(1).forward_label[0].get_f() + pi[convex_constr_id];
+    auto      nb_constraints{reformulation_model.get_nb_constraints()};
+    std::span aux_pi{pi, nb_constraints};
+    double    reduced_cost =
+        table.node(1).forward_label[0].get_f() + aux_pi[convex_constr_id];
     bool removed_edges = false;
     int  nb_removed_edges_evaluate = 0;
 
@@ -186,27 +190,27 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                 child.backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[0].get_f() +
                          child.backward_label[0].get_f() + it.reduced_cost[1] +
-                         pi[convex_constr_id];
+                         aux_pi[convex_constr_id];
             } else if (it.forward_label[0].get_previous_job() == job &&
                        child.backward_label[0].get_prev_job() != job) {
                 result = it.forward_label[1].get_f() +
                          child.backward_label[0].get_f() + it.reduced_cost[1] +
-                         pi[convex_constr_id];
+                         aux_pi[convex_constr_id];
             } else if (it.forward_label[0].get_previous_job() != job &&
                        child.backward_label[0].get_prev_job() == job) {
                 result = it.forward_label[0].get_f() +
                          child.backward_label[1].get_f() + it.reduced_cost[1] +
-                         pi[convex_constr_id];
+                         aux_pi[convex_constr_id];
             } else {
                 result = it.forward_label[1].get_f() +
                          child.backward_label[1].get_f() + it.reduced_cost[1] +
-                         pi[convex_constr_id];
+                         aux_pi[convex_constr_id];
             }
 
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
             if (LB + aux_nb_machines * reduced_cost + result > UB + RC_FIXING &&
-                (it.calc_yes)) {
-                it.calc_yes = false;
+                (it.calc[1])) {
+                it.calc[1] = false;
                 removed_edges = true;
                 add_nb_removed_edges();
                 nb_removed_edges_evaluate++;
@@ -320,8 +324,8 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi) {
             auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
             if (constLB + aux_nb_machines * reduced_cost + result >
                     UB + RC_FIXING &&
-                (it.calc_yes)) {
-                it.calc_yes = false;
+                (it.calc[1])) {
+                it.calc[1] = false;
                 removed_edges = true;
                 add_nb_removed_edges();
                 nb_removed_edges_evaluate++;

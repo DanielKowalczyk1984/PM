@@ -27,6 +27,8 @@ class ZeroHalfCuts {
     void                                            generate_cuts();
     std::vector<std::shared_ptr<ConstraintGeneric>> get_cut_list();
 
+    static constexpr int ALIGN = 40;
+
    private:
     std::unique_ptr<GRBEnv>                         env;
     std::unique_ptr<GRBModel>                       model;

@@ -43,7 +43,7 @@ class DataTable {
      * Constructor.
      * @param n the number of rows.
      */
-    DataTable(int n = 0) : table(n) {}
+    explicit DataTable(int n = 0) : table(n) {}
 
     /** Copy constructor */
     // DataTable(const DataTable& other) : table(other.table) {}
@@ -66,6 +66,8 @@ class DataTable {
     //     table = other.table;
     //     return *this;
     // }
+
+    ~DataTable<T>() = default;
 
     //    template<typename U>
     //    DataTable(DataTable<U> const& o)
@@ -186,8 +188,9 @@ class DataTable {
         for (int i = 0; i < o.numRows(); ++i) {
             os << i << ": ";
             for (size_t j = 0; j < o[i].size(); ++j) {
-                if (j != 0)
+                if (j != 0) {
                     os << ", ";
+                }
                 os << o.table[i][j];
             }
             os << "\n";

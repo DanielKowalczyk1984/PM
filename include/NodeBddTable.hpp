@@ -252,7 +252,7 @@ class NodeTableEntity : public data_table_node<T> {
                     }
                 }
 #endif
-            } else
+            } else {
                 for (size_t j = 0; j < m; ++j) {
                     for (int b = 0; b < 2; ++b) {
                         int const ii = node[j].branch[b].row();
@@ -271,6 +271,7 @@ class NodeTableEntity : public data_table_node<T> {
                         }
                     }
                 }
+            }
 
             higherLevelTable[lowest].push_back(i);
             my_vector<int>& lower = lowerLevelTable[i];

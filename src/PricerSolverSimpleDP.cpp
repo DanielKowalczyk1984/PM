@@ -4,6 +4,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include "boost/graph/graphviz.hpp"
+#include "gurobi_c++.h"
 #include "gurobi_c.h"
 
 /**
@@ -20,23 +21,21 @@ PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray*  _jobs,
       A(Hmax + 1),
       F(Hmax + 1),
       backward_F(Hmax + 1),
-      TI_x(new GRBVar[convex_constr_id * (Hmax + 1)]),
-      take(static_cast<int*>(
-          malloc(convex_constr_id * (Hmax + 1) * sizeof(int)))),
-      lp_x(new double[convex_constr_id * (Hmax + 1)]{}),
-      solution_x(new double[convex_constr_id * (Hmax + 1)]{}) {
-    fill_int(take, convex_constr_id * (Hmax + 1), 0);
+      TI_x(convex_constr_id * (Hmax + 1), GRBVar()),
+      take(convex_constr_id * (Hmax + 1), 0),
+      lp_x(convex_constr_id * (Hmax + 1), 0.0),
+      solution_x(convex_constr_id * (Hmax + 1), 0.0) {
     init_table();
 }
 
 void PricerSolverSimpleDp::init_table() {
-    backward_graph = new std::vector<Job*>[Hmax + 1];
-    forward_graph = new std::vector<Job*>[Hmax + 1];
+    backward_graph = std::vector<std::vector<Job*>>(Hmax + 1);
+    forward_graph = std::vector<std::vector<Job*>>(Hmax + 1);
 
     for (int t = 0; t < Hmax + 1; t++) {
         for (int i = 1; i < convex_constr_id + 1; i++) {
             int  j = i - 1;
-            Job* job = reinterpret_cast<Job*>(g_ptr_array_index(jobs, j));
+            Job* job = static_cast<Job*>(jobs[j]);
 
             if (t >= job->processing_time) {
                 forward_graph[t].push_back(job);
@@ -53,14 +52,14 @@ void PricerSolverSimpleDp::init_table() {
 }
 
 PricerSolverSimpleDp::~PricerSolverSimpleDp() {
-    delete[] backward_graph;
-    delete[] forward_graph;
-    delete[] TI_x;
-    if (take) {
-        free(take);
-    }
-    delete[] lp_x;
-    delete[] solution_x;
+    // delete[] backward_graph;
+    // delete[] forward_graph;
+    // delete[] TI_x;
+    // if (take) {
+    //     free(take);
+    // }
+    // delete[] lp_x;
+    // delete[] solution_x;
 }
 
 void PricerSolverSimpleDp::evaluate_nodes(double*                 pi,
@@ -78,15 +77,17 @@ void PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
 
 void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     evaluate_nodes(pi, UB, LB);
-    int counter = 0;
-    int x = 0;
+    auto      nb_constraints = reformulation_model.get_nb_constraints();
+    std::span aux_pi{pi, nb_constraints};
+    int       counter = 0;
+    int       x = 0;
 
     for (int t = 0; t < Hmax + 1; t++) {
         auto it = forward_graph[t].begin();
         while (it != forward_graph[t].end()) {
             double result = F[t - (*it)->processing_time] + value_Fj(t, *it) -
-                            pi[(*it)->job] + backward_F[t];
-            if (LB + result + (convex_rhs - 1) * F[Hmax] > UB + 1e-6) {
+                            aux_pi[(*it)->job] + backward_F[t];
+            if (LB + result + (convex_rhs - 1) * F[Hmax] > UB + RC_FIXING) {
                 size_graph--;
                 it = forward_graph[t].erase(it);
             } else {
@@ -100,8 +101,8 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
         while (iter != backward_graph[t].end()) {
             double result =
                 F[t] + value_Fj(t + (*iter)->processing_time, *iter) -
-                pi[(*iter)->job] + backward_F[t + (*iter)->processing_time];
-            if (LB + result + (convex_rhs - 1) * F[Hmax] > UB + 1e-6) {
+                aux_pi[(*iter)->job] + backward_F[t + (*iter)->processing_time];
+            if (LB + result + (convex_rhs - 1) * F[Hmax] > UB + RC_FIXING) {
                 take[(*iter)->job * (Hmax + 1) + t] = false;
                 // iter = backward_graph[t].erase(iter);
             } else {
@@ -198,7 +199,9 @@ void PricerSolverSimpleDp::build_mip() {
 
 void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     /** Initialisation */
-    F[0] = _pi[convex_constr_id];
+    auto      nb_constraints = reformulation_model.get_nb_constraints();
+    std::span aux_pi{_pi, nb_constraints};
+    F[0] = aux_pi[convex_constr_id];
     A[0] = nullptr;
 
     for (int t = 1; t < Hmax + 1; t++) {
@@ -210,10 +213,10 @@ void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     for (int t = 1; t < Hmax + 1; t++) {
         for (auto& it : forward_graph[t]) {
             if (F[t - it->processing_time] +
-                    static_cast<double>(value_Fj(t, it)) - _pi[it->job] <=
+                    static_cast<double>(value_Fj(t, it)) - aux_pi[it->job] <=
                 F[t]) {
-                F[t] =
-                    F[t - it->processing_time] + value_Fj(t, it) - _pi[it->job];
+                F[t] = F[t - it->processing_time] + value_Fj(t, it) -
+                       aux_pi[it->job];
                 A[t] = it;
             }
         }
@@ -226,6 +229,8 @@ void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
 
 void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     backward_F[Hmax] = 0.0;
+    auto      nb_constraints{reformulation_model.get_nb_constraints()};
+    std::span aux_pi{_pi, nb_constraints};
 
     for (int t = 0; t < Hmax; t++) {
         backward_F[t] = DBL_MAX / 2;
@@ -236,11 +241,11 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
             Job* job = it;
             int  tt = t + job->processing_time;
             if (backward_F[tt] + static_cast<double>(value_Fj(tt, job)) -
-                    _pi[job->job] <=
+                    aux_pi[job->job] <=
                 backward_F[t]) {
                 backward_F[t] = backward_F[tt] +
                                 static_cast<double>(value_Fj(tt, job)) -
-                                _pi[job->job];
+                                aux_pi[job->job];
             }
         }
 
@@ -299,16 +304,18 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     const double*    columns,
     const GPtrArray* schedule_sets,
     int              num_columns) {
-    std::fill(lp_x, lp_x + convex_constr_id * (Hmax + 1), 0.0);
+    auto      nb_constraints{reformulation_model.get_nb_constraints()};
+    std::span aux_cols{columns, schedule_sets->len};
+    std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
+    std::fill(lp_x.begin(), lp_x.end(), 0.0);
     for (int k = 0; k < num_columns; k++) {
-        if (columns[k] > 0.00001) {
-            auto* tmp =
-                static_cast<ScheduleSet*>(g_ptr_array_index(schedule_sets, k));
-            int t = 0;
-            for (size_t l = 0; l < tmp->job_list->len; l++) {
-                Job* tmp_j =
-                    static_cast<Job*>(g_ptr_array_index(tmp->job_list, l));
-                lp_x[(tmp_j->job) * (Hmax + 1) + t] += columns[k];
+        if (aux_cols[k] > EPS) {
+            auto*     tmp = static_cast<ScheduleSet*>(aux_schedule_sets[k]);
+            int       t = 0;
+            std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
+            for (auto& it : aux_jobs) {
+                Job* tmp_j = static_cast<Job*>(it);
+                lp_x[(tmp_j->job) * (Hmax + 1) + t] += aux_cols[k];
                 t += tmp_j->processing_time;
             }
         }

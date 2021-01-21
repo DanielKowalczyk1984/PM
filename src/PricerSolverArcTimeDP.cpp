@@ -1,6 +1,8 @@
 #include "PricerSolverArcTimeDP.hpp"
 #include <fmt/core.h>
 #include <iostream>
+#include <vector>
+#include "gurobi_c++.h"
 #include "gurobi_c.h"
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
@@ -14,11 +16,10 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
       size_graph(0u),
       vector_jobs(),
       nb_edges_removed{},
-      lp_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}),
-      solution_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}) {
+      lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
+      solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
     for (int i = 0; i < n; ++i) {
-        vector_jobs.push_back(
-            reinterpret_cast<Job*>(g_ptr_array_index(jobs, i)));
+        vector_jobs.push_back(static_cast<Job*>(jobs[i]));
     }
     job_init(&j0, 0, 0, 0);
     j0.job = n;
@@ -28,40 +29,40 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
 }
 
 void PricerSolverArcTimeDp::init_table() {
-    graph = new std::vector<Job*>*[n + 1];
-    reversed_graph = new std::vector<Job*>*[n + 1];
+    graph = vector<vector<vector<Job*>>>(n + 1);
+    reversed_graph = vector<vector<vector<Job*>>>(n + 1);
     for (int j = 0; j < n + 1; j++) {
-        reversed_graph[j] = new std::vector<Job*>[Hmax + 1];
+        reversed_graph[j] = vector<vector<Job*>>(Hmax + 1);
     }
 
-    forward_F = new double*[jobs->len + 1];
-    backward_F = new double*[jobs->len + 1];
-    for (unsigned i = 0; i < jobs->len + 1; ++i) {
-        forward_F[i] = new double[Hmax + 1]{};
-        backward_F[i] = new double[Hmax + 1]{};
+    forward_F = vector<vector<double>>(jobs.size() + 1);
+    backward_F = vector<vector<double>>(jobs.size() + 1);
+    for (unsigned i = 0; i < jobs.size() + 1; ++i) {
+        forward_F[i] = vector<double>(Hmax + 1, 0.0);
+        backward_F[i] = vector<double>(Hmax + 1, 0.0);
     }
 
-    A = new Job**[jobs->len + 1];
-    for (unsigned i = 0; i < jobs->len + 1; ++i) {
-        A[i] = new Job*[Hmax + 1];
+    A = vector<vector<Job*>>(jobs.size() + 1);
+    for (unsigned i = 0; i < jobs.size() + 1; ++i) {
+        A[i] = vector<Job*>(Hmax + 1, nullptr);
     }
 
-    B = new int*[jobs->len + 1];
-    for (unsigned i = 0; i < jobs->len + 1; ++i) {
-        B[i] = new int[Hmax + 1];
+    B = vector<vector<int>>(jobs.size() + 1);
+    for (unsigned i = 0; i < jobs.size() + 1; ++i) {
+        B[i] = vector<int>(Hmax + 1);
     }
 
-    arctime_x = new GRBVar**[jobs->len + 1];
+    arctime_x = vector<vector<vector<GRBVar>>>(jobs.size() + 1);
     for (int i = 0; i < n + 1; i++) {
-        arctime_x[i] = new GRBVar*[jobs->len + 1];
+        arctime_x[i] = vector<vector<GRBVar>>(jobs.size() + 1);
         for (int j = 0; j < n + 1; j++) {
-            arctime_x[i][j] = new GRBVar[Hmax + 1];
+            arctime_x[i][j] = vector<GRBVar>(Hmax + 1);
         }
     }
 
     for (int j = 0; j < n; ++j) {
-        graph[j] = new std::vector<Job*>[Hmax + 1];
-        Job* tmp = reinterpret_cast<Job*>(g_ptr_array_index(jobs, j));
+        graph[j] = vector<vector<Job*>>(Hmax + 1);
+        Job* tmp = static_cast<Job*>(jobs[j]);
         for (int t = 0; t < Hmax + 1; t++) {
             for (auto& it : vector_jobs) {
                 int p = (it->job != j) ? it->processing_time : 1;
@@ -74,7 +75,7 @@ void PricerSolverArcTimeDp::init_table() {
         }
     }
 
-    graph[n] = new std::vector<Job*>[Hmax + 1];
+    graph[n] = vector<vector<Job*>>(Hmax + 1);
     for (int t = 0; t < Hmax + 1; t++) {
         for (auto& it : vector_jobs) {
             if (t >= it->processing_time) {
@@ -253,9 +254,9 @@ void PricerSolverArcTimeDp::build_mip() {
                 for (auto& it : graph[j][t]) {
                     auto a = arctime_x[it->job][j][t].get(GRB_DoubleAttr_X);
                     if (a > 0) {
-                        fmt::print("{} {} {}\n", j, t,
-                                   (static_cast<Job*>(jobs->pdata[j]))
-                                       ->processing_time);
+                        fmt::print(
+                            "{} {} {}\n", j, t,
+                            (static_cast<Job*>(jobs[j]))->processing_time);
                     }
                 }
             }
@@ -266,6 +267,8 @@ void PricerSolverArcTimeDp::build_mip() {
 
 void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     evaluate_nodes(pi, UB, LB);
+    auto      nb_constraints = reformulation_model.get_nb_constraints();
+    std::span aux_pi{pi, nb_constraints};
 
     for (int j = 0; j < n; j++) {
         Job* tmp = vector_jobs[j];
@@ -274,11 +277,12 @@ void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
             while (it != graph[j][t].end()) {
                 double result =
                     forward_F[(*it)->job][t - (*it)->processing_time] +
-                    value_Fj(t + tmp->processing_time, tmp) - pi[tmp->job] +
+                    value_Fj(t + tmp->processing_time, tmp) - aux_pi[tmp->job] +
                     backward_F[tmp->job][t + tmp->processing_time];
-                if (result + pi[n] +
-                        (convex_rhs - 1) * (forward_F[n][Hmax] + pi[n]) + LB >
-                    UB - 1 + 0.00001) {
+                if (result + aux_pi[n] +
+                        (convex_rhs - 1) * (forward_F[n][Hmax] + aux_pi[n]) +
+                        LB >
+                    UB - 1 + RC_FIXING) {
                     size_graph--;
                     nb_edges_removed++;
                     // Job* tmp_j = (*it);
@@ -302,43 +306,45 @@ void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
 }
 
 PricerSolverArcTimeDp::~PricerSolverArcTimeDp() {
-    for (int i = 0; i < n + 1; ++i) {
-        delete[] graph[i];
-        delete[] reversed_graph[i];
-    }
-    delete[] graph;
-    delete[] reversed_graph;
-    for (int i = 0; i < n + 1; ++i) {
-        delete[] forward_F[i];
-        delete[] backward_F[i];
-    }
-    delete[] forward_F;
-    delete[] backward_F;
+    // for (int i = 0; i < n + 1; ++i) {
+    //     delete[] graph[i];
+    //     delete[] reversed_graph[i];
+    // }
+    // delete[] graph;
+    // delete[] reversed_graph;
+    // for (int i = 0; i < n + 1; ++i) {
+    //     delete[] forward_F[i];
+    //     delete[] backward_F[i];
+    // }
+    // delete[] forward_F;
+    // delete[] backward_F;
 
-    for (int i = 0; i < n + 1; ++i) {
-        delete[] A[i];
-    }
-    delete[] A;
+    // for (int i = 0; i < n + 1; ++i) {
+    //     delete[] A[i];
+    // }
+    // delete[] A;
 
-    for (int i = 0; i < n + 1; ++i) {
-        delete[] B[i];
-    }
-    delete[] B;
+    // for (int i = 0; i < n + 1; ++i) {
+    //     delete[] B[i];
+    // }
+    // delete[] B;
 
-    for (int i = 0; i < n + 1; i++) {
-        for (int j = 0; j < n + 1; j++) {
-            delete[] arctime_x[i][j];
-        }
-        delete[] arctime_x[i];
-    }
-    delete[] arctime_x;
-    delete[] lp_x;
-    delete[] solution_x;
+    // for (int i = 0; i < n + 1; i++) {
+    //     for (int j = 0; j < n + 1; j++) {
+    //         delete[] arctime_x[i][j];
+    //     }
+    //     delete[] arctime_x[i];
+    // }
+    // delete[] arctime_x;
+    // delete[] lp_x;
+    // delete[] solution_x;
 }
 
 void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
     // backward_F[n][T] = 0;
-    backward_F[n][Hmax] = 0;
+    backward_F[n][Hmax] = 0.0;
+    auto      nb_constraints = reformulation_model.get_nb_constraints();
+    std::span aux_pi{_pi, nb_constraints};
 
     for (int t = Hmax - 1; t >= 0; --t) {
         for (int i = 0; i <= n; ++i) {
@@ -351,7 +357,7 @@ void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
                     ((*it)->job == n)
                         ? value_Fj(t + (*it)->processing_time, *it)
                         : value_Fj(t + (*it)->processing_time, *it) -
-                              _pi[(*it)->job];
+                              aux_pi[(*it)->job];
                 int tt = ((*it)->job != n) ? (*it)->processing_time
                          : (*it)->job == i ? 1
                                            : 0;
@@ -363,7 +369,7 @@ void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
                         ((*it)->job == n)
                             ? value_Fj(t + (*it)->processing_time, *it)
                             : value_Fj(t + (*it)->processing_time, *it) -
-                                  _pi[(*it)->job];
+                                  aux_pi[(*it)->job];
 
                     tt = ((*it)->job != n) ? (*it)->processing_time
                          : (*it)->job == i ? 1
@@ -386,6 +392,8 @@ void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
 
 void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
     forward_F[n][0] = 0;
+    auto      nb_constraints = reformulation_model.get_nb_constraints();
+    std::span aux_pi{_pi, nb_constraints};
 
     for (int t = 0; t < Hmax + 1; ++t) {
         for (int j = 0; j <= n; ++j) {
@@ -396,8 +404,9 @@ void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
             auto it = graph[j][t].begin();
             if (!graph[j][t].empty() && t <= Hmax - tmp->processing_time) {
                 double reduced_cost =
-                    (j == n) ? value_Fj(t + tmp->processing_time, tmp)
-                             : value_Fj(t + tmp->processing_time, tmp) - _pi[j];
+                    (j == n)
+                        ? value_Fj(t + tmp->processing_time, tmp)
+                        : value_Fj(t + tmp->processing_time, tmp) - aux_pi[j];
                 forward_F[j][t] =
                     forward_F[(*it)->job][t - (*it)->processing_time] +
                     reduced_cost;
@@ -407,9 +416,9 @@ void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
                 it++;
                 while (it != graph[j][t].end()) {
                     reduced_cost =
-                        (j == n)
-                            ? value_Fj(t + tmp->processing_time, tmp)
-                            : value_Fj(t + tmp->processing_time, tmp) - _pi[j];
+                        (j == n) ? value_Fj(t + tmp->processing_time, tmp)
+                                 : value_Fj(t + tmp->processing_time, tmp) -
+                                       aux_pi[j];
                     double result =
                         ((*it)->job != vector_jobs[j]->job)
                             ? forward_F[(*it)->job][t - (*it)->processing_time]
@@ -430,7 +439,9 @@ void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
 }
 
 OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
-    OptimalSolution<double> sol(_pi[n]);
+    auto      nb_constraints = reformulation_model.get_nb_constraints();
+    std::span aux_pi{_pi, nb_constraints};
+    OptimalSolution<double> sol(aux_pi[n]);
     std::vector<Job*>       v;
 
     forward_evaluator(_pi);
@@ -446,7 +457,7 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
             sol.C_max += vector_jobs[aux_job]->processing_time;
             sol.cost += value_Fj(aux_T + vector_jobs[aux_job]->processing_time,
                                  vector_jobs[aux_job]);
-            sol.obj += -_pi[aux_job] +
+            sol.obj += -aux_pi[aux_job] +
                        value_Fj(aux_T + vector_jobs[aux_job]->processing_time,
                                 vector_jobs[aux_job]);
         }
@@ -473,26 +484,27 @@ void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     const double*    columns,
     const GPtrArray* schedule_sets,
     int              num_columns) {
-    std::fill(lp_x, lp_x + get_nb_edges(), 0);
+    std::fill(lp_x.begin(), lp_x.end(), 0.0);
+    std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
+    std::span aux_cols{columns, static_cast<size_t>(num_columns)};
     for (int k = 0; k < num_columns; k++) {
-        if (columns[k] > 0.0) {
-            size_t counter = 0;
-            auto*  tmp =
-                static_cast<ScheduleSet*>(g_ptr_array_index(schedule_sets, k));
-            int i = n;
-            int t = 0;
+        if (aux_cols[k] > 0.0) {
+            size_t    counter = 0;
+            auto*     tmp = static_cast<ScheduleSet*>(aux_schedule_sets[k]);
+            std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
+            int       i = n;
+            int       t = 0;
             while (t < Hmax + 1) {
                 Job* tmp_j = nullptr;
                 int  j = n;
 
                 if (counter < tmp->job_list->len) {
-                    tmp_j = static_cast<Job*>(
-                        g_ptr_array_index(tmp->job_list, counter));
+                    tmp_j = static_cast<Job*>(aux_jobs[counter]);
                     j = tmp_j->job;
                 }
 
                 lp_x[i * (n + 1) * (Hmax + 1) + j * (Hmax + 1) + t] +=
-                    columns[k];
+                    aux_cols[k];
 
                 if (tmp_j == nullptr) {
                     i = n;
@@ -554,16 +566,18 @@ int PricerSolverArcTimeDp::get_num_layers() {
 void PricerSolverArcTimeDp::print_num_paths() {}
 
 bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
-    size_t counter = set->len - 1;
-    int    i = n;
-    int    t = 0;
+    auto      nb_constraints = reformulation_model.get_nb_constraints();
+    std::span aux_set{set->pdata, set->len};
+    size_t    counter = set->len - 1;
+    int       i = n;
+    int       t = 0;
 
     while (t < Hmax + 1) {
         Job* tmp_j = nullptr;
         int  j = n;
 
         if (counter < set->len) {
-            tmp_j = static_cast<Job*>(g_ptr_array_index(set, counter));
+            tmp_j = static_cast<Job*>(aux_set[counter]);
             j = tmp_j->job;
         }
 

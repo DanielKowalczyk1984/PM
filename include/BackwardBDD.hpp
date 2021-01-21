@@ -3,6 +3,7 @@
 #include <fmt/core.h>
 #include <NodeBdd.hpp>
 #include <OptimalSolution.hpp>
+#include <span>
 #include "NodeBddEval.hpp"
 
 template <typename T = double>

@@ -1,23 +1,27 @@
+#include <vector>
 #include "PricerSolverBase.hpp"
+#include "gurobi_c++.h"
 #include "solver.h"
+
+using std::vector;
 
 class PricerSolverArcTimeDp : public PricerSolverBase {
    private:
-    int                 Hmax;
-    int                 n;
-    size_t              size_graph;
-    std::vector<Job*>** graph;
-    std::vector<Job*>** reversed_graph;
-    std::vector<Job*>   vector_jobs;
-    Job                 j0;
-    double**            forward_F;
-    double**            backward_F;
-    Job***              A;
-    int**               B;
-    GRBVar***           arctime_x;
-    int                 nb_edges_removed;
-    double*             lp_x;
-    double*             solution_x;
+    int                            Hmax;
+    int                            n;
+    size_t                         size_graph;
+    vector<vector<vector<Job*>>>   graph;
+    vector<vector<vector<Job*>>>   reversed_graph;
+    vector<Job*>                   vector_jobs;
+    Job                            j0;
+    vector<vector<double>>         forward_F;
+    vector<vector<double>>         backward_F;
+    vector<vector<Job*>>           A;
+    vector<vector<int>>            B;
+    vector<vector<vector<GRBVar>>> arctime_x;
+    int                            nb_edges_removed;
+    vector<double>                 lp_x;
+    vector<double>                 solution_x;
 
    public:
     PricerSolverArcTimeDp(GPtrArray*  _jobs,
@@ -32,11 +36,10 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
           n(src.n),
           vector_jobs(),
           nb_edges_removed(src.nb_edges_removed),
-          lp_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}),
-          solution_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}) {
+          lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
+          solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
         for (auto i = 0; i < n; ++i) {
-            vector_jobs.push_back(
-                reinterpret_cast<Job*>(g_ptr_array_index(jobs, i)));
+            vector_jobs.push_back(static_cast<Job*>(jobs[i]));
         }
         job_init(&j0, 0, 0, 0);
         j0.job = n;

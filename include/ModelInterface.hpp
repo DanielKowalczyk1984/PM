@@ -128,7 +128,7 @@ class ReformulationModel {
     ReformulationModel(const ReformulationModel&) = default;
     ReformulationModel& operator=(const ReformulationModel&) = default;
 
-    [[nodiscard]] inline int get_nb_constraints() const {
+    [[nodiscard]] inline size_t get_nb_constraints() const {
         return constraint_array.size();
     };
 

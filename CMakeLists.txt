@@ -89,7 +89,7 @@ verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
 # -Wmissing-declarations -Wpointer-arith -Wcast-qual -Wcast-align
 # -Wwrite-strings)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O5 -std=c++20 -stdlib=libc++ -m64")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O5 -std=c++20 -m64")
 set(CMAKE_C_FLAGS_RELEASE
     "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )

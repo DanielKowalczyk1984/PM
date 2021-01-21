@@ -66,7 +66,7 @@ void BranchNodeBase::branch(BTree* bt) {
         auto  prev = -1;
         auto  accum = 0.0;
         auto  dist_zero = 0.0;
-        auto* job = static_cast<Job*>(g_ptr_array_index(solver->jobs, i));
+        auto* job = static_cast<Job*>(solver->jobs[i]);
         for (auto t = 0; t < pd->H_max + 1; t++) {
             accum += x_job_time[i][t];
             // avg_completion_time[i] +=
@@ -111,6 +111,7 @@ void BranchNodeBase::branch(BTree* bt) {
     auto            best_min_gain = 0.0;
     auto            best_job = -1;
     auto            best_time = 0;
+    std::span       jobsarray{pd->jobarray->pdata, pd->jobarray->len};
     BranchNodeBase* best_right = nullptr;
     BranchNodeBase* best_left = nullptr;
     for (auto& it : best_cand) {
@@ -121,7 +122,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
         auto  left_gain = 0.0;
         auto  right_gain = 0.0;
-        auto* job = static_cast<Job*>(g_ptr_array_index(pd->jobarray, i));
+        auto* job = static_cast<Job*>(jobsarray[i]);
         for (auto t = 0; t < pd->H_max + 1; t++) {
             if (t + job->processing_time <= middle_time[i]) {
                 left_gain += x_job_time[i][t];
@@ -215,7 +216,7 @@ void BranchNodeBase::branch(BTree* bt) {
         fmt::print(stderr, "ERROR: no branching found!\n");
         for (auto k = 0; k < nb_jobs; k++) {
             auto  j = ord[k];
-            auto* job = (Job*)g_ptr_array_index(solver->jobs, j);
+            auto* job = static_cast<Job*>(solver->jobs[j]);
             fmt::print(stderr, "j={}:", j);
             for (int t = 0; t < pd->H_max; t++) {
                 if (x_job_time[j][t] > ERROR) {
