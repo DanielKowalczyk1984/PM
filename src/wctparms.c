@@ -3,6 +3,9 @@
 #include <util.h>
 #include <wctparms.h>
 
+const double TIME_LIMIT = 7200.0;
+const double ALPHA_STAB_INIT = 0.8;
+
 void parms_init(Parms* parms) {
     parms->init_upper_bound = INT_MAX;
     parms->bb_branch_strategy = min_bb_strategy;

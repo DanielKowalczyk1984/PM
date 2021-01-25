@@ -144,7 +144,7 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
             auto constr = reformulation_model.get_constraint(c);
             auto coeff = constr->get_var_coeff(&k);
 
-            if (fabs(coeff) > EPS) {
+            if (fabs(coeff) > EPS_SOLVER) {
                 result -= coeff * dual;
                 aux_lhs[c] += coeff;
             }
@@ -176,7 +176,7 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
         auto            constr = reformulation_model.get_constraint(tmp_j->job);
         auto            coeff = constr->get_var_coeff(&k);
 
-        if (fabs(coeff) > EPS) {
+        if (fabs(coeff) > EPS_SOLVER) {
             result -= coeff * dual;
         }
 
@@ -186,7 +186,7 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
             auto   constr_ = reformulation_model.get_constraint(c);
             double coeff_ = constr_->get_var_coeff(&k);
 
-            if (fabs(coeff_) > EPS) {
+            if (fabs(coeff_) > EPS_SOLVER) {
                 result -= coeff_ * dual_;
             }
         }
@@ -231,7 +231,7 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
         auto            constr = reformulation_model.get_constraint(tmp_j->job);
         auto            coeff = constr->get_var_coeff(&k);
 
-        if (fabs(coeff) > EPS) {
+        if (fabs(coeff) > EPS_SOLVER) {
             aux_subgradient[k.get_j()] -= coeff * convex_rhs;
         }
 
@@ -240,7 +240,7 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
             auto constr_ = reformulation_model.get_constraint(c);
             auto coeff_ = constr_->get_var_coeff(&k);
 
-            if (fabs(coeff_) > EPS) {
+            if (fabs(coeff_) > EPS_SOLVER) {
                 aux_subgradient[c] -= coeff_ * convex_rhs;
             }
         }

@@ -43,7 +43,7 @@ class ZeroHalfCuts {
     GRBVar                                          q;
     std::vector<std::shared_ptr<ConstraintGeneric>> cut_list;
 
-    static constexpr double EPS = 1e-6;
+    static constexpr double EPS_CUT = 1e-6;
     static constexpr double HALF = 2.0;
     static constexpr double TIMELIMIT = 50.0;
 

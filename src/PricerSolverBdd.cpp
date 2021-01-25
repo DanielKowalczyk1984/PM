@@ -204,7 +204,7 @@ void PricerSolverBdd::init_coeff_constraints() {
                 auto*           constr = reformulation_model.get_constraint(c);
                 VariableKeyBase key_aux(it.get_nb_job(), it.get_weight());
                 auto            coeff = constr->get_var_coeff(&key_aux);
-                if (fabs(coeff) > EPS) {
+                if (fabs(coeff) > EPS_SOLVER) {
                     auto ptr_coeff{std::make_shared<BddCoeff>(
                         it.get_nb_job(), it.get_weight(), coeff, 0.0, c)};
                     original_model.add_coeff_list(c, ptr_coeff);
@@ -220,7 +220,7 @@ void PricerSolverBdd::init_coeff_constraints() {
                             true);
     auto*           constr = original_model.get_constraint(convex_constr_id);
     auto            coeff = constr->get_var_coeff(&key_aux);
-    if (fabs(coeff) > EPS) {
+    if (fabs(coeff) > EPS_SOLVER) {
         auto ptr_coeff_high{std::make_shared<BddCoeff>(
             root_node.get_nb_job(), root_node.get_weight(), coeff, true, true)};
         original_model.add_coeff_list(convex_constr_id, ptr_coeff_high);
@@ -249,7 +249,7 @@ void PricerSolverBdd::update_coeff_constraints() {
                 BddCoeff key_high{it.get_nb_job(), it.get_weight(), 0.0, 0.0,
                                   nb_constr + c};
                 auto     coeff_high = constr->get_var_coeff(&key_high);
-                if (fabs(coeff_high) > EPS) {
+                if (fabs(coeff_high) > EPS_SOLVER) {
                     auto ptr_coeff{std::make_shared<BddCoeff>(
                         it.get_nb_job(), it.get_weight(), coeff_high, 0.0,
                         nb_constr + c)};
@@ -264,7 +264,7 @@ void PricerSolverBdd::update_coeff_constraints() {
                                  nb_constr + c,
                                  false};
                 auto     coeff_low = constr->get_var_coeff(&key_low);
-                if (fabs(coeff_low) > EPS) {
+                if (fabs(coeff_low) > EPS_SOLVER) {
                     std::shared_ptr<BddCoeff> ptr_coeff{
                         std::make_shared<BddCoeff>(it.get_nb_job(),
                                                    it.get_weight(), coeff_low,
@@ -407,7 +407,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
 
             assert(tmp_nodeid == 1);
 
-            if (fabs(coeff_val) > EPS) {
+            if (fabs(coeff_val) > EPS_SOLVER) {
                 column_ind.push_back(pd->id_pseudo_schedules + i);
                 coeff.push_back(coeff_val);
                 pos++;
@@ -466,7 +466,7 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
             auto  dual = aux_pi[key.get_j()];
             auto  coeff = constr->get_var_coeff(&key);
 
-            if (fabs(coeff) > EPS) {
+            if (fabs(coeff) > EPS_SOLVER) {
                 result -= coeff * dual;
                 aux_lhs[key.get_j()] += coeff;
             }
@@ -480,7 +480,7 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
             auto  dual = aux_pi[c];
             auto  coeff = constr->get_var_coeff(&key);
 
-            if (fabs(coeff) > EPS) {
+            if (fabs(coeff) > EPS_SOLVER) {
                 result -= coeff * dual;
                 aux_lhs[c] += coeff;
             }
@@ -530,7 +530,7 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
             auto* constr = reformulation_model.get_constraint(key.get_j());
             auto  coeff = constr->get_var_coeff(&key);
 
-            if (fabs(coeff) > EPS) {
+            if (fabs(coeff) > EPS_SOLVER) {
                 aux_subgradient[key.get_j()] -= coeff * convex_rhs;
             }
         } else {
@@ -543,7 +543,7 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
             auto* constr = reformulation_model.get_constraint(c);
             auto  coeff = constr->get_var_coeff(&key);
 
-            if (fabs(coeff) > EPS) {
+            if (fabs(coeff) > EPS_SOLVER) {
                 aux_subgradient[c] -= coeff * convex_rhs;
             }
         }
@@ -584,7 +584,7 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
             auto  dual = aux_pi[key.get_j()];
             auto  coeff = constr->get_var_coeff(&key);
 
-            if (fabs(coeff) > EPS) {
+            if (fabs(coeff) > EPS_SOLVER) {
                 result -= coeff * dual;
             }
 
@@ -603,7 +603,7 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
             auto  dual = aux_pi[c];
             auto  coeff = constr->get_var_coeff(&key);
 
-            if (fabs(coeff) > EPS) {
+            if (fabs(coeff) > EPS_SOLVER) {
                 result -= coeff * dual;
             }
         }
@@ -1466,8 +1466,8 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
 
     set_is_integer_solution(true);
     for (int i = 0; i < num_columns; ++i) {
-        if (aux_cols[i] > EPS) {
-            if (aux_cols[i] < 1.0 - EPS) {
+        if (aux_cols[i] > EPS_SOLVER) {
+            if (aux_cols[i] < 1.0 - EPS_SOLVER) {
                 set_is_integer_solution(false);
             }
 
@@ -1504,12 +1504,12 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
         for (auto& it : table[i]) {
             it.lp_visited = false;
             auto value = it.lp_x[1];
-            if (value > EPS) {
+            if (value > EPS_SOLVER) {
                 lp_sol.emplace_back(it.get_nb_job(), it.get_weight(), 0.0,
                                     value);
             }
             value = it.lp_x[0];
-            if (value > EPS) {
+            if (value > EPS_SOLVER) {
                 lp_sol.emplace_back(it.get_nb_job(), it.get_weight(), 0.0,
                                     value, -1, false);
             }

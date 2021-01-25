@@ -381,7 +381,7 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
     auto& table = *(decision_diagram->getDiagram());
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
     for (int i = 0; i < num_columns; ++i) {
-        if (columns[i] > EPS) {
+        if (columns[i] > EPS_SOLVER) {
             size_t counter = 0;
             auto*  tmp =
                 static_cast<ScheduleSet*>(g_ptr_array_index(schedule_sets, i));

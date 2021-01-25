@@ -46,7 +46,7 @@
 template <typename T = NodeBdd<double>>
 class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     TableHandler<T> diagram;  ///< The diagram structure.
-    NodeId          root_;    ///< Root node ID.
+    NodeId          root_{};  ///< Root node ID.
 
    public:
     /**

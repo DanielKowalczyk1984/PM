@@ -18,7 +18,7 @@ class PricingStabilizationBase {
 
     static constexpr double EPS_RC = -1e-6;
     static constexpr double ETA_DIFF_PREC = 1e-4;
-    static constexpr double EPS = 1e-6;
+    static constexpr double EPS_STAB = 1e-6;
 
    public:
     PricerSolverBase* solver;
@@ -194,7 +194,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
         for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
              ++i) {
             double dualdiff = SQR(pi_in[i] - pi_out[i]);
-            if (dualdiff > EPS) {
+            if (dualdiff > EPS_STAB) {
                 dualdiffnorm += dualdiff;
             }
         }
@@ -208,12 +208,12 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
             double dualdiff = ABS(pi_out[i] - pi_in[i]);
             double product = dualdiff * std::abs(subgradient_in[i]);
 
-            if (product > EPS) {
+            if (product > EPS_STAB) {
                 beta += product;
             }
         }
 
-        if (subgradientnorm > EPS) {
+        if (subgradientnorm > EPS_STAB) {
             beta = beta / (subgradientnorm * dualdiffnorm);
         }
     }
@@ -224,7 +224,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
             double aux_double = SQR(
                 (beta - 1.0) * (pi_out[i] - pi_in[i]) +
                 beta * (subgradient_in[i] * dualdiffnorm / subgradientnorm));
-            if (aux_double > EPS) {
+            if (aux_double > EPS_STAB) {
                 aux_norm += aux_double;
             }
         }
@@ -294,7 +294,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
              ++i) {
             double sqr = SQR(subgradient_in[i]);
 
-            if (sqr > EPS) {
+            if (sqr > EPS_STAB) {
                 subgradientnorm += sqr;
             }
         }

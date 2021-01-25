@@ -137,7 +137,7 @@ void ZeroHalfCuts::construct_cut() {
 
         for (int k = 0; k < 2; k++) {
             auto coeff = floor(node.coeff_cut.at(k) / HALF);
-            if (coeff > EPS) {
+            if (coeff > EPS_CUT) {
                 data->add_coeff_hash_table(node.get_nb_job(), node.get_weight(),
                                            k, -coeff);
             }
@@ -147,7 +147,7 @@ void ZeroHalfCuts::construct_cut() {
                 if (aux) {
                     auto& aux_node = table->node(*aux);
                     auto  coeff_in = floor(aux_node.coeff_cut.at(k) / 2);
-                    if (coeff_in < -EPS) {
+                    if (coeff_in < -EPS_CUT) {
                         data->add_coeff_hash_table(aux_node.get_nb_job(),
                                                    aux_node.get_weight(), k,
                                                    -coeff_in);
@@ -176,16 +176,16 @@ void ZeroHalfCuts::construct_cut() {
     auto& root_node = table->node(root);
     auto& terminal_node = table->node(1);
     auto  rhs = 0.0;
-    rhs += (root_node.sigma.get(GRB_DoubleAttr_Xn) > EPS)
+    rhs += (root_node.sigma.get(GRB_DoubleAttr_Xn) > EPS_CUT)
                ? static_cast<double>(nb_machines)
                : 0.0;
-    rhs += (terminal_node.sigma.get(GRB_DoubleAttr_Xn) > EPS)
+    rhs += (terminal_node.sigma.get(GRB_DoubleAttr_Xn) > EPS_CUT)
                ? -static_cast<double>(nb_machines)
                : 0.0;
 
     for (auto& it : jobs_var) {
         auto x = it.get(GRB_DoubleAttr_Xn);
-        if (x > EPS) {
+        if (x > EPS_CUT) {
             rhs += 1.0;
         }
     }
@@ -236,7 +236,7 @@ void ZeroHalfCuts::generate_cuts() {
             auto calc_coeff_cut = [&](const auto& it) {
                 auto& node = table->node(it);
                 auto  x = node.sigma.get(GRB_DoubleAttr_Xn);
-                if (x > EPS) {
+                if (x > EPS_CUT) {
                     if (it > 1) {
                         node.coeff_cut[0] += 1.0;
                         node.coeff_cut[1] += 1.0;
@@ -261,7 +261,7 @@ void ZeroHalfCuts::generate_cuts() {
                 for (auto& it : (*table)[i]) {
                     auto j = it.get_nb_job();
                     auto x = jobs_var[j].get(GRB_DoubleAttr_Xn);
-                    if (x > EPS) {
+                    if (x > EPS_CUT) {
                         it.coeff_cut[1] += 1.0;
                     }
                 }
@@ -330,7 +330,7 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
     node.lp_visited = true;
 
     for (size_t i = 0U; i < 2; i++) {
-        if (node.lp_x.at(i) > EPS) {
+        if (node.lp_x.at(i) > EPS_CUT) {
             auto& child = table->node(node.branch.at(i));
             if (!child.lp_visited) {
                 if (node.branch.at(i) == 1) {

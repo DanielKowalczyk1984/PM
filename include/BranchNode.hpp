@@ -8,7 +8,7 @@
 
 class BranchNodeBase : public State {
     struct BranchCand {
-        double score{EPS};
+        double score{EPS_BRANCH};
         int    job{-1};
 
         BranchCand() = default;
@@ -25,7 +25,7 @@ class BranchNodeBase : public State {
     BranchNodeBase& operator=(BranchNodeBase&&) = default;
     BranchNodeBase& operator=(const BranchNodeBase&) = default;
     ~BranchNodeBase() override { nodedata_free(pd); };
-    static constexpr double EPS = 1e-4;
+    static constexpr double EPS_BRANCH = 1e-4;
     static constexpr double ERROR = 1e-12;
 
     void branch(BTree* bt) final;

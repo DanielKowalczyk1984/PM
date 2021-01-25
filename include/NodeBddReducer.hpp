@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstddef>
 #include <ostream>
+#include <span>
 #include <stdexcept>
 
 #include <NodeBdd.hpp>
@@ -69,18 +70,21 @@ class DdReducer {
      * in order to make lower-level index safe.
      */
     void makeReadyForSequentialReduction() {
-        if (readyForSequentialReduction)
+        if (readyForSequentialReduction) {
             return;
+        }
 
         for (int i = 2; i < input.numRows(); ++i) {
-            size_t const m = input[i].size();
-            T* const     tt = input[i].data();
+            // size_t const    m = input[i].size();
+            // std::span const tt{input[i].data(), input[i].size()};
+            // T* const     tt = input[i].data();
 
-            for (size_t j = 0; j < m; ++j) {
+            for (auto& it : input[i]) {
                 for (int b = 0; b < 2; ++b) {
-                    NodeId& f = tt[j].branch[b];
-                    if (f.row() == 0)
+                    NodeId& f = it.branch[b];
+                    if (f.row() == 0) {
                         continue;
+                    }
 
                     NodeId f0 = input.child(f, 0);
                     NodeId deletable = 0;
@@ -131,19 +135,21 @@ class DdReducer {
     void algorithmR(int i) {
         makeReadyForSequentialReduction();
         size_t const m = input[i].size();
-        T* const     tt = input[i].data();
+        // T* const     tt = input[i].data();
 
         std::vector<NodeId>& newId = newIdTable[i];
         newId.resize(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j) {
-            NodeId& f0 = tt[j].branch[0];
-            NodeId& f1 = tt[j].branch[1];
+            NodeId& f0 = input[i][j].branch[0];
+            NodeId& f1 = input[i][j].branch[1];
 
-            if (f0.row() != 0)
+            if (f0.row() != 0) {
                 f0 = newIdTable[f0.row()][f0.col()];
-            if (f1.row() != 0)
+            }
+            if (f1.row() != 0) {
                 f1 = newIdTable[f1.row()][f1.col()];
+            }
 
             if (ZDD && f1 == 0) {
                 newId[j] = f0;
@@ -167,7 +173,7 @@ class DdReducer {
                 continue;
             }
 
-            NodeId& g0 = tt[j].branch[0];
+            NodeId& g0 = input[i][j].branch[0];
             assert(newId[j].row() == counter + 1);
             newId[j] = NodeId(counter, mm++, g0.hasEmpty());
         }
@@ -179,18 +185,18 @@ class DdReducer {
 
         if (mm > 0u) {
             output.initRow(counter, mm);
-            T* nt = output[counter].data();
+            std::span<T> nt{output[counter].data(), output[counter].size()};
 
             for (size_t j = 0; j < m; ++j) {
                 // NodeId const& f0 = tt[j].branch[0];
-                NodeId const& f1 = tt[j].branch[1];
+                NodeId const& f1 = input[i][j].branch[1];
 
                 if (ZDD && f1 == 0) {  // forwarded
                     assert(newId[j].row() < counter);
                 } else {
                     assert(newId[j].row() == counter);
                     size_t k = newId[j].col();
-                    nt[k] = tt[j];
+                    nt[k] = input[i][j];
                     nt[k].set_node_id_label(newId[j]);
                     if (nt[k].ptr_node_id != nullptr) {
                         *(nt[k].ptr_node_id) = newId[j];
@@ -213,9 +219,9 @@ class DdReducer {
      */
     void algorithmZdd(int i) {
         makeReadyForSequentialReduction();
-        size_t const m = input[i].size();
-        T* const     tt = input[i].data();
-        NodeId const mark(i, m);
+        size_t const       m = input[i].size();
+        std::span<T> const tt{input[i].data(), input[i].size()};
+        NodeId const       mark(i, m);
 
         auto& newId = newIdTable[i];
         newId.resize(m);
@@ -224,10 +230,12 @@ class DdReducer {
             NodeId& f0 = tt[j].branch[0];
             NodeId& f1 = tt[j].branch[1];
 
-            if (f0.row() != 0)
+            if (f0.row() != 0) {
                 f0 = newIdTable[f0.row()][f0.col()];
-            if (f1.row() != 0)
+            }
+            if (f1.row() != 0) {
                 f1 = newIdTable[f1.row()][f1.col()];
+            }
 
             if (ZDD && f1 == 0) {
                 newId[j] = f0;
@@ -256,8 +264,9 @@ class DdReducer {
         for (size_t j = 0; j < m; ++j) {
             NodeId const f(i, j);
             assert(newId[j].row() <= i + 1);
-            if (newId[j].row() <= i)
+            if (newId[j].row() <= i) {
                 continue;
+            }
 
             for (size_t k = j; k < m;) {  // for each g in f0-equivalent list
                 assert(j <= k);
@@ -291,7 +300,7 @@ class DdReducer {
 
         if (mm > 0u) {
             output.initRow(i, mm);
-            T* nt = output[i].data();
+            std::span<T> nt{output[i].data(), output[i].size()};
 
             for (size_t j = 0; j < m; ++j) {
                 NodeId const& f0 = tt[j].branch[0];
@@ -348,8 +357,9 @@ class DdReducer {
                 for (int b = 1; b < 2; ++b) {
                     NodeId& ff = f.branch[b];
                     ff = newIdTable[ff.row()][ff.col()];
-                    if (ff != deletable)
+                    if (ff != deletable) {
                         del = false;
+                    }
                 }
 
                 if (del) {  // f is redundant

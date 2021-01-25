@@ -309,7 +309,7 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
     for (int k = 0; k < num_columns; k++) {
-        if (aux_cols[k] > EPS) {
+        if (aux_cols[k] > EPS_SOLVER) {
             auto*     tmp = static_cast<ScheduleSet*>(aux_schedule_sets[k]);
             int       t = 0;
             std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
