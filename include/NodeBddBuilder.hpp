@@ -27,6 +27,8 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <memory>
 #include <ostream>
 #include <stdexcept>
 #include <unordered_set>
@@ -56,19 +58,19 @@ class BuilderBase {
         int64_t code;
     };
 
-    static NodeId*& srcPtr(SpecNode* p) { return p[0].srcPtr; }
+    static NodeId*& srcPtr(SpecNode* p) { return p->srcPtr; }
 
-    static int64_t& code(SpecNode* p) { return p[0].code; }
+    static int64_t& code(SpecNode* p) { return p->code; }
 
     static NodeId& nodeId(SpecNode* p) {
-        return *reinterpret_cast<NodeId*>(&p[0].code);
+        return *reinterpret_cast<NodeId*>(&p->code);
     }
 
     static void* state(SpecNode* p) { return p + headerSize; }
 
     static void const* state(SpecNode const* p) { return p + headerSize; }
 
-    static int getSpecNodeSize(int n) {
+    static size_t getSpecNodeSize(int n) {
         if (n < 0) {
             throw std::runtime_error("storage size is not initialized!!!");
         }
@@ -139,6 +141,11 @@ class DdBuilder : BuilderBase {
             oneSrcPtr.clear();
         }
     }
+
+    DdBuilder<S, T>(const DdBuilder<S, T>&) = default;
+    DdBuilder<S, T>& operator=(const DdBuilder<S, T>&) = default;
+    DdBuilder<S, T>(DdBuilder<S, T>&&) = default;
+    DdBuilder<S, T>& operator=(DdBuilder<S, T>&&) = default;
 
     /**
      * Schedules a top-down event.
@@ -364,6 +371,11 @@ class ZddSubsetter : BuilderBase {
             oneSrcPtr.clear();
         }
     }
+
+    ZddSubsetter<T, S>(const ZddSubsetter<T, S>&) = default;
+    ZddSubsetter<T, S>& operator=(const ZddSubsetter<T, S>&) = default;
+    ZddSubsetter<T, S>(ZddSubsetter<T, S>&&) = default;
+    ZddSubsetter<T, S>& operator=(ZddSubsetter<T, S>&&) = default;
 
     /**
      * Initializes the builder.

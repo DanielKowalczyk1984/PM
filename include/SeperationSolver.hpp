@@ -7,7 +7,7 @@
 
 class SeperationSolver {
    public:
-    SeperationSolver(PricerSolverBase* _solver);
+    explicit SeperationSolver(PricerSolverBase* _solver);
     SeperationSolver(SeperationSolver&&) = default;
     SeperationSolver(const SeperationSolver&) = default;
     SeperationSolver& operator=(SeperationSolver&&) = default;

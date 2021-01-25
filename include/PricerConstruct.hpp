@@ -1,7 +1,10 @@
 #include <glib.h>
 #include <interval.h>
 #include <solution.h>
+#include <boost/container_hash/hash_fwd.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <cstddef>
+#include <span>
 #include "NodeBddSpec.hpp"
 
 class conflict_state {
@@ -9,19 +12,30 @@ class conflict_state {
     boost::dynamic_bitset<> add;
     boost::dynamic_bitset<> remove;
 
+    conflict_state(const conflict_state&) = default;
+    conflict_state(conflict_state&&) = default;
+    conflict_state& operator=(const conflict_state&) = default;
+    conflict_state& operator=(conflict_state&&) = default;
+
     conflict_state() = default;
 
     ~conflict_state() = default;
 };
 
 class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
-    GPtrArray* pair_list;
-    int        nb_layers;
+    std::span<void*> aux_list;
+    int              nb_layers;
 
    public:
-    explicit PricerConstruct(GPtrArray* _pair_list) : pair_list(_pair_list) {
-        nb_layers = pair_list->len;
+    explicit PricerConstruct(GPtrArray* _pair_list)
+        : aux_list{_pair_list->pdata, _pair_list->len} {
+        nb_layers = _pair_list->len;
     };
+
+    PricerConstruct(const PricerConstruct&) = default;
+    PricerConstruct(PricerConstruct&&) = default;
+    PricerConstruct& operator=(const PricerConstruct&) = default;
+    PricerConstruct& operator=(PricerConstruct&&) = default;
 
     int getRoot(int& state) {
         state = 0;
@@ -30,9 +44,8 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
     int getChild(int& state, int level, int value) const {
         auto layer = nb_layers - level;
-        assert(0 <= layer && layer <= nb_layers - 1);
-        auto* tmp_pair =
-            (job_interval_pair*)g_ptr_array_index(pair_list, layer);
+        // assert(0 <= layer && layer <= nb_layers - 1);
+        auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[layer]);
         auto* tmp_interval = static_cast<interval*>(tmp_pair->I);
         auto* tmp_j = static_cast<Job*>(tmp_pair->j);
 
@@ -56,13 +69,12 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
    private:
     [[nodiscard]] int min_job(int j, int state, int value) const {
-        int  val = nb_layers;
-        Job* tmp = ((job_interval_pair*)g_ptr_array_index(pair_list, j))->j;
+        int   val = nb_layers;
+        auto* tmp = static_cast<job_interval_pair*>(aux_list[j])->j;
 
         if (value) {
             for (int i = j + 1; i < nb_layers; ++i) {
-                auto* tmp_pair = static_cast<job_interval_pair*>(
-                    g_ptr_array_index(pair_list, i));
+                auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[i]);
                 auto* tmp_interval = static_cast<interval*>(tmp_pair->I);
                 auto* tmp_j = static_cast<Job*>(tmp_pair->j);
 
@@ -77,8 +89,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
             }
         } else {
             for (int i = j + 1; i < nb_layers; ++i) {
-                auto* tmp_pair = static_cast<job_interval_pair*>(
-                    g_ptr_array_index(pair_list, i));
+                auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[i]);
                 auto* tmp_interval = static_cast<interval*>(tmp_pair->I);
                 auto* tmp_j = static_cast<Job*>(tmp_pair->j);
 
@@ -101,18 +112,23 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 };
 
 class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
-    GPtrArray* pair_list;
-    int*       take_job;
-    int        Hmax;
-    int        nb_layers;
+    std::span<void*> aux_list;
+    // GPtrArray*       pair_list;
+    int* take_job;
+    int  Hmax;
+    int  nb_layers;
 
    public:
     explicit PricerConstructTI(GPtrArray* _pair_list, int* _take_job, int _Hmax)
-        : pair_list(_pair_list),
+        : aux_list{_pair_list->pdata, _pair_list->len},
           take_job(_take_job),
-          Hmax(_Hmax) {
-        nb_layers = pair_list->len;
-    };
+          Hmax(_Hmax),
+          nb_layers(_pair_list->len){};
+
+    PricerConstructTI(const PricerConstructTI&) = default;
+    PricerConstructTI(PricerConstructTI&&) = default;
+    PricerConstructTI& operator=(const PricerConstructTI&) = default;
+    PricerConstructTI& operator=(PricerConstructTI&&) = default;
 
     int getRoot(int& state) {
         state = 0;
@@ -121,9 +137,8 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
 
     int getChild(int& state, int level, int value) const {
         auto layer = nb_layers - level;
-        assert(0 <= layer && layer <= nb_layers - 1);
-        auto* tmp_pair =
-            (job_interval_pair*)g_ptr_array_index(pair_list, layer);
+        // assert(0 <= layer && layer <= nb_layers - 1);
+        auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[layer]);
         auto* tmp_interval = static_cast<interval*>(tmp_pair->I);
         auto* tmp_j = static_cast<Job*>(tmp_pair->j);
 
@@ -154,14 +169,14 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
    private:
     [[nodiscard]] int min_job(int j, int state, int value) const {
         int                val = nb_layers;
-        job_interval_pair* tmp_pair;
-        interval*          tmp_interval;
-        Job*               tmp_j;
-        Job* tmp = ((job_interval_pair*)g_ptr_array_index(pair_list, j))->j;
+        job_interval_pair* tmp_pair = nullptr;
+        interval*          tmp_interval = nullptr;
+        Job*               tmp_j = nullptr;
+        auto* tmp = (static_cast<job_interval_pair*>(aux_list[j]))->j;
 
         if (value) {
             for (int i = j + 1; i < nb_layers; ++i) {
-                tmp_pair = (job_interval_pair*)g_ptr_array_index(pair_list, i);
+                tmp_pair = static_cast<job_interval_pair*>(aux_list[i]);
                 tmp_interval = tmp_pair->I;
                 tmp_j = tmp_pair->j;
 
@@ -179,7 +194,7 @@ class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
             }
         } else {
             for (int i = j + 1; i < nb_layers; ++i) {
-                tmp_pair = (job_interval_pair*)g_ptr_array_index(pair_list, i);
+                tmp_pair = static_cast<job_interval_pair*>(aux_list[i]);
                 tmp_interval = tmp_pair->I;
                 tmp_j = tmp_pair->j;
 
@@ -225,12 +240,15 @@ class ConflictConstraints
     }
 
    public:
-    ConflictConstraints(int  _nb_jobs,
-                        int* elist_same,
-                        int  edge_count_same,
-                        int* elist_differ,
-                        int  edge_count_differ)
+    ConflictConstraints(int    _nb_jobs,
+                        int*   elist_same,
+                        size_t edge_count_same,
+                        int*   elist_differ,
+                        size_t edge_count_differ)
         : nb_jobs(_nb_jobs) {
+        std::span aux_same{elist_same, edge_count_same};
+        std::span aux_diff{elist_differ, edge_count_differ};
+
         differsets.resize(_nb_jobs);
         samesets.resize(_nb_jobs);
 
@@ -240,15 +258,19 @@ class ConflictConstraints
         }
 
         for (int i = 0; i < edge_count_same; ++i) {
-            samesets[elist_same[2 * i]][elist_same[2 * i + 1]] = true;
+            samesets[aux_same[2 * i]][aux_same[2 * i + 1]] = true;
         }
 
         for (int i = 0; i < edge_count_differ; ++i) {
-            differsets[elist_differ[2 * i]][elist_differ[2 * i + 1]] = true;
+            differsets[aux_diff[2 * i]][aux_diff[2 * i + 1]] = true;
         }
     };
 
     ~ConflictConstraints() = default;
+    ConflictConstraints(const ConflictConstraints&) = default;
+    ConflictConstraints(ConflictConstraints&&) = default;
+    ConflictConstraints& operator=(ConflictConstraints&&) = default;
+    ConflictConstraints& operator=(const ConflictConstraints&) = default;
 
     int getRoot(conflict_state& state) const {
         state.add.resize(nb_jobs);
@@ -258,7 +280,7 @@ class ConflictConstraints
 
     int getChild(conflict_state& state, int level, int take) {
         int job = nb_jobs - level;
-        int _j;
+        int _j = 0;
         assert(0 <= job && job <= nb_jobs - 1);
 
         if (samesets[job].intersects(differsets[job])) {
@@ -286,7 +308,7 @@ class ConflictConstraints
             state.remove |= samesets[job];
         }
 
-        _j = min_job(job, state);
+        _j = min_job(job, &state);
 
         if (_j == nb_jobs && take) {
             return (!state.remove[job]) ? -1 : 0;
@@ -316,25 +338,27 @@ class ConflictConstraints
         size_t it = state.add.find_first();
 
         while (it != boost::dynamic_bitset<>::npos) {
-            val += 1213657 * it;
+            // val += 1213657 * it;
+            boost::hash_combine(val, it);
             it = state.add.find_next(it);
         }
 
         it = state.remove.find_first();
 
         while (it != boost::dynamic_bitset<>::npos) {
-            val += 487239 * it;
+            // val += 487239 * it;
+            boost::hash_combine(val, it);
             it = state.remove.find_next(it);
         }
 
         return val;
     }
 
-    int min_job(int j, conflict_state& state) const {
-        int i, val = nb_jobs;
+    int min_job(int j, conflict_state* state) const {
+        int val = nb_jobs;
 
-        for (i = j + 1; i < nb_jobs; ++i) {
-            if (!state.remove[i]) {
+        for (int i = j + 1; i < nb_jobs; ++i) {
+            if (!state->remove[i]) {
                 val = i;
                 break;
             }
@@ -345,19 +369,24 @@ class ConflictConstraints
 };
 
 class scheduling : public DdSpec<scheduling, int, 2> {
-    Job*       job;
-    GPtrArray* list_layers;
-    int        nb_layers;
-    int        order;
+    Job*             job;
+    GPtrArray*       list_layers;
+    std::span<void*> aux_list;
+    int              nb_layers;
+    int              order;
 
    public:
     scheduling(Job* _job, GPtrArray* _list_layers, int _order)
         : job(_job),
           list_layers(_list_layers),
-          order(_order) {
-        nb_layers = list_layers->len;
-    };
+          aux_list{_list_layers->pdata, _list_layers->len},
+          nb_layers(_list_layers->len),
+          order(_order){};
 
+    scheduling(const scheduling&) = default;
+    scheduling(scheduling&&) = default;
+    scheduling& operator=(const scheduling&) = default;
+    scheduling& operator=(scheduling&&) = default;
     ~scheduling() = default;
 
     int getRoot(int& state) const {
@@ -367,9 +396,8 @@ class scheduling : public DdSpec<scheduling, int, 2> {
 
     int getChild(int& state, int level, int take) {
         auto j = nb_layers - level;
-        assert(0 <= j && j <= nb_layers - 1);
-        auto* tmp =
-            static_cast<job_interval_pair*>(g_ptr_array_index(list_layers, j));
+        // assert(0 <= j && j <= nb_layers - 1);
+        auto* tmp = static_cast<job_interval_pair*>(aux_list[j]);
         auto* tmp_j = static_cast<Job*>(tmp->j);
 
         if (level - 1 == 0 && take) {

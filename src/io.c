@@ -2,10 +2,10 @@
 #include <wct.h>
 #include "Statistics.h"
 static int get_problem_name(char* pname, const char* end_file_name) {
-    int         rval = 0;
-    int         len = 0;
-    const char* fname = strrchr(end_file_name, '/');
-    const char* lastdot = strrchr(end_file_name, '.');
+    int           rval = 0;
+    unsigned long len = 0;
+    const char*   fname = strrchr(end_file_name, '/');
+    const char*   lastdot = strrchr(end_file_name, '.');
 
     if (!fname) {
         fname = end_file_name;
@@ -30,21 +30,18 @@ static int get_problem_name(char* pname, const char* end_file_name) {
 int read_problem(Problem* problem) {
     int         val = 0;
     int         nb_jobs = 0;
-    int         curduration, curduedate, curweight, curjob;
+    int         curduration = 0, curduedate = 0, curweight = 0, curjob = 0;
     Job*        _jobarray = (Job*)NULL;
-    Job*        tmp_j;
-    char        buf[256], *p;
-    int         bufsize;
+    Job*        tmp_j = NULL;
+    char        buf[256], *p = NULL;
+    int         bufsize = 0;
     const char* delim = " \n\t";
     char*       data = (char*)NULL;
     char*       buf2 = (char*)NULL;
-    NodeData*   pd;
-    Parms*      parms;
+    NodeData*   pd = problem->root_pd;
+    Parms*      parms = &(problem->parms);
     Statistics* statistics = &(problem->stat);
-    parms = &(problem->parms);
-    pd = (problem->root_pd);
-    FILE* in = fopen(parms->jobfile, "r");
-    curjob = 0;
+    FILE*       in = fopen(parms->jobfile, "r");
 
     if (in != (FILE*)NULL) {
         get_problem_name(statistics->pname, parms->jobfile);
@@ -54,7 +51,7 @@ int read_problem(Problem* problem) {
             data = strtok(p, delim);
             sscanf(data, "%d", &nb_jobs);
             bufsize = 3 * nb_jobs * (2 + (int)ceil(log((double)nb_jobs + 10)));
-            buf2 = (char*)CC_SAFE_MALLOC(bufsize, char);
+            buf2 = CC_SAFE_MALLOC(bufsize, char);
             CCcheck_NULL_2(buf2, "Failed to allocate buf2");
         } else {
             val = 1;
@@ -212,7 +209,7 @@ int print_to_screen(Problem* problem) {
 /** Printing sizes of ZDD */
 int print_size_to_csv(Problem* problem, NodeData* pd) {
     int    val = 0;
-    int    size;
+    long   size = 0;
     Parms* parms = &(problem->parms);
     char   file_name[128];
     FILE*  file = (FILE*)NULL;

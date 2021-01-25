@@ -7,14 +7,18 @@
 
 template <typename T = double>
 class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
-   protected:
     T*  pi{nullptr};
     int num_jobs{};
 
+   protected:
    public:
     BackwardZDDBase(T* _pi, int _num_jobs) : pi(_pi), num_jobs(_num_jobs){};
     explicit BackwardZDDBase(int _num_jobs) : num_jobs(_num_jobs){};
     BackwardZDDBase() = default;
+    BackwardZDDBase<T>(const BackwardZDDBase<T>&) = default;
+    BackwardZDDBase<T>& operator=(const BackwardZDDBase<T>&) = default;
+    BackwardZDDBase<T>(BackwardZDDBase<T>&&) = default;
+    BackwardZDDBase<T>& operator=(BackwardZDDBase<T>&&) = default;
     ~BackwardZDDBase() = default;
 
     void initialize_pi(T* _pi) { pi = _pi; }
@@ -65,7 +69,7 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
 
     void initializerootnode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->backward_label[0].f = pi[num_jobs];
+            it->backward_label[0].get_f() = pi[num_jobs];
         }
     }
 
@@ -174,7 +178,7 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
 
     void initializerootnode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->backward_label[0].f = pi[num_jobs];
+            it->backward_label[0].get_f() = pi[num_jobs];
         }
     }
 

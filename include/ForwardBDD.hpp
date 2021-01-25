@@ -4,7 +4,9 @@
 #include <fmt/core.h>
 #include <NodeBdd.hpp>
 #include <OptimalSolution.hpp>
+#include <array>
 #include "NodeBddEval.hpp"
+#include "math.h"
 
 template <typename T = double>
 class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
@@ -17,6 +19,7 @@ class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     ForwardBddBase<T>(ForwardBddBase<T>&&) noexcept = default;
     ForwardBddBase<T>& operator=(ForwardBddBase<T>&&) noexcept = default;
     ForwardBddBase<T>& operator=(const ForwardBddBase<T>&) = default;
+    ~ForwardBddBase<T>() = default;
 
     void set_pi(double* _pi) { pi = _pi; }
 
@@ -57,6 +60,7 @@ class ForwardBddCycle : public ForwardBddBase<T> {
     ForwardBddCycle<T>(ForwardBddCycle<T>&&) noexcept = default;
     ForwardBddCycle<T>& operator=(const ForwardBddCycle<T>&) = default;
     ForwardBddCycle<T>& operator=(ForwardBddCycle<T>&&) noexcept = default;
+    ~ForwardBddCycle<T>() = default;
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {
@@ -69,15 +73,15 @@ class ForwardBddCycle : public ForwardBddBase<T> {
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {
-        n.forward_label[0].f = 0;
+        n.forward_label[0].get_f() = 0;
         n.forward_label[1].set_f(DBL_MAX / 2);
     }
 
     void evalNode(NodeBdd<T>& n) const override {
         Job* tmp_j = n.get_job();
         assert(tmp_j != nullptr);
-        double result;
-        bool   diff;
+        double result = NAN;
+        bool   diff = false;
 
         int   weight = n.get_weight();
         T     g;
@@ -175,6 +179,7 @@ class ForwardBddSimple : public ForwardBddBase<T> {
     ForwardBddSimple<T>& operator=(const ForwardBddSimple<T>&) = default;
     ForwardBddSimple(ForwardBddSimple<T>&&) noexcept = default;
     ForwardBddSimple<T>& operator=(ForwardBddSimple<T>&&) noexcept = default;
+    ~ForwardBddSimple<T>() = default;
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {
@@ -185,7 +190,7 @@ class ForwardBddSimple : public ForwardBddBase<T> {
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {
-        n.forward_label[0].f = 0;
+        n.forward_label[0].get_f() = 0;
     }
 
     void evalNode(NodeBdd<T>& n) const override {

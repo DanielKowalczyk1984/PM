@@ -1,5 +1,6 @@
 #include "job.h"
 #include "lp.h"
+#include "math.h"
 #include "scheduleset.h"
 #include "util.h"
 #include "wct.h"
@@ -7,10 +8,10 @@
 
 int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     int          val = 0;
-    double       incumbent;
+    double       incumbent = 0.0;
     int          tot_weighted = 0;
-    ScheduleSet* tmp_schedule;
-    Job*         tmp_j;
+    ScheduleSet* tmp_schedule = (ScheduleSet*)NULL;
+    Job*         tmp_j = (Job*)NULL;
 
     val = lp_interface_objval(pd->RMP, &incumbent);
     CCcheck_val_2(val, "lp_interface_objval failed");
@@ -50,7 +51,7 @@ int grab_integer_solution(NodeData* pd, double* x, double tolerance) {
     printf("Intermediate schedule:\n");
     // print_schedule(pd->bestcolors, pd->nb_best);
     printf("with total weight %d\n", tot_weighted);
-    assert(fabs((double)tot_weighted - incumbent) <= 0.00001);
+    assert(fabs((double)tot_weighted - incumbent) <= EPS);
 
     if (tot_weighted < pd->upper_bound) {
         pd->upper_bound = tot_weighted;
@@ -84,7 +85,7 @@ int add_artificial_var_to_rmp(NodeData* pd) {
 
 int add_lhs_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     int     val = 0;
-    gsize   aux;
+    gsize   aux = 0;
     double* lhs_coeff = &g_array_index(pd->lhs_coeff, double, 0);
 
     int* aux_int_array = g_array_steal(pd->id_row, &aux);
@@ -93,7 +94,7 @@ int add_lhs_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     CC_IFFREE(aux_double_array, double);
 
     for (int j = 0; j < pd->nb_rows; j++) {
-        if (fabs(lhs_coeff[j]) > 1e-10) {
+        if (fabs(lhs_coeff[j]) > EPS_BOUND) {
             g_array_append_val(pd->id_row, j);
             g_array_append_val(pd->coeff_row, lhs_coeff[j]);
         }
@@ -117,13 +118,13 @@ CLEAN:
 
 int add_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     int        val = 0;
-    int        row_ind;
-    int        var_ind;
-    double     cval;
+    int        row_ind = 0;
+    int        var_ind = 0;
+    double     cval = 0.0;
     int        nb_jobs = pd->nb_jobs;
     GPtrArray* members = set->job_list;
     wctlp*     lp = pd->RMP;
-    Job*       job;
+    Job*       job = (Job*)NULL;
 
     val = lp_interface_get_nb_cols(lp, &(pd->nb_cols));
     CCcheck_val_2(val, "Failed to get the number of cols");
@@ -316,7 +317,7 @@ CLEAN:
 
 int get_solution_lp_lowerbound(NodeData* pd) {
     int  val = 0;
-    Job* tmp_j;
+    Job* tmp_j = (Job*)NULL;
 
     val = lp_interface_get_nb_cols(pd->RMP, &pd->nb_cols);
     CCcheck_val_2(val, "Failed in wctlp_get_nb_cols");

@@ -2,6 +2,7 @@
 #define OPTIMAL_SOLUTION_HPP
 #include <job.h>
 #include <iostream>
+#include <span>
 
 template <typename T = double>
 class OptimalSolution {
@@ -97,10 +98,11 @@ class OptimalSolution {
     }
 
     void reverse_jobs() {
+        std::span aux{jobs->pdata, jobs->len};
         for (int low = 0, high = jobs->len - 1; low < high; low++, high--) {
-            auto temp = g_ptr_array_index(jobs, low);
-            g_ptr_array_index(jobs, low) = g_ptr_array_index(jobs, high);
-            g_ptr_array_index(jobs, high) = temp;
+            auto temp = aux[low];
+            aux[low] = aux[high];
+            aux[high] = temp;
         }
     }
 };

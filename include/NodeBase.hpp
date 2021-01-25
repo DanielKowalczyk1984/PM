@@ -1,6 +1,9 @@
 #ifndef NODE_BASE_HPP
 #define NODE_BASE_HPP
 
+// #include <boost/container_hash/hash_fwd.hpp>
+#include <boost/functional/hash.hpp>
+#include <cstddef>
 #include "ModelInterface.hpp"
 #include "NodeId.hpp"
 #include "OptimalSolution.hpp"
@@ -26,6 +29,7 @@ class NodeBase {
     NodeBase(NodeBase&& src) = default;
     NodeBase& operator=(const NodeBase& src) = default;
     NodeBase& operator=(NodeBase&& src) = default;
+    ~NodeBase() = default;
 
     void set_job(Job* _job) {
         job = _job;
@@ -39,17 +43,20 @@ class NodeBase {
     [[nodiscard]] inline int get_nb_job() const { return job->job; }
 
     [[nodiscard]] size_t hash() const {
-        size_t h = branch[0].code();
-        for (int i = 1; i < 2; ++i) {
-            h = h * 314159257 + branch[i].code() * 271828171;
+        // size_t h = branch[0].code();
+        size_t h = 0;
+        // for (int i = 1; i < 2; ++i) {
+        // h = h * 314159257 + branch[1].code() * 271828171;
+        for (auto const& it : branch) {
+            boost::hash_combine(h, it.code());
         }
+        // }
         return h;
     }
 
     bool operator==(NodeBase const& o) const {
-        for (int i = 0; i < 2; ++i) {
-            if (branch[i] != o.branch[i])
-                return false;
+        if (branch != o.branch) {
+            return false;
         }
         return true;
     }

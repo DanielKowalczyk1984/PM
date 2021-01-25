@@ -15,13 +15,14 @@ class Label {
     N*           head_node{nullptr};
     NodeId       node_id{};
 
-   public:
     T    f{std::numeric_limits<double>::max()};
     Job* prev_job{nullptr};
+
+   public:
     /**
      * Constructor
      */
-    Label(T& _f, Label<N, T>*& _prev, bool& _high)
+    Label(T& _f, Label<N, T>*& _prev, bool _high)
         : prev(_prev),
           high(_high),
           f(_f){};
@@ -32,6 +33,7 @@ class Label {
     Label<N, T>(Label<N, T>&& src) noexcept = default;
     Label<N, T>& operator=(const Label<N, T>& src) = default;
     Label<N, T>& operator=(Label<N, T>&& src) noexcept = default;
+    ~Label<N, T>() = default;
 
     void set_previous(Label<N, T>* _prev) { prev = _prev; }
 
@@ -54,6 +56,8 @@ class Label {
     }
 
     T get_f() const { return f; }
+
+    T& get_f() { return f; }
 
     Label<N, T>* get_previous() { return prev; }
 

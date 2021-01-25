@@ -2,6 +2,7 @@
 #define NODE_ID_HPP
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <ostream>
 
@@ -20,6 +21,8 @@ uint64_t const NODE_ATTR_MASK = uint64_t(1) << NODE_ATTR_OFFSET;
 
 class NodeId {
     uint64_t code_;
+
+    static constexpr size_t HASH_CONSTANT = 314159257;
 
    public:
     NodeId() = default;
@@ -57,7 +60,7 @@ class NodeId {
 
     [[nodiscard]] uint64_t code() const { return code_ & ~NODE_ATTR_MASK; }
 
-    [[nodiscard]] size_t hash() const { return code() * 314159257; }
+    [[nodiscard]] size_t hash() const { return code() * HASH_CONSTANT; }
 
     bool operator==(NodeId const& o) const { return code() == o.code(); }
 
@@ -77,11 +80,13 @@ class NodeId {
     NodeId(const NodeId&) = default;
     NodeId(NodeId&&) = default;
     NodeId& operator=(NodeId&&) = default;
+    ~NodeId() = default;
 
     friend std::ostream& operator<<(std::ostream& os, NodeId const& o) {
         os << o.row() << ":" << o.col();
-        if (o.code_ & NODE_ATTR_MASK)
+        if (o.code_ & NODE_ATTR_MASK) {
             os << "+";
+        }
         return os;
     }
 };

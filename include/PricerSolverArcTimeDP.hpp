@@ -3,25 +3,35 @@
 #include "gurobi_c++.h"
 #include "solver.h"
 
-using std::vector;
-
+// using std::vector;
 class PricerSolverArcTimeDp : public PricerSolverBase {
+    using vector3d_jobs = std::vector<std::vector<std::vector<Job*>>>;
+    using vector2d_jobs = std::vector<std::vector<Job*>>;
+    using vector1d_jobs = std::vector<Job*>;
+    using vector2d_dbl = std::vector<std::vector<double>>;
+    using vector1d_dbl = std::vector<double>;
+    using vector_grb_var = std::vector<std::vector<std::vector<GRBVar>>>;
+    using vector2d_grb_var = std::vector<std::vector<GRBVar>>;
+    using vector1d_grb_var = std::vector<GRBVar>;
+    using vector2d_int = std::vector<std::vector<int>>;
+    using vector1d_int = std::vector<int>;
+
    private:
-    int                            Hmax;
-    int                            n;
-    size_t                         size_graph;
-    vector<vector<vector<Job*>>>   graph;
-    vector<vector<vector<Job*>>>   reversed_graph;
-    vector<Job*>                   vector_jobs;
-    Job                            j0;
-    vector<vector<double>>         forward_F;
-    vector<vector<double>>         backward_F;
-    vector<vector<Job*>>           A;
-    vector<vector<int>>            B;
-    vector<vector<vector<GRBVar>>> arctime_x;
-    int                            nb_edges_removed;
-    vector<double>                 lp_x;
-    vector<double>                 solution_x;
+    int            Hmax;
+    int            n;
+    size_t         size_graph;
+    vector3d_jobs  graph;
+    vector3d_jobs  reversed_graph;
+    vector1d_jobs  vector_jobs;
+    Job            j0;
+    vector2d_dbl   forward_F;
+    vector2d_dbl   backward_F;
+    vector2d_jobs  A;
+    vector2d_int   B;
+    vector_grb_var arctime_x;
+    int            nb_edges_removed;
+    vector1d_dbl   lp_x;
+    vector1d_dbl   solution_x;
 
    public:
     PricerSolverArcTimeDp(GPtrArray*  _jobs,

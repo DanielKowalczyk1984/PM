@@ -2,10 +2,10 @@
 #define DURATION_ZDD_HPP
 #include <algorithm>
 #include <vector>
+#include "ForwardBDD.hpp"
 #include "NodeBddEval.hpp"
 #include "OptimalSolution.hpp"
 #include "ZddNode.hpp"
-using namespace std;
 
 template <typename T = double>
 class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
@@ -16,7 +16,7 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
    public:
     ForwardZddBase(T* _pi, int _num_jobs) : pi(_pi), num_jobs(_num_jobs) {}
 
-    ForwardZddBase(int _num_jobs)
+    explicit ForwardZddBase(int _num_jobs)
         : Eval<NodeZdd<T>, OptimalSolution<T>>(),
           pi(nullptr),
           num_jobs(_num_jobs) {}
@@ -25,6 +25,8 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
         pi = nullptr;
         num_jobs = 0;
     }
+
+    ~ForwardBddBase<T>() = default;
 
     // ForwardZddBase(const ForwardZddBase<T>& src) {
     //     pi = src.pi;
@@ -83,6 +85,7 @@ class ForwardZddCycle : public ForwardZddBase<T> {
         pi = nullptr;
         num_jobs = 0;
     }
+    ~ForwardZddCycle<T>() = default;
 
     // ForwardZddCycle(const ForwardZddCycle<T>& src) {
     //     pi = src.pi;
@@ -107,7 +110,7 @@ class ForwardZddCycle : public ForwardZddBase<T> {
 
     void initializerootnode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->forward_label[0].f = pi[num_jobs];
+            it->forward_label[0].get_f() = pi[num_jobs];
             it->forward_label[1].set_f(DBL_MAX / 2);
         }
     }
@@ -127,11 +130,11 @@ class ForwardZddCycle : public ForwardZddBase<T> {
             /**
              * High edge calculation
              */
-            Job*   prev = it->forward_label[0].get_previous_job();
-            Job*   aux1 = p1->forward_label[0].get_previous_job();
-            double diff = (prev == nullptr)
-                              ? true
-                              : (value_diff_Fij(weight, tmp_j, prev) >= 0);
+            Job* prev = it->forward_label[0].get_previous_job();
+            Job* aux1 = p1->forward_label[0].get_previous_job();
+            auto diff = (prev == nullptr)
+                            ? true
+                            : (value_diff_Fij(weight, tmp_j, prev) >= 0);
 
             if (prev != tmp_j && diff) {
                 g = it->forward_label[0].get_f() + result;
@@ -214,6 +217,8 @@ class ForwardZddSimple : public ForwardZddBase<T> {
         num_jobs = 0;
     }
 
+    ~ForwardZddSimple<T>() = default;
+
     // ForwardZddSimple(const ForwardZddSimple<T>& src) {
     //     pi = src.pi;
     //     num_jobs = src.num_jobs;
@@ -234,7 +239,7 @@ class ForwardZddSimple : public ForwardZddBase<T> {
     void initializerootnode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             // printf("test init %f\n", -pi[num_jobs]);
-            it->forward_label[0].f = pi[num_jobs];
+            it->forward_label[0].get_f() = pi[num_jobs];
         }
     }
 

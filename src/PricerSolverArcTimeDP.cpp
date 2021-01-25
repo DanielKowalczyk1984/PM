@@ -29,39 +29,39 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
 }
 
 void PricerSolverArcTimeDp::init_table() {
-    graph = vector<vector<vector<Job*>>>(n + 1);
-    reversed_graph = vector<vector<vector<Job*>>>(n + 1);
+    graph = vector3d_jobs(n + 1);
+    reversed_graph = vector3d_jobs(n + 1);
     for (int j = 0; j < n + 1; j++) {
-        reversed_graph[j] = vector<vector<Job*>>(Hmax + 1);
+        reversed_graph[j] = vector2d_jobs(Hmax + 1);
     }
 
-    forward_F = vector<vector<double>>(jobs.size() + 1);
-    backward_F = vector<vector<double>>(jobs.size() + 1);
+    forward_F = vector2d_dbl(jobs.size() + 1);
+    backward_F = vector2d_dbl(jobs.size() + 1);
     for (unsigned i = 0; i < jobs.size() + 1; ++i) {
-        forward_F[i] = vector<double>(Hmax + 1, 0.0);
-        backward_F[i] = vector<double>(Hmax + 1, 0.0);
+        forward_F[i] = vector1d_dbl(Hmax + 1, 0.0);
+        backward_F[i] = vector1d_dbl(Hmax + 1, 0.0);
     }
 
-    A = vector<vector<Job*>>(jobs.size() + 1);
+    A = vector2d_jobs(jobs.size() + 1);
     for (unsigned i = 0; i < jobs.size() + 1; ++i) {
-        A[i] = vector<Job*>(Hmax + 1, nullptr);
+        A[i] = vector1d_jobs(Hmax + 1, nullptr);
     }
 
-    B = vector<vector<int>>(jobs.size() + 1);
+    B = vector2d_int(jobs.size() + 1);
     for (unsigned i = 0; i < jobs.size() + 1; ++i) {
-        B[i] = vector<int>(Hmax + 1);
+        B[i] = vector1d_int(Hmax + 1);
     }
 
-    arctime_x = vector<vector<vector<GRBVar>>>(jobs.size() + 1);
+    arctime_x = vector_grb_var(jobs.size() + 1);
     for (int i = 0; i < n + 1; i++) {
-        arctime_x[i] = vector<vector<GRBVar>>(jobs.size() + 1);
+        arctime_x[i] = vector2d_grb_var(jobs.size() + 1);
         for (int j = 0; j < n + 1; j++) {
-            arctime_x[i][j] = vector<GRBVar>(Hmax + 1);
+            arctime_x[i][j] = vector1d_grb_var(Hmax + 1);
         }
     }
 
     for (int j = 0; j < n; ++j) {
-        graph[j] = vector<vector<Job*>>(Hmax + 1);
+        graph[j] = vector2d_jobs(Hmax + 1);
         Job* tmp = static_cast<Job*>(jobs[j]);
         for (int t = 0; t < Hmax + 1; t++) {
             for (auto& it : vector_jobs) {
@@ -75,7 +75,7 @@ void PricerSolverArcTimeDp::init_table() {
         }
     }
 
-    graph[n] = vector<vector<Job*>>(Hmax + 1);
+    graph[n] = vector2d_jobs(Hmax + 1);
     for (int t = 0; t < Hmax + 1; t++) {
         for (auto& it : vector_jobs) {
             if (t >= it->processing_time) {

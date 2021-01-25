@@ -53,8 +53,9 @@ class DdDumper {
     using UniqTable = std::unordered_set<SpecNode*, Hasher<Spec>, Hasher<Spec>>;
 
     static int getSpecNodeSize(int n) {
-        if (n < 0)
+        if (n < 0) {
             throw std::runtime_error("storage size is not initialized!!!");
+        }
         return headerSize + (n + sizeof(SpecNode) - 1) / sizeof(SpecNode);
     }
 
@@ -80,6 +81,11 @@ class DdDumper {
             delete[] oneState;
         }
     }
+
+    DdDumper<S, T>(DdDumper<S, T>&&) = default;
+    DdDumper<S, T>(const DdDumper<S, T>&) = default;
+    DdDumper<S, T>& operator=(const DdDumper<S, T>&) = default;
+    DdDumper<S, T>& operator=(DdDumper<S, T>&&) = default;
 
     /**
      * Dumps the node table in Graphviz (dot) format.
@@ -250,10 +256,12 @@ class DdDumper {
             for (int b = 0; b < AR; ++b) {
                 NodeId f(i, j);
                 NodeId child = nodeList[j].branch[b];
-                if (child == 0)
+                if (child == 0) {
                     continue;
-                if (child == 1)
+                }
+                if (child == 1) {
                     child = oneId;
+                }
 
                 os << "  \"" << f << "\" -> \"" << child << "\"";
 

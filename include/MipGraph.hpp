@@ -59,9 +59,11 @@ class ColorWriterEdgeX {
    private:
     const MipGraph&          g;
     const NodeTableEntity<>* table;
+    static constexpr double  EPS = 1e-6;
 
    public:
-    explicit ColorWriterEdgeX(MipGraph& _g, NodeTableEntity<>* _table)
+    explicit ColorWriterEdgeX(const MipGraph&          _g,
+                              const NodeTableEntity<>* _table)
         : g{_g},
           table(_table) {}
 
@@ -69,16 +71,17 @@ class ColorWriterEdgeX {
         auto  high = get(boost::edge_weight_t(), g, _edge);
         auto  node_id = get(boost::vertex_name_t(), g, source(_edge, g));
         auto& node = table->node(node_id);
-        auto& x = node.lp_x[high];
 
         if (high) {
-            if (x > 1e-5) {
+            auto& x = node.lp_x[1];
+            if (x > EPS) {
                 output << "[label = " << x << ",color = red]";
             } else {
                 output << "[label = " << x << "]";
             }
         } else {
-            if (x > 1e-5) {
+            auto& x = node.lp_x[0];
+            if (x > EPS) {
                 output << "[label = " << x << ",color = red, style = dashed]";
             } else {
                 output << "[label = " << x << ",style=dashed]";
@@ -92,7 +95,7 @@ class ColorWriterEdgeIndex {
     const MipGraph& g;
 
    public:
-    explicit ColorWriterEdgeIndex(MipGraph& _g) : g{_g} {}
+    explicit ColorWriterEdgeIndex(const MipGraph& _g) : g{_g} {}
 
     void operator()(std::ostream& output, Edge _edge) {
         int  index = get(boost::edge_index_t(), g, _edge);
@@ -108,11 +111,11 @@ class ColorWriterEdgeIndex {
 
 class ColorWriterVertex {
    private:
-    const MipGraph&    g;
-    NodeTableEntity<>& table;
+    const MipGraph&          g;
+    const NodeTableEntity<>& table;
 
    public:
-    ColorWriterVertex(MipGraph& _g, NodeTableEntity<>& _table)
+    ColorWriterVertex(const MipGraph& _g, const NodeTableEntity<>& _table)
         : g{_g},
           table{_table} {}
 

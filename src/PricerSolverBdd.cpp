@@ -1537,7 +1537,7 @@ void PricerSolverBdd::calculate_job_time(std::vector<std::vector<double>>* v) {
     }
 }
 
-void PricerSolverBdd::split_job_time(int _job, int _time, bool _left = false) {
+void PricerSolverBdd::split_job_time(int _job, int _time, bool _left) {
     auto& table = *(decision_diagram.getDiagram());
     auto  removed_edges = false;
 

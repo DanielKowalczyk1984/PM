@@ -12,6 +12,7 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
 
    public:
     BackwardBddBase() = default;
+    ~BackwardBddBase<T>() = default;
 
     // BackwardBddBase(const BackwardBddBase<T>& src) {}
 
@@ -52,7 +53,8 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
 template <typename T = double>
 class BackwardBddSimple : public BackwardBddBase<T> {
    public:
-    BackwardBddSimple() : BackwardBddBase<T>(){};
+    BackwardBddSimple() = default;
+    ~BackwardBddSimple<T>() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
         auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
@@ -107,7 +109,7 @@ class BackwardBddSimple : public BackwardBddBase<T> {
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {
-        n.backward_label[0].f = 0;
+        n.backward_label[0].get_f() = 0;
     }
 
     BackwardBddSimple<T>(const BackwardBddSimple<T>&) = default;
@@ -119,7 +121,8 @@ class BackwardBddSimple : public BackwardBddBase<T> {
 template <typename T = double>
 class BackwardBddCycle : public BackwardBddBase<T> {
    public:
-    BackwardBddCycle() : BackwardBddBase<T>(){};
+    BackwardBddCycle<T>() = default;
+    ~BackwardBddCycle<T>() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
         auto  tmp_j = n.get_job();
@@ -208,7 +211,7 @@ class BackwardBddCycle : public BackwardBddBase<T> {
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {
-        n.backward_label[0].f = 0.0;
+        n.backward_label[0].get_f() = 0.0;
     }
 
     BackwardBddCycle<T>(const BackwardBddCycle<T>&) = default;
