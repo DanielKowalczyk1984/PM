@@ -107,7 +107,8 @@ void PricerSolverZdd::construct_mipgraph() {
 void PricerSolverZdd::init_table() {
     auto& table = *(decision_diagram->getDiagram());
     /** init table */
-    auto& n = table.node(decision_diagram->root());
+    auto&     n = table.node(decision_diagram->root());
+    std::span span_ordered_job{ordered_jobs->pdata, ordered_jobs->len};
     n.add_sub_node(0, decision_diagram->root(), true, false);
     n.set_node_id(decision_diagram->root());
     if (table.node(decision_diagram->root()).list.size() > 1) {
@@ -116,8 +117,8 @@ void PricerSolverZdd::init_table() {
 
     for (size_t i = decision_diagram->topLevel(); i >= 0; i--) {
         size_t layer = ordered_jobs->len - i;
-        auto*  tmp_pair = static_cast<job_interval_pair*>(
-            g_ptr_array_index(ordered_jobs, layer));
+        auto*  tmp_pair =
+            static_cast<job_interval_pair*>(span_ordered_job[layer]);
 
         for (auto& it : table[i]) {
             if (i != 0) {
@@ -378,14 +379,16 @@ void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
 void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 const GPtrArray* schedule_sets,
                                                 int              num_columns) {
-    auto& table = *(decision_diagram->getDiagram());
+    auto&     table = *(decision_diagram->getDiagram());
+    std::span aux_cols{columns, schedule_sets->len};
+    std::span aux_sets{schedule_sets->pdata, schedule_sets->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
     for (int i = 0; i < num_columns; ++i) {
-        if (columns[i] > EPS_SOLVER) {
-            size_t counter = 0;
-            auto*  tmp =
-                static_cast<ScheduleSet*>(g_ptr_array_index(schedule_sets, i));
-            NodeId                        tmp_nodeid(decision_diagram->root());
+        if (aux_cols[i] > EPS_SOLVER) {
+            size_t    counter = 0;
+            auto*     tmp = static_cast<ScheduleSet*>(aux_sets[i]);
+            std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->pdata};
+            NodeId    tmp_nodeid(decision_diagram->root());
             std::shared_ptr<SubNodeZdd<>> tmp_sub_node =
                 table.node(tmp_nodeid).list[0];
 
@@ -393,8 +396,7 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                 Job* tmp_j{};
 
                 if (counter < tmp->job_list->len) {
-                    tmp_j = static_cast<Job*>(
-                        g_ptr_array_index(tmp->job_list, counter));
+                    tmp_j = static_cast<Job*>(aux_jobs[counter]);
                 } else {
                     tmp_j = nullptr;
                 }
@@ -402,12 +404,12 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                 NodeZdd<>& tmp_node = table.node(tmp_nodeid);
 
                 if (tmp_j == tmp_node.get_job()) {
-                    lp_x[tmp_sub_node->high_edge_key] += columns[i];
+                    lp_x[tmp_sub_node->high_edge_key] += aux_cols[i];
                     tmp_nodeid = tmp_node.branch[1];
                     tmp_sub_node = tmp_sub_node->y;
                     counter++;
                 } else {
-                    lp_x[tmp_sub_node->low_edge_key] += columns[i];
+                    lp_x[tmp_sub_node->low_edge_key] += aux_cols[i];
                     tmp_nodeid = tmp_node.branch[0];
                     tmp_sub_node = tmp_sub_node->n;
                 }
@@ -423,12 +425,13 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
 }
 
 bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
-    guint  weight = 0;
-    auto&  table = *(decision_diagram->getDiagram());
-    NodeId tmp_nodeid(decision_diagram->root());
+    guint     weight = 0;
+    std::span aux_jobs{set->pdata, set->len};
+    auto&     table = *(decision_diagram->getDiagram());
+    NodeId    tmp_nodeid(decision_diagram->root());
 
     for (unsigned j = 0; j < set->len; ++j) {
-        Job* tmp_j = static_cast<Job*>(g_ptr_array_index(set, j));
+        Job* tmp_j = static_cast<Job*>(aux_jobs[j]);
         while (tmp_nodeid > 1) {
             NodeZdd<>& tmp_node = table.node(tmp_nodeid);
 
