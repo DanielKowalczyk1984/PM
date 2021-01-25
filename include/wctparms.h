@@ -15,6 +15,9 @@
 extern "C" {
 #endif
 
+const double TIME_LIMIT = 7200.0;
+const double ALPHA_STAB_INIT = 0.8;
+
 enum BBNodeSelection {
     min_search_strategy = 0,
     no_branching = min_search_strategy,

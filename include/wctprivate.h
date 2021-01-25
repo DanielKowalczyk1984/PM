@@ -28,6 +28,17 @@ typedef enum {
 } NodeDataStatus;
 
 /**
+ *  CONSTANTS NODEDATA STRUCTURE
+ *
+ */
+
+const int    NB_CUTS = 2000;
+const int    NB_CG_ITERATIONS = 1000000;
+const int    CLEANUP_ITERATION = 30;
+const double EPS = 1e-6;
+const double EPS_BOUND = 1e-9;
+
+/**
  * problem data
  */
 typedef struct _Problem Problem;

@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "math.h"
 #include "util.h"
 #include "wct.h"
 #include "wctparms.h"
@@ -45,7 +46,7 @@ static void usage(char* f) {
 static char* find_match(const char* _instance_file) {
     GError*     err = NULL;
     GRegex*     regex = g_regex_new("^.*(wt[0-9]*_[0-9]*).*$", 0, 0, &err);
-    GMatchInfo* match_info;
+    GMatchInfo* match_info = (GMatchInfo*)NULL;
 
     g_regex_match(regex, _instance_file, 0, &match_info);
 
@@ -65,10 +66,10 @@ static char* find_match(const char* _instance_file) {
 }
 
 static int parseargs(int ac, char** av, Parms* parms) {
-    int    c;
-    double f;
+    int    c = 0;
+    double f = 0.0;
     int    val = 0;
-    char*  ptr;
+    char*  ptr = (char*)NULL;
     int    debug = dbg_lvl();
 
     while ((c = getopt(ac, av, "df:s:l:B:S:D:p:b:Z:a:m:r:h:e:")) != EOF) {
@@ -187,7 +188,7 @@ CLEAN:
 
 int main(int ac, char** av) {
     int     val = 0;
-    double  start_time;
+    double  start_time = 0.0;
     Problem problem;
     problem_init(&problem);
 
