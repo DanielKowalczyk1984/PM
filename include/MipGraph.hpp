@@ -13,7 +13,7 @@
 #include <vector>
 #include "ZddNode.hpp"
 
-using namespace boost;
+// using namespace boost;
 
 struct VarsEdge {
     GRBVar x;
@@ -24,42 +24,58 @@ struct VarsNode {
     std::array<GRBVar, 2> omega;
 };
 
-using VertexProperty = property<
-    vertex_index_t,
+using VertexProperty = boost::property<
+    boost::vertex_index_t,
     int,
-    property<vertex_name_t,
-             NodeId,
-             property<vertex_degree_t,
-                      int,
-                      property<vertex_distance_t,
-                               VarsNode,
-                               property<vertex_color_t,
-                                        std::shared_ptr<SubNodeZdd<>>>>>>>;
+    boost::property<
+        boost::vertex_name_t,
+        NodeId,
+        boost::property<
+            boost::vertex_degree_t,
 
-using EdgeProperty =
-    property<edge_index_t,
-             int,
-             property<edge_weight_t, bool, property<edge_weight2_t, VarsEdge>>>;
+            int,
+            boost::property<boost::vertex_distance_t,
+                            VarsNode,
+                            boost::property<boost::vertex_color_t,
+                                            std::shared_ptr<SubNodeZdd<>>>>>>>;
 
-using MipGraph =
-    adjacency_list<vecS, vecS, bidirectionalS, VertexProperty, EdgeProperty>;
-using Edge = graph_traits<MipGraph>::edge_descriptor;
-using Vertex = graph_traits<MipGraph>::vertex_descriptor;
+using EdgeProperty = boost::property<
+    boost::edge_index_t,
+    int,
+    boost::property<boost::edge_weight_t,
+                    bool,
+                    boost::property<boost::edge_weight2_t, VarsEdge>>>;
 
-using IndexAccessor = property_map<MipGraph, vertex_index_t>::type;
-using NodeIdAccessor = property_map<MipGraph, vertex_name_t>::type;
-using NodeZddIdAccessor = property_map<MipGraph, vertex_color_t>::type;
-using NodeMipIdAccessor = property_map<MipGraph, vertex_degree_t>::type;
-using VarsNodeAccessor = property_map<MipGraph, vertex_distance_t>::type;
-using EdgeIndexAccessor = property_map<MipGraph, edge_index_t>::type;
-using EdgeTypeAccessor = property_map<MipGraph, edge_weight_t>::type;
-using EdgeVarAccessor = property_map<MipGraph, edge_weight2_t>::type;
+using MipGraph = boost::adjacency_list<boost::vecS,
+                                       boost::vecS,
+                                       boost::bidirectionalS,
+                                       VertexProperty,
+                                       EdgeProperty>;
+using Edge = boost::graph_traits<MipGraph>::edge_descriptor;
+using Vertex = boost::graph_traits<MipGraph>::vertex_descriptor;
+
+using IndexAccessor =
+    boost::property_map<MipGraph, boost::vertex_index_t>::type;
+using NodeIdAccessor =
+    boost::property_map<MipGraph, boost::vertex_name_t>::type;
+using NodeZddIdAccessor =
+    boost::property_map<MipGraph, boost::vertex_color_t>::type;
+using NodeMipIdAccessor =
+    boost::property_map<MipGraph, boost::vertex_degree_t>::type;
+using VarsNodeAccessor =
+    boost::property_map<MipGraph, boost::vertex_distance_t>::type;
+using EdgeIndexAccessor =
+    boost::property_map<MipGraph, boost::edge_index_t>::type;
+using EdgeTypeAccessor =
+    boost::property_map<MipGraph, boost::edge_weight_t>::type;
+using EdgeVarAccessor =
+    boost::property_map<MipGraph, boost::edge_weight2_t>::type;
 using dbl_matrix = std::vector<std::vector<double>>;
 class ColorWriterEdgeX {
    private:
     const MipGraph&          g;
     const NodeTableEntity<>* table;
-    static constexpr double  EPS = 1e-6;
+    static constexpr double  EPS_GRAPH = 1e-6;
 
    public:
     explicit ColorWriterEdgeX(const MipGraph&          _g,
@@ -74,14 +90,14 @@ class ColorWriterEdgeX {
 
         if (high) {
             auto& x = node.lp_x[1];
-            if (x > EPS) {
+            if (x > EPS_GRAPH) {
                 output << "[label = " << x << ",color = red]";
             } else {
                 output << "[label = " << x << "]";
             }
         } else {
             auto& x = node.lp_x[0];
-            if (x > EPS) {
+            if (x > EPS_GRAPH) {
                 output << "[label = " << x << ",color = red, style = dashed]";
             } else {
                 output << "[label = " << x << ",style=dashed]";

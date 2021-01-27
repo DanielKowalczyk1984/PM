@@ -1,16 +1,17 @@
 #ifndef BACKWARD_ZDD_HPP
 #define BACKWARD_ZDD_HPP
 #include <algorithm>
+#include <cstddef>
 #include "NodeBddEval.hpp"
 #include "OptimalSolution.hpp"
 #include "ZddNode.hpp"
 
 template <typename T = double>
 class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
-    T*  pi{nullptr};
-    int num_jobs{};
-
    protected:
+    T*     pi{nullptr};
+    size_t num_jobs{};
+
    public:
     BackwardZDDBase(T* _pi, int _num_jobs) : pi(_pi), num_jobs(_num_jobs){};
     explicit BackwardZDDBase(int _num_jobs) : num_jobs(_num_jobs){};
@@ -21,7 +22,9 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
     BackwardZDDBase<T>& operator=(BackwardZDDBase<T>&&) = default;
     ~BackwardZDDBase() = default;
 
-    void initialize_pi(T* _pi) { pi = _pi; }
+    void   initialize_pi(T* _pi) { pi = _pi; }
+    T*     get_pi() const { return pi; }
+    size_t get_num_jobs() const { return num_jobs; }
 
     virtual void initializenode(NodeZdd<T>& n) const = 0;
     virtual void initializerootnode(NodeZdd<T>& n) const = 0;
@@ -30,10 +33,10 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
 
 template <typename T = double>
 class BackwardZddSimple : public BackwardZDDBase<T> {
-   public:
     using BackwardZDDBase<T>::pi;
     using BackwardZDDBase<T>::num_jobs;
 
+   public:
     BackwardZddSimple() : BackwardZDDBase<T>(){};
     BackwardZddSimple(T* _pi, int _num_jobs)
         : BackwardZDDBase<T>(_pi, _num_jobs){};
@@ -68,8 +71,11 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
     }
 
     void initializerootnode(NodeZdd<T>& n) const override {
+        std::span aux{BackwardZDDBase<T>::get_pi(),
+                      BackwardZDDBase<T>::get_num_jobs() + 1};
         for (auto& it : n.list) {
-            it->backward_label[0].get_f() = pi[num_jobs];
+            it->backward_label[0].get_f() =
+                aux[BackwardZDDBase<T>::get_num_jobs()];
         }
     }
 
@@ -104,7 +110,6 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
    public:
     using BackwardZDDBase<T>::pi;
     using BackwardZDDBase<T>::num_jobs;
-
     BackwardZddCycle() : BackwardZDDBase<T>(){};
     BackwardZddCycle(T* _pi, int _num_jobs)
         : BackwardZDDBase<T>(_pi, _num_jobs){};

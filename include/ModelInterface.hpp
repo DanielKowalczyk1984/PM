@@ -86,7 +86,9 @@ class ConstraintAssignment : public ConstraintBase {
     int job;
 
    public:
-    ConstraintAssignment(int _job) : ConstraintBase('>', 1.0), job(_job) {}
+    explicit ConstraintAssignment(int _job)
+        : ConstraintBase('>', 1.0),
+          job(_job) {}
 
     double get_var_coeff(VariableKeyBase* key) override {
         if (key->get_j() == job && key->get_high()) {
@@ -105,7 +107,7 @@ class ConstraintAssignment : public ConstraintBase {
 
 class ConstraintConvex : public ConstraintBase {
    public:
-    ConstraintConvex(double _rhs) : ConstraintBase('>', _rhs) {}
+    explicit ConstraintConvex(double _rhs) : ConstraintBase('>', _rhs) {}
 
     double get_var_coeff(VariableKeyBase* key) override {
         if (key->get_t() == 0) {
@@ -366,6 +368,8 @@ class OriginalConstraint {
     inline void set_constraint(const std::shared_ptr<ConstraintBase>& _constr) {
         constr = _constr;
     }
+
+    void clear_coeff() { coeff_list.clear(); }
 };
 
 template <typename T = BddCoeff>
@@ -411,6 +415,12 @@ class OriginalModel {
     inline void delete_constraints(int first, int nb_del) {
         auto it = constraint_array.begin() + first;
         constraint_array.erase(it, it + nb_del);
+    }
+
+    void clear_all_coeff() {
+        for (auto& it : constraint_array) {
+            it.clear_coeff();
+        }
     }
 };
 

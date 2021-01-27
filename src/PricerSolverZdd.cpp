@@ -22,8 +22,8 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
     PricerConstruct ps(ordered_jobs);
     decision_diagram = std::make_unique<DdStructure<NodeZdd<>>>(ps);
     remove_layers_init();
-    decision_diagram->compressBdd();
-    decision_diagram->reduceZdd();
+    // decision_diagram->compressBdd();
+    // decision_diagram->reduceZdd();
     size_graph = decision_diagram->size();
     init_table();
     construct_mipgraph();
@@ -241,8 +241,8 @@ void PricerSolverZdd::remove_layers() {
 }
 
 void PricerSolverZdd::remove_edges() {
-    decision_diagram->compressBdd();
-    decision_diagram->reduceZdd();
+    // decision_diagram->compressBdd();
+    // decision_diagram->reduceZdd();
     nb_removed_nodes -= size_graph;
     size_graph = decision_diagram->size();
     fmt::print("The new size of ZDD = {}\n", size_graph);
@@ -365,7 +365,7 @@ void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
     // vertex_writer(g, table); boost::write_graphviz(outf, g, vertex_writer);
     decision_diagram->zddSubset(constr);
     // outf.close();
-    decision_diagram->compressBdd();
+    // decision_diagram->compressBdd();
     init_table();
     std::cout << decision_diagram->size() << '\n';
     construct_mipgraph();
@@ -471,7 +471,7 @@ void PricerSolverZdd::iterate_zdd() {
 void PricerSolverZdd::create_dot_zdd(const char* name) {
     std::ofstream file;
     file.open(name);
-    decision_diagram->dumpDot(file);
+    // decision_diagram->dumpDot(file);
     file.close();
 }
 

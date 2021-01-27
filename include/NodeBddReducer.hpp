@@ -1,6 +1,7 @@
 #ifndef NODE_BDD_REDUCER_HPP
 #define NODE_BDD_REDUCER_HPP
 
+#include <fmt/core.h>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -26,18 +27,18 @@ class DdReducer {
     std::vector<std::vector<NodeId*>> rootPtr;
     int                               counter = 1;
 
-    struct ReducNodeInfo {
+    struct ReduceNodeInfo {
         NodeBdd<T> children;
         size_t     column;
 
         [[nodiscard]] size_t hash() const { return children.hash(); }
 
-        bool operator==(ReducNodeInfo const& o) const {
+        bool operator==(ReduceNodeInfo const& o) const {
             return children == o.children;
         }
 
-        friend std::ostream& operator<<(std::ostream&        os,
-                                        ReducNodeInfo const& o) {
+        friend std::ostream& operator<<(std::ostream&         os,
+                                        ReduceNodeInfo const& o) {
             return os << "(" << o.children << " -> " << o.column << ")";
         }
     };
@@ -53,7 +54,7 @@ class DdReducer {
           newIdTable(input.numRows()),
           rootPtr(input.numRows()),
           readyForSequentialReduction(false) {
-        diagram = newDiagram;
+        diagram = std::move(newDiagram);
 
         input.initTerminals();
         input.makeIndex(useMP);
@@ -316,6 +317,7 @@ class DdReducer {
                     assert(newId[j].row() == i);
                     size_t k = newId[j].col();
                     nt[k] = tt[j];
+                    fmt::print("test {}\n", nt[k].coeff_list[1].size());
                     nt[k].set_node_id_label(newId[j]);
                 }
             }

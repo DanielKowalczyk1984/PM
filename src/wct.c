@@ -251,8 +251,7 @@ NodeData* new_node_data(NodeData* pd) {
 
     /** copy info about solver */
 
-    aux->solver = newSolver(aux->jobarray, aux->nb_machines, aux->ordered_jobs,
-                            aux->parms, aux->H_max, NULL, aux->opt_sol->tw);
+    aux->solver = copy_pricer_solver(pd->solver, aux->ordered_jobs, aux->parms);
 
     aux->localColPool =
         g_ptr_array_copy(pd->localColPool, g_copy_scheduleset, &(pd->nb_jobs));

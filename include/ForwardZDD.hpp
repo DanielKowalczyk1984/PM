@@ -26,7 +26,7 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
         num_jobs = 0;
     }
 
-    ~ForwardBddBase<T>() = default;
+    ~ForwardZddBase<T>() = default;
 
     // ForwardZddBase(const ForwardZddBase<T>& src) {
     //     pi = src.pi;
@@ -73,9 +73,10 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
 
 template <typename T = double>
 class ForwardZddCycle : public ForwardZddBase<T> {
-   public:
     using ForwardZddBase<T>::pi;
     using ForwardZddBase<T>::num_jobs;
+
+   public:
     ForwardZddCycle(T* _pi, int _num_jobs)
         : ForwardZddBase<T>(_pi, _num_jobs) {}
 
@@ -204,9 +205,10 @@ class ForwardZddCycle : public ForwardZddBase<T> {
 
 template <typename T = double>
 class ForwardZddSimple : public ForwardZddBase<T> {
-   public:
     using ForwardZddBase<T>::pi;
     using ForwardZddBase<T>::num_jobs;
+
+   public:
     ForwardZddSimple(T* _pi, int _num_jobs)
         : ForwardZddBase<T>(_pi, _num_jobs) {}
 

@@ -28,7 +28,8 @@ class PricerSolverZdd : public PricerSolverBase {
 
     PricerSolverZdd(const PricerSolverZdd& src)
         : PricerSolverBase(src),
-          decision_diagram(new DdStructure<NodeZdd<>>(*src.decision_diagram)),
+          // decision_diagram(new
+          // DdStructure<NodeZdd<>>(*src.decision_diagram)),
           size_graph(src.size_graph),
           nb_removed_edges(src.nb_removed_edges),
           nb_removed_nodes(src.nb_removed_nodes),

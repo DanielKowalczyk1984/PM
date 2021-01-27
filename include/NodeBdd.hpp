@@ -1,5 +1,6 @@
 #ifndef NODE_DURATION_HPP
 #define NODE_DURATION_HPP
+#include <fmt/core.h>
 #include <array>
 #include <boost/dynamic_bitset.hpp>
 #include <memory>
@@ -80,12 +81,17 @@ class NodeBdd : public NodeBase {
         lp_visited = false;
     }
 
-    void add_coeff_list(const std::shared_ptr<BddCoeff>& ptr, bool high) {
+    void add_coeff_list(const std::shared_ptr<BddCoeff> ptr, bool high) {
         if (high) {
             coeff_list[1].push_back(ptr);
         } else {
             coeff_list[0].push_back(ptr);
         }
+    }
+
+    void add_coeff_list_clear() {
+        coeff_list[0].clear();
+        coeff_list[1].clear();
     }
 
     void adjust_reduced_costs(double _x, bool high) {

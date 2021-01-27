@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <fmt/core.h>
 #include <algorithm>
 #include <cassert>
 #include <climits>
@@ -55,7 +56,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     DdStructure() : root_(0) {}
     DdStructure<T>(const DdStructure<T>&) = default;
     DdStructure<T>(DdStructure<T>&&) noexcept = default;
-    DdStructure<T>& operator=(const DdStructure<T>&) = default;
+    DdStructure<T>& operator=(const DdStructure<T>&) = delete;
     DdStructure<T>& operator=(DdStructure<T>&&) noexcept = default;
     ~DdStructure<T>() = default;
 
@@ -130,7 +131,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
             }
         }
 
-        diagram = tmpTable;
+        diagram = std::move(tmpTable);
     }
 
    public:
@@ -327,7 +328,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     template <typename R>
     R evaluate_backward(Eval<T, R>& evaluator) {
         int   n = root_.row();
-        auto& work = *(getDiagram());
+        auto& work = *diagram;
         evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {

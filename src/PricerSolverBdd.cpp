@@ -40,23 +40,14 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
                                  int*        _take_jobs,
                                  double      _ub)
     : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
-      size_graph(0),
-      ordered_jobs(_ordered_jobs),
-      original_model(reformulation_model),
-      H_min(0),
-      H_max(_hmax)
+      decision_diagram{PricerConstruct(_ordered_jobs)},
+      size_graph{0},
+      ordered_jobs{_ordered_jobs},
+      original_model{reformulation_model},
+      H_min{},
+      H_max{_hmax}
 
 {
-    /**
-     * Construction of decision diagram
-     */
-    if (_take_jobs) {
-        PricerConstructTI ps(ordered_jobs, _take_jobs, _hmax);
-        decision_diagram = DdStructure<>(ps);
-    } else {
-        PricerConstruct ps(ordered_jobs);
-        decision_diagram = DdStructure<>(ps);
-    }
     remove_layers_init();
     decision_diagram.compressBdd();
     size_graph = decision_diagram.size();
@@ -76,6 +67,7 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
 PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src,
                                  GPtrArray*             _ordered_jobs)
     : PricerSolverBase(src),
+      decision_diagram(src.decision_diagram),
       size_graph(src.size_graph),
       nb_removed_edges(src.nb_removed_edges),
       nb_removed_nodes(src.nb_removed_nodes),
@@ -84,37 +76,10 @@ PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src,
       original_model(src.original_model),
       H_max(src.H_max),
       H_min(src.H_min) {
-    PricerConstruct ps(_ordered_jobs);
-    decision_diagram = DdStructure<>(ps);
     remove_layers_init();
     decision_diagram.compressBdd();
     size_graph = decision_diagram.size();
     init_table();
-    calculate_H_min();
-    cleanup_arcs();
-    // check_infeasible_arcs();
-    bottum_up_filtering();
-    topdown_filtering();
-    construct_mipgraph();
-    init_coeff_constraints();
-}
-
-PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src)
-    : PricerSolverBase(src),
-      decision_diagram(DdStructure<>(src.decision_diagram)),
-      size_graph(src.size_graph),
-      nb_removed_edges(src.nb_removed_edges),
-      nb_removed_nodes(src.nb_removed_nodes),
-      ordered_jobs(src.ordered_jobs),
-      mip_graph(src.mip_graph),
-      original_model(src.original_model),
-      H_max(src.H_max),
-      H_min(src.H_min) {
-    // remove_layers_init();
-    // decision_diagram.compressBdd();
-    // size_graph = decision_diagram.size();
-    init_table();
-    calculate_H_min();
     cleanup_arcs();
     // check_infeasible_arcs();
     bottum_up_filtering();
@@ -192,9 +157,11 @@ void PricerSolverBdd::construct_mipgraph() {
 
 void PricerSolverBdd::init_coeff_constraints() {
     auto& table = *(decision_diagram.getDiagram());
+    original_model.clear_all_coeff();
 
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
+            it.add_coeff_list_clear();
             for (auto c = 0; c < reformulation_model.get_nb_constraints();
                  c++) {
                 if (c == convex_constr_id) {
@@ -1320,7 +1287,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
         std::vector<bool>                    visited(num_vertices, false);
         std::vector<bool>                    edge_visited(num_vertices, false);
         std::vector<boost::dynamic_bitset<>> all(
-            num_vertices, dynamic_bitset(convex_constr_id, 0));
+            num_vertices, boost::dynamic_bitset(convex_constr_id, 0));
         std::vector<int> C(num_vertices, 0);
 
         auto& tmp_n = table.node(start_v);
@@ -1354,8 +1321,8 @@ void PricerSolverBdd::equivalent_paths_filtering() {
                         C[n.key] = C[tmp_node.key];
                     }
                 } else {
-                    dynamic_bitset<> tmp;
-                    int              tmp_C{};
+                    boost::dynamic_bitset<> tmp;
+                    int                     tmp_C{};
                     if (high) {
                         auto& tmp_node = table.node(n.branch[1]);
                         tmp = all[tmp_node.key];
@@ -1664,7 +1631,7 @@ void PricerSolverBdd::iterate_zdd() {
 void PricerSolverBdd::create_dot_zdd(const char* name) {
     std::ofstream file;
     file.open(name);
-    decision_diagram.dumpDot(file);
+    // decision_diagram.dumpDot(file);
     file.close();
 }
 

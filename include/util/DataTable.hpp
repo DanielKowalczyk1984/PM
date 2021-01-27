@@ -53,7 +53,7 @@ class DataTable {
     DataTable(DataTable&& other) = default;
 
     /** Copy Assignment operator */
-    DataTable& operator=(const DataTable& other) = default;
+    DataTable& operator=(const DataTable& other) = delete;
     // {
     //     DataTable tmp(other);
     //     *this = std::move(tmp);

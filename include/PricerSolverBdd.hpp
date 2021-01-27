@@ -38,7 +38,7 @@ class PricerSolverBdd : public PricerSolverBase {
                     double      _ub);
 
     PricerSolverBdd(const PricerSolverBdd& src, GPtrArray* _ordered_jobs);
-    PricerSolverBdd(const PricerSolverBdd& src);
+    // PricerSolverBdd(const PricerSolverBdd& src);
 
     void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
