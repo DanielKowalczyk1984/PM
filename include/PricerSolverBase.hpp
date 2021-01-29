@@ -31,7 +31,7 @@ struct PricerSolverBase {
     double constLB;
     double UB;
 
-    static constexpr double EPS_SOLVER = 1e-10;
+    static constexpr double EPS_SOLVER = 1e-6;
     static constexpr double RC_FIXING = 1e-4;
     static constexpr int    ALIGN = 60;
     static constexpr int    ALIGN_HALF = 60;
