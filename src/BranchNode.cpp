@@ -266,8 +266,6 @@ void BranchNodeBase::computeBounds(BTree* bt) {
     build_rmp(pd);
     solve_relaxation(pd);
     compute_lower_bound(pd);
-    // lowerBound = pd->LP_lower_bound;
-    // objValue = pd->LP_lower_bound;
     set_lb(pd->LP_lower_bound);
     setObjValue(pd->LP_lower_bound);
 }
