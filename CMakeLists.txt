@@ -120,20 +120,21 @@ else()
       ${PROJECT_NAME}_LIB
       PUBLIC $<INSTALL_INTERFACE:include>
              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-             ${CONAN_INCLUDE_DIRS_FMT}
              ${GUROBI_INCLUDE_DIR}
-             ${GLIB_INCLUDE_DIRS}
+             CONAN_PKG::fmt
+             CONAN_PKG::glib
+             CONAN_PKG::boost
              ORUtils::ORUtils
              branch-and-bound
       PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-    conan_target_link_libraries(${PROJECT_NAME}_LIB)
 
     target_link_libraries(
       ${PROJECT_NAME}_LIB
       ${GUROBI_LIBRARY}
       ${GUROBI_CXX_LIBRARY}
-      ${GLIB_LIBRARIES}
+      CONAN_PKG::fmt
+      CONAN_PKG::glib
+      CONAN_PKG::boost
       ORUtils::ORUtils
       branch-and-bound
       -lm
