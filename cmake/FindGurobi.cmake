@@ -13,6 +13,7 @@ else(GUROBI_INCLUDE_DIR)
     GUROBI_LIBRARY
     NAMES gurobi81
           gurobi90
+          gurobi91
           gurobi80
           gurobi75
           gurobi65
