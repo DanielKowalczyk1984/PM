@@ -213,7 +213,7 @@ int build_solve_mip(NodeData* pd) {
 
 int construct_lp_sol_from_rmp(NodeData* pd) {
     int val = 0;
-    int nb_cols;
+    int nb_cols = 0;
 
     val = lp_interface_get_nb_cols(pd->RMP, &nb_cols);
     CCcheck_val_2(val, "Failed to get nb cols");
