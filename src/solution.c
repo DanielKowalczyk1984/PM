@@ -47,7 +47,7 @@ Solution* solution_alloc(guint nb_interval,
                          int   nb_jobs,
                          int   off) {
     int       val = 0;
-    int       i;
+    int       i = 0;
     Solution* sol = CC_SAFE_MALLOC(1, Solution);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
     solution_init(sol);
@@ -354,8 +354,9 @@ static int next_interval_reversed(int u, PartList* part) {
     u--;
     while (u != -1) {
         GPtrArray* Q = part->Q_in[u];
-        if (Q->len > 0)
+        if (Q->len > 0) {
             return u;
+        }
         u--;
     }
 
