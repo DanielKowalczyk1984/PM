@@ -1,5 +1,6 @@
 #include "PricerSolverBase.hpp"
 #include "PricingStabilization.hpp"
+#include "branch-and-bound/btree.h"
 #include "fmt/core.h"
 #include "scheduleset.h"
 #include "stabilization.h"
@@ -42,33 +43,41 @@ int solve_pricing(NodeData* pd) {
 
     if (call_get_update_stab_center(pd->solver_stab)) {
         if (call_do_reduced_fixing(pd->solver_stab)) {
-            call_reduced_cost_fixing(pd->solver_stab);
+            pd->solver_stab->reduced_cost_fixing();
             check_schedules(pd);
             delete_infeasible_schedules(pd);
+            solve_relaxation(pd);
             double obj{};
             lp_interface_objval(pd->RMP, &obj);
             call_update_continueLP(pd->solver_stab, obj);
         }
     } else {
         if (!call_get_continueLP(pd->solver_stab)) {
-            call_reduced_cost_fixing(pd->solver_stab);
+            pd->solver_stab->reduced_cost_fixing();
             check_schedules(pd);
             delete_infeasible_schedules(pd);
+            solve_relaxation(pd);
             double obj{};
             lp_interface_objval(pd->RMP, &obj);
             call_update_continueLP(pd->solver_stab, obj);
         }
     }
 
-    if (pd->solver_stab->get_reduced_cost() < -1e-6 &&
+    if (pd->solver_stab->get_reduced_cost() < -EPS &&
         call_get_continueLP(pd->solver_stab) &&
-        (call_get_eta_in(pd->solver_stab) < pd->upper_bound - 1.0 + 1e-6)) {
-        pd->update = 1;
+        (call_get_eta_in(pd->solver_stab) < pd->upper_bound - 1.0 + EPS)) {
         auto sol = std::move(pd->solver_stab->get_sol());
         val = construct_sol(pd, &sol);
         CCcheck_val_2(val, "Failed in construction");
+        val = add_lhs_scheduleset_to_rmp(pd->newsets, pd);
+        pd->newsets->id = pd->localColPool->len;
+        g_ptr_array_add(pd->localColPool, pd->newsets);
+        pd->newsets = NULL;
+        pd->nb_new_sets = 0;
+        pd->nb_non_improvements = 0;
     } else {
         pd->nb_new_sets = 0;
+        pd->nb_non_improvements++;
     }
 
 CLEAN:
@@ -81,7 +90,7 @@ int solve_farkas_dbl(NodeData* pd) {
         pd->solver->farkas_pricing(&g_array_index(pd->pi, double, 0));
     pd->update = 0;
 
-    if (s.obj < 1e-6) {
+    if (s.obj < EPS) {
         val = construct_sol(pd, &s);
         lp_interface_write(pd->RMP, "RMP.lp");
 
