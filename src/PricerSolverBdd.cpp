@@ -2,6 +2,7 @@
 #include <fmt/core.h>
 #include <algorithm>
 #include <boost/concept_archetype.hpp>
+#include <cassert>
 #include <complex>
 #include <cstddef>
 #include <cstdio>
@@ -316,8 +317,8 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     fmt::print("nb rows initial {} {} {}\n", pd->nb_rows,
                reformulation_model.get_nb_constraints(), nb_new_constraints);
 
-    assert(nb_new_constraints <=
-           (pd->id_pseudo_schedules - pd->id_next_var_cuts));
+    assert((nb_new_constraints <=
+            (pd->id_pseudo_schedules - pd->id_next_var_cuts)));
     std::vector<int>    starts(nb_new_constraints + 1);
     std::vector<char>   sense(nb_new_constraints);
     std::vector<double> rhs(nb_new_constraints);
@@ -372,7 +373,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
                 }
             }
 
-            assert(tmp_nodeid == 1);
+            assert((tmp_nodeid == 1));
 
             if (fabs(coeff_val) > EPS_SOLVER) {
                 column_ind.push_back(pd->id_pseudo_schedules + i);
@@ -1428,8 +1429,10 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
             it.reset_lp_x();
         }
     }
-    std::span<const double> aux_cols{columns, static_cast<size_t>(num_columns)};
+    auto                    nb_columns = static_cast<size_t>(num_columns);
+    std::span<const double> aux_cols{columns, nb_columns};
     std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
+    assert(nb_columns == schedule_sets->len);
 
     set_is_integer_solution(true);
     for (int i = 0; i < num_columns; ++i) {
