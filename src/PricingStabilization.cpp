@@ -2,7 +2,7 @@
 #include <fmt/core.h>
 #include <cmath>
 #include <span>
-#include "util.h"
+// #include "util.h"
 #include "wctparms.h"
 
 /**
@@ -61,11 +61,11 @@ double PricingStabilizationBase::get_eta_in() {
 }
 
 double PricingStabilizationBase::get_eta_sep() {
-    return eta_sep;
+    return eta_in;
 }
 
 int PricingStabilizationBase::stopping_criteria() {
-    return eta_out - eta_in > ETA_DIFF_PREC;
+    return abs(eta_out - eta_in) > ETA_DIFF_PREC;
 }
 
 void PricingStabilizationBase::update_duals() {
@@ -184,7 +184,7 @@ double PricingStabilizationStat::get_eta_in() {
 }
 
 int PricingStabilizationStat::stopping_criteria() {
-    return (eta_out - eta_in > ETA_DIFF_PREC);
+    return (abs(eta_out - eta_in) > ETA_DIFF_PREC);
 }
 
 void PricingStabilizationStat::update_duals() {
@@ -443,7 +443,7 @@ void call_reduced_cost_fixing(PricingStabilizationBase* solver) {
 
 void call_update_continueLP(PricingStabilizationBase* solver, double _eta_out) {
     solver->eta_out = _eta_out;
-    solver->continueLP = (solver->eta_in < solver->eta_out);
+    solver->continueLP = (1.0e-4 < solver->eta_out - solver->eta_in);
 }
 
 int call_get_continueLP(PricingStabilizationBase* solver) {

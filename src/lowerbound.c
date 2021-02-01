@@ -257,6 +257,7 @@ int delete_infeasible_schedules(NodeData* pd) {
 
     if (pd->zero_count > 0) {
         solve_relaxation(pd);
+        pd->update = 1;
     }
 
 CLEAN:
@@ -487,13 +488,13 @@ int compute_lower_bound(NodeData* pd) {
     pd->retirementage = (int)sqrt(pd->nb_jobs) + CLEANUP_ITERATION;
     check_schedules(pd);
     delete_infeasible_schedules(pd);
-    int test = 0;
 
     // solve_relaxation(problem, pd);
     // do {
     do {
         has_cols = 1;
         has_cuts = 0;
+        pd->update = 0;
         CCutil_suspend_timer(&(statistics->tot_cputime));
         CCutil_resume_timer(&(statistics->tot_cputime));
         while ((pd->iterations < pd->maxiterations) && has_cols &&
@@ -535,25 +536,12 @@ int compute_lower_bound(NodeData* pd) {
             real_time_pricing = getRealTime() - real_time_pricing;
             statistics->real_time_pricing += real_time_pricing;
 
-            if (pd->update) {
-                for (j = 0; j < pd->nb_new_sets; j++) {
-                    val = add_lhs_scheduleset_to_rmp(pd->newsets + j, pd);
-                    CCcheck_val_2(val, "lp_interface_addcol failed");
-                    pd->newsets[j].id = pd->localColPool->len;
-                    g_ptr_array_add(pd->localColPool, pd->newsets + j);
-                }
-                pd->newsets = NULL;
-                nb_non_improvements = 0;
-            } else {
-                nb_non_improvements++;
-            }
-
             switch (status) {
                 case GRB_OPTIMAL:
                     has_cols = (call_stopping_criteria(pd->solver_stab) &&
                                 (call_get_eta_sep(pd->solver_stab) <
                                  pd->upper_bound - 1.0 + EPS));
-                    pd->nb_new_sets = 0;
+                    // pd->nb_new_sets = 0;
                     // || nb_non_improvements > 5;  // ||
                     // (ceil(pd->eta_in - 0.00001) >= pd->eta_out);
 
@@ -561,7 +549,7 @@ int compute_lower_bound(NodeData* pd) {
 
                 case GRB_INFEASIBLE:
                     has_cols = (pd->nb_new_sets == 0);
-                    pd->nb_new_sets = 0;
+                    // pd->nb_new_sets = 0;
                     break;
             }
 
@@ -590,21 +578,24 @@ int compute_lower_bound(NodeData* pd) {
                 /**
                  * Compute the objective function
                  */
+                pd->retirementage = 0;
+                delete_old_schedules(pd);
+                check_schedules(pd);
+                delete_infeasible_schedules(pd);
                 solve_relaxation(pd);
                 // compute_objective(pd);
                 if (pd->localColPool->len > 0) {
                     val = construct_lp_sol_from_rmp(pd);
                     CCcheck_val_2(val, "Failed in construct lp sol from rmp\n");
-                    delete_old_schedules(pd);
-                    solve_relaxation(pd);
+                    // solve_relaxation(pd);
+                    // delete_old_schedules(pd);
                     // delete_unused_rows(pd);
                     // solve_relaxation(pd);
-                    construct_lp_sol_from_rmp(pd);
+                    // construct_lp_sol_from_rmp(pd);
                     if (!call_is_integer_solution(pd->solver)) {
                         // has_cuts = (generate_cuts(pd) > 0);
                         has_cuts = 0;
                         // call_update_duals(pd->solver_stab);
-                        test++;
                         // lp_interface_write(pd->RMP, "test.lp");
                     }
                 }
@@ -615,7 +606,7 @@ int compute_lower_bound(NodeData* pd) {
                 lp_interface_write(pd->RMP, "infeasible_RMP.lp");
                 lp_interface_compute_IIS(pd->RMP);
         }
-    } while (has_cuts && test < 5);
+    } while (has_cuts || pd->update);
 
     if (dbg_lvl() > 0 || pd->id == 0) {
         printf("iterations = %d\n", pd->iterations);

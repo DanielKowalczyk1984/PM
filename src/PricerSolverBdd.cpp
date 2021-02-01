@@ -1514,13 +1514,13 @@ void PricerSolverBdd::split_job_time(int _job, int _time, bool _left) {
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             if (_left) {
-                if (it.get_weight() + it.get_job()->processing_time > _time &&
+                if (it.get_weight() + it.get_job()->processing_time <= _time &&
                     it.get_nb_job() == _job) {
                     it.calc[1] = false;
                     removed_edges = true;
                 }
             } else {
-                if (it.get_weight() + it.get_job()->processing_time <= _time &&
+                if (it.get_weight() + it.get_job()->processing_time > _time &&
                     it.get_nb_job() == _job) {
                     it.calc[1] = false;
                     removed_edges = true;
