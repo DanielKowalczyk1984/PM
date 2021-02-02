@@ -1486,7 +1486,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
         }
     }
 
-    if (is_integer_solution) {
+    if (is_integer_solution && dbg_lvl() > 1) {
         fmt::print("FOUND INTEGER SOLUTION\n\n");
     }
 

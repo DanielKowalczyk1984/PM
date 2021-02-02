@@ -504,7 +504,7 @@ int compute_lower_bound(NodeData* pd) {
              */
             if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
                 status == GRB_OPTIMAL) {
-                val = delete_old_schedules(pd);
+                // val = delete_old_schedules(pd);
                 CCcheck_val_2(val, "Failed in delete_old_cclasses");
             }
             solve_relaxation(pd);
@@ -578,8 +578,8 @@ int compute_lower_bound(NodeData* pd) {
                 /**
                  * Compute the objective function
                  */
-                pd->retirementage = 0;
-                delete_old_schedules(pd);
+                // pd->retirementage = 0;
+                // delete_old_schedules(pd);
                 check_schedules(pd);
                 delete_infeasible_schedules(pd);
                 solve_relaxation(pd);

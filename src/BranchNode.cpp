@@ -29,15 +29,32 @@ void BranchNodeBase::branch(BTree* bt) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
     }
 
-    fmt::print(
-        "BRANCHING NODE with branch_job = {} and middle_time = {} , less = "
-        "{}, "
-        "depth = {} with graph size {} and DWM LB = {}\n\n",
-        pd->branch_job, pd->completiontime, pd->less, get_depth(),
-        solver->get_nb_vertices(), pd->LP_lower_bound);
+    // fmt::print(
+    //     "BRANCHING NODE with branch_job = {} and middle_time = {} , less = "
+    //     "{}, "
+    //     "depth = {} with graph size {}, DWM LB = {} and UB {}\n\n",
+    //     pd->branch_job, pd->completiontime, pd->less, get_depth(),
+    //     solver->get_nb_vertices(), pd->LP_lower_bound + pd->off,
+    //     pd->upper_bound + pd->off);
 
+    // fmt::print(
+    //     "{0:^10}{1:^10}|{2:^10}{3:^10}{10:^10}|{4:>10}{5:>10}{6:>10}|{7:>5}{8:>"
+    //     "5}|{9:^10}\n",
+    //     "Expl", "Unexpl", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
+    //     "Time", "Time", "Size");
+    fmt::print(
+        "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{8:>"
+        "5}{9:>5}\n",
+        bt->tStats->get_nodes_explored(), bt->get_nb_nodes(),
+        pd->LP_lower_bound + pd->off, pd->depth, solver->get_nb_vertices(),
+        bt->getGlobalUB() + pd->off, bt->getGlobalLB() + pd->off, 0.0,
+        pd->branch_job, pd->completiontime);
     auto fathom_left = false;
     auto fathom_right = false;
+    if (bt->getGlobalUB() < pd->upper_bound) {
+        pd->upper_bound = static_cast<int>(bt->getGlobalUB());
+        solver->UB = bt->getGlobalUB();
+    }
 
     // calculate the fraction of each job finishing at each time in the
     // relaxation solution
@@ -255,11 +272,15 @@ void BranchNodeBase::branch(BTree* bt) {
         bt->setStateComputesBounds(false);
     }
 
-    fmt::print("Number of Nodes in B&B tree = {}\n", bt->get_nb_nodes());
-    fmt::print("Number of nodes explored = {}\n",
-               bt->tStats->get_nodes_explored());
-    fmt::print("Branching choice: j = {}, t = {}, best_gain = {}\n", best_job,
-               best_time, best_min_gain);
+    bt->update_global_lb();
+
+    // fmt::print("Number of Nodes in B&B tree = {}\n", bt->get_nb_nodes());
+    // fmt::print("Number of nodes explored = {}\n",
+    //            bt->tStats->get_nodes_explored());
+    if (dbg_lvl() > 1) {
+        fmt::print("Branching choice: j = {}, t = {}, best_gain = {}\n",
+                   best_job, best_time, best_min_gain + pd->off);
+    }
 }
 
 void BranchNodeBase::computeBounds(BTree* bt) {
@@ -278,6 +299,11 @@ bool BranchNodeBase::isTerminalState() {
 }
 
 void BranchNodeBase::applyFinalPruningTests(BTree* bt) {}
+
+void BranchNodeBase::update_data(double upper_bound) {
+    auto* statistics = pd->stat;
+    statistics->global_upper_bound = static_cast<int>(upper_bound);
+}
 
 extern "C" {
 

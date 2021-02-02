@@ -1,4 +1,6 @@
 #include "BranchBoundTree.hpp"
+#include <fmt/core.h>
+#include <boost/timer/timer.hpp>
 #include <memory>
 #include "BranchNode.hpp"
 #include "branch-and-bound/bfstree.h"
@@ -7,7 +9,6 @@
 #include "branch-and-bound/dfstree.h"
 #include "wctparms.h"
 #include "wctprivate.h"
-
 BranchBoundTree::BranchBoundTree(NodeData* root,
                                  int       _probType,
                                  bool      _isIntProb) {
@@ -50,7 +51,9 @@ void delete_branch_bound_tree(BranchBoundTree* tree) {
 }
 
 void call_branch_and_bound_explore(BranchBoundTree* tree) {
-    BTree* ptr_tree = tree->get_ptr_tree();
+    BTree*                  ptr_tree = tree->get_ptr_tree();
+    boost::timer::cpu_timer t;
     ptr_tree->explore();
+    fmt::print("{}\n", t.format());
 }
 }

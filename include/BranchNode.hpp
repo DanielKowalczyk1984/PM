@@ -33,6 +33,7 @@ class BranchNodeBase : public State {
     void assessDominance(State* otherState) final;
     bool isTerminalState() final;
     void applyFinalPruningTests(BTree* bt) final;
+    void update_data(double upper_bound) final;
     // std::unique_ptr<State> clone() { return nullptr; };  // "copy
     // constructor"
     void print() const final{};

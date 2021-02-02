@@ -332,7 +332,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
-            fmt::print("empty DDstructure\n");
+            // fmt::print("empty DDstructure\n");
             R retval;
             return retval;
         }
@@ -355,7 +355,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
-            fmt::print("empty DDstructure\n");
+            // fmt::print("empty DDstructure\n");
             return;
         }
 
@@ -375,7 +375,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
-            fmt::print("empty DDstructure\n");
+            // fmt::print("empty DDstructure\n");
             R retval;
             return retval;
         }
@@ -412,7 +412,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         evaluator.set_table(&(*diagram));
 
         if (this->size() == 0) {
-            fmt::print("empty DDstructure\n");
+            // fmt::print("empty DDstructure\n");
             return;
         }
 
