@@ -51,9 +51,7 @@ void delete_branch_bound_tree(BranchBoundTree* tree) {
 }
 
 void call_branch_and_bound_explore(BranchBoundTree* tree) {
-    BTree*                  ptr_tree = tree->get_ptr_tree();
-    boost::timer::cpu_timer t;
+    BTree* ptr_tree = tree->get_ptr_tree();
     ptr_tree->explore();
-    fmt::print("{}\n", t.format());
 }
 }

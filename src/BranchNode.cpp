@@ -42,13 +42,18 @@ void BranchNodeBase::branch(BTree* bt) {
     //     "5}|{9:^10}\n",
     //     "Expl", "Unexpl", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
     //     "Time", "Time", "Size");
-    fmt::print(
-        "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{8:>"
-        "5}{9:>5}\n",
-        bt->tStats->get_nodes_explored(), bt->get_nb_nodes(),
-        pd->LP_lower_bound + pd->off, pd->depth, solver->get_nb_vertices(),
-        bt->getGlobalUB() + pd->off, bt->getGlobalLB() + pd->off, 0.0,
-        pd->branch_job, pd->completiontime);
+
+    if (pd->depth == 0 || bt->print_progress()) {
+        fmt::print(
+            "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{"
+            "8:>"
+            "5}{9:>5}|\n",
+            bt->tStats->get_nodes_explored(), bt->get_nb_nodes(),
+            pd->LP_lower_bound + pd->off, pd->depth, solver->get_nb_vertices(),
+            bt->getGlobalUB() + pd->off, bt->getGlobalLB() + pd->off, 0.0,
+            pd->branch_job, pd->completiontime);
+    }
+
     auto fathom_left = false;
     auto fathom_right = false;
     if (bt->getGlobalUB() < pd->upper_bound) {
