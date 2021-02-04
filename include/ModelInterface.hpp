@@ -55,9 +55,8 @@ class VariableKeyBase {
 };
 
 class ConstraintBase {
-   protected:
-    char   sense;
     double rhs;
+    char   sense;
     bool   can_be_deleted;
 
    public:
@@ -127,6 +126,7 @@ class ReformulationModel {
     ~ReformulationModel() = default;
     ReformulationModel(ReformulationModel&&) noexcept =
         default;  // movable and noncopyable ReformulationModel&
+    ReformulationModel& operator=(ReformulationModel&&) = default;
     ReformulationModel(const ReformulationModel&) = default;
     ReformulationModel& operator=(const ReformulationModel&) = default;
 
@@ -138,7 +138,7 @@ class ReformulationModel {
         return constraint_array[c].get();
     };
 
-    inline std::shared_ptr<ConstraintBase> get_constraint_ptr(int c) {
+    inline std::shared_ptr<ConstraintBase> get_constraint_ptr(int c) const {
         return constraint_array[c];
     }
 
@@ -180,7 +180,7 @@ class BddCoeff : public VariableKeyBase {
           row(_row),
           coeff(_coeff),
           value(_value){};
-    BddCoeff() = default;
+    // BddCoeff() = default;
     ~BddCoeff() override = default;
     BddCoeff(const BddCoeff&) = default;
     BddCoeff& operator=(const BddCoeff&) = default;
@@ -212,7 +212,7 @@ class BddCoeff : public VariableKeyBase {
 namespace std {
 template <>
 struct hash<BddCoeff> {
-    std::size_t operator()(BddCoeff const& s) const noexcept {
+    std::size_t operator()(auto const& s) const noexcept {
         std::size_t seed = 0;
         boost::hash_combine(seed, s.get_j());
         boost::hash_combine(seed, s.get_t());
@@ -228,11 +228,15 @@ class GenericData {
     using coeff_hash_table = std::unordered_map<BddCoeff, double>;
     coeff_hash_table coeff;
 
+    static constexpr double EPS_GENERIC_DATA = 1e-6;
+
    public:
     GenericData() = default;
     ~GenericData() = default;
-    GenericData(GenericData&& op) = default;  // movable and noncopyable
-    GenericData& operator=(GenericData&& op) = default;
+    GenericData(GenericData&&) = default;  // movable and noncopyable
+    GenericData(const GenericData&) = default;
+    GenericData& operator=(GenericData&&) = default;
+    GenericData& operator=(const GenericData&) = default;
 
     coeff_hash_table::iterator find(const BddCoeff& key) {
         return coeff.find(key);
@@ -270,7 +274,7 @@ class GenericData {
                 return false;
             }
 
-            if (fabs(it1.second - (*it2).second) > 1e-6) {
+            if (fabs(it1.second - (*it2).second) > EPS_GENERIC_DATA) {
                 return false;
             }
         }
@@ -278,7 +282,7 @@ class GenericData {
         return true;
     };
 
-    friend bool operator!=(const GenericData& lhs, GenericData& rhs) {
+    friend bool operator!=(const GenericData& lhs, const GenericData& rhs) {
         return !(lhs == rhs);
     }
 };
@@ -294,9 +298,9 @@ class ConstraintGeneric : public ConstraintBase {
         : ConstraintBase(_sense, _rhs, _can_be_deleted),
           data(_data) {}
 
-    ConstraintGeneric(double _rhs,
-                      char   _sense = '>',
-                      bool   _can_be_deleted = true)
+    explicit ConstraintGeneric(double _rhs,
+                               char   _sense = '>',
+                               bool   _can_be_deleted = true)
         : ConstraintBase(_sense, _rhs, _can_be_deleted),
           data(nullptr) {}
 
@@ -340,7 +344,7 @@ class OriginalConstraint {
     std::list<std::shared_ptr<T>> coeff_list;
 
    public:
-    OriginalConstraint(const std::shared_ptr<ConstraintBase>& _constr)
+    explicit OriginalConstraint(const std::shared_ptr<ConstraintBase>& _constr)
         : constr(_constr){};
     OriginalConstraint() : constr(){};
     ~OriginalConstraint() = default;
@@ -355,10 +359,11 @@ class OriginalConstraint {
 
     inline ConstraintBase* get_constr() {
         auto aux = constr.lock();
-        if (aux)
+        if (aux) {
             return aux.get();
-        else
+        } else {
             return nullptr;
+        }
     }
 
     inline void add_coeff_to_list(std::shared_ptr<T> _coeff) {
@@ -378,7 +383,7 @@ class OriginalModel {
     std::vector<OriginalConstraint<T>> constraint_array;
 
    public:
-    OriginalModel(ReformulationModel& model)
+    explicit OriginalModel(const ReformulationModel& model)
         : constraint_array(model.get_nb_constraints()) {
         const int nb_constraints = model.get_nb_constraints();
 
@@ -398,11 +403,11 @@ class OriginalModel {
         constraint_array[c].add_coeff_to_list(coeff);
     }
 
-    ConstraintBase* get_constraint(int c) {
+    ConstraintBase* get_constraint(int c) const {
         return constraint_array[c].get_constr();
     }
 
-    inline std::list<std::shared_ptr<T>>* get_coeff_list(int c) {
+    inline std::list<std::shared_ptr<T>>* get_coeff_list(int c) const {
         return constraint_array[c].get_coeff_list();
     }
 
