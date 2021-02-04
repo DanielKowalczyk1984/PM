@@ -21,7 +21,7 @@ struct PricerSolverBase {
 
     std::string problem_name;
 
-    GRBEnv   env;
+    std::shared_ptr<GRBEnv>   env;
     GRBModel model;
 
     ReformulationModel reformulation_model;
@@ -32,7 +32,7 @@ struct PricerSolverBase {
     double UB;
 
     static constexpr double EPS_SOLVER = 1e-6;
-    static constexpr double RC_FIXING = 1e-2;
+    static constexpr double RC_FIXING = 1e-1;
     static constexpr int    ALIGN = 60;
     static constexpr int    ALIGN_HALF = 60;
 

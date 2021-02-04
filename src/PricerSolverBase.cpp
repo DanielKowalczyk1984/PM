@@ -1,5 +1,7 @@
 #include "PricerSolverBase.hpp"
+#include <fmt/core.h>
 #include <limits>
+#include <memory>
 #include "gurobi_c.h"
 
 /**
@@ -13,8 +15,8 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
       convex_constr_id(_jobs->len),
       convex_rhs(_num_machines),
       problem_name(_p_name),
-      env(GRBEnv()),
-      model(GRBModel(env)),
+      env(std::make_shared<GRBEnv>()),
+      model(GRBModel(*env)),
       reformulation_model(_jobs->len, _num_machines),
       is_integer_solution(false),
       constLB(0.0),
