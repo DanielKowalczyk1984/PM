@@ -83,7 +83,7 @@ void g_scheduleset_free(void* set) {
 }
 
 ScheduleSet* scheduleset_alloc(int nb_jobs) {
-    ScheduleSet* tmp;
+    ScheduleSet* tmp = NULL;
     tmp = CC_SAFE_MALLOC(1, ScheduleSet);
     CCcheck_NULL_3(tmp, "Failed to allocate memory");
     scheduleset_init(tmp);
@@ -95,7 +95,7 @@ CLEAN:
 }
 
 ScheduleSet* scheduleset_alloc_bis(int nb_jobs) {
-    ScheduleSet* tmp;
+    ScheduleSet* tmp = NULL;
     tmp = CC_SAFE_MALLOC(1, ScheduleSet);
     CCcheck_NULL_3(tmp, "Failed to allocate memory");
     scheduleset_init_bis(tmp);
@@ -153,7 +153,7 @@ void scheduleset_recalculate(ScheduleSet* set) {
 }
 
 ScheduleSet* scheduleset_from_solution(GPtrArray* machine, int nb_jobs) {
-    ScheduleSet* tmp;
+    ScheduleSet* tmp = NULL;
 
     tmp = CC_SAFE_MALLOC(1, ScheduleSet);
     CCcheck_NULL_3(tmp, "failed to allocate memory")
@@ -193,7 +193,7 @@ int scheduleset_less(ScheduleSet* c1, ScheduleSet* c2) {
     GPtrArray* tmp2 = c2->job_list;
 
     if (tmp1->len != tmp2->len) {
-        return tmp1->len - tmp2->len;
+        return (int)tmp1->len - (int)tmp2->len;
     }
 
     for (guint i = 0; i < tmp1->len; ++i) {
@@ -248,10 +248,9 @@ void g_scheduleset_print(gpointer data, MAYBE_UNUSED gpointer user_data) {
 // }
 
 int print_schedule(ScheduleSet* cclasses, int nb_columns) {
-    int i;
     int sum = 0;
 
-    for (i = 0; i < nb_columns; i++) {
+    for (int i = 0; i < nb_columns; i++) {
         printf("Machine %d:", i);
 
         g_ptr_array_foreach(cclasses[i].job_list, g_print_machine, NULL);
@@ -269,9 +268,8 @@ int print_schedule(ScheduleSet* cclasses, int nb_columns) {
 
 int scheduleset_max(ScheduleSet* cclasses, int nb_columns) {
     int val = 0;
-    int i;
 
-    for (i = 0; i < nb_columns; i++) {
+    for (int i = 0; i < nb_columns; i++) {
         if (cclasses[i].total_processing_time > val) {
             val = cclasses[i].total_processing_time;
         }

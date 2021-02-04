@@ -454,7 +454,7 @@ int heuristic(Problem* prob) {
             if (sol1->tw < sol->tw) {
                 solution_update(sol, sol1);
                 solution_canonical_order(sol, intervals);
-                add_solution_to_colpool(sol, (prob->root_pd));
+                // add_solution_to_colpool(sol, (prob->root_pd));
                 j = 0;
             }
 
@@ -463,6 +463,7 @@ int heuristic(Problem* prob) {
 
         if (sol->tw < prob->opt_sol->tw) {
             solution_update(prob->opt_sol, sol);
+            add_solution_to_colpool(prob->opt_sol, (prob->root_pd));
         }
 
         local_search_data_free(&data_RS);

@@ -141,7 +141,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->column_status = (int*)NULL;
     /*Initialization max and retirement age*/
     pd->maxiterations = NB_CG_ITERATIONS;
-    pd->retirementage = 100;
+    pd->retirementage = 0;
     /*initialization of branches*/
     pd->branch_job = -1;
     pd->less = -1;
@@ -205,7 +205,7 @@ void nodedata_init_null(NodeData* pd) {
     pd->column_status = (int*)NULL;
     /*Initialization max and retirement age*/
     pd->maxiterations = NB_CG_ITERATIONS;
-    pd->retirementage = 100;
+    pd->retirementage = 0;
     /*initialization of branches*/
     pd->branch_job = -1;
     pd->parent = (NodeData*)NULL;
