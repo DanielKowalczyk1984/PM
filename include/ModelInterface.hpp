@@ -353,8 +353,8 @@ class OriginalConstraint {
     OriginalConstraint<T>(const OriginalConstraint<T>&) = default;
     OriginalConstraint<T>& operator=(const OriginalConstraint<T>&) = default;
 
-    inline std::list<std::shared_ptr<T>>* get_coeff_list() {
-        return &coeff_list;
+    inline std::list<std::shared_ptr<T>>& get_coeff_list() {
+        return coeff_list;
     }
 
     inline ConstraintBase* get_constr() {
@@ -403,11 +403,11 @@ class OriginalModel {
         constraint_array[c].add_coeff_to_list(coeff);
     }
 
-    ConstraintBase* get_constraint(int c) const {
+    ConstraintBase* get_constraint(int c) {
         return constraint_array[c].get_constr();
     }
 
-    inline std::list<std::shared_ptr<T>>* get_coeff_list(int c) const {
+    inline std::list<std::shared_ptr<T>>& get_coeff_list(int c) {
         return constraint_array[c].get_coeff_list();
     }
 

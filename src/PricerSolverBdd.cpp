@@ -1581,8 +1581,8 @@ void PricerSolverBdd::remove_constraints(int first, int nb_del) {
 
 void PricerSolverBdd::update_rows_coeff(int first) {
     for (int k = first; k < original_model.get_nb_constraints(); k++) {
-        auto aux = original_model.get_coeff_list(k);
-        for (auto& it : *aux) {
+        auto& aux = original_model.get_coeff_list(k);
+        for (auto& it : aux) {
             it->set_row(k);
         }
     }

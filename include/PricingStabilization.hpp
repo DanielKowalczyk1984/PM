@@ -17,8 +17,9 @@ class PricingStabilizationBase {
     virtual ~PricingStabilizationBase();
 
     static constexpr double EPS_RC = -1e-6;
-    static constexpr double ETA_DIFF_PREC = 1e-4;
+    static constexpr double ETA_DIFF = 1e-4;
     static constexpr double EPS_STAB = 1e-6;
+    static constexpr int    RC_FIXING_RATE = 20;
 
    public:
     PricerSolverBase* solver;
@@ -41,6 +42,7 @@ class PricingStabilizationBase {
     OptimalSolution<>& get_sol();
     bool               get_update_stab_center();
     double             get_reduced_cost();
+    double             get_eps_stab_solver();
     virtual double     get_eta_in();
     virtual double     get_eta_sep();
     virtual void       solve(double eta_out, double* _pi_out, double* _lhs);
