@@ -29,10 +29,10 @@ class BranchNodeBase : public State {
     static constexpr double ERROR = 1e-12;
 
     void branch(BTree* bt) final;
-    void computeBounds(BTree* bt) final;
-    void assessDominance(State* otherState) final;
-    bool isTerminalState() final;
-    void applyFinalPruningTests(BTree* bt) final;
+    void compute_bounds(BTree* bt) final;
+    void assess_dominance(State* otherState) final;
+    bool is_terminal_state() final;
+    void apply_final_pruning_tests(BTree* bt) final;
     void update_data(double upper_bound) final;
     // std::unique_ptr<State> clone() { return nullptr; };  // "copy
     // constructor"

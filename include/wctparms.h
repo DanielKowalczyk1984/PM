@@ -38,8 +38,9 @@ enum PricingSolver {
 };
 
 enum BranchandBound {
-    no = 0,
-    yes = 1,
+    min_branch_and_bound = 0,
+    no_branch_and_bound = 1,
+    yes_branch_and_bound = min_branch_and_bound,
 };
 
 enum stab_techniques {
@@ -47,6 +48,7 @@ enum stab_techniques {
     stab_wentgnes = 1,
     stab_dynamic = 2,
     stab_hybrid = 3,
+    min_stab = stab_wentgnes,
 };
 
 enum print {
@@ -71,9 +73,9 @@ enum BBExploreStrategy {
 };
 
 enum Strong_Branching {
-    min_strong_branching = 0,
-    use_strong_branching = min_strong_branching,
-    no_strong_branching = 1,
+    min_strong_branching = 1,
+    yes_strong_branching = min_strong_branching,
+    no_strong_branching = 0,
 };
 
 enum MIP_solver {
@@ -83,15 +85,15 @@ enum MIP_solver {
 };
 
 enum reduced_cost_fixing_param {
-    min_reduced_cost = 0,
+    min_reduced_cost = 1,
     yes_reduced_cost = min_reduced_cost,
-    no_reduced_cost = 1,
+    no_reduced_cost = 0,
 };
 
 enum use_heuristic {
-    min_use_heuristic = 0,
+    min_use_heuristic = 1,
     yes_use_heuristic = min_use_heuristic,
-    no_use_heuristic = 1,
+    no_use_heuristic = 0,
 };
 
 typedef struct parms {
@@ -102,7 +104,7 @@ typedef struct parms {
     int    bb_search_strategy;
     int    bb_explore_strategy;
     int    bb_branch_strategy;
-    int    strong_branching;
+    int    use_strong_branching;
     int    nb_iterations_rvnd;
     double branching_cpu_limit;
     double alpha;
@@ -119,12 +121,9 @@ typedef struct parms {
     int stab_technique;
     int print;
 
-    int delete_edge_lists;
-
     char* jobfile;
     char* pname;
 
-    int upper_bounds_only;
     int nb_jobs;
     int nb_machines;
 } Parms;
@@ -134,10 +133,8 @@ void parms_init(Parms* parms);
 void parms_free(Parms* parms);
 
 /*Functions for setting some parameters*/
-int parms_set_init_upper_bound(Parms* parms, int bound);
 int parms_set_branching_cpu_limit(Parms* parms, double limit);
 int parms_set_alpha(Parms* parms, double alpha);
-int parms_set_search_strategy(Parms* parms, int strategy);
 int parms_set_branching_strategy(Parms* parms, int strategy);
 int parms_set_strong_branching(Parms* parms, int strong);
 int parms_set_mip_solver(Parms* parms, int usage);
@@ -155,12 +152,12 @@ int parms_set_stab_technique(Parms* parms, int stab_technique);
  * Branch-and-Bound parameters
  */
 int parms_set_branchandbound(Parms* parms, int bound);
-int parms_set_bb_strategy(Parms* parms, int strategy);
+int parms_set_bb_explore_strategy(Parms* parms, int strategy);
 int parms_set_print(Parms* parms, int print);
 
 /*Functions for defining the filesname*/
 int parms_set_file(Parms* parms, const char* fname);
-int parms_set_pname(Parms* parms, char* fname);
+int parms_set_pname(Parms* parms, const char* fname);
 int parms_set_nb_machines(Parms* parms, int nb_machines);
 
 #ifdef __cplusplus

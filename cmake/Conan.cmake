@@ -5,6 +5,7 @@ if(${PROJECT_NAME}_ENABLE_CONAN)
 
   set(CONAN_REQUIRES "boost/1.73.0
                       fmt/7.0.3
+                      docopt.cpp/0.6.3
                       glib/2.67.0")
 
   set(PM_CONAN_OPTIONS "pcre:with_utf=True

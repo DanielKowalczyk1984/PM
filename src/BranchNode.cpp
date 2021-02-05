@@ -47,11 +47,11 @@ void BranchNodeBase::branch(BTree* bt) {
         fmt::print(
             "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{"
             "8:>"
-            "5}{9:>5}|\n",
-            bt->tStats->get_nodes_explored(), bt->get_nb_nodes(),
+            "5}{9:>5}|{10:>10}|\n",
+            bt->tStats->get_states_explored(), bt->get_nb_nodes(),
             pd->LP_lower_bound + pd->off, pd->depth, solver->get_nb_vertices(),
             bt->getGlobalUB() + pd->off, bt->getGlobalLB() + pd->off, 0.0,
-            pd->branch_job, pd->completiontime);
+            pd->branch_job, pd->completiontime, bt->get_run_time_start());
     }
 
     auto fathom_left = false;
@@ -168,7 +168,7 @@ void BranchNodeBase::branch(BTree* bt) {
             auto  left_node_branch = std::make_unique<BranchNodeBase>(left);
             // std::unique_ptr<BranchNodeBase>(new BranchNodeBase(left));
             left->solver->split_job_time(i, middle_time[i], true);
-            left_node_branch->computeBounds(bt);
+            left_node_branch->compute_bounds(bt);
 
             auto approx = left_gain;
             left_gain = left->LP_lower_bound;
@@ -191,7 +191,7 @@ void BranchNodeBase::branch(BTree* bt) {
             auto  right_node_branch = std::make_unique<BranchNodeBase>(right);
 
             right_solver->split_job_time(i, middle_time[i], false);
-            right_node_branch->computeBounds(bt);
+            right_node_branch->compute_bounds(bt);
 
             approx = right_gain;
             right_gain = right->LP_lower_bound;
@@ -252,7 +252,7 @@ void BranchNodeBase::branch(BTree* bt) {
         left->branch_job = best_job;
         left->completiontime = best_time;
         left->less = 0;
-        bt->processState(std::move(left_node_branch));
+        bt->process_state(std::move(left_node_branch));
 
         auto* right = new_node_data(pd);
         auto* right_solver = right->solver;
@@ -261,20 +261,20 @@ void BranchNodeBase::branch(BTree* bt) {
         right->branch_job = best_job;
         right->completiontime = best_time;
         right->less = 1;
-        bt->processState(std::move(right_node_branch));
+        bt->process_state(std::move(right_node_branch));
         // auto job = (Job*)g_ptr_array_index(pd->solver->jobs, best_job);
         // fmt::print("NO STRONG BRANCHING {} {} {}\n\n", best_job, best_time,
         //            best_min_gain);
     } else {
-        bt->setStateComputesBounds(true);
+        bt->set_state_bounds_computed(true);
         best_left->pd->branch_job = best_right->pd->branch_job = best_job;
         best_left->pd->completiontime = best_right->pd->completiontime =
             best_time;
         best_left->pd->less = 0;
         best_right->pd->less = 1;
-        bt->processState(std::move(best_left));
-        bt->processState(std::move(best_right));
-        bt->setStateComputesBounds(false);
+        bt->process_state(std::move(best_left));
+        bt->process_state(std::move(best_right));
+        bt->set_state_bounds_computed(false);
     }
 
     bt->update_global_lb();
@@ -288,22 +288,22 @@ void BranchNodeBase::branch(BTree* bt) {
     }
 }
 
-void BranchNodeBase::computeBounds(BTree* bt) {
+void BranchNodeBase::compute_bounds(BTree* bt) {
     build_rmp(pd);
     solve_relaxation(pd);
     compute_lower_bound(pd);
     set_lb(pd->LP_lower_bound);
-    setObjValue(pd->LP_lower_bound);
+    set_obj_value(pd->LP_lower_bound);
 }
 
-void BranchNodeBase::assessDominance(State* otherState) {}
+void BranchNodeBase::assess_dominance(State* otherState) {}
 
-bool BranchNodeBase::isTerminalState() {
+bool BranchNodeBase::is_terminal_state() {
     auto* solver = pd->solver;
     return solver->get_is_integer_solution();
 }
 
-void BranchNodeBase::applyFinalPruningTests(BTree* bt) {}
+void BranchNodeBase::apply_final_pruning_tests(BTree* bt) {}
 
 void BranchNodeBase::update_data(double upper_bound) {
     auto* statistics = pd->stat;
@@ -316,30 +316,30 @@ size_t call_getDepth(BranchNodeBase* state) {
     return state->get_depth();
 };
 int call_getDomClassID(BranchNodeBase* state) {
-    return state->getDomClassID();
+    return state->get_dom_class_id();
 };
 double call_getObjValue(BranchNodeBase* state) {
-    return state->getObjValue();
+    return state->get_obj_value();
 };
 double call_getLB(BranchNodeBase* state) {
-    return state->getLB();
+    return state->get_lb();
 };
 double call_getUB(BranchNodeBase* state) {
-    return state->getUB();
+    return state->get_ub();
 };
 int call_getID(BranchNodeBase* state) {
-    return state->getID();
+    return state->get_id();
 }
 int call_getParentID(BranchNodeBase* state) {
-    return state->getParentID();
+    return state->get_parent_id();
 }
 void call_setID(BranchNodeBase* state, int i) {
     state->set_id(i);
 }
 bool call_isDominated(BranchNodeBase* state) {
-    return state->isDominated();
+    return state->is_dominated();
 };
 bool call_wasProcessed(BranchNodeBase* state) {
-    return state->wasProcessed();
+    return state->was_processed();
 };
 }

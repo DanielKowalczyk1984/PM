@@ -11,18 +11,16 @@ void parms_init(Parms* parms) {
     parms->bb_branch_strategy = min_bb_strategy;
     parms->bb_search_strategy = min_search_strategy;
     parms->bb_explore_strategy = min_bb_explore_strategy;
-    parms->strong_branching = min_strong_branching;
+    parms->use_strong_branching = min_strong_branching;
     parms->mip_solver = min_mip_solver;
     parms->use_heuristic = min_use_heuristic;
     parms->reduce_cost_fixing = min_reduced_cost;
     parms->nb_iterations_rvnd = 3;
-    parms->branchandbound = no;
-    parms->stab_technique = no_stab;
+    parms->branchandbound = min_branch_and_bound;
+    parms->stab_technique = min_stab;
     parms->print = min_print_size;
-    parms->delete_edge_lists = 1;
     parms->jobfile = (char*)NULL;
     parms->pname = (char*)NULL;
-    parms->upper_bounds_only = 0;
     parms->branching_cpu_limit = TIME_LIMIT;
     parms->alpha = ALPHA_STAB_INIT;
     parms->pricing_solver = bdd_solver_backward_cycle;
@@ -49,16 +47,11 @@ int parms_set_file(Parms* parms, const char* fname) {
     return copy_string(&(parms->jobfile), fname);
 }
 
-int parms_set_pname(Parms* parms, char* fname) {
+int parms_set_pname(Parms* parms, const char* fname) {
     int val = copy_string(&(parms->pname), fname);
-    CC_IFFREE(fname, char);
     return val;
 }
-/*Functions for setting the branching parameters*/
-int parms_set_init_upper_bound(Parms* parms, int bound) {
-    parms->init_upper_bound = bound;
-    return 0;
-}
+
 int parms_set_branching_cpu_limit(Parms* parms, double limit) {
     parms->branching_cpu_limit = limit;
     return 0;
@@ -74,11 +67,6 @@ int parms_set_alpha(Parms* parms, double alpha) {
     return 0;
 }
 
-int parms_set_search_strategy(Parms* parms, int strategy) {
-    parms->bb_search_strategy = strategy;
-    return 0;
-}
-
 int parms_set_mip_solver(Parms* parms, int usage) {
     parms->mip_solver = usage;
     return 0;
@@ -89,12 +77,12 @@ int parms_set_use_heuristic(Parms* parms, int usage) {
     return 0;
 }
 int parms_set_reduce_cost(Parms* parms, int usage) {
-    parms->mip_solver = usage;
+    parms->reduce_cost_fixing = usage;
     return 0;
 }
 
 int parms_set_strong_branching(Parms* parms, int strong) {
-    parms->strong_branching = strong;
+    parms->use_strong_branching = strong;
     return 0;
 }
 
@@ -113,7 +101,7 @@ int parms_set_branchandbound(Parms* parms, int bound) {
     return 0;
 }
 
-int parms_set_bb_strategy(Parms* parms, int strategy) {
+int parms_set_bb_explore_strategy(Parms* parms, int strategy) {
     parms->bb_explore_strategy = strategy;
     return 0;
 }

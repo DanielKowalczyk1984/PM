@@ -1,13 +1,13 @@
 #include "ZeroHalfCuts.hpp"
+#include <fmt/core.h>
+#include <fmt/format.h>
+#include <gurobi_c++.h>
 #include <algorithm>
 #include <memory>
 #include <vector>
 #include "ModelInterface.hpp"
 #include "NodeBddTable.hpp"
 #include "NodeId.hpp"
-#include "fmt/core.h"
-#include "fmt/format.h"
-#include "gurobi_c++.h"
 
 ZeroHalfCuts::ZeroHalfCuts(int                 _nb_jobs,
                            int                 _nb_machines,

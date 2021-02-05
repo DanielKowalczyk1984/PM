@@ -8,185 +8,13 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#include <regex.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include "math.h"
+#include "solver.h"
 #include "util.h"
 #include "wct.h"
 #include "wctparms.h"
 #include "wctprivate.h"
-static void usage(char* f) {
-    fprintf(stderr, "Usage %s: [-see below-] adjlist_file NrMachines\n", f);
-    fprintf(stderr, "   -d      turn on the debugging\n");
-    fprintf(stderr, "   -f n    Number of iterations in RVND\n");
-    fprintf(stderr,
-            "   -s int  Node selection: 0 = none, 1= minimum lower "
-            "bound(default), 2 = DFS\n");
-    fprintf(stderr, "   -l dbl  Cpu time limit for branching\n");
-    fprintf(stderr, "   -L dbl  Cpu time limit for heuristic construction\n");
-    fprintf(stderr,
-            "   -B int  Branch and Bound use: 0 = no branch and bound, 1 "
-            "= use branch and bound(default)\n");
-    fprintf(
-        stderr,
-        "   -S int  Stabilization technique: 0 = no stabilization(default), "
-        "1 = stabilization wentgnes, 2 = stabilization dynamic\n");
-    fprintf(stderr, "   -p int  Print csv-files: 0 = no(default), 1 = yes\n");
-    fprintf(stderr,
-            "   -b int  Branching strategy: 0 = conflict(default), 1 = ahv\n");
-    fprintf(stderr,
-            "   -Z int  Use strong branching: 0 = use strong "
-            "branching(default), 1 = no strong branching\n");
-    fprintf(stderr,
-            "   -a int  Set solver: 0 = bdd solver(default), 1 = dp solver\n");
-}
 
-static char* find_match(const char* _instance_file) {
-    GError*     err = NULL;
-    GRegex*     regex = g_regex_new("^.*(wt[0-9]*_[0-9]*).*$", 0, 0, &err);
-    GMatchInfo* match_info = (GMatchInfo*)NULL;
-
-    g_regex_match(regex, _instance_file, 0, &match_info);
-
-    char* val = (char*)NULL;
-    if (g_match_info_matches(match_info)) {
-        gchar* result = g_match_info_fetch(match_info, 1);
-        val = g_strdup(result);
-        g_free(result);
-    } else {
-        printf("No match\n");
-        val = strdup("unknown_name");
-    }
-
-    g_match_info_free(match_info);
-    g_regex_unref(regex);
-    return val;
-}
-
-static int parseargs(int ac, char** av, Parms* parms) {
-    int    c = 0;
-    double f = 0.0;
-    int    val = 0;
-    char*  ptr = (char*)NULL;
-    int    debug = dbg_lvl();
-
-    while ((c = getopt(ac, av, "df:s:l:B:S:D:p:b:Z:a:m:r:h:e:")) != EOF) {
-        switch (c) {
-            case 'd':
-                ++(debug);
-                set_dbg_lvl(debug);
-                break;
-
-            case 'f':
-                c = atoi(optarg);
-                val = parms_set_nb_iterations_rvnd(parms, c);
-                CCcheck_val(val, "Failed number feasible solutions");
-                break;
-
-            case 's':
-                c = atoi(optarg);
-                val = parms_set_search_strategy(parms, c);
-                CCcheck_val(val, "Failed set_branching_strategy");
-                break;
-
-            case 'l':
-                f = strtod(optarg, &ptr);
-                val = parms_set_branching_cpu_limit(parms, f);
-                CCcheck_val(val, "Failed parms_set_branching_cpu_limit");
-                break;
-
-            case 'B':
-                c = atoi(optarg);
-                val = parms_set_branchandbound(parms, c);
-                CCcheck_val(val, "Failed parms_set_branchandbound");
-                break;
-
-            case 'S':
-                c = atoi(optarg);
-                val = parms_set_stab_technique(parms, c);
-                CCcheck_val(val, "Failed in parms_set_stab_technique");
-                break;
-
-            case 'p':
-                c = atoi(optarg);
-                val = parms_set_print(parms, c);
-                CCcheck_val(val, "Failed in print");
-                break;
-
-            case 'b':
-                c = atoi(optarg);
-                val = parms_set_branching_strategy(parms, c);
-                CCcheck_val(val, "Failed in set branching strategy");
-                break;
-            case 'a':
-                c = atoi(optarg);
-                val = parms_set_pricing_solver(parms, c);
-                CCcheck_val(val, "Failed in set alpha");
-                break;
-            case 'Z':
-                c = atoi(optarg);
-                val = parms_set_strong_branching(parms, c);
-                CCcheck_val(val, "Failed in set strong branching");
-                break;
-            case 'm':
-                c = atoi(optarg);
-                val = parms_set_mip_solver(parms, c);
-                CCcheck_val(val, "Failed in set mip solver");
-                break;
-            case 'h':
-                c = atoi(optarg);
-                val = parms_set_use_heuristic(parms, c);
-                CCcheck_val(val, "Failed in set mip solver");
-                break;
-            case 'r':
-                c = atoi(optarg);
-                val = parms_set_reduce_cost(parms, c);
-                CCcheck_val(val, "Failed in set reduce cost fixing");
-                break;
-            case 'e':
-                c = atoi(optarg);
-                val = parms_set_bb_strategy(parms, c);
-                CCcheck_val(val, "Failed to set strategy");
-                break;
-            default:
-                usage(av[0]);
-                val = 1;
-                goto CLEAN;
-        }
-    }
-
-    if (ac <= optind) {
-        val = 1;
-        goto CLEAN;
-    } else {
-        char* instance_file = av[optind++];
-
-        val = parms_set_file(parms, instance_file);
-        CCcheck_val(val, "Failed in parms_set_file");
-        val = parms_set_pname(parms, find_match(instance_file));
-        CCcheck_val(val, "Failed in parms_set_pname");
-
-        if (ac <= optind) {
-            val = 1;
-            goto CLEAN;
-        }
-        c = atoi(av[optind++]);
-        val = parms_set_nb_machines(parms, c);
-        CCcheck_val(val, "Failed in parms_set_nb_machines");
-    }
-
-CLEAN:
-
-    if (val) {
-        usage(av[0]);
-    }
-
-    return val;
-}
-
-int main(int ac, char** av) {
+int main(int ac, const char** av) {
     int     val = 0;
     double  start_time = 0.0;
     Problem problem;
@@ -199,8 +27,9 @@ int main(int ac, char** av) {
     val = program_header(ac, av);
     CCcheck_val_2(val, "Failed in program_header");
 
-    val = parseargs(ac, av, parms);
-    CCcheck_val_2(val, "Failed in parseargs");
+    val = parse_cmd(ac, av, parms);
+    CCcheck_val_2(val, "Failed parsing the commands\n");
+
     if (dbg_lvl() > 1) {
         printf("Debugging turned on\n");
     }
@@ -223,7 +52,7 @@ int main(int ac, char** av) {
      *feasible solutions
      *
      */
-    if (parms->use_heuristic == yes_use_heuristic) {
+    if (parms->use_heuristic) {
         heuristic(&problem);
     } else {
         problem.opt_sol =
@@ -254,7 +83,7 @@ int main(int ac, char** av) {
         root->solver = newSolverDp(root->jobarray, root->nb_machines,
                                    root->H_max, parms, problem.opt_sol->tw);
     }
-    statistics->first_size_graph = get_nb_edges(root->solver);
+    statistics->first_size_graph = get_nb_vertices(root->solver);
 
     /**
      * @brief Initial stabilization
@@ -268,8 +97,6 @@ int main(int ac, char** av) {
      * @brief Solve initial relaxation
      *
      */
-    // build_rmp(root);
-    // solve_relaxation(root);
     GPtrArray* solutions_pool = g_ptr_array_copy(
         root->localColPool, g_copy_scheduleset, &(problem.nb_jobs));
 
@@ -317,7 +144,9 @@ int main(int ac, char** av) {
         build_solve_mip(root);
     }
 
-    print_to_csv(&problem);
+    if (parms->print) {
+        print_to_csv(&problem);
+    }
 
 CLEAN:
     problem_free(&problem);

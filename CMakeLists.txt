@@ -133,6 +133,7 @@ else()
              CONAN_PKG::fmt
              CONAN_PKG::glib
              CONAN_PKG::boost
+             CONAN_PKG::docopt.cpp
              ORUtils::ORUtils
              branch-and-bound
       PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -144,6 +145,7 @@ else()
       CONAN_PKG::fmt
       CONAN_PKG::glib
       CONAN_PKG::boost
+      CONAN_PKG::docopt.cpp
       ORUtils::ORUtils
       branch-and-bound
       -lm

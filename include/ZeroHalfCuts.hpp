@@ -1,6 +1,7 @@
 #ifndef __ZEROHALFCUTS_H__
 #define __ZEROHALFCUTS_H__
 
+#include <gurobi_c++.h>
 #include <memory>
 #include <span>
 #include <vector>
@@ -8,7 +9,6 @@
 #include "NodeBdd.hpp"
 #include "NodeBddTable.hpp"
 #include "NodeId.hpp"
-#include "gurobi_c++.h"
 
 class ZeroHalfCuts {
    public:
