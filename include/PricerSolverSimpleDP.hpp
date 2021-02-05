@@ -2,20 +2,21 @@
 #define PRICER_SOLVER_SIMPLE_DP_HPP
 #include <memory>
 #include "PricerSolverBase.hpp"
+#include "gurobi_c++.h"
 
 class PricerSolverSimpleDp : public PricerSolverBase {
    private:
-    int                       Hmax;
-    size_t                    size_graph;
-    std::unique_ptr<Job*[]>   A;
-    std::unique_ptr<double[]> F;
-    std::unique_ptr<double[]> backward_F;
-    std::vector<Job*>*        backward_graph;
-    std::vector<Job*>*        forward_graph;
-    GRBVar*                   TI_x;
-    int*                      take;
-    double*                   lp_x;
-    double*                   solution_x;
+    int                            Hmax;
+    size_t                         size_graph;
+    std::vector<Job*>              A;
+    std::vector<double>            F;
+    std::vector<double>            backward_F;
+    std::vector<std::vector<Job*>> backward_graph;
+    std::vector<std::vector<Job*>> forward_graph;
+    std::vector<GRBVar>            TI_x;
+    std::vector<int>               take;
+    std::vector<double>            lp_x;
+    std::vector<double>            solution_x;
 
    public:
     PricerSolverSimpleDp(GPtrArray*  _jobs,
@@ -27,18 +28,17 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         : PricerSolverBase(src),
           Hmax(src.Hmax),
           size_graph(src.size_graph),
-          A(new Job*[Hmax + 1]),
-          F(new double[Hmax + 1]),
-          backward_F(new double[Hmax + 1]),
-          TI_x(new GRBVar[convex_constr_id * (Hmax + 1)]),
-          take(static_cast<int*>(
-              malloc(convex_constr_id * (Hmax + 1) * sizeof(int)))),
-          lp_x(new double[convex_constr_id * (Hmax + 1)]{}),
-          solution_x(new double[convex_constr_id * (Hmax + 1)]) {
+          A(Hmax + 1),
+          F(Hmax + 1),
+          backward_F(Hmax + 1),
+          TI_x(convex_constr_id * (Hmax + 1), GRBVar()),
+          take(convex_constr_id * (Hmax + 1)),
+          lp_x(convex_constr_id * (Hmax + 1), 0.0),
+          solution_x(convex_constr_id * (Hmax + 1)) {
         init_table();
     };
-    ~PricerSolverSimpleDp();
-    void init_table() override;
+    ~PricerSolverSimpleDp() override;
+    void init_table();
 
     void evaluate_nodes([[maybe_unused]] double* pi,
                         [[maybe_unused]] int     UB,
@@ -72,9 +72,9 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void                    backward_evaluator(double* _pi);
 
     int* get_take() override {
-        int* tmp = take;
-        take = NULL;
-        return tmp;
+        // int* tmp = take.data();
+        // take = nullptr;
+        return take.data();
     }
 
     void update_constraints() override {}

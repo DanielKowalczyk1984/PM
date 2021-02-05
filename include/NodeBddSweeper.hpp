@@ -59,10 +59,10 @@ class DdSweeper {
      */
     explicit DdSweeper(NodeTableEntity<T>& _diagram)
         : diagram(_diagram),
-          oneSrcPtr(0),
+          oneSrcPtr(nullptr),
           allCount(0),
           maxCount(0),
-          rootPtr(0) {}
+          rootPtr(nullptr) {}
 
     /**
      * Constructor.
@@ -75,7 +75,7 @@ class DdSweeper {
           oneSrcPtr(&_oneSrcPtr),
           allCount(0),
           maxCount(0),
-          rootPtr(0) {}
+          rootPtr(nullptr) {}
 
     /**
      * Set the root pointer.
@@ -92,8 +92,9 @@ class DdSweeper {
     void update(int current, int child, size_t count) {
         assert(1 <= current);
         assert(0 <= child);
-        if (current <= 1)
+        if (current <= 1) {
             return;
+        }
 
         if (size_t(current) >= sweepLevel.size()) {
             sweepLevel.resize(current + 1);
@@ -101,8 +102,9 @@ class DdSweeper {
         }
 
         for (int i = child; i <= current; ++i) {
-            if (sweepLevel[i] > 0)
+            if (sweepLevel[i] > 0) {
                 break;
+            }
             sweepLevel[i] = current + 1;
         }
 
@@ -114,10 +116,12 @@ class DdSweeper {
             deadCount[k] += deadCount[i];
             deadCount[i] = 0;
         }
-        if (maxCount < allCount)
+        if (maxCount < allCount) {
             maxCount = allCount;
-        if (deadCount[k] * SWEEP_RATIO < maxCount)
+        }
+        if (deadCount[k] * SWEEP_RATIO < maxCount) {
             return;
+        }
 
         std::vector<std::vector<NodeId>> newId(diagram.numRows());
 
@@ -133,10 +137,12 @@ class DdSweeper {
 
                 for (int b = 0; b < 2; ++b) {
                     NodeId& f = p.branch[b];
-                    if (f.row() >= k)
+                    if (f.row() >= k) {
                         f = newId[f.row()][f.col()];
-                    if (f != 0)
+                    }
+                    if (f != 0) {
                         dead = false;
+                    }
                 }
 
                 if (dead) {
@@ -152,8 +158,7 @@ class DdSweeper {
         }
 
         if (oneSrcPtr) {
-            for (size_t i = 0; i < oneSrcPtr->size(); ++i) {
-                NodeBranchId& nbi = (*oneSrcPtr)[i];
+            for (auto& nbi : *oneSrcPtr) {
                 if (nbi.row >= k) {
                     NodeId f = newId[nbi.row][nbi.col];
                     nbi.row = f.row();

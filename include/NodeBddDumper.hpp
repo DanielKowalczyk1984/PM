@@ -13,7 +13,7 @@
  */
 template <typename S, typename T = NodeBdd<double>>
 class DdDumper {
-    typedef S        Spec;
+    using Spec = S;
     static int const AR = Spec::ARITY;
     static int const headerSize = 1;
 
@@ -50,11 +50,12 @@ class DdDumper {
         }
     };
 
-    typedef std::unordered_set<SpecNode*, Hasher<Spec>, Hasher<Spec>> UniqTable;
+    using UniqTable = std::unordered_set<SpecNode*, Hasher<Spec>, Hasher<Spec>>;
 
     static int getSpecNodeSize(int n) {
-        if (n < 0)
+        if (n < 0) {
             throw std::runtime_error("storage size is not initialized!!!");
+        }
         return headerSize + (n + sizeof(SpecNode) - 1) / sizeof(SpecNode);
     }
 
@@ -71,7 +72,7 @@ class DdDumper {
     explicit DdDumper(Spec const& s)
         : spec(s),
           specNodeSize(getSpecNodeSize(spec.datasize())),
-          oneState(0),
+          oneState(nullptr),
           oneId(1) {}
 
     ~DdDumper() {
@@ -81,12 +82,17 @@ class DdDumper {
         }
     }
 
+    DdDumper<S, T>(DdDumper<S, T>&&) = default;
+    DdDumper<S, T>(const DdDumper<S, T>&) = default;
+    DdDumper<S, T>& operator=(const DdDumper<S, T>&) = default;
+    DdDumper<S, T>& operator=(DdDumper<S, T>&&) = default;
+
     /**
      * Dumps the node table in Graphviz (dot) format.
      * @param os the output stream.
      * @param title title label.
      */
-    void dump(std::ostream& os, std::string title) {
+    void dump(std::ostream& os, const std::string& title) {
         if (oneState) {
             spec.destruct(oneState);
         } else {
@@ -102,8 +108,8 @@ class DdDumper {
                 os << "  label=\"" << title << "\";\n";
             }
         } else if (n < 0) {
-            os << "  \"^\" [shape=none,label=\"" << title << "\"];\n";
-            os << "  \"^\" -> \"" << oneId << "\" [style=dashed"
+            os << R"(  "^" [shape=none,label=")" << title << "\"];\n";
+            os << R"(  "^" -> ")" << oneId << "\" [style=dashed"
                << "];\n";
             os << "  \"" << oneId << "\" ";
             os << "[shape=square,label=\"⊤\"];\n";
@@ -119,11 +125,11 @@ class DdDumper {
                 os << "  " << (i + 1) << " -> " << i << " [style=invis];\n";
             }
 
-            os << "  \"^\" [shape=none,label=\"" << title << "\"];\n";
-            os << "  \"^\" -> \"" << root << "\" [style=dashed"
+            os << R"(  "^" [shape=none,label=")" << title << "\"];\n";
+            auto dummy = R"(  "^" -> ")";
+            os << dummy << root << "\" [style=dashed"
                << "];\n";
 
-            // snodeTable.init(n + 1);
             spec_nodes_table.clear();
             spec_nodes_table.resize(n + 1);
             SpecNode* p = spec_nodes_table[n].alloc_front(specNodeSize);
@@ -250,10 +256,12 @@ class DdDumper {
             for (int b = 0; b < AR; ++b) {
                 NodeId f(i, j);
                 NodeId child = nodeList[j].branch[b];
-                if (child == 0)
+                if (child == 0) {
                     continue;
-                if (child == 1)
+                }
+                if (child == 1) {
                     child = oneId;
+                }
 
                 os << "  \"" << f << "\" -> \"" << child << "\"";
 

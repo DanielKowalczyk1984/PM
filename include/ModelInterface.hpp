@@ -17,10 +17,10 @@
 #include "wctparms.h"
 class VariableKeyBase {
    private:
-    int  j;
-    int  t;
-    bool high;
-    bool root;
+    int  j{-1};
+    int  t{-1};
+    bool high{false};
+    bool root{false};
 
    public:
     VariableKeyBase(int _j, int _t, bool _high = true, bool _root = false)
@@ -29,15 +29,15 @@ class VariableKeyBase {
           high(_high),
           root(_root) {}
 
-    VariableKeyBase() : j(-1), t(-1), high(false), root(false) {}
+    VariableKeyBase() = default;
 
-    inline int get_j() const { return j; }
+    [[nodiscard]] inline int get_j() const { return j; }
 
-    inline int get_t() const { return t; }
+    [[nodiscard]] inline int get_t() const { return t; }
 
     inline bool get_root() { return root; }
 
-    inline bool get_high() const { return high; }
+    [[nodiscard]] inline bool get_high() const { return high; }
 
     inline void set_j(int _j) { j = _j; }
 
@@ -55,9 +55,8 @@ class VariableKeyBase {
 };
 
 class ConstraintBase {
-   protected:
-    char   sense;
     double rhs;
+    char   sense;
     bool   can_be_deleted;
 
    public:
@@ -86,9 +85,11 @@ class ConstraintAssignment : public ConstraintBase {
     int job;
 
    public:
-    ConstraintAssignment(int _job) : ConstraintBase('>', 1.0), job(_job) {}
+    explicit ConstraintAssignment(int _job)
+        : ConstraintBase('>', 1.0),
+          job(_job) {}
 
-    double get_var_coeff(VariableKeyBase* key) {
+    double get_var_coeff(VariableKeyBase* key) override {
         if (key->get_j() == job && key->get_high()) {
             return 1.0;
         }
@@ -100,14 +101,14 @@ class ConstraintAssignment : public ConstraintBase {
     ConstraintAssignment(ConstraintAssignment&&) = default;
     ConstraintAssignment& operator=(const ConstraintAssignment&) = default;
     ConstraintAssignment& operator=(ConstraintAssignment&&) = default;
-    virtual ~ConstraintAssignment() = default;
+    ~ConstraintAssignment() override = default;
 };
 
 class ConstraintConvex : public ConstraintBase {
    public:
-    ConstraintConvex(double _rhs) : ConstraintBase('>', _rhs) {}
+    explicit ConstraintConvex(double _rhs) : ConstraintBase('>', _rhs) {}
 
-    double get_var_coeff(VariableKeyBase* key) {
+    double get_var_coeff(VariableKeyBase* key) override {
         if (key->get_t() == 0) {
             return -1.0;
         }
@@ -122,19 +123,22 @@ class ReformulationModel {
 
    public:
     ReformulationModel(int nb_assignments, int nb_machines);
-    ~ReformulationModel();
-    ReformulationModel(ReformulationModel&& op);  // movable and noncopyable
-    ReformulationModel& operator=(ReformulationModel&& op);
+    ~ReformulationModel() = default;
+    ReformulationModel(ReformulationModel&&) noexcept =
+        default;  // movable and noncopyable ReformulationModel&
+    ReformulationModel& operator=(ReformulationModel&&) = default;
     ReformulationModel(const ReformulationModel&) = default;
     ReformulationModel& operator=(const ReformulationModel&) = default;
 
-    inline int get_nb_constraints() const { return constraint_array.size(); };
+    [[nodiscard]] inline size_t get_nb_constraints() const {
+        return constraint_array.size();
+    };
 
-    inline ConstraintBase* get_constraint(int c) const {
+    [[nodiscard]] inline ConstraintBase* get_constraint(int c) const {
         return constraint_array[c].get();
     };
 
-    inline std::shared_ptr<ConstraintBase> get_constraint_ptr(int c) {
+    inline std::shared_ptr<ConstraintBase> get_constraint_ptr(int c) const {
         return constraint_array[c];
     }
 
@@ -176,8 +180,8 @@ class BddCoeff : public VariableKeyBase {
           row(_row),
           coeff(_coeff),
           value(_value){};
-    BddCoeff() = default;
-    ~BddCoeff() = default;
+    // BddCoeff() = default;
+    ~BddCoeff() override = default;
     BddCoeff(const BddCoeff&) = default;
     BddCoeff& operator=(const BddCoeff&) = default;
     BddCoeff(BddCoeff&& op) = default;
@@ -185,7 +189,7 @@ class BddCoeff : public VariableKeyBase {
 
     inline double get_coeff() { return coeff; }
 
-    inline double get_value() const { return value; }
+    [[nodiscard]] inline double get_value() const { return value; }
 
     inline void set_value(double _value) { value = _value; }
 
@@ -208,7 +212,7 @@ class BddCoeff : public VariableKeyBase {
 namespace std {
 template <>
 struct hash<BddCoeff> {
-    std::size_t operator()(BddCoeff const& s) const noexcept {
+    std::size_t operator()(auto const& s) const noexcept {
         std::size_t seed = 0;
         boost::hash_combine(seed, s.get_j());
         boost::hash_combine(seed, s.get_t());
@@ -221,14 +225,18 @@ struct hash<BddCoeff> {
 
 class GenericData {
    private:
-    typedef std::unordered_map<BddCoeff, double> coeff_hash_table;
-    coeff_hash_table                             coeff;
+    using coeff_hash_table = std::unordered_map<BddCoeff, double>;
+    coeff_hash_table coeff;
+
+    static constexpr double EPS_GENERIC_DATA = 1e-6;
 
    public:
-    GenericData() {}
+    GenericData() = default;
     ~GenericData() = default;
-    GenericData(GenericData&& op) = default;  // movable and noncopyable
-    GenericData& operator=(GenericData&& op) = default;
+    GenericData(GenericData&&) = default;  // movable and noncopyable
+    GenericData(const GenericData&) = default;
+    GenericData& operator=(GenericData&&) = default;
+    GenericData& operator=(const GenericData&) = default;
 
     coeff_hash_table::iterator find(const BddCoeff& key) {
         return coeff.find(key);
@@ -266,7 +274,7 @@ class GenericData {
                 return false;
             }
 
-            if (fabs(it1.second - (*it2).second) > 1e-6) {
+            if (fabs(it1.second - (*it2).second) > EPS_GENERIC_DATA) {
                 return false;
             }
         }
@@ -274,7 +282,7 @@ class GenericData {
         return true;
     };
 
-    friend bool operator!=(const GenericData& lhs, GenericData& rhs) {
+    friend bool operator!=(const GenericData& lhs, const GenericData& rhs) {
         return !(lhs == rhs);
     }
 };
@@ -290,21 +298,21 @@ class ConstraintGeneric : public ConstraintBase {
         : ConstraintBase(_sense, _rhs, _can_be_deleted),
           data(_data) {}
 
-    ConstraintGeneric(double _rhs,
-                      char   _sense = '>',
-                      bool   _can_be_deleted = true)
+    explicit ConstraintGeneric(double _rhs,
+                               char   _sense = '>',
+                               bool   _can_be_deleted = true)
         : ConstraintBase(_sense, _rhs, _can_be_deleted),
           data(nullptr) {}
 
-    ~ConstraintGeneric() = default;
+    ~ConstraintGeneric() override = default;
     ConstraintGeneric(ConstraintGeneric&& op) = default;
     ConstraintGeneric& operator=(ConstraintGeneric&& op) = default;
     ConstraintGeneric& operator=(const ConstraintGeneric&) = default;
     ConstraintGeneric(const ConstraintGeneric&) = default;
 
     double get_var_coeff(VariableKeyBase* key) override {
-        BddCoeff* aux = static_cast<BddCoeff*>(key);
-        auto      it = data->find(*aux);
+        auto* aux = static_cast<BddCoeff*>(key);
+        auto  it = data->find(*aux);
         if (it == data->end()) {
             return 0.0;
         } else {
@@ -336,34 +344,37 @@ class OriginalConstraint {
     std::list<std::shared_ptr<T>> coeff_list;
 
    public:
-    OriginalConstraint(std::shared_ptr<ConstraintBase> _constr)
+    explicit OriginalConstraint(const std::shared_ptr<ConstraintBase>& _constr)
         : constr(_constr){};
     OriginalConstraint() : constr(){};
     ~OriginalConstraint() = default;
-    OriginalConstraint(OriginalConstraint&&) = default;
-    OriginalConstraint& operator=(OriginalConstraint&&) = default;
+    OriginalConstraint(OriginalConstraint&&) noexcept = default;
+    OriginalConstraint& operator=(OriginalConstraint&&) noexcept = default;
     OriginalConstraint<T>(const OriginalConstraint<T>&) = default;
     OriginalConstraint<T>& operator=(const OriginalConstraint<T>&) = default;
 
-    inline std::list<std::shared_ptr<T>>* get_coeff_list() {
-        return &coeff_list;
+    inline std::list<std::shared_ptr<T>>& get_coeff_list() {
+        return coeff_list;
     }
 
     inline ConstraintBase* get_constr() {
         auto aux = constr.lock();
-        if (aux)
+        if (aux) {
             return aux.get();
-        else
+        } else {
             return nullptr;
+        }
     }
 
     inline void add_coeff_to_list(std::shared_ptr<T> _coeff) {
         coeff_list.push_back(_coeff);
     }
 
-    inline void set_constraint(std::shared_ptr<ConstraintBase> _constr) {
+    inline void set_constraint(const std::shared_ptr<ConstraintBase>& _constr) {
         constr = _constr;
     }
+
+    void clear_coeff() { coeff_list.clear(); }
 };
 
 template <typename T = BddCoeff>
@@ -372,7 +383,7 @@ class OriginalModel {
     std::vector<OriginalConstraint<T>> constraint_array;
 
    public:
-    OriginalModel(ReformulationModel& model)
+    explicit OriginalModel(const ReformulationModel& model)
         : constraint_array(model.get_nb_constraints()) {
         const int nb_constraints = model.get_nb_constraints();
 
@@ -382,8 +393,9 @@ class OriginalModel {
     }
 
     ~OriginalModel() = default;
-    OriginalModel(OriginalModel&& op) = default;  // movable and noncopyable
-    OriginalModel& operator=(OriginalModel&& op) = default;
+    OriginalModel(OriginalModel&& op) noexcept =
+        default;  // movable and noncopyable
+    OriginalModel& operator=(OriginalModel&& op) noexcept = default;
     OriginalModel<T>(const OriginalModel<T>&) = default;
     OriginalModel<T>& operator=(const OriginalModel<T>&) = default;
 
@@ -395,11 +407,11 @@ class OriginalModel {
         return constraint_array[c].get_constr();
     }
 
-    inline std::list<std::shared_ptr<T>>* get_coeff_list(int c) {
+    inline std::list<std::shared_ptr<T>>& get_coeff_list(int c) {
         return constraint_array[c].get_coeff_list();
     }
 
-    inline void add_constraint(std::shared_ptr<ConstraintBase> _constr) {
+    inline void add_constraint(const std::shared_ptr<ConstraintBase>& _constr) {
         constraint_array.push_back(OriginalConstraint<>(_constr));
     }
 
@@ -408,6 +420,12 @@ class OriginalModel {
     inline void delete_constraints(int first, int nb_del) {
         auto it = constraint_array.begin() + first;
         constraint_array.erase(it, it + nb_del);
+    }
+
+    void clear_all_coeff() {
+        for (auto& it : constraint_array) {
+            it.clear_coeff();
+        }
     }
 };
 

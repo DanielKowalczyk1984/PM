@@ -1,37 +1,34 @@
 #include "PricerSolverZdd.hpp"
 #include <fmt/core.h>
 #include <NodeBddStructure.hpp>
+#include <cstddef>
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 #include "boost/graph/graphviz.hpp"
+#include "gurobi_c.h"
 
 PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
                                  int         _num_machines,
                                  GPtrArray*  _ordered_jobs,
-                                 const char* p_name,
-                                 double      _UB)
-    : PricerSolverBase(_jobs, _num_machines, p_name, _UB),
-      size_graph(0),
-      nb_removed_edges(0),
-      nb_removed_nodes(0),
-      ordered_jobs(_ordered_jobs),
-      nb_layers(_ordered_jobs->len)
+                                 const char* _p_name,
+                                 double      _ub)
+    : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
+      ordered_jobs(_ordered_jobs)
 
 {
     /**
      * Construction of decision diagram
      */
     PricerConstruct ps(ordered_jobs);
-    decision_diagram =
-        std::unique_ptr<DdStructure<NodeZdd<>>>(new DdStructure<NodeZdd<>>(ps));
+    decision_diagram = std::make_unique<DdStructure<NodeZdd<>>>(ps);
     remove_layers_init();
-    decision_diagram->compressBdd();
-    decision_diagram->reduceZdd();
+    // decision_diagram->compressBdd();
+    // decision_diagram->reduceZdd();
     size_graph = decision_diagram->size();
     init_table();
     construct_mipgraph();
-    lp_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
-    solution_x = std::unique_ptr<double[]>(new double[get_nb_edges()]);
+    lp_x = std::vector<double>(num_edges(mip_graph), 0.0);
+    solution_x = std::vector<double>(num_edges(mip_graph), 0.0);
 }
 
 void PricerSolverZdd::construct_mipgraph() {
@@ -73,8 +70,8 @@ void PricerSolverZdd::construct_mipgraph() {
 
     for (int i = decision_diagram->topLevel(); i > 0; i--) {
 #ifndef NDEBUG
-        auto job = ((job_interval_pair*)g_ptr_array_index(
-                        ordered_jobs, ordered_jobs->len - i))
+        auto job = (static_cast<job_interval_pair*>(
+                        g_ptr_array_index(ordered_jobs, ordered_jobs->len - i)))
                        ->j;
 #endif  // NDEBUG
 
@@ -110,17 +107,18 @@ void PricerSolverZdd::construct_mipgraph() {
 void PricerSolverZdd::init_table() {
     auto& table = *(decision_diagram->getDiagram());
     /** init table */
-    auto& n = table.node(decision_diagram->root());
+    auto&     n = table.node(decision_diagram->root());
+    std::span span_ordered_job{ordered_jobs->pdata, ordered_jobs->len};
     n.add_sub_node(0, decision_diagram->root(), true, false);
     n.set_node_id(decision_diagram->root());
     if (table.node(decision_diagram->root()).list.size() > 1) {
         table.node(decision_diagram->root()).list.pop_back();
     }
 
-    for (int i = decision_diagram->topLevel(); i >= 0; i--) {
-        int                layer = nb_layers - i;
-        job_interval_pair* tmp_pair = reinterpret_cast<job_interval_pair*>(
-            g_ptr_array_index(ordered_jobs, layer));
+    for (size_t i = decision_diagram->topLevel(); i >= 0; i--) {
+        size_t layer = ordered_jobs->len - i;
+        auto*  tmp_pair =
+            static_cast<job_interval_pair*>(span_ordered_job[layer]);
 
         for (auto& it : table[i]) {
             if (i != 0) {
@@ -142,8 +140,8 @@ void PricerSolverZdd::init_table() {
     }
 }
 
-OptimalSolution<double> PricerSolverZdd::farkas_pricing([
-    [maybe_unused]] double* pi) {
+OptimalSolution<double> PricerSolverZdd::farkas_pricing(
+    [[maybe_unused]] double* pi) {
     OptimalSolution<double> sol;
 
     return sol;
@@ -184,8 +182,7 @@ void PricerSolverZdd::remove_layers_init() {
                                  last_del - first_del + 1);
     }
 
-    nb_layers = ordered_jobs->len;
-    fmt::print("The new number of layers = {}\n", nb_layers);
+    fmt::print("The new number of layers = {}\n", ordered_jobs->len);
 }
 
 void PricerSolverZdd::remove_layers() {
@@ -199,9 +196,11 @@ void PricerSolverZdd::remove_layers() {
         bool remove_layer = true;
 
         for (auto& iter : table[i]) {
-            auto end = std::remove_if(
-                iter.list.begin(), iter.list.end(),
-                [](std::shared_ptr<SubNodeZdd<>> n) { return !(n->calc_yes); });
+            auto end =
+                std::remove_if(iter.list.begin(), iter.list.end(),
+                               [](std::shared_ptr<SubNodeZdd<>> const& n) {
+                                   return !(n->calc_yes);
+                               });
             iter.list.erase(end, iter.list.end());
 
             if (iter.list.empty()) {
@@ -238,13 +237,12 @@ void PricerSolverZdd::remove_layers() {
                                  last_del - first_del + 1);
     }
 
-    nb_layers = ordered_jobs->len;
-    fmt::print("The new number of layers = {}\n", nb_layers);
+    fmt::print("The new number of layers = {}\n", ordered_jobs->len);
 }
 
 void PricerSolverZdd::remove_edges() {
-    decision_diagram->compressBdd();
-    decision_diagram->reduceZdd();
+    // decision_diagram->compressBdd();
+    // decision_diagram->reduceZdd();
     nb_removed_nodes -= size_graph;
     size_graph = decision_diagram->size();
     fmt::print("The new size of ZDD = {}\n", size_graph);
@@ -269,24 +267,18 @@ void PricerSolverZdd::build_mip() {
 
                 double cost = value_Fj(n->weight + job->processing_time, job);
                 edge_var_list[*it.first].x =
-                    model->addVar(0.0, 1.0, cost, GRB_CONTINUOUS);
+                    model.addVar(0.0, 1.0, cost, GRB_CONTINUOUS);
             } else {
-                edge_var_list[*it.first].x = model->addVar(
+                edge_var_list[*it.first].x = model.addVar(
                     0.0, static_cast<double>(convex_rhs), 0.0, GRB_CONTINUOUS);
             }
         }
 
-        model->update();
+        model.update();
         /** Assignment constraints */
-        std::unique_ptr<GRBLinExpr[]> assignment(
-            new GRBLinExpr[convex_constr_id]());
-        std::unique_ptr<char[]>   sense(new char[convex_constr_id]);
-        std::unique_ptr<double[]> rhs(new double[convex_constr_id]);
-
-        for (unsigned i = 0; i < jobs->len; ++i) {
-            sense[i] = GRB_GREATER_EQUAL;
-            rhs[i] = 1.0;
-        }
+        std::vector<GRBLinExpr> assignment(convex_constr_id, GRBLinExpr());
+        std::vector<char>       sense(convex_constr_id, GRB_GREATER_EQUAL);
+        std::vector<double>     rhs(convex_constr_id, 1.0);
 
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
             auto high = edge_type_list[*it.first];
@@ -298,23 +290,22 @@ void PricerSolverZdd::build_mip() {
             }
         }
 
-        std::unique_ptr<GRBConstr[]> assignment_constrs(
-            model->addConstrs(assignment.get(), sense.get(), rhs.get(), nullptr,
-                              convex_constr_id));
-        model->update();
+        std::unique_ptr<GRBConstr> assignment_constrs(
+            model.addConstrs(assignment.data(), sense.data(), rhs.data(),
+                             nullptr, convex_constr_id));
+        model.update();
         /** Flow constraints */
         size_t num_vertices = boost::num_vertices(mip_graph);
         // boost::num_vertices(mip_graph) - table[0][1].list.size() + 1;
-        std::unique_ptr<GRBLinExpr[]> flow_conservation_constr(
-            new GRBLinExpr[num_vertices]());
-        std::unique_ptr<char[]>   sense_flow(new char[num_vertices]);
-        std::unique_ptr<double[]> rhs_flow(new double[num_vertices]);
+        std::vector<GRBLinExpr> flow_conservation_constr(num_vertices,
+                                                         GRBLinExpr());
+        std::vector<char>       sense_flow(num_vertices, GRB_EQUAL);
+        std::vector<double>     rhs_flow(num_vertices, 0.0);
 
         for (auto it = vertices(mip_graph); it.first != it.second; ++it.first) {
             const auto node_id = vertex_nodeid_list[*it.first];
             const auto vertex_key = vertex_mip_id_list[*it.first];
-            sense_flow[vertex_key] = GRB_EQUAL;
-            auto out_edges_it = boost::out_edges(*it.first, mip_graph);
+            auto       out_edges_it = boost::out_edges(*it.first, mip_graph);
 
             for (; out_edges_it.first != out_edges_it.second;
                  ++out_edges_it.first) {
@@ -334,18 +325,16 @@ void PricerSolverZdd::build_mip() {
                 rhs_flow[vertex_key] = static_cast<double>(-convex_rhs);
             } else if (node_id.row() == 0) {
                 rhs_flow[vertex_key] = static_cast<double>(convex_rhs);
-            } else {
-                rhs_flow[vertex_key] = 0.0;
             }
         }
 
-        std::unique_ptr<GRBConstr[]> flow_constrs(
-            model->addConstrs(flow_conservation_constr.get(), sense_flow.get(),
-                              rhs_flow.get(), nullptr, num_vertices));
-        model->update();
-        model->write("zdd_" + problem_name + "_" + std::to_string(convex_rhs) +
-                     ".lp");
-        model->optimize();
+        std::unique_ptr<GRBConstr> flow_constrs(
+            model.addConstrs(flow_conservation_constr.data(), sense_flow.data(),
+                             rhs_flow.data(), nullptr, num_vertices));
+        model.update();
+        model.write("zdd_" + problem_name + "_" + std::to_string(convex_rhs) +
+                    ".lp");
+        model.optimize();
     } catch (GRBException& e) {
         std::cout << "Error code = " << e.getErrorCode() << "\n";
         std::cout << e.getMessage() << "\n";
@@ -376,7 +365,7 @@ void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
     // vertex_writer(g, table); boost::write_graphviz(outf, g, vertex_writer);
     decision_diagram->zddSubset(constr);
     // outf.close();
-    decision_diagram->compressBdd();
+    // decision_diagram->compressBdd();
     init_table();
     std::cout << decision_diagram->size() << '\n';
     construct_mipgraph();
@@ -390,23 +379,24 @@ void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
 void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                                                 const GPtrArray* schedule_sets,
                                                 int              num_columns) {
-    auto& table = *(decision_diagram->getDiagram());
-    std::fill(lp_x.get(), lp_x.get() + get_nb_edges(), 0.0);
+    auto&     table = *(decision_diagram->getDiagram());
+    std::span aux_cols{columns, schedule_sets->len};
+    std::span aux_sets{schedule_sets->pdata, schedule_sets->len};
+    std::fill(lp_x.begin(), lp_x.end(), 0.0);
     for (int i = 0; i < num_columns; ++i) {
-        if (columns[i] > 0.00001) {
-            size_t       counter = 0;
-            ScheduleSet* tmp =
-                (ScheduleSet*)g_ptr_array_index(schedule_sets, i);
-            NodeId                        tmp_nodeid(decision_diagram->root());
+        if (aux_cols[i] > EPS_SOLVER) {
+            size_t    counter = 0;
+            auto*     tmp = static_cast<ScheduleSet*>(aux_sets[i]);
+            std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->pdata};
+            NodeId    tmp_nodeid(decision_diagram->root());
             std::shared_ptr<SubNodeZdd<>> tmp_sub_node =
                 table.node(tmp_nodeid).list[0];
 
             while (tmp_nodeid > 1) {
-                Job* tmp_j;
+                Job* tmp_j{};
 
                 if (counter < tmp->job_list->len) {
-                    tmp_j = static_cast<Job*>(
-                        g_ptr_array_index(tmp->job_list, counter));
+                    tmp_j = static_cast<Job*>(aux_jobs[counter]);
                 } else {
                     tmp_j = nullptr;
                 }
@@ -414,12 +404,12 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
                 NodeZdd<>& tmp_node = table.node(tmp_nodeid);
 
                 if (tmp_j == tmp_node.get_job()) {
-                    lp_x[tmp_sub_node->high_edge_key] += columns[i];
+                    lp_x[tmp_sub_node->high_edge_key] += aux_cols[i];
                     tmp_nodeid = tmp_node.branch[1];
                     tmp_sub_node = tmp_sub_node->y;
                     counter++;
                 } else {
-                    lp_x[tmp_sub_node->low_edge_key] += columns[i];
+                    lp_x[tmp_sub_node->low_edge_key] += aux_cols[i];
                     tmp_nodeid = tmp_node.branch[0];
                     tmp_sub_node = tmp_sub_node->n;
                 }
@@ -435,12 +425,13 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
 }
 
 bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
-    guint                       weight = 0;
-    auto& table = *(decision_diagram->getDiagram());
-    NodeId tmp_nodeid(decision_diagram->root());
+    guint     weight = 0;
+    std::span aux_jobs{set->pdata, set->len};
+    auto&     table = *(decision_diagram->getDiagram());
+    NodeId    tmp_nodeid(decision_diagram->root());
 
     for (unsigned j = 0; j < set->len; ++j) {
-        Job* tmp_j = (Job*)g_ptr_array_index(set, j);
+        Job* tmp_j = static_cast<Job*>(aux_jobs[j]);
         while (tmp_nodeid > 1) {
             NodeZdd<>& tmp_node = table.node(tmp_nodeid);
 
@@ -460,17 +451,17 @@ bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
     return (weight == set->len);
 }
 
-void PricerSolverZdd::make_schedule_set_feasible([
-    [maybe_unused]] GPtrArray* set) {}
+void PricerSolverZdd::make_schedule_set_feasible(
+    [[maybe_unused]] GPtrArray* set) {}
 
 void PricerSolverZdd::iterate_zdd() {
     DdStructure<NodeZdd<double>>::const_iterator it = decision_diagram->begin();
 
     for (; it != decision_diagram->end(); ++it) {
-        std::set<int>::const_iterator i = (*it).begin();
+        auto i = (*it).begin();
 
         for (; i != (*it).end(); ++i) {
-            std::cout << nb_layers - *i << " ";
+            std::cout << ordered_jobs->len - *i << " ";
         }
 
         std::cout << '\n';
@@ -480,7 +471,7 @@ void PricerSolverZdd::iterate_zdd() {
 void PricerSolverZdd::create_dot_zdd(const char* name) {
     std::ofstream file;
     file.open(name);
-    decision_diagram->dumpDot(file);
+    // decision_diagram->dumpDot(file);
     file.close();
 }
 

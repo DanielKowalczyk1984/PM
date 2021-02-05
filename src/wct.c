@@ -1,6 +1,7 @@
 #include <wct.h>
 #include "gurobi_c.h"
 #include "pricingstabilizationwrapper.h"
+#include "scheduleset.h"
 #include "solver.h"
 #include "util.h"
 #include "wctprivate.h"
@@ -41,7 +42,7 @@ void problem_init(Problem* problem) {
     problem->global_upper_bound = INT_MAX;
     problem->global_lower_bound = 0;
     problem->rel_error = DBL_MAX;
-    problem->root_lower_bound = 0.0;
+    problem->root_lower_bound = 0;
     problem->root_upper_bound = INT_MAX;
     problem->root_rel_error = DBL_MAX;
     problem->status = no_sol;
@@ -118,7 +119,7 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->nb_rows = 0;
     pd->nb_cols = 0;
     // init info cut generation
-    pd->max_nb_cuts = 2000;
+    pd->max_nb_cuts = NB_CUTS;
     pd->id_convex_constraint = 0;
     pd->id_assignment_constraint = 0;
     pd->id_valid_cuts = 0;
@@ -139,8 +140,8 @@ void nodedata_init(NodeData* pd, Problem* prob) {
     pd->localColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     pd->column_status = (int*)NULL;
     /*Initialization max and retirement age*/
-    pd->maxiterations = 1000000;
-    pd->retirementage = 100;
+    pd->maxiterations = NB_CG_ITERATIONS;
+    pd->retirementage = 0;
     /*initialization of branches*/
     pd->branch_job = -1;
     pd->less = -1;
@@ -180,7 +181,7 @@ void nodedata_init_null(NodeData* pd) {
     pd->nb_rows = 0;
     pd->nb_cols = 0;
     // init info cut generation
-    pd->max_nb_cuts = 2000;
+    pd->max_nb_cuts = NB_CUTS;
     pd->id_convex_constraint = 0;
     pd->id_assignment_constraint = 0;
     pd->id_valid_cuts = 0;
@@ -203,8 +204,8 @@ void nodedata_init_null(NodeData* pd) {
     pd->localColPool = (GPtrArray*)NULL;
     pd->column_status = (int*)NULL;
     /*Initialization max and retirement age*/
-    pd->maxiterations = 1000000;
-    pd->retirementage = 100;
+    pd->maxiterations = NB_CG_ITERATIONS;
+    pd->retirementage = 0;
     /*initialization of branches*/
     pd->branch_job = -1;
     pd->parent = (NodeData*)NULL;
@@ -250,8 +251,7 @@ NodeData* new_node_data(NodeData* pd) {
 
     /** copy info about solver */
 
-    aux->solver = newSolver(aux->jobarray, aux->nb_machines, aux->ordered_jobs,
-                            aux->parms, aux->H_max, NULL, aux->opt_sol->tw);
+    aux->solver = copy_pricer_solver(pd->solver, aux->ordered_jobs, aux->parms);
 
     aux->localColPool =
         g_ptr_array_copy(pd->localColPool, g_copy_scheduleset, &(pd->nb_jobs));
@@ -318,7 +318,7 @@ void lp_node_data_free(NodeData* pd) {
     g_ptr_array_free(pd->localColPool, TRUE);
     pd->nb_rows = 0;
     pd->nb_cols = 0;
-    pd->max_nb_cuts = 2000;
+    pd->max_nb_cuts = NB_CUTS;
     pd->id_convex_constraint = 0;
     pd->id_assignment_constraint = 0;
     pd->id_valid_cuts = 0;
@@ -364,12 +364,13 @@ CLEAN:
     return val;
 }
 static void scheduleset_unify(GPtrArray* array) {
-    int          i;
+    int          i = 0;
     int          it = 1;
     int          first_del = -1;
     int          last_del = -1;
     int          nb_col = array->len;
-    ScheduleSet *temp, *prev;
+    ScheduleSet* temp = (ScheduleSet*)NULL;
+    ScheduleSet* prev = (ScheduleSet*)NULL;
     g_ptr_array_sort(array, g_scheduleset_less);
 
     if (!(array->len)) {
@@ -550,7 +551,7 @@ CLEAN:
 
 int add_solution_to_colpool_and_lp(Solution* sol, NodeData* pd) {
     int          val = 0;
-    ScheduleSet* tmp;
+    ScheduleSet* tmp = (ScheduleSet*)NULL;
 
     for (int i = 0; i < sol->nb_machines; ++i) {
         GPtrArray* machine = sol->part[i].machine;

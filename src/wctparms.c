@@ -3,6 +3,9 @@
 #include <util.h>
 #include <wctparms.h>
 
+const double TIME_LIMIT = 7200.0;
+const double ALPHA_STAB_INIT = 0.8;
+
 void parms_init(Parms* parms) {
     parms->init_upper_bound = INT_MAX;
     parms->bb_branch_strategy = min_bb_strategy;
@@ -20,8 +23,8 @@ void parms_init(Parms* parms) {
     parms->jobfile = (char*)NULL;
     parms->pname = (char*)NULL;
     parms->upper_bounds_only = 0;
-    parms->branching_cpu_limit = 7200.0;
-    parms->alpha = 0.8;
+    parms->branching_cpu_limit = TIME_LIMIT;
+    parms->alpha = ALPHA_STAB_INIT;
     parms->pricing_solver = bdd_solver_backward_cycle;
 }
 
@@ -32,10 +35,10 @@ void parms_free(Parms* parms) {
 
 static int copy_string(char** dst, const char* src) {
     int val = 0;
-    int len;
+    int len = 0;
     len = (int)strlen(src) + 1;
     CC_IFFREE(*dst, char);
-    *dst = (char*)CC_SAFE_MALLOC(len, char);
+    *dst = CC_SAFE_MALLOC(len, char);
     CCcheck_NULL_2(*dst, "Failed to allocate dst");
     strcpy(*dst, src);
 CLEAN:

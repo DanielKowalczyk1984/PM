@@ -1,5 +1,8 @@
 #include <localsearch.h>
 #include <wct.h>
+#include "job.h"
+#include "scheduleset.h"
+#include "solution.h"
 
 // static int add_feasible_solution(problem *problem, solution *new_sol);
 static int  solution_set_c(Solution* sol);
@@ -151,10 +154,9 @@ CLEAN:
 }
 
 void permutation_solution(GRand* rand_uniform, Solution* sol) {
-    int  i;
     Job* tmp = (Job*)NULL;
 
-    for (i = 0; i <= sol->nb_jobs - 2; i++) {
+    for (int i = 0; i <= sol->nb_jobs - 2; i++) {
         int j = g_rand_int_range(rand_uniform, 0, sol->nb_jobs - i);
         CC_SWAP(sol->perm[i], sol->perm[i + j], tmp);
     }
@@ -263,16 +265,15 @@ static void perturb_swap(Solution*    sol,
                          int                             l1,
                          int                             l2,
                          GRand*                          rand_uniform) {
-    int       m1, m2;
     unsigned  i1 = 0, i2 = 0;
     int       nb_machines = sol->nb_machines;
     Job**     tmp1 = (Job**)NULL;
     Job**     tmp2 = (Job**)NULL;
-    Job*      tmp;
+    Job*      tmp = (Job*)NULL;
     PartList* part1 = (PartList*)NULL;
     PartList* part2 = (PartList*)NULL;
-    m1 = g_rand_int_range(rand_uniform, 0, nb_machines);
-    m2 = g_rand_int_range(rand_uniform, 0, nb_machines);
+    int       m1 = g_rand_int_range(rand_uniform, 0, nb_machines);
+    int       m2 = g_rand_int_range(rand_uniform, 0, nb_machines);
 
     while (m1 == m2) {
         m2 = g_rand_int_range(rand_uniform, 0, nb_machines);
@@ -359,8 +360,7 @@ static void perturb_swap(Solution*    sol,
 }
 
 void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform) {
-    int L;
-    L = g_rand_int_range(rand_uniform, 0, 3);
+    int L = g_rand_int_range(rand_uniform, 0, 3);
 
     for (int i = 0; i < L; ++i) {
         perturb_swap(sol, data, 1, 2, rand_uniform);
@@ -402,7 +402,7 @@ int heuristic(Problem* prob) {
     g_random_set_seed(1984);
     int                ILS = prob->nb_jobs / 2;
     int                IR = parms->nb_iterations_rvnd;
-    Solution*          sol;
+    Solution*          sol = (Solution*)NULL;
     Solution*          sol1 = (Solution*)NULL;
     GPtrArray*         intervals = prob->intervals;
     local_search_data* data = (local_search_data*)NULL;
@@ -454,7 +454,7 @@ int heuristic(Problem* prob) {
             if (sol1->tw < sol->tw) {
                 solution_update(sol, sol1);
                 solution_canonical_order(sol, intervals);
-                add_solution_to_colpool(sol, (prob->root_pd));
+                // add_solution_to_colpool(sol, (prob->root_pd));
                 j = 0;
             }
 
@@ -463,6 +463,7 @@ int heuristic(Problem* prob) {
 
         if (sol->tw < prob->opt_sol->tw) {
             solution_update(prob->opt_sol, sol);
+            add_solution_to_colpool(prob->opt_sol, (prob->root_pd));
         }
 
         local_search_data_free(&data_RS);

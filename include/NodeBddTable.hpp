@@ -1,6 +1,8 @@
 #ifndef NODE_BDD_TABLE_HPP
 #define NODE_BDD_TABLE_HPP
 
+#include <fmt/core.h>
+#include <memory>
 #include "NodeBdd.hpp"
 #include "util/DataTable.hpp"
 #include "util/MyVector.hpp"
@@ -24,6 +26,12 @@ class NodeTableEntity : public data_table_node<T> {
         assert(n >= 1);
         initTerminals();
     }
+
+    NodeTableEntity<T>(const NodeTableEntity<T>&) = default;
+    NodeTableEntity<T>& operator=(const NodeTableEntity<T>&) = delete;
+    NodeTableEntity<T>& operator=(NodeTableEntity<T>&&) = default;
+    NodeTableEntity<T>(NodeTableEntity<T>&&) = default;
+    ~NodeTableEntity<T>() = default;
 
     /**
      * Clears and initializes the table.
@@ -251,7 +259,7 @@ class NodeTableEntity : public data_table_node<T> {
                     }
                 }
 #endif
-            } else
+            } else {
                 for (size_t j = 0; j < m; ++j) {
                     for (int b = 0; b < 2; ++b) {
                         int const ii = node[j].branch[b].row();
@@ -270,6 +278,7 @@ class NodeTableEntity : public data_table_node<T> {
                         }
                     }
                 }
+            }
 
             higherLevelTable[lowest].push_back(i);
             my_vector<int>& lower = lowerLevelTable[i];
@@ -402,12 +411,13 @@ class TableHandler {
 
         explicit Object(int n) : refCount(1), entity(n) {}
 
-        explicit Object(NodeTableEntity<T> const& _entity)
+        explicit Object(const NodeTableEntity<T>& _entity)
             : refCount(1),
               entity(_entity) {}
 
         void ref() {
             ++refCount;
+            // fmt::print("We are using ref {}\n", refCount);
 
             if (refCount == 0) {
                 throw std::runtime_error("Too many references");
@@ -415,6 +425,7 @@ class TableHandler {
         }
 
         void deref() {
+            // fmt::print("we are using deref {}\n", refCount);
             --refCount;
 
             if (refCount == 0) {
@@ -428,16 +439,43 @@ class TableHandler {
    public:
     explicit TableHandler(int n = 1) : pointer(new Object(n)) {}
 
-    TableHandler(TableHandler const& o) : pointer(o.pointer) { pointer->ref(); }
+    TableHandler<T>(TableHandler<T> const& o)
+        : pointer(new Object(o.pointer->entity)){};
 
-    TableHandler& operator=(TableHandler const& o) {
-        pointer->deref();
-        pointer = o.pointer;
-        pointer->ref();
+    //     : pointer(o.pointer) {
+    //     fmt::print("we are using copy constructor\n");
+    //     pointer->ref();
+    //     fmt::print("we are using copy constructor end\n");
+    // }
+
+    TableHandler<T>& operator=(TableHandler<T> const& o) = delete;
+
+    //     {
+    //     fmt::print("we are using copy assignment\n");
+    //     pointer->deref();
+    //     pointer = o.pointer;
+    //     pointer->ref();
+    //     return *this;
+    // }
+
+    TableHandler<T>& operator=(TableHandler<T>&& o) noexcept {
+        if (this != &o) {
+            delete pointer;
+            pointer = o.pointer;
+            o.pointer = nullptr;
+        }
         return *this;
     }
 
-    ~TableHandler() { pointer->deref(); }
+    TableHandler<T>(TableHandler<T>&& o) noexcept : pointer(o.pointer) {
+        o.pointer = nullptr;
+    }
+
+    ~TableHandler<T>() {
+        if (pointer) {
+            pointer->deref();
+        }
+    }
 
     NodeTableEntity<T>& operator*() const { return pointer->entity; }
 
@@ -476,11 +514,11 @@ class TableHandler {
      * Clear a row if it is not shared.
      * @param i row index.
      */
-    void derefLevel(int i) {
-        if (pointer->refCount == 1) {
-            pointer->entity[i].clear();
-        }
-    }
+    // void derefLevel(int i) {
+    //     if (pointer->refCount == 1) {
+    //         pointer->entity[i].clear();
+    //     }
+    // }
 };
 
 #endif  // NODE_BDD_TABLE_HPP

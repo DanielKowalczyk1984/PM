@@ -2,6 +2,7 @@
 #define __ZEROHALFCUTS_H__
 
 #include <memory>
+#include <span>
 #include <vector>
 #include "ModelInterface.hpp"
 #include "NodeBdd.hpp"
@@ -14,7 +15,7 @@ class ZeroHalfCuts {
     ZeroHalfCuts(int                 _nb_jobs,
                  int                 _nb_machines,
                  ReformulationModel* _rmp_model,
-                 NodeId&             _root,
+                 NodeId const&       _root,
                  NodeTableEntity<>*  _table);
     ZeroHalfCuts(ZeroHalfCuts&&) = default;
     ZeroHalfCuts(const ZeroHalfCuts&) = delete;
@@ -25,6 +26,8 @@ class ZeroHalfCuts {
     bool                                            add_cuts();
     void                                            generate_cuts();
     std::vector<std::shared_ptr<ConstraintGeneric>> get_cut_list();
+
+    static constexpr int ALIGN = 40;
 
    private:
     std::unique_ptr<GRBEnv>                         env;
@@ -40,10 +43,14 @@ class ZeroHalfCuts {
     GRBVar                                          q;
     std::vector<std::shared_ptr<ConstraintGeneric>> cut_list;
 
+    static constexpr double EPS_CUT = 1e-6;
+    static constexpr double HALF = 2.0;
+    static constexpr double TIMELIMIT = 50.0;
+
     void generate_model();
     void init_table();
     void init_coeff_cut();
-    void init_coeff_node(NodeBdd<>& node);
+    void init_coeff_node(NodeBdd<>* node);
     void construct_cut();
     void lift_operator();
     void dfs(const NodeId& v);

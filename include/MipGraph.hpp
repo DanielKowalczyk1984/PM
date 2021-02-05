@@ -5,6 +5,7 @@
 #include <scheduleset.h>
 #include <NodeBdd.hpp>
 #include <NodeBddTable.hpp>
+#include <array>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/unordered_set.hpp>
@@ -12,7 +13,7 @@
 #include <vector>
 #include "ZddNode.hpp"
 
-using namespace boost;
+// using namespace boost;
 
 struct VarsEdge {
     GRBVar x;
@@ -20,49 +21,65 @@ struct VarsEdge {
 };
 
 struct VarsNode {
-    GRBVar omega[2];
+    std::array<GRBVar, 2> omega;
 };
 
-typedef property<
-    vertex_index_t,
+using VertexProperty = boost::property<
+    boost::vertex_index_t,
     int,
-    property<vertex_name_t,
-             NodeId,
-             property<vertex_degree_t,
-                      int,
-                      property<vertex_distance_t,
-                               VarsNode,
-                               property<vertex_color_t,
-                                        std::shared_ptr<SubNodeZdd<>>>>>>>
-    VertexProperty;
+    boost::property<
+        boost::vertex_name_t,
+        NodeId,
+        boost::property<
+            boost::vertex_degree_t,
 
-typedef property<
-    edge_index_t,
+            int,
+            boost::property<boost::vertex_distance_t,
+                            VarsNode,
+                            boost::property<boost::vertex_color_t,
+                                            std::shared_ptr<SubNodeZdd<>>>>>>>;
+
+using EdgeProperty = boost::property<
+    boost::edge_index_t,
     int,
-    property<edge_weight_t, bool, property<edge_weight2_t, VarsEdge>>>
-    EdgeProperty;
+    boost::property<boost::edge_weight_t,
+                    bool,
+                    boost::property<boost::edge_weight2_t, VarsEdge>>>;
 
-using MipGraph =
-    adjacency_list<vecS, vecS, bidirectionalS, VertexProperty, EdgeProperty>;
-using Edge = graph_traits<MipGraph>::edge_descriptor;
-using Vertex = graph_traits<MipGraph>::vertex_descriptor;
+using MipGraph = boost::adjacency_list<boost::vecS,
+                                       boost::vecS,
+                                       boost::bidirectionalS,
+                                       VertexProperty,
+                                       EdgeProperty>;
+using Edge = boost::graph_traits<MipGraph>::edge_descriptor;
+using Vertex = boost::graph_traits<MipGraph>::vertex_descriptor;
 
-typedef property_map<MipGraph, vertex_index_t>::type    IndexAccessor;
-typedef property_map<MipGraph, vertex_name_t>::type     NodeIdAccessor;
-typedef property_map<MipGraph, vertex_color_t>::type    NodeZddIdAccessor;
-typedef property_map<MipGraph, vertex_degree_t>::type   NodeMipIdAccessor;
-typedef property_map<MipGraph, vertex_distance_t>::type VarsNodeAccessor;
-typedef property_map<MipGraph, edge_index_t>::type      EdgeIndexAccessor;
-typedef property_map<MipGraph, edge_weight_t>::type     EdgeTypeAccessor;
-typedef property_map<MipGraph, edge_weight2_t>::type    EdgeVarAccessor;
-typedef std::vector<std::vector<double>>                dbl_matrix;
+using IndexAccessor =
+    boost::property_map<MipGraph, boost::vertex_index_t>::type;
+using NodeIdAccessor =
+    boost::property_map<MipGraph, boost::vertex_name_t>::type;
+using NodeZddIdAccessor =
+    boost::property_map<MipGraph, boost::vertex_color_t>::type;
+using NodeMipIdAccessor =
+    boost::property_map<MipGraph, boost::vertex_degree_t>::type;
+using VarsNodeAccessor =
+    boost::property_map<MipGraph, boost::vertex_distance_t>::type;
+using EdgeIndexAccessor =
+    boost::property_map<MipGraph, boost::edge_index_t>::type;
+using EdgeTypeAccessor =
+    boost::property_map<MipGraph, boost::edge_weight_t>::type;
+using EdgeVarAccessor =
+    boost::property_map<MipGraph, boost::edge_weight2_t>::type;
+using dbl_matrix = std::vector<std::vector<double>>;
 class ColorWriterEdgeX {
    private:
     const MipGraph&          g;
     const NodeTableEntity<>* table;
+    static constexpr double  EPS_GRAPH = 1e-6;
 
    public:
-    explicit ColorWriterEdgeX(MipGraph& _g, NodeTableEntity<>* _table)
+    explicit ColorWriterEdgeX(const MipGraph&          _g,
+                              const NodeTableEntity<>* _table)
         : g{_g},
           table(_table) {}
 
@@ -70,16 +87,17 @@ class ColorWriterEdgeX {
         auto  high = get(boost::edge_weight_t(), g, _edge);
         auto  node_id = get(boost::vertex_name_t(), g, source(_edge, g));
         auto& node = table->node(node_id);
-        auto& x = node.lp_x[high];
 
         if (high) {
-            if (x > 1e-5) {
+            auto& x = node.lp_x[1];
+            if (x > EPS_GRAPH) {
                 output << "[label = " << x << ",color = red]";
             } else {
                 output << "[label = " << x << "]";
             }
         } else {
-            if (x > 1e-5) {
+            auto& x = node.lp_x[0];
+            if (x > EPS_GRAPH) {
                 output << "[label = " << x << ",color = red, style = dashed]";
             } else {
                 output << "[label = " << x << ",style=dashed]";
@@ -93,7 +111,7 @@ class ColorWriterEdgeIndex {
     const MipGraph& g;
 
    public:
-    explicit ColorWriterEdgeIndex(MipGraph& _g) : g{_g} {}
+    explicit ColorWriterEdgeIndex(const MipGraph& _g) : g{_g} {}
 
     void operator()(std::ostream& output, Edge _edge) {
         int  index = get(boost::edge_index_t(), g, _edge);
@@ -109,11 +127,11 @@ class ColorWriterEdgeIndex {
 
 class ColorWriterVertex {
    private:
-    const MipGraph&    g;
-    NodeTableEntity<>& table;
+    const MipGraph&          g;
+    const NodeTableEntity<>& table;
 
    public:
-    ColorWriterVertex(MipGraph& _g, NodeTableEntity<>& _table)
+    ColorWriterVertex(const MipGraph& _g, const NodeTableEntity<>& _table)
         : g{_g},
           table{_table} {}
 

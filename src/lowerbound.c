@@ -1,5 +1,7 @@
 #include "gurobi_c.h"
+#include "job.h"
 #include "lp.h"
+#include "math.h"
 #include "pricingstabilizationwrapper.h"
 #include "scheduleset.h"
 #include "solver.h"
@@ -43,12 +45,12 @@ void g_grow_ages(gpointer data, gpointer user_data) {
 
 static int grow_ages(NodeData* pd) {
     int val = 0;
-    int nb_cols;
+    int nb_cols = 0;
     lp_interface_get_nb_cols(pd->RMP, &nb_cols);
     assert(nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
     CC_IFFREE(pd->column_status, int);
     if (pd->localColPool->len > 0) {
-        pd->column_status = (int*)CC_SAFE_MALLOC(pd->localColPool->len, int);
+        pd->column_status = CC_SAFE_MALLOC(pd->localColPool->len, int);
         CCcheck_NULL_2(pd->column_status, "Failed to allocate column_status");
         val = lp_interface_basis_cols(pd->RMP, pd->column_status,
                                       pd->id_pseudo_schedules);
@@ -64,7 +66,7 @@ CLEAN:
 
 int delete_unused_rows(NodeData* pd) {
     int     val = 0;
-    int     nb_rows;
+    int     nb_rows = 0;
     double* slack = &g_array_index(pd->slack, double, 0);
     GArray* del_indices = g_array_new(FALSE, FALSE, sizeof(int));
 
@@ -76,7 +78,7 @@ int delete_unused_rows(NodeData* pd) {
     int first_del = -1;
     int last_del = -1;
     for (int i = pd->id_valid_cuts; i < nb_rows; i++) {
-        if (fabs(slack[i]) < 0.00001) {
+        if (fabs(slack[i]) < EPS) {
             if (first_del != -1) {
                 val = delete_unused_rows_range(pd, first_del, last_del);
                 CCcheck_val(val, "Failed in deleterows lp_interface");
@@ -107,11 +109,11 @@ int delete_unused_rows(NodeData* pd) {
 
 int delete_old_schedules(NodeData* pd) {
     int          val = 0;
-    int          min_numdel = pd->nb_jobs * min_nb_del_row_ratio;
-    int          nb_col;
-    guint        i;
+    int          min_numdel = floor(pd->nb_jobs * min_nb_del_row_ratio);
+    int          nb_col = 0;
+    guint        i = 0U;
     guint        count = pd->localColPool->len;
-    ScheduleSet* tmp_schedule;
+    ScheduleSet* tmp_schedule = (ScheduleSet*)NULL;
     /** pd->zero_count can be deprecated! */
     pd->zero_count = 0;
 
@@ -185,10 +187,10 @@ CLEAN:
 
 int delete_infeasible_schedules(NodeData* pd) {
     int          val = 0;
-    int          nb_col;
-    guint        i;
+    int          nb_col = 0;
+    guint        i = 0;
     guint        count = pd->localColPool->len;
-    ScheduleSet* tmp_schedule;
+    ScheduleSet* tmp_schedule = (ScheduleSet*)NULL;
     /** pd->zero_count can be deprecated! */
     pd->zero_count = 0;
 
@@ -255,6 +257,7 @@ int delete_infeasible_schedules(NodeData* pd) {
 
     if (pd->zero_count > 0) {
         solve_relaxation(pd);
+        pd->update = 1;
     }
 
 CLEAN:
@@ -264,7 +267,7 @@ CLEAN:
 void g_make_pi_feasible(gpointer data, gpointer user_data) {
     ScheduleSet* x = (ScheduleSet*)data;
     NodeData*    pd = (NodeData*)user_data;
-    Job*         tmp_j;
+    Job*         tmp_j = (Job*)NULL;
 
     double colsum = .0;
 
@@ -358,24 +361,24 @@ void make_pi_feasible_farkas_pricing(NodeData* pd) {
 
 int compute_objective(NodeData* pd) {
     int val = 0;
-    int i;
+    // int i;
     pd->LP_lower_bound_dual = .0;
 
     /** compute lower bound with the dual variables */
     double* tmp = &g_array_index(pd->pi, double, 0);
     double* tmp_rhs = &g_array_index(pd->rhs, double, 0);
 
-    for (i = 0; i < pd->nb_rows; i++) {
+    for (int i = 0; i < pd->nb_rows; i++) {
         // if (i != pd->nb_jobs) {
         // pd->eta_out += tmp[i] * tmp_rhs[i];
         // }
         pd->LP_lower_bound_dual += tmp[i] * tmp_rhs[i];
     }
-    pd->LP_lower_bound_dual -= 1e-9;
+    pd->LP_lower_bound_dual -= EPS_BOUND;
 
     /** Get the LP lower bound and compute the lower bound of WCT */
     val = lp_interface_objval(pd->RMP, &(pd->LP_lower_bound));
-    pd->LP_lower_bound -= 1e-9;
+    pd->LP_lower_bound -= EPS_BOUND;
     CCcheck_val_2(val, "lp_interface_objval failed");
     pd->lower_bound =
         ((int)ceil(pd->LP_lower_bound_dual) < (int)ceil(pd->LP_lower_bound))
@@ -400,8 +403,8 @@ CLEAN:
 
 int solve_relaxation(NodeData* pd) {
     int         val = 0;
-    int         status;
-    double      real_time_solve_lp;
+    int         status = 0;
+    double      real_time_solve_lp = 0.0;
     Statistics* statistics = pd->stat;
 
     /** Compute LP relaxation */
@@ -449,12 +452,13 @@ CLEAN:
 }
 
 int compute_lower_bound(NodeData* pd) {
-    int         j, val = 0;
+    int         j = 0;
+    int         val = 0;
     int         has_cols = 1;
     int         has_cuts = 0;
     int         nb_non_improvements = 0;
     int         status = GRB_LOADED;
-    double      real_time_pricing;
+    double      real_time_pricing = 0.0;
     Parms*      parms = pd->parms;
     Statistics* statistics = pd->stat;
 
@@ -481,16 +485,16 @@ int compute_lower_bound(NodeData* pd) {
         CCcheck_val(val, "build_lp failed");
     }
 
-    pd->retirementage = (int)sqrt(pd->nb_jobs) + 30;
+    pd->retirementage = (int)sqrt(pd->nb_jobs) + CLEANUP_ITERATION;
     check_schedules(pd);
     delete_infeasible_schedules(pd);
-    int test = 0;
 
     // solve_relaxation(problem, pd);
     // do {
     do {
         has_cols = 1;
         has_cuts = 0;
+        pd->update = 0;
         CCutil_suspend_timer(&(statistics->tot_cputime));
         CCutil_resume_timer(&(statistics->tot_cputime));
         while ((pd->iterations < pd->maxiterations) && has_cols &&
@@ -500,7 +504,7 @@ int compute_lower_bound(NodeData* pd) {
              */
             if (pd->zero_count > pd->nb_jobs * min_nb_del_row_ratio &&
                 status == GRB_OPTIMAL) {
-                val = delete_old_schedules(pd);
+                // val = delete_old_schedules(pd);
                 CCcheck_val_2(val, "Failed in delete_old_cclasses");
             }
             solve_relaxation(pd);
@@ -532,25 +536,12 @@ int compute_lower_bound(NodeData* pd) {
             real_time_pricing = getRealTime() - real_time_pricing;
             statistics->real_time_pricing += real_time_pricing;
 
-            if (pd->update) {
-                for (j = 0; j < pd->nb_new_sets; j++) {
-                    val = add_lhs_scheduleset_to_rmp(pd->newsets + j, pd);
-                    CCcheck_val_2(val, "lp_interface_addcol failed");
-                    pd->newsets[j].id = pd->localColPool->len;
-                    g_ptr_array_add(pd->localColPool, pd->newsets + j);
-                }
-                pd->newsets = NULL;
-                nb_non_improvements = 0;
-            } else {
-                nb_non_improvements++;
-            }
-
             switch (status) {
                 case GRB_OPTIMAL:
                     has_cols = (call_stopping_criteria(pd->solver_stab) &&
                                 (call_get_eta_sep(pd->solver_stab) <
-                                 pd->upper_bound - 1.0 + 1e-6));
-                    pd->nb_new_sets = 0;
+                                 pd->upper_bound - 1.0 + EPS));
+                    // pd->nb_new_sets = 0;
                     // || nb_non_improvements > 5;  // ||
                     // (ceil(pd->eta_in - 0.00001) >= pd->eta_out);
 
@@ -558,7 +549,7 @@ int compute_lower_bound(NodeData* pd) {
 
                 case GRB_INFEASIBLE:
                     has_cols = (pd->nb_new_sets == 0);
-                    pd->nb_new_sets = 0;
+                    // pd->nb_new_sets = 0;
                     break;
             }
 
@@ -587,21 +578,24 @@ int compute_lower_bound(NodeData* pd) {
                 /**
                  * Compute the objective function
                  */
+                // pd->retirementage = 0;
+                // delete_old_schedules(pd);
+                check_schedules(pd);
+                delete_infeasible_schedules(pd);
                 solve_relaxation(pd);
                 // compute_objective(pd);
                 if (pd->localColPool->len > 0) {
                     val = construct_lp_sol_from_rmp(pd);
                     CCcheck_val_2(val, "Failed in construct lp sol from rmp\n");
-                    delete_old_schedules(pd);
-                    solve_relaxation(pd);
+                    // solve_relaxation(pd);
+                    // delete_old_schedules(pd);
                     // delete_unused_rows(pd);
                     // solve_relaxation(pd);
-                    construct_lp_sol_from_rmp(pd);
+                    // construct_lp_sol_from_rmp(pd);
                     if (!call_is_integer_solution(pd->solver)) {
                         // has_cuts = (generate_cuts(pd) > 0);
                         has_cuts = 0;
                         // call_update_duals(pd->solver_stab);
-                        test++;
                         // lp_interface_write(pd->RMP, "test.lp");
                     }
                 }
@@ -612,7 +606,7 @@ int compute_lower_bound(NodeData* pd) {
                 lp_interface_write(pd->RMP, "infeasible_RMP.lp");
                 lp_interface_compute_IIS(pd->RMP);
         }
-    } while (has_cuts && test < 5);
+    } while (has_cuts || pd->update);
 
     if (dbg_lvl() > 0 || pd->id == 0) {
         printf("iterations = %d\n", pd->iterations);
@@ -643,7 +637,7 @@ int compute_lower_bound(NodeData* pd) {
         statistics->root_rel_error =
             (double)(statistics->global_upper_bound -
                      statistics->global_lower_bound) /
-            ((double)statistics->global_lower_bound + 0.000001);
+            ((double)statistics->global_lower_bound + EPS);
     }
 
     fflush(stdout);
@@ -656,8 +650,8 @@ CLEAN:
 
 int print_x(NodeData* pd) {
     int val = 0;
-    int nb_cols;
-    int status;
+    int nb_cols = 0;
+    int status = 0;
 
     val = lp_interface_status(pd->RMP, &status);
     CCcheck_val_2(val, "Failed in lp_interface_status");
@@ -677,7 +671,7 @@ int print_x(NodeData* pd) {
                 GPtrArray* tmp =
                     ((ScheduleSet*)g_ptr_array_index(pd->localColPool, i))
                         ->job_list;
-                if (pd->lambda[i] > 0.00001) {
+                if (pd->lambda[i] > EPS) {
                     g_ptr_array_foreach(tmp, g_print_machine, NULL);
                     printf("\n");
                 }
@@ -692,8 +686,8 @@ CLEAN:
 
 int calculate_nb_layers(NodeData* pd, int k) {
     int val = 0;
-    int nb_cols;
-    int status;
+    int nb_cols = 0;
+    int status = 0;
 
     val = lp_interface_status(pd->RMP, &status);
     CCcheck_val_2(val, "Failed in lp_interface_status");
@@ -714,7 +708,7 @@ int calculate_nb_layers(NodeData* pd, int k) {
             CCcheck_val_2(val, "Failed in lp_interface_x");
 
             for (unsigned i = 0; i < pd->localColPool->len; ++i) {
-                if (pd->lambda[i + pd->id_pseudo_schedules] > 0.00001) {
+                if (pd->lambda[i + pd->id_pseudo_schedules] > EPS) {
                     ScheduleSet* tmp =
                         (ScheduleSet*)g_ptr_array_index(pd->localColPool, i);
                     for (int j = 0; j < (int)tmp->job_list->len - k; ++j) {
@@ -739,8 +733,8 @@ CLEAN:
 
 int calculate_x_e(NodeData* pd) {
     int val = 0;
-    int nb_cols;
-    int status;
+    int nb_cols = 0;
+    int status = 0;
 
     val = lp_interface_status(pd->RMP, &status);
     CCcheck_val_2(val, "Failed in lp_interface_status");
@@ -772,8 +766,8 @@ CLEAN:
 
 int check_schedules(NodeData* pd) {
     int val = 0;
-    int nb_cols;
-    int status;
+    int nb_cols = 0;
+    int status = 0;
 
     val = lp_interface_status(pd->RMP, &status);
     CCcheck_val_2(val, "Failed in lp_interface_status");

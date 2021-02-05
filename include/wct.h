@@ -1,12 +1,11 @@
 #ifndef _WCT_H
 #define _WCT_H
 
+#include "defs.h"
+#include "wctprivate.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "defs.h"
-#include "wctprivate.h"
 
 /**
  * io.c

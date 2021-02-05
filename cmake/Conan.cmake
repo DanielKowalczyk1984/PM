@@ -7,7 +7,8 @@ if(${PROJECT_NAME}_ENABLE_CONAN)
                       fmt/7.0.3
                       glib/2.67.0")
 
-  set(${PROJECT_NAME}_CONAN_OPTIONS "")
+  set(PM_CONAN_OPTIONS "pcre:with_utf=True
+                        pcre:with_unicode_properties=True")
 
   #
   # If `conan.cmake` (from https://github.com/conan-io/cmake-conan) does not
@@ -26,18 +27,11 @@ if(${PROJECT_NAME}_ENABLE_CONAN)
 
   include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-  conan_add_remote(NAME bincrafters URL
-                   https://api.bintray.com/conan/bincrafters/public-conan)
-
   conan_cmake_run(
-    REQUIRES
-    ${CONAN_REQUIRES}
-    OPTIONS
-    ${CONAN_OPTIONS}
-    BASIC_SETUP
-    CMAKE_TARGETS # Individual targets to link to
-    BUILD
-    missing)
+    REQUIRES ${CONAN_REQUIRES}
+    OPTIONS ${PM_CONAN_OPTIONS}
+    BASIC_SETUP CMAKE_TARGETS # Individual targets to link to
+    BUILD missing)
 
   verbose_message("Conan is setup and all requires have been installed.")
 endif()

@@ -25,8 +25,3 @@ ReformulationModel::ReformulationModel(int nb_assignments, int nb_machines)
 
     // constraint_array.push_back(constr);
 }
-
-ReformulationModel::~ReformulationModel() = default;
-ReformulationModel::ReformulationModel(ReformulationModel&&) = default;
-ReformulationModel& ReformulationModel::operator=(ReformulationModel&&) =
-    default;

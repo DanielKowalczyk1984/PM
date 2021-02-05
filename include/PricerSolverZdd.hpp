@@ -10,16 +10,15 @@
 class PricerSolverZdd : public PricerSolverBase {
    public:
     std::unique_ptr<DdStructure<NodeZdd<double>>> decision_diagram;
-    size_t                                        size_graph;
-    int                                           nb_removed_edges = 0;
-    int                                           nb_removed_nodes = 0;
+    size_t                                        size_graph{};
+    int                                           nb_removed_edges{};
+    int                                           nb_removed_nodes{};
 
     GPtrArray* ordered_jobs;
-    int        nb_layers;
 
-    MipGraph                  mip_graph;
-    std::unique_ptr<double[]> lp_x;
-    std::unique_ptr<double[]> solution_x;
+    MipGraph            mip_graph;
+    std::vector<double> lp_x;
+    std::vector<double> solution_x;
 
     PricerSolverZdd(GPtrArray*  _jobs,
                     int         _num_machines,
@@ -29,15 +28,16 @@ class PricerSolverZdd : public PricerSolverBase {
 
     PricerSolverZdd(const PricerSolverZdd& src)
         : PricerSolverBase(src),
-          decision_diagram(new DdStructure<NodeZdd<>>(*src.decision_diagram)),
+          // decision_diagram(new
+          // DdStructure<NodeZdd<>>(*src.decision_diagram)),
           size_graph(src.size_graph),
           nb_removed_edges(src.nb_removed_edges),
           nb_removed_nodes(src.nb_removed_nodes),
           ordered_jobs(src.ordered_jobs),
           mip_graph(src.mip_graph) {}
 
-    void         init_table() override;
-    virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
+    void init_table();
+    void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
     void reduce_cost_fixing(double* pi, int UB, double LB) override;
     void remove_layers();
@@ -60,7 +60,7 @@ class PricerSolverZdd : public PricerSolverBase {
     int    get_num_layers() override;
     void   print_num_paths() override;
     void   remove_layers_init();
-    int*   get_take() override { return NULL; }
+    int*   get_take() override { return nullptr; }
 
     OptimalSolution<double> farkas_pricing(double* pi) override;
 

@@ -7,21 +7,22 @@
 #include <OptimalSolution.hpp>
 #include <cstddef>
 #include <memory>
+#include <span>
 #include "ModelInterface.hpp"
 #include "scheduleset.h"
 #include "wctprivate.h"
 
 struct PricerSolverBase {
    public:
-    GPtrArray* jobs;
+    std::span<void*> jobs;
 
     int convex_constr_id;
     int convex_rhs;
 
     std::string problem_name;
 
-    std::unique_ptr<GRBEnv>   env;
-    std::unique_ptr<GRBModel> model;
+    std::shared_ptr<GRBEnv>   env;
+    GRBModel model;
 
     ReformulationModel reformulation_model;
 
@@ -30,14 +31,19 @@ struct PricerSolverBase {
     double constLB;
     double UB;
 
+    static constexpr double EPS_SOLVER = 1e-6;
+    static constexpr double RC_FIXING = 1e-1;
+    static constexpr int    ALIGN = 60;
+    static constexpr int    ALIGN_HALF = 60;
+
     std::vector<BddCoeff> lp_sol;
     /**
      * Default constructors
      */
     PricerSolverBase(GPtrArray*  _jobs,
                      int         _num_machines,
-                     const char* p_name,
-                     double      _UB);
+                     const char* _p_name,
+                     double      _ub);
     /**
      * Copy constructor
      */
@@ -66,7 +72,7 @@ struct PricerSolverBase {
     /**
      * init_table
      */
-    virtual void init_table() = 0;
+    // virtual void init_table() = 0;
 
     /**
      * Pricing Algorithm
@@ -99,7 +105,7 @@ struct PricerSolverBase {
     virtual void update_rows_coeff(int first);
 
     virtual void update_coeff_constraints() = 0;
-    virtual void calculate_job_time(std::vector<std::vector<double>>& v){};
+    virtual void calculate_job_time(std::vector<std::vector<double>>* v){};
     virtual void add_constraint(ConstraintBase* constr) {
         reformulation_model.add_constraint(constr);
     };
@@ -112,7 +118,7 @@ struct PricerSolverBase {
     virtual void iterate_zdd() = 0;
     virtual void print_num_paths() = 0;
     double       get_UB();
-    void         update_UB(double _UB);
+    void         update_UB(double _ub);
 
     virtual int    get_num_remove_nodes() = 0;
     virtual int    get_num_remove_edges() = 0;

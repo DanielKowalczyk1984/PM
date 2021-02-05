@@ -2,15 +2,16 @@
 #define __BRANCHNODE_H__
 
 #include <limits>
+#include <memory>
 #include "branch-and-bound/state.h"
 #include "wctprivate.h"
 
 class BranchNodeBase : public State {
     struct BranchCand {
-        double score;
-        int    job;
+        double score{EPS_BRANCH};
+        int    job{-1};
 
-        BranchCand() : score(1e-3), job(-1){};
+        BranchCand() = default;
 
         bool operator<(const BranchCand& other) const {
             return (score < other.score);
@@ -18,21 +19,25 @@ class BranchNodeBase : public State {
     };
 
    public:
-    BranchNodeBase(NodeData* pd, bool isRoot = false);
+    explicit BranchNodeBase(NodeData* pd, bool isRoot = false);
     BranchNodeBase(BranchNodeBase&&) = default;
     BranchNodeBase(const BranchNodeBase&) = default;
     BranchNodeBase& operator=(BranchNodeBase&&) = default;
     BranchNodeBase& operator=(const BranchNodeBase&) = default;
-    virtual ~BranchNodeBase() { nodedata_free(pd); };
+    ~BranchNodeBase() override { nodedata_free(pd); };
+    static constexpr double EPS_BRANCH = 1e-4;
+    static constexpr double ERROR = 1e-12;
 
-    virtual void   branch(BTree* bt) final;
-    virtual void   computeBounds(BTree* bt) final;
-    virtual void   assessDominance(State* otherState) final;
-    virtual bool   isTerminalState() final;
-    virtual void   applyFinalPruningTests(BTree* bt) final;
-    virtual State* clone() { return nullptr; };  // "copy constructor"
-    virtual void   print() const {};
-    virtual bool   operator<(const State& other) { return false; };
+    void branch(BTree* bt) final;
+    void computeBounds(BTree* bt) final;
+    void assessDominance(State* otherState) final;
+    bool isTerminalState() final;
+    void applyFinalPruningTests(BTree* bt) final;
+    void update_data(double upper_bound) final;
+    // std::unique_ptr<State> clone() { return nullptr; };  // "copy
+    // constructor"
+    void print() const final{};
+    bool operator<(const State& other) final { return false; };
 
    private:
     NodeData* pd;

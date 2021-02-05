@@ -3,24 +3,22 @@
 #include <fmt/core.h>
 #include <NodeBdd.hpp>
 #include <OptimalSolution.hpp>
+#include <span>
 #include "NodeBddEval.hpp"
 
 template <typename T = double>
 class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
-    OriginalModel<>* original_model;
-    double*          pi;
+    double* pi{};
 
    public:
-    BackwardBddBase()
-        : Eval<NodeBdd<T>, OptimalSolution<T>>(),
-          original_model(nullptr),
-          pi(nullptr) {}
+    BackwardBddBase() = default;
+    ~BackwardBddBase<T>() = default;
 
     // BackwardBddBase(const BackwardBddBase<T>& src) {}
 
     void set_pi(double* _pi) { pi = _pi; }
 
-    const double* get_pi() const { return pi; }
+    [[nodiscard]] const double* get_pi() const { return pi; }
 
     OptimalSolution<T> get_objective(NodeBdd<T>& n) const {
         OptimalSolution<T>    sol(0.0);
@@ -45,16 +43,18 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     virtual void initializenode(NodeBdd<T>& n) const = 0;
     virtual void initializerootnode(NodeBdd<T>& n) const = 0;
     virtual void evalNode(NodeBdd<T>& n) const = 0;
+
     BackwardBddBase<T>(const BackwardBddBase<T>&) = default;
-    BackwardBddBase<T>(BackwardBddBase<T>&&) = default;
+    BackwardBddBase<T>(BackwardBddBase<T>&&) noexcept = default;
     BackwardBddBase<T>& operator=(const BackwardBddBase<T>&) = default;
-    BackwardBddBase<T>& operator=(BackwardBddBase<T>&&) = default;
+    BackwardBddBase<T>& operator=(BackwardBddBase<T>&&) noexcept = default;
 };
 
 template <typename T = double>
 class BackwardBddSimple : public BackwardBddBase<T> {
    public:
-    BackwardBddSimple() : BackwardBddBase<T>(){};
+    BackwardBddSimple() = default;
+    ~BackwardBddSimple<T>() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
         auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
@@ -109,19 +109,20 @@ class BackwardBddSimple : public BackwardBddBase<T> {
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {
-        n.backward_label[0].f = 0;
+        n.backward_label[0].get_f() = 0;
     }
 
     BackwardBddSimple<T>(const BackwardBddSimple<T>&) = default;
-    BackwardBddSimple<T>(BackwardBddSimple<T>&&) = default;
+    BackwardBddSimple<T>(BackwardBddSimple<T>&&) noexcept = default;
     BackwardBddSimple<T>& operator=(const BackwardBddSimple<T>&) = default;
-    BackwardBddSimple<T>& operator=(BackwardBddSimple<T>&&) = default;
+    BackwardBddSimple<T>& operator=(BackwardBddSimple<T>&&) noexcept = default;
 };
 
 template <typename T = double>
 class BackwardBddCycle : public BackwardBddBase<T> {
    public:
-    BackwardBddCycle() : BackwardBddBase<T>(){};
+    BackwardBddCycle<T>() = default;
+    ~BackwardBddCycle<T>() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
         auto  tmp_j = n.get_job();
@@ -210,13 +211,13 @@ class BackwardBddCycle : public BackwardBddBase<T> {
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {
-        n.backward_label[0].f = 0.0;
+        n.backward_label[0].get_f() = 0.0;
     }
 
     BackwardBddCycle<T>(const BackwardBddCycle<T>&) = default;
-    BackwardBddCycle<T>(BackwardBddCycle<T>&&) = default;
+    BackwardBddCycle<T>(BackwardBddCycle<T>&&) noexcept = default;
     BackwardBddCycle<T>& operator=(const BackwardBddCycle<T>&) = default;
-    BackwardBddCycle<T>& operator=(BackwardBddCycle<T>&&) = default;
+    BackwardBddCycle<T>& operator=(BackwardBddCycle<T>&&) noexcept = default;
 };
 
 #endif  // BACKWARD_BDD_HPP

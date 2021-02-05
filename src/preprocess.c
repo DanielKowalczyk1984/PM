@@ -1,5 +1,6 @@
 #include <interval.h>
 #include <wct.h>
+#include "job.h"
 
 void g_problem_summary_init(gpointer data, gpointer user_data) {
     Job*     j = (Job*)data;
@@ -85,15 +86,14 @@ void calculate_Hmax(Problem* problem) {
 }
 
 void determine_jobs_order_interval(Problem* problem) {
-    interval* tmp_interval;
-
     GPtrArray* local_intervals = problem->intervals;
 
     for (unsigned i = 0; i < problem->g_job_array->len; ++i) {
         Job* tmp_j = (Job*)g_ptr_array_index(problem->g_job_array, i);
         // tmp_j->pos_interval = CC_SAFE_MALLOC(local_intervals->len, int);
         for (unsigned j = 0; j < local_intervals->len; ++j) {
-            tmp_interval = (interval*)g_ptr_array_index(local_intervals, j);
+            interval* tmp_interval =
+                (interval*)g_ptr_array_index(local_intervals, j);
             GPtrArray* sigma = tmp_interval->sigma;
             for (unsigned k = 0; k < sigma->len; ++k) {
                 Job* tmp = (Job*)g_ptr_array_index(sigma, k);
@@ -180,10 +180,10 @@ static int check_interval(interval_pair* pair,
 
 static GPtrArray* array_time_slots(interval* I, GList* pairs) {
     GPtrArray*     array = g_ptr_array_new_with_free_func(free);
-    interval_pair* tmp;
-    interval_pair* min_data;
-    GList*         min;
-    int*           tmp_int;
+    interval_pair* tmp = (interval_pair*)NULL;
+    interval_pair* min_data = (interval_pair*)NULL;
+    GList*         min = (GList*)NULL;
+    int*           tmp_int = NULL;
 
     tmp_int = CC_SAFE_MALLOC(1, int);
     *tmp_int = I->a;
@@ -230,9 +230,9 @@ static GPtrArray* array_time_slots(interval* I, GList* pairs) {
 }
 
 void create_ordered_jobs_array(GPtrArray* a, GPtrArray* b) {
-    interval*          tmp_interval;
-    Job*               tmp_j;
-    job_interval_pair* tmp_pair;
+    interval*          tmp_interval = (interval*)NULL;
+    Job*               tmp_j = (Job*)NULL;
+    job_interval_pair* tmp_pair = (job_interval_pair*)NULL;
     for (unsigned i = 0; i < a->len; ++i) {
         tmp_interval = (interval*)g_ptr_array_index(a, i);
         GPtrArray* jobarray = tmp_interval->sigma;
@@ -254,14 +254,14 @@ int find_division(Problem* problem) {
     int            val = 0;
     int            counter = 0;
     int            nb_jobs = problem->nb_jobs;
-    int            prev;
+    int            prev = 0;
     NodeData*      root_pd = problem->root_pd;
     GPtrArray*     tmp_array = g_ptr_array_new_with_free_func(g_interval_free);
     GPtrArray*     jobarray = problem->g_job_array;
-    Job*           tmp_j;
-    Job *          j1, *j2;
-    interval*      tmp_interval;
-    interval_pair* pair;
+    Job*           tmp_j = NULL;
+    Job *          j1 = NULL, *j2 = NULL;
+    interval*      tmp_interval = NULL;
+    interval_pair* pair = NULL;
     interval_pair  tmp_pair;
 
     /** Find initial partition */
@@ -305,8 +305,7 @@ int find_division(Problem* problem) {
         }
 
         if (pairs) {
-            GPtrArray* slots;
-            slots = array_time_slots(tmp_interval, pairs);
+            GPtrArray* slots = array_time_slots(tmp_interval, pairs);
             for (unsigned j = 1; j < slots->len; ++j) {
                 g_ptr_array_add(problem->intervals,
                                 interval_alloc(*((int*)slots->pdata[j - 1]),

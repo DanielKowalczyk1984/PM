@@ -11,10 +11,10 @@
 #include "wctprivate.h"
 
 class PricerSolverBdd : public PricerSolverBase {
-    std::unique_ptr<DdStructure<>> decision_diagram;
-    size_t                         size_graph;
-    int                            nb_removed_edges{};
-    int                            nb_removed_nodes{};
+    DdStructure<> decision_diagram;
+    size_t        size_graph;
+    int           nb_removed_edges{};
+    int           nb_removed_nodes{};
 
     GPtrArray* ordered_jobs;
 
@@ -22,8 +22,8 @@ class PricerSolverBdd : public PricerSolverBase {
 
     OriginalModel<> original_model;
 
-    std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_in;
-    std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_out;
+    // std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_in;
+    // std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_out;
 
     int H_min;
     int H_max;
@@ -33,14 +33,14 @@ class PricerSolverBdd : public PricerSolverBase {
                     int         _num_machines,
                     GPtrArray*  _ordered_jobs,
                     const char* p_name,
-                    int         _Hmax,
+                    int         _hmax,
                     int*        _take_jobs,
-                    double      _UB);
+                    double      _ub);
 
     PricerSolverBdd(const PricerSolverBdd& src, GPtrArray* _ordered_jobs);
-    PricerSolverBdd(const PricerSolverBdd& src);
+    // PricerSolverBdd(const PricerSolverBdd& src);
 
-    virtual void evaluate_nodes(double* pi, int UB, double LB) override = 0;
+    void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
     void check_infeasible_arcs();
     void topdown_filtering();
@@ -55,16 +55,16 @@ class PricerSolverBdd : public PricerSolverBase {
     void remove_layers_init();
     void construct_mipgraph();
     void init_coeff_constraints();
+    void init_table();
 
     bool   check_schedule_set(GPtrArray* set) override;
-    void   init_table() override;
     void   reduce_cost_fixing(double* pi, int UB, double LB) override;
     void   build_mip() override;
     void   construct_lp_sol_from_rmp(const double*    columns,
                                      const GPtrArray* schedule_sets,
                                      int              num_columns) override;
     void   make_schedule_set_feasible(GPtrArray* set) override;
-    void   calculate_job_time(std::vector<std::vector<double>>& v) override;
+    void   calculate_job_time(std::vector<std::vector<double>>* v) override;
     void   split_job_time(int _job, int _time, bool _left) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
@@ -81,15 +81,13 @@ class PricerSolverBdd : public PricerSolverBase {
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
 
-    inline DdStructure<>* get_decision_diagram() {
-        return decision_diagram.get();
-    }
+    inline DdStructure<>& get_decision_diagram() { return decision_diagram; }
 
     inline int get_nb_removed_edges() { return nb_removed_edges; }
 
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 
-    inline int* get_take() override { return NULL; };
+    inline int* get_take() override { return nullptr; };
 
    private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);

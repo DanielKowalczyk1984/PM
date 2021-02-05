@@ -1,23 +1,37 @@
+#include <vector>
 #include "PricerSolverBase.hpp"
+#include "gurobi_c++.h"
 #include "solver.h"
 
+// using std::vector;
 class PricerSolverArcTimeDp : public PricerSolverBase {
+    using vector3d_jobs = std::vector<std::vector<std::vector<Job*>>>;
+    using vector2d_jobs = std::vector<std::vector<Job*>>;
+    using vector1d_jobs = std::vector<Job*>;
+    using vector2d_dbl = std::vector<std::vector<double>>;
+    using vector1d_dbl = std::vector<double>;
+    using vector_grb_var = std::vector<std::vector<std::vector<GRBVar>>>;
+    using vector2d_grb_var = std::vector<std::vector<GRBVar>>;
+    using vector1d_grb_var = std::vector<GRBVar>;
+    using vector2d_int = std::vector<std::vector<int>>;
+    using vector1d_int = std::vector<int>;
+
    private:
-    int                 Hmax;
-    int                 n;
-    size_t              size_graph;
-    std::vector<Job*>** graph;
-    std::vector<Job*>** reversed_graph;
-    std::vector<Job*>   vector_jobs;
-    Job                 j0;
-    double**            forward_F;
-    double**            backward_F;
-    Job***              A;
-    int**               B;
-    GRBVar***           arctime_x;
-    int                 nb_edges_removed;
-    double*             lp_x;
-    double*             solution_x;
+    int            Hmax;
+    int            n;
+    size_t         size_graph;
+    vector3d_jobs  graph;
+    vector3d_jobs  reversed_graph;
+    vector1d_jobs  vector_jobs;
+    Job            j0;
+    vector2d_dbl   forward_F;
+    vector2d_dbl   backward_F;
+    vector2d_jobs  A;
+    vector2d_int   B;
+    vector_grb_var arctime_x;
+    int            nb_edges_removed;
+    vector1d_dbl   lp_x;
+    vector1d_dbl   solution_x;
 
    public:
     PricerSolverArcTimeDp(GPtrArray*  _jobs,
@@ -25,18 +39,17 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
                           int         _Hmax,
                           const char* p_name,
                           double      _UB);
-    ~PricerSolverArcTimeDp();
+    ~PricerSolverArcTimeDp() override;
     PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
         : PricerSolverBase(src),
           Hmax(src.Hmax),
           n(src.n),
           vector_jobs(),
           nb_edges_removed(src.nb_edges_removed),
-          lp_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}),
-          solution_x(new double[(n + 1) * (n + 1) * (Hmax + 1)]{}) {
+          lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
+          solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
         for (auto i = 0; i < n; ++i) {
-            vector_jobs.push_back(
-                reinterpret_cast<Job*>(g_ptr_array_index(jobs, i)));
+            vector_jobs.push_back(static_cast<Job*>(jobs[i]));
         }
         job_init(&j0, 0, 0, 0);
         j0.job = n;
@@ -44,7 +57,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
         init_table();
     }
-    void init_table() override;
+    void init_table();
 
     void reduce_cost_fixing([[maybe_unused]] double* pi,
                             [[maybe_unused]] int     UB,
@@ -100,7 +113,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
     }
 
-    int* get_take() override { return NULL; }
+    int* get_take() override { return nullptr; }
 
     void update_constraints() override {}
 

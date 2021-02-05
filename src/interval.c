@@ -67,11 +67,10 @@ void interval_init(interval*  p,
     p->sigma = g_ptr_array_copy(jobarray, NULL, NULL);
     g_ptr_array_set_free_func(p->sigma, NULL);
     p->begin = 0;
-    Job* j;
 
     g_ptr_array_sort_with_data(p->sigma, g_compare_interval_data, p);
 
-    j = (Job*)g_ptr_array_index(p->sigma, p->begin);
+    Job* j = (Job*)g_ptr_array_index(p->sigma, p->begin);
     while (p->b - p->a <= j->processing_time && p->begin < (int)jobarray->len) {
         j = (Job*)g_ptr_array_index(p->sigma, p->begin);
         p->begin++;
@@ -153,7 +152,7 @@ void interval_pair_free(void* p) {
 
 void print_interval_pair(GPtrArray* ordered_jobs) {
     interval*          cur = (interval*)NULL;
-    job_interval_pair* tmp_p;
+    job_interval_pair* tmp_p = NULL;
 
     for (size_t i = 0; i < ordered_jobs->len; i++) {
         tmp_p = g_ptr_array_index(ordered_jobs, i);
@@ -168,7 +167,7 @@ void print_interval_pair(GPtrArray* ordered_jobs) {
 }
 
 void count_jobs_interval_pair(GPtrArray* ordered_jobs) {
-    job_interval_pair* tmp_p;
+    job_interval_pair* tmp_p = NULL;
 
     for (size_t i = 0; i < ordered_jobs->len; i++) {
         tmp_p = g_ptr_array_index(ordered_jobs, i);

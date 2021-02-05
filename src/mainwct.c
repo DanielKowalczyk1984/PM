@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "math.h"
 #include "util.h"
 #include "wct.h"
 #include "wctparms.h"
@@ -43,34 +44,32 @@ static void usage(char* f) {
 }
 
 static char* find_match(const char* _instance_file) {
-    regex_t    regex;
-    regmatch_t matches[2];
-    char*      val = (char*)NULL;
-    int regex_val = regcomp(&regex, "^.*(wt[0-9]*_[0-9]*).*$", REG_EXTENDED);
-    if (regex_val) {
-        fprintf(stderr, "Could not compile regex\n");
-        val = strdup("regex_error");
-    } else {
-        regex_val =
-            regexec(&regex, _instance_file, 2, (regmatch_t*)&matches, 0);
-        if (!regex_val) {
-            val = g_strndup(_instance_file + matches[1].rm_so,
-                            matches[1].rm_eo - matches[1].rm_so);
-        } else {
-            printf("No match\n");
-            val = strdup("unknown_name");
-        }
-    }
-    regfree(&regex);
+    GError*     err = NULL;
+    GRegex*     regex = g_regex_new("^.*(wt[0-9]*_[0-9]*).*$", 0, 0, &err);
+    GMatchInfo* match_info = (GMatchInfo*)NULL;
 
+    g_regex_match(regex, _instance_file, 0, &match_info);
+
+    char* val = (char*)NULL;
+    if (g_match_info_matches(match_info)) {
+        gchar* result = g_match_info_fetch(match_info, 1);
+        val = g_strdup(result);
+        g_free(result);
+    } else {
+        printf("No match\n");
+        val = strdup("unknown_name");
+    }
+
+    g_match_info_free(match_info);
+    g_regex_unref(regex);
     return val;
 }
 
 static int parseargs(int ac, char** av, Parms* parms) {
-    int    c;
-    double f;
+    int    c = 0;
+    double f = 0.0;
     int    val = 0;
-    char*  ptr;
+    char*  ptr = (char*)NULL;
     int    debug = dbg_lvl();
 
     while ((c = getopt(ac, av, "df:s:l:B:S:D:p:b:Z:a:m:r:h:e:")) != EOF) {
@@ -189,7 +188,7 @@ CLEAN:
 
 int main(int ac, char** av) {
     int     val = 0;
-    double  start_time;
+    double  start_time = 0.0;
     Problem problem;
     problem_init(&problem);
 

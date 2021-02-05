@@ -1,7 +1,8 @@
 #include "PricingStabilization.hpp"
 #include <fmt/core.h>
 #include <cmath>
-#include "util.h"
+#include <span>
+// #include "util.h"
 #include "wctparms.h"
 
 /**
@@ -40,6 +41,13 @@ void PricingStabilizationBase::solve(double  _eta_out,
         pi_in = pi_sep;
         update_stab_center = true;
     }
+
+    if (dbg_lvl() > 0) {
+        fmt::print(
+            R"(alpha = {1}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f} UB = {4}
+)",
+            4, solver->get_nb_vertices(), eta_out, eta_in, solver->UB);
+    }
     iterations++;
 }
 
@@ -51,6 +59,10 @@ double PricingStabilizationBase::get_reduced_cost() {
     return reduced_cost;
 }
 
+double PricingStabilizationBase::get_eps_stab_solver() {
+    return ETA_DIFF;
+}
+
 bool PricingStabilizationBase::get_update_stab_center() {
     return update_stab_center;
 }
@@ -60,11 +72,11 @@ double PricingStabilizationBase::get_eta_in() {
 }
 
 double PricingStabilizationBase::get_eta_sep() {
-    return eta_sep;
+    return eta_in;
 }
 
 int PricingStabilizationBase::stopping_criteria() {
-    return eta_in - eta_out < -1e-6;
+    return eta_out - eta_in > ETA_DIFF;
 }
 
 void PricingStabilizationBase::update_duals() {
@@ -96,13 +108,14 @@ void PricingStabilizationBase::update_continueLP(int _continueLP) {
 }
 
 int PricingStabilizationBase::do_reduced_cost_fixing() {
-    if (iterations == 1 || !continueLP || previous_fix <= iterations - 20) {
+    if ((iterations == 1 || !continueLP ||
+         previous_fix <= iterations - RC_FIXING_RATE)) {
         return 1;
     }
     return 0;
 }
 
-PricingStabilizationBase::~PricingStabilizationBase() {}
+PricingStabilizationBase::~PricingStabilizationBase() = default;
 
 /**
  * @brief Wentgnes stabilization technique
@@ -117,9 +130,10 @@ PricingStabilizationBase::~PricingStabilizationBase() {}
  */
 PricingStabilizationStat::PricingStabilizationStat(PricerSolverBase* _solver)
     : PricingStabilizationBase(_solver),
+      nb_rows(_solver->convex_constr_id + 1),
       pi_out(_solver->convex_constr_id + 1, 0.0) {}
 
-PricingStabilizationStat::~PricingStabilizationStat() {}
+PricingStabilizationStat::~PricingStabilizationStat() = default;
 
 /**
 @brief Solve pricing problem with Wentgnes stabilization
@@ -154,9 +168,9 @@ void PricingStabilizationStat::solve(double  _eta_out,
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs_coeff);
 
-        continueLP = (eta_sep < eta_out - 1e-2);
+        continueLP = (ETA_DIFF < eta_out - eta_sep);
 
-        if (reduced_cost < -1e-6) {
+        if (reduced_cost < EPS_RC) {
             sol = std::move(aux_sol);
             update = 1;
             mispricing = false;
@@ -183,7 +197,7 @@ double PricingStabilizationStat::get_eta_in() {
 }
 
 int PricingStabilizationStat::stopping_criteria() {
-    return (eta_out - eta_in >= 1e-4);
+    return (eta_out - eta_in > ETA_DIFF);
 }
 
 void PricingStabilizationStat::update_duals() {
@@ -214,13 +228,13 @@ PricingStabilizationDynamic::PricingStabilizationDynamic(
 
 {}
 
-PricingStabilizationDynamic::~PricingStabilizationDynamic() {}
+PricingStabilizationDynamic::~PricingStabilizationDynamic() = default;
 
 void PricingStabilizationDynamic::solve(double  _eta_out,
                                         double* _pi_out,
                                         double* _lhs) {
     k = 0.0;
-    double result_sep;
+    double result_sep{};
     bool   mispricing = true;
     update = 0;
 
@@ -240,7 +254,7 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs);
 
-        if (reduced_cost <= -1e-6) {
+        if (reduced_cost < EPS_RC) {
             solver->compute_subgradient(aux_sol, subgradient.data());
             adjust_alpha();
             sol = std::move(aux_sol);
@@ -255,7 +269,7 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
         eta_in = result_sep;
         pi_in = pi_sep;
         update_stab_center = true;
-        if (iterations % 10 == 0 && eta_out - 1e-2 <= solver->UB) {
+        if (iterations % RC_FIXING_RATE == 0) {
             solver->calculate_constLB(pi_sep.data());
             solver->evaluate_nodes(pi_sep.data());
         }
@@ -301,7 +315,7 @@ PricingStabilizationHybrid::PricingStabilizationHybrid(
     : PricingStabilizationDynamic(pricer_solver),
       subgradient_in(pricer_solver->convex_constr_id + 1) {}
 
-PricingStabilizationHybrid::~PricingStabilizationHybrid() {}
+PricingStabilizationHybrid::~PricingStabilizationHybrid() = default;
 
 void PricingStabilizationHybrid::update_duals() {
     if (solver->reformulation_model.get_nb_constraints() != pi_sep.size()) {
@@ -358,7 +372,7 @@ void PricingStabilizationHybrid::solve(double  _eta_out,
 
         update_stabcenter(aux_sol);
 
-        if (reduced_cost < -1e-6) {
+        if (reduced_cost < EPS_RC) {
             if (in_mispricing_schedule) {
                 in_mispricing_schedule = 0;
             }
@@ -442,7 +456,8 @@ void call_reduced_cost_fixing(PricingStabilizationBase* solver) {
 
 void call_update_continueLP(PricingStabilizationBase* solver, double _eta_out) {
     solver->eta_out = _eta_out;
-    solver->continueLP = (solver->eta_in < solver->eta_out);
+    solver->continueLP =
+        (solver->get_eps_stab_solver() < solver->eta_out - solver->eta_in);
 }
 
 int call_get_continueLP(PricingStabilizationBase* solver) {
