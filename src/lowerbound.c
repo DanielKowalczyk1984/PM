@@ -608,12 +608,6 @@ int compute_lower_bound(NodeData* pd) {
         }
     } while (has_cuts || pd->update);
 
-    if (dbg_lvl() > 0 || pd->id == 0) {
-        printf("iterations = %d\n", pd->iterations);
-        printf("lowerbound %d\n", pd->lower_bound + pd->off);
-        printf("LP value = %f \n", pd->LP_lower_bound + pd->off);
-    }
-
     if (pd->iterations < pd->maxiterations &&
         statistics->tot_cputime.cum_zeit <= parms->branching_cpu_limit) {
     } else {
