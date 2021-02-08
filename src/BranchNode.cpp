@@ -47,11 +47,12 @@ void BranchNodeBase::branch(BTree* bt) {
         fmt::print(
             "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{"
             "8:>"
-            "5}{9:>5}|{10:>10}|\n",
+            "5}{9:>5}|{10:>5}{11:>5}|\n",
             bt->tStats->get_states_explored(), bt->get_nb_nodes(),
             pd->LP_lower_bound + pd->off, pd->depth, solver->get_nb_vertices(),
             bt->getGlobalUB() + pd->off, bt->getGlobalLB() + pd->off, 0.0,
-            pd->branch_job, pd->completiontime, bt->get_run_time_start());
+            pd->branch_job, pd->completiontime, bt->get_run_time_start(),
+            pd->iterations);
     }
 
     auto fathom_left = false;
