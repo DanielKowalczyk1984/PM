@@ -21,8 +21,8 @@ struct PricerSolverBase {
 
     std::string problem_name;
 
-    std::shared_ptr<GRBEnv>   env;
-    GRBModel model;
+    std::shared_ptr<GRBEnv> env;
+    GRBModel                model;
 
     ReformulationModel reformulation_model;
 
