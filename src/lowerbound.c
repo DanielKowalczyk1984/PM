@@ -1,7 +1,6 @@
 #include "gurobi_c.h"
 #include "job.h"
 #include "lp.h"
-#include "math.h"
 #include "pricingstabilizationwrapper.h"
 #include "scheduleset.h"
 #include "solver.h"

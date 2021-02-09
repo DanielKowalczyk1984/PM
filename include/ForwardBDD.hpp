@@ -6,7 +6,6 @@
 #include <OptimalSolution.hpp>
 #include <array>
 #include "NodeBddEval.hpp"
-#include "math.h"
 
 template <typename T = double>
 class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {

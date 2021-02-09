@@ -1,6 +1,5 @@
 #include "job.h"
 #include "lp.h"
-#include "math.h"
 #include "scheduleset.h"
 #include "util.h"
 #include "wct.h"

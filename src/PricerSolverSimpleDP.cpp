@@ -3,7 +3,7 @@
 #include <scheduleset.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
-#include "boost/graph/graphviz.hpp"
+#include <boost/graph/graphviz.hpp>
 #include "gurobi_c++.h"
 #include "gurobi_c.h"
 

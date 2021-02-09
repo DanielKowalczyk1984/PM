@@ -1,11 +1,9 @@
 #include "PricerSolverZdd.hpp"
 #include <fmt/core.h>
 #include <NodeBddStructure.hpp>
-#include <cstddef>
+#include <boost/graph/graphviz.hpp>
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
-#include "boost/graph/graphviz.hpp"
-#include "gurobi_c.h"
 
 PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
                                  int         _num_machines,

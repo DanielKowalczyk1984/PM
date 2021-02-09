@@ -1,6 +1,6 @@
 #include "PricerSolverBddForward.hpp"
+#include <fmt/core.h>
 #include <span>
-#include "fmt/core.h"
 
 /**
  *  bdd solver pricersolver for the flow formulation
