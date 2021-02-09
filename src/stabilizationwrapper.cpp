@@ -1,10 +1,12 @@
+#include <branch-and-bound/btree.h>
+#include <fmt/core.h>
 #include "PricerSolverBase.hpp"
 #include "PricingStabilization.hpp"
-#include "branch-and-bound/btree.h"
-#include "fmt/core.h"
+#include "pricingstabilizationwrapper.h"
 #include "scheduleset.h"
 #include "stabilization.h"
 #include "wct.h"
+#include "wctparms.h"
 #include "wctprivate.h"
 
 template <typename T = double>
@@ -36,13 +38,15 @@ int solve_pricing(NodeData* pd) {
     int val = 0;
 
     pd->update = 0;
+    Parms*  parms = pd->parms;
     double* pi = &g_array_index(pd->pi, double, 0);
     double* lhs = &g_array_index(pd->lhs_coeff, double, 0);
 
-    pd->solver_stab->solve(pd->LP_lower_bound, pi, lhs);
+    pd->solver_stab->solve(pd->LP_lower_bound_BB, pi, lhs);
 
     if (call_get_update_stab_center(pd->solver_stab)) {
-        if (call_do_reduced_fixing(pd->solver_stab)) {
+        if (call_do_reduced_fixing(pd->solver_stab) &&
+            parms->reduce_cost_fixing == yes_reduced_cost) {
             pd->solver_stab->reduced_cost_fixing();
             check_schedules(pd);
             delete_infeasible_schedules(pd);
@@ -63,9 +67,10 @@ int solve_pricing(NodeData* pd) {
         }
     }
 
-    if (pd->solver_stab->get_reduced_cost() < -EPS &&
+    if (pd->solver_stab->get_reduced_cost() < -EPS_BOUND &&
         call_get_continueLP(pd->solver_stab) &&
-        (call_get_eta_in(pd->solver_stab) < pd->upper_bound - 1.0 + EPS)) {
+        (call_get_eta_in(pd->solver_stab) <
+         pd->upper_bound - 1.0 + EPS_BOUND)) {
         auto sol = std::move(pd->solver_stab->get_sol());
         val = construct_sol(pd, &sol);
         CCcheck_val_2(val, "Failed in construction");
