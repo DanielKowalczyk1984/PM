@@ -539,8 +539,8 @@ int compute_lower_bound(NodeData* pd) {
             switch (status) {
                 case GRB_OPTIMAL:
                     has_cols = (call_stopping_criteria(pd->solver_stab) &&
-                                (call_get_eta_sep(pd->solver_stab) <
-                                 pd->upper_bound - 1.0 + EPS));
+                                call_get_eta_in(pd->solver_stab) <
+                                    pd->upper_bound - 1.0 + EPS_BOUND);
                     // pd->nb_new_sets = 0;
                     // || nb_non_improvements > 5;  // ||
                     // (ceil(pd->eta_in - 0.00001) >= pd->eta_out);
@@ -580,9 +580,16 @@ int compute_lower_bound(NodeData* pd) {
                  */
                 // pd->retirementage = 0;
                 // delete_old_schedules(pd);
-                check_schedules(pd);
-                delete_infeasible_schedules(pd);
                 solve_relaxation(pd);
+                // double obj;
+                // lp_interface_objval(pd->RMP, &obj);
+                // printf("test objval = %f\n", obj);
+                // check_schedules(pd);
+                // delete_infeasible_schedules(pd);
+                // solve_relaxation(pd);
+                // lp_interface_objval(pd->RMP, &obj);
+                // printf("test objval = %f\n", obj);
+                // printf("----------------\n");
                 // compute_objective(pd);
                 if (pd->localColPool->len > 0) {
                     val = construct_lp_sol_from_rmp(pd);
@@ -592,12 +599,12 @@ int compute_lower_bound(NodeData* pd) {
                     // delete_unused_rows(pd);
                     // solve_relaxation(pd);
                     // construct_lp_sol_from_rmp(pd);
-                    if (!call_is_integer_solution(pd->solver)) {
-                        // has_cuts = (generate_cuts(pd) > 0);
-                        has_cuts = 0;
-                        // call_update_duals(pd->solver_stab);
-                        // lp_interface_write(pd->RMP, "test.lp");
-                    }
+                    // if (!call_is_integer_solution(pd->solver)) {
+                    // has_cuts = (generate_cuts(pd) > 0);
+                    // has_cuts = 0;
+                    // call_update_duals(pd->solver_stab);
+                    // lp_interface_write(pd->RMP, "test.lp");
+                    // }
                 }
                 break;
 
@@ -606,7 +613,7 @@ int compute_lower_bound(NodeData* pd) {
                 lp_interface_write(pd->RMP, "infeasible_RMP.lp");
                 lp_interface_compute_IIS(pd->RMP);
         }
-    } while (has_cuts || pd->update);
+    } while (0);
 
     if (pd->iterations < pd->maxiterations &&
         statistics->tot_cputime.cum_zeit <= parms->branching_cpu_limit) {
@@ -742,7 +749,8 @@ int calculate_x_e(NodeData* pd) {
             val = lp_interface_x(pd->RMP, pd->lambda, 0);
             CCcheck_val_2(val, "Failed in lp_interface_x");
             // pd->x_e =
-            //     CC_SAFE_REALLOC(pd->x_e, get_nb_edges(pd->solver), double);
+            //     CC_SAFE_REALLOC(pd->x_e, get_nb_edges(pd->solver),
+            //     double);
             // CCcheck_NULL_2(pd->x_e, "Failed to reallocate memory to
             // pd->x_e");
 
