@@ -2,8 +2,8 @@
 #include <fmt/core.h>
 #include <cmath>
 #include <span>
-// #include "util.h"
 #include "wctparms.h"
+#include "wctprivate.h"
 
 /**
  * @brief Construct a new Pricing Stabilization Base:: Pricing Stabilization
@@ -168,14 +168,14 @@ void PricingStabilizationStat::solve(double  _eta_out,
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs_coeff);
 
-        continueLP = (ETA_DIFF < eta_out - eta_sep);
-
         if (reduced_cost < EPS_RC) {
             sol = std::move(aux_sol);
             update = 1;
             mispricing = false;
         }
     } while (mispricing && alphabar > 0); /** mispricing check */
+
+    continueLP = (ETA_DIFF < eta_out - eta_in);
 
     if (eta_sep > eta_in) {
         hasstabcenter = 1;
@@ -197,7 +197,7 @@ double PricingStabilizationStat::get_eta_in() {
 }
 
 int PricingStabilizationStat::stopping_criteria() {
-    return (eta_out - eta_in > ETA_DIFF);
+    return !(eta_in > (eta_out - ETA_DIFF));
 }
 
 void PricingStabilizationStat::update_duals() {
