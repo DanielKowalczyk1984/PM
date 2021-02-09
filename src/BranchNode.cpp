@@ -29,20 +29,6 @@ void BranchNodeBase::branch(BTree* bt) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
     }
 
-    // fmt::print(
-    //     "BRANCHING NODE with branch_job = {} and middle_time = {} , less = "
-    //     "{}, "
-    //     "depth = {} with graph size {}, DWM LB = {} and UB {}\n\n",
-    //     pd->branch_job, pd->completiontime, pd->less, get_depth(),
-    //     solver->get_nb_vertices(), pd->LP_lower_bound + pd->off,
-    //     pd->upper_bound + pd->off);
-
-    // fmt::print(
-    //     "{0:^10}{1:^10}|{2:^10}{3:^10}{10:^10}|{4:>10}{5:>10}{6:>10}|{7:>5}{8:>"
-    //     "5}|{9:^10}\n",
-    //     "Expl", "Unexpl", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
-    //     "Time", "Time", "Size");
-
     if (pd->depth == 0 || bt->print_progress()) {
         fmt::print(
             "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{"
@@ -293,7 +279,7 @@ void BranchNodeBase::compute_bounds(BTree* bt) {
     build_rmp(pd);
     solve_relaxation(pd);
     compute_lower_bound(pd);
-    set_lb(pd->LP_lower_bound);
+    set_lb(pd->lower_bound);
     set_obj_value(pd->LP_lower_bound);
 }
 
