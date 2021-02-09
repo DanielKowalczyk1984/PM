@@ -21,12 +21,13 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     [[nodiscard]] const double* get_pi() const { return pi; }
 
     OptimalSolution<T> get_objective(NodeBdd<T>& n) const {
-        OptimalSolution<T>    sol(0.0);
-        Label<NodeBdd<T>, T>* aux_label = &(n.backward_label[0]);
-        auto                  tmp_node_id = aux_label->get_node_id();
+        OptimalSolution<T> sol(0.0);
+        auto*              aux_label = &(n.backward_label[0]);
+        // auto                  tmp_node_id = aux_label->get_node_id();
         auto table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
 
         do {
+            auto tmp_node_id = aux_label->get_node_id();
             if (aux_label->get_high()) {
                 auto& node = table_tmp->node(tmp_node_id);
                 Job*  aux_job = node.get_job();
@@ -34,8 +35,7 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
             }
 
             aux_label = aux_label->get_previous();
-            tmp_node_id = aux_label->get_node_id();
-        } while (tmp_node_id > 1);
+        } while (aux_label);
 
         return sol;
     }
