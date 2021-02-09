@@ -1,17 +1,9 @@
 #include "PricerSolverBdd.hpp"
 #include <fmt/core.h>
+#include <gurobi_c++.h>
 #include <algorithm>
-#include <boost/concept_archetype.hpp>
-#include <cassert>
-#include <complex>
-#include <cstddef>
-#include <cstdio>
-#include <functional>
-#include <iostream>
-#include <list>
+#include <boost/graph/graphviz.hpp>
 #include <memory>
-#include <unordered_map>
-#include <vector>
 #include "MipGraph.hpp"
 #include "ModelInterface.hpp"
 #include "NodeBdd.hpp"
@@ -20,9 +12,6 @@
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 #include "ZeroHalfCuts.hpp"
-#include "boost/graph/graphviz.hpp"
-#include "gurobi_c++.h"
-#include "gurobi_c.h"
 #include "interval.h"
 #include "job.h"
 #include "lp.h"
@@ -30,7 +19,6 @@
 #include "util.h"
 #include "wctprivate.h"
 
-using std::list;
 using std::vector;
 
 PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
@@ -803,6 +791,8 @@ void PricerSolverBdd::add_inequality(std::vector<int> v1) {
     model.addConstr(expr1, GRB_EQUAL, convex_rhs);
 }
 void PricerSolverBdd::build_mip() {
+    GRBModel m(*env);
+    m.set(GRB_IntParam_OutputFlag, 1);
     try {
         fmt::print("Building Mip model for the extended formulation:\n");
         auto& table = *(decision_diagram.getDiagram());
@@ -819,14 +809,14 @@ void PricerSolverBdd::build_mip() {
                 auto   C = n.get_weight() + n.get_job()->processing_time;
                 double cost = value_Fj(C, n.get_job());
                 edge_var_list[*it.first].x =
-                    model.addVar(0.0, 1.0, cost, GRB_BINARY);
+                    m.addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
-                edge_var_list[*it.first].x = model.addVar(
+                edge_var_list[*it.first].x = m.addVar(
                     0.0, static_cast<double>(convex_rhs), 0.0, GRB_CONTINUOUS);
             }
         }
 
-        model.update();
+        m.update();
         /** Assignment constraints */
         auto assignment{
             std::vector<GRBLinExpr>(convex_constr_id, GRBLinExpr())};
@@ -849,9 +839,9 @@ void PricerSolverBdd::build_mip() {
         }
 
         std::unique_ptr<GRBConstr> assignment_constrs(
-            model.addConstrs(assignment.data(), sense.data(), rhs.data(),
-                             nullptr, convex_constr_id));
-        model.update();
+            m.addConstrs(assignment.data(), sense.data(), rhs.data(), nullptr,
+                         convex_constr_id));
+        m.update();
         /** Flow constraints */
         auto num_vertices = boost::num_vertices(mip_graph);
         auto flow_conservation_constr{
@@ -889,9 +879,9 @@ void PricerSolverBdd::build_mip() {
         }
 
         std::unique_ptr<GRBConstr> flow_constrs(
-            model.addConstrs(flow_conservation_constr.data(), sense_flow.data(),
-                             rhs_flow.data(), nullptr, num_vertices));
-        model.update();
+            m.addConstrs(flow_conservation_constr.data(), sense_flow.data(),
+                         rhs_flow.data(), nullptr, num_vertices));
+        m.update();
         // for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
         //     // edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart,
         //     // lp_x[edge_index_list[*it.first]]);
@@ -899,10 +889,10 @@ void PricerSolverBdd::build_mip() {
         //         GRB_DoubleAttr_Start,
         //         solution_x[edge_index_list[*it.first]]);
         // }
-        model.write("original_" + problem_name + ".lp");
-        auto presolve = model.presolve();
-        presolve.write("presolve_" + problem_name + ".lp");
-        model.optimize();
+        // model.write("original_" + problem_name + ".lp");
+        auto presolve = m.presolve();
+        // presolve.write("presolve_" + problem_name + ".lp");
+        m.optimize();
 
         // if (model.get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
         //     for (auto it = edges(mip_graph); it.first != it.second;
@@ -921,14 +911,15 @@ void PricerSolverBdd::build_mip() {
         //     // edge_writer); outf.close();
         // }
 
-        ColorWriterEdgeIndex edge_writer_index(mip_graph);
-        ColorWriterVertex    vertex_writer(mip_graph, table);
-        auto                 file_name =
-            "index_" + problem_name + "_" + std::to_string(convex_rhs) + ".gv";
-        std::ofstream outf_index(file_name);
-        boost::write_graphviz(outf_index, mip_graph, vertex_writer,
-                              edge_writer_index);
-        outf_index.close();
+        // ColorWriterEdgeIndex edge_writer_index(mip_graph);
+        // ColorWriterVertex    vertex_writer(mip_graph, table);
+        // auto                 file_name =
+        //     "index_" + problem_name + "_" + std::to_string(convex_rhs) +
+        //     ".gv";
+        // std::ofstream outf_index(file_name);
+        // boost::write_graphviz(outf_index, mip_graph, vertex_writer,
+        //                       edge_writer_index);
+        // outf_index.close();
 
     } catch (GRBException& e) {
         fmt::print("Error code = {}\n", e.getErrorCode());
@@ -1039,13 +1030,13 @@ void PricerSolverBdd::cleanup_arcs() {
     /** remove the unnecessary nodes of the bdd */
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& iter : table[i]) {
-            if (iter.get_weight() + iter.backward_distance[0] < H_min &&
-                iter.branch[0] != 0) {
-                iter.calc[0] = false;
-                removed_edges = true;
-                nb_edges_removed_tmp++;
-                nb_removed_edges++;
-            }
+            // if (iter.get_weight() + iter.backward_distance[0] < H_min &&
+            //     iter.branch[0] != 0) {
+            //     iter.calc[0] = false;
+            //     removed_edges = true;
+            //     nb_edges_removed_tmp++;
+            //     nb_removed_edges++;
+            // }
 
             if (iter.get_weight() + iter.backward_distance[1] < H_min) {
                 iter.calc[1] = false;
@@ -1280,9 +1271,9 @@ void PricerSolverBdd::equivalent_paths_filtering() {
     }
 
     for (auto& it : vertices) {
-        auto         start_v = get(boost::vertex_name_t(), mip_graph, it);
-        auto         num_vertices = boost::num_vertices(mip_graph);
-        list<NodeId> queue;
+        auto              start_v = get(boost::vertex_name_t(), mip_graph, it);
+        auto              num_vertices = boost::num_vertices(mip_graph);
+        std::list<NodeId> queue;
 
         queue.push_back(start_v);
         std::vector<bool>                    visited(num_vertices, false);
@@ -1437,10 +1428,6 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
     set_is_integer_solution(true);
     for (int i = 0; i < num_columns; ++i) {
         if (aux_cols[i] > EPS_SOLVER) {
-            if (aux_cols[i] < 1.0 - EPS_SOLVER) {
-                set_is_integer_solution(false);
-            }
-
             auto      counter = 0u;
             auto      tmp = static_cast<ScheduleSet*>(aux_schedule_sets[i]);
             auto      tmp_nodeid(decision_diagram.root());
@@ -1477,12 +1464,16 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
             if (value > EPS_SOLVER) {
                 lp_sol.emplace_back(it.get_nb_job(), it.get_weight(), 0.0,
                                     value);
+                if (value < 1.0 - EPS_SOLVER) {
+                    set_is_integer_solution(false);
+                }
             }
+
             value = it.lp_x[0];
-            if (value > EPS_SOLVER) {
-                lp_sol.emplace_back(it.get_nb_job(), it.get_weight(), 0.0,
-                                    value, -1, false);
-            }
+            // if (value > EPS_SOLVER) {
+            //     lp_sol.emplace_back(it.get_nb_job(), it.get_weight(), 0.0,
+            //                         value, -1, false);
+            // }
         }
     }
 

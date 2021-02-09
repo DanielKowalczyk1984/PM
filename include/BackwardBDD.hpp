@@ -26,7 +26,7 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
         auto                  tmp_node_id = aux_label->get_node_id();
         auto table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
 
-        while (tmp_node_id != 0) {
+        do {
             if (aux_label->get_high()) {
                 auto& node = table_tmp->node(tmp_node_id);
                 Job*  aux_job = node.get_job();
@@ -35,7 +35,7 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
 
             aux_label = aux_label->get_previous();
             tmp_node_id = aux_label->get_node_id();
-        }
+        } while (tmp_node_id > 1);
 
         return sol;
     }
