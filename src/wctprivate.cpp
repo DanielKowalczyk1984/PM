@@ -29,8 +29,6 @@ static int get_problem_name(char* pname, const char* end_file_name) {
 }
 
 _Problem::~_Problem() { /*free the parameters*/
-    parms_free(&(parms));
-
     g_ptr_array_free(g_job_array, TRUE);
     g_ptr_array_free(ColPool, TRUE);
     g_ptr_array_free(intervals, TRUE);

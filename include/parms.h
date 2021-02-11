@@ -95,39 +95,7 @@ enum use_heuristic {
     yes_use_heuristic = min_use_heuristic,
     no_use_heuristic = 0,
 };
-
-typedef struct parms {
-    /**
-     * General parameters
-     */
-    int                    init_upper_bound;
-    enum BBExploreStrategy bb_explore_strategy;
-    int                    bb_branch_strategy;
-    int                    use_strong_branching;
-    int                    bb_node_limit;
-    int                    nb_iterations_rvnd;
-    double                 branching_cpu_limit;
-    double                 alpha;
-    int                    pricing_solver;
-    int                    mip_solver;
-    int                    use_heuristic;
-
-    enum reduced_cost_fixing_param reduce_cost_fixing;
-
-    /**
-     * column generation
-     */
-    int                  branchandbound;
-    enum stab_techniques stab_technique;
-    int                  print;
-
-    char* jobfile;
-    char* pname;
-
-    int nb_jobs;
-    int nb_machines;
-} Parms;
-
+typedef struct parms Parms;
 /*Initialization and free memory*/
 void parms_init(Parms* parms);
 void parms_free(Parms* parms);
@@ -164,4 +132,40 @@ int parms_set_nb_machines(Parms* parms, int nb_machines);
 #ifdef __cplusplus
 }
 #endif
+struct parms {
+    /**
+     * General parameters
+     */
+    int                    init_upper_bound;
+    enum BBExploreStrategy bb_explore_strategy;
+    // int                    bb_branch_strategy;
+    int    use_strong_branching;
+    int    bb_node_limit;
+    int    nb_iterations_rvnd;
+    double branching_cpu_limit;
+    double alpha;
+    int    pricing_solver;
+    int    mip_solver;
+    int    use_heuristic;
+
+    enum reduced_cost_fixing_param reduce_cost_fixing;
+
+    /**
+     * column generation
+     */
+    int                  branchandbound;
+    enum stab_techniques stab_technique;
+    int                  print;
+
+    char* jobfile;
+    char* pname;
+
+    int nb_jobs;
+    int nb_machines;
+    ~parms();
+    parms();
+};
+
+typedef struct parms Parms;
+
 #endif  // INCLUDE_WCTPARMS_H_

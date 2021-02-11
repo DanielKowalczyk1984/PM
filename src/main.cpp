@@ -10,10 +10,10 @@
 
 #include <fmt/core.h>
 #include "branch-and-bound/btree.h"
+#include "parms.h"
 #include "solver.h"
 #include "util.h"
 #include "wct.h"
-#include "wctparms.h"
 #include "wctprivate.h"
 
 int main(int ac, const char** av) {

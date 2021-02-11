@@ -193,9 +193,14 @@ int call_update_rows_coeff(NodeData* pd);
 }
 #endif
 struct _Problem {
-    Parms                            parms;
+    /** Different Parameters */
+    Parms parms;
+    /*Cpu time measurement + Statistics*/
+    Statistics stat;
+
     NodeData*                        root_pd;
     std::unique_ptr<BranchBoundTree> tree;
+
     /** Job data in EDD order */
     GPtrArray* g_job_array;
     GPtrArray* list_solutions;
@@ -214,7 +219,7 @@ struct _Problem {
 
     GPtrArray* intervals;
 
-    int    nb_data_nodes;
+    /**  */
     int    global_upper_bound;
     int    global_lower_bound;
     double rel_error;
@@ -229,9 +234,8 @@ struct _Problem {
     GPtrArray* ColPool;
     /* Best Solution*/
     Solution* opt_sol;
-    /*Cpu time measurement + Statistics*/
-    Statistics stat;
 
+    /** All methods of problem class */
     void problem_init();
     int  problem_read();
     int  preprocess_data();
@@ -240,7 +244,6 @@ struct _Problem {
     int print_to_csv();
 
    private:
-    // void g_problem_summary_init(gpointer data, gpointer user_data);
     void calculate_Hmax();
     void create_ordered_jobs_array(GPtrArray* a, GPtrArray* b);
     int  find_division();

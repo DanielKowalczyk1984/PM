@@ -2,8 +2,8 @@
 #define __PRICINGSTABILIZATIONWRAPPER_H__
 
 // #include "PricingStabilization.hpp"
+#include "parms.h"
 #include "solver.h"
-#include "wctparms.h"
 
 #ifdef __cplusplus
 extern "C" {

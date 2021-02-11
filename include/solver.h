@@ -3,7 +3,7 @@
 
 // #include <scheduleset.h>
 #include <glib.h>
-#include <wctparms.h>
+#include "parms.h"
 
 #ifdef __cplusplus
 extern "C" {

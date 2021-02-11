@@ -2,7 +2,7 @@
 #define __BRANCHBOUNDTREE_H__
 #include <memory>
 #include "branch-and-bound/btree.h"
-#include "wctparms.h"
+#include "parms.h"
 // #include "wctprivate.h"
 typedef struct _NodeData NodeData;
 class BranchBoundTree {

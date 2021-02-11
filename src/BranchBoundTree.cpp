@@ -7,7 +7,7 @@
 #include "branch-and-bound/brfstree.h"
 #include "branch-and-bound/cbfstree.h"
 #include "branch-and-bound/dfstree.h"
-#include "wctparms.h"
+#include "parms.h"
 #include "wctprivate.h"
 BranchBoundTree::BranchBoundTree(NodeData* root,
                                  int       _probType,

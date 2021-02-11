@@ -9,7 +9,8 @@
 void _Problem::problem_init() {
     root_pd = CC_SAFE_MALLOC(1, NodeData);
     nodedata_init(root_pd, this);
-    parms_init(&(parms));
+    // parms_init(&(parms));
+    parms = Parms();
     statistics_init(&(stat));
     tree = nullptr;
     /** Job data */
@@ -27,7 +28,6 @@ void _Problem::problem_init() {
     H_min = 0;
     H_max = INT_MAX;
     /*B&B info*/
-    nb_data_nodes = 0;
     global_upper_bound = INT_MAX;
     global_lower_bound = 0;
     rel_error = DBL_MAX;
@@ -38,8 +38,7 @@ void _Problem::problem_init() {
     // br_heap_a = (BinomialHeap*)NULL;
     /*data of the problem*/
     set_id_and_name(root_pd, 0, "root_node");
-    nb_data_nodes++;
-    /*parms of the problem*/
+    // /*parms of the problem*/
     /** statistics of the problem */
     /*heap initialization*/
     /** initialize colPool */

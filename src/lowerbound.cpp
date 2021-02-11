@@ -1,12 +1,12 @@
 #include "gurobi_c.h"
 #include "job.h"
 #include "lp.h"
+#include "parms.h"
 #include "pricingstabilizationwrapper.h"
 #include "scheduleset.h"
 #include "solver.h"
 #include "util.h"
 #include "wct.h"
-#include "wctparms.h"
 #include "wctprivate.h"
 
 static const double min_nb_del_row_ratio = 0.9;

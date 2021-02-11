@@ -2,11 +2,11 @@
 #include <fmt/core.h>
 #include "PricerSolverBase.hpp"
 #include "PricingStabilization.hpp"
+#include "parms.h"
 #include "pricingstabilizationwrapper.h"
 #include "scheduleset.h"
 #include "stabilization.h"
 #include "wct.h"
-#include "wctparms.h"
 #include "wctprivate.h"
 
 template <typename T = double>
