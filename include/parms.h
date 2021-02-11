@@ -10,7 +10,7 @@
 
 #ifndef INCLUDE_WCTPARMS_H_
 #define INCLUDE_WCTPARMS_H_
-
+#include <string>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -95,39 +95,6 @@ enum use_heuristic {
     yes_use_heuristic = min_use_heuristic,
     no_use_heuristic = 0,
 };
-typedef struct parms Parms;
-/*Initialization and free memory*/
-void parms_init(Parms* parms);
-void parms_free(Parms* parms);
-
-/*Functions for setting some parameters*/
-int parms_set_branching_cpu_limit(Parms* parms, double limit);
-int parms_set_alpha(Parms* parms, double alpha);
-int parms_set_branching_strategy(Parms* parms, int strategy);
-int parms_set_strong_branching(Parms* parms, int strong);
-int parms_set_mip_solver(Parms* parms, int usage);
-int parms_set_use_heuristic(Parms* parms, int usage);
-int parms_set_reduce_cost(Parms* parms, int usage);
-int parms_set_nb_iterations_rvnd(Parms* parms, int nb_sol);
-
-/**
- * Column Generation parameters
- */
-int parms_set_pricing_solver(Parms* parms, int solver);
-int parms_set_stab_technique(Parms* parms, int stab_technique);
-
-/**
- * Branch-and-Bound parameters
- */
-int parms_set_branchandbound(Parms* parms, int bound);
-int parms_set_bb_explore_strategy(Parms* parms, int strategy);
-int parms_set_bb_node_limit(Parms* parms, int node_limit);
-int parms_set_print(Parms* parms, int print);
-
-/*Functions for defining the filesname*/
-int parms_set_file(Parms* parms, const char* fname);
-int parms_set_pname(Parms* parms, const char* fname);
-int parms_set_nb_machines(Parms* parms, int nb_machines);
 
 #ifdef __cplusplus
 }
@@ -157,13 +124,47 @@ struct parms {
     enum stab_techniques stab_technique;
     int                  print;
 
-    char* jobfile;
-    char* pname;
+    std::string jobfile;
+    std::string pname;
 
     int nb_jobs;
     int nb_machines;
-    ~parms();
     parms();
+
+    parms(const parms&) = default;
+    parms(parms&&) = default;
+    parms& operator=(const parms&) = default;
+    parms& operator=(parms&&) = default;
+    ~parms() = default;
+
+    /*Functions for setting some parameters*/
+    int parms_set_branching_cpu_limit(double limit);
+    int parms_set_alpha(double alpha);
+    int parms_set_branching_strategy(int strategy);
+    int parms_set_strong_branching(int strong);
+    int parms_set_mip_solver(int usage);
+    int parms_set_use_heuristic(int usage);
+    int parms_set_reduce_cost(int usage);
+    int parms_set_nb_iterations_rvnd(int nb_sol);
+
+    /**
+     * Column Generation parameters
+     */
+    int parms_set_pricing_solver(int solver);
+    int parms_set_stab_technique(int stab_technique);
+
+    /**
+     * Branch-and-Bound parameters
+     */
+    int parms_set_branchandbound(int bound);
+    int parms_set_bb_explore_strategy(int strategy);
+    int parms_set_bb_node_limit(int node_limit);
+    int parms_set_print(int print);
+
+    /*Functions for defining the filesname*/
+    int parms_set_file(std::string const& fname);
+    int parms_set_pname(std::string const& fname);
+    int parms_set_nb_machines(int nb_machines);
 };
 
 typedef struct parms Parms;

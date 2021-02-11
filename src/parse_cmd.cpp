@@ -38,11 +38,11 @@ Options:
   -n --node_limit=<nl>          Set a limit on the number of nodes that can be explored.[default: 0]. Default meaning that all nodes should be explored.
 )";
 
-static std::string find_match(const char* _instance_file) {
+static std::string find_match(std::string const& _instance_file) {
     std::regex  regexp{"^.*(wt[0-9]*_[0-9]*).*$"};
     std::smatch match{};
-    std::string s{_instance_file};
-    std::regex_search(s, match, regexp);
+    // std::string s{_instance_file};
+    std::regex_search(_instance_file, match, regexp);
 
     if (match.size() != 2) {
         return std::string("unknown_problem");
@@ -57,40 +57,40 @@ int parse_cmd(int argc, const char** argv, Parms* parms) {
     auto args = docopt::docopt(USAGE, {argv + 1, argv + argc}, true, "PM 0.1");
 
     /** Set CPU limit for branching */
-    val = parms_set_branching_cpu_limit(
-        parms, static_cast<double>(args["--cpu_limit"].asLong()));
+    val = parms->parms_set_branching_cpu_limit(
+        static_cast<double>(args["--cpu_limit"].asLong()));
     /** Set number of iterations in rvnd */
-    val = parms_set_nb_iterations_rvnd(
-        parms, static_cast<int>(args["--nb_rvnb_it"].asLong()));
+    val = parms->parms_set_nb_iterations_rvnd(
+        static_cast<int>(args["--nb_rvnb_it"].asLong()));
     /** Print statistics to csv files */
-    val = parms_set_print(parms, args["--print_csv"].asBool());
+    val = parms->parms_set_print(args["--print_csv"].asBool());
     /** Use MIP solver or not */
-    val = parms_set_mip_solver(parms, args["--mip_solver"].asBool());
+    val = parms->parms_set_mip_solver(args["--mip_solver"].asBool());
     /** Use reduced cost fixing */
-    val = parms_set_reduce_cost(parms, !(args["--no_rc_fixing"].asBool()));
+    val = parms->parms_set_reduce_cost(!(args["--no_rc_fixing"].asBool()));
     /** Use heuristic or not */
-    val = parms_set_use_heuristic(parms, !(args["--no_heuristic"].asBool()));
+    val = parms->parms_set_use_heuristic(!(args["--no_heuristic"].asBool()));
     /** Set the pricing solver */
-    val = parms_set_pricing_solver(
-        parms, static_cast<int>(args["--pricing_solver"].asLong()));
+    val = parms->parms_set_pricing_solver(
+        static_cast<int>(args["--pricing_solver"].asLong()));
     /** Set the stabilization method */
-    val = parms_set_stab_technique(
-        parms, static_cast<int>(args["--stab_method"].asLong()));
+    val = parms->parms_set_stab_technique(
+        static_cast<int>(args["--stab_method"].asLong()));
     val =
-        parms_set_branchandbound(parms, args["--no_branch_and_bound"].asBool());
+        parms->parms_set_branchandbound(args["--no_branch_and_bound"].asBool());
     /** Determine the name of the instance */
-    auto* file_name = args["FILE"].asString().c_str();
-    val = parms_set_file(parms, file_name);
-    val = parms_set_pname(parms, find_match(file_name).c_str());
+    auto file_name = args["FILE"].asString();
+    val = parms->parms_set_file(file_name);
+    val = parms->parms_set_pname(find_match(file_name));
     /** Set the number of machines */
-    val = parms_set_nb_machines(parms, static_cast<int>(args["NB"].asLong()));
+    val = parms->parms_set_nb_machines(static_cast<int>(args["NB"].asLong()));
 
-    val = parms_set_strong_branching(parms,
-                                     !(args["--no_strong_branching"].asBool()));
-    val = parms_set_alpha(parms, std::stod(args["--alpha"].asString()));
-    val = parms_set_bb_explore_strategy(
-        parms, static_cast<int>(args["--branching_strategy"].asLong()));
-    val = parms_set_bb_node_limit(
-        parms, static_cast<int>(args["--node_limit"].asLong()));
+    val = parms->parms_set_strong_branching(
+        !(args["--no_strong_branching"].asBool()));
+    val = parms->parms_set_alpha(std::stod(args["--alpha"].asString()));
+    val = parms->parms_set_bb_explore_strategy(
+        static_cast<int>(args["--branching_strategy"].asLong()));
+    val = parms->parms_set_bb_node_limit(
+        static_cast<int>(args["--node_limit"].asLong()));
     return val;
 }

@@ -19,44 +19,46 @@ PricerSolverBase* newSolver(GPtrArray* _jobs,
                             double     _ub) {
     switch (_parms->pricing_solver) {
         case bdd_solver_simple:
-            return new PricerSolverBddSimple(_jobs, _num_machines,
-                                             _ordered_jobs, _parms->pname,
-                                             _hmax, _take_jobs, _ub);
+            return new PricerSolverBddSimple(
+                _jobs, _num_machines, _ordered_jobs, _parms->pname.c_str(),
+                _hmax, _take_jobs, _ub);
             break;
         case bdd_solver_cycle:
             return new PricerSolverBddCycle(_jobs, _num_machines, _ordered_jobs,
-                                            _parms->pname, _hmax, _take_jobs,
-                                            _ub);
+                                            _parms->pname.c_str(), _hmax,
+                                            _take_jobs, _ub);
             break;
         case zdd_solver_cycle:
             return new PricerSolverZddCycle(_jobs, _num_machines, _ordered_jobs,
-                                            _parms->pname, _ub);
+                                            _parms->pname.c_str(), _ub);
             break;
         case zdd_solver_simple:
             return new PricerSolverSimple(_jobs, _num_machines, _ordered_jobs,
-                                          _parms->pname, _ub);
+                                          _parms->pname.c_str(), _ub);
             break;
         case bdd_solver_backward_simple:
             return new PricerSolverBddBackwardSimple(
-                _jobs, _num_machines, _ordered_jobs, _parms->pname, _hmax,
-                _take_jobs, _ub);
+                _jobs, _num_machines, _ordered_jobs, _parms->pname.c_str(),
+                _hmax, _take_jobs, _ub);
             break;
         case bdd_solver_backward_cycle:
             return new PricerSolverBddBackwardCycle(
-                _jobs, _num_machines, _ordered_jobs, _parms->pname, _hmax,
-                _take_jobs, _ub);
+                _jobs, _num_machines, _ordered_jobs, _parms->pname.c_str(),
+                _hmax, _take_jobs, _ub);
             break;
         case zdd_solver_backward_simple:
             return new PricerSolverZddBackwardSimple(
-                _jobs, _num_machines, _ordered_jobs, _parms->pname, _ub);
+                _jobs, _num_machines, _ordered_jobs, _parms->pname.c_str(),
+                _ub);
             break;
         case zdd_solver_backward_cycle:
-            return new PricerSolverZddBackwardCycle(
-                _jobs, _num_machines, _ordered_jobs, _parms->pname, _ub);
+            return new PricerSolverZddBackwardCycle(_jobs, _num_machines,
+                                                    _ordered_jobs,
+                                                    _parms->pname.c_str(), _ub);
         default:
             return new PricerSolverBddBackwardCycle(
-                _jobs, _num_machines, _ordered_jobs, _parms->pname, _hmax,
-                _take_jobs, _ub);
+                _jobs, _num_machines, _ordered_jobs, _parms->pname.c_str(),
+                _hmax, _take_jobs, _ub);
     }
 }
 
@@ -68,17 +70,17 @@ PricerSolverBase* newSolverDp(GPtrArray* _jobs,
     switch (_parms->pricing_solver) {
         case dp_solver:
             return new PricerSolverSimpleDp(_jobs, _num_machines, _hmax,
-                                            _parms->pname, _ub);
+                                            _parms->pname.c_str(), _ub);
             break;
         case ati_solver:
             return new PricerSolverArcTimeDp(_jobs, _num_machines, _hmax,
-                                             _parms->pname, _ub);
+                                             _parms->pname.c_str(), _ub);
         case dp_bdd_solver:
             return new PricerSolverSimpleDp(_jobs, _num_machines, _hmax,
-                                            _parms->pname, _ub);
+                                            _parms->pname.c_str(), _ub);
         default:
             return new PricerSolverSimpleDp(_jobs, _num_machines, _hmax,
-                                            _parms->pname, _ub);
+                                            _parms->pname.c_str(), _ub);
             break;
     }
 }

@@ -42,10 +42,10 @@ int _Problem::problem_read() {
     // NodeData*   pd = root_pd;
     // Parms*      parms = &(parms);
     // Statistics* statistics = &(stat);
-    FILE* in = fopen(parms.jobfile, "r");
+    FILE* in = fopen(parms.jobfile.c_str(), "r");
 
     if (in != (FILE*)NULL) {
-        get_problem_name(stat.pname, parms.jobfile);
+        get_problem_name(stat.pname, parms.jobfile.c_str());
 
         if (fgets(buf, 254, in) != NULL) {
             p = buf;
@@ -81,7 +81,7 @@ int _Problem::problem_read() {
         nb_jobs = root_pd->nb_jobs = parms.nb_jobs = nb_jobs_tmp;
         nb_machines = root_pd->nb_machines = parms.nb_machines;
     } else {
-        fprintf(stderr, "Unable to open file %s\n", parms.jobfile);
+        fmt::print(stderr, "Unable to open file {}\n", parms.jobfile);
         val = 1;
         goto CLEAN;
     }
