@@ -3,6 +3,7 @@
 
 #include "defs.h"
 #include "wctprivate.h"
+int parse_cmd(int argc, const char** argv, Parms* parms);
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,7 +17,6 @@ extern "C" {
  * @param parms
  * @return int
  */
-int parse_cmd(int argc, const char** argv, Parms* parms);
 
 /**
  * io.c
@@ -25,17 +25,6 @@ int parse_cmd(int argc, const char** argv, Parms* parms);
 int print_to_screen(Problem* problem);
 int print_to_csv(Problem* problem);
 int read_problem(Problem* problem);
-
-/**
- * preprocess.c
- */
-
-void calculate_Hmax(Problem* problem);
-int  preprocess_data(Problem* problem);
-int  find_division(Problem* problem);
-void g_problem_summary_init(gpointer data, gpointer user_data);
-void create_ordered_jobs_array(GPtrArray* a, GPtrArray* b);
-void determine_jobs_order_interval(Problem* problem);
 
 /**
  * greedy.c

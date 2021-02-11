@@ -8,6 +8,8 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
+#include <fmt/core.h>
+#include "branch-and-bound/btree.h"
 #include "solver.h"
 #include "util.h"
 #include "wct.h"
@@ -25,13 +27,13 @@ int main(int ac, const char** av) {
     Statistics* statistics = &(problem.stat);
 
     val = program_header(ac, av);
-    CCcheck_val_2(val, "Failed in program_header");
+    // CCcheck_val_2(val, "Failed in program_header");
 
     val = parse_cmd(ac, av, parms);
-    CCcheck_val_2(val, "Failed parsing the commands\n");
+    // CCcheck_val_2(val, "Failed parsing the commands\n");
 
     if (dbg_lvl() > 1) {
-        printf("Debugging turned on\n");
+        fmt::print("Debugging turned on\n");
     }
 
     /**
@@ -39,13 +41,15 @@ int main(int ac, const char** av) {
      *
      */
     start_time = CCutil_zeit();
-    val = read_problem(&problem);
-    CCcheck_val_2(val, "read_adjlist failed");
+    // val = read_problem(&problem);
+    problem.problem_read();
+    // CCcheck_val_2(val, "read_adjlist failed");
 
-    val = preprocess_data(&problem);
-    CCcheck_val_2(val, "Failed at preprocess_data");
-    printf("Reading and preprocessing of the data took %f seconds\n",
-           CCutil_zeit() - start_time);
+    // val = preprocess_data(&problem);
+    problem.preprocess_data();
+    // CCcheck_val_2(val, "Failed at preprocess_data");
+    fmt::print("Reading and preprocessing of the data took %f seconds\n",
+               CCutil_zeit() - start_time);
 
     /**
      *@brief Finding heuristic solutions to the problem or start without
@@ -59,13 +63,13 @@ int main(int ac, const char** av) {
             solution_alloc(problem.intervals->len, root->nb_machines,
                            root->nb_jobs, problem.off);
         Solution* sol = problem.opt_sol;
-        CCcheck_NULL_2(sol, "Failed to allocate memory");
+        // CCcheck_NULL_2(sol, "Failed to allocate memory");
         val = construct_edd(&problem, sol);
-        CCcheck_val_2(val, "Failed construct edd");
-        printf("Solution Constructed with EDD heuristic:\n");
+        // CCcheck_val_2(val, "Failed construct edd");
+        fmt::print("Solution Constructed with EDD heuristic:\n");
         solution_print(sol);
         solution_canonical_order(sol, problem.intervals);
-        printf("Solution in canonical order: \n");
+        fmt::print("Solution in canonical order: \n");
         solution_print(sol);
     }
 
@@ -100,8 +104,9 @@ int main(int ac, const char** av) {
     GPtrArray* solutions_pool = g_ptr_array_copy(
         root->localColPool, g_copy_scheduleset, &(problem.nb_jobs));
 
-    problem.tree = new_branch_bound_tree(problem.root_pd, 0, 1);
-    call_branch_and_bound_explore(problem.tree);
+    problem.tree = std::make_unique<BranchBoundTree>(problem.root_pd, 0, 1);
+    // call_branch_and_bound_explore(problem.tree);
+    problem.tree->explore();
 
     /**
      * @brief Calculation of LB at the root node with column generation
@@ -111,12 +116,14 @@ int main(int ac, const char** av) {
     //     CCutil_start_timer(&(statistics->tot_lb_root));
     // compute_lower_bound(&problem, &(problem.root_pd));
     //     if (parms->pricing_solver < dp_solver) {
-    //         solution_canonical_order(problem.opt_sol, root->local_intervals);
+    //         solution_canonical_order(problem.opt_sol,
+    //         root->local_intervals);
     //     }
     //     // represent_solution(root, problem.opt_sol);
     //     problem.rel_error =
-    //         (double)(problem.global_upper_bound - problem.global_lower_bound)
-    //         / (problem.global_lower_bound + 0.00001);
+    //         (double)(problem.global_upper_bound -
+    //         problem.global_lower_bound) / (problem.global_lower_bound +
+    //         0.00001);
     //     CCutil_stop_timer(&(statistics->tot_lb_root), 1);
 
     //     if (parms->pricing_solver == dp_bdd_solver) {
@@ -129,7 +136,8 @@ int main(int ac, const char** av) {
     //         root->solver =
     //             newSolver(root->jobarray, root->nb_machines,
     //             root->ordered_jobs,
-    //                       parms, problem.H_max, take, problem.opt_sol->tw);
+    //                       parms, problem.H_max, take,
+    //                       problem.opt_sol->tw);
 
     //         CC_IFFREE(take, int);
     //         CCutil_start_timer(&(statistics->tot_lb_root));
@@ -145,10 +153,10 @@ int main(int ac, const char** av) {
     }
 
     if (parms->print) {
-        print_to_csv(&problem);
+        problem.print_to_csv();
     }
 
-CLEAN:
-    problem_free(&problem);
+    // CLEAN:
+    // problem_free(&problem);
     return val;
 }

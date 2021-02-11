@@ -87,9 +87,10 @@ int add_lhs_scheduleset_to_rmp(ScheduleSet* set, NodeData* pd) {
     gsize   aux = 0;
     double* lhs_coeff = &g_array_index(pd->lhs_coeff, double, 0);
 
-    int* aux_int_array = g_array_steal(pd->id_row, &aux);
+    int* aux_int_array = static_cast<int*>(g_array_steal(pd->id_row, &aux));
     CC_IFFREE(aux_int_array, int);
-    double* aux_double_array = g_array_steal(pd->coeff_row, &aux);
+    double* aux_double_array =
+        static_cast<double*>(g_array_steal(pd->coeff_row, &aux));
     CC_IFFREE(aux_double_array, double);
 
     for (int j = 0; j < pd->nb_rows; j++) {
@@ -178,7 +179,7 @@ int build_rmp(NodeData* pd) {
     double* rhs = CC_SAFE_MALLOC(nb_jobs, double);
     char*   sense = CC_SAFE_MALLOC(nb_jobs, char);
     val = lp_interface_init(&(pd->RMP), NULL);
-    CCcheck_val_2(val, "lp_interface_init failed");
+    // CCcheck_val_2(val, "lp_interface_init failed");
 
     fill_int(start, nb_jobs, 0);
     fill_dbl(rhs, nb_jobs, 1.0);
@@ -198,7 +199,7 @@ int build_rmp(NodeData* pd) {
     val = lp_interface_addrow(pd->RMP, 0, (int*)NULL, (double*)NULL,
                               lp_interface_GREATER_EQUAL, -(double)nb_machines,
                               (char*)NULL);
-    CCcheck_val_2(val, "Failed to add convexification constraint");
+    // CCcheck_val_2(val, "Failed to add convexification constraint");
     lp_interface_get_nb_rows(pd->RMP, &(pd->id_valid_cuts));
     pd->nb_rows = pd->id_valid_cuts;
 

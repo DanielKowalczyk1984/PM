@@ -3,8 +3,8 @@
 #include <memory>
 #include "branch-and-bound/btree.h"
 #include "wctparms.h"
-#include "wctprivate.h"
-
+// #include "wctprivate.h"
+typedef struct _NodeData NodeData;
 class BranchBoundTree {
    public:
     explicit BranchBoundTree(NodeData* data,
@@ -16,6 +16,7 @@ class BranchBoundTree {
     BranchBoundTree(const BranchBoundTree&) = delete;
     ~BranchBoundTree() = default;
     BTree* get_ptr_tree() { return tree.get(); }
+    void   explore() { tree->explore(); }
 
    private:
     std::unique_ptr<BTree> tree;

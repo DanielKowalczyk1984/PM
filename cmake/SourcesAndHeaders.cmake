@@ -20,6 +20,6 @@ file(
 
 set(sources ${SOURCE_FILES})
 
-set(exe_sources src/mainwct.c)
+set(exe_sources src/main.cpp)
 
 set(headers ${PROJECT_SOURCE_DIR}/include)

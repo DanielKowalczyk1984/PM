@@ -6,6 +6,49 @@
 #include "util.h"
 #include "wctprivate.h"
 
+void _Problem::problem_init() {
+    root_pd = CC_SAFE_MALLOC(1, NodeData);
+    nodedata_init(root_pd, this);
+    parms_init(&(parms));
+    statistics_init(&(stat));
+    tree = nullptr;
+    /** Job data */
+    g_job_array = g_ptr_array_new_with_free_func(g_job_free);
+    intervals = g_ptr_array_new_with_free_func(g_interval_free);
+    opt_sol = nullptr;
+    /** Job summary */
+    nb_jobs = 0;
+    p_sum = 0;
+    pmax = 0;
+    pmin = INT_MAX;
+    dmax = INT_MIN;
+    dmin = INT_MAX;
+    off = 0;
+    H_min = 0;
+    H_max = INT_MAX;
+    /*B&B info*/
+    nb_data_nodes = 0;
+    global_upper_bound = INT_MAX;
+    global_lower_bound = 0;
+    rel_error = DBL_MAX;
+    root_lower_bound = 0;
+    root_upper_bound = INT_MAX;
+    root_rel_error = DBL_MAX;
+    status = no_sol;
+    // br_heap_a = (BinomialHeap*)NULL;
+    /*data of the problem*/
+    set_id_and_name(root_pd, 0, "root_node");
+    nb_data_nodes++;
+    /*parms of the problem*/
+    /** statistics of the problem */
+    /*heap initialization*/
+    /** initialize colPool */
+    ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 int debug = 0;
 
 /*Information about debug*/
@@ -57,17 +100,17 @@ void set_dbg_lvl(int dbglvl) {
 //     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
 // }
 
-void problem_free(Problem* problem) {
-    /*free the parameters*/
-    parms_free(&(problem->parms));
-    delete_branch_bound_tree(problem->tree);
-    // nodedata_free(problem->root_pd);
+// void problem_free(Problem* problem) {
+//     /*free the parameters*/
+//     parms_free(&(problem->parms));
+//     // delete_branch_bound_tree(problem->tree);
+//     // nodedata_free(problem->root_pd);
 
-    g_ptr_array_free(problem->g_job_array, TRUE);
-    g_ptr_array_free(problem->ColPool, TRUE);
-    g_ptr_array_free(problem->intervals, TRUE);
-    solution_free(&(problem->opt_sol));
-}
+//     g_ptr_array_free(problem->g_job_array, TRUE);
+//     g_ptr_array_free(problem->ColPool, TRUE);
+//     g_ptr_array_free(problem->intervals, TRUE);
+//     solution_free(&(problem->opt_sol));
+// }
 
 /*Functions for initialization and free the data*/
 void nodedata_init(NodeData* pd, Problem* prob) {
@@ -550,3 +593,6 @@ int add_solution_to_colpool_and_lp(Solution* sol, NodeData* pd) {
 CLEAN:
     return val;
 }
+#ifdef __cplusplus
+}
+#endif

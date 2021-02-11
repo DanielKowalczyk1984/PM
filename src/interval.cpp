@@ -155,7 +155,8 @@ void print_interval_pair(GPtrArray* ordered_jobs) {
     job_interval_pair* tmp_p = NULL;
 
     for (size_t i = 0; i < ordered_jobs->len; i++) {
-        tmp_p = g_ptr_array_index(ordered_jobs, i);
+        tmp_p =
+            static_cast<job_interval_pair*>(g_ptr_array_index(ordered_jobs, i));
         if (tmp_p->I != cur) {
             cur = tmp_p->I;
             printf("\n");
@@ -170,7 +171,8 @@ void count_jobs_interval_pair(GPtrArray* ordered_jobs) {
     job_interval_pair* tmp_p = NULL;
 
     for (size_t i = 0; i < ordered_jobs->len; i++) {
-        tmp_p = g_ptr_array_index(ordered_jobs, i);
+        tmp_p =
+            static_cast<job_interval_pair*>(g_ptr_array_index(ordered_jobs, i));
         tmp_p->j->num_layers++;
     }
 }

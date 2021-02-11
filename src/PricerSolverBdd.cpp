@@ -77,6 +77,17 @@ PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src,
     init_coeff_constraints();
 }
 
+gint g_compare_duration(gconstpointer a, gconstpointer b) {
+    const Job* x = *((Job* const*)a);
+    const Job* y = *((Job* const*)b);
+
+    if (x->processing_time < y->processing_time) {
+        return -1;
+    } else {
+        return 1;
+    }
+}
+
 void PricerSolverBdd::calculate_H_min() {
     auto  p_sum = 0.0;
     auto* duration = g_ptr_array_new();

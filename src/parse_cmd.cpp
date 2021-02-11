@@ -51,7 +51,7 @@ static std::string find_match(const char* _instance_file) {
     }
 }
 
-extern "C" int parse_cmd(int argc, const char** argv, Parms* parms) {
+int parse_cmd(int argc, const char** argv, Parms* parms) {
     int val = 0;
 
     auto args = docopt::docopt(USAGE, {argv + 1, argv + argc}, true, "PM 0.1");

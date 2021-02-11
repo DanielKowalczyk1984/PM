@@ -38,15 +38,15 @@ BranchBoundTree::BranchBoundTree(NodeData* root,
 }
 
 extern "C" {
-BranchBoundTree* new_branch_bound_tree(NodeData* root,
-                                       int       _probType,
-                                       int       _isIntProb) {
-    return new BranchBoundTree(root, _probType, _isIntProb);
-}
+// BranchBoundTree* new_branch_bound_tree(NodeData* root,
+//                                        int       _probType,
+//                                        int       _isIntProb) {
+//     return new BranchBoundTree(root, _probType, _isIntProb);
+// }
 
 void delete_branch_bound_tree(BranchBoundTree* tree) {
     if (tree) {
-        delete tree;
+        // delete tree;
     }
 }
 

@@ -1,9 +1,12 @@
 #ifndef WCT_PRIVATE_H
 #define WCT_PRIVATE_H
 
+#include <memory>
+#include "BranchBoundTree.hpp"
 #include "MIP_defs.hpp"
 #include "Statistics.h"
 #include "binomial-heap.h"
+// #include "branch-and-bound/btree.h"
 #include "interval.h"
 #include "lp.h"
 #include "pricingstabilizationwrapper.h"
@@ -48,15 +51,7 @@ typedef struct _Problem Problem;
  */
 typedef struct _NodeData NodeData;
 
-typedef struct BranchNodeBase  BranchNode;
-typedef struct BranchBoundTree BranchBoundTree;
-
-BranchBoundTree* new_branch_bound_tree(NodeData* data,
-                                       int       _probtype,
-                                       int       _isIntProb);
-
-void delete_branch_bound_tree(BranchBoundTree* tree);
-void call_branch_and_bound_explore(BranchBoundTree* tree);
+typedef struct BranchNodeBase BranchNode;
 
 struct _NodeData {
     // The id and depth of the node in the B&B tree
@@ -165,10 +160,6 @@ typedef enum {
     optimal = 4
 } problem_status;
 
-/*Initialization and free memory for the problem*/
-// void problem_init(Problem* problem);
-void problem_free(Problem* problem);
-
 /*Initialize pmc data*/
 void      nodedata_init(NodeData* pd, Problem* prob);
 void      nodedata_init_null(NodeData* pd);
@@ -202,9 +193,9 @@ int call_update_rows_coeff(NodeData* pd);
 }
 #endif
 struct _Problem {
-    Parms            parms;
-    NodeData*        root_pd;
-    BranchBoundTree* tree;
+    Parms                            parms;
+    NodeData*                        root_pd;
+    std::unique_ptr<BranchBoundTree> tree;
     /** Job data in EDD order */
     GPtrArray* g_job_array;
     GPtrArray* list_solutions;
@@ -242,46 +233,26 @@ struct _Problem {
     Statistics stat;
 
     void problem_init();
-};
+    int  problem_read();
+    int  preprocess_data();
+    ~_Problem();
+    int print_to_screen();
+    int print_to_csv();
 
-void _Problem::problem_init() {
-    root_pd = CC_SAFE_MALLOC(1, NodeData);
-    nodedata_init(root_pd, this);
-    parms_init(&(parms));
-    statistics_init(&(stat));
-    tree = nullptr;
-    /** Job data */
-    g_job_array = g_ptr_array_new_with_free_func(g_job_free);
-    intervals = g_ptr_array_new_with_free_func(g_interval_free);
-    opt_sol = nullptr;
-    /** Job summary */
-    nb_jobs = 0;
-    p_sum = 0;
-    pmax = 0;
-    pmin = INT_MAX;
-    dmax = INT_MIN;
-    dmin = INT_MAX;
-    off = 0;
-    H_min = 0;
-    H_max = INT_MAX;
-    /*B&B info*/
-    nb_data_nodes = 0;
-    global_upper_bound = INT_MAX;
-    global_lower_bound = 0;
-    rel_error = DBL_MAX;
-    root_lower_bound = 0;
-    root_upper_bound = INT_MAX;
-    root_rel_error = DBL_MAX;
-    status = no_sol;
-    // br_heap_a = (BinomialHeap*)NULL;
-    /*data of the problem*/
-    set_id_and_name(root_pd, 0, "root_node");
-    nb_data_nodes++;
-    /*parms of the problem*/
-    /** statistics of the problem */
-    /*heap initialization*/
-    /** initialize colPool */
-    ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+   private:
+    // void g_problem_summary_init(gpointer data, gpointer user_data);
+    void calculate_Hmax();
+    void create_ordered_jobs_array(GPtrArray* a, GPtrArray* b);
+    int  find_division();
+
+    static int check_interval(interval_pair* pair,
+                              int            k,
+                              GPtrArray*     interval_array);
+    static int calculate_T(interval_pair* pair,
+                           int            k,
+                           GPtrArray*     interval_array);
+
+    static GPtrArray* array_time_slots(interval* I, GList* pairs);
 };
 
 #endif
