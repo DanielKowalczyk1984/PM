@@ -24,27 +24,6 @@ int main(int ac, const char** av) {
     Parms*      parms = &(problem.parms);
     Statistics* statistics = &(problem.stat);
 
-    // val = program_header(ac, av);
-
-    // if (dbg_lvl() > 1) {
-    //     fmt::print("Debugging turned on\n");
-    // }
-
-    // /**
-    //  * @brief Reading and preprocessing the data
-    //  *
-    //  */
-    // start_time = CCutil_zeit();
-    // // val = read_problem(&problem);
-    // problem.problem_read();
-    // // CCcheck_val_2(val, "read_adjlist failed");
-
-    // // val = preprocess_data(&problem);
-    // problem.preprocess_data();
-    // // CCcheck_val_2(val, "Failed at preprocess_data");
-    // fmt::print("Reading and preprocessing of the data took %f seconds\n",
-    //            CCutil_zeit() - start_time);
-
     /**
      *@brief Finding heuristic solutions to the problem or start without
      *feasible solutions
