@@ -165,6 +165,15 @@ struct parms {
     int parms_set_file(std::string const& fname);
     int parms_set_pname(std::string const& fname);
     int parms_set_nb_machines(int nb_machines);
+    /**
+    @brief Parse the commands with docopt
+     *
+     * @param argc
+     * @param argv
+     * @param parms
+     * @return int
+     */
+    int parse_cmd(int argc, const char** argv);
 };
 
 typedef struct parms Parms;

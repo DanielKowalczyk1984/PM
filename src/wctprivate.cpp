@@ -35,6 +35,30 @@ _Problem::~_Problem() { /*free the parameters*/
     solution_free(&(opt_sol));
 }
 
+_Problem::_Problem(int argc, const char** argv) {
+    double start_time = 0.0;
+    problem_init();
+
+    int val = program_header(argc, argv);
+
+    val = parms.parse_cmd(argc, argv);
+
+    if (dbg_lvl() > 1) {
+        fmt::print("Debugging turned on\n");
+    }
+
+    /**
+     * @brief Reading and preprocessing the data
+     *
+     */
+    start_time = CCutil_zeit();
+    problem_read();
+    preprocess_data();
+    // CCcheck_val_2(val, "Failed at preprocess_data");
+    fmt::print("Reading and preprocessing of the data took %f seconds\n",
+               CCutil_zeit() - start_time);
+}
+
 static void g_problem_summary_init(gpointer data, gpointer user_data) {
     Problem* prob = static_cast<Problem*>(user_data);
     Job*     j = static_cast<Job*>(data);

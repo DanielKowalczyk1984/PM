@@ -3,28 +3,10 @@
 
 #include "defs.h"
 #include "wctprivate.h"
-int parse_cmd(int argc, const char** argv, Parms* parms);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
-@brief Parse the commands with docopt (see parse_cmd.cpp for definition)
- *
- * @param argc
- * @param argv
- * @param parms
- * @return int
- */
-
-/**
- * io.c
- */
-
-int print_to_screen(Problem* problem);
-int print_to_csv(Problem* problem);
-int read_problem(Problem* problem);
 
 /**
  * greedy.c

@@ -239,9 +239,10 @@ struct _Problem {
     void problem_init();
     int  problem_read();
     int  preprocess_data();
+    int  print_to_screen();
+    int  print_to_csv();
     ~_Problem();
-    int print_to_screen();
-    int print_to_csv();
+    _Problem(int argc, const char** argv);
 
    private:
     void calculate_Hmax();

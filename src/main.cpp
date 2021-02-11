@@ -18,38 +18,32 @@
 
 int main(int ac, const char** av) {
     int     val = 0;
-    double  start_time = 0.0;
-    Problem problem;
-    problem.problem_init();
+    Problem problem(ac, av);
 
     NodeData*   root = problem.root_pd;
     Parms*      parms = &(problem.parms);
     Statistics* statistics = &(problem.stat);
 
-    val = program_header(ac, av);
-    // CCcheck_val_2(val, "Failed in program_header");
+    // val = program_header(ac, av);
 
-    val = parse_cmd(ac, av, parms);
-    // CCcheck_val_2(val, "Failed parsing the commands\n");
+    // if (dbg_lvl() > 1) {
+    //     fmt::print("Debugging turned on\n");
+    // }
 
-    if (dbg_lvl() > 1) {
-        fmt::print("Debugging turned on\n");
-    }
+    // /**
+    //  * @brief Reading and preprocessing the data
+    //  *
+    //  */
+    // start_time = CCutil_zeit();
+    // // val = read_problem(&problem);
+    // problem.problem_read();
+    // // CCcheck_val_2(val, "read_adjlist failed");
 
-    /**
-     * @brief Reading and preprocessing the data
-     *
-     */
-    start_time = CCutil_zeit();
-    // val = read_problem(&problem);
-    problem.problem_read();
-    // CCcheck_val_2(val, "read_adjlist failed");
-
-    // val = preprocess_data(&problem);
-    problem.preprocess_data();
-    // CCcheck_val_2(val, "Failed at preprocess_data");
-    fmt::print("Reading and preprocessing of the data took %f seconds\n",
-               CCutil_zeit() - start_time);
+    // // val = preprocess_data(&problem);
+    // problem.preprocess_data();
+    // // CCcheck_val_2(val, "Failed at preprocess_data");
+    // fmt::print("Reading and preprocessing of the data took %f seconds\n",
+    //            CCutil_zeit() - start_time);
 
     /**
      *@brief Finding heuristic solutions to the problem or start without
