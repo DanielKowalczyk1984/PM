@@ -4,6 +4,7 @@
 #include <fmt/core.h>
 #include <limits>
 #include <memory>
+#include "branch-and-bound/btree.h"
 #include "branch-and-bound/state.h"
 #include "wctprivate.h"
 
@@ -37,7 +38,7 @@ class BranchNodeBase : public State {
     void update_data(double upper_bound) final;
     // std::unique_ptr<State> clone() { return nullptr; };  // "copy
     // constructor"
-    void print() const final{};
+    void print(const BTree* bt) const override;
     bool operator<(const State& other) final {
         return get_obj_value() < other.get_obj_value();
     };

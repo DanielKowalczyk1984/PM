@@ -16,6 +16,13 @@
 BranchNodeBase::BranchNodeBase(NodeData* _pd, bool _isRoot)
     : State(_isRoot),
       pd(_pd) {
+    if (_isRoot) {
+        build_rmp(pd);
+        solve_relaxation(pd);
+        compute_lower_bound(pd);
+        set_lb(pd->lower_bound);
+        set_obj_value(pd->LP_lower_bound);
+    }
     set_depth(pd->depth);
 }
 
@@ -29,17 +36,17 @@ void BranchNodeBase::branch(BTree* bt) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
     }
 
-    if (pd->depth == 0 || bt->print_progress()) {
-        fmt::print(
-            "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{"
-            "8:>"
-            "5}{9:>5}|{10:>5}{11:>5}|\n",
-            bt->tStats->get_states_explored(), bt->get_nb_nodes(),
-            pd->LP_lower_bound + pd->off, pd->depth, solver->get_nb_vertices(),
-            bt->getGlobalUB() + pd->off, bt->getGlobalLB() + pd->off, 0.0,
-            pd->branch_job, pd->completiontime, bt->get_run_time_start(),
-            pd->iterations);
-    }
+    // if (get_depth() == 0 || bt->print_progress()) {
+    //     fmt::print(
+    //         "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{"
+    //         "8:>"
+    //         "5}{9:>5}|{10:>5}{11:>5}|\n",
+    //         bt->tStats->get_states_explored(), bt->get_nb_nodes(),
+    //         pd->LP_lower_bound + pd->off, pd->depth,
+    //         solver->get_nb_vertices(), bt->getGlobalUB() + pd->off,
+    //         bt->getGlobalLB() + pd->off, 0.0, pd->branch_job,
+    //         pd->completiontime, bt->get_run_time_start(), pd->iterations);
+    // }
 
     auto fathom_left = false;
     auto fathom_right = false;
@@ -295,6 +302,29 @@ void BranchNodeBase::apply_final_pruning_tests(BTree* bt) {}
 void BranchNodeBase::update_data(double upper_bound) {
     auto* statistics = pd->stat;
     statistics->global_upper_bound = static_cast<int>(upper_bound);
+}
+
+void BranchNodeBase::print(const BTree* bt) const {
+    auto* solver = pd->solver;
+    if (get_is_root_node()) {
+        fmt::print("{0:^10}|{1:^30}|{2:^30}|{3:^10}|{4:^10}|\n", "Nodes",
+                   "Current Node", "Objective Bounds", "Branch", "Work");
+        fmt::print(
+            "{0:^5}{1:^5}|{2:^10}{3:^10}{10:^10}|{4:>10}{5:>10}{6:>10}|{7:>5}{"
+            "8:>5}"
+            "|{9:>5}{11:>5}\n",
+            "Expl", "Unex", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
+            "Time", "Time", "Size", "Iter");
+    }
+    fmt::print(
+        "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{"
+        "8:>"
+        "5}{9:>5}|{10:>5}{11:>5}|\n",
+        bt->get_nb_nodes_explored(), bt->get_nb_nodes(),
+        pd->LP_lower_bound + pd->off, pd->depth, solver->get_nb_vertices(),
+        bt->getGlobalUB() + pd->off, bt->getGlobalLB() + pd->off, 0.0,
+        pd->branch_job, pd->completiontime, bt->get_run_time_start(),
+        pd->iterations);
 }
 
 extern "C" {
