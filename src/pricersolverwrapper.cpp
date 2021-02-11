@@ -178,30 +178,19 @@ void print_number_nodes_edges(PricerSolver* solver) {
     solver->print_number_nodes_edges();
 }
 
-int evaluate_nodes(NodeData* pd) {
-    int    val = 0;
-    int    UB = pd->opt_sol->tw;
-    double LB = pd->LP_lower_bound;
+// int reduce_cost_fixing(NodeData* pd) {
+//     int    val = 0;
+//     int    UB = pd->opt_sol->tw;
+//     double LB = pd->LP_lower_bound_dual;
 
-    auto* aux_pi = static_cast<double*>(static_cast<void*>(pd->pi->data));
-    pd->solver->evaluate_nodes(aux_pi, UB, LB);
-
-    return val;
-}
-
-int reduce_cost_fixing(NodeData* pd) {
-    int    val = 0;
-    int    UB = pd->opt_sol->tw;
-    double LB = pd->LP_lower_bound_dual;
-
-    auto* aux_pi = static_cast<double*>(static_cast<void*>(pd->pi->data));
-    pd->solver->reduce_cost_fixing(aux_pi, UB, LB);
-    if (pd->depth == 0) {
-        pd->stat->size_graph_after_reduced_cost_fixing =
-            get_nb_edges(pd->solver);
-    }
-    return val;
-}
+//     auto* aux_pi = static_cast<double*>(static_cast<void*>(pd->pi->data));
+//     pd->solver->reduce_cost_fixing(aux_pi, UB, LB);
+//     if (pd->depth == 0) {
+//         pd->stat->size_graph_after_reduced_cost_fixing =
+//             get_nb_edges(pd->solver);
+//     }
+//     return val;
+// }
 
 int build_solve_mip(NodeData* pd) {
     int val = 0;

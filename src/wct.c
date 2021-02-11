@@ -17,49 +17,45 @@ void set_dbg_lvl(int dbglvl) {
 }
 
 /*Functions for initialization of the problem and freeing the problem*/
-void problem_init(Problem* problem) {
-    problem->root_pd = CC_SAFE_MALLOC(1, NodeData);
-    nodedata_init(problem->root_pd, problem);
-    parms_init(&(problem->parms));
-    statistics_init(&(problem->stat));
-    problem->tree = (BranchBoundTree*)NULL;
-    /** Job data */
-    problem->g_job_array = g_ptr_array_new_with_free_func(g_job_free);
-    problem->intervals = g_ptr_array_new_with_free_func(g_interval_free);
-    problem->opt_sol = (Solution*)NULL;
-    /** Job summary */
-    problem->nb_jobs = 0;
-    problem->p_sum = 0;
-    problem->pmax = 0;
-    problem->pmin = INT_MAX;
-    problem->dmax = INT_MIN;
-    problem->dmin = INT_MAX;
-    problem->off = 0;
-    problem->H_min = 0;
-    problem->H_max = INT_MAX;
-    /*B&B info*/
-    problem->nb_data_nodes = 0;
-    problem->global_upper_bound = INT_MAX;
-    problem->global_lower_bound = 0;
-    problem->rel_error = DBL_MAX;
-    problem->root_lower_bound = 0;
-    problem->root_upper_bound = INT_MAX;
-    problem->root_rel_error = DBL_MAX;
-    problem->status = no_sol;
-    problem->br_heap_a = (BinomialHeap*)NULL;
-    /*data of the problem*/
-    set_id_and_name(problem->root_pd, 0, "root_node");
-    problem->nb_data_nodes++;
-    /*parms of the problem*/
-    /** statistics of the problem */
-    /*heap initialization*/
-    problem->unexplored_states = g_ptr_array_new();
-    problem->non_empty_level_pqs = g_queue_new();
-    problem->last_explored = -1;
-    problem->found = 0;
-    /** initialize colPool */
-    problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
-}
+// void problem_init(Problem* problem) {
+//     problem->root_pd = CC_SAFE_MALLOC(1, NodeData);
+//     nodedata_init(problem->root_pd, problem);
+//     parms_init(&(problem->parms));
+//     statistics_init(&(problem->stat));
+//     problem->tree = (BranchBoundTree*)NULL;
+//     /** Job data */
+//     problem->g_job_array = g_ptr_array_new_with_free_func(g_job_free);
+//     problem->intervals = g_ptr_array_new_with_free_func(g_interval_free);
+//     problem->opt_sol = (Solution*)NULL;
+//     /** Job summary */
+//     problem->nb_jobs = 0;
+//     problem->p_sum = 0;
+//     problem->pmax = 0;
+//     problem->pmin = INT_MAX;
+//     problem->dmax = INT_MIN;
+//     problem->dmin = INT_MAX;
+//     problem->off = 0;
+//     problem->H_min = 0;
+//     problem->H_max = INT_MAX;
+//     /*B&B info*/
+//     problem->nb_data_nodes = 0;
+//     problem->global_upper_bound = INT_MAX;
+//     problem->global_lower_bound = 0;
+//     problem->rel_error = DBL_MAX;
+//     problem->root_lower_bound = 0;
+//     problem->root_upper_bound = INT_MAX;
+//     problem->root_rel_error = DBL_MAX;
+//     problem->status = no_sol;
+//     // problem->br_heap_a = (BinomialHeap*)NULL;
+//     /*data of the problem*/
+//     set_id_and_name(problem->root_pd, 0, "root_node");
+//     problem->nb_data_nodes++;
+//     /*parms of the problem*/
+//     /** statistics of the problem */
+//     /*heap initialization*/
+//     /** initialize colPool */
+//     problem->ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+// }
 
 void problem_free(Problem* problem) {
     /*free the parameters*/
@@ -67,23 +63,9 @@ void problem_free(Problem* problem) {
     delete_branch_bound_tree(problem->tree);
     // nodedata_free(problem->root_pd);
 
-    /*free the heap*/
-    if (problem->br_heap_a != (BinomialHeap*)NULL) {
-        binomial_heap_free(problem->br_heap_a);
-    }
-
-    for (unsigned int i = 0; i < problem->unexplored_states->len; ++i) {
-        if ((problem->unexplored_states->pdata[i]) != (BinomialHeap*)NULL) {
-            binomial_heap_free(
-                (BinomialHeap*)problem->unexplored_states->pdata[i]);
-        }
-    }
-
     g_ptr_array_free(problem->g_job_array, TRUE);
-    g_ptr_array_free(problem->unexplored_states, TRUE);
     g_ptr_array_free(problem->ColPool, TRUE);
     g_ptr_array_free(problem->intervals, TRUE);
-    g_queue_free(problem->non_empty_level_pqs);
     solution_free(&(problem->opt_sol));
 }
 

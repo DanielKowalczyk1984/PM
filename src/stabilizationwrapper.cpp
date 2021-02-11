@@ -44,8 +44,8 @@ int solve_pricing(NodeData* pd) {
 
     pd->solver_stab->solve(pd->LP_lower_bound_BB, pi, lhs);
 
-    if (call_get_update_stab_center(pd->solver_stab)) {
-        if (call_do_reduced_fixing(pd->solver_stab) &&
+    if (pd->solver_stab->get_update_stab_center()) {
+        if (pd->solver_stab->do_reduced_cost_fixing() &&
             parms->reduce_cost_fixing == yes_reduced_cost) {
             pd->solver_stab->reduced_cost_fixing();
             check_schedules(pd);
@@ -56,7 +56,7 @@ int solve_pricing(NodeData* pd) {
             call_update_continueLP(pd->solver_stab, obj);
         }
     } else {
-        if (!call_get_continueLP(pd->solver_stab)) {
+        if (!pd->solver_stab->continueLP) {
             pd->solver_stab->reduced_cost_fixing();
             check_schedules(pd);
             delete_infeasible_schedules(pd);
@@ -68,9 +68,8 @@ int solve_pricing(NodeData* pd) {
     }
 
     if (pd->solver_stab->get_reduced_cost() < -EPS_BOUND &&
-        call_get_continueLP(pd->solver_stab) &&
-        (call_get_eta_in(pd->solver_stab) <
-         pd->upper_bound - 1.0 + EPS_BOUND)) {
+        pd->solver_stab->continueLP &&
+        (pd->solver_stab->get_eta_in() < pd->upper_bound - 1.0 + EPS_BOUND)) {
         auto sol = std::move(pd->solver_stab->get_sol());
         val = construct_sol(pd, &sol);
         CCcheck_val_2(val, "Failed in construction");

@@ -18,7 +18,7 @@ int main(int ac, const char** av) {
     int     val = 0;
     double  start_time = 0.0;
     Problem problem;
-    problem_init(&problem);
+    problem.problem_init();
 
     NodeData*   root = problem.root_pd;
     Parms*      parms = &(problem.parms);

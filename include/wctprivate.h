@@ -51,17 +51,6 @@ typedef struct _NodeData NodeData;
 typedef struct BranchNodeBase  BranchNode;
 typedef struct BranchBoundTree BranchBoundTree;
 
-size_t call_getDepth(BranchNode* state);
-int    call_getDomClassID(BranchNode* state);
-double call_getObjValue(BranchNode* state);
-double call_getLB(BranchNode* state);
-double call_getUB(BranchNode* state);
-int    call_getID(BranchNode* state);
-int    call_getParentID(BranchNode* state);
-void   call_setID(BranchNode* state, int i);
-int    isDominated(BranchNode* state);
-int    wasProcessed(BranchNode* state);
-
 BranchBoundTree* new_branch_bound_tree(NodeData* data,
                                        int       _probtype,
                                        int       _isIntProb);
@@ -176,6 +165,42 @@ typedef enum {
     optimal = 4
 } problem_status;
 
+/*Initialization and free memory for the problem*/
+// void problem_init(Problem* problem);
+void problem_free(Problem* problem);
+
+/*Initialize pmc data*/
+void      nodedata_init(NodeData* pd, Problem* prob);
+void      nodedata_init_null(NodeData* pd);
+int       set_id_and_name(NodeData* pd, int id, const char* fname);
+NodeData* new_node_data(NodeData* pd);
+
+/*Free the Nodedata*/
+void lp_node_data_free(NodeData* pd);
+void nodedata_free(NodeData* pd);
+void temporary_data_free(NodeData* pd);
+
+/**
+ * solver zdd
+ */
+int  build_solve_mip(NodeData* pd);
+int  construct_lp_sol_from_rmp(NodeData* pd);
+int  check_schedule_set(ScheduleSet* set, NodeData* pd);
+void make_schedule_set_feasible(NodeData* pd, ScheduleSet* set);
+
+void get_mip_statistics(NodeData* pd, enum MIP_Attr c);
+
+/**
+ * pricing algorithms
+ */
+int solve_pricing(NodeData* pd);
+int solve_farkas_dbl(NodeData* pd);
+int generate_cuts(NodeData* pd);
+int delete_unused_rows_range(NodeData* pd, int first, int last);
+int call_update_rows_coeff(NodeData* pd);
+#ifdef __cplusplus
+}
+#endif
 struct _Problem {
     Parms            parms;
     NodeData*        root_pd;
@@ -213,52 +238,50 @@ struct _Problem {
     GPtrArray* ColPool;
     /* Best Solution*/
     Solution* opt_sol;
-    /*heap variables*/
-    BinomialHeap* br_heap_a;
-    GPtrArray*    unexplored_states;
-    GQueue*       non_empty_level_pqs;
-    unsigned int  last_explored;
-    int           mult_key;
-    int           found;
     /*Cpu time measurement + Statistics*/
     Statistics stat;
+
+    void problem_init();
 };
 
-/*Initialization and free memory for the problem*/
-void problem_init(Problem* problem);
-void problem_free(Problem* problem);
-
-/*Initialize pmc data*/
-void      nodedata_init(NodeData* pd, Problem* prob);
-void      nodedata_init_null(NodeData* pd);
-int       set_id_and_name(NodeData* pd, int id, const char* fname);
-NodeData* new_node_data(NodeData* pd);
-
-/*Free the Nodedata*/
-void lp_node_data_free(NodeData* pd);
-void nodedata_free(NodeData* pd);
-void temporary_data_free(NodeData* pd);
-
-/**
- * solver zdd
- */
-int  build_solve_mip(NodeData* pd);
-int  construct_lp_sol_from_rmp(NodeData* pd);
-int  check_schedule_set(ScheduleSet* set, NodeData* pd);
-void make_schedule_set_feasible(NodeData* pd, ScheduleSet* set);
-
-void get_mip_statistics(NodeData* pd, enum MIP_Attr c);
-
-/**
- * pricing algorithms
- */
-int solve_pricing(NodeData* pd);
-int solve_farkas_dbl(NodeData* pd);
-int generate_cuts(NodeData* pd);
-int delete_unused_rows_range(NodeData* pd, int first, int last);
-int call_update_rows_coeff(NodeData* pd);
-#ifdef __cplusplus
-}
-#endif
+void _Problem::problem_init() {
+    root_pd = CC_SAFE_MALLOC(1, NodeData);
+    nodedata_init(root_pd, this);
+    parms_init(&(parms));
+    statistics_init(&(stat));
+    tree = nullptr;
+    /** Job data */
+    g_job_array = g_ptr_array_new_with_free_func(g_job_free);
+    intervals = g_ptr_array_new_with_free_func(g_interval_free);
+    opt_sol = nullptr;
+    /** Job summary */
+    nb_jobs = 0;
+    p_sum = 0;
+    pmax = 0;
+    pmin = INT_MAX;
+    dmax = INT_MIN;
+    dmin = INT_MAX;
+    off = 0;
+    H_min = 0;
+    H_max = INT_MAX;
+    /*B&B info*/
+    nb_data_nodes = 0;
+    global_upper_bound = INT_MAX;
+    global_lower_bound = 0;
+    rel_error = DBL_MAX;
+    root_lower_bound = 0;
+    root_upper_bound = INT_MAX;
+    root_rel_error = DBL_MAX;
+    status = no_sol;
+    // br_heap_a = (BinomialHeap*)NULL;
+    /*data of the problem*/
+    set_id_and_name(root_pd, 0, "root_node");
+    nb_data_nodes++;
+    /*parms of the problem*/
+    /** statistics of the problem */
+    /*heap initialization*/
+    /** initialize colPool */
+    ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+};
 
 #endif

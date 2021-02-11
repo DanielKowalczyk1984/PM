@@ -17,9 +17,9 @@ BranchNodeBase::BranchNodeBase(NodeData* _pd, bool _isRoot)
     : State(_isRoot),
       pd(_pd) {
     if (_isRoot) {
-        build_rmp(pd);
-        solve_relaxation(pd);
-        compute_lower_bound(pd);
+        build_rmp(pd.get());
+        solve_relaxation(pd.get());
+        compute_lower_bound(pd.get());
         set_lb(pd->lower_bound);
         set_obj_value(pd->LP_lower_bound);
     }
@@ -35,18 +35,6 @@ void BranchNodeBase::branch(BTree* bt) {
     if (!strong_branching && dbg_lvl() > 0) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
     }
-
-    // if (get_depth() == 0 || bt->print_progress()) {
-    //     fmt::print(
-    //         "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{"
-    //         "8:>"
-    //         "5}{9:>5}|{10:>5}{11:>5}|\n",
-    //         bt->tStats->get_states_explored(), bt->get_nb_nodes(),
-    //         pd->LP_lower_bound + pd->off, pd->depth,
-    //         solver->get_nb_vertices(), bt->getGlobalUB() + pd->off,
-    //         bt->getGlobalLB() + pd->off, 0.0, pd->branch_job,
-    //         pd->completiontime, bt->get_run_time_start(), pd->iterations);
-    // }
 
     auto fathom_left = false;
     auto fathom_right = false;
@@ -157,7 +145,7 @@ void BranchNodeBase::branch(BTree* bt) {
                 best_time = middle_time[i];
             }
         } else {
-            auto* left = new_node_data(pd);
+            auto* left = new_node_data(pd.get());
             auto* left_solver = left->solver;
             auto  left_node_branch = std::make_unique<BranchNodeBase>(left);
             // std::unique_ptr<BranchNodeBase>(new BranchNodeBase(left));
@@ -180,7 +168,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
             // build the right node and solve its root LP only
 
-            auto* right = new_node_data(pd);
+            auto* right = new_node_data(pd.get());
             auto* right_solver = right->solver;
             auto  right_node_branch = std::make_unique<BranchNodeBase>(right);
 
@@ -239,7 +227,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
     /** Process the branching nodes insert them in the tree */
     if (strong_branching) {
-        auto* left = new_node_data(pd);
+        auto* left = new_node_data(pd.get());
         auto* left_solver = left->solver;
         auto  left_node_branch = std::make_unique<BranchNodeBase>(left);
         left_solver->split_job_time(best_job, best_time, false);
@@ -248,7 +236,7 @@ void BranchNodeBase::branch(BTree* bt) {
         left->less = 0;
         bt->process_state(std::move(left_node_branch));
 
-        auto* right = new_node_data(pd);
+        auto* right = new_node_data(pd.get());
         auto* right_solver = right->solver;
         auto  right_node_branch = std::make_unique<BranchNodeBase>(right);
         right_solver->split_job_time(best_job, best_time, true);
@@ -283,9 +271,9 @@ void BranchNodeBase::branch(BTree* bt) {
 }
 
 void BranchNodeBase::compute_bounds(BTree* bt) {
-    build_rmp(pd);
-    solve_relaxation(pd);
-    compute_lower_bound(pd);
+    build_rmp(pd.get());
+    solve_relaxation(pd.get());
+    compute_lower_bound(pd.get());
     set_lb(pd->lower_bound);
     set_obj_value(pd->LP_lower_bound);
 }
@@ -325,38 +313,4 @@ void BranchNodeBase::print(const BTree* bt) const {
         bt->getGlobalUB() + pd->off, bt->getGlobalLB() + pd->off, 0.0,
         pd->branch_job, pd->completiontime, bt->get_run_time_start(),
         pd->iterations);
-}
-
-extern "C" {
-
-size_t call_getDepth(BranchNodeBase* state) {
-    return state->get_depth();
-};
-int call_getDomClassID(BranchNodeBase* state) {
-    return state->get_dom_class_id();
-};
-double call_getObjValue(BranchNodeBase* state) {
-    return state->get_obj_value();
-};
-double call_getLB(BranchNodeBase* state) {
-    return state->get_lb();
-};
-double call_getUB(BranchNodeBase* state) {
-    return state->get_ub();
-};
-int call_getID(BranchNodeBase* state) {
-    return state->get_id();
-}
-int call_getParentID(BranchNodeBase* state) {
-    return state->get_parent_id();
-}
-void call_setID(BranchNodeBase* state, int i) {
-    state->set_id(i);
-}
-bool call_isDominated(BranchNodeBase* state) {
-    return state->is_dominated();
-};
-bool call_wasProcessed(BranchNodeBase* state) {
-    return state->was_processed();
-};
 }
