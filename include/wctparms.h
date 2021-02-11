@@ -100,26 +100,26 @@ typedef struct parms {
     /**
      * General parameters
      */
-    int    init_upper_bound;
-    int    bb_search_strategy;
-    int    bb_explore_strategy;
-    int    bb_branch_strategy;
-    int    use_strong_branching;
-    int    nb_iterations_rvnd;
-    double branching_cpu_limit;
-    double alpha;
-    int    pricing_solver;
-    int    mip_solver;
-    int    use_heuristic;
+    int                    init_upper_bound;
+    enum BBExploreStrategy bb_explore_strategy;
+    int                    bb_branch_strategy;
+    int                    use_strong_branching;
+    int                    bb_node_limit;
+    int                    nb_iterations_rvnd;
+    double                 branching_cpu_limit;
+    double                 alpha;
+    int                    pricing_solver;
+    int                    mip_solver;
+    int                    use_heuristic;
 
     enum reduced_cost_fixing_param reduce_cost_fixing;
 
     /**
      * column generation
      */
-    int branchandbound;
-    int stab_technique;
-    int print;
+    int                  branchandbound;
+    enum stab_techniques stab_technique;
+    int                  print;
 
     char* jobfile;
     char* pname;
@@ -153,6 +153,7 @@ int parms_set_stab_technique(Parms* parms, int stab_technique);
  */
 int parms_set_branchandbound(Parms* parms, int bound);
 int parms_set_bb_explore_strategy(Parms* parms, int strategy);
+int parms_set_bb_node_limit(Parms* parms, int node_limit);
 int parms_set_print(Parms* parms, int print);
 
 /*Functions for defining the filesname*/

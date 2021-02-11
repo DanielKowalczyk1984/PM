@@ -8,7 +8,7 @@ static const std::string USAGE =
     R"(PM.
 
 Usage:
-  bin/PM [-S <kn> -pmBRZH -b <br> -a <ln> -l <x> -f <y> -d --no_strong_branching --alpha <mn>] FILE NB
+  bin/PM [-S <kn> -pmBRZH -n <nl> -b <br> -a <ln> -l <x> -f <y> -d --no_strong_branching --alpha <mn>] FILE NB
   bin/PM (-h | --help)
   bin/PM --version
 
@@ -35,6 +35,7 @@ Options:
   -B --no_branch_and_bound      Don't apply branch-and-bound.
   --no_strong_branching         Don't apply strong branching.
   -b --branching_strategy=<br>  Set branch-and-bound exploration strategy: 0 = DFS, 1 = BFS, 2 = BrFS, 3 = CBFS[default: 0].
+  -n --node_limit=<nl>          Set a limit on the number of nodes that can be explored.[default: 0]. Default meaning that all nodes should be explored.
 )";
 
 static std::string find_match(const char* _instance_file) {
@@ -89,5 +90,7 @@ extern "C" int parse_cmd(int argc, const char** argv, Parms* parms) {
     val = parms_set_alpha(parms, std::stod(args["--alpha"].asString()));
     val = parms_set_bb_explore_strategy(
         parms, static_cast<int>(args["--branching_strategy"].asLong()));
+    val = parms_set_bb_node_limit(
+        parms, static_cast<int>(args["--node_limit"].asLong()));
     return val;
 }

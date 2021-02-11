@@ -9,8 +9,8 @@ const double ALPHA_STAB_INIT = 0.8;
 void parms_init(Parms* parms) {
     parms->init_upper_bound = INT_MAX;
     parms->bb_branch_strategy = min_bb_strategy;
-    parms->bb_search_strategy = min_search_strategy;
     parms->bb_explore_strategy = min_bb_explore_strategy;
+    parms->bb_node_limit = 0;
     parms->use_strong_branching = min_strong_branching;
     parms->mip_solver = min_mip_solver;
     parms->use_heuristic = min_use_heuristic;
@@ -103,6 +103,11 @@ int parms_set_branchandbound(Parms* parms, int bound) {
 
 int parms_set_bb_explore_strategy(Parms* parms, int strategy) {
     parms->bb_explore_strategy = strategy;
+    return 0;
+}
+
+int parms_set_bb_node_limit(Parms* parms, int node_limit) {
+    parms->bb_node_limit = node_limit;
     return 0;
 }
 
