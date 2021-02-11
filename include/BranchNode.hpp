@@ -1,6 +1,7 @@
 #ifndef __BRANCHNODE_H__
 #define __BRANCHNODE_H__
 
+#include <fmt/core.h>
 #include <limits>
 #include <memory>
 #include "branch-and-bound/state.h"
@@ -37,7 +38,9 @@ class BranchNodeBase : public State {
     // std::unique_ptr<State> clone() { return nullptr; };  // "copy
     // constructor"
     void print() const final{};
-    bool operator<(const State& other) final { return false; };
+    bool operator<(const State& other) final {
+        return get_obj_value() < other.get_obj_value();
+    };
 
    private:
     NodeData* pd;
