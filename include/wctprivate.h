@@ -13,6 +13,7 @@
 #include "scheduleset.h"
 #include "solver.h"
 #include "util.h"
+typedef struct Problem Problem;
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,7 +45,6 @@ typedef enum {
 /**
  * problem data
  */
-typedef struct _Problem Problem;
 
 /**
  * node data
@@ -119,8 +119,8 @@ struct _NodeData {
     int iterations;
 
     /** Wentges smoothing technique */
-    PricingStabilization* solver_stab;
-    int                   update;
+    PricingStabilizationBase* solver_stab;
+    int                       update;
 
     // Best Solution
     GPtrArray* best_schedule;
@@ -192,7 +192,7 @@ int call_update_rows_coeff(NodeData* pd);
 #ifdef __cplusplus
 }
 #endif
-struct _Problem {
+struct Problem {
     /** Different Parameters */
     Parms parms;
     /*Cpu time measurement + Statistics*/
@@ -241,8 +241,15 @@ struct _Problem {
     int  preprocess_data();
     int  print_to_screen();
     int  print_to_csv();
-    ~_Problem();
-    _Problem(int argc, const char** argv);
+    void solve();
+    /** Heuristic related */
+    int heuristic();
+    ~Problem();
+    Problem(int argc, const char** argv);
+    Problem(const Problem&) = delete;
+    Problem(Problem&&) = delete;
+    Problem& operator=(const Problem&) = delete;
+    Problem& operator=(Problem&&) = delete;
 
    private:
     void calculate_Hmax();
@@ -257,6 +264,9 @@ struct _Problem {
                            GPtrArray*     interval_array);
 
     static GPtrArray* array_time_slots(interval* I, GList* pairs);
+    /** Heuristic related */
+    int construct_edd(Solution*);
+    int construct_random(Solution* sol, GRand* rand_uniform);
 };
 
 #endif

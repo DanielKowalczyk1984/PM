@@ -19,68 +19,6 @@
 int main(int ac, const char** av) {
     int     val = 0;
     Problem problem(ac, av);
-
-    NodeData*   root = problem.root_pd;
-    Parms*      parms = &(problem.parms);
-    Statistics* statistics = &(problem.stat);
-
-    /**
-     *@brief Finding heuristic solutions to the problem or start without
-     *feasible solutions
-     *
-     */
-    if (parms->use_heuristic) {
-        heuristic(&problem);
-    } else {
-        problem.opt_sol =
-            solution_alloc(problem.intervals->len, root->nb_machines,
-                           root->nb_jobs, problem.off);
-        Solution* sol = problem.opt_sol;
-        // CCcheck_NULL_2(sol, "Failed to allocate memory");
-        val = construct_edd(&problem, sol);
-        // CCcheck_val_2(val, "Failed construct edd");
-        fmt::print("Solution Constructed with EDD heuristic:\n");
-        solution_print(sol);
-        solution_canonical_order(sol, problem.intervals);
-        fmt::print("Solution in canonical order: \n");
-        solution_print(sol);
-    }
-
-    /**
-     * @brief Build DD at the root node
-     *
-     */
-    if (parms->pricing_solver < dp_solver) {
-        CCutil_start_timer(&(statistics->tot_build_dd));
-        root->solver =
-            newSolver(root->jobarray, root->nb_machines, root->ordered_jobs,
-                      parms, root->H_max, NULL, problem.opt_sol->tw);
-        CCutil_stop_timer(&(statistics->tot_build_dd), 0);
-    } else {
-        root->solver = newSolverDp(root->jobarray, root->nb_machines,
-                                   root->H_max, parms, problem.opt_sol->tw);
-    }
-    statistics->first_size_graph = get_nb_vertices(root->solver);
-
-    /**
-     * @brief Initial stabilization
-     *
-     */
-    root->solver_stab = new_pricing_stabilization(root->solver, parms);
-    root->stat = &(problem.stat);
-    root->opt_sol = problem.opt_sol;
-
-    /**
-     * @brief Solve initial relaxation
-     *
-     */
-    GPtrArray* solutions_pool = g_ptr_array_copy(
-        root->localColPool, g_copy_scheduleset, &(problem.nb_jobs));
-
-    problem.tree = std::make_unique<BranchBoundTree>(problem.root_pd, 0, 1);
-    // call_branch_and_bound_explore(problem.tree);
-    problem.tree->explore();
-
     /**
      * @brief Calculation of LB at the root node with column generation
      *
@@ -119,16 +57,7 @@ int main(int ac, const char** av) {
     //     }
     // }
 
-    g_ptr_array_free(solutions_pool, TRUE);
-
-    if (parms->mip_solver) {
-        build_solve_mip(root);
-    }
-
-    if (parms->print) {
-        problem.print_to_csv();
-    }
-
+    problem.solve();
     // CLEAN:
     // problem_free(&problem);
     return val;

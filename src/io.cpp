@@ -28,7 +28,7 @@ static int get_problem_name(char* pname, const char* end_file_name) {
     return rval;
 }
 
-int _Problem::problem_read() {
+int Problem::problem_read() {
     int         val = 0;
     int         nb_jobs_tmp = 0;
     int         curduration = 0, curduedate = 0, curweight = 0, curjob = 0;
@@ -63,7 +63,6 @@ int _Problem::problem_read() {
         while (fgets(buf2, bufsize, in) != (char*)NULL) {
             p = buf2;
             sscanf(p, "%d %d %d", &curduration, &curduedate, &curweight);
-            fmt::print("test {} {} {}\n", curduration, curduedate, curweight);
             curduedate = curduedate / parms.nb_machines;
             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
             g_ptr_array_add(g_job_array, tmp_j);
@@ -101,7 +100,7 @@ CLEAN:
     return val;
 }
 
-int _Problem::print_to_csv() {
+int Problem::print_to_csv() {
     int         val = 0;
     NodeData*   pd = root_pd;
     Statistics& statistics = stat;
@@ -166,7 +165,7 @@ CLEAN:
     return val;
 }
 
-int _Problem::print_to_screen() {
+int Problem::print_to_screen() {
     int val = 0;
 
     switch (status) {

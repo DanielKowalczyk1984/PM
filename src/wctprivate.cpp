@@ -1,5 +1,12 @@
 #include "wctprivate.h"
 #include <fmt/core.h>
+#include "PricerSolverArcTimeDP.hpp"
+#include "PricerSolverBddBackward.hpp"
+#include "PricerSolverBddForward.hpp"
+#include "PricerSolverSimpleDP.hpp"
+#include "PricerSolverZddBackward.hpp"
+#include "PricerSolverZddForward.hpp"
+#include "PricingStabilization.hpp"
 #include "interval.h"
 
 static int get_problem_name(char* pname, const char* end_file_name) {
@@ -28,14 +35,14 @@ static int get_problem_name(char* pname, const char* end_file_name) {
     return rval;
 }
 
-_Problem::~_Problem() { /*free the parameters*/
+Problem::~Problem() { /*free the parameters*/
     g_ptr_array_free(g_job_array, TRUE);
     g_ptr_array_free(ColPool, TRUE);
     g_ptr_array_free(intervals, TRUE);
     solution_free(&(opt_sol));
 }
 
-_Problem::_Problem(int argc, const char** argv) {
+Problem::Problem(int argc, const char** argv) {
     double start_time = 0.0;
     problem_init();
 
@@ -57,6 +64,126 @@ _Problem::_Problem(int argc, const char** argv) {
     // CCcheck_val_2(val, "Failed at preprocess_data");
     fmt::print("Reading and preprocessing of the data took %f seconds\n",
                CCutil_zeit() - start_time);
+    /**
+     *@brief Finding heuristic solutions to the problem or start without
+     *feasible solutions
+     *
+     */
+    if (parms.use_heuristic) {
+        heuristic();
+    } else {
+        opt_sol = solution_alloc(intervals->len, nb_machines, nb_jobs, off);
+        Solution* sol = opt_sol;
+        // CCcheck_NULL_2(sol, "Failed to allocate memory");
+        val = construct_edd(sol);
+        // CCcheck_val_2(val, "Failed construct edd");
+        fmt::print("Solution Constructed with EDD heuristic:\n");
+        solution_print(sol);
+        solution_canonical_order(sol, intervals);
+        fmt::print("Solution in canonical order: \n");
+        solution_print(sol);
+    }
+    /**
+     * @brief Build DD at the root node
+     *
+     */
+    CCutil_start_timer(&(stat.tot_build_dd));
+    switch (parms.pricing_solver) {
+        case bdd_solver_simple:
+            root_pd->solver = new PricerSolverBddSimple(
+                g_job_array, nb_machines, root_pd->ordered_jobs,
+                parms.pname.c_str(), H_max, nullptr, opt_sol->tw);
+            break;
+        case bdd_solver_cycle:
+            root_pd->solver = new PricerSolverBddCycle(
+                g_job_array, nb_machines, root_pd->ordered_jobs,
+                parms.pname.c_str(), H_max, nullptr, opt_sol->tw);
+            break;
+        case zdd_solver_cycle:
+            root_pd->solver = new PricerSolverZddCycle(
+                g_job_array, nb_machines, root_pd->ordered_jobs,
+                parms.pname.c_str(), global_upper_bound);
+            break;
+        case zdd_solver_simple:
+            root_pd->solver = new PricerSolverSimple(
+                g_job_array, nb_machines, root_pd->ordered_jobs,
+                parms.pname.c_str(), opt_sol->tw);
+            break;
+        case bdd_solver_backward_simple:
+            root_pd->solver = new PricerSolverBddBackwardSimple(
+                g_job_array, nb_machines, root_pd->ordered_jobs,
+                parms.pname.c_str(), H_max, nullptr, global_upper_bound);
+            break;
+        case bdd_solver_backward_cycle:
+            root_pd->solver = new PricerSolverBddBackwardCycle(
+                g_job_array, nb_machines, root_pd->ordered_jobs,
+                parms.pname.c_str(), H_max, nullptr, global_upper_bound);
+            ;
+            break;
+        case zdd_solver_backward_simple:
+            root_pd->solver = new PricerSolverZddBackwardSimple(
+                g_job_array, nb_machines, root_pd->ordered_jobs,
+                parms.pname.c_str(), opt_sol->tw);
+            break;
+        case zdd_solver_backward_cycle:
+            root_pd->solver = new PricerSolverZddBackwardCycle(
+                g_job_array, nb_machines, root_pd->ordered_jobs,
+                parms.pname.c_str(), opt_sol->tw);
+        case dp_solver:
+            root_pd->solver =
+                new PricerSolverSimpleDp(g_job_array, nb_machines, H_max,
+                                         parms.pname.c_str(), opt_sol->tw);
+            break;
+        case ati_solver:
+            root_pd->solver =
+                new PricerSolverArcTimeDp(g_job_array, nb_machines, H_max,
+                                          parms.pname.c_str(), opt_sol->tw);
+            break;
+        case dp_bdd_solver:
+            root_pd->solver =
+                new PricerSolverSimpleDp(g_job_array, nb_machines, H_max,
+                                         parms.pname.c_str(), opt_sol->tw);
+            break;
+        default:
+            root_pd->solver = new PricerSolverBddBackwardCycle(
+                g_job_array, nb_machines, root_pd->ordered_jobs,
+                parms.pname.c_str(), H_max, nullptr, global_upper_bound);
+        break;
+    }
+    CCutil_stop_timer(&(stat.tot_build_dd), 0);
+    stat.first_size_graph = root_pd->solver->get_nb_vertices();
+
+    /**
+     * @brief Initial stabilization method
+     *
+     */
+    auto* tmp_solver = root_pd->solver;
+    switch (parms.stab_technique) {
+        case stab_wentgnes:
+            root_pd->solver_stab = new PricingStabilizationStat(tmp_solver);
+            break;
+        case stab_dynamic:
+            root_pd->solver_stab = new PricingStabilizationDynamic(tmp_solver);
+            break;
+        case stab_hybrid:
+            root_pd->solver_stab = new PricingStabilizationHybrid(tmp_solver);
+            break;
+        case no_stab:
+            root_pd->solver_stab = new PricingStabilizationBase(tmp_solver);
+            break;
+        default:
+            root_pd->solver_stab = new PricingStabilizationStat(tmp_solver);
+            break;
+    }
+    root_pd->stat = &(stat);
+    root_pd->opt_sol = opt_sol;
+
+    /**
+     * @brief Initialization of the B&B tree
+     *
+     */
+    tree = std::make_unique<BranchBoundTree>(root_pd, 0, 1);
+    tree->explore();
 }
 
 static void g_problem_summary_init(gpointer data, gpointer user_data) {
@@ -70,7 +197,7 @@ static void g_problem_summary_init(gpointer data, gpointer user_data) {
     prob->dmin = std::max(prob->dmin, j->due_time);
 }
 
-void _Problem::calculate_Hmax() {
+void Problem::calculate_Hmax() {
     int       temp = 0;
     double    temp_dbl = 0.0;
     NodeData* pd = root_pd;
@@ -105,7 +232,7 @@ void _Problem::calculate_Hmax() {
         H_max, H_min, pmax, pmin, p_sum, off);
 }
 
-void _Problem::create_ordered_jobs_array(GPtrArray* a, GPtrArray* b) {
+void Problem::create_ordered_jobs_array(GPtrArray* a, GPtrArray* b) {
     // interval* tmp_interval = (interval*)NULL;
     // Job*               tmp_j = nullptr;
     // job_interval_pair* tmp_pair = static_cast<job_interval_pair*)NULL;
@@ -127,7 +254,7 @@ void _Problem::create_ordered_jobs_array(GPtrArray* a, GPtrArray* b) {
     fmt::print("There are {} layers\n", b->len);
 }
 
-int _Problem::find_division() {
+int Problem::find_division() {
     int            val = 0;
     int            counter = 0;
     int            prev = 0;
@@ -202,18 +329,18 @@ CLEAN:
     return val;
 }
 
-int _Problem::check_interval(interval_pair* pair,
-                             int            k,
-                             GPtrArray*     interval_array) {
+int Problem::check_interval(interval_pair* pair,
+                            int            k,
+                            GPtrArray*     interval_array) {
     auto* I = static_cast<interval*>(g_ptr_array_index(interval_array, k));
     auto* j = pair->b;
     return (I->a + j->processing_time >= I->b ||
             calculate_T(pair, k, interval_array) <= I->a);
 }
 
-int _Problem::calculate_T(interval_pair* pair,
-                          int            k,
-                          GPtrArray*     interval_array) {
+int Problem::calculate_T(interval_pair* pair,
+                         int            k,
+                         GPtrArray*     interval_array) {
     auto* I = static_cast<interval*>(g_ptr_array_index(interval_array, k));
     auto* i = pair->a;
     auto* j = pair->b;
@@ -246,7 +373,7 @@ int _Problem::calculate_T(interval_pair* pair,
     }
 }
 
-GPtrArray* _Problem::array_time_slots(interval* I, GList* pairs) {
+GPtrArray* Problem::array_time_slots(interval* I, GList* pairs) {
     GPtrArray* array = g_ptr_array_new_with_free_func(free);
     // interval_pair* tmp = (interval_pair*)NULL;
     interval_pair* min_data = nullptr;
@@ -297,7 +424,7 @@ GPtrArray* _Problem::array_time_slots(interval* I, GList* pairs) {
     return array;
 }
 
-int _Problem::preprocess_data() {
+int Problem::preprocess_data() {
     int       val = 0;
     int       i = 0;
     NodeData* root = root_pd;
@@ -325,4 +452,11 @@ int _Problem::preprocess_data() {
     // determine_jobs_order_interval(problem);
 
     return val;
+}
+
+void Problem::solve() {
+    tree->explore();
+    if (parms.print) {
+        print_to_csv();
+    }
 }

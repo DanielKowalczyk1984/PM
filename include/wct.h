@@ -12,20 +12,6 @@ extern "C" {
  * greedy.c
  */
 
-void update_bestschedule(Problem* problem, Solution* sol);
-
-int construct_wspt(Job* jobarray, int nb_jobs, int nb_machines, Solution* sol);
-int construct_feasible_solutions(Problem* problem);
-int construct_edd(Problem* prob, Solution* sol);
-int construct_spt(Problem* prob, Solution* sol);
-int construct_random(Problem* prob, Solution* sol, GRand* rand_uniform);
-
-int heuristic(Problem* prob);
-int partlist_to_scheduleset(PartList*     part,
-                            int           nb_part,
-                            int           nb_jobs,
-                            ScheduleSet** classes,
-                            int*          column_count);
 
 int prune_duplicated_sets(NodeData* pd);
 /**

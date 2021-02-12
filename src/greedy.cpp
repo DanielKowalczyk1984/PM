@@ -127,29 +127,29 @@ CLEAN:
     return val;
 }
 
-int construct_edd(Problem* prob, Solution* sol) {
+int Problem::construct_edd(Solution* sol) {
     int val = 0;
 
-    g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
+    g_ptr_array_foreach(g_job_array, g_set_sol_perm, sol);
 
-    sol->nb_jobs = prob->nb_jobs;
-    sol->nb_machines = prob->nb_machines;
+    sol->nb_jobs = nb_jobs;
+    sol->nb_machines = nb_machines;
     val = solution_set_c(sol);
     CCcheck_val_2(val, "failed in solution_set_c");
 CLEAN:
     return val;
 }
 
-int construct_random(Problem* prob, Solution* sol, GRand* rand_uniform) {
+int Problem::construct_random(Solution* sol, GRand* rand_uniform) {
     int val = 0;
 
-    g_ptr_array_foreach(prob->g_job_array, g_set_sol_perm, sol);
-    sol->nb_jobs = prob->nb_jobs;
-    sol->nb_machines = prob->nb_machines;
+    g_ptr_array_foreach(g_job_array, g_set_sol_perm, sol);
+    sol->nb_jobs = nb_jobs;
+    sol->nb_machines = nb_machines;
     permutation_solution(rand_uniform, sol);
     val = solution_set_c(sol);
-    CCcheck_val_2(val, "failed in solution_set_c");
-CLEAN:
+    // CCcheck_val_2(val, "failed in solution_set_c");
+    // CLEAN:
     return val;
 }
 
@@ -392,28 +392,26 @@ void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform) {
     local_search_create_g(sol, data);
 }
 
-int heuristic(Problem* prob) {
-    int         val = 0;
-    int         nb_jobs = prob->nb_jobs;
-    int         nb_machines = prob->nb_machines;
-    GRand*      rand_uniform = g_rand_new_with_seed(2011);
-    Parms*      parms = &(prob->parms);
-    Statistics* statistics = &(prob->stat);
+int Problem::heuristic() {
+    int    val = 0;
+    GRand* rand_uniform = g_rand_new_with_seed(2011);
+    // Parms*      parms = &(prob->parms);
+    // Statistics* statistics = &(prob->stat);
     g_random_set_seed(1984);
-    int                ILS = prob->nb_jobs / 2;
-    int                IR = parms->nb_iterations_rvnd;
-    Solution*          sol = (Solution*)NULL;
-    Solution*          sol1 = (Solution*)NULL;
-    GPtrArray*         intervals = prob->intervals;
-    local_search_data* data = (local_search_data*)NULL;
-    local_search_data* data_RS = (local_search_data*)NULL;
+    int       ILS = nb_jobs / 2;
+    int       IR = parms.nb_iterations_rvnd;
+    Solution* sol = nullptr;
+    Solution* sol1 = nullptr;
+    // GPtrArray*         intervals = prob->intervals;
+    local_search_data* data = nullptr;
+    local_search_data* data_RS = nullptr;
 
-    CCutil_start_resume_time(&(statistics->tot_heuristic));
-    sol = solution_alloc(intervals->len, nb_machines, nb_jobs, prob->off);
+    CCutil_start_resume_time(&(stat.tot_heuristic));
+    sol = solution_alloc(intervals->len, nb_machines, nb_jobs, off);
     CCcheck_NULL_2(sol, "Failed to allocate memory");
-    val = construct_edd(prob, sol);
+    val = construct_edd(sol);
     CCcheck_val_2(val, "Failed construct edd");
-    printf("Solution Constructed with EDD heuristic:\n");
+    fmt::print("Solution Constructed with EDD heuristic:\n");
     solution_print(sol);
     solution_canonical_order(sol, intervals);
     printf("Solution in canonical order: \n");
@@ -425,23 +423,21 @@ int heuristic(Problem* prob) {
     local_search_create_g(sol, data);
     RVND(sol, data);
     solution_canonical_order(sol, intervals);
-    add_solution_to_colpool(sol, (prob->root_pd));
+    add_solution_to_colpool(sol, root_pd);
     printf("Solution after local search:\n");
     solution_print(sol);
 
-    if (prob->opt_sol == NULL) {
-        prob->opt_sol =
-            solution_alloc(intervals->len, nb_machines, nb_jobs, prob->off);
-        CCcheck_NULL_2(prob->opt_sol, "Failed to allocate memory");
-        solution_update(prob->opt_sol, sol);
+    if (opt_sol == nullptr) {
+        opt_sol = solution_alloc(intervals->len, nb_machines, nb_jobs, off);
+        // CCcheck_NULL_2(opt_sol, "Failed to allocate memory");
+        solution_update(opt_sol, sol);
     }
 
-    for (int i = 0; i < IR && prob->opt_sol->tw + prob->opt_sol->off != 0;
-         ++i) {
+    for (int i = 0; i < IR && opt_sol->tw + opt_sol->off != 0; ++i) {
         // fprintf(stderr, "iteration %d\n", i);
-        sol1 = solution_alloc(intervals->len, nb_machines, nb_jobs, prob->off);
+        sol1 = solution_alloc(intervals->len, nb_machines, nb_jobs, off);
         CCcheck_NULL_2(sol1, "Failed to allocate memory");
-        val = construct_random(prob, sol1, rand_uniform);
+        val = construct_random(sol1, rand_uniform);
         CCcheck_val_2(val, "Failed in construct random solution");
         data_RS = local_search_data_init(nb_jobs, nb_machines);
         local_search_create_W(sol1, data_RS);
@@ -461,22 +457,23 @@ int heuristic(Problem* prob) {
             Perturb(sol1, data_RS, rand_uniform);
         }
 
-        if (sol->tw < prob->opt_sol->tw) {
-            solution_update(prob->opt_sol, sol);
-            add_solution_to_colpool(prob->opt_sol, (prob->root_pd));
+        if (sol->tw < opt_sol->tw) {
+            solution_update(opt_sol, sol);
+            add_solution_to_colpool(opt_sol, root_pd);
         }
 
         local_search_data_free(&data_RS);
         solution_free(&sol1);
     }
 
-    solution_canonical_order(prob->opt_sol, intervals);
-    printf("Solution after some improvements with Random Variable Search:\n");
-    solution_print(prob->opt_sol);
-    prob->global_upper_bound = prob->opt_sol->tw + prob->off;
-    CCutil_stop_timer(&(statistics->tot_heuristic), 0);
-    prune_duplicated_sets((prob->root_pd));
-    prob->root_pd->upper_bound = prob->global_upper_bound;
+    solution_canonical_order(opt_sol, intervals);
+    fmt::print(
+        "Solution after some improvements with Random Variable Search:\n");
+    solution_print(opt_sol);
+    global_upper_bound = opt_sol->tw + off;
+    CCutil_stop_timer(&(stat.tot_heuristic), 0);
+    prune_duplicated_sets((root_pd));
+    root_pd->upper_bound = global_upper_bound;
 CLEAN:
     solution_free(&sol);
     local_search_data_free(&data);

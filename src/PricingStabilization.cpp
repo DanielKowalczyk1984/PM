@@ -414,10 +414,9 @@ PricingStabilizationBase* new_pricing_stabilization(PricerSolver* solver,
     }
 }
 
-void delete_pricing_stabilization(PricingStabilization* pricing_stab_solver) {
-    if (pricing_stab_solver) {
-        delete pricing_stab_solver;
-    }
+void delete_pricing_stabilization(
+    PricingStabilizationBase* pricing_stab_solver) {
+    delete pricing_stab_solver;
 }
 
 double call_get_reduced_cost(PricingStabilizationBase* p) {

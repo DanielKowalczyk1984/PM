@@ -6,7 +6,7 @@
 #include "util.h"
 #include "wctprivate.h"
 
-void _Problem::problem_init() {
+void Problem::problem_init() {
     root_pd = CC_SAFE_MALLOC(1, NodeData);
     nodedata_init(root_pd, this);
     // parms_init(&(parms));
