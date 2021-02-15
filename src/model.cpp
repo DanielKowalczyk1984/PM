@@ -86,33 +86,36 @@ int NodeData::add_artificial_var_to_rmp() {
 }
 
 int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
-    int     val = 0;
-    gsize   aux = 0;
-    double* lhs_coeff_tmp =
-        static_cast<double*>(&g_array_index(lhs_coeff, double, 0));
+    int   val = 0;
+    gsize aux = 0;
+    // double* lhs_coeff_tmp =
+    //     static_cast<double*>(&g_array_index(lhs_coeff, double, 0));
 
-    int* aux_int_array = static_cast<int*>(g_array_steal(id_row, &aux));
-    CC_IFFREE(aux_int_array, int);
-    double* aux_double_array =
-        static_cast<double*>(g_array_steal(coeff_row, &aux));
-    CC_IFFREE(aux_double_array, double);
+    // int* aux_int_array = static_cast<int*>(g_array_steal(id_row, &aux));
+    // CC_IFFREE(aux_int_array, int);
+    id_row.clear();
+    coeff_row.clear();
+    // double* aux_double_array =
+    //     static_cast<double*>(g_array_steal(coeff_row, &aux));
+    // CC_IFFREE(aux_double_array, double);
 
     for (int j = 0; j < nb_rows; j++) {
-        if (std::fabs(lhs_coeff_tmp[j]) > EPS_BOUND) {
-            g_array_append_val(id_row, j);
-            g_array_append_val(coeff_row, lhs_coeff_tmp[j]);
+        if (std::fabs(lhs_coeff[j]) > EPS_BOUND) {
+            id_row.emplace_back(j);
+            coeff_row.emplace_back(lhs_coeff[j]);
         }
     }
 
-    int*    id_constraint = static_cast<int*>(&g_array_index(id_row, int, 0));
-    double* coeff_constraint =
-        static_cast<double*>(&g_array_index(coeff_row, double, 0));
-    int len = id_row->len;
+    // int*    id_constraint = static_cast<int*>(&g_array_index(id_row, int,
+    // 0));
+    // double* coeff_constraint =
+    //     static_cast<double*>(&g_array_index(coeff_row, double, 0));
+    int len = id_row.size();
 
     val = lp_interface_get_nb_cols(RMP, &(nb_cols));
     set->id = nb_cols - id_pseudo_schedules;
     auto cost = static_cast<double>(set->total_weighted_completion_time);
-    val = lp_interface_addcol(RMP, len, id_constraint, coeff_constraint, cost,
+    val = lp_interface_addcol(RMP, len, id_row.data(), coeff_row.data(), cost,
                               0.0, GRB_INFINITY, lp_interface_CONT, NULL);
 
     return val;
@@ -230,27 +233,28 @@ int NodeData::build_rmp() {
     int_values = CC_SAFE_MALLOC(nb_rows, int);
     fill_int(int_values, nb_rows, 0);
 
-    pi = g_array_sized_new(FALSE, FALSE, sizeof(double), nb_rows);
-    g_array_append_vals(pi, dbl_values, nb_rows);
-    slack = g_array_sized_new(FALSE, FALSE, sizeof(double), nb_rows);
-    g_array_append_vals(slack, dbl_values, nb_rows);
-    rhs = g_array_sized_new(FALSE, FALSE, sizeof(double), nb_rows);
-    g_array_append_vals(rhs, dbl_values, nb_rows);
-    val = lp_interface_get_rhs(RMP, &g_array_index(rhs, double, 0));
-    lhs_coeff = g_array_sized_new(FALSE, FALSE, sizeof(double), nb_rows);
-    g_array_append_vals(lhs_coeff, dbl_values, nb_rows);
-    id_row = g_array_sized_new(FALSE, FALSE, sizeof(int), nb_rows);
-    g_array_append_vals(id_row, int_values, nb_rows);
-    coeff_row = g_array_sized_new(FALSE, FALSE, sizeof(double), nb_rows);
-    g_array_append_vals(coeff_row, dbl_values, nb_rows);
+    pi.resize(nb_rows, 0.0);
+    // g_array_append_vals(pi, dbl_values, nb_rows);
+    slack.resize(nb_rows, 0.0);
+    // g_array_append_vals(slack, dbl_values, nb_rows);
+    // rhs = g_array_sized_new(FALSE, FALSE, sizeof(double), nb_rows);
+    rhs.resize(nb_rows, 0.0);
+    // g_array_append_vals(rhs, dbl_values, nb_rows);
+    val = lp_interface_get_rhs(RMP, rhs.data());
+    lhs_coeff.resize(nb_rows, 0.0);
+    // g_array_append_vals(lhs_coeff, dbl_values, nb_rows);
+    // id_row = g_array_sized_new(FALSE, FALSE, sizeof(int), nb_rows);
+    // g_array_append_vals(id_row, int_values, nb_rows);
+    id_row.reserve(nb_rows);
+    coeff_row.reserve(nb_rows);
 
 CLEAN:
 
     if (val) {
         lp_interface_free(&(RMP));
-        g_array_free(pi, TRUE);
-        g_array_free(rhs, TRUE);
-        g_array_free(lhs_coeff, TRUE);
+        // g_array_free(pi, TRUE);
+        // g_array_free(rhs, TRUE);
+        // g_array_free(lhs_coeff, TRUE);
     }
     CC_IFFREE(dbl_values, double);
     CC_IFFREE(int_values, int);

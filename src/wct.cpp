@@ -1,5 +1,6 @@
 #include <fmt/core.h>
 #include <memory>
+#include <vector>
 #include "BranchBoundTree.hpp"
 #include "Statistics.h"
 #include "gurobi_c.h"
@@ -62,12 +63,12 @@ NodeData::NodeData(Problem* problem)
       ordered_jobs(g_ptr_array_new_with_free_func(g_free)),
       RMP(nullptr),
       lambda(nullptr),
-      pi(nullptr),
-      slack(nullptr),
-      rhs(nullptr),
-      lhs_coeff(nullptr),
-      id_row(nullptr),
-      coeff_row(nullptr),
+      pi(),
+      slack(),
+      rhs(),
+      lhs_coeff(),
+      id_row(),
+      coeff_row(),
       nb_rows(0),
       nb_cols(0),
       max_nb_cuts(NB_CUTS),
@@ -128,16 +129,16 @@ NodeData::NodeData() {
     lower_bound = 0;
     LP_lower_bound = 0.0;
     LP_lower_min = DBL_MAX;
-    rhs = nullptr;
+    rhs = std::vector<double>();
     /*Initialization  of the LP*/
     RMP = nullptr;
     lambda = nullptr;
     // x_e = (double*)NULL;
-    pi = nullptr;
-    slack = nullptr;
-    lhs_coeff = nullptr;
-    id_row = nullptr;
-    coeff_row = nullptr;
+    pi = std::vector<double>();
+    slack = std::vector<double>();
+    lhs_coeff = std::vector<double>();
+    id_row = std::vector<int>();
+    coeff_row = std::vector<double>();
     nb_rows = 0;
     nb_cols = 0;
     // init info cut generation
@@ -249,27 +250,27 @@ void NodeData::lp_node_data_free() {
     /**
      * free all the data associated with the LP
      */
-    if (pi) {
-        g_array_free(pi, TRUE);
-    }
-    if (slack) {
-        g_array_free(slack, TRUE);
-    }
+    // if (pi) {
+    //     g_array_free(pi, TRUE);
+    // }
+    // if (slack) {
+    //     g_array_free(slack, TRUE);
+    // }
     CC_IFFREE(lambda, double);
-    if (rhs) {
-        g_array_free(rhs, TRUE);
-    }
+    // if (rhs) {
+    //     g_array_free(rhs, TRUE);
+    // }
 
-    if (lhs_coeff) {
-        g_array_free(lhs_coeff, TRUE);
-    }
+    // if (lhs_coeff) {
+    //     g_array_free(lhs_coeff, TRUE);
+    // }
 
-    if (id_row) {
-        g_array_free(id_row, TRUE);
-    }
-    if (coeff_row) {
-        g_array_free(coeff_row, TRUE);
-    }
+    // if (id_row) {
+    //     g_array_free(id_row, TRUE);
+    // }
+    // if (coeff_row) {
+    //     g_array_free(coeff_row, TRUE);
+    // }
     CC_IFFREE(column_status, int);
 
     /**

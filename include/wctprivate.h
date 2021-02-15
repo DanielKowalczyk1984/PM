@@ -2,6 +2,7 @@
 #define WCT_PRIVATE_H
 
 #include <memory>
+#include <vector>
 #include "BranchBoundTree.hpp"
 #include "MIP_defs.hpp"
 #include "OptimalSolution.hpp"
@@ -159,12 +160,13 @@ struct NodeData {
     wctlp*  RMP;
     double* lambda;
 
-    GArray* pi;
-    GArray* slack;
-    GArray* rhs;
-    GArray* lhs_coeff;
-    GArray* id_row;
-    GArray* coeff_row;
+    // GArray* pi;
+    std::vector<double> pi;
+    std::vector<double> slack;
+    std::vector<double> rhs;
+    std::vector<double> lhs_coeff;
+    std::vector<int>    id_row;
+    std::vector<double> coeff_row;
 
     int nb_rows;
     int nb_cols;

@@ -23,10 +23,10 @@ int NodeData::solve_pricing() {
     int val = 0;
 
     update = 0;
-    double* pi_tmp = &g_array_index(pi, double, 0);
-    double* lhs = &g_array_index(lhs_coeff, double, 0);
+    // double* pi_tmp = pi.data();
+    // double* lhs = &g_array_index(lhs_coeff, double, 0);
 
-    solver_stab->solve(LP_lower_bound_BB, pi_tmp, lhs);
+    solver_stab->solve(LP_lower_bound_BB, pi.data(), lhs_coeff.data());
 
     if (solver_stab->get_update_stab_center()) {
         if (solver_stab->do_reduced_cost_fixing() &&
@@ -74,8 +74,7 @@ CLEAN:
 
 int NodeData::solve_farkas_dbl() {
     int                     val = 0;
-    OptimalSolution<double> s =
-        solver->farkas_pricing(&g_array_index(pi, double, 0));
+    OptimalSolution<double> s = solver->farkas_pricing(pi.data());
     update = 0;
 
     if (s.obj < EPS) {

@@ -61,20 +61,20 @@ CLEAN:
 }
 
 int NodeData::delete_unused_rows() {
-    int     val = 0;
-    int     nb_rows = 0;
-    double* slack_tmp = &g_array_index(slack, double, 0);
+    int val = 0;
+    int nb_rows = 0;
+    // double* slack_tmp = &g_array_index(slack, double, 0);
     GArray* del_indices = g_array_new(FALSE, FALSE, sizeof(int));
 
     lp_interface_get_nb_rows(RMP, &nb_rows);
     // assert(nb_rows == pd->slack->len);
-    lp_interface_slack(RMP, slack_tmp);
+    lp_interface_slack(RMP, slack.data());
 
     int it = id_valid_cuts;
     int first_del = -1;
     int last_del = -1;
     for (int i = id_valid_cuts; i < nb_rows; i++) {
-        if (std::fabs(slack_tmp[i]) < EPS) {
+        if (std::fabs(slack[i]) < EPS) {
             if (first_del != -1) {
                 val = delete_unused_rows_range(first_del, last_del);
                 it = it - (last_del - first_del);
@@ -270,35 +270,33 @@ void g_make_pi_feasible(gpointer data, gpointer user_data) {
 
     for (guint i = 0; i < x->job_list->len; ++i) {
         tmp_j = static_cast<Job*>(g_ptr_array_index(x->job_list, i));
-        if (signbit((double)pd->pi->data[tmp_j->job])) {
-            pd->pi->data[tmp_j->job] = 0.0;
+        if (signbit(pd->pi[tmp_j->job])) {
+            pd->pi[tmp_j->job] = 0.0;
         }
 
-        colsum += pd->pi->data[tmp_j->job];
+        colsum += pd->pi[tmp_j->job];
         colsum = nextafter(colsum, DBL_MAX);
     }
 
-    if (!signbit((double)pd->pi->data[pd->nb_jobs])) {
-        g_array_index(pd->pi, double, pd->nb_jobs) = 0.0;
+    if (!signbit(pd->pi[pd->nb_jobs])) {
+        pd->pi[pd->nb_jobs] = 0.0;
     }
 
-    colsum += static_cast<double>(pd->pi->data[pd->nb_jobs]);
+    colsum += pd->pi[pd->nb_jobs];
     colsum = nextafter(colsum, DBL_MAX);
 
     if (colsum > x->total_weighted_completion_time) {
         double newcolsum = .0;
         for (guint i = 0; i < x->job_list->len; ++i) {
             tmp_j = static_cast<Job*>(g_ptr_array_index(x->job_list, i));
-            g_array_index(pd->pi, double, tmp_j->job) /= colsum;
-            g_array_index(pd->pi, double, tmp_j->job) *=
-                x->total_weighted_completion_time;
-            newcolsum += g_array_index(pd->pi, double, tmp_j->job);
+            pd->pi[tmp_j->job] /= colsum;
+            pd->pi[tmp_j->job] *= x->total_weighted_completion_time;
+            newcolsum += pd->pi[tmp_j->job];
         }
 
-        g_array_index(pd->pi, double, pd->nb_jobs) /= colsum;
-        g_array_index(pd->pi, double, pd->nb_jobs) *=
-            x->total_weighted_completion_time;
-        newcolsum += g_array_index(pd->pi, double, pd->nb_jobs);
+        pd->pi[pd->nb_jobs] /= colsum;
+        pd->pi[pd->nb_jobs] *= x->total_weighted_completion_time;
+        newcolsum += pd->pi[pd->nb_jobs];
 
         if (dbg_lvl() > 1) {
             fmt::print(
@@ -321,30 +319,30 @@ void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
     double colsum = .0;
 
     for (guint i = 0; i < x->job_list->len; ++i) {
-        double* tmp = &g_array_index(pd->pi, double, i);
-        if (signbit(*tmp)) {
-            *tmp = 0.0;
+        double tmp = pd->pi[i];
+        if (signbit(tmp)) {
+            tmp = 0.0;
         }
 
-        colsum += *tmp;
+        colsum += tmp;
         colsum = nextafter(colsum, DBL_MAX);
     }
 
-    colsum += g_array_index(pd->pi, double, pd->nb_jobs);
+    colsum += pd->pi[pd->nb_jobs];
 
     if (colsum > x->total_weighted_completion_time) {
         double newcolsum = .0;
         for (guint i = 0; i < x->job_list->len; ++i) {
-            double* tmp = &g_array_index(pd->pi, double, i);
-            *tmp /= colsum;
-            *tmp *= x->total_weighted_completion_time;
-            newcolsum += *tmp;
+            double tmp = pd->pi[i];
+            tmp /= colsum;
+            tmp *= x->total_weighted_completion_time;
+            newcolsum += tmp;
         }
 
-        double* tmp = &g_array_index(pd->pi, double, pd->nb_jobs);
-        *tmp /= colsum;
-        *tmp *= x->total_weighted_completion_time;
-        newcolsum += *tmp;
+        double tmp = pd->pi[pd->nb_jobs];
+        tmp /= colsum;
+        tmp *= x->total_weighted_completion_time;
+        newcolsum += tmp;
 
         if (dbg_lvl() > 1) {
             fmt::print(
@@ -366,14 +364,15 @@ int NodeData::compute_objective() {
     LP_lower_bound_dual = .0;
 
     /** compute lower bound with the dual variables */
-    double* tmp = &g_array_index(pi, double, 0);
-    double* tmp_rhs = &g_array_index(rhs, double, 0);
+    // double tmp = pi, double, 0);
+    // double* tmp_rhs = &g_array_index(rhs, double, 0);
+    assert(nb_rows == pi.size());
 
     for (int i = 0; i < nb_rows; i++) {
         // if (i != nb_jobs) {
         // eta_out += tmp[i] * tmp_rhs[i];
         // }
-        LP_lower_bound_dual += tmp[i] * tmp_rhs[i];
+        LP_lower_bound_dual += pi[i] * rhs[i];
     }
     LP_lower_bound_dual -= EPS_BOUND;
 
@@ -429,7 +428,7 @@ int NodeData::solve_relaxation() {
             val = grow_ages();
             // CCcheck_val_2(val, "Failed in grow_ages");
             /** get the dual variables and make them feasible */
-            val = lp_interface_pi(RMP, &g_array_index(pi, double, 0));
+            val = lp_interface_pi(RMP, pi.data());
             // CCcheck_val_2(val, "lp_interface_pi failed");
             /** Compute the objective function */
             val = compute_objective();
@@ -438,7 +437,7 @@ int NodeData::solve_relaxation() {
 
         case LP_INTERFACE_INFEASIBLE:
             /** get the dual variables and make them feasible */
-            val = lp_interface_pi_inf(RMP, &g_array_index(pi, double, 0));
+            val = lp_interface_pi_inf(RMP, pi.data());
             // CCcheck_val_2(val, "Failed at lp_interface_pi_inf");
             break;
     }

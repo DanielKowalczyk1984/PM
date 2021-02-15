@@ -385,16 +385,21 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     lp_interface_get_nb_rows(pd->RMP, &(pd->nb_rows));
     vector<double> new_values(nb_new_constraints, 0.0);
     vector<int>    new_values_int(nb_new_constraints, 0);
-    g_array_append_vals(pd->pi, new_values.data(), new_values.size());
-    g_array_append_vals(pd->slack, new_values.data(), new_values.size());
-    g_array_append_vals(pd->rhs, new_values.data(), new_values.size());
-    lp_interface_get_rhs(
-        pd->RMP, static_cast<double*>(static_cast<void*>(pd->rhs->data)));
+    // g_array_append_vals(pd->pi, new_values.data(), new_values.size());
+    pd->pi.resize(pd->nb_rows, 0.0);
+    // g_array_append_vals(pd->slack, new_values.data(), new_values.size());
+    pd->slack.resize(pd->nb_rows, 0.0);
+    // g_array_append_vals(pd->rhs, new_values.data(), new_values.size());
+    pd->rhs.resize(pd->nb_rows, 0.0);
+    lp_interface_get_rhs(pd->RMP, (pd->rhs).data());
     // lp_interface_get_rhs(pd->RMP, &g_array_index(pd->rhs, double, 0));
-    g_array_append_vals(pd->lhs_coeff, new_values.data(), new_values.size());
-    g_array_append_vals(pd->id_row, new_values_int.data(),
-                        new_values_int.size());
-    g_array_append_vals(pd->coeff_row, new_values.data(), new_values.size());
+    // g_array_append_vals(pd->lhs_coeff, new_values.data(), new_values.size());
+    pd->lhs_coeff.resize(pd->nb_rows, 0.0);
+    // g_array_append_vals(pd->id_row, new_values_int.data(),
+    //                     new_values_int.size());
+    pd->id_row.resize(pd->nb_rows, 0.0);
+    // g_array_append_vals(pd->coeff_row, new_values.data(), new_values.size());
+    pd->coeff_row.resize(pd->nb_rows, 0.0);
     // assert(pd->nb_rows == pd->slack->len);
 }
 
