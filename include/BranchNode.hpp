@@ -8,14 +8,6 @@
 #include "branch-and-bound/state.h"
 #include "wctprivate.h"
 
-namespace std {
-
-template <>
-struct default_delete<NodeData> {
-    void operator()(NodeData* ptr) { nodedata_free(ptr); }
-};
-}  // namespace std
-
 class BranchNodeBase : public State {
     struct BranchCand {
         double score{EPS_BRANCH};
@@ -30,10 +22,11 @@ class BranchNodeBase : public State {
 
    public:
     explicit BranchNodeBase(NodeData* pd, bool isRoot = false);
+    explicit BranchNodeBase(std::unique_ptr<NodeData> pd, bool isRoot = false);
     BranchNodeBase(BranchNodeBase&&) = default;
-    BranchNodeBase(const BranchNodeBase&) = default;
+    BranchNodeBase(const BranchNodeBase&) = delete;
     BranchNodeBase& operator=(BranchNodeBase&&) = default;
-    BranchNodeBase& operator=(const BranchNodeBase&) = default;
+    BranchNodeBase& operator=(const BranchNodeBase&) = delete;
     ~BranchNodeBase() override = default;
     std::unique_ptr<State> clone() const override { return nullptr; }
 

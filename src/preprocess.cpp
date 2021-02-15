@@ -1,6 +1,7 @@
-#include <interval.h>
-#include <wct.h>
+// #include <wct.h>
+// #include "interval.h"
 #include "job.h"
+#include "wctprivate.h"
 
 void g_problem_summary_init(gpointer data, gpointer user_data) {
     Job*     j = static_cast<Job*>(data);

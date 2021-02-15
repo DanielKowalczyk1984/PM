@@ -9,9 +9,9 @@
 #include "branch-and-bound/dfstree.h"
 #include "parms.h"
 #include "wctprivate.h"
-BranchBoundTree::BranchBoundTree(NodeData* root,
-                                 int       _probType,
-                                 bool      _isIntProb) {
+BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
+                                 int                       _probType,
+                                 bool                      _isIntProb) {
     Parms* parms = root->parms;
     switch (parms->bb_explore_strategy) {
         case min_bb_explore_strategy:
@@ -32,26 +32,8 @@ BranchBoundTree::BranchBoundTree(NodeData* root,
     tree->set_retain_states(false);
     tree->set_time_limit(parms->branchandbound);
     tree->set_node_limit(parms->bb_node_limit);
-    auto node = std::make_unique<BranchNodeBase>(root, true);
-    node->set_depth(root->depth);
+    auto aux = root->depth;
+    auto node = std::make_unique<BranchNodeBase>(std::move(root), true);
+    node->set_depth(aux);
     tree->process_state(std::move(node), true);
-}
-
-extern "C" {
-// BranchBoundTree* new_branch_bound_tree(NodeData* root,
-//                                        int       _probType,
-//                                        int       _isIntProb) {
-//     return new BranchBoundTree(root, _probType, _isIntProb);
-// }
-
-void delete_branch_bound_tree(BranchBoundTree* tree) {
-    if (tree) {
-        // delete tree;
-    }
-}
-
-void call_branch_and_bound_explore(BranchBoundTree* tree) {
-    BTree* ptr_tree = tree->get_ptr_tree();
-    ptr_tree->explore();
-}
 }

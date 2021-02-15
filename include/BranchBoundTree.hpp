@@ -4,12 +4,12 @@
 #include "branch-and-bound/btree.h"
 #include "parms.h"
 // #include "wctprivate.h"
-typedef struct _NodeData NodeData;
+typedef struct NodeData NodeData;
 class BranchBoundTree {
    public:
-    explicit BranchBoundTree(NodeData* data,
-                             int       probType = 0,
-                             bool      isIntProb = true);
+    explicit BranchBoundTree(std::unique_ptr<NodeData> data,
+                             int                       probType = 0,
+                             bool                      isIntProb = true);
     BranchBoundTree(BranchBoundTree&&) = default;
     BranchBoundTree& operator=(BranchBoundTree&&) = default;
     BranchBoundTree& operator=(const BranchBoundTree&) = delete;

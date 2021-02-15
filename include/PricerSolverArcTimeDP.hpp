@@ -1,3 +1,4 @@
+#include <memory>
 #include <vector>
 #include "PricerSolverBase.hpp"
 #include "gurobi_c++.h"
@@ -57,6 +58,9 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
         init_table();
     }
+
+    std::unique_ptr<PricerSolverBase> clone() override { return nullptr; };
+
     void init_table();
 
     void reduce_cost_fixing([[maybe_unused]] double* pi,

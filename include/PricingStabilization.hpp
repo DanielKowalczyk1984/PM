@@ -2,6 +2,7 @@
 #define __PRICINGSTABILIZATION_H__
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
@@ -15,9 +16,10 @@ class PricingStabilizationBase {
     PricingStabilizationBase& operator=(const PricingStabilizationBase&) =
         default;
     virtual ~PricingStabilizationBase();
+    virtual std::unique_ptr<PricingStabilizationBase> clone(PricerSolverBase*);
 
     static constexpr double EPS_RC = -1e-10;
-    static constexpr double ETA_DIFF = 1e-6;
+    static constexpr double ETA_DIFF = 1e-4;
     static constexpr double EPS_STAB = 1e-9;
     static constexpr int    RC_FIXING_RATE = 20;
 
@@ -52,6 +54,7 @@ class PricingStabilizationBase {
     virtual void       remove_constraints(int first, int nb_del);
     virtual void       update_continueLP(int _continueLP);
     virtual int        do_reduced_cost_fixing();
+    virtual void       update_continueLP(double obj);
 };
 
 class PricingStabilizationStat : public PricingStabilizationBase {
@@ -76,20 +79,14 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     int update{};
 
     int k{};
-    // int node_stab{};
     int hasstabcenter{};
-    // int in_mispricing_schedule{};
-    // int update_stab_center{};
-
-    // PricerSolverBase* solver;
-    // OptimalSolution<> sol{};
 
     int nb_rows;
 
     void compute_pi_eta_sep(double _alpha_bar) {
         double beta_bar = 1.0 - _alpha_bar;
 
-        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
+        for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
              ++i) {
             pi_sep[i] = _alpha_bar * pi_in[i] + (1.0 - _alpha_bar) * pi_out[i];
         }
@@ -104,6 +101,7 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     int    stopping_criteria() final;
     void   update_duals() override;
     void   remove_constraints(int first, int nb_del) override;
+    std::unique_ptr<PricingStabilizationBase> clone(PricerSolverBase*) override;
     // double diff_eta_in_eta_out();
 };
 
@@ -117,6 +115,8 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
     PricingStabilizationDynamic& operator=(const PricingStabilizationDynamic&) =
         default;
     ~PricingStabilizationDynamic() override;
+    std::unique_ptr<PricingStabilizationBase> clone(PricerSolverBase*) override;
+
     std::vector<double> subgradient;
     double              subgradientnorm{};
     double              subgradientproduct{};
@@ -126,8 +126,8 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
     void update_duals() override;
     void remove_constraints(int first, int nb_del) override;
 
-    void compute_subgradient(const OptimalSolution<double>& sol) {
-        solver->compute_subgradient(sol, subgradient.data());
+    void compute_subgradient(const OptimalSolution<double>& _sol) {
+        solver->compute_subgradient(_sol, subgradient.data());
 
         // subgradientnorm = 0.0;
 
@@ -145,7 +145,7 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
     void adjust_alpha() {
         double sum = 0.0;
 
-        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
+        for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
              ++i) {
             sum += subgradient[i] * (pi_out[i] - pi_in[i]);
         }
@@ -169,6 +169,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
     PricingStabilizationHybrid& operator=(const PricingStabilizationHybrid&) =
         default;
     ~PricingStabilizationHybrid() override;
+    std::unique_ptr<PricingStabilizationBase> clone(PricerSolverBase*) override;
 
     std::vector<double> subgradient_in;
 
@@ -193,7 +194,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
     void calculate_dualdiffnorm() {
         dualdiffnorm = 0.0;
 
-        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
+        for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
              ++i) {
             double dualdiff = SQR(pi_in[i] - pi_out[i]);
             if (dualdiff > EPS_STAB) {
@@ -206,7 +207,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
     void calculate_beta() {
         beta = 0.0;
-        for (int i = 0; i < solver->convex_constr_id; ++i) {
+        for (auto i = 0UL; i < solver->convex_constr_id; ++i) {
             double dualdiff = ABS(pi_out[i] - pi_in[i]);
             double product = dualdiff * std::abs(subgradient_in[i]);
 
@@ -222,7 +223,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
     void calculate_hybridfactor() {
         double aux_norm = 0.0;
-        for (int i = 0; i < solver->convex_constr_id; ++i) {
+        for (auto i = 0UL; i < solver->convex_constr_id; ++i) {
             double aux_double = SQR(
                 (beta - 1.0) * (pi_out[i] - pi_in[i]) +
                 beta * (subgradient_in[i] * dualdiffnorm / subgradientnorm));
@@ -242,7 +243,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
         return alpha > 0.0;
     }
 
-    double compute_dual(int i) {
+    double compute_dual(auto i) {
         double usedalpha = alpha;
         double usedbeta = beta;
 
@@ -266,10 +267,10 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
         return pi_out[i];
     }
 
-    void update_stabcenter(const OptimalSolution<double>& sol) {
+    void update_stabcenter(const OptimalSolution<double>& _sol) {
         if (eta_sep > eta_in) {
             pi_in = pi_sep;
-            compute_subgradient_norm(sol);
+            compute_subgradient_norm(_sol);
             eta_in = eta_sep;
             hasstabcenter = 1;
             update_stab_center = true;
@@ -278,12 +279,12 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
         }
     }
 
-    void compute_subgradient_norm(const OptimalSolution<double>& sol) {
+    void compute_subgradient_norm(const OptimalSolution<double>& _sol) {
         // double* subgradient_in = &g_array_index(pd->subgradient_in, double,
         // 0); double* rhs = &g_array_index(pd->rhs, double, 0);
         // fill_dbl(subgradient_in, pd->nb_rows, 1.0);
         // subgradient_in[pd->nb_jobs] = 0.0;
-        solver->compute_subgradient(sol, subgradient_in.data());
+        solver->compute_subgradient(_sol, subgradient_in.data());
 
         // for (guint i = 0; i < sol.jobs->len; i++) {
         //     Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs,
@@ -292,7 +293,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
         subgradientnorm = 0.0;
 
-        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
+        for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
              ++i) {
             double sqr = SQR(subgradient_in[i]);
 
@@ -305,7 +306,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
     }
     void update_subgradientproduct() {
         subgradientproduct = 0.0;
-        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
+        for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
              ++i) {
             subgradientproduct += (pi_out[i] - pi_in[i]) * subgradient_in[i];
         }

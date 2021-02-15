@@ -2,6 +2,7 @@
 #define PRICER_SOLVER_ZDD_HPP
 
 #include <NodeBddStructure.hpp>
+#include <memory>
 #include "MipGraph.hpp"
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
@@ -35,6 +36,8 @@ class PricerSolverZdd : public PricerSolverBase {
           nb_removed_nodes(src.nb_removed_nodes),
           ordered_jobs(src.ordered_jobs),
           mip_graph(src.mip_graph) {}
+
+    std::unique_ptr<PricerSolverBase> clone() override { return nullptr; };
 
     void init_table();
     void evaluate_nodes(double* pi, int UB, double LB) override = 0;

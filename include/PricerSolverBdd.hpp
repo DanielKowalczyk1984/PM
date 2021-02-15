@@ -38,7 +38,11 @@ class PricerSolverBdd : public PricerSolverBase {
                     double      _ub);
 
     PricerSolverBdd(const PricerSolverBdd& src, GPtrArray* _ordered_jobs);
-    // PricerSolverBdd(const PricerSolverBdd& src);
+    PricerSolverBdd(const PricerSolverBdd&) = default;
+    PricerSolverBdd(PricerSolverBdd&&) = default;
+    PricerSolverBdd& operator=(PricerSolverBdd&&) = default;
+    PricerSolverBdd& operator=(const PricerSolverBdd&) = delete;
+    virtual ~PricerSolverBdd() override;
 
     void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
@@ -80,6 +84,8 @@ class PricerSolverBdd : public PricerSolverBase {
     int    add_constraints() override;
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
+    std::unique_ptr<PricerSolverBase> clone() override = 0;
+    void set_ordered_jobs(GPtrArray* set) override { ordered_jobs = set; }
 
     inline DdStructure<>& get_decision_diagram() { return decision_diagram; }
 
@@ -88,6 +94,8 @@ class PricerSolverBdd : public PricerSolverBase {
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 
     inline int* get_take() override { return nullptr; };
+
+    GPtrArray* get_ordered_jobs() { return ordered_jobs; }
 
    private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);

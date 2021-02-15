@@ -23,6 +23,12 @@ class PricerSolverBddSimple : public PricerSolverBdd {
           evaluator(src.evaluator),
           reversed_evaluator(src.reversed_evaluator),
           farkas_evaluator(src.farkas_evaluator){};
+    std::unique_ptr<PricerSolverBase> clone() override {
+        auto* tmp =
+            g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
+        return std::make_unique<PricerSolverBddSimple>(*this, tmp);
+    };
+
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    compute_labels(double* _pi);
@@ -55,6 +61,11 @@ class PricerSolverBddCycle : public PricerSolverBdd {
     void                    compute_labels(double* _pi);
     void evaluate_nodes(double* pi, int UB, double LB) override;
     void evaluate_nodes(double* pi) final;
+    std::unique_ptr<PricerSolverBase> clone() override {
+        auto* tmp =
+            g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
+        return std::make_unique<PricerSolverBddCycle>(*this, tmp);
+    }
 };
 
 #endif  // PRICER_SOLVER_BDD_FORWARD_HPP

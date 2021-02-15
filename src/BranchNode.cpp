@@ -1,12 +1,9 @@
 #include "BranchNode.hpp"
 #include <fmt/core.h>
 #include <algorithm>
-#include <cstdio>
-#include <iterator>
 #include <limits>
 #include <memory>
 #include <span>
-#include "PricerSolverBase.hpp"
 #include "branch-and-bound/btree.h"
 #include "solver.h"
 #include "util.h"
@@ -17,17 +14,29 @@ BranchNodeBase::BranchNodeBase(NodeData* _pd, bool _isRoot)
     : State(_isRoot),
       pd(_pd) {
     if (_isRoot) {
-        build_rmp(pd.get());
-        solve_relaxation(pd.get());
-        compute_lower_bound(pd.get());
+        pd->build_rmp();
+        pd->solve_relaxation();
+        pd->compute_lower_bound();
         set_lb(pd->lower_bound);
         set_obj_value(pd->LP_lower_bound);
     }
     set_depth(pd->depth);
 }
 
+BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
+    : State(_isRoot),
+      pd(std::move(_pd)) {
+    if (_isRoot) {
+        pd->build_rmp();
+        pd->solve_relaxation();
+        pd->compute_lower_bound();
+        set_lb(pd->lower_bound);
+        set_obj_value(pd->LP_lower_bound);
+    }
+}
+
 void BranchNodeBase::branch(BTree* bt) {
-    auto* solver = pd->solver;
+    auto* solver = pd->solver.get();
     auto  nb_jobs = pd->nb_jobs;
     auto  strong_branching =
         ((pd->opt_sol->tw - pd->LP_lower_bound) < (1.0 + IntegerTolerance));
@@ -145,21 +154,22 @@ void BranchNodeBase::branch(BTree* bt) {
                 best_time = middle_time[i];
             }
         } else {
-            auto* left = new_node_data(pd.get());
-            auto* left_solver = left->solver;
-            auto  left_node_branch = std::make_unique<BranchNodeBase>(left);
+            auto  left = pd->clone();
+            auto* left_solver = left->solver.get();
+            auto  left_node_branch =
+                std::make_unique<BranchNodeBase>(std::move(left));
             // std::unique_ptr<BranchNodeBase>(new BranchNodeBase(left));
-            left->solver->split_job_time(i, middle_time[i], true);
+            left_solver->split_job_time(i, middle_time[i], true);
             left_node_branch->compute_bounds(bt);
 
             auto approx = left_gain;
-            left_gain = left->LP_lower_bound;
+            left_gain = left_node_branch->get_obj_value();
             if (dbg_lvl() > 0) {
                 fmt::print(
                     "STRONG BRANCHING LEFT PROBE: j = {}, t = {},"
                     " DWM LB = {:9.2f} in iterations {} ({})\n\n",
-                    i, middle_time[i], left_gain + pd->off, left->iterations,
-                    approx);
+                    i, middle_time[i], left_gain + pd->off,
+                    left_node_branch->pd->iterations, approx);
             }
             if (left_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance ||
                 left_solver->get_is_integer_solution()) {
@@ -168,21 +178,22 @@ void BranchNodeBase::branch(BTree* bt) {
 
             // build the right node and solve its root LP only
 
-            auto* right = new_node_data(pd.get());
-            auto* right_solver = right->solver;
-            auto  right_node_branch = std::make_unique<BranchNodeBase>(right);
+            auto  right = pd->clone();
+            auto* right_solver = right->solver.get();
+            auto  right_node_branch =
+                std::make_unique<BranchNodeBase>(std::move(right));
 
             right_solver->split_job_time(i, middle_time[i], false);
             right_node_branch->compute_bounds(bt);
 
             approx = right_gain;
-            right_gain = right->LP_lower_bound;
+            right_gain = right_node_branch->pd->LP_lower_bound;
             if (dbg_lvl() > 0) {
                 fmt::print(
                     "STRONG BRANCHING RIGHT PROBE: j = {}, t = {},"
                     " DWM LB = {:9.2f} in iterations {} ({})\n\n",
-                    i, middle_time[i], right_gain + pd->off, right->iterations,
-                    approx);
+                    i, middle_time[i], right_gain + pd->off,
+                    right_node_branch->pd->iterations, approx);
             }
             if (right_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance ||
                 right_solver->get_is_integer_solution()) {
@@ -227,18 +238,20 @@ void BranchNodeBase::branch(BTree* bt) {
 
     /** Process the branching nodes insert them in the tree */
     if (strong_branching) {
-        auto* left = new_node_data(pd.get());
-        auto* left_solver = left->solver;
-        auto  left_node_branch = std::make_unique<BranchNodeBase>(left);
+        auto  left = pd->clone();
+        auto* left_solver = left->solver.get();
+        auto  left_node_branch =
+            std::make_unique<BranchNodeBase>(std::move(left));
         left_solver->split_job_time(best_job, best_time, false);
         left->branch_job = best_job;
         left->completiontime = best_time;
         left->less = 0;
         bt->process_state(std::move(left_node_branch));
 
-        auto* right = new_node_data(pd.get());
-        auto* right_solver = right->solver;
-        auto  right_node_branch = std::make_unique<BranchNodeBase>(right);
+        auto  right = pd->clone();
+        auto* right_solver = right->solver.get();
+        auto  right_node_branch =
+            std::make_unique<BranchNodeBase>(std::move(right));
         right_solver->split_job_time(best_job, best_time, true);
         right->branch_job = best_job;
         right->completiontime = best_time;
@@ -261,9 +274,6 @@ void BranchNodeBase::branch(BTree* bt) {
 
     bt->update_global_lb();
 
-    // fmt::print("Number of Nodes in B&B tree = {}\n", bt->get_nb_nodes());
-    // fmt::print("Number of nodes explored = {}\n",
-    //            bt->tStats->get_nodes_explored());
     if (dbg_lvl() > 1) {
         fmt::print("Branching choice: j = {}, t = {}, best_gain = {}\n",
                    best_job, best_time, best_min_gain + pd->off);
@@ -271,9 +281,9 @@ void BranchNodeBase::branch(BTree* bt) {
 }
 
 void BranchNodeBase::compute_bounds(BTree* bt) {
-    build_rmp(pd.get());
-    solve_relaxation(pd.get());
-    compute_lower_bound(pd.get());
+    pd->build_rmp();
+    pd->solve_relaxation();
+    pd->compute_lower_bound();
     set_lb(pd->lower_bound);
     set_obj_value(pd->LP_lower_bound);
 }
@@ -281,7 +291,7 @@ void BranchNodeBase::compute_bounds(BTree* bt) {
 void BranchNodeBase::assess_dominance(State* otherState) {}
 
 bool BranchNodeBase::is_terminal_state() {
-    auto* solver = pd->solver;
+    auto* solver = pd->solver.get();
     return solver->get_is_integer_solution();
 }
 
@@ -293,7 +303,7 @@ void BranchNodeBase::update_data(double upper_bound) {
 }
 
 void BranchNodeBase::print(const BTree* bt) const {
-    auto* solver = pd->solver;
+    auto* solver = pd->solver.get();
     if (get_is_root_node()) {
         fmt::print("{0:^10}|{1:^30}|{2:^30}|{3:^10}|{4:^10}|\n", "Nodes",
                    "Current Node", "Objective Bounds", "Branch", "Work");

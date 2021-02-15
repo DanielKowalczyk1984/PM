@@ -1,3 +1,4 @@
+#include <memory>
 #include "PricerEvaluateBdd.hpp"
 #include "PricerSolverBdd.hpp"
 
@@ -15,17 +16,34 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
                                   int         _Hmax,
                                   int*        _take_jobs,
                                   double      _UB);
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
-    OptimalSolution<double> farkas_pricing(double* _pi) override;
-    void                    compute_labels(double* _pi);
-    void evaluate_nodes(double* pi, int UB, double LB) override;
-    void evaluate_nodes(double* pi) final;
     PricerSolverBddBackwardSimple(const PricerSolverBddBackwardSimple& src,
                                   GPtrArray* _ordered_jobs)
         : PricerSolverBdd(src, _ordered_jobs),
           evaluator(src.evaluator),
           reversed_evaluator(src.reversed_evaluator),
           farkas_evaluator(src.farkas_evaluator){};
+
+    PricerSolverBddBackwardSimple(const PricerSolverBddBackwardSimple&) =
+        default;
+    PricerSolverBddBackwardSimple(PricerSolverBddBackwardSimple&&) = default;
+    PricerSolverBddBackwardSimple& operator=(PricerSolverBddBackwardSimple&&) =
+        default;
+    PricerSolverBddBackwardSimple& operator=(
+        const PricerSolverBddBackwardSimple&) = delete;
+    ~PricerSolverBddBackwardSimple() override = default;
+
+    std::unique_ptr<PricerSolverBase> clone() override {
+        auto* tmp =
+            g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
+        return std::make_unique<PricerSolverBddBackwardSimple>(*this, tmp);
+    };
+
+    OptimalSolution<double> pricing_algorithm(double* _pi) override;
+    OptimalSolution<double> farkas_pricing(double* _pi) override;
+
+    void compute_labels(double* _pi);
+    void evaluate_nodes(double* pi, int UB, double LB) override;
+    void evaluate_nodes(double* pi) final;
 };
 
 class PricerSolverBddBackwardCycle : public PricerSolverBdd {
@@ -54,4 +72,18 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
           evaluator(src.evaluator),
           reversed_evaluator(src.reversed_evaluator),
           farkas_evaluator(src.farkas_evaluator){};
+
+    PricerSolverBddBackwardCycle& operator=(
+        const PricerSolverBddBackwardCycle&) = delete;
+    PricerSolverBddBackwardCycle& operator=(PricerSolverBddBackwardCycle&&) =
+        default;
+    PricerSolverBddBackwardCycle(PricerSolverBddBackwardCycle&&) = default;
+    PricerSolverBddBackwardCycle(const PricerSolverBddBackwardCycle&) = default;
+    virtual ~PricerSolverBddBackwardCycle() override = default;
+
+    std::unique_ptr<PricerSolverBase> clone() override {
+        auto* tmp =
+            g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
+        return std::make_unique<PricerSolverBddBackwardCycle>(*this, tmp);
+    };
 };

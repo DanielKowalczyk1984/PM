@@ -1,9 +1,11 @@
 #include "PricingStabilization.hpp"
 #include <fmt/core.h>
 #include <cmath>
+#include <memory>
 #include <span>
+#include "PricerSolverBase.hpp"
 #include "parms.h"
-#include "wctprivate.h"
+// #include "wctprivate.h"
 
 /**
  * @brief Construct a new Pricing Stabilization Base:: Pricing Stabilization
@@ -115,8 +117,17 @@ int PricingStabilizationBase::do_reduced_cost_fixing() {
     return 0;
 }
 
+void PricingStabilizationBase::update_continueLP(double obj) {
+    eta_out = obj;
+    continueLP = (ETA_DIFF < eta_out - eta_in);
+}
+
 PricingStabilizationBase::~PricingStabilizationBase() = default;
 
+std::unique_ptr<PricingStabilizationBase> PricingStabilizationBase::clone(
+    PricerSolverBase* _solver) {
+    return std::make_unique<PricingStabilizationBase>(_solver);
+}
 /**
  * @brief Wentgnes stabilization technique
  *
@@ -217,6 +228,11 @@ void PricingStabilizationStat::remove_constraints(int first, int nb_del) {
     pi_sep.erase(it_sep, it_sep + nb_del);
 }
 
+std::unique_ptr<PricingStabilizationBase> PricingStabilizationStat::clone(
+    PricerSolverBase* _solver) {
+    return std::make_unique<PricingStabilizationStat>(_solver);
+}
+
 /**
  * Dynamic stabilization technique
  */
@@ -283,6 +299,11 @@ void PricingStabilizationDynamic::solve(double  _eta_out,
     }
 }
 
+std::unique_ptr<PricingStabilizationBase> PricingStabilizationDynamic::clone(
+    PricerSolverBase* _solver) {
+    return std::make_unique<PricingStabilizationDynamic>(_solver);
+}
+
 void PricingStabilizationDynamic::update_duals() {
     if (solver->reformulation_model.get_nb_constraints() != pi_sep.size()) {
         pi_sep.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
@@ -327,6 +348,11 @@ void PricingStabilizationHybrid::update_duals() {
         subgradient.resize(solver->reformulation_model.get_nb_constraints(),
                            0.0);
     }
+}
+
+std::unique_ptr<PricingStabilizationBase> PricingStabilizationHybrid::clone(
+    PricerSolverBase* _solver) {
+    return std::make_unique<PricingStabilizationBase>(solver);
 }
 
 void PricingStabilizationHybrid::remove_constraints(int first, int nb_del) {
@@ -398,21 +424,22 @@ void PricingStabilizationHybrid::solve(double  _eta_out,
 }
 
 extern "C" {
-PricingStabilizationBase* new_pricing_stabilization(PricerSolver* solver,
-                                                    Parms*        parms) {
-    switch (parms->stab_technique) {
-        case stab_wentgnes:
-            return new PricingStabilizationStat(solver);
-        case stab_dynamic:
-            return new PricingStabilizationDynamic(solver);
-        case stab_hybrid:
-            return new PricingStabilizationHybrid(solver);
-        case no_stab:
-            return new PricingStabilizationBase(solver);
-        default:
-            return new PricingStabilizationStat(solver);
-    }
-}
+// PricingStabilizationBase* new_pricing_stabilization(PricerSolver* solver,
+//                                                     Parms*        parms)
+//                                                     {
+//     switch (parms->stab_technique) {
+//         case stab_wentgnes:
+//             return new PricingStabilizationStat(solver);
+//         case stab_dynamic:
+//             return new PricingStabilizationDynamic(solver);
+//         case stab_hybrid:
+//             return new PricingStabilizationHybrid(solver);
+//         case no_stab:
+//             return new PricingStabilizationBase(solver);
+//         default:
+//             return new PricingStabilizationStat(solver);
+//     }
+// }
 
 void delete_pricing_stabilization(
     PricingStabilizationBase* pricing_stab_solver) {

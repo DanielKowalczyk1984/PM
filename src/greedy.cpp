@@ -414,7 +414,7 @@ int Problem::heuristic() {
     fmt::print("Solution Constructed with EDD heuristic:\n");
     solution_print(sol);
     solution_canonical_order(sol, intervals);
-    printf("Solution in canonical order: \n");
+    fmt::print("Solution in canonical order: \n");
     solution_print(sol);
 
     data = local_search_data_init(nb_jobs, nb_machines);
@@ -423,8 +423,8 @@ int Problem::heuristic() {
     local_search_create_g(sol, data);
     RVND(sol, data);
     solution_canonical_order(sol, intervals);
-    add_solution_to_colpool(sol, root_pd);
-    printf("Solution after local search:\n");
+    root_pd->add_solution_to_colpool(sol);
+    fmt::print("Solution after local search:\n");
     solution_print(sol);
 
     if (opt_sol == nullptr) {
@@ -436,9 +436,9 @@ int Problem::heuristic() {
     for (int i = 0; i < IR && opt_sol->tw + opt_sol->off != 0; ++i) {
         // fprintf(stderr, "iteration %d\n", i);
         sol1 = solution_alloc(intervals->len, nb_machines, nb_jobs, off);
-        CCcheck_NULL_2(sol1, "Failed to allocate memory");
+        // CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(sol1, rand_uniform);
-        CCcheck_val_2(val, "Failed in construct random solution");
+        // CCcheck_val_2(val, "Failed in construct random solution");
         data_RS = local_search_data_init(nb_jobs, nb_machines);
         local_search_create_W(sol1, data_RS);
         local_search_create_g(sol1, data_RS);
@@ -459,7 +459,7 @@ int Problem::heuristic() {
 
         if (sol->tw < opt_sol->tw) {
             solution_update(opt_sol, sol);
-            add_solution_to_colpool(opt_sol, root_pd);
+            root_pd->add_solution_to_colpool(opt_sol);
         }
 
         local_search_data_free(&data_RS);
@@ -472,7 +472,7 @@ int Problem::heuristic() {
     solution_print(opt_sol);
     global_upper_bound = opt_sol->tw + off;
     CCutil_stop_timer(&(stat.tot_heuristic), 0);
-    prune_duplicated_sets((root_pd));
+    root_pd->prune_duplicated_sets();
     root_pd->upper_bound = global_upper_bound;
 CLEAN:
     solution_free(&sol);

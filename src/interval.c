@@ -1,4 +1,4 @@
-#include <interval.h>
+#include "interval.h"
 #include "util.h"
 
 void g_print_interval(gpointer data, MAYBE_UNUSED gpointer user_data) {
@@ -83,7 +83,7 @@ interval* interval_alloc(int        a,
                          GPtrArray* jobarray,
                          int        nb_jobs) {
     interval* p = CC_SAFE_MALLOC(1, interval);
-    CCcheck_NULL_3(p, "Failed to allocate memory");
+    // CCcheck_NULL_3(p, "Failed to allocate memory");
     interval_init(p, a, b, key, jobarray, nb_jobs);
 CLEAN:
     return p;
@@ -155,8 +155,7 @@ void print_interval_pair(GPtrArray* ordered_jobs) {
     job_interval_pair* tmp_p = NULL;
 
     for (size_t i = 0; i < ordered_jobs->len; i++) {
-        tmp_p =
-            static_cast<job_interval_pair*>(g_ptr_array_index(ordered_jobs, i));
+        tmp_p = (job_interval_pair*)g_ptr_array_index(ordered_jobs, i);
         if (tmp_p->I != cur) {
             cur = tmp_p->I;
             printf("\n");
@@ -171,8 +170,7 @@ void count_jobs_interval_pair(GPtrArray* ordered_jobs) {
     job_interval_pair* tmp_p = NULL;
 
     for (size_t i = 0; i < ordered_jobs->len; i++) {
-        tmp_p =
-            static_cast<job_interval_pair*>(g_ptr_array_index(ordered_jobs, i));
+        tmp_p = (job_interval_pair*)g_ptr_array_index(ordered_jobs, i);
         tmp_p->j->num_layers++;
     }
 }

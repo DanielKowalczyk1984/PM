@@ -1,3 +1,4 @@
+#include <PricingStabilization.hpp>
 #include <memory>
 #include "PricerSolverArcTimeDP.hpp"
 #include "PricerSolverBddBackward.hpp"
@@ -64,46 +65,46 @@ PricerSolverBase* copy_pricer_solver(PricerSolverBase* src,
     }
 }
 
-void freeSolver(PricerSolver* src) {
-    delete src;
-}
+// void freeSolver(PricerSolver* src) {
+//     delete src;
+// }
 
-void deletePricerSolver(PricerSolver* solver) {
-    if (solver) {
-        delete solver;
-    }
-}
+// void deletePricerSolver(PricerSolver* solver) {
+//     if (solver) {
+//         delete solver;
+//     }
+// }
 
-int* get_take(PricerSolver* solver) {
-    return solver->get_take();
-}
+// int* get_take(PricerSolver* solver) {
+//     return solver->get_take();
+// }
 
-void iterate_zdd(PricerSolver* solver) {
-    solver->iterate_zdd();
-}
+// void iterate_zdd(PricerSolver* solver) {
+//     solver->iterate_zdd();
+// }
 
-int get_num_layers(PricerSolver* solver) {
-    return solver->get_num_layers();
-}
+// int get_num_layers(PricerSolver* solver) {
+//     return solver->get_num_layers();
+// }
 
-size_t get_nb_vertices(PricerSolver* solver) {
-    return solver->get_nb_vertices();
-}
+// size_t get_nb_vertices(PricerSolver* solver) {
+//     return solver->get_nb_vertices();
+// }
 
-size_t get_nb_edges(PricerSolver* solver) {
-    return solver->get_nb_edges();
-}
+// size_t get_nb_edges(PricerSolver* solver) {
+//     return solver->get_nb_edges();
+// }
 
-void print_number_paths(PricerSolver* solver) {
-    solver->print_num_paths();
-}
-void print_dot_file(PricerSolver* solver, char* name) {
-    solver->create_dot_zdd(name);
-}
+// void print_number_paths(PricerSolver* solver) {
+//     solver->print_num_paths();
+// }
+// void print_dot_file(PricerSolver* solver, char* name) {
+//     solver->create_dot_zdd(name);
+// }
 
-void print_number_nodes_edges(PricerSolver* solver) {
-    solver->print_number_nodes_edges();
-}
+// void print_number_nodes_edges(PricerSolver* solver) {
+//     solver->print_number_nodes_edges();
+// }
 
 // int reduce_cost_fixing(NodeData* pd) {
 //     int    val = 0;
@@ -119,87 +120,73 @@ void print_number_nodes_edges(PricerSolver* solver) {
 //     return val;
 // }
 
-int build_solve_mip(NodeData* pd) {
+int NodeData::build_solve_mip() {
     int val = 0;
 
-    pd->solver->build_mip();
+    solver->build_mip();
 
     return val;
 }
 
-int construct_lp_sol_from_rmp(NodeData* pd) {
+int NodeData::construct_lp_sol_from_rmp() {
     int val = 0;
-    int nb_cols = 0;
 
-    val = lp_interface_get_nb_cols(pd->RMP, &nb_cols);
-    CCcheck_val_2(val, "Failed to get nb cols");
-    assert(nb_cols - pd->id_pseudo_schedules == pd->localColPool->len);
+    val = lp_interface_get_nb_cols(RMP, &nb_cols);
+    // CCcheck_val_2(val, "Failed to get nb cols");
+    assert(nb_cols - id_pseudo_schedules == localColPool->len);
 
-    pd->lambda =
-        CC_SAFE_REALLOC(pd->lambda, nb_cols - pd->id_pseudo_schedules, double);
-    CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
-    val = lp_interface_x(pd->RMP, pd->lambda, pd->id_pseudo_schedules);
-    CCcheck_val_2(val, "Failed in lp_interface_x");
-    pd->solver->construct_lp_sol_from_rmp(pd->lambda, pd->localColPool,
-                                          pd->localColPool->len);
+    lambda = CC_SAFE_REALLOC(lambda, nb_cols - id_pseudo_schedules, double);
+    // CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
+    val = lp_interface_x(RMP, lambda, id_pseudo_schedules);
+    // CCcheck_val_2(val, "Failed in lp_interface_x");
+    solver->construct_lp_sol_from_rmp(lambda, localColPool, localColPool->len);
 
-CLEAN:
     return val;
 }
 
-int generate_cuts(NodeData* pd) {
+int NodeData::generate_cuts() {
     // 1. add cuts to reformulation model
     int val = 0;
 
-    PricerSolver* pricing_solver = pd->solver;
-    val = pricing_solver->add_constraints();
-    pricing_solver->insert_constraints_lp(pd);
-    pricing_solver->update_coeff_constraints();
+    val = solver->add_constraints();
+    solver->insert_constraints_lp(this);
+    solver->update_coeff_constraints();
     // 2. add cuts to lp relaxation wctlp
     // 3. adjust the pricing solver (add constraints to original model)
     return val;
 }
 
-int delete_unused_rows_range(NodeData* pd, int first, int last) {
+int NodeData::delete_unused_rows_range(int first, int last) {
     int val = 0;
 
-    PricerSolver*         pricer_solver = pd->solver;
-    PricingStabilization* stab_solver = pd->solver_stab;
-    lp_interface_deleterows(pd->RMP, first, last);
-    pricer_solver->remove_constraints(first, last - first + 1);
-    call_remove_constraints(stab_solver, first, last - first + 1);
-    g_array_remove_range(pd->pi, first, last - first + 1);
-    g_array_remove_range(pd->rhs, first, last - first + 1);
-    g_array_remove_range(pd->lhs_coeff, first, last - first + 1);
+    lp_interface_deleterows(RMP, first, last);
+    solver->remove_constraints(first, last - first + 1);
+    solver_stab->remove_constraints(first, last - first + 1);
+    g_array_remove_range(pi, first, last - first + 1);
+    g_array_remove_range(rhs, first, last - first + 1);
+    g_array_remove_range(lhs_coeff, first, last - first + 1);
 
     return val;
 }
 
-int call_update_rows_coeff(NodeData* pd) {
+int NodeData::call_update_rows_coeff() {
     int val = 0;
 
-    PricerSolver* solver = pd->solver;
-    solver->update_rows_coeff(pd->id_valid_cuts);
+    solver->update_rows_coeff(id_valid_cuts);
 
     return val;
 }
 
-int check_schedule_set(ScheduleSet* set, NodeData* pd) {
-    return static_cast<int>(pd->solver->check_schedule_set(set->job_list));
+int NodeData::check_schedule_set(ScheduleSet* set) {
+    return static_cast<int>(solver->check_schedule_set(set->job_list));
 }
 
-void make_schedule_set_feasible(NodeData* pd, ScheduleSet* set) {
-    PricerSolver* solver = pd->solver;
+void NodeData::make_schedule_set_feasible(ScheduleSet* set) {
     solver->make_schedule_set_feasible(set->job_list);
 }
 
-void add_constraint(NodeData* pd, Job* job, int order) {
-    pd->solver->add_constraint(job, pd->ordered_jobs, order);
-}
-
-void get_mip_statistics(NodeData* pd, enum MIP_Attr c) {
-    PricerSolverBase* solver = pd->solver;
-    Statistics*       statistics = pd->stat;
+void NodeData::get_mip_statistics(enum MIP_Attr c) {
+    Statistics* statistics = stat;
     switch (c) {
         case MIP_Attr_Nb_Vars:
             statistics->mip_nb_vars = solver->get_int_attr_model(c);

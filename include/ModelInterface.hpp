@@ -55,8 +55,8 @@ class VariableKeyBase {
 };
 
 class ConstraintBase {
-    double rhs;
     char   sense;
+    double rhs;
     bool   can_be_deleted;
 
    public:
@@ -134,11 +134,11 @@ class ReformulationModel {
         return constraint_array.size();
     };
 
-    [[nodiscard]] inline ConstraintBase* get_constraint(int c) const {
+    [[nodiscard]] inline ConstraintBase* get_constraint(auto c) const {
         return constraint_array[c].get();
     };
 
-    inline std::shared_ptr<ConstraintBase> get_constraint_ptr(int c) const {
+    inline std::shared_ptr<ConstraintBase> get_constraint_ptr(auto c) const {
         return constraint_array[c];
     }
 
@@ -147,10 +147,10 @@ class ReformulationModel {
     }
 
     inline void add_constraint(std::shared_ptr<ConstraintBase>&& _constr) {
-        constraint_array.push_back(std::shared_ptr<ConstraintBase>(_constr));
+        constraint_array.emplace_back(_constr);
     }
 
-    inline void delete_constraint(int c) {
+    inline void delete_constraint(auto c) {
         if (constraint_array[c]->get_can_be_deleted()) {
             constraint_array[c].reset();
         }

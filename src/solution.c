@@ -1,9 +1,9 @@
-#include <interval.h>
-#include <job.h>
 #include <solution.h>
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
+#include "interval.h"
+#include "job.h"
 
 gint g_sort_jobs_key(const void* a, const void* b, void* data);
 gint g_sort_jobs_weight(gconstpointer a, gconstpointer b, void* data);
@@ -389,8 +389,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                     g_ptr_array_sort_with_data(Q_in, g_compare_interval_data,
                                                I);
                     for (guint j = 0; j < Q_in->len; j++) {
-                        Job* tmp =
-                            static_cast<Job*>(g_ptr_array_index(Q_in, j));
+                        Job* tmp = (Job*)g_ptr_array_index(Q_in, j);
                         g_ptr_array_index(Q, j + 1) = tmp;
                         C += tmp->processing_time;
                         sol->c[tmp->job] = C;
@@ -424,8 +423,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                             g_ptr_array_sort_with_data(
                                 Q_in, g_compare_interval_data, I);
                             for (guint j = 0; j < Q_in->len; j++) {
-                                Job* aux_tmp = static_cast<Job*>(
-                                    g_ptr_array_index(Q_in, j));
+                                Job* aux_tmp = (Job*)g_ptr_array_index(Q_in, j);
                                 g_ptr_array_index(Q, j + 1) = aux_tmp;
                                 aux_C += aux_tmp->processing_time;
                                 sol->c[aux_tmp->job] = aux_C;
@@ -473,7 +471,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                                       g_compare_interval_data, I);
                     int C = 0;
                     for (guint j = 0; j < Q->len; j++) {
-                        Job* tmp = static_cast<Job*>(g_ptr_array_index(Q, j));
+                        Job* tmp = (Job*)g_ptr_array_index(Q, j);
                         C += tmp->processing_time;
                         sol->c[tmp->job] = C;
                     }
@@ -493,7 +491,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
             GPtrArray* Q = part->Q[uu];
             if (Q->len > 0) {
                 for (guint k = 0; k < Q->len; k++) {
-                    Job* tmp = static_cast<Job*>(g_ptr_array_index(Q, k));
+                    Job* tmp = (Job*)g_ptr_array_index(Q, k);
                     g_ptr_array_add(machine, g_ptr_array_index(Q, k));
                     part->c += tmp->processing_time;
                     assert(part->c == sol->c[tmp->job]);

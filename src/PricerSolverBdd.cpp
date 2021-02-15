@@ -31,7 +31,8 @@ PricerSolverBdd::PricerSolverBdd(GPtrArray*  _jobs,
     : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
       decision_diagram{PricerConstruct(_ordered_jobs)},
       size_graph{0},
-      ordered_jobs{_ordered_jobs},
+      ordered_jobs{
+          g_ptr_array_copy(_ordered_jobs, g_copy_interval_pair, nullptr)},
       original_model{reformulation_model},
       H_min{},
       H_max{_hmax}
@@ -77,15 +78,8 @@ PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src,
     init_coeff_constraints();
 }
 
-gint g_compare_duration(gconstpointer a, gconstpointer b) {
-    const Job* x = *((Job* const*)a);
-    const Job* y = *((Job* const*)b);
-
-    if (x->processing_time < y->processing_time) {
-        return -1;
-    } else {
-        return 1;
-    }
+PricerSolverBdd::~PricerSolverBdd() {
+    g_ptr_array_free(ordered_jobs, TRUE);
 }
 
 void PricerSolverBdd::calculate_H_min() {

@@ -101,8 +101,8 @@ CLEAN:
 }
 
 int Problem::print_to_csv() {
-    int         val = 0;
-    NodeData*   pd = root_pd;
+    int val = 0;
+    // NodeData*   pd = root_pd.get();
     Statistics& statistics = stat;
     FILE*       file = (FILE*)NULL;
     char*       file_name = CC_SAFE_MALLOC(128, char);
@@ -139,10 +139,11 @@ int Problem::print_to_csv() {
             "mip_nb_nodes");
     }
 
-    for (int i = MIP_Attr_Run_Time; i <= MIP_Attr_Nb_Nodes && parms.mip_solver;
-         i++) {
-        get_mip_statistics(pd, static_cast<MIP_Attr>(i));
-    }
+    // for (int i = MIP_Attr_Run_Time; i <= MIP_Attr_Nb_Nodes &&
+    // parms.mip_solver;
+    //      i++) {
+    //     pd->get_mip_statistics(static_cast<MIP_Attr>(i));
+    // }
 
     fprintf(file,
             "%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"

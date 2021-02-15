@@ -38,6 +38,9 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         init_table();
     };
     ~PricerSolverSimpleDp() override;
+
+    std::unique_ptr<PricerSolverBase> clone() override { return nullptr; };
+
     void init_table();
 
     void evaluate_nodes([[maybe_unused]] double* pi,

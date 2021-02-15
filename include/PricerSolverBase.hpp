@@ -2,15 +2,17 @@
 #define PRICER_SOLVER_BASE_HPP
 
 #include <gurobi_c++.h>
-#include <solution.h>
-#include <MIP_defs.hpp>
-#include <OptimalSolution.hpp>
-#include <cstddef>
 #include <memory>
 #include <span>
+// #include "BranchBoundTree.hpp"
+#include "BranchBoundTree.hpp"
+#include "MIP_defs.hpp"
 #include "ModelInterface.hpp"
+#include "OptimalSolution.hpp"
 #include "scheduleset.h"
-#include "wctprivate.h"
+#include "solution.h"
+
+struct NodeData;
 
 struct PricerSolverBase {
    public:
@@ -68,6 +70,9 @@ struct PricerSolverBase {
      * Destructor
      */
     virtual ~PricerSolverBase();
+
+    virtual std::unique_ptr<PricerSolverBase> clone() = 0;
+    virtual void                              set_ordered_jobs(GPtrArray*){};
 
     /**
      * init_table
