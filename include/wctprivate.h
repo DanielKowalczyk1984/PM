@@ -38,11 +38,11 @@ typedef enum {
  *
  */
 
-#define NB_CUTS (2000)
-#define NB_CG_ITERATIONS (1000000)
-#define CLEANUP_ITERATION (30)
-#define EPS (1e-6)
-#define EPS_BOUND (1e-9)
+constexpr int    NB_CUTS = 2000;
+constexpr int    NB_CG_ITERATIONS = 1000000;
+constexpr int    CLEANUP_ITERATION = 30;
+constexpr double EPS = 1e-6;
+constexpr double EPS_BOUND = 1e-9;
 
 /**
  * node data
@@ -112,12 +112,12 @@ struct Problem {
     void solve();
     /** Heuristic related */
     int heuristic();
-    ~Problem();
     Problem(int argc, const char** argv);
     Problem(const Problem&) = delete;
     Problem(Problem&&) = delete;
     Problem& operator=(const Problem&) = delete;
     Problem& operator=(Problem&&) = delete;
+    ~Problem();
 
    private:
     void calculate_Hmax();
@@ -185,11 +185,11 @@ struct NodeData {
     std::unique_ptr<PricerSolverBase> solver;
 
     // Columns
-    int          zero_count;
-    ScheduleSet* newsets;
-    int          nb_new_sets;
-    int*         column_status;
-    GPtrArray*   localColPool;
+    int              zero_count;
+    ScheduleSet*     newsets;
+    int              nb_new_sets;
+    std::vector<int> column_status;
+    GPtrArray*       localColPool;
 
     int lower_bound;
     int upper_bound;

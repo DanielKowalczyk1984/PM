@@ -45,12 +45,14 @@ int NodeData::grow_ages() {
     int nb_cols = 0;
     lp_interface_get_nb_cols(RMP, &nb_cols);
     assert(nb_cols - id_pseudo_schedules == localColPool->len);
-    CC_IFFREE(column_status, int);
+    // CC_IFFREE(column_status, int);
     if (localColPool->len > 0) {
-        column_status = CC_SAFE_MALLOC(localColPool->len, int);
-        CCcheck_NULL_2(column_status, "Failed to allocate column_status");
-        val = lp_interface_basis_cols(RMP, column_status, id_pseudo_schedules);
-        CCcheck_val_2(val, "Failed in lp_interface_basis_cols");
+        // column_status = CC_SAFE_MALLOC(localColPool->len, int);
+        column_status.resize(localColPool->len);
+        // CCcheck_NULL_2(column_status, "Failed to allocate column_status");
+        val = lp_interface_basis_cols(RMP, column_status.data(),
+                                      id_pseudo_schedules);
+        // CCcheck_val_2(val, "Failed in lp_interface_basis_cols");
         zero_count = 0;
 
         g_ptr_array_foreach(localColPool, g_grow_ages, this);

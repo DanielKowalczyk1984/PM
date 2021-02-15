@@ -84,7 +84,7 @@ NodeData::NodeData(Problem* problem)
       zero_count{},
       newsets(nullptr),
       nb_new_sets(0),
-      column_status((int*)NULL),
+      column_status(),
       localColPool(g_ptr_array_new_with_free_func(g_scheduleset_free)),
       lower_bound(0),
       upper_bound(INT_MAX),
@@ -163,7 +163,7 @@ NodeData::NodeData() {
     // nb_best = 0;
     /**Column schedules */
     localColPool = nullptr;
-    column_status = nullptr;
+    column_status = std::vector<int>();
     /*Initialization max and retirement age*/
     maxiterations = NB_CG_ITERATIONS;
     retirementage = 0;
@@ -271,7 +271,7 @@ void NodeData::lp_node_data_free() {
     // if (coeff_row) {
     //     g_array_free(coeff_row, TRUE);
     // }
-    CC_IFFREE(column_status, int);
+    // CC_IFFREE(column_status, int);
 
     /**
      * free all the schedules from the localColPool
