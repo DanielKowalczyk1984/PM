@@ -158,7 +158,6 @@ struct NodeData {
     wctlp*              RMP;
     std::vector<double> lambda;
 
-    // GArray* pi;
     std::vector<double> pi;
     std::vector<double> slack;
     std::vector<double> rhs;
@@ -278,7 +277,6 @@ struct NodeData {
     int add_scheduleset_to_rmp(ScheduleSet* set);
 
    private:
-    // int add_artificial_var_to_rmp();
     int add_lhs_scheduleset_to_rmp(ScheduleSet* set);
 
     /** lowerbound.cpp */

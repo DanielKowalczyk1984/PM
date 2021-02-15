@@ -229,9 +229,9 @@ void BranchNodeBase::branch(BTree* bt) {
         auto  left_node_branch =
             std::make_unique<BranchNodeBase>(std::move(left));
         left_solver->split_job_time(best_job, best_time, false);
-        left->branch_job = best_job;
-        left->completiontime = best_time;
-        left->less = 0;
+        left_node_branch->pd->branch_job = best_job;
+        left_node_branch->pd->completiontime = best_time;
+        left_node_branch->pd->less = 0;
         bt->process_state(std::move(left_node_branch));
 
         auto  right = pd->clone();
@@ -239,13 +239,10 @@ void BranchNodeBase::branch(BTree* bt) {
         auto  right_node_branch =
             std::make_unique<BranchNodeBase>(std::move(right));
         right_solver->split_job_time(best_job, best_time, true);
-        right->branch_job = best_job;
-        right->completiontime = best_time;
-        right->less = 1;
+        right_node_branch->pd->branch_job = best_job;
+        right_node_branch->pd->completiontime = best_time;
+        right_node_branch->pd->less = 1;
         bt->process_state(std::move(right_node_branch));
-        // auto job = (Job*)g_ptr_array_index(pd->solver->jobs, best_job);
-        // fmt::print("NO STRONG BRANCHING {} {} {}\n\n", best_job, best_time,
-        //            best_min_gain);
     } else {
         bt->set_state_bounds_computed(true);
         best_left->pd->branch_job = best_right->pd->branch_job = best_job;
