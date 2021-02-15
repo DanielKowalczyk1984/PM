@@ -7,7 +7,6 @@
 #include "branch-and-bound/btree.h"
 #include "solver.h"
 #include "util.h"
-#include "wct.h"
 #include "wctprivate.h"
 
 BranchNodeBase::BranchNodeBase(NodeData* _pd, bool _isRoot)

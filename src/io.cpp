@@ -1,7 +1,6 @@
-#include <unistd.h>
-#include <wct.h>
 #include "MIP_defs.hpp"
 #include "Statistics.h"
+#include "wctprivate.h"
 static int get_problem_name(char* pname, const char* end_file_name) {
     int           rval = 0;
     unsigned long len = 0;

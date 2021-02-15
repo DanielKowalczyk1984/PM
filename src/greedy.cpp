@@ -1,8 +1,9 @@
 #include <localsearch.h>
-#include <wct.h>
+#include "binomial-heap.h"
 #include "job.h"
 #include "scheduleset.h"
 #include "solution.h"
+#include "wctprivate.h"
 
 // static int add_feasible_solution(problem *problem, solution *new_sol);
 static int  solution_set_c(Solution* sol);

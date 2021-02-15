@@ -5,7 +5,6 @@
 #include "scheduleset.h"
 #include "solver.h"
 #include "util.h"
-#include "wct.h"
 #include "wctprivate.h"
 
 static const double min_nb_del_row_ratio = 0.9;

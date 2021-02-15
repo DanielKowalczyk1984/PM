@@ -9,7 +9,6 @@
 #include "lp.h"
 #include "scheduleset.h"
 #include "util.h"
-#include "wct.h"
 #include "wctprivate.h"
 
 int grab_integer_solution(NodeData* pd, double* x, double tolerance) {

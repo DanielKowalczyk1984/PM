@@ -1,5 +1,3 @@
-// #include <wct.h>
-// #include "interval.h"
 #include "job.h"
 #include "wctprivate.h"
 
