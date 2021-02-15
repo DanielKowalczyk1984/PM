@@ -21,7 +21,6 @@ class BranchNodeBase : public State {
     };
 
    public:
-    explicit BranchNodeBase(NodeData* pd, bool isRoot = false);
     explicit BranchNodeBase(std::unique_ptr<NodeData> pd, bool isRoot = false);
     BranchNodeBase(BranchNodeBase&&) = default;
     BranchNodeBase(const BranchNodeBase&) = delete;

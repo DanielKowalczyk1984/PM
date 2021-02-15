@@ -9,19 +9,6 @@
 #include "util.h"
 #include "wctprivate.h"
 
-BranchNodeBase::BranchNodeBase(NodeData* _pd, bool _isRoot)
-    : State(_isRoot),
-      pd(_pd) {
-    if (_isRoot) {
-        pd->build_rmp();
-        pd->solve_relaxation();
-        pd->compute_lower_bound();
-        set_lb(pd->lower_bound);
-        set_obj_value(pd->LP_lower_bound);
-    }
-    set_depth(pd->depth);
-}
-
 BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
     : State(_isRoot),
       pd(std::move(_pd)) {
