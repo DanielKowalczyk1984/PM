@@ -2,7 +2,6 @@
 #include "job.h"
 #include "lp.h"
 #include "parms.h"
-#include "pricingstabilizationwrapper.h"
 #include "scheduleset.h"
 #include "solver.h"
 #include "util.h"
@@ -451,13 +450,13 @@ CLEAN:
 }
 
 int NodeData::compute_lower_bound() {
-    int    j = 0;
-    int    val = 0;
-    int    has_cols = 1;
-    int    has_cuts = 0;
-    int    nb_non_improvements = 0;
-    int    status_RMP = GRB_LOADED;
-    double real_time_pricing = 0.0;
+    int         j = 0;
+    int         val = 0;
+    int         has_cols = 1;
+    int         has_cuts = 0;
+    int         nb_non_improvements = 0;
+    int         status_RMP = GRB_LOADED;
+    double      real_time_pricing = 0.0;
     Statistics* statistics = stat;
 
     if (dbg_lvl() > 1) {

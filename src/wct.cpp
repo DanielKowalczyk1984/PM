@@ -3,7 +3,6 @@
 #include "BranchBoundTree.hpp"
 #include "Statistics.h"
 #include "gurobi_c.h"
-#include "pricingstabilizationwrapper.h"
 #include "scheduleset.h"
 #include "solver.h"
 #include "util.h"
