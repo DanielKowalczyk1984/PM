@@ -1,11 +1,11 @@
 #ifndef PRICER_SOLVER_BDD_HPP
 #define PRICER_SOLVER_BDD_HPP
-#include <NodeBddStructure.hpp>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 #include "MipGraph.hpp"
 #include "ModelInterface.hpp"
+#include "NodeBddStructure.hpp"
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
 #include "wctprivate.h"
@@ -43,6 +43,7 @@ class PricerSolverBdd : public PricerSolverBase {
     PricerSolverBdd& operator=(PricerSolverBdd&&) = default;
     PricerSolverBdd& operator=(const PricerSolverBdd&) = delete;
     virtual ~PricerSolverBdd() override;
+    std::unique_ptr<PricerSolverBase> clone() override = 0;
 
     void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
@@ -61,31 +62,32 @@ class PricerSolverBdd : public PricerSolverBase {
     void init_coeff_constraints();
     void init_table();
 
-    bool   check_schedule_set(GPtrArray* set) override;
-    void   reduce_cost_fixing(double* pi, int UB, double LB) override;
-    void   build_mip() override;
-    void   construct_lp_sol_from_rmp(const double*    columns,
-                                     const GPtrArray* schedule_sets,
-                                     int              num_columns) override;
-    void   make_schedule_set_feasible(GPtrArray* set) override;
-    void   calculate_job_time(std::vector<std::vector<double>>* v) override;
-    void   split_job_time(int _job, int _time, bool _left) override;
-    void   iterate_zdd() override;
-    void   create_dot_zdd(const char* name) override;
-    void   print_number_nodes_edges() override;
-    void   add_constraint(Job* job, GPtrArray* list, int order) override;
-    void   print_num_paths() override;
-    void   remove_constraints(int first, int nb_del) override;
-    void   update_rows_coeff(int first) override;
-    void   insert_constraints_lp(NodeData* pd) override;
-    int    get_num_remove_nodes() override;
-    int    get_num_remove_edges() override;
-    int    get_num_layers() override;
-    int    add_constraints() override;
+    bool check_schedule_set(GPtrArray* set) override;
+
+    void reduce_cost_fixing(double* pi, int UB, double LB) override;
+    void build_mip() override;
+    void construct_lp_sol_from_rmp(const double*    columns,
+                                   const GPtrArray* schedule_sets,
+                                   int              num_columns) override;
+    void make_schedule_set_feasible(GPtrArray* set) override;
+    void calculate_job_time(std::vector<std::vector<double>>* v) override;
+    void split_job_time(int _job, int _time, bool _left) override;
+    void iterate_zdd() override;
+    void create_dot_zdd(const char* name) override;
+    void print_number_nodes_edges() override;
+    void add_constraint(Job* job, GPtrArray* list, int order) override;
+    void print_num_paths() override;
+    void remove_constraints(int first, int nb_del) override;
+    void update_rows_coeff(int first) override;
+    void insert_constraints_lp(NodeData* pd) override;
+
+    int get_num_remove_nodes() override;
+    int get_num_remove_edges() override;
+    int get_num_layers() override;
+    int add_constraints() override;
+
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
-    std::unique_ptr<PricerSolverBase> clone() override = 0;
-    void set_ordered_jobs(GPtrArray* set) override { ordered_jobs = set; }
 
     inline DdStructure<>& get_decision_diagram() { return decision_diagram; }
 

@@ -4,8 +4,6 @@
 #include <gurobi_c++.h>
 #include <memory>
 #include <span>
-// #include "BranchBoundTree.hpp"
-#include "BranchBoundTree.hpp"
 #include "MIP_defs.hpp"
 #include "ModelInterface.hpp"
 #include "OptimalSolution.hpp"
@@ -72,7 +70,6 @@ struct PricerSolverBase {
     virtual ~PricerSolverBase();
 
     virtual std::unique_ptr<PricerSolverBase> clone() = 0;
-    virtual void                              set_ordered_jobs(GPtrArray*){};
 
     /**
      * init_table
