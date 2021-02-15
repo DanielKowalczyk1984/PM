@@ -14,7 +14,7 @@
 
 Problem::~Problem() { /*free the parameters*/
     g_ptr_array_free(g_job_array, TRUE);
-    g_ptr_array_free(ColPool, TRUE);
+    // g_ptr_array_free(ColPool, TRUE);
     g_ptr_array_free(intervals, TRUE);
     solution_free(&(opt_sol));
 }

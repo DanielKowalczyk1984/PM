@@ -135,11 +135,13 @@ int NodeData::construct_lp_sol_from_rmp() {
     // CCcheck_val_2(val, "Failed to get nb cols");
     assert(nb_cols - id_pseudo_schedules == localColPool->len);
 
-    lambda = CC_SAFE_REALLOC(lambda, nb_cols - id_pseudo_schedules, double);
+    // lambda = CC_SAFE_REALLOC(lambda, nb_cols - id_pseudo_schedules, double);
+    lambda.resize(nb_cols - id_pseudo_schedules, 0.0);
     // CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
-    val = lp_interface_x(RMP, lambda, id_pseudo_schedules);
+    val = lp_interface_x(RMP, lambda.data(), id_pseudo_schedules);
     // CCcheck_val_2(val, "Failed in lp_interface_x");
-    solver->construct_lp_sol_from_rmp(lambda, localColPool, localColPool->len);
+    solver->construct_lp_sol_from_rmp(lambda.data(), localColPool,
+                                      localColPool->len);
 
     return val;
 }

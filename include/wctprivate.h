@@ -100,8 +100,6 @@ struct Problem {
 
     problem_status status;
 
-    /* All partial schedules*/
-    GPtrArray* ColPool;
     /* Best Solution*/
     Solution* opt_sol;
 
@@ -157,8 +155,8 @@ struct NodeData {
     GPtrArray* ordered_jobs;
 
     // The column generation lp information
-    wctlp*  RMP;
-    double* lambda;
+    wctlp*              RMP;
+    std::vector<double> lambda;
 
     // GArray* pi;
     std::vector<double> pi;

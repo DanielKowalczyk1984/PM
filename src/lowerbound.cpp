@@ -654,10 +654,12 @@ int NodeData::print_x() {
             val = lp_interface_get_nb_cols(RMP, &nb_cols);
             // CCcheck_val_2(val, "Failed to get nb cols");
             assert(localColPool->len == nb_cols - id_pseudo_schedules);
-            lambda =
-                CC_SAFE_REALLOC(lambda, nb_cols - id_pseudo_schedules, double);
+            lambda.resize(nb_cols - id_pseudo_schedules, 0.0);
+            // lambda =
+            //     CC_SAFE_REALLOC(lambda, nb_cols - id_pseudo_schedules,
+            //     double);
             // CCcheck_NULL_2(lambda, "Failed to allocate memory to x");
-            val = lp_interface_x(RMP, lambda, id_pseudo_schedules);
+            val = lp_interface_x(RMP, lambda.data(), id_pseudo_schedules);
             // CCcheck_val_2(val, "Failed in lp_interface_x");
 
             for (guint i = 0; i < localColPool->len; ++i) {

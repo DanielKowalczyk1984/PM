@@ -36,7 +36,7 @@ void Problem::problem_init() {
     root_upper_bound = INT_MAX;
     root_rel_error = DBL_MAX;
     status = no_sol;
-    ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
+    // ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
     root_pd = std::make_unique<NodeData>(this);
 };
 
@@ -62,7 +62,7 @@ NodeData::NodeData(Problem* problem)
       off(problem->off),
       ordered_jobs(g_ptr_array_new_with_free_func(g_free)),
       RMP(nullptr),
-      lambda(nullptr),
+      lambda(),
       pi(),
       slack(),
       rhs(),
@@ -132,7 +132,7 @@ NodeData::NodeData() {
     rhs = std::vector<double>();
     /*Initialization  of the LP*/
     RMP = nullptr;
-    lambda = nullptr;
+    lambda = std::vector<double>();
     // x_e = (double*)NULL;
     pi = std::vector<double>();
     slack = std::vector<double>();
@@ -256,7 +256,7 @@ void NodeData::lp_node_data_free() {
     // if (slack) {
     //     g_array_free(slack, TRUE);
     // }
-    CC_IFFREE(lambda, double);
+    // CC_IFFREE(lambda, double);
     // if (rhs) {
     //     g_array_free(rhs, TRUE);
     // }

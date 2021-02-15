@@ -266,16 +266,16 @@ int NodeData::get_solution_lp_lowerbound() {
     Job* tmp_j = nullptr;
 
     val = lp_interface_get_nb_cols(RMP, &nb_cols);
-    lambda = CC_SAFE_REALLOC(lambda, nb_cols, double);
-    std::span lambda_span{lambda, static_cast<size_t>(nb_cols)};
-    CCcheck_NULL_2(lambda, "Failed to allocate memory");
-    assert(nb_cols == localColPool->len);
-    lp_interface_x(RMP, lambda, 0);
+    lambda.resize(nb_cols, 0.0);
+    // std::span lambda_span{lambda, static_cast<size_t>(nb_cols)};
+    // CCcheck_NULL_2(lambda, "Failed to allocate memory");
+    // assert(nb_cols == localColPool->len);
+    lp_interface_x(RMP, lambda.data(), 0);
 
     for (int i = 0; i < nb_cols; ++i) {
         ScheduleSet* tmp = ((ScheduleSet*)g_ptr_array_index(localColPool, i));
-        if (lambda_span[i]) {
-            fmt::print("{}: ", lambda_span[i]);
+        if (lambda[i] > EPS) {
+            fmt::print("{}: ", lambda[i]);
             g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
             fmt::print("\n");
             for (unsigned j = 0; j < tmp->job_list->len; ++j) {
