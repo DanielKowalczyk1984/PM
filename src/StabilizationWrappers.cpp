@@ -1,12 +1,13 @@
 #include <fmt/core.h>
+#include <memory>
 #include "scheduleset.h"
 #include "wctprivate.h"
 
 template <typename T = double>
 int NodeData::construct_sol(OptimalSolution<T>* sol) {
-    int          val = 0;
-    int          nb_set = 1;
-    ScheduleSet* newset = scheduleset_alloc_bis(nb_jobs);
+    int                          val = 0;
+    int                          nb_set = 1;
+    std::shared_ptr<ScheduleSet> newset = std::make_shared<ScheduleSet>();
 
     newset->job_list = sol->jobs;
     sol->jobs = nullptr;
@@ -57,10 +58,11 @@ int NodeData::solve_pricing() {
         auto sol = std::move(solver_stab->get_sol());
         val = construct_sol(&sol);
         CCcheck_val_2(val, "Failed in construction");
-        val = add_lhs_scheduleset_to_rmp(newsets);
-        newsets->id = localColPool->len;
-        g_ptr_array_add(localColPool, newsets);
-        newsets = NULL;
+        val = add_lhs_scheduleset_to_rmp(newsets.get());
+        newsets->id = localColPool.size();
+        // g_ptr_array_add(localColPool, newsets);
+        localColPool.emplace_back(newsets);
+        // newsets = N;
         nb_new_sets = 0;
         nb_non_improvements = 0;
     } else {

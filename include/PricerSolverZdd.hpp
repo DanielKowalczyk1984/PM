@@ -3,6 +3,7 @@
 
 #include <NodeBddStructure.hpp>
 #include <memory>
+#include <vector>
 #include "MipGraph.hpp"
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
@@ -46,11 +47,12 @@ class PricerSolverZdd : public PricerSolverBase {
     void remove_layers();
     void remove_edges();
 
-    void   construct_mipgraph();
-    void   build_mip() override;
-    void   construct_lp_sol_from_rmp(const double*    columns,
-                                     const GPtrArray* schedule_sets,
-                                     int              num_columns) override;
+    void construct_mipgraph();
+    void build_mip() override;
+    void construct_lp_sol_from_rmp(
+        const double*                                    columns,
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
+        int                                              num_columns) override;
     bool   check_schedule_set(GPtrArray* set) override;
     void   make_schedule_set_feasible(GPtrArray* set) override;
     void   iterate_zdd() override;

@@ -133,7 +133,7 @@ int NodeData::construct_lp_sol_from_rmp() {
 
     val = lp_interface_get_nb_cols(RMP, &nb_cols);
     // CCcheck_val_2(val, "Failed to get nb cols");
-    assert(nb_cols - id_pseudo_schedules == localColPool->len);
+    assert(nb_cols - id_pseudo_schedules == localColPool.size());
 
     // lambda = CC_SAFE_REALLOC(lambda, nb_cols - id_pseudo_schedules, double);
     lambda.resize(nb_cols - id_pseudo_schedules, 0.0);
@@ -141,7 +141,7 @@ int NodeData::construct_lp_sol_from_rmp() {
     val = lp_interface_x(RMP, lambda.data(), id_pseudo_schedules);
     // CCcheck_val_2(val, "Failed in lp_interface_x");
     solver->construct_lp_sol_from_rmp(lambda.data(), localColPool,
-                                      localColPool->len);
+                                      localColPool.size());
 
     return val;
 }

@@ -1,3 +1,7 @@
+#include <fmt/core.h>
+#include <algorithm>
+#include <string>
+#include <vector>
 #include "gurobi_c.h"
 #include "job.h"
 #include "lp.h"
@@ -19,7 +23,9 @@ void g_print_ages_col(gpointer data, MAYBE_UNUSED gpointer user_data) {
 void NodeData::print_ages() {
     fmt::print("AGES:");
 
-    g_ptr_array_foreach(localColPool, g_print_ages_col, NULL);
+    // g_ptr_array_foreach(localColPool, g_print_ages_col, NULL);
+    std::for_each(localColPool.begin(), localColPool.end(),
+                  [](auto const& it) { fmt::print(" {}", it->age); });
 
     fmt::print("\n");
 }
@@ -44,18 +50,31 @@ int NodeData::grow_ages() {
     int val = 0;
     int nb_cols = 0;
     lp_interface_get_nb_cols(RMP, &nb_cols);
-    assert(nb_cols - id_pseudo_schedules == localColPool->len);
+    assert(nb_cols - id_pseudo_schedules == localColPool.size());
     // CC_IFFREE(column_status, int);
-    if (localColPool->len > 0) {
+    if (!localColPool.empty()) {
         // column_status = CC_SAFE_MALLOC(localColPool->len, int);
-        column_status.resize(localColPool->len);
+        column_status.resize(localColPool.size());
         // CCcheck_NULL_2(column_status, "Failed to allocate column_status");
         val = lp_interface_basis_cols(RMP, column_status.data(),
                                       id_pseudo_schedules);
         // CCcheck_val_2(val, "Failed in lp_interface_basis_cols");
         zero_count = 0;
 
-        g_ptr_array_foreach(localColPool, g_grow_ages, this);
+        // g_ptr_array_foreach(localColPool, g_grow_ages, this);
+
+        std::for_each(localColPool.begin(), localColPool.end(), [&](auto& it) {
+            if (column_status[it->id] == lp_interface_LOWER ||
+                column_status[it->id] == lp_interface_FREE) {
+                it->age++;
+
+                if (it->age > retirementage) {
+                    zero_count++;
+                }
+            } else {
+                it->age = 0;
+            }
+        });
     }
 
 CLEAN:
@@ -114,266 +133,211 @@ void g_scheduleset_count_zero(gpointer data, gpointer user_data) {
 }
 
 int NodeData::delete_old_schedules() {
-    int          val = 0;
-    int          min_numdel = floor(nb_jobs * min_nb_del_row_ratio);
-    int          nb_col = 0;
-    guint        i = 0U;
-    guint        count = localColPool->len;
-    ScheduleSet* tmp_schedule = (ScheduleSet*)NULL;
+    int   val = 0;
+    int   min_numdel = floor(nb_jobs * min_nb_del_row_ratio);
+    guint i = 0U;
     /** pd->zero_count can be deprecated! */
     zero_count = 0;
 
-    g_ptr_array_foreach(localColPool, g_scheduleset_count_zero, &zero_count);
+    std::for_each(localColPool.begin(), localColPool.end(),
+                  [&](auto const& it) {
+                      if (it->age > 0) {
+                          zero_count++;
+                      }
+                  });
 
     if (zero_count > min_numdel) {
-        int it = 0;
-        int first_del = -1;
-        int last_del = -1;
-        lp_interface_get_nb_cols(RMP, &nb_col);
-        assert(nb_col - id_pseudo_schedules == count);
-        for (i = 0; i < count; ++i) {
-            tmp_schedule =
-                static_cast<ScheduleSet*>(g_ptr_array_index(localColPool, it));
-            if (tmp_schedule->age <= retirementage) {
-                if (first_del != -1) {
-                    /** Delete recently found deletion range.*/
-                    val = lp_interface_deletecols(
-                        RMP, first_del + id_pseudo_schedules,
-                        last_del + id_pseudo_schedules);
-                    // CCcheck_val_2(val, "Failed in lp_interface_deletecols");
-                    g_ptr_array_remove_range(localColPool, first_del,
-                                             last_del - first_del + 1);
-                    it = it - (last_del - first_del);
-                    first_del = last_del = -1;
-                } else {
-                    it++;
-                }
-            } else {
-                if (first_del == -1) {
-                    first_del = it;
-                    last_del = first_del;
-                } else {
-                    last_del++;
-                }
-                it++;
-            }
-        }
+        int              iter = 0;
+        int              first_del = -1;
+        int              last_del = -1;
+        std::vector<int> dellist{};
+        lp_interface_get_nb_cols(RMP, &nb_cols);
+        assert(nb_cols - id_pseudo_schedules == localColPool.size());
 
-        if (first_del != -1) {
-            lp_interface_deletecols(RMP, first_del + id_pseudo_schedules,
-                                    last_del + id_pseudo_schedules);
-            g_ptr_array_remove_range(localColPool, first_del,
-                                     last_del - first_del + 1);
-        }
+        std::erase_if(localColPool, [&](auto const& it) {
+            auto val = false;
+            if (it->age > retirementage) {
+                dellist.emplace_back(iter + id_pseudo_schedules);
+                val = true;
+            }
+            iter++;
+            return val;
+        });
+
+        lp_interface_delete_cols_array(RMP, dellist.data(), dellist.size());
 
         if (dbg_lvl() > 1) {
-            fmt::print("Deleted %d out of %d columns with age > %d.\n",
-                       zero_count, count, retirementage);
+            fmt::print("Deleted {} out of {} columns with age > {}.\n",
+                       zero_count, localColPool.size(), retirementage);
         }
 
-        lp_interface_get_nb_cols(RMP, &nb_col);
-        assert(localColPool->len == nb_col - id_pseudo_schedules);
-        for (i = 0; i < localColPool->len; ++i) {
-            tmp_schedule = (ScheduleSet*)g_ptr_array_index(localColPool, i);
-            tmp_schedule->id = i;
-        }
+        lp_interface_get_nb_cols(RMP, &nb_cols);
+        assert(localColPool.size() == nb_cols - id_pseudo_schedules);
+        i = 0;
+        std::for_each(localColPool.begin(), localColPool.end(),
+                      [&](auto& it) { it->id = i++; });
         zero_count = 0;
     }
 
-CLEAN:
     return val;
 }
 
 int NodeData::delete_infeasible_schedules() {
-    int          val = 0;
-    int          nb_col = 0;
-    guint        i = 0;
-    guint        count = localColPool->len;
-    ScheduleSet* tmp_schedule = (ScheduleSet*)NULL;
+    guint i = 0;
+    guint count = localColPool.size();
     /** pd->zero_count can be deprecated! */
     zero_count = 0;
 
-    int it = 0;
-    int first_del = -1;
-    int last_del = -1;
-    lp_interface_get_nb_cols(RMP, &nb_col);
-    assert(nb_col - id_pseudo_schedules == count);
-    for (i = 0; i < count; ++i) {
-        // while (it < localColPool->len) {
-        tmp_schedule = (ScheduleSet*)g_ptr_array_index(localColPool, it);
-        if (tmp_schedule->del != 0) {
-            if (first_del != -1) {
-                /** Delete recently found deletion range.*/
-                val = lp_interface_deletecols(RMP,
-                                              first_del + id_pseudo_schedules,
-                                              last_del + id_pseudo_schedules);
-                CCcheck_val_2(val, "Failed in lp_interface_deletecols");
-                g_ptr_array_remove_range(localColPool, first_del,
-                                         last_del - first_del + 1);
-                zero_count += last_del - first_del + 1;
-                it = it - (last_del - first_del);
-                first_del = last_del = -1;
-            } else {
-                it++;
-            }
-        } else {
-            if (first_del == -1) {
-                first_del = it;
-                last_del = first_del;
-            } else {
-                last_del++;
-            }
-            it++;
-        }
-    }
+    int iter = 0;
+    lp_interface_get_nb_cols(RMP, &nb_cols);
+    assert(nb_cols - id_pseudo_schedules == count);
+    std::vector<int> dellist{};
 
-    if (first_del != -1) {
-        lp_interface_deletecols(RMP, first_del + id_pseudo_schedules,
-                                last_del + id_pseudo_schedules);
-        CCcheck_val_2(val, "Failed in lp_interface_deletecols");
-        g_ptr_array_remove_range(localColPool, first_del,
-                                 last_del - first_del + 1);
-        zero_count += last_del - first_del + 1;
-    }
+    std::erase_if(localColPool, [&](auto& it) {
+        auto val = false;
+        if (!it->del) {
+            dellist.emplace_back(iter + id_pseudo_schedules);
+            val = true;
+        }
+        iter++;
+        return val;
+    });
+
+    lp_interface_delete_cols_array(RMP, dellist.data(), dellist.size());
 
     if (dbg_lvl() > 1) {
         fmt::print(
             "Deleted {} out of {} columns(infeasible columns after reduce cost "
             "fixing).\n",
-            zero_count, count);
+            dellist.size(), count);
     }
 
-    lp_interface_get_nb_cols(RMP, &nb_col);
-    assert(localColPool->len == nb_col - id_pseudo_schedules);
+    lp_interface_get_nb_cols(RMP, &nb_cols);
+    assert(localColPool.size() == nb_cols - id_pseudo_schedules);
     if (dbg_lvl() > 1) {
-        fmt::print("number of cols = {}\n", nb_col - id_pseudo_schedules);
+        fmt::print("number of cols = {}\n", nb_cols - id_pseudo_schedules);
     }
 
-    for (i = 0; i < localColPool->len; ++i) {
-        tmp_schedule = (ScheduleSet*)g_ptr_array_index(localColPool, i);
-        tmp_schedule->id = i;
+    for (auto& it : localColPool) {
+        it->id = i;
     }
 
-    if (zero_count > 0) {
+    if (!dellist.empty()) {
         solve_relaxation();
         update = 1;
     }
 
 CLEAN:
-    return val;
+    return 0;
 }
 
-void g_make_pi_feasible(gpointer data, gpointer user_data) {
-    ScheduleSet* x = static_cast<ScheduleSet*>(data);
-    NodeData*    pd = static_cast<NodeData*>(user_data);
-    Job*         tmp_j = nullptr;
+// void g_make_pi_feasible(gpointer data, gpointer user_data) {
+//     ScheduleSet* x = static_cast<ScheduleSet*>(data);
+//     NodeData*    pd = static_cast<NodeData*>(user_data);
+//     Job*         tmp_j = nullptr;
 
-    double colsum = .0;
+//     double colsum = .0;
 
-    for (guint i = 0; i < x->job_list->len; ++i) {
-        tmp_j = static_cast<Job*>(g_ptr_array_index(x->job_list, i));
-        if (signbit(pd->pi[tmp_j->job])) {
-            pd->pi[tmp_j->job] = 0.0;
-        }
+//     for (guint i = 0; i < x->job_list->len; ++i) {
+//         tmp_j = static_cast<Job*>(g_ptr_array_index(x->job_list, i));
+//         if (signbit(pd->pi[tmp_j->job])) {
+//             pd->pi[tmp_j->job] = 0.0;
+//         }
 
-        colsum += pd->pi[tmp_j->job];
-        colsum = nextafter(colsum, DBL_MAX);
-    }
+//         colsum += pd->pi[tmp_j->job];
+//         colsum = nextafter(colsum, DBL_MAX);
+//     }
 
-    if (!signbit(pd->pi[pd->nb_jobs])) {
-        pd->pi[pd->nb_jobs] = 0.0;
-    }
+//     if (!signbit(pd->pi[pd->nb_jobs])) {
+//         pd->pi[pd->nb_jobs] = 0.0;
+//     }
 
-    colsum += pd->pi[pd->nb_jobs];
-    colsum = nextafter(colsum, DBL_MAX);
+//     colsum += pd->pi[pd->nb_jobs];
+//     colsum = nextafter(colsum, DBL_MAX);
 
-    if (colsum > x->total_weighted_completion_time) {
-        double newcolsum = .0;
-        for (guint i = 0; i < x->job_list->len; ++i) {
-            tmp_j = static_cast<Job*>(g_ptr_array_index(x->job_list, i));
-            pd->pi[tmp_j->job] /= colsum;
-            pd->pi[tmp_j->job] *= x->total_weighted_completion_time;
-            newcolsum += pd->pi[tmp_j->job];
-        }
+//     if (colsum > x->total_weighted_completion_time) {
+//         double newcolsum = .0;
+//         for (guint i = 0; i < x->job_list->len; ++i) {
+//             tmp_j = static_cast<Job*>(g_ptr_array_index(x->job_list, i));
+//             pd->pi[tmp_j->job] /= colsum;
+//             pd->pi[tmp_j->job] *= x->total_weighted_completion_time;
+//             newcolsum += pd->pi[tmp_j->job];
+//         }
 
-        pd->pi[pd->nb_jobs] /= colsum;
-        pd->pi[pd->nb_jobs] *= x->total_weighted_completion_time;
-        newcolsum += pd->pi[pd->nb_jobs];
+//         pd->pi[pd->nb_jobs] /= colsum;
+//         pd->pi[pd->nb_jobs] *= x->total_weighted_completion_time;
+//         newcolsum += pd->pi[pd->nb_jobs];
 
-        if (dbg_lvl() > 1) {
-            fmt::print(
-                R"(Decreased column sum of {} from  {:30.20f} to  {:30.20f}
-)",
-                x->id, colsum, newcolsum);
-        }
-    }
-}
+//         if (dbg_lvl() > 1) {
+//             fmt::print(
+//                 R"(Decreased column sum of {} from  {:30.20f} to  {:30.20f}
+// )",
+//                 x->id, colsum, newcolsum);
+//         }
+//     }
+// }
 
-MAYBE_UNUSED
-void make_pi_feasible(NodeData* pd) {
-    g_ptr_array_foreach(pd->localColPool, g_make_pi_feasible, pd);
-}
+// MAYBE_UNUSED
+// void make_pi_feasible(NodeData* pd) {
+//     g_ptr_array_foreach(pd->localColPool, g_make_pi_feasible, pd);
 
-void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
-    ScheduleSet* x = static_cast<ScheduleSet*>(data);
-    NodeData*    pd = static_cast<NodeData*>(user_data);
+//     std::for_each()
+// }
 
-    double colsum = .0;
+// void g_make_pi_feasible_farkas(gpointer data, gpointer user_data) {
+//     ScheduleSet* x = static_cast<ScheduleSet*>(data);
+//     NodeData*    pd = static_cast<NodeData*>(user_data);
 
-    for (guint i = 0; i < x->job_list->len; ++i) {
-        double tmp = pd->pi[i];
-        if (signbit(tmp)) {
-            tmp = 0.0;
-        }
+//     double colsum = .0;
 
-        colsum += tmp;
-        colsum = nextafter(colsum, DBL_MAX);
-    }
+//     for (guint i = 0; i < x->job_list->len; ++i) {
+//         double tmp = pd->pi[i];
+//         if (signbit(tmp)) {
+//             tmp = 0.0;
+//         }
 
-    colsum += pd->pi[pd->nb_jobs];
+//         colsum += tmp;
+//         colsum = nextafter(colsum, DBL_MAX);
+//     }
 
-    if (colsum > x->total_weighted_completion_time) {
-        double newcolsum = .0;
-        for (guint i = 0; i < x->job_list->len; ++i) {
-            double tmp = pd->pi[i];
-            tmp /= colsum;
-            tmp *= x->total_weighted_completion_time;
-            newcolsum += tmp;
-        }
+//     colsum += pd->pi[pd->nb_jobs];
 
-        double tmp = pd->pi[pd->nb_jobs];
-        tmp /= colsum;
-        tmp *= x->total_weighted_completion_time;
-        newcolsum += tmp;
+//     if (colsum > x->total_weighted_completion_time) {
+//         double newcolsum = .0;
+//         for (guint i = 0; i < x->job_list->len; ++i) {
+//             double tmp = pd->pi[i];
+//             tmp /= colsum;
+//             tmp *= x->total_weighted_completion_time;
+//             newcolsum += tmp;
+//         }
 
-        if (dbg_lvl() > 1) {
-            fmt::print(
-                R"(Decreased column sum of {} from  {:30.20f} to  {:30.20f}
-)",
-                x->id, colsum, newcolsum);
-        }
-    }
-}
+//         double tmp = pd->pi[pd->nb_jobs];
+//         tmp /= colsum;
+//         tmp *= x->total_weighted_completion_time;
+//         newcolsum += tmp;
 
-MAYBE_UNUSED
-void NodeData::make_pi_feasible_farkas_pricing() {
-    g_ptr_array_foreach(localColPool, g_make_pi_feasible_farkas, this);
-}
+//         if (dbg_lvl() > 1) {
+//             fmt::print(
+//                 R"(Decreased column sum of {} from  {:30.20f} to  {:30.20f}
+// )",
+//                 x->id, colsum, newcolsum);
+//         }
+//     }
+// }
+
+// MAYBE_UNUSED
+// void NodeData::make_pi_feasible_farkas_pricing() {
+//     g_ptr_array_foreach(localColPool, g_make_pi_feasible_farkas, this);
+// }
 
 int NodeData::compute_objective() {
     int val = 0;
-    // int i;
     LP_lower_bound_dual = .0;
 
     /** compute lower bound with the dual variables */
-    // double tmp = pi, double, 0);
-    // double* tmp_rhs = &g_array_index(rhs, double, 0);
     assert(nb_rows == pi.size());
 
     for (int i = 0; i < nb_rows; i++) {
-        // if (i != nb_jobs) {
-        // eta_out += tmp[i] * tmp_rhs[i];
-        // }
         LP_lower_bound_dual += pi[i] * rhs[i];
     }
     LP_lower_bound_dual -= EPS_BOUND;
@@ -396,7 +360,6 @@ int NodeData::compute_objective() {
             solver_stab->get_eta_in() + off, LP_lower_bound + off);
     }
 
-CLEAN:
     return val;
 }
 
@@ -471,7 +434,7 @@ int NodeData::compute_lower_bound() {
     /**
      * Construction of new solution if localPoolColPool is empty
      */
-    if (localColPool->len == 0) {
+    if (localColPool.empty()) {
         // add_solution_to_colpool(problem->opt_sol, pd);
     }
     reset_nb_layers(jobarray);
@@ -586,7 +549,7 @@ int NodeData::compute_lower_bound() {
                 // printf("test objval = %f\n", obj);
                 // printf("----------------\n");
                 // compute_objective(pd);
-                if (localColPool->len > 0) {
+                if (!localColPool.empty()) {
                     val = construct_lp_sol_from_rmp();
                     // CCcheck_val_2(val, "Failed in construct lp sol from
                     // rmp\n"); solve_relaxation(pd); delete_old_schedules(pd);
@@ -649,25 +612,17 @@ int NodeData::print_x() {
     int status = 0;
 
     val = lp_interface_status(RMP, &status);
-    CCcheck_val_2(val, "Failed in lp_interface_status");
+    // CCcheck_val_2(val, "Failed in lp_interface_status");
 
     switch (status) {
         case GRB_OPTIMAL:
             val = lp_interface_get_nb_cols(RMP, &nb_cols);
-            // CCcheck_val_2(val, "Failed to get nb cols");
-            assert(localColPool->len == nb_cols - id_pseudo_schedules);
+            assert(localColPool.size() == nb_cols - id_pseudo_schedules);
             lambda.resize(nb_cols - id_pseudo_schedules, 0.0);
-            // lambda =
-            //     CC_SAFE_REALLOC(lambda, nb_cols - id_pseudo_schedules,
-            //     double);
-            // CCcheck_NULL_2(lambda, "Failed to allocate memory to x");
             val = lp_interface_x(RMP, lambda.data(), id_pseudo_schedules);
-            // CCcheck_val_2(val, "Failed in lp_interface_x");
 
-            for (guint i = 0; i < localColPool->len; ++i) {
-                GPtrArray* tmp =
-                    ((ScheduleSet*)g_ptr_array_index(localColPool, i))
-                        ->job_list;
+            for (guint i = 0; i < localColPool.size(); ++i) {
+                GPtrArray* tmp = localColPool[i]->job_list;
                 if (lambda[i] > EPS) {
                     g_ptr_array_foreach(tmp, g_print_machine, NULL);
                     fmt::print("\n");
@@ -691,12 +646,12 @@ int NodeData::check_schedules() {
 
     val = lp_interface_get_nb_cols(RMP, &nb_cols);
     // CCcheck_val_2(val, "Failed to get nb cols");
-    assert(nb_cols - id_pseudo_schedules == localColPool->len);
+    assert(nb_cols - id_pseudo_schedules == localColPool.size());
     if (dbg_lvl() > 1) {
         fmt::print("number of cols check {}\n", nb_cols - id_pseudo_schedules);
     }
-    for (unsigned i = 0; i < localColPool->len; ++i) {
-        ScheduleSet* tmp = (ScheduleSet*)g_ptr_array_index(localColPool, i);
+    for (unsigned i = 0; i < localColPool.size(); ++i) {
+        ScheduleSet* tmp = localColPool[i].get();
         if (check_schedule_set(tmp) == 1) {
             tmp->del = 1;
         } else {

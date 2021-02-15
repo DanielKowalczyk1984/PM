@@ -1,4 +1,6 @@
 #include <fmt/core.h>
+#include <algorithm>
+#include <functional>
 #include <memory>
 #include <vector>
 #include "BranchBoundTree.hpp"
@@ -85,7 +87,7 @@ NodeData::NodeData(Problem* problem)
       newsets(nullptr),
       nb_new_sets(0),
       column_status(),
-      localColPool(g_ptr_array_new_with_free_func(g_scheduleset_free)),
+      localColPool(),
       lower_bound(0),
       upper_bound(INT_MAX),
       LP_lower_bound(0.0),
@@ -96,7 +98,7 @@ NodeData::NodeData(Problem* problem)
       iterations(0),
       solver_stab(nullptr),
       update(1),
-      best_schedule(g_ptr_array_new_with_free_func(g_scheduleset_free)),
+      best_schedule(),
       best_objective(INT_MAX),
       maxiterations(NB_CG_ITERATIONS),
       retirementage(0),
@@ -159,10 +161,10 @@ NodeData::NodeData() {
     nb_non_improvements = 0;
     zero_count = 0;
     // bestcolors = (ScheduleSet*)NULL;
-    best_schedule = nullptr;
+    best_schedule = std::vector<std::shared_ptr<ScheduleSet>>();
     // nb_best = 0;
     /**Column schedules */
-    localColPool = nullptr;
+    localColPool = std::vector<std::shared_ptr<ScheduleSet>>();
     column_status = std::vector<int>();
     /*Initialization max and retirement age*/
     maxiterations = NB_CG_ITERATIONS;
@@ -214,8 +216,8 @@ std::unique_ptr<NodeData> NodeData::clone() {
     // aux->solver->set_ordered_jobs(aux->ordered_jobs);
     // aux->ordered_jobs = aux->solver->get_ordered_jobs();
 
-    aux->localColPool =
-        g_ptr_array_copy(localColPool, g_copy_scheduleset, &(nb_jobs));
+    aux->localColPool = localColPool;
+    // g_ptr_array_copy(localColPool, g_copy_scheduleset, &(nb_jobs));
 
     aux->lower_bound = lower_bound;
     aux->upper_bound = upper_bound;
@@ -230,8 +232,7 @@ std::unique_ptr<NodeData> NodeData::clone() {
 
     aux->solver_stab = solver_stab->clone(aux->solver.get());
     /** copy info about best_schedule */
-    aux->best_schedule =
-        g_ptr_array_copy(best_schedule, g_copy_scheduleset, NULL);
+    aux->best_schedule = best_schedule;
 
     aux->maxiterations = maxiterations;
     aux->retirementage = retirementage;
@@ -247,36 +248,6 @@ void NodeData::lp_node_data_free() {
         lp_interface_free(&(RMP));
     }
 
-    /**
-     * free all the data associated with the LP
-     */
-    // if (pi) {
-    //     g_array_free(pi, TRUE);
-    // }
-    // if (slack) {
-    //     g_array_free(slack, TRUE);
-    // }
-    // CC_IFFREE(lambda, double);
-    // if (rhs) {
-    //     g_array_free(rhs, TRUE);
-    // }
-
-    // if (lhs_coeff) {
-    //     g_array_free(lhs_coeff, TRUE);
-    // }
-
-    // if (id_row) {
-    //     g_array_free(id_row, TRUE);
-    // }
-    // if (coeff_row) {
-    //     g_array_free(coeff_row, TRUE);
-    // }
-    // CC_IFFREE(column_status, int);
-
-    /**
-     * free all the schedules from the localColPool
-     */
-    g_ptr_array_free(localColPool, TRUE);
     nb_rows = 0;
     nb_cols = 0;
     max_nb_cuts = NB_CUTS;
@@ -299,51 +270,6 @@ int set_id_and_name(NodeData* pd, int id, const char* fname) {
     pd->pname = fmt::format("{}", fname);
     return val;
 }
-static void scheduleset_unify(GPtrArray* array) {
-    int          i = 0;
-    int          it = 1;
-    int          first_del = -1;
-    int          last_del = -1;
-    int          nb_col = array->len;
-    ScheduleSet* temp = nullptr;
-    ScheduleSet* prev = nullptr;
-    g_ptr_array_sort(array, g_scheduleset_less);
-
-    if (!(array->len)) {
-        return;
-    }
-
-    prev = (ScheduleSet*)g_ptr_array_index(array, 0);
-    /* Find first non-empty set */
-    for (i = 1; i < nb_col; ++i) {
-        temp = (ScheduleSet*)g_ptr_array_index(array, it);
-        if (scheduleset_less(prev, temp)) {
-            if (first_del != -1) {
-                /** Delete recently found deletion range.*/
-                g_ptr_array_remove_range(array, first_del,
-                                         last_del - first_del + 1);
-                it = it - (last_del - first_del);
-                first_del = last_del = -1;
-            } else {
-                it++;
-            }
-            prev = temp;
-        } else {
-            if (first_del == -1) {
-                first_del = it;
-                last_del = first_del;
-            } else {
-                last_del++;
-            }
-            prev = temp;
-            it++;
-        }
-    }
-
-    if (first_del != -1) {
-        g_ptr_array_remove_range(array, first_del, last_del - first_del + 1);
-    }
-}
 
 static void g_scheduleset_print_duplicated(gpointer data, gpointer user_data) {
     ScheduleSet* tmp = static_cast<ScheduleSet*>(data);
@@ -353,12 +279,19 @@ static void g_scheduleset_print_duplicated(gpointer data, gpointer user_data) {
 }
 
 void NodeData::prune_duplicated_sets() {
-    int val = 0;
-    scheduleset_unify(localColPool);
+    auto equal_func = [](auto const& lhs, auto const& rhs) {
+        return (*lhs) == (*rhs);
+    };
 
-    if (dbg_lvl() > 1) {
-        g_ptr_array_foreach(localColPool, g_scheduleset_print_duplicated,
-                            nullptr);
+    std::sort(localColPool.begin(), localColPool.end(),
+              std::less<std::shared_ptr<ScheduleSet>>());
+    localColPool.erase(
+        std::unique(localColPool.begin(), localColPool.end(), equal_func),
+        localColPool.end());
+
+    int i = 0;
+    for (auto& it : localColPool) {
+        it->id = i++;
     }
 }
 
@@ -366,25 +299,29 @@ void NodeData::add_solution_to_colpool(Solution* sol) {
     int val = 0;
 
     for (int i = 0; i < sol->nb_machines; ++i) {
-        GPtrArray*   machine = sol->part[i].machine;
-        ScheduleSet* tmp = scheduleset_from_solution(machine, nb_jobs);
-        tmp->id = localColPool->len;
-        g_ptr_array_add(localColPool, tmp);
+        GPtrArray*                   machine = sol->part[i].machine;
+        std::shared_ptr<ScheduleSet> tmp =
+            std::make_shared<ScheduleSet>(machine);
+        tmp->id = localColPool.size();
+        // g_ptr_array_add(localColPool, tmp);
+        localColPool.emplace_back(tmp);
     }
 }
 
 void NodeData::add_solution_to_colpool_and_lp(Solution* sol) {
-    int          val = 0;
-    ScheduleSet* tmp = nullptr;
+    int val = 0;
+    // ScheduleSet* tmp = nullptr;
 
     for (int i = 0; i < sol->nb_machines; ++i) {
-        GPtrArray* machine = sol->part[i].machine;
-        tmp = scheduleset_from_solution(machine, nb_jobs);
-        g_ptr_array_add(localColPool, tmp);
+        GPtrArray*                   machine = sol->part[i].machine;
+        std::shared_ptr<ScheduleSet> tmp =
+            std::make_shared<ScheduleSet>(machine);
+        localColPool.emplace_back(tmp);
+        // g_ptr_array_add(localColPool, tmp);
     }
 
-    for (unsigned i = 0; i < localColPool->len; ++i) {
-        tmp = static_cast<ScheduleSet*>(g_ptr_array_index(localColPool, i));
+    for (unsigned i = 0; i < localColPool.size(); ++i) {
+        auto* tmp = localColPool[i].get();
         add_scheduleset_to_rmp(tmp);
     }
 }

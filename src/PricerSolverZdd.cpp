@@ -2,6 +2,7 @@
 #include <fmt/core.h>
 #include <NodeBddStructure.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <vector>
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 
@@ -374,17 +375,18 @@ void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
     // outf.close();
 }
 
-void PricerSolverZdd::construct_lp_sol_from_rmp(const double*    columns,
-                                                const GPtrArray* schedule_sets,
-                                                int              num_columns) {
+void PricerSolverZdd::construct_lp_sol_from_rmp(
+    const double*                                    columns,
+    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
+    int                                              num_columns) {
     auto&     table = *(decision_diagram->getDiagram());
-    std::span aux_cols{columns, schedule_sets->len};
-    std::span aux_sets{schedule_sets->pdata, schedule_sets->len};
+    std::span aux_cols{columns, schedule_sets.size()};
+    // std::span aux_sets{schedule_sets->pdata, schedule_sets->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
     for (int i = 0; i < num_columns; ++i) {
         if (aux_cols[i] > EPS_SOLVER) {
             size_t    counter = 0;
-            auto*     tmp = static_cast<ScheduleSet*>(aux_sets[i]);
+            auto*     tmp = schedule_sets[i].get();
             std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->pdata};
             NodeId    tmp_nodeid(decision_diagram->root());
             std::shared_ptr<SubNodeZdd<>> tmp_sub_node =

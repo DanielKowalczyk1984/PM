@@ -185,11 +185,12 @@ struct NodeData {
     std::unique_ptr<PricerSolverBase> solver;
 
     // Columns
-    int              zero_count;
-    ScheduleSet*     newsets;
-    int              nb_new_sets;
-    std::vector<int> column_status;
-    GPtrArray*       localColPool;
+    int                                       zero_count;
+    std::shared_ptr<ScheduleSet>              newsets;
+    int                                       nb_new_sets;
+    std::vector<int>                          column_status;
+    std::vector<std::shared_ptr<ScheduleSet>> localColPool;
+    // GPtrArray*                                localColPool;
 
     int lower_bound;
     int upper_bound;
@@ -207,8 +208,8 @@ struct NodeData {
     int                                       update;
 
     // Best Solution
-    GPtrArray* best_schedule;
-    int        best_objective;
+    std::vector<std::shared_ptr<ScheduleSet>> best_schedule;
+    int                                       best_objective;
 
     // maxiterations and retireage
     int maxiterations;
@@ -246,7 +247,7 @@ struct NodeData {
     void add_solution_to_colpool_and_lp(Solution*);
 
     int build_rmp();
-    int get_solution_lp_lowerbound();
+    // int get_solution_lp_lowerbound();
     /** lowerbound.cpp */
     int  delete_unused_rows();
     int  delete_old_schedules();
@@ -277,7 +278,7 @@ struct NodeData {
     int add_scheduleset_to_rmp(ScheduleSet* set);
 
    private:
-    int add_artificial_var_to_rmp();
+    // int add_artificial_var_to_rmp();
     int add_lhs_scheduleset_to_rmp(ScheduleSet* set);
 
     /** lowerbound.cpp */

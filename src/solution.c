@@ -8,6 +8,55 @@
 gint g_sort_jobs_key(const void* a, const void* b, void* data);
 gint g_sort_jobs_weight(gconstpointer a, gconstpointer b, void* data);
 
+static gint g_compare_interval_data_solution(gconstpointer a,
+                                             gconstpointer b,
+                                             gpointer      data) {
+    const Job* x = *(Job* const*)a;
+    const Job* y = *(Job* const*)b;
+    interval*  user_data = (interval*)data;
+    int        diff = user_data->b - user_data->a;
+    double     w_x = (x->due_time >= user_data->b)
+                         ? 0.0
+                         : (double)x->weight / x->processing_time;
+    double     w_y = (y->due_time >= user_data->b)
+                         ? 0.0
+                         : (double)y->weight / y->processing_time;
+
+    if (x->processing_time >= diff) {
+        if (y->processing_time < diff) {
+            return -1;
+        } else {
+            if (w_x > w_y) {
+                return -1;
+            } else if (w_y > w_x) {
+                return 1;
+            } else if (x->processing_time > y->processing_time) {
+                return -1;
+            } else if (y->processing_time > x->processing_time) {
+                return 1;
+            }
+
+            return x->job - y->job;
+        }
+    } else {
+        if (y->processing_time >= diff) {
+            return 1;
+        } else {
+            if (w_x > w_y) {
+                return -1;
+            } else if (w_y > w_x) {
+                return 1;
+            } else if (x->processing_time > y->processing_time) {
+                return -1;
+            } else if (y->processing_time > x->processing_time) {
+                return 1;
+            }
+
+            return x->job - y->job;
+        }
+    }
+}
+
 void solution_init(Solution* sol) {
     if (sol) {
         sol->part = (PartList*)NULL;
@@ -272,7 +321,8 @@ void solution_calculate_partition_all(Solution* sol, GPtrArray* intervals) {
     }
 }
 
-// static void calculate_partition(Solution* sol, GPtrArray* intervals, int m,
+// static void calculate_partition(Solution* sol, GPtrArray* intervals, int
+// m,
 //                                 int* u, int* last) {
 //     int   count = 0;
 //     int   cur = *last;
@@ -298,7 +348,8 @@ void solution_calculate_partition_all(Solution* sol, GPtrArray* intervals) {
 
 //     if (count > 0) {
 //         if (first_job->job != i->job) {
-//             g_qsort_with_data(machine->pdata + cur + 1, count, sizeof(Job*),
+//             g_qsort_with_data(machine->pdata + cur + 1, count,
+//             sizeof(Job*),
 //                               compare_interval, I);
 //             j = (Job*)g_ptr_array_index(machine, cur + 1);
 //         } else {
@@ -320,7 +371,8 @@ void solution_calculate_partition_all(Solution* sol, GPtrArray* intervals) {
 //                 }
 //             } else {
 //                 sol->c[j->job] =
-//                     sol->c[i->job] - i->processing_time + j->processing_time;
+//                     sol->c[i->job] - i->processing_time +
+//                     j->processing_time;
 //                 sol->c[i->job] = sol->c[j->job] + i->processing_time;
 //                 CC_SWAP(g_ptr_array_index(machine, cur),
 //                         g_ptr_array_index(machine, cur + 1), tmp);
@@ -386,8 +438,8 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                     Job* last = (Job*)g_ptr_array_index(Q_in, Q_in->len - 1);
                     int  C_last = sol->c[last->job];
 #endif
-                    g_ptr_array_sort_with_data(Q_in, g_compare_interval_data,
-                                               I);
+                    g_ptr_array_sort_with_data(
+                        Q_in, g_compare_interval_data_solution, I);
                     for (guint j = 0; j < Q_in->len; j++) {
                         Job* tmp = (Job*)g_ptr_array_index(Q_in, j);
                         g_ptr_array_index(Q, j + 1) = tmp;
@@ -397,7 +449,8 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                     assert(C == C_last);
                     Job* tmp_out = (Job*)g_ptr_array_index(Q, 0);
                     Job* tmp_in = (Job*)g_ptr_array_index(Q_in, 0);
-                    if (g_compare_interval_data(&tmp_out, &tmp_in, I) < 0) {
+                    if (g_compare_interval_data_solution(&tmp_out, &tmp_in, I) <
+                        0) {
                         assert(sol->c[tmp_in->job] - tmp_in->processing_time ==
                                sol->c[tmp_out->job]);
                         u = next_interval_reversed(u, part);
@@ -421,7 +474,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                             // assert(C == sol->c[tmp_out->job] -
                             //                 tmp_out->processing_time);
                             g_ptr_array_sort_with_data(
-                                Q_in, g_compare_interval_data, I);
+                                Q_in, g_compare_interval_data_solution, I);
                             for (guint j = 0; j < Q_in->len; j++) {
                                 Job* aux_tmp = (Job*)g_ptr_array_index(Q_in, j);
                                 g_ptr_array_index(Q, j + 1) = aux_tmp;
@@ -468,7 +521,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                 } else {
                     assert(u == 0);
                     g_qsort_with_data(Q->pdata, Q->len, sizeof(Job*),
-                                      g_compare_interval_data, I);
+                                      g_compare_interval_data_solution, I);
                     int C = 0;
                     for (guint j = 0; j < Q->len; j++) {
                         Job* tmp = (Job*)g_ptr_array_index(Q, j);
