@@ -1,9 +1,5 @@
 #include <fmt/core.h>
-#include <algorithm>
-#include <cstddef>
-#include <memory>
 #include <numeric>
-#include <span>
 #include <vector>
 #include "gurobi_c.h"
 #include "job.h"
