@@ -67,30 +67,18 @@ int grab_integer_solution(NodeData*                  pd,
 }
 
 int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
-    int   val = 0;
-    gsize aux = 0;
-    // double* lhs_coeff_tmp =
-    //     static_cast<double*>(&g_array_index(lhs_coeff, double, 0));
-
-    // int* aux_int_array = static_cast<int*>(g_array_steal(id_row, &aux));
-    // CC_IFFREE(aux_int_array, int);
+    int val = 0;
     id_row.clear();
     coeff_row.clear();
-    // double* aux_double_array =
-    //     static_cast<double*>(g_array_steal(coeff_row, &aux));
-    // CC_IFFREE(aux_double_array, double);
 
-    for (int j = 0; j < nb_rows; j++) {
-        if (std::fabs(lhs_coeff[j]) > EPS_BOUND) {
+    for (int j = 0; auto const& it : lhs_coeff) {
+        if (std::fabs(it) > EPS_BOUND) {
             id_row.emplace_back(j);
-            coeff_row.emplace_back(lhs_coeff[j]);
+            coeff_row.emplace_back(it);
         }
+        j++;
     }
 
-    // int*    id_constraint = static_cast<int*>(&g_array_index(id_row, int,
-    // 0));
-    // double* coeff_constraint =
-    //     static_cast<double*>(&g_array_index(coeff_row, double, 0));
     int len = id_row.size();
 
     val = lp_interface_get_nb_cols(RMP, &(nb_cols));
@@ -135,8 +123,6 @@ int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
 
 int NodeData::build_rmp() {
     int                 val = 0;
-    double*             dbl_values{};
-    int*                int_values{};
     std::vector<int>    start(nb_jobs, 0);
     std::vector<double> rhs_tmp(nb_jobs, 1.0);
     std::vector<char>   sense(nb_jobs, GRB_GREATER_EQUAL);
@@ -181,24 +167,15 @@ int NodeData::build_rmp() {
     std::vector<int> rows_ind(nb_jobs + 1);
     std::iota(rows_ind.begin(), rows_ind.end(), 0);
     std::vector<double> coeff_vals(nb_jobs + 1, 1.0);
-    // std::iota(start_vars.begin(), start_vars.begin() + nb_jobs + 1, 0);
-
-    for (int j = 0; j < nb_jobs + 1; j++) {
-        //     rows_ind[j] = j;
-        start_vars[j] = j;
-        //     coeff_vals[j] = 1.0;
-    }
+    coeff_vals[nb_jobs] = -1.0;
+    std::iota(start_vars.begin(), start_vars.begin() + nb_jobs + 1, 0);
 
     val = lp_interface_addcols(RMP, nb_vars, nb_jobs + 1, start_vars.data(),
                                rows_ind.data(), coeff_vals.data(), obj.data(),
                                lb.data(), ub.data(), vtype.data(), nullptr);
-    // CCcheck_val(val, "failed construct cols");
     val = lp_interface_get_nb_cols(RMP, &(id_pseudo_schedules));
 
     /** add columns from localColPool */
-    // add_artificial_var_to_rmp(pd);
-    // g_ptr_array_foreach(localColPool, g_add_col_to_lp, this);
-
     std::for_each(localColPool.begin(), localColPool.end(),
                   [&](auto& it) { add_scheduleset_to_rmp(it.get()); });
 
@@ -221,30 +198,3 @@ CLEAN:
     }
     return val;
 }
-
-// int NodeData::get_solution_lp_lowerbound() {
-//     int  val = 0;
-//     Job* tmp_j = nullptr;
-
-//     val = lp_interface_get_nb_cols(RMP, &nb_cols);
-//     lambda.resize(nb_cols, 0.0);
-//     lp_interface_x(RMP, lambda.data(), 0);
-
-//     for (int i = 0; i < nb_cols; ++i) {
-//         ScheduleSet* tmp = localColPool[i].get();
-//         if (lambda[i] > EPS) {
-//             fmt::print("{}: ", lambda[i]);
-//             g_ptr_array_foreach(tmp->job_list, g_print_machine, NULL);
-//             fmt::print("\n");
-//             for (unsigned j = 0; j < tmp->job_list->len; ++j) {
-//                 tmp_j = (Job*)g_ptr_array_index(tmp->job_list, j);
-//                 // printf("%d (%d) ", tmp->num[tmp_j->job],
-//                 //    tmp_j->processing_time);
-//             }
-//             fmt::print("\n");
-//         }
-//     }
-
-// CLEAN:
-//     return val;
-// }
