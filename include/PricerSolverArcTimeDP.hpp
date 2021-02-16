@@ -72,9 +72,10 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     void evaluate_nodes([[maybe_unused]] double* pi) override;
     void build_mip() override;
-    void construct_lp_sol_from_rmp(const double*    columns,
-                                   const GPtrArray* schedule_sets,
-                                   int              num_columns) override;
+    void construct_lp_sol_from_rmp(
+        const double*                                    columns,
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
+        int                                              num_columns) override;
     void add_constraint(Job* job, GPtrArray* list, int order) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;

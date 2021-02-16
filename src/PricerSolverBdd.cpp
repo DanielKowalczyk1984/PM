@@ -305,7 +305,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     lp_interface_get_nb_rows(pd->RMP, &(pd->nb_rows));
     auto nb_new_constraints =
         reformulation_model.get_nb_constraints() - pd->nb_rows;
-    std::span aux_col_pool{pd->localColPool->pdata, pd->localColPool->len};
+    // std::span aux_col_pool{pd->localColPool->pdata, pd->localColPool->len};
 
     fmt::print("nb rows initial {} {} {}\n", pd->nb_rows,
                reformulation_model.get_nb_constraints(), nb_new_constraints);
@@ -336,8 +336,9 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
             }
         }
 
-        for (auto i = 0U; i < pd->localColPool->len; i++) {
-            auto* aux_schedule_set = static_cast<ScheduleSet*>(aux_col_pool[i]);
+        int i = 0;
+        for (auto& it : pd->localColPool) {
+            auto*     aux_schedule_set = it.get();
             std::span jobs_list{aux_schedule_set->job_list->pdata,
                                 aux_schedule_set->job_list->len};
             auto&     table = *(decision_diagram.getDiagram());
@@ -373,6 +374,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
                 coeff.push_back(coeff_val);
                 pos++;
             }
+            i++;
         }
     }
 
@@ -385,16 +387,21 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     lp_interface_get_nb_rows(pd->RMP, &(pd->nb_rows));
     vector<double> new_values(nb_new_constraints, 0.0);
     vector<int>    new_values_int(nb_new_constraints, 0);
-    g_array_append_vals(pd->pi, new_values.data(), new_values.size());
-    g_array_append_vals(pd->slack, new_values.data(), new_values.size());
-    g_array_append_vals(pd->rhs, new_values.data(), new_values.size());
-    lp_interface_get_rhs(
-        pd->RMP, static_cast<double*>(static_cast<void*>(pd->rhs->data)));
+    // g_array_append_vals(pd->pi, new_values.data(), new_values.size());
+    pd->pi.resize(pd->nb_rows, 0.0);
+    // g_array_append_vals(pd->slack, new_values.data(), new_values.size());
+    pd->slack.resize(pd->nb_rows, 0.0);
+    // g_array_append_vals(pd->rhs, new_values.data(), new_values.size());
+    pd->rhs.resize(pd->nb_rows, 0.0);
+    lp_interface_get_rhs(pd->RMP, (pd->rhs).data());
     // lp_interface_get_rhs(pd->RMP, &g_array_index(pd->rhs, double, 0));
-    g_array_append_vals(pd->lhs_coeff, new_values.data(), new_values.size());
-    g_array_append_vals(pd->id_row, new_values_int.data(),
-                        new_values_int.size());
-    g_array_append_vals(pd->coeff_row, new_values.data(), new_values.size());
+    // g_array_append_vals(pd->lhs_coeff, new_values.data(), new_values.size());
+    pd->lhs_coeff.resize(pd->nb_rows, 0.0);
+    // g_array_append_vals(pd->id_row, new_values_int.data(),
+    //                     new_values_int.size());
+    pd->id_row.resize(pd->nb_rows, 0.0);
+    // g_array_append_vals(pd->coeff_row, new_values.data(), new_values.size());
+    pd->coeff_row.resize(pd->nb_rows, 0.0);
     // assert(pd->nb_rows == pd->slack->len);
 }
 
@@ -1416,9 +1423,10 @@ void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
     outf.close();
 }
 
-void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
-                                                const GPtrArray* schedule_sets,
-                                                int              num_columns) {
+void PricerSolverBdd::construct_lp_sol_from_rmp(
+    const double*                                    columns,
+    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
+    int                                              num_columns) {
     auto& table = *(decision_diagram.getDiagram());
     for (auto i = decision_diagram.topLevel(); i >= 0; i--) {
         for (auto& it : table[i]) {
@@ -1427,14 +1435,14 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(const double*    columns,
     }
     auto                    nb_columns = static_cast<size_t>(num_columns);
     std::span<const double> aux_cols{columns, nb_columns};
-    std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
-    assert(nb_columns == schedule_sets->len);
+    // std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
+    assert(nb_columns == schedule_sets.size());
 
     set_is_integer_solution(true);
     for (int i = 0; i < num_columns; ++i) {
         if (aux_cols[i] > EPS_SOLVER) {
             auto      counter = 0u;
-            auto      tmp = static_cast<ScheduleSet*>(aux_schedule_sets[i]);
+            auto*     tmp = schedule_sets[i].get();
             auto      tmp_nodeid(decision_diagram.root());
             std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
 

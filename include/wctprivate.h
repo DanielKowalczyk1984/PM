@@ -2,6 +2,7 @@
 #define WCT_PRIVATE_H
 
 #include <memory>
+#include <vector>
 #include "BranchBoundTree.hpp"
 #include "MIP_defs.hpp"
 #include "OptimalSolution.hpp"
@@ -37,11 +38,11 @@ typedef enum {
  *
  */
 
-#define NB_CUTS (2000)
-#define NB_CG_ITERATIONS (1000000)
-#define CLEANUP_ITERATION (30)
-#define EPS (1e-6)
-#define EPS_BOUND (1e-9)
+constexpr int    NB_CUTS = 2000;
+constexpr int    NB_CG_ITERATIONS = 1000000;
+constexpr int    CLEANUP_ITERATION = 30;
+constexpr double EPS = 1e-6;
+constexpr double EPS_BOUND = 1e-9;
 
 /**
  * node data
@@ -99,8 +100,6 @@ struct Problem {
 
     problem_status status;
 
-    /* All partial schedules*/
-    GPtrArray* ColPool;
     /* Best Solution*/
     Solution* opt_sol;
 
@@ -113,12 +112,12 @@ struct Problem {
     void solve();
     /** Heuristic related */
     int heuristic();
-    ~Problem();
     Problem(int argc, const char** argv);
     Problem(const Problem&) = delete;
     Problem(Problem&&) = delete;
     Problem& operator=(const Problem&) = delete;
     Problem& operator=(Problem&&) = delete;
+    ~Problem();
 
    private:
     void calculate_Hmax();
@@ -156,15 +155,15 @@ struct NodeData {
     GPtrArray* ordered_jobs;
 
     // The column generation lp information
-    wctlp*  RMP;
-    double* lambda;
+    wctlp*              RMP;
+    std::vector<double> lambda;
 
-    GArray* pi;
-    GArray* slack;
-    GArray* rhs;
-    GArray* lhs_coeff;
-    GArray* id_row;
-    GArray* coeff_row;
+    std::vector<double> pi;
+    std::vector<double> slack;
+    std::vector<double> rhs;
+    std::vector<double> lhs_coeff;
+    std::vector<int>    id_row;
+    std::vector<double> coeff_row;
 
     int nb_rows;
     int nb_cols;
@@ -185,11 +184,12 @@ struct NodeData {
     std::unique_ptr<PricerSolverBase> solver;
 
     // Columns
-    int          zero_count;
-    ScheduleSet* newsets;
-    int          nb_new_sets;
-    int*         column_status;
-    GPtrArray*   localColPool;
+    int                                       zero_count;
+    std::shared_ptr<ScheduleSet>              newsets;
+    int                                       nb_new_sets;
+    std::vector<int>                          column_status;
+    std::vector<std::shared_ptr<ScheduleSet>> localColPool;
+    // GPtrArray*                                localColPool;
 
     int lower_bound;
     int upper_bound;
@@ -207,8 +207,8 @@ struct NodeData {
     int                                       update;
 
     // Best Solution
-    GPtrArray* best_schedule;
-    int        best_objective;
+    std::vector<std::shared_ptr<ScheduleSet>> best_schedule;
+    int                                       best_objective;
 
     // maxiterations and retireage
     int maxiterations;
@@ -246,7 +246,7 @@ struct NodeData {
     void add_solution_to_colpool_and_lp(Solution*);
 
     int build_rmp();
-    int get_solution_lp_lowerbound();
+    // int get_solution_lp_lowerbound();
     /** lowerbound.cpp */
     int  delete_unused_rows();
     int  delete_old_schedules();
@@ -277,7 +277,6 @@ struct NodeData {
     int add_scheduleset_to_rmp(ScheduleSet* set);
 
    private:
-    int add_artificial_var_to_rmp();
     int add_lhs_scheduleset_to_rmp(ScheduleSet* set);
 
     /** lowerbound.cpp */

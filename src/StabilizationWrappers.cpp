@@ -1,12 +1,13 @@
 #include <fmt/core.h>
+#include <memory>
 #include "scheduleset.h"
 #include "wctprivate.h"
 
 template <typename T = double>
 int NodeData::construct_sol(OptimalSolution<T>* sol) {
-    int          val = 0;
-    int          nb_set = 1;
-    ScheduleSet* newset = scheduleset_alloc_bis(nb_jobs);
+    int                          val = 0;
+    int                          nb_set = 1;
+    std::shared_ptr<ScheduleSet> newset = std::make_shared<ScheduleSet>();
 
     newset->job_list = sol->jobs;
     sol->jobs = nullptr;
@@ -23,10 +24,10 @@ int NodeData::solve_pricing() {
     int val = 0;
 
     update = 0;
-    double* pi_tmp = &g_array_index(pi, double, 0);
-    double* lhs = &g_array_index(lhs_coeff, double, 0);
+    // double* pi_tmp = pi.data();
+    // double* lhs = &g_array_index(lhs_coeff, double, 0);
 
-    solver_stab->solve(LP_lower_bound_BB, pi_tmp, lhs);
+    solver_stab->solve(LP_lower_bound_BB, pi.data(), lhs_coeff.data());
 
     if (solver_stab->get_update_stab_center()) {
         if (solver_stab->do_reduced_cost_fixing() &&
@@ -57,10 +58,11 @@ int NodeData::solve_pricing() {
         auto sol = std::move(solver_stab->get_sol());
         val = construct_sol(&sol);
         CCcheck_val_2(val, "Failed in construction");
-        val = add_lhs_scheduleset_to_rmp(newsets);
-        newsets->id = localColPool->len;
-        g_ptr_array_add(localColPool, newsets);
-        newsets = NULL;
+        val = add_lhs_scheduleset_to_rmp(newsets.get());
+        newsets->id = localColPool.size();
+        // g_ptr_array_add(localColPool, newsets);
+        localColPool.emplace_back(newsets);
+        // newsets = N;
         nb_new_sets = 0;
         nb_non_improvements = 0;
     } else {
@@ -74,8 +76,7 @@ CLEAN:
 
 int NodeData::solve_farkas_dbl() {
     int                     val = 0;
-    OptimalSolution<double> s =
-        solver->farkas_pricing(&g_array_index(pi, double, 0));
+    OptimalSolution<double> s = solver->farkas_pricing(pi.data());
     update = 0;
 
     if (s.obj < EPS) {

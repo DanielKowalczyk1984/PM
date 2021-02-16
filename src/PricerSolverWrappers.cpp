@@ -133,13 +133,15 @@ int NodeData::construct_lp_sol_from_rmp() {
 
     val = lp_interface_get_nb_cols(RMP, &nb_cols);
     // CCcheck_val_2(val, "Failed to get nb cols");
-    assert(nb_cols - id_pseudo_schedules == localColPool->len);
+    assert(nb_cols - id_pseudo_schedules == localColPool.size());
 
-    lambda = CC_SAFE_REALLOC(lambda, nb_cols - id_pseudo_schedules, double);
+    // lambda = CC_SAFE_REALLOC(lambda, nb_cols - id_pseudo_schedules, double);
+    lambda.resize(nb_cols - id_pseudo_schedules, 0.0);
     // CCcheck_NULL_2(pd->lambda, "Failed to allocate memory to pd->x");
-    val = lp_interface_x(RMP, lambda, id_pseudo_schedules);
+    val = lp_interface_x(RMP, lambda.data(), id_pseudo_schedules);
     // CCcheck_val_2(val, "Failed in lp_interface_x");
-    solver->construct_lp_sol_from_rmp(lambda, localColPool, localColPool->len);
+    solver->construct_lp_sol_from_rmp(lambda.data(), localColPool,
+                                      localColPool.size());
 
     return val;
 }
@@ -162,9 +164,12 @@ int NodeData::delete_unused_rows_range(int first, int last) {
     lp_interface_deleterows(RMP, first, last);
     solver->remove_constraints(first, last - first + 1);
     solver_stab->remove_constraints(first, last - first + 1);
-    g_array_remove_range(pi, first, last - first + 1);
-    g_array_remove_range(rhs, first, last - first + 1);
-    g_array_remove_range(lhs_coeff, first, last - first + 1);
+    // g_array_remove_range(pi, first, last - first + 1);
+    pi.erase(pi.begin(), pi.begin() + last - first + 1);
+    pi.erase(rhs.begin(), rhs.begin() + last - first + 1);
+    pi.erase(lhs_coeff.begin(), lhs_coeff.begin() + last - first + 1);
+    // g_array_remove_range(rhs, first, last - first + 1);
+    // g_array_remove_range(lhs_coeff, first, last - first + 1);
 
     return val;
 }

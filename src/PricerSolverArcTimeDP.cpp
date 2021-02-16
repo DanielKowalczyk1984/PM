@@ -482,15 +482,15 @@ OptimalSolution<double> PricerSolverArcTimeDp::farkas_pricing(
 
 void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     const double*    columns,
-    const GPtrArray* schedule_sets,
+    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
     int              num_columns) {
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
+    // std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
     std::span aux_cols{columns, static_cast<size_t>(num_columns)};
     for (int k = 0; k < num_columns; k++) {
         if (aux_cols[k] > 0.0) {
             size_t    counter = 0;
-            auto*     tmp = static_cast<ScheduleSet*>(aux_schedule_sets[k]);
+            auto*     tmp = schedule_sets[k].get();
             std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
             int       i = n;
             int       t = 0;

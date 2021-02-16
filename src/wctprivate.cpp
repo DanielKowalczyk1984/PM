@@ -14,7 +14,6 @@
 
 Problem::~Problem() { /*free the parameters*/
     g_ptr_array_free(g_job_array, TRUE);
-    g_ptr_array_free(ColPool, TRUE);
     g_ptr_array_free(intervals, TRUE);
     solution_free(&(opt_sol));
 }
@@ -216,7 +215,7 @@ void Problem::calculate_Hmax() {
 NodeData::~NodeData() {
     temporary_data_free();
     g_ptr_array_free(ordered_jobs, TRUE);
-    g_ptr_array_free(best_schedule, TRUE);
+    // g_ptr_array_free(best_schedule, TRUE);
 }
 
 void Problem::solve() {

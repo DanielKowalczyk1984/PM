@@ -66,9 +66,10 @@ class PricerSolverBdd : public PricerSolverBase {
 
     void reduce_cost_fixing(double* pi, int UB, double LB) override;
     void build_mip() override;
-    void construct_lp_sol_from_rmp(const double*    columns,
-                                   const GPtrArray* schedule_sets,
-                                   int              num_columns) override;
+    void construct_lp_sol_from_rmp(
+        const double*                                    columns,
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
+        int                                              num_columns) override;
     void make_schedule_set_feasible(GPtrArray* set) override;
     void calculate_job_time(std::vector<std::vector<double>>* v) override;
     void split_job_time(int _job, int _time, bool _left) override;

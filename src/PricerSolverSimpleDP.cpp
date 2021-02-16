@@ -301,16 +301,16 @@ OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing(
 }
 
 void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
-    const double*    columns,
-    const GPtrArray* schedule_sets,
-    int              num_columns) {
+    const double*                                    columns,
+    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
+    int                                              num_columns) {
     auto      nb_constraints{reformulation_model.get_nb_constraints()};
-    std::span aux_cols{columns, schedule_sets->len};
-    std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
+    std::span aux_cols{columns, schedule_sets.size()};
+    // std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
     for (int k = 0; k < num_columns; k++) {
         if (aux_cols[k] > EPS_SOLVER) {
-            auto*     tmp = static_cast<ScheduleSet*>(aux_schedule_sets[k]);
+            auto*     tmp = schedule_sets[k].get();
             int       t = 0;
             std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
             for (auto& it : aux_jobs) {

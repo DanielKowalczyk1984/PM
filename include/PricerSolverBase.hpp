@@ -4,6 +4,7 @@
 #include <gurobi_c++.h>
 #include <memory>
 #include <span>
+#include <vector>
 #include "MIP_defs.hpp"
 #include "ModelInterface.hpp"
 #include "OptimalSolution.hpp"
@@ -92,9 +93,10 @@ struct PricerSolverBase {
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;
-    virtual void construct_lp_sol_from_rmp(const double*    columns,
-                                           const GPtrArray* schedule_sets,
-                                           int              num_columns) = 0;
+    virtual void construct_lp_sol_from_rmp(
+        const double*                                    columns,
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
+        int                                              num_columns) = 0;
 
     /**
      * Constraint on the solver
