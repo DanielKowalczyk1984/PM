@@ -111,42 +111,40 @@ void PricerSolverBdd::calculate_H_min() {
 void PricerSolverBdd::construct_mipgraph() {
     mip_graph.clear();
     auto& table = *(decision_diagram.getDiagram());
-    auto  vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
-    auto  edge_type_list(get(boost::edge_weight_t(), mip_graph));
 
+    auto index{0U};
     for (auto i = decision_diagram.topLevel(); i >= 0; i--) {
         for (auto j = 0U; j < table[i].size(); j++) {
             if (NodeId(i, j) != 0
                 // && (table[i][j].calc_yes || table[i][j].calc_no)
             ) {
-                table[i][j].key = add_vertex(mip_graph);
-                vertex_nodeid_list[table[i][j].key] = NodeId(i, j);
+                table[i][j].key =
+                    boost::add_vertex({index++, NodeId(i, j)}, mip_graph);
             }
         }
     }
 
-    auto count = 0;
+    auto edge_index{0U};
 
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             if (it.branch[0] != 0 && it.calc[0]) {
                 auto& n0 = table.node(it.branch[0]);
-                auto  a = add_edge(it.key, n0.key, mip_graph);
-                put(edge_type_list, a.first, false);
-                put(boost::edge_index_t(), mip_graph, a.first, count++);
+                auto  a = add_edge(it.key, n0.key,
+                                  {edge_index++, false, GRBVar()}, mip_graph);
             }
 
             if (it.branch[1] != 0 && it.calc[1]) {
                 auto& n1 = table.node(it.branch[1]);
-                auto  a = add_edge(it.key, n1.key, mip_graph);
-                put(edge_type_list, a.first, true);
-                put(boost::edge_index_t(), mip_graph, a.first, count++);
+                auto  a = add_edge(it.key, n1.key,
+                                  {edge_index++, true, GRBVar()}, mip_graph);
             }
         }
     }
 
-    // std::cout << "Number of vertices = " << num_vertices(mip_graph) << '\n';
-    // std::cout << "Number of edges = " << num_edges(mip_graph) << '\n';
+    // std::cout << "Number of vertices = " << num_vertices(mip_graph) <<
+    // '\n'; std::cout << "Number of edges = " << num_edges(mip_graph) <<
+    // '\n';
 }
 
 void PricerSolverBdd::init_coeff_constraints() {
@@ -305,7 +303,8 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     lp_interface_get_nb_rows(pd->RMP, &(pd->nb_rows));
     auto nb_new_constraints =
         reformulation_model.get_nb_constraints() - pd->nb_rows;
-    // std::span aux_col_pool{pd->localColPool->pdata, pd->localColPool->len};
+    // std::span aux_col_pool{pd->localColPool->pdata,
+    // pd->localColPool->len};
 
     fmt::print("nb rows initial {} {} {}\n", pd->nb_rows,
                reformulation_model.get_nb_constraints(), nb_new_constraints);
@@ -395,12 +394,14 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     pd->rhs.resize(pd->nb_rows, 0.0);
     lp_interface_get_rhs(pd->RMP, (pd->rhs).data());
     // lp_interface_get_rhs(pd->RMP, &g_array_index(pd->rhs, double, 0));
-    // g_array_append_vals(pd->lhs_coeff, new_values.data(), new_values.size());
+    // g_array_append_vals(pd->lhs_coeff, new_values.data(),
+    // new_values.size());
     pd->lhs_coeff.resize(pd->nb_rows, 0.0);
     // g_array_append_vals(pd->id_row, new_values_int.data(),
     //                     new_values_int.size());
     pd->id_row.resize(pd->nb_rows, 0.0);
-    // g_array_append_vals(pd->coeff_row, new_values.data(), new_values.size());
+    // g_array_append_vals(pd->coeff_row, new_values.data(),
+    // new_values.size());
     pd->coeff_row.resize(pd->nb_rows, 0.0);
     // assert(pd->nb_rows == pd->slack->len);
 }
@@ -716,10 +717,10 @@ void PricerSolverBdd::remove_edges() {
 
 void PricerSolverBdd::print_representation_file() {
     auto& table = *(decision_diagram.getDiagram());
-    auto  vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
-    auto  edge_type_list(get(boost::edge_weight_t(), mip_graph));
-    auto  edge_index_list(get(boost::edge_index_t(), mip_graph));
-    auto  index_edge{
+    // auto  vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
+    // auto  edge_type_list(get(boost::edge_weight_t(), mip_graph));
+    // auto  edge_index_list(get(boost::edge_index_t(), mip_graph));
+    auto index_edge{
         std::vector<std::vector<int>>(convex_constr_id, std::vector<int>())};
 
     auto outfile_file_mip_str =
@@ -731,17 +732,15 @@ void PricerSolverBdd::print_representation_file() {
                  << " " << convex_rhs << "\n\n";
 
     for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-        auto& head = table.node(get(boost::vertex_name_t(), mip_graph,
-                                    source(*it.first, mip_graph)));
-        auto& n = table.node(get(boost::vertex_name_t(), mip_graph,
-                                 target(*it.first, mip_graph)));
-        auto  high = edge_type_list[*it.first];
-        if (high) {
+        auto& head =
+            table.node(mip_graph[source(*it.first, mip_graph)].node_id);
+        auto& n = table.node(mip_graph[target(*it.first, mip_graph)].node_id);
+        if (mip_graph[*it.first].high) {
             double cost =
                 value_Fj(head.get_weight() + head.get_job()->processing_time,
                          head.get_job());
             out_file_mip << head.key << " " << n.key << " " << cost << "\n";
-            index_edge[head.get_nb_job()].push_back(edge_index_list[*it.first]);
+            index_edge[head.get_nb_job()].push_back(mip_graph[*it.first].id);
         } else {
             out_file_mip << head.key << " " << n.key << " " << 0.0 << "\n";
         }
@@ -760,8 +759,8 @@ void PricerSolverBdd::print_representation_file() {
     out_file_mip << "\n";
 
     for (auto it = vertices(mip_graph); it.first != it.second; it.first++) {
-        const auto node_id = vertex_nodeid_list[*it.first];
-        auto&      n = table.node(node_id);
+        auto const& node_id = mip_graph[*it.first].node_id;
+        auto&       n = table.node(node_id);
         if (node_id > 1) {
             out_file_mip << n.get_nb_job() << " " << n.get_weight() << "\n";
         }
@@ -773,18 +772,19 @@ void PricerSolverBdd::print_representation_file() {
 }
 
 void PricerSolverBdd::add_inequality(std::vector<int> v1, std::vector<int> v2) {
-    GRBLinExpr        expr1;
-    EdgeVarAccessor   edge_var_list(get(boost::edge_weight2_t(), mip_graph));
-    EdgeIndexAccessor edge_index_list(get(boost::edge_index_t(), mip_graph));
+    GRBLinExpr expr1;
+    // EdgeVarAccessor   edge_var_list(get(boost::edge_weight2_t(),
+    // mip_graph)); EdgeIndexAccessor
+    // edge_index_list(get(boost::edge_index_t(), mip_graph));
     for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-        if (std::find(v1.begin(), v1.end(), edge_index_list[*it.first]) !=
+        auto* data = static_cast<EdgeData*>(it.first->get_property());
+        if (std::find(v1.begin(), v1.end(), mip_graph[*it.first].id) !=
             v1.end()) {
-            expr1 += edge_var_list[*it.first].x;
+            expr1 += mip_graph[*it.first].x;
         }
 
-        if (std::find(v2.begin(), v2.end(), edge_index_list[*it.first]) !=
-            v2.end()) {
-            expr1 -= edge_var_list[*it.first].x;
+        if (std::find(v2.begin(), v2.end(), data->id) != v2.end()) {
+            expr1 -= mip_graph[*it.first].x;
         }
     }
     model.addConstr(expr1, GRB_EQUAL, 0);
@@ -792,12 +792,12 @@ void PricerSolverBdd::add_inequality(std::vector<int> v1, std::vector<int> v2) {
 
 void PricerSolverBdd::add_inequality(std::vector<int> v1) {
     GRBLinExpr expr1;
-    auto       edge_var_list(get(boost::edge_weight2_t(), mip_graph));
-    auto       edge_index_list(get(boost::edge_index_t(), mip_graph));
+    // auto       edge_var_list(get(boost::edge_weight2_t(), mip_graph));
+    // auto       edge_index_list(get(boost::edge_index_t(), mip_graph));
     for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-        if (std::find(v1.begin(), v1.end(), edge_index_list[*it.first]) !=
-            v1.end()) {
-            expr1 += edge_var_list[*it.first].x;
+        auto* data = static_cast<EdgeData*>(it.first->get_property());
+        if (std::find(v1.begin(), v1.end(), data->id) != v1.end()) {
+            expr1 += mip_graph[*it.first].x;
         }
     }
     model.addConstr(expr1, GRB_EQUAL, convex_rhs);
@@ -808,23 +808,22 @@ void PricerSolverBdd::build_mip() {
     try {
         fmt::print("Building Mip model for the extended formulation:\n");
         auto& table = *(decision_diagram.getDiagram());
-        auto  vertex_index_list(get(boost::vertex_index_t(), mip_graph));
-        auto  vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
-        auto  edge_type_list{get(boost::edge_weight_t(), mip_graph)};
-        auto  edge_var_list{get(boost::edge_weight2_t(), mip_graph)};
 
         /** Constructing variables */
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            if (edge_type_list[*it.first]) {
-                auto&  n = table.node(get(boost::vertex_name_t(), mip_graph,
-                                         source(*it.first, mip_graph)));
+            // auto* data =
+            // static_cast<EdgeData*>(it.first->get_property());
+            auto& high = mip_graph[*it.first].high;
+            auto& x = mip_graph[*it.first].x;
+            if (high) {
+                auto& n =
+                    table.node(mip_graph[source(*it.first, mip_graph)].node_id);
                 auto   C = n.get_weight() + n.get_job()->processing_time;
                 double cost = value_Fj(C, n.get_job());
-                edge_var_list[*it.first].x =
-                    m.addVar(0.0, 1.0, cost, GRB_BINARY);
+                x = m.addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
-                edge_var_list[*it.first].x = m.addVar(
-                    0.0, static_cast<double>(convex_rhs), 0.0, GRB_CONTINUOUS);
+                x = m.addVar(0.0, static_cast<double>(convex_rhs), 0.0,
+                             GRB_CONTINUOUS);
             }
         }
 
@@ -841,12 +840,15 @@ void PricerSolverBdd::build_mip() {
         // }
 
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            auto high = edge_type_list[*it.first];
-
+            // auto high = edge_type_list[*it.first];
+            // auto* data =
+            // static_cast<EdgeData*>(it.first->get_property());
+            auto& high = mip_graph[*it.first].high;
             if (high) {
-                auto& n = table.node(get(boost::vertex_name_t(), mip_graph,
-                                         source(*it.first, mip_graph)));
-                assignment[n.get_nb_job()] += edge_var_list[*it.first].x;
+                auto& x = mip_graph[*it.first].x;
+                auto& n =
+                    table.node(mip_graph[source(*it.first, mip_graph)].node_id);
+                assignment[n.get_nb_job()] += x;
             }
         }
 
@@ -862,15 +864,15 @@ void PricerSolverBdd::build_mip() {
         auto rhs_flow(std::vector<double>(num_vertices, 0));
 
         for (auto it = vertices(mip_graph); it.first != it.second; ++it.first) {
-            const auto node_id = vertex_nodeid_list[*it.first];
-            const auto vertex_key = vertex_index_list[*it.first];
+            const auto node_id = mip_graph[*it.first].node_id;
+            const auto vertex_key = mip_graph[*it.first].index;
             sense_flow[vertex_key] = GRB_EQUAL;
             auto out_edges_it = boost::out_edges(*it.first, mip_graph);
 
             for (; out_edges_it.first != out_edges_it.second;
                  ++out_edges_it.first) {
                 flow_conservation_constr[vertex_key] -=
-                    edge_var_list[*out_edges_it.first].x;
+                    mip_graph[*out_edges_it.first].x;
             }
 
             auto in_edges_it = boost::in_edges(*it.first, mip_graph);
@@ -878,7 +880,7 @@ void PricerSolverBdd::build_mip() {
             for (; in_edges_it.first != in_edges_it.second;
                  ++in_edges_it.first) {
                 flow_conservation_constr[vertex_key] +=
-                    edge_var_list[*in_edges_it.first].x;
+                    mip_graph[*in_edges_it.first].x;
             }
 
             if (node_id == decision_diagram.root()) {
@@ -894,7 +896,8 @@ void PricerSolverBdd::build_mip() {
             m.addConstrs(flow_conservation_constr.data(), sense_flow.data(),
                          rhs_flow.data(), nullptr, num_vertices));
         m.update();
-        // for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+        // for (auto it = edges(mip_graph); it.first != it.second;
+        // it.first++) {
         //     // edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart,
         //     // lp_x[edge_index_list[*it.first]]);
         //     edge_var_list[*it.first].x.set(
@@ -903,36 +906,7 @@ void PricerSolverBdd::build_mip() {
         // }
         // model.write("original_" + problem_name + ".lp");
         auto presolve = m.presolve();
-        // presolve.write("presolve_" + problem_name + ".lp");
         m.optimize();
-
-        // if (model.get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
-        //     for (auto it = edges(mip_graph); it.first != it.second;
-        //          it.first++) {
-        //         int index = edge_index_list[*it.first];
-        //     }
-
-        //     // ColorWriterEdgeX  edge_writer(mip_graph, solution_x.get());
-        //     // ColorWriterVertex vertex_writer(mip_graph, table);
-        //     // string            file_name = "lp_solution_" + problem_name +
-        //     "_"
-        //     // +
-        //     //                    std::to_string(num_machines) + ".gv";
-        //     // std::ofstream outf(file_name);
-        //     // boost::write_graphviz(outf, mip_graph, vertex_writer,
-        //     // edge_writer); outf.close();
-        // }
-
-        // ColorWriterEdgeIndex edge_writer_index(mip_graph);
-        // ColorWriterVertex    vertex_writer(mip_graph, table);
-        // auto                 file_name =
-        //     "index_" + problem_name + "_" + std::to_string(convex_rhs) +
-        //     ".gv";
-        // std::ofstream outf_index(file_name);
-        // boost::write_graphviz(outf_index, mip_graph, vertex_writer,
-        //                       edge_writer_index);
-        // outf_index.close();
-
     } catch (GRBException& e) {
         fmt::print("Error code = {}\n", e.getErrorCode());
         fmt::print(e.getMessage());
@@ -951,57 +925,6 @@ void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     topdown_filtering();
     cleanup_arcs();
     construct_mipgraph();
-    // for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
-    //     if (c == nb_jobs) {
-    //         continue;
-    //     }
-
-    //     auto coeff_list = original_model.get_coeff_list(c);
-    //     auto iter = coeff_list->begin();
-
-    //     while (iter != coeff_list->end()) {
-    //         if (node_ids[(*iter)->get_j()][(*iter)->get_t()].lock()) {
-    //             iter = coeff_list->erase(iter);
-    //         } else {
-    //             iter++;
-    //         }
-    //     }
-    // }
-
-    // auto& table = decision_diagram->getDiagram().privateEntity();
-    // std::for_each(t_out.begin(), t_out.end(), [&](auto& elem) {
-    //     std::cout << elem.first << ": ";
-    //     for (auto& it : elem.second) {
-    //         auto aux = it.lock();
-    //         if (aux) {
-    //             auto& node = table.node(*aux);
-    //             std::cout << node.get_nb_job() << " ";
-    //         }
-    //     }
-    //     std::cout << "\n";
-    // });
-
-    // std::cout << "----------------------------------------------------\n";
-    // // NodeTableEntity<>&   table =
-    // std::for_each(t_in.begin(), t_in.end(), [&](auto& elem) {
-    //     std::cout << elem.first << ": ";
-    //     for (auto& it : elem.second) {
-    //         auto aux = it.lock();
-    //         if (aux) {
-    //             auto& node = table.node(*aux);
-    //             std::cout << node.get_nb_job() << " ";
-    //         }
-    //     }
-    //     std::cout << "\n";
-    // });
-    // decision_diagram->getDiagram().privateEntity(); ColorWriterEdgeIndex
-    // edge_writer(mip_graph); ColorWriterVertex    vertex_writer(mip_graph,
-    // table); string               file_name = "representation_" + problem_name
-    // + "_" +
-    //                    std::to_string(num_machines) + ".gv";
-    // std::ofstream outf(file_name);
-    // boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
-    // outf.close();
 }
 
 void PricerSolverBdd::cleanup_arcs() {
@@ -1256,9 +1179,9 @@ void PricerSolverBdd::check_infeasible_arcs() {
 
 void PricerSolverBdd::equivalent_paths_filtering() {
     /** init table */
-    auto  removed_edges = false;
-    auto  nb_edges_removed_tmp = 0;
-    auto  edge_type_list(get(boost::edge_weight_t(), mip_graph));
+    auto removed_edges = false;
+    auto nb_edges_removed_tmp = 0;
+    // auto  edge_type_list(get(boost::edge_weight_t(), mip_graph));
     auto& table = *(decision_diagram.getDiagram());
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
@@ -1283,7 +1206,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
     }
 
     for (auto& it : vertices) {
-        auto              start_v = get(boost::vertex_name_t(), mip_graph, it);
+        auto              start_v = mip_graph[it].node_id;
         auto              num_vertices = boost::num_vertices(mip_graph);
         std::list<NodeId> queue;
 
@@ -1304,10 +1227,11 @@ void PricerSolverBdd::equivalent_paths_filtering() {
             auto iter = boost::in_edges(table.node(currVertex).key, mip_graph);
 
             for (; iter.first != iter.second; iter.first++) {
-                auto  adjVertex = get(boost::vertex_name_t(), mip_graph,
-                                     source(*iter.first, mip_graph));
+                auto adjVertex =
+                    mip_graph[source(*iter.first, mip_graph)].node_id;
                 auto& n = table.node(adjVertex);
-                auto  high = edge_type_list[*iter.first];
+                auto* data = static_cast<EdgeData*>(iter.first->get_property());
+                auto  high = data->high;
 
                 if (!visited[n.key]) {
                     visited[n.key] = true;
@@ -1395,7 +1319,8 @@ void PricerSolverBdd::equivalent_paths_filtering() {
 
     if (removed_edges) {
         fmt::print(
-            "Number of edges removed by equivalent_path_filtering = {}\nNumber "
+            "Number of edges removed by equivalent_path_filtering = "
+            "{}\nNumber "
             "of edges removed in total = {}\n",
             nb_edges_removed_tmp, nb_removed_edges);
 
@@ -1435,7 +1360,8 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
     }
     auto                    nb_columns = static_cast<size_t>(num_columns);
     std::span<const double> aux_cols{columns, nb_columns};
-    // std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
+    // std::span aux_schedule_sets{schedule_sets->pdata,
+    // schedule_sets->len};
     assert(nb_columns == schedule_sets.size());
 
     set_is_integer_solution(true);
@@ -1484,7 +1410,8 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
 
             value = it.lp_x[0];
             // if (value > EPS_SOLVER) {
-            //     lp_sol.emplace_back(it.get_nb_job(), it.get_weight(), 0.0,
+            //     lp_sol.emplace_back(it.get_nb_job(), it.get_weight(),
+            //     0.0,
             //                         value, -1, false);
             // }
         }

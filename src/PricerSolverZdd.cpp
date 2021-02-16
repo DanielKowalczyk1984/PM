@@ -31,76 +31,82 @@ PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
 }
 
 void PricerSolverZdd::construct_mipgraph() {
-    mip_graph.clear();
-    auto&             table = *(decision_diagram->getDiagram());
-    NodeZddIdAccessor vertex_node_zdd_id_list(
-        get(boost::vertex_color_t(), mip_graph));
-    NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(), mip_graph));
-    NodeMipIdAccessor vertex_mip_id_list(
-        get(boost::vertex_degree_t(), mip_graph));
-    EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
+    //     mip_graph.clear();
+    //     auto&             table = *(decision_diagram->getDiagram());
+    //     NodeZddIdAccessor vertex_node_zdd_id_list(
+    //         get(boost::vertex_color_t(), mip_graph));
+    //     NodeIdAccessor vertex_nodeid_list(get(boost::vertex_name_t(),
+    //     mip_graph)); NodeMipIdAccessor vertex_mip_id_list(
+    //         get(boost::vertex_degree_t(), mip_graph));
+    //     EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(),
+    //     mip_graph));
 
-    for (int i = decision_diagram->topLevel(); i >= 0; i--) {
-        for (size_t j = 0; j < table[i].size(); j++) {
-            auto n{NodeId(i, j)};
-            if (n.row() != 0) {
-                for (auto& it : table[i][j].list) {
-                    auto key = add_vertex(mip_graph);
-                    it->key = key;
-                    vertex_mip_id_list[it->key] = key;
-                    vertex_nodeid_list[it->key] = it->node_id;
-                    vertex_node_zdd_id_list[it->key] = it;
-                }
-            } else {
-                if (n != 0) {
-                    auto terminal_node = add_vertex(mip_graph);
-                    for (auto& it : table[i][j].list) {
-                        it->key = terminal_node;
-                        vertex_mip_id_list[terminal_node] = terminal_node;
-                        vertex_nodeid_list[terminal_node] = it->node_id;
-                        vertex_node_zdd_id_list[terminal_node] = it;
-                    }
-                }
-            }
-        }
-    }
+    //     for (int i = decision_diagram->topLevel(); i >= 0; i--) {
+    //         for (size_t j = 0; j < table[i].size(); j++) {
+    //             auto n{NodeId(i, j)};
+    //             if (n.row() != 0) {
+    //                 for (auto& it : table[i][j].list) {
+    //                     auto key = add_vertex(mip_graph);
+    //                     it->key = key;
+    //                     vertex_mip_id_list[it->key] = key;
+    //                     vertex_nodeid_list[it->key] = it->node_id;
+    //                     vertex_node_zdd_id_list[it->key] = it;
+    //                 }
+    //             } else {
+    //                 if (n != 0) {
+    //                     auto terminal_node = add_vertex(mip_graph);
+    //                     for (auto& it : table[i][j].list) {
+    //                         it->key = terminal_node;
+    //                         vertex_mip_id_list[terminal_node] =
+    //                         terminal_node; vertex_nodeid_list[terminal_node]
+    //                         = it->node_id;
+    //                         vertex_node_zdd_id_list[terminal_node] = it;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
 
-    int count = 0;
+    //     int count = 0;
 
-    for (int i = decision_diagram->topLevel(); i > 0; i--) {
-#ifndef NDEBUG
-        auto job = (static_cast<job_interval_pair*>(
-                        g_ptr_array_index(ordered_jobs, ordered_jobs->len - i)))
-                       ->j;
-#endif  // NDEBUG
+    //     for (int i = decision_diagram->topLevel(); i > 0; i--) {
+    // #ifndef NDEBUG
+    //         auto job = (static_cast<job_interval_pair*>(
+    //                         g_ptr_array_index(ordered_jobs, ordered_jobs->len
+    //                         - i)))
+    //                        ->j;
+    // #endif  // NDEBUG
 
-        for (auto& it : table[i]) {
-            if (it.branch[0] != 0) {
-                for (auto& iter : it.list) {
-                    auto n = iter->n;
-                    assert(iter->weight == n->weight);
-                    auto a = add_edge(iter->key, n->key, mip_graph);
-                    put(edge_type_list, a.first, false);
-                    iter->low_edge_key = count;
-                    put(boost::edge_index_t(), mip_graph, a.first, count++);
-                }
-            }
+    //         for (auto& it : table[i]) {
+    //             if (it.branch[0] != 0) {
+    //                 for (auto& iter : it.list) {
+    //                     auto n = iter->n;
+    //                     assert(iter->weight == n->weight);
+    //                     auto a = add_edge(iter->key, n->key, mip_graph);
+    //                     put(edge_type_list, a.first, false);
+    //                     iter->low_edge_key = count;
+    //                     put(boost::edge_index_t(), mip_graph, a.first,
+    //                     count++);
+    //                 }
+    //             }
 
-            if (it.branch[1] != 0) {
-                for (auto& iter : it.list) {
-                    auto y = iter->y;
-                    assert(iter->weight + job->processing_time == y->weight);
-                    auto a = add_edge(iter->key, y->key, mip_graph);
-                    put(edge_type_list, a.first, true);
-                    iter->high_edge_key = count;
-                    put(boost::edge_index_t(), mip_graph, a.first, count++);
-                }
-            }
-        }
-    }
+    //             if (it.branch[1] != 0) {
+    //                 for (auto& iter : it.list) {
+    //                     auto y = iter->y;
+    //                     assert(iter->weight + job->processing_time ==
+    //                     y->weight); auto a = add_edge(iter->key, y->key,
+    //                     mip_graph); put(edge_type_list, a.first, true);
+    //                     iter->high_edge_key = count;
+    //                     put(boost::edge_index_t(), mip_graph, a.first,
+    //                     count++);
+    //                 }
+    //             }
+    //         }
+    //     }
 
-    std::cout << "Number of vertices = " << num_vertices(mip_graph) << '\n';
-    std::cout << "Number of edges = " << num_edges(mip_graph) << '\n';
+    //     std::cout << "Number of vertices = " << num_vertices(mip_graph) <<
+    //     '\n'; std::cout << "Number of edges = " << num_edges(mip_graph) <<
+    //     '\n';
 }
 
 void PricerSolverZdd::init_table() {
@@ -249,91 +255,96 @@ void PricerSolverZdd::remove_edges() {
 
 void PricerSolverZdd::build_mip() {
     try {
-        fmt::print("Building Mip model for the extended formulation:\n");
-        NodeIdAccessor vertex_nodeid_list(
-            get(boost::vertex_name_t(), mip_graph));
-        NodeMipIdAccessor vertex_mip_id_list(
-            get(boost::vertex_degree_t(), mip_graph));
-        EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(), mip_graph));
-        EdgeVarAccessor  edge_var_list(get(boost::edge_weight2_t(), mip_graph));
+        // fmt::print("Building Mip model for the extended formulation:\n");
+        // // NodeIdAccessor vertex_nodeid_list(
+        // //     get(boost::vertex_name_t(), mip_graph));
+        // // NodeMipIdAccessor vertex_mip_id_list(
+        // //     get(boost::vertex_degree_t(), mip_graph));
+        // // EdgeTypeAccessor edge_type_list(get(boost::edge_weight_t(),
+        // // mip_graph)); EdgeVarAccessor
+        // // edge_var_list(get(boost::edge_weight2_t(), mip_graph));
 
-        /** Constructing variables */
-        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            if (edge_type_list[*it.first]) {
-                auto& n = get(boost::vertex_color_t(), mip_graph,
-                              source(*it.first, mip_graph));
-                Job*  job = n->get_job();
+        // /** Constructing variables */
+        // for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+        //     if (mip_graph[*it.first].high) {
+        //         auto& n = decision_diagram->getDiagram()->node(
+        //             mip_graph[source(*it.first, mip_graph)].node_id);
+        //         Job* job = n.get_job();
 
-                double cost = value_Fj(n->weight + job->processing_time, job);
-                edge_var_list[*it.first].x =
-                    model.addVar(0.0, 1.0, cost, GRB_CONTINUOUS);
-            } else {
-                edge_var_list[*it.first].x = model.addVar(
-                    0.0, static_cast<double>(convex_rhs), 0.0, GRB_CONTINUOUS);
-            }
-        }
+        //         double cost = value_Fj(n.+ job->processing_time, job);
+        //         edge_var_list[*it.first].x =
+        //             model.addVar(0.0, 1.0, cost, GRB_CONTINUOUS);
+        //     } else {
+        //         edge_var_list[*it.first].x = model.addVar(
+        //             0.0, static_cast<double>(convex_rhs), 0.0,
+        //             GRB_CONTINUOUS);
+        //     }
+        // }
 
-        model.update();
-        /** Assignment constraints */
-        std::vector<GRBLinExpr> assignment(convex_constr_id, GRBLinExpr());
-        std::vector<char>       sense(convex_constr_id, GRB_GREATER_EQUAL);
-        std::vector<double>     rhs(convex_constr_id, 1.0);
+        // model.update();
+        // /** Assignment constraints */
+        // std::vector<GRBLinExpr> assignment(convex_constr_id, GRBLinExpr());
+        // std::vector<char>       sense(convex_constr_id, GRB_GREATER_EQUAL);
+        // std::vector<double>     rhs(convex_constr_id, 1.0);
 
-        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-            auto high = edge_type_list[*it.first];
+        // for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+        //     auto high = edge_type_list[*it.first];
 
-            if (high) {
-                auto& n = get(boost::vertex_color_t(), mip_graph,
-                              source(*it.first, mip_graph));
-                assignment[n->get_job()->job] += edge_var_list[*it.first].x;
-            }
-        }
+        //     if (high) {
+        //         auto& n = get(boost::vertex_color_t(), mip_graph,
+        //                       source(*it.first, mip_graph));
+        //         assignment[n->get_job()->job] += edge_var_list[*it.first].x;
+        //     }
+        // }
 
-        std::unique_ptr<GRBConstr> assignment_constrs(
-            model.addConstrs(assignment.data(), sense.data(), rhs.data(),
-                             nullptr, convex_constr_id));
-        model.update();
-        /** Flow constraints */
-        size_t num_vertices = boost::num_vertices(mip_graph);
-        // boost::num_vertices(mip_graph) - table[0][1].list.size() + 1;
-        std::vector<GRBLinExpr> flow_conservation_constr(num_vertices,
-                                                         GRBLinExpr());
-        std::vector<char>       sense_flow(num_vertices, GRB_EQUAL);
-        std::vector<double>     rhs_flow(num_vertices, 0.0);
+        // std::unique_ptr<GRBConstr> assignment_constrs(
+        //     model.addConstrs(assignment.data(), sense.data(), rhs.data(),
+        //                      nullptr, convex_constr_id));
+        // model.update();
+        // /** Flow constraints */
+        // size_t num_vertices = boost::num_vertices(mip_graph);
+        // // boost::num_vertices(mip_graph) - table[0][1].list.size() + 1;
+        // std::vector<GRBLinExpr> flow_conservation_constr(num_vertices,
+        //                                                  GRBLinExpr());
+        // std::vector<char>       sense_flow(num_vertices, GRB_EQUAL);
+        // std::vector<double>     rhs_flow(num_vertices, 0.0);
 
-        for (auto it = vertices(mip_graph); it.first != it.second; ++it.first) {
-            const auto node_id = vertex_nodeid_list[*it.first];
-            const auto vertex_key = vertex_mip_id_list[*it.first];
-            auto       out_edges_it = boost::out_edges(*it.first, mip_graph);
+        // for (auto it = vertices(mip_graph); it.first != it.second;
+        // ++it.first) {
+        //     const auto node_id = vertex_nodeid_list[*it.first];
+        //     const auto vertex_key = vertex_mip_id_list[*it.first];
+        //     auto       out_edges_it = boost::out_edges(*it.first, mip_graph);
 
-            for (; out_edges_it.first != out_edges_it.second;
-                 ++out_edges_it.first) {
-                flow_conservation_constr[vertex_key] -=
-                    edge_var_list[*out_edges_it.first].x;
-            }
+        //     for (; out_edges_it.first != out_edges_it.second;
+        //          ++out_edges_it.first) {
+        //         flow_conservation_constr[vertex_key] -=
+        //             edge_var_list[*out_edges_it.first].x;
+        //     }
 
-            auto in_edges_it = boost::in_edges(*it.first, mip_graph);
+        //     auto in_edges_it = boost::in_edges(*it.first, mip_graph);
 
-            for (; in_edges_it.first != in_edges_it.second;
-                 ++in_edges_it.first) {
-                flow_conservation_constr[vertex_key] +=
-                    edge_var_list[*in_edges_it.first].x;
-            }
+        //     for (; in_edges_it.first != in_edges_it.second;
+        //          ++in_edges_it.first) {
+        //         flow_conservation_constr[vertex_key] +=
+        //             edge_var_list[*in_edges_it.first].x;
+        //     }
 
-            if (node_id == decision_diagram->root()) {
-                rhs_flow[vertex_key] = static_cast<double>(-convex_rhs);
-            } else if (node_id.row() == 0) {
-                rhs_flow[vertex_key] = static_cast<double>(convex_rhs);
-            }
-        }
+        //     if (node_id == decision_diagram->root()) {
+        //         rhs_flow[vertex_key] = static_cast<double>(-convex_rhs);
+        //     } else if (node_id.row() == 0) {
+        //         rhs_flow[vertex_key] = static_cast<double>(convex_rhs);
+        //     }
+        // }
 
-        std::unique_ptr<GRBConstr> flow_constrs(
-            model.addConstrs(flow_conservation_constr.data(), sense_flow.data(),
-                             rhs_flow.data(), nullptr, num_vertices));
-        model.update();
-        model.write("zdd_" + problem_name + "_" + std::to_string(convex_rhs) +
-                    ".lp");
-        model.optimize();
+        // std::unique_ptr<GRBConstr> flow_constrs(
+        //     model.addConstrs(flow_conservation_constr.data(),
+        //     sense_flow.data(),
+        //                      rhs_flow.data(), nullptr, num_vertices));
+        // model.update();
+        // model.write("zdd_" + problem_name + "_" + std::to_string(convex_rhs)
+        // +
+        //             ".lp");
+        // model.optimize();
     } catch (GRBException& e) {
         std::cout << "Error code = " << e.getErrorCode() << "\n";
         std::cout << e.getMessage() << "\n";
