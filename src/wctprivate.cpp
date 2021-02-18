@@ -1,6 +1,7 @@
 #include "wctprivate.h"
 #include <fmt/core.h>
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <type_traits>
 #include "PricerSolverArcTimeDP.hpp"
@@ -18,9 +19,33 @@ Problem::~Problem() { /*free the parameters*/
     solution_free(&(opt_sol));
 }
 
-Problem::Problem(int argc, const char** argv) {
+Problem::Problem(int argc, const char** argv)
+    : parms(),
+      stat(),
+      tree(),
+      g_job_array(g_ptr_array_new_with_free_func(g_job_free)),
+      intervals(g_ptr_array_new_with_free_func(g_interval_free)),
+      opt_sol(nullptr),
+      nb_jobs(),
+      nb_machines(),
+      p_sum(),
+      pmax(),
+      pmin(std::numeric_limits<int>::max()),
+      dmax(std::numeric_limits<int>::min()),
+      dmin(std::numeric_limits<int>::max()),
+      off(),
+      H_min(),
+      H_max(std::numeric_limits<int>::max()),
+      /*B&B info*/
+      global_upper_bound(std::numeric_limits<int>::max()),
+      global_lower_bound(),
+      rel_error(std::numeric_limits<double>::max()),
+      root_lower_bound(),
+      root_upper_bound(std::numeric_limits<int>::max()),
+      root_rel_error(std::numeric_limits<double>::max()),
+      status(no_sol),
+      root_pd(std::make_unique<NodeData>(this)) {
     double start_time = 0.0;
-    problem_init();
 
     int val = program_header(argc, argv);
     val = parms.parse_cmd(argc, argv);
@@ -34,10 +59,11 @@ Problem::Problem(int argc, const char** argv) {
      *
      */
     start_time = CCutil_zeit();
+    fs::path _path{parms.jobfile};
+    instance = Instance(_path, &parms);
     problem_read();
     preprocess_data();
-    // CCcheck_val_2(val, "Failed at preprocess_data");
-    fmt::print("Reading and preprocessing of the data took %f seconds\n",
+    fmt::print("Reading and preprocessing of the data took {} seconds\n",
                CCutil_zeit() - start_time);
 
     /**
@@ -49,9 +75,7 @@ Problem::Problem(int argc, const char** argv) {
     } else {
         opt_sol = solution_alloc(intervals->len, nb_machines, nb_jobs, off);
         Solution* sol = opt_sol;
-        // CCcheck_NULL_2(sol, "Failed to allocate memory");
         val = construct_edd(sol);
-        // CCcheck_val_2(val, "Failed construct edd");
         fmt::print("Solution Constructed with EDD heuristic:\n");
         solution_print(sol);
         solution_canonical_order(sol, intervals);

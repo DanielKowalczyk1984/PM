@@ -11,37 +11,6 @@
 #include "util.h"
 #include "wctprivate.h"
 
-void Problem::problem_init() {
-    parms = Parms();
-    stat = Statistics();
-    statistics_init(&(stat));
-    tree = nullptr;
-    /** Job data */
-    g_job_array = g_ptr_array_new_with_free_func(g_job_free);
-    intervals = g_ptr_array_new_with_free_func(g_interval_free);
-    opt_sol = nullptr;
-    /** Job summary */
-    nb_jobs = 0;
-    p_sum = 0;
-    pmax = 0;
-    pmin = INT_MAX;
-    dmax = INT_MIN;
-    dmin = INT_MAX;
-    off = 0;
-    H_min = 0;
-    H_max = INT_MAX;
-    /*B&B info*/
-    global_upper_bound = INT_MAX;
-    global_lower_bound = 0;
-    rel_error = DBL_MAX;
-    root_lower_bound = 0;
-    root_upper_bound = INT_MAX;
-    root_rel_error = DBL_MAX;
-    status = no_sol;
-    // ColPool = g_ptr_array_new_with_free_func(g_scheduleset_free);
-    root_pd = std::make_unique<NodeData>(this);
-};
-
 int debug = 0;
 
 /*Information about debug*/
@@ -211,13 +180,9 @@ std::unique_ptr<NodeData> NodeData::clone() {
 
     /** copy info about solver */
 
-    // aux->solver = copy_pricer_solver(solver, aux->ordered_jobs, aux->parms);
     aux->solver = solver->clone();
-    // aux->solver->set_ordered_jobs(aux->ordered_jobs);
-    // aux->ordered_jobs = aux->solver->get_ordered_jobs();
 
     aux->localColPool = localColPool;
-    // g_ptr_array_copy(localColPool, g_copy_scheduleset, &(nb_jobs));
 
     aux->lower_bound = lower_bound;
     aux->upper_bound = upper_bound;
