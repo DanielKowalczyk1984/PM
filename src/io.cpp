@@ -1,31 +1,6 @@
 #include "MIP_defs.hpp"
 #include "Statistics.h"
 #include "wctprivate.h"
-static int get_problem_name(char* pname, const char* end_file_name) {
-    int           rval = 0;
-    unsigned long len = 0;
-    const char*   fname = strrchr(end_file_name, '/');
-    const char*   lastdot = strrchr(end_file_name, '.');
-
-    if (!fname) {
-        fname = end_file_name;
-    } else {
-        fname++;
-    }
-
-    if (lastdot) {
-        len = lastdot - fname + 1;
-    } else {
-        len = strlen(fname);
-    }
-
-    if (snprintf(pname, len, "%s", fname) < 0) {
-        rval = 1;
-    }
-
-    printf("Extracted problem name %s\n", pname);
-    return rval;
-}
 
 int Problem::problem_read() {
     int         val = 0;
@@ -44,7 +19,7 @@ int Problem::problem_read() {
     FILE* in = fopen(parms.jobfile.c_str(), "r");
 
     if (in != (FILE*)NULL) {
-        get_problem_name(stat.pname, parms.jobfile.c_str());
+        stat.pname = parms.jobfile;
 
         if (fgets(buf, 254, in) != NULL) {
             p = buf;
@@ -100,8 +75,7 @@ CLEAN:
 }
 
 int Problem::print_to_csv() {
-    int val = 0;
-    // NodeData*   pd = root_pd.get();
+    int         val = 0;
     Statistics& statistics = stat;
     FILE*       file = (FILE*)NULL;
     char*       file_name = CC_SAFE_MALLOC(128, char);
@@ -147,7 +121,7 @@ int Problem::print_to_csv() {
     fprintf(file,
             "%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
             "%u/%u,%d,%d,%f,%d,%d,%d,%lu,%lu,%d,%d,%f,%f,%f,%f,%d,%f,%f\n",
-            stat.pname, stat.real_time_total, stat.tot_cputime.cum_zeit,
+            stat.pname.c_str(), stat.real_time_total, stat.tot_cputime.cum_zeit,
             stat.tot_lb.cum_zeit, stat.tot_lb_root.cum_zeit,
             stat.tot_heuristic.cum_zeit, stat.tot_build_dd.cum_zeit,
             stat.tot_pricing.cum_zeit, stat.tot_reduce_cost_fixing.cum_zeit,
