@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include "BranchBoundTree.hpp"
+#include "Instance.h"
 #include "MIP_defs.hpp"
 #include "OptimalSolution.hpp"
 #include "PricingStabilization.hpp"
@@ -73,10 +74,10 @@ struct Problem {
 
     /** Job data in EDD order */
     GPtrArray* g_job_array;
-    GPtrArray* list_solutions;
-
+    Instance   instance;
     /** Summary of jobs */
     int nb_jobs;
+    int nb_machines;
     int p_sum;
     int pmax;
     int pmin;
@@ -85,18 +86,15 @@ struct Problem {
     int H_min;
     int H_max;
     int off;
-    int nb_machines;
 
     GPtrArray* intervals;
 
-    /**  */
     int    global_upper_bound;
     int    global_lower_bound;
     double rel_error;
     int    root_upper_bound;
     int    root_lower_bound;
     double root_rel_error;
-    int    maxdepth;
 
     problem_status status;
 
@@ -104,7 +102,6 @@ struct Problem {
     Solution* opt_sol;
 
     /** All methods of problem class */
-    void problem_init();
     int  problem_read();
     int  preprocess_data();
     int  print_to_screen();

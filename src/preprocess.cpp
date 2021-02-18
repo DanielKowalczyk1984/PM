@@ -1,3 +1,4 @@
+#include <fmt/core.h>
 #include "job.h"
 #include "wctprivate.h"
 
@@ -30,11 +31,9 @@ gint g_job_compare_edd(const void* a, const void* b, MAYBE_UNUSED void* data) {
         return (-1);
     } else if (x->job > y->job) {
         return (1);
-    } else if (x->job < y->job) {
+    } else {
         return (-1);
     }
-
-    return (0);
 }
 
 gint g_compare_duration(gconstpointer a, gconstpointer b) {
