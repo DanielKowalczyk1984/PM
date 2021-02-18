@@ -130,6 +130,7 @@ struct parms {
     int nb_jobs;
     int nb_machines;
     parms();
+    parms(int argc, const char** argv);
 
     parms(const parms&) = default;
     parms(parms&&) = default;

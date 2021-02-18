@@ -4,6 +4,8 @@
 #include <string.h>
 #include <util.h>
 #include <regex>
+#include <string>
+#include <vector>
 
 const double TIME_LIMIT = 7200.0;
 const double ALPHA_STAB_INIT = 0.8;
@@ -27,6 +29,10 @@ parms::parms()
       pname(),
       nb_jobs(0),
       nb_machines(0) {}
+
+parms::parms(int argc, const char** argv) : parms() {
+    parse_cmd(argc, argv);
+}
 
 int Parms::parms_set_file(std::string const& fname) {
     jobfile = std::string(fname);
@@ -185,6 +191,12 @@ int Parms::parse_cmd(int argc, const char** argv) {
     val = parms_set_stab_technique(
         static_cast<int>(args["--stab_method"].asLong()));
     val = parms_set_branchandbound(args["--no_branch_and_bound"].asBool());
+    val = parms_set_strong_branching(!(args["--no_strong_branching"].asBool()));
+    val = parms_set_alpha(std::stod(args["--alpha"].asString()));
+    val = parms_set_bb_explore_strategy(
+        static_cast<int>(args["--branching_strategy"].asLong()));
+    val = parms_set_bb_node_limit(
+        static_cast<int>(args["--node_limit"].asLong()));
     /** Determine the name of the instance */
     auto file_name = args["FILE"].asString();
     val = parms_set_file(file_name);
@@ -192,11 +204,5 @@ int Parms::parse_cmd(int argc, const char** argv) {
     /** Set the number of machines */
     val = parms_set_nb_machines(static_cast<int>(args["NB"].asLong()));
 
-    val = parms_set_strong_branching(!(args["--no_strong_branching"].asBool()));
-    val = parms_set_alpha(std::stod(args["--alpha"].asString()));
-    val = parms_set_bb_explore_strategy(
-        static_cast<int>(args["--branching_strategy"].asLong()));
-    val = parms_set_bb_node_limit(
-        static_cast<int>(args["--node_limit"].asLong()));
     return val;
 }
