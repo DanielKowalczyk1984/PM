@@ -25,7 +25,7 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
         model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
         model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
         model.set(GRB_IntParam_Presolve, GRB_PRESOLVE_AGGRESSIVE);
-    } catch (GRBException& e) {
+    } catch (const GRBException& e) {
         fmt::print("Error code = {}\n", e.getErrorCode());
         fmt::print(e.getMessage());
     } catch (...) {
