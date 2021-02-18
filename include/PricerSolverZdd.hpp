@@ -7,6 +7,7 @@
 #include "MipGraph.hpp"
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
+#include "ZddNode.hpp"
 #include "wctprivate.h"
 
 class PricerSolverZdd : public PricerSolverBase {

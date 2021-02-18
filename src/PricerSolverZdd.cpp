@@ -5,6 +5,7 @@
 #include <vector>
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
+#include "ZddNode.hpp"
 
 PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
                                  int         _num_machines,
