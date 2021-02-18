@@ -1,14 +1,5 @@
-#include <partlist.h>
-#include <solution.h>
-#include <stdio.h>
-#include <util.h>
-
-int partition_order(const void* a, const void* b, void* data) {
-    (void)data;
-    const int* v1 = (const int*)&(((const Job*)a)->job);
-    const int* w1 = (const int*)&(((const Job*)b)->job);
-    return (*v1 - *w1);
-}
+#include "partlist.h"
+#include "util.h"
 
 void partlist_free(PartList* part) {
     if (part) {
@@ -32,11 +23,3 @@ void partlist_init(PartList* part) {
         part->used = 1;
     }
 }
-
-// void partition_init(PartList* part, int nb_part, MAYBE_UNUSED int nb_jobs) {
-//     int i;
-
-//     for (i = 0; i < nb_part; i++) {
-//         partlist_init(&part[i]);
-//     }
-// }
