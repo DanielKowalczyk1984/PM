@@ -3,53 +3,6 @@
 #include <memory>
 #include "Instance.h"
 
-struct compare_edd {
-    int a;
-    int b;
-    compare_edd(int _a, int _b) : a(_a), b(_b){};
-
-    bool operator()(const std::shared_ptr<Job> lhs,
-                    const std::shared_ptr<Job> rhs) {
-        int    diff = b - a;
-        double w_lhs = (lhs->due_time >= b)
-                           ? 0.0
-                           : (double)lhs->weight / lhs->processing_time;
-        double w_rhs = (rhs->due_time >= b)
-                           ? 0.0
-                           : (double)rhs->weight / rhs->processing_time;
-
-        if (lhs->processing_time >= diff) {
-            if (rhs->processing_time < diff) {
-                return true;
-            } else {
-                if (w_lhs > w_rhs) {
-                    return true;
-                } else if (w_rhs > w_lhs) {
-                    return false;
-                } else if (lhs->processing_time > rhs->processing_time) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        } else {
-            if (rhs->processing_time >= diff) {
-                return false;
-            } else {
-                if (w_lhs > w_rhs) {
-                    return true;
-                } else if (w_rhs > w_lhs) {
-                    return false;
-                } else if (lhs->processing_time > rhs->processing_time) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        }
-    }
-};
-
 Interval::Interval(int _a, int _b, const vector_ptr_jobs& _sigma)
     : a(_a),
       b(_b),

@@ -493,7 +493,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
                                 // assert(sol->c[tmp_out->job] <= I->b &&
                                 // sol->c[tmp_out->job] > I->a);
                                 sol->u[tmp_out->job] = u;
-                                sol->u[tmp_out->job] = -1;
+                                sol->u_in[tmp_out->job] = -1;
                                 g_ptr_array_remove(Q_in, tmp_out);
                             }
                             g_ptr_array_remove(Q, tmp_in);

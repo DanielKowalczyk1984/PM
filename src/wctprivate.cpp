@@ -11,6 +11,7 @@
 #include "PricerSolverZddBackward.hpp"
 #include "PricerSolverZddForward.hpp"
 #include "PricingStabilization.hpp"
+#include "Solution_new.hpp"
 // #include "interval.h"
 
 Problem::~Problem() { /*free the parameters*/
@@ -65,6 +66,12 @@ Problem::Problem(int argc, const char** argv)
     preprocess_data();
     fmt::print("Reading and preprocessing of the data took {} seconds\n",
                CCutil_zeit() - start_time);
+
+    Sol s(instance.nb_jobs, instance.nb_machines, instance.off);
+    s.construct_edd(instance.jobs);
+    s.print_solution();
+    s.canonical_order(instance.intervals);
+    s.print_solution();
 
     /**
      *@brief Finding heuristic solutions to the problem or start without
