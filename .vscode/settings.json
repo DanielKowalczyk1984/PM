@@ -1,6 +1,6 @@
 {
     "cmake.configureOnOpen": false,
-    "C_Cpp.errorSquiggles": "Disabled",
+    "C_Cpp.errorSquiggles": "Enabled",
     "cmake.preferredGenerators": [
         "Unix Makefiles",
         "Ninja"
@@ -125,6 +125,17 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "regex": "cpp",
+        "cassert": "cpp",
+        "cerrno": "cpp",
+        "cfloat": "cpp",
+        "ciso646": "cpp",
+        "climits": "cpp",
+        "queue": "cpp",
+        "stack": "cpp",
+        "version": "cpp",
+        "*.inc": "cpp",
+        "*.def": "c"
     }
 }
