@@ -523,12 +523,12 @@ int local_search_create_g(Solution* sol, local_search_data* data) {
             tw = 0;
             w = 0;
             t1 = 0;
-            unsigned k;
+            unsigned k = 0;
             int      move;
             move = 1;
             tmp = (Job*)g_ptr_array_index(lateness_sort, 0);
 
-            for (k = 0; k < lateness_sort->len && move;) {
+            for (; k < lateness_sort->len && move;) {
                 move = tmp->weight * (sol->c[tmp->job] - P - tmp->due_time) > 0;
 
                 if (move) {
