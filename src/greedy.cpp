@@ -396,14 +396,11 @@ void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform) {
 int Problem::heuristic() {
     int    val = 0;
     GRand* rand_uniform = g_rand_new_with_seed(2011);
-    // Parms*      parms = &(prob->parms);
-    // Statistics* statistics = &(prob->stat);
     g_random_set_seed(1984);
-    int       ILS = nb_jobs / 2;
-    int       IR = parms.nb_iterations_rvnd;
-    Solution* sol = nullptr;
-    Solution* sol1 = nullptr;
-    // GPtrArray*         intervals = prob->intervals;
+    int                ILS = nb_jobs / 2;
+    int                IR = parms.nb_iterations_rvnd;
+    Solution*          sol = nullptr;
+    Solution*          sol1 = nullptr;
     local_search_data* data = nullptr;
     local_search_data* data_RS = nullptr;
 
