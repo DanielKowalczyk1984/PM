@@ -11,36 +11,39 @@
 LocalSearchData::LocalSearchData(int _nb_jobs, int _nb_machines)
     : nb_jobs(_nb_jobs),
       nb_machines(_nb_machines),
-      W(_nb_machines, std::vector<int>(_nb_jobs)),
+      W(_nb_machines, VectorInt(_nb_jobs)),
       g(_nb_machines,
         std::vector<std::list<SlopeType>>(nb_jobs, std::list<SlopeType>())),
-      processing_list{MatrixProcessingList(_nb_machines),
-                      MatrixProcessingList(_nb_machines)},
-      G(_nb_jobs, std::vector<int>(_nb_jobs, 0)),
-      H(_nb_jobs, std::vector<int>(_nb_jobs, 0)),
+      processing_list{
+          MatrixProcessingList(
+              _nb_machines,
+              VectorProcessingList(_nb_jobs, ProcessingListData())),
+          MatrixProcessingList(
+              _nb_machines,
+              VectorProcessingList(_nb_jobs, ProcessingListData()))},
+      G(_nb_jobs, VectorInt(_nb_jobs, 0)),
+      H(_nb_jobs, VectorInt(_nb_jobs, 0)),
       GG(_nb_jobs, 0),
       HH(_nb_jobs, std::vector<int>(_nb_jobs, 0)),
       begin(_nb_jobs, std::list<SlopeType>::iterator()),
       end(_nb_jobs, std::list<SlopeType>::iterator()),
-      B2_1(_nb_jobs + 1, std::vector<int>(_nb_jobs + 1)),
-      B2_2(_nb_jobs + 1, std::vector<int>(_nb_jobs + 1)),
-      B3_1(_nb_jobs + 1, std::vector<int>(_nb_jobs + 1)),
-      B3_2(_nb_jobs + 1, std::vector<int>(_nb_jobs + 1)),
-      B4_1(_nb_jobs + 1, std::vector<int>(_nb_jobs + 1)),
-      B4_2(_nb_jobs + 1, std::vector<int>(_nb_jobs + 1)),
+      B2_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
+      B2_2(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
+      B3_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
+      B3_2(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
+      B4_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
+      B4_2(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
       B3_1_(_nb_jobs + 1, 0),
-      B5_1(_nb_jobs + 1, std::vector<int>(_nb_jobs + 1)),
-      B5_2(_nb_jobs + 1, std::vector<int>(_nb_jobs + 1)),
-      B6_1(_nb_jobs + 1, std::vector<int>(_nb_jobs + 1)) {
-    for (auto i = 0; i < nb_machines; i++) {
-        for (auto& l : processing_list) {
-            l[i] =
-                std::vector<ProcessingListData>(nb_jobs, ProcessingListData());
-        }
-    }
+      B5_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
+      B5_2(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
+      B6_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)) {}
+
+void LocalSearchData::RVND(Sol& sol) {
+    do {
+    } while (updated);
 }
 
-void LocalSearchData::forward_insertion(Sol& sol, int l) {
+void LocalSearchData::insertion_operator(Sol& sol, int l) {
     int max = 0;
     updated = false;
     auto i_best{0};
@@ -49,7 +52,7 @@ void LocalSearchData::forward_insertion(Sol& sol, int l) {
 
     calculate_g(sol);
     calculate_W(sol);
-    create_processing_list(sol, l);
+    create_processing_insertion_operator(sol, l);
 
     for (auto k = 0UL; auto& m : sol.machines) {
         const auto& vec_m = m.job_list;
@@ -135,8 +138,6 @@ void LocalSearchData::forward_insertion(Sol& sol, int l) {
                 tmp += GG[i] - HH[i][j];
                 tmp += W[k][n - 1] - W[k][j];
 
-                fmt::print("TMP = {}\n", m.total_weighted_tardiness - tmp);
-
                 if (m.total_weighted_tardiness - tmp > max) {
                     max = m.total_weighted_tardiness - tmp;
                     i_best = i;
@@ -151,8 +152,7 @@ void LocalSearchData::forward_insertion(Sol& sol, int l) {
     }
 
     if (updated) {
-        fmt::print("MAX = {}\n", max);
-        update_insertion(sol, i_best, j_best, k_best, l);
+        sol.update_insertion_move(i_best, j_best, k_best, l);
     }
 }
 
@@ -343,10 +343,7 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
             sol.print_solution();
         }
 
-        fmt::print("MAX = {}\n", max);
-        update_swap(sol, i_best, j_best, k_best, l1, l2);
-        calculate_W(sol);
-        calculate_g(sol);
+        sol.update_swap_move(i_best, j_best, k_best, l1, l2);
 
         if (dbg_lvl()) {
             sol.print_solution();
@@ -557,13 +554,10 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
                         max) {
                         max = sol.machines[k1].total_weighted_tardiness +
                               sol.machines[k2].total_weighted_tardiness - t;
-                        fmt::print("max first {}\n", max);
                         i_best = i;
                         j_best = j;
                         k_best = k1;
                         kk_best = k2;
-                        fmt::print("{} {} {} {} {} {}\n", k_best, kk_best,
-                                   i_best, j_best, l1, l2);
                         update = true;
                     }
                 }
@@ -577,8 +571,7 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
             sol.print_solution();
         }
 
-        fmt::print("max = {}\n", max);
-        update_swap_inter(sol, i_best, j_best, k_best, kk_best, l1, l2);
+        sol.update_swap_move_inter(i_best, j_best, k_best, kk_best, l1, l2);
         updated = true;
 
         if (dbg_lvl()) {
@@ -610,11 +603,11 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
     max = 0;
     calculate_g(sol);
     calculate_W(sol);
-    create_processing_list_insertion(sol, l);
+    create_processing_insertion_operator_inter(sol, l);
 
     for (auto k1 = 0UL; auto& m1 : sol.machines) {
         auto&       vec_m1 = m1.job_list;
-        const auto& njobs1 = vec_m1.size();
+        const auto& nb_jobs1 = vec_m1.size();
 
         for (auto k2 = 0UL; auto& m2 : sol.machines) {
             if (k1 == k2) {
@@ -623,13 +616,13 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
             }
 
             auto&       vec_m2 = m2.job_list;
-            const auto& njobs2 = vec_m2.size();
+            const auto& nb_jobs2 = vec_m2.size();
 
-            for (auto i = 0UL; i < njobs1 - l + 1; ++i) {
+            for (auto i = 0UL; i < nb_jobs1 - l + 1; ++i) {
                 auto       it = g[k1][i].begin();
                 const auto end = g[k1][i].end();
 
-                for (auto j = 0UL; j < njobs2; ++j) {
+                for (auto j = 0UL; j < nb_jobs2; ++j) {
                     c = 0;
 
                     if (j != 0) {
@@ -644,17 +637,17 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                 }
             }
 
-            for (int i = 0; i < njobs1 - l + 1; ++i) {
+            for (int i = 0; i < nb_jobs1 - l + 1; ++i) {
                 auto& p_list = processing_list[0][k1][i];
 
-                if (p_list.pos + l >= njobs1) {
-                    for (int j = 0; j < njobs2; ++j) {
+                if (p_list.pos + l >= nb_jobs1) {
+                    for (int j = 0; j < nb_jobs2; ++j) {
                         B2_2[p_list.pos][j] = 0;
                     }
                 } else {
                     auto       it = g[k1][p_list.pos + l].begin();
                     const auto end = g[k1][p_list.pos + l].end();
-                    for (int j = 0UL; j < njobs2; ++j) {
+                    for (int j = 0UL; j < nb_jobs2; ++j) {
                         c = p_list.p;
 
                         if (j != 0UL) {
@@ -670,8 +663,8 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                 }
             }
 
-            for (auto i = 0UL; i < njobs1 - l + 1; ++i) {
-                if (i + l >= njobs1) {
+            for (auto i = 0UL; i < nb_jobs1 - l + 1; ++i) {
+                if (i + l >= nb_jobs1) {
                     B3_1_[i] = 0;
                 } else {
                     auto       it = g[k1][i].begin();
@@ -690,11 +683,11 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                 }
             }
 
-            for (int j = 0; j < njobs2 - 1; ++j) {
+            for (int j = 0; j < nb_jobs2 - 1; ++j) {
                 auto       it = g[k2][j].begin();
                 const auto end = g[k2][j].end();
 
-                for (auto i = 0UL; i < njobs1 - l + 1; ++i) {
+                for (auto i = 0UL; i < nb_jobs1 - l + 1; ++i) {
                     auto& p_list = processing_list[0][k1][i];
                     c = p_list.p;
 
@@ -710,8 +703,8 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                 }
             }
 
-            for (int i = 0; i < njobs1 - l + 1; ++i) {
-                for (int j = 0; j < njobs2 - 1; ++j) {
+            for (int i = 0; i < nb_jobs1 - l + 1; ++i) {
+                for (int j = 0; j < nb_jobs2 - 1; ++j) {
                     t = 0;
 
                     if (i != 0) {
@@ -725,10 +718,6 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                     if (j != 0) {
                         t += W[k2][j - 1];
                     }
-
-                    fmt::print("test test {}\n",
-                               m1.total_weighted_tardiness +
-                                   m2.total_weighted_tardiness - t);
 
                     if (m1.total_weighted_tardiness +
                             m2.total_weighted_tardiness - t >
@@ -754,9 +743,7 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
         }
         updated = true;
 
-        fmt::print("MAX = {} {} {} {} {}\n", max, i_best, j_best, k_best,
-                   kk_best);
-        update_insertion_inter(sol, i_best, j_best, k_best, kk_best, l);
+        sol.update_insertion_move_inter(i_best, j_best, k_best, kk_best, l);
         if (dbg_lvl()) {
             sol.print_solution();
         }
@@ -861,7 +848,8 @@ void LocalSearchData::calculate_g(const Sol& sol) {
     }
 }
 
-void LocalSearchData::create_processing_list(const Sol& sol, int l) {
+void LocalSearchData::create_processing_insertion_operator(const Sol& sol,
+                                                           int        l) {
     for (auto i = 0UL; auto& m : sol.machines) {
         auto  C = 0;
         auto& machine = m.job_list;
@@ -881,31 +869,6 @@ void LocalSearchData::create_processing_list(const Sol& sol, int l) {
                   [](const auto& lhs, const auto& rhs) -> bool {
                       return lhs.p > rhs.p;
                   });
-        i++;
-    }
-}
-
-void LocalSearchData::create_processing_list_reversed(const Sol& sol, int l) {
-    for (auto i = 0UL; auto& m : sol.machines) {
-        auto        C = 0;
-        auto&       machine = m.job_list;
-        const auto& n = machine.size();
-        for (auto j = n - l; j < n; j++) {
-            C += machine[j]->processing_time;
-        }
-
-        for (auto j = n - l; j > 0UL; --j) {
-            processing_list[1][i][n - l - j] = {j, C};
-            C += (machine[j - 1]->processing_time -
-                  machine[j + l - 1]->processing_time);
-        }
-
-        std::sort(processing_list[1][i].begin(),
-                  processing_list[1][i].begin() + n - l,
-                  [](const auto& lhs, const auto& rhs) -> bool {
-                      return lhs.p < rhs.p;
-                  });
-
         i++;
     }
 }
@@ -956,11 +919,12 @@ void LocalSearchData::create_processing_list_swap(const Sol& sol,
     }
 }
 
-void LocalSearchData::create_processing_list_insertion(const Sol& sol, int l) {
+void LocalSearchData::create_processing_insertion_operator_inter(const Sol& sol,
+                                                                 int        l) {
     int val = 0;
 
     for (auto i = 0UL; auto& m : sol.machines) {
-        const auto& njobs = m.job_list.size();
+        const auto& nb_jobs = m.job_list.size();
         const auto& vec_m = m.job_list;
         auto        C = 0;
 
@@ -969,17 +933,17 @@ void LocalSearchData::create_processing_list_insertion(const Sol& sol, int l) {
             C += j1->processing_time;
         }
 
-        for (auto j = 0UL; j < njobs - l; ++j) {
+        for (auto j = 0UL; j < nb_jobs - l; ++j) {
             auto j1 = vec_m[j];
             auto j2 = vec_m[j + l];
             processing_list[0][i][j] = {j, C};
             C = C - j1->processing_time + j2->processing_time;
         }
 
-        processing_list[0][i][njobs - l] = {njobs - l, C};
+        processing_list[0][i][nb_jobs - l] = {nb_jobs - l, C};
         std::sort(
             processing_list[0][i].begin(),
-            processing_list[0][i].begin() + njobs - l + 1,
+            processing_list[0][i].begin() + nb_jobs - l + 1,
             [](const auto& lhs, const auto& rhs) { return lhs.p < rhs.p; });
         i++;
     }
@@ -992,10 +956,10 @@ void LocalSearchData::create_processing_list_swap_inter(const Sol& sol,
 
     for (int i = 0; i < nb_machines; ++i) {
         auto&      machine = sol.machines[i].job_list;
-        const auto njobs = machine.size();
+        const auto nb_jobs = machine.size();
         int        C = 0;
 
-        if (njobs - l1 < 0 || njobs - l2 < 0) {
+        if (nb_jobs - l1 < 0 || nb_jobs - l2 < 0) {
             continue;
         }
 
@@ -1003,18 +967,18 @@ void LocalSearchData::create_processing_list_swap_inter(const Sol& sol,
             C += machine[j]->processing_time;
         }
 
-        for (auto j = 0UL; j < njobs - l1; ++j) {
+        for (auto j = 0UL; j < nb_jobs - l1; ++j) {
             auto j1 = machine[j];
             auto j2 = machine[j + l1];
             processing_list[0][i][j] = {j, C};
             C = C - j1->processing_time + j2->processing_time;
         }
 
-        processing_list[0][i][njobs - l1].pos = njobs - l1;
-        processing_list[0][i][njobs - l1].p = C;
+        processing_list[0][i][nb_jobs - l1].pos = nb_jobs - l1;
+        processing_list[0][i][nb_jobs - l1].p = C;
         std::sort(
             processing_list[0][i].begin(),
-            processing_list[0][i].begin() + njobs - l1 + 1,
+            processing_list[0][i].begin() + nb_jobs - l1 + 1,
             [](const auto& lhs, const auto& rhs) { return lhs.p < rhs.p; });
         C = 0;
 
@@ -1022,155 +986,17 @@ void LocalSearchData::create_processing_list_swap_inter(const Sol& sol,
             C += machine[j]->processing_time;
         }
 
-        for (auto j = 0UL; j < njobs - l2; ++j) {
+        for (auto j = 0UL; j < nb_jobs - l2; ++j) {
             auto j1 = machine[j];
             auto j2 = machine[j + l2];
             processing_list[1][i][j] = {j, C};
             C = C - j1->processing_time + j2->processing_time;
         }
 
-        processing_list[1][i][njobs - l2] = {njobs - l2, C};
+        processing_list[1][i][nb_jobs - l2] = {nb_jobs - l2, C};
         std::sort(
             processing_list[1][i].begin(),
-            processing_list[1][i].begin() + njobs - l2 + 1,
+            processing_list[1][i].begin() + nb_jobs - l2 + 1,
             [](const auto& lhs, const auto& rhs) { return lhs.p < rhs.p; });
     }
-}
-
-void LocalSearchData::update_insertion(Sol& sol,
-                                       int  i_best,
-                                       int  j_best,
-                                       int  k_best,
-                                       int  l) {
-    auto& m = sol.machines[k_best];
-    auto  begin = m.job_list.begin();
-
-    auto old = m.total_weighted_tardiness;
-
-    sol.tw -= m.total_weighted_tardiness;
-    m.completion_time = 0;
-    m.total_weighted_tardiness = 0;
-
-    m.job_list.insert(begin + j_best + 1, begin + i_best, begin + i_best + l);
-    m.job_list.erase(begin + i_best, begin + i_best + l);
-
-    for (auto& tmp_j : m.job_list) {
-        m.completion_time += tmp_j->processing_time;
-        sol.c[tmp_j->job] = m.completion_time;
-        m.total_weighted_tardiness += value_Fj(sol.c[tmp_j->job], tmp_j.get());
-    }
-
-    sol.tw += m.total_weighted_tardiness;
-}
-
-void LocalSearchData::update_swap(Sol& sol,
-                                  int  i_best,
-                                  int  j_best,
-                                  int  k_best,
-                                  int  l1,
-                                  int  l2) {
-    auto& m = sol.machines[k_best];
-    auto& vec_m = sol.machines[k_best].job_list;
-    sol.tw -= m.total_weighted_tardiness;
-    m.completion_time = 0;
-    m.total_weighted_tardiness = 0;
-
-    auto it1 = vec_m.begin() + i_best;
-    auto it2 = vec_m.begin() + j_best;
-
-    swap_ranges(it1, it1 + l1, it2, it2 + l2);
-    for (auto& tmp_j : m.job_list) {
-        m.completion_time += tmp_j->processing_time;
-        sol.c[tmp_j->job] = m.completion_time;
-        m.total_weighted_tardiness += value_Fj(sol.c[tmp_j->job], tmp_j.get());
-    }
-
-    sol.tw += m.total_weighted_tardiness;
-}
-
-void LocalSearchData::update_swap_inter(Sol& sol,
-                                        int  i_best,
-                                        int  j_best,
-                                        int  k_best,
-                                        int  kk_best,
-                                        int  l1,
-                                        int  l2) {
-    auto& m1 = sol.machines[k_best];
-    auto& m2 = sol.machines[kk_best];
-    auto& vec_m1 = sol.machines[k_best].job_list;
-    auto& vec_m2 = sol.machines[kk_best].job_list;
-    sol.tw -= (m1.total_weighted_tardiness + m2.total_weighted_tardiness);
-
-    fmt::print("{} {} {} {} {} {} \n", k_best, kk_best, i_best, j_best, l1, l2);
-
-    m1.completion_time = 0;
-    m2.completion_time = 0;
-    m1.total_weighted_tardiness = 0;
-    m2.total_weighted_tardiness = 0;
-
-    auto it1 = vec_m1.begin() + i_best;
-    auto it2 = vec_m2.begin() + j_best;
-
-    std::ranges::swap_ranges(it1, it1 + l1, it2, it2 + l2);
-
-    if (l1 < l2) {
-        vec_m1.insert(it1 + l1, it2 + l1, it2 + l2);
-        vec_m2.erase(it2 + l1, it2 + l2);
-    } else if (l2 < l1) {
-        vec_m2.insert(it2 + l2, it1 + l2, it1 + l1);
-        vec_m1.erase(it1 + l2, it1 + l1);
-    }
-
-    for (auto& tmp_j : m1.job_list) {
-        m1.completion_time += tmp_j->processing_time;
-        sol.c[tmp_j->job] = m1.completion_time;
-        m1.total_weighted_tardiness += value_Fj(sol.c[tmp_j->job], tmp_j.get());
-    }
-
-    for (auto& tmp_j : m2.job_list) {
-        m2.completion_time += tmp_j->processing_time;
-        sol.c[tmp_j->job] = m2.completion_time;
-        m2.total_weighted_tardiness += value_Fj(sol.c[tmp_j->job], tmp_j.get());
-    }
-
-    sol.tw += m1.total_weighted_tardiness + m2.total_weighted_tardiness;
-}
-
-void LocalSearchData::update_insertion_inter(Sol& sol,
-                                             int  i_best,
-                                             int  j_best,
-                                             int  k_best,
-                                             int  kk_best,
-                                             int  l) {
-    auto& m1 = sol.machines[k_best];
-    auto& m2 = sol.machines[kk_best];
-    auto  begin1 = m1.job_list.begin();
-    auto  begin2 = m2.job_list.begin();
-
-    auto old = sol.tw;
-
-    sol.tw -= m1.total_weighted_tardiness + m2.total_weighted_tardiness;
-    m1.completion_time = 0;
-    m2.completion_time = 0;
-    m1.total_weighted_tardiness = 0;
-    m2.total_weighted_tardiness = 0;
-
-    m2.job_list.insert(begin2 + j_best, begin1 + i_best, begin1 + i_best + l);
-    m1.job_list.erase(begin1 + i_best, begin1 + i_best + l);
-
-    for (auto& tmp_j : m1.job_list) {
-        m1.completion_time += tmp_j->processing_time;
-        sol.c[tmp_j->job] = m1.completion_time;
-        m1.total_weighted_tardiness += value_Fj(sol.c[tmp_j->job], tmp_j.get());
-    }
-
-    for (auto& tmp_j : m2.job_list) {
-        m2.completion_time += tmp_j->processing_time;
-        sol.c[tmp_j->job] = m2.completion_time;
-        m2.total_weighted_tardiness += value_Fj(sol.c[tmp_j->job], tmp_j.get());
-    }
-
-    sol.tw += m1.total_weighted_tardiness + m2.total_weighted_tardiness;
-
-    fmt::print("diff = {}\n", old - sol.tw);
 }
