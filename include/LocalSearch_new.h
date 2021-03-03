@@ -17,6 +17,7 @@ struct SlopeType {
     SlopeType(SlopeType&&) = default;
     SlopeType& operator=(SlopeType&&) = default;
     SlopeType& operator=(const SlopeType&) = default;
+    ~SlopeType() = default;
 
     SlopeType(int _b1, int _b2, int _c, int _alpha)
         : b1(_b1),
@@ -37,6 +38,7 @@ struct ProcessingListData {
     ProcessingListData(const ProcessingListData&) = default;
     ProcessingListData(ProcessingListData&&) = default;
     ProcessingListData& operator=(ProcessingListData&&) = default;
+    ~ProcessingListData() = default;
 };
 
 using MatrixProcessingList = std::vector<std::vector<ProcessingListData>>;
@@ -46,14 +48,6 @@ using VectorInt = std::vector<int>;
 using SlopeTypeIt = std::list<SlopeType>::iterator;
 
 struct LocalSearchData {
-    int  nb_jobs;
-    int  nb_machines;
-    bool updated{};
-
-    MatrixInt                                      W;
-    std::vector<std::vector<std::list<SlopeType>>> g;
-
-    std::array<MatrixProcessingList, 2> processing_list;
 
     LocalSearchData(int _nb_jobs, int _nb_machines);
 
@@ -65,12 +59,14 @@ struct LocalSearchData {
     void insertion_operator_inter(Sol& sol, int l);
 
    private:
-    void calculate_W(const Sol& sol);
-    void calculate_g(const Sol& sol);
-    void create_processing_insertion_operator(const Sol& sol, int l);
-    void create_processing_insertion_operator_inter(const Sol& sol, int l);
-    void create_processing_list_swap(const Sol& sol, int l1, int l2);
-    void create_processing_list_swap_inter(const Sol& sol, int l1, int l2);
+    int  nb_jobs;
+    int  nb_machines;
+    bool updated{};
+
+    MatrixInt                                      W;
+    std::vector<std::vector<std::list<SlopeType>>> g;
+
+    std::array<MatrixProcessingList, 2> processing_list;
 
     MatrixInt                G;
     MatrixInt                H;
@@ -88,6 +84,14 @@ struct LocalSearchData {
     MatrixInt                B5_1;
     MatrixInt                B5_2;
     MatrixInt                B6_1;
+
+    void calculate_W(const Sol& sol);
+    void calculate_g(const Sol& sol);
+    void create_processing_insertion_operator(const Sol& sol, int l);
+    void create_processing_insertion_operator_inter(const Sol& sol, int l);
+    void create_processing_list_swap(const Sol& sol, int l1, int l2);
+    void create_processing_list_swap_inter(const Sol& sol, int l1, int l2);
+
 };
 
 #endif  // __LOCALSEARCH_NEW_H__

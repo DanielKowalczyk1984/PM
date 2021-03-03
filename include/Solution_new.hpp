@@ -8,13 +8,20 @@
 using VecJobPtr = std::vector<std::shared_ptr<Job>>;
 using VecIntervalPtr = std::vector<std::shared_ptr<Interval>>;
 
+template <typename IT>
+void swap_ranges(IT start_a, IT end_a, IT start_b, IT end_b) {
+    auto it = std::rotate(start_a, start_b, end_b);
+    auto new_start_a = (end_a - start_a) + it;
+    std::rotate(it, new_start_a, end_b);
+}
+
 struct Machine {
     VecJobPtr job_list{};
 
     int completion_time{};
     int total_weighted_tardiness{};
 
-    bool update{true};
+    bool updated{false};
 
     Machine() = default;
     Machine(Machine&&) = default;
@@ -24,6 +31,7 @@ struct Machine {
     ~Machine() = default;
 
     void add_job(std::shared_ptr<Job> job);
+    void reset_machine(std::vector<int>& c);
 };
 
 struct Sol {
@@ -52,6 +60,11 @@ struct Sol {
     void construct_random_fisher_yates(const VecJobPtr& v);
     void construct_random_shuffle(const VecJobPtr& v);
     void canonical_order(const VecIntervalPtr& intervals);
+
+    void update_insertion_move(int i, int j, int k, int l);
+    void update_swap_move(int i, int j, int k, int l1, int l2);
+    void update_insertion_move_inter(int i, int j, int k, int l, int m);
+    void update_swap_move_inter(int i, int j, int k1, int k2, int l1, int l2);
     void print_solution();
 
    private:

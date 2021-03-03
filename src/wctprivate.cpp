@@ -4,6 +4,7 @@
 #include <limits>
 #include <memory>
 #include <type_traits>
+#include "LocalSearch_new.h"
 #include "PricerSolverArcTimeDP.hpp"
 #include "PricerSolverBddBackward.hpp"
 #include "PricerSolverBddForward.hpp"
@@ -68,9 +69,13 @@ Problem::Problem(int argc, const char** argv)
                CCutil_zeit() - start_time);
 
     Sol s(instance.nb_jobs, instance.nb_machines, instance.off);
-    s.construct_edd(instance.jobs);
+    s.construct_random_fisher_yates(instance.jobs);
     s.print_solution();
     s.canonical_order(instance.intervals);
+    s.print_solution();
+    auto local = LocalSearchData(instance.nb_jobs, instance.nb_machines);
+
+    local.insertion_operator_inter(s, 3);
     s.print_solution();
 
     /**

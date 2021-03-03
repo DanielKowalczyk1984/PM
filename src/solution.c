@@ -423,7 +423,7 @@ int solution_canonical_order(Solution* sol, GPtrArray* intervals) {
     for (int it = 0; it < sol->nb_machines; ++it) {
         PartList*  part = sol->part + it;
         GPtrArray* machine = part->machine;
-        int        last = machine->len - 1;
+        guint      last = machine->len - 1;
         Job*       i = (Job*)g_ptr_array_index(machine, last);
         int        u = sol->u[i->job];
         while (u != -1) {

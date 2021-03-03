@@ -111,7 +111,7 @@ void LocalSearchData::insertion_operator(Sol& sol, int l) {
             auto pos = processing_list[0][k][i].pos;
             auto p = processing_list[0][k][i].p;
 
-            for (int j = pos + l; j < n; ++j) {
+            for (auto j = pos + l; j < n; ++j) {
                 if (j != n - 1) {
                     auto& tmp_j = vec_m[j];
                     auto  c = sol.c[tmp_j->job] - p;
@@ -247,7 +247,7 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
         for (int i = 0; i < n - l1 - l2 + 1; ++i) {
             auto& p_list = processing_list[0][k][i];
 
-            for (int j = p_list.pos + l1; j < n - l2 + 1; ++j) {
+            for (auto j = p_list.pos + l1; j < n - l2 + 1; ++j) {
                 if (i + l1 >= n) {
                     B3_2[p_list.pos][j] = 0;
                 } else {
@@ -351,9 +351,9 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
     }
 
     if (dbg_lvl() > 0) {
-        printf(
-            "intra swap with l1 = %d and l2 = %d, running time = %f and "
-            "improvement %d on machine %d on places %d %d\n",
+        fmt::print(
+            R"(intra swap with l1 = {} and l2 = {}, running time = {} and improvement {} on machine {} on places {} {}
+)",
             l1, l2, CCutil_zeit(), max, k_best, i_best, j_best);
     }
 }
@@ -361,7 +361,7 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
 void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
     std::shared_ptr<Job> tmp_j;
 
-    int    c, t;
+    int    c{}, t{};
     auto   update = false;
     auto   max = 0;
     auto   i_best = -1, j_best = -1, k_best = -1, kk_best = -1;
@@ -582,9 +582,9 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
     }
 
     if (dbg_lvl() > 0) {
-        printf(
-            "inter insertion with l1 = %d and l2 = %d, running time = %f and "
-            "improvement %d on machines %d and %d on places %d %d\n",
+        fmt::print(
+            R"(inter insertion with l1 = {} and l2 = {}, running time = {} and improvement {} on machines {} and {} on places {} {}
+)",
             l1, l2, CCutil_zeit() - runningtime, max, k_best, kk_best, i_best,
             j_best);
         print_line();
@@ -592,14 +592,13 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
 }
 
 void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
-    int                  c, t;
-    int                  update;
+    int                  c{}, t{};
+    bool                  update{};
     std::shared_ptr<Job> tmp_j;
-    int                  max;
+    int                  max{};
     int                  i_best = -1, j_best = -1, k_best = -1, kk_best = -1;
     double               runningtime = CCutil_zeit();
 
-    update = 0;
     max = 0;
     calculate_g(sol);
     calculate_W(sol);
@@ -752,9 +751,9 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
     }
 
     if (dbg_lvl() > 0) {
-        printf(
-            "inter insertion with l = %d, running time = %f and improvement %d "
-            "on machines %d and %d on places %d %d\n",
+        fmt::print(
+            R"(inter insertion with l = {}, running time = {} and improvement {} on machines {} and {} on places {} {}
+)",
             l, CCutil_zeit() - runningtime, max, k_best, kk_best, i_best,
             j_best);
         print_line();
