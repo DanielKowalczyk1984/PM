@@ -54,6 +54,11 @@ struct Sol {
           c(_nb_jobs, -1),
           u(_nb_jobs, -1),
           off(_off) {}
+    Sol(const Sol&) = default;
+    Sol& operator=(const Sol&) = default;
+    Sol(Sol&&) = default;
+    Sol& operator=(Sol&&) = default;
+    ~Sol() = default;
 
     void construct_edd(const VecJobPtr& v);
     void construct_spt(const VecJobPtr& v);
