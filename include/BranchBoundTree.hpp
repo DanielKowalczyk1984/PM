@@ -4,7 +4,7 @@
 #include "branch-and-bound/btree.h"
 #include "parms.h"
 // #include "wctprivate.h"
-typedef struct NodeData NodeData;
+class NodeData;
 class BranchBoundTree {
    public:
     explicit BranchBoundTree(std::unique_ptr<NodeData> data,
