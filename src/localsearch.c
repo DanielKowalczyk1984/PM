@@ -199,6 +199,7 @@ local_search_data* local_search_data_init(int njobs, int nb_machines) {
             data->g[i][j] = (GList*)NULL;
         }
     }
+    data->iterations = 0;
 
 CLEAN:
 
@@ -226,6 +227,7 @@ CLEAN:
 
 void local_search_data_free(local_search_data** data) {
     if (*data != (local_search_data*)NULL) {
+        printf("old iterations %d\n", (*data)->iterations);
         int nmachines = (*data)->nmachines;
         int njobs = (*data)->njobs;
 
@@ -791,6 +793,7 @@ void local_search_forward_insertion(Solution*          sol,
 
     update = 0;
     max = 0;
+    data->iterations++;
     local_search_create_processing_list(sol, data, l);
 
     for (int k = 0; k < sol->nb_machines; ++k) {
@@ -928,6 +931,7 @@ void local_search_backward_insertion(Solution*          sol,
     max = 0;
     local_search_create_processing_list_2(sol, data, l);
 
+    data->iterations++;
     for (int k = 0; k < sol->nb_machines; ++k) {
         int        njobs = sol->part[k].machine->len;
         int        p;
@@ -1071,7 +1075,7 @@ void local_search_swap_intra(Solution*          sol,
     update = 0;
     max = 0;
     local_search_create_processing_list_swap(sol, data, l1, l2);
-
+    data->iterations++;
     for (int k = 0; k < sol->nb_machines; ++k) {
         int        njobs = sol->part[k].machine->len;
         GPtrArray* machine = sol->part[k].machine;
@@ -1263,7 +1267,7 @@ void local_search_insertion_inter(Solution*          sol,
     update = 0;
     max = 0;
     local_search_create_processing_list_insertion_inter(sol, data, l);
-
+    data->iterations++;
     for (int k1 = 0; k1 < sol->nb_machines; ++k1) {
         int        njobs1 = sol->part[k1].machine->len;
         GPtrArray* machine1 = sol->part[k1].machine;
@@ -1427,7 +1431,7 @@ void local_search_swap_inter(Solution*          sol,
     update = 0;
     max = 0;
     local_search_create_processing_list_swap_inter(sol, data, l1, l2);
-
+    data->iterations++;
     for (int k1 = 0; k1 < sol->nb_machines; ++k1) {
         int        njobs1 = sol->part[k1].machine->len;
         GPtrArray* machine1 = sol->part[k1].machine;

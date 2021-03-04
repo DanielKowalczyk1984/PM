@@ -27,6 +27,7 @@ typedef struct _local_search_data {
     processing_list_data** processing_list_1;
     processing_list_data** processing_list_2;
     int                    updated;
+    int                    iterations;
 } local_search_data;
 
 void alloc_all(Solution* sol);

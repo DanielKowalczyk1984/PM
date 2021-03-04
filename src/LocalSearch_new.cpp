@@ -2,8 +2,11 @@
 #include <bits/c++config.h>
 #include <fmt/core.h>
 #include <algorithm>
+#include <boost/timer/timer.hpp>
+#include <cstdio>
 #include <limits>
 #include <list>
+#include <memory>
 #include <vector>
 #include "Solution_new.hpp"
 #include "job.h"
@@ -12,8 +15,7 @@ LocalSearchData::LocalSearchData(int _nb_jobs, int _nb_machines)
     : nb_jobs(_nb_jobs),
       nb_machines(_nb_machines),
       W(_nb_machines, VectorInt(_nb_jobs)),
-      g(_nb_machines,
-        std::vector<std::list<SlopeType>>(nb_jobs, std::list<SlopeType>())),
+      g(_nb_machines, std::vector<SlopeList>(nb_jobs, SlopeList())),
       processing_list{
           MatrixProcessingList(
               _nb_machines,
@@ -24,9 +26,9 @@ LocalSearchData::LocalSearchData(int _nb_jobs, int _nb_machines)
       G(_nb_jobs, VectorInt(_nb_jobs, 0)),
       H(_nb_jobs, VectorInt(_nb_jobs, 0)),
       GG(_nb_jobs, 0),
-      HH(_nb_jobs, std::vector<int>(_nb_jobs, 0)),
-      begin(_nb_jobs, std::list<SlopeType>::iterator()),
-      end(_nb_jobs, std::list<SlopeType>::iterator()),
+      HH(_nb_jobs, VectorInt(_nb_jobs, 0)),
+      begin(_nb_jobs, SlopeListIt()),
+      end(_nb_jobs, SlopeListIt()),
       B2_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
       B2_2(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
       B3_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
@@ -39,67 +41,102 @@ LocalSearchData::LocalSearchData(int _nb_jobs, int _nb_machines)
       B6_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)) {}
 
 void LocalSearchData::RVND(Sol& sol) {
+    calculate_W(sol);
+    calculate_g(sol);
+
+    std::vector<std::unique_ptr<MoveOperator>> moves;
+    // moves.push_back(std::make_unique<InsertionOperator>(this, 1));
+    // moves.push_back(std::make_unique<SwapOperator>(this, 0, 1));
+    // moves.push_back(std::make_unique<InsertionOperator>(this, 2));
+    // moves.push_back(std::make_unique<SwapOperator>(this, 0, 2));
+    // moves.push_back(std::make_unique<SwapOperator>(this, 1, 1));
+    // moves.push_back(std::make_unique<InsertionOperatorInter>(this, 1));
+    // moves.push_back(std::make_unique<InsertionOperatorInter>(this, 2));
+    moves.push_back(std::make_unique<SwapOperatorInter>(this, 1, 1));
+    moves.push_back(std::make_unique<SwapOperatorInter>(this, 1, 2));
+    moves.push_back(std::make_unique<SwapOperatorInter>(this, 1, 3));
+    moves.push_back(std::make_unique<SwapOperatorInter>(this, 2, 2));
+    moves.push_back(std::make_unique<SwapOperatorInter>(this, 2, 3));
+    moves.push_back(std::make_unique<SwapOperatorInter>(this, 3, 3));
+    moves.push_back(std::make_unique<SwapOperatorInter>(this, 3, 4));
+    moves.push_back(std::make_unique<SwapOperatorInter>(this, 4, 4));
+
+    // for (int i = 1; i < 5; ++i) {
+    //     for (int j = i; j < 5; ++j) {
+    //         moves.push_back(std::make_unique<SwapOperatorInter>(this, i, j));
+    //     }
+    // }
+
     do {
+        for (auto& operator_move : moves) {
+            (*operator_move)(sol);
+            if (updated) {
+                break;
+            }
+        }
     } while (updated);
+    // fmt::print("iter = {}\n", moves.front()->data->get_iterations());
 }
 
 void LocalSearchData::insertion_operator(Sol& sol, int l) {
-    int max = 0;
-    updated = false;
-    auto i_best{0};
-    auto j_best{0};
-    auto k_best{0};
+    int         max = 0;
+    auto        i_best{0};
+    auto        j_best{0};
+    auto        k_best{0};
+    int         c{};
+    SlopeListIt it;
+    SlopeListIt tmp_end;
 
-    calculate_g(sol);
-    calculate_W(sol);
+    ++iterations;
     create_processing_insertion_operator(sol, l);
+    updated = false;
 
     for (auto k = 0UL; auto& m : sol.machines) {
         const auto& vec_m = m.job_list;
         const auto& n = vec_m.size();
 
         for (auto i = 0UL; i < n - l; i++) {
-            auto&      p_list = processing_list[0][k][i];
-            auto       it = g[k][p_list.pos].begin();
-            const auto end = g[k][p_list.pos].end();
+            auto& p_list = processing_list[0][k][i];
+            it = g[k][p_list.pos].begin();
+            tmp_end = g[k][p_list.pos].end();
 
             for (auto j = p_list.pos + l; j < n; j++) {
                 auto& tmp_j = vec_m[j];
                 auto  c = sol.c[tmp_j->job] - p_list.p;
-                it = std::find_if(it, end, [&c](const SlopeType& tmp) -> bool {
-                    return (tmp.b1 <= c && tmp.b2 > c);
+                it = std::find_if(it, tmp_end, [&c](const auto& tmp) -> bool {
+                    return tmp.in_interval(c);
                 });
-                G[p_list.pos][j] = it != end ? (*it)(c) : 0;
+                G[p_list.pos][j] = it != tmp_end ? (*it)(c) : 0;
             }
         }
 
         for (auto i = 0UL; i < n - l; i++) {
-            auto       it = g[k][i + l].begin();
-            const auto end = g[k][i + l].end();
+            it = g[k][i + l].begin();
+            tmp_end = g[k][i + l].end();
 
             for (auto j = i + l; j < n; j++) {
                 auto& tmp_j = vec_m[j];
-                auto  c = sol.c[tmp_j->job];
-                it = std::find_if(it, end, [&c](const SlopeType& tmp) -> bool {
-                    return (tmp.b1 <= c && tmp.b2 > c);
+                c = sol.c[tmp_j->job];
+                it = std::find_if(it, tmp_end, [&c](const auto& tmp) -> bool {
+                    return tmp.in_interval(c);
                 });
-                H[i][j] = it != end ? (*it)(c) : 0;
+                H[i][j] = it != tmp_end ? (*it)(c) : 0;
             }
         }
 
         for (auto i = 0UL; i < n - l; i++) {
-            auto       it = g[k][i + l].begin();
-            const auto end = g[k][i + l].end();
-            auto       c = 0;
+            it = g[k][i + l].begin();
+            tmp_end = g[k][i + l].end();
+            c = 0;
 
             if (i != 0) {
                 auto tmp_j = vec_m[i - 1];
                 c = sol.c[tmp_j->job];
             }
-            it = std::find_if(it, end, [&c](const SlopeType& tmp) -> bool {
-                return (tmp.b1 <= c && tmp.b2 > c);
+            it = std::find_if(it, tmp_end, [&c](const auto& tmp) -> bool {
+                return tmp.in_interval(c);
             });
-            GG[i] = it != end ? (*it)(c) : 0;
+            GG[i] = it != tmp_end ? (*it)(c) : 0;
         }
 
         for (auto j = l; j < n - 1; ++j) {
@@ -114,11 +151,11 @@ void LocalSearchData::insertion_operator(Sol& sol, int l) {
             for (auto j = pos + l; j < n; ++j) {
                 if (j != n - 1) {
                     auto& tmp_j = vec_m[j];
-                    auto  c = sol.c[tmp_j->job] - p;
-                    begin[j] = std::find_if(
-                        begin[j], end[j], [&c](const SlopeType& tmp) -> bool {
-                            return (tmp.b1 <= c && tmp.b2 > c);
-                        });
+                    c = sol.c[tmp_j->job] - p;
+                    begin[j] = std::find_if(begin[j], end[j],
+                                            [&c](const auto& tmp) -> bool {
+                                                return tmp.in_interval(c);
+                                            });
                     HH[pos][j] = begin[j] != end[j] ? (*begin[j])(c) : 0;
                 } else {
                     HH[pos][j] = 0;
@@ -152,21 +189,32 @@ void LocalSearchData::insertion_operator(Sol& sol, int l) {
     }
 
     if (updated) {
+        if (dbg_lvl()) {
+            sol.print_solution();
+        }
+
         sol.update_insertion_move(i_best, j_best, k_best, l);
+        calculate_W(sol);
+        calculate_g(sol);
+
+        if (dbg_lvl()) {
+            sol.print_solution();
+        }
     }
 }
 
 void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
     std::shared_ptr<Job> tmp_j;
 
-    auto c = 0, t = 0;
-    auto max = 0;
-    auto i_best = -1, j_best = -1, k_best = -1;
+    auto        max = 0;
+    auto        i_best = -1, j_best = -1, k_best = -1;
+    SlopeListIt it;
+    SlopeListIt end_tmp;
+    int         c{};
 
-    updated = false;
-    calculate_g(sol);
-    calculate_W(sol);
     create_processing_list_swap(sol, l1, l2);
+    ++iterations;
+    updated = false;
 
     for (auto k = 0UL; auto& m : sol.machines) {
         auto&       machine = m.job_list;
@@ -174,17 +222,18 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
 
         /** compute g */
         for (auto i = 0UL; i < n - l1 - l2 + 1; ++i) {
-            auto&      p_list = processing_list[0][k][i];
-            auto       it = g[k][p_list.pos].begin();
-            const auto end = g[k][p_list.pos].end();
+            auto& p_list = processing_list[0][k][i];
+            it = g[k][p_list.pos].begin();
+            end_tmp = g[k][p_list.pos].end();
 
             for (auto j = p_list.pos + l1; j < n - l2 + 1; ++j) {
                 tmp_j = machine[j + l2 - 1];
                 c = sol.c[tmp_j->job] - p_list.p;
-                it = std::find_if(it, end, [&c](const auto& tmp) -> bool {
-                    return (tmp.b1 <= c) && (tmp.b2 > c);
-                });
-                B2_1[p_list.pos][j] = it != end ? (*it)(c) : 0;
+                it = std::find_if(it, end_tmp,
+                                  [&c](const SlopeType& tmp) -> bool {
+                                      return tmp.in_interval(c);
+                                  });
+                B2_1[p_list.pos][j] = it != end_tmp ? (*it)(c) : 0;
             }
         }
 
@@ -195,15 +244,16 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
                     B2_2[i][j] = 0;
                 }
             } else {
-                auto       it = g[k][i + l1].begin();
-                const auto end = g[k][i + l1].end();
+                it = g[k][i + l1].begin();
+                end_tmp = g[k][i + l1].end();
                 for (int j = i + l1; j < n - l2 + 1; ++j) {
                     tmp_j = machine[j + l2 - 1];
                     c = sol.c[tmp_j->job];
-                    it = std::find_if(it, end, [&c](const auto& tmp) -> bool {
-                        return (tmp.b1 <= c) && (tmp.b2 > c);
-                    });
-                    B2_2[i][j] = it != end ? (*it)(c) : 0;
+                    it = std::find_if(it, end_tmp,
+                                      [&c](const auto& tmp) -> bool {
+                                          return tmp.in_interval(c);
+                                      });
+                    B2_2[i][j] = it != end_tmp ? (*it)(c) : 0;
                 }
             }
         }
@@ -228,10 +278,10 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
                         c += sol.c[tmp_j->job];
                     }
 
-                    begin[i] = std::find_if(
-                        begin[i], end[i], [&c](const auto& tmp) -> bool {
-                            return (tmp.b1 <= c) && (tmp.b2 > c);
-                        });
+                    begin[i] = std::find_if(begin[i], end[i],
+                                            [&c](const auto& tmp) -> bool {
+                                                return tmp.in_interval(c);
+                                            });
                     B3_1[i][p_list.pos] =
                         begin[i] != end[i] ? (*begin[i])(c) : 0;
                 }
@@ -253,10 +303,10 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
                 } else {
                     tmp_j = machine[j + l2 - 1];
                     c = sol.c[tmp_j->job] - p_list.p;
-                    begin[j] = std::find_if(
-                        begin[j], end[j], [&c](const auto& tmp) -> bool {
-                            return (tmp.b1 <= c) && (tmp.b2 > c);
-                        });
+                    begin[j] = std::find_if(begin[j], end[j],
+                                            [&c](const auto& tmp) -> bool {
+                                                return tmp.in_interval(c);
+                                            });
                     B3_2[p_list.pos][j] =
                         begin[j] != end[j] ? (*begin[j])(c) : 0;
                 }
@@ -265,8 +315,8 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
 
         /** compute B4_1 */
         for (int j = l1; j < n - l2 + 1; ++j) {
-            auto       it = g[k][j].begin();
-            const auto end = g[k][j].end();
+            it = g[k][j].begin();
+            end_tmp = g[k][j].end();
 
             for (int i = 0; i < j - l1 + 1; ++i) {
                 c = 0;
@@ -276,10 +326,10 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
                     c = sol.c[tmp_j->job];
                 }
 
-                it = std::find_if(it, end, [&c](const auto& tmp) -> bool {
-                    return (tmp.b1 <= c) && (tmp.b2 > c);
+                it = std::find_if(it, end_tmp, [&c](const auto& tmp) -> bool {
+                    return tmp.in_interval(c);
                 });
-                B4_1[i][j] = it != end ? (*it)(c) : 0;
+                B4_1[i][j] = it != end_tmp ? (*it)(c) : 0;
             }
         }
 
@@ -292,8 +342,8 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
                     B4_2[i][p_list.pos] = 0;
                 }
             } else {
-                auto       it = g[k][p_list.pos + l2].begin();
-                const auto end = g[k][p_list.pos + l2].end();
+                it = g[k][p_list.pos + l2].begin();
+                end_tmp = g[k][p_list.pos + l2].end();
 
                 for (int i = 0; i < p_list.pos - l1 + 1; ++i) {
                     c = p_list.p;
@@ -303,18 +353,19 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
                         c += sol.c[tmp_j->job];
                     }
 
-                    it = std::find_if(it, end, [&c](const auto& tmp) -> bool {
-                        return (tmp.b1 <= c) && (tmp.b2 > c);
-                    });
+                    it = std::find_if(it, end_tmp,
+                                      [&c](const auto& tmp) -> bool {
+                                          return tmp.in_interval(c);
+                                      });
 
-                    B4_2[i][p_list.pos] = it != end ? (*it)(c) : 0;
+                    B4_2[i][p_list.pos] = it != end_tmp ? (*it)(c) : 0;
                 }
             }
         }
 
         for (int i = 0; i < n - l1 - l2 + 1; ++i) {
             for (int j = i + l1; j < n - l2 + 1; ++j) {
-                t = 0;
+                auto t = 0;
 
                 if (i != 0) {
                     t += W[k][i - 1];
@@ -344,6 +395,8 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
         }
 
         sol.update_swap_move(i_best, j_best, k_best, l1, l2);
+        calculate_W(sol);
+        calculate_g(sol);
 
         if (dbg_lvl()) {
             sol.print_solution();
@@ -361,15 +414,15 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
 void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
     std::shared_ptr<Job> tmp_j;
 
-    int    c{}, t{};
-    auto   update = false;
-    auto   max = 0;
-    auto   i_best = -1, j_best = -1, k_best = -1, kk_best = -1;
-    double runningtime = CCutil_zeit();
+    auto        max = 0;
+    auto        i_best = -1, j_best = -1, k_best = -1, kk_best = -1;
+    SlopeListIt it;
+    SlopeListIt end_tmp;
+    int         c{};
 
-    calculate_g(sol);
-    calculate_W(sol);
+    ++iterations;
     create_processing_list_swap_inter(sol, l1, l2);
+    updated = false;
 
     for (auto k1 = 0UL; k1 < nb_machines; ++k1) {
         auto&      machine1 = sol.machines[k1].job_list;
@@ -385,8 +438,8 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
 
             /** compute B2_1 */
             for (int i = 0; i < nb_jobs1 - l1 + 1; ++i) {
-                auto       it = g[k1][i].begin();
-                const auto end = g[k1][i].end();
+                it = g[k1][i].begin();
+                end_tmp = g[k1][i].end();
 
                 for (int j = 0; j < nb_jobs2 - l2 + 1; ++j) {
                     c = 0;
@@ -396,10 +449,11 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
                         c = sol.c[tmp_j->job];
                     }
 
-                    it = std::find_if(it, end, [&c](const auto& tmp) {
-                        return (tmp.b1 <= c) && (c < tmp.b2);
-                    });
-                    B2_1[i][j] = it != end ? (*it)(c) : 0;
+                    it = std::find_if(it, end_tmp,
+                                      [&c](const auto& tmp) -> bool {
+                                          return tmp.in_interval(c);
+                                      });
+                    B2_1[i][j] = it != end_tmp ? (*it)(c) : 0;
                 }
             }
 
@@ -411,8 +465,8 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
                         B2_2[p_list.pos][j] = 0;
                     }
                 } else {
-                    auto       it = g[k1][p_list.pos + l1].begin();
-                    const auto end = g[k1][p_list.pos + l1].end();
+                    it = g[k1][p_list.pos + l1].begin();
+                    end_tmp = g[k1][p_list.pos + l1].end();
                     for (int j = 0; j < nb_jobs2 - l2 + 1; ++j) {
                         c = p_list.p;
 
@@ -421,10 +475,11 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
                             c += sol.c[tmp_j->job];
                         }
 
-                        it = std::find_if(it, end, [&c](const auto& tmp) {
-                            return (tmp.b1 <= c) && (c < tmp.b2);
-                        });
-                        B2_2[p_list.pos][j] = it != end ? (*it)(c) : 0;
+                        it = std::find_if(it, end_tmp,
+                                          [&c](const auto& tmp) -> bool {
+                                              return tmp.in_interval(c);
+                                          });
+                        B2_2[p_list.pos][j] = it != end_tmp ? (*it)(c) : 0;
                     }
                 }
             }
@@ -448,10 +503,10 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
                             c += sol.c[tmp_j->job];
                         }
 
-                        begin[i] = std::find_if(
-                            begin[i], end[i], [&c](const auto& tmp) {
-                                return (tmp.b1 <= c) && (c < tmp.b2);
-                            });
+                        begin[i] = std::find_if(begin[i], end[i],
+                                                [&c](const auto& tmp) -> bool {
+                                                    return tmp.in_interval(c);
+                                                });
                         B3_1[i][p_list.pos] =
                             begin[i] != end[i] ? (*begin[i])(c) : 0;
                     }
@@ -459,8 +514,8 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
             }
 
             for (int j = 0; j < nb_jobs2 - l2 + 1; ++j) {
-                auto it = g[k2][j].begin();
-                auto end = g[k2][j].end();
+                it = g[k2][j].begin();
+                end_tmp = g[k2][j].end();
 
                 for (int i = 0; i < nb_jobs1 - l1 + 1; ++i) {
                     c = 0;
@@ -470,10 +525,11 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
                         c += sol.c[tmp_j->job];
                     }
 
-                    it = std::find_if(it, end, [&c](const auto& tmp) {
-                        return (tmp.b1 <= c) && (c < tmp.b2);
-                    });
-                    B5_1[i][j] = it != end ? (*it)(c) : 0;
+                    it = std::find_if(it, end_tmp,
+                                      [&c](const auto& tmp) -> bool {
+                                          return tmp.in_interval(c);
+                                      });
+                    B5_1[i][j] = it != end_tmp ? (*it)(c) : 0;
                 }
             }
 
@@ -485,8 +541,8 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
                         B5_2[i][p_list.pos] = 0;
                     }
                 } else {
-                    auto it = g[k2][p_list.pos + l2].begin();
-                    auto end = g[k2][p_list.pos + l2].end();
+                    it = g[k2][p_list.pos + l2].begin();
+                    end_tmp = g[k2][p_list.pos + l2].end();
                     for (int i = 0; i < nb_jobs1 - l1 + 1; ++i) {
                         c = p_list.p;
 
@@ -495,10 +551,11 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
                             c += sol.c[tmp_j->job];
                         }
 
-                        it = std::find_if(it, end, [&c](const auto& tmp) {
-                            return (tmp.b1 <= c) && (c < tmp.b2);
-                        });
-                        B5_2[i][p_list.pos] = it != end ? (*it)(c) : 0;
+                        it = std::find_if(it, end_tmp,
+                                          [&c](const auto& tmp) -> bool {
+                                              return tmp.in_interval(c);
+                                          });
+                        B5_2[i][p_list.pos] = it != end_tmp ? (*it)(c) : 0;
                     }
                 }
             }
@@ -522,10 +579,10 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
                             c += sol.c[tmp_j->job];
                         }
 
-                        begin[j] = std::find_if(
-                            begin[j], end[j], [&c](const auto& tmp) {
-                                return (tmp.b1 <= c) && (tmp.b2 > c);
-                            });
+                        begin[j] = std::find_if(begin[j], end[j],
+                                                [&c](const auto& tmp) -> bool {
+                                                    return tmp.in_interval(c);
+                                                });
                         B6_1[p_list.pos][j] =
                             begin[j] != end[j] ? (*begin[j])(c) : 0;
                     }
@@ -534,7 +591,7 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
 
             for (int i = 0; i < nb_jobs1 - l1 + 1; ++i) {
                 for (int j = 0; j < nb_jobs2 - l2 + 1; ++j) {
-                    t = 0;
+                    auto t = 0;
 
                     if (i != 0) {
                         t += W[k1][i - 1];
@@ -558,7 +615,7 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
                         j_best = j;
                         k_best = k1;
                         kk_best = k2;
-                        update = true;
+                        updated = true;
                     }
                 }
             }
@@ -566,43 +623,39 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
     }
 
     /** update to best improvement */
-    if (update) {
+    if (updated) {
         if (dbg_lvl()) {
             sol.print_solution();
         }
 
         sol.update_swap_move_inter(i_best, j_best, k_best, kk_best, l1, l2);
-        updated = true;
+        calculate_W(sol);
+        calculate_g(sol);
 
         if (dbg_lvl()) {
             sol.print_solution();
         }
-    } else {
-        updated = false;
     }
 
     if (dbg_lvl() > 0) {
         fmt::print(
-            R"(inter insertion with l1 = {} and l2 = {}, running time = {} and improvement {} on machines {} and {} on places {} {}
+            R"(inter insertion with l1 = {} and l2 = {} and improvement {} on machines {} and {} on places {} {}
 )",
-            l1, l2, CCutil_zeit() - runningtime, max, k_best, kk_best, i_best,
-            j_best);
-        print_line();
+            l1, l2, max, k_best, kk_best, i_best, j_best);
     }
 }
 
 void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
-    int                  c{}, t{};
-    bool                  update{};
     std::shared_ptr<Job> tmp_j;
     int                  max{};
     int                  i_best = -1, j_best = -1, k_best = -1, kk_best = -1;
-    double               runningtime = CCutil_zeit();
+    SlopeListIt          it;
+    SlopeListIt          tmp_end;
+    int                  c{};
 
-    max = 0;
-    calculate_g(sol);
-    calculate_W(sol);
+    ++iterations;
     create_processing_insertion_operator_inter(sol, l);
+    updated = false;
 
     for (auto k1 = 0UL; auto& m1 : sol.machines) {
         auto&       vec_m1 = m1.job_list;
@@ -618,8 +671,8 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
             const auto& nb_jobs2 = vec_m2.size();
 
             for (auto i = 0UL; i < nb_jobs1 - l + 1; ++i) {
-                auto       it = g[k1][i].begin();
-                const auto end = g[k1][i].end();
+                it = g[k1][i].begin();
+                tmp_end = g[k1][i].end();
 
                 for (auto j = 0UL; j < nb_jobs2; ++j) {
                     c = 0;
@@ -629,10 +682,11 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                         c = sol.c[tmp_j->job];
                     }
 
-                    it = std::find_if(it, end, [&c](const auto& tmp) {
-                        return (tmp.b1 <= c) && (tmp.b2 > c);
-                    });
-                    B2_1[i][j] = (it != end) ? (*it)(c) : 0;
+                    it = std::find_if(it, tmp_end,
+                                      [&c](const auto& tmp) -> bool {
+                                          return tmp.in_interval(c);
+                                      });
+                    B2_1[i][j] = (it != tmp_end) ? (*it)(c) : 0;
                 }
             }
 
@@ -644,8 +698,8 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                         B2_2[p_list.pos][j] = 0;
                     }
                 } else {
-                    auto       it = g[k1][p_list.pos + l].begin();
-                    const auto end = g[k1][p_list.pos + l].end();
+                    it = g[k1][p_list.pos + l].begin();
+                    tmp_end = g[k1][p_list.pos + l].end();
                     for (int j = 0UL; j < nb_jobs2; ++j) {
                         c = p_list.p;
 
@@ -654,10 +708,11 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                             c += sol.c[tmp_j->job];
                         }
 
-                        it = std::find_if(it, end, [&c](const auto& tmp) {
-                            return (tmp.b1 <= c) && (tmp.b2 > c);
-                        });
-                        B2_2[p_list.pos][j] = it != end ? (*it)(c) : 0;
+                        it = std::find_if(it, tmp_end,
+                                          [&c](const auto& tmp) -> bool {
+                                              return tmp.in_interval(c);
+                                          });
+                        B2_2[p_list.pos][j] = it != tmp_end ? (*it)(c) : 0;
                     }
                 }
             }
@@ -666,25 +721,27 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                 if (i + l >= nb_jobs1) {
                     B3_1_[i] = 0;
                 } else {
-                    auto       it = g[k1][i].begin();
-                    const auto end = g[k1][i].end();
                     c = 0;
+
+                    it = g[k1][i].begin();
+                    tmp_end = g[k1][i].end();
 
                     if (i != 0) {
                         tmp_j = vec_m1[i - 1];
                         c = sol.c[tmp_j->job];
                     }
 
-                    it = std::find_if(it, end, [&c](const auto& tmp) {
-                        return (tmp.b1 <= c) && (tmp.b2 > c);
-                    });
-                    B3_1_[i] = it != end ? (*it)(c) : 0;
+                    it = std::find_if(it, tmp_end,
+                                      [&c](const auto& tmp) -> bool {
+                                          return tmp.in_interval(c);
+                                      });
+                    B3_1_[i] = it != tmp_end ? (*it)(c) : 0;
                 }
             }
 
             for (int j = 0; j < nb_jobs2 - 1; ++j) {
-                auto       it = g[k2][j].begin();
-                const auto end = g[k2][j].end();
+                it = g[k2][j].begin();
+                tmp_end = g[k2][j].end();
 
                 for (auto i = 0UL; i < nb_jobs1 - l + 1; ++i) {
                     auto& p_list = processing_list[0][k1][i];
@@ -695,16 +752,17 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                         c += sol.c[tmp_j->job];
                     }
 
-                    it = std::find_if(it, end, [&c](const auto& tmp) {
-                        return (tmp.b1 <= c) && (c < tmp.b2);
-                    });
-                    B5_1[p_list.pos][j] = (it != end) ? (*it)(c) : 0;
+                    it = std::find_if(it, tmp_end,
+                                      [&c](const auto& tmp) -> bool {
+                                          return tmp.in_interval(c);
+                                      });
+                    B5_1[p_list.pos][j] = (it != tmp_end) ? (*it)(c) : 0;
                 }
             }
 
             for (int i = 0; i < nb_jobs1 - l + 1; ++i) {
                 for (int j = 0; j < nb_jobs2 - 1; ++j) {
-                    t = 0;
+                    auto t = 0;
 
                     if (i != 0) {
                         t += W[k1][i - 1];
@@ -727,7 +785,7 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
                         j_best = j;
                         k_best = k1;
                         kk_best = k2;
-                        update = 1;
+                        updated = true;
                     }
                 }
             }
@@ -736,34 +794,35 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
         k1++;
     }
 
-    if (update) {
+    if (updated) {
         if (dbg_lvl()) {
             sol.print_solution();
         }
-        updated = true;
-
         sol.update_insertion_move_inter(i_best, j_best, k_best, kk_best, l);
+        calculate_W(sol);
+        calculate_g(sol);
+
         if (dbg_lvl()) {
             sol.print_solution();
         }
-    } else {
-        updated = false;
     }
 
     if (dbg_lvl() > 0) {
         fmt::print(
-            R"(inter insertion with l = {}, running time = {} and improvement {} on machines {} and {} on places {} {}
+            R"(inter insertion with l = {} and improvement {} on machines {} and {} on places {} {}
 )",
-            l, CCutil_zeit() - runningtime, max, k_best, kk_best, i_best,
-            j_best);
+            l, max, k_best, kk_best, i_best, j_best);
         print_line();
     }
 }
-/** update to best improvement */
 
 void LocalSearchData::calculate_W(const Sol& sol) {
     std::size_t i = 0UL;
     for (auto& m : sol.machines) {
+        if (!m.updated) {
+            ++i;
+            continue;
+        }
         auto tmp = m.job_list.begin();
         W[i][0] = value_Fj(sol.c[(*tmp)->job], (*tmp).get());
         tmp++;
@@ -776,12 +835,18 @@ void LocalSearchData::calculate_W(const Sol& sol) {
     }
 }
 
-void LocalSearchData::calculate_g(const Sol& sol) {
+void LocalSearchData::calculate_g(Sol& sol) {
     int i = 0;
     for (auto& m : sol.machines) {
-        for (int j = 0; j < nb_jobs; j++) {
-            g[i][j].clear();
-        }  // GPtrArray*  machine1 = sol->part[k1].machine;
+        if (m.updated) {
+            for (int j = 0; j < nb_jobs; j++) {
+                g[i][j].clear();
+            }
+            m.updated = false;
+        } else {
+            ++i;
+            continue;
+        }
 
         int P{0};
         int j{0};

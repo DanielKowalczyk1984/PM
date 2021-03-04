@@ -1,9 +1,11 @@
 #include "wctprivate.h"
 #include <fmt/core.h>
 #include <algorithm>
+#include <boost/timer/timer.hpp>
 #include <limits>
 #include <memory>
 #include <type_traits>
+#include <vector>
 #include "LocalSearch_new.h"
 #include "PricerSolverArcTimeDP.hpp"
 #include "PricerSolverBddBackward.hpp"
@@ -67,16 +69,7 @@ Problem::Problem(int argc, const char** argv)
     preprocess_data();
     fmt::print("Reading and preprocessing of the data took {} seconds\n",
                CCutil_zeit() - start_time);
-
-    Sol s(instance.nb_jobs, instance.nb_machines, instance.off);
-    s.construct_random_fisher_yates(instance.jobs);
-    s.print_solution();
-    s.canonical_order(instance.intervals);
-    s.print_solution();
-    auto local = LocalSearchData(instance.nb_jobs, instance.nb_machines);
-
-    local.insertion_operator_inter(s, 3);
-    s.print_solution();
+    heuristic_new();
 
     /**
      *@brief Finding heuristic solutions to the problem or start without
@@ -199,7 +192,7 @@ Problem::Problem(int argc, const char** argv)
      *
      */
     tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
-    tree->explore();
+    // tree->explore();
 }
 
 static void g_problem_summary_init(gpointer data, gpointer user_data) {
@@ -259,4 +252,72 @@ void Problem::solve() {
     if (parms.print) {
         print_to_csv();
     }
+}
+
+void Problem::heuristic_new() {
+    auto                         ILS = nb_jobs / 2;
+    auto                         IR = parms.nb_iterations_rvnd;
+    boost::timer::auto_cpu_timer test;
+
+    Sol best_sol(instance.nb_jobs, instance.nb_machines, instance.off);
+    best_sol.construct_edd(instance.jobs);
+    fmt::print("Solution Constructed with EDD heuristic:\n");
+    best_sol.print_solution();
+    best_sol.canonical_order(instance.intervals);
+    fmt::print("Solution in canonical order: \n");
+    best_sol.print_solution();
+
+    /** Local Search */
+    auto local = LocalSearchData(instance.nb_jobs, instance.nb_machines);
+    local.RVND(best_sol);
+
+    best_sol.canonical_order(instance.intervals);
+    fmt::print("Solution after local search:\n");
+    best_sol.print_solution();
+
+    /** Generate Mersenne twister */
+    std::array<std::mt19937::result_type, std::mt19937::state_size>
+        random_data{};
+    std::iota(std::begin(random_data), std::end(random_data), 4);
+    std::seed_seq seeds(std::begin(random_data), std::end(random_data));
+    std::mt19937  mt = std::mt19937(seeds);
+
+    Sol sol(instance.nb_jobs, instance.nb_machines, instance.off);
+    std::vector<PerturbationOperator> perturbation_moves = {
+        PerturbationOperator(1, 2), PerturbationOperator(1, 2),
+        PerturbationOperator(1, 3), PerturbationOperator(1, 3),
+        PerturbationOperator(2, 2), PerturbationOperator(2, 2),
+        PerturbationOperator(2, 3), PerturbationOperator(2, 3)};
+    int iterations = 0;
+    for (auto i = 0UL; i < IR; ++i) {
+        Sol sol1{instance.nb_jobs, instance.nb_machines, instance.off};
+        sol1.construct_random_shuffle(instance.jobs);
+        sol = sol1;
+
+        for (auto j = 0UL; j < ILS; ++j) {
+            local.RVND(sol1);
+            ++iterations;
+            if (sol1.tw < sol.tw) {
+                sol = sol1;
+                // sol.canonical_order(instance.intervals);
+                j = 0UL;
+            }
+            std::uniform_int_distribution dist(0UL,
+                                               perturbation_moves.size() - 1);
+
+            auto nb_perturbation_moves = dist(mt);
+
+            std::ranges::shuffle(perturbation_moves, mt);
+            std::for_each(perturbation_moves.begin(),
+                          perturbation_moves.begin() + nb_perturbation_moves,
+                          [&sol1](const auto& it) { it(sol1); });
+        }
+
+        if (sol.tw < best_sol.tw) {
+            best_sol = sol;
+        }
+    }
+
+    fmt::print("Best new heuristics {}\n", iterations);
+    best_sol.print_solution();
 }

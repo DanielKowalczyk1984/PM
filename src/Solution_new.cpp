@@ -221,6 +221,34 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
     }
 }
 
+void Sol::perturb_solution(int l1, int l2, std::mt19937& mt) {
+    std::uniform_int_distribution dist(0, nb_machines - 1);
+
+    auto m1 = dist(mt);
+    auto m2 = dist(mt);
+
+    while (m1 == m2) {
+        m2 = dist(mt);
+    }
+
+    if (l1 >= machines[m1].job_list.size() ||
+        l2 >= machines[m2].job_list.size()) {
+        return;
+    }
+
+    std::uniform_int_distribution dist1(0UL,
+                                        machines[m1].job_list.size() - l1 - 1);
+
+    auto i1 = dist1(mt);
+
+    std::uniform_int_distribution dist2(0UL,
+                                        machines[m2].job_list.size() - l2 - 1);
+
+    auto i2 = dist2(mt);
+
+    update_swap_move_inter(i1, i2, m1, m2, l1, l2);
+}
+
 void Sol::add_job_front_machine(const std::shared_ptr<Job>& job) {
     std::pop_heap(machines.begin(), machines.end(), cmp_machines_completion);
     auto& m = machines.back();
@@ -264,6 +292,7 @@ void Machine::add_job(std::shared_ptr<Job> job) {
 void Machine::reset_machine(std::vector<int>& c) {
     completion_time = 0;
     total_weighted_tardiness = 0;
+    updated = true;
 
     for (const auto& it : job_list) {
         completion_time += it->processing_time;
@@ -275,11 +304,10 @@ void Machine::reset_machine(std::vector<int>& c) {
 void Sol::update_insertion_move(int i, int j, int k, int l) {
     auto& m = machines[k];
     auto  begin = m.job_list.begin();
-    auto  old = m.total_weighted_tardiness;
+    auto  old = tw;
     tw -= m.total_weighted_tardiness;
 
-    m.job_list.insert(begin + j + 1, begin + i, begin + i + l);
-    m.job_list.erase(begin + i, begin + i + l);
+    swap_ranges(begin + i, begin + i + l, begin + j + 1, begin + j + 1);
 
     m.reset_machine(c);
 
@@ -289,6 +317,7 @@ void Sol::update_insertion_move(int i, int j, int k, int l) {
 void Sol::update_swap_move(int i, int j, int k, int l1, int l2) {
     auto& m = machines[k];
     auto& vec_m = machines[k].job_list;
+    auto  old = tw;
     tw -= m.total_weighted_tardiness;
 
     auto it1 = vec_m.begin() + i;
@@ -308,6 +337,7 @@ void Sol::update_insertion_move_inter(int i, int j, int k, int l, int m) {
     auto& m2 = machines[l];
     auto  begin1 = m1.job_list.begin();
     auto  begin2 = m2.job_list.begin();
+    auto  old = tw;
 
     tw -= m1.total_weighted_tardiness + m2.total_weighted_tardiness;
 
@@ -321,29 +351,23 @@ void Sol::update_insertion_move_inter(int i, int j, int k, int l, int m) {
 }
 
 void Sol::update_swap_move_inter(int i, int j, int k1, int k2, int l1, int l2) {
-    auto& m1 = machines[k1];
-    auto& m2 = machines[k2];
-    auto& vec_m1 = machines[k1].job_list;
-    auto& vec_m2 = machines[k2].job_list;
-    tw -= (m1.total_weighted_tardiness + m2.total_weighted_tardiness);
-
-    auto it1 = vec_m1.begin() + i;
-    auto it2 = vec_m2.begin() + j;
-
-    auto old = m1.total_weighted_tardiness + m2.total_weighted_tardiness;
+    auto it1 = machines[k1].job_list.begin() + i;
+    auto it2 = machines[k2].job_list.begin() + j;
 
     std::ranges::swap_ranges(it1, it1 + l1, it2, it2 + l2);
 
     if (l1 < l2) {
-        vec_m1.insert(it1 + l1, it2 + l1, it2 + l2);
-        vec_m2.erase(it2 + l1, it2 + l2);
+        machines[k1].job_list.insert(it1 + l1, it2 + l1, it2 + l2);
+        machines[k2].job_list.erase(it2 + l1, it2 + l2);
     } else if (l2 < l1) {
-        vec_m2.insert(it2 + l2, it1 + l2, it1 + l1);
-        vec_m1.erase(it1 + l2, it1 + l1);
+        machines[k2].job_list.insert(it2 + l2, it1 + l2, it1 + l1);
+        machines[k1].job_list.erase(it1 + l2, it1 + l1);
     }
 
-    m1.reset_machine(c);
-    m2.reset_machine(c);
-
-    tw += m1.total_weighted_tardiness + m2.total_weighted_tardiness;
+    tw -= (machines[k1].total_weighted_tardiness +
+           machines[k2].total_weighted_tardiness);
+    machines[k1].reset_machine(c);
+    machines[k2].reset_machine(c);
+    tw += machines[k1].total_weighted_tardiness +
+          machines[k2].total_weighted_tardiness;
 }

@@ -1,4 +1,7 @@
+#include <fmt/core.h>
 #include <localsearch.h>
+#include <boost/timer/timer.hpp>
+#include <cstdio>
 #include "binomial-heap.h"
 #include "job.h"
 #include "scheduleset.h"
@@ -167,47 +170,46 @@ void RVND(Solution* sol, local_search_data* data) {
     alloc_all(sol);
 
     do {
-        local_search_forward_insertion(sol, data, 1);
+        // local_search_forward_insertion(sol, data, 1);
 
-        if (data->updated) {
-            continue;
-        }
+        // if (data->updated) {
+        //     continue;
+        // }
 
-        local_search_swap_intra(sol, data, 0, 1);
+        // local_search_swap_intra(sol, data, 0, 1);
+        // if (data->updated) {
+        //     continue;
+        // }
 
-        if (data->updated) {
-            continue;
-        }
+        // local_search_forward_insertion(sol, data, 2);
 
-        local_search_forward_insertion(sol, data, 2);
+        // if (data->updated) {
+        //     continue;
+        // }
 
-        if (data->updated) {
-            continue;
-        }
+        // local_search_swap_intra(sol, data, 0, 2);
 
-        local_search_swap_intra(sol, data, 0, 2);
+        // if (data->updated) {
+        //     continue;
+        // }
 
-        if (data->updated) {
-            continue;
-        }
+        // local_search_swap_intra(sol, data, 1, 1);
 
-        local_search_swap_intra(sol, data, 1, 1);
+        // if (data->updated) {
+        //     continue;
+        // }
 
-        if (data->updated) {
-            continue;
-        }
+        // local_search_insertion_inter(sol, data, 1);
 
-        local_search_insertion_inter(sol, data, 1);
+        // if (data->updated) {
+        //     continue;
+        // }
 
-        if (data->updated) {
-            continue;
-        }
+        // local_search_insertion_inter(sol, data, 2);
 
-        local_search_insertion_inter(sol, data, 2);
-
-        if (data->updated) {
-            continue;
-        }
+        // if (data->updated) {
+        //     continue;
+        // }
 
         local_search_swap_inter(sol, data, 1, 1);
 
@@ -394,8 +396,9 @@ void Perturb(Solution* sol, local_search_data* data, GRand* rand_uniform) {
 }
 
 int Problem::heuristic() {
-    int    val = 0;
-    GRand* rand_uniform = g_rand_new_with_seed(2011);
+    boost::timer::auto_cpu_timer test;
+    int                          val = 0;
+    GRand*                       rand_uniform = g_rand_new_with_seed(2011);
     g_random_set_seed(1984);
     int                ILS = nb_jobs / 2;
     int                IR = parms.nb_iterations_rvnd;
@@ -403,12 +406,13 @@ int Problem::heuristic() {
     Solution*          sol1 = nullptr;
     local_search_data* data = nullptr;
     local_search_data* data_RS = nullptr;
+    int                test_iterations = 0;
 
     CCutil_start_resume_time(&(stat.tot_heuristic));
     sol = solution_alloc(intervals->len, nb_machines, nb_jobs, off);
-    CCcheck_NULL_2(sol, "Failed to allocate memory");
+    // CCcheck_NULL_2(sol, "Failed to allocate memory");
     val = construct_edd(sol);
-    CCcheck_val_2(val, "Failed construct edd");
+    // CCcheck_val_2(val, "Failed construct edd");
     fmt::print("Solution Constructed with EDD heuristic:\n");
     solution_print(sol);
     solution_canonical_order(sol, intervals);
@@ -434,9 +438,7 @@ int Problem::heuristic() {
     for (int i = 0; i < IR && opt_sol->tw + opt_sol->off != 0; ++i) {
         // fprintf(stderr, "iteration %d\n", i);
         sol1 = solution_alloc(intervals->len, nb_machines, nb_jobs, off);
-        // CCcheck_NULL_2(sol1, "Failed to allocate memory");
         val = construct_random(sol1, rand_uniform);
-        // CCcheck_val_2(val, "Failed in construct random solution");
         data_RS = local_search_data_init(nb_jobs, nb_machines);
         local_search_create_W(sol1, data_RS);
         local_search_create_g(sol1, data_RS);
@@ -444,6 +446,7 @@ int Problem::heuristic() {
 
         for (int j = 0; j < ILS; ++j) {
             RVND(sol1, data_RS);
+            ++test_iterations;
 
             if (sol1->tw < sol->tw) {
                 solution_update(sol, sol1);
@@ -466,7 +469,8 @@ int Problem::heuristic() {
 
     solution_canonical_order(opt_sol, intervals);
     fmt::print(
-        "Solution after some improvements with Random Variable Search:\n");
+        "Solution after some improvements with Random Variable Search {}:\n",
+        test_iterations);
     solution_print(opt_sol);
     global_upper_bound = opt_sol->tw + off;
     CCutil_stop_timer(&(stat.tot_heuristic), 0);

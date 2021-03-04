@@ -8,7 +8,7 @@
 #include "NodeBddStructure.hpp"
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
-#include "wctprivate.h"
+// #include "wctprivate.h"
 
 class PricerSolverBdd : public PricerSolverBase {
     DdStructure<> decision_diagram;

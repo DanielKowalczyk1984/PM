@@ -108,7 +108,8 @@ struct Problem {
     int  print_to_csv();
     void solve();
     /** Heuristic related */
-    int heuristic();
+    int  heuristic();
+    void heuristic_new();
     Problem(int argc, const char** argv);
     Problem(const Problem&) = delete;
     Problem(Problem&&) = delete;
