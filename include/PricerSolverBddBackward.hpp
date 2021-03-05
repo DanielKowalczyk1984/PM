@@ -1,6 +1,7 @@
 #include <memory>
 #include "PricerEvaluateBdd.hpp"
 #include "PricerSolverBdd.hpp"
+#include "interval.h"
 
 class PricerSolverBddBackwardSimple : public PricerSolverBdd {
    private:

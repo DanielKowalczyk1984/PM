@@ -2,6 +2,7 @@
 #define PRICER_SOLVER_BDD_FORWARD_HPP
 #include "PricerEvaluateBdd.hpp"
 #include "PricerSolverBdd.hpp"
+#include "interval.h"
 
 class PricerSolverBddSimple : public PricerSolverBdd {
    private:

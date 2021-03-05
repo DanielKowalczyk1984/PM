@@ -8,10 +8,12 @@
 #include "MIP_defs.hpp"
 #include "ModelInterface.hpp"
 #include "OptimalSolution.hpp"
-#include "scheduleset.h"
+// #include "scheduleset.h"
+// #include "scheduleset.h"
 #include "solution.h"
 
 struct NodeData;
+struct ScheduleSet;
 
 struct PricerSolverBase {
    public:

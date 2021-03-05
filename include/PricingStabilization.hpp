@@ -5,8 +5,9 @@
 #include <memory>
 #include <vector>
 #include "OptimalSolution.hpp"
-#include "PricerSolverBase.hpp"
-
+// #include "OptimalSolution.hpp"
+// #include "PricerSolverBase.hpp"
+class PricerSolverBase;
 class PricingStabilizationBase {
    public:
     explicit PricingStabilizationBase(PricerSolverBase* _solver);
@@ -83,16 +84,7 @@ class PricingStabilizationStat : public PricingStabilizationBase {
 
     int nb_rows;
 
-    void compute_pi_eta_sep(double _alpha_bar) {
-        double beta_bar = 1.0 - _alpha_bar;
-
-        for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
-             ++i) {
-            pi_sep[i] = _alpha_bar * pi_in[i] + (1.0 - _alpha_bar) * pi_out[i];
-        }
-
-        eta_sep = _alpha_bar * (eta_in) + beta_bar * (eta_out);
-    }
+    void compute_pi_eta_sep(double _alpha_bar);
 
    public:
     void solve(double _eta_out, double* _pi_out, double* _lhs_coeff) override;
@@ -126,37 +118,8 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
     void update_duals() override;
     void remove_constraints(int first, int nb_del) override;
 
-    void compute_subgradient(const OptimalSolution<double>& _sol) {
-        solver->compute_subgradient(_sol, subgradient.data());
-
-        // subgradientnorm = 0.0;
-
-        // for (int i = 0; i < nb_rows; ++i) {
-        //     double sqr = SQR(subgradient_in[i]);
-
-        //     if (sqr > 0.00001) {
-        //         subgradientnorm += sqr;
-        //     }
-        // }
-
-        // subgradientnorm = SQRT(subgradientnorm);
-    }
-
-    void adjust_alpha() {
-        double sum = 0.0;
-
-        for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
-             ++i) {
-            sum += subgradient[i] * (pi_out[i] - pi_in[i]);
-        }
-
-        if (sum > 0) {
-            alphabar = std::max<double>(0, alphabar - ALPHA_CHG);
-        } else {
-            alphabar = std::min<double>(ALPHA_MAX,
-                                        alphabar + (1 - alphabar) * ALPHA_CHG);
-        }
-    }
+    void compute_subgradient(const OptimalSolution<double>& _sol);
+    void adjust_alpha();
 };
 
 class PricingStabilizationHybrid : public PricingStabilizationDynamic {
@@ -191,139 +154,25 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
         }
     }
 
-    void calculate_dualdiffnorm() {
-        dualdiffnorm = 0.0;
+    void calculate_dualdiffnorm();
 
-        for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
-             ++i) {
-            double dualdiff = SQR(pi_in[i] - pi_out[i]);
-            if (dualdiff > EPS_STAB) {
-                dualdiffnorm += dualdiff;
-            }
-        }
+    void calculate_beta();
 
-        dualdiffnorm = SQRT(dualdiffnorm);
-    }
+    void calculate_hybridfactor();
 
-    void calculate_beta() {
-        beta = 0.0;
-        for (auto i = 0UL; i < solver->convex_constr_id; ++i) {
-            double dualdiff = ABS(pi_out[i] - pi_in[i]);
-            double product = dualdiff * std::abs(subgradient_in[i]);
+    bool is_stabilized();
 
-            if (product > EPS_STAB) {
-                beta += product;
-            }
-        }
+    double compute_dual(auto i);
 
-        if (subgradientnorm > EPS_STAB) {
-            beta = beta / (subgradientnorm * dualdiffnorm);
-        }
-    }
+    void update_stabcenter(const OptimalSolution<double>& _sol);
 
-    void calculate_hybridfactor() {
-        double aux_norm = 0.0;
-        for (auto i = 0UL; i < solver->convex_constr_id; ++i) {
-            double aux_double = SQR(
-                (beta - 1.0) * (pi_out[i] - pi_in[i]) +
-                beta * (subgradient_in[i] * dualdiffnorm / subgradientnorm));
-            if (aux_double > EPS_STAB) {
-                aux_norm += aux_double;
-            }
-        }
-        aux_norm = SQRT(aux_norm);
+    void compute_subgradient_norm(const OptimalSolution<double>& _sol);
 
-        hybridfactor = ((1 - alpha) * dualdiffnorm) / aux_norm;
-    }
+    void update_subgradientproduct();
 
-    bool is_stabilized() {
-        if (in_mispricing_schedule) {
-            return alphabar > 0.0;
-        }
-        return alpha > 0.0;
-    }
+    void update_alpha_misprice();
 
-    double compute_dual(auto i) {
-        double usedalpha = alpha;
-        double usedbeta = beta;
-
-        if (in_mispricing_schedule) {
-            usedalpha = alphabar;
-            usedbeta = 0.0;
-        }
-
-        if (hasstabcenter && (usedbeta == 0.0 || usedalpha == 0.0)) {
-            return usedalpha * pi_in[i] + (1.0 - usedalpha) * pi_out[i];
-        } else if (hasstabcenter && usedbeta > 0.0) {
-            double dual =
-                pi_in[i] +
-                hybridfactor *
-                    (beta * (pi_in[i] + subgradient_in[i] * dualdiffnorm /
-                                            subgradientnorm) +
-                     (1.0 - beta) * pi_out[i] - pi_in[i]);
-            return CC_MAX(dual, 0.0);
-        }
-
-        return pi_out[i];
-    }
-
-    void update_stabcenter(const OptimalSolution<double>& _sol) {
-        if (eta_sep > eta_in) {
-            pi_in = pi_sep;
-            compute_subgradient_norm(_sol);
-            eta_in = eta_sep;
-            hasstabcenter = 1;
-            update_stab_center = true;
-            solver->calculate_constLB(pi_sep.data());
-            solver->evaluate_nodes(pi_sep.data());
-        }
-    }
-
-    void compute_subgradient_norm(const OptimalSolution<double>& _sol) {
-        // double* subgradient_in = &g_array_index(pd->subgradient_in, double,
-        // 0); double* rhs = &g_array_index(pd->rhs, double, 0);
-        // fill_dbl(subgradient_in, pd->nb_rows, 1.0);
-        // subgradient_in[pd->nb_jobs] = 0.0;
-        solver->compute_subgradient(_sol, subgradient_in.data());
-
-        // for (guint i = 0; i < sol.jobs->len; i++) {
-        //     Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs,
-        //     i)); subgradient_in[tmp_j->job] += rhs[pd->nb_jobs] * 1.0;
-        // }
-
-        subgradientnorm = 0.0;
-
-        for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
-             ++i) {
-            double sqr = SQR(subgradient_in[i]);
-
-            if (sqr > EPS_STAB) {
-                subgradientnorm += sqr;
-            }
-        }
-
-        subgradientnorm = SQRT(subgradientnorm);
-    }
-    void update_subgradientproduct() {
-        subgradientproduct = 0.0;
-        for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
-             ++i) {
-            subgradientproduct += (pi_out[i] - pi_in[i]) * subgradient_in[i];
-        }
-    }
-
-    void update_alpha_misprice() {
-        k++;
-        alphabar = CC_MAX(0.0, 1 - k * (1.0 - alpha));
-    }
-
-    void update_alpha() {
-        if (subgradientproduct > 0.0) {
-            alpha = std::max(0.0, alpha - ALPHA_CHG);
-        } else {
-            alpha = std::min(ALPHA_MAX, alpha + (1.0 - alpha) * ALPHA_CHG);
-        }
-    }
+    void update_alpha();
 };
 
 #endif  // __PRICINGSTABILIZATION_H__

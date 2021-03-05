@@ -24,8 +24,9 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     if (dbg_lvl() > 0) {
         fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", ALIGN,
                    "Backward Simple Evaluator");
-        fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", ALIGN,
-                   get_nb_vertices());
+        fmt::print(R"({0: <{1}}{2}
+)",
+                   "Number of vertices BDD", ALIGN, get_nb_vertices());
         fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", ALIGN,
                    get_nb_edges());
     }

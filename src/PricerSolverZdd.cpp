@@ -6,6 +6,7 @@
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 #include "ZddNode.hpp"
+#include "scheduleset.h"
 
 PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
                                  int         _num_machines,

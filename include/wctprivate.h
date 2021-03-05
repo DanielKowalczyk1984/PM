@@ -12,7 +12,8 @@
 #include "binomial-heap.h"
 #include "interval.h"
 #include "lp.h"
-#include "scheduleset.h"
+// #include "scheduleset.h"
+// #include "scheduleset.h"
 #include "solution.h"
 #include "solver.h"
 #include "util.h"
@@ -21,6 +22,7 @@
  */
 typedef struct Problem  Problem;
 typedef struct NodeData NodeData;
+struct ScheduleSet;
 
 /**
  * wct data types nodes of branch and bound tree

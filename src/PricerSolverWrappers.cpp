@@ -1,4 +1,3 @@
-#include <PricingStabilization.hpp>
 #include <memory>
 #include "PricerSolverArcTimeDP.hpp"
 #include "PricerSolverBddBackward.hpp"
@@ -6,64 +5,65 @@
 #include "PricerSolverSimpleDP.hpp"
 #include "PricerSolverZddBackward.hpp"
 #include "PricerSolverZddForward.hpp"
+#include "PricingStabilization.hpp"
+#include "scheduleset.h"
 #include "wctprivate.h"
 
-extern "C" {
-#include "scheduleset.h"
+// extern "C" {
 
-PricerSolverBase* copy_pricer_solver(PricerSolverBase* src,
-                                     GPtrArray*        array,
-                                     Parms*            parms) {
-    switch (parms->pricing_solver) {
-        case bdd_solver_simple:
-            return new PricerSolverBddSimple(
-                *dynamic_cast<PricerSolverBddSimple*>(src), array);
-            break;
-        case bdd_solver_cycle:
-            return new PricerSolverBddCycle(
-                *dynamic_cast<PricerSolverBddCycle*>(src), array);
-            break;
-        case zdd_solver_cycle:
-            return new PricerSolverZddCycle(
-                *dynamic_cast<PricerSolverZddCycle*>(src));
-            break;
-        case zdd_solver_simple:
-            return new PricerSolverSimple(
-                *dynamic_cast<PricerSolverSimple*>(src));
-            break;
-        case bdd_solver_backward_simple:
-            return new PricerSolverBddBackwardSimple(
-                *dynamic_cast<PricerSolverBddBackwardSimple*>(src), array);
-            break;
-        case bdd_solver_backward_cycle:
-            return new PricerSolverBddBackwardCycle(
-                *dynamic_cast<PricerSolverBddBackwardCycle*>(src), array);
-            break;
-        case zdd_solver_backward_simple:
-            return new PricerSolverZddBackwardSimple(
-                *dynamic_cast<PricerSolverZddBackwardSimple*>(src));
-            break;
-        case zdd_solver_backward_cycle:
-            return new PricerSolverZddBackwardCycle(
-                *dynamic_cast<PricerSolverZddBackwardCycle*>(src));
-            break;
-        case dp_solver:
-            return new PricerSolverSimpleDp(
-                *dynamic_cast<PricerSolverSimpleDp*>(src));
-            break;
-        case ati_solver:
-            return new PricerSolverArcTimeDp(
-                *dynamic_cast<PricerSolverArcTimeDp*>(src));
-            break;
-        case dp_bdd_solver:
-            return new PricerSolverBddBackwardCycle(
-                *dynamic_cast<PricerSolverBddBackwardCycle*>(src), array);
-            break;
-        default:
-            return new PricerSolverBddCycle(
-                *dynamic_cast<PricerSolverBddCycle*>(src), array);
-    }
-}
+// PricerSolverBase* copy_pricer_solver(PricerSolverBase* src,
+//                                      GPtrArray*        array,
+//                                      Parms*            parms) {
+//     switch (parms->pricing_solver) {
+//         case bdd_solver_simple:
+//             return new PricerSolverBddSimple(
+//                 *dynamic_cast<PricerSolverBddSimple*>(src), array);
+//             break;
+//         case bdd_solver_cycle:
+//             return new PricerSolverBddCycle(
+//                 *dynamic_cast<PricerSolverBddCycle*>(src), array);
+//             break;
+//         case zdd_solver_cycle:
+//             return new PricerSolverZddCycle(
+//                 *dynamic_cast<PricerSolverZddCycle*>(src));
+//             break;
+//         case zdd_solver_simple:
+//             return new PricerSolverSimple(
+//                 *dynamic_cast<PricerSolverSimple*>(src));
+//             break;
+//         case bdd_solver_backward_simple:
+//             return new PricerSolverBddBackwardSimple(
+//                 *dynamic_cast<PricerSolverBddBackwardSimple*>(src), array);
+//             break;
+//         case bdd_solver_backward_cycle:
+//             return new PricerSolverBddBackwardCycle(
+//                 *dynamic_cast<PricerSolverBddBackwardCycle*>(src), array);
+//             break;
+//         case zdd_solver_backward_simple:
+//             return new PricerSolverZddBackwardSimple(
+//                 *dynamic_cast<PricerSolverZddBackwardSimple*>(src));
+//             break;
+//         case zdd_solver_backward_cycle:
+//             return new PricerSolverZddBackwardCycle(
+//                 *dynamic_cast<PricerSolverZddBackwardCycle*>(src));
+//             break;
+//         case dp_solver:
+//             return new PricerSolverSimpleDp(
+//                 *dynamic_cast<PricerSolverSimpleDp*>(src));
+//             break;
+//         case ati_solver:
+//             return new PricerSolverArcTimeDp(
+//                 *dynamic_cast<PricerSolverArcTimeDp*>(src));
+//             break;
+//         case dp_bdd_solver:
+//             return new PricerSolverBddBackwardCycle(
+//                 *dynamic_cast<PricerSolverBddBackwardCycle*>(src), array);
+//             break;
+//         default:
+//             return new PricerSolverBddCycle(
+//                 *dynamic_cast<PricerSolverBddCycle*>(src), array);
+//     }
+// }
 
 // void freeSolver(PricerSolver* src) {
 //     delete src;
@@ -221,5 +221,4 @@ void NodeData::get_mip_statistics(enum MIP_Attr c) {
             statistics->mip_nb_nodes = solver->get_dbl_attr_model(c);
             break;
     }
-}
 }

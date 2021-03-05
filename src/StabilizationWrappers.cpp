@@ -1,5 +1,6 @@
 #include <fmt/core.h>
 #include <memory>
+#include "PricerSolverBase.hpp"
 #include "scheduleset.h"
 #include "wctprivate.h"
 
@@ -24,9 +25,6 @@ int NodeData::solve_pricing() {
     int val = 0;
 
     update = 0;
-    // double* pi_tmp = pi.data();
-    // double* lhs = &g_array_index(lhs_coeff, double, 0);
-
     solver_stab->solve(LP_lower_bound_BB, pi.data(), lhs_coeff.data());
 
     if (solver_stab->get_update_stab_center()) {

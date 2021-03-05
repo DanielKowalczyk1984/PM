@@ -2,7 +2,6 @@
 #include <vector>
 #include "PricerSolverBase.hpp"
 #include "gurobi_c++.h"
-#include "solver.h"
 
 // using std::vector;
 class PricerSolverArcTimeDp : public PricerSolverBase {

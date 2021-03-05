@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include "BranchBoundTree.hpp"
+#include "PricerSolverBase.hpp"
 #include "Statistics.h"
 #include "gurobi_c.h"
 #include "scheduleset.h"
