@@ -1,13 +1,14 @@
 #ifndef __LOCALSEARCH_NEW_H__
 #define __LOCALSEARCH_NEW_H__
 
+#include <bits/ranges_algo.h>
+#include <algorithm>
 #include <array>
-#include <boost/timer/timer.hpp>
+#include <functional>
 #include <list>
 #include <random>
 #include <vector>
 #include "Solution_new.hpp"
-#include "util.h"
 
 struct SlopeType {
     int b1{};    /* begin of segment*/
@@ -54,23 +55,32 @@ using SlopeListIt = std::list<SlopeType>::iterator;
 
 struct LocalSearchData {
     LocalSearchData(int _nb_jobs, int _nb_machines);
-
     void RVND(Sol& sol);
-
-    void swap_operator(Sol& sol, int l1, int l2);
-    void swap_operator_inter(Sol& sol, int l1, int l2);
-    void insertion_operator(Sol& sol, int l);
-    void insertion_operator_inter(Sol& sol, int l);
-    int  get_iterations() const { return iterations; }
-
-    boost::timer::cpu_timer test_swap;
-    CCutil_timer            test_timer;
 
    private:
     int  nb_jobs;
     int  nb_machines;
     bool updated{};
     int  iterations{};
+
+    constexpr static int nb_moves = 15;
+
+    std::array<std::function<void(Sol&)>, nb_moves> moves{
+        [&](Sol& sol) { insertion_operator(sol, 1); },
+        [&](Sol& sol) { swap_operator(sol, 0, 1); },
+        [&](Sol& sol) { insertion_operator(sol, 2); },
+        [&](Sol& sol) { swap_operator(sol, 0, 2); },
+        [&](Sol& sol) { swap_operator(sol, 1, 1); },
+        [&](Sol& sol) { insertion_operator_inter(sol, 1); },
+        [&](Sol& sol) { insertion_operator_inter(sol, 2); },
+        [&](Sol& sol) { swap_operator_inter(sol, 1, 1); },
+        [&](Sol& sol) { swap_operator_inter(sol, 1, 2); },
+        [&](Sol& sol) { swap_operator_inter(sol, 1, 3); },
+        [&](Sol& sol) { swap_operator_inter(sol, 2, 2); },
+        [&](Sol& sol) { swap_operator_inter(sol, 2, 3); },
+        [&](Sol& sol) { swap_operator_inter(sol, 3, 3); },
+        [&](Sol& sol) { swap_operator_inter(sol, 3, 4); },
+        [&](Sol& sol) { swap_operator_inter(sol, 4, 4); }};
 
     MatrixInt                           W;
     std::vector<std::vector<SlopeList>> g;
@@ -100,118 +110,38 @@ struct LocalSearchData {
     void create_processing_insertion_operator_inter(const Sol& sol, int l);
     void create_processing_list_swap(const Sol& sol, int l1, int l2);
     void create_processing_list_swap_inter(const Sol& sol, int l1, int l2);
+    void swap_operator(Sol& sol, int l1, int l2);
+    void swap_operator_inter(Sol& sol, int l1, int l2);
+    void insertion_operator(Sol& sol, int l);
+    void insertion_operator_inter(Sol& sol, int l);
 };
 
-struct MoveOperator {
-    LocalSearchData* data{};
+struct PerturbOperator {
+    constexpr static int max_nb_perturbations = 8;
+    std::mt19937         gen = std::mt19937(0);
 
-    explicit MoveOperator(LocalSearchData* _data) : data(_data){};
-    MoveOperator() = default;
-    MoveOperator(const MoveOperator&) = default;
-    MoveOperator(MoveOperator&&) = default;
-    MoveOperator& operator=(MoveOperator&&) = default;
-    MoveOperator& operator=(const MoveOperator&) = default;
-    virtual ~MoveOperator() = default;
-    virtual bool operator()(Sol& sol) = 0;
+    std::array<std::function<void(Sol&)>, max_nb_perturbations>
+                                    perturbation_list;
+    std::uniform_int_distribution<> dist;
 
-    int get_iterations() const { return data->get_iterations(); }
-};
-
-struct SwapOperator : public MoveOperator {
-    int l1{};
-    int l2{};
-
-    SwapOperator(LocalSearchData* _data, int _l1, int _l2)
-        : MoveOperator(_data),
-          l1(_l1),
-          l2(_l2){};
-    SwapOperator() = default;
-    SwapOperator(const SwapOperator&) = default;
-    SwapOperator(SwapOperator&&) = default;
-    SwapOperator& operator=(SwapOperator&&) = default;
-    SwapOperator& operator=(const SwapOperator&) = default;
-    virtual ~SwapOperator() = default;
-
-    bool operator()(Sol& sol) override {
-        data->swap_operator(sol, l1, l2);
-        return true;
+    PerturbOperator()
+        : perturbation_list{[&](Sol& sol) { sol.perturb_solution(1, 2, gen); },
+                            [&](Sol& sol) { sol.perturb_solution(1, 2, gen); },
+                            [&](Sol& sol) { sol.perturb_solution(1, 3, gen); },
+                            [&](Sol& sol) { sol.perturb_solution(1, 3, gen); },
+                            [&](Sol& sol) { sol.perturb_solution(2, 2, gen); },
+                            [&](Sol& sol) { sol.perturb_solution(2, 2, gen); },
+                            [&](Sol& sol) { sol.perturb_solution(2, 3, gen); },
+                            [&](Sol& sol) { sol.perturb_solution(2, 3, gen); }},
+          dist(0, max_nb_perturbations - 1) {}
+    void operator()(Sol& sol) {
+        std::ranges::shuffle(perturbation_list.begin(), perturbation_list.end(),
+                             gen);
+        int nb = dist(gen);
+        std::ranges::for_each(perturbation_list.begin(),
+                              perturbation_list.begin() + nb,
+                              [&sol](auto& operation) { operation(sol); });
     }
-};
-
-struct SwapOperatorInter : public MoveOperator {
-    int l1{};
-    int l2{};
-
-    SwapOperatorInter(LocalSearchData* _data, int _l1, int _l2)
-        : MoveOperator(_data),
-          l1(_l1),
-          l2(_l2){};
-    SwapOperatorInter() = default;
-    SwapOperatorInter(const SwapOperatorInter&) = default;
-    SwapOperatorInter(SwapOperatorInter&&) = default;
-    SwapOperatorInter& operator=(SwapOperatorInter&&) = default;
-    SwapOperatorInter& operator=(const SwapOperatorInter&) = default;
-    virtual ~SwapOperatorInter() = default;
-
-    bool operator()(Sol& sol) override {
-        data->swap_operator_inter(sol, l1, l2);
-        return true;
-    }
-};
-
-struct InsertionOperator : public MoveOperator {
-    int l{};
-
-    InsertionOperator(LocalSearchData* _data, int _l)
-        : MoveOperator(_data),
-          l(_l){};
-    InsertionOperator() = default;
-    InsertionOperator(const InsertionOperator&) = default;
-    InsertionOperator(InsertionOperator&&) = default;
-    InsertionOperator& operator=(InsertionOperator&&) = default;
-    InsertionOperator& operator=(const InsertionOperator&) = default;
-    virtual ~InsertionOperator() = default;
-
-    bool operator()(Sol& sol) override {
-        data->insertion_operator(sol, l);
-        return true;
-    }
-};
-
-struct InsertionOperatorInter : public MoveOperator {
-    int l{};
-
-    InsertionOperatorInter(LocalSearchData* _data, int _l)
-        : MoveOperator(_data),
-          l(_l){};
-    InsertionOperatorInter() = default;
-    InsertionOperatorInter(const InsertionOperatorInter&) = default;
-    InsertionOperatorInter(InsertionOperatorInter&&) = default;
-    InsertionOperatorInter& operator=(InsertionOperatorInter&&) = default;
-    InsertionOperatorInter& operator=(const InsertionOperatorInter&) = default;
-    virtual ~InsertionOperatorInter() = default;
-
-    bool operator()(Sol& sol) override {
-        data->insertion_operator_inter(sol, l);
-        return true;
-    }
-};
-
-static std::mt19937 gen = std::mt19937(0);
-
-struct PerturbationOperator {
-    int l1{};
-    int l2{};
-
-    PerturbationOperator() = default;
-    PerturbationOperator(int _l1, int _l2) : l1(_l1), l2(_l2) {}
-    PerturbationOperator(const PerturbationOperator&) = default;
-    PerturbationOperator(PerturbationOperator&&) = default;
-    PerturbationOperator& operator=(const PerturbationOperator&) = default;
-    PerturbationOperator& operator=(PerturbationOperator&&) = default;
-    ~PerturbationOperator() = default;
-
-    void operator()(Sol& sol) const { sol.perturb_solution(l1, l2, gen); }
 };
 
 #endif  // __LOCALSEARCH_NEW_H__

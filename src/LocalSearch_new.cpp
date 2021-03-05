@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <boost/timer/timer.hpp>
 #include <cstdio>
+#include <functional>
 #include <limits>
 #include <list>
 #include <memory>
@@ -39,34 +40,15 @@ LocalSearchData::LocalSearchData(int _nb_jobs, int _nb_machines)
       B3_1_(_nb_jobs + 1, 0),
       B5_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
       B5_2(_nb_jobs + 1, VectorInt(_nb_jobs + 1)),
-      B6_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)) {
-    CCutil_init_timer(&(test_timer), "test_timer");
-}
+      B6_1(_nb_jobs + 1, VectorInt(_nb_jobs + 1)) {}
 
 void LocalSearchData::RVND(Sol& sol) {
     calculate_W(sol);
     calculate_g(sol);
 
-    std::vector<std::unique_ptr<MoveOperator>> moves;
-    moves.push_back(std::make_unique<InsertionOperator>(this, 1));
-    moves.push_back(std::make_unique<SwapOperator>(this, 0, 1));
-    moves.push_back(std::make_unique<InsertionOperator>(this, 2));
-    moves.push_back(std::make_unique<SwapOperator>(this, 0, 2));
-    moves.push_back(std::make_unique<SwapOperator>(this, 1, 1));
-    moves.push_back(std::make_unique<InsertionOperatorInter>(this, 1));
-    moves.push_back(std::make_unique<InsertionOperatorInter>(this, 2));
-    moves.push_back(std::make_unique<SwapOperatorInter>(this, 1, 1));
-    moves.push_back(std::make_unique<SwapOperatorInter>(this, 1, 2));
-    moves.push_back(std::make_unique<SwapOperatorInter>(this, 1, 3));
-    moves.push_back(std::make_unique<SwapOperatorInter>(this, 2, 2));
-    moves.push_back(std::make_unique<SwapOperatorInter>(this, 2, 3));
-    moves.push_back(std::make_unique<SwapOperatorInter>(this, 3, 3));
-    moves.push_back(std::make_unique<SwapOperatorInter>(this, 3, 4));
-    moves.push_back(std::make_unique<SwapOperatorInter>(this, 4, 4));
-
     do {
         for (auto& operator_move : moves) {
-            (*operator_move)(sol);
+            operator_move(sol);
             if (updated) {
                 break;
             }
@@ -83,7 +65,7 @@ void LocalSearchData::insertion_operator(Sol& sol, int l) {
     SlopeListIt it;
     SlopeListIt tmp_end;
 
-    // ++iterations;
+    ++iterations;
     create_processing_insertion_operator(sol, l);
     updated = false;
 
@@ -202,8 +184,8 @@ void LocalSearchData::swap_operator(Sol& sol, int l1, int l2) {
     SlopeListIt end_tmp;
     int         c{};
 
+    ++iterations;
     create_processing_list_swap(sol, l1, l2);
-    // ++iterations;
     updated = false;
 
     for (auto k = 0UL; auto& m : sol.machines) {
@@ -401,10 +383,9 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
     SlopeListIt end_tmp;
     int         c{};
 
-    // ++iterations;
+    ++iterations;
     create_processing_list_swap_inter(sol, l1, l2);
     updated = false;
-    CCutil_resume_timer(&(test_timer));
 
     for (auto k1 = 0UL; k1 < nb_machines; ++k1) {
         auto&      machine1 = sol.machines[k1].job_list;
@@ -598,8 +579,6 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
         }
     }
 
-    CCutil_suspend_timer(&(test_timer));
-    iterations++;
     /** update to best improvement */
     if (updated) {
         if (dbg_lvl()) {
@@ -629,7 +608,7 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
     SlopeListIt tmp_end;
     int         c{};
 
-    // ++iterations;
+    ++iterations;
     create_processing_insertion_operator_inter(sol, l);
     updated = false;
 
@@ -836,7 +815,6 @@ void LocalSearchData::calculate_g(Sol& sol) {
             int  t1{0};
             bool move{true};
             auto k = 0U;
-            // auto tmp = lateness_sort[k];
 
             for (; k < lateness_sort.size() && move;) {
                 move = lateness_sort[k]->weight *
@@ -850,7 +828,6 @@ void LocalSearchData::calculate_g(Sol& sol) {
                            lateness_sort[k]->due_time);
                     w += lateness_sort[k]->weight;
                     k++;
-                    // tmp = lateness_sort[k];
                 }
             }
 
@@ -872,7 +849,6 @@ void LocalSearchData::calculate_g(Sol& sol) {
                         move = false;
                         t2 = std::numeric_limits<int>::max();
                     } else {
-                        // tmp = lateness_sort[l];
                         t2 = lateness_sort[l]->due_time -
                              sol.c[lateness_sort[l]->job] + P;
                         move = (t1 == t2);

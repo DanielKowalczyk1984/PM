@@ -1,1 +1,1 @@
-Checks: 'cppcoreguidelines-*,-fuchsia-*,google-*,-zircon-*,-abseil-*,-modernize-use-trailing-return-type'
+Checks: 'cppcoreguidelines-*,-fuchsia-*,-google-*,-zircon-*,-abseil-*,-modernize-use-trailing-return-type'
