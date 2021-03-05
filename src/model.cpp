@@ -172,8 +172,8 @@ int NodeData::build_rmp() {
     val = lp_interface_get_nb_cols(RMP, &(id_pseudo_schedules));
 
     /** add columns from localColPool */
-    std::for_each(localColPool.begin(), localColPool.end(),
-                  [&](auto& it) { add_scheduleset_to_rmp(it.get()); });
+    std::ranges::for_each(localColPool,
+                          [&](auto& it) { add_scheduleset_to_rmp(it.get()); });
 
     /**
      * Some aux variables for column generation

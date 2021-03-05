@@ -125,14 +125,15 @@ struct PerturbOperator {
     std::uniform_int_distribution<> dist;
 
     PerturbOperator()
-        : perturbation_list{[&](Sol& sol) { sol.perturb_solution(1, 2, gen); },
-                            [&](Sol& sol) { sol.perturb_solution(1, 2, gen); },
-                            [&](Sol& sol) { sol.perturb_solution(1, 3, gen); },
-                            [&](Sol& sol) { sol.perturb_solution(1, 3, gen); },
-                            [&](Sol& sol) { sol.perturb_solution(2, 2, gen); },
-                            [&](Sol& sol) { sol.perturb_solution(2, 2, gen); },
-                            [&](Sol& sol) { sol.perturb_solution(2, 3, gen); },
-                            [&](Sol& sol) { sol.perturb_solution(2, 3, gen); }},
+        : perturbation_list{
+              [&](Sol& sol) { sol.perturb_swap_inter(1, 2, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(1, 2, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(1, 3, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(1, 3, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(2, 2, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(2, 2, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(2, 3, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(2, 3, gen); }},
           dist(0, max_nb_perturbations - 1) {}
     void operator()(Sol& sol) {
         std::ranges::shuffle(perturbation_list.begin(), perturbation_list.end(),

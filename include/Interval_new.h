@@ -10,8 +10,7 @@ struct compare_edd {
     int b;
     compare_edd(int _a, int _b) : a(_a), b(_b){};
 
-    bool operator()(const std::shared_ptr<Job> lhs,
-                    const std::shared_ptr<Job> rhs) {
+    bool operator()(const auto lhs, const auto rhs) {
         int    diff = b - a;
         double w_lhs = (lhs->due_time >= b) ? 0.0
                                             : static_cast<double>(lhs->weight) /

@@ -248,8 +248,7 @@ void NodeData::prune_duplicated_sets() {
         return (*lhs) == (*rhs);
     };
 
-    std::sort(localColPool.begin(), localColPool.end(),
-              std::less<std::shared_ptr<ScheduleSet>>());
+    std::ranges::sort(localColPool, std::less<std::shared_ptr<ScheduleSet>>());
     localColPool.erase(
         std::unique(localColPool.begin(), localColPool.end(), equal_func),
         localColPool.end());
@@ -274,9 +273,6 @@ void NodeData::add_solution_to_colpool(Solution* sol) {
 }
 
 void NodeData::add_solution_to_colpool_and_lp(Solution* sol) {
-    int val = 0;
-    // ScheduleSet* tmp = nullptr;
-
     for (int i = 0; i < sol->nb_machines; ++i) {
         GPtrArray*                   machine = sol->part[i].machine;
         std::shared_ptr<ScheduleSet> tmp =

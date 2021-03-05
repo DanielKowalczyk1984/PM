@@ -168,7 +168,7 @@ void ZeroHalfCuts::construct_cut() {
     //     }
     // };
 
-    std::for_each(node_ids.begin(), node_ids.end(), add_coeff_constr);
+    std::ranges::for_each(node_ids, add_coeff_constr);
     // std::for_each(node_ids_lift.begin(), node_ids_lift.end(),
     // add_coeff_constr); std::for_each(node_ids.begin(), node_ids.end(),
     // print_node_ids); fmt::print("\n");
@@ -275,7 +275,7 @@ void ZeroHalfCuts::generate_cuts() {
             // }
             // fmt::print("\n");
 
-            std::for_each(node_ids.begin(), node_ids.end(), calc_coeff_cut);
+            std::ranges::for_each(node_ids, calc_coeff_cut);
 
             // for (auto& iter : node_ids) {
             //     auto& node = table->node(iter);

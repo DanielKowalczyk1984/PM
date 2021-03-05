@@ -64,10 +64,9 @@ void Instance::calculate_H_max_H_min() {
     H_max = static_cast<int>(temp_dbl) + pmax;
     H_min = static_cast<int>(ceil(temp_dbl / nb_machines)) - pmax;
 
-    std::sort(jobs.begin(), jobs.end(),
-              [](const auto& lhs, const auto& rhs) -> bool {
-                  return (lhs->processing_time < rhs->processing_time);
-              });
+    std::ranges::sort(jobs, [](const auto& lhs, const auto& rhs) -> bool {
+        return (lhs->processing_time < rhs->processing_time);
+    });
 
     int    m = 0;
     int    i = nb_jobs - 1;

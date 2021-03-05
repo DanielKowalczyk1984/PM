@@ -2,19 +2,24 @@
 #include <bits/c++config.h>
 #include <fmt/core.h>
 #include <algorithm>
+#include <iterator>
 #include <memory>
 #include <queue>
 #include <random>
+#include <ranges>
 #include <vector>
 #include "Interval_new.h"
 #include "job.h"
 
-void Sol::construct_edd(const std::vector<std::shared_ptr<Job>>& v) {
-    auto cmp_jobs_edd = [](const auto& lhs, const auto& rhs) -> bool {
+void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
+    auto cmp_jobs_edd = [](const auto lhs, const auto rhs) -> bool {
         return lhs->due_time < rhs->due_time;
     };
-    std::vector<std::shared_ptr<Job>> tmp = v;
-    std::sort(tmp.begin(), tmp.end(), cmp_jobs_edd);
+    std::vector<Job*> tmp{};
+
+    std::ranges::transform(v, std::back_inserter(tmp),
+                           [](const auto& tmp_j) { return tmp_j.get(); });
+    std::ranges::sort(tmp, cmp_jobs_edd);
 
     std::make_heap(machines.begin(), machines.end(), cmp_machines_completion);
     for (auto& it : tmp) {
@@ -44,8 +49,11 @@ void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
             return true;
         }
     };
-    std::vector<std::shared_ptr<Job>> tmp = v;
-    std::sort(tmp.begin(), tmp.end(), cmp_jobs_spt);
+    // std::vector<std::shared_ptr<Job>> tmp = v;
+    std::vector<Job*> tmp{};
+    std::ranges::transform(v.cbegin(), v.cend(), std::back_inserter(tmp),
+                           [](auto& ptr) { return ptr.get(); });
+    std::ranges::sort(tmp, cmp_jobs_spt);
 
     for (auto& it : tmp) {
         add_job_front_machine(it);
@@ -56,7 +64,10 @@ void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
 
 void Sol::construct_random_fisher_yates(
     const std::vector<std::shared_ptr<Job>>& v) {
-    std::vector<std::shared_ptr<Job>> tmp = v;
+    // std::vector<std::shared_ptr<Job>> tmp = v;
+    std::vector<Job*> tmp{};
+    std::ranges::transform(v.cbegin(), v.cend(), std::back_inserter(tmp),
+                           [](auto& ptr) { return ptr.get(); });
     for (auto i = 0UL; i < tmp.size() - 1; i++) {
         auto j = i + rand() % (tmp.size() - i);
         std::swap(tmp[i], tmp[j]);
@@ -70,9 +81,12 @@ void Sol::construct_random_fisher_yates(
 }
 
 void Sol::construct_random_shuffle(const std::vector<std::shared_ptr<Job>>& v) {
-    std::vector<std::shared_ptr<Job>> tmp = v;
-    std::random_device                rd;
-    std::default_random_engine        rng(rd());
+    // std::vector<std::shared_ptr<Job>> tmp = v;
+    std::vector<Job*> tmp{};
+    std::ranges::transform(v.cbegin(), v.cend(), std::back_inserter(tmp),
+                           [](auto& ptr) { return ptr.get(); });
+    std::random_device         rd;
+    std::default_random_engine rng(rd());
     std::shuffle(tmp.begin(), tmp.end(), rng);
     for (auto& it : tmp) {
         add_job_front_machine(it);
@@ -84,8 +98,8 @@ void Sol::construct_random_shuffle(const std::vector<std::shared_ptr<Job>>& v) {
 void Sol::canonical_order(const VecIntervalPtr& intervals) {
     tw = 0;
     for (auto& m : machines) {
-        std::vector<VecJobPtr> Q(intervals.size(), VecJobPtr());
-        std::vector<VecJobPtr> Q_in(intervals.size(), VecJobPtr());
+        std::vector<VecJobRawPtr> Q(intervals.size(), VecJobRawPtr());
+        std::vector<VecJobRawPtr> Q_in(intervals.size(), VecJobRawPtr());
 
         auto it_I = 0UL;
         for (auto& job_it : m.job_list) {
@@ -117,7 +131,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                     auto C = c[Q_in_tmp.front()->job] -
                              Q_in_tmp.front()->processing_time;
                     auto cmp = compare_edd(I->a, I->b);
-                    std::sort(Q_in_tmp.begin(), Q_in_tmp.end(), cmp);
+                    std::ranges::sort(Q_in_tmp, cmp);
 
                     int j = 0;
                     for (auto& it : Q_in_tmp) {
@@ -146,7 +160,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                             u[tmp_in->job] = u_it;
                             auto C_aux = c[tmp_in->job];
 
-                            std::sort(Q_in_tmp.begin(), Q_in_tmp.end(), cmp);
+                            std::ranges::sort(Q_in_tmp, cmp);
                             int j = 0;
                             for (auto& it : Q_in_tmp) {
                                 Q_tmp[j + 1] = it;
@@ -191,7 +205,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                     auto cmp = compare_edd(I->a, I->b);
                     auto C =
                         c[Q_tmp.front()->job] - Q_tmp.front()->processing_time;
-                    std::sort(Q_tmp.begin(), Q_tmp.end(), cmp);
+                    std::ranges::sort(Q_tmp, cmp);
                     for (auto& it : Q_tmp) {
                         C += it->processing_time;
                         c[it->job] = C;
@@ -213,7 +227,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                 m.completion_time += job_Q->processing_time;
                 c[job_Q->job] = m.completion_time;
                 m.total_weighted_tardiness +=
-                    value_Fj(m.completion_time, job_Q.get());
+                    value_Fj(m.completion_time, job_Q);
             }
         }
 
@@ -221,7 +235,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
     }
 }
 
-void Sol::perturb_solution(int l1, int l2, std::mt19937& mt) {
+void Sol::perturb_swap_inter(int l1, int l2, std::mt19937& mt) {
     std::uniform_int_distribution dist(0, nb_machines - 1);
 
     auto m1 = dist(mt);
@@ -249,11 +263,11 @@ void Sol::perturb_solution(int l1, int l2, std::mt19937& mt) {
     update_swap_move_inter(i1, i2, m1, m2, l1, l2);
 }
 
-void Sol::add_job_front_machine(const std::shared_ptr<Job>& job) {
+void Sol::add_job_front_machine(Job* job) {
     std::pop_heap(machines.begin(), machines.end(), cmp_machines_completion);
     auto& m = machines.back();
     m.add_job(job);
-    tw += value_Fj(m.completion_time, job.get());
+    tw += value_Fj(m.completion_time, job);
     c[job->job] = m.completion_time;
     std::push_heap(machines.begin(), machines.end(), cmp_machines_completion);
 }
@@ -283,10 +297,10 @@ void Sol::print_solution() {
     fmt::print("with total weighted tardiness {}\n", tw + off);
 }
 
-void Machine::add_job(std::shared_ptr<Job> job) {
+void Machine::add_job(Job* job) {
     job_list.push_back(job);
     completion_time += job->processing_time;
-    total_weighted_tardiness += value_Fj(completion_time, job.get());
+    total_weighted_tardiness += value_Fj(completion_time, job);
 }
 
 void Machine::reset_machine(std::vector<int>& c) {
@@ -297,7 +311,7 @@ void Machine::reset_machine(std::vector<int>& c) {
     for (const auto& it : job_list) {
         completion_time += it->processing_time;
         c[it->job] = completion_time;
-        total_weighted_tardiness += value_Fj(completion_time, it.get());
+        total_weighted_tardiness += value_Fj(completion_time, it);
     }
 }
 

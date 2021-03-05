@@ -1,6 +1,8 @@
 #include "Interval_new.h"
+#include <bits/ranges_algo.h>
 #include <fmt/core.h>
 #include <memory>
+#include <ranges>
 #include "Instance.h"
 
 Interval::Interval(int _a, int _b, const vector_ptr_jobs& _sigma)
@@ -10,7 +12,7 @@ Interval::Interval(int _a, int _b, const vector_ptr_jobs& _sigma)
       key(),
       sigma(_sigma) {
     auto cmp = compare_edd(a, b);
-    std::sort(sigma.begin(), sigma.end(), cmp);
+    std::ranges::sort(sigma, cmp);
 }
 
 IntervalPair::IntervalPair(int                         _a,

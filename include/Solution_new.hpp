@@ -7,6 +7,7 @@
 #include "job.h"
 
 using VecJobPtr = std::vector<std::shared_ptr<Job>>;
+using VecJobRawPtr = std::vector<Job*>;
 using VecIntervalPtr = std::vector<std::shared_ptr<Interval>>;
 
 template <typename IT>
@@ -17,7 +18,7 @@ void swap_ranges(IT start_a, IT end_a, IT start_b, IT end_b) {
 }
 
 struct Machine {
-    VecJobPtr job_list{};
+    VecJobRawPtr job_list{};
 
     int completion_time{};
     int total_weighted_tardiness{};
@@ -31,7 +32,7 @@ struct Machine {
     Machine(const Machine&) = default;
     ~Machine() = default;
 
-    void add_job(std::shared_ptr<Job> job);
+    void add_job(Job* job);
     void reset_machine(std::vector<int>& c);
 };
 
@@ -61,12 +62,12 @@ struct Sol {
     Sol& operator=(Sol&&) = default;
     ~Sol() = default;
 
-    void construct_edd(const VecJobPtr& v);
+    void construct_edd(VecJobPtr& v);
     void construct_spt(const VecJobPtr& v);
     void construct_random_fisher_yates(const VecJobPtr& v);
     void construct_random_shuffle(const VecJobPtr& v);
     void canonical_order(const VecIntervalPtr& intervals);
-    void perturb_solution(int l1, int l2, std::mt19937& mt);
+    void perturb_swap_inter(int l1, int l2, std::mt19937& mt);
 
     void update_insertion_move(int i, int j, int k, int l);
     void update_swap_move(int i, int j, int k, int l1, int l2);
@@ -75,7 +76,8 @@ struct Sol {
     void print_solution();
 
    private:
-    void add_job_front_machine(const std::shared_ptr<Job>& job);
+    void add_job_front_machine(Job* job);
+
     static constexpr auto cmp_machines_completion =
         [](const auto& lhs, const auto& rhs) -> bool {
         return lhs.completion_time > rhs.completion_time;

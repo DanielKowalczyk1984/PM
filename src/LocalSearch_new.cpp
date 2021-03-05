@@ -775,11 +775,11 @@ void LocalSearchData::calculate_W(const Sol& sol) {
             continue;
         }
         auto tmp = m.job_list.begin();
-        W[i][0] = value_Fj(sol.c[(*tmp)->job], (*tmp).get());
+        W[i][0] = value_Fj(sol.c[(*tmp)->job], (*tmp));
         tmp++;
         int j = 1;
         for (; tmp != m.job_list.end(); tmp++) {
-            W[i][j] = W[i][j - 1] + value_Fj(sol.c[(*tmp)->job], (*tmp).get());
+            W[i][j] = W[i][j - 1] + value_Fj(sol.c[(*tmp)->job], (*tmp));
             j++;
         }
         i++;
@@ -802,13 +802,13 @@ void LocalSearchData::calculate_g(Sol& sol) {
         int P{0};
         int j{0};
         for (auto it = m.job_list.begin(); it != m.job_list.end(); it++) {
-            VecJobPtr lateness_sort(it, m.job_list.end());
+            VecJobRawPtr lateness_sort(it, m.job_list.end());
 
-            std::sort(lateness_sort.begin(), lateness_sort.end(),
-                      [&sol](const auto& lhs, const auto& rhs) -> bool {
-                          return (sol.c[lhs->job] - lhs->due_time >
-                                  sol.c[rhs->job] - rhs->due_time);
-                      });
+            std::ranges::sort(lateness_sort,
+                              [&sol](const auto& lhs, const auto& rhs) -> bool {
+                                  return (sol.c[lhs->job] - lhs->due_time >
+                                          sol.c[rhs->job] - rhs->due_time);
+                              });
 
             int  tw{0};
             int  w{0};

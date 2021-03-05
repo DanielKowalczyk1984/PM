@@ -24,8 +24,8 @@ void NodeData::print_ages() {
     fmt::print("AGES:");
 
     // g_ptr_array_foreach(localColPool, g_print_ages_col, NULL);
-    std::for_each(localColPool.begin(), localColPool.end(),
-                  [](auto const& it) { fmt::print(" {}", it->age); });
+    std::ranges::for_each(localColPool,
+                          [](auto const& it) { fmt::print(" {}", it->age); });
 
     fmt::print("\n");
 }
@@ -63,7 +63,7 @@ int NodeData::grow_ages() {
 
         // g_ptr_array_foreach(localColPool, g_grow_ages, this);
 
-        std::for_each(localColPool.begin(), localColPool.end(), [&](auto& it) {
+        std::ranges::for_each(localColPool, [&](auto& it) {
             if (column_status[it->id] == lp_interface_LOWER ||
                 column_status[it->id] == lp_interface_FREE) {
                 it->age++;
@@ -139,12 +139,11 @@ int NodeData::delete_old_schedules() {
     /** pd->zero_count can be deprecated! */
     zero_count = 0;
 
-    std::for_each(localColPool.begin(), localColPool.end(),
-                  [&](auto const& it) {
-                      if (it->age > 0) {
-                          zero_count++;
-                      }
-                  });
+    std::ranges::for_each(localColPool, [&](auto const& it) {
+        if (it->age > 0) {
+            zero_count++;
+        }
+    });
 
     if (zero_count > min_numdel) {
         int              iter = 0;
@@ -174,8 +173,7 @@ int NodeData::delete_old_schedules() {
         lp_interface_get_nb_cols(RMP, &nb_cols);
         assert(localColPool.size() == nb_cols - id_pseudo_schedules);
         i = 0;
-        std::for_each(localColPool.begin(), localColPool.end(),
-                      [&](auto& it) { it->id = i++; });
+        std::ranges::for_each(localColPool, [&](auto& it) { it->id = i++; });
         zero_count = 0;
     }
 
