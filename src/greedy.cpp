@@ -170,46 +170,46 @@ void RVND(Solution* sol, local_search_data* data) {
     alloc_all(sol);
 
     do {
-        // local_search_forward_insertion(sol, data, 1);
+        local_search_forward_insertion(sol, data, 1);
 
-        // if (data->updated) {
-        //     continue;
-        // }
+        if (data->updated) {
+            continue;
+        }
 
-        // local_search_swap_intra(sol, data, 0, 1);
-        // if (data->updated) {
-        //     continue;
-        // }
+        local_search_swap_intra(sol, data, 0, 1);
+        if (data->updated) {
+            continue;
+        }
 
-        // local_search_forward_insertion(sol, data, 2);
+        local_search_forward_insertion(sol, data, 2);
 
-        // if (data->updated) {
-        //     continue;
-        // }
+        if (data->updated) {
+            continue;
+        }
 
-        // local_search_swap_intra(sol, data, 0, 2);
+        local_search_swap_intra(sol, data, 0, 2);
 
-        // if (data->updated) {
-        //     continue;
-        // }
+        if (data->updated) {
+            continue;
+        }
 
-        // local_search_swap_intra(sol, data, 1, 1);
+        local_search_swap_intra(sol, data, 1, 1);
 
-        // if (data->updated) {
-        //     continue;
-        // }
+        if (data->updated) {
+            continue;
+        }
 
-        // local_search_insertion_inter(sol, data, 1);
+        local_search_insertion_inter(sol, data, 1);
 
-        // if (data->updated) {
-        //     continue;
-        // }
+        if (data->updated) {
+            continue;
+        }
 
-        // local_search_insertion_inter(sol, data, 2);
+        local_search_insertion_inter(sol, data, 2);
 
-        // if (data->updated) {
-        //     continue;
-        // }
+        if (data->updated) {
+            continue;
+        }
 
         local_search_swap_inter(sol, data, 1, 1);
 
@@ -407,6 +407,7 @@ int Problem::heuristic() {
     local_search_data* data = nullptr;
     local_search_data* data_RS = nullptr;
     int                test_iterations = 0;
+    double             all_time = 0.0;
 
     CCutil_start_resume_time(&(stat.tot_heuristic));
     sol = solution_alloc(intervals->len, nb_machines, nb_jobs, off);
@@ -428,6 +429,8 @@ int Problem::heuristic() {
     root_pd->add_solution_to_colpool(sol);
     fmt::print("Solution after local search:\n");
     solution_print(sol);
+    all_time += data->test_swap.cum_zeit;
+    test_iterations += data->iterations;
 
     if (opt_sol == nullptr) {
         opt_sol = solution_alloc(intervals->len, nb_machines, nb_jobs, off);
@@ -446,7 +449,6 @@ int Problem::heuristic() {
 
         for (int j = 0; j < ILS; ++j) {
             RVND(sol1, data_RS);
-            ++test_iterations;
 
             if (sol1->tw < sol->tw) {
                 solution_update(sol, sol1);
@@ -463,14 +465,16 @@ int Problem::heuristic() {
             root_pd->add_solution_to_colpool(opt_sol);
         }
 
+        all_time += data_RS->test_swap.cum_zeit;
+        test_iterations += data_RS->iterations;
         local_search_data_free(&data_RS);
         solution_free(&sol1);
     }
 
     solution_canonical_order(opt_sol, intervals);
     fmt::print(
-        "Solution after some improvements with Random Variable Search {}:\n",
-        test_iterations);
+        "Solution after some improvements with Random Variable Search {} {}:\n",
+        test_iterations, all_time);
     solution_print(opt_sol);
     global_upper_bound = opt_sol->tw + off;
     CCutil_stop_timer(&(stat.tot_heuristic), 0);

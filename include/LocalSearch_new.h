@@ -2,10 +2,12 @@
 #define __LOCALSEARCH_NEW_H__
 
 #include <array>
+#include <boost/timer/timer.hpp>
 #include <list>
 #include <random>
 #include <vector>
 #include "Solution_new.hpp"
+#include "util.h"
 
 struct SlopeType {
     int b1{};    /* begin of segment*/
@@ -60,6 +62,9 @@ struct LocalSearchData {
     void insertion_operator(Sol& sol, int l);
     void insertion_operator_inter(Sol& sol, int l);
     int  get_iterations() const { return iterations; }
+
+    boost::timer::cpu_timer test_swap;
+    CCutil_timer            test_timer;
 
    private:
     int  nb_jobs;

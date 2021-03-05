@@ -299,7 +299,6 @@ void Problem::heuristic_new() {
             ++iterations;
             if (sol1.tw < sol.tw) {
                 sol = sol1;
-                // sol.canonical_order(instance.intervals);
                 j = 0UL;
             }
             std::uniform_int_distribution dist(0UL,
@@ -318,6 +317,7 @@ void Problem::heuristic_new() {
         }
     }
 
-    fmt::print("Best new heuristics {}\n", iterations);
+    fmt::print("Best new heuristics {}\n", local.get_iterations());
+    fmt::print("{}\n", local.test_timer.cum_zeit);
     best_sol.print_solution();
 }

@@ -1,5 +1,6 @@
 #ifndef LOCALSEARCH_H
 #define LOCALSEARCH_H
+#include "util.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,6 +29,7 @@ typedef struct _local_search_data {
     processing_list_data** processing_list_2;
     int                    updated;
     int                    iterations;
+    CCutil_timer           test_swap;
 } local_search_data;
 
 void alloc_all(Solution* sol);
