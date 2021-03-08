@@ -27,9 +27,8 @@ Problem::Problem(int argc, const char** argv)
     : parms(),
       stat(),
       tree(),
+      root_pd(std::make_unique<NodeData>(this)),
       g_job_array(g_ptr_array_new_with_free_func(g_job_free)),
-      intervals(g_ptr_array_new_with_free_func(g_interval_free)),
-      opt_sol(nullptr),
       nb_jobs(),
       nb_machines(),
       p_sum(),
@@ -37,18 +36,19 @@ Problem::Problem(int argc, const char** argv)
       pmin(std::numeric_limits<int>::max()),
       dmax(std::numeric_limits<int>::min()),
       dmin(std::numeric_limits<int>::max()),
-      off(),
       H_min(),
       H_max(std::numeric_limits<int>::max()),
+      off(),
+      intervals(g_ptr_array_new_with_free_func(g_interval_free)),
       /*B&B info*/
       global_upper_bound(std::numeric_limits<int>::max()),
       global_lower_bound(),
       rel_error(std::numeric_limits<double>::max()),
-      root_lower_bound(),
       root_upper_bound(std::numeric_limits<int>::max()),
+      root_lower_bound(),
       root_rel_error(std::numeric_limits<double>::max()),
       status(no_sol),
-      root_pd(std::make_unique<NodeData>(this)) {
+      opt_sol(nullptr) {
     double start_time = 0.0;
 
     int val = program_header(argc, argv);
@@ -193,17 +193,6 @@ Problem::Problem(int argc, const char** argv)
      */
     tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
     // tree->explore();
-}
-
-static void g_problem_summary_init(gpointer data, gpointer user_data) {
-    Problem* prob = static_cast<Problem*>(user_data);
-    Job*     j = static_cast<Job*>(data);
-
-    prob->p_sum += j->processing_time;
-    prob->pmax = std::max(prob->pmax, j->processing_time);
-    prob->pmin = std::min(prob->pmin, j->processing_time);
-    prob->dmax = std::max(prob->dmax, j->due_time);
-    prob->dmin = std::min(prob->dmin, j->due_time);
 }
 
 void Problem::calculate_Hmax() {

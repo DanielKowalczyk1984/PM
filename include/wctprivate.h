@@ -1,6 +1,7 @@
 #ifndef WCT_PRIVATE_H
 #define WCT_PRIVATE_H
 
+#include <bits/c++config.h>
 #include <memory>
 #include <vector>
 #include "BranchBoundTree.hpp"
@@ -12,16 +13,12 @@
 #include "binomial-heap.h"
 #include "interval.h"
 #include "lp.h"
-// #include "scheduleset.h"
-// #include "scheduleset.h"
 #include "solution.h"
-#include "solver.h"
-#include "util.h"
 /**
  * problem data
  */
-typedef struct Problem  Problem;
-typedef struct NodeData NodeData;
+// typedef struct Problem Problem;
+// typedef struct NodeData NodeData;
 struct ScheduleSet;
 
 /**
@@ -46,12 +43,6 @@ constexpr int    NB_CG_ITERATIONS = 1000000;
 constexpr int    CLEANUP_ITERATION = 30;
 constexpr double EPS = 1e-6;
 constexpr double EPS_BOUND = 1e-9;
-
-/**
- * node data
- */
-
-typedef struct BranchNodeBase BranchNode;
 
 /**
  * wct problem data type
