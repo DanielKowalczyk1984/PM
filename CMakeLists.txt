@@ -4,15 +4,16 @@ project(
   PM
   VERSION 0.1.0
   LANGUAGES CXX C
-  DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems")
+  DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
+)
 
 #
 # Set project options
 #
 
 # Define a local module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake
-                      ${CMAKE_SOURCE_DIR})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR})
+message((${CMAKE_MODULE_PATH}))
 
 include(StandardSettings)
 include(Utils)
@@ -37,6 +38,15 @@ include(Vcpkg)
 #
 
 find_package(codecov)
+
+#
+# Third Party packages
+#
+
+find_package(Gurobi)
+
+add_subdirectory(or-utils)
+add_subdirectory(branch-and-bound)
 
 #
 # Create library, setup header and source files
@@ -64,12 +74,6 @@ else()
 endif()
 message(STATUS "Added all header and implementation files.\n")
 
-# Find Gurobi
-find_package(Gurobi)
-
-add_subdirectory(or-utils)
-add_subdirectory(branch-and-bound)
-
 #
 # Set the project standard and warnings
 #
@@ -77,26 +81,26 @@ add_subdirectory(branch-and-bound)
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
   target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 else()
-  target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+  target_compile_features(${PROJECT_NAME}_LIB PUBLIC cxx_std_20)
 endif()
 
 include(CompilerWarnings)
 set_project_warnings(${PROJECT_NAME})
+# set_project_warnings(${PROJECT_NAME}_LIB)
 
 verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
 
-# Set the flags for compiling add_definitions(-Wall -Wno-deprecated -pedantic
-# -Wmissing-declarations -Wpointer-arith -Wcast-qual -Wcast-align
-# -Wwrite-strings)
+# Set the flags for compiling add_definitions(-Wall -Wno-deprecated -pedantic -Wmissing-declarations
+# -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings)
 
 # RelWIthDebInfo Flags
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O5 -std=c++20 -m64")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -m64")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO
     "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
 
 # Release Flags
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O5 -std=c++20 -m64")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  -m64")
 set(CMAKE_C_FLAGS_RELEASE
     "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
@@ -114,15 +118,15 @@ set(CMAKE_C_FLAGS_DEBUG
 # Allow usage of header files in the `src` directory, but only for utilities
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
   target_include_directories(
-    ${PROJECT_NAME}
-    INTERFACE $<INSTALL_INTERFACE:include>
-              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+    ${PROJECT_NAME} INTERFACE $<INSTALL_INTERFACE:include>
+                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  )
 else()
   target_include_directories(
     ${PROJECT_NAME}
-    PUBLIC $<INSTALL_INTERFACE:include>
-           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    PUBLIC $<INSTALL_INTERFACE:include> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
 
   if(${PROJECT_NAME}_BUILD_EXECUTABLE)
     target_include_directories(
@@ -130,26 +134,28 @@ else()
       PUBLIC $<INSTALL_INTERFACE:include>
              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
              ${GUROBI_INCLUDE_DIR}
-             CONAN_PKG::fmt
-             CONAN_PKG::glib
-             CONAN_PKG::boost
-             CONAN_PKG::docopt.cpp
+             ${CONAN_INCLUDE_DIRS_FMT}
+             ${CONAN_INCLUDE_DIRS_BOOST}
+             ${CONAN_INCLUDE_DIRS_GLIB}
+             ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
              ORUtils::ORUtils
-             branch-and-bound
-      PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+             branch-and-bound::branch-and-bound
+      PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
 
     target_link_libraries(
       ${PROJECT_NAME}_LIB
       ${GUROBI_LIBRARY}
       ${GUROBI_CXX_LIBRARY}
-      CONAN_PKG::fmt
-      CONAN_PKG::glib
+      ${CONAN_PKG_LIBS_FMT}
+      ${CONAN_PKG_LIBS_GLIB}
       CONAN_PKG::boost
       CONAN_PKG::docopt.cpp
       ORUtils::ORUtils
-      branch-and-bound
+      branch-and-bound::branch-and-bound
       -lm
-      -lpthread)
+      -lpthread
+    )
 
     target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_LIB)
   endif()
@@ -170,8 +176,8 @@ endif()
 verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.\n")
 
 #
-# Format the project using the `clang-format` target (i.e: cmake --build build
-# --target clang-format)
+# Format the project using the `clang-format` target (i.e: cmake --build build --target
+# clang-format)
 #
 
 add_clang_format_target()
@@ -184,12 +190,14 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
   ${PROJECT_NAME}ConfigVersion.cmake
   VERSION ${PROJECT_VERSION}
-  COMPATIBILITY SameMajorVersion)
+  COMPATIBILITY SameMajorVersion
+)
 
 configure_package_config_file(
   ${CMAKE_CURRENT_LIST_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)
 
 # Include CppCcheck
 include(CppcheckTargets)
@@ -200,5 +208,4 @@ include(dev-tools)
 
 # include Doxygen
 include(cmake/Doxygen.cmake)
-# set_property(TARGET ${PROJECT_NAME}
-# PROPERTY OUTPUT_NAME "${PROJECT_NAME}$<CONFIG>${_output}" )
+# set_property(TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME "${PROJECT_NAME}$<CONFIG>${_output}" )
