@@ -2,10 +2,11 @@
 #define FORWARD_BDD_HPP
 // #include <tdzdd/DdEval.hpp>
 #include <fmt/core.h>
-#include <NodeBdd.hpp>
-#include <OptimalSolution.hpp>
 #include <array>
+#include <limits>
+#include "NodeBdd.hpp"
 #include "NodeBddEval.hpp"
+#include "OptimalSolution.hpp"
 
 template <typename T = double>
 class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
@@ -18,7 +19,7 @@ class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     ForwardBddBase<T>(ForwardBddBase<T>&&) noexcept = default;
     ForwardBddBase<T>& operator=(ForwardBddBase<T>&&) noexcept = default;
     ForwardBddBase<T>& operator=(const ForwardBddBase<T>&) = default;
-    ~ForwardBddBase<T>() = default;
+    virtual ~ForwardBddBase<T>() = default;
 
     void set_pi(double* _pi) { pi = _pi; }
 
@@ -59,21 +60,24 @@ class ForwardBddCycle : public ForwardBddBase<T> {
     ForwardBddCycle<T>(ForwardBddCycle<T>&&) noexcept = default;
     ForwardBddCycle<T>& operator=(const ForwardBddCycle<T>&) = default;
     ForwardBddCycle<T>& operator=(ForwardBddCycle<T>&&) noexcept = default;
-    ~ForwardBddCycle<T>() = default;
+    virtual ~ForwardBddCycle<T>() = default;
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {
             n.forward_label[0].update_solution(0, nullptr, false);
-            n.forward_label[1].update_solution(DBL_MAX / 2, nullptr, false);
+            n.forward_label[1].update_solution(
+                std::numeric_limits<double>::max() / 2, nullptr, false);
         } else {
-            n.forward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
-            n.forward_label[1].update_solution(DBL_MAX / 2, nullptr, false);
+            n.forward_label[0].update_solution(
+                std::numeric_limits<double>::max() / 2, nullptr, false);
+            n.forward_label[1].update_solution(
+                std::numeric_limits<double>::max() / 2, nullptr, false);
         }
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {
         n.forward_label[0].get_f() = 0;
-        n.forward_label[1].set_f(DBL_MAX / 2);
+        n.forward_label[1].set_f(std::numeric_limits<double>::max() / 2);
     }
 
     void evalNode(NodeBdd<T>& n) const override {
@@ -178,13 +182,14 @@ class ForwardBddSimple : public ForwardBddBase<T> {
     ForwardBddSimple<T>& operator=(const ForwardBddSimple<T>&) = default;
     ForwardBddSimple(ForwardBddSimple<T>&&) noexcept = default;
     ForwardBddSimple<T>& operator=(ForwardBddSimple<T>&&) noexcept = default;
-    ~ForwardBddSimple<T>() = default;
+    virtual ~ForwardBddSimple<T>() = default;
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {
             n.forward_label[0].update_solution(0, nullptr, false);
         } else {
-            n.forward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
+            n.forward_label[0].update_solution(
+                std::numeric_limits<double>::max() / 2, nullptr, false);
         }
     }
 

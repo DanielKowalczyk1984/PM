@@ -1,10 +1,11 @@
 #ifndef BACKWARD_BDD_HPP
 #define BACKWARD_BDD_HPP
 #include <fmt/core.h>
-#include <NodeBdd.hpp>
-#include <OptimalSolution.hpp>
+#include <limits>
 #include <span>
+#include "NodeBdd.hpp"
 #include "NodeBddEval.hpp"
+#include "OptimalSolution.hpp"
 
 template <typename T = double>
 class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
@@ -12,7 +13,6 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
 
    public:
     BackwardBddBase() = default;
-    ~BackwardBddBase<T>() = default;
 
     // BackwardBddBase(const BackwardBddBase<T>& src) {}
 
@@ -48,13 +48,13 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     BackwardBddBase<T>(BackwardBddBase<T>&&) noexcept = default;
     BackwardBddBase<T>& operator=(const BackwardBddBase<T>&) = default;
     BackwardBddBase<T>& operator=(BackwardBddBase<T>&&) noexcept = default;
+    virtual ~BackwardBddBase<T>() = default;
 };
 
 template <typename T = double>
 class BackwardBddSimple : public BackwardBddBase<T> {
    public:
     BackwardBddSimple() = default;
-    ~BackwardBddSimple<T>() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
         auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
@@ -105,7 +105,8 @@ class BackwardBddSimple : public BackwardBddBase<T> {
     }
 
     void initializenode(NodeBdd<T>& n) const override {
-        n.backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
+        n.backward_label[0].update_solution(
+            std::numeric_limits<double>::max() / 2, nullptr, false);
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {
@@ -116,13 +117,13 @@ class BackwardBddSimple : public BackwardBddBase<T> {
     BackwardBddSimple<T>(BackwardBddSimple<T>&&) noexcept = default;
     BackwardBddSimple<T>& operator=(const BackwardBddSimple<T>&) = default;
     BackwardBddSimple<T>& operator=(BackwardBddSimple<T>&&) noexcept = default;
+    virtual ~BackwardBddSimple<T>() = default;
 };
 
 template <typename T = double>
 class BackwardBddCycle : public BackwardBddBase<T> {
    public:
     BackwardBddCycle<T>() = default;
-    ~BackwardBddCycle<T>() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
         auto  tmp_j = n.get_job();
@@ -207,7 +208,8 @@ class BackwardBddCycle : public BackwardBddBase<T> {
     }
 
     void initializenode(NodeBdd<T>& n) const override {
-        n.backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
+        n.backward_label[0].update_solution(
+            std::numeric_limits<double>::max() / 2, nullptr, false);
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {
@@ -218,6 +220,7 @@ class BackwardBddCycle : public BackwardBddBase<T> {
     BackwardBddCycle<T>(BackwardBddCycle<T>&&) noexcept = default;
     BackwardBddCycle<T>& operator=(const BackwardBddCycle<T>&) = default;
     BackwardBddCycle<T>& operator=(BackwardBddCycle<T>&&) noexcept = default;
+    virtual ~BackwardBddCycle<T>() = default;
 };
 
 #endif  // BACKWARD_BDD_HPP

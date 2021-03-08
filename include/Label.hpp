@@ -50,7 +50,7 @@ class Label {
     void set_node_id(NodeId _id) { node_id = _id; }
 
     void reset() {
-        f = DBL_MAX;
+        f = std::numeric_limits<double>::max();
         prev = nullptr;
         high = false;
     }
