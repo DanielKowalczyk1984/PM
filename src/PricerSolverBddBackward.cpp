@@ -3,6 +3,7 @@
 #include <iostream>
 #include "Instance.h"
 #include "PricerSolverBdd.hpp"
+#include "util.h"
 
 /**
  * backward bdd pricersolver for the flow formulation that takes care of the

@@ -1,5 +1,6 @@
 #include "PricerSolverBase.hpp"
 #include <fmt/core.h>
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include "Instance.h"
@@ -233,7 +234,7 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
         }
     }
 
-    result = CC_MIN(0, result);
+    result = std::min(0.0, result);
 
     for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
         if (c == convex_constr_id) {

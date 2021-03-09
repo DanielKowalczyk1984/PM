@@ -1,3 +1,4 @@
+#include <boost/date_time/gregorian/gregorian.hpp>
 #include "MIP_defs.hpp"
 #include "Statistics.h"
 #include "wctprivate.h"
@@ -80,13 +81,14 @@ int Problem::print_to_csv() {
     Statistics& statistics = stat;
     FILE*       file = (FILE*)NULL;
     char*       file_name = CC_SAFE_MALLOC(128, char);
-    GDate       date;
-    g_date_set_time_t(&date, time(NULL));
+    auto        d =
+        boost::gregorian::date(boost::gregorian::day_clock::universal_day());
+    // date;
     stat.real_time_total = getRealTime() - stat.real_time_total;
     CCutil_stop_timer(&(statistics.tot_cputime), 0);
 
-    sprintf(file_name, "CG_overall_%d%02d%02d.csv", date.year, date.month,
-            date.day);
+    sprintf(file_name, "CG_overall_%d%02d%02d.csv", d.year(), d.month(),
+            d.day());
 
     if (access(file_name, F_OK) != -1) {
         file = fopen(file_name, "a");
@@ -127,8 +129,8 @@ int Problem::print_to_csv() {
             stat.tot_heuristic.cum_zeit, stat.tot_build_dd.cum_zeit,
             stat.tot_pricing.cum_zeit, stat.tot_reduce_cost_fixing.cum_zeit,
             stat.rel_error, stat.global_lower_bound, stat.global_upper_bound,
-            stat.root_rel_error, stat.nb_generated_col, date.day, date.month,
-            date.year, parms.nb_iterations_rvnd, parms.stab_technique,
+            stat.root_rel_error, stat.nb_generated_col, d.day(), d.month(),
+            d.year(), parms.nb_iterations_rvnd, parms.stab_technique,
             parms.alpha, parms.pricing_solver, nb_jobs, parms.nb_machines,
             stat.first_size_graph, stat.size_graph_after_reduced_cost_fixing,
             stat.mip_nb_vars, stat.mip_nb_constr, stat.mip_obj_bound,

@@ -80,7 +80,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         const double*                                    columns,
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
         int                                              num_columns) override;
-    void add_constraint(Job* job, GPtrArray* list, int order) override;
+    // void add_constraint(Job* job, GPtrArray* list, int order) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* pi) override;
@@ -94,9 +94,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     size_t get_nb_vertices() override;
     int    get_num_layers() override;
     void   print_num_paths() override;
-    bool   check_schedule_set(GPtrArray* set) override;
     bool   check_schedule_set(const std::vector<Job*>& set) override;
-    void   make_schedule_set_feasible(GPtrArray* set) override;
 
     void forward_evaluator(double* pi);
     void backward_evaluator(double* _pi);

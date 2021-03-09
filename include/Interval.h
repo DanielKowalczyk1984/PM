@@ -3,7 +3,7 @@
 #include <array>
 #include <memory>
 #include <vector>
-#include "job.h"
+#include "Job.h"
 
 struct compare_edd {
     int a;

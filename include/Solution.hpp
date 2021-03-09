@@ -3,8 +3,8 @@
 #include <memory>
 #include <random>
 #include <vector>
-#include "Interval_new.h"
-#include "job.h"
+#include "Interval.h"
+#include "Job.h"
 
 using VecJobPtr = std::vector<std::shared_ptr<Job>>;
 using VecJobRawPtr = std::vector<Job*>;

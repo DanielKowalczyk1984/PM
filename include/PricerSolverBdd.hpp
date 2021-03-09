@@ -40,8 +40,8 @@ class PricerSolverBdd : public PricerSolverBase {
 
     explicit PricerSolverBdd(const Instance& instance);
 
-    PricerSolverBdd(const PricerSolverBdd& src, GPtrArray* _ordered_jobs);
-    PricerSolverBdd(const PricerSolverBdd&) = default;
+    PricerSolverBdd(const PricerSolverBdd& src);
+    // PricerSolverBdd(const PricerSolverBdd&) = default;
     PricerSolverBdd(PricerSolverBdd&&) = default;
     PricerSolverBdd& operator=(PricerSolverBdd&&) = default;
     PricerSolverBdd& operator=(const PricerSolverBdd&) = delete;
@@ -65,7 +65,7 @@ class PricerSolverBdd : public PricerSolverBase {
     void init_coeff_constraints();
     void init_table();
 
-    bool check_schedule_set(GPtrArray* set) override;
+    // bool check_schedule_set(GPtrArray* set) override;
     bool check_schedule_set(const std::vector<Job*>& set) override;
 
     void reduce_cost_fixing(double* pi, int UB, double LB) override;
@@ -74,13 +74,13 @@ class PricerSolverBdd : public PricerSolverBase {
         const double*                                    columns,
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
         int                                              num_columns) override;
-    void make_schedule_set_feasible(GPtrArray* set) override;
+    // void make_schedule_set_feasible(GPtrArray* set) override;
     void calculate_job_time(std::vector<std::vector<double>>* v) override;
     void split_job_time(int _job, int _time, bool _left) override;
     void iterate_zdd() override;
     void create_dot_zdd(const char* name) override;
     void print_number_nodes_edges() override;
-    void add_constraint(Job* job, GPtrArray* list, int order) override;
+    // void add_constraint(Job* job, GPtrArray* list, int order) override;
     void print_num_paths() override;
     void remove_constraints(int first, int nb_del) override;
     void update_rows_coeff(int first) override;
@@ -101,11 +101,6 @@ class PricerSolverBdd : public PricerSolverBase {
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 
     inline int* get_take() override { return nullptr; };
-
-    GPtrArray* get_ordered_jobs() {
-        return nullptr;
-        // return ordered_jobs;
-    }
 
    private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);

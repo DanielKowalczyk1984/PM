@@ -1,4 +1,3 @@
-#include "LocalSearch_new.h"
 #include <bits/c++config.h>
 #include <fmt/core.h>
 #include <algorithm>
@@ -9,8 +8,9 @@
 #include <list>
 #include <memory>
 #include <vector>
-#include "Solution_new.hpp"
-#include "job.h"
+#include "Job.h"
+#include "LocalSearch_new.h"
+#include "Solution.hpp"
 #include "util.h"
 
 LocalSearchData::LocalSearchData(int _nb_jobs, int _nb_machines)

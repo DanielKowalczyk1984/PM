@@ -12,16 +12,6 @@
 #include "util.h"
 #include "wctprivate.h"
 
-int debug = 0;
-
-/*Information about debug*/
-int dbg_lvl() {
-    return debug;
-}
-void set_dbg_lvl(int dbglvl) {
-    debug = dbglvl;
-}
-
 NodeData::NodeData(Problem* problem)
     : id(-1),
       depth(0),

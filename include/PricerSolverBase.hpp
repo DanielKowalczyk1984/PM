@@ -9,7 +9,6 @@
 #include "MIP_defs.hpp"
 #include "ModelInterface.hpp"
 #include "OptimalSolution.hpp"
-#include "solution.h"
 
 struct NodeData;
 struct ScheduleSet;
@@ -105,7 +104,7 @@ struct PricerSolverBase {
      * Constraint on the solver
      */
 
-    virtual void add_constraint(Job* job, GPtrArray* list, int order) = 0;
+    // virtual void add_constraint(Job* job,  list, int order) = 0;
     virtual void insert_constraints_lp(NodeData* pd) = 0;
     virtual int  add_constraints();
     virtual void remove_constraints(int first, int nb_del);
@@ -132,11 +131,11 @@ struct PricerSolverBase {
     virtual int    get_num_layers() = 0;
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
-    virtual bool   check_schedule_set(GPtrArray* set) = 0;
-    virtual bool   check_schedule_set(const std::vector<Job*>& set) {
+    // virtual bool   check_schedule_set(GPtrArray* set) = 0;
+    virtual bool check_schedule_set(const std::vector<Job*>& set) {
         return true;
     };
-    virtual void make_schedule_set_feasible(GPtrArray* set) = 0;
+    // virtual void make_schedule_set_feasible(GPtrArray* set) = 0;
     virtual void make_schedule_set_feasible(std::vector<Job*>& set){};
     /**
      * Some printing functions

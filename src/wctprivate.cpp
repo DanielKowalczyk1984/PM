@@ -15,7 +15,7 @@
 #include "PricerSolverZddBackward.hpp"
 #include "PricerSolverZddForward.hpp"
 #include "PricingStabilization.hpp"
-#include "Solution_new.hpp"
+#include "Solution.hpp"
 // #include "interval.h"
 
 Problem::~Problem() { /*free the parameters*/

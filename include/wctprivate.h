@@ -9,12 +9,11 @@
 #include "MIP_defs.hpp"
 #include "OptimalSolution.hpp"
 #include "PricingStabilization.hpp"
-#include "Solution_new.hpp"
+#include "Solution.hpp"
 #include "Statistics.h"
 #include "binomial-heap.h"
 // #include "interval.h"
 #include "lp.h"
-#include "solution.h"
 /**
  * problem data
  */

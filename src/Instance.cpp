@@ -9,9 +9,8 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "Interval_new.h"
-#include "interval.h"
-#include "job.h"
+#include "Interval.h"
+#include "Job.h"
 #include "util.h"
 
 Instance::Instance(const fs::path& _path, Parms* _parms)

@@ -1,4 +1,4 @@
-#include "Solution_new.hpp"
+#include "Solution.hpp"
 #include <bits/c++config.h>
 #include <fmt/core.h>
 #include <algorithm>
@@ -8,8 +8,8 @@
 #include <random>
 #include <ranges>
 #include <vector>
-#include "Interval_new.h"
-#include "job.h"
+#include "Interval.h"
+#include "Job.h"
 
 void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
     auto cmp_jobs_edd = [](const auto lhs, const auto rhs) -> bool {

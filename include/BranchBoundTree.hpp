@@ -1,8 +1,8 @@
 #ifndef __BRANCHBOUNDTREE_H__
 #define __BRANCHBOUNDTREE_H__
 #include <memory>
+#include "Parms.h"
 #include "branch-and-bound/btree.h"
-#include "parms.h"
 // #include "wctprivate.h"
 struct NodeData;
 class BranchBoundTree {

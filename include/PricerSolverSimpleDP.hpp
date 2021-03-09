@@ -60,7 +60,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
         int                                              num_columns) override;
 
-    void   add_constraint(Job* job, GPtrArray* list, int order) override;
+    // void   add_constraint(Job* job, GPtrArray* list, int order) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;
@@ -71,9 +71,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     int    get_num_layers() override;
     void   print_num_paths() override;
 
-    bool check_schedule_set(GPtrArray* set) override;
     bool check_schedule_set(const std::vector<Job*>& set) override;
-    void make_schedule_set_feasible(GPtrArray* set) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;

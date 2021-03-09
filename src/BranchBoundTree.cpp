@@ -3,11 +3,11 @@
 #include <boost/timer/timer.hpp>
 #include <memory>
 #include "BranchNode.hpp"
+#include "Parms.h"
 #include "branch-and-bound/bfstree.h"
 #include "branch-and-bound/brfstree.h"
 #include "branch-and-bound/cbfstree.h"
 #include "branch-and-bound/dfstree.h"
-#include "parms.h"
 #include "wctprivate.h"
 BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
                                  int                       _probType,

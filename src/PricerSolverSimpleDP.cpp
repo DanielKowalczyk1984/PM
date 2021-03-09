@@ -340,10 +340,6 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     }
 }
 
-void PricerSolverSimpleDp::add_constraint([[maybe_unused]] Job*       job,
-                                          [[maybe_unused]] GPtrArray* list,
-                                          [[maybe_unused]] int        order) {}
-
 void PricerSolverSimpleDp::iterate_zdd() {}
 
 void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name) {
@@ -399,26 +395,6 @@ int PricerSolverSimpleDp::get_num_layers() {
 
 void PricerSolverSimpleDp::print_num_paths() {}
 
-bool PricerSolverSimpleDp::check_schedule_set([[maybe_unused]] GPtrArray* set) {
-    // int t = 0;
-    // for(unsigned int j = 0; j < set->len; j++) {
-    //     Job* tmp_j = static_cast<Job*>() g_ptr_array_index()atic_cast<set,
-    //     j>())); t += tmp_j->processing_time;
-
-    //     if (t > Hmax) {
-    //         return false;
-    //     }
-
-    //     auto it = std::find(forward_graph[t].begin(),
-    //     forward_graph[t].end(),tmp_j); if (it == forward_graph[t].end()) {
-    //         return false;
-    //     }
-
-    // }
-
-    return true;
-}
-
 bool PricerSolverSimpleDp::check_schedule_set(
     [[maybe_unused]] const std::vector<Job*>& set) {
     // int t = 0;
@@ -439,6 +415,3 @@ bool PricerSolverSimpleDp::check_schedule_set(
 
     return true;
 }
-
-void PricerSolverSimpleDp::make_schedule_set_feasible(
-    [[maybe_unused]] GPtrArray* set) {}

@@ -25,11 +25,11 @@ class PricerSolverZdd : public PricerSolverBase {
     std::vector<double> lp_x;
     std::vector<double> solution_x;
 
-    PricerSolverZdd(GPtrArray*  _jobs,
-                    int         _num_machines,
-                    GPtrArray*  _ordered_jobs,
-                    const char* p_name,
-                    double      _UB);
+    // PricerSolverZdd(GPtrArray*  _jobs,
+    //                 int         _num_machines,
+    //                 GPtrArray*  _ordered_jobs,
+    //                 const char* p_name,
+    //                 double      _UB);
 
     explicit PricerSolverZdd(const Instance& instance);
 
@@ -59,9 +59,7 @@ class PricerSolverZdd : public PricerSolverBase {
         const double*                                    columns,
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
         int                                              num_columns) override;
-    bool   check_schedule_set(GPtrArray* set) override;
     bool   check_schedule_set(const std::vector<Job*>& set) override;
-    void   make_schedule_set_feasible(GPtrArray* set) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;
@@ -76,7 +74,7 @@ class PricerSolverZdd : public PricerSolverBase {
 
     OptimalSolution<double> farkas_pricing(double* pi) override;
 
-    void add_constraint(Job* job, GPtrArray* list, int order) override;
+    // void add_constraint(Job* job, GPtrArray* list, int order) override;
 
     void update_constraints() override {}
 

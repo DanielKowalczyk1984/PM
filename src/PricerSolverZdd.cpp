@@ -425,25 +425,25 @@ void PricerSolverZdd::reduce_cost_fixing(double* pi, int UB, double LB) {
     construct_mipgraph();
 }
 
-void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
-    std::cout << decision_diagram->size() << '\n';
-    scheduling constr(job, ordered_jobs_new, order);
-    // std::ofstream outf("min1.gv");
-    // NodeTableEntity<NodeZdd<>>& table =
-    // decision_diagram->getDiagram().privateEntity(); ColorWriterVertex
-    // vertex_writer(g, table); boost::write_graphviz(outf, g, vertex_writer);
-    decision_diagram->zddSubset(constr);
-    // outf.close();
-    // decision_diagram->compressBdd();
-    init_table();
-    std::cout << decision_diagram->size() << '\n';
-    construct_mipgraph();
-    // NodeTableEntity<NodeZdd<>>& table1 =
-    // decision_diagram->getDiagram().privateEntity(); ColorWriterVertex
-    // vertex_writer1(g, table1); outf = std::ofstream("min2.gv");
-    // boost::write_graphviz(outf, g, vertex_writer1);
-    // outf.close();
-}
+// void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
+//     std::cout << decision_diagram->size() << '\n';
+//     scheduling constr(job, ordered_jobs_new, order);
+//     // std::ofstream outf("min1.gv");
+//     // NodeTableEntity<NodeZdd<>>& table =
+//     // decision_diagram->getDiagram().privateEntity(); ColorWriterVertex
+//     // vertex_writer(g, table); boost::write_graphviz(outf, g,
+//     vertex_writer); decision_diagram->zddSubset(constr);
+//     // outf.close();
+//     // decision_diagram->compressBdd();
+//     init_table();
+//     std::cout << decision_diagram->size() << '\n';
+//     construct_mipgraph();
+//     // NodeTableEntity<NodeZdd<>>& table1 =
+//     // decision_diagram->getDiagram().privateEntity(); ColorWriterVertex
+//     // vertex_writer1(g, table1); outf = std::ofstream("min2.gv");
+//     // boost::write_graphviz(outf, g, vertex_writer1);
+//     // outf.close();
+// }
 
 void PricerSolverZdd::construct_lp_sol_from_rmp(
     const double*                                    columns,
@@ -494,35 +494,8 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(
     // outf.close();
 }
 
-bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
-    guint     weight = 0;
-    std::span aux_jobs{set->pdata, set->len};
-    auto&     table = *(decision_diagram->getDiagram());
-    NodeId    tmp_nodeid(decision_diagram->root());
-
-    for (unsigned j = 0; j < set->len; ++j) {
-        Job* tmp_j = static_cast<Job*>(aux_jobs[j]);
-        while (tmp_nodeid > 1) {
-            NodeZdd<>& tmp_node = table.node(tmp_nodeid);
-
-            if (tmp_j == tmp_node.get_job()) {
-                tmp_nodeid = tmp_node.branch[1];
-                weight += 1;
-
-                if (j + 1 != weight) {
-                    return false;
-                }
-            } else {
-                tmp_nodeid = tmp_node.branch[0];
-            }
-        }
-    }
-
-    return (weight == set->len);
-}
-
 bool PricerSolverZdd::check_schedule_set(const std::vector<Job*>& set) {
-    guint weight = 0;
+    auto weight = 0UL;
     // std::span aux_jobs{set->pdata, set->len};
     auto&  table = *(decision_diagram->getDiagram());
     NodeId tmp_nodeid(decision_diagram->root());
@@ -547,9 +520,6 @@ bool PricerSolverZdd::check_schedule_set(const std::vector<Job*>& set) {
 
     return (weight == set.size());
 }
-
-void PricerSolverZdd::make_schedule_set_feasible(
-    [[maybe_unused]] GPtrArray* set) {}
 
 void PricerSolverZdd::iterate_zdd() {
     DdStructure<NodeZdd<double>>::const_iterator it = decision_diagram->begin();

@@ -8,7 +8,7 @@
 #include <list>
 #include <random>
 #include <vector>
-#include "Solution_new.hpp"
+#include "Solution.hpp"
 
 struct SlopeType {
     int b1{};    /* begin of segment*/

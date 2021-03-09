@@ -2,8 +2,8 @@
 #define LABEL_HPP
 
 #include <limits>
+#include "Job.h"
 #include "NodeId.hpp"
-#include "job.h"
 
 template <typename N, typename T>
 class Label {

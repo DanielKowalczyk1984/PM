@@ -6,18 +6,11 @@
 #include <memory>
 #include <vector>
 
-#include "Interval_new.h"
-#include "job.h"
-#include "parms.h"
-#include "util.h"
+#include "Interval.h"
+#include "Job.h"
+#include "Parms.h"
 
 namespace fs = std::filesystem;
-namespace std {
-template <>
-struct default_delete<Job> {
-    void operator()(Job* ptr) { CC_IFFREE(ptr, Job); }
-};
-}  // namespace std
 
 struct Instance {
     fs::path path_to_instance{};
@@ -33,9 +26,9 @@ struct Instance {
     int nb_jobs{};
     int nb_machines{};
     int p_sum{};
-    int pmax{0};
+    int pmax{};
     int pmin{std::numeric_limits<int>::max()};
-    int dmax{0};
+    int dmax{};
     int dmin{std::numeric_limits<int>::max()};
     int H_min{};
     int H_max{};

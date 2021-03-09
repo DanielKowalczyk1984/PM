@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include "Job.h"
+#include "Parms.h"
 #include "gurobi_c.h"
-#include "job.h"
 #include "lp.h"
-#include "parms.h"
 #include "scheduleset.h"
 #include "solver.h"
 #include "util.h"
@@ -14,11 +14,11 @@
 
 static const double min_nb_del_row_ratio = 0.9;
 
-void g_print_ages_col(gpointer data, MAYBE_UNUSED gpointer user_data) {
-    ScheduleSet* x = static_cast<ScheduleSet*>(data);
+// void g_print_ages_col(gpointer data, MAYBE_UNUSED gpointer user_data) {
+//     ScheduleSet* x = static_cast<ScheduleSet*>(data);
 
-    fmt::print(" {}", x->age);
-}
+//     fmt::print(" {}", x->age);
+// }
 
 /** Help function for column generation */
 void NodeData::print_ages() {
@@ -31,21 +31,21 @@ void NodeData::print_ages() {
     fmt::print("\n");
 }
 
-void g_grow_ages(gpointer data, gpointer user_data) {
-    ScheduleSet* x = static_cast<ScheduleSet*>(data);
-    NodeData*    pd = static_cast<NodeData*>(user_data);
+// void g_grow_ages(gpointer data, gpointer user_data) {
+//     ScheduleSet* x = static_cast<ScheduleSet*>(data);
+//     NodeData*    pd = static_cast<NodeData*>(user_data);
 
-    if (pd->column_status[x->id] == lp_interface_LOWER ||
-        pd->column_status[x->id] == lp_interface_FREE) {
-        x->age++;
+//     if (pd->column_status[x->id] == lp_interface_LOWER ||
+//         pd->column_status[x->id] == lp_interface_FREE) {
+//         x->age++;
 
-        if (x->age > pd->retirementage) {
-            pd->zero_count++;
-        }
-    } else {
-        x->age = 0;
-    }
-}
+//         if (x->age > pd->retirementage) {
+//             pd->zero_count++;
+//         }
+//     } else {
+//         x->age = 0;
+//     }
+// }
 
 int NodeData::grow_ages() {
     int val = 0;
@@ -86,7 +86,7 @@ int NodeData::delete_unused_rows() {
     int val = 0;
     int nb_rows = 0;
     // double* slack_tmp = &g_array_index(slack, double, 0);
-    GArray* del_indices = g_array_new(FALSE, FALSE, sizeof(int));
+    std::vector<int> del_indices{};
 
     lp_interface_get_nb_rows(RMP, &nb_rows);
     // assert(nb_rows == pd->slack->len);
@@ -124,19 +124,19 @@ int NodeData::delete_unused_rows() {
     return val;
 }
 
-void g_scheduleset_count_zero(gpointer data, gpointer user_data) {
-    ScheduleSet* tmp = static_cast<ScheduleSet*>(data);
-    int*         aux = static_cast<int*>(user_data);
+// void g_scheduleset_count_zero(gpointer data, gpointer user_data) {
+//     ScheduleSet* tmp = static_cast<ScheduleSet*>(data);
+//     int*         aux = static_cast<int*>(user_data);
 
-    if (tmp->age > 0) {
-        (*aux)++;
-    }
-}
+//     if (tmp->age > 0) {
+//         (*aux)++;
+//     }
+// }
 
 int NodeData::delete_old_schedules() {
-    int   val = 0;
-    int   min_numdel = floor(nb_jobs * min_nb_del_row_ratio);
-    guint i = 0U;
+    int  val = 0;
+    int  min_numdel = floor(nb_jobs * min_nb_del_row_ratio);
+    auto i = 0U;
     /** pd->zero_count can be deprecated! */
     zero_count = 0;
 
@@ -182,8 +182,8 @@ int NodeData::delete_old_schedules() {
 }
 
 int NodeData::delete_infeasible_schedules() {
-    guint i = 0;
-    guint count = localColPool.size();
+    auto i = 0UL;
+    auto count = localColPool.size();
     /** pd->zero_count can be deprecated! */
     zero_count = 0;
 

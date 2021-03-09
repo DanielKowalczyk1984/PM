@@ -1,8 +1,8 @@
 #include <fmt/core.h>
 #include <numeric>
 #include <vector>
+#include "Job.h"
 #include "gurobi_c.h"
-#include "job.h"
 #include "lp.h"
 #include "scheduleset.h"
 #include "util.h"
@@ -25,7 +25,7 @@ int grab_integer_solution(NodeData*                  pd,
     pd->best_schedule.clear();
     // pd->best_schedule = g_ptr_array_new_with_free_func(g_scheduleset_free);
 
-    for (guint i = 0; i < pd->localColPool.size(); ++i) {
+    for (auto i = 0UL; i < pd->localColPool.size(); ++i) {
         tmp_schedule = pd->localColPool[i].get();
 
         if (x[i + pd->id_pseudo_schedules] >= 1.0 - tolerance) {

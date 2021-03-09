@@ -3,9 +3,9 @@
 #include <cmath>
 #include <memory>
 #include <span>
+#include "Parms.h"
 #include "PricerSolverBase.hpp"
-#include "parms.h"
-// #include "wctprivate.h"
+#include "util.h"
 
 /**
  * @brief Construct a new Pricing Stabilization Base:: Pricing Stabilization
@@ -481,7 +481,7 @@ void PricingStabilizationHybrid::calculate_dualdiffnorm() {
 void PricingStabilizationHybrid::calculate_beta() {
     beta = 0.0;
     for (auto i = 0UL; i < solver->convex_constr_id; ++i) {
-        double dualdiff = ABS(pi_out[i] - pi_in[i]);
+        double dualdiff = std::abs(pi_out[i] - pi_in[i]);
         double product = dualdiff * std::abs(subgradient_in[i]);
 
         if (product > EPS_STAB) {

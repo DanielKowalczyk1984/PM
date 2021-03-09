@@ -6,6 +6,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <memory>
 #include "Instance.h"
+#include "Job.h"
 #include "MipGraph.hpp"
 #include "ModelInterface.hpp"
 #include "NodeBdd.hpp"
@@ -15,8 +16,7 @@
 #include "PricerConstruct.hpp"
 #include "PricerSolverBase.hpp"
 #include "ZeroHalfCuts.hpp"
-#include "interval.h"
-#include "job.h"
+// #include "interval.h"
 #include "lp.h"
 #include "scheduleset.h"
 #include "util.h"
@@ -81,8 +81,7 @@ PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     }
 }
 
-PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src,
-                                 GPtrArray*             _ordered_jobs)
+PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src)
     : PricerSolverBase(src),
       decision_diagram(src.decision_diagram),
       size_graph(src.size_graph),
@@ -1391,22 +1390,22 @@ void PricerSolverBdd::equivalent_paths_filtering() {
     }
 }
 
-void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
-    scheduling         constr(job, ordered_jobs_new, order);
-    std::ofstream      outf("min1.gv");
-    NodeTableEntity<>& table = *(decision_diagram.getDiagram());
-    ColorWriterVertex  vertex_writer(mip_graph, table);
-    boost::write_graphviz(outf, mip_graph, vertex_writer);
-    decision_diagram.zddSubset(constr);
-    outf.close();
-    decision_diagram.compressBdd();
-    construct_mipgraph();
-    auto&             table1 = *(decision_diagram.getDiagram());
-    ColorWriterVertex vertex_writer1(mip_graph, table1);
-    outf = std::ofstream("min2.gv");
-    boost::write_graphviz(outf, mip_graph, vertex_writer1);
-    outf.close();
-}
+// void PricerSolverBdd::add_constraint(Job* job, GPtrArray* list, int order) {
+//     scheduling         constr(job, ordered_jobs_new, order);
+//     std::ofstream      outf("min1.gv");
+//     NodeTableEntity<>& table = *(decision_diagram.getDiagram());
+//     ColorWriterVertex  vertex_writer(mip_graph, table);
+//     boost::write_graphviz(outf, mip_graph, vertex_writer);
+//     decision_diagram.zddSubset(constr);
+//     outf.close();
+//     decision_diagram.compressBdd();
+//     construct_mipgraph();
+//     auto&             table1 = *(decision_diagram.getDiagram());
+//     ColorWriterVertex vertex_writer1(mip_graph, table1);
+//     outf = std::ofstream("min2.gv");
+//     boost::write_graphviz(outf, mip_graph, vertex_writer1);
+//     outf.close();
+// }
 
 void PricerSolverBdd::construct_lp_sol_from_rmp(
     const double*                                    columns,
@@ -1579,32 +1578,6 @@ void PricerSolverBdd::update_rows_coeff(int first) {
     }
 }
 
-bool PricerSolverBdd::check_schedule_set(GPtrArray* set) {
-    // guint              weight = 0;
-    auto&     table = *(decision_diagram.getDiagram());
-    auto      tmp_nodeid(decision_diagram.root());
-    auto      counter = 0u;
-    std::span aux_set{set->pdata, set->len};
-
-    while (tmp_nodeid > 1) {
-        auto& tmp_node = table.node(tmp_nodeid);
-        Job*  tmp_j = nullptr;
-
-        if (counter < set->len) {
-            tmp_j = static_cast<Job*>(aux_set[counter]);
-        }
-
-        if (tmp_j == tmp_node.get_job()) {
-            tmp_nodeid = tmp_node.branch[1];
-            counter++;
-        } else {
-            tmp_nodeid = tmp_node.branch[0];
-        }
-    }
-
-    return (tmp_nodeid == 1 && counter == set->len);
-}
-
 bool PricerSolverBdd::check_schedule_set(const std::vector<Job*>& set) {
     // guint              weight = 0;
     auto& table = *(decision_diagram.getDiagram());
@@ -1630,9 +1603,6 @@ bool PricerSolverBdd::check_schedule_set(const std::vector<Job*>& set) {
 
     return (tmp_nodeid == 1 && counter == set.size());
 }
-
-void PricerSolverBdd::make_schedule_set_feasible(
-    [[maybe_unused]] GPtrArray* set) {}
 
 void PricerSolverBdd::iterate_zdd() {
     DdStructure<NodeBdd<double>>::const_iterator it = decision_diagram.begin();

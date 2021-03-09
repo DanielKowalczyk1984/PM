@@ -4,8 +4,8 @@
 #include <iostream>
 #include <span>
 #include <vector>
+#include "Job.h"
 #include "fmt/core.h"
-#include "job.h"
 
 template <typename T = double>
 class OptimalSolution {

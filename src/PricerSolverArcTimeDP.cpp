@@ -1,6 +1,7 @@
 #include "PricerSolverArcTimeDP.hpp"
 #include <fmt/core.h>
 #include <iostream>
+#include <limits>
 #include <vector>
 #include "Instance.h"
 #include "PricerSolverBase.hpp"
@@ -148,7 +149,7 @@ void PricerSolverArcTimeDp::init_table() {
         Job* tmp = vector_jobs[j];
         for (int t = 0; t <= Hmax; ++t) {
             if (graph[j][t].empty()) {
-                forward_F[j][t] = DBL_MAX / 2;
+                forward_F[j][t] = std::numeric_limits<double>::max() / 2;
             } else {
                 for (auto& it : graph[j][t]) {
                     reversed_graph[it->job][t].push_back(tmp);
@@ -160,7 +161,7 @@ void PricerSolverArcTimeDp::init_table() {
     for (int j = 0; j < n + 1; j++) {
         for (int t = 0; t <= Hmax; t++) {
             if (reversed_graph[j][t].empty()) {
-                backward_F[j][t] = DBL_MAX / 2;
+                backward_F[j][t] = std::numeric_limits<double>::max() / 2;
             }
         }
     }
@@ -372,7 +373,9 @@ void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
     for (int t = Hmax - 1; t >= 0; --t) {
         for (int i = 0; i <= n; ++i) {
             // Job* tmp = vector_jobs[i];
-            backward_F[i][t] = ((i == n) && (t == Hmax)) ? 0.0 : DBL_MAX / 2;
+            backward_F[i][t] = ((i == n) && (t == Hmax))
+                                   ? 0.0
+                                   : std::numeric_limits<double>::max() / 2;
             auto it = reversed_graph[i][t].begin();
 
             if (!reversed_graph[i][t].empty() && t <= Hmax) {
@@ -407,7 +410,7 @@ void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
                 }
 
             } else {
-                backward_F[i][t] = DBL_MAX / 2;
+                backward_F[i][t] = std::numeric_limits<double>::max() / 2;
             }
         }
     }
@@ -423,7 +426,9 @@ void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
             Job* tmp = vector_jobs[j];
             A[j][t] = nullptr;
             B[j][t] = -1;
-            forward_F[j][t] = ((j == n) && (t == 0)) ? 0 : DBL_MAX / 2;
+            forward_F[j][t] = ((j == n) && (t == 0))
+                                  ? 0
+                                  : std::numeric_limits<double>::max() / 2;
             auto it = graph[j][t].begin();
             if (!graph[j][t].empty() && t <= Hmax - tmp->processing_time) {
                 double reduced_cost =
@@ -542,10 +547,6 @@ void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     }
 }
 
-void PricerSolverArcTimeDp::add_constraint([[maybe_unused]] Job*       job,
-                                           [[maybe_unused]] GPtrArray* list,
-                                           [[maybe_unused]] int        order) {}
-
 void PricerSolverArcTimeDp::iterate_zdd() {}
 
 void PricerSolverArcTimeDp::create_dot_zdd([[maybe_unused]] const char* name) {}
@@ -588,40 +589,6 @@ int PricerSolverArcTimeDp::get_num_layers() {
 
 void PricerSolverArcTimeDp::print_num_paths() {}
 
-bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_set{set->pdata, set->len};
-    size_t    counter = set->len - 1;
-    int       i = n;
-    int       t = 0;
-
-    while (t < Hmax + 1) {
-        Job* tmp_j = nullptr;
-        int  j = n;
-
-        if (counter < set->len) {
-            tmp_j = static_cast<Job*>(aux_set[counter]);
-            j = tmp_j->job;
-        }
-
-        if (std::find(graph[j][t].begin(), graph[j][t].end(), vector_jobs[i]) ==
-            graph[j][t].end()) {
-            return true;
-        }
-
-        if (tmp_j == nullptr) {
-            i = n;
-            t += 1;
-        } else {
-            i = j;
-            t += tmp_j->processing_time;
-            counter--;
-        }
-    }
-
-    return false;
-}
-
 bool PricerSolverArcTimeDp::check_schedule_set(const std::vector<Job*>& set) {
     auto nb_constraints = reformulation_model.get_nb_constraints();
     // std::span aux_set{set->pdata, set->len};
@@ -654,6 +621,3 @@ bool PricerSolverArcTimeDp::check_schedule_set(const std::vector<Job*>& set) {
 
     return false;
 }
-
-void PricerSolverArcTimeDp::make_schedule_set_feasible(
-    [[maybe_unused]] GPtrArray* set) {}

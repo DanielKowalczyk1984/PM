@@ -18,12 +18,11 @@ class PricerSolverBddSimple : public PricerSolverBdd {
     //                       int         _Hmax,
     //                       int*        _take_jobs,
     //                       double      _UB);
-    PricerSolverBddSimple(const PricerSolverBddSimple& src,
-                          GPtrArray*                   _ordered_jobs)
-        : PricerSolverBdd(src, _ordered_jobs),
-          evaluator(src.evaluator),
-          reversed_evaluator(src.reversed_evaluator),
-          farkas_evaluator(src.farkas_evaluator){};
+    // PricerSolverBddSimple(const PricerSolverBddSimple& src)
+    //     : PricerSolverBdd(src),
+    //       evaluator(src.evaluator),
+    //       reversed_evaluator(src.reversed_evaluator),
+    //       farkas_evaluator(src.farkas_evaluator){};
 
     explicit PricerSolverBddSimple(const Instance& instance);
 
@@ -36,7 +35,7 @@ class PricerSolverBddSimple : public PricerSolverBdd {
     std::unique_ptr<PricerSolverBase> clone() override {
         // auto* tmp =
         //     g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
-        return std::make_unique<PricerSolverBddSimple>(*this, nullptr);
+        return std::make_unique<PricerSolverBddSimple>(*this);
     };
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
@@ -63,12 +62,6 @@ class PricerSolverBddCycle : public PricerSolverBdd {
     //                      double      _UB);
 
     explicit PricerSolverBddCycle(const Instance& instance);
-    PricerSolverBddCycle(const PricerSolverBddCycle& src,
-                         GPtrArray*                  _ordered_jobs)
-        : PricerSolverBdd(src, _ordered_jobs),
-          evaluator(src.evaluator),
-          reversed_evaluator(src.reversed_evaluator),
-          farkas_evaluator(src.farkas_evaluator){};
 
     PricerSolverBddCycle(const PricerSolverBddCycle&) = default;
     PricerSolverBddCycle(PricerSolverBddCycle&&) = default;
@@ -79,7 +72,7 @@ class PricerSolverBddCycle : public PricerSolverBdd {
     std::unique_ptr<PricerSolverBase> clone() override {
         // auto* tmp =
         //     g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
-        return std::make_unique<PricerSolverBddCycle>(*this, nullptr);
+        return std::make_unique<PricerSolverBddCycle>(*this);
     }
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
