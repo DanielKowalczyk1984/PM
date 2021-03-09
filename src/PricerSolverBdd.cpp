@@ -1605,6 +1605,32 @@ bool PricerSolverBdd::check_schedule_set(GPtrArray* set) {
     return (tmp_nodeid == 1 && counter == set->len);
 }
 
+bool PricerSolverBdd::check_schedule_set(const std::vector<Job*>& set) {
+    // guint              weight = 0;
+    auto& table = *(decision_diagram.getDiagram());
+    auto  tmp_nodeid(decision_diagram.root());
+    auto  counter = 0u;
+    // std::span aux_set{set->pdata, set->len};
+
+    while (tmp_nodeid > 1) {
+        auto& tmp_node = table.node(tmp_nodeid);
+        Job*  tmp_j = nullptr;
+
+        if (counter < set.size()) {
+            tmp_j = set[counter];
+        }
+
+        if (tmp_j == tmp_node.get_job()) {
+            tmp_nodeid = tmp_node.branch[1];
+            counter++;
+        } else {
+            tmp_nodeid = tmp_node.branch[0];
+        }
+    }
+
+    return (tmp_nodeid == 1 && counter == set.size());
+}
+
 void PricerSolverBdd::make_schedule_set_feasible(
     [[maybe_unused]] GPtrArray* set) {}
 

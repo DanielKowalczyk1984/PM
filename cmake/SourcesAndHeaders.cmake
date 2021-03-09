@@ -1,20 +1,19 @@
 set(sources
     "src/BranchBoundTree.cpp"
     "src/BranchNode.cpp"
-    "src/greedy.cpp"
+    # "src/greedy.cpp"
     "src/Instance.cpp"
-    "src/interval.cpp"
+    # "src/interval.cpp"
     "src/Interval_new.cpp"
     "src/io.cpp"
-    "src/job.c"
-    "src/localsearch.c"
+    "src/job.cpp"
+    # "src/localsearch.c"
     "src/LocalSearch_new.cpp"
     "src/lowerbound.cpp"
     "src/model.cpp"
     "src/ModelInterface.cpp"
     "src/parms.cpp"
-    "src/partlist.c"
-    "src/preprocess.cpp"
+    # "src/partlist.c" "src/preprocess.cpp"
     "src/PricerSolverArcTimeDP.cpp"
     "src/PricerSolverBase.cpp"
     "src/PricerSolverBdd.cpp"
@@ -28,13 +27,14 @@ set(sources
     "src/PricingStabilization.cpp"
     "src/scheduleset.cpp"
     "src/SeperationSolver.cpp"
-    "src/solution.c"
+    # "src/solution.c"
     "src/Solution_new.cpp"
     "src/StabilizationWrappers.cpp"
     "src/Statistics.cpp"
     "src/wct.cpp"
     "src/wctprivate.cpp"
-    "src/ZeroHalfCuts.cpp")
+    "src/ZeroHalfCuts.cpp"
+)
 
 set(exe_sources "src/main.cpp")
 

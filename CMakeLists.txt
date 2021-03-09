@@ -147,7 +147,7 @@ else()
       ${PROJECT_NAME}_LIB
       ${GUROBI_LIBRARY}
       ${GUROBI_CXX_LIBRARY}
-      ${CONAN_PKG_LIBS_FMT}
+      CONAN_PKG::fmt
       ${CONAN_PKG_LIBS_GLIB}
       CONAN_PKG::boost
       CONAN_PKG::docopt.cpp

@@ -521,6 +521,33 @@ bool PricerSolverZdd::check_schedule_set(GPtrArray* set) {
     return (weight == set->len);
 }
 
+bool PricerSolverZdd::check_schedule_set(const std::vector<Job*>& set) {
+    guint weight = 0;
+    // std::span aux_jobs{set->pdata, set->len};
+    auto&  table = *(decision_diagram->getDiagram());
+    NodeId tmp_nodeid(decision_diagram->root());
+
+    for (unsigned j = 0; j < set.size(); ++j) {
+        Job* tmp_j = set[j];
+        while (tmp_nodeid > 1) {
+            NodeZdd<>& tmp_node = table.node(tmp_nodeid);
+
+            if (tmp_j == tmp_node.get_job()) {
+                tmp_nodeid = tmp_node.branch[1];
+                weight += 1;
+
+                if (j + 1 != weight) {
+                    return false;
+                }
+            } else {
+                tmp_nodeid = tmp_node.branch[0];
+            }
+        }
+    }
+
+    return (weight == set.size());
+}
+
 void PricerSolverZdd::make_schedule_set_feasible(
     [[maybe_unused]] GPtrArray* set) {}
 

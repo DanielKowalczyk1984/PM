@@ -42,7 +42,7 @@ void      interval_free(interval* p);
 void      g_interval_free(void* p);
 
 gint g_compare_interval_data(gconstpointer a, gconstpointer b, gpointer data);
-gint g_compare_duration(gconstpointer a, gconstpointer b);
+// gint g_compare_duration(gconstpointer a, gconstpointer b);
 void g_print_interval(gpointer data, gpointer user_data);
 void print_interval_pair(GPtrArray* ordered_jobs);
 

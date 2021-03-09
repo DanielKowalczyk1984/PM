@@ -33,8 +33,7 @@ Instance::Instance(const fs::path& _path, Parms* _parms)
             std::istringstream ss(str);
             ss >> p >> d >> w;
             d = d / nb_machines;
-            jobs.push_back(std::shared_ptr<Job>(job_alloc(&p, &w, &d),
-                                                std::default_delete<Job>()));
+            jobs.emplace_back(std::make_shared<Job>(p, w, d));
             auto* tmp = jobs.back().get();
             if (tmp->processing_time > tmp->due_time) {
                 off += tmp->weight * (tmp->processing_time - tmp->due_time);
@@ -73,8 +72,7 @@ Instance::Instance(Parms* _parms)
             std::istringstream ss(str);
             ss >> p >> d >> w;
             d = d / nb_machines;
-            jobs.push_back(std::shared_ptr<Job>(job_alloc(&p, &w, &d),
-                                                std::default_delete<Job>()));
+            jobs.emplace_back(std::make_shared<Job>(p, w, d));
             auto* tmp = jobs.back().get();
             if (tmp->processing_time > tmp->due_time) {
                 off += tmp->weight * (tmp->processing_time - tmp->due_time);
@@ -227,7 +225,7 @@ void Instance::find_division() {
         auto& tmp_sigma = it->sigma;
         for (auto& job : tmp_sigma) {
             if (job->processing_time <= it->b) {
-                vector_pair.emplace_back(std::make_pair(job, it));
+                vector_pair.emplace_back(std::make_pair(job.get(), it.get()));
             }
         }
     }

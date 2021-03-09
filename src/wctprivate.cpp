@@ -239,6 +239,7 @@ void Problem::heuristic_new() {
     best_sol.canonical_order(instance.intervals);
     fmt::print("Solution after local search:\n");
     best_sol.print_solution();
+    root_pd->add_solution_to_colpool(best_sol);
 
     Sol sol(instance.nb_jobs, instance.nb_machines, instance.off);
     int iterations = 0;
@@ -259,9 +260,11 @@ void Problem::heuristic_new() {
 
         if (sol.tw < best_sol.tw) {
             best_sol = sol;
+            root_pd->add_solution_to_colpool(sol);
         }
     }
 
     fmt::print("Best new heuristics\n");
     best_sol.print_solution();
+    opt_sol = best_sol;
 }

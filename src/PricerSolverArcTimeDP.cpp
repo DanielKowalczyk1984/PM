@@ -623,5 +623,38 @@ bool PricerSolverArcTimeDp::check_schedule_set(GPtrArray* set) {
     return false;
 }
 
+bool PricerSolverArcTimeDp::check_schedule_set(const std::vector<Job*>& set) {
+    auto nb_constraints = reformulation_model.get_nb_constraints();
+    // std::span aux_set{set->pdata, set->len};
+    size_t counter = set.size() - 1;
+    int    i = n;
+    int    t = 0;
+
+    while (t < Hmax + 1) {
+        Job* tmp_j = nullptr;
+        int  j = n;
+
+        if (counter < set.size()) {
+            j = set[counter]->job;
+        }
+
+        if (std::find(graph[j][t].begin(), graph[j][t].end(), vector_jobs[i]) ==
+            graph[j][t].end()) {
+            return true;
+        }
+
+        if (tmp_j == nullptr) {
+            i = n;
+            t += 1;
+        } else {
+            i = j;
+            t += tmp_j->processing_time;
+            counter--;
+        }
+    }
+
+    return false;
+}
+
 void PricerSolverArcTimeDp::make_schedule_set_feasible(
     [[maybe_unused]] GPtrArray* set) {}

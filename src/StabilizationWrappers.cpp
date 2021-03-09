@@ -11,7 +11,7 @@ int NodeData::construct_sol(OptimalSolution<T>* sol) {
     std::shared_ptr<ScheduleSet> newset = std::make_shared<ScheduleSet>();
 
     newset->job_list = sol->jobs;
-    sol->jobs = nullptr;
+    // sol->jobs = nullptr;
 
     newset->total_weighted_completion_time = sol->cost;
     newset->total_processing_time = sol->C_max;

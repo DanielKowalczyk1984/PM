@@ -9,9 +9,10 @@
 #include "MIP_defs.hpp"
 #include "OptimalSolution.hpp"
 #include "PricingStabilization.hpp"
+#include "Solution_new.hpp"
 #include "Statistics.h"
 #include "binomial-heap.h"
-#include "interval.h"
+// #include "interval.h"
 #include "lp.h"
 #include "solution.h"
 /**
@@ -61,26 +62,27 @@ struct Problem {
     Parms parms;
     /*Cpu time measurement + Statistics*/
     Statistics stat;
+    /** Instance data*/
+    Instance instance;
 
     std::unique_ptr<BranchBoundTree> tree;
     std::unique_ptr<NodeData>        root_pd;
 
     /** Job data in EDD order */
-    GPtrArray* g_job_array;
-    Instance   instance;
+    // GPtrArray* g_job_array;
     /** Summary of jobs */
     int nb_jobs;
     int nb_machines;
-    int p_sum;
-    int pmax;
-    int pmin;
-    int dmax;
-    int dmin;
-    int H_min;
-    int H_max;
-    int off;
+    // int p_sum;
+    // int pmax;
+    // int pmin;
+    // int dmax;
+    // int dmin;
+    // int H_min;
+    // int H_max;
+    // int off;
 
-    GPtrArray* intervals;
+    // GPtrArray* intervals;
 
     int    global_upper_bound;
     int    global_lower_bound;
@@ -92,16 +94,16 @@ struct Problem {
     problem_status status;
 
     /* Best Solution*/
-    Solution* opt_sol;
+    Sol opt_sol;
 
     /** All methods of problem class */
-    int  problem_read();
+    // int  problem_read();
     int  preprocess_data();
     int  print_to_screen();
     int  print_to_csv();
     void solve();
     /** Heuristic related */
-    int  heuristic();
+    // int  heuristic();
     void heuristic_new();
     Problem(int argc, const char** argv);
     Problem(const Problem&) = delete;
@@ -111,21 +113,21 @@ struct Problem {
     ~Problem();
 
    private:
-    void calculate_Hmax();
-    void create_ordered_jobs_array(GPtrArray* a, GPtrArray* b);
-    int  find_division();
+    // void calculate_Hmax();
+    // void create_ordered_jobs_array(GPtrArray* a, GPtrArray* b);
+    // int find_division();
 
-    static int check_interval(interval_pair* pair,
-                              int            k,
-                              GPtrArray*     interval_array);
-    static int calculate_T(interval_pair* pair,
-                           int            k,
-                           GPtrArray*     interval_array);
+    // static int check_interval(interval_pair* pair,
+    //                           int            k,
+    //                           GPtrArray*     interval_array);
+    // static int calculate_T(interval_pair* pair,
+    //                        int            k,
+    //                        GPtrArray*     interval_array);
 
-    static GPtrArray* array_time_slots(interval* I, GList* pairs);
+    // static GPtrArray* array_time_slots(interval* I, GList* pairs);
     /** Heuristic related */
-    int construct_edd(Solution*);
-    int construct_random(Solution* sol, GRand* rand_uniform);
+    // int construct_edd(Solution*);
+    // int construct_random(Solution* sol, GRand* rand_uniform);
 };
 
 struct NodeData {
@@ -136,14 +138,12 @@ struct NodeData {
     NodeDataStatus status;
 
     // The instance information
-    GPtrArray* jobarray;
-    int        nb_jobs;
-    int        nb_machines;
-    int        H_max;
-    int        H_min;
-    int        off;
+    // GPtrArray* jobarray;
+    const Instance* instance;
+    int             nb_jobs;
+    int             nb_machines;
     /** data about the intervals */
-    GPtrArray* ordered_jobs;
+    // GPtrArray* ordered_jobs;
 
     // The column generation lp information
     wctlp*              RMP;
@@ -218,7 +218,7 @@ struct NodeData {
     /** Some additional pointers to data needed */
     Parms*      parms;
     Statistics* stat;
-    Solution*   opt_sol;
+    Sol*        opt_sol;
     std::string pname;
 
     explicit NodeData(Problem* problem);
@@ -233,8 +233,10 @@ struct NodeData {
     void lp_node_data_free();
     void temporary_data_free();
     void prune_duplicated_sets();
-    void add_solution_to_colpool(Solution*);
-    void add_solution_to_colpool_and_lp(Solution*);
+    // void add_solution_to_colpool(Solution*);
+    void add_solution_to_colpool(const Sol&);
+    // void add_solution_to_colpool_and_lp(Solution*);
+    void add_solution_to_colpool_and_lp(const Sol&);
 
     int build_rmp();
     // int get_solution_lp_lowerbound();
@@ -256,6 +258,7 @@ struct NodeData {
     int  delete_unused_rows_range(int first, int last);
     int  call_update_rows_coeff();
     int  check_schedule_set(ScheduleSet* set);
+    int  check_schedule_set(const std::vector<Job*>& set);
     void make_schedule_set_feasible(ScheduleSet* set);
     void get_mip_statistics(enum MIP_Attr c);
 
