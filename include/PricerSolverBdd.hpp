@@ -3,6 +3,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include "Instance.h"
 #include "MipGraph.hpp"
 #include "ModelInterface.hpp"
 #include "NodeBddStructure.hpp"
@@ -16,7 +17,7 @@ class PricerSolverBdd : public PricerSolverBase {
     int           nb_removed_edges{};
     int           nb_removed_nodes{};
 
-    GPtrArray* ordered_jobs;
+    std::vector<std::pair<Job*, Interval*>> ordered_jobs_new;
 
     MipGraph mip_graph;
 
@@ -29,13 +30,15 @@ class PricerSolverBdd : public PricerSolverBase {
     int H_max;
 
    public:
-    PricerSolverBdd(GPtrArray*  _jobs,
-                    int         _num_machines,
-                    GPtrArray*  _ordered_jobs,
-                    const char* p_name,
-                    int         _hmax,
-                    int*        _take_jobs,
-                    double      _ub);
+    // PricerSolverBdd(GPtrArray*  _jobs,
+    //                 int         _num_machines,
+    //                 GPtrArray*  _ordered_jobs,
+    //                 const char* p_name,
+    //                 int         _hmax,
+    //                 int*        _take_jobs,
+    //                 double      _ub);
+
+    explicit PricerSolverBdd(const Instance& instance);
 
     PricerSolverBdd(const PricerSolverBdd& src, GPtrArray* _ordered_jobs);
     PricerSolverBdd(const PricerSolverBdd&) = default;
@@ -63,6 +66,7 @@ class PricerSolverBdd : public PricerSolverBase {
     void init_table();
 
     bool check_schedule_set(GPtrArray* set) override;
+    bool check_schedule_set(const std::vector<Job*>& set) override;
 
     void reduce_cost_fixing(double* pi, int UB, double LB) override;
     void build_mip() override;
@@ -98,7 +102,10 @@ class PricerSolverBdd : public PricerSolverBase {
 
     inline int* get_take() override { return nullptr; };
 
-    GPtrArray* get_ordered_jobs() { return ordered_jobs; }
+    GPtrArray* get_ordered_jobs() {
+        return nullptr;
+        // return ordered_jobs;
+    }
 
    private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);
