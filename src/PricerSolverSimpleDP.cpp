@@ -3,6 +3,8 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/graphviz.hpp>
+#include "Instance.h"
+#include "PricerSolverBase.hpp"
 #include "gurobi_c++.h"
 #include "gurobi_c.h"
 #include "scheduleset.h"
@@ -10,14 +12,30 @@
 /**
  * Pricersolver for the TI index formulation
  */
-PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray*  _jobs,
-                                           int         _num_machines,
-                                           int         _hmax,
-                                           const char* _p_name,
-                                           double      _ub)
-    : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
-      Hmax(_hmax),
-      size_graph(0u),
+// PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray*  _jobs,
+//                                            int         _num_machines,
+//                                            int         _hmax,
+//                                            const char* _p_name,
+//                                            double      _ub)
+//     : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
+//       Hmax(_hmax),
+//       size_graph(0u),
+//       A(Hmax + 1),
+//       F(Hmax + 1),
+//       backward_F(Hmax + 1),
+//       TI_x(convex_constr_id * (Hmax + 1), GRBVar()),
+//       take(convex_constr_id * (Hmax + 1), 0),
+//       lp_x(convex_constr_id * (Hmax + 1), 0.0),
+//       solution_x(convex_constr_id * (Hmax + 1), 0.0)
+
+// {
+//     init_table();
+// }
+
+PricerSolverSimpleDp::PricerSolverSimpleDp(const Instance& instance)
+    : PricerSolverBase(instance),
+      Hmax(instance.H_max),
+      size_graph{},
       A(Hmax + 1),
       F(Hmax + 1),
       backward_F(Hmax + 1),
@@ -286,7 +304,7 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     auto it = v.rbegin();
 
     for (; it != v.rend(); ++it) {
-        g_ptr_array_add(opt_sol.jobs, *it);
+        opt_sol.jobs.push_back(*it);
     }
 
     /** Free the memory */
@@ -310,13 +328,12 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
     for (int k = 0; k < num_columns; k++) {
         if (aux_cols[k] > EPS_SOLVER) {
-            auto*     tmp = schedule_sets[k].get();
-            int       t = 0;
-            std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
-            for (auto& it : aux_jobs) {
-                Job* tmp_j = static_cast<Job*>(it);
-                lp_x[(tmp_j->job) * (Hmax + 1) + t] += aux_cols[k];
-                t += tmp_j->processing_time;
+            auto* tmp = schedule_sets[k].get();
+            int   t = 0;
+            // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
+            for (auto& it : tmp->job_list) {
+                lp_x[(it->job) * (Hmax + 1) + t] += aux_cols[k];
+                t += it->processing_time;
             }
         }
     }

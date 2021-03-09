@@ -1,6 +1,7 @@
 #ifndef PRICER_SOLVER_SIMPLE_DP_HPP
 #define PRICER_SOLVER_SIMPLE_DP_HPP
 #include <memory>
+#include "Instance.h"
 #include "PricerSolverBase.hpp"
 #include "gurobi_c++.h"
 
@@ -19,11 +20,14 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     std::vector<double>            solution_x;
 
    public:
-    PricerSolverSimpleDp(GPtrArray*  _jobs,
-                         int         _num_machines,
-                         int         _Hmax,
-                         const char* p_name,
-                         double      _UB);
+    // PricerSolverSimpleDp(GPtrArray*  _jobs,
+    //                      int         _num_machines,
+    //                      int         _Hmax,
+    //                      const char* p_name,
+    //                      double      _UB);
+
+    PricerSolverSimpleDp(const Instance& instance);
+
     PricerSolverSimpleDp(const PricerSolverSimpleDp& src)
         : PricerSolverBase(src),
           Hmax(src.Hmax),
@@ -68,6 +72,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void   print_num_paths() override;
 
     bool check_schedule_set(GPtrArray* set) override;
+    bool check_schedule_set(const std::vector<Job*>& set) override;
     void make_schedule_set_feasible(GPtrArray* set) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
