@@ -2,10 +2,11 @@
 #include <docopt/docopt.h>
 #include <limits.h>
 #include <string.h>
-#include <util.h>
 #include <regex>
 #include <string>
 #include <vector>
+#include "fmt/core.h"
+#include "util.h"
 
 const double TIME_LIMIT = 7200.0;
 const double ALPHA_STAB_INIT = 0.8;
@@ -31,7 +32,11 @@ Parms::Parms()
       nb_machines(0) {}
 
 Parms::Parms(int argc, const char** argv) : Parms() {
+    int val = program_header(argc, argv);
     parse_cmd(argc, argv);
+    if (dbg_lvl() > 1) {
+        fmt::print("Debugging turned on\n");
+    }
 }
 
 int Parms::parms_set_file(std::string const& fname) {

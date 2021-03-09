@@ -16,13 +16,8 @@
 #include "PricerSolverZddForward.hpp"
 #include "PricingStabilization.hpp"
 #include "Solution.hpp"
-// #include "interval.h"
 
-Problem::~Problem() { /*free the parameters*/
-    // g_ptr_array_free(g_job_array, TRUE);
-    // g_ptr_array_free(intervals, TRUE);
-    // solution_free(&(opt_sol));
-}
+Problem::~Problem() = default;
 
 Problem::Problem(int argc, const char** argv)
     : parms(argc, argv),
@@ -30,19 +25,8 @@ Problem::Problem(int argc, const char** argv)
       instance(&parms),
       tree(),
       root_pd(std::make_unique<NodeData>(this)),
-      //   g_job_array(g_ptr_array_new_with_free_func(g_job_free)),
-      nb_jobs(),
-      nb_machines(),
-      //   p_sum(),
-      //   pmax(),
-      //   pmin(std::numeric_limits<int>::max()),
-      //   dmax(std::numeric_limits<int>::min()),
-      //   dmin(std::numeric_limits<int>::max()),
-      //   H_min(),
-      //   H_max(std::numeric_limits<int>::max()),
-      //   off(),
-      //   intervals(g_ptr_array_new_with_free_func(g_interval_free)),
-      /*B&B info*/
+      nb_jobs(instance.nb_jobs),
+      nb_machines(instance.nb_machines),
       global_upper_bound(std::numeric_limits<int>::max()),
       global_lower_bound(),
       rel_error(std::numeric_limits<double>::max()),
@@ -51,12 +35,6 @@ Problem::Problem(int argc, const char** argv)
       root_rel_error(std::numeric_limits<double>::max()),
       status(no_sol),
       opt_sol() {
-    int val = program_header(argc, argv);
-
-    if (dbg_lvl() > 1) {
-        fmt::print("Debugging turned on\n");
-    }
-
     /**
      *@brief Finding heuristic solutions to the problem or start without
      *feasible solutions
@@ -98,7 +76,6 @@ Problem::Problem(int argc, const char** argv)
         case bdd_solver_backward_cycle:
             root_pd->solver =
                 std::make_unique<PricerSolverBddBackwardCycle>(instance);
-            ;
             break;
         case zdd_solver_backward_simple:
             root_pd->solver =
@@ -160,7 +137,7 @@ Problem::Problem(int argc, const char** argv)
      *
      */
     tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
-    // tree->explore();
+    tree->explore();
 }
 
 NodeData::~NodeData() {
