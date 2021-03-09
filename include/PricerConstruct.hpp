@@ -1,10 +1,11 @@
-#include <glib.h>
-#include <interval.h>
-#include <solution.h>
+// #include <solution.h>
 #include <boost/container_hash/hash_fwd.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <cstddef>
 #include <span>
+#include <utility>
+#include <vector>
+#include "Instance.h"
 #include "NodeBddSpec.hpp"
 
 class conflict_state {
@@ -23,14 +24,13 @@ class conflict_state {
 };
 
 class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
-    std::span<void*> aux_list;
-    int              nb_layers;
+    const std::vector<std::pair<Job*, Interval*>>* ptr_vector{};
+    int                                            nb_layers;
 
    public:
-    explicit PricerConstruct(GPtrArray* _pair_list)
-        : aux_list{_pair_list->pdata, _pair_list->len} {
-        nb_layers = _pair_list->len;
-    };
+    explicit PricerConstruct(const Instance& instance)
+        : ptr_vector(&instance.vector_pair),
+          nb_layers(instance.vector_pair.size()) {}
 
     PricerConstruct(const PricerConstruct&) = default;
     PricerConstruct(PricerConstruct&&) = default;
@@ -45,9 +45,10 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     int getChild(int& state, int level, int value) const {
         auto layer = nb_layers - level;
         // assert(0 <= layer && layer <= nb_layers - 1);
-        auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[layer]);
-        auto* tmp_interval = static_cast<interval*>(tmp_pair->I);
-        auto* tmp_j = static_cast<Job*>(tmp_pair->j);
+        // auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[layer]);
+        auto& tmp_pair = (*ptr_vector)[layer];
+        auto* tmp_j = tmp_pair.first;
+        auto* tmp_interval = tmp_pair.second;
 
         if (value) {
             state = state + tmp_j->processing_time;
@@ -69,14 +70,19 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
    private:
     [[nodiscard]] int min_job(int j, int state, int value) const {
-        int   val = nb_layers;
-        auto* tmp = static_cast<job_interval_pair*>(aux_list[j])->j;
+        int val = nb_layers;
+        // auto* tmp = static_cast<job_interval_pair*>(aux_list[j])->j;
+        auto* tmp = (*ptr_vector)[j].first;
 
         if (value) {
             for (int i = j + 1; i < nb_layers; ++i) {
-                auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[i]);
-                auto* tmp_interval = static_cast<interval*>(tmp_pair->I);
-                auto* tmp_j = static_cast<Job*>(tmp_pair->j);
+                auto& tmp_pair = (*ptr_vector)[i];
+                auto* tmp_j = tmp_pair.first;
+                auto* tmp_interval = tmp_pair.second;
+                // auto* tmp_pair =
+                // static_cast<job_interval_pair*>(aux_list[i]); auto*
+                // tmp_interval = static_cast<interval*>(tmp_pair->I); auto*
+                // tmp_j = static_cast<Job*>(tmp_pair->j);
 
                 if (state + tmp_j->processing_time > tmp_interval->a &&
                     state + tmp_j->processing_time <= tmp_interval->b) {
@@ -89,9 +95,13 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
             }
         } else {
             for (int i = j + 1; i < nb_layers; ++i) {
-                auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[i]);
-                auto* tmp_interval = static_cast<interval*>(tmp_pair->I);
-                auto* tmp_j = static_cast<Job*>(tmp_pair->j);
+                auto& tmp_pair = (*ptr_vector)[i];
+                auto* tmp_j = tmp_pair.first;
+                auto* tmp_interval = tmp_pair.second;
+                // auto* tmp_pair =
+                // static_cast<job_interval_pair*>(aux_list[i]); auto*
+                // tmp_interval = static_cast<interval*>(tmp_pair->I); auto*
+                // tmp_j = static_cast<Job*>(tmp_pair->j);
 
                 if (state + tmp_j->processing_time > tmp_interval->a &&
                     state + tmp_j->processing_time <= tmp_interval->b) {
@@ -111,111 +121,113 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     }
 };
 
-class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
-    std::span<void*> aux_list;
-    // GPtrArray*       pair_list;
-    int* take_job;
-    int  Hmax;
-    int  nb_layers;
+// class PricerConstructTI : public DdSpec<PricerConstructTI, int, 2> {
+//     std::span<void*> aux_list;
+//     // GPtrArray*       pair_list;
+//     int* take_job;
+//     int  Hmax;
+//     int  nb_layers;
 
-   public:
-    explicit PricerConstructTI(GPtrArray* _pair_list, int* _take_job, int _Hmax)
-        : aux_list{_pair_list->pdata, _pair_list->len},
-          take_job(_take_job),
-          Hmax(_Hmax),
-          nb_layers(_pair_list->len){};
+//    public:
+//     explicit PricerConstructTI(GPtrArray* _pair_list, int* _take_job, int
+//     _Hmax)
+//         : aux_list{_pair_list->pdata, _pair_list->len},
+//           take_job(_take_job),
+//           Hmax(_Hmax),
+//           nb_layers(_pair_list->len){};
 
-    PricerConstructTI(const PricerConstructTI&) = default;
-    PricerConstructTI(PricerConstructTI&&) = default;
-    PricerConstructTI& operator=(const PricerConstructTI&) = default;
-    PricerConstructTI& operator=(PricerConstructTI&&) = default;
+//     PricerConstructTI(const PricerConstructTI&) = default;
+//     PricerConstructTI(PricerConstructTI&&) = default;
+//     PricerConstructTI& operator=(const PricerConstructTI&) = default;
+//     PricerConstructTI& operator=(PricerConstructTI&&) = default;
 
-    int getRoot(int& state) {
-        state = 0;
-        return nb_layers;
-    };
+//     int getRoot(int& state) {
+//         state = 0;
+//         return nb_layers;
+//     };
 
-    int getChild(int& state, int level, int value) const {
-        auto layer = nb_layers - level;
-        // assert(0 <= layer && layer <= nb_layers - 1);
-        auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[layer]);
-        auto* tmp_interval = static_cast<interval*>(tmp_pair->I);
-        auto* tmp_j = static_cast<Job*>(tmp_pair->j);
+//     int getChild(int& state, int level, int value) const {
+//         auto layer = nb_layers - level;
+//         // assert(0 <= layer && layer <= nb_layers - 1);
+//         auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[layer]);
+//         auto* tmp_interval = static_cast<interval*>(tmp_pair->I);
+//         auto* tmp_j = static_cast<Job*>(tmp_pair->j);
 
-        if (level - 1 == 0 && value) {
-            return (state + tmp_j->processing_time <= tmp_interval->b) ? -1 : 0;
-        } else if (level - 1 == 0) {
-            return (state <= tmp_interval->b) ? -1 : 0;
-        }
+//         if (level - 1 == 0 && value) {
+//             return (state + tmp_j->processing_time <= tmp_interval->b) ? -1 :
+//             0;
+//         } else if (level - 1 == 0) {
+//             return (state <= tmp_interval->b) ? -1 : 0;
+//         }
 
-        if (value) {
-            state = state + tmp_j->processing_time;
-        }
+//         if (value) {
+//             state = state + tmp_j->processing_time;
+//         }
 
-        auto _j = min_job(layer, state, value);
+//         auto _j = min_job(layer, state, value);
 
-        if (!(_j < nb_layers)) {
-            if (state <= tmp_interval->b) {
-                return -1;
-            }
-            return 0;
-        }
-        assert(_j < nb_layers);
-        return nb_layers - _j;
-    }
+//         if (!(_j < nb_layers)) {
+//             if (state <= tmp_interval->b) {
+//                 return -1;
+//             }
+//             return 0;
+//         }
+//         assert(_j < nb_layers);
+//         return nb_layers - _j;
+//     }
 
-    ~PricerConstructTI() = default;
+//     ~PricerConstructTI() = default;
 
-   private:
-    [[nodiscard]] int min_job(int j, int state, int value) const {
-        int                val = nb_layers;
-        job_interval_pair* tmp_pair = nullptr;
-        interval*          tmp_interval = nullptr;
-        Job*               tmp_j = nullptr;
-        auto* tmp = (static_cast<job_interval_pair*>(aux_list[j]))->j;
+//    private:
+//     [[nodiscard]] int min_job(int j, int state, int value) const {
+//         int                val = nb_layers;
+//         job_interval_pair* tmp_pair = nullptr;
+//         interval*          tmp_interval = nullptr;
+//         Job*               tmp_j = nullptr;
+//         auto* tmp = (static_cast<job_interval_pair*>(aux_list[j]))->j;
 
-        if (value) {
-            for (int i = j + 1; i < nb_layers; ++i) {
-                tmp_pair = static_cast<job_interval_pair*>(aux_list[i]);
-                tmp_interval = tmp_pair->I;
-                tmp_j = tmp_pair->j;
+//         if (value) {
+//             for (int i = j + 1; i < nb_layers; ++i) {
+//                 tmp_pair = static_cast<job_interval_pair*>(aux_list[i]);
+//                 tmp_interval = tmp_pair->I;
+//                 tmp_j = tmp_pair->j;
 
-                if (state + tmp_j->processing_time > tmp_interval->a &&
-                    state + tmp_j->processing_time <= tmp_interval->b &&
-                    take_job[tmp_j->job * (Hmax + 1) + state]) {
-                    if (tmp == tmp_j ||
-                        (tmp->job > tmp_j->job &&
-                         value_diff_Fij(state, tmp_j, tmp) < 0)) {
-                        continue;
-                    }
-                    val = i;
-                    break;
-                }
-            }
-        } else {
-            for (int i = j + 1; i < nb_layers; ++i) {
-                tmp_pair = static_cast<job_interval_pair*>(aux_list[i]);
-                tmp_interval = tmp_pair->I;
-                tmp_j = tmp_pair->j;
+//                 if (state + tmp_j->processing_time > tmp_interval->a &&
+//                     state + tmp_j->processing_time <= tmp_interval->b &&
+//                     take_job[tmp_j->job * (Hmax + 1) + state]) {
+//                     if (tmp == tmp_j ||
+//                         (tmp->job > tmp_j->job &&
+//                          value_diff_Fij(state, tmp_j, tmp) < 0)) {
+//                         continue;
+//                     }
+//                     val = i;
+//                     break;
+//                 }
+//             }
+//         } else {
+//             for (int i = j + 1; i < nb_layers; ++i) {
+//                 tmp_pair = static_cast<job_interval_pair*>(aux_list[i]);
+//                 tmp_interval = tmp_pair->I;
+//                 tmp_j = tmp_pair->j;
 
-                if (state + tmp_j->processing_time > tmp_interval->a &&
-                    state + tmp_j->processing_time <= tmp_interval->b &&
-                    take_job[tmp_j->job * (Hmax + 1) + state]) {
-                    val = i;
-                    break;
-                }
-            }
-        }
+//                 if (state + tmp_j->processing_time > tmp_interval->a &&
+//                     state + tmp_j->processing_time <= tmp_interval->b &&
+//                     take_job[tmp_j->job * (Hmax + 1) + state]) {
+//                     val = i;
+//                     break;
+//                 }
+//             }
+//         }
 
-        return val;
-    }
+//         return val;
+//     }
 
-    int diff_obj(Job* i, Job* j, int C) const {
-        return value_Fj(C, i) + value_Fj(C + j->processing_time, j) -
-               (value_Fj(C - i->processing_time + j->processing_time, j) +
-                value_Fj(C + j->processing_time, i));
-    }
-};
+//     int diff_obj(Job* i, Job* j, int C) const {
+//         return value_Fj(C, i) + value_Fj(C + j->processing_time, j) -
+//                (value_Fj(C - i->processing_time + j->processing_time, j) +
+//                 value_Fj(C + j->processing_time, i));
+//     }
+// };
 
 class ConflictConstraints
     : public DdSpec<ConflictConstraints, conflict_state, 2> {
@@ -369,19 +381,21 @@ class ConflictConstraints
 };
 
 class scheduling : public DdSpec<scheduling, int, 2> {
-    Job*             job;
-    GPtrArray*       list_layers;
-    std::span<void*> aux_list;
-    int              nb_layers;
-    int              order;
+    Job*                                           job;
+    const std::vector<std::pair<Job*, Interval*>>* ptr_vector;
+    // GPtrArray*                                     list_layers;
+    // std::span<void*>                               aux_list;
+    int nb_layers;
+    int order;
 
    public:
-    scheduling(Job* _job, GPtrArray* _list_layers, int _order)
+    explicit scheduling(Job*                                     _job,
+                        std::vector<std::pair<Job*, Interval*>>& _vector_pair,
+                        int                                      _order)
         : job(_job),
-          list_layers(_list_layers),
-          aux_list{_list_layers->pdata, _list_layers->len},
-          nb_layers(_list_layers->len),
-          order(_order){};
+          ptr_vector(&_vector_pair),
+          nb_layers(_vector_pair.size()),
+          order(_order) {}
 
     scheduling(const scheduling&) = default;
     scheduling(scheduling&&) = default;
@@ -397,8 +411,8 @@ class scheduling : public DdSpec<scheduling, int, 2> {
     int getChild(int& state, int level, int take) {
         auto j = nb_layers - level;
         // assert(0 <= j && j <= nb_layers - 1);
-        auto* tmp = static_cast<job_interval_pair*>(aux_list[j]);
-        auto* tmp_j = static_cast<Job*>(tmp->j);
+        auto& tmp = (*ptr_vector)[j];
+        auto* tmp_j = tmp.first;
 
         if (level - 1 == 0 && take) {
             if (tmp_j != job) {
