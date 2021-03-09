@@ -1,6 +1,7 @@
 #include <bits/ranges_algo.h>
 #include <fmt/core.h>
 #include <algorithm>
+#include <boost/timer/timer.hpp>
 #include <string>
 #include <vector>
 #include "Job.h"
@@ -414,14 +415,15 @@ CLEAN:
 }
 
 int NodeData::compute_lower_bound() {
-    int         j = 0;
-    int         val = 0;
-    int         has_cols = 1;
-    int         has_cuts = 0;
-    int         nb_non_improvements = 0;
-    int         status_RMP = GRB_LOADED;
-    double      real_time_pricing = 0.0;
-    Statistics* statistics = stat;
+    boost::timer::auto_cpu_timer timer;
+    int                          j = 0;
+    int                          val = 0;
+    int                          has_cols = 1;
+    int                          has_cuts = 0;
+    int                          nb_non_improvements = 0;
+    int                          status_RMP = GRB_LOADED;
+    double                       real_time_pricing = 0.0;
+    Statistics*                  statistics = stat;
 
     if (dbg_lvl() > 1) {
         fmt::print(
