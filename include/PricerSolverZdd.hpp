@@ -3,6 +3,7 @@
 
 #include <NodeBddStructure.hpp>
 #include <memory>
+#include <utility>
 #include <vector>
 #include "MipGraph.hpp"
 #include "OptimalSolution.hpp"
@@ -17,7 +18,8 @@ class PricerSolverZdd : public PricerSolverBase {
     int                                           nb_removed_edges{};
     int                                           nb_removed_nodes{};
 
-    GPtrArray* ordered_jobs;
+    // GPtrArray*                              ordered_jobs;
+    std::vector<std::pair<Job*, Interval*>> ordered_jobs_new;
 
     MipGraph            mip_graph;
     std::vector<double> lp_x;
@@ -29,6 +31,8 @@ class PricerSolverZdd : public PricerSolverBase {
                     const char* p_name,
                     double      _UB);
 
+    explicit PricerSolverZdd(const Instance& instance);
+
     PricerSolverZdd(const PricerSolverZdd& src)
         : PricerSolverBase(src),
           // decision_diagram(new
@@ -36,7 +40,8 @@ class PricerSolverZdd : public PricerSolverBase {
           size_graph(src.size_graph),
           nb_removed_edges(src.nb_removed_edges),
           nb_removed_nodes(src.nb_removed_nodes),
-          ordered_jobs(src.ordered_jobs),
+          //   ordered_jobs(src.ordered_jobs),
+          ordered_jobs_new(src.ordered_jobs_new),
           mip_graph(src.mip_graph) {}
 
     std::unique_ptr<PricerSolverBase> clone() override { return nullptr; };
@@ -55,6 +60,7 @@ class PricerSolverZdd : public PricerSolverBase {
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
         int                                              num_columns) override;
     bool   check_schedule_set(GPtrArray* set) override;
+    bool   check_schedule_set(const std::vector<Job*>& set) override;
     void   make_schedule_set_feasible(GPtrArray* set) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;

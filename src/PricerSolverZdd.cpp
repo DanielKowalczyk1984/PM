@@ -3,25 +3,40 @@
 #include <NodeBddStructure.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <vector>
+#include "Instance.h"
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 #include "ZddNode.hpp"
 #include "scheduleset.h"
 
-PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
-                                 int         _num_machines,
-                                 GPtrArray*  _ordered_jobs,
-                                 const char* _p_name,
-                                 double      _ub)
-    : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
-      ordered_jobs(_ordered_jobs)
+// PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
+//                                  int         _num_machines,
+//                                  GPtrArray*  _ordered_jobs,
+//                                  const char* _p_name,
+//                                  double      _ub)
+//     : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
+//       ordered_jobs(_ordered_jobs)
 
-{
-    /**
-     * Construction of decision diagram
-     */
-    PricerConstruct ps(ordered_jobs);
-    decision_diagram = std::make_unique<DdStructure<NodeZdd<>>>(ps);
+// {
+//     /**
+//      * Construction of decision diagram
+//      */
+//     PricerConstruct ps(ordered_jobs);
+//     decision_diagram = std::make_unique<DdStructure<NodeZdd<>>>(ps);
+//     remove_layers_init();
+//     // decision_diagram->compressBdd();
+//     // decision_diagram->reduceZdd();
+//     size_graph = decision_diagram->size();
+//     init_table();
+//     construct_mipgraph();
+//     lp_x = std::vector<double>(num_edges(mip_graph), 0.0);
+//     solution_x = std::vector<double>(num_edges(mip_graph), 0.0);
+// }
+
+PricerSolverZdd::PricerSolverZdd(const Instance& instance)
+    : PricerSolverBase(instance),
+      decision_diagram(
+          std::make_unique<DdStructure<NodeZdd<>>>(PricerConstruct(instance))) {
     remove_layers_init();
     // decision_diagram->compressBdd();
     // decision_diagram->reduceZdd();
@@ -114,8 +129,8 @@ void PricerSolverZdd::construct_mipgraph() {
 void PricerSolverZdd::init_table() {
     auto& table = *(decision_diagram->getDiagram());
     /** init table */
-    auto&     n = table.node(decision_diagram->root());
-    std::span span_ordered_job{ordered_jobs->pdata, ordered_jobs->len};
+    auto& n = table.node(decision_diagram->root());
+    // std::span span_ordered_job{ordered_jobs->pdata, ordered_jobs->len};
     n.add_sub_node(0, decision_diagram->root(), true, false);
     n.set_node_id(decision_diagram->root());
     if (table.node(decision_diagram->root()).list.size() > 1) {
@@ -123,13 +138,13 @@ void PricerSolverZdd::init_table() {
     }
 
     for (size_t i = decision_diagram->topLevel(); i >= 0; i--) {
-        size_t layer = ordered_jobs->len - i;
-        auto*  tmp_pair =
-            static_cast<job_interval_pair*>(span_ordered_job[layer]);
+        size_t layer = ordered_jobs_new.size() - i;
+        auto&  tmp_pair = ordered_jobs_new[layer];
+        // static_cast<job_interval_pair*>(span_ordered_job[layer]);
 
         for (auto& it : table[i]) {
             if (i != 0) {
-                it.set_job(tmp_pair->j);
+                it.set_job(tmp_pair.first);
                 auto& n0 = table.node(it.branch[0]);
                 auto& n1 = table.node(it.branch[1]);
                 int   p = it.get_job()->processing_time;
@@ -155,96 +170,138 @@ OptimalSolution<double> PricerSolverZdd::farkas_pricing(
 }
 
 void PricerSolverZdd::remove_layers_init() {
-    int   first_del = -1;
-    int   last_del = -1;
-    int   it = 0;
+    // int   first_del = -1;
+    // int   last_del = -1;
+    // int   it = 0;
     auto& table = *(decision_diagram->getDiagram());
 
-    /** remove the unnecessary layers of the bdd */
-    for (int i = decision_diagram->topLevel(); i > 0; i--) {
-        if (std::any_of(table[i].begin(), table[i].end(),
-                        [](NodeZdd<>& n) { return n.branch[1] != 0; })) {
-            if (first_del != -1) {
-                g_ptr_array_remove_range(ordered_jobs, first_del,
-                                         last_del - first_del + 1);
-                it = it - (last_del - first_del);
-                first_del = last_del = -1;
-            } else {
-                it++;
-            }
-        } else {
-            if (first_del == -1) {
-                first_del = it;
-                last_del = first_del;
-            } else {
-                last_del++;
-            }
+    // /** remove the unnecessary layers of the bdd */
+    // for (int i = decision_diagram->topLevel(); i > 0; i--) {
+    //     if (std::any_of(table[i].begin(), table[i].end(),
+    //                     [](NodeZdd<>& n) { return n.branch[1] != 0; })) {
+    //         if (first_del != -1) {
+    //             g_ptr_array_remove_range(ordered_jobs, first_del,
+    //                                      last_del - first_del + 1);
+    //             it = it - (last_del - first_del);
+    //             first_del = last_del = -1;
+    //         } else {
+    //             it++;
+    //         }
+    //     } else {
+    //         if (first_del == -1) {
+    //             first_del = it;
+    //             last_del = first_del;
+    //         } else {
+    //             last_del++;
+    //         }
 
-            it++;
-        }
+    //         it++;
+    //     }
+    // }
+
+    // if (first_del != -1) {
+    //     g_ptr_array_remove_range(ordered_jobs, first_del,
+    //                              last_del - first_del + 1);
+    // }
+    auto i = decision_diagram->topLevel();
+    ordered_jobs_new.erase(
+        std::remove_if(ordered_jobs_new.begin(), ordered_jobs_new.end(),
+                       [&](const auto& tmp) {
+                           bool remove = std::ranges::all_of(
+                               table[i],
+                               [&](const auto& n) { return n.branch[1] == 0; });
+                           --i;
+                           return remove;
+                       }),
+        ordered_jobs_new.end());
+
+    if (dbg_lvl() > 0) {
+        fmt::print("{0: <{2}}{1}\n", "The new number of layers",
+                   ordered_jobs_new.size(), ALIGN);
     }
 
-    if (first_del != -1) {
-        g_ptr_array_remove_range(ordered_jobs, first_del,
-                                 last_del - first_del + 1);
-    }
-
-    fmt::print("The new number of layers = {}\n", ordered_jobs->len);
+    fmt::print("The new number of layers = {}\n", ordered_jobs_new.size());
 }
 
 void PricerSolverZdd::remove_layers() {
-    int   first_del = -1;
-    int   last_del = -1;
-    int   it = 0;
+    // int   first_del = -1;
+    // int   last_del = -1;
+    // int   it = 0;
     auto& table = *(decision_diagram->getDiagram());
 
-    /** remove the unnecessary layers of the bdd */
-    for (int i = decision_diagram->topLevel(); i > 0; i--) {
-        bool remove_layer = true;
+    // /** remove the unnecessary layers of the bdd */
+    // for (int i = decision_diagram->topLevel(); i > 0; i--) {
+    //     bool remove_layer = true;
 
-        for (auto& iter : table[i]) {
-            auto end =
-                std::remove_if(iter.list.begin(), iter.list.end(),
-                               [](std::shared_ptr<SubNodeZdd<>> const& n) {
-                                   return !(n->calc_yes);
-                               });
-            iter.list.erase(end, iter.list.end());
+    //     for (auto& iter : table[i]) {
+    //         auto end =
+    //             std::remove_if(iter.list.begin(), iter.list.end(),
+    //                            [](std::shared_ptr<SubNodeZdd<>> const& n) {
+    //                                return !(n->calc_yes);
+    //                            });
+    //         iter.list.erase(end, iter.list.end());
 
-            if (iter.list.empty()) {
-                NodeId& cur_node_1 = iter.branch[1];
-                cur_node_1 = 0;
-            } else {
-                remove_layer = false;
-            }
-        }
+    //         if (iter.list.empty()) {
+    //             NodeId& cur_node_1 = iter.branch[1];
+    //             cur_node_1 = 0;
+    //         } else {
+    //             remove_layer = false;
+    //         }
+    //     }
 
-        if (!remove_layer) {
-            if (first_del != -1) {
-                g_ptr_array_remove_range(ordered_jobs, first_del,
-                                         last_del - first_del + 1);
-                it = it - (last_del - first_del);
-                first_del = last_del = -1;
-            } else {
-                it++;
-            }
-        } else {
-            if (first_del == -1) {
-                first_del = it;
-                last_del = first_del;
-            } else {
-                last_del++;
-            }
+    //     if (!remove_layer) {
+    //         if (first_del != -1) {
+    //             g_ptr_array_remove_range(ordered_jobs, first_del,
+    //                                      last_del - first_del + 1);
+    //             it = it - (last_del - first_del);
+    //             first_del = last_del = -1;
+    //         } else {
+    //             it++;
+    //         }
+    //     } else {
+    //         if (first_del == -1) {
+    //             first_del = it;
+    //             last_del = first_del;
+    //         } else {
+    //             last_del++;
+    //         }
 
-            it++;
-        }
-    }
+    //         it++;
+    //     }
+    // }
 
-    if (first_del != -1) {
-        g_ptr_array_remove_range(ordered_jobs, first_del,
-                                 last_del - first_del + 1);
-    }
+    // if (first_del != -1) {
+    //     g_ptr_array_remove_range(ordered_jobs, first_del,
+    //                              last_del - first_del + 1);
+    // }
+    auto i = decision_diagram->topLevel();
+    ordered_jobs_new.erase(
+        std::remove_if(ordered_jobs_new.begin(), ordered_jobs_new.end(),
+                       [&](const auto& tmp) {
+                           bool remove_layer = true;
 
-    fmt::print("The new number of layers = {}\n", ordered_jobs->len);
+                           for (auto& iter : table[i]) {
+                               auto end = std::remove_if(
+                                   iter.list.begin(), iter.list.end(),
+                                   [](std::shared_ptr<SubNodeZdd<>> const& n) {
+                                       return !(n->calc_yes);
+                                   });
+                               iter.list.erase(end, iter.list.end());
+
+                               if (iter.list.empty()) {
+                                   NodeId& cur_node_1 = iter.branch[1];
+                                   cur_node_1 = 0;
+                               } else {
+                                   remove_layer = false;
+                               }
+                           }
+
+                           --i;
+                           return remove_layer;
+                       }),
+        ordered_jobs_new.end());
+
+    fmt::print("The new number of layers = {}\n", ordered_jobs_new.size());
 }
 
 void PricerSolverZdd::remove_edges() {
@@ -370,7 +427,7 @@ void PricerSolverZdd::reduce_cost_fixing(double* pi, int UB, double LB) {
 
 void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
     std::cout << decision_diagram->size() << '\n';
-    scheduling constr(job, list, order);
+    scheduling constr(job, ordered_jobs_new, order);
     // std::ofstream outf("min1.gv");
     // NodeTableEntity<NodeZdd<>>& table =
     // decision_diagram->getDiagram().privateEntity(); ColorWriterVertex
@@ -398,18 +455,18 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
     for (int i = 0; i < num_columns; ++i) {
         if (aux_cols[i] > EPS_SOLVER) {
-            size_t    counter = 0;
-            auto*     tmp = schedule_sets[i].get();
-            std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->pdata};
-            NodeId    tmp_nodeid(decision_diagram->root());
+            size_t counter = 0;
+            auto*  tmp = schedule_sets[i].get();
+            // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->pdata};
+            NodeId                        tmp_nodeid(decision_diagram->root());
             std::shared_ptr<SubNodeZdd<>> tmp_sub_node =
                 table.node(tmp_nodeid).list[0];
 
             while (tmp_nodeid > 1) {
                 Job* tmp_j{};
 
-                if (counter < tmp->job_list->len) {
-                    tmp_j = static_cast<Job*>(aux_jobs[counter]);
+                if (counter < tmp->job_list.size()) {
+                    tmp_j = tmp->job_list[counter];
                 } else {
                     tmp_j = nullptr;
                 }
@@ -474,7 +531,7 @@ void PricerSolverZdd::iterate_zdd() {
         auto i = (*it).begin();
 
         for (; i != (*it).end(); ++i) {
-            std::cout << ordered_jobs->len - *i << " ";
+            std::cout << ordered_jobs_new.size() - *i << " ";
         }
 
         std::cout << '\n';
