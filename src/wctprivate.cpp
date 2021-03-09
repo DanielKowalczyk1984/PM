@@ -58,11 +58,6 @@ Problem::Problem(int argc, const char** argv)
     }
 
     /**
-     * @brief Reading and preprocessing the data
-     *
-     */
-
-    /**
      *@brief Finding heuristic solutions to the problem or start without
      *feasible solutions
      */
@@ -158,6 +153,7 @@ Problem::Problem(int argc, const char** argv)
     }
     root_pd->stat = &(stat);
     root_pd->opt_sol = &opt_sol;
+    root_pd->solver->update_UB(opt_sol.tw);
 
     /**
      * @brief Initialization of the B&B tree
@@ -166,43 +162,6 @@ Problem::Problem(int argc, const char** argv)
     tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
     // tree->explore();
 }
-
-// void Problem::calculate_Hmax() {
-//     int       temp = 0;
-//     double    temp_dbl = 0.0;
-//     NodeData* pd = root_pd.get();
-
-//     temp = p_sum - pmax;
-//     temp_dbl = static_cast<double>(temp);
-//     temp_dbl = floor(temp_dbl / nb_machines);
-//     H_max = pd->H_max = static_cast<int>(temp_dbl) + pmax;
-//     H_min = pd->H_min = static_cast<int>(ceil(temp_dbl / nb_machines)) -
-//     pmax;
-
-//     GPtrArray* duration = g_ptr_array_copy(g_job_array, NULL, NULL);
-//     g_ptr_array_set_free_func(duration, NULL);
-//     g_ptr_array_sort(duration, g_compare_duration);
-
-//     int    m = 0;
-//     int    i = nb_jobs - 1;
-//     double tmp = p_sum;
-//     H_min = p_sum;
-//     do {
-//         Job* job = static_cast<Job*>(g_ptr_array_index(duration, i));
-//         tmp -= job->processing_time;
-//         m++;
-//         i--;
-
-//     } while (m < nb_machines - 1);
-
-//     H_min = pd->H_min = static_cast<int>(ceil(tmp / nb_machines));
-//     g_ptr_array_free(duration, TRUE);
-//     fmt::print(
-//         R"(H_max = {}, H_min = {},  pmax = {}, pmin = {}, p_sum = {}, off =
-//         {}
-// )",
-//         H_max, H_min, pmax, pmin, p_sum, off);
-// }
 
 NodeData::~NodeData() {
     temporary_data_free();

@@ -54,7 +54,7 @@ void PricerSolverSimpleDp::init_table() {
     for (int t = 0; t < Hmax + 1; t++) {
         for (int i = 1; i < convex_constr_id + 1; i++) {
             int  j = i - 1;
-            Job* job = static_cast<Job*>(jobs[j]);
+            Job* job = (*jobs)[j].get();
 
             if (t >= job->processing_time) {
                 forward_graph[t].push_back(job);

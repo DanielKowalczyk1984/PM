@@ -54,7 +54,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
           lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
           solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
         for (auto i = 0; i < n; ++i) {
-            vector_jobs.push_back((*jobs_new)[i].get());
+            vector_jobs.push_back((*jobs)[i].get());
         }
 
         j0.job = n;

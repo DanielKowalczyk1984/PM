@@ -1203,13 +1203,13 @@ void PricerSolverBdd::check_infeasible_arcs() {
                 auto index = it.all.find_first();
 
                 auto max = value_diff_Fij(it.get_weight(), it.get_job(),
-                                          static_cast<Job*>(jobs[index]));
+                                          (*jobs)[index].get());
                 // bool index_bool = (index > (size_t)it.get_nb_job());
                 while (index != boost::dynamic_bitset<>::npos && max < 0) {
                     index = it.all.find_next(index);
                     if (index != boost::dynamic_bitset<>::npos) {
                         int a = value_diff_Fij(it.get_weight(), it.get_job(),
-                                               static_cast<Job*>(jobs[index]));
+                                               (*jobs)[index].get());
                         if (a > max) {
                             max = a;
                         }

@@ -44,7 +44,7 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
       lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
       solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
     for (int i = 0; i < n; ++i) {
-        vector_jobs.push_back((*jobs_new)[i].get());
+        vector_jobs.push_back((*jobs)[i].get());
     }
     j0.job = n;
     vector_jobs.push_back(&j0);
@@ -59,26 +59,26 @@ void PricerSolverArcTimeDp::init_table() {
         reversed_graph[j] = vector2d_jobs(Hmax + 1);
     }
 
-    forward_F = vector2d_dbl(jobs.size() + 1);
-    backward_F = vector2d_dbl(jobs.size() + 1);
-    for (unsigned i = 0; i < jobs.size() + 1; ++i) {
+    forward_F = vector2d_dbl(jobs->size() + 1);
+    backward_F = vector2d_dbl(jobs->size() + 1);
+    for (unsigned i = 0; i < jobs->size() + 1; ++i) {
         forward_F[i] = vector1d_dbl(Hmax + 1, 0.0);
         backward_F[i] = vector1d_dbl(Hmax + 1, 0.0);
     }
 
-    A = vector2d_jobs(jobs.size() + 1);
-    for (unsigned i = 0; i < jobs.size() + 1; ++i) {
+    A = vector2d_jobs(jobs->size() + 1);
+    for (unsigned i = 0; i < jobs->size() + 1; ++i) {
         A[i] = vector1d_jobs(Hmax + 1, nullptr);
     }
 
-    B = vector2d_int(jobs.size() + 1);
-    for (unsigned i = 0; i < jobs.size() + 1; ++i) {
+    B = vector2d_int(jobs->size() + 1);
+    for (unsigned i = 0; i < jobs->size() + 1; ++i) {
         B[i] = vector1d_int(Hmax + 1);
     }
 
-    arctime_x = vector_grb_var(jobs.size() + 1);
+    arctime_x = vector_grb_var(jobs->size() + 1);
     for (int i = 0; i < n + 1; i++) {
-        arctime_x[i] = vector2d_grb_var(jobs.size() + 1);
+        arctime_x[i] = vector2d_grb_var(jobs->size() + 1);
         for (int j = 0; j < n + 1; j++) {
             arctime_x[i][j] = vector1d_grb_var(Hmax + 1);
         }
@@ -86,7 +86,7 @@ void PricerSolverArcTimeDp::init_table() {
 
     for (int j = 0; j < n; ++j) {
         graph[j] = vector2d_jobs(Hmax + 1);
-        Job* tmp = static_cast<Job*>(jobs[j]);
+        Job* tmp = (*jobs)[j].get();
         for (int t = 0; t < Hmax + 1; t++) {
             for (auto& it : vector_jobs) {
                 int p = (it->job != j) ? it->processing_time : 1;
@@ -278,9 +278,8 @@ void PricerSolverArcTimeDp::build_mip() {
                 for (auto& it : graph[j][t]) {
                     auto a = arctime_x[it->job][j][t].get(GRB_DoubleAttr_X);
                     if (a > 0) {
-                        fmt::print(
-                            "{} {} {}\n", j, t,
-                            (static_cast<Job*>(jobs[j]))->processing_time);
+                        fmt::print("{} {} {}\n", j, t,
+                                   ((*jobs)[j])->processing_time);
                     }
                 }
             }
