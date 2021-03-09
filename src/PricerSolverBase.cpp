@@ -2,25 +2,51 @@
 #include <fmt/core.h>
 #include <limits>
 #include <memory>
+#include "Instance.h"
 #include "gurobi_c.h"
 
 /**
  * PricerSolverBase default COnstructor
  **/
-PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
-                                   int         _num_machines,
-                                   const char* _p_name,
-                                   double      _ub)
-    : jobs(_jobs->pdata, _jobs->len),
-      convex_constr_id(_jobs->len),
-      convex_rhs(_num_machines),
-      problem_name(_p_name),
+// PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
+//                                    int         _num_machines,
+//                                    const char* _p_name,
+//                                    double      _ub)
+//     : jobs(_jobs->pdata, _jobs->len),
+//       convex_constr_id(_jobs->len),
+//       convex_rhs(_num_machines),
+//       problem_name(_p_name),
+//       env(std::make_shared<GRBEnv>()),
+//       model(GRBModel(*env)),
+//       reformulation_model(_jobs->len, _num_machines),
+//       is_integer_solution(false),
+//       constLB(0.0),
+//       UB(_ub)
+
+// {
+//     try {
+//         model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
+//         model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
+//         model.set(GRB_IntParam_Presolve, GRB_PRESOLVE_AGGRESSIVE);
+//     } catch (const GRBException& e) {
+//         fmt::print("Error code = {}\n", e.getErrorCode());
+//         fmt::print(e.getMessage());
+//     } catch (...) {
+//         fmt::print("Exception during optimization\n");
+//     }
+// }
+
+PricerSolverBase::PricerSolverBase(const Instance& instance)
+    : jobs_new(&instance.jobs),
+      convex_constr_id(instance.nb_jobs),
+      convex_rhs(instance.nb_machines),
+      problem_name(),
       env(std::make_shared<GRBEnv>()),
       model(GRBModel(*env)),
-      reformulation_model(_jobs->len, _num_machines),
+      reformulation_model(instance.nb_jobs, instance.nb_machines),
       is_integer_solution(false),
       constLB(0.0),
-      UB(_ub) {
+      UB(std::numeric_limits<int>::max()) {
     try {
         model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
         model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
@@ -32,6 +58,23 @@ PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
         fmt::print("Exception during optimization\n");
     }
 }
+
+PricerSolverBase::PricerSolverBase(const PricerSolverBase& other)
+    : jobs(other.jobs),
+      jobs_new(other.jobs_new),
+      convex_constr_id(other.convex_constr_id),
+      convex_rhs(other.convex_rhs),
+      problem_name(other.problem_name),
+      env(other.env),
+      model(other.model),
+      reformulation_model(other.reformulation_model),
+      is_integer_solution(other.is_integer_solution),
+      constLB(other.constLB),
+      UB(other.UB) {
+    model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
+    model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
+    model.set(GRB_IntParam_Presolve, GRB_PRESOLVE_AGGRESSIVE);
+};
 
 PricerSolverBase::~PricerSolverBase() = default;
 
@@ -132,12 +175,11 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
     auto      nb_constraints = reformulation_model.get_nb_constraints();
     std::span aux_lhs{lhs, nb_constraints};
     std::span aux_pi{pi, nb_constraints};
-    std::span aux_jobs{sol.jobs->pdata, sol.jobs->len};
+    // std::span aux_jobs{sol.jobs->pdata, sol.jobs->len};
     std::fill(aux_lhs.begin(), aux_lhs.end(), 0.0);
 
-    for (auto& it : aux_jobs) {
-        Job*            tmp_j = static_cast<Job*>(it);
-        VariableKeyBase k(tmp_j->job, 0);
+    for (auto& it : sol.jobs) {
+        VariableKeyBase k(it->job, 0);
         for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
             if (c == convex_constr_id) {
                 continue;
@@ -169,13 +211,11 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
     double    dual_bound = 0.0;
     auto      nb_constraints{reformulation_model.get_nb_constraints()};
     std::span aux_pi{pi, nb_constraints};
-    std::span aux_jobs{sol.jobs->pdata, sol.jobs->len};
 
-    for (auto& it : aux_jobs) {
-        Job*            tmp_j = static_cast<Job*>(it);
-        VariableKeyBase k(tmp_j->job, 0);
-        auto            dual = aux_pi[tmp_j->job];
-        auto            constr = reformulation_model.get_constraint(tmp_j->job);
+    for (auto& it : sol.jobs) {
+        VariableKeyBase k(it->job, 0);
+        auto            dual = aux_pi[it->job];
+        auto            constr = reformulation_model.get_constraint(it->job);
         auto            coeff = constr->get_var_coeff(&k);
 
         if (fabs(coeff) > EPS_SOLVER) {
@@ -218,7 +258,6 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
                                              double* subgradient) {
     auto      nb_constraints = reformulation_model.get_nb_constraints();
     std::span aux_subgradient{subgradient, nb_constraints};
-    std::span aux_jobs{sol.jobs->pdata, sol.jobs->len};
     auto      convex_rhs =
         -reformulation_model.get_constraint(convex_constr_id)->get_rhs();
 
@@ -227,10 +266,9 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
         aux_subgradient[i] = constr->get_rhs();
     }
 
-    for (auto& it : aux_jobs) {
-        Job*            tmp_j = static_cast<Job*>(it);
-        VariableKeyBase k(tmp_j->job, 0);
-        auto            constr = reformulation_model.get_constraint(tmp_j->job);
+    for (auto& it : sol.jobs) {
+        VariableKeyBase k(it->job, 0);
+        auto            constr = reformulation_model.get_constraint(it->job);
         auto            coeff = constr->get_var_coeff(&k);
 
         if (fabs(coeff) > EPS_SOLVER) {
@@ -287,20 +325,4 @@ int call_is_integer_solution(PricerSolverBase* solver) {
 
 inline std::vector<BddCoeff>& PricerSolverBase::get_lp_sol() {
     return lp_sol;
-};
-
-PricerSolverBase::PricerSolverBase(const PricerSolverBase& other)
-    : jobs(other.jobs),
-      convex_constr_id(other.convex_constr_id),
-      convex_rhs(other.convex_rhs),
-      problem_name(other.problem_name),
-      env(other.env),
-      model(other.model),
-      reformulation_model(other.reformulation_model),
-      is_integer_solution(other.is_integer_solution),
-      constLB(other.constLB),
-      UB(other.UB) {
-    model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-    model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-    model.set(GRB_IntParam_Presolve, GRB_PRESOLVE_AGGRESSIVE);
 };

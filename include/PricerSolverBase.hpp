@@ -5,11 +5,10 @@
 #include <memory>
 #include <span>
 #include <vector>
+#include "Instance.h"
 #include "MIP_defs.hpp"
 #include "ModelInterface.hpp"
 #include "OptimalSolution.hpp"
-// #include "scheduleset.h"
-// #include "scheduleset.h"
 #include "solution.h"
 
 struct NodeData;
@@ -17,7 +16,8 @@ struct ScheduleSet;
 
 struct PricerSolverBase {
    public:
-    std::span<void*> jobs;
+    std::span<void*>                         jobs;
+    const std::vector<std::shared_ptr<Job>>* jobs_new;
 
     int convex_constr_id;
     int convex_rhs;
@@ -43,10 +43,12 @@ struct PricerSolverBase {
     /**
      * Default constructors
      */
-    PricerSolverBase(GPtrArray*  _jobs,
-                     int         _num_machines,
-                     const char* _p_name,
-                     double      _ub);
+    // PricerSolverBase(GPtrArray*  _jobs,
+    //                  int         _num_machines,
+    //                  const char* _p_name,
+    //                  double      _ub);
+
+    explicit PricerSolverBase(const Instance& instance);
     /**
      * Copy constructor
      */
@@ -132,7 +134,11 @@ struct PricerSolverBase {
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
     virtual bool   check_schedule_set(GPtrArray* set) = 0;
-    virtual void   make_schedule_set_feasible(GPtrArray* set) = 0;
+    virtual bool   check_schedule_set(const std::vector<Job*>& set) {
+        return true;
+    };
+    virtual void make_schedule_set_feasible(GPtrArray* set) = 0;
+    virtual void make_schedule_set_feasible(std::vector<Job*>& set){};
     /**
      * Some printing functions
      */
