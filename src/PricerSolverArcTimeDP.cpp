@@ -2,25 +2,48 @@
 #include <fmt/core.h>
 #include <iostream>
 #include <vector>
+#include "Instance.h"
+#include "PricerSolverBase.hpp"
 #include "gurobi_c++.h"
 #include "gurobi_c.h"
 #include "scheduleset.h"
 
-PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
-                                             int         _num_machines,
-                                             int         _hmax,
-                                             const char* _p_name,
-                                             double      _ub)
-    : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
-      Hmax(_hmax),
-      n(_jobs->len),
+// PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
+//                                              int         _num_machines,
+//                                              int         _hmax,
+//                                              const char* _p_name,
+//                                              double      _ub)
+//     : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
+//       Hmax(_hmax),
+//       n(_jobs->len),
+//       size_graph(0u),
+//       vector_jobs(),
+//       nb_edges_removed{},
+//       lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
+//       solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0)
+
+// {
+//     for (int i = 0; i < n; ++i) {
+//         vector_jobs.push_back(static_cast<Job*>(jobs[i]));
+//     }
+//     job_init(&j0, 0, 0, 0);
+//     j0.job = n;
+//     vector_jobs.push_back(&j0);
+
+//     init_table();
+// }
+
+PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
+    : PricerSolverBase(instance),
+      Hmax(instance.H_max),
+      n(instance.nb_jobs),
       size_graph(0u),
       vector_jobs(),
       nb_edges_removed{},
       lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
       solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
     for (int i = 0; i < n; ++i) {
-        vector_jobs.push_back(static_cast<Job*>(jobs[i]));
+        vector_jobs.push_back((*jobs_new)[i].get());
     }
     job_init(&j0, 0, 0, 0);
     j0.job = n;
@@ -468,7 +491,7 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
 
     sol.C_max = 0;
     for (auto it = v.rbegin(); it != v.rend(); it++) {
-        g_ptr_array_add(sol.jobs, *it);
+        sol.jobs.push_back(*it);
     }
 
     return sol;
@@ -490,17 +513,17 @@ void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     std::span aux_cols{columns, static_cast<size_t>(num_columns)};
     for (int k = 0; k < num_columns; k++) {
         if (aux_cols[k] > 0.0) {
-            size_t    counter = 0;
-            auto*     tmp = schedule_sets[k].get();
-            std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
-            int       i = n;
-            int       t = 0;
+            size_t counter = 0;
+            auto*  tmp = schedule_sets[k].get();
+            // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
+            int i = n;
+            int t = 0;
             while (t < Hmax + 1) {
                 Job* tmp_j = nullptr;
                 int  j = n;
 
-                if (counter < tmp->job_list->len) {
-                    tmp_j = static_cast<Job*>(aux_jobs[counter]);
+                if (counter < tmp->job_list.size()) {
+                    tmp_j = tmp->job_list[counter];
                     j = tmp_j->job;
                 }
 

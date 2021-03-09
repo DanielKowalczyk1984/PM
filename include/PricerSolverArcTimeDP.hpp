@@ -1,5 +1,6 @@
 #include <memory>
 #include <vector>
+#include "Instance.h"
 #include "PricerSolverBase.hpp"
 #include "gurobi_c++.h"
 
@@ -34,11 +35,14 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     vector1d_dbl   solution_x;
 
    public:
-    PricerSolverArcTimeDp(GPtrArray*  _jobs,
-                          int         _num_machines,
-                          int         _Hmax,
-                          const char* p_name,
-                          double      _UB);
+    // PricerSolverArcTimeDp(GPtrArray*  _jobs,
+    //                       int         _num_machines,
+    //                       int         _Hmax,
+    //                       const char* p_name,
+    //                       double      _UB);
+
+    PricerSolverArcTimeDp(const Instance& instance);
+
     ~PricerSolverArcTimeDp() override;
     PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
         : PricerSolverBase(src),
@@ -49,7 +53,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
           lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
           solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
         for (auto i = 0; i < n; ++i) {
-            vector_jobs.push_back(static_cast<Job*>(jobs[i]));
+            vector_jobs.push_back((*jobs_new)[i].get());
         }
         job_init(&j0, 0, 0, 0);
         j0.job = n;
@@ -90,6 +94,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     int    get_num_layers() override;
     void   print_num_paths() override;
     bool   check_schedule_set(GPtrArray* set) override;
+    bool   check_schedule_set(const std::vector<Job*>& set) override;
     void   make_schedule_set_feasible(GPtrArray* set) override;
 
     void forward_evaluator(double* pi);
