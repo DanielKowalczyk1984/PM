@@ -54,6 +54,46 @@ Instance::Instance(const fs::path& _path, Parms* _parms)
     }
 }
 
+Instance::Instance(Parms* _parms)
+    : path_to_instance(_parms->jobfile),
+      parms(_parms),
+      nb_machines(parms->nb_machines) {
+    std::ifstream in_file{path_to_instance.c_str()};
+
+    if (in_file.is_open()) {
+        std::string str;
+        if (getline(in_file, str)) {
+            std::istringstream ss(str);
+            ss >> nb_jobs;
+        }
+
+        int p{}, d{}, w{};
+        int counter{};
+        while (getline(in_file, str)) {
+            std::istringstream ss(str);
+            ss >> p >> d >> w;
+            d = d / nb_machines;
+            jobs.push_back(std::shared_ptr<Job>(job_alloc(&p, &w, &d),
+                                                std::default_delete<Job>()));
+            auto* tmp = jobs.back().get();
+            if (tmp->processing_time > tmp->due_time) {
+                off += tmp->weight * (tmp->processing_time - tmp->due_time);
+                tmp->due_time = tmp->processing_time;
+            }
+
+            p_sum += tmp->processing_time;
+            pmin = std::min(pmin, tmp->processing_time);
+            pmax = std::max(pmax, tmp->processing_time);
+            dmin = std::min(dmin, tmp->due_time);
+            dmax = std::max(dmax, tmp->due_time);
+
+            tmp->job = counter++;
+        }
+        calculate_H_max_H_min();
+        find_division();
+    }
+}
+
 void Instance::calculate_H_max_H_min() {
     int    temp = 0;
     double temp_dbl = 0.0;

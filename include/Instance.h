@@ -27,8 +27,7 @@ struct Instance {
     std::vector<std::shared_ptr<Job>>      jobs;
     std::vector<std::shared_ptr<Interval>> intervals;
 
-    std::vector<std::pair<std::shared_ptr<Job>, std::shared_ptr<Interval>>>
-        vector_pair;
+    std::vector<std::pair<Job*, Interval*>> vector_pair;
 
     /** Summary of jobs */
     int nb_jobs{};
@@ -43,6 +42,7 @@ struct Instance {
     int off{};
 
     Instance(const fs::path& _path, Parms* _parms);
+    Instance(Parms* _parms);
 
     Instance() = default;
 

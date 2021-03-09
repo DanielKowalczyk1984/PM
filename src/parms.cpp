@@ -10,7 +10,7 @@
 const double TIME_LIMIT = 7200.0;
 const double ALPHA_STAB_INIT = 0.8;
 
-parms::parms()
+Parms::Parms()
     : init_upper_bound(INT_MAX),
       bb_explore_strategy(min_bb_explore_strategy),
       use_strong_branching(min_strong_branching),
@@ -30,7 +30,7 @@ parms::parms()
       nb_jobs(0),
       nb_machines(0) {}
 
-parms::parms(int argc, const char** argv) : parms() {
+Parms::Parms(int argc, const char** argv) : Parms() {
     parse_cmd(argc, argv);
 }
 

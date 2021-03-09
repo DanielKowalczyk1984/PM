@@ -99,7 +99,7 @@ enum use_heuristic {
 #ifdef __cplusplus
 }
 #endif
-struct parms {
+struct Parms {
     /**
      * General parameters
      */
@@ -129,14 +129,14 @@ struct parms {
 
     int nb_jobs;
     int nb_machines;
-    parms();
-    parms(int argc, const char** argv);
+    Parms();
+    Parms(int argc, const char** argv);
 
-    parms(const parms&) = default;
-    parms(parms&&) = default;
-    parms& operator=(const parms&) = default;
-    parms& operator=(parms&&) = default;
-    ~parms() = default;
+    Parms(const Parms&) = default;
+    Parms(Parms&&) = default;
+    Parms& operator=(const Parms&) = default;
+    Parms& operator=(Parms&&) = default;
+    ~Parms() = default;
 
     /*Functions for setting some parameters*/
     int parms_set_branching_cpu_limit(double limit);
@@ -176,7 +176,5 @@ struct parms {
      */
     int parse_cmd(int argc, const char** argv);
 };
-
-typedef struct parms Parms;
 
 #endif  // INCLUDE_WCTPARMS_H_
