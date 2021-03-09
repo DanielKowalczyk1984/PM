@@ -1,24 +1,36 @@
 #include "PricerSolverBddForward.hpp"
 #include <fmt/core.h>
 #include <span>
+#include "Instance.h"
+#include "PricerSolverBdd.hpp"
 
 /**
  *  bdd solver pricersolver for the flow formulation
  */
-PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray*  _jobs,
-                                             int         _num_machines,
-                                             GPtrArray*  _ordered_jobs,
-                                             const char* _p_name,
-                                             int         _hmax,
-                                             int*        _take_jobs,
-                                             double      _ub)
-    : PricerSolverBdd(_jobs,
-                      _num_machines,
-                      _ordered_jobs,
-                      _p_name,
-                      _hmax,
-                      _take_jobs,
-                      _ub) {
+// PricerSolverBddSimple::PricerSolverBddSimple(GPtrArray*  _jobs,
+//                                              int         _num_machines,
+//                                              GPtrArray*  _ordered_jobs,
+//                                              const char* _p_name,
+//                                              int         _hmax,
+//                                              int*        _take_jobs,
+//                                              double      _ub)
+//     : PricerSolverBdd(_jobs,
+//                       _num_machines,
+//                       _ordered_jobs,
+//                       _p_name,
+//                       _hmax,
+//                       _take_jobs,
+//                       _ub) {
+//     fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", ALIGN,
+//                "Forward Simple Evaluator");
+//     fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", ALIGN,
+//                get_nb_vertices());
+//     fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", ALIGN,
+//     get_nb_edges());
+// }
+
+PricerSolverBddSimple::PricerSolverBddSimple(const Instance& instance)
+    : PricerSolverBdd(instance) {
     fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", ALIGN,
                "Forward Simple Evaluator");
     fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", ALIGN,
@@ -131,20 +143,30 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi) {
  * bdd solver pricersolver for the flow formulation that takes care of the
  * consecutive jobs
  */
-PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray*  _jobs,
-                                           int         _num_machines,
-                                           GPtrArray*  _ordered_jobs,
-                                           const char* _p_name,
-                                           int         _hmax,
-                                           int*        _take_jobs,
-                                           double      _ub)
-    : PricerSolverBdd(_jobs,
-                      _num_machines,
-                      _ordered_jobs,
-                      _p_name,
-                      _hmax,
-                      _take_jobs,
-                      _ub) {
+// PricerSolverBddCycle::PricerSolverBddCycle(GPtrArray*  _jobs,
+//                                            int         _num_machines,
+//                                            GPtrArray*  _ordered_jobs,
+//                                            const char* _p_name,
+//                                            int         _hmax,
+//                                            int*        _take_jobs,
+//                                            double      _ub)
+//     : PricerSolverBdd(_jobs,
+//                       _num_machines,
+//                       _ordered_jobs,
+//                       _p_name,
+//                       _hmax,
+//                       _take_jobs,
+//                       _ub) {
+//     fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", ALIGN,
+//                "Forward Cycle Evaluator");
+//     fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", ALIGN,
+//                get_nb_vertices());
+//     fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", ALIGN,
+//     get_nb_edges());
+// }
+
+PricerSolverBddCycle::PricerSolverBddCycle(const Instance& instance)
+    : PricerSolverBdd(instance) {
     fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", ALIGN,
                "Forward Cycle Evaluator");
     fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", ALIGN,
