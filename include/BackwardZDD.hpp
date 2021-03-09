@@ -2,6 +2,7 @@
 #define BACKWARD_ZDD_HPP
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include "NodeBddEval.hpp"
 #include "OptimalSolution.hpp"
 #include "ZddNode.hpp"
@@ -66,7 +67,8 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
 
     void initializenode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
+            it->backward_label[0].update_solution(
+                std::numeric_limits<double>::max() / 2, nullptr, false);
         }
     }
 
@@ -177,7 +179,8 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
 
     void initializenode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
+            it->backward_label[0].update_solution(
+                std::numeric_limits<double>::max() / 2, nullptr, false);
         }
     }
 

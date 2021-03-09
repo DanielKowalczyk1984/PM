@@ -87,14 +87,14 @@ int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
 }
 
 int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
-    int        val = 0;
-    int        row_ind = 0;
-    int        var_ind = 0;
-    double     cval = 0.0;
-    double     cost = static_cast<double>(set->total_weighted_completion_time);
-    GPtrArray* members = set->job_list;
-    wctlp*     lp = RMP;
-    Job*       job = nullptr;
+    int    val = 0;
+    int    row_ind = 0;
+    int    var_ind = 0;
+    double cval = 0.0;
+    double cost = static_cast<double>(set->total_weighted_completion_time);
+    // GPtrArray* members = set->job_list;
+    wctlp* lp = RMP;
+    // Job*   job = nullptr;
 
     val = lp_interface_get_nb_cols(lp, &(nb_cols));
     var_ind = nb_cols;
@@ -102,12 +102,13 @@ int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
     val = lp_interface_addcol(lp, 0, nullptr, nullptr, cost, 0.0, GRB_INFINITY,
                               lp_interface_CONT, nullptr);
 
-    for (unsigned i = 0; i < members->len; ++i) {
-        job = static_cast<Job*>(g_ptr_array_index(members, i));
-        row_ind = job->job;
+    for (auto i = 0UL; auto& it : set->job_list) {
+        // job = static_cast<Job*>(g_ptr_array_index(members, i));
+        row_ind = it->job;
         val = lp_interface_getcoeff(lp, &row_ind, &var_ind, &cval);
         cval += 1.0;
         val = lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
+        ++i;
     }
 
     row_ind = nb_jobs;

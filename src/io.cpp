@@ -2,77 +2,78 @@
 #include "Statistics.h"
 #include "wctprivate.h"
 
-int Problem::problem_read() {
-    int         val = 0;
-    int         nb_jobs_tmp = 0;
-    int         curduration = 0, curduedate = 0, curweight = 0, curjob = 0;
-    Job*        _jobarray = (Job*)NULL;
-    Job*        tmp_j = NULL;
-    char        buf[256], *p = NULL;
-    int         bufsize = 0;
-    const char* delim = " \n\t";
-    char*       data = nullptr;
-    char*       buf2 = nullptr;
-    // NodeData*   pd = root_pd;
-    // Parms*      parms = &(parms);
-    // Statistics* statistics = &(stat);
-    FILE* in = fopen(parms.jobfile.c_str(), "r");
+// int Problem::problem_read() {
+//     int         val = 0;
+//     int         nb_jobs_tmp = 0;
+//     int         curduration = 0, curduedate = 0, curweight = 0, curjob = 0;
+//     Job*        _jobarray = (Job*)NULL;
+//     Job*        tmp_j = NULL;
+//     char        buf[256], *p = NULL;
+//     int         bufsize = 0;
+//     const char* delim = " \n\t";
+//     char*       data = nullptr;
+//     char*       buf2 = nullptr;
+//     // NodeData*   pd = root_pd;
+//     // Parms*      parms = &(parms);
+//     // Statistics* statistics = &(stat);
+//     FILE* in = fopen(parms.jobfile.c_str(), "r");
 
-    if (in != (FILE*)NULL) {
-        stat.pname = parms.jobfile;
+//     if (in != (FILE*)NULL) {
+//         stat.pname = parms.jobfile;
 
-        if (fgets(buf, 254, in) != NULL) {
-            p = buf;
-            data = strtok(p, delim);
-            sscanf(data, "%d", &nb_jobs_tmp);
-            bufsize = 3 * nb_jobs_tmp *
-                      (2 + (int)ceil(log((double)nb_jobs_tmp + 10)));
-            buf2 = CC_SAFE_MALLOC(bufsize, char);
-            CCcheck_NULL_2(buf2, "Failed to allocate buf2");
-        } else {
-            val = 1;
-            goto CLEAN;
-        }
+//         if (fgets(buf, 254, in) != NULL) {
+//             p = buf;
+//             data = strtok(p, delim);
+//             sscanf(data, "%d", &nb_jobs_tmp);
+//             bufsize = 3 * nb_jobs_tmp *
+//                       (2 + (int)ceil(log((double)nb_jobs_tmp + 10)));
+//             buf2 = CC_SAFE_MALLOC(bufsize, char);
+//             CCcheck_NULL_2(buf2, "Failed to allocate buf2");
+//         } else {
+//             val = 1;
+//             goto CLEAN;
+//         }
 
-        while (fgets(buf2, bufsize, in) != (char*)NULL) {
-            p = buf2;
-            sscanf(p, "%d %d %d", &curduration, &curduedate, &curweight);
-            curduedate = curduedate / parms.nb_machines;
-            tmp_j = job_alloc(&curduration, &curweight, &curduedate);
-            g_ptr_array_add(g_job_array, tmp_j);
+//         while (fgets(buf2, bufsize, in) != (char*)NULL) {
+//             p = buf2;
+//             sscanf(p, "%d %d %d", &curduration, &curduedate, &curweight);
+//             curduedate = curduedate / parms.nb_machines;
+//             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
+//             g_ptr_array_add(g_job_array, tmp_j);
 
-            if (tmp_j->processing_time > tmp_j->due_time) {
-                off +=
-                    tmp_j->weight * (tmp_j->processing_time - tmp_j->due_time);
-                tmp_j->due_time = tmp_j->processing_time;
-            }
+//             if (tmp_j->processing_time > tmp_j->due_time) {
+//                 off +=
+//                     tmp_j->weight * (tmp_j->processing_time -
+//                     tmp_j->due_time);
+//                 tmp_j->due_time = tmp_j->processing_time;
+//             }
 
-            tmp_j->job = curjob;
-            curjob++;
-        }
+//             tmp_j->job = curjob;
+//             curjob++;
+//         }
 
-        nb_jobs = root_pd->nb_jobs = parms.nb_jobs = nb_jobs_tmp;
-        nb_machines = root_pd->nb_machines = parms.nb_machines;
-    } else {
-        fmt::print(stderr, "Unable to open file {}\n", parms.jobfile);
-        val = 1;
-        goto CLEAN;
-    }
+//         nb_jobs = root_pd->nb_jobs = parms.nb_jobs = nb_jobs_tmp;
+//         nb_machines = root_pd->nb_machines = parms.nb_machines;
+//     } else {
+//         fmt::print(stderr, "Unable to open file {}\n", parms.jobfile);
+//         val = 1;
+//         goto CLEAN;
+//     }
 
-CLEAN:
+// CLEAN:
 
-    if (val) {
-        CC_IFFREE(_jobarray, Job);
-    }
+//     if (val) {
+//         CC_IFFREE(_jobarray, Job);
+//     }
 
-    CC_IFFREE(buf2, char);
+//     CC_IFFREE(buf2, char);
 
-    if (in) {
-        fclose(in);
-    }
+//     if (in) {
+//         fclose(in);
+//     }
 
-    return val;
-}
+//     return val;
+// }
 
 int Problem::print_to_csv() {
     int         val = 0;

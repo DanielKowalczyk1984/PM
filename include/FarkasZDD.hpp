@@ -1,4 +1,5 @@
 #include <BackwardBDD.hpp>
+#include <limits>
 #include "NodeBddEval.hpp"
 
 template <typename T = double>
@@ -39,7 +40,8 @@ class BackwardBddFarkas : public BackwardBddBase<T> {
     }
 
     void initializenode(NodeBdd<T>& n) const override {
-        n.backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
+        n.backward_label[0].update_solution(
+            std::numeric_limits<double>::max() / 2, nullptr, false);
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {

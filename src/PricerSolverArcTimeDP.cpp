@@ -37,6 +37,7 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
     : PricerSolverBase(instance),
       Hmax(instance.H_max),
       n(instance.nb_jobs),
+      j0(),
       size_graph(0u),
       vector_jobs(),
       nb_edges_removed{},
@@ -45,7 +46,6 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
     for (int i = 0; i < n; ++i) {
         vector_jobs.push_back((*jobs_new)[i].get());
     }
-    job_init(&j0, 0, 0, 0);
     j0.job = n;
     vector_jobs.push_back(&j0);
 

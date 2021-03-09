@@ -1,6 +1,7 @@
 #ifndef DURATION_ZDD_HPP
 #define DURATION_ZDD_HPP
 #include <algorithm>
+#include <limits>
 #include <vector>
 #include "ForwardBDD.hpp"
 #include "NodeBddEval.hpp"
@@ -98,13 +99,13 @@ class ForwardZddCycle : public ForwardZddBase<T> {
             if (it->weight == 0) {
                 it->forward_label[0].update_solution(pi[num_jobs], nullptr,
                                                      false);
-                it->forward_label[1].update_solution(DBL_MAX / 2, nullptr,
-                                                     false);
+                it->forward_label[1].update_solution(
+                    std::numeric_limits<double>::max() / 2, nullptr, false);
             } else {
-                it->forward_label[0].update_solution(DBL_MAX / 2, nullptr,
-                                                     false);
-                it->forward_label[1].update_solution(DBL_MAX / 2, nullptr,
-                                                     false);
+                it->forward_label[0].update_solution(
+                    std::numeric_limits<double>::max() / 2, nullptr, false);
+                it->forward_label[1].update_solution(
+                    std::numeric_limits<double>::max() / 2, nullptr, false);
             }
         }
     }
@@ -112,7 +113,7 @@ class ForwardZddCycle : public ForwardZddBase<T> {
     void initializerootnode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             it->forward_label[0].get_f() = pi[num_jobs];
-            it->forward_label[1].set_f(DBL_MAX / 2);
+            it->forward_label[1].set_f(std::numeric_limits<double>::max() / 2);
         }
     }
 
@@ -232,8 +233,8 @@ class ForwardZddSimple : public ForwardZddBase<T> {
                 it->forward_label[0].update_solution(pi[num_jobs], nullptr,
                                                      false);
             } else {
-                it->forward_label[0].update_solution(DBL_MAX / 2, nullptr,
-                                                     false);
+                it->forward_label[0].update_solution(
+                    std::numeric_limits<double>::max() / 2, nullptr, false);
             }
         }
     }
