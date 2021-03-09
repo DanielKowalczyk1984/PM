@@ -1,26 +1,44 @@
 #include "PricerSolverBddBackward.hpp"
 #include <fmt/core.h>
 #include <iostream>
+#include "Instance.h"
+#include "PricerSolverBdd.hpp"
 
 /**
  * backward bdd pricersolver for the flow formulation that takes care of the
  * consecutive jobs
  */
+// PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
+//     GPtrArray*  _jobs,
+//     int         _num_machines,
+//     GPtrArray*  _ordered_jobs,
+//     const char* _p_name,
+//     int         _hmax,
+//     int*        _take_jobs,
+//     double      _ub)
+//     : PricerSolverBdd(_jobs,
+//                       _num_machines,
+//                       _ordered_jobs,
+//                       _p_name,
+//                       _hmax,
+//                       _take_jobs,
+//                       _ub) {
+//     if (dbg_lvl() > 0) {
+//         fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:",
+//         ALIGN,
+//                    "Backward Simple Evaluator");
+//         fmt::print(R"({0: <{1}}{2}
+// )",
+//                    "Number of vertices BDD", ALIGN, get_nb_vertices());
+//         fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", ALIGN,
+//                    get_nb_edges());
+//     }
+//     evaluator.set_table(&(*(get_decision_diagram().getDiagram())));
+// }
+
 PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
-    GPtrArray*  _jobs,
-    int         _num_machines,
-    GPtrArray*  _ordered_jobs,
-    const char* _p_name,
-    int         _hmax,
-    int*        _take_jobs,
-    double      _ub)
-    : PricerSolverBdd(_jobs,
-                      _num_machines,
-                      _ordered_jobs,
-                      _p_name,
-                      _hmax,
-                      _take_jobs,
-                      _ub) {
+    const Instance& instance)
+    : PricerSolverBdd(instance) {
     if (dbg_lvl() > 0) {
         fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", ALIGN,
                    "Backward Simple Evaluator");
@@ -141,21 +159,36 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi) {
 /**
  * Simple backward bdd pricersolver for the flow formulation
  */
+// PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
+//     GPtrArray*  _jobs,
+//     int         _num_machines,
+//     GPtrArray*  _ordered_jobs,
+//     const char* _p_name,
+//     int         _hmax,
+//     int*        _take_jobs,
+//     double      _ub)
+//     : PricerSolverBdd(_jobs,
+//                       _num_machines,
+//                       _ordered_jobs,
+//                       _p_name,
+//                       _hmax,
+//                       _take_jobs,
+//                       _ub) {
+//     if (dbg_lvl() > 0) {
+//         fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:",
+//         ALIGN,
+//                    "Backward Cycle Evaluator");
+//         fmt::print("{0: <{1}}{2}\n", "Number of vertices BDD", ALIGN,
+//                    get_nb_vertices());
+//         fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", ALIGN,
+//                    get_nb_edges());
+//     }
+//     evaluator.set_table(&(*(get_decision_diagram().getDiagram())));
+// }
+
 PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
-    GPtrArray*  _jobs,
-    int         _num_machines,
-    GPtrArray*  _ordered_jobs,
-    const char* _p_name,
-    int         _hmax,
-    int*        _take_jobs,
-    double      _ub)
-    : PricerSolverBdd(_jobs,
-                      _num_machines,
-                      _ordered_jobs,
-                      _p_name,
-                      _hmax,
-                      _take_jobs,
-                      _ub) {
+    const Instance& instance)
+    : PricerSolverBdd(instance) {
     if (dbg_lvl() > 0) {
         fmt::print("{0: <{1}}{2}\n", "Constructing BDD with evaluator:", ALIGN,
                    "Backward Cycle Evaluator");

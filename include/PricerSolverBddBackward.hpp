@@ -1,7 +1,8 @@
 #include <memory>
+#include "Instance.h"
 #include "PricerEvaluateBdd.hpp"
 #include "PricerSolverBdd.hpp"
-#include "interval.h"
+// #include "interval.h"
 
 class PricerSolverBddBackwardSimple : public PricerSolverBdd {
    private:
@@ -10,13 +11,14 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
     BackwardBddFarkasDouble farkas_evaluator;
 
    public:
-    PricerSolverBddBackwardSimple(GPtrArray*  _jobs,
-                                  int         _num_machines,
-                                  GPtrArray*  _ordered_jobs,
-                                  const char* p_name,
-                                  int         _Hmax,
-                                  int*        _take_jobs,
-                                  double      _UB);
+    // PricerSolverBddBackwardSimple(GPtrArray*  _jobs,
+    //                               int         _num_machines,
+    //                               GPtrArray*  _ordered_jobs,
+    //                               const char* p_name,
+    //                               int         _Hmax,
+    //                               int*        _take_jobs,
+    //                               double      _UB);
+    explicit PricerSolverBddBackwardSimple(const Instance& instance);
     PricerSolverBddBackwardSimple(const PricerSolverBddBackwardSimple& src,
                                   GPtrArray* _ordered_jobs)
         : PricerSolverBdd(src, _ordered_jobs),
@@ -34,9 +36,9 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
     virtual ~PricerSolverBddBackwardSimple() override = default;
 
     std::unique_ptr<PricerSolverBase> clone() override {
-        auto* tmp =
-            g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
-        return std::make_unique<PricerSolverBddBackwardSimple>(*this, tmp);
+        // auto* tmp =
+        //     g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
+        return std::make_unique<PricerSolverBddBackwardSimple>(*this, nullptr);
     };
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
@@ -54,14 +56,14 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
     BackwardBddFarkasDouble farkas_evaluator;
 
    public:
-    PricerSolverBddBackwardCycle(GPtrArray*  _jobs,
-                                 int         _num_machines,
-                                 GPtrArray*  _ordered_jobs,
-                                 const char* p_name,
-                                 int         _Hmax,
-                                 int*        _take_jobs,
-                                 double      _UB);
-
+    // PricerSolverBddBackwardCycle(GPtrArray*  _jobs,
+    //                              int         _num_machines,
+    //                              GPtrArray*  _ordered_jobs,
+    //                              const char* p_name,
+    //                              int         _Hmax,
+    //                              int*        _take_jobs,
+    //                              double      _UB);
+    explicit PricerSolverBddBackwardCycle(const Instance& instance);
     PricerSolverBddBackwardCycle(const PricerSolverBddBackwardCycle& src,
                                  GPtrArray* _ordered_jobs)
         : PricerSolverBdd(src, _ordered_jobs),
@@ -78,9 +80,9 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
     virtual ~PricerSolverBddBackwardCycle() override = default;
 
     std::unique_ptr<PricerSolverBase> clone() override {
-        auto* tmp =
-            g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
-        return std::make_unique<PricerSolverBddBackwardCycle>(*this, tmp);
+        // auto* tmp =
+        //     g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
+        return std::make_unique<PricerSolverBddBackwardCycle>(*this, nullptr);
     };
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
