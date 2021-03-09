@@ -3,20 +3,23 @@
 // #ifdef __cplusplus
 // extern "C" {
 // #endif
-#include <glib.h>
-#include <interval.h>
+// #include <glib.h>
+// #include <interval.h>
 #include <memory>
+#include <vector>
+#include "Solution_new.hpp"
 
 struct ScheduleSet {
-    int        age{};
-    int        del{};
-    int        total_processing_time{};
-    int        total_weighted_completion_time{};
-    GPtrArray* job_list{nullptr};
-    int        id{-1};
+    int age{};
+    int del{};
+    int total_processing_time{};
+    int total_weighted_completion_time{};
+    // GPtrArray*        job_list{nullptr};
+    std::vector<Job*> job_list{};
+    int               id{-1};
 
     ScheduleSet() = default;
-    explicit ScheduleSet(GPtrArray*);
+    explicit ScheduleSet(const Machine&);
     ~ScheduleSet();
     ScheduleSet(ScheduleSet&&) = default;
     ScheduleSet& operator=(ScheduleSet&&) = default;
@@ -28,6 +31,7 @@ struct ScheduleSet {
 
     void recalculate();
 };
+
 namespace std {
 template <>
 struct less<std::shared_ptr<ScheduleSet>> {
@@ -41,10 +45,10 @@ struct less<std::shared_ptr<ScheduleSet>> {
 /*Sorting schedulesets*/
 // int  scheduleset_less(ScheduleSet* c1, ScheduleSet* c2);
 // gint g_scheduleset_less(gconstpointer a, gconstpointer b);
-void g_scheduleset_print(gpointer data, gpointer user_data);
-void g_sum_recalculate(gpointer data, gpointer user_data);
+// void g_scheduleset_print(gpointer data, gpointer user_data);
+// void g_sum_recalculate(gpointer data, gpointer user_data);
 
 /** new approach for columns */
-void g_sum_processing_time(gpointer data, gpointer user_data);
+// void g_sum_processing_time(gpointer data, gpointer user_data);
 
 #endif  // SCHEDULESET_H
