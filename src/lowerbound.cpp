@@ -1,3 +1,4 @@
+#include <bits/ranges_algo.h>
 #include <fmt/core.h>
 #include <algorithm>
 #include <string>
@@ -354,8 +355,10 @@ int NodeData::compute_objective() {
         fmt::print(
             "Current primal LP objective: {:19.16f}  (LP_dual-bound {:19.16f}, "
             "lowerbound = {}, eta_in = {}, eta_out = {}).\n",
-            LP_lower_bound + off, LP_lower_bound_dual + off, lower_bound + off,
-            solver_stab->get_eta_in() + off, LP_lower_bound + off);
+            LP_lower_bound + instance->off, LP_lower_bound_dual + instance->off,
+            lower_bound + instance->off,
+            solver_stab->get_eta_in() + instance->off,
+            LP_lower_bound + instance->off);
     }
 
     return val;
@@ -435,7 +438,6 @@ int NodeData::compute_lower_bound() {
     if (localColPool.empty()) {
         // add_solution_to_colpool(problem->opt_sol, pd);
     }
-    reset_nb_layers(jobarray);
 
     if (!RMP) {
         val = build_rmp();
@@ -587,7 +589,7 @@ int NodeData::compute_lower_bound() {
 
     if (depth == 0) {
         statistics->global_lower_bound =
-            CC_MAX(lower_bound + off, statistics->global_lower_bound);
+            CC_MAX(lower_bound + instance->off, statistics->global_lower_bound);
         statistics->root_lower_bound = statistics->global_lower_bound;
         statistics->root_upper_bound = statistics->global_upper_bound;
         statistics->root_rel_error =
@@ -619,12 +621,14 @@ int NodeData::print_x() {
             lambda.resize(nb_cols - id_pseudo_schedules, 0.0);
             val = lp_interface_x(RMP, lambda.data(), id_pseudo_schedules);
 
-            for (guint i = 0; i < localColPool.size(); ++i) {
-                GPtrArray* tmp = localColPool[i]->job_list;
+            for (auto i = 0UL; auto& it : localColPool) {
                 if (lambda[i] > EPS) {
-                    g_ptr_array_foreach(tmp, g_print_machine, NULL);
+                    std::ranges::for_each(it->job_list, [](const Job* j) {
+                        fmt::print("{} ", j->job);
+                    });
                     fmt::print("\n");
                 }
+                ++i;
             }
             break;
     }

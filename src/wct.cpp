@@ -26,13 +26,9 @@ NodeData::NodeData(Problem* problem)
     : id(-1),
       depth(0),
       status(initialized),
-      jobarray(nullptr),
-      nb_jobs(problem->nb_jobs),
-      nb_machines(problem->nb_machines),
-      H_max(problem->H_max),
-      H_min(problem->H_min),
-      off(problem->off),
-      ordered_jobs(g_ptr_array_new_with_free_func(g_free)),
+      instance(&(problem->instance)),
+      nb_jobs(instance->nb_jobs),
+      nb_machines(instance->nb_machines),
       RMP(nullptr),
       lambda(),
       pi(),
@@ -78,7 +74,7 @@ NodeData::NodeData(Problem* problem)
       parent(nullptr),
       parms(&(problem->parms)),
       stat(&(problem->stat)),
-      opt_sol(problem->opt_sol),
+      opt_sol(&(problem->opt_sol)),
       pname("tmp") {
     /**init stab data */
 }
@@ -91,11 +87,6 @@ NodeData::NodeData() {
     pname = "temporary";
     /*Initialization node instance data*/
     nb_jobs = 0;
-    H_max = 0;
-    H_min = 0;
-    off = 0;
-    ordered_jobs = nullptr;
-    jobarray = nullptr;
     /** Initialization data */
     upper_bound = INT_MAX;
     lower_bound = 0;
@@ -154,18 +145,11 @@ std::unique_ptr<NodeData> NodeData::clone() {
     aux->stat = stat;
     aux->opt_sol = opt_sol;
     aux->depth = depth + 1;
+    aux->instance = instance;
 
     /** Instance copy */
-    aux->jobarray = jobarray;
     aux->nb_jobs = nb_jobs;
     aux->nb_machines = nb_machines;
-    aux->H_max = H_max;
-    aux->H_min = H_min;
-    aux->off = off;
-
-    /** copy info about intervals */
-    aux->ordered_jobs =
-        g_ptr_array_copy(ordered_jobs, g_copy_interval_pair, NULL);
 
     /** Ids for model */
     aux->max_nb_cuts = max_nb_cuts;
@@ -237,12 +221,13 @@ int set_id_and_name(NodeData* pd, int id, const char* fname) {
     return val;
 }
 
-static void g_scheduleset_print_duplicated(gpointer data, gpointer user_data) {
-    ScheduleSet* tmp = static_cast<ScheduleSet*>(data);
-    GPtrArray*   tmp_array = tmp->job_list;
+// static void g_scheduleset_print_duplicated(gpointer data, gpointer user_data)
+// {
+//     ScheduleSet* tmp = static_cast<ScheduleSet*>(data);
+//     GPtrArray*   tmp_array = tmp->job_list;
 
-    fmt::print("TRANSSORT SET ");
-}
+//     fmt::print("TRANSSORT SET ");
+// }
 
 void NodeData::prune_duplicated_sets() {
     auto equal_func = [](auto const& lhs, auto const& rhs) {
@@ -260,30 +245,46 @@ void NodeData::prune_duplicated_sets() {
     }
 }
 
-void NodeData::add_solution_to_colpool(Solution* sol) {
-    int val = 0;
+// void NodeData::add_solution_to_colpool(Solution* sol) {
+//     int val = 0;
 
-    for (int i = 0; i < sol->nb_machines; ++i) {
-        GPtrArray*                   machine = sol->part[i].machine;
-        std::shared_ptr<ScheduleSet> tmp =
-            std::make_shared<ScheduleSet>(machine);
+//     for (int i = 0; i < sol->nb_machines; ++i) {
+//         GPtrArray*                   machine = sol->part[i].machine;
+//         std::shared_ptr<ScheduleSet> tmp =
+//             std::make_shared<ScheduleSet>(machine);
+//         tmp->id = localColPool.size();
+//         // g_ptr_array_add(localColPool, tmp);
+//         localColPool.emplace_back(tmp);
+//     }
+// }
+
+void NodeData::add_solution_to_colpool(const Sol& sol) {
+    for (auto& it : sol.machines) {
+        std::shared_ptr<ScheduleSet> tmp = std::make_shared<ScheduleSet>(it);
         tmp->id = localColPool.size();
-        // g_ptr_array_add(localColPool, tmp);
         localColPool.emplace_back(tmp);
     }
 }
 
-void NodeData::add_solution_to_colpool_and_lp(Solution* sol) {
-    for (int i = 0; i < sol->nb_machines; ++i) {
-        GPtrArray*                   machine = sol->part[i].machine;
-        std::shared_ptr<ScheduleSet> tmp =
-            std::make_shared<ScheduleSet>(machine);
-        localColPool.emplace_back(tmp);
-        // g_ptr_array_add(localColPool, tmp);
-    }
+// void NodeData::add_solution_to_colpool_and_lp(Solution* sol) {
+//     for (int i = 0; i < sol->nb_machines; ++i) {
+//         GPtrArray*                   machine = sol->part[i].machine;
+//         std::shared_ptr<ScheduleSet> tmp =
+//             std::make_shared<ScheduleSet>(machine);
+//         localColPool.emplace_back(tmp);
+//         // g_ptr_array_add(localColPool, tmp);
+//     }
 
-    for (unsigned i = 0; i < localColPool.size(); ++i) {
-        auto* tmp = localColPool[i].get();
-        add_scheduleset_to_rmp(tmp);
+//     for (unsigned i = 0; i < localColPool.size(); ++i) {
+//         auto* tmp = localColPool[i].get();
+//         add_scheduleset_to_rmp(tmp);
+//     }
+// }
+
+void NodeData::add_solution_to_colpool_and_lp(const Sol& sol) {
+    add_solution_to_colpool(sol);
+
+    for (auto& it : localColPool) {
+        add_scheduleset_to_rmp(it.get());
     }
 }
