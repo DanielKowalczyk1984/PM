@@ -3,89 +3,15 @@
 #include "Statistics.h"
 #include "wctprivate.h"
 
-// int Problem::problem_read() {
-//     int         val = 0;
-//     int         nb_jobs_tmp = 0;
-//     int         curduration = 0, curduedate = 0, curweight = 0, curjob = 0;
-//     Job*        _jobarray = (Job*)NULL;
-//     Job*        tmp_j = NULL;
-//     char        buf[256], *p = NULL;
-//     int         bufsize = 0;
-//     const char* delim = " \n\t";
-//     char*       data = nullptr;
-//     char*       buf2 = nullptr;
-//     // NodeData*   pd = root_pd;
-//     // Parms*      parms = &(parms);
-//     // Statistics* statistics = &(stat);
-//     FILE* in = fopen(parms.jobfile.c_str(), "r");
-
-//     if (in != (FILE*)NULL) {
-//         stat.pname = parms.jobfile;
-
-//         if (fgets(buf, 254, in) != NULL) {
-//             p = buf;
-//             data = strtok(p, delim);
-//             sscanf(data, "%d", &nb_jobs_tmp);
-//             bufsize = 3 * nb_jobs_tmp *
-//                       (2 + (int)ceil(log((double)nb_jobs_tmp + 10)));
-//             buf2 = CC_SAFE_MALLOC(bufsize, char);
-//             CCcheck_NULL_2(buf2, "Failed to allocate buf2");
-//         } else {
-//             val = 1;
-//             goto CLEAN;
-//         }
-
-//         while (fgets(buf2, bufsize, in) != (char*)NULL) {
-//             p = buf2;
-//             sscanf(p, "%d %d %d", &curduration, &curduedate, &curweight);
-//             curduedate = curduedate / parms.nb_machines;
-//             tmp_j = job_alloc(&curduration, &curweight, &curduedate);
-//             g_ptr_array_add(g_job_array, tmp_j);
-
-//             if (tmp_j->processing_time > tmp_j->due_time) {
-//                 off +=
-//                     tmp_j->weight * (tmp_j->processing_time -
-//                     tmp_j->due_time);
-//                 tmp_j->due_time = tmp_j->processing_time;
-//             }
-
-//             tmp_j->job = curjob;
-//             curjob++;
-//         }
-
-//         nb_jobs = root_pd->nb_jobs = parms.nb_jobs = nb_jobs_tmp;
-//         nb_machines = root_pd->nb_machines = parms.nb_machines;
-//     } else {
-//         fmt::print(stderr, "Unable to open file {}\n", parms.jobfile);
-//         val = 1;
-//         goto CLEAN;
-//     }
-
-// CLEAN:
-
-//     if (val) {
-//         CC_IFFREE(_jobarray, Job);
-//     }
-
-//     CC_IFFREE(buf2, char);
-
-//     if (in) {
-//         fclose(in);
-//     }
-
-//     return val;
-// }
-
-int Problem::print_to_csv() {
-    int         val = 0;
-    Statistics& statistics = stat;
-    FILE*       file = (FILE*)NULL;
-    char*       file_name = CC_SAFE_MALLOC(128, char);
-    auto        d =
+void Problem::to_csv() {
+    int   val = 0;
+    FILE* file = (FILE*)NULL;
+    char* file_name = CC_SAFE_MALLOC(128, char);
+    auto  d =
         boost::gregorian::date(boost::gregorian::day_clock::universal_day());
     // date;
     stat.real_time_total = getRealTime() - stat.real_time_total;
-    CCutil_stop_timer(&(statistics.tot_cputime), 0);
+    CCutil_stop_timer(&(stat.tot_cputime), 0);
 
     sprintf(file_name, "CG_overall_%d%02d%02d.csv", d.year(), d.month(),
             d.day());
@@ -139,7 +65,6 @@ int Problem::print_to_csv() {
     fclose(file);
 CLEAN:
     CC_FREE(file_name, char);
-    return val;
 }
 
 int Problem::print_to_screen() {

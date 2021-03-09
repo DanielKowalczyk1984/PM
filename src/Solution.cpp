@@ -64,7 +64,6 @@ void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
 
 void Sol::construct_random_fisher_yates(
     const std::vector<std::shared_ptr<Job>>& v) {
-    // std::vector<std::shared_ptr<Job>> tmp = v;
     std::vector<Job*> tmp{};
     std::ranges::transform(v.cbegin(), v.cend(), std::back_inserter(tmp),
                            [](auto& ptr) { return ptr.get(); });
@@ -81,7 +80,6 @@ void Sol::construct_random_fisher_yates(
 }
 
 void Sol::construct_random_shuffle(const std::vector<std::shared_ptr<Job>>& v) {
-    // std::vector<std::shared_ptr<Job>> tmp = v;
     std::vector<Job*> tmp{};
     std::ranges::transform(v.cbegin(), v.cend(), std::back_inserter(tmp),
                            [](auto& ptr) { return ptr.get(); });
@@ -269,7 +267,6 @@ void Sol::add_job_front_machine(Job* job) {
     m.add_job(job);
     tw += value_Fj(m.completion_time, job);
     c[job->job] = m.completion_time;
-    std::push_heap(machines.begin(), machines.end(), cmp_machines_completion);
 }
 
 void Sol::calculate_partition(const VecIntervalPtr& v) {

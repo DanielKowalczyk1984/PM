@@ -42,28 +42,34 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     //                       double      _UB);
 
     PricerSolverArcTimeDp(const Instance& instance);
+    PricerSolverArcTimeDp(const PricerSolverArcTimeDp&) = default;
+    PricerSolverArcTimeDp(PricerSolverArcTimeDp&&) = default;
+    PricerSolverArcTimeDp& operator=(const PricerSolverArcTimeDp&) = default;
+    PricerSolverArcTimeDp& operator=(PricerSolverArcTimeDp&&) = default;
 
     ~PricerSolverArcTimeDp() override;
-    PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
-        : PricerSolverBase(src),
-          Hmax(src.Hmax),
-          n(src.n),
-          j0(),
-          vector_jobs(),
-          nb_edges_removed(src.nb_edges_removed),
-          lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
-          solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
-        for (auto i = 0; i < n; ++i) {
-            vector_jobs.push_back((*jobs)[i].get());
-        }
+    // PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
+    //     : PricerSolverBase(src),
+    //       Hmax(src.Hmax),
+    //       n(src.n),
+    //       j0(),
+    //       vector_jobs(),
+    //       nb_edges_removed(src.nb_edges_removed),
+    //       lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
+    //       solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
+    //     for (auto i = 0; i < n; ++i) {
+    //         vector_jobs.push_back((*jobs)[i].get());
+    //     }
 
-        j0.job = n;
-        vector_jobs.push_back(&j0);
+    //     j0.job = n;
+    //     vector_jobs.push_back(&j0);
 
-        init_table();
-    }
+    //     init_table();
+    // }
 
-    std::unique_ptr<PricerSolverBase> clone() override { return nullptr; };
+    std::unique_ptr<PricerSolverBase> clone() const override {
+        return std::make_unique<PricerSolverArcTimeDp>(*this);
+    };
 
     void init_table();
 
@@ -120,8 +126,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         Job* tmp_j = vector_jobs[j];
         return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
     }
-
-    int* get_take() override { return nullptr; }
 
     void update_constraints() override {}
 

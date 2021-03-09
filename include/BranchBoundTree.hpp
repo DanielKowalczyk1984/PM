@@ -3,7 +3,7 @@
 #include <memory>
 #include "Parms.h"
 #include "branch-and-bound/btree.h"
-// #include "wctprivate.h"
+
 struct NodeData;
 class BranchBoundTree {
    public:

@@ -10,7 +10,7 @@ int NodeData::construct_sol(OptimalSolution<T>* sol) {
     int                          nb_set = 1;
     std::shared_ptr<ScheduleSet> newset = std::make_shared<ScheduleSet>();
 
-    newset->job_list = sol->jobs;
+    newset->job_list = std::move(sol->jobs);
     // sol->jobs = nullptr;
 
     newset->total_weighted_completion_time = sol->cost;
@@ -24,7 +24,6 @@ int NodeData::construct_sol(OptimalSolution<T>* sol) {
 int NodeData::solve_pricing() {
     int val = 0;
 
-    update = 0;
     solver_stab->solve(LP_lower_bound_BB, pi.data(), lhs_coeff.data());
 
     if (solver_stab->get_update_stab_center()) {
@@ -57,7 +56,6 @@ int NodeData::solve_pricing() {
         val = construct_sol(&sol);
         val = add_lhs_scheduleset_to_rmp(newsets.get());
         newsets->id = localColPool.size();
-        // g_ptr_array_add(localColPool, newsets);
         localColPool.emplace_back(newsets);
         nb_new_sets = 0;
         nb_non_improvements = 0;
@@ -70,20 +68,14 @@ CLEAN:
     return val;
 }
 
-int NodeData::solve_farkas_dbl() {
+void NodeData::solve_farkas_dbl() {
     int                     val = 0;
     OptimalSolution<double> s = solver->farkas_pricing(pi.data());
-    update = 0;
 
     if (s.obj < EPS) {
         val = construct_sol(&s);
         lp_interface_write(RMP, "RMP.lp");
-
-        // CCcheck_val_2(val, "Failed in constructing jobs");
-        update = 1;
     } else {
         nb_new_sets = 0;
     }
-
-    return val;
 }

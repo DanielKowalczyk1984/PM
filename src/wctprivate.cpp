@@ -40,7 +40,7 @@ Problem::Problem(int argc, const char** argv)
      *feasible solutions
      */
     if (parms.use_heuristic) {
-        heuristic_new();
+        heuristic();
     } else {
         Sol best_sol(instance.nb_jobs, instance.nb_machines, instance.off);
         best_sol.construct_edd(instance.jobs);
@@ -149,11 +149,11 @@ NodeData::~NodeData() {
 void Problem::solve() {
     tree->explore();
     if (parms.print) {
-        print_to_csv();
+        to_csv();
     }
 }
 
-void Problem::heuristic_new() {
+void Problem::heuristic() {
     auto                         ILS = nb_jobs / 2;
     auto                         IR = parms.nb_iterations_rvnd;
     boost::timer::auto_cpu_timer test;

@@ -29,7 +29,7 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
         const PricerSolverBddBackwardSimple&) = delete;
     virtual ~PricerSolverBddBackwardSimple() override = default;
 
-    std::unique_ptr<PricerSolverBase> clone() override {
+    std::unique_ptr<PricerSolverBase> clone() const override {
         // auto* tmp =
         //     g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
         return std::make_unique<PricerSolverBddBackwardSimple>(*this);
@@ -68,7 +68,7 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
     PricerSolverBddBackwardCycle(const PricerSolverBddBackwardCycle&) = default;
     virtual ~PricerSolverBddBackwardCycle() override = default;
 
-    std::unique_ptr<PricerSolverBase> clone() override {
+    std::unique_ptr<PricerSolverBase> clone() const override {
         return std::make_unique<PricerSolverBddBackwardCycle>(*this);
     };
 

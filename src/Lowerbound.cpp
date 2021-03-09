@@ -224,7 +224,6 @@ int NodeData::delete_infeasible_schedules() {
 
     if (!dellist.empty()) {
         solve_relaxation();
-        update = 1;
     }
 
 CLEAN:
@@ -356,10 +355,10 @@ int NodeData::compute_objective() {
         fmt::print(
             "Current primal LP objective: {:19.16f}  (LP_dual-bound {:19.16f}, "
             "lowerbound = {}, eta_in = {}, eta_out = {}).\n",
-            LP_lower_bound + instance->off, LP_lower_bound_dual + instance->off,
-            lower_bound + instance->off,
-            solver_stab->get_eta_in() + instance->off,
-            LP_lower_bound + instance->off);
+            LP_lower_bound + instance.off, LP_lower_bound_dual + instance.off,
+            lower_bound + instance.off,
+            solver_stab->get_eta_in() + instance.off,
+            LP_lower_bound + instance.off);
     }
 
     return val;
@@ -454,7 +453,6 @@ int NodeData::compute_lower_bound() {
     do {
         has_cols = 1;
         has_cuts = 0;
-        update = 0;
         CCutil_suspend_timer(&(statistics->tot_cputime));
         CCutil_resume_timer(&(statistics->tot_cputime));
         while ((iterations < maxiterations) && has_cols &&
@@ -487,7 +485,7 @@ int NodeData::compute_lower_bound() {
                     break;
 
                 case GRB_INFEASIBLE:
-                    val = solve_farkas_dbl();
+                    solve_farkas_dbl();
                     // CCcheck_val_2(val, "Failed in solving farkas");
                     break;
             }
@@ -551,7 +549,7 @@ int NodeData::compute_lower_bound() {
                 // printf("----------------\n");
                 // compute_objective(pd);
                 if (!localColPool.empty()) {
-                    val = construct_lp_sol_from_rmp();
+                    construct_lp_sol_from_rmp();
                     // CCcheck_val_2(val, "Failed in construct lp sol from
                     // rmp\n"); solve_relaxation(pd); delete_old_schedules(pd);
                     // delete_unused_rows(pd);
@@ -590,7 +588,7 @@ int NodeData::compute_lower_bound() {
 
     if (depth == 0) {
         statistics->global_lower_bound =
-            CC_MAX(lower_bound + instance->off, statistics->global_lower_bound);
+            CC_MAX(lower_bound + instance.off, statistics->global_lower_bound);
         statistics->root_lower_bound = statistics->global_lower_bound;
         statistics->root_upper_bound = statistics->global_upper_bound;
         statistics->root_rel_error =
@@ -655,7 +653,7 @@ int NodeData::check_schedules() {
     }
     for (unsigned i = 0; i < localColPool.size(); ++i) {
         ScheduleSet* tmp = localColPool[i].get();
-        if (check_schedule_set(tmp) == 1) {
+        if (check_schedule_set(tmp)) {
             tmp->del = 1;
         } else {
             tmp->del = 0;

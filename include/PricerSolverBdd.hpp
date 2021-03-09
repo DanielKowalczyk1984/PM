@@ -46,7 +46,7 @@ class PricerSolverBdd : public PricerSolverBase {
     PricerSolverBdd& operator=(PricerSolverBdd&&) = default;
     PricerSolverBdd& operator=(const PricerSolverBdd&) = delete;
     virtual ~PricerSolverBdd() override;
-    std::unique_ptr<PricerSolverBase> clone() override = 0;
+    std::unique_ptr<PricerSolverBase> clone() const override = 0;
 
     void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
@@ -99,8 +99,6 @@ class PricerSolverBdd : public PricerSolverBase {
     inline int get_nb_removed_edges() { return nb_removed_edges; }
 
     inline void add_nb_removed_edges() { nb_removed_edges++; }
-
-    inline int* get_take() override { return nullptr; };
 
    private:
     void add_inequality(std::vector<int> v1, std::vector<int> v2);

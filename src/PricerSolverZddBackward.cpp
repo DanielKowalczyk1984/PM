@@ -5,19 +5,6 @@
 /**
  *  bdd solver pricersolver for the flow formulation
  */
-// PricerSolverZddBackwardSimple::PricerSolverZddBackwardSimple(
-//     GPtrArray*  _jobs,
-//     int         _num_machines,
-//     GPtrArray*  _ordered_jobs,
-//     const char* _p_name,
-//     double      _ub)
-//     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, _p_name, _ub) {
-//     std::cout << "Constructing ZDD with Backward Simple evaluator" << '\n';
-//     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
-//     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
-//     evaluator = BackwardZddSimpleDouble(convex_constr_id);
-//     reversed_evaluator = ForwardZddSimpleDouble(convex_constr_id);
-// }
 
 PricerSolverZddBackwardSimple::PricerSolverZddBackwardSimple(
     const Instance& instance)

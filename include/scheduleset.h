@@ -14,17 +14,17 @@ struct ScheduleSet {
     int del{};
     int total_processing_time{};
     int total_weighted_completion_time{};
-    // GPtrArray*        job_list{nullptr};
+    int id{-1};
+
     std::vector<Job*> job_list{};
-    int               id{-1};
 
     ScheduleSet() = default;
     explicit ScheduleSet(const Machine&);
-    ~ScheduleSet();
+    ~ScheduleSet() = default;
     ScheduleSet(ScheduleSet&&) = default;
     ScheduleSet& operator=(ScheduleSet&&) = default;
-    ScheduleSet(const ScheduleSet&);
-    ScheduleSet& operator=(const ScheduleSet&);
+    ScheduleSet(const ScheduleSet&) = default;
+    ScheduleSet& operator=(const ScheduleSet&) = default;
 
     bool operator<(ScheduleSet const& other);
     bool operator==(ScheduleSet const& other) const;

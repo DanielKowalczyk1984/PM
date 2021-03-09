@@ -39,6 +39,12 @@ struct Instance {
 
     Instance() = default;
 
+    Instance(const Instance&) = default;
+    Instance& operator=(const Instance&) = default;
+    Instance& operator=(Instance&&) = default;
+    Instance(Instance&&) = default;
+    ~Instance() = default;
+
    private:
     void calculate_H_max_H_min();
     void find_division();

@@ -13,26 +13,6 @@
 /**
  * Pricersolver for the TI index formulation
  */
-// PricerSolverSimpleDp::PricerSolverSimpleDp(GPtrArray*  _jobs,
-//                                            int         _num_machines,
-//                                            int         _hmax,
-//                                            const char* _p_name,
-//                                            double      _ub)
-//     : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
-//       Hmax(_hmax),
-//       size_graph(0u),
-//       A(Hmax + 1),
-//       F(Hmax + 1),
-//       backward_F(Hmax + 1),
-//       TI_x(convex_constr_id * (Hmax + 1), GRBVar()),
-//       take(convex_constr_id * (Hmax + 1), 0),
-//       lp_x(convex_constr_id * (Hmax + 1), 0.0),
-//       solution_x(convex_constr_id * (Hmax + 1), 0.0)
-
-// {
-//     init_table();
-// }
-
 PricerSolverSimpleDp::PricerSolverSimpleDp(const Instance& instance)
     : PricerSolverBase(instance),
       Hmax(instance.H_max),
@@ -68,17 +48,6 @@ void PricerSolverSimpleDp::init_table() {
     }
 
     fmt::print("Number of arcs in TI formulation = {}\n", size_graph);
-}
-
-PricerSolverSimpleDp::~PricerSolverSimpleDp() {
-    // delete[] backward_graph;
-    // delete[] forward_graph;
-    // delete[] TI_x;
-    // if (take) {
-    //     free(take);
-    // }
-    // delete[] lp_x;
-    // delete[] solution_x;
 }
 
 void PricerSolverSimpleDp::evaluate_nodes(double*                 pi,

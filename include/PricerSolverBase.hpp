@@ -41,12 +41,8 @@ struct PricerSolverBase {
     /**
      * Default constructors
      */
-    // PricerSolverBase(GPtrArray*  _jobs,
-    //                  int         _num_machines,
-    //                  const char* _p_name,
-    //                  double      _ub);
-
     explicit PricerSolverBase(const Instance& instance);
+
     /**
      * Copy constructor
      */
@@ -72,12 +68,7 @@ struct PricerSolverBase {
      */
     virtual ~PricerSolverBase();
 
-    virtual std::unique_ptr<PricerSolverBase> clone() = 0;
-
-    /**
-     * init_table
-     */
-    // virtual void init_table() = 0;
+    virtual std::unique_ptr<PricerSolverBase> clone() const = 0;
 
     /**
      * Pricing Algorithm
@@ -104,7 +95,6 @@ struct PricerSolverBase {
      * Constraint on the solver
      */
 
-    // virtual void add_constraint(Job* job,  list, int order) = 0;
     virtual void insert_constraints_lp(NodeData* pd) = 0;
     virtual int  add_constraints();
     virtual void remove_constraints(int first, int nb_del);
@@ -142,7 +132,6 @@ struct PricerSolverBase {
      */
     virtual void   create_dot_zdd(const char* name) = 0;
     virtual void   print_number_nodes_edges() = 0;
-    virtual int*   get_take() = 0;
     virtual int    get_int_attr_model(enum MIP_Attr);
     virtual double get_dbl_attr_model(enum MIP_Attr);
 

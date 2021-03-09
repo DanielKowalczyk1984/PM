@@ -43,7 +43,7 @@ void BranchNodeBase::branch(BTree* bt) {
     // relaxation solution
     std::vector<std::vector<double>> x_job_time(nb_jobs);
     for (auto i = 0; i < nb_jobs; i++) {
-        x_job_time[i].resize(pd->instance->H_max + 1, 0.0);
+        x_job_time[i].resize(pd->instance.H_max + 1, 0.0);
     }
 
     solver->calculate_job_time(&x_job_time);
@@ -68,7 +68,7 @@ void BranchNodeBase::branch(BTree* bt) {
         auto  accum = 0.0;
         auto  dist_zero = 0.0;
         auto* job = (*solver->jobs)[i].get();
-        for (auto t = 0; t < pd->instance->H_max + 1; t++) {
+        for (auto t = 0; t < pd->instance.H_max + 1; t++) {
             accum += x_job_time[i][t];
             // avg_completion_time[i] +=
             //     x_job_time[i][t] * (t + job->processing_time);
@@ -123,8 +123,8 @@ void BranchNodeBase::branch(BTree* bt) {
 
         auto  left_gain = 0.0;
         auto  right_gain = 0.0;
-        auto* job = pd->instance->jobs[i].get();
-        for (auto t = 0; t < pd->instance->H_max + 1; t++) {
+        auto* job = pd->instance.jobs[i].get();
+        for (auto t = 0; t < pd->instance.H_max + 1; t++) {
             if (t + job->processing_time <= middle_time[i]) {
                 left_gain += x_job_time[i][t];
             } else {
@@ -155,7 +155,7 @@ void BranchNodeBase::branch(BTree* bt) {
                 fmt::print(
                     "STRONG BRANCHING LEFT PROBE: j = {}, t = {},"
                     " DWM LB = {:9.2f} in iterations {} ({})\n\n",
-                    i, middle_time[i], left_gain + pd->instance->off,
+                    i, middle_time[i], left_gain + pd->instance.off,
                     left_node_branch->pd->iterations, approx);
             }
             if (left_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance ||
@@ -179,7 +179,7 @@ void BranchNodeBase::branch(BTree* bt) {
                 fmt::print(
                     "STRONG BRANCHING RIGHT PROBE: j = {}, t = {},"
                     " DWM LB = {:9.2f} in iterations {} ({})\n\n",
-                    i, middle_time[i], right_gain + pd->instance->off,
+                    i, middle_time[i], right_gain + pd->instance.off,
                     right_node_branch->pd->iterations, approx);
             }
             if (right_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance ||
@@ -211,7 +211,7 @@ void BranchNodeBase::branch(BTree* bt) {
             auto  j = ord[k];
             auto* job = (*solver->jobs)[j].get();
             fmt::print(stderr, "j={}:", j);
-            for (int t = 0; t < pd->instance->H_max; t++) {
+            for (int t = 0; t < pd->instance.H_max; t++) {
                 if (x_job_time[j][t] > ERROR) {
                     fmt::print(stderr, " ({},{})", t + job->processing_time,
                                x_job_time[j][t]);
@@ -260,7 +260,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
     if (dbg_lvl() > 1) {
         fmt::print("Branching choice: j = {}, t = {}, best_gain = {}\n",
-                   best_job, best_time, best_min_gain + pd->instance->off);
+                   best_job, best_time, best_min_gain + pd->instance.off);
     }
 }
 
@@ -295,7 +295,7 @@ void BranchNodeBase::print(const BTree* bt) const {
             "{0:^5}{1:^5}|{2:^10}{3:^10}{10:^10}|{4:>10}{5:>10}{6:>10}|{7:>5}{"
             "8:>5}"
             "|{9:>5}{11:>5}\n",
-            "Expl", "Unex", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
+            "Expl", "UnEx", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
             "Time", "Time", "Size", "Iter");
     }
     fmt::print(
@@ -303,8 +303,8 @@ void BranchNodeBase::print(const BTree* bt) const {
         "8:>"
         "5}{9:>5}|{10:>5}{11:>5}|\n",
         bt->get_nb_nodes_explored(), bt->get_nb_nodes(),
-        pd->LP_lower_bound + pd->instance->off, pd->depth,
-        solver->get_nb_vertices(), bt->getGlobalUB() + pd->instance->off,
-        bt->getGlobalLB() + pd->instance->off, 0.0, pd->branch_job,
+        pd->LP_lower_bound + pd->instance.off, pd->depth,
+        solver->get_nb_vertices(), bt->getGlobalUB() + pd->instance.off,
+        bt->getGlobalLB() + pd->instance.off, 0.0, pd->branch_job,
         pd->completiontime, bt->get_run_time_start(), pd->iterations);
 }

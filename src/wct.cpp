@@ -1,14 +1,12 @@
 #include <fmt/core.h>
 #include <algorithm>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <vector>
-#include "BranchBoundTree.hpp"
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
-#include "gurobi_c.h"
 #include "scheduleset.h"
-#include "solver.h"
 #include "util.h"
 #include "wctprivate.h"
 
@@ -16,9 +14,9 @@ NodeData::NodeData(Problem* problem)
     : id(-1),
       depth(0),
       status(initialized),
-      instance(&(problem->instance)),
-      nb_jobs(instance->nb_jobs),
-      nb_machines(instance->nb_machines),
+      instance((problem->instance)),
+      nb_jobs(instance.nb_jobs),
+      nb_machines(instance.nb_machines),
       RMP(nullptr),
       lambda(),
       pi(),
@@ -53,7 +51,6 @@ NodeData::NodeData(Problem* problem)
       nb_non_improvements(0),
       iterations(0),
       solver_stab(nullptr),
-      update(1),
       best_schedule(),
       best_objective(INT_MAX),
       maxiterations(NB_CG_ITERATIONS),
@@ -65,77 +62,71 @@ NodeData::NodeData(Problem* problem)
       parms(&(problem->parms)),
       stat(&(problem->stat)),
       opt_sol(&(problem->opt_sol)),
-      pname("tmp") {
-    /**init stab data */
-}
+      pname("tmp") {}
 
-NodeData::NodeData() {
-    /*Initialization B&B data*/
-    id = -1;
-    depth = 0;
-    status = initialized;
-    pname = "temporary";
-    /*Initialization node instance data*/
-    nb_jobs = 0;
-    /** Initialization data */
-    upper_bound = INT_MAX;
-    lower_bound = 0;
-    LP_lower_bound = 0.0;
-    LP_lower_min = DBL_MAX;
-    rhs = std::vector<double>();
-    /*Initialization  of the LP*/
-    RMP = nullptr;
-    lambda = std::vector<double>();
-    // x_e = (double*)NULL;
-    pi = std::vector<double>();
-    slack = std::vector<double>();
-    lhs_coeff = std::vector<double>();
-    id_row = std::vector<int>();
-    coeff_row = std::vector<double>();
-    nb_rows = 0;
-    nb_cols = 0;
-    // init info cut generation
-    max_nb_cuts = NB_CUTS;
-    id_convex_constraint = 0;
-    id_assignment_constraint = 0;
-    id_valid_cuts = 0;
-    id_art_var_assignment = 0;
-    id_art_var_convex = 0;
-    id_art_var_cuts = 0;
-    id_pseudo_schedules = 0;
+NodeData::NodeData(const Instance& _instance)
+    : /*Initialization B&B data*/
+      id{-1},
+      depth{},
+      status{initialized},
+      instance(_instance),
+      pname{"temporary"},
+      /*Initialization node instance data*/
+      nb_jobs{},
+      nb_machines{},
+      /** Initialization data */
+      upper_bound{std::numeric_limits<int>::max()},
+      lower_bound{},
+      LP_lower_bound{},
+      LP_lower_min{std::numeric_limits<double>::max()},
+      rhs{},
+      /*Initialization  of the LP*/
+      RMP{},
+      lambda{},
+      pi{},
+      slack{},
+      lhs_coeff{},
+      id_row{},
+      coeff_row{},
+      nb_rows{},
+      nb_cols{},
+      // init info cut generation
+      max_nb_cuts{NB_CUTS},
+      id_convex_constraint{},
+      id_assignment_constraint{},
+      id_valid_cuts{},
+      id_art_var_assignment{},
+      id_art_var_convex{},
+      id_art_var_cuts{},
+      id_pseudo_schedules{},
 
-    /**init stab data */
-    update = 1;
-    iterations = 0;
-    /*Initialization pricing_problem*/
-    solver = nullptr;
-    nb_non_improvements = 0;
-    zero_count = 0;
-    // bestcolors = (ScheduleSet*)NULL;
-    best_schedule = std::vector<std::shared_ptr<ScheduleSet>>();
-    // nb_best = 0;
-    /**Column schedules */
-    localColPool = std::vector<std::shared_ptr<ScheduleSet>>();
-    column_status = std::vector<int>();
-    /*Initialization max and retirement age*/
-    maxiterations = NB_CG_ITERATIONS;
-    retirementage = 0;
-    /*initialization of branches*/
-    branch_job = -1;
-    parent = nullptr;
-    completiontime = 0;
-    less = -1;
-    parms = nullptr;
-}
+      /**init stab data */
+      iterations{},
+      /*Initialization pricing_problem*/
+      solver{},
+      nb_non_improvements{},
+      zero_count{},
+      best_schedule{},
+      /**Column schedules */
+      localColPool{},
+      column_status{},
+      /*Initialization max and retirement age*/
+      maxiterations{NB_CG_ITERATIONS},
+      retirementage{},
+      /*initialization of branches*/
+      branch_job{-1},
+      parent{},
+      completiontime{},
+      less{-1},
+      parms{} {}
 
-std::unique_ptr<NodeData> NodeData::clone() {
-    auto aux = std::make_unique<NodeData>();
+std::unique_ptr<NodeData> NodeData::clone() const {
+    auto aux = std::make_unique<NodeData>(instance);
 
     aux->parms = parms;
     aux->stat = stat;
     aux->opt_sol = opt_sol;
     aux->depth = depth + 1;
-    aux->instance = instance;
 
     /** Instance copy */
     aux->nb_jobs = nb_jobs;
@@ -204,21 +195,6 @@ void NodeData::temporary_data_free() {
     lp_node_data_free();
 }
 
-int set_id_and_name(NodeData* pd, int id, const char* fname) {
-    int val = 0;
-    pd->id = id;
-    pd->pname = fmt::format("{}", fname);
-    return val;
-}
-
-// static void g_scheduleset_print_duplicated(gpointer data, gpointer user_data)
-// {
-//     ScheduleSet* tmp = static_cast<ScheduleSet*>(data);
-//     GPtrArray*   tmp_array = tmp->job_list;
-
-//     fmt::print("TRANSSORT SET ");
-// }
-
 void NodeData::prune_duplicated_sets() {
     auto equal_func = [](auto const& lhs, auto const& rhs) {
         return (*lhs) == (*rhs);
@@ -235,19 +211,6 @@ void NodeData::prune_duplicated_sets() {
     }
 }
 
-// void NodeData::add_solution_to_colpool(Solution* sol) {
-//     int val = 0;
-
-//     for (int i = 0; i < sol->nb_machines; ++i) {
-//         GPtrArray*                   machine = sol->part[i].machine;
-//         std::shared_ptr<ScheduleSet> tmp =
-//             std::make_shared<ScheduleSet>(machine);
-//         tmp->id = localColPool.size();
-//         // g_ptr_array_add(localColPool, tmp);
-//         localColPool.emplace_back(tmp);
-//     }
-// }
-
 void NodeData::add_solution_to_colpool(const Sol& sol) {
     for (auto& it : sol.machines) {
         std::shared_ptr<ScheduleSet> tmp = std::make_shared<ScheduleSet>(it);
@@ -255,21 +218,6 @@ void NodeData::add_solution_to_colpool(const Sol& sol) {
         localColPool.emplace_back(tmp);
     }
 }
-
-// void NodeData::add_solution_to_colpool_and_lp(Solution* sol) {
-//     for (int i = 0; i < sol->nb_machines; ++i) {
-//         GPtrArray*                   machine = sol->part[i].machine;
-//         std::shared_ptr<ScheduleSet> tmp =
-//             std::make_shared<ScheduleSet>(machine);
-//         localColPool.emplace_back(tmp);
-//         // g_ptr_array_add(localColPool, tmp);
-//     }
-
-//     for (unsigned i = 0; i < localColPool.size(); ++i) {
-//         auto* tmp = localColPool[i].get();
-//         add_scheduleset_to_rmp(tmp);
-//     }
-// }
 
 void NodeData::add_solution_to_colpool_and_lp(const Sol& sol) {
     add_solution_to_colpool(sol);

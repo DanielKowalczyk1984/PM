@@ -27,6 +27,9 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     //                      double      _UB);
 
     PricerSolverSimpleDp(const Instance& instance);
+    PricerSolverSimpleDp& operator=(const PricerSolverSimpleDp&) = default;
+    PricerSolverSimpleDp& operator=(PricerSolverSimpleDp&&) = default;
+    PricerSolverSimpleDp(PricerSolverSimpleDp&&) = default;
 
     PricerSolverSimpleDp(const PricerSolverSimpleDp& src)
         : PricerSolverBase(src),
@@ -41,9 +44,12 @@ class PricerSolverSimpleDp : public PricerSolverBase {
           solution_x(convex_constr_id * (Hmax + 1)) {
         init_table();
     };
-    ~PricerSolverSimpleDp() override;
 
-    std::unique_ptr<PricerSolverBase> clone() override { return nullptr; };
+    ~PricerSolverSimpleDp() override = default;
+
+    std::unique_ptr<PricerSolverBase> clone() const override {
+        return std::make_unique<PricerSolverSimpleDp>(*this);
+    };
 
     void init_table();
 
@@ -77,12 +83,6 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    forward_evaluator(double* _pi);
     void                    backward_evaluator(double* _pi);
-
-    int* get_take() override {
-        // int* tmp = take.data();
-        // take = nullptr;
-        return take.data();
-    }
 
     void update_constraints() override {}
 

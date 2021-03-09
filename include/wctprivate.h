@@ -17,8 +17,6 @@
 /**
  * problem data
  */
-// typedef struct Problem Problem;
-// typedef struct NodeData NodeData;
 struct ScheduleSet;
 
 /**
@@ -67,21 +65,9 @@ struct Problem {
     std::unique_ptr<BranchBoundTree> tree;
     std::unique_ptr<NodeData>        root_pd;
 
-    /** Job data in EDD order */
-    // GPtrArray* g_job_array;
     /** Summary of jobs */
     int nb_jobs;
     int nb_machines;
-    // int p_sum;
-    // int pmax;
-    // int pmin;
-    // int dmax;
-    // int dmin;
-    // int H_min;
-    // int H_max;
-    // int off;
-
-    // GPtrArray* intervals;
 
     int    global_upper_bound;
     int    global_lower_bound;
@@ -96,37 +82,18 @@ struct Problem {
     Sol opt_sol;
 
     /** All methods of problem class */
-    // int  problem_read();
-    int  preprocess_data();
     int  print_to_screen();
-    int  print_to_csv();
+    void to_csv();
     void solve();
     /** Heuristic related */
-    // int  heuristic();
-    void heuristic_new();
+    void heuristic();
+    /** Constructors */
     Problem(int argc, const char** argv);
     Problem(const Problem&) = delete;
     Problem(Problem&&) = delete;
     Problem& operator=(const Problem&) = delete;
     Problem& operator=(Problem&&) = delete;
     ~Problem();
-
-   private:
-    // void calculate_Hmax();
-    // void create_ordered_jobs_array(GPtrArray* a, GPtrArray* b);
-    // int find_division();
-
-    // static int check_interval(interval_pair* pair,
-    //                           int            k,
-    //                           GPtrArray*     interval_array);
-    // static int calculate_T(interval_pair* pair,
-    //                        int            k,
-    //                        GPtrArray*     interval_array);
-
-    // static GPtrArray* array_time_slots(interval* I, GList* pairs);
-    /** Heuristic related */
-    // int construct_edd(Solution*);
-    // int construct_random(Solution* sol, GRand* rand_uniform);
 };
 
 struct NodeData {
@@ -137,12 +104,9 @@ struct NodeData {
     NodeDataStatus status;
 
     // The instance information
-    // GPtrArray* jobarray;
-    const Instance* instance;
+    const Instance& instance;
     int             nb_jobs;
     int             nb_machines;
-    /** data about the intervals */
-    // GPtrArray* ordered_jobs;
 
     // The column generation lp information
     wctlp*              RMP;
@@ -179,7 +143,6 @@ struct NodeData {
     int                                       nb_new_sets;
     std::vector<int>                          column_status;
     std::vector<std::shared_ptr<ScheduleSet>> localColPool;
-    // GPtrArray*                                localColPool;
 
     int lower_bound;
     int upper_bound;
@@ -194,7 +157,6 @@ struct NodeData {
 
     /** Wentges smoothing technique */
     std::unique_ptr<PricingStabilizationBase> solver_stab;
-    int                                       update;
 
     // Best Solution
     std::vector<std::shared_ptr<ScheduleSet>> best_schedule;
@@ -221,10 +183,10 @@ struct NodeData {
     std::string pname;
 
     explicit NodeData(Problem* problem);
-    NodeData();
+    explicit NodeData(const Instance&);
     NodeData(const NodeData&) = delete;
     NodeData& operator=(const NodeData&) = delete;
-    NodeData& operator=(NodeData&&) = default;
+    NodeData& operator=(NodeData&&) = delete;
     NodeData(NodeData&&) = default;
     ~NodeData();
 
@@ -238,7 +200,6 @@ struct NodeData {
     void add_solution_to_colpool_and_lp(const Sol&);
 
     int build_rmp();
-    // int get_solution_lp_lowerbound();
     /** lowerbound.cpp */
     int  delete_unused_rows();
     int  delete_old_schedules();
@@ -251,21 +212,20 @@ struct NodeData {
     int  print_x();
 
     /** PricerSolverWrappers.cpp */
-    int  build_solve_mip();
-    int  construct_lp_sol_from_rmp();
-    int  generate_cuts();
+    void build_solve_mip();
+    void construct_lp_sol_from_rmp();
+    void generate_cuts();
     int  delete_unused_rows_range(int first, int last);
     int  call_update_rows_coeff();
-    int  check_schedule_set(ScheduleSet* set);
-    int  check_schedule_set(const std::vector<Job*>& set);
+    bool check_schedule_set(ScheduleSet* set);
     void make_schedule_set_feasible(ScheduleSet* set);
     void get_mip_statistics(enum MIP_Attr c);
 
     /** StabilizationWrappers.cpp */
-    int solve_pricing();
-    int solve_farkas_dbl();
+    int  solve_pricing();
+    void solve_farkas_dbl();
 
-    std::unique_ptr<NodeData> clone();
+    std::unique_ptr<NodeData> clone() const;
 
     int add_scheduleset_to_rmp(ScheduleSet* set);
 
