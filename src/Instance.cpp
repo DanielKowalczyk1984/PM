@@ -1,5 +1,7 @@
 #include "Instance.h"
+#include <bits/ranges_algo.h>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <algorithm>
 #include <cstddef>
 #include <cstdio>
@@ -13,11 +15,10 @@
 #include "Job.h"
 #include "util.h"
 
-Instance::Instance(const fs::path& _path, Parms* _parms)
-    : path_to_instance(_path),
-      parms(_parms),
-      nb_machines(parms->nb_machines) {
-    std::ifstream in_file{_path.c_str()};
+Instance::Instance(const Parms& _parms)
+    : path_to_instance(_parms.jobfile),
+      nb_machines(_parms.nb_machines) {
+    std::ifstream in_file{path_to_instance};
 
     if (in_file.is_open()) {
         std::string str;
@@ -31,7 +32,7 @@ Instance::Instance(const fs::path& _path, Parms* _parms)
         while (getline(in_file, str)) {
             std::istringstream ss(str);
             ss >> p >> d >> w;
-            d = d / nb_machines;
+            d = d / static_cast<int>(nb_machines);
             jobs.emplace_back(std::make_shared<Job>(p, w, d));
             auto* tmp = jobs.back().get();
             if (tmp->processing_time > tmp->due_time) {
@@ -49,51 +50,14 @@ Instance::Instance(const fs::path& _path, Parms* _parms)
         }
         calculate_H_max_H_min();
         find_division();
-    }
-}
-
-Instance::Instance(Parms* _parms)
-    : path_to_instance(_parms->jobfile),
-      parms(_parms),
-      nb_machines(parms->nb_machines) {
-    std::ifstream in_file{path_to_instance.c_str()};
-
-    if (in_file.is_open()) {
-        std::string str;
-        if (getline(in_file, str)) {
-            std::istringstream ss(str);
-            ss >> nb_jobs;
-        }
-
-        int p{}, d{}, w{};
-        int counter{};
-        while (getline(in_file, str)) {
-            std::istringstream ss(str);
-            ss >> p >> d >> w;
-            d = d / nb_machines;
-            jobs.emplace_back(std::make_shared<Job>(p, w, d));
-            auto* tmp = jobs.back().get();
-            if (tmp->processing_time > tmp->due_time) {
-                off += tmp->weight * (tmp->processing_time - tmp->due_time);
-                tmp->due_time = tmp->processing_time;
-            }
-
-            p_sum += tmp->processing_time;
-            pmin = std::min(pmin, tmp->processing_time);
-            pmax = std::max(pmax, tmp->processing_time);
-            dmin = std::min(dmin, tmp->due_time);
-            dmax = std::max(dmax, tmp->due_time);
-
-            tmp->job = counter++;
-        }
-        calculate_H_max_H_min();
-        find_division();
+    } else {
+        throw InstanceException("Could not open file\n");
     }
 }
 
 void Instance::calculate_H_max_H_min() {
-    int    temp = 0;
-    double temp_dbl = 0.0;
+    auto temp = 0;
+    auto temp_dbl = 0.0;
 
     temp = p_sum - pmax;
     temp_dbl = static_cast<double>(temp);
@@ -105,16 +69,14 @@ void Instance::calculate_H_max_H_min() {
         return (lhs->processing_time < rhs->processing_time);
     });
 
-    int    m = 0;
-    int    i = nb_jobs - 1;
-    double tmp = p_sum;
+    auto m = 0;
+    auto i = nb_jobs - 1;
+    auto tmp = p_sum;
     H_min = p_sum;
     do {
-        auto* job = jobs[i].get();
-        tmp -= job->processing_time;
+        tmp -= jobs[i]->processing_time;
         m++;
         i--;
-
     } while (m < nb_machines - 1);
 
     H_min = static_cast<int>(ceil(tmp / nb_machines));
@@ -123,39 +85,36 @@ void Instance::calculate_H_max_H_min() {
 )",
         H_max, H_min, pmax, pmin, p_sum, off);
 
-    std::sort(jobs.begin(), jobs.end(),
-              [](const auto& x, const auto& y) -> bool {
-                  if (x->due_time > y->due_time) {
-                      return (false);
-                  } else if (x->due_time < y->due_time) {
-                      return (true);
-                  } else if (x->processing_time > y->processing_time) {
-                      return (false);
-                  } else if (x->processing_time < y->processing_time) {
-                      return (true);
-                  } else if (x->weight < y->weight) {
-                      return (false);
-                  } else if (x->weight > y->weight) {
-                      return (true);
-                  } else if (x->job > y->job) {
-                      return (false);
-                  } else {
-                      return (true);
-                  }
-              });
+    std::ranges::sort(jobs, [](const auto& x, const auto& y) -> bool {
+        if (x->due_time > y->due_time) {
+            return (false);
+        } else if (x->due_time < y->due_time) {
+            return (true);
+        } else if (x->processing_time > y->processing_time) {
+            return (false);
+        } else if (x->processing_time < y->processing_time) {
+            return (true);
+        } else if (x->weight < y->weight) {
+            return (false);
+        } else if (x->weight > y->weight) {
+            return (true);
+        } else if (x->job > y->job) {
+            return (false);
+        } else {
+            return (true);
+        }
+    });
 
     int index = 0;
-    for (auto& it : jobs) {
-        it->job = index++;
-    }
+    std::ranges::for_each(jobs, [&index](auto& it) { it->job = index++; });
 }
 
 void Instance::find_division() {
     int prev = 0;
 
     std::vector<std::shared_ptr<Interval>> tmp_ptr_vec{};
-    for (int i = 0; i < nb_jobs && prev < H_max; ++i) {
-        int tmp = std::min(H_max, jobs[i]->due_time);
+    for (auto i = 0; i < nb_jobs && prev < H_max; ++i) {
+        auto tmp = std::min(H_max, jobs[i]->due_time);
         if (prev < tmp) {
             tmp_ptr_vec.push_back(std::make_shared<Interval>(prev, tmp, jobs));
             prev = jobs[i]->due_time;
@@ -221,8 +180,7 @@ void Instance::find_division() {
     }
 
     for (auto& it : intervals) {
-        auto& tmp_sigma = it->sigma;
-        for (auto& job : tmp_sigma) {
+        for (auto& job : it->sigma) {
             if (job->processing_time <= it->b) {
                 vector_pair.emplace_back(std::make_pair(job.get(), it.get()));
             }
