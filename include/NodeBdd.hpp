@@ -1,12 +1,12 @@
 #ifndef NODE_DURATION_HPP
 #define NODE_DURATION_HPP
 #include <fmt/core.h>
+#include <gurobi_c++.h>
 #include <array>
 #include <boost/dynamic_bitset.hpp>
 #include <memory>
 #include "Label.hpp"
 #include "NodeBase.hpp"
-#include "gurobi_c++.h"
 
 template <typename T = double>
 class NodeBdd : public NodeBase {
@@ -68,11 +68,7 @@ class NodeBdd : public NodeBase {
 
     [[nodiscard]] int get_weight() const { return weight; }
 
-    void reset_reduced_costs() {
-        // reduced_cost[0] = 0.0;
-        // reduced_cost[1] = cost[1];
-        reduced_cost = cost;
-    }
+    void reset_reduced_costs() { reduced_cost = cost; }
 
     void reset_reduced_costs_farkas() { reduced_cost = {0.0, 0.0}; }
 
