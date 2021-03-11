@@ -2,6 +2,7 @@
 #include <docopt/docopt.h>
 #include <limits.h>
 #include <string.h>
+#include <cstdio>
 #include <regex>
 #include <string>
 #include <vector>
@@ -33,7 +34,9 @@ Parms::Parms()
 
 Parms::Parms(int argc, const char** argv) : Parms() {
     int val = program_header(argc, argv);
+
     parse_cmd(argc, argv);
+
     if (dbg_lvl() > 1) {
         fmt::print("Debugging turned on\n");
     }
@@ -123,40 +126,6 @@ int Parms::parms_set_pricing_solver(int solver) {
     return 0;
 }
 
-static const std::string USAGE =
-    R"(PM.
-
-Usage:
-  bin/PM [-S <kn> -pmBRZH -n <nl> -b <br> -a <ln> -l <x> -f <y> -d --no_strong_branching --alpha <mn>] FILE NB
-  bin/PM (-h | --help)
-  bin/PM --version
-
-Arguments:
-  FILE  Path to the instance file
-  NB    Number of machines
-
-Options:
-  -h --help                     Show this screen.
-  --version                     Show version.
-  -d --debug                    Turn on the debugging.
-  -S --stab_method=<kn>         Stabilization technique: 0 = no stabilization, 1 = stabilization wentgnes, 2 = stabilization dynamic[default: 1].
-  -a --pricing_solver=<ln>      Set pricing solver: 0 = bdd backward cycle, 1 = bdd forward simple, 2 = bdd forward cycle,
-                                                    3 = bdd backward simple, 4 = bdd backward cycle, 5 = zdd forward simple,
-                                                    6 = zdd forward cycle, 7 = zdd backward simple, 8 = zdd backward cycle,
-                                                    9 = TI solver, 10 = arc-TI solver, 11 = hybrid model TI and bdd backward cycle[default: 4].
-  -l --cpu_limit=<x>            Cpu time limit for branch and bound method[default: 7200].
-  -f --nb_rvnb_it=<y>           Number of iterations in RVND[default: 4].
-  --alpha=<mn>                  Stabilization factor[default: 0.8].
-  -p --print_csv                Print csv-files.
-  -m --mip_solver               Use mip solver to solve the original formulation.
-  -R --no_rc_fixing             Don't apply reduce cost fixing.
-  -H --no_heuristic             Don't apply heuristic.
-  -B --no_branch_and_bound      Don't apply branch-and-bound.
-  --no_strong_branching         Don't apply strong branching.
-  -b --branching_strategy=<br>  Set branch-and-bound exploration strategy: 0 = DFS, 1 = BFS, 2 = BrFS, 3 = CBFS[default: 0].
-  -n --node_limit=<nl>          Set a limit on the number of nodes that can be explored.[default: 0]. Default meaning that all nodes should be explored.
-)";
-
 static std::string find_match(std::string const& _instance_file) {
     std::regex  regexp{"^.*(wt[0-9]*_[0-9]*).*$"};
     std::smatch match{};
@@ -173,7 +142,8 @@ static std::string find_match(std::string const& _instance_file) {
 int Parms::parse_cmd(int argc, const char** argv) {
     int val = 0;
 
-    auto args = docopt::docopt(USAGE, {argv + 1, argv + argc}, true, "PM 0.1");
+    auto args =
+        docopt::docopt_parse(USAGE, {argv + 1, argv + argc}, true, "PM 0.1");
 
     /** Set CPU limit for branching */
     val = parms_set_branching_cpu_limit(
