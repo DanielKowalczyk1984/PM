@@ -9,8 +9,6 @@
 Interval::Interval(int _a, int _b, const vector_ptr_jobs& _sigma)
     : a(_a),
       b(_b),
-      begin(),
-      key(),
       sigma(_sigma) {
     auto cmp = compare_edd(a, b);
     std::ranges::sort(sigma, cmp);

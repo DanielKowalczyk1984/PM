@@ -1,6 +1,7 @@
 #ifndef __INTERVAL_H__
 #define __INTERVAL_H__
 #include <array>
+#include <cstddef>
 #include <memory>
 #include <vector>
 #include "Job.h"
@@ -11,13 +12,13 @@ struct compare_edd {
     compare_edd(int _a, int _b) : a(_a), b(_b){};
 
     bool operator()(const auto lhs, const auto rhs) {
-        int    diff = b - a;
-        double w_lhs = (lhs->due_time >= b) ? 0.0
-                                            : static_cast<double>(lhs->weight) /
-                                                  lhs->processing_time;
-        double w_rhs = (rhs->due_time >= b) ? 0.0
-                                            : static_cast<double>(rhs->weight) /
-                                                  rhs->processing_time;
+        auto diff = b - a;
+        auto w_lhs = (lhs->due_time >= b) ? 0.0
+                                          : static_cast<double>(lhs->weight) /
+                                                lhs->processing_time;
+        auto w_rhs = (rhs->due_time >= b) ? 0.0
+                                          : static_cast<double>(rhs->weight) /
+                                                rhs->processing_time;
 
         if (lhs->processing_time >= diff) {
             if (rhs->processing_time < diff) {
@@ -65,8 +66,6 @@ struct negate_compare_edd {
 struct Interval {
     int a{};
     int b{};
-    int begin{};
-    int key{};
 
     using vector_ptr_jobs = std::vector<std::shared_ptr<Job>>;
 
