@@ -13,7 +13,6 @@ project(
 
 # Define a local module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR})
-message((${CMAKE_MODULE_PATH}))
 
 include(StandardSettings)
 include(Utils)
@@ -44,7 +43,6 @@ find_package(codecov)
 #
 
 find_package(Gurobi)
-
 add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 
@@ -136,7 +134,6 @@ else()
              ${GUROBI_INCLUDE_DIR}
              ${CONAN_INCLUDE_DIRS_FMT}
              ${CONAN_INCLUDE_DIRS_BOOST}
-             ${CONAN_INCLUDE_DIRS_GLIB}
              ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
              ORUtils::ORUtils
              branch-and-bound::branch-and-bound
@@ -148,7 +145,6 @@ else()
       ${GUROBI_LIBRARY}
       ${GUROBI_CXX_LIBRARY}
       CONAN_PKG::fmt
-      ${CONAN_PKG_LIBS_GLIB}
       CONAN_PKG::boost
       CONAN_PKG::docopt.cpp
       ORUtils::ORUtils
