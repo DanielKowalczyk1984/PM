@@ -3,7 +3,6 @@
 
 #include <bits/c++config.h>
 #include <fmt/core.h>
-#include <NodeId.hpp>
 #include <boost/container_hash/hash_fwd.hpp>
 #include <boost/functional/hash.hpp>
 #include <cstddef>
@@ -14,6 +13,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include "NodeId.hpp"
 #include "Parms.h"
 class VariableKeyBase {
    private:
