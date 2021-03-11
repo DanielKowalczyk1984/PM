@@ -8,6 +8,7 @@
 #include <random>
 #include <ranges>
 #include <vector>
+#include "Instance.h"
 #include "Interval.h"
 #include "Job.h"
 
@@ -234,7 +235,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
 }
 
 void Sol::perturb_swap_inter(int l1, int l2, std::mt19937& mt) {
-    std::uniform_int_distribution dist(0, nb_machines - 1);
+    std::uniform_int_distribution dist(0UL, nb_machines - 1);
 
     auto m1 = dist(mt);
     auto m2 = dist(mt);
@@ -311,6 +312,14 @@ void Machine::reset_machine(std::vector<int>& c) {
         total_weighted_tardiness += value_Fj(completion_time, it);
     }
 }
+
+Sol::Sol(const Instance& instance)
+    : machines{instance.nb_machines},
+      nb_jobs{instance.nb_jobs},
+      nb_machines{instance.nb_machines},
+      c(nb_jobs, -1),
+      u(nb_jobs, -1),
+      off{instance.off} {}
 
 void Sol::update_insertion_move(int i, int j, int k, int l) {
     auto& m = machines[k];

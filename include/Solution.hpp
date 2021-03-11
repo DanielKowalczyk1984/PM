@@ -3,6 +3,7 @@
 #include <memory>
 #include <random>
 #include <vector>
+#include "Instance.h"
 #include "Interval.h"
 #include "Job.h"
 
@@ -39,8 +40,8 @@ struct Machine {
 struct Sol {
     std::vector<Machine> machines{};
 
-    int nb_jobs{};
-    int nb_machines{};
+    size_t nb_jobs{};
+    size_t nb_machines{};
 
     std::vector<int> c{};
     std::vector<int> u{};
@@ -49,13 +50,14 @@ struct Sol {
     int off{};
 
     Sol() = default;
-    Sol(int _nb_jobs, int _nb_machines, int _off)
-        : machines(_nb_machines),
-          nb_jobs(_nb_jobs),
-          nb_machines(_nb_machines),
-          c(_nb_jobs, -1),
-          u(_nb_jobs, -1),
-          off(_off) {}
+    // Sol(s _nb_jobs, int _nb_machines, int _off)
+    //     : machines(_nb_machines),
+    //       nb_jobs(_nb_jobs),
+    //       nb_machines(_nb_machines),
+    //       c(_nb_jobs, -1),
+    //       u(_nb_jobs, -1),
+    //       off(_off) {}
+    explicit Sol(const Instance& instance);
     Sol(const Sol&) = default;
     Sol& operator=(const Sol&) = default;
     Sol(Sol&&) = default;
