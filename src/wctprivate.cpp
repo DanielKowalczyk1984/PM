@@ -22,7 +22,7 @@ Problem::~Problem() = default;
 Problem::Problem(int argc, const char** argv)
     : parms(argc, argv),
       stat(),
-      instance(&parms),
+      instance(parms),
       tree(),
       root_pd(std::make_unique<NodeData>(this)),
       nb_jobs(instance.nb_jobs),
@@ -42,7 +42,7 @@ Problem::Problem(int argc, const char** argv)
     if (parms.use_heuristic) {
         heuristic();
     } else {
-        Sol best_sol(instance.nb_jobs, instance.nb_machines, instance.off);
+        Sol best_sol(instance);
         best_sol.construct_edd(instance.jobs);
         fmt::print("Solution Constructed with EDD heuristic:\n");
         best_sol.print_solution();
@@ -142,8 +142,6 @@ Problem::Problem(int argc, const char** argv)
 
 NodeData::~NodeData() {
     temporary_data_free();
-    // g_ptr_array_free(ordered_jobs, TRUE);
-    // g_ptr_array_free(best_schedule, TRUE);
 }
 
 void Problem::solve() {
@@ -158,7 +156,7 @@ void Problem::heuristic() {
     auto                         IR = parms.nb_iterations_rvnd;
     boost::timer::auto_cpu_timer test;
 
-    Sol best_sol(instance.nb_jobs, instance.nb_machines, instance.off);
+    Sol best_sol{instance};
     best_sol.construct_edd(instance.jobs);
     fmt::print("Solution Constructed with EDD heuristic:\n");
     best_sol.print_solution();
@@ -177,10 +175,10 @@ void Problem::heuristic() {
     best_sol.print_solution();
     root_pd->add_solution_to_colpool(best_sol);
 
-    Sol sol(instance.nb_jobs, instance.nb_machines, instance.off);
+    Sol sol{instance};
     int iterations = 0;
     for (auto i = 0UL; i < IR; ++i) {
-        Sol sol1{instance.nb_jobs, instance.nb_machines, instance.off};
+        Sol sol1{instance};
         sol1.construct_random_shuffle(instance.jobs);
         sol = sol1;
 
