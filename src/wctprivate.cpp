@@ -138,6 +138,7 @@ Problem::Problem(int argc, const char** argv)
      */
     tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
     tree->explore();
+    to_csv();
 }
 
 NodeData::~NodeData() {

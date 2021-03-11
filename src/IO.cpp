@@ -1,35 +1,38 @@
-#include <boost/date_time/gregorian/gregorian.hpp>
+#include <fmt/chrono.h>
+#include <fmt/core.h>
+#include <fmt/format.h>
+#include <functional>
+#include <memory>
 #include "MIP_defs.hpp"
 #include "Statistics.h"
 #include "wctprivate.h"
 
 void Problem::to_csv() {
-    int   val = 0;
-    FILE* file = (FILE*)NULL;
-    char* file_name = CC_SAFE_MALLOC(128, char);
-    auto  d =
-        boost::gregorian::date(boost::gregorian::day_clock::universal_day());
-    // date;
+    using ptr_file = std::unique_ptr<std::FILE, std::function<int(FILE*)>>;
+
+    ptr_file    file = nullptr;
+    std::time_t result = std::time(nullptr);
+    const auto  current_t = std::localtime(&result);
+
+    std::string file_name =
+        fmt::format("CG_overall_{:%y_%m_%d}.csv", *current_t);
     stat.real_time_total = getRealTime() - stat.real_time_total;
     CCutil_stop_timer(&(stat.tot_cputime), 0);
 
-    sprintf(file_name, "CG_overall_%d%02d%02d.csv", d.year(), d.month(),
-            d.day());
-
-    if (access(file_name, F_OK) != -1) {
-        file = fopen(file_name, "a");
+    if (access(file_name.c_str(), F_OK) != -1) {
+        file = ptr_file(std::fopen(file_name.c_str(), "a"), &fclose);
     } else {
-        file = fopen(file_name, "w");
-        if (file == NULL) {
-            printf("We couldn't open %s in %s at line %d\n", "CG_overall.csv",
-                   __FILE__, __LINE__);
-            val = 1;
-            goto CLEAN;
+        file = ptr_file(std::fopen(file_name.c_str(), "w"), &fclose);
+        if (file == nullptr) {
+            throw ProblemException(
+                fmt::format("We could not open file {} in {} at {}", file_name,
+                            __FILE__, __LINE__)
+                    .c_str());
         }
-        fprintf(
-            file,
-            "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%"
-            "s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+        fmt::print(
+            file.get(),
+            R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
+)",
             "NameInstance", "tot_real_time", "tot_cputime", "tot_lb",
             "tot_lb_root", "tot_heuristic", "tot_build_dd", "tot_pricing",
             stat.tot_reduce_cost_fixing.name, "rel_error", "global_lower_bound",
@@ -47,27 +50,25 @@ void Problem::to_csv() {
     //     pd->get_mip_statistics(static_cast<MIP_Attr>(i));
     // }
 
-    fprintf(file,
-            "%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%f,%d,%u/"
-            "%u/%u,%d,%d,%f,%d,%d,%d,%lu,%lu,%d,%d,%f,%f,%f,%f,%d,%f,%f\n",
-            stat.pname.c_str(), stat.real_time_total, stat.tot_cputime.cum_zeit,
-            stat.tot_lb.cum_zeit, stat.tot_lb_root.cum_zeit,
-            stat.tot_heuristic.cum_zeit, stat.tot_build_dd.cum_zeit,
-            stat.tot_pricing.cum_zeit, stat.tot_reduce_cost_fixing.cum_zeit,
-            stat.rel_error, stat.global_lower_bound, stat.global_upper_bound,
-            stat.root_rel_error, stat.nb_generated_col, d.day(), d.month(),
-            d.year(), parms.nb_iterations_rvnd, parms.stab_technique,
-            parms.alpha, parms.pricing_solver, nb_jobs, parms.nb_machines,
-            stat.first_size_graph, stat.size_graph_after_reduced_cost_fixing,
-            stat.mip_nb_vars, stat.mip_nb_constr, stat.mip_obj_bound,
-            stat.mip_obj_bound_lp, stat.mip_rel_gap, stat.mip_run_time,
-            stat.mip_status, stat.mip_nb_iter_simplex, stat.mip_nb_nodes);
-    fclose(file);
-CLEAN:
-    CC_FREE(file_name, char);
+    fmt::print(
+        file.get(),
+        R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{:%y/%m/%d},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
+)",
+        stat.pname, stat.real_time_total, stat.tot_cputime.cum_zeit,
+        stat.tot_lb.cum_zeit, stat.tot_lb_root.cum_zeit,
+        stat.tot_heuristic.cum_zeit, stat.tot_build_dd.cum_zeit,
+        stat.tot_pricing.cum_zeit, stat.tot_reduce_cost_fixing.cum_zeit,
+        stat.rel_error, stat.global_lower_bound, stat.global_upper_bound,
+        stat.root_rel_error, stat.nb_generated_col, *current_t,
+        parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
+        parms.pricing_solver, nb_jobs, parms.nb_machines, stat.first_size_graph,
+        stat.size_graph_after_reduced_cost_fixing, stat.mip_nb_vars,
+        stat.mip_nb_constr, stat.mip_obj_bound, stat.mip_obj_bound_lp,
+        stat.mip_rel_gap, stat.mip_run_time, stat.mip_status,
+        stat.mip_nb_iter_simplex, stat.mip_nb_nodes);
 }
 
-int Problem::print_to_screen() {
+int Problem::to_screen() {
     int val = 0;
 
     switch (status) {
@@ -93,7 +94,8 @@ int Problem::print_to_screen() {
 
     fmt::print(
         "Compute_schedule took {} seconds(tot_scatter_search {}, "
-        "tot_branch_and_bound {}, tot_lb_lp_root {}, tot_lb_lp {}, tot_lb {}, "
+        "tot_branch_and_bound {}, tot_lb_lp_root {}, tot_lb_lp {}, tot_lb "
+        "{}, "
         "tot_pricing {}, tot_build_dd {}) and {} seconds in real time\n",
         stat.tot_cputime.cum_zeit, stat.tot_heuristic.cum_zeit,
         stat.tot_branch_and_bound.cum_zeit, stat.tot_lb_root.cum_zeit,

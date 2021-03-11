@@ -82,7 +82,7 @@ struct Problem {
     Sol opt_sol;
 
     /** All methods of problem class */
-    int  print_to_screen();
+    int  to_screen();
     void to_csv();
     void solve();
     /** Heuristic related */
@@ -94,6 +94,16 @@ struct Problem {
     Problem& operator=(const Problem&) = delete;
     Problem& operator=(Problem&&) = delete;
     ~Problem();
+
+    class ProblemException : public std::exception {
+       public:
+        ProblemException(const char* const msg = 0) { errmsg = msg; }
+
+        const char* what(void) const throw() override { return (errmsg); }
+
+       private:
+        const char* errmsg;
+    };
 };
 
 struct NodeData {
