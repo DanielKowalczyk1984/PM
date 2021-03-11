@@ -7,7 +7,7 @@
 
 class PricerSolverSimpleDp : public PricerSolverBase {
    private:
-    int                            Hmax;
+    size_t                         Hmax;
     size_t                         size_graph;
     std::vector<Job*>              A;
     std::vector<double>            F;

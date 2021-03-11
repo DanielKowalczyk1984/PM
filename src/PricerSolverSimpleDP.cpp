@@ -143,10 +143,10 @@ void PricerSolverSimpleDp::build_mip() {
         std::vector<char>       interval_sense(Hmax + 1);
         std::vector<double>     interval_rhs(Hmax + 1);
 
-        for (int t = 0; t <= Hmax; t++) {
+        for (auto t = 0UL; t <= Hmax; t++) {
             auto add_constraint = false;
             for (auto& it : backward_graph[t]) {
-                for (int s = std::max(0, t - it->processing_time); s <= t;
+                for (int s = std::max(0UL, t - it->processing_time); s <= t;
                      s++) {
                     if (std::find(backward_graph[s].begin(),
                                   backward_graph[s].end(),
@@ -224,16 +224,15 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
         backward_F[t] = DBL_MAX / 2;
     }
 
-    for (int t = Hmax - 1; t >= 0; t--) {
+    for (auto t = Hmax - 1; t >= 0UL; t--) {
         for (auto& it : backward_graph[t]) {
-            Job* job = it;
-            int  tt = t + job->processing_time;
-            if (backward_F[tt] + static_cast<double>(value_Fj(tt, job)) -
-                    aux_pi[job->job] <=
+            auto tt = t + it->processing_time;
+            if (backward_F[tt] + static_cast<double>(value_Fj(tt, it)) -
+                    aux_pi[it->job] <=
                 backward_F[t]) {
                 backward_F[t] = backward_F[tt] +
-                                static_cast<double>(value_Fj(tt, job)) -
-                                aux_pi[job->job];
+                                static_cast<double>(value_Fj(tt, it)) -
+                                aux_pi[it->job];
             }
         }
 
