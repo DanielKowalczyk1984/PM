@@ -3,6 +3,7 @@
 #include <cmath>
 #include <memory>
 #include <span>
+#include <vector>
 #include "Parms.h"
 #include "PricerSolverBase.hpp"
 #include "util.h"
@@ -25,12 +26,10 @@ PricingStabilizationBase::PricingStabilizationBase(PricerSolverBase* _solver)
  * @param _pi_out
  * @param _lhs
  */
-void PricingStabilizationBase::solve(double  _eta_out,
-                                     double* _pi_out,
-                                     double* _lhs) {
-    std::copy(_pi_out,
-              _pi_out + solver->reformulation_model.get_nb_constraints(),
-              pi_sep.begin());
+void PricingStabilizationBase::solve(double                     _eta_out,
+                                     const std::vector<double>& _pi_out,
+                                     double*                    _lhs) {
+    std::copy(_pi_out.begin(), _pi_out.end(), pi_sep.begin());
     solver->calculate_constLB(pi_sep.data());
     sol = std::move(solver->pricing_algorithm(pi_sep.data()));
     reduced_cost = solver->compute_reduced_cost(sol, pi_sep.data(), _lhs);
@@ -153,16 +152,14 @@ PricingStabilizationStat::~PricingStabilizationStat() = default;
  * @param _pi_out
  * @param _lhs_coeff
  */
-void PricingStabilizationStat::solve(double  _eta_out,
-                                     double* _pi_out,
-                                     double* _lhs_coeff) {
+void PricingStabilizationStat::solve(double                     _eta_out,
+                                     const std::vector<double>& _pi_out,
+                                     double*                    _lhs_coeff) {
     k = 0.0;
     bool mispricing = true;
     update = 0;
 
-    std::copy(_pi_out,
-              _pi_out + solver->reformulation_model.get_nb_constraints(),
-              pi_out.begin());
+    std::copy(_pi_out.begin(), _pi_out.end(), pi_out.begin());
     eta_out = _eta_out;
     iterations++;
     update_stab_center = false;
@@ -256,17 +253,15 @@ PricingStabilizationDynamic::PricingStabilizationDynamic(
 
 PricingStabilizationDynamic::~PricingStabilizationDynamic() = default;
 
-void PricingStabilizationDynamic::solve(double  _eta_out,
-                                        double* _pi_out,
-                                        double* _lhs) {
+void PricingStabilizationDynamic::solve(double                     _eta_out,
+                                        const std::vector<double>& _pi_out,
+                                        double*                    _lhs) {
     k = 0.0;
     double result_sep{};
     bool   mispricing = true;
     update = 0;
 
-    std::copy(_pi_out,
-              _pi_out + solver->reformulation_model.get_nb_constraints(),
-              pi_out.begin());
+    std::copy(_pi_out.begin(), _pi_out.end(), pi_out.begin());
     eta_out = _eta_out;
     iterations++;
     update_stab_center = false;
@@ -410,14 +405,12 @@ void PricingStabilizationHybrid::remove_constraints(int first, int nb_del) {
     subgradient_in.erase(it_sub_in, it_sub_in + nb_del);
 }
 
-void PricingStabilizationHybrid::solve(double  _eta_out,
-                                       double* _pi_out,
-                                       double* _lhs) {
+void PricingStabilizationHybrid::solve(double                     _eta_out,
+                                       const std::vector<double>& _pi_out,
+                                       double*                    _lhs) {
     update = 0;
     bool stabilized = false;
-    std::copy(_pi_out,
-              _pi_out + solver->reformulation_model.get_nb_constraints(),
-              pi_out.begin());
+    std::copy(_pi_out.begin(), _pi_out.end(), pi_out.begin());
     eta_out = _eta_out;
     iterations++;
 
@@ -600,73 +593,74 @@ void PricingStabilizationHybrid::update_alpha() {
 }
 
 extern "C" {
-// PricingStabilizationBase* new_pricing_stabilization(PricerSolver* solver,
-//                                                     Parms*        parms)
-//                                                     {
-//     switch (parms->stab_technique) {
-//         case stab_wentgnes:
-//             return new PricingStabilizationStat(solver);
-//         case stab_dynamic:
-//             return new PricingStabilizationDynamic(solver);
-//         case stab_hybrid:
-//             return new PricingStabilizationHybrid(solver);
-//         case no_stab:
-//             return new PricingStabilizationBase(solver);
-//         default:
-//             return new PricingStabilizationStat(solver);
-//     }
+// // PricingStabilizationBase* new_pricing_stabilization(PricerSolver* solver,
+// //                                                     Parms*        parms)
+// //                                                     {
+// //     switch (parms->stab_technique) {
+// //         case stab_wentgnes:
+// //             return new PricingStabilizationStat(solver);
+// //         case stab_dynamic:
+// //             return new PricingStabilizationDynamic(solver);
+// //         case stab_hybrid:
+// //             return new PricingStabilizationHybrid(solver);
+// //         case no_stab:
+// //             return new PricingStabilizationBase(solver);
+// //         default:
+// //             return new PricingStabilizationStat(solver);
+// //     }
+// // }
+
+// void delete_pricing_stabilization(
+//     PricingStabilizationBase* pricing_stab_solver) {
+//     delete pricing_stab_solver;
 // }
 
-void delete_pricing_stabilization(
-    PricingStabilizationBase* pricing_stab_solver) {
-    delete pricing_stab_solver;
-}
+// double call_get_reduced_cost(PricingStabilizationBase* p) {
+//     return p->get_reduced_cost();
+// }
 
-double call_get_reduced_cost(PricingStabilizationBase* p) {
-    return p->get_reduced_cost();
-}
+// double call_get_eta_in(PricingStabilizationBase* solver) {
+//     return solver->get_eta_in();
+// }
 
-double call_get_eta_in(PricingStabilizationBase* solver) {
-    return solver->get_eta_in();
-}
+// int call_stopping_criteria(PricingStabilizationBase* solver) {
+//     return solver->stopping_criteria();
+// }
 
-int call_stopping_criteria(PricingStabilizationBase* solver) {
-    return solver->stopping_criteria();
-}
+// int call_get_update_stab_center(PricingStabilizationBase* solver) {
+//     return solver->get_update_stab_center();
+// }
 
-int call_get_update_stab_center(PricingStabilizationBase* solver) {
-    return solver->get_update_stab_center();
-}
+// void call_update_duals(PricingStabilizationBase* solver) {
+//     solver->update_duals();
+// }
 
-void call_update_duals(PricingStabilizationBase* solver) {
-    solver->update_duals();
-}
+// void call_remove_constraints(PricingStabilizationBase* solver,
+//                              int                       first,
+//                              int                       nb_del) {
+//     solver->remove_constraints(first, nb_del);
+// }
 
-void call_remove_constraints(PricingStabilizationBase* solver,
-                             int                       first,
-                             int                       nb_del) {
-    solver->remove_constraints(first, nb_del);
-}
+// int call_do_reduced_fixing(PricingStabilizationBase* solver) {
+//     return solver->do_reduced_cost_fixing();
+// }
 
-int call_do_reduced_fixing(PricingStabilizationBase* solver) {
-    return solver->do_reduced_cost_fixing();
-}
+// void call_reduced_cost_fixing(PricingStabilizationBase* solver) {
+//     solver->reduced_cost_fixing();
+// }
 
-void call_reduced_cost_fixing(PricingStabilizationBase* solver) {
-    solver->reduced_cost_fixing();
-}
+// void call_update_continueLP(PricingStabilizationBase* solver, double
+// _eta_out) {
+//     solver->eta_out = _eta_out;
+//     solver->continueLP =
+//         (solver->get_eps_stab_solver() < solver->eta_out - solver->eta_in);
+// }
 
-void call_update_continueLP(PricingStabilizationBase* solver, double _eta_out) {
-    solver->eta_out = _eta_out;
-    solver->continueLP =
-        (solver->get_eps_stab_solver() < solver->eta_out - solver->eta_in);
-}
+// int call_get_continueLP(PricingStabilizationBase* solver) {
+//     return solver->continueLP;
+// }
 
-int call_get_continueLP(PricingStabilizationBase* solver) {
-    return solver->continueLP;
-}
-
-double call_get_eta_sep(PricingStabilizationBase* solver) {
-    return solver->get_eta_sep();
-}
+// double call_get_eta_sep(PricingStabilizationBase* solver) {
+//     return solver->get_eta_sep();
+// }
 }
