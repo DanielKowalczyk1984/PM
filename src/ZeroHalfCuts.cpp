@@ -130,7 +130,7 @@ void ZeroHalfCuts::init_coeff_node(NodeBdd<>* node) {
 }
 
 void ZeroHalfCuts::construct_cut() {
-    auto* data = new GenericData();
+    std::unique_ptr<GenericData> data = std::make_unique<GenericData>();
 
     auto add_coeff_constr = [&](const auto& it) {
         auto& node = table->node(it);
@@ -191,7 +191,8 @@ void ZeroHalfCuts::construct_cut() {
     }
     // fmt::print("test rhs = {}\n", rhs);
     std::shared_ptr<ConstraintGeneric> constr{
-        std::make_shared<ConstraintGeneric>(data, -floor(rhs / HALF))};
+        std::make_shared<ConstraintGeneric>(data.release(),
+                                            -floor(rhs / HALF))};
     // data->list_coeff();
     // fmt::print("RHS = {}\n",
     //            -floor((2.0 * q.get(GRB_DoubleAttr_Xn) + 1 + rhs) / 2.0));

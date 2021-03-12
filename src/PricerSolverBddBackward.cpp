@@ -75,8 +75,7 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi,
                                                    double  LB) {
     auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
-    auto      nb_constraints{reformulation_model.get_nb_constraints()};
-    std::span aux_pi{pi, nb_constraints};
+    std::span aux_pi{pi, reformulation_model.size()};
     double    reduced_cost =
         table.node(1).forward_label[0].get_f() + aux_pi[convex_constr_id];
     bool removed_edges = false;

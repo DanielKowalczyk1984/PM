@@ -117,21 +117,20 @@ void PricerSolverBdd::init_coeff_constraints() {
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
             it.add_coeff_list_clear();
-            for (auto c = 0; c < reformulation_model.get_nb_constraints();
-                 c++) {
+            for (auto c = 0; const auto& constr : reformulation_model) {
                 if (c == convex_constr_id) {
                     continue;
                 }
 
-                auto*           constr = reformulation_model.get_constraint(c);
                 VariableKeyBase key_aux(it.get_nb_job(), it.get_weight());
-                auto            coeff = constr->get_var_coeff(&key_aux);
+                auto            coeff = (*constr)(key_aux);
                 if (fabs(coeff) > EPS_SOLVER) {
                     auto ptr_coeff{std::make_shared<BddCoeff>(
                         it.get_nb_job(), it.get_weight(), coeff, 0.0, c)};
                     original_model.add_coeff_list(c, ptr_coeff);
                     it.add_coeff_list(ptr_coeff, true);
                 }
+                ++c;
             }
         }
     }
@@ -141,7 +140,7 @@ void PricerSolverBdd::init_coeff_constraints() {
     VariableKeyBase key_aux(root_node.get_nb_job(), root_node.get_weight(),
                             true);
     auto*           constr = original_model.get_constraint(convex_constr_id);
-    auto            coeff = constr->get_var_coeff(&key_aux);
+    auto            coeff = (*constr)(key_aux);
     if (fabs(coeff) > EPS_SOLVER) {
         auto ptr_coeff_high{std::make_shared<BddCoeff>(
             root_node.get_nb_job(), root_node.get_weight(), coeff, true, true)};
@@ -155,12 +154,11 @@ void PricerSolverBdd::init_coeff_constraints() {
 
 void PricerSolverBdd::update_coeff_constraints() {
     int  nb_constr = original_model.get_nb_constraints();
-    auto nb_new_constr = reformulation_model.get_nb_constraints() - nb_constr;
+    auto nb_new_constr = reformulation_model.size() - nb_constr;
 
-    for (auto j = nb_constr; j < reformulation_model.get_nb_constraints();
-         j++) {
-        original_model.add_constraint(
-            reformulation_model.get_constraint_ptr(j));
+    for (auto j = reformulation_model.begin() + nb_constr;
+         j != reformulation_model.end(); ++j) {
+        original_model.add_constraint(*j);
     }
 
     auto& table = *(decision_diagram.getDiagram());
@@ -170,7 +168,7 @@ void PricerSolverBdd::update_coeff_constraints() {
                 auto*    constr = original_model.get_constraint(nb_constr + c);
                 BddCoeff key_high{it.get_nb_job(), it.get_weight(), 0.0, 0.0,
                                   nb_constr + c};
-                auto     coeff_high = constr->get_var_coeff(&key_high);
+                auto     coeff_high = (*constr)(key_high);
                 if (fabs(coeff_high) > EPS_SOLVER) {
                     auto ptr_coeff{std::make_shared<BddCoeff>(
                         it.get_nb_job(), it.get_weight(), coeff_high, 0.0,
@@ -185,7 +183,7 @@ void PricerSolverBdd::update_coeff_constraints() {
                                  0.0,
                                  nb_constr + c,
                                  false};
-                auto     coeff_low = constr->get_var_coeff(&key_low);
+                auto     coeff_low = (*constr)(key_low);
                 if (fabs(coeff_low) > EPS_SOLVER) {
                     std::shared_ptr<BddCoeff> ptr_coeff{
                         std::make_shared<BddCoeff>(it.get_nb_job(),
@@ -245,11 +243,10 @@ void PricerSolverBdd::init_table() {
 
 void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     lp_interface_get_nb_rows(pd->RMP.get(), &(pd->nb_rows));
-    auto nb_new_constraints =
-        reformulation_model.get_nb_constraints() - pd->nb_rows;
+    auto nb_new_constraints = reformulation_model.size() - pd->nb_rows;
 
     fmt::print("nb rows initial {} {} {}\n", pd->nb_rows,
-               reformulation_model.get_nb_constraints(), nb_new_constraints);
+               reformulation_model.size(), nb_new_constraints);
 
     assert((nb_new_constraints <=
             (pd->id_pseudo_schedules - pd->id_next_var_cuts)));
@@ -261,7 +258,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
 
     int pos = 0;
     for (int c = 0; c < nb_new_constraints; c++) {
-        auto* constr = reformulation_model.get_constraint(pd->nb_rows + c);
+        auto* constr = reformulation_model[pd->nb_rows + c].get();
 
         sense[c] = constr->get_sense();
         starts[c] = pos;
@@ -296,12 +293,11 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
                 VariableKeyBase key(tmp_node.get_nb_job(),
                                     tmp_node.get_weight(),
                                     tmp_j == tmp_node.get_job());
+                coeff_val += (*constr)(key);
                 if (key.get_high()) {
-                    coeff_val += constr->get_var_coeff(&key);
                     tmp_nodeid = tmp_node.branch[1];
                     counter++;
                 } else {
-                    coeff_val += constr->get_var_coeff(&key);
                     tmp_nodeid = tmp_node.branch[0];
                 }
             }
@@ -340,9 +336,9 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
     auto   tmp_nodeid(decision_diagram.root());
     auto   counter = 0U;
 
-    std::span aux_lhs{lhs, reformulation_model.get_nb_constraints()};
-    std::span aux_pi{pi, reformulation_model.get_nb_constraints()};
-    std::fill(aux_lhs.begin(), aux_lhs.end(), 0.0);
+    std::span aux_lhs{lhs, reformulation_model.size()};
+    std::span aux_pi{pi, reformulation_model.size()};
+    std::ranges::fill(aux_lhs, 0.0);
     while (tmp_nodeid > 1) {
         auto& tmp_node = table.node(tmp_nodeid);
         Job*  tmp_j = nullptr;
@@ -356,9 +352,9 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
         if (key.get_high()) {
             tmp_nodeid = tmp_node.branch[1];
             counter++;
-            auto* constr = reformulation_model.get_constraint(key.get_j());
+            auto* constr = reformulation_model[key.get_j()].get();
             auto  dual = aux_pi[key.get_j()];
-            auto  coeff = constr->get_var_coeff(&key);
+            auto  coeff = (*constr)(key);
 
             if (fabs(coeff) > EPS_SOLVER) {
                 result -= coeff * dual;
@@ -368,11 +364,11 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
             tmp_nodeid = tmp_node.branch[0];
         }
 
-        for (int c = convex_constr_id + 1;
-             c < reformulation_model.get_nb_constraints(); c++) {
-            auto* constr = reformulation_model.get_constraint(c);
+        for (int c = convex_constr_id + 1; c < reformulation_model.size();
+             ++c) {
+            auto* constr = reformulation_model[c].get();
             auto  dual = aux_pi[c];
-            auto  coeff = constr->get_var_coeff(&key);
+            auto  coeff = (*constr)(key);
 
             if (fabs(coeff) > EPS_SOLVER) {
                 result -= coeff * dual;
@@ -381,10 +377,10 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
         }
     }
 
-    auto* constr = reformulation_model.get_constraint(convex_constr_id);
-    auto  dual = aux_pi[convex_constr_id];
+    auto*           constr = reformulation_model[convex_constr_id].get();
+    auto            dual = aux_pi[convex_constr_id];
     VariableKeyBase k(0, 0, true);
-    auto            coeff = constr->get_var_coeff(&k);
+    auto            coeff = (*constr)(k);
     result -= coeff * dual;
     aux_lhs[convex_constr_id] += coeff;
 
@@ -393,19 +389,18 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
 
 double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
                                             double* sub_gradient) {
-    double result = sol.cost;
-    auto&  table = *decision_diagram.getDiagram();
-    auto   tmp_nodeid(decision_diagram.root());
-    auto   counter = 0U;
-    auto   nb_constraints = reformulation_model.get_nb_constraints();
-    auto   convex_rhs =
-        -reformulation_model.get_constraint(convex_constr_id)->get_rhs();
+    double    result = sol.cost;
+    auto&     table = *decision_diagram.getDiagram();
+    auto      tmp_nodeid(decision_diagram.root());
+    auto      counter = 0U;
+    auto      nb_constraints = reformulation_model.size();
+    auto      convex_rhs = -reformulation_model[convex_constr_id]->get_rhs();
     std::span aux_subgradient{sub_gradient, nb_constraints};
     // std::span aux_jobs{sol.jobs->pdata, sol.jobs->len};
 
-    for (size_t i = 0; i < nb_constraints; i++) {
-        auto* constr = reformulation_model.get_constraint(i);
+    for (auto i = 0; const auto& constr : reformulation_model) {
         aux_subgradient[i] = constr->get_rhs();
+        i++;
     }
 
     while (tmp_nodeid > 1) {
@@ -421,8 +416,8 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
         if (key.get_high()) {
             tmp_nodeid = tmp_node.branch[1];
             counter++;
-            auto* constr = reformulation_model.get_constraint(key.get_j());
-            auto  coeff = constr->get_var_coeff(&key);
+            auto* constr = reformulation_model[key.get_j()].get();
+            auto  coeff = (*constr)(key);
 
             if (fabs(coeff) > EPS_SOLVER) {
                 aux_subgradient[key.get_j()] -= coeff * convex_rhs;
@@ -431,11 +426,11 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
             tmp_nodeid = tmp_node.branch[0];
         }
 
-        for (int c = convex_constr_id + 1;
-             c < reformulation_model.get_nb_constraints(); c++) {
+        for (int c = convex_constr_id + 1; c < reformulation_model.size();
+             c++) {
             // auto dual = pi[c];
-            auto* constr = reformulation_model.get_constraint(c);
-            auto  coeff = constr->get_var_coeff(&key);
+            auto* constr = reformulation_model[c].get();
+            auto  coeff = (*constr)(key);
 
             if (fabs(coeff) > EPS_SOLVER) {
                 aux_subgradient[c] -= coeff * convex_rhs;
@@ -458,7 +453,7 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
 
     auto&     table = *decision_diagram.getDiagram();
     auto      tmp_nodeid(decision_diagram.root());
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
+    auto      nb_constraints = reformulation_model.size();
     std::span aux_pi{pi, nb_constraints};
 
     auto counter = 0U;
@@ -473,9 +468,9 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
         VariableKeyBase key(tmp_node.get_nb_job(), tmp_node.get_weight(),
                             tmp_j == tmp_node.get_job());
         if (key.get_high()) {
-            auto* constr = reformulation_model.get_constraint(key.get_j());
+            auto* constr = reformulation_model[key.get_j()].get();
             auto  dual = aux_pi[key.get_j()];
-            auto  coeff = constr->get_var_coeff(&key);
+            auto  coeff = (*constr)(key);
 
             if (fabs(coeff) > EPS_SOLVER) {
                 result -= coeff * dual;
@@ -487,14 +482,14 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
             tmp_nodeid = tmp_node.branch[0];
         }
 
-        for (int c = convex_constr_id + 1;
-             c < reformulation_model.get_nb_constraints(); c++) {
+        for (int c = convex_constr_id + 1; c < reformulation_model.size();
+             c++) {
             if (c == convex_constr_id) {
                 continue;
             }
-            auto* constr = reformulation_model.get_constraint(c);
+            auto* constr = reformulation_model[c].get();
             auto  dual = aux_pi[c];
-            auto  coeff = constr->get_var_coeff(&key);
+            auto  coeff = (*constr)(key);
 
             if (fabs(coeff) > EPS_SOLVER) {
                 result -= coeff * dual;
@@ -502,21 +497,18 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
         }
     }
 
-    result = CC_MIN(0, result);
+    result = std::min(0.0, result);
 
-    for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+    for (auto c = 0; const auto& constr : reformulation_model) {
         if (c == convex_constr_id) {
             continue;
         }
-        auto* constr = reformulation_model.get_constraint(c);
-        auto  dual = aux_pi[c];
-        auto  rhs = constr->get_rhs();
 
-        dual_bound += rhs * dual;
+        dual_bound += constr->get_rhs() * aux_pi[c];
+        ++c;
     }
 
-    result = -reformulation_model.get_constraint(convex_constr_id)->get_rhs() *
-             result;
+    result = -reformulation_model[convex_constr_id]->get_rhs() * result;
     result = dual_bound + result;
 
     return result;
@@ -1351,7 +1343,7 @@ int PricerSolverBdd::add_constraints() {
         bool added_cuts = false;
         auto cut_list = generator.get_cut_list();
         for (auto& it : cut_list) {
-            reformulation_model.add_constraint(std::move(it));
+            reformulation_model.emplace_back(std::move(it));
         }
 
         added_cuts = (cut_list.size() > 0);

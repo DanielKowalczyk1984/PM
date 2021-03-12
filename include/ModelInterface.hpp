@@ -3,7 +3,7 @@
 
 #include <bits/c++config.h>
 #include <fmt/core.h>
-#include <boost/container_hash/hash_fwd.hpp>
+// #include <boost/container_hash/hash_fwd.hpp>
 #include <boost/functional/hash.hpp>
 #include <cstddef>
 #include <functional>
@@ -78,19 +78,28 @@ class ConstraintBase {
           can_be_deleted(_can_be_delete) {}
 
     virtual double get_var_coeff(VariableKeyBase*) = 0;
+    virtual double operator()(const VariableKeyBase&) = 0;
 };
 
 class ConstraintAssignment : public ConstraintBase {
    private:
-    int job;
+    int row;
 
    public:
-    explicit ConstraintAssignment(int _job)
+    explicit ConstraintAssignment(int _row)
         : ConstraintBase('>', 1.0),
-          job(_job) {}
+          row(_row) {}
 
     double get_var_coeff(VariableKeyBase* key) override {
-        if (key->get_j() == job && key->get_high()) {
+        if (key->get_j() == row && key->get_high()) {
+            return 1.0;
+        }
+
+        return 0.0;
+    }
+
+    double operator()(const VariableKeyBase& key) override {
+        if (key.get_j() == row && key.get_high()) {
             return 1.0;
         }
 
@@ -115,12 +124,16 @@ class ConstraintConvex : public ConstraintBase {
 
         return 0.0;
     }
+
+    double operator()(const VariableKeyBase& key) override {
+        if (!key.get_t()) {
+            return -1.0;
+        }
+        return 0.0;
+    }
 };
 
-class ReformulationModel {
-   private:
-    std::vector<std::shared_ptr<ConstraintBase>> constraint_array;
-
+class ReformulationModel : public std::vector<std::shared_ptr<ConstraintBase>> {
    public:
     ReformulationModel(int nb_assignments, int nb_machines);
     ~ReformulationModel() = default;
@@ -130,35 +143,15 @@ class ReformulationModel {
     ReformulationModel(const ReformulationModel&) = default;
     ReformulationModel& operator=(const ReformulationModel&) = default;
 
-    [[nodiscard]] inline size_t get_nb_constraints() const {
-        return constraint_array.size();
-    };
-
-    [[nodiscard]] inline ConstraintBase* get_constraint(auto c) const {
-        return constraint_array[c].get();
-    };
-
-    inline std::shared_ptr<ConstraintBase> get_constraint_ptr(auto c) const {
-        return constraint_array[c];
-    }
-
-    inline void add_constraint(ConstraintBase* _constr) {
-        constraint_array.push_back(std::shared_ptr<ConstraintBase>(_constr));
-    }
-
-    inline void add_constraint(std::shared_ptr<ConstraintBase>&& _constr) {
-        constraint_array.emplace_back(_constr);
-    }
-
     inline void delete_constraint(auto c) {
-        if (constraint_array[c]->get_can_be_deleted()) {
-            constraint_array[c].reset();
+        if ((*this)[c]->get_can_be_deleted()) {
+            (*this)[c].reset();
         }
     }
 
     inline void delete_constraints(int first, int nb_del) {
-        auto it = constraint_array.begin() + first;
-        constraint_array.erase(it, it + nb_del);
+        auto it = this->begin() + first;
+        this->erase(it, it + nb_del);
     }
 };
 
@@ -202,6 +195,11 @@ class BddCoeff : public VariableKeyBase {
                lhs.get_high() == rhs.get_high();
     };
 
+    bool operator==(const BddCoeff& other) {
+        return get_j() == other.get_j() && get_t() == other.get_t() &&
+               get_high() == other.get_high();
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const BddCoeff& object) {
         return os << "(j = " << object.get_j() << ", t = " << object.get_t()
                   << ", x = " << object.get_value()
@@ -221,12 +219,24 @@ struct hash<BddCoeff> {
         return seed;  // or use boost::hash_combine
     }
 };
+
+template <>
+struct hash<VariableKeyBase> {
+    std::size_t operator()(auto const& s) const noexcept {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, s.get_j());
+        boost::hash_combine(seed, s.get_t());
+        boost::hash_combine(seed, s.get_high());
+
+        return seed;  // or use boost::hash_combine
+    }
+};
 }  // namespace std
 
 class GenericData {
    private:
-    using coeff_hash_table = std::unordered_map<BddCoeff, double>;
-    coeff_hash_table coeff;
+    using coeff_hash_table = std::unordered_map<VariableKeyBase, double>;
+    coeff_hash_table coeff{};
 
     static constexpr double EPS_GENERIC_DATA = 1e-6;
 
@@ -239,6 +249,10 @@ class GenericData {
     GenericData& operator=(const GenericData&) = default;
 
     coeff_hash_table::iterator find(const BddCoeff& key) {
+        return coeff.find(key);
+    }
+
+    coeff_hash_table::iterator find(const VariableKeyBase& key) {
         return coeff.find(key);
     }
 
@@ -311,8 +325,18 @@ class ConstraintGeneric : public ConstraintBase {
     ConstraintGeneric(const ConstraintGeneric&) = default;
 
     double get_var_coeff(VariableKeyBase* key) override {
-        auto* aux = static_cast<BddCoeff*>(key);
-        auto  it = data->find(*aux);
+        // auto* aux = static_cast<BddCoeff*>(key);
+        auto it = data->find(*key);
+        if (it == data->end()) {
+            return 0.0;
+        } else {
+            return (*it).second;
+        }
+    }
+
+    double operator()(const VariableKeyBase& key) override {
+        // auto* aux = static_cast<BddCoeff*>(key);
+        auto it = data->find(key);
         if (it == data->end()) {
             return 0.0;
         } else {
@@ -384,11 +408,11 @@ class OriginalModel {
 
    public:
     explicit OriginalModel(const ReformulationModel& model)
-        : constraint_array(model.get_nb_constraints()) {
-        const int nb_constraints = model.get_nb_constraints();
+        : constraint_array(model.size()) {
+        const int nb_constraints = model.size();
 
         for (int i = 0; i < nb_constraints; i++) {
-            constraint_array[i].set_constraint(model.get_constraint_ptr(i));
+            constraint_array[i].set_constraint(model[i]);
         }
     }
 

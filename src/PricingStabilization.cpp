@@ -82,9 +82,9 @@ int PricingStabilizationBase::stopping_criteria() {
 }
 
 void PricingStabilizationBase::update_duals() {
-    if (solver->reformulation_model.get_nb_constraints() != pi_sep.size()) {
-        pi_sep.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
-        pi_in.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
+    if (solver->reformulation_model.size() != pi_sep.size()) {
+        pi_sep.resize(solver->reformulation_model.size(), 0.0);
+        pi_in.resize(solver->reformulation_model.size(), 0.0);
     }
 }
 
@@ -204,10 +204,10 @@ int PricingStabilizationStat::stopping_criteria() {
 }
 
 void PricingStabilizationStat::update_duals() {
-    if (solver->reformulation_model.get_nb_constraints() != pi_sep.size()) {
-        pi_sep.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
-        pi_out.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
-        pi_in.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
+    if (solver->reformulation_model.size() != pi_sep.size()) {
+        pi_sep.resize(solver->reformulation_model.size(), 0.0);
+        pi_out.resize(solver->reformulation_model.size(), 0.0);
+        pi_in.resize(solver->reformulation_model.size(), 0.0);
     }
 }
 
@@ -222,8 +222,7 @@ void PricingStabilizationStat::remove_constraints(int first, int nb_del) {
 void PricingStabilizationStat::compute_pi_eta_sep(double _alpha_bar) {
     double beta_bar = 1.0 - _alpha_bar;
 
-    for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
-         ++i) {
+    for (auto i = 0UL; i < solver->reformulation_model.size(); ++i) {
         pi_sep[i] = _alpha_bar * pi_in[i] + (1.0 - _alpha_bar) * pi_out[i];
     }
 
@@ -315,8 +314,7 @@ void PricingStabilizationDynamic::compute_subgradient(
 void PricingStabilizationDynamic::adjust_alpha() {
     auto sum = 0.0;
 
-    for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
-         ++i) {
+    for (auto i = 0UL; i < solver->reformulation_model.size(); ++i) {
         sum += subgradient[i] * (pi_out[i] - pi_in[i]);
     }
 
@@ -335,12 +333,11 @@ std::unique_ptr<PricingStabilizationBase> PricingStabilizationDynamic::clone(
 }
 
 void PricingStabilizationDynamic::update_duals() {
-    if (solver->reformulation_model.get_nb_constraints() != pi_sep.size()) {
-        pi_sep.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
-        pi_out.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
-        pi_in.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
-        subgradient.resize(solver->reformulation_model.get_nb_constraints(),
-                           0.0);
+    if (solver->reformulation_model.size() != pi_sep.size()) {
+        pi_sep.resize(solver->reformulation_model.size(), 0.0);
+        pi_out.resize(solver->reformulation_model.size(), 0.0);
+        pi_in.resize(solver->reformulation_model.size(), 0.0);
+        subgradient.resize(solver->reformulation_model.size(), 0.0);
     }
 }
 
@@ -368,14 +365,12 @@ PricingStabilizationHybrid::PricingStabilizationHybrid(
       subgradient_in(pricer_solver->convex_constr_id + 1) {}
 
 void PricingStabilizationHybrid::update_duals() {
-    if (solver->reformulation_model.get_nb_constraints() != pi_sep.size()) {
-        pi_sep.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
-        pi_out.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
-        pi_in.resize(solver->reformulation_model.get_nb_constraints(), 0.0);
-        subgradient_in.resize(solver->reformulation_model.get_nb_constraints(),
-                              0.0);
-        subgradient.resize(solver->reformulation_model.get_nb_constraints(),
-                           0.0);
+    if (solver->reformulation_model.size() != pi_sep.size()) {
+        pi_sep.resize(solver->reformulation_model.size(), 0.0);
+        pi_out.resize(solver->reformulation_model.size(), 0.0);
+        pi_in.resize(solver->reformulation_model.size(), 0.0);
+        subgradient_in.resize(solver->reformulation_model.size(), 0.0);
+        subgradient.resize(solver->reformulation_model.size(), 0.0);
     }
 }
 
@@ -411,8 +406,7 @@ void PricingStabilizationHybrid::solve(double _eta_out,
 
         stabilized = is_stabilized();
 
-        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
-             ++i) {
+        for (int i = 0; i < solver->reformulation_model.size(); ++i) {
             pi_sep[i] = compute_dual(i);
         }
 
@@ -452,8 +446,7 @@ void PricingStabilizationHybrid::solve(double _eta_out,
 void PricingStabilizationHybrid::calculate_dualdiffnorm() {
     dualdiffnorm = 0.0;
 
-    for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
-         ++i) {
+    for (auto i = 0UL; i < solver->reformulation_model.size(); ++i) {
         double dualdiff = SQR(pi_in[i] - pi_out[i]);
         if (dualdiff > EPS_STAB) {
             dualdiffnorm += dualdiff;
@@ -552,8 +545,7 @@ void PricingStabilizationHybrid::compute_subgradient_norm(
 
     subgradientnorm = 0.0;
 
-    for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
-         ++i) {
+    for (auto i = 0UL; i < solver->reformulation_model.size(); ++i) {
         double sqr = SQR(subgradient_in[i]);
 
         if (sqr > EPS_STAB) {
@@ -565,8 +557,7 @@ void PricingStabilizationHybrid::compute_subgradient_norm(
 }
 void PricingStabilizationHybrid::update_subgradientproduct() {
     subgradientproduct = 0.0;
-    for (auto i = 0UL; i < solver->reformulation_model.get_nb_constraints();
-         ++i) {
+    for (auto i = 0UL; i < solver->reformulation_model.size(); ++i) {
         subgradientproduct += (pi_out[i] - pi_in[i]) * subgradient_in[i];
     }
 }

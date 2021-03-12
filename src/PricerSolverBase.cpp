@@ -1,4 +1,5 @@
 #include "PricerSolverBase.hpp"
+#include <bits/ranges_algobase.h>
 #include <fmt/core.h>
 #include <algorithm>
 #include <limits>
@@ -171,34 +172,32 @@ double PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) {
 double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
                                               double*                  pi,
                                               double*                  lhs) {
-    double    result = sol.cost;
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_lhs{lhs, nb_constraints};
-    std::span aux_pi{pi, nb_constraints};
-    // std::span aux_jobs{sol.jobs->pdata, sol.jobs->len};
-    std::fill(aux_lhs.begin(), aux_lhs.end(), 0.0);
+    double result = sol.cost;
+    // auto      nb_constraints = reformulation_model.get_nb_constraints();
+    std::span aux_lhs{lhs, reformulation_model.size()};
+    std::span aux_pi{pi, reformulation_model.size()};
+    std::ranges::fill(aux_lhs, 0.0);
 
     for (auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
-        for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+        for (int c = 0; const auto& constr : reformulation_model) {
             if (c == convex_constr_id) {
                 continue;
             }
-            auto dual = aux_pi[c];
-            auto constr = reformulation_model.get_constraint(c);
-            auto coeff = constr->get_var_coeff(&k);
+            auto coeff = (*constr)(k);
 
             if (fabs(coeff) > EPS_SOLVER) {
-                result -= coeff * dual;
+                result -= coeff * aux_pi[c];
                 aux_lhs[c] += coeff;
             }
+            ++c;
         }
     }
 
-    double dual = aux_pi[convex_constr_id];
-    auto   constr = reformulation_model.get_constraint(convex_constr_id);
+    double          dual = aux_pi[convex_constr_id];
+    auto*           constr = reformulation_model[convex_constr_id].get();
     VariableKeyBase k(0, 0, true);
-    double          coeff = constr->get_var_coeff(&k);
+    double          coeff = (*constr)(k);
     result -= coeff * dual;
     aux_lhs[convex_constr_id] += coeff;
 
@@ -209,24 +208,23 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
                                           double*                  pi) {
     double    result = sol.cost;
     double    dual_bound = 0.0;
-    auto      nb_constraints{reformulation_model.get_nb_constraints()};
-    std::span aux_pi{pi, nb_constraints};
+    std::span aux_pi{pi, reformulation_model.size()};
 
     for (auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
         auto            dual = aux_pi[it->job];
-        auto            constr = reformulation_model.get_constraint(it->job);
-        auto            coeff = constr->get_var_coeff(&k);
+        auto*           constr = reformulation_model[it->job].get();
+        auto            coeff = (*constr)(k);
 
         if (fabs(coeff) > EPS_SOLVER) {
             result -= coeff * dual;
         }
 
-        for (int c = convex_constr_id + 1;
-             c < reformulation_model.get_nb_constraints(); c++) {
+        for (int c = convex_constr_id + 1; c < reformulation_model.size();
+             c++) {
+            auto*  constr_ = reformulation_model[c].get();
             double dual_ = aux_pi[c];
-            auto   constr_ = reformulation_model.get_constraint(c);
-            double coeff_ = constr_->get_var_coeff(&k);
+            double coeff_ = (*constr)(k);
 
             if (fabs(coeff_) > EPS_SOLVER) {
                 result -= coeff_ * dual_;
@@ -236,19 +234,16 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
 
     result = std::min(0.0, result);
 
-    for (int c = 0; c < reformulation_model.get_nb_constraints(); c++) {
+    for (int c = 0; const auto& constr : reformulation_model) {
         if (c == convex_constr_id) {
             continue;
         }
-        auto dual = aux_pi[c];
-        auto constr = reformulation_model.get_constraint(c);
-        auto rhs = constr->get_rhs();
 
-        dual_bound += rhs * dual;
+        dual_bound += constr->get_rhs() * aux_pi[c];
+        ++c;
     }
 
-    result = -reformulation_model.get_constraint(convex_constr_id)->get_rhs() *
-             result;
+    result = -reformulation_model[convex_constr_id]->get_rhs() * result;
     result = dual_bound + result;
 
     return result;
@@ -256,29 +251,27 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
 
 double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
                                              double* subgradient) {
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_subgradient{subgradient, nb_constraints};
-    auto      convex_rhs =
-        -reformulation_model.get_constraint(convex_constr_id)->get_rhs();
+    std::span aux_subgradient{subgradient, reformulation_model.size()};
+    auto      convex_rhs = -reformulation_model[convex_constr_id]->get_rhs();
 
-    for (size_t i = 0; i < nb_constraints; i++) {
-        auto constr = reformulation_model.get_constraint(i);
+    for (size_t i = 0; const auto& constr : reformulation_model) {
         aux_subgradient[i] = constr->get_rhs();
+        ++i;
     }
 
     for (auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
-        auto            constr = reformulation_model.get_constraint(it->job);
-        auto            coeff = constr->get_var_coeff(&k);
+        auto*           constr = reformulation_model[it->job].get();
+        auto            coeff = (*constr)(k);
 
         if (fabs(coeff) > EPS_SOLVER) {
             aux_subgradient[k.get_j()] -= coeff * convex_rhs;
         }
 
-        for (int c = convex_constr_id + 1;
-             c < reformulation_model.get_nb_constraints(); c++) {
-            auto constr_ = reformulation_model.get_constraint(c);
-            auto coeff_ = constr_->get_var_coeff(&k);
+        for (int c = convex_constr_id + 1; c < reformulation_model.size();
+             c++) {
+            auto* constr_ = reformulation_model[c].get();
+            auto  coeff_ = (*constr)(k);
 
             if (fabs(coeff_) > EPS_SOLVER) {
                 aux_subgradient[c] -= coeff_ * convex_rhs;
@@ -293,36 +286,35 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
 
 void PricerSolverBase::calculate_constLB(double* pi) {
     constLB = 0.0;
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_pi{pi, nb_constraints};
-    for (int i = 0; i < nb_constraints; i++) {
+    std::span aux_pi{pi, reformulation_model.size()};
+    for (int i = 0; const auto& constr : reformulation_model) {
         if (i == convex_constr_id) {
             continue;
         }
-        auto constr = reformulation_model.get_constraint(i);
         constLB += constr->get_rhs() * aux_pi[i];
+        ++i;
     }
 }
 
-extern "C" {
-double call_get_UB(PricerSolverBase* solver) {
-    return solver->get_UB();
-}
+// extern "C" {
+// double call_get_UB(PricerSolverBase* solver) {
+//     return solver->get_UB();
+// }
 
-void call_update_UB(PricerSolverBase* solver, double _ub) {
-    solver->update_UB(_ub);
-}
+// void call_update_UB(PricerSolverBase* solver, double _ub) {
+//     solver->update_UB(_ub);
+// }
 
-void call_evaluate_nodes(PricerSolverBase* solver, double* pi) {
-    solver->calculate_constLB(pi);
-    solver->evaluate_nodes(pi);
-}
+// void call_evaluate_nodes(PricerSolverBase* solver, double* pi) {
+//     solver->calculate_constLB(pi);
+//     solver->evaluate_nodes(pi);
+// }
 
-int call_is_integer_solution(PricerSolverBase* solver) {
-    return solver->get_is_integer_solution();
-}
-}
+// int call_is_integer_solution(PricerSolverBase* solver) {
+//     return solver->get_is_integer_solution();
+// }
+// }
 
-inline std::vector<BddCoeff>& PricerSolverBase::get_lp_sol() {
-    return lp_sol;
-};
+// inline std::vector<BddCoeff>& PricerSolverBase::get_lp_sol() {
+//     return lp_sol;
+// };

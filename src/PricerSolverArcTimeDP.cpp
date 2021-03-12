@@ -291,8 +291,7 @@ void PricerSolverArcTimeDp::build_mip() {
 
 void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     evaluate_nodes(pi, UB, LB);
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_pi{pi, nb_constraints};
+    std::span aux_pi{pi, reformulation_model.size()};
 
     for (int j = 0; j < n; j++) {
         Job* tmp = vector_jobs[j];
@@ -367,8 +366,7 @@ PricerSolverArcTimeDp::~PricerSolverArcTimeDp() {
 void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
     // backward_F[n][T] = 0;
     backward_F[n][Hmax] = 0.0;
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_pi{_pi, nb_constraints};
+    std::span aux_pi{_pi, reformulation_model.size()};
 
     for (int t = Hmax - 1; t >= 0; --t) {
         for (int i = 0; i <= n; ++i) {
@@ -418,8 +416,7 @@ void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
 
 void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
     forward_F[n][0] = 0;
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_pi{_pi, nb_constraints};
+    std::span aux_pi{_pi, reformulation_model.size()};
 
     for (int t = 0; t < Hmax + 1; ++t) {
         for (int j = 0; j <= n; ++j) {
@@ -467,8 +464,7 @@ void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
 }
 
 OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_pi{_pi, nb_constraints};
+    std::span               aux_pi{_pi, reformulation_model.size()};
     OptimalSolution<double> sol(aux_pi[n]);
     std::vector<Job*>       v;
 
@@ -590,7 +586,6 @@ int PricerSolverArcTimeDp::get_num_layers() {
 void PricerSolverArcTimeDp::print_num_paths() {}
 
 bool PricerSolverArcTimeDp::check_schedule_set(const std::vector<Job*>& set) {
-    auto nb_constraints = reformulation_model.get_nb_constraints();
     // std::span aux_set{set->pdata, set->len};
     size_t counter = set.size() - 1;
     int    i = n;

@@ -65,8 +65,7 @@ void PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
 
 void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     evaluate_nodes(pi, UB, LB);
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_pi{pi, nb_constraints};
+    std::span aux_pi{pi, reformulation_model.size()};
     int       counter = 0;
     int       x = 0;
 
@@ -187,8 +186,7 @@ void PricerSolverSimpleDp::build_mip() {
 
 void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     /** Initialisation */
-    auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_pi{_pi, nb_constraints};
+    std::span aux_pi{_pi, reformulation_model.size()};
     F[0] = aux_pi[convex_constr_id];
     A[0] = nullptr;
 
@@ -217,8 +215,7 @@ void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
 
 void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     backward_F[Hmax] = 0.0;
-    auto      nb_constraints{reformulation_model.get_nb_constraints()};
-    std::span aux_pi{_pi, nb_constraints};
+    std::span aux_pi{_pi, reformulation_model.size()};
 
     for (int t = 0; t < Hmax; t++) {
         backward_F[t] = DBL_MAX / 2;
@@ -291,7 +288,6 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     const double*                                    columns,
     const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
     int                                              num_columns) {
-    auto      nb_constraints{reformulation_model.get_nb_constraints()};
     std::span aux_cols{columns, schedule_sets.size()};
     // std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);

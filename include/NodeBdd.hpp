@@ -39,9 +39,9 @@ class NodeBdd : public NodeBase {
     boost::dynamic_bitset<> all{};
     std::array<int, 2>      backward_distance{};
     std::array<int, 2>      in_degree{};
-    std::array<GRBVar, 2>   y;
-    std::array<GRBVar, 2>   r;
-    GRBVar                  sigma;
+    std::array<GRBVar, 2>   y{};
+    std::array<GRBVar, 2>   r{};
+    GRBVar                  sigma{};
     std::array<double, 2>   coeff_cut{0.0, 0.0};
 
     /**
