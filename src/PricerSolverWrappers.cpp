@@ -67,35 +67,3 @@ bool NodeData::check_schedule_set(ScheduleSet* set) {
 void NodeData::make_schedule_set_feasible(ScheduleSet* set) {
     solver->make_schedule_set_feasible(set->job_list);
 }
-
-void NodeData::get_mip_statistics(enum MIP_Attr c) {
-    switch (c) {
-        case MIP_Attr_Nb_Vars:
-            stat.mip_nb_vars = solver->get_int_attr_model(c);
-            break;
-        case MIP_Attr_Nb_Constr:
-            stat.mip_nb_constr = solver->get_int_attr_model(c);
-            break;
-        case MIP_Attr_Obj_Bound:
-            stat.mip_obj_bound = solver->get_dbl_attr_model(c);
-            break;
-        case MIP_Attr_Obj_Bound_LP:
-            stat.mip_obj_bound_lp = solver->get_dbl_attr_model(c);
-            break;
-        case MIP_Attr_Mip_Gap:
-            stat.mip_rel_gap = solver->get_dbl_attr_model(c);
-            break;
-        case MIP_Attr_Run_Time:
-            stat.mip_run_time = solver->get_dbl_attr_model(c);
-            break;
-        case MIP_Attr_Status:
-            stat.mip_status = solver->get_int_attr_model(c);
-            break;
-        case MIP_Attr_Nb_Simplex_Iter:
-            stat.mip_nb_iter_simplex = solver->get_dbl_attr_model(c);
-            break;
-        case MIP_Attr_Nb_Nodes:
-            stat.mip_nb_nodes = solver->get_dbl_attr_model(c);
-            break;
-    }
-}

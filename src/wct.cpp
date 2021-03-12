@@ -9,7 +9,6 @@
 #include "Statistics.h"
 #include "lp.h"
 #include "scheduleset.h"
-// #include "util.h"
 #include "wctprivate.h"
 
 NodeData::NodeData(Problem* problem)
@@ -55,8 +54,7 @@ NodeData::NodeData(Problem* problem)
       solver_stab(nullptr),
       best_schedule(),
       best_objective(std::numeric_limits<int>::max()),
-      maxiterations(NB_CG_ITERATIONS),
-      retirementage(0),
+      retirementage(static_cast<int>(sqrt(nb_jobs)) + CLEANUP_ITERATION),
       branch_job(-1),
       completiontime(0),
       less(-1),
@@ -105,10 +103,9 @@ NodeData::NodeData(const NodeData& src)
       LP_lower_min(src.LP_lower_min),
       nb_non_improvements(0),
       iterations(0),
-      solver_stab(src.solver_stab->clone(solver.get())),
+      solver_stab(src.solver_stab->clone(solver.get(), pi)),
       best_schedule(src.best_schedule),
       best_objective(src.best_objective),
-      maxiterations(src.maxiterations),
       retirementage(src.retirementage),
       branch_job(-1),
       completiontime(-1),

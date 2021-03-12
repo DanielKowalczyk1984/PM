@@ -17,7 +17,6 @@
 void NodeData::print_ages() {
     fmt::print("AGES:");
 
-    // g_ptr_array_foreach(localColPool, g_print_ages_col, NULL);
     std::ranges::for_each(localColPool,
                           [](auto const& it) { fmt::print(" {}", it->age); });
 
@@ -28,7 +27,7 @@ int NodeData::grow_ages() {
     int val = 0;
     int nb_cols = 0;
     lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    assert(nb_cols - id_pseudo_schedules == localColPool.size());
+    assert(((nb_cols - id_pseudo_schedules) == localColPool.size()));
     // CC_IFFREE(column_status, int);
     if (!localColPool.empty()) {
         column_status.resize(localColPool.size());
@@ -401,7 +400,6 @@ int NodeData::compute_lower_bound() {
         // CCcheck_val(val, "build_lp failed");
     }
 
-    retirementage = static_cast<int>(sqrt(nb_jobs)) + CLEANUP_ITERATION;
     check_schedules();
     delete_infeasible_schedules();
 
@@ -411,14 +409,14 @@ int NodeData::compute_lower_bound() {
         has_cuts = 0;
         CCutil_suspend_timer(&(stat.tot_cputime));
         CCutil_resume_timer(&(stat.tot_cputime));
-        while ((iterations < maxiterations) && has_cols &&
+        while ((iterations < NB_CG_ITERATIONS) && has_cols &&
                stat.tot_cputime.cum_zeit <= parms.branching_cpu_limit) {
             /**
              * Delete old columns
              */
             if (zero_count > nb_jobs * min_nb_del_row_ratio &&
                 status == GRB_OPTIMAL) {
-                // val = delete_old_schedules(pd);
+                val = delete_old_schedules();
                 // CCcheck_val_2(val, "Failed in delete_old_cclasses");
             }
             solve_relaxation();
@@ -437,12 +435,10 @@ int NodeData::compute_lower_bound() {
                     status = infeasible;
 
                     val = solve_pricing();
-                    // CCcheck_val_2(val, "Failed in solving pricing");
                     break;
 
                 case GRB_INFEASIBLE:
                     solve_farkas_dbl();
-                    // CCcheck_val_2(val, "Failed in solving farkas");
                     break;
             }
 
@@ -527,7 +523,7 @@ int NodeData::compute_lower_bound() {
         }
     } while (0);
 
-    if (iterations < maxiterations &&
+    if (iterations < NB_CG_ITERATIONS &&
         stat.tot_cputime.cum_zeit <= parms.branching_cpu_limit) {
     } else {
         switch (status_RMP) {
@@ -544,7 +540,7 @@ int NodeData::compute_lower_bound() {
 
     if (depth == 0) {
         stat.global_lower_bound =
-            CC_MAX(lower_bound + instance.off, stat.global_lower_bound);
+            std::max(lower_bound + instance.off, stat.global_lower_bound);
         stat.root_lower_bound = stat.global_lower_bound;
         stat.root_upper_bound = stat.global_upper_bound;
         stat.root_rel_error = static_cast<double>(stat.global_upper_bound -

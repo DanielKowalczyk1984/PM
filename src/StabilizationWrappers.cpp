@@ -23,7 +23,7 @@ int NodeData::construct_sol(OptimalSolution<T>* sol) {
 int NodeData::solve_pricing() {
     int val = 0;
 
-    solver_stab->solve(LP_lower_bound_BB, pi, lhs_coeff.data());
+    solver_stab->solve(LP_lower_bound_BB, lhs_coeff.data());
 
     if (solver_stab->get_update_stab_center()) {
         if (solver_stab->do_reduced_cost_fixing() &&

@@ -108,24 +108,25 @@ Problem::Problem(int argc, const char** argv)
     auto* tmp_solver = root_pd->solver.get();
     switch (parms.stab_technique) {
         case stab_wentgnes:
-            root_pd->solver_stab =
-                std::make_unique<PricingStabilizationStat>(tmp_solver);
+            root_pd->solver_stab = std::make_unique<PricingStabilizationStat>(
+                tmp_solver, root_pd->pi);
             break;
         case stab_dynamic:
             root_pd->solver_stab =
-                std::make_unique<PricingStabilizationDynamic>(tmp_solver);
+                std::make_unique<PricingStabilizationDynamic>(tmp_solver,
+                                                              root_pd->pi);
             break;
         case stab_hybrid:
-            root_pd->solver_stab =
-                std::make_unique<PricingStabilizationHybrid>(tmp_solver);
+            root_pd->solver_stab = std::make_unique<PricingStabilizationHybrid>(
+                tmp_solver, root_pd->pi);
             break;
         case no_stab:
-            root_pd->solver_stab =
-                std::make_unique<PricingStabilizationBase>(tmp_solver);
+            root_pd->solver_stab = std::make_unique<PricingStabilizationBase>(
+                tmp_solver, root_pd->pi);
             break;
         default:
-            root_pd->solver_stab =
-                std::make_unique<PricingStabilizationStat>(tmp_solver);
+            root_pd->solver_stab = std::make_unique<PricingStabilizationStat>(
+                tmp_solver, root_pd->pi);
             break;
     }
 

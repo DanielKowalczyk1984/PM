@@ -12,8 +12,6 @@
 #include "PricingStabilization.hpp"
 #include "Solution.hpp"
 #include "Statistics.h"
-#include "binomial-heap.h"
-// #include "interval.h"
 #include "lp.h"
 /**
  * problem data
@@ -179,7 +177,6 @@ struct NodeData {
     int                                       best_objective;
 
     // maxiterations and retireage
-    int maxiterations;
     int retirementage;
 
     /** Branching strategies */
@@ -220,7 +217,6 @@ struct NodeData {
     int  call_update_rows_coeff();
     bool check_schedule_set(ScheduleSet* set);
     void make_schedule_set_feasible(ScheduleSet* set);
-    void get_mip_statistics(enum MIP_Attr c);
 
     /** StabilizationWrappers.cpp */
     int  solve_pricing();
