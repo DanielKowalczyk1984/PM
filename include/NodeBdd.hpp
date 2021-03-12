@@ -6,17 +6,11 @@
 #include <boost/dynamic_bitset.hpp>
 #include <memory>
 #include "Label.hpp"
+#include "ModelInterface.hpp"
 #include "NodeBase.hpp"
 
 template <typename T = double>
 class NodeBdd : public NodeBase {
-    struct data {
-        double cost{};
-        double rc_cost{};
-        double lp_x{};
-        double coeff_cut{};
-    };
-
    private:
     int weight{};
 
@@ -27,7 +21,6 @@ class NodeBdd : public NodeBase {
     std::array<std::vector<std::weak_ptr<NodeId>>, 2>   in_edges{};
 
     std::shared_ptr<NodeId> ptr_node_id{nullptr};
-    std::array<data, 2>     info{};
     std::array<double, 2>   cost{0.0, 0.0};
     std::array<double, 2>   reduced_cost{0.0, 0.0};
     std::array<double, 2>   lp_x{0.0, 0.0};
@@ -48,14 +41,6 @@ class NodeBdd : public NodeBase {
      * Constructor
      */
     NodeBdd() = default;
-
-    // void set_head_node() {
-    //     forward_label[0].set_head_node(this);
-    //     forward_label[1].set_head_node(this);
-    //     backward_label[0].set_head_node(this);
-    //     backward_label[1].set_head_node(this);
-    // }
-
     NodeBdd(int i, int j) : NodeBase(i, j) {}
 
     NodeBdd<T>(const NodeBdd<T>& src) = default;

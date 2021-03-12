@@ -81,8 +81,8 @@ class DdReducer {
             // T* const     tt = input[i].data();
 
             for (auto& it : input[i]) {
-                for (int b = 0; b < 2; ++b) {
-                    NodeId& f = it.branch[b];
+                for (auto& f : it) {
+                    // NodeId& f = it[b];
                     if (f.row() == 0) {
                         continue;
                     }
@@ -142,8 +142,8 @@ class DdReducer {
         newId.resize(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j) {
-            NodeId& f0 = input[i][j].branch[0];
-            NodeId& f1 = input[i][j].branch[1];
+            NodeId& f0 = input[i][j][0];
+            NodeId& f1 = input[i][j][1];
 
             if (f0.row() != 0) {
                 f0 = newIdTable[f0.row()][f0.col()];
@@ -174,7 +174,7 @@ class DdReducer {
                 continue;
             }
 
-            NodeId& g0 = input[i][j].branch[0];
+            NodeId& g0 = input[i][j][0];
             assert(newId[j].row() == counter + 1);
             newId[j] = NodeId(counter, mm++, g0.hasEmpty());
         }
@@ -190,7 +190,7 @@ class DdReducer {
 
             for (size_t j = 0; j < m; ++j) {
                 // NodeId const& f0 = tt[j].branch[0];
-                NodeId const& f1 = input[i][j].branch[1];
+                NodeId const& f1 = input[i][j][1];
 
                 if (ZDD && f1 == 0) {  // forwarded
                     assert(newId[j].row() < counter);
@@ -228,8 +228,8 @@ class DdReducer {
         newId.resize(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j) {
-            NodeId& f0 = tt[j].branch[0];
-            NodeId& f1 = tt[j].branch[1];
+            NodeId& f0 = tt[j][0];
+            NodeId& f1 = tt[j][1];
 
             if (f0.row() != 0) {
                 f0 = newIdTable[f0.row()][f0.col()];
@@ -272,8 +272,8 @@ class DdReducer {
             for (size_t k = j; k < m;) {  // for each g in f0-equivalent list
                 assert(j <= k);
                 NodeId const g(i, k);
-                NodeId&      g0 = tt[k].branch[0];
-                NodeId&      g1 = tt[k].branch[1];
+                NodeId&      g0 = tt[k][0];
+                NodeId&      g1 = tt[k][1];
                 NodeId&      g10 = input.child(g1, 0);
                 NodeId&      g11 = input.child(g1, 1);
                 assert(g1 != mark);
@@ -304,8 +304,8 @@ class DdReducer {
             std::span<T> nt{output[i].data(), output[i].size()};
 
             for (size_t j = 0; j < m; ++j) {
-                NodeId const& f0 = tt[j].branch[0];
-                NodeId const& f1 = tt[j].branch[1];
+                NodeId const& f0 = tt[j][0];
+                NodeId const& f1 = tt[j][1];
 
                 if (f1 == mark) {  // forwarded
                     assert(f0.row() == i);
@@ -352,12 +352,12 @@ class DdReducer {
                 NodeBdd<T>&       f = input[i][j];
 
                 // make f canonical
-                NodeId& f0 = f.branch[0];
+                NodeId& f0 = f[0];
                 f0 = newIdTable[f0.row()][f0.col()];
                 NodeId deletable = BDD ? f0 : 0;
                 bool   del = BDD || ZDD || (f0 == 0);
                 for (int b = 1; b < 2; ++b) {
-                    NodeId& ff = f.branch[b];
+                    NodeId& ff = f[b];
                     ff = newIdTable[ff.row()][ff.col()];
                     if (ff != deletable) {
                         del = false;
@@ -390,9 +390,9 @@ class DdReducer {
             if (ff.row() == i) {
                 output[i][ff.col()] = input[i][j];
                 output[i][ff.col()].child[0] =
-                    &(output.node(output[i][ff.col()].branch[0]));
+                    &(output.node(output[i][ff.col()][0]));
                 output[i][ff.col()].child[1] =
-                    &(output.node(output[i][ff.col()].branch[1]));
+                    &(output.node(output[i][ff.col()][1]));
             }
         }
 

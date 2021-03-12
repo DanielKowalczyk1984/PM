@@ -24,8 +24,8 @@ class BackwardBddFarkas : public BackwardBddBase<T> {
         }
 
         auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
-        auto& p0 = table_tmp->node(n.branch[0]);
-        auto& p1 = table_tmp->node(n.branch[1]);
+        auto& p0 = table_tmp->node(n[0]);
+        auto& p1 = table_tmp->node(n[1]);
 
         T obj0 = p0.backward_label[0].get_f() + n.reduced_cost[0];
         T obj1 = p1.backward_label[0].get_f() + n.reduced_cost[1];

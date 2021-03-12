@@ -15,7 +15,7 @@ struct ScheduleSet;
 
 struct PricerSolverBase {
    public:
-    const std::vector<std::shared_ptr<Job>>* jobs;
+    const std::vector<std::shared_ptr<Job>>& jobs;
 
     int convex_constr_id;
     int convex_rhs;

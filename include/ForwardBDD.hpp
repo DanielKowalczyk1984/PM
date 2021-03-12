@@ -89,8 +89,8 @@ class ForwardBddCycle : public ForwardBddBase<T> {
         int   weight = n.get_weight();
         T     g;
         auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
-        auto& p0 = table_tmp->node(n.branch[0]);
-        auto& p1 = table_tmp->node(n.branch[1]);
+        auto& p0 = table_tmp->node(n[0]);
+        auto& p1 = table_tmp->node(n[1]);
         n.reset_reduced_costs();
         const double* dual = ForwardBddBase<T>::get_pi();
 
@@ -200,8 +200,8 @@ class ForwardBddSimple : public ForwardBddBase<T> {
     void evalNode(NodeBdd<T>& n) const override {
         T     g;
         auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
-        auto& p0 = table_tmp->node(n.branch[0]);
-        auto& p1 = table_tmp->node(n.branch[1]);
+        auto& p0 = table_tmp->node(n[0]);
+        auto& p1 = table_tmp->node(n[1]);
         n.reset_reduced_costs();
         const double* dual = ForwardBddBase<T>::get_pi();
 

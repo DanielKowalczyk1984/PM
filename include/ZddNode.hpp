@@ -102,7 +102,7 @@ class NodeZdd : public NodeBase {
 
     bool operator==(NodeZdd const& o) const {
         for (int i = 0; i < 2; ++i) {
-            if (branch[i] != o.branch[i]) {
+            if ((*this)[i] != o[i]) {
                 return false;
             }
         }

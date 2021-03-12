@@ -39,7 +39,7 @@
 // }
 
 PricerSolverBase::PricerSolverBase(const Instance& instance)
-    : jobs(&instance.jobs),
+    : jobs(instance.jobs),
       convex_constr_id(instance.nb_jobs),
       convex_rhs(instance.nb_machines),
       problem_name(),

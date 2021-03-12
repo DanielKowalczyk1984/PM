@@ -14,8 +14,6 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
    public:
     BackwardBddBase() = default;
 
-    // BackwardBddBase(const BackwardBddBase<T>& src) {}
-
     void set_pi(double* _pi) { pi = _pi; }
 
     [[nodiscard]] const double* get_pi() const { return pi; }
@@ -58,38 +56,26 @@ class BackwardBddSimple : public BackwardBddBase<T> {
 
     void evalNode(NodeBdd<T>& n) const override {
         auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
-        auto& p0_tmp = table_tmp->node(n.branch[0]);
-        auto& p1_tmp = table_tmp->node(n.branch[1]);
+        auto& p0_tmp = table_tmp->node(n[0]);
+        auto& p1_tmp = table_tmp->node(n[1]);
 
         n.reset_reduced_costs();
 
         const double* dual = BackwardBddBase<T>::get_pi();
 
-        auto func = [&](auto it) {
-            auto aux = it.lock();
-            if (aux) {
-                n.adjust_reduced_costs(aux->get_coeff() * dual[aux->get_row()],
-                                       aux->get_high());
-                return false;
-            } else {
-                return true;
-            }
-        };
-
-        for (int k = 0; k < 2; k++) {
-            auto it = std::remove_if(n.coeff_list[k].begin(),
-                                     n.coeff_list[k].end(), func);
-            // for (auto it = n.coeff_list[k].begin(); it !=
-            // n.coeff_list[k].end();
-            //      it++) {
-            //     auto aux = it->lock();
-            //     if (aux) {
-            //         n.adjust_reduced_costs(
-            //             aux->get_coeff() * dual[aux->get_row()],
-            //             aux->get_high());
-            //     }
-            // }
-            n.coeff_list[k].erase(it, n.coeff_list[k].end());
+        for (auto& list : n.coeff_list) {
+            auto tmp = std::remove_if(list.begin(), list.end(), [&](auto it) {
+                auto aux = it.lock();
+                if (aux) {
+                    n.adjust_reduced_costs(
+                        aux->get_coeff() * dual[aux->get_row()],
+                        aux->get_high());
+                    return false;
+                } else {
+                    return true;
+                }
+            });
+            list.erase(tmp, list.end());
         }
 
         T obj0 = p0_tmp.backward_label[0].get_f() + n.reduced_cost[0];
@@ -126,28 +112,27 @@ class BackwardBddCycle : public BackwardBddBase<T> {
     BackwardBddCycle<T>() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
-        auto  tmp_j = n.get_job();
-        auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
-        auto& p0_tmp = table_tmp->node(n.branch[0]);
-        auto& p1_tmp = table_tmp->node(n.branch[1]);
+        auto* tmp_j = n.get_job();
+        auto* table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
+        auto& p0_tmp = table_tmp->node(n[0]);
+        auto& p1_tmp = table_tmp->node(n[1]);
         const auto dual = BackwardBddBase<T>::get_pi();
 
         n.reset_reduced_costs();
-        auto func = [&](auto it) {
-            auto aux = it.lock();
-            if (aux) {
-                n.adjust_reduced_costs(aux->get_coeff() * dual[aux->get_row()],
-                                       aux->get_high());
-                return false;
-            } else {
-                return true;
-            }
-        };
 
-        for (auto k = 0; k < 2; k++) {
-            auto it = std::remove_if(n.coeff_list[k].begin(),
-                                     n.coeff_list[k].end(), func);
-            n.coeff_list[k].erase(it, n.coeff_list[k].end());
+        for (auto& list : n.coeff_list) {
+            auto tmp = std::remove_if(list.begin(), list.end(), [&](auto it) {
+                auto aux = it.lock();
+                if (aux) {
+                    n.adjust_reduced_costs(
+                        aux->get_coeff() * dual[aux->get_row()],
+                        aux->get_high());
+                    return false;
+                } else {
+                    return true;
+                }
+            });
+            list.erase(tmp, list.end());
         }
 
         auto prev_job{p1_tmp.backward_label[0].get_prev_job()};

@@ -67,7 +67,7 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi, int UB, double LB) {
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            auto&  child = table.node(it.branch[1]);
+            auto&  child = table.node(it[1]);
             double result = it.forward_label[0].get_f() +
                             child.backward_label[0].get_f() +
                             it.reduced_cost[1] + aux_pi[convex_constr_id];
@@ -107,7 +107,7 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi) {
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            auto&  child = table.node(it.branch[1]);
+            auto&  child = table.node(it[1]);
             double result = it.forward_label[0].get_f() +
                             child.backward_label[0].get_f() +
                             it.reduced_cost[1];
@@ -204,7 +204,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi, int UB, double LB) {
         for (auto& it : table[i]) {
             Job*   job = it.get_job();
             double result{};
-            auto&  child = table.node(it.branch[1]);
+            auto&  child = table.node(it[1]);
 
             if (it.forward_label[0].get_previous_job() != job &&
                 child.backward_label[0].get_prev_job() != job) {
@@ -322,7 +322,7 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi) {
         for (auto& it : table[i]) {
             Job*   job = it.get_job();
             double result{};
-            auto&  child = table.node(it.branch[1]);
+            auto&  child = table.node(it[1]);
 
             if (it.forward_label[0].get_previous_job() != job &&
                 child.backward_label[0].get_prev_job() != job) {

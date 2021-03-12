@@ -72,7 +72,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         for (int i = 1; i <= n; ++i) {
             table.initRow(i, 1);
             for (int b = 0; b < 2; ++b) {
-                table[i][0].branch[b] = f;
+                table[i][0][b] = f;
             }
             f = NodeId(i, 0);
         }
@@ -231,8 +231,8 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
                 InitializedNode node;
 
                 for (int b = 0; b < 2; ++b) {
-                    NodeId f = (*o.diagram)[i][j].branch[b];
-                    node.branch[b] = equiv[f.row()][f.col()];
+                    NodeId f = (*o.diagram)[i][j][b];
+                    node[b] = equiv[f.row()][f.col()];
                 }
 
                 size_t* p = uniq.getValue(node);
@@ -496,13 +496,13 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
                 while (f > 1) { /* down */
                     T const& s = (*dd.diagram)[f.row()][f.col()];
 
-                    if (s.branch[0] != 0) {
+                    if (s[0] != 0) {
                         cursor = path.size();
                         path.push_back(Selection(f, false));
-                        f = s.branch[0];
+                        f = s[0];
                     } else {
                         path.push_back(Selection(f, true));
-                        f = s.branch[1];
+                        f = s[1];
                     }
                 }
 
@@ -513,7 +513,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
                 for (; cursor >= 0; --cursor) { /* up */
                     Selection& sel = path[cursor];
                     T const& ss = (*dd.diagram)[sel.node.row()][sel.node.col()];
-                    if (sel.val == false && ss.branch[1] != 0) {
+                    if (sel.val == false && ss[1] != 0) {
                         f = sel.node;
                         sel.val = true;
                         path.resize(cursor + 1);

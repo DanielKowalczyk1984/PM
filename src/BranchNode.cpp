@@ -67,7 +67,7 @@ void BranchNodeBase::branch(BTree* bt) {
         auto  prev = -1;
         auto  accum = 0.0;
         auto  dist_zero = 0.0;
-        auto* job = (*solver->jobs)[i].get();
+        auto* job = (solver->jobs)[i].get();
         for (auto t = 0; t < pd->instance.H_max + 1; t++) {
             accum += x_job_time[i][t];
             // avg_completion_time[i] +=
@@ -209,7 +209,7 @@ void BranchNodeBase::branch(BTree* bt) {
         fmt::print(stderr, "ERROR: no branching found!\n");
         for (auto k = 0; k < nb_jobs; k++) {
             auto  j = ord[k];
-            auto* job = (*solver->jobs)[j].get();
+            auto* job = (solver->jobs)[j].get();
             fmt::print(stderr, "j={}:", j);
             for (int t = 0; t < pd->instance.H_max; t++) {
                 if (x_job_time[j][t] > ERROR) {

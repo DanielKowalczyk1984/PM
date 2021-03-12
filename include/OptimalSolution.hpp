@@ -1,11 +1,11 @@
 #ifndef OPTIMAL_SOLUTION_HPP
 #define OPTIMAL_SOLUTION_HPP
 #include <bits/ranges_algo.h>
+#include <fmt/core.h>
 #include <iostream>
 #include <span>
 #include <vector>
 #include "Job.h"
-#include "fmt/core.h"
 
 template <typename T = double>
 class OptimalSolution {

@@ -91,14 +91,14 @@ void PricerSolverBdd::construct_mipgraph() {
 
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            if (it.branch[0] != 0 && it.calc[0]) {
-                auto& n0 = table.node(it.branch[0]);
+            if (it[0] != 0 && it.calc[0]) {
+                auto& n0 = table.node(it[0]);
                 auto  a = add_edge(it.key, n0.key,
                                   {edge_index++, false, GRBVar()}, mip_graph);
             }
 
-            if (it.branch[1] != 0 && it.calc[1]) {
-                auto& n1 = table.node(it.branch[1]);
+            if (it[1] != 0 && it.calc[1]) {
+                auto& n1 = table.node(it[1]);
                 auto  a = add_edge(it.key, n1.key,
                                   {edge_index++, true, GRBVar()}, mip_graph);
             }
@@ -216,10 +216,10 @@ void PricerSolverBdd::init_table() {
                 auto  w = node.get_weight();
                 auto  p = aux_job->processing_time;
 
-                auto& n0 = table.node(node.branch[0]);
-                auto& n1 = table.node(node.branch[1]);
-                n0.set_node_id_label(node.branch[0]);
-                n1.set_node_id_label(node.branch[1]);
+                auto& n0 = table.node(node[0]);
+                auto& n1 = table.node(node[1]);
+                n0.set_node_id_label(node[0]);
+                n1.set_node_id_label(node[1]);
 
                 node.ptr_node_id = std::make_shared<NodeId>(i, it);
                 node.set_job(aux_job);
@@ -295,10 +295,10 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
                                     tmp_j == tmp_node.get_job());
                 coeff_val += (*constr)(key);
                 if (key.get_high()) {
-                    tmp_nodeid = tmp_node.branch[1];
+                    tmp_nodeid = tmp_node[1];
                     counter++;
                 } else {
-                    tmp_nodeid = tmp_node.branch[0];
+                    tmp_nodeid = tmp_node[0];
                 }
             }
 
@@ -350,7 +350,7 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
         VariableKeyBase key(tmp_node.get_nb_job(), tmp_node.get_weight(),
                             tmp_j == tmp_node.get_job());
         if (key.get_high()) {
-            tmp_nodeid = tmp_node.branch[1];
+            tmp_nodeid = tmp_node[1];
             counter++;
             auto* constr = reformulation_model[key.get_j()].get();
             auto  dual = aux_pi[key.get_j()];
@@ -361,7 +361,7 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
                 aux_lhs[key.get_j()] += coeff;
             }
         } else {
-            tmp_nodeid = tmp_node.branch[0];
+            tmp_nodeid = tmp_node[0];
         }
 
         for (int c = convex_constr_id + 1; c < reformulation_model.size();
@@ -414,7 +414,7 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
         VariableKeyBase key(tmp_node.get_nb_job(), tmp_node.get_weight(),
                             tmp_j == tmp_node.get_job());
         if (key.get_high()) {
-            tmp_nodeid = tmp_node.branch[1];
+            tmp_nodeid = tmp_node[1];
             counter++;
             auto* constr = reformulation_model[key.get_j()].get();
             auto  coeff = (*constr)(key);
@@ -423,7 +423,7 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
                 aux_subgradient[key.get_j()] -= coeff * convex_rhs;
             }
         } else {
-            tmp_nodeid = tmp_node.branch[0];
+            tmp_nodeid = tmp_node[0];
         }
 
         for (int c = convex_constr_id + 1; c < reformulation_model.size();
@@ -477,9 +477,9 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>& sol,
             }
 
             counter++;
-            tmp_nodeid = tmp_node.branch[1];
+            tmp_nodeid = tmp_node[1];
         } else {
-            tmp_nodeid = tmp_node.branch[0];
+            tmp_nodeid = tmp_node[0];
         }
 
         for (int c = convex_constr_id + 1; c < reformulation_model.size();
@@ -522,7 +522,7 @@ void PricerSolverBdd::remove_layers_init() {
                        [&](const auto& tmp) {
                            bool remove = std::ranges::all_of(
                                table[i],
-                               [&](const auto& n) { return n.branch[1] == 0; });
+                               [&](const auto& n) { return n[1] == 0; });
                            --i;
                            return remove;
                        }),
@@ -547,7 +547,7 @@ void PricerSolverBdd::remove_layers() {
                                if (iter.calc[1]) {
                                    remove = false;
                                } else {
-                                   auto& cur_node_1 = iter.branch[1];
+                                   auto& cur_node_1 = iter[1];
                                    cur_node_1 = 0;
                                }
                            }
@@ -569,13 +569,13 @@ void PricerSolverBdd::remove_edges() {
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& iter : table[i]) {
             if (!iter.calc[1]) {
-                auto& cur_node_1 = iter.branch[1];
+                auto& cur_node_1 = iter[1];
                 iter.ptr_node_id.reset();
                 cur_node_1 = 0;
             }
 
             if (!iter.calc[0]) {
-                auto& cur_node_0 = iter.branch[0];
+                auto& cur_node_0 = iter[0];
                 cur_node_0 = 0;
             }
         }
@@ -805,8 +805,8 @@ void PricerSolverBdd::cleanup_arcs() {
     for (auto i = 1; i <= decision_diagram.topLevel(); i++) {
         for (auto& it : table[i]) {
             it.calc = {true, true};
-            NodeBdd<>& cur_node_0 = table.node(it.branch[0]);
-            NodeBdd<>& cur_node_1 = table.node(it.branch[1]);
+            NodeBdd<>& cur_node_0 = table.node(it[0]);
+            NodeBdd<>& cur_node_1 = table.node(it[1]);
 
             if (cur_node_0.backward_distance[0] <=
                 cur_node_0.backward_distance[1]) {
@@ -875,7 +875,7 @@ void PricerSolverBdd::topdown_filtering() {
 
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            auto& n0 = table.node(it.branch[0]);
+            auto& n0 = table.node(it[0]);
 
             if (n0.visited) {
                 n0.all &= it.all;
@@ -885,7 +885,7 @@ void PricerSolverBdd::topdown_filtering() {
                 n0.all |= it.all;
             }
 
-            auto& n1 = table.node(it.branch[1]);
+            auto& n1 = table.node(it[1]);
 
             if (n1.visited) {
                 if (n1.all[it.get_nb_job()]) {
@@ -948,14 +948,14 @@ void PricerSolverBdd::bottum_up_filtering() {
     for (auto i = 1; i <= decision_diagram.topLevel(); i++) {
         for (auto& it : table[i]) {
             it.all[it.get_nb_job()] = true;
-            it.all |= table.node(it.branch[1]).all;
-            it.all &= table.node(it.branch[0]).all;
+            it.all |= table.node(it[1]).all;
+            it.all &= table.node(it[0]).all;
         }
     }
 
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            if (table.node(it.branch[1]).all[it.get_nb_job()]) {
+            if (table.node(it[1]).all[it.get_nb_job()]) {
                 removed_edges = true;
                 it.calc[1] = false;
                 nb_removed_edges++;
@@ -994,9 +994,9 @@ void PricerSolverBdd::check_infeasible_arcs() {
 
     for (auto i = decision_diagram.topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            auto& n0 = table.node(it.branch[0]);
+            auto& n0 = table.node(it[0]);
             n0.all |= it.all;
-            auto& n1 = table.node(it.branch[1]);
+            auto& n1 = table.node(it[1]);
             n1.all[it.get_nb_job()] = true;
         }
     }
@@ -1008,13 +1008,13 @@ void PricerSolverBdd::check_infeasible_arcs() {
                 auto index = it.all.find_first();
 
                 auto max = value_diff_Fij(it.get_weight(), it.get_job(),
-                                          (*jobs)[index].get());
+                                          jobs[index].get());
                 // bool index_bool = (index > (size_t)it.get_nb_job());
                 while (index != boost::dynamic_bitset<>::npos && max < 0) {
                     index = it.all.find_next(index);
                     if (index != boost::dynamic_bitset<>::npos) {
                         int a = value_diff_Fij(it.get_weight(), it.get_job(),
-                                               (*jobs)[index].get());
+                                               jobs[index].get());
                         if (a > max) {
                             max = a;
                         }
@@ -1053,9 +1053,9 @@ void PricerSolverBdd::equivalent_paths_filtering() {
             it.visited = false;
             it.all = boost::dynamic_bitset<>{convex_constr_id, 0};
             it.calc = {true, true};
-            auto& n0 = table.node(it.branch[0]);
+            auto& n0 = table.node(it[0]);
             n0.in_degree[0]++;
-            auto& n1 = table.node(it.branch[1]);
+            auto& n1 = table.node(it[1]);
             n1.in_degree[1]++;
         }
     }
@@ -1102,14 +1102,14 @@ void PricerSolverBdd::equivalent_paths_filtering() {
                     visited[n.key] = true;
                     queue.push_back(adjVertex);
                     if (high) {
-                        auto& tmp_node = table.node(n.branch[1]);
+                        auto& tmp_node = table.node(n[1]);
                         all[n.key] |= all[tmp_node.key];
                         all[n.key][n.get_nb_job()] = true;
                         C[n.key] = C[tmp_node.key] +
                                    value_Fj(tmp_node.get_weight(), n.get_job());
                         edge_visited[n.key] = true;
                     } else {
-                        auto& tmp_node = table.node(n.branch[0]);
+                        auto& tmp_node = table.node(n[0]);
                         all[n.key] |= all[tmp_node.key];
                         C[n.key] = C[tmp_node.key];
                     }
@@ -1117,13 +1117,13 @@ void PricerSolverBdd::equivalent_paths_filtering() {
                     boost::dynamic_bitset<> tmp;
                     int                     tmp_C{};
                     if (high) {
-                        auto& tmp_node = table.node(n.branch[1]);
+                        auto& tmp_node = table.node(n[1]);
                         tmp = all[tmp_node.key];
                         tmp[n.get_nb_job()] = true;
                         tmp_C = C[tmp_node.key] +
                                 value_Fj(tmp_node.get_weight(), n.get_job());
                     } else {
-                        auto& tmp_node = table.node(n.branch[0]);
+                        auto& tmp_node = table.node(n[0]);
                         tmp = all[tmp_node.key];
                         tmp_C = C[tmp_node.key];
                     }
@@ -1133,15 +1133,15 @@ void PricerSolverBdd::equivalent_paths_filtering() {
                         NodeId prev = adjVertex;
                         if (high) {
                             if (tmp_C > C[n.key]) {
-                                cur = n.branch[1];
+                                cur = n[1];
                             } else {
-                                cur = n.branch[0];
+                                cur = n[0];
                             }
                         } else {
                             if (tmp_C > C[n.key]) {
-                                cur = n.branch[0];
+                                cur = n[0];
                             } else {
-                                cur = n.branch[1];
+                                cur = n[1];
                             }
                         }
 
@@ -1154,9 +1154,9 @@ void PricerSolverBdd::equivalent_paths_filtering() {
                             assert(cur != NodeId(0, 0));
                             assert(cur != NodeId(0, 1));
                             if (edge_visited[node.key]) {
-                                cur = node.branch[1];
+                                cur = node[1];
                             } else {
-                                cur = node.branch[0];
+                                cur = node[0];
                             }
                         }
 
@@ -1228,11 +1228,11 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
 
                 if (tmp_j == tmp_node.get_job()) {
                     tmp_node.lp_x[1] += x;
-                    tmp_nodeid = tmp_node.branch[1];
+                    tmp_nodeid = tmp_node[1];
                     counter++;
                 } else {
                     tmp_node.lp_x[0] += x;
-                    tmp_nodeid = tmp_node.branch[0];
+                    tmp_nodeid = tmp_node[0];
                 }
             }
 
@@ -1379,10 +1379,10 @@ bool PricerSolverBdd::check_schedule_set(const std::vector<Job*>& set) {
         }
 
         if (tmp_j == tmp_node.get_job()) {
-            tmp_nodeid = tmp_node.branch[1];
+            tmp_nodeid = tmp_node[1];
             counter++;
         } else {
-            tmp_nodeid = tmp_node.branch[0];
+            tmp_nodeid = tmp_node[0];
         }
     }
 

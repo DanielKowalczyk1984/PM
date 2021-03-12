@@ -6,16 +6,17 @@
 #include "Instance.h"
 #include "MipGraph.hpp"
 #include "ModelInterface.hpp"
+#include "NodeBdd.hpp"
 #include "NodeBddStructure.hpp"
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
 // #include "wctprivate.h"
 
 class PricerSolverBdd : public PricerSolverBase {
-    DdStructure<> decision_diagram;
-    size_t        size_graph;
-    int           nb_removed_edges{};
-    int           nb_removed_nodes{};
+    DdStructure<NodeBdd<double>> decision_diagram;
+    size_t                       size_graph;
+    int                          nb_removed_edges{};
+    int                          nb_removed_nodes{};
 
     std::vector<std::pair<Job*, Interval*>> ordered_jobs_new;
 
@@ -30,18 +31,9 @@ class PricerSolverBdd : public PricerSolverBase {
     int H_max;
 
    public:
-    // PricerSolverBdd(GPtrArray*  _jobs,
-    //                 int         _num_machines,
-    //                 GPtrArray*  _ordered_jobs,
-    //                 const char* p_name,
-    //                 int         _hmax,
-    //                 int*        _take_jobs,
-    //                 double      _ub);
-
     explicit PricerSolverBdd(const Instance& instance);
 
     PricerSolverBdd(const PricerSolverBdd& src);
-    // PricerSolverBdd(const PricerSolverBdd&) = default;
     PricerSolverBdd(PricerSolverBdd&&) = default;
     PricerSolverBdd& operator=(PricerSolverBdd&&) = default;
     PricerSolverBdd& operator=(const PricerSolverBdd&) = delete;

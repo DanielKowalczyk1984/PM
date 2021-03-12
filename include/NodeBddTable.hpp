@@ -178,7 +178,7 @@ class NodeTableEntity : public data_table_node<T> {
      */
     NodeId child(int i, size_t j, int b) const {
         assert(0 <= b && b < 2);
-        return (*this)[i][j].branch[b];
+        return (*this)[i][j][b];
     }
 
     /**
@@ -190,7 +190,7 @@ class NodeTableEntity : public data_table_node<T> {
      */
     NodeId& child(int i, size_t j, int b) {
         assert(0 <= b && b < 2);
-        return (*this)[i][j].branch[b];
+        return (*this)[i][j][b];
     }
 
     /**
@@ -244,7 +244,7 @@ class NodeTableEntity : public data_table_node<T> {
 #pragma omp parallel for schedule(static)
                 for (intmax_t j = 0; j < intmax_t(m); ++j) {
                     for (int b = 0; b < 2; ++b) {
-                        int const ii = node[j].branch[b].row();
+                        int const ii = node[j][b].row();
                         if (ii == 0)
                             continue;
                         if (ii < lowest) {
@@ -262,7 +262,7 @@ class NodeTableEntity : public data_table_node<T> {
             } else {
                 for (size_t j = 0; j < m; ++j) {
                     for (int b = 0; b < 2; ++b) {
-                        int const ii = node[j].branch[b].row();
+                        int const ii = node[j][b].row();
 
                         if (ii == 0) {
                             continue;

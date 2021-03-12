@@ -145,15 +145,15 @@ void PricerSolverZdd::init_table() {
         for (auto& it : table[i]) {
             if (i != 0) {
                 it.set_job(tmp_pair.first);
-                auto& n0 = table.node(it.branch[0]);
-                auto& n1 = table.node(it.branch[1]);
+                auto& n0 = table.node(it[0]);
+                auto& n1 = table.node(it[1]);
                 int   p = it.get_job()->processing_time;
-                it.child[0] = table.node_ptr(it.branch[0]);
-                it.child[1] = table.node_ptr(it.branch[1]);
+                it.child[0] = table.node_ptr(it[0]);
+                it.child[1] = table.node_ptr(it[1]);
                 for (auto& iter : it.list) {
                     int w = iter->weight;
-                    iter->n = n0.add_weight(w, it.branch[0]);
-                    iter->y = n1.add_weight(w + p, it.branch[1]);
+                    iter->n = n0.add_weight(w, it[0]);
+                    iter->y = n1.add_weight(w + p, it[1]);
                 }
             } else {
                 it.set_job(nullptr);
@@ -209,7 +209,7 @@ void PricerSolverZdd::remove_layers_init() {
                        [&](const auto& tmp) {
                            bool remove = std::ranges::all_of(
                                table[i],
-                               [&](const auto& n) { return n.branch[1] == 0; });
+                               [&](const auto& n) { return n[1] == 0; });
                            --i;
                            return remove;
                        }),
@@ -289,7 +289,7 @@ void PricerSolverZdd::remove_layers() {
                                iter.list.erase(end, iter.list.end());
 
                                if (iter.list.empty()) {
-                                   NodeId& cur_node_1 = iter.branch[1];
+                                   NodeId& cur_node_1 = iter[1];
                                    cur_node_1 = 0;
                                } else {
                                    remove_layer = false;
@@ -475,12 +475,12 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(
 
                 if (tmp_j == tmp_node.get_job()) {
                     lp_x[tmp_sub_node->high_edge_key] += aux_cols[i];
-                    tmp_nodeid = tmp_node.branch[1];
+                    tmp_nodeid = tmp_node[1];
                     tmp_sub_node = tmp_sub_node->y;
                     counter++;
                 } else {
                     lp_x[tmp_sub_node->low_edge_key] += aux_cols[i];
-                    tmp_nodeid = tmp_node.branch[0];
+                    tmp_nodeid = tmp_node[0];
                     tmp_sub_node = tmp_sub_node->n;
                 }
             }
@@ -506,14 +506,14 @@ bool PricerSolverZdd::check_schedule_set(const std::vector<Job*>& set) {
             NodeZdd<>& tmp_node = table.node(tmp_nodeid);
 
             if (tmp_j == tmp_node.get_job()) {
-                tmp_nodeid = tmp_node.branch[1];
+                tmp_nodeid = tmp_node[1];
                 weight += 1;
 
                 if (j + 1 != weight) {
                     return false;
                 }
             } else {
-                tmp_nodeid = tmp_node.branch[0];
+                tmp_nodeid = tmp_node[0];
             }
         }
     }

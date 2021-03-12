@@ -9,31 +9,6 @@
 #include "gurobi_c.h"
 #include "scheduleset.h"
 
-// PricerSolverArcTimeDp::PricerSolverArcTimeDp(GPtrArray*  _jobs,
-//                                              int         _num_machines,
-//                                              int         _hmax,
-//                                              const char* _p_name,
-//                                              double      _ub)
-//     : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
-//       Hmax(_hmax),
-//       n(_jobs->len),
-//       size_graph(0u),
-//       vector_jobs(),
-//       nb_edges_removed{},
-//       lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
-//       solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0)
-
-// {
-//     for (int i = 0; i < n; ++i) {
-//         vector_jobs.push_back(static_cast<Job*>(jobs[i]));
-//     }
-//     job_init(&j0, 0, 0, 0);
-//     j0.job = n;
-//     vector_jobs.push_back(&j0);
-
-//     init_table();
-// }
-
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
     : PricerSolverBase(instance),
       Hmax(instance.H_max),
@@ -45,7 +20,7 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
       lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
       solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
     for (int i = 0; i < n; ++i) {
-        vector_jobs.push_back((*jobs)[i].get());
+        vector_jobs.push_back((jobs)[i].get());
     }
     j0.job = n;
     vector_jobs.push_back(&j0);
@@ -60,26 +35,26 @@ void PricerSolverArcTimeDp::init_table() {
         reversed_graph[j] = vector2d_jobs(Hmax + 1);
     }
 
-    forward_F = vector2d_dbl(jobs->size() + 1);
-    backward_F = vector2d_dbl(jobs->size() + 1);
-    for (unsigned i = 0; i < jobs->size() + 1; ++i) {
+    forward_F = vector2d_dbl(jobs.size() + 1);
+    backward_F = vector2d_dbl(jobs.size() + 1);
+    for (unsigned i = 0; i < jobs.size() + 1; ++i) {
         forward_F[i] = vector1d_dbl(Hmax + 1, 0.0);
         backward_F[i] = vector1d_dbl(Hmax + 1, 0.0);
     }
 
-    A = vector2d_jobs(jobs->size() + 1);
-    for (unsigned i = 0; i < jobs->size() + 1; ++i) {
+    A = vector2d_jobs(jobs.size() + 1);
+    for (unsigned i = 0; i < jobs.size() + 1; ++i) {
         A[i] = vector1d_jobs(Hmax + 1, nullptr);
     }
 
-    B = vector2d_int(jobs->size() + 1);
-    for (unsigned i = 0; i < jobs->size() + 1; ++i) {
+    B = vector2d_int(jobs.size() + 1);
+    for (unsigned i = 0; i < jobs.size() + 1; ++i) {
         B[i] = vector1d_int(Hmax + 1);
     }
 
-    arctime_x = vector_grb_var(jobs->size() + 1);
+    arctime_x = vector_grb_var(jobs.size() + 1);
     for (int i = 0; i < n + 1; i++) {
-        arctime_x[i] = vector2d_grb_var(jobs->size() + 1);
+        arctime_x[i] = vector2d_grb_var(jobs.size() + 1);
         for (int j = 0; j < n + 1; j++) {
             arctime_x[i][j] = vector1d_grb_var(Hmax + 1);
         }
@@ -87,7 +62,7 @@ void PricerSolverArcTimeDp::init_table() {
 
     for (int j = 0; j < n; ++j) {
         graph[j] = vector2d_jobs(Hmax + 1);
-        Job* tmp = (*jobs)[j].get();
+        Job* tmp = jobs[j].get();
         for (int t = 0; t < Hmax + 1; t++) {
             for (auto& it : vector_jobs) {
                 int p = (it->job != j) ? it->processing_time : 1;
@@ -280,7 +255,7 @@ void PricerSolverArcTimeDp::build_mip() {
                     auto a = arctime_x[it->job][j][t].get(GRB_DoubleAttr_X);
                     if (a > 0) {
                         fmt::print("{} {} {}\n", j, t,
-                                   ((*jobs)[j])->processing_time);
+                                   jobs[j]->processing_time);
                     }
                 }
             }
@@ -328,40 +303,7 @@ void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     return;
 }
 
-PricerSolverArcTimeDp::~PricerSolverArcTimeDp() {
-    // for (int i = 0; i < n + 1; ++i) {
-    //     delete[] graph[i];
-    //     delete[] reversed_graph[i];
-    // }
-    // delete[] graph;
-    // delete[] reversed_graph;
-    // for (int i = 0; i < n + 1; ++i) {
-    //     delete[] forward_F[i];
-    //     delete[] backward_F[i];
-    // }
-    // delete[] forward_F;
-    // delete[] backward_F;
-
-    // for (int i = 0; i < n + 1; ++i) {
-    //     delete[] A[i];
-    // }
-    // delete[] A;
-
-    // for (int i = 0; i < n + 1; ++i) {
-    //     delete[] B[i];
-    // }
-    // delete[] B;
-
-    // for (int i = 0; i < n + 1; i++) {
-    //     for (int j = 0; j < n + 1; j++) {
-    //         delete[] arctime_x[i][j];
-    //     }
-    //     delete[] arctime_x[i];
-    // }
-    // delete[] arctime_x;
-    // delete[] lp_x;
-    // delete[] solution_x;
-}
+PricerSolverArcTimeDp::~PricerSolverArcTimeDp() = default;
 
 void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
     // backward_F[n][T] = 0;

@@ -3,7 +3,6 @@
 
 #include <bits/c++config.h>
 #include <fmt/core.h>
-// #include <boost/container_hash/hash_fwd.hpp>
 #include <boost/functional/hash.hpp>
 #include <cstddef>
 #include <functional>
@@ -13,8 +12,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#include "NodeId.hpp"
-#include "Parms.h"
+
 class VariableKeyBase {
    private:
     int  j{-1};
@@ -52,6 +50,15 @@ class VariableKeyBase {
     VariableKeyBase& operator=(const VariableKeyBase&) = default;
     VariableKeyBase& operator=(VariableKeyBase&&) = default;
     virtual ~VariableKeyBase() = default;
+
+    bool operator==(const VariableKeyBase& other) {
+        return (j == other.j && t == other.t && high == other.high);
+    }
+
+    friend bool operator==(const VariableKeyBase& lhs,
+                           const VariableKeyBase& rhs) {
+        return (lhs.j == rhs.j && lhs.t == rhs.t && lhs.high == rhs.high);
+    }
 };
 
 class ConstraintBase {
@@ -77,7 +84,7 @@ class ConstraintBase {
           rhs(_rhs),
           can_be_deleted(_can_be_delete) {}
 
-    virtual double get_var_coeff(VariableKeyBase*) = 0;
+    // virtual double get_var_coeff(VariableKeyBase*) = 0;
     virtual double operator()(const VariableKeyBase&) = 0;
 };
 
@@ -89,14 +96,6 @@ class ConstraintAssignment : public ConstraintBase {
     explicit ConstraintAssignment(int _row)
         : ConstraintBase('>', 1.0),
           row(_row) {}
-
-    double get_var_coeff(VariableKeyBase* key) override {
-        if (key->get_j() == row && key->get_high()) {
-            return 1.0;
-        }
-
-        return 0.0;
-    }
 
     double operator()(const VariableKeyBase& key) override {
         if (key.get_j() == row && key.get_high()) {
@@ -116,14 +115,6 @@ class ConstraintAssignment : public ConstraintBase {
 class ConstraintConvex : public ConstraintBase {
    public:
     explicit ConstraintConvex(double _rhs) : ConstraintBase('>', _rhs) {}
-
-    double get_var_coeff(VariableKeyBase* key) override {
-        if (key->get_t() == 0) {
-            return -1.0;
-        }
-
-        return 0.0;
-    }
 
     double operator()(const VariableKeyBase& key) override {
         if (!key.get_t()) {
@@ -233,11 +224,9 @@ struct hash<VariableKeyBase> {
 };
 }  // namespace std
 
-class GenericData {
+using coeff_hash_table = std::unordered_map<VariableKeyBase, double>;
+class GenericData : public std::unordered_map<VariableKeyBase, double> {
    private:
-    using coeff_hash_table = std::unordered_map<VariableKeyBase, double>;
-    coeff_hash_table coeff{};
-
     static constexpr double EPS_GENERIC_DATA = 1e-6;
 
    public:
@@ -248,43 +237,35 @@ class GenericData {
     GenericData& operator=(GenericData&&) = default;
     GenericData& operator=(const GenericData&) = default;
 
-    coeff_hash_table::iterator find(const BddCoeff& key) {
-        return coeff.find(key);
-    }
-
-    coeff_hash_table::iterator find(const VariableKeyBase& key) {
-        return coeff.find(key);
-    }
-
-    coeff_hash_table::iterator end() { return coeff.end(); }
-
     void add_coeff_hash_table(int _j, int _t, bool _high, double _coeff) {
         BddCoeff key(_j, _t, _coeff, 0.0, -1, _high);
 
-        auto it = coeff.find(key);
-        if (it == coeff.end()) {
-            coeff[key] = _coeff;
+        auto it = this->find(key);
+        if (it == this->end()) {
+            (*this)[key] = _coeff;
         } else {
-            coeff[key] += _coeff;
+            (*this)[key] += _coeff;
         }
     }
 
     void list_coeff() {
-        for (auto& it : coeff) {
+        for (auto& it : (*this)) {
             fmt::print("{} ({},{},{})", it.second, it.first.get_j(),
                        it.first.get_t(), it.first.get_high());
         }
         fmt::print("\n");
+
+        // fmt::print("{}", *this);
     }
 
     friend bool operator==(const GenericData& lhs, const GenericData& rhs) {
-        if (lhs.coeff.size() != rhs.coeff.size()) {
+        if (lhs.size() != rhs.size()) {
             return false;
         }
 
-        for (auto& it1 : lhs.coeff) {
-            auto it2 = rhs.coeff.find(it1.first);
-            if (it2 == rhs.coeff.end()) {
+        for (const auto& it1 : lhs) {
+            const auto it2 = rhs.find(it1.first);
+            if (it2 == rhs.end()) {
                 return false;
             }
 
@@ -324,18 +305,17 @@ class ConstraintGeneric : public ConstraintBase {
     ConstraintGeneric& operator=(const ConstraintGeneric&) = default;
     ConstraintGeneric(const ConstraintGeneric&) = default;
 
-    double get_var_coeff(VariableKeyBase* key) override {
-        // auto* aux = static_cast<BddCoeff*>(key);
-        auto it = data->find(*key);
-        if (it == data->end()) {
-            return 0.0;
-        } else {
-            return (*it).second;
-        }
-    }
+    // double get_var_coeff(VariableKeyBase* key) override {
+    //     // auto* aux = static_cast<BddCoeff*>(key);
+    //     auto it = data->find(*key);
+    //     if (it == data->end()) {
+    //         return 0.0;
+    //     } else {
+    //         return (*it).second;
+    //     }
+    // }
 
     double operator()(const VariableKeyBase& key) override {
-        // auto* aux = static_cast<BddCoeff*>(key);
         auto it = data->find(key);
         if (it == data->end()) {
             return 0.0;
