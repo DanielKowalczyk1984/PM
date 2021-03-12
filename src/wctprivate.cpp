@@ -128,8 +128,7 @@ Problem::Problem(int argc, const char** argv)
                 std::make_unique<PricingStabilizationStat>(tmp_solver);
             break;
     }
-    root_pd->stat = &(stat);
-    root_pd->opt_sol = &opt_sol;
+
     root_pd->solver->update_UB(opt_sol.tw);
 
     /**
@@ -141,10 +140,7 @@ Problem::Problem(int argc, const char** argv)
     to_csv();
 }
 
-NodeData::~NodeData() {
-    temporary_data_free();
-}
-
+NodeData::~NodeData() = default;
 void Problem::solve() {
     tree->explore();
     if (parms.print) {
