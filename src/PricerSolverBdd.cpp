@@ -57,16 +57,16 @@ PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src)
       original_model(src.original_model),
       H_max(src.H_max),
       H_min(src.H_min) {
-    remove_layers_init();
-    decision_diagram.compressBdd();
-    size_graph = decision_diagram.size();
-    init_table();
+    // remove_layers_init();
+    // decision_diagram.compressBdd();
+    // size_graph = decision_diagram.size();
+    // init_table();
     cleanup_arcs();
     // check_infeasible_arcs();
     bottum_up_filtering();
     topdown_filtering();
     construct_mipgraph();
-    init_coeff_constraints();
+    // init_coeff_constraints();
 }
 
 PricerSolverBdd::~PricerSolverBdd() = default;
@@ -244,7 +244,7 @@ void PricerSolverBdd::init_table() {
 }
 
 void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
-    lp_interface_get_nb_rows(pd->RMP, &(pd->nb_rows));
+    lp_interface_get_nb_rows(pd->RMP.get(), &(pd->nb_rows));
     auto nb_new_constraints =
         reformulation_model.get_nb_constraints() - pd->nb_rows;
 
@@ -319,14 +319,14 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
 
     starts[nb_new_constraints] = pos;
 
-    lp_interface_addrows(pd->RMP, nb_new_constraints, coeff.size(),
+    lp_interface_addrows(pd->RMP.get(), nb_new_constraints, coeff.size(),
                          starts.data(), column_ind.data(), coeff.data(),
                          sense.data(), rhs.data(), nullptr);
-    lp_interface_get_nb_rows(pd->RMP, &(pd->nb_rows));
+    lp_interface_get_nb_rows(pd->RMP.get(), &(pd->nb_rows));
     pd->pi.resize(pd->nb_rows, 0.0);
     pd->slack.resize(pd->nb_rows, 0.0);
     pd->rhs.resize(pd->nb_rows, 0.0);
-    lp_interface_get_rhs(pd->RMP, (pd->rhs).data());
+    lp_interface_get_rhs(pd->RMP.get(), (pd->rhs).data());
     pd->lhs_coeff.resize(pd->nb_rows, 0.0);
     pd->id_row.resize(pd->nb_rows, 0.0);
     pd->coeff_row.resize(pd->nb_rows, 0.0);

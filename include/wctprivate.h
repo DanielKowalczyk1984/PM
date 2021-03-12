@@ -2,6 +2,7 @@
 #define WCT_PRIVATE_H
 
 #include <bits/c++config.h>
+#include <functional>
 #include <memory>
 #include <vector>
 #include "BranchBoundTree.hpp"
@@ -22,15 +23,6 @@ struct ScheduleSet;
 /**
  * wct data types nodes of branch and bound tree
  */
-typedef enum {
-    initialized = 0,
-    LP_bound_estimated = 1,
-    LP_bound_computed = 2,
-    submitted_for_branching = 3,
-    infeasible = 4,
-    finished = 5,
-} NodeDataStatus;
-
 /**
  *  CONSTANTS NODEDATA STRUCTURE
  *
@@ -107,19 +99,33 @@ struct Problem {
 };
 
 struct NodeData {
-    // The id and depth of the node in the B&B tree
+    typedef enum {
+        initialized = 0,
+        LP_bound_estimated = 1,
+        LP_bound_computed = 2,
+        submitted_for_branching = 3,
+        infeasible = 4,
+        finished = 5,
+    } NodeDataStatus;
+
     int id;
     int depth;
 
     NodeDataStatus status;
 
     // The instance information
+    const Parms&    parms;
     const Instance& instance;
-    int             nb_jobs;
-    int             nb_machines;
+    Statistics&     stat;
+    Sol&            opt_sol;
+    std::string     pname;
+
+    int nb_jobs;
+    int nb_machines;
 
     // The column generation lp information
-    wctlp*              RMP;
+    std::unique_ptr<wctlp, std::function<void(wctlp*)>> RMP;
+
     std::vector<double> lambda;
 
     std::vector<double> pi;
@@ -184,42 +190,27 @@ struct NodeData {
     /**
      * ptr to the parent node
      */
-    NodeData* parent;
-
-    /** Some additional pointers to data needed */
-    Parms*      parms;
-    Statistics* stat;
-    Sol*        opt_sol;
-    std::string pname;
-
     explicit NodeData(Problem* problem);
-    explicit NodeData(const Instance&);
-    NodeData(const NodeData&) = delete;
+    NodeData(const NodeData&);
     NodeData& operator=(const NodeData&) = delete;
     NodeData& operator=(NodeData&&) = delete;
-    NodeData(NodeData&&) = default;
+    NodeData(NodeData&&) = delete;
     ~NodeData();
 
-    // void init_null();
-    void lp_node_data_free();
-    void temporary_data_free();
     void prune_duplicated_sets();
-    // void add_solution_to_colpool(Solution*);
     void add_solution_to_colpool(const Sol&);
-    // void add_solution_to_colpool_and_lp(Solution*);
-    void add_solution_to_colpool_and_lp(const Sol&);
 
     int build_rmp();
     /** lowerbound.cpp */
     int  delete_unused_rows();
     int  delete_old_schedules();
     int  delete_infeasible_schedules();
-    void make_pi_feasible_farkas_pricing();
     int  compute_objective();
     int  solve_relaxation();
     int  compute_lower_bound();
     int  check_schedules();
     int  print_x();
+    void make_pi_feasible_farkas_pricing();
 
     /** PricerSolverWrappers.cpp */
     void build_solve_mip();
@@ -249,6 +240,9 @@ struct NodeData {
     /** StabilizationWrappers.cpp */
     template <typename T>
     int construct_sol(OptimalSolution<T>* sol);
+    int grab_integer_solution(std::vector<double> const& x, double tolerance);
+
+    static constexpr double min_nb_del_row_ratio = 0.9;
 };
 
 #endif

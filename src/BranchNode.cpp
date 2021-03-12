@@ -26,7 +26,7 @@ void BranchNodeBase::branch(BTree* bt) {
     auto* solver = pd->solver.get();
     auto  nb_jobs = pd->nb_jobs;
     auto  strong_branching =
-        ((pd->opt_sol->tw - pd->LP_lower_bound) < (1.0 + IntegerTolerance));
+        ((pd->opt_sol.tw - pd->LP_lower_bound) < (1.0 + IntegerTolerance));
 
     if (!strong_branching && dbg_lvl() > 0) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
@@ -158,7 +158,7 @@ void BranchNodeBase::branch(BTree* bt) {
                     i, middle_time[i], left_gain + pd->instance.off,
                     left_node_branch->pd->iterations, approx);
             }
-            if (left_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance ||
+            if (left_gain >= pd->opt_sol.tw - 1.0 + IntegerTolerance ||
                 left_solver->get_is_integer_solution()) {
                 fathom_left = true;
             }
@@ -182,7 +182,7 @@ void BranchNodeBase::branch(BTree* bt) {
                     i, middle_time[i], right_gain + pd->instance.off,
                     right_node_branch->pd->iterations, approx);
             }
-            if (right_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance ||
+            if (right_gain >= pd->opt_sol.tw - 1.0 + IntegerTolerance ||
                 right_solver->get_is_integer_solution()) {
                 fathom_right = true;
             }
@@ -282,8 +282,8 @@ bool BranchNodeBase::is_terminal_state() {
 void BranchNodeBase::apply_final_pruning_tests(BTree* bt) {}
 
 void BranchNodeBase::update_data(double upper_bound) {
-    auto* statistics = pd->stat;
-    statistics->global_upper_bound = static_cast<int>(upper_bound);
+    // auto* statistics = pd->stat;
+    pd->stat.global_upper_bound = static_cast<int>(upper_bound);
 }
 
 void BranchNodeBase::print(const BTree* bt) const {
@@ -292,16 +292,14 @@ void BranchNodeBase::print(const BTree* bt) const {
         fmt::print("{0:^10}|{1:^30}|{2:^30}|{3:^10}|{4:^10}|\n", "Nodes",
                    "Current Node", "Objective Bounds", "Branch", "Work");
         fmt::print(
-            "{0:^5}{1:^5}|{2:^10}{3:^10}{10:^10}|{4:>10}{5:>10}{6:>10}|{7:>5}{"
-            "8:>5}"
-            "|{9:>5}{11:>5}\n",
+            R"({0:^5}{1:^5}|{2:^10}{3:^10}{10:^10}|{4:>10}{5:>10}{6:>10}|{7:>5}{8:>5}|{9:>5}{11:>5}
+)",
             "Expl", "UnEx", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
             "Time", "Time", "Size", "Iter");
     }
     fmt::print(
-        "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{"
-        "8:>"
-        "5}{9:>5}|{10:>5}{11:>5}|\n",
+        R"({0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{8:>5}{9:>5}|{10:>5}{11:>5}|
+)",
         bt->get_nb_nodes_explored(), bt->get_nb_nodes(),
         pd->LP_lower_bound + pd->instance.off, pd->depth,
         solver->get_nb_vertices(), bt->getGlobalUB() + pd->instance.off,

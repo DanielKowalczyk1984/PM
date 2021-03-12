@@ -16,11 +16,11 @@ void NodeData::build_solve_mip() {
 void NodeData::construct_lp_sol_from_rmp() {
     int val = 0;
 
-    val = lp_interface_get_nb_cols(RMP, &nb_cols);
+    val = lp_interface_get_nb_cols(RMP.get(), &nb_cols);
     assert(nb_cols - id_pseudo_schedules == localColPool.size());
 
     lambda.resize(nb_cols - id_pseudo_schedules, 0.0);
-    val = lp_interface_x(RMP, lambda.data(), id_pseudo_schedules);
+    val = lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
     solver->construct_lp_sol_from_rmp(lambda.data(), localColPool,
                                       localColPool.size());
 }
@@ -39,7 +39,7 @@ void NodeData::generate_cuts() {
 int NodeData::delete_unused_rows_range(int first, int last) {
     int val = 0;
 
-    lp_interface_deleterows(RMP, first, last);
+    lp_interface_deleterows(RMP.get(), first, last);
     solver->remove_constraints(first, last - first + 1);
     solver_stab->remove_constraints(first, last - first + 1);
     // g_array_remove_range(pi, first, last - first + 1);
@@ -69,34 +69,33 @@ void NodeData::make_schedule_set_feasible(ScheduleSet* set) {
 }
 
 void NodeData::get_mip_statistics(enum MIP_Attr c) {
-    Statistics* statistics = stat;
     switch (c) {
         case MIP_Attr_Nb_Vars:
-            statistics->mip_nb_vars = solver->get_int_attr_model(c);
+            stat.mip_nb_vars = solver->get_int_attr_model(c);
             break;
         case MIP_Attr_Nb_Constr:
-            statistics->mip_nb_constr = solver->get_int_attr_model(c);
+            stat.mip_nb_constr = solver->get_int_attr_model(c);
             break;
         case MIP_Attr_Obj_Bound:
-            statistics->mip_obj_bound = solver->get_dbl_attr_model(c);
+            stat.mip_obj_bound = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Obj_Bound_LP:
-            statistics->mip_obj_bound_lp = solver->get_dbl_attr_model(c);
+            stat.mip_obj_bound_lp = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Mip_Gap:
-            statistics->mip_rel_gap = solver->get_dbl_attr_model(c);
+            stat.mip_rel_gap = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Run_Time:
-            statistics->mip_run_time = solver->get_dbl_attr_model(c);
+            stat.mip_run_time = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Status:
-            statistics->mip_status = solver->get_int_attr_model(c);
+            stat.mip_status = solver->get_int_attr_model(c);
             break;
         case MIP_Attr_Nb_Simplex_Iter:
-            statistics->mip_nb_iter_simplex = solver->get_dbl_attr_model(c);
+            stat.mip_nb_iter_simplex = solver->get_dbl_attr_model(c);
             break;
         case MIP_Attr_Nb_Nodes:
-            statistics->mip_nb_nodes = solver->get_dbl_attr_model(c);
+            stat.mip_nb_nodes = solver->get_dbl_attr_model(c);
             break;
     }
 }
