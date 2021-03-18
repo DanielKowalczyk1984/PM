@@ -14,7 +14,6 @@ struct ScheduleSet {
     int del{};
     int total_processing_time{};
     int total_weighted_completion_time{};
-    int id{-1};
 
     std::vector<Job*> job_list{};
 
@@ -41,14 +40,5 @@ struct less<std::shared_ptr<ScheduleSet>> {
 };
 
 }  // namespace std
-
-/*Sorting schedulesets*/
-// int  scheduleset_less(ScheduleSet* c1, ScheduleSet* c2);
-// gint g_scheduleset_less(gconstpointer a, gconstpointer b);
-// void g_scheduleset_print(gpointer data, gpointer user_data);
-// void g_sum_recalculate(gpointer data, gpointer user_data);
-
-/** new approach for columns */
-// void g_sum_processing_time(gpointer data, gpointer user_data);
 
 #endif  // SCHEDULESET_H

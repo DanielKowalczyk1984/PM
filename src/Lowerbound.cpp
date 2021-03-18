@@ -2,6 +2,12 @@
 #include <fmt/core.h>
 #include <algorithm>
 #include <boost/timer/timer.hpp>
+#include <range/v3/action/remove_if.hpp>
+#include <range/v3/algorithm/remove_if.hpp>
+#include <range/v3/numeric/accumulate.hpp>
+#include <range/v3/numeric/inner_product.hpp>
+#include <range/v3/view/enumerate.hpp>
+#include <range/v3/view/zip.hpp>
 #include <string>
 #include <vector>
 #include "Job.h"
@@ -36,18 +42,19 @@ int NodeData::grow_ages() {
         // CCcheck_val_2(val, "Failed in lp_interface_basis_cols");
         zero_count = 0;
 
-        std::ranges::for_each(localColPool, [&](auto& it) {
-            if (column_status[it->id] == lp_interface_LOWER ||
-                column_status[it->id] == lp_interface_FREE) {
-                it->age++;
+        std::ranges::for_each(
+            localColPool | ranges::views::enumerate, [&](auto&& it) {
+                if (column_status[it.first] == lp_interface_LOWER ||
+                    column_status[it.first] == lp_interface_FREE) {
+                    it.second->age++;
 
-                if (it->age > retirementage) {
-                    zero_count++;
+                    if (it.second->age > retirementage) {
+                        zero_count++;
+                    }
+                } else {
+                    it.second->age = 0;
                 }
-            } else {
-                it->age = 0;
-            }
-        });
+            });
     }
 
     return val;
@@ -116,7 +123,16 @@ int NodeData::delete_old_schedules() {
         lp_interface_get_nb_cols(RMP.get(), &nb_cols);
         assert(nb_cols - id_pseudo_schedules == localColPool.size());
 
-        std::erase_if(localColPool, [&](auto const& it) {
+        // std::erase_if(localColPool, [&](auto const& it) {
+        //     auto val = false;
+        //     if (it->age > retirementage) {
+        //         dellist.emplace_back(iter + id_pseudo_schedules);
+        //         val = true;
+        //     }
+        //     iter++;
+        //     return val;
+        // });
+        localColPool |= ranges::actions::remove_if([&](const auto& it) {
             auto val = false;
             if (it->age > retirementage) {
                 dellist.emplace_back(iter + id_pseudo_schedules);
@@ -133,11 +149,12 @@ int NodeData::delete_old_schedules() {
             fmt::print("Deleted {} out of {} columns with age > {}.\n",
                        zero_count, localColPool.size(), retirementage);
         }
-
         lp_interface_get_nb_cols(RMP.get(), &nb_cols);
         assert(localColPool.size() == nb_cols - id_pseudo_schedules);
-        i = 0;
-        std::ranges::for_each(localColPool, [&](auto& it) { it->id = i++; });
+        // i = 0;
+        // std::ranges::for_each(localColPool, [&](auto& it) { it->id =
+        // i++;
+        // });
         zero_count = 0;
     }
 
@@ -155,7 +172,9 @@ int NodeData::delete_infeasible_schedules() {
     assert(nb_cols - id_pseudo_schedules == count);
     std::vector<int> dellist{};
 
-    std::erase_if(localColPool, [&](auto& it) {
+    // std::erase_if(localColPool, );
+
+    localColPool |= ranges::actions::remove_if([&](auto& it) {
         auto val = false;
         if (!it->del) {
             dellist.emplace_back(iter + id_pseudo_schedules);
@@ -169,7 +188,9 @@ int NodeData::delete_infeasible_schedules() {
 
     if (dbg_lvl() > 1) {
         fmt::print(
-            "Deleted {} out of {} columns(infeasible columns after reduce cost "
+            "Deleted {} out of {} columns(infeasible columns after "
+            "reduce "
+            "cost "
             "fixing).\n",
             dellist.size(), count);
     }
@@ -180,9 +201,9 @@ int NodeData::delete_infeasible_schedules() {
         fmt::print("number of cols = {}\n", nb_cols - id_pseudo_schedules);
     }
 
-    for (auto& it : localColPool) {
-        it->id = i;
-    }
+    // for (auto& it : localColPool) {
+    //     it->id = i;
+    // }
 
     if (!dellist.empty()) {
         solve_relaxation();
@@ -231,7 +252,8 @@ CLEAN:
 
 //         if (dbg_lvl() > 1) {
 //             fmt::print(
-//                 R"(Decreased column sum of {} from  {:30.20f} to  {:30.20f}
+//                 R"(Decreased column sum of {} from  {:30.20f} to
+//                 {:30.20f}
 // )",
 //                 x->id, colsum, newcolsum);
 //         }
@@ -279,7 +301,8 @@ CLEAN:
 
 //         if (dbg_lvl() > 1) {
 //             fmt::print(
-//                 R"(Decreased column sum of {} from  {:30.20f} to  {:30.20f}
+//                 R"(Decreased column sum of {} from  {:30.20f} to
+//                 {:30.20f}
 // )",
 //                 x->id, colsum, newcolsum);
 //         }
@@ -298,9 +321,7 @@ int NodeData::compute_objective() {
     /** compute lower bound with the dual variables */
     assert(nb_rows == pi.size());
 
-    for (int i = 0; i < nb_rows; i++) {
-        LP_lower_bound_dual += pi[i] * rhs[i];
-    }
+    LP_lower_bound_dual = ranges::inner_product(pi, rhs, 0.0);
     LP_lower_bound_dual -= EPS_BOUND;
 
     /** Get the LP lower bound and compute the lower bound of WCT */
@@ -315,7 +336,8 @@ int NodeData::compute_objective() {
 
     if (iterations % (nb_jobs) == 0 && dbg_lvl() > 0) {
         fmt::print(
-            "Current primal LP objective: {:19.16f}  (LP_dual-bound {:19.16f}, "
+            "Current primal LP objective: {:19.16f}  (LP_dual-bound "
+            "{:19.16f}, "
             "lowerbound = {}, eta_in = {}, eta_out = {}).\n",
             LP_lower_bound + instance.off, LP_lower_bound_dual + instance.off,
             lower_bound + instance.off,
@@ -352,11 +374,11 @@ int NodeData::solve_relaxation() {
     switch (status) {
         case LP_INTERFACE_OPTIMAL:
             /** grow ages of the different columns */
-            val = grow_ages();
+            grow_ages();
             /** get the dual variables and make them feasible */
-            val = lp_interface_pi(RMP.get(), pi.data());
+            lp_interface_pi(RMP.get(), pi.data());
             /** Compute the objective function */
-            val = compute_objective();
+            compute_objective();
             break;
 
         case LP_INTERFACE_INFEASIBLE:
@@ -416,8 +438,7 @@ int NodeData::compute_lower_bound() {
              */
             if (zero_count > nb_jobs * min_nb_del_row_ratio &&
                 status == GRB_OPTIMAL) {
-                val = delete_old_schedules();
-                // CCcheck_val_2(val, "Failed in delete_old_cclasses");
+                delete_old_schedules();
             }
             solve_relaxation();
 
@@ -502,9 +523,9 @@ int NodeData::compute_lower_bound() {
                 // compute_objective(pd);
                 if (!localColPool.empty()) {
                     construct_lp_sol_from_rmp();
-                    // CCcheck_val_2(val, "Failed in construct lp sol from
-                    // rmp\n"); solve_relaxation(pd); delete_old_schedules(pd);
-                    // delete_unused_rows(pd);
+                    // CCcheck_val_2(val, "Failed in construct lp sol
+                    // from rmp\n"); solve_relaxation(pd);
+                    // delete_old_schedules(pd); delete_unused_rows(pd);
                     // solve_relaxation(pd);
                     // construct_lp_sol_from_rmp(pd);
                     // if (!call_is_integer_solution(pd->solver)) {
@@ -521,7 +542,7 @@ int NodeData::compute_lower_bound() {
                 lp_interface_write(RMP.get(), "infeasible_RMP.lp");
                 lp_interface_compute_IIS(RMP.get());
         }
-    } while (0);
+    } while (false);
 
     if (iterations < NB_CG_ITERATIONS &&
         stat.tot_cputime.cum_zeit <= parms.branching_cpu_limit) {
@@ -600,12 +621,11 @@ int NodeData::check_schedules() {
     if (dbg_lvl() > 1) {
         fmt::print("number of cols check {}\n", nb_cols - id_pseudo_schedules);
     }
-    for (unsigned i = 0; i < localColPool.size(); ++i) {
-        ScheduleSet* tmp = localColPool[i].get();
-        if (check_schedule_set(tmp)) {
-            tmp->del = 1;
+    for (auto& col : localColPool) {
+        if (check_schedule_set(col.get())) {
+            col->del = 1;
         } else {
-            tmp->del = 0;
+            col->del = 0;
         }
     }
 

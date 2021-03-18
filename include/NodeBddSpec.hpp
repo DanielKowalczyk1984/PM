@@ -29,6 +29,7 @@
 #include <cassert>
 #include <cstddef>
 #include <iostream>
+#include <range/v3/view/zip.hpp>
 #include <span>
 #include <stdexcept>
 #include "NodeBddDumper.hpp"
@@ -133,8 +134,9 @@ class DdSpecBase {
         // I const*  a2 = static_cast<I const*>(p2);
         std::span aux1{static_cast<I const*>(p1), sizeof(T) / sizeof(I)};
         std::span aux2{static_cast<I const*>(p2), sizeof(T) / sizeof(I)};
-        for (size_t i = 0; i < sizeof(T) / sizeof(I); ++i) {
-            if (aux1[i] != aux2[i]) {
+
+        for (auto&& [it1, it2] : ranges::views::zip(aux1, aux2)) {
+            if (it1 != it2) {
                 return false;
             }
         }

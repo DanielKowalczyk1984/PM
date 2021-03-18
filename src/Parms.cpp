@@ -1,9 +1,6 @@
 #include "Parms.h"
 #include <docopt/docopt.h>
 #include <fmt/core.h>
-#include <limits.h>
-#include <string.h>
-#include <cstdio>
 #include <regex>
 #include <string>
 #include <vector>
@@ -33,7 +30,7 @@ Parms::Parms()
       nb_machines(0) {}
 
 Parms::Parms(int argc, const char** argv) : Parms() {
-    int val = program_header(argc, argv);
+    program_header(argc, argv);
 
     parse_cmd(argc, argv);
 
@@ -54,11 +51,6 @@ int Parms::parms_set_pname(std::string const& fname) {
 
 int Parms::parms_set_branching_cpu_limit(double limit) {
     branching_cpu_limit = limit;
-    return 0;
-}
-
-int Parms::parms_set_branching_strategy(int strategy) {
-    // bb_branch_strategy = strategy;
     return 0;
 }
 
@@ -112,7 +104,7 @@ int Parms::parms_set_bb_node_limit(int node_limit) {
 }
 
 int Parms::parms_set_stab_technique(int stab_technique) {
-    stab_technique = static_cast<stab_techniques>(stab_technique);
+    stab_technique = static_cast<StabTechniques>(stab_technique);
     return 0;
 }
 
@@ -129,7 +121,6 @@ int Parms::parms_set_pricing_solver(int solver) {
 static std::string find_match(std::string const& _instance_file) {
     std::regex  regexp{"^.*(wt[0-9]*_[0-9]*).*$"};
     std::smatch match{};
-    // std::string s{_instance_file};
     std::regex_search(_instance_file, match, regexp);
 
     if (match.size() != 2) {
@@ -146,38 +137,36 @@ int Parms::parse_cmd(int argc, const char** argv) {
         docopt::docopt_parse(USAGE, {argv + 1, argv + argc}, true, "PM 0.1");
 
     /** Set CPU limit for branching */
-    val = parms_set_branching_cpu_limit(
+    parms_set_branching_cpu_limit(
         static_cast<double>(args["--cpu_limit"].asLong()));
     /** Set number of iterations in rvnd */
-    val = parms_set_nb_iterations_rvnd(
+    parms_set_nb_iterations_rvnd(
         static_cast<int>(args["--nb_rvnb_it"].asLong()));
     /** Print statistics to csv files */
-    val = parms_set_print(args["--print_csv"].asBool());
+    parms_set_print(args["--print_csv"].asBool());
     /** Use MIP solver or not */
-    val = parms_set_mip_solver(args["--mip_solver"].asBool());
+    parms_set_mip_solver(args["--mip_solver"].asBool());
     /** Use reduced cost fixing */
-    val = parms_set_reduce_cost(!(args["--no_rc_fixing"].asBool()));
+    parms_set_reduce_cost(!(args["--no_rc_fixing"].asBool()));
     /** Use heuristic or not */
-    val = parms_set_use_heuristic(!(args["--no_heuristic"].asBool()));
+    parms_set_use_heuristic(!(args["--no_heuristic"].asBool()));
     /** Set the pricing solver */
-    val = parms_set_pricing_solver(
+    parms_set_pricing_solver(
         static_cast<int>(args["--pricing_solver"].asLong()));
     /** Set the stabilization method */
-    val = parms_set_stab_technique(
-        static_cast<int>(args["--stab_method"].asLong()));
-    val = parms_set_branchandbound(args["--no_branch_and_bound"].asBool());
-    val = parms_set_strong_branching(!(args["--no_strong_branching"].asBool()));
-    val = parms_set_alpha(std::stod(args["--alpha"].asString()));
-    val = parms_set_bb_explore_strategy(
+    parms_set_stab_technique(static_cast<int>(args["--stab_method"].asLong()));
+    parms_set_branchandbound(args["--no_branch_and_bound"].asBool());
+    parms_set_strong_branching(!(args["--no_strong_branching"].asBool()));
+    parms_set_alpha(std::stod(args["--alpha"].asString()));
+    parms_set_bb_explore_strategy(
         static_cast<int>(args["--branching_strategy"].asLong()));
-    val = parms_set_bb_node_limit(
-        static_cast<int>(args["--node_limit"].asLong()));
+    parms_set_bb_node_limit(static_cast<int>(args["--node_limit"].asLong()));
     /** Determine the name of the instance */
     auto file_name = args["FILE"].asString();
-    val = parms_set_file(file_name);
-    val = parms_set_pname(find_match(file_name));
+    parms_set_file(file_name);
+    parms_set_pname(find_match(file_name));
     /** Set the number of machines */
-    val = parms_set_nb_machines(static_cast<int>(args["NB"].asLong()));
+    parms_set_nb_machines(static_cast<int>(args["NB"].asLong()));
 
     return val;
 }

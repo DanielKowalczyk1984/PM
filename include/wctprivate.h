@@ -36,13 +36,13 @@ constexpr double EPS_BOUND = 1e-9;
  * wct problem data type
  */
 
-typedef enum {
+enum problem_status {
     no_sol = 0,
     lp_feasible = 1,
     feasible = 2,
     meta_heuristic = 3,
     optimal = 4
-} problem_status;
+};
 
 struct Problem {
     /** Different Parameters */
@@ -87,9 +87,11 @@ struct Problem {
 
     class ProblemException : public std::exception {
        public:
-        ProblemException(const char* const msg = 0) { errmsg = msg; }
+        ProblemException(const char* const msg = nullptr) : errmsg(msg) {}
 
-        const char* what(void) const throw() override { return (errmsg); }
+        [[nodiscard]] const char* what() const noexcept override {
+            return (errmsg);
+        }
 
        private:
         const char* errmsg;
@@ -97,14 +99,14 @@ struct Problem {
 };
 
 struct NodeData {
-    typedef enum {
+    enum NodeDataStatus {
         initialized = 0,
         LP_bound_estimated = 1,
         LP_bound_computed = 2,
         submitted_for_branching = 3,
         infeasible = 4,
         finished = 5,
-    } NodeDataStatus;
+    };
 
     int id;
     int depth;
@@ -222,7 +224,7 @@ struct NodeData {
     int  solve_pricing();
     void solve_farkas_dbl();
 
-    std::unique_ptr<NodeData> clone() const;
+    [[nodiscard]] std::unique_ptr<NodeData> clone() const;
 
     int add_scheduleset_to_rmp(ScheduleSet* set);
 

@@ -16,11 +16,10 @@
 #include <util.h>
 #include <span>
 
-ScheduleSet::ScheduleSet(const Machine& m) {
-    job_list = m.job_list;
-    total_processing_time = m.completion_time;
-    total_weighted_completion_time = m.total_weighted_tardiness;
-}
+ScheduleSet::ScheduleSet(const Machine& m)
+    : job_list(m.job_list),
+      total_processing_time(m.completion_time),
+      total_weighted_completion_time(m.total_weighted_tardiness) {}
 
 bool ScheduleSet::operator<(ScheduleSet const& other) {
     auto& tmp1 = job_list;

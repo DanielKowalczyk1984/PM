@@ -52,9 +52,9 @@ int NodeData::solve_pricing() {
         solver_stab->continueLP &&
         (solver_stab->get_eta_in() < upper_bound - 1.0 + EPS_BOUND)) {
         auto sol = std::move(solver_stab->get_sol());
-        val = construct_sol(&sol);
+        construct_sol(&sol);
         val = add_lhs_scheduleset_to_rmp(newsets.get());
-        newsets->id = localColPool.size();
+        // newsets->id = localColPool.size();
         localColPool.emplace_back(newsets);
         nb_non_improvements = 0;
     } else {
@@ -66,11 +66,10 @@ CLEAN:
 }
 
 void NodeData::solve_farkas_dbl() {
-    int                     val = 0;
     OptimalSolution<double> s = solver->farkas_pricing(pi.data());
 
     if (s.obj < EPS) {
-        val = construct_sol(&s);
+        construct_sol(&s);
         lp_interface_write(RMP.get(), "RMP.lp");
     } else {
         nb_new_sets = 0;

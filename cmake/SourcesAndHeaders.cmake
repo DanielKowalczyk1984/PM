@@ -29,6 +29,7 @@ set(sources
     "src/wct.cpp"
     "src/wctprivate.cpp"
     "src/ZeroHalfCuts.cpp"
+    "src/ZeroHalfSystem.cpp"
 )
 
 set(exe_sources "src/main.cpp")

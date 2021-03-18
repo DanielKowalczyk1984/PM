@@ -14,9 +14,9 @@ int value_diff_Fij(int C, Job* i, Job* j) {
 }
 
 int bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) {
-    return (_prev == NULL) ? 1
-                           : (value_diff_Fij(weight + tmp_j->processing_time,
-                                             _prev, tmp_j) >= 0);
+    return (_prev == nullptr) ? 1
+                              : (value_diff_Fij(weight + tmp_j->processing_time,
+                                                _prev, tmp_j) >= 0);
 }
 
 int arctime_diff_Fij(int weight, Job* i, Job* j) {

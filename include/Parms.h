@@ -74,7 +74,7 @@ enum BranchandBound {
     yes_branch_and_bound = min_branch_and_bound,
 };
 
-enum stab_techniques {
+enum StabTechniques {
     no_stab = 0,
     stab_wentgnes = 1,
     stab_dynamic = 2,
@@ -148,9 +148,9 @@ struct Parms {
     /**
      * column generation
      */
-    int                  branchandbound;
-    enum stab_techniques stab_technique;
-    int                  print;
+    int                 branchandbound;
+    enum StabTechniques stab_technique;
+    int                 print;
 
     std::string jobfile;
     std::string pname;
@@ -169,7 +169,6 @@ struct Parms {
     /*Functions for setting some parameters*/
     int parms_set_branching_cpu_limit(double limit);
     int parms_set_alpha(double alpha);
-    int parms_set_branching_strategy(int strategy);
     int parms_set_strong_branching(int strong);
     int parms_set_mip_solver(int usage);
     int parms_set_use_heuristic(int usage);

@@ -35,6 +35,7 @@
         "cbfs",
         "cbfstree",
         "cofeb",
+        "cppcoreguidelines",
         "dfstree",
         "gboolean",
         "gconstpointer",
@@ -52,7 +53,6 @@
         "wentgnes",
         "zeit"
     ],
-    "cquery.cacheDirectory": "${workspaceFolder}/.vscode/cquery_cached_index/",
     "files.associations": {
         "*.ipynb": "jupyter",
         "format": "cpp",

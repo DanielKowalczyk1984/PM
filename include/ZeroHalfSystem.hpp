@@ -37,7 +37,7 @@ class ZeroHalfSystem {
 
     void reduce_system();
     void reduce_gauss();
-    void evaluate_rows(const std::vector<int> _rows);
+    void evaluate_rows(const std::vector<int>& _rows);
 
     void add_to_row(size_t i, size_t j);
 };

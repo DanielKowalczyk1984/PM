@@ -42,13 +42,13 @@ class PricerSolverBdd : public PricerSolverBase {
 
     void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
-    void check_infeasible_arcs();
-    void topdown_filtering();
-    void bottum_up_filtering();
-    void equivalent_paths_filtering();
-    void print_representation_file();
-    void calculate_H_min();
-    void cleanup_arcs();
+    void                  check_infeasible_arcs();
+    void                  topdown_filtering();
+    void                  bottum_up_filtering();
+    void                  equivalent_paths_filtering();
+    [[maybe_unused]] void print_representation_file();
+    void                  calculate_H_min();
+    void                  cleanup_arcs();
 
     void remove_layers();
     void remove_edges();

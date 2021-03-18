@@ -222,9 +222,8 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
 
         for (int c = convex_constr_id + 1; c < reformulation_model.size();
              c++) {
-            auto*  constr_ = reformulation_model[c].get();
             double dual_ = aux_pi[c];
-            double coeff_ = (*constr)(k);
+            double coeff_ = (*reformulation_model[c])(k);
 
             if (fabs(coeff_) > EPS_SOLVER) {
                 result -= coeff_ * dual_;
@@ -270,8 +269,7 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
 
         for (int c = convex_constr_id + 1; c < reformulation_model.size();
              c++) {
-            auto* constr_ = reformulation_model[c].get();
-            auto  coeff_ = (*constr)(k);
+            auto coeff_ = (*reformulation_model[c])(k);
 
             if (fabs(coeff_) > EPS_SOLVER) {
                 aux_subgradient[c] -= coeff_ * convex_rhs;

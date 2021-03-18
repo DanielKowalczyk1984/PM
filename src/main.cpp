@@ -1,6 +1,5 @@
 #include <docopt/docopt.h>
 #include <fmt/core.h>
-#include <cstdlib>
 #include "Parms.h"
 #include "wctprivate.h"
 

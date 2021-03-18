@@ -6,6 +6,11 @@
 #include <memory>
 #include <queue>
 #include <random>
+#include <range/v3/action/shuffle.hpp>
+#include <range/v3/action/sort.hpp>
+#include <range/v3/algorithm/sort.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 #include <ranges>
 #include <vector>
 #include "Instance.h"
@@ -31,7 +36,7 @@ void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
 }
 
 void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
-    auto cmp_jobs_spt = [](const auto& x, const auto& y) -> bool {
+    auto cmp_jobs_spt = [](const auto x, const auto y) -> bool {
         if (x->processing_time > y->processing_time) {
             return false;
         } else if (x->processing_time < y->processing_time) {
@@ -50,11 +55,10 @@ void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
             return true;
         }
     };
-    // std::vector<std::shared_ptr<Job>> tmp = v;
-    std::vector<Job*> tmp{};
-    std::ranges::transform(v.cbegin(), v.cend(), std::back_inserter(tmp),
-                           [](auto& ptr) { return ptr.get(); });
-    std::ranges::sort(tmp, cmp_jobs_spt);
+
+    auto tmp =
+        v | ranges::views::transform([](const auto ptr) { return ptr.get(); }) |
+        ranges::to<std::vector>() | ranges::actions::sort(cmp_jobs_spt);
 
     for (auto& it : tmp) {
         add_job_front_machine(it);
@@ -65,9 +69,10 @@ void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
 
 void Sol::construct_random_fisher_yates(
     const std::vector<std::shared_ptr<Job>>& v) {
-    std::vector<Job*> tmp{};
-    std::ranges::transform(v.cbegin(), v.cend(), std::back_inserter(tmp),
-                           [](auto& ptr) { return ptr.get(); });
+    auto tmp =
+        v | ranges::views::transform([](const auto ptr) { return ptr.get(); }) |
+        ranges::to<std::vector>();
+
     for (auto i = 0UL; i < tmp.size() - 1; i++) {
         auto j = i + rand() % (tmp.size() - i);
         std::swap(tmp[i], tmp[j]);
@@ -81,12 +86,15 @@ void Sol::construct_random_fisher_yates(
 }
 
 void Sol::construct_random_shuffle(const std::vector<std::shared_ptr<Job>>& v) {
-    std::vector<Job*> tmp{};
-    std::ranges::transform(v.cbegin(), v.cend(), std::back_inserter(tmp),
-                           [](auto& ptr) { return ptr.get(); });
     std::random_device         rd;
     std::default_random_engine rng(rd());
-    std::shuffle(tmp.begin(), tmp.end(), rng);
+
+    auto tmp =
+        v | ranges::views::transform([](const auto ptr) { return ptr.get(); }) |
+        ranges::to<std::vector>();
+
+    tmp |= ranges::actions::shuffle(rng);
+
     for (auto& it : tmp) {
         add_job_front_machine(it);
         std::push_heap(machines.begin(), machines.end(),
@@ -324,7 +332,6 @@ Sol::Sol(const Instance& instance)
 void Sol::update_insertion_move(int i, int j, int k, int l) {
     auto& m = machines[k];
     auto  begin = m.job_list.begin();
-    auto  old = tw;
     tw -= m.total_weighted_tardiness;
 
     swap_ranges(begin + i, begin + i + l, begin + j + 1, begin + j + 1);
@@ -337,15 +344,12 @@ void Sol::update_insertion_move(int i, int j, int k, int l) {
 void Sol::update_swap_move(int i, int j, int k, int l1, int l2) {
     auto& m = machines[k];
     auto& vec_m = machines[k].job_list;
-    auto  old = tw;
     tw -= m.total_weighted_tardiness;
 
     auto it1 = vec_m.begin() + i;
     auto it2 = vec_m.begin() + j;
 
     swap_ranges(it1, it1 + l1, it2, it2 + l2);
-    it1 = vec_m.begin() + i;
-    it2 = vec_m.begin() + j;
 
     m.reset_machine(c);
 
@@ -357,7 +361,6 @@ void Sol::update_insertion_move_inter(int i, int j, int k, int l, int m) {
     auto& m2 = machines[l];
     auto  begin1 = m1.job_list.begin();
     auto  begin2 = m2.job_list.begin();
-    auto  old = tw;
 
     tw -= m1.total_weighted_tardiness + m2.total_weighted_tardiness;
 

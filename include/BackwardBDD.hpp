@@ -2,6 +2,7 @@
 #define BACKWARD_BDD_HPP
 #include <fmt/core.h>
 #include <limits>
+#include <range/v3/action/remove_if.hpp>
 #include <span>
 #include "NodeBdd.hpp"
 #include "NodeBddEval.hpp"
@@ -120,8 +121,11 @@ class BackwardBddCycle : public BackwardBddBase<T> {
 
         n.reset_reduced_costs();
 
+        // n.adjust_reduced_costs(dual[tmp_j->job], true);
+        // n.adjust_reduced_costs(d, bool high)
+
         for (auto& list : n.coeff_list) {
-            auto tmp = std::remove_if(list.begin(), list.end(), [&](auto it) {
+            list |= ranges::actions::remove_if([&](auto it) {
                 auto aux = it.lock();
                 if (aux) {
                     n.adjust_reduced_costs(
@@ -132,7 +136,8 @@ class BackwardBddCycle : public BackwardBddBase<T> {
                     return true;
                 }
             });
-            list.erase(tmp, list.end());
+            // auto tmp = std::remove_if(list.begin(), list.end(), );
+            // list.erase(tmp, list.end());
         }
 
         auto prev_job{p1_tmp.backward_label[0].get_prev_job()};

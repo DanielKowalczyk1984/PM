@@ -1,5 +1,6 @@
 #include <fmt/core.h>
 #include <numeric>
+#include <range/v3/view/enumerate.hpp>
 #include <vector>
 #include "Job.h"
 #include "gurobi_c.h"
@@ -10,17 +11,17 @@
 
 int NodeData::grab_integer_solution(std::vector<double> const& x,
                                     double                     tolerance) {
-    int    val = 0;
-    double incumbent = 0.0;
-    int    tot_weighted = 0;
+    auto incumbent = 0.0;
+    auto tot_weighted = 0;
 
-    val = lp_interface_objval(RMP.get(), &incumbent);
-    val = lp_interface_get_nb_cols(RMP.get(), &nb_cols);
+    lp_interface_objval(RMP.get(), &incumbent);
+    lp_interface_get_nb_cols(RMP.get(), &nb_cols);
     assert(nb_cols - id_pseudo_schedules == localColPool.size());
 
     best_schedule.clear();
 
-    for (auto i = 0UL; const auto& tmp_schedule : localColPool) {
+    for (const auto&& [i, tmp_schedule] :
+         localColPool | ranges::views::enumerate) {
         if (x[i + id_pseudo_schedules] >= 1.0 - tolerance) {
             auto aux = std::make_shared<ScheduleSet>(*tmp_schedule);
             best_schedule.emplace_back(aux);
@@ -32,10 +33,8 @@ int NodeData::grab_integer_solution(std::vector<double> const& x,
                     "ERROR: \"Integral\" solution turned out to be not "
                     "integral!\n");
                 fflush(stdout);
-                val = 1;
             }
         }
-        ++i;
     }
 
     /** Write a check function */
@@ -53,61 +52,54 @@ int NodeData::grab_integer_solution(std::vector<double> const& x,
         status = finished;
     }
 
-    return val;
+    return 0;
 }
 
 int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
-    int val = 0;
     id_row.clear();
     coeff_row.clear();
 
-    for (auto j = 0; auto const& it : lhs_coeff) {
+    for (auto const&& [j, it] : lhs_coeff | ranges::views::enumerate) {
         if (std::fabs(it) > EPS_BOUND) {
             id_row.emplace_back(j);
             coeff_row.emplace_back(it);
         }
-        ++j;
     }
 
     int len = id_row.size();
 
-    val = lp_interface_get_nb_cols(RMP.get(), &(nb_cols));
-    set->id = nb_cols - id_pseudo_schedules;
     auto cost = static_cast<double>(set->total_weighted_completion_time);
-    val = lp_interface_addcol(RMP.get(), len, id_row.data(), coeff_row.data(),
-                              cost, 0.0, GRB_INFINITY, lp_interface_CONT, NULL);
+    lp_interface_addcol(RMP.get(), len, id_row.data(), coeff_row.data(), cost,
+                        0.0, GRB_INFINITY, lp_interface_CONT, nullptr);
 
-    return val;
+    return 0;
 }
 
 int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
-    auto  val = 0;
     auto  row_ind = 0;
     auto  var_ind = 0;
     auto  cval = 0.0;
     auto  cost = static_cast<double>(set->total_weighted_completion_time);
     auto* lp = RMP.get();
 
-    val = lp_interface_get_nb_cols(lp, &(nb_cols));
+    lp_interface_get_nb_cols(lp, &(nb_cols));
     var_ind = nb_cols;
-    set->id = nb_cols - id_pseudo_schedules;
-    val = lp_interface_addcol(lp, 0, nullptr, nullptr, cost, 0.0, GRB_INFINITY,
-                              lp_interface_CONT, nullptr);
+    lp_interface_addcol(lp, 0, nullptr, nullptr, cost, 0.0, GRB_INFINITY,
+                        lp_interface_CONT, nullptr);
 
     for (auto i = 0UL; auto& it : set->job_list) {
-        // job = static_cast<Job*>(g_ptr_array_index(members, i));
         row_ind = it->job;
-        val = lp_interface_getcoeff(lp, &row_ind, &var_ind, &cval);
+        lp_interface_getcoeff(lp, &row_ind, &var_ind, &cval);
         cval += 1.0;
-        val = lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
+        lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
         ++i;
     }
 
     row_ind = nb_jobs;
     cval = -1.0;
-    val = lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
+    lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
 
-    return val;
+    return 0;
 }
 
 int NodeData::build_rmp() {
@@ -120,8 +112,8 @@ int NodeData::build_rmp() {
      * add assignment constraints
      */
     lp_interface_get_nb_rows(RMP.get(), &(id_assignment_constraint));
-    lp_interface_addrows(RMP.get(), nb_jobs, 0, start.data(), NULL, NULL,
-                         sense.data(), rhs_tmp.data(), NULL);
+    lp_interface_addrows(RMP.get(), nb_jobs, 0, start.data(), nullptr, nullptr,
+                         sense.data(), rhs_tmp.data(), nullptr);
 
     /**
      * add number of machines constraint (convexification)
@@ -164,6 +156,7 @@ int NodeData::build_rmp() {
     val = lp_interface_get_nb_cols(RMP.get(), &(id_pseudo_schedules));
 
     /** add columns from localColPool */
+    prune_duplicated_sets();
     std::ranges::for_each(localColPool,
                           [&](auto& it) { add_scheduleset_to_rmp(it.get()); });
 

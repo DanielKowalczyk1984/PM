@@ -29,8 +29,10 @@ struct SlopeType {
           c(_c),
           alpha(_alpha) {}
 
-    int  operator()(int t) { return c + alpha * (t - b1); };
-    bool in_interval(int c) const { return (b1 <= c) && (c < b2); };
+    int                operator()(int t) { return c + alpha * (t - b1); };
+    [[nodiscard]] bool in_interval(int c) const {
+        return (b1 <= c) && (c < b2);
+    };
 };
 
 struct ProcessingListData {

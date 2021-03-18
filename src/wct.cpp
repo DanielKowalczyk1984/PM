@@ -1,10 +1,10 @@
 #include <bits/ranges_algo.h>
-#include <fmt/core.h>
-#include <algorithm>
 #include <functional>
 #include <limits>
 #include <memory>
-#include <vector>
+#include <range/v3/action/sort.hpp>
+#include <range/v3/action/unique.hpp>
+#include <range/v3/view/enumerate.hpp>
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
 #include "lp.h"
@@ -118,23 +118,23 @@ std::unique_ptr<NodeData> NodeData::clone() const {
 }
 
 void NodeData::prune_duplicated_sets() {
-    auto equal_func = [](auto const& lhs, auto const& rhs) {
-        return (*lhs) == (*rhs);
-    };
+    auto equal_func = [](auto const& l, auto const& r) { return (*l) == (*r); };
 
-    std::ranges::sort(localColPool, std::less<std::shared_ptr<ScheduleSet>>());
-    localColPool.erase(
-        std::unique(localColPool.begin(), localColPool.end(), equal_func),
-        localColPool.end());
+    localColPool |=
+        ranges::actions::sort(std::less<std::shared_ptr<ScheduleSet>>()) |
+        ranges::actions::unique(equal_func);
+    //     std::ranges::sort(localColPool,
+    //     std::less<std::shared_ptr<ScheduleSet>>()); localColPool.erase(
+    //         std::unique(localColPool.begin(), localColPool.end(),
+    //         equal_func), localColPool.end());
 
-    int i = 0;
-    std::ranges::for_each(localColPool, [&i](auto& it) { it->id = i++; });
+    // int i = 0;
+    // std::ranges::for_each(localColPool, [&i](auto& it) { it->id = i; });
 }
 
 void NodeData::add_solution_to_colpool(const Sol& sol) {
     for (auto& it : sol.machines) {
         std::shared_ptr<ScheduleSet> tmp = std::make_shared<ScheduleSet>(it);
-        tmp->id = localColPool.size();
         localColPool.emplace_back(tmp);
     }
 }

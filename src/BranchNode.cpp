@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <numeric>
+#include <range/v3/numeric/iota.hpp>
 #include <span>
 #include "PricerSolverBase.hpp"
 #include "branch-and-bound/btree.h"
@@ -42,17 +44,15 @@ void BranchNodeBase::branch(BTree* bt) {
     // calculate the fraction of each job finishing at each time in the
     // relaxation solution
     std::vector<std::vector<double>> x_job_time(nb_jobs);
-    for (auto i = 0; i < nb_jobs; i++) {
-        x_job_time[i].resize(pd->instance.H_max + 1, 0.0);
+    for (auto& it : x_job_time) {
+        it.resize(pd->instance.H_max + 1, 0.0);
     }
 
     solver->calculate_job_time(&x_job_time);
 
     // initialize the order for evaluating the branching jobs
     std::vector<int> ord(nb_jobs);
-    for (int k = 0; k < nb_jobs; k++) {
-        ord[k] = k;
-    }
+    ranges::iota(ord, 0);
 
     // initialize the middle times and scores used for branching
     std::vector<int>        middle_time(nb_jobs, -1);

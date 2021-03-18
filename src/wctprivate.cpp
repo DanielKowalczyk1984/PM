@@ -1,10 +1,8 @@
 #include "wctprivate.h"
 #include <fmt/core.h>
-#include <algorithm>
 #include <boost/timer/timer.hpp>
 #include <limits>
 #include <memory>
-#include <type_traits>
 #include <vector>
 #include "Instance.h"
 #include "LocalSearch_new.h"

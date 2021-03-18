@@ -104,7 +104,7 @@ set(CMAKE_C_FLAGS_RELEASE
 )
 
 # Debug Flags
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++20 -O0 -m64")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -m64")
 set(CMAKE_C_FLAGS_DEBUG
     "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
@@ -135,8 +135,8 @@ else()
              ${CONAN_INCLUDE_DIRS_FMT}
              ${CONAN_INCLUDE_DIRS_BOOST}
              ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
-             ORUtils::ORUtils
-             branch-and-bound::branch-and-bound
+             ${CONAN_INCLUDE_DIRS_RANGE-V3}
+             ${CONAN_INCLUDE_DIRS_EIGEN}
       PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
@@ -147,6 +147,8 @@ else()
       CONAN_PKG::fmt
       CONAN_PKG::boost
       CONAN_PKG::docopt.cpp
+      CONAN_PKG::range-v3
+      CONAN_PKG::eigen
       ORUtils::ORUtils
       branch-and-bound::branch-and-bound
       -lm

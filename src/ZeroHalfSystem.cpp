@@ -58,7 +58,7 @@ ZeroHalfSystem::ZeroHalfSystem(const MatrixDouble& _A,
         ranges::to<std::vector>();
 
     for (auto&& [i, set] : row_index | vs::enumerate) {
-        set[i] = 1;
+        set[i] = true;
     }
 
     reduce_system();
@@ -217,7 +217,7 @@ void ZeroHalfSystem::reduce_gauss() {
     }
 }
 
-void ZeroHalfSystem::evaluate_rows(const std::vector<int> _rows) {
+void ZeroHalfSystem::evaluate_rows(const std::vector<int>& _rows) {
     auto sum_slack = 0.0;
     ranges::for_each(_rows, [&](int idx) { sum_slack += slack[idx]; });
     if (sum_slack <= 1.0 - HALF * EPS) {

@@ -244,7 +244,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     }
 
     /**
-     * Checks structural inequivalence with another DD.
+     * Checks structural in-equivalence with another DD.
      * @return true if they have the different structure.
      */
     bool operator!=(DdStructure const& o) const { return !operator==(o); }
