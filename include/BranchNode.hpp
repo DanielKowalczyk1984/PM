@@ -28,7 +28,7 @@ class BranchNodeBase : public State {
     BranchNodeBase& operator=(BranchNodeBase&&) = default;
     BranchNodeBase& operator=(const BranchNodeBase&) = delete;
     ~BranchNodeBase() override = default;
-    std::unique_ptr<State> clone() const override { return nullptr; }
+    [[nodiscard]] std::unique_ptr<State> clone() const override { return nullptr; }
 
     void branch(BTree* bt) final;
     void compute_bounds(BTree* bt) final;

@@ -29,8 +29,8 @@ class NodeTableEntity : public data_table_node<T> {
 
     NodeTableEntity<T>(const NodeTableEntity<T>&) = default;
     NodeTableEntity<T>& operator=(const NodeTableEntity<T>&) = delete;
-    NodeTableEntity<T>& operator=(NodeTableEntity<T>&&) = default;
-    NodeTableEntity<T>(NodeTableEntity<T>&&) = default;
+    NodeTableEntity<T>& operator=(NodeTableEntity<T>&&) noexcept = default;
+    NodeTableEntity<T>(NodeTableEntity<T>&&) noexcept = default;
     ~NodeTableEntity<T>() = default;
 
     /**
@@ -323,7 +323,7 @@ class NodeTableEntity : public data_table_node<T> {
      * @param os output stream.
      * @param title title label.
      */
-    void dumpDot(std::ostream& os, std::string title = "") const {
+    void dumpDot(std::ostream& os, const std::string& title = "") const {
         os << "digraph \"" << title << "\" {\n";
 
         for (int i = this->numRows() - 1; i >= 1; --i) {

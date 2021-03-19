@@ -1,16 +1,14 @@
 #include <fmt/chrono.h>
 #include <fmt/core.h>
-#include <fmt/format.h>
 #include <functional>
 #include <memory>
-#include "MIP_defs.hpp"
 #include "Statistics.h"
 #include "wctprivate.h"
 
 void Problem::to_csv() {
     using ptr_file = std::unique_ptr<std::FILE, std::function<int(FILE*)>>;
 
-    ptr_file    file = nullptr;
+    ptr_file    file{};
     std::time_t result = std::time(nullptr);
     const auto  current_t = std::localtime(&result);
 

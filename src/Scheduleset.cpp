@@ -10,11 +10,7 @@
 ////////////////////////////////////////////////////////////////
 
 #include <bits/ranges_algo.h>
-#include <defs.h>
-#include <fmt/core.h>
 #include <scheduleset.h>
-#include <util.h>
-#include <span>
 
 ScheduleSet::ScheduleSet(const Machine& m)
     : job_list(m.job_list),

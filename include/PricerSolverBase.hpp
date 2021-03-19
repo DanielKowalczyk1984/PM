@@ -143,7 +143,8 @@ struct PricerSolverBase {
     virtual double compute_reduced_cost(const OptimalSolution<>& sol,
                                         double*                  pi,
                                         double*                  lhs);
-    virtual double compute_lagrange(const OptimalSolution<>& sol, double* pi);
+    virtual double compute_lagrange(const OptimalSolution<>&   sol,
+                                    const std::vector<double>& pi);
 
     virtual double compute_subgradient(const OptimalSolution<>& sol,
                                        double*                  subgradient);

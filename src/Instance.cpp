@@ -1,11 +1,7 @@
 #include "Instance.h"
 #include <bits/ranges_algo.h>
 #include <fmt/core.h>
-#include <fmt/format.h>
-#include <algorithm>
 #include <cstddef>
-#include <cstdio>
-#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -56,11 +52,8 @@ Instance::Instance(const Parms& _parms)
 }
 
 void Instance::calculate_H_max_H_min() {
-    auto temp = 0;
-    auto temp_dbl = 0.0;
-
-    temp = p_sum - pmax;
-    temp_dbl = static_cast<double>(temp);
+    auto temp = p_sum - pmax;
+    auto temp_dbl = static_cast<double>(temp);
     temp_dbl = floor(temp_dbl / nb_machines);
     H_max = static_cast<int>(temp_dbl) + pmax;
     H_min = static_cast<int>(ceil(temp_dbl / nb_machines)) - pmax;

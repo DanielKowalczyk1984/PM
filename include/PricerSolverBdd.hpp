@@ -99,7 +99,8 @@ class PricerSolverBdd : public PricerSolverBase {
     double compute_reduced_cost(const OptimalSolution<>& sol,
                                 double*                  pi,
                                 double*                  lhs) override;
-    double compute_lagrange(const OptimalSolution<>& sol, double* pi) override;
+    double compute_lagrange(const OptimalSolution<>&   sol,
+                            const std::vector<double>& pi) override;
 
     double compute_subgradient(const OptimalSolution<>& sol,
                                double*                  sub_gradient) override;

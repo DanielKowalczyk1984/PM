@@ -1,4 +1,3 @@
-#include <fmt/core.h>
 #include <memory>
 #include "PricerSolverBase.hpp"
 #include "scheduleset.h"
@@ -7,7 +6,6 @@
 template <typename T = double>
 int NodeData::construct_sol(OptimalSolution<T>* sol) {
     int                          val = 0;
-    int                          nb_set = 1;
     std::shared_ptr<ScheduleSet> newset = std::make_shared<ScheduleSet>();
 
     newset->job_list = std::move(sol->jobs);
@@ -54,14 +52,12 @@ int NodeData::solve_pricing() {
         auto sol = std::move(solver_stab->get_sol());
         construct_sol(&sol);
         val = add_lhs_scheduleset_to_rmp(newsets.get());
-        // newsets->id = localColPool.size();
         localColPool.emplace_back(newsets);
         nb_non_improvements = 0;
     } else {
         nb_non_improvements++;
     }
 
-CLEAN:
     return val;
 }
 

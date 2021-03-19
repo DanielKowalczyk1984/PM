@@ -1,10 +1,5 @@
 #ifndef SCHEDULESET_H
 #define SCHEDULESET_H
-// #ifdef __cplusplus
-// extern "C" {
-// #endif
-// #include <glib.h>
-// #include <interval.h>
 #include <memory>
 #include <vector>
 #include "Solution.hpp"

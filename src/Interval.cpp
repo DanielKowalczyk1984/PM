@@ -1,10 +1,7 @@
 #include "Interval.h"
 #include <bits/ranges_algo.h>
-#include <fmt/core.h>
 #include <cmath>
 #include <memory>
-#include <ranges>
-#include "Instance.h"
 
 Interval::Interval(int _a, int _b, const vector_ptr_jobs& _sigma)
     : a(_a),

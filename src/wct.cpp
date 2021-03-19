@@ -1,10 +1,8 @@
-#include <bits/ranges_algo.h>
 #include <functional>
 #include <limits>
 #include <memory>
 #include <range/v3/action/sort.hpp>
 #include <range/v3/action/unique.hpp>
-#include <range/v3/view/enumerate.hpp>
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
 #include "lp.h"

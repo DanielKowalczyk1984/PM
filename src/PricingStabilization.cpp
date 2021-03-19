@@ -34,7 +34,7 @@ void PricingStabilizationBase::solve(double _eta_out,
     solver->calculate_constLB(pi_out.data());
     sol = std::move(solver->pricing_algorithm(pi_out.data()));
     reduced_cost = solver->compute_reduced_cost(sol, pi_out.data(), _lhs);
-    eta_sep = solver->compute_lagrange(sol, pi_out.data());
+    eta_sep = solver->compute_lagrange(sol, pi_out);
     update_stab_center = false;
     eta_out = _eta_out;
     continueLP = (eta_in < eta_out);
@@ -167,7 +167,7 @@ void PricingStabilizationStat::solve(double _eta_out, double* _lhs_coeff) {
         OptimalSolution<> aux_sol =
             std::move(solver->pricing_algorithm(pi_sep.data()));
 
-        eta_sep = solver->compute_lagrange(aux_sol, pi_sep.data());
+        eta_sep = solver->compute_lagrange(aux_sol, pi_sep);
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs_coeff);
 
@@ -262,7 +262,7 @@ void PricingStabilizationDynamic::solve(double _eta_out, double* _lhs) {
         alphabar = hasstabcenter ? std::max(0.0, 1.0 - k * (1 - alpha)) : 0.0;
         compute_pi_eta_sep(alphabar);
         auto aux_sol = std::move(solver->pricing_algorithm(pi_sep.data()));
-        result_sep = solver->compute_lagrange(aux_sol, pi_sep.data());
+        result_sep = solver->compute_lagrange(aux_sol, pi_sep);
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs);
 
@@ -413,7 +413,7 @@ void PricingStabilizationHybrid::solve(double _eta_out,
         OptimalSolution<double> aux_sol;
         aux_sol = solver->pricing_algorithm(pi_sep.data());
 
-        eta_sep = solver->compute_lagrange(aux_sol, pi_sep.data());
+        eta_sep = solver->compute_lagrange(aux_sol, pi_sep);
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs);
 

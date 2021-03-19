@@ -1,7 +1,6 @@
 #include "PricerSolverSimpleDP.hpp"
 #include <fmt/core.h>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graph_traits.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <vector>
 #include "Instance.h"
@@ -55,7 +54,6 @@ void PricerSolverSimpleDp::evaluate_nodes(double*                 pi,
                                           [[maybe_unused]] double LB) {
     forward_evaluator(pi);
     backward_evaluator(pi);
-    return;
 }
 
 void PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
@@ -102,7 +100,6 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     }
 
     fmt::print("new size of TI formulation = {} {} {}", size_graph, counter, x);
-    return;
 }
 
 void PricerSolverSimpleDp::build_mip() {
@@ -167,7 +164,7 @@ void PricerSolverSimpleDp::build_mip() {
 
         model.update();
 
-    } catch (GRBException e) {
+    } catch (GRBException& e) {
         std::cerr << e.getMessage() << '\n';
     }
 
@@ -181,7 +178,6 @@ void PricerSolverSimpleDp::build_mip() {
     model.write("ti_" + problem_name + "_" + std::to_string(convex_rhs) +
                 "correct.lp");
     model.optimize();
-    return;
 }
 
 void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
@@ -242,13 +238,12 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
 OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     OptimalSolution<double> opt_sol;
     opt_sol.cost = 0;
-    int               t_min = 0;
     std::vector<Job*> v;
 
     forward_evaluator(_pi);
 
     /** Find optimal solution */
-    opt_sol.obj = DBL_MAX;
+    opt_sol.obj = std::numeric_limits<double>::max();
 
     for (int i = 0; i < Hmax + 1; i++) {
         if (F[i] < opt_sol.obj) {
@@ -257,7 +252,7 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
         }
     }
 
-    t_min = opt_sol.C_max;
+    auto t_min = opt_sol.C_max;
 
     /** Construct the solution */
     while (A[t_min] != nullptr) {

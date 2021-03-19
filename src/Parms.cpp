@@ -3,7 +3,6 @@
 #include <fmt/core.h>
 #include <regex>
 #include <string>
-#include <vector>
 #include "util.h"
 
 const double TIME_LIMIT = 7200.0;
@@ -54,8 +53,8 @@ int Parms::parms_set_branching_cpu_limit(double limit) {
     return 0;
 }
 
-int Parms::parms_set_alpha(double alpha) {
-    alpha = alpha;
+int Parms::parms_set_alpha(double _alpha) {
+    alpha = _alpha;
     return 0;
 }
 
@@ -103,13 +102,13 @@ int Parms::parms_set_bb_node_limit(int node_limit) {
     return 0;
 }
 
-int Parms::parms_set_stab_technique(int stab_technique) {
-    stab_technique = static_cast<StabTechniques>(stab_technique);
+int Parms::parms_set_stab_technique(int _stab_technique) {
+    stab_technique = static_cast<StabTechniques>(_stab_technique);
     return 0;
 }
 
-int Parms::parms_set_print(int print) {
-    print = print;
+int Parms::parms_set_print(int _print) {
+    print = _print;
     return 0;
 }
 

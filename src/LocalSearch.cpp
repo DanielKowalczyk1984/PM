@@ -941,7 +941,7 @@ void LocalSearchData::create_processing_insertion_operator_inter(const Sol& sol,
     int val = 0;
 
     for (auto i = 0UL; auto& m : sol.machines) {
-        const auto& nb_jobs = m.job_list.size();
+        const auto& nb = m.job_list.size();
         const auto& vec_m = m.job_list;
         auto        C = 0;
 
@@ -950,17 +950,17 @@ void LocalSearchData::create_processing_insertion_operator_inter(const Sol& sol,
             C += j1->processing_time;
         }
 
-        for (auto j = 0UL; j < nb_jobs - l; ++j) {
+        for (auto j = 0UL; j < nb - l; ++j) {
             auto j1 = vec_m[j];
             auto j2 = vec_m[j + l];
             processing_list[0][i][j] = {j, C};
             C = C - j1->processing_time + j2->processing_time;
         }
 
-        processing_list[0][i][nb_jobs - l] = {nb_jobs - l, C};
+        processing_list[0][i][nb - l] = {nb - l, C};
         std::sort(
             processing_list[0][i].begin(),
-            processing_list[0][i].begin() + nb_jobs - l + 1,
+            processing_list[0][i].begin() + nb - l + 1,
             [](const auto& lhs, const auto& rhs) { return lhs.p < rhs.p; });
         i++;
     }
@@ -973,10 +973,10 @@ void LocalSearchData::create_processing_list_swap_inter(const Sol& sol,
 
     for (int i = 0; i < nb_machines; ++i) {
         auto&      machine = sol.machines[i].job_list;
-        const auto nb_jobs = machine.size();
+        const auto nb = machine.size();
         int        C = 0;
 
-        if (nb_jobs - l1 < 0 || nb_jobs - l2 < 0) {
+        if (nb - l1 < 0 || nb - l2 < 0) {
             continue;
         }
 
@@ -984,18 +984,18 @@ void LocalSearchData::create_processing_list_swap_inter(const Sol& sol,
             C += machine[j]->processing_time;
         }
 
-        for (auto j = 0UL; j < nb_jobs - l1; ++j) {
+        for (auto j = 0UL; j < nb - l1; ++j) {
             auto j1 = machine[j];
             auto j2 = machine[j + l1];
             processing_list[0][i][j] = {j, C};
             C = C - j1->processing_time + j2->processing_time;
         }
 
-        processing_list[0][i][nb_jobs - l1].pos = nb_jobs - l1;
-        processing_list[0][i][nb_jobs - l1].p = C;
+        processing_list[0][i][nb - l1].pos = nb - l1;
+        processing_list[0][i][nb - l1].p = C;
         std::sort(
             processing_list[0][i].begin(),
-            processing_list[0][i].begin() + nb_jobs - l1 + 1,
+            processing_list[0][i].begin() + nb - l1 + 1,
             [](const auto& lhs, const auto& rhs) { return lhs.p < rhs.p; });
         C = 0;
 
@@ -1003,17 +1003,17 @@ void LocalSearchData::create_processing_list_swap_inter(const Sol& sol,
             C += machine[j]->processing_time;
         }
 
-        for (auto j = 0UL; j < nb_jobs - l2; ++j) {
+        for (auto j = 0UL; j < nb - l2; ++j) {
             auto j1 = machine[j];
             auto j2 = machine[j + l2];
             processing_list[1][i][j] = {j, C};
             C = C - j1->processing_time + j2->processing_time;
         }
 
-        processing_list[1][i][nb_jobs - l2] = {nb_jobs - l2, C};
+        processing_list[1][i][nb - l2] = {nb - l2, C};
         std::sort(
             processing_list[1][i].begin(),
-            processing_list[1][i].begin() + nb_jobs - l2 + 1,
+            processing_list[1][i].begin() + nb - l2 + 1,
             [](const auto& lhs, const auto& rhs) { return lhs.p < rhs.p; });
     }
 }

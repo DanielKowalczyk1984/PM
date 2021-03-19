@@ -258,8 +258,8 @@ void ZeroHalfCuts::generate_cuts() {
                 }
             };
 
-            for (auto i = root.row(); i > 0; i--) {
-                for (auto& it : (*table)[i]) {
+            for (auto k = root.row(); k > 0; k--) {
+                for (auto& it : (*table)[k]) {
                     auto j = it.get_nb_job();
                     auto x = jobs_var[j].get(GRB_DoubleAttr_Xn);
                     if (x > EPS_CUT) {

@@ -27,6 +27,7 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
 
     init_table();
 }
+#pragma clang diagnostic pop
 
 void PricerSolverArcTimeDp::init_table() {
     graph = vector3d_jobs(n + 1);
@@ -150,7 +151,6 @@ void PricerSolverArcTimeDp::evaluate_nodes(double*                 pi,
     forward_evaluator(pi);
     backward_evaluator(pi);
 
-    return;
 }
 
 void PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
@@ -261,7 +261,6 @@ void PricerSolverArcTimeDp::build_mip() {
             }
         }
     }
-    return;
 }
 
 void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
@@ -300,7 +299,6 @@ void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
         "size_graph after reduced cost fixing = {} and edges removed = {}\n",
         size_graph, nb_edges_removed);
 
-    return;
 }
 
 PricerSolverArcTimeDp::~PricerSolverArcTimeDp() = default;

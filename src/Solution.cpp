@@ -1,18 +1,14 @@
 #include "Solution.hpp"
-#include <bits/c++config.h>
 #include <fmt/core.h>
 #include <algorithm>
-#include <iterator>
 #include <memory>
-#include <queue>
 #include <random>
 #include <range/v3/action/shuffle.hpp>
 #include <range/v3/action/sort.hpp>
-#include <range/v3/algorithm/sort.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
-#include <ranges>
 #include <vector>
+#include <range/v3/view/enumerate.hpp>
 #include "Instance.h"
 #include "Interval.h"
 #include "Job.h"
@@ -39,16 +35,10 @@ void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
     auto cmp_jobs_spt = [](const auto x, const auto y) -> bool {
         if (x->processing_time > y->processing_time) {
             return false;
-        } else if (x->processing_time < y->processing_time) {
-            return true;
         } else if (x->due_time > y->due_time) {
             return false;
-        } else if (x->due_time < y->due_time) {
-            return true;
         } else if (x->weight > y->weight) {
             return false;
-        } else if (x->weight < y->weight) {
-            return true;
         } else if (x->job > y->job) {
             return false;
         } else {
@@ -168,12 +158,10 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                             auto C_aux = c[tmp_in->job];
 
                             std::ranges::sort(Q_in_tmp, cmp);
-                            int j = 0;
-                            for (auto& it : Q_in_tmp) {
-                                Q_tmp[j + 1] = it;
+                            for (auto&& [jj,it] : Q_in_tmp | ranges::views::enumerate) {
+                                Q_tmp[jj + 1] = it;
                                 C_aux += it->processing_time;
                                 c[it->job] = C_aux;
-                                j++;
                             }
                             u_it--;
                         } else {
@@ -290,15 +278,13 @@ void Sol::calculate_partition(const VecIntervalPtr& v) {
 }
 
 void Sol::print_solution() {
-    int j = 0;
-    for (auto& m : machines) {
+    for (auto&& [j,m] : machines | ranges::views::enumerate) {
         fmt::print("Machine {}: ", j);
-        for (auto& j : m.job_list) {
-            fmt::print("{} ", j->job);
+        for (auto& tmp_j : m.job_list) {
+            fmt::print("{} ", tmp_j->job);
         }
         fmt::print("with C = {}, TW = {}, {} jobs\n", m.completion_time,
                    m.total_weighted_tardiness, m.job_list.size());
-        j++;
     }
     fmt::print("with total weighted tardiness {}\n", tw + off);
 }

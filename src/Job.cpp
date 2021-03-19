@@ -1,5 +1,4 @@
 #include "Job.h"
-#include "util.h"
 
 Job::Job(int p, int w, int d) : processing_time(p), due_time(d), weight(w) {}
 

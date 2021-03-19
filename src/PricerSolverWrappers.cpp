@@ -1,11 +1,4 @@
-#include <memory>
-#include "PricerSolverArcTimeDP.hpp"
-#include "PricerSolverBddBackward.hpp"
-#include "PricerSolverBddForward.hpp"
-#include "PricerSolverSimpleDP.hpp"
-#include "PricerSolverZddBackward.hpp"
-#include "PricerSolverZddForward.hpp"
-#include "PricingStabilization.hpp"
+#include "PricerSolverBase.hpp"
 #include "scheduleset.h"
 #include "wctprivate.h"
 
@@ -39,12 +32,9 @@ int NodeData::delete_unused_rows_range(int first, int last) {
     lp_interface_deleterows(RMP.get(), first, last);
     solver->remove_constraints(first, last - first + 1);
     solver_stab->remove_constraints(first, last - first + 1);
-    // g_array_remove_range(pi, first, last - first + 1);
     pi.erase(pi.begin(), pi.begin() + last - first + 1);
     pi.erase(rhs.begin(), rhs.begin() + last - first + 1);
     pi.erase(lhs_coeff.begin(), lhs_coeff.begin() + last - first + 1);
-    // g_array_remove_range(rhs, first, last - first + 1);
-    // g_array_remove_range(lhs_coeff, first, last - first + 1);
 
     return val;
 }

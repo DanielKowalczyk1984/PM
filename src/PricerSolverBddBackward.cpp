@@ -1,6 +1,5 @@
 #include "PricerSolverBddBackward.hpp"
 #include <fmt/core.h>
-#include <iostream>
 #include "Instance.h"
 #include "PricerSolverBdd.hpp"
 #include "util.h"
@@ -232,12 +231,11 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
     /** check for each node the Lagrangian dual */
     for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
         for (auto& it : table[i]) {
-            double result{};
             auto&  child = table.node(it[1]);
 
             // if (it.forward_label[0].get_previous_job() != job &&
             //     it.child[1]->backward_label[0].get_prev_job() != job) {
-            result = it.forward_label[0].get_f() +
+            auto result = it.forward_label[0].get_f() +
                      child.backward_label[0].get_f() + it.reduced_cost[1];
 
             // } else if (it.forward_label[0].get_previous_job() == job &&

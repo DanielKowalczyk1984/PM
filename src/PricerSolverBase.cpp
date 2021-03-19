@@ -204,15 +204,15 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
     return result;
 }
 
-double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
-                                          double*                  pi) {
-    double    result = sol.cost;
-    double    dual_bound = 0.0;
-    std::span aux_pi{pi, reformulation_model.size()};
+double PricerSolverBase::compute_lagrange(const OptimalSolution<>&   sol,
+                                          const std::vector<double>& pi) {
+    double result = sol.cost;
+    double dual_bound = 0.0;
+    // std::span aux_pi{pi, reformulation_model.size()};
 
     for (auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
-        auto            dual = aux_pi[it->job];
+        auto            dual = pi[it->job];
         auto*           constr = reformulation_model[it->job].get();
         auto            coeff = (*constr)(k);
 
@@ -222,7 +222,7 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
 
         for (int c = convex_constr_id + 1; c < reformulation_model.size();
              c++) {
-            double dual_ = aux_pi[c];
+            double dual_ = pi[c];
             double coeff_ = (*reformulation_model[c])(k);
 
             if (fabs(coeff_) > EPS_SOLVER) {
@@ -238,7 +238,7 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>& sol,
             continue;
         }
 
-        dual_bound += constr->get_rhs() * aux_pi[c];
+        dual_bound += constr->get_rhs() * pi[c];
         ++c;
     }
 
