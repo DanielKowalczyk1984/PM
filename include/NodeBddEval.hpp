@@ -153,7 +153,9 @@ class Eval {
 
     Eval<T, R>(const Eval<T, R>&) = default;
     Eval<T, R>(Eval<T, R>&&) noexcept = default;
+
     Eval<T, R>& operator=(const Eval<T, R>&) = default;
+
     Eval<T, R>& operator=(Eval<T, R>&&) noexcept = default;
     ~Eval<T, R>() = default;
 };

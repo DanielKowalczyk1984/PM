@@ -9,7 +9,6 @@
 #include "gurobi_c.h"
 #include "lp.h"
 #include "scheduleset.h"
-#include "solver.h"
 #include "util.h"
 #include "wctprivate.h"
 

@@ -144,8 +144,8 @@ class DdBuilder : BuilderBase {
 
     DdBuilder<S, T>(const DdBuilder<S, T>&) = default;
     DdBuilder<S, T>& operator=(const DdBuilder<S, T>&) = default;
-    DdBuilder<S, T>(DdBuilder<S, T>&&) = default;
-    DdBuilder<S, T>& operator=(DdBuilder<S, T>&&) = default;
+    DdBuilder<S, T>(DdBuilder<S, T>&&) noexcept = default;
+    DdBuilder<S, T>& operator=(DdBuilder<S, T>&&) noexcept = default;
 
     /**
      * Schedules a top-down event.
@@ -373,8 +373,8 @@ class ZddSubsetter : BuilderBase {
 
     ZddSubsetter<T, S>(const ZddSubsetter<T, S>&) = default;
     ZddSubsetter<T, S>& operator=(const ZddSubsetter<T, S>&) = default;
-    ZddSubsetter<T, S>(ZddSubsetter<T, S>&&) = default;
-    ZddSubsetter<T, S>& operator=(ZddSubsetter<T, S>&&) = default;
+    ZddSubsetter<T, S>(ZddSubsetter<T, S>&&) noexcept = default;
+    ZddSubsetter<T, S>& operator=(ZddSubsetter<T, S>&&) noexcept = default;
 
     /**
      * Initializes the builder.

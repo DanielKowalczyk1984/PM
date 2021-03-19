@@ -7,8 +7,10 @@
 #include "Job.h"
 
 struct compare_edd {
+private:
     int a;
     int b;
+public:
     compare_edd(int _a, int _b) : a(_a), b(_b){};
 
     bool operator()(const auto lhs, const auto rhs) {

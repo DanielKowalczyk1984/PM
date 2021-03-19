@@ -8,7 +8,6 @@
 #include <span>
 #include "PricerSolverBase.hpp"
 #include "branch-and-bound/btree.h"
-#include "solver.h"
 #include "util.h"
 #include "wctprivate.h"
 

@@ -4,6 +4,9 @@
 #include <cstddef>
 #include <fstream>
 #include <memory>
+#include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/view/reverse.hpp>
+#include <range/v3/view/take.hpp>
 #include <string>
 #include <utility>
 #include <vector>
@@ -62,15 +65,11 @@ void Instance::calculate_H_max_H_min() {
         return (lhs->processing_time < rhs->processing_time);
     });
 
-    auto m = 0;
-    auto i = nb_jobs - 1;
     auto tmp = p_sum;
     H_min = p_sum;
-    do {
-        tmp -= jobs[i]->processing_time;
-        m++;
-        i--;
-    } while (m < nb_machines - 1);
+    ranges::for_each(
+        jobs | ranges::views::reverse | ranges::views::take(nb_machines - 1),
+        [&tmp](auto& tmp_j) { tmp -= tmp_j->processing_time; });
 
     H_min = static_cast<int>(ceil(tmp / nb_machines));
     fmt::print(

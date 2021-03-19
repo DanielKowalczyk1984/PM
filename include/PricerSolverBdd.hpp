@@ -1,6 +1,7 @@
 #ifndef PRICER_SOLVER_BDD_HPP
 #define PRICER_SOLVER_BDD_HPP
 #include <memory>
+#include <range/v3/view/drop.hpp>
 #include <unordered_map>
 #include <vector>
 #include "Instance.h"
@@ -37,8 +38,8 @@ class PricerSolverBdd : public PricerSolverBase {
     PricerSolverBdd(PricerSolverBdd&&) = default;
     PricerSolverBdd& operator=(PricerSolverBdd&&) = default;
     PricerSolverBdd& operator=(const PricerSolverBdd&) = delete;
-    virtual ~PricerSolverBdd() override;
-    std::unique_ptr<PricerSolverBase> clone() const override = 0;
+    ~PricerSolverBdd() override;
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override = 0;
 
     void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 

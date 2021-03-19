@@ -42,9 +42,9 @@ struct Instance {
     ~Instance() = default;
     class InstanceException : public std::exception {
        public:
-        InstanceException(const char* const msg = 0) { errmsg = msg; }
+        InstanceException(const char* const msg = nullptr) : errmsg(msg) { }
 
-        const char* what(void) const throw() override { return (errmsg); }
+        [[nodiscard]] const char* what() const noexcept override { return (errmsg); }
 
        private:
         const char* errmsg;
