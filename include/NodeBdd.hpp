@@ -12,7 +12,8 @@
 template <typename T = double>
 class NodeBdd : public NodeBase {
    private:
-    int weight{};
+    Job* job{nullptr};
+    int  weight{};
 
    public:
     std::array<Label<NodeBdd<T>, T>, 2>                 forward_label{};
@@ -52,6 +53,11 @@ class NodeBdd : public NodeBase {
     void set_weight(int _weight) { weight = _weight; }
 
     [[nodiscard]] int get_weight() const { return weight; }
+    void              set_job(Job* _job) { job = _job; }
+
+    [[nodiscard]] Job* get_job() const { return job; }
+
+    [[nodiscard]] inline int get_nb_job() const { return job->job; }
 
     void reset_reduced_costs() { reduced_cost = cost; }
 
@@ -101,7 +107,7 @@ class NodeBdd : public NodeBase {
         if (!_terminal_node) {
             weight = _weight;
         } else {
-            NodeBase::set_job(nullptr);
+            set_job(nullptr);
             weight = -1;
         }
     }
@@ -113,18 +119,8 @@ class NodeBdd : public NodeBase {
         }
     }
 
-    friend bool operator<(const NodeBdd<T>& lhs, const NodeBdd<T>& rhs) {
-        return lhs.forward_label[0].f < rhs.forward_label[0].f;
-    }
-
-    friend bool operator>(const NodeBdd<T>& lhs, const NodeBdd<T>& rhs) {
-        return rhs < lhs;
-    }
-    friend bool operator<=(const NodeBdd<T>& lhs, const NodeBdd<T>& rhs) {
-        return !(lhs > rhs);
-    }
-    friend bool operator>=(const NodeBdd<T>& lhs, const NodeBdd<T>& rhs) {
-        return !(lhs < rhs);
+    friend bool operator<=>(const NodeBdd<T>& lhs, const NodeBdd<T>& rhs) {
+        return lhs.forward_label[0] <=> rhs.forward_label[0].f;
     }
 };
 

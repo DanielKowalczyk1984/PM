@@ -6,12 +6,9 @@
 template <typename T = double>
 int NodeData::construct_sol(OptimalSolution<T>* sol) {
     int                          val = 0;
-    std::shared_ptr<ScheduleSet> newset = std::make_shared<ScheduleSet>();
+    std::shared_ptr<ScheduleSet> newset =
+        std::make_shared<ScheduleSet>(std::move(*sol));
 
-    newset->job_list = std::move(sol->jobs);
-
-    newset->total_weighted_completion_time = sol->cost;
-    newset->total_processing_time = sol->C_max;
     newsets = newset;
     nb_new_sets = 1;
 

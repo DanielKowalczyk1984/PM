@@ -83,6 +83,8 @@ bool compare_sub_nodes(const std::shared_ptr<SubNodeZdd<T>>& lhs,
 
 template <typename T>
 class NodeZdd : public NodeBase {
+    Job* job{nullptr};
+
    public:
     std::array<NodeZdd<T>*, 2>                  child{};
     std::shared_ptr<NodeId>                     ptr_node_id;
@@ -109,6 +111,12 @@ class NodeZdd : public NodeBase {
 
         return true;
     }
+
+    void set_job(Job* _job) { job = _job; }
+
+    [[nodiscard]] Job* get_job() const { return job; }
+
+    [[nodiscard]] inline int get_nb_job() const { return job->job; }
 
     bool operator!=(NodeZdd const& o) const { return !operator==(o); }
 

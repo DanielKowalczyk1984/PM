@@ -11,13 +11,6 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
     BackwardBddFarkasDouble farkas_evaluator;
 
    public:
-    // PricerSolverBddBackwardSimple(GPtrArray*  _jobs,
-    //                               int         _num_machines,
-    //                               GPtrArray*  _ordered_jobs,
-    //                               const char* p_name,
-    //                               int         _Hmax,
-    //                               int*        _take_jobs,
-    //                               double      _UB);
     explicit PricerSolverBddBackwardSimple(const Instance& instance);
 
     PricerSolverBddBackwardSimple(const PricerSolverBddBackwardSimple&) =
@@ -27,11 +20,9 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
         default;
     PricerSolverBddBackwardSimple& operator=(
         const PricerSolverBddBackwardSimple&) = delete;
-    virtual ~PricerSolverBddBackwardSimple() override = default;
+    ~PricerSolverBddBackwardSimple() override = default;
 
-    std::unique_ptr<PricerSolverBase> clone() const override {
-        // auto* tmp =
-        //     g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return std::make_unique<PricerSolverBddBackwardSimple>(*this);
     };
 
@@ -50,14 +41,6 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
     BackwardBddFarkasDouble farkas_evaluator;
 
    public:
-    // PricerSolverBddBackwardCycle(GPtrArray*  _jobs,
-    //                              int         _num_machines,
-    //                              GPtrArray*  _ordered_jobs,
-    //                              const char* p_name,
-    //                              int         _Hmax,
-    //                              int*        _take_jobs,
-    //                              double      _UB);
-
     explicit PricerSolverBddBackwardCycle(const Instance& instance);
 
     PricerSolverBddBackwardCycle& operator=(
@@ -66,9 +49,9 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
         default;
     PricerSolverBddBackwardCycle(PricerSolverBddBackwardCycle&&) = default;
     PricerSolverBddBackwardCycle(const PricerSolverBddBackwardCycle&) = default;
-    virtual ~PricerSolverBddBackwardCycle() override = default;
+    ~PricerSolverBddBackwardCycle() override = default;
 
-    std::unique_ptr<PricerSolverBase> clone() const override {
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return std::make_unique<PricerSolverBddBackwardCycle>(*this);
     };
 

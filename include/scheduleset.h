@@ -2,6 +2,8 @@
 #define SCHEDULESET_H
 #include <memory>
 #include <vector>
+#include "ModelInterface.hpp"
+#include "OptimalSolution.hpp"
 #include "Solution.hpp"
 
 struct ScheduleSet {
@@ -14,6 +16,7 @@ struct ScheduleSet {
 
     ScheduleSet() = default;
     explicit ScheduleSet(const Machine&);
+    explicit ScheduleSet(OptimalSolution<double>&& pricing_solution);
     ~ScheduleSet() = default;
     ScheduleSet(ScheduleSet&&) = default;
     ScheduleSet& operator=(ScheduleSet&&) = default;

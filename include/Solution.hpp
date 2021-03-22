@@ -50,13 +50,6 @@ struct Sol {
     int off{};
 
     Sol() = default;
-    // Sol(s _nb_jobs, int _nb_machines, int _off)
-    //     : machines(_nb_machines),
-    //       nb_jobs(_nb_jobs),
-    //       nb_machines(_nb_machines),
-    //       c(_nb_jobs, -1),
-    //       u(_nb_jobs, -1),
-    //       off(_off) {}
     explicit Sol(const Instance& instance);
     Sol(const Sol&) = default;
     Sol& operator=(const Sol&) = default;

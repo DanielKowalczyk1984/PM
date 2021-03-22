@@ -17,6 +17,11 @@ ScheduleSet::ScheduleSet(const Machine& m)
       total_processing_time(m.completion_time),
       total_weighted_completion_time(m.total_weighted_tardiness) {}
 
+ScheduleSet::ScheduleSet(OptimalSolution<double>&& pricing_solution)
+    : total_processing_time(pricing_solution.C_max),
+      total_weighted_completion_time(pricing_solution.cost),
+      job_list(std::move(pricing_solution.jobs)) {}
+
 bool ScheduleSet::operator<(ScheduleSet const& other) {
     auto& tmp1 = job_list;
     auto& tmp2 = other.job_list;
