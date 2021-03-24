@@ -1,8 +1,10 @@
+#include <fmt/core.h>
 #include <functional>
 #include <limits>
 #include <memory>
 #include <range/v3/action/sort.hpp>
 #include <range/v3/action/unique.hpp>
+#include <range/v3/algorithm/for_each.hpp>
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
 #include "lp.h"
@@ -10,10 +12,9 @@
 #include "wctprivate.h"
 
 NodeData::NodeData(Problem* problem)
-    : id(-1),
-      depth(0),
+    : depth(0),
       status(initialized),
-      instance((problem->instance)),
+      instance(problem->instance),
       nb_jobs(instance.nb_jobs),
       nb_machines(instance.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
@@ -78,6 +79,8 @@ NodeData::NodeData(const NodeData& src)
       lhs_coeff(),
       id_row(),
       coeff_row(),
+      nb_rows(),
+      nb_cols(),
       max_nb_cuts(src.max_nb_cuts),
       id_convex_constraint(src.id_convex_constraint),
       id_assignment_constraint(src.id_assignment_constraint),
@@ -125,14 +128,10 @@ void NodeData::prune_duplicated_sets() {
     //     std::less<std::shared_ptr<ScheduleSet>>()); localColPool.erase(
     //         std::unique(localColPool.begin(), localColPool.end(),
     //         equal_func), localColPool.end());
-
-    // int i = 0;
-    // std::ranges::for_each(localColPool, [&i](auto& it) { it->id = i; });
 }
 
 void NodeData::add_solution_to_colpool(const Sol& sol) {
     for (auto& it : sol.machines) {
-        std::shared_ptr<ScheduleSet> tmp = std::make_shared<ScheduleSet>(it);
-        localColPool.emplace_back(tmp);
+        localColPool.emplace_back(std::make_shared<ScheduleSet>(it));
     }
 }

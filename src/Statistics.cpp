@@ -1,14 +1,14 @@
 #include "Statistics.h"
+#include "Parms.h"
+#include "util.h"
 
-Statistics::Statistics()
+Statistics::Statistics(const Parms& _parms)
     : global_upper_bound(INT_MAX),
       global_lower_bound(0),
       rel_error(DBL_MAX),
       root_upper_bound(INT_MAX),
       root_lower_bound(0.0),
       root_rel_error(DBL_MAX),
-      nb_explored_nodes(0),
-      nb_generated_nodes(0),
       nb_generated_col(0),
       nb_generated_col_root(0),
       first_size_graph(0),
@@ -32,7 +32,7 @@ Statistics::Statistics()
       mip_nb_iter_simplex(),
       mip_nb_nodes(0),
       mip_reduced_cost_fixing(),
-      pname() {
+      pname(_parms.pname) {
     CCutil_init_timer(&(tot_build_dd), "tot_build_dd");
     CCutil_init_timer(&(tot_cputime), "tot_cputime");
     CCutil_init_timer(&(tot_branch_and_bound), "tot_branch_and_bound");
@@ -44,4 +44,92 @@ Statistics::Statistics()
     CCutil_init_timer(&(tot_heuristic), "tot_heuristic");
     CCutil_init_timer(&(tot_reduce_cost_fixing), "tot_reduce_cost_fixing");
     CCutil_start_timer(&(tot_cputime));
+}
+
+void Statistics::start_resume_timer(TimerType _type) {
+    switch (_type) {
+        case build_dd_timer:
+            CCutil_start_resume_time(&tot_build_dd);
+            break;
+        case cputime_timer:
+            CCutil_start_resume_time(&tot_cputime);
+            break;
+        case bb_timer:
+            CCutil_start_resume_time(&tot_branch_and_bound);
+            break;
+        case lb_root_timer:
+            CCutil_start_resume_time(&tot_lb_root);
+            break;
+        case lb_timer:
+            CCutil_start_resume_time(&tot_lb);
+            break;
+        case solve_lp_timer:
+            CCutil_start_resume_time(&tot_solve_lp);
+            break;
+        case pricing_timer:
+            CCutil_start_resume_time(&tot_pricing);
+            break;
+        case heuristic_timer:
+            CCutil_start_resume_time(&tot_heuristic);
+            break;
+        case reduced_cost_fixing_timer:
+            CCutil_start_resume_time(&tot_reduce_cost_fixing);
+            break;
+    }
+}
+
+void Statistics::suspend_timer(TimerType _type) {
+    switch (_type) {
+        case build_dd_timer:
+            CCutil_suspend_timer(&tot_build_dd);
+            break;
+        case cputime_timer:
+            CCutil_suspend_timer(&tot_cputime);
+            break;
+        case bb_timer:
+            CCutil_suspend_timer(&tot_branch_and_bound);
+            break;
+        case lb_root_timer:
+            CCutil_suspend_timer(&tot_lb_root);
+            break;
+        case lb_timer:
+            CCutil_suspend_timer(&tot_lb);
+            break;
+        case solve_lp_timer:
+            CCutil_suspend_timer(&tot_solve_lp);
+            break;
+        case pricing_timer:
+            CCutil_suspend_timer(&tot_pricing);
+            break;
+        case heuristic_timer:
+            CCutil_suspend_timer(&tot_heuristic);
+            break;
+        case reduced_cost_fixing_timer:
+            CCutil_suspend_timer(&tot_reduce_cost_fixing);
+            break;
+    }
+}
+
+double Statistics::total_timer(TimerType _type) {
+    switch (_type) {
+        case build_dd_timer:
+            return CCutil_total_timer(&tot_build_dd, 0);
+        case cputime_timer:
+            return CCutil_total_timer(&tot_cputime, 0);
+        case bb_timer:
+            return CCutil_total_timer(&tot_branch_and_bound, 0);
+        case lb_root_timer:
+            return CCutil_total_timer(&tot_lb_root, 0);
+        case lb_timer:
+            return CCutil_total_timer(&tot_lb, 0);
+        case solve_lp_timer:
+            return CCutil_total_timer(&tot_solve_lp, 0);
+        case pricing_timer:
+            return CCutil_total_timer(&tot_pricing, 0);
+        case heuristic_timer:
+            return CCutil_total_timer(&tot_heuristic, 0);
+        case reduced_cost_fixing_timer:
+            return CCutil_total_timer(&tot_reduce_cost_fixing, 0);
+    }
+    return 0.0;
 }

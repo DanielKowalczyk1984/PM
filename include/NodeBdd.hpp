@@ -119,6 +119,13 @@ class NodeBdd : public NodeBase {
         }
     }
 
+    void set_job_label(Job* _job) {
+        for (int j = 0; j < 2; j++) {
+            backward_label[j].set_job(_job);
+            forward_label[j].set_job(_job);
+        }
+    }
+
     friend bool operator<=>(const NodeBdd<T>& lhs, const NodeBdd<T>& rhs) {
         return lhs.forward_label[0] <=> rhs.forward_label[0].f;
     }

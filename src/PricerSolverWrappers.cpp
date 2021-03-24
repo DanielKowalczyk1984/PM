@@ -1,4 +1,5 @@
 #include "PricerSolverBase.hpp"
+#include "Statistics.h"
 #include "scheduleset.h"
 #include "wctprivate.h"
 

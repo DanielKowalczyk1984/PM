@@ -8,6 +8,7 @@
 #include "MipGraph.hpp"
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
+#include "Statistics.h"
 #include "ZddNode.hpp"
 #include "wctprivate.h"
 

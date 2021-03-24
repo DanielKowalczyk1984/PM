@@ -6,32 +6,9 @@
 #include "Instance.h"
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
+#include "Statistics.h"
 #include "ZddNode.hpp"
 #include "scheduleset.h"
-
-// PricerSolverZdd::PricerSolverZdd(GPtrArray*  _jobs,
-//                                  int         _num_machines,
-//                                  GPtrArray*  _ordered_jobs,
-//                                  const char* _p_name,
-//                                  double      _ub)
-//     : PricerSolverBase(_jobs, _num_machines, _p_name, _ub),
-//       ordered_jobs(_ordered_jobs)
-
-// {
-//     /**
-//      * Construction of decision diagram
-//      */
-//     PricerConstruct ps(ordered_jobs);
-//     decision_diagram = std::make_unique<DdStructure<NodeZdd<>>>(ps);
-//     remove_layers_init();
-//     // decision_diagram->compressBdd();
-//     // decision_diagram->reduceZdd();
-//     size_graph = decision_diagram->size();
-//     init_table();
-//     construct_mipgraph();
-//     lp_x = std::vector<double>(num_edges(mip_graph), 0.0);
-//     solution_x = std::vector<double>(num_edges(mip_graph), 0.0);
-// }
 
 PricerSolverZdd::PricerSolverZdd(const Instance& instance)
     : PricerSolverBase(instance),

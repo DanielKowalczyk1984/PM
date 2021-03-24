@@ -1,19 +1,8 @@
 #include <memory>
 #include "PricerSolverBase.hpp"
+#include "Statistics.h"
 #include "scheduleset.h"
 #include "wctprivate.h"
-
-template <typename T = double>
-int NodeData::construct_sol(OptimalSolution<T>* sol) {
-    int                          val = 0;
-    std::shared_ptr<ScheduleSet> newset =
-        std::make_shared<ScheduleSet>(std::move(*sol));
-
-    newsets = newset;
-    nb_new_sets = 1;
-
-    return val;
-}
 
 int NodeData::solve_pricing() {
     int val = 0;
@@ -23,7 +12,9 @@ int NodeData::solve_pricing() {
     if (solver_stab->get_update_stab_center()) {
         if (solver_stab->do_reduced_cost_fixing() &&
             parms.reduce_cost_fixing == yes_reduced_cost) {
+            stat.start_resume_timer(Statistics::reduced_cost_fixing_timer);
             solver_stab->reduced_cost_fixing();
+            stat.suspend_timer(Statistics::reduced_cost_fixing_timer);
             check_schedules();
             delete_infeasible_schedules();
             solve_relaxation();
@@ -33,7 +24,9 @@ int NodeData::solve_pricing() {
         }
     } else {
         if (!solver_stab->continueLP) {
+            stat.start_resume_timer(Statistics::reduced_cost_fixing_timer);
             solver_stab->reduced_cost_fixing();
+            stat.suspend_timer(Statistics::reduced_cost_fixing_timer);
             check_schedules();
             delete_infeasible_schedules();
             solve_relaxation();
@@ -46,10 +39,9 @@ int NodeData::solve_pricing() {
     if (solver_stab->get_reduced_cost() < -EPS_BOUND &&
         solver_stab->continueLP &&
         (solver_stab->get_eta_in() < upper_bound - 1.0 + EPS_BOUND)) {
-        auto sol = std::move(solver_stab->get_sol());
-        construct_sol(&sol);
-        val = add_lhs_scheduleset_to_rmp(newsets.get());
-        localColPool.emplace_back(newsets);
+        localColPool.emplace_back(
+            std::make_shared<ScheduleSet>(std::move(solver_stab->get_sol())));
+        val = add_lhs_scheduleset_to_rmp(localColPool.back().get());
         nb_non_improvements = 0;
     } else {
         nb_non_improvements++;
@@ -59,11 +51,11 @@ int NodeData::solve_pricing() {
 }
 
 void NodeData::solve_farkas_dbl() {
-    OptimalSolution<double> s = solver->farkas_pricing(pi.data());
+    OptimalSolution<double> s = std::move(solver->farkas_pricing(pi.data()));
 
     if (s.obj < EPS) {
-        construct_sol(&s);
-        lp_interface_write(RMP.get(), "RMP.lp");
+        localColPool.emplace_back(std::make_shared<ScheduleSet>(std::move(s)));
+        add_lhs_scheduleset_to_rmp(localColPool.back().get());
     } else {
         nb_new_sets = 0;
     }

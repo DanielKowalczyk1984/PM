@@ -3,9 +3,11 @@
 #include <memory>
 #include <random>
 #include <vector>
-#include "Instance.h"
+// #include "Instance.h"
 #include "Interval.h"
 #include "Job.h"
+
+struct Instance;
 
 using VecJobPtr = std::vector<std::shared_ptr<Job>>;
 using VecJobRawPtr = std::vector<Job*>;

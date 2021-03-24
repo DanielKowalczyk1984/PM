@@ -5,18 +5,18 @@
 #include <functional>
 #include <memory>
 #include <vector>
-#include "BranchBoundTree.hpp"
 #include "Instance.h"
 #include "MIP_defs.hpp"
-#include "OptimalSolution.hpp"
+#include "Parms.h"
 #include "PricingStabilization.hpp"
 #include "Solution.hpp"
 #include "Statistics.h"
 #include "lp.h"
-/**
- * problem data
- */
+
 struct ScheduleSet;
+struct NodeData;
+
+class BranchBoundTree;
 
 /**
  * wct data types nodes of branch and bound tree
@@ -32,10 +32,6 @@ constexpr int    CLEANUP_ITERATION = 30;
 constexpr double EPS = 1e-6;
 constexpr double EPS_BOUND = 1e-9;
 
-/**
- * wct problem data type
- */
-
 enum problem_status {
     no_sol = 0,
     lp_feasible = 1,
@@ -44,7 +40,11 @@ enum problem_status {
     optimal = 4
 };
 
-struct Problem {
+/**
+ * problem data
+ */
+class Problem {
+   private:
     /** Different Parameters */
     Parms parms;
     /*Cpu time measurement + Statistics*/
@@ -55,22 +55,12 @@ struct Problem {
     std::unique_ptr<BranchBoundTree> tree;
     std::unique_ptr<NodeData>        root_pd;
 
-    /** Summary of jobs */
-    int nb_jobs;
-    int nb_machines;
-
-    int    global_upper_bound;
-    int    global_lower_bound;
-    double rel_error;
-    int    root_upper_bound;
-    int    root_lower_bound;
-    double root_rel_error;
-
     problem_status status;
 
     /* Best Solution*/
     Sol opt_sol;
 
+   public:
     /** All methods of problem class */
     int  to_screen();
     void to_csv();
@@ -84,6 +74,7 @@ struct Problem {
     Problem& operator=(const Problem&) = delete;
     Problem& operator=(Problem&&) = delete;
     ~Problem();
+    friend NodeData;
 
     class ProblemException : public std::exception {
        public:
@@ -108,7 +99,6 @@ struct NodeData {
         finished = 5,
     };
 
-    int id;
     int depth;
 
     NodeDataStatus status;
@@ -236,8 +226,6 @@ struct NodeData {
     void print_ages();
 
     /** StabilizationWrappers.cpp */
-    template <typename T>
-    int construct_sol(OptimalSolution<T>* sol);
     int grab_integer_solution(std::vector<double> const& x, double tolerance);
 
     static constexpr double min_nb_del_row_ratio = 0.9;

@@ -5,7 +5,10 @@
 #include <range/v3/view/enumerate.hpp>
 #include <range/v3/view/zip.hpp>
 #include <vector>
+#include "Instance.h"
 #include "Job.h"
+#include "PricerSolverBase.hpp"
+#include "Statistics.h"
 #include "gurobi_c.h"
 #include "lp.h"
 #include "scheduleset.h"
@@ -17,7 +20,7 @@ void NodeData::print_ages() {
     fmt::print("AGES:");
 
     std::ranges::for_each(localColPool,
-                          [](auto const &it) { fmt::print(" {}", it->age); });
+                          [](auto const& it) { fmt::print(" {}", it->age); });
 
     fmt::print("\n");
 }
@@ -34,25 +37,25 @@ int NodeData::grow_ages() {
         zero_count = 0;
 
         std::ranges::for_each(
-                localColPool | ranges::views::enumerate, [&](auto &&it) {
-                    if (column_status[it.first] == lp_interface_LOWER ||
-                        column_status[it.first] == lp_interface_FREE) {
-                        it.second->age++;
+            localColPool | ranges::views::enumerate, [&](auto&& it) {
+                if (column_status[it.first] == lp_interface_LOWER ||
+                    column_status[it.first] == lp_interface_FREE) {
+                    it.second->age++;
 
-                        if (it.second->age > retirementage) {
-                            zero_count++;
-                        }
-                    } else {
-                        it.second->age = 0;
+                    if (it.second->age > retirementage) {
+                        zero_count++;
                     }
-                });
+                } else {
+                    it.second->age = 0;
+                }
+            });
     }
 
     return val;
 }
 
 int NodeData::delete_unused_rows() {
-    int val = 0;
+    int              val = 0;
     std::vector<int> del_indices{};
 
     lp_interface_get_nb_rows(RMP.get(), &nb_rows);
@@ -97,19 +100,19 @@ int NodeData::delete_old_schedules() {
     /** pd->zero_count can be deprecated! */
     zero_count = 0;
 
-    std::ranges::for_each(localColPool, [&](auto const &it) {
+    std::ranges::for_each(localColPool, [&](auto const& it) {
         if (it->age > 0) {
             zero_count++;
         }
     });
 
     if (zero_count > min_numdel) {
-        int iter = 0;
+        int              iter = 0;
         std::vector<int> dellist{};
         lp_interface_get_nb_cols(RMP.get(), &nb_cols);
         assert(nb_cols - id_pseudo_schedules == localColPool.size());
 
-        localColPool |= ranges::actions::remove_if([&](const auto &it) {
+        localColPool |= ranges::actions::remove_if([&](const auto& it) {
             auto val = false;
             if (it->age > retirementage) {
                 dellist.emplace_back(iter + id_pseudo_schedules);
@@ -146,7 +149,7 @@ int NodeData::delete_infeasible_schedules() {
 
     // std::erase_if(localColPool, );
 
-    localColPool |= ranges::actions::remove_if([&](auto &it) {
+    localColPool |= ranges::actions::remove_if([&](auto& it) {
         auto val = false;
         if (!it->del) {
             dellist.emplace_back(iter + id_pseudo_schedules);
@@ -160,11 +163,11 @@ int NodeData::delete_infeasible_schedules() {
 
     if (dbg_lvl() > 1) {
         fmt::print(
-                "Deleted {} out of {} columns(infeasible columns after "
-                "reduce "
-                "cost "
-                "fixing).\n",
-                dellist.size(), count);
+            "Deleted {} out of {} columns(infeasible columns after "
+            "reduce "
+            "cost "
+            "fixing).\n",
+            dellist.size(), count);
     }
 
     lp_interface_get_nb_cols(RMP.get(), &nb_cols);
@@ -295,36 +298,36 @@ int NodeData::compute_objective() {
     LP_lower_bound -= EPS_BOUND;
     // CCcheck_val_2(val, "lp_interface_objval failed");
     lower_bound = (ceil(LP_lower_bound_dual) < ceil(LP_lower_bound))
-                  ? static_cast<int>(ceil(LP_lower_bound_dual))
-                  : static_cast<int>(ceil(LP_lower_bound));
+                      ? static_cast<int>(ceil(LP_lower_bound_dual))
+                      : static_cast<int>(ceil(LP_lower_bound));
     LP_lower_bound_BB = std::min(LP_lower_bound, LP_lower_bound_dual);
     LP_lower_min = std::min(LP_lower_min, LP_lower_bound_BB);
 
     if (iterations % (nb_jobs) == 0 && dbg_lvl() > 0) {
         fmt::print(
-                "Current primal LP objective: {:19.16f}  (LP_dual-bound "
-                "{:19.16f}, "
-                "lowerbound = {}, eta_in = {}, eta_out = {}).\n",
-                LP_lower_bound + instance.off, LP_lower_bound_dual + instance.off,
-                lower_bound + instance.off,
-                solver_stab->get_eta_in() + instance.off,
-                LP_lower_bound + instance.off);
+            "Current primal LP objective: {:19.16f}  (LP_dual-bound "
+            "{:19.16f}, "
+            "lowerbound = {}, eta_in = {}, eta_out = {}).\n",
+            LP_lower_bound + instance.off, LP_lower_bound_dual + instance.off,
+            lower_bound + instance.off,
+            solver_stab->get_eta_in() + instance.off,
+            LP_lower_bound + instance.off);
     }
 
     return 0;
 }
 
 int NodeData::solve_relaxation() {
-    int val = 0;
-    int status = 0;
+    int    val = 0;
+    int    status = 0;
     double real_time_solve_lp = 0.0;
 
     /** Compute LP relaxation */
     real_time_solve_lp = getRealTime();
-    CCutil_start_resume_time(&(stat.tot_solve_lp));
+    stat.start_resume_timer(Statistics::solve_lp_timer);
     val = lp_interface_optimize(RMP.get(), &status);
     // CCcheck_val_2(val, "lp_interface_optimize failed");
-    CCutil_suspend_timer(&(stat.tot_solve_lp));
+    stat.suspend_timer(Statistics::solve_lp_timer);
     real_time_solve_lp = getRealTime() - real_time_solve_lp;
     stat.real_time_solve_lp += real_time_solve_lp;
 
@@ -353,28 +356,28 @@ int NodeData::solve_relaxation() {
             break;
     }
 
-    CLEAN:
+CLEAN:
 
     return val;
 }
 
 int NodeData::compute_lower_bound() {
-    int j = 0;
-    int val = 0;
-    int has_cols = 1;
-    int has_cuts = 0;
-    int nb_non_improvements = 0;
-    int status_RMP = GRB_LOADED;
-    double real_time_pricing = 0.0;
+    auto j = 0;
+    auto val = 0;
+    auto has_cols = 1;
+    auto has_cuts = 0;
+    auto nb_non_improvements = 0;
+    auto status_RMP = GRB_LOADED;
+    auto real_time_pricing = 0.0;
 
     if (dbg_lvl() > 1) {
         fmt::print(
-                R"(Starting compute_lower_bound with lb {} and ub %d at depth {}(id = {})
+            R"(Starting compute_lower_bound with lb {} and ub %d at depth {}
 )",
-                lower_bound, upper_bound, depth, id);
+            lower_bound, upper_bound, depth);
     }
 
-    CCutil_start_resume_time(&(stat.tot_lb));
+    stat.start_resume_timer(Statistics::lb_timer);
 
     /**
      * Construction of new solution if localPoolColPool is empty
@@ -385,7 +388,6 @@ int NodeData::compute_lower_bound() {
 
     if (!RMP) {
         val = build_rmp();
-        // CCcheck_val(val, "build_lp failed");
     }
 
     check_schedules();
@@ -395,10 +397,9 @@ int NodeData::compute_lower_bound() {
     do {
         has_cols = 1;
         has_cuts = 0;
-        CCutil_suspend_timer(&(stat.tot_cputime));
-        CCutil_resume_timer(&(stat.tot_cputime));
         while ((iterations < NB_CG_ITERATIONS) && has_cols &&
-               stat.tot_cputime.cum_zeit <= parms.branching_cpu_limit) {
+               stat.total_timer(Statistics::cputime_timer) <=
+                   parms.branching_cpu_limit) {
             /**
              * Delete old columns
              */
@@ -412,9 +413,8 @@ int NodeData::compute_lower_bound() {
              * Solve the pricing problem
              */
             real_time_pricing = getRealTime();
-            CCutil_start_resume_time(&stat.tot_pricing);
+            stat.start_resume_timer(Statistics::pricing_timer);
             val = lp_interface_status(RMP.get(), &status_RMP);
-            // CCcheck_val_2(val, "Failed in status");
 
             switch (status_RMP) {
                 case GRB_OPTIMAL:
@@ -429,7 +429,7 @@ int NodeData::compute_lower_bound() {
                     break;
             }
 
-            CCutil_suspend_timer(&stat.tot_pricing);
+            stat.suspend_timer(Statistics::pricing_timer);
             real_time_pricing = getRealTime() - real_time_pricing;
             stat.real_time_pricing += real_time_pricing;
 
@@ -437,7 +437,7 @@ int NodeData::compute_lower_bound() {
                 case GRB_OPTIMAL:
                     has_cols = (solver_stab->stopping_criteria() &&
                                 solver_stab->get_eta_in() <
-                                upper_bound - 1.0 + EPS_BOUND);
+                                    upper_bound - 1.0 + EPS_BOUND);
                     // nb_new_sets = 0;
                     // || nb_non_improvements > 5;  // ||
                     // (ceil(eta_in - 0.00001) >= eta_out);
@@ -449,9 +449,6 @@ int NodeData::compute_lower_bound() {
                     // nb_new_sets = 0;
                     break;
             }
-
-            CCutil_suspend_timer(&(stat.tot_cputime));
-            CCutil_resume_timer(&(stat.tot_cputime));
         }
 
         switch (status_RMP) {
@@ -465,10 +462,9 @@ int NodeData::compute_lower_bound() {
 
                 if (dbg_lvl() > 1) {
                     fmt::print(
-                            R"(Found lb = {} ({}) upper_bound = {} (id = {}, iterations = {}).
+                        R"(Found lb = {} ({}) upper_bound = {} (iterations = {}).
 )",
-                            lower_bound, LP_lower_bound, upper_bound, id,
-                            iterations);
+                        lower_bound, LP_lower_bound, upper_bound, iterations);
                 }
 
                 /**
@@ -511,11 +507,12 @@ int NodeData::compute_lower_bound() {
     } while (false);
 
     if (iterations < NB_CG_ITERATIONS &&
-        stat.tot_cputime.cum_zeit <= parms.branching_cpu_limit) {
+        stat.total_timer(Statistics::cputime_timer) <=
+            parms.branching_cpu_limit) {
     } else {
         switch (status_RMP) {
             case GRB_OPTIMAL:
-                status = LP_bound_estimated;
+                status = LP_bound_computed;
                 break;
 
             case GRB_INFEASIBLE:
@@ -527,18 +524,20 @@ int NodeData::compute_lower_bound() {
 
     if (depth == 0) {
         stat.global_lower_bound =
-                std::max(lower_bound + instance.off, stat.global_lower_bound);
+            std::max(lower_bound + instance.off, stat.global_lower_bound);
         stat.root_lower_bound = stat.global_lower_bound;
         stat.root_upper_bound = stat.global_upper_bound;
         stat.root_rel_error = static_cast<double>(stat.global_upper_bound -
                                                   stat.global_lower_bound) /
                               (stat.global_lower_bound + EPS);
+        stat.size_graph_after_reduced_cost_fixing = solver->get_nb_vertices();
+        stat.nb_generated_col_root = iterations;
     }
 
     stat.nb_generated_col += iterations;
-    CCutil_suspend_timer(&(stat.tot_lb));
+    stat.suspend_timer(Statistics::lb_timer);
 
-    CLEAN:
+CLEAN:
     return val;
 }
 
@@ -557,9 +556,9 @@ int NodeData::print_x() {
             lambda.resize(nb_cols - id_pseudo_schedules, 0.0);
             val = lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
 
-            for (auto i = 0UL; auto &it : localColPool) {
+            for (auto i = 0UL; auto& it : localColPool) {
                 if (lambda[i] > EPS) {
-                    std::ranges::for_each(it->job_list, [](const Job *j) {
+                    std::ranges::for_each(it->job_list, [](const Job* j) {
                         fmt::print("{} ", j->job);
                     });
                     fmt::print("\n");
@@ -569,7 +568,7 @@ int NodeData::print_x() {
             break;
     }
 
-    CLEAN:
+CLEAN:
 
     return val;
 }
@@ -583,7 +582,7 @@ int NodeData::check_schedules() {
     if (dbg_lvl() > 1) {
         fmt::print("number of cols check {}\n", nb_cols - id_pseudo_schedules);
     }
-    for (auto &col : localColPool) {
+    for (auto& col : localColPool) {
         if (check_schedule_set(col.get())) {
             col->del = 1;
         } else {

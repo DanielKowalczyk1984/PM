@@ -1,6 +1,7 @@
 #ifndef __STATISTICS_H__
 #define __STATISTICS_H__
 #include <string>
+#include "Parms.h"
 #include "util.h"
 
 struct Statistics {
@@ -12,12 +13,22 @@ struct Statistics {
     int    root_lower_bound;
     double root_rel_error;
 
-    int    nb_explored_nodes;
-    int    nb_generated_nodes;
     int    nb_generated_col;
     int    nb_generated_col_root;
     size_t first_size_graph;
     size_t size_graph_after_reduced_cost_fixing;
+
+    enum TimerType {
+        build_dd_timer,
+        cputime_timer,
+        bb_timer,
+        lb_root_timer,
+        lb_timer,
+        solve_lp_timer,
+        pricing_timer,
+        heuristic_timer,
+        reduced_cost_fixing_timer
+    };
 
     CCutil_timer tot_build_dd;
     CCutil_timer tot_cputime;
@@ -51,7 +62,11 @@ struct Statistics {
     int         mip_reduced_cost_fixing;
     std::string pname;
 
-    Statistics();
+    void   start_resume_timer(TimerType _type);
+    void   suspend_timer(TimerType _type);
+    double total_timer(TimerType _type);
+
+    Statistics(const Parms& parms);
 };
 
 #endif  // __STATISTICS_H__

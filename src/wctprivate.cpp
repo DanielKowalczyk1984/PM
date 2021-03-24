@@ -4,6 +4,7 @@
 #include <limits>
 #include <memory>
 #include <vector>
+#include "BranchBoundTree.hpp"
 #include "Instance.h"
 #include "LocalSearch_new.h"
 #include "PricerSolverArcTimeDP.hpp"
@@ -14,29 +15,23 @@
 #include "PricerSolverZddForward.hpp"
 #include "PricingStabilization.hpp"
 #include "Solution.hpp"
+#include "Statistics.h"
 
 Problem::~Problem() = default;
 
 Problem::Problem(int argc, const char** argv)
     : parms(argc, argv),
-      stat(),
+      stat(parms),
       instance(parms),
       tree(),
       root_pd(std::make_unique<NodeData>(this)),
-      nb_jobs(instance.nb_jobs),
-      nb_machines(instance.nb_machines),
-      global_upper_bound(std::numeric_limits<int>::max()),
-      global_lower_bound(),
-      rel_error(std::numeric_limits<double>::max()),
-      root_upper_bound(std::numeric_limits<int>::max()),
-      root_lower_bound(),
-      root_rel_error(std::numeric_limits<double>::max()),
       status(no_sol),
       opt_sol() {
     /**
      *@brief Finding heuristic solutions to the problem or start without
      *feasible solutions
      */
+    stat.start_resume_timer(Statistics::heuristic_timer);
     if (parms.use_heuristic) {
         heuristic();
     } else {
@@ -49,11 +44,13 @@ Problem::Problem(int argc, const char** argv)
         best_sol.print_solution();
         opt_sol = best_sol;
     }
+
+    stat.suspend_timer(Statistics::heuristic_timer);
     /**
      * @brief Build DD at the root node
      *
      */
-    CCutil_start_timer(&(stat.tot_build_dd));
+    stat.start_resume_timer(Statistics::build_dd_timer);
     switch (parms.pricing_solver) {
         case bdd_solver_simple:
             root_pd->solver = std::make_unique<PricerSolverBddSimple>(instance);
@@ -96,7 +93,7 @@ Problem::Problem(int argc, const char** argv)
                 std::make_unique<PricerSolverBddBackwardCycle>(instance);
             break;
     }
-    CCutil_stop_timer(&(stat.tot_build_dd), 0);
+    stat.suspend_timer(Statistics::build_dd_timer);
     stat.first_size_graph = root_pd->solver->get_nb_vertices();
 
     /**
@@ -129,13 +126,21 @@ Problem::Problem(int argc, const char** argv)
     }
 
     root_pd->solver->update_UB(opt_sol.tw);
+    stat.root_upper_bound = opt_sol.tw + instance.off;
+    stat.global_upper_bound = opt_sol.tw + instance.off;
 
     /**
      * @brief Initialization of the B&B tree
      *
      */
+    stat.start_resume_timer(Statistics::bb_timer);
     tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
     tree->explore();
+    stat.global_upper_bound = static_cast<int>(tree->get_UB()) + instance.off;
+    stat.global_lower_bound = static_cast<int>(tree->get_LB()) + instance.off;
+    stat.rel_error = (stat.global_upper_bound - stat.global_lower_bound) /
+                     (EPS + stat.global_lower_bound);
+    stat.suspend_timer(Statistics::bb_timer);
     to_csv();
 }
 
@@ -148,9 +153,9 @@ void Problem::solve() {
 }
 
 void Problem::heuristic() {
-    auto                         ILS = nb_jobs / 2;
+    auto                         ILS = instance.nb_jobs / 2;
     auto                         IR = parms.nb_iterations_rvnd;
-    boost::timer::auto_cpu_timer test;
+    boost::timer::auto_cpu_timer timer_heuristic;
 
     Sol best_sol{instance};
     best_sol.construct_edd(instance.jobs);

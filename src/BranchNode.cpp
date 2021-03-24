@@ -7,6 +7,7 @@
 #include <range/v3/numeric/iota.hpp>
 #include <span>
 #include "PricerSolverBase.hpp"
+#include "Statistics.h"
 #include "branch-and-bound/btree.h"
 #include "util.h"
 #include "wctprivate.h"
@@ -17,7 +18,9 @@ BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
     if (_isRoot) {
         pd->build_rmp();
         pd->solve_relaxation();
+        pd->stat.start_resume_timer(Statistics::lb_root_timer);
         pd->compute_lower_bound();
+        pd->stat.suspend_timer(Statistics::lb_root_timer);
         set_lb(pd->lower_bound);
         set_obj_value(pd->LP_lower_bound);
     }
@@ -149,7 +152,7 @@ void BranchNodeBase::branch(BTree* bt) {
             left_node_branch->compute_bounds(bt);
 
             auto approx = left_gain;
-            left_gain = left_node_branch->get_obj_value();
+            left_gain = left_node_branch->pd->LP_lower_bound;
             if (dbg_lvl() > 0) {
                 fmt::print(
                     "STRONG BRANCHING LEFT PROBE: j = {}, t = {},"
@@ -268,7 +271,9 @@ void BranchNodeBase::compute_bounds(BTree* bt) {
     pd->solve_relaxation();
     pd->compute_lower_bound();
     set_lb(pd->lower_bound);
-    set_obj_value(pd->LP_lower_bound);
+    if (pd->solver->get_is_integer_solution()) {
+        set_obj_value(pd->lower_bound);
+    }
 }
 
 void BranchNodeBase::assess_dominance(State* otherState) {}

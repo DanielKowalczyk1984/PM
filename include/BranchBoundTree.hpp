@@ -17,6 +17,12 @@ class BranchBoundTree {
     ~BranchBoundTree() = default;
     void explore() { tree->explore(); }
 
+    [[nodiscard]] double get_UB() const { return tree->getGlobalUB(); }
+    [[nodiscard]] double get_LB() const { return tree->getGlobalLB(); }
+    [[nodiscard]] int    get_nb_nodes_explored() const {
+        return tree->tStats->get_states_explored();
+    }
+
    private:
     std::unique_ptr<BTree> tree;
 };

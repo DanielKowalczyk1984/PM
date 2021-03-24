@@ -13,6 +13,7 @@
 #include <vector>
 #include "Instance.h"
 #include "Job.h"
+#include "Label.hpp"
 #include "MipGraph.hpp"
 #include "ModelInterface.hpp"
 #include "NodeBdd.hpp"
@@ -21,12 +22,12 @@
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 #include "PricerSolverBase.hpp"
+#include "Statistics.h"
 #include "ZeroHalfCuts.hpp"
 #include "lp.h"
 #include "scheduleset.h"
 #include "util.h"
 #include "wctprivate.h"
-
 using std::vector;
 
 PricerSolverBdd::PricerSolverBdd(const Instance& instance)
@@ -220,6 +221,7 @@ void PricerSolverBdd::init_table() {
                 auto& n1 = table.node(node[1]);
                 n0.set_node_id_label(node[0]);
                 n1.set_node_id_label(node[1]);
+                node.set_job_label(aux_job);
 
                 node.ptr_node_id = std::make_shared<NodeId>(i, it);
                 node.set_job(aux_job);

@@ -22,7 +22,6 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     OptimalSolution<T> get_objective(NodeBdd<T>& n) const {
         OptimalSolution<T> sol(0.0);
         auto*              aux_label = &(n.backward_label[0]);
-        // auto                  tmp_node_id = aux_label->get_node_id();
         auto table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
 
         do {
@@ -121,9 +120,6 @@ class BackwardBddCycle : public BackwardBddBase<T> {
 
         n.reset_reduced_costs();
 
-        // n.adjust_reduced_costs(dual[tmp_j->job], true);
-        // n.adjust_reduced_costs(d, bool high)
-
         for (auto& list : n.coeff_list) {
             list |= ranges::actions::remove_if([&](auto it) {
                 auto aux = it.lock();
@@ -136,8 +132,6 @@ class BackwardBddCycle : public BackwardBddBase<T> {
                     return true;
                 }
             });
-            // auto tmp = std::remove_if(list.begin(), list.end(), );
-            // list.erase(tmp, list.end());
         }
 
         auto prev_job{p1_tmp.backward_label[0].get_prev_job()};

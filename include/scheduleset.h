@@ -26,6 +26,15 @@ struct ScheduleSet {
     bool operator<(ScheduleSet const& other);
     bool operator==(ScheduleSet const& other) const;
 
+    friend std::ostream& operator<<(std::ostream& os, const ScheduleSet& set) {
+        for (auto& it : set.job_list) {
+            os << it->job << " ";
+        }
+        os << "C = " << set.total_processing_time
+           << " cost = " << set.total_weighted_completion_time << '\n';
+        return os;
+    }
+
     void recalculate();
 };
 
