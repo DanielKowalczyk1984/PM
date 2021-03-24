@@ -155,8 +155,8 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                 auto p = job->processing_time;
 
                 auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-                if (iter->forward_label[0].get_previous_job() != job) {
-                    if (iter->y->backward_label[0].get_prev_job() != job) {
+                if (iter->forward_label[0].prev_job_forward() != job) {
+                    if (iter->y->backward_label[0].prev_job_backward() != job) {
                         auto result = iter->forward_label[0].get_f() +
                                       iter->y->backward_label[0].get_f() -
                                       value_Fj(w + p, job) + pi[job->job] +
@@ -180,7 +180,7 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                         }
                     }
                 } else {
-                    if (iter->y->backward_label[0].get_prev_job() != job) {
+                    if (iter->y->backward_label[0].prev_job_backward() != job) {
                         auto result = iter->forward_label[1].get_f() +
                                       iter->y->backward_label[0].get_f() -
                                       value_Fj(w + p, job) + pi[job->job] +
@@ -227,8 +227,8 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi) {
                 auto p = job->processing_time;
 
                 auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-                if (iter->forward_label[0].get_previous_job() != job) {
-                    if (iter->y->backward_label[0].get_prev_job() != job) {
+                if (iter->forward_label[0].prev_job_forward() != job) {
+                    if (iter->y->backward_label[0].prev_job_backward() != job) {
                         auto result = iter->forward_label[0].get_f() +
                                       iter->y->backward_label[0].get_f() -
                                       value_Fj(w + p, job) + pi[job->job];
@@ -250,7 +250,7 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi) {
                         }
                     }
                 } else {
-                    if (iter->y->backward_label[0].get_prev_job() != job) {
+                    if (iter->y->backward_label[0].prev_job_backward() != job) {
                         auto result = iter->forward_label[1].get_f() +
                                       iter->y->backward_label[0].get_f() -
                                       value_Fj(w + p, job) + pi[job->job];

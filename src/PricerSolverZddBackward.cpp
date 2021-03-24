@@ -150,8 +150,8 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
                 auto w = iter->get_weight();
 
                 auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-                if (iter->forward_label[0].get_previous_job() != job &&
-                    iter->y->backward_label[0].get_prev_job() != job) {
+                if (iter->forward_label[0].prev_job_forward() != job &&
+                        iter->y->backward_label[0].prev_job_backward() != job) {
                     double result = iter->forward_label[0].get_f() +
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + p, job) + pi[job->job];
@@ -161,8 +161,8 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
                         iter->calc_yes = false;
                         nb_removed_edges++;
                     }
-                } else if (iter->forward_label[0].get_previous_job() == job &&
-                           iter->y->backward_label[0].get_prev_job() != job) {
+                } else if (iter->forward_label[0].prev_job_forward() == job &&
+                        iter->y->backward_label[0].prev_job_backward() != job) {
                     double result = iter->forward_label[1].get_f() +
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + p, job) + pi[job->job];
@@ -172,8 +172,8 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
                         iter->calc_yes = false;
                         nb_removed_edges++;
                     }
-                } else if (iter->forward_label[0].get_previous_job() != job &&
-                           iter->y->backward_label[0].get_prev_job() == job) {
+                } else if (iter->forward_label[0].prev_job_forward() != job &&
+                        iter->y->backward_label[0].prev_job_backward() == job) {
                     double result = iter->forward_label[0].get_f() +
                                     iter->y->backward_label[1].get_f() -
                                     value_Fj(w + p, job) + pi[job->job];
@@ -219,8 +219,8 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                 int w = iter->get_weight();
 
                 auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-                if (iter->forward_label[0].get_previous_job() != job &&
-                    iter->y->backward_label[0].get_prev_job() != job) {
+                if (iter->forward_label[0].prev_job_forward() != job &&
+                        iter->y->backward_label[0].prev_job_backward() != job) {
                     double result = iter->forward_label[0].get_f() +
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + p, job) + pi[job->job] +
@@ -231,8 +231,8 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                         iter->calc_yes = false;
                         nb_removed_edges++;
                     }
-                } else if (iter->forward_label[0].get_previous_job() == job &&
-                           iter->y->backward_label[0].get_prev_job() != job) {
+                } else if (iter->forward_label[0].prev_job_forward() == job &&
+                        iter->y->backward_label[0].prev_job_backward() != job) {
                     double result = iter->forward_label[1].get_f() +
                                     iter->y->backward_label[0].get_f() -
                                     value_Fj(w + p, job) + pi[job->job] +
@@ -243,8 +243,8 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi,
                         iter->calc_yes = false;
                         nb_removed_edges++;
                     }
-                } else if (iter->forward_label[0].get_previous_job() != job &&
-                           iter->y->backward_label[0].get_prev_job() == job) {
+                } else if (iter->forward_label[0].prev_job_forward() != job &&
+                        iter->y->backward_label[0].prev_job_backward() == job) {
                     double result = iter->forward_label[0].get_f() +
                                     iter->y->backward_label[1].get_f() -
                                     value_Fj(w + p, job) + pi[job->job] +

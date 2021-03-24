@@ -114,7 +114,6 @@ void BranchNodeBase::branch(BTree* bt) {
     auto best_min_gain = 0.0;
     auto best_job = -1;
     auto best_time = 0;
-    // std::span jobsarray{pd->jobarray->pdata, pd->jobarray->len};
     std::unique_ptr<BranchNodeBase> best_right = nullptr;
     std::unique_ptr<BranchNodeBase> best_left = nullptr;
     for (auto& it : best_cand) {
@@ -147,7 +146,6 @@ void BranchNodeBase::branch(BTree* bt) {
             auto* left_solver = left->solver.get();
             auto  left_node_branch =
                 std::make_unique<BranchNodeBase>(std::move(left));
-            // std::unique_ptr<BranchNodeBase>(new BranchNodeBase(left));
             left_solver->split_job_time(i, middle_time[i], true);
             left_node_branch->compute_bounds(bt);
 

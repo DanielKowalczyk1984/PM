@@ -58,17 +58,16 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
             auto obj1 = p1->backward_label[0].get_f() + result;
 
             if (obj0 > obj1) {
-                it->backward_label[0].update_solution(obj1, nullptr, true);
+                it->backward_label[0].backward_update(obj1, true);
             } else {
-                it->backward_label[0].update_solution(obj0, nullptr, false);
+                it->backward_label[0].backward_update(obj0, false);
             }
         }
     }
 
     void initializenode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->backward_label[0].update_solution(
-                std::numeric_limits<double>::max() / 2, nullptr, false);
+            it->backward_label[0].reset();
         }
     }
 
@@ -127,51 +126,51 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
             T result{value_Fj(weight + tmp_j->processing_time, tmp_j) -
                      pi[tmp_j->job]};
 
-            Job* prev_job{p1->backward_label[0].get_prev_job()};
+            Job* prev_job{p1->backward_label[0].prev_job_backward()};
 
-            it->backward_label[0].update_label(&(p0->backward_label[0]));
-            it->backward_label[1].update_label(&(p0->backward_label[1]));
+            it->backward_label[0].backward_update(&(p0->backward_label[0]));
+            it->backward_label[1].backward_update(&(p0->backward_label[1]));
             bool diff = bool_diff_Fij(weight, prev_job, tmp_j);
             bool diff1 = bool_diff_Fij(
-                weight, p1->backward_label[0].get_prev_job(), tmp_j);
+                    weight, p1->backward_label[0].prev_job_backward(), tmp_j);
 
             if (prev_job != tmp_j && diff) {
                 T obj1{p1->backward_label[0].get_f() + result};
                 T obj2{p1->backward_label[1].get_f() + result};
 
                 if (obj1 < it->backward_label[0].get_f()) {
-                    if (tmp_j != it->backward_label[0].get_prev_job()) {
-                        it->backward_label[1].update_label(
-                            &(p0->backward_label[0]));
+                    if (tmp_j != it->backward_label[0].prev_job_backward()) {
+                        it->backward_label[1].backward_update(
+                                &(p0->backward_label[0]));
                     }
 
-                    it->backward_label[0].update_label(&(p1->backward_label[0]),
-                                                       obj1, true);
+                    it->backward_label[0].backward_update(&(p1->backward_label[0]),
+                                                          obj1, true);
                 } else if (obj1 < it->backward_label[1].get_f() &&
-                           tmp_j != it->backward_label[0].get_prev_job() &&
+                           tmp_j != it->backward_label[0].prev_job_backward() &&
                            diff1) {
-                    it->backward_label[1].update_label(&(p1->backward_label[0]),
-                                                       obj1, true);
+                    it->backward_label[1].backward_update(&(p1->backward_label[0]),
+                                                          obj1, true);
                 } else if (obj2 < it->backward_label[1].get_f() &&
-                           tmp_j != it->backward_label[0].get_prev_job()) {
-                    it->backward_label[1].update_label(&(p1->backward_label[1]),
-                                                       obj2, true);
+                           tmp_j != it->backward_label[0].prev_job_backward()) {
+                    it->backward_label[1].backward_update(&(p1->backward_label[1]),
+                                                          obj2, true);
                 }
             } else {
                 T obj1 = p1->backward_label[1].get_f() + result;
 
                 if (obj1 < it->backward_label[0].get_f()) {
-                    if (tmp_j != it->backward_label[0].get_prev_job()) {
-                        it->backward_label[1].update_label(
-                            &(p0->backward_label[0]));
+                    if (tmp_j != it->backward_label[0].prev_job_backward()) {
+                        it->backward_label[1].backward_update(
+                                &(p0->backward_label[0]));
                     }
 
-                    it->backward_label[0].update_label(&(p1->backward_label[1]),
-                                                       obj1, true);
+                    it->backward_label[0].backward_update(&(p1->backward_label[1]),
+                                                          obj1, true);
                 } else if (obj1 < it->backward_label[1].get_f() &&
-                           tmp_j != it->backward_label[0].get_prev_job()) {
-                    it->backward_label[1].update_label(&(p1->backward_label[1]),
-                                                       obj1, true);
+                           tmp_j != it->backward_label[0].prev_job_backward()) {
+                    it->backward_label[1].backward_update(&(p1->backward_label[1]),
+                                                          obj1, true);
                 }
             }
         }
@@ -179,8 +178,7 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
 
     void initializenode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->backward_label[0].update_solution(
-                std::numeric_limits<double>::max() / 2, nullptr, false);
+            it->backward_label[0].reset();
         }
     }
 

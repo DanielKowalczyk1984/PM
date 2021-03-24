@@ -31,17 +31,16 @@ class BackwardBddFarkas : public BackwardBddBase<T> {
         T obj1 = p1.backward_label[0].get_f() + n.reduced_cost[1];
 
         if (obj0 > obj1) {
-            n.backward_label[0].update_label(&(p1.backward_label[0]), obj1,
-                                             true);
+            n.backward_label[0].backward_update(&(p1.backward_label[0]), obj1,
+                                                true);
         } else {
-            n.backward_label[0].update_label(&(p0.backward_label[0]), obj0,
-                                             false);
+            n.backward_label[0].backward_update(&(p0.backward_label[0]), obj0,
+                                                false);
         }
     }
 
     void initializenode(NodeBdd<T>& n) const override {
-        n.backward_label[0].update_solution(
-            std::numeric_limits<double>::max() / 2, nullptr, false);
+        n.backward_label[0].reset();
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {

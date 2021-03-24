@@ -178,19 +178,19 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
         for (auto& it : table[i]) {
             auto& child = table.node(it[1]);
 
-            // if (it.forward_label[0].get_previous_job() != job &&
-            //     it.child[1]->backward_label[0].get_prev_job() != job) {
+            // if (it.forward_label[0].prev_job_forward() != job &&
+            //     it.child[1]->backward_label[0].prev_job_backward() != job) {
             auto result = it.forward_label[0].get_f() +
                           child.backward_label[0].get_f() + it.reduced_cost[1];
 
-            // } else if (it.forward_label[0].get_previous_job() == job &&
-            //            it.child[1]->backward_label[0].get_prev_job() != job)
+            // } else if (it.forward_label[0].prev_job_forward() == job &&
+            //            it.child[1]->backward_label[0].prev_job_backward() != job)
             //            {
             //     result = it.forward_label[1].get_f() +
             //              it.child[1]->backward_label[0].get_f() +
             //              it.reduced_cost[1];
-            // } else if (it.forward_label[0].get_previous_job() != job &&
-            //            it.child[1]->backward_label[0].get_prev_job() == job)
+            // } else if (it.forward_label[0].prev_job_forward() != job &&
+            //            it.child[1]->backward_label[0].prev_job_backward() == job)
             //            {
             //     result = it.forward_label[0].get_f() +
             //              it.child[1]->backward_label[1].get_f() +
@@ -243,17 +243,17 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
             auto  result{0.0};
             auto& child = table.node(it[1]);
 
-            if (it.forward_label[0].get_previous_job() != job &&
-                child.backward_label[0].get_prev_job() != job) {
+            if (it.forward_label[0].prev_job_forward() != job &&
+                    child.backward_label[0].prev_job_backward() != job) {
                 result = it.forward_label[0].get_f() +
                          child.backward_label[0].get_f() + it.reduced_cost[1];
 
-            } else if (it.forward_label[0].get_previous_job() == job &&
-                       child.backward_label[0].get_prev_job() != job) {
+            } else if (it.forward_label[0].prev_job_forward() == job &&
+                    child.backward_label[0].prev_job_backward() != job) {
                 result = it.forward_label[1].get_f() +
                          child.backward_label[0].get_f() + it.reduced_cost[1];
-            } else if (it.forward_label[0].get_previous_job() != job &&
-                       child.backward_label[0].get_prev_job() == job) {
+            } else if (it.forward_label[0].prev_job_forward() != job &&
+                    child.backward_label[0].prev_job_backward() == job) {
                 result = it.forward_label[0].get_f() +
                          child.backward_label[1].get_f() + it.reduced_cost[1];
             } else {

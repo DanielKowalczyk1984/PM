@@ -64,14 +64,12 @@ class ForwardBddCycle : public ForwardBddBase<T> {
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {
-            n.forward_label[0].update_solution(0, nullptr, false);
-            n.forward_label[1].update_solution(
-                std::numeric_limits<double>::max() / 2, nullptr, false);
+            n.forward_label[0].forward_update(0, nullptr, false);
+            n.forward_label[1].reset();
         } else {
-            n.forward_label[0].update_solution(
-                std::numeric_limits<double>::max() / 2, nullptr, false);
-            n.forward_label[1].update_solution(
-                std::numeric_limits<double>::max() / 2, nullptr, false);
+            for(auto& it: n.forward_label){
+                it.reset();
+            }
         }
     }
 
@@ -110,8 +108,8 @@ class ForwardBddCycle : public ForwardBddBase<T> {
         /**
          * High edge calculation
          */
-        Job* prev = n.forward_label[0].get_previous_job();
-        Job* aux1 = p1.forward_label[0].get_previous_job();
+        Job* prev = n.forward_label[0].prev_job_forward();
+        Job* aux1 = p1.forward_label[0].prev_job_forward();
         // // diff = (prev == nullptr) ? true
         //                          : (value_diff_Fij(weight, tmp_j, prev) >=
         //                          0);
@@ -122,17 +120,17 @@ class ForwardBddCycle : public ForwardBddBase<T> {
             g = n.forward_label[0].get_f() + result;
             if (g < p1.forward_label[0].get_f()) {
                 if (aux1 != tmp_j) {
-                    p1.forward_label[1].update_solution(p1.forward_label[0]);
+                    p1.forward_label[1].forward_update(p1.forward_label[0]);
                 }
-                p1.forward_label[0].update_solution(g, &(n.forward_label[0]),
-                                                    true);
+                p1.forward_label[0].forward_update(g, &(n.forward_label[0]),
+                                                   true);
             } else if ((g < p1.forward_label[1].get_f()) && (aux1 != tmp_j)) {
-                p1.forward_label[1].update_solution(g, &(n.forward_label[0]),
-                                                    true);
+                p1.forward_label[1].forward_update(g, &(n.forward_label[0]),
+                                                   true);
             }
         } else {
             g = n.forward_label[1].get_f() + result;
-            prev = n.forward_label[1].get_previous_job();
+            prev = n.forward_label[1].prev_job_forward();
             // diff = (prev == nullptr)
             //    ? true
             //    : (value_diff_Fij(weight, tmp_j, prev) >= 0);
@@ -140,13 +138,13 @@ class ForwardBddCycle : public ForwardBddBase<T> {
             // if (diff) {
             if (g < p1.forward_label[0].get_f()) {
                 if (aux1 != tmp_j) {
-                    p1.forward_label[1].update_solution(p1.forward_label[0]);
+                    p1.forward_label[1].forward_update(p1.forward_label[0]);
                 }
-                p1.forward_label[0].update_solution(g, &(n.forward_label[1]),
-                                                    true);
+                p1.forward_label[0].forward_update(g, &(n.forward_label[1]),
+                                                   true);
             } else if ((g < p1.forward_label[1].get_f()) && (aux1 != tmp_j)) {
-                p1.forward_label[1].update_solution(g, &(n.forward_label[1]),
-                                                    true);
+                p1.forward_label[1].forward_update(g, &(n.forward_label[1]),
+                                                   true);
             }
             // }
         }
@@ -154,21 +152,21 @@ class ForwardBddCycle : public ForwardBddBase<T> {
         /**
          * Low edge calculation
          */
-        aux1 = p0.forward_label[0].get_previous_job();
+        aux1 = p0.forward_label[0].prev_job_forward();
         g = n.forward_label[0].get_f() + n.reduced_cost[0];
         auto g1 = n.forward_label[1].get_f() + n.reduced_cost[0];
         if (g < p0.forward_label[0].get_f()) {
             if (prev != aux1) {
-                p0.forward_label[1].update_solution(p0.forward_label[0]);
+                p0.forward_label[1].forward_update(p0.forward_label[0]);
             }
-            p0.forward_label[0].update_solution(g, n.forward_label[0]);
+            p0.forward_label[0].forward_update(g, n.forward_label[0]);
             if (g1 < p0.forward_label[1].get_f()) {
-                p0.forward_label[1].update_solution(g1, n.forward_label[1]);
+                p0.forward_label[1].forward_update(g1, n.forward_label[1]);
             }
         } else if ((g < p0.forward_label[1].get_f()) && (aux1 != prev)) {
-            p0.forward_label[1].update_solution(g, n.forward_label[0]);
+            p0.forward_label[1].forward_update(g, n.forward_label[0]);
         } else if ((g1 < p0.forward_label[1].get_f())) {
-            p0.forward_label[1].update_solution(g1, n.forward_label[1]);
+            p0.forward_label[1].forward_update(g1, n.forward_label[1]);
         }
     }
 };
@@ -186,10 +184,9 @@ class ForwardBddSimple : public ForwardBddBase<T> {
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {
-            n.forward_label[0].update_solution(0, nullptr, false);
+            n.forward_label[0].forward_update(0, nullptr, false);
         } else {
-            n.forward_label[0].update_solution(
-                std::numeric_limits<double>::max() / 2, nullptr, false);
+            n.forward_label[0].reset();
         }
     }
 
@@ -205,10 +202,9 @@ class ForwardBddSimple : public ForwardBddBase<T> {
         n.reset_reduced_costs();
         const double* dual = ForwardBddBase<T>::get_pi();
 
-        for (int k = 0; k < 2; k++) {
-            for (auto it = n.coeff_list[k].begin(); it != n.coeff_list[k].end();
-                 it++) {
-                auto aux = it->lock();
+        for (auto& list: n.coeff_list) {
+            for (auto& it : list) {
+                auto aux = it.lock();
                 if (aux) {
                     n.adjust_reduced_costs(
                         aux->get_coeff() * dual[aux->get_row()],
@@ -222,7 +218,7 @@ class ForwardBddSimple : public ForwardBddBase<T> {
          */
         g = n.forward_label[0].get_f() + n.reduced_cost[1];
         if (g < p1.forward_label[0].get_f()) {
-            p1.forward_label[0].update_solution(g, &(n.forward_label[0]), true);
+            p1.forward_label[0].forward_update(g, &(n.forward_label[0]), true);
         }
 
         /**
@@ -231,7 +227,7 @@ class ForwardBddSimple : public ForwardBddBase<T> {
         g = n.forward_label[0].get_f() + n.reduced_cost[0];
         double result = g;
         if (g < p0.forward_label[0].get_f()) {
-            p0.forward_label[0].update_solution(result, n.forward_label[0]);
+            p0.forward_label[0].forward_update(result, n.forward_label[0]);
         }
     }
 };
