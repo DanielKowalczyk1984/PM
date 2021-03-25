@@ -121,6 +121,10 @@ std::unique_ptr<NodeData> NodeData::clone() const {
 void NodeData::prune_duplicated_sets() {
     auto equal_func = [](auto const& l, auto const& r) { return (*l) == (*r); };
 
+    if (localColPool.empty()) {
+        return;
+    }
+
     localColPool |=
         ranges::actions::sort(std::less<std::shared_ptr<ScheduleSet>>()) |
         ranges::actions::unique(equal_func);

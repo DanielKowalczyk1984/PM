@@ -177,26 +177,40 @@ void Problem::heuristic() {
     root_pd->add_solution_to_colpool(best_sol);
 
     Sol sol{instance};
-    int iterations = 0;
+    sol = best_sol;
+    // int iterations = 0;
     for (auto i = 0UL; i < IR; ++i) {
         Sol sol1{instance};
-        sol1.construct_random_shuffle(instance.jobs);
-        sol = sol1;
+        // sol1.construct_random_shuffle(instance.jobs);
+        // sol = sol1;
+        sol1 = sol;
+        perturb(sol1);
+        local.RVND(sol1);
 
-        for (auto j = 0UL; j < ILS; ++j) {
-            local.RVND(sol1);
-            ++iterations;
-            if (sol1.tw < sol.tw) {
-                sol = sol1;
-                j = 0UL;
+        if (sol1.tw < sol.tw) {
+            sol = sol1;
+            if (sol.tw < best_sol.tw) {
+                best_sol = sol;
+                root_pd->add_solution_to_colpool(best_sol);
+                i = 0;
             }
-            perturb(sol1);
         }
 
-        if (sol.tw < best_sol.tw) {
-            best_sol = sol;
-            root_pd->add_solution_to_colpool(sol);
-        }
+        // for (auto j = 0UL; j < ILS; ++j) {
+        //     local.RVND(sol1);
+        //     ++iterations;
+        //     if (sol1.tw < sol.tw) {
+        //         sol = sol1;
+        //         j = 0UL;
+        //     }
+        //     perturb(sol1);
+        // }
+
+        // if (sol.tw < best_sol.tw) {
+        //     best_sol = sol;
+        //     root_pd->add_solution_to_colpool(sol);
+        //     i = 0;
+        // }
     }
 
     fmt::print("Best new heuristics\n");

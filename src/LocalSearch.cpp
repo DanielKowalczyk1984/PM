@@ -7,6 +7,11 @@
 #include <limits>
 #include <list>
 #include <memory>
+#include <range/v3/action/shuffle.hpp>
+#include <range/v3/algorithm/shuffle.hpp>
+#include <range/v3/numeric/iota.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/iota.hpp>
 #include <vector>
 #include "Job.h"
 #include "LocalSearch_new.h"
@@ -45,8 +50,12 @@ LocalSearchData::LocalSearchData(int _nb_jobs, int _nb_machines)
 void LocalSearchData::RVND(Sol& sol) {
     calculate_W(sol);
     calculate_g(sol);
-
+    std::random_device         rd;
+    std::default_random_engine rng(rd());
+    // auto                       shuffle =
+    //     ranges::views::iota(0, nb_moves - 1) | ranges::to<std::vector<int>>;
     do {
+        moves |= ranges::actions::shuffle(rng);
         for (auto& operator_move : moves) {
             operator_move(sol);
             if (updated) {
@@ -395,7 +404,7 @@ void LocalSearchData::swap_operator_inter(Sol& sol, int l1, int l2) {
             auto&      machine2 = sol.machines[k2].job_list;
             const auto nb_jobs2 = machine2.size();
 
-            if (k1 == k2 || nb_jobs1 - l1 < 0 || nb_jobs2 - l2 < 0) {
+            if (k1 == k2 || nb_jobs1 < l1 || nb_jobs2 < l2) {
                 continue;
             }
 
@@ -976,7 +985,7 @@ void LocalSearchData::create_processing_list_swap_inter(const Sol& sol,
         const auto nb = machine.size();
         int        C = 0;
 
-        if (nb - l1 < 0 || nb - l2 < 0) {
+        if (nb < l1 || nb < l2) {
             continue;
         }
 
