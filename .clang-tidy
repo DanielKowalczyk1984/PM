@@ -1,1 +1,1 @@
-Checks: 'misc-*,clang-analyzer-*,bugprone-*,performance-*,modernize-*,cppcoreguidelines-*,-fuchsia-*,-google-*,-zircon-*,-abseil-*,-modernize-use-trailing-return-type'
+Checks: '-misc-*,clang-analyzer-*,bugprone-*,performance-*,modernize-*,cppcoreguidelines-*,-fuchsia-*,-google-*,-zircon-*,-abseil-*,-modernize-use-trailing-return-type'
