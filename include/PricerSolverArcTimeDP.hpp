@@ -67,7 +67,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     //     init_table();
     // }
 
-    std::unique_ptr<PricerSolverBase> clone() const override {
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return std::make_unique<PricerSolverArcTimeDp>(*this);
     };
 
@@ -108,11 +108,10 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     int delta1(const int& i, const int& j, const int& t) {
         Job* tmp_i = vector_jobs[i];
         Job* tmp_j = vector_jobs[j];
-        return (value_Fj(t, tmp_i) +
-                value_Fj(t + tmp_j->processing_time, tmp_j)) -
-               (value_Fj(t + tmp_j->processing_time - tmp_i->processing_time,
-                         tmp_j) +
-                value_Fj(t + tmp_j->processing_time, tmp_i));
+        return (tmp_i->weighted_tardiness(t) +
+                tmp_j->weighted_tardiness_start(t))  -
+               (tmp_j->weighted_tardiness_start(t - tmp_i->processing_time) +
+                tmp_i->weighted_tardiness(t + tmp_j->processing_time));
     }
 
     void remove_arc(const int& i, const int& j, const int& t) {
@@ -124,7 +123,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     int delta2(const int& j, const int& t) {
         Job* tmp_j = vector_jobs[j];
-        return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
+        return tmp_j->weighted_tardiness(t) - tmp_j->weighted_tardiness(t + 1);
     }
 
     void update_constraints() override {}

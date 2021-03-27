@@ -6,9 +6,9 @@
 #include <range/v3/action/shuffle.hpp>
 #include <range/v3/action/sort.hpp>
 #include <range/v3/range/conversion.hpp>
+#include <range/v3/view/enumerate.hpp>
 #include <range/v3/view/transform.hpp>
 #include <vector>
-#include <range/v3/view/enumerate.hpp>
 #include "Instance.h"
 #include "Interval.h"
 #include "Job.h"
@@ -158,7 +158,8 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                             auto C_aux = c[tmp_in->job];
 
                             std::ranges::sort(Q_in_tmp, cmp);
-                            for (auto&& [jj,it] : Q_in_tmp | ranges::views::enumerate) {
+                            for (auto&& [jj, it] :
+                                 Q_in_tmp | ranges::views::enumerate) {
                                 Q_tmp[jj + 1] = it;
                                 C_aux += it->processing_time;
                                 c[it->job] = C_aux;
@@ -222,7 +223,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                 m.completion_time += job_Q->processing_time;
                 c[job_Q->job] = m.completion_time;
                 m.total_weighted_tardiness +=
-                    value_Fj(m.completion_time, job_Q);
+                    job_Q->weighted_tardiness(m.completion_time);
             }
         }
 
@@ -262,7 +263,7 @@ void Sol::add_job_front_machine(Job* job) {
     std::pop_heap(machines.begin(), machines.end(), cmp_machines_completion);
     auto& m = machines.back();
     m.add_job(job);
-    tw += value_Fj(m.completion_time, job);
+    tw += job->weighted_tardiness(m.completion_time);
     c[job->job] = m.completion_time;
 }
 
@@ -278,7 +279,7 @@ void Sol::calculate_partition(const VecIntervalPtr& v) {
 }
 
 void Sol::print_solution() {
-    for (auto&& [j,m] : machines | ranges::views::enumerate) {
+    for (auto&& [j, m] : machines | ranges::views::enumerate) {
         fmt::print("Machine {}: ", j);
         for (auto& tmp_j : m.job_list) {
             fmt::print("{} ", tmp_j->job);
@@ -292,7 +293,7 @@ void Sol::print_solution() {
 void Machine::add_job(Job* job) {
     job_list.push_back(job);
     completion_time += job->processing_time;
-    total_weighted_tardiness += value_Fj(completion_time, job);
+    total_weighted_tardiness += job->weighted_tardiness(completion_time);
 }
 
 void Machine::reset_machine(std::vector<int>& c) {
@@ -303,7 +304,7 @@ void Machine::reset_machine(std::vector<int>& c) {
     for (const auto& it : job_list) {
         completion_time += it->processing_time;
         c[it->job] = completion_time;
-        total_weighted_tardiness += value_Fj(completion_time, it);
+        total_weighted_tardiness += it->weighted_tardiness(completion_time);
     }
 }
 

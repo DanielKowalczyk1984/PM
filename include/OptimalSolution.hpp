@@ -16,21 +16,21 @@ class OptimalSolution {
     std::vector<Job*> jobs{};
 
     /** Default constructor */
-    OptimalSolution() = default;
+    OptimalSolution<T>() = default;
 
-    explicit OptimalSolution(T _obj) : obj(_obj) {}
+    explicit OptimalSolution<T>(T _obj) : obj(_obj) {}
 
     /** Copy constructor */
-    OptimalSolution(const OptimalSolution& other) = delete;
+    OptimalSolution<T>(const OptimalSolution<T>& other) = delete;
 
     /** Move constructor */
-    OptimalSolution(OptimalSolution&& other) = default;
+    OptimalSolution<T>(OptimalSolution<T>&& other) noexcept = default;
 
     /** Copy assignment operator */
-    OptimalSolution& operator=(const OptimalSolution& other) = delete;
+    OptimalSolution<T>& operator=(const OptimalSolution<T>& other) = delete;
 
     /** Move assignment operator */
-    OptimalSolution& operator=(OptimalSolution&& other) = default;
+    OptimalSolution<T>& operator=(OptimalSolution<T>&& other) noexcept = default;
 
     /** Destructor */
     ~OptimalSolution() = default;
@@ -39,32 +39,23 @@ class OptimalSolution {
                                     OptimalSolution<T> const& o) {
         os << "obj = " << o.obj << "," << std::endl
            << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
-        // g_ptr_array_foreach(o.jobs, g_print_machine, NULL);
 
         for (auto& it : o.jobs) {
             os << it->job << ' ';
         }
-        //   [&os](const Job& tmp) { os << tmp.job << " "; });
         return os;
     };
 
     inline void push_job_back(Job* _job, double _pi) {
-        jobs.push_back(_job);
+        jobs.emplace_back(_job);
         C_max += _job->processing_time;
-        cost += value_Fj(C_max, _job);
+        cost += _job->weighted_tardiness(C_max);
         obj += _pi;
     }
 
-    inline void push_job_back_farkas(Job* _job, double _pi) {
-        jobs.push_back(_job);
-        C_max += _job->processing_time;
-        cost += value_Fj(C_max, _job);
-        obj += -_pi;
-    }
-
     inline void push_job_back(Job* _job, int C, double _pi) {
-        jobs.push_back(_job);
-        cost += value_Fj(C + _job->processing_time, _job);
+        jobs.emplace_back(_job);
+        cost += _job->weighted_tardiness_start(C);
         obj += _pi;
     }
 

@@ -13,7 +13,6 @@
 #include <vector>
 #include "Instance.h"
 #include "Job.h"
-#include "Label.hpp"
 #include "MipGraph.hpp"
 #include "ModelInterface.hpp"
 #include "NodeBdd.hpp"
@@ -22,7 +21,6 @@
 #include "OptimalSolution.hpp"
 #include "PricerConstruct.hpp"
 #include "PricerSolverBase.hpp"
-#include "Statistics.h"
 #include "ZeroHalfCuts.hpp"
 #include "lp.h"
 #include "scheduleset.h"
@@ -228,7 +226,7 @@ void PricerSolverBdd::init_table() {
                 n0.init_node(w);
                 n1.init_node(w + p);
                 node.cost[0] = 0.0;
-                node.cost[1] = value_Fj(w + p, aux_job);
+                node.cost[1] = aux_job->weighted_tardiness_start(w);
 
                 n0.in_degree[0]++;
                 n0.in_edges[0].push_back(node.ptr_node_id);
@@ -593,8 +591,7 @@ void PricerSolverBdd::remove_edges() {
         auto& n = table.node(mip_graph[target(*it.first, mip_graph)].node_id);
         if (mip_graph[*it.first].high) {
             double cost =
-                value_Fj(head.get_weight() + head.get_job()->processing_time,
-                         head.get_job());
+                head.get_job()->weighted_tardiness_start(head.get_weight());
             out_file_mip << head.key << " " << n.key << " " << cost << '\n';
             index_edge[head.get_nb_job()].push_back(mip_graph[*it.first].id);
         } else {
@@ -673,8 +670,8 @@ void PricerSolverBdd::build_mip() {
             if (high) {
                 auto& n =
                     table.node(mip_graph[source(*it.first, mip_graph)].node_id);
-                auto   C = n.get_weight() + n.get_job()->processing_time;
-                double cost = value_Fj(C, n.get_job());
+                double cost =
+                    n.get_job()->weighted_tardiness_start(n.get_weight());
                 x = m.addVar(0.0, 1.0, cost, GRB_BINARY);
             } else {
                 x = m.addVar(0.0, static_cast<double>(convex_rhs), 0.0,
@@ -1083,7 +1080,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
                         all[n.key] |= all[tmp_node.key];
                         all[n.key][n.get_nb_job()] = true;
                         C[n.key] = C[tmp_node.key] +
-                                   value_Fj(tmp_node.get_weight(), n.get_job());
+                                    n.get_job()->weighted_tardiness(tmp_node.get_weight());
                         edge_visited[n.key] = true;
                     } else {
                         auto& tmp_node = table.node(n[0]);
@@ -1097,8 +1094,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
                         auto& tmp_node = table.node(n[1]);
                         tmp = all[tmp_node.key];
                         tmp[n.get_nb_job()] = true;
-                        tmp_C = C[tmp_node.key] +
-                                value_Fj(tmp_node.get_weight(), n.get_job());
+                        tmp_C = C[tmp_node.key] + n.get_job()->weighted_tardiness(tmp_node.get_weight());
                     } else {
                         auto& tmp_node = table.node(n[0]);
                         tmp = all[tmp_node.key];

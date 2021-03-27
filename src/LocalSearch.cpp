@@ -1,16 +1,11 @@
 #include <bits/c++config.h>
 #include <fmt/core.h>
 #include <algorithm>
-#include <boost/timer/timer.hpp>
 #include <cstdio>
-#include <functional>
 #include <limits>
-#include <list>
 #include <memory>
 #include <range/v3/action/shuffle.hpp>
-#include <range/v3/algorithm/shuffle.hpp>
-#include <range/v3/numeric/iota.hpp>
-#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/enumerate.hpp>
 #include <range/v3/view/iota.hpp>
 #include <vector>
 #include "Job.h"
@@ -88,11 +83,11 @@ void LocalSearchData::insertion_operator(Sol& sol, int l) {
             tmp_end = g[k][p_list.pos].end();
 
             for (auto j = p_list.pos + l; j < n; j++) {
-                auto c = sol.c[vec_m[j]->job] - p_list.p;
-                it = std::find_if(it, tmp_end, [&c](const auto& tmp) -> bool {
-                    return tmp.in_interval(c);
+                auto start = sol.c[vec_m[j]->job] - p_list.p;
+                it = std::find_if(it, tmp_end, [&start](const auto& tmp) -> bool {
+                    return tmp.in_interval(start);
                 });
-                G[p_list.pos][j] = it != tmp_end ? (*it)(c) : 0;
+                G[p_list.pos][j] = it != tmp_end ? (*it)(start) : 0;
             }
         }
 
@@ -777,21 +772,19 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, int l) {
 }
 
 void LocalSearchData::calculate_W(const Sol& sol) {
-    std::size_t i = 0UL;
-    for (auto& m : sol.machines) {
+    for (auto&& [i, m] : sol.machines | ranges::views::enumerate) {
         if (!m.updated) {
-            ++i;
             continue;
         }
         auto tmp = m.job_list.begin();
-        W[i][0] = value_Fj(sol.c[(*tmp)->job], (*tmp));
+        W[i][0] = (*tmp)->weighted_tardiness(sol.c[(*tmp)->job]);
         tmp++;
         int j = 1;
         for (; tmp != m.job_list.end(); tmp++) {
-            W[i][j] = W[i][j - 1] + value_Fj(sol.c[(*tmp)->job], (*tmp));
+            W[i][j] =
+                W[i][j - 1] + (*tmp)->weighted_tardiness(sol.c[(*tmp)->job]);
             j++;
         }
-        i++;
     }
 }
 

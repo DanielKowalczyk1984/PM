@@ -121,17 +121,17 @@ std::unique_ptr<NodeData> NodeData::clone() const {
 void NodeData::prune_duplicated_sets() {
     auto equal_func = [](auto const& l, auto const& r) { return (*l) == (*r); };
 
-    if (localColPool.empty()) {
+    if (localColPool.empty() || localColPool.size() == 1) {
         return;
     }
 
     localColPool |=
         ranges::actions::sort(std::less<std::shared_ptr<ScheduleSet>>()) |
         ranges::actions::unique(equal_func);
-    //     std::ranges::sort(localColPool,
-    //     std::less<std::shared_ptr<ScheduleSet>>()); localColPool.erase(
-    //         std::unique(localColPool.begin(), localColPool.end(),
-    //         equal_func), localColPool.end());
+    // std::ranges::sort(localColPool,
+    // std::less<std::shared_ptr<ScheduleSet>>()); localColPool.erase(
+    //     std::unique(localColPool.begin(), localColPool.end(), equal_func),
+    //     localColPool.end());
 }
 
 void NodeData::add_solution_to_colpool(const Sol& sol) {

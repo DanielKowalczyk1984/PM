@@ -114,9 +114,11 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     }
 
     int diff_obj(Job* i, Job* j, int C) const {
-        return value_Fj(C, i) + value_Fj(C + j->processing_time, j) -
-               (value_Fj(C - i->processing_time + j->processing_time, j) +
-                value_Fj(C + j->processing_time, i));
+        return i->weighted_tardiness(C) +
+               j->weighted_tardiness(C + j->processing_time) -
+               (j->weighted_tardiness(C - i->processing_time +
+                                      j->processing_time) +
+                i->weighted_tardiness(C + j->processing_time));
     }
 };
 

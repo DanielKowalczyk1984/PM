@@ -1,5 +1,6 @@
 #ifndef SCHEDULESET_H
 #define SCHEDULESET_H
+#include <functional>
 #include <memory>
 #include <vector>
 #include "ModelInterface.hpp"
@@ -25,6 +26,7 @@ struct ScheduleSet {
 
     bool operator<(ScheduleSet const& other);
     bool operator==(ScheduleSet const& other) const;
+    bool operator<=>(ScheduleSet const& other);
 
     friend std::ostream& operator<<(std::ostream& os, const ScheduleSet& set) {
         for (auto& it : set.job_list) {
@@ -43,6 +45,12 @@ template <>
 struct less<std::shared_ptr<ScheduleSet>> {
     constexpr bool operator()(auto const& lhs, auto const& rhs) {
         return (*lhs) < (*rhs);  // or use boost::hash_combine
+    }
+};
+template <>
+struct equal_to<std::shared_ptr<ScheduleSet>> {
+    constexpr bool operator()(auto const& lhs, auto const& rhs) {
+        return (*lhs) == (*rhs);  // or use boost::hash_combine
     }
 };
 

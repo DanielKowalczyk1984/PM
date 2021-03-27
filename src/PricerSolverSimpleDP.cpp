@@ -69,8 +69,9 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
     for (int t = 0; t < Hmax + 1; t++) {
         auto it = forward_graph[t].begin();
         while (it != forward_graph[t].end()) {
-            double result = F[t - (*it)->processing_time] + value_Fj(t, *it) -
-                            aux_pi[(*it)->job] + backward_F[t];
+            double result = F[t - (*it)->processing_time] +
+                            (*it)->weighted_tardiness(t) - aux_pi[(*it)->job] +
+                            backward_F[t];
             if (LB + result + (convex_rhs - 1) * F[Hmax] > UB + RC_FIXING) {
                 size_graph--;
                 it = forward_graph[t].erase(it);
@@ -83,9 +84,9 @@ void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
 
         auto iter = backward_graph[t].begin();
         while (iter != backward_graph[t].end()) {
-            double result =
-                F[t] + value_Fj(t + (*iter)->processing_time, *iter) -
-                aux_pi[(*iter)->job] + backward_F[t + (*iter)->processing_time];
+            double result = F[t] + (*iter)->weighted_tardiness_start(t) -
+                            aux_pi[(*iter)->job] +
+                            backward_F[t + (*iter)->processing_time];
             if (LB + result + (convex_rhs - 1) * F[Hmax] > UB + RC_FIXING) {
                 take[(*iter)->job * (Hmax + 1) + t] = false;
                 // iter = backward_graph[t].erase(iter);
@@ -108,7 +109,7 @@ void PricerSolverSimpleDp::build_mip() {
         /** Constructing variables */
         for (int t = 0; t < Hmax + 1; t++) {
             for (auto& it : backward_graph[t]) {
-                double cost = value_Fj(t + it->processing_time, it);
+                double cost = it->weighted_tardiness_start(t);
                 double ub = take[(it->job) * (Hmax + 1) + t] ? 1.0 : 0.0;
                 TI_x[it->job * (Hmax + 1) + t] =
                     model.addVar(0.0, ub, cost, GRB_BINARY);
@@ -194,9 +195,10 @@ void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     for (int t = 1; t < Hmax + 1; t++) {
         for (auto& it : forward_graph[t]) {
             if (F[t - it->processing_time] +
-                    static_cast<double>(value_Fj(t, it)) - aux_pi[it->job] <=
+                    static_cast<double>(it->weighted_tardiness(t)) -
+                    aux_pi[it->job] <=
                 F[t]) {
-                F[t] = F[t - it->processing_time] + value_Fj(t, it) -
+                F[t] = F[t - it->processing_time] + it->weighted_tardiness(t) -
                        aux_pi[it->job];
                 A[t] = it;
             }
@@ -219,12 +221,14 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     for (auto t = Hmax - 1; t >= 0UL; t--) {
         for (auto& it : backward_graph[t]) {
             auto tt = t + it->processing_time;
-            if (backward_F[tt] + static_cast<double>(value_Fj(tt, it)) -
+            if (backward_F[tt] +
+                    static_cast<double>(it->weighted_tardiness(tt)) -
                     aux_pi[it->job] <=
                 backward_F[t]) {
-                backward_F[t] = backward_F[tt] +
-                                static_cast<double>(value_Fj(tt, it)) -
-                                aux_pi[it->job];
+                backward_F[t] =
+                    backward_F[tt] +
+                    static_cast<double>(it->weighted_tardiness(tt)) -
+                    aux_pi[it->job];
             }
         }
 
@@ -257,7 +261,7 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     while (A[t_min] != nullptr) {
         Job* job = A[t_min];
         v.push_back(A[t_min]);
-        opt_sol.cost += value_Fj(t_min, A[t_min]);
+        opt_sol.cost += A[t_min]->weighted_tardiness(t_min);
         t_min -= job->processing_time;
     }
 

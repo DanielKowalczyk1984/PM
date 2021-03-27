@@ -51,8 +51,7 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
             auto weight = it->weight;
             auto p0 = it->n;
             auto p1 = it->y;
-            auto result = value_Fj(weight + tmp_j->processing_time, tmp_j) -
-                          pi[tmp_j->job];
+            auto result = tmp_j->weighted_tardiness_start(weight);
 
             auto obj0 = p0->backward_label[0].get_f();
             auto obj1 = p1->backward_label[0].get_f() + result;
@@ -123,8 +122,7 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
             int                           weight{it->get_weight()};
             std::shared_ptr<SubNodeZdd<>> p0{it->n};
             std::shared_ptr<SubNodeZdd<>> p1{it->y};
-            T result{value_Fj(weight + tmp_j->processing_time, tmp_j) -
-                     pi[tmp_j->job]};
+            T result{tmp_j->weighted_tardiness_start(weight) - pi[tmp_j->job]};
 
             Job* prev_job{p1->backward_label[0].prev_job_backward()};
 
@@ -132,7 +130,7 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
             it->backward_label[1].backward_update(&(p0->backward_label[1]));
             bool diff = bool_diff_Fij(weight, prev_job, tmp_j);
             bool diff1 = bool_diff_Fij(
-                    weight, p1->backward_label[0].prev_job_backward(), tmp_j);
+                weight, p1->backward_label[0].prev_job_backward(), tmp_j);
 
             if (prev_job != tmp_j && diff) {
                 T obj1{p1->backward_label[0].get_f() + result};
@@ -141,20 +139,20 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
                 if (obj1 < it->backward_label[0].get_f()) {
                     if (tmp_j != it->backward_label[0].prev_job_backward()) {
                         it->backward_label[1].backward_update(
-                                &(p0->backward_label[0]));
+                            &(p0->backward_label[0]));
                     }
 
-                    it->backward_label[0].backward_update(&(p1->backward_label[0]),
-                                                          obj1, true);
+                    it->backward_label[0].backward_update(
+                        &(p1->backward_label[0]), obj1, true);
                 } else if (obj1 < it->backward_label[1].get_f() &&
                            tmp_j != it->backward_label[0].prev_job_backward() &&
                            diff1) {
-                    it->backward_label[1].backward_update(&(p1->backward_label[0]),
-                                                          obj1, true);
+                    it->backward_label[1].backward_update(
+                        &(p1->backward_label[0]), obj1, true);
                 } else if (obj2 < it->backward_label[1].get_f() &&
                            tmp_j != it->backward_label[0].prev_job_backward()) {
-                    it->backward_label[1].backward_update(&(p1->backward_label[1]),
-                                                          obj2, true);
+                    it->backward_label[1].backward_update(
+                        &(p1->backward_label[1]), obj2, true);
                 }
             } else {
                 T obj1 = p1->backward_label[1].get_f() + result;
@@ -162,15 +160,15 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
                 if (obj1 < it->backward_label[0].get_f()) {
                     if (tmp_j != it->backward_label[0].prev_job_backward()) {
                         it->backward_label[1].backward_update(
-                                &(p0->backward_label[0]));
+                            &(p0->backward_label[0]));
                     }
 
-                    it->backward_label[0].backward_update(&(p1->backward_label[1]),
-                                                          obj1, true);
+                    it->backward_label[0].backward_update(
+                        &(p1->backward_label[1]), obj1, true);
                 } else if (obj1 < it->backward_label[1].get_f() &&
                            tmp_j != it->backward_label[0].prev_job_backward()) {
-                    it->backward_label[1].backward_update(&(p1->backward_label[1]),
-                                                          obj1, true);
+                    it->backward_label[1].backward_update(
+                        &(p1->backward_label[1]), obj1, true);
                 }
             }
         }

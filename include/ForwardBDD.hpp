@@ -32,7 +32,7 @@ class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     virtual void evalNode(NodeBdd<T>& n) const = 0;
 
     OptimalSolution<T> get_objective(NodeBdd<T>& n) const {
-        OptimalSolution<T>    sol(0);
+        OptimalSolution<T>    sol(0.0);
         Label<NodeBdd<T>, T>* ptr_node = &(n.forward_label[0]);
         auto table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
 

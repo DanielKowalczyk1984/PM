@@ -11,7 +11,6 @@
 #include "NodeBddStructure.hpp"
 #include "OptimalSolution.hpp"
 #include "PricerSolverBase.hpp"
-// #include "wctprivate.h"
 
 class PricerSolverBdd : public PricerSolverBase {
     DdStructure<NodeBdd<double>> decision_diagram;
@@ -48,7 +47,6 @@ class PricerSolverBdd : public PricerSolverBase {
     void                  bottum_up_filtering();
     void                  equivalent_paths_filtering();
     [[maybe_unused]] void print_representation_file();
-    void                  calculate_H_min();
     void                  cleanup_arcs();
 
     void remove_layers();
@@ -87,7 +85,7 @@ class PricerSolverBdd : public PricerSolverBase {
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
 
-    inline DdStructure<>& get_decision_diagram() { return decision_diagram; }
+    inline DdStructure<NodeBdd<double>>& get_decision_diagram() { return decision_diagram; }
 
     inline int get_nb_removed_edges() { return nb_removed_edges; }
 

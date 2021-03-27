@@ -100,12 +100,12 @@ class ForwardZddCycle : public ForwardZddBase<T> {
                 it->forward_label[0].forward_update(pi[num_jobs], nullptr,
                                                     false);
                 it->forward_label[1].forward_update(
-                        std::numeric_limits<double>::max() / 2, nullptr, false);
+                    std::numeric_limits<double>::max() / 2, nullptr, false);
             } else {
                 it->forward_label[0].forward_update(
-                        std::numeric_limits<double>::max() / 2, nullptr, false);
+                    std::numeric_limits<double>::max() / 2, nullptr, false);
                 it->forward_label[1].forward_update(
-                        std::numeric_limits<double>::max() / 2, nullptr, false);
+                    std::numeric_limits<double>::max() / 2, nullptr, false);
             }
         }
     }
@@ -126,46 +126,48 @@ class ForwardZddCycle : public ForwardZddBase<T> {
             T                              g;
             std::shared_ptr<SubNodeZdd<T>> p0 = it->n;
             std::shared_ptr<SubNodeZdd<T>> p1 = it->y;
-            double result = value_Fj(weight + tmp_j->processing_time, tmp_j) -
-                            pi[tmp_j->job];
+            double                         result =
+                tmp_j->weighted_tardiness_start(weight) - pi[tmp_j->job];
 
             /**
              * High edge calculation
              */
             Job* prev = it->forward_label[0].prev_job_forward();
             Job* aux1 = p1->forward_label[0].prev_job_forward();
-            auto diff = (prev == nullptr) || (value_diff_Fij(weight, tmp_j, prev) >= 0);
+            auto diff =
+                (prev == nullptr) || (value_diff_Fij(weight, tmp_j, prev) >= 0);
 
             if (prev != tmp_j && diff) {
                 g = it->forward_label[0].get_f() + result;
                 if (g < p1->forward_label[0].get_f()) {
                     if (aux1 != tmp_j) {
                         p1->forward_label[1].forward_update(
-                                p1->forward_label[0]);
+                            p1->forward_label[0]);
                     }
                     p1->forward_label[0].forward_update(
-                            g, &(it->forward_label[0]), true);
+                        g, &(it->forward_label[0]), true);
                 } else if ((g < p1->forward_label[1].get_f()) &&
                            (aux1 != tmp_j)) {
                     p1->forward_label[1].forward_update(
-                            g, &(it->forward_label[0]), true);
+                        g, &(it->forward_label[0]), true);
                 }
             } else {
                 g = it->forward_label[1].get_f() + result;
                 prev = it->forward_label[1].prev_job_forward();
-                diff = (prev == nullptr) || (value_diff_Fij(weight, tmp_j, prev) >= 0);
+                diff = (prev == nullptr) ||
+                       (value_diff_Fij(weight, tmp_j, prev) >= 0);
                 if (diff) {
                     if (g < p1->forward_label[0].get_f()) {
                         if (aux1 != tmp_j) {
                             p1->forward_label[1].forward_update(
-                                    p1->forward_label[0]);
+                                p1->forward_label[0]);
                         }
                         p1->forward_label[0].forward_update(
-                                g, &(it->forward_label[1]), true);
+                            g, &(it->forward_label[1]), true);
                     } else if ((g < p1->forward_label[1].get_f()) &&
                                (aux1 != tmp_j)) {
                         p1->forward_label[1].forward_update(
-                                g, &(it->forward_label[1]), true);
+                            g, &(it->forward_label[1]), true);
                     }
                 }
             }
@@ -252,8 +254,8 @@ class ForwardZddSimple : public ForwardZddBase<T> {
             T                              g;
             std::shared_ptr<SubNodeZdd<T>> p0 = it->n;
             std::shared_ptr<SubNodeZdd<T>> p1 = it->y;
-            double result = value_Fj(weight + tmp_j->processing_time, tmp_j) -
-                            pi[tmp_j->job];
+            double                         result =
+                tmp_j->weighted_tardiness_start(weight) - pi[tmp_j->job];
             // printf("test result %f\n", result);
 
             /**
