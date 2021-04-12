@@ -5,6 +5,8 @@
 #include <memory>
 #include <numeric>
 #include <range/v3/numeric/iota.hpp>
+#include <range/v3/view/enumerate.hpp>
+#include <range/v3/view/filter.hpp>
 #include <span>
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
@@ -60,18 +62,16 @@ void BranchNodeBase::branch(BTree* bt) {
     std::vector<int>        middle_time(nb_jobs, -1);
     std::vector<BranchCand> best_cand(NumStrBrCandidates, BranchCand());
     std::vector<double>     branch_scores(nb_jobs, 0.0);
-    std::vector<double>     avg_completion_time(nb_jobs, 0.0);
     std::vector<double>     min_completion_time(nb_jobs,
                                             std::numeric_limits<double>::max());
 
-    for (auto k = 0; k < nb_jobs; k++) {
-        auto  i = ord[k];
+    for (auto& i : ord) {
         auto  prev = -1;
         auto  accum = 0.0;
         auto  dist_zero = 0.0;
         auto* job = (solver->jobs)[i].get();
-        for (auto t = 0; t < pd->instance.H_max + 1; t++) {
-            accum += x_job_time[i][t];
+        for (auto&& [t, x] : x_job_time[i] | ranges::views::enumerate) {
+            accum += x;
             // avg_completion_time[i] +=
             //     x_job_time[i][t] * (t + job->processing_time);
             // if (x_job_time[i][t] > 1e-5) {
@@ -80,22 +80,20 @@ void BranchNodeBase::branch(BTree* bt) {
             //         job->processing_time));
             // }
 
-            if ((accum >= (1.0 - TargetBrTimeValue)) &&
-                (x_job_time[i][t] > EPS) && (prev != -1) &&
-                (middle_time[i] == -1)) {
+            if ((accum >= (1.0 - TargetBrTimeValue)) && (x > EPS) &&
+                (prev != -1) && (middle_time[i] == -1)) {
                 middle_time[i] = (t + job->processing_time + prev) / 2;
                 branch_scores[i] = double(middle_time[i]) * accum - dist_zero;
             }
 
             if (middle_time[i] != -1) {
                 branch_scores[i] +=
-                    double(t + job->processing_time - middle_time[i] + 1) *
-                    x_job_time[i][t];
+                    double(t + job->processing_time - middle_time[i] + 1) * x;
             }
 
-            dist_zero += double(t + job->processing_time) * x_job_time[i][t];
+            dist_zero += double(t + job->processing_time) * x;
 
-            if (x_job_time[i][t] > EPS) {
+            if (x > EPS) {
                 prev = t + job->processing_time;
             }
         }
@@ -114,22 +112,21 @@ void BranchNodeBase::branch(BTree* bt) {
     auto best_min_gain = 0.0;
     auto best_job = -1;
     auto best_time = 0;
+
     std::unique_ptr<BranchNodeBase> best_right = nullptr;
     std::unique_ptr<BranchNodeBase> best_left = nullptr;
-    for (auto& it : best_cand) {
+    for (auto& it : best_cand | ranges::views::filter(
+                                    [](auto& tmp) { return tmp.job != -1; })) {
         auto i = it.job;
-        if (i == -1) {
-            continue;
-        }
 
         auto  left_gain = 0.0;
         auto  right_gain = 0.0;
         auto* job = pd->instance.jobs[i].get();
-        for (auto t = 0; t < pd->instance.H_max + 1; t++) {
+        for (auto&& [t, x] : x_job_time[i] | ranges::views::enumerate) {
             if (t + job->processing_time <= middle_time[i]) {
-                left_gain += x_job_time[i][t];
+                left_gain += x;
             } else {
-                right_gain += x_job_time[i][t];
+                right_gain += x;
             }
         }
 
@@ -207,14 +204,12 @@ void BranchNodeBase::branch(BTree* bt) {
 
     if (best_job == -1) {
         fmt::print(stderr, "ERROR: no branching found!\n");
-        for (auto k = 0; k < nb_jobs; k++) {
-            auto  j = ord[k];
+        for (auto& j : ord) {
             auto* job = (solver->jobs)[j].get();
             fmt::print(stderr, "j={}:", j);
-            for (int t = 0; t < pd->instance.H_max; t++) {
-                if (x_job_time[j][t] > ERROR) {
-                    fmt::print(stderr, " ({},{})", t + job->processing_time,
-                               x_job_time[j][t]);
+            for (auto&& [t, x] : x_job_time[j] | ranges::views::enumerate) {
+                if (x > ERROR) {
+                    fmt::print(stderr, " ({},{})", t + job->processing_time, x);
                 }
             }
             fmt::print(stderr, "\n");

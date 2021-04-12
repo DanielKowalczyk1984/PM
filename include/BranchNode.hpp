@@ -52,7 +52,7 @@ class BranchNodeBase : public State {
     static constexpr double ERROR = 1e-12;
     static constexpr double IntegerTolerance = 1e-3;
     static constexpr double TargetBrTimeValue = 0.5;
-    static constexpr int    NumStrBrCandidates = 32;
+    static constexpr int    NumStrBrCandidates = 40;
 };
 
 #endif  // __BRANCHNODE_H__
