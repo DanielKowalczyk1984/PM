@@ -82,9 +82,8 @@ void PricerSolverBdd::construct_mipgraph() {
     auto index{0U};
     for (auto i = decision_diagram.topLevel(); i >= 0; i--) {
         for (auto j = 0U; j < table[i].size(); j++) {
-            if (NodeId(i, j) != 0
-                // && (table[i][j].calc_yes || table[i][j].calc_no)
-            ) {
+            if (NodeId(i, j) != 0 &&
+                (table[i][j].calc[1] || table[i][j].calc[0])) {
                 table[i][j].key =
                     boost::add_vertex({index++, NodeId(i, j)}, mip_graph);
             }
@@ -1079,8 +1078,9 @@ void PricerSolverBdd::equivalent_paths_filtering() {
                         auto& tmp_node = table.node(n[1]);
                         all[n.key] |= all[tmp_node.key];
                         all[n.key][n.get_nb_job()] = true;
-                        C[n.key] = C[tmp_node.key] +
-                                    n.get_job()->weighted_tardiness(tmp_node.get_weight());
+                        C[n.key] =
+                            C[tmp_node.key] + n.get_job()->weighted_tardiness(
+                                                  tmp_node.get_weight());
                         edge_visited[n.key] = true;
                     } else {
                         auto& tmp_node = table.node(n[0]);
@@ -1094,7 +1094,9 @@ void PricerSolverBdd::equivalent_paths_filtering() {
                         auto& tmp_node = table.node(n[1]);
                         tmp = all[tmp_node.key];
                         tmp[n.get_nb_job()] = true;
-                        tmp_C = C[tmp_node.key] + n.get_job()->weighted_tardiness(tmp_node.get_weight());
+                        tmp_C =
+                            C[tmp_node.key] + n.get_job()->weighted_tardiness(
+                                                  tmp_node.get_weight());
                     } else {
                         auto& tmp_node = table.node(n[0]);
                         tmp = all[tmp_node.key];
