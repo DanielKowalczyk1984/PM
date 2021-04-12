@@ -47,8 +47,7 @@ void LocalSearchData::RVND(Sol& sol) {
     calculate_g(sol);
     std::random_device         rd;
     std::default_random_engine rng(rd());
-    // auto                       shuffle =
-    //     ranges::views::iota(0, nb_moves - 1) | ranges::to<std::vector<int>>;
+
     do {
         moves |= ranges::actions::shuffle(rng);
         for (auto& operator_move : moves) {
@@ -84,9 +83,10 @@ void LocalSearchData::insertion_operator(Sol& sol, int l) {
 
             for (auto j = p_list.pos + l; j < n; j++) {
                 auto start = sol.c[vec_m[j]->job] - p_list.p;
-                it = std::find_if(it, tmp_end, [&start](const auto& tmp) -> bool {
-                    return tmp.in_interval(start);
-                });
+                it = std::find_if(it, tmp_end,
+                                  [&start](const auto& tmp) -> bool {
+                                      return tmp.in_interval(start);
+                                  });
                 G[p_list.pos][j] = it != tmp_end ? (*it)(start) : 0;
             }
         }
