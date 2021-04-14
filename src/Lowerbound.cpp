@@ -453,13 +453,6 @@ int NodeData::compute_lower_bound() {
 
         switch (status_RMP) {
             case GRB_OPTIMAL:
-                /**
-                 * change status of problem
-                 */
-                // if (problem->status == no_sol) {
-                //     problem->status = lp_feasible;
-                // }
-
                 if (dbg_lvl() > 1) {
                     fmt::print(
                         R"(Found lb = {} ({}) upper_bound = {} (iterations = {}).
