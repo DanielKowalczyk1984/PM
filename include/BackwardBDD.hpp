@@ -117,19 +117,22 @@ class BackwardBddCycle : public BackwardBddBase<T> {
 
         n.reset_reduced_costs();
 
-        for (auto& list : n.coeff_list) {
-            list |= ranges::actions::remove_if([&](auto it) {
-                auto aux = it.lock();
-                if (aux) {
-                    n.adjust_reduced_costs(
-                        aux->get_coeff() * dual[aux->get_row()],
-                        aux->get_high());
-                    return false;
-                } else {
-                    return true;
-                }
-            });
-        }
+        n.adjust_reduced_costs(dual[tmp_j->job], true);
+        n.adjust_reduced_costs(0.0, false);
+
+        // for (auto& list : n.coeff_list) {
+        //     list |= ranges::actions::remove_if([&](auto it) {
+        //         auto aux = it.lock();
+        //         if (aux) {
+        //             n.adjust_reduced_costs(
+        //                 aux->get_coeff() * dual[aux->get_row()],
+        //                 aux->get_high());
+        //             return false;
+        //         } else {
+        //             return true;
+        //         }
+        //     });
+        // }
 
         auto prev_job{p1_tmp.backward_label[0].prev_job_backward()};
 
