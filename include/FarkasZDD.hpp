@@ -1,4 +1,5 @@
-#include <BackwardBDD.hpp>
+#include <limits>
+#include "BackwardBDD.hpp"
 #include "NodeBddEval.hpp"
 
 template <typename T = double>
@@ -23,23 +24,23 @@ class BackwardBddFarkas : public BackwardBddBase<T> {
         }
 
         auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
-        auto& p0 = table_tmp->node(n.branch[0]);
-        auto& p1 = table_tmp->node(n.branch[1]);
+        auto& p0 = table_tmp->node(n[0]);
+        auto& p1 = table_tmp->node(n[1]);
 
         T obj0 = p0.backward_label[0].get_f() + n.reduced_cost[0];
         T obj1 = p1.backward_label[0].get_f() + n.reduced_cost[1];
 
         if (obj0 > obj1) {
-            n.backward_label[0].update_label(&(p1.backward_label[0]), obj1,
-                                             true);
+            n.backward_label[0].backward_update(&(p1.backward_label[0]), obj1,
+                                                true);
         } else {
-            n.backward_label[0].update_label(&(p0.backward_label[0]), obj0,
-                                             false);
+            n.backward_label[0].backward_update(&(p0.backward_label[0]), obj0,
+                                                false);
         }
     }
 
     void initializenode(NodeBdd<T>& n) const override {
-        n.backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
+        n.backward_label[0].reset();
     }
 
     void initializerootnode(NodeBdd<T>& n) const override {

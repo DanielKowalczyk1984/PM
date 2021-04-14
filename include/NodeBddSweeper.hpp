@@ -136,7 +136,7 @@ class DdSweeper {
                 bool dead = true;
 
                 for (int b = 0; b < 2; ++b) {
-                    NodeId& f = p.branch[b];
+                    auto& f = p[b];
                     if (f.row() >= k) {
                         f = newId[f.row()][f.col()];
                     }

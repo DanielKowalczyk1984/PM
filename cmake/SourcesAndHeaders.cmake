@@ -1,26 +1,37 @@
-file(
-  GLOB
-  SOURCE_FILES
-  "src/*.cpp"
-  # src/Statistics.c
-  # src/greedy.c
-  src/interval.c
-  # src/io.c
-  src/job.c
-  src/localsearch.c
-  # src/lowerbound.c
-  src/lp.c
-  src/model.c
-  src/partlist.c
-  # src/preprocess.c
-  src/scheduleset.c
-  src/solution.c
-  # src/wct.c
-  # src/wctparms.c
-  )
+set(sources
+    "src/BranchBoundTree.cpp"
+    "src/BranchNode.cpp"
+    "src/Instance.cpp"
+    "src/Interval.cpp"
+    "src/IO.cpp"
+    "src/Job.cpp"
+    "src/LocalSearch.cpp"
+    "src/Lowerbound.cpp"
+    "src/Model.cpp"
+    "src/ModelInterface.cpp"
+    "src/Parms.cpp"
+    "src/PricerSolverArcTimeDP.cpp"
+    "src/PricerSolverBase.cpp"
+    "src/PricerSolverBdd.cpp"
+    "src/PricerSolverBddBackward.cpp"
+    "src/PricerSolverBddForward.cpp"
+    "src/PricerSolverSimpleDP.cpp"
+    "src/PricerSolverWrappers.cpp"
+    "src/PricerSolverZdd.cpp"
+    "src/PricerSolverZddBackward.cpp"
+    "src/PricerSolverZddForward.cpp"
+    "src/PricingStabilization.cpp"
+    "src/Scheduleset.cpp"
+    "src/SeperationSolver.cpp"
+    "src/Solution.cpp"
+    "src/StabilizationWrappers.cpp"
+    "src/Statistics.cpp"
+    "src/wct.cpp"
+    "src/wctprivate.cpp"
+    "src/ZeroHalfCuts.cpp"
+    "src/ZeroHalfSystem.cpp"
+)
 
-set(sources ${SOURCE_FILES})
-
-set(exe_sources src/main.cpp)
+set(exe_sources "src/main.cpp")
 
 set(headers ${PROJECT_SOURCE_DIR}/include)

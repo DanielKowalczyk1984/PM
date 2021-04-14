@@ -3,7 +3,7 @@
 
 #include "ModelInterface.hpp"
 #include "PricerSolverBase.hpp"
-#include "wctprivate.h"
+// #include "wctprivate.h"
 
 class SeperationSolver {
    public:

@@ -3,9 +3,14 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <numeric>
+#include <range/v3/numeric/iota.hpp>
+#include <range/v3/view/enumerate.hpp>
+#include <range/v3/view/filter.hpp>
 #include <span>
+#include "PricerSolverBase.hpp"
+#include "Statistics.h"
 #include "branch-and-bound/btree.h"
-#include "solver.h"
 #include "util.h"
 #include "wctprivate.h"
 
@@ -15,7 +20,9 @@ BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
     if (_isRoot) {
         pd->build_rmp();
         pd->solve_relaxation();
+        pd->stat.start_resume_timer(Statistics::lb_root_timer);
         pd->compute_lower_bound();
+        pd->stat.suspend_timer(Statistics::lb_root_timer);
         set_lb(pd->lower_bound);
         set_obj_value(pd->LP_lower_bound);
     }
@@ -25,7 +32,7 @@ void BranchNodeBase::branch(BTree* bt) {
     auto* solver = pd->solver.get();
     auto  nb_jobs = pd->nb_jobs;
     auto  strong_branching =
-        ((pd->opt_sol->tw - pd->LP_lower_bound) < (1.0 + IntegerTolerance));
+        ((pd->opt_sol.tw - pd->LP_lower_bound) < (1.0 + IntegerTolerance));
 
     if (!strong_branching && dbg_lvl() > 0) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
@@ -41,34 +48,30 @@ void BranchNodeBase::branch(BTree* bt) {
     // calculate the fraction of each job finishing at each time in the
     // relaxation solution
     std::vector<std::vector<double>> x_job_time(nb_jobs);
-    for (auto i = 0; i < nb_jobs; i++) {
-        x_job_time[i].resize(pd->H_max + 1, 0.0);
+    for (auto& it : x_job_time) {
+        it.resize(pd->instance.H_max + 1, 0.0);
     }
 
     solver->calculate_job_time(&x_job_time);
 
     // initialize the order for evaluating the branching jobs
     std::vector<int> ord(nb_jobs);
-    for (int k = 0; k < nb_jobs; k++) {
-        ord[k] = k;
-    }
+    ranges::iota(ord, 0);
 
     // initialize the middle times and scores used for branching
     std::vector<int>        middle_time(nb_jobs, -1);
     std::vector<BranchCand> best_cand(NumStrBrCandidates, BranchCand());
     std::vector<double>     branch_scores(nb_jobs, 0.0);
-    std::vector<double>     avg_completion_time(nb_jobs, 0.0);
     std::vector<double>     min_completion_time(nb_jobs,
                                             std::numeric_limits<double>::max());
 
-    for (auto k = 0; k < nb_jobs; k++) {
-        auto  i = ord[k];
+    for (auto& i : ord) {
         auto  prev = -1;
         auto  accum = 0.0;
         auto  dist_zero = 0.0;
-        auto* job = static_cast<Job*>(solver->jobs[i]);
-        for (auto t = 0; t < pd->H_max + 1; t++) {
-            accum += x_job_time[i][t];
+        auto* job = (solver->jobs)[i].get();
+        for (auto&& [t, x] : x_job_time[i] | ranges::views::enumerate) {
+            accum += x;
             // avg_completion_time[i] +=
             //     x_job_time[i][t] * (t + job->processing_time);
             // if (x_job_time[i][t] > 1e-5) {
@@ -77,22 +80,20 @@ void BranchNodeBase::branch(BTree* bt) {
             //         job->processing_time));
             // }
 
-            if ((accum >= (1.0 - TargetBrTimeValue)) &&
-                (x_job_time[i][t] > EPS) && (prev != -1) &&
-                (middle_time[i] == -1)) {
+            if ((accum >= (1.0 - TargetBrTimeValue)) && (x > EPS) &&
+                (prev != -1) && (middle_time[i] == -1)) {
                 middle_time[i] = (t + job->processing_time + prev) / 2;
                 branch_scores[i] = double(middle_time[i]) * accum - dist_zero;
             }
 
             if (middle_time[i] != -1) {
                 branch_scores[i] +=
-                    double(t + job->processing_time - middle_time[i] + 1) *
-                    x_job_time[i][t];
+                    double(t + job->processing_time - middle_time[i] + 1) * x;
             }
 
-            dist_zero += double(t + job->processing_time) * x_job_time[i][t];
+            dist_zero += double(t + job->processing_time) * x;
 
-            if (x_job_time[i][t] > EPS) {
+            if (x > EPS) {
                 prev = t + job->processing_time;
             }
         }
@@ -108,26 +109,24 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
-    auto      best_min_gain = 0.0;
-    auto      best_job = -1;
-    auto      best_time = 0;
-    std::span jobsarray{pd->jobarray->pdata, pd->jobarray->len};
+    auto best_min_gain = 0.0;
+    auto best_job = -1;
+    auto best_time = 0;
+
     std::unique_ptr<BranchNodeBase> best_right = nullptr;
     std::unique_ptr<BranchNodeBase> best_left = nullptr;
-    for (auto& it : best_cand) {
+    for (auto& it : best_cand | ranges::views::filter(
+                                    [](auto& tmp) { return tmp.job != -1; })) {
         auto i = it.job;
-        if (i == -1) {
-            continue;
-        }
 
         auto  left_gain = 0.0;
         auto  right_gain = 0.0;
-        auto* job = static_cast<Job*>(jobsarray[i]);
-        for (auto t = 0; t < pd->H_max + 1; t++) {
+        auto* job = pd->instance.jobs[i].get();
+        for (auto&& [t, x] : x_job_time[i] | ranges::views::enumerate) {
             if (t + job->processing_time <= middle_time[i]) {
-                left_gain += x_job_time[i][t];
+                left_gain += x;
             } else {
-                right_gain += x_job_time[i][t];
+                right_gain += x;
             }
         }
 
@@ -144,20 +143,19 @@ void BranchNodeBase::branch(BTree* bt) {
             auto* left_solver = left->solver.get();
             auto  left_node_branch =
                 std::make_unique<BranchNodeBase>(std::move(left));
-            // std::unique_ptr<BranchNodeBase>(new BranchNodeBase(left));
             left_solver->split_job_time(i, middle_time[i], true);
             left_node_branch->compute_bounds(bt);
 
             auto approx = left_gain;
-            left_gain = left_node_branch->get_obj_value();
+            left_gain = left_node_branch->pd->LP_lower_bound;
             if (dbg_lvl() > 0) {
                 fmt::print(
                     "STRONG BRANCHING LEFT PROBE: j = {}, t = {},"
                     " DWM LB = {:9.2f} in iterations {} ({})\n\n",
-                    i, middle_time[i], left_gain + pd->off,
+                    i, middle_time[i], left_gain + pd->instance.off,
                     left_node_branch->pd->iterations, approx);
             }
-            if (left_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance ||
+            if (left_gain >= pd->opt_sol.tw - 1.0 + IntegerTolerance ||
                 left_solver->get_is_integer_solution()) {
                 fathom_left = true;
             }
@@ -178,10 +176,10 @@ void BranchNodeBase::branch(BTree* bt) {
                 fmt::print(
                     "STRONG BRANCHING RIGHT PROBE: j = {}, t = {},"
                     " DWM LB = {:9.2f} in iterations {} ({})\n\n",
-                    i, middle_time[i], right_gain + pd->off,
+                    i, middle_time[i], right_gain + pd->instance.off,
                     right_node_branch->pd->iterations, approx);
             }
-            if (right_gain >= pd->opt_sol->tw - 1.0 + IntegerTolerance ||
+            if (right_gain >= pd->opt_sol.tw - 1.0 + IntegerTolerance ||
                 right_solver->get_is_integer_solution()) {
                 fathom_right = true;
             }
@@ -206,14 +204,12 @@ void BranchNodeBase::branch(BTree* bt) {
 
     if (best_job == -1) {
         fmt::print(stderr, "ERROR: no branching found!\n");
-        for (auto k = 0; k < nb_jobs; k++) {
-            auto  j = ord[k];
-            auto* job = static_cast<Job*>(solver->jobs[j]);
+        for (auto& j : ord) {
+            auto* job = (solver->jobs)[j].get();
             fmt::print(stderr, "j={}:", j);
-            for (int t = 0; t < pd->H_max; t++) {
-                if (x_job_time[j][t] > ERROR) {
-                    fmt::print(stderr, " ({},{})", t + job->processing_time,
-                               x_job_time[j][t]);
+            for (auto&& [t, x] : x_job_time[j] | ranges::views::enumerate) {
+                if (x > ERROR) {
+                    fmt::print(stderr, " ({},{})", t + job->processing_time, x);
                 }
             }
             fmt::print(stderr, "\n");
@@ -259,7 +255,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
     if (dbg_lvl() > 1) {
         fmt::print("Branching choice: j = {}, t = {}, best_gain = {}\n",
-                   best_job, best_time, best_min_gain + pd->off);
+                   best_job, best_time, best_min_gain + pd->instance.off);
     }
 }
 
@@ -268,7 +264,9 @@ void BranchNodeBase::compute_bounds(BTree* bt) {
     pd->solve_relaxation();
     pd->compute_lower_bound();
     set_lb(pd->lower_bound);
-    set_obj_value(pd->LP_lower_bound);
+    if (pd->solver->get_is_integer_solution()) {
+        set_obj_value(pd->lower_bound);
+    }
 }
 
 void BranchNodeBase::assess_dominance(State* otherState) {}
@@ -281,8 +279,8 @@ bool BranchNodeBase::is_terminal_state() {
 void BranchNodeBase::apply_final_pruning_tests(BTree* bt) {}
 
 void BranchNodeBase::update_data(double upper_bound) {
-    auto* statistics = pd->stat;
-    statistics->global_upper_bound = static_cast<int>(upper_bound);
+    // auto* statistics = pd->stat;
+    pd->stat.global_upper_bound = static_cast<int>(upper_bound);
 }
 
 void BranchNodeBase::print(const BTree* bt) const {
@@ -291,19 +289,17 @@ void BranchNodeBase::print(const BTree* bt) const {
         fmt::print("{0:^10}|{1:^30}|{2:^30}|{3:^10}|{4:^10}|\n", "Nodes",
                    "Current Node", "Objective Bounds", "Branch", "Work");
         fmt::print(
-            "{0:^5}{1:^5}|{2:^10}{3:^10}{10:^10}|{4:>10}{5:>10}{6:>10}|{7:>5}{"
-            "8:>5}"
-            "|{9:>5}{11:>5}\n",
-            "Expl", "Unex", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
+            R"({0:^5}{1:^5}|{2:^10}{3:^10}{10:^10}|{4:>10}{5:>10}{6:>10}|{7:>5}{8:>5}|{9:>5}{11:>5}
+)",
+            "Expl", "UnEx", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
             "Time", "Time", "Size", "Iter");
     }
     fmt::print(
-        "{0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{"
-        "8:>"
-        "5}{9:>5}|{10:>5}{11:>5}|\n",
+        R"({0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{8:>5}{9:>5}|{10:>5}{11:>5}|
+)",
         bt->get_nb_nodes_explored(), bt->get_nb_nodes(),
-        pd->LP_lower_bound + pd->off, pd->depth, solver->get_nb_vertices(),
-        bt->getGlobalUB() + pd->off, bt->getGlobalLB() + pd->off, 0.0,
-        pd->branch_job, pd->completiontime, bt->get_run_time_start(),
-        pd->iterations);
+        pd->LP_lower_bound + pd->instance.off, pd->depth,
+        solver->get_nb_vertices(), bt->getGlobalUB() + pd->instance.off,
+        bt->getGlobalLB() + pd->instance.off, 0.0, pd->branch_job,
+        pd->completiontime, bt->get_run_time_start(), pd->iterations);
 }

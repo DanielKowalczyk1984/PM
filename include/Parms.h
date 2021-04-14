@@ -11,9 +11,40 @@
 #ifndef INCLUDE_WCTPARMS_H_
 #define INCLUDE_WCTPARMS_H_
 #include <string>
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+static const std::string USAGE =
+    R"(PM.
+
+Usage:
+  bin/PM [-S <kn> -pmBRZH -n <nl> -b <br> -a <ln> -l <x> -f <y> -d --no_strong_branching --alpha <mn>] FILE NB
+  bin/PM (-h | --help)
+  bin/PM --version
+
+Arguments:
+  FILE  Path to the instance file
+  NB    Number of machines
+
+Options:
+  -h --help                     Show this screen.
+  --version                     Show version.
+  -d --debug                    Turn on the debugging.
+  -S --stab_method=<kn>         Stabilization technique: 0 = no stabilization, 1 = stabilization wentgnes, 2 = stabilization dynamic[default: 1].
+  -a --pricing_solver=<ln>      Set pricing solver: 0 = bdd backward cycle, 1 = bdd forward simple, 2 = bdd forward cycle,
+                                                    3 = bdd backward simple, 4 = bdd backward cycle, 5 = zdd forward simple,
+                                                    6 = zdd forward cycle, 7 = zdd backward simple, 8 = zdd backward cycle,
+                                                    9 = TI solver, 10 = arc-TI solver, 11 = hybrid model TI and bdd backward cycle[default: 4].
+  -l --cpu_limit=<x>            Cpu time limit for branch and bound method[default: 7200].
+  -f --nb_rvnb_it=<y>           Number of iterations in RVND[default: 4].
+  --alpha=<mn>                  Stabilization factor[default: 0.8].
+  -p --print_csv                Print csv-files.
+  -m --mip_solver               Use mip solver to solve the original formulation.
+  -R --no_rc_fixing             Don't apply reduce cost fixing.
+  -H --no_heuristic             Don't apply heuristic.
+  -B --no_branch_and_bound      Don't apply branch-and-bound.
+  --no_strong_branching         Don't apply strong branching.
+  -b --branching_strategy=<br>  Set branch-and-bound exploration strategy: 0 = DFS, 1 = BFS, 2 = BrFS, 3 = CBFS[default: 0].
+  -n --node_limit=<nl>          Set a limit on the number of nodes that can be explored.[default: 0]. Default meaning that all nodes should be explored.
+)";
 
 enum BBNodeSelection {
     min_search_strategy = 0,
@@ -43,7 +74,7 @@ enum BranchandBound {
     yes_branch_and_bound = min_branch_and_bound,
 };
 
-enum stab_techniques {
+enum StabTechniques {
     no_stab = 0,
     stab_wentgnes = 1,
     stab_dynamic = 2,
@@ -96,10 +127,7 @@ enum use_heuristic {
     no_use_heuristic = 0,
 };
 
-#ifdef __cplusplus
-}
-#endif
-struct parms {
+struct Parms {
     /**
      * General parameters
      */
@@ -120,27 +148,27 @@ struct parms {
     /**
      * column generation
      */
-    int                  branchandbound;
-    enum stab_techniques stab_technique;
-    int                  print;
+    int                 branchandbound;
+    enum StabTechniques stab_technique;
+    int                 print;
 
     std::string jobfile;
     std::string pname;
 
     int nb_jobs;
     int nb_machines;
-    parms();
+    Parms();
+    Parms(int argc, const char** argv);
 
-    parms(const parms&) = default;
-    parms(parms&&) = default;
-    parms& operator=(const parms&) = default;
-    parms& operator=(parms&&) = default;
-    ~parms() = default;
+    Parms(const Parms&) = default;
+    Parms(Parms&&) = default;
+    Parms& operator=(const Parms&) = default;
+    Parms& operator=(Parms&&) = default;
+    ~Parms() = default;
 
     /*Functions for setting some parameters*/
     int parms_set_branching_cpu_limit(double limit);
     int parms_set_alpha(double alpha);
-    int parms_set_branching_strategy(int strategy);
     int parms_set_strong_branching(int strong);
     int parms_set_mip_solver(int usage);
     int parms_set_use_heuristic(int usage);
@@ -175,7 +203,5 @@ struct parms {
      */
     int parse_cmd(int argc, const char** argv);
 };
-
-typedef struct parms Parms;
 
 #endif  // INCLUDE_WCTPARMS_H_

@@ -1,14 +1,25 @@
 #include "PricerSolverZddForward.hpp"
+#include "Instance.h"
+#include "PricerSolverZdd.hpp"
 
 /**
  *  zdd solver pricersolver for the flow formulation
  */
-PricerSolverSimple::PricerSolverSimple(GPtrArray*  _jobs,
-                                       int         _num_machines,
-                                       GPtrArray*  _ordered_jobs,
-                                       const char* _p_name,
-                                       double      _ub)
-    : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, _p_name, _ub) {
+// PricerSolverSimple::PricerSolverSimple(GPtrArray*  _jobs,
+//                                        int         _num_machines,
+//                                        GPtrArray*  _ordered_jobs,
+//                                        const char* _p_name,
+//                                        double      _ub)
+//     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, _p_name, _ub) {
+//     std::cout << "Constructing ZDD with Forward Simple evaluator" << '\n';
+//     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
+//     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
+//     evaluator = ForwardZddSimpleDouble(convex_constr_id);
+//     reversed_evaluator = BackwardZddSimpleDouble(convex_constr_id);
+// }
+
+PricerSolverSimple::PricerSolverSimple(const Instance& instance)
+    : PricerSolverZdd(instance) {
     std::cout << "Constructing ZDD with Forward Simple evaluator" << '\n';
     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
@@ -45,7 +56,7 @@ void PricerSolverSimple::evaluate_nodes(double* pi, int UB, double LB) {
                 Job*   job = it.get_job();
                 double result = iter->forward_label[0].get_f() +
                                 iter->y->backward_label[0].get_f() -
-                                value_Fj(w + job->processing_time, job) +
+                                job->weighted_tardiness_start(w) +
                                 pi[job->job] + pi[convex_constr_id];
                 auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
                 if (LB - aux_nb_machines * reduced_cost - result >
@@ -77,8 +88,7 @@ void PricerSolverSimple::evaluate_nodes(double* pi) {
                 Job*   job = it.get_job();
                 double result = iter->forward_label[0].get_f() +
                                 iter->y->backward_label[0].get_f() -
-                                value_Fj(w + job->processing_time, job) +
-                                pi[job->job];
+                                job->weighted_tardiness_start(w) + pi[job->job];
                 auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
                 if (constLB + aux_nb_machines * reduced_cost + result >
                         UB - 1 + RC_FIXING &&
@@ -93,12 +103,21 @@ void PricerSolverSimple::evaluate_nodes(double* pi) {
     fmt::print("removed edges = {}\n", nb_removed_edges);
 }
 
-PricerSolverZddCycle::PricerSolverZddCycle(GPtrArray*  _jobs,
-                                           int         _num_machines,
-                                           GPtrArray*  _ordered_jobs,
-                                           const char* _p_name,
-                                           double      _ub)
-    : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, _p_name, _ub) {
+// PricerSolverZddCycle::PricerSolverZddCycle(GPtrArray*  _jobs,
+//                                            int         _num_machines,
+//                                            GPtrArray*  _ordered_jobs,
+//                                            const char* _p_name,
+//                                            double      _ub)
+//     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, _p_name, _ub) {
+//     std::cout << "Constructing ZDD with Forward ZddCycle evaluator" << '\n';
+//     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
+//     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
+//     evaluator = ForwardZddCycleDouble(convex_constr_id);
+//     reversed_evaluator = BackwardZddCycleDouble(convex_constr_id);
+// }
+
+PricerSolverZddCycle::PricerSolverZddCycle(const Instance& instance)
+    : PricerSolverZdd(instance) {
     std::cout << "Constructing ZDD with Forward ZddCycle evaluator" << '\n';
     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
@@ -132,15 +151,14 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
             auto* job = it.get_job();
             for (auto& iter : it.list) {
                 auto w = iter->get_weight();
-                auto p = job->processing_time;
 
                 auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-                if (iter->forward_label[0].get_previous_job() != job) {
-                    if (iter->y->backward_label[0].get_prev_job() != job) {
+                if (iter->forward_label[0].prev_job_forward() != job) {
+                    if (iter->y->backward_label[0].prev_job_backward() != job) {
                         auto result = iter->forward_label[0].get_f() +
                                       iter->y->backward_label[0].get_f() -
-                                      value_Fj(w + p, job) + pi[job->job] +
-                                      pi[convex_constr_id];
+                                      job->weighted_tardiness_start(w) +
+                                      pi[job->job] + pi[convex_constr_id];
                         if (LB - aux_nb_machines * reduced_cost - result >
                                 UB + RC_FIXING &&
                             (iter->calc_yes)) {
@@ -150,8 +168,8 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                     } else {
                         auto result = iter->forward_label[0].get_f() +
                                       iter->y->backward_label[1].get_f() -
-                                      value_Fj(w + p, job) + pi[job->job] +
-                                      pi[convex_constr_id];
+                                      job->weighted_tardiness_start(w) +
+                                      pi[job->job] + pi[convex_constr_id];
                         if (LB - aux_nb_machines * reduced_cost - result >
                                 UB + RC_FIXING &&
                             (iter->calc_yes)) {
@@ -160,11 +178,11 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                         }
                     }
                 } else {
-                    if (iter->y->backward_label[0].get_prev_job() != job) {
+                    if (iter->y->backward_label[0].prev_job_backward() != job) {
                         auto result = iter->forward_label[1].get_f() +
                                       iter->y->backward_label[0].get_f() -
-                                      value_Fj(w + p, job) + pi[job->job] +
-                                      pi[convex_constr_id];
+                                      job->weighted_tardiness_start(w) +
+                                      pi[job->job] + pi[convex_constr_id];
                         if (LB - aux_nb_machines * reduced_cost - result >
                                 UB + RC_FIXING &&
                             (iter->calc_yes)) {
@@ -174,8 +192,8 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
                     } else {
                         auto result = iter->forward_label[1].get_f() +
                                       iter->y->backward_label[1].get_f() -
-                                      value_Fj(w + p, job) + pi[job->job] +
-                                      pi[convex_constr_id];
+                                      job->weighted_tardiness_start(w) +
+                                      pi[job->job] + pi[convex_constr_id];
                         if (LB - aux_nb_machines * reduced_cost - result >
                                 UB + RC_FIXING &&
                             (iter->calc_yes)) {
@@ -204,14 +222,14 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi) {
             auto* job = it.get_job();
             for (auto& iter : it.list) {
                 auto w = iter->get_weight();
-                auto p = job->processing_time;
 
                 auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-                if (iter->forward_label[0].get_previous_job() != job) {
-                    if (iter->y->backward_label[0].get_prev_job() != job) {
+                if (iter->forward_label[0].prev_job_forward() != job) {
+                    if (iter->y->backward_label[0].prev_job_backward() != job) {
                         auto result = iter->forward_label[0].get_f() +
                                       iter->y->backward_label[0].get_f() -
-                                      value_Fj(w + p, job) + pi[job->job];
+                                      job->weighted_tardiness_start(w) +
+                                      pi[job->job];
                         if (constLB - aux_nb_machines * reduced_cost - result >
                                 UB + RC_FIXING &&
                             (iter->calc_yes)) {
@@ -221,7 +239,8 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi) {
                     } else {
                         auto result = iter->forward_label[0].get_f() +
                                       iter->y->backward_label[1].get_f() -
-                                      value_Fj(w + p, job) + pi[job->job];
+                                      job->weighted_tardiness_start(w) +
+                                      pi[job->job];
                         if (constLB - aux_nb_machines * reduced_cost - result >
                                 UB + RC_FIXING &&
                             (iter->calc_yes)) {
@@ -230,10 +249,11 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi) {
                         }
                     }
                 } else {
-                    if (iter->y->backward_label[0].get_prev_job() != job) {
+                    if (iter->y->backward_label[0].prev_job_backward() != job) {
                         auto result = iter->forward_label[1].get_f() +
                                       iter->y->backward_label[0].get_f() -
-                                      value_Fj(w + p, job) + pi[job->job];
+                                      job->weighted_tardiness_start(w) +
+                                      pi[job->job];
                         if (constLB - aux_nb_machines * reduced_cost - result >
                                 UB + RC_FIXING &&
                             (iter->calc_yes)) {
@@ -243,7 +263,8 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi) {
                     } else {
                         auto result = iter->forward_label[1].get_f() +
                                       iter->y->backward_label[1].get_f() -
-                                      value_Fj(w + p, job) + pi[job->job];
+                                      job->weighted_tardiness_start(w) +
+                                      pi[job->job];
                         if (constLB - aux_nb_machines * reduced_cost - result >
                                 UB + RC_FIXING &&
                             (iter->calc_yes)) {

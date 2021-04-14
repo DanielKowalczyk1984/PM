@@ -144,8 +144,8 @@ class DdBuilder : BuilderBase {
 
     DdBuilder<S, T>(const DdBuilder<S, T>&) = default;
     DdBuilder<S, T>& operator=(const DdBuilder<S, T>&) = default;
-    DdBuilder<S, T>(DdBuilder<S, T>&&) = default;
-    DdBuilder<S, T>& operator=(DdBuilder<S, T>&&) = default;
+    DdBuilder<S, T>(DdBuilder<S, T>&&) noexcept = default;
+    DdBuilder<S, T>& operator=(DdBuilder<S, T>&&) noexcept = default;
 
     /**
      * Schedules a top-down event.
@@ -252,7 +252,7 @@ class DdBuilder : BuilderBase {
 
             for (int b = 0; b < AR; ++b) {
                 if (nodeId(p) == 0) {
-                    q.branch[b] = 0;
+                    q[b] = 0;
                     continue;
                 }
 
@@ -260,12 +260,12 @@ class DdBuilder : BuilderBase {
                 int ii = spec.get_child(state(pp), i, b);
 
                 if (ii == 0) {
-                    q.branch[b] = 0;
+                    q[b] = 0;
                     spec.destruct(state(pp));
                 } else if (ii < 0) {
                     if (oneSrcPtr.empty()) {  // the first 1-terminal candidate
                         spec.get_copy(one, state(pp));
-                        q.branch[b] = 1;
+                        q[b] = 1;
                         oneSrcPtr.emplace_back(i, jj, b);
                     } else {
                         switch (spec.merge_states(one, state(pp))) {
@@ -273,20 +273,19 @@ class DdBuilder : BuilderBase {
                                 while (!oneSrcPtr.empty()) {
                                     NodeBranchId const& nbi = oneSrcPtr.back();
                                     assert(nbi.row >= i);
-                                    output[nbi.row][nbi.col].branch[nbi.val] =
-                                        0;
+                                    output[nbi.row][nbi.col][nbi.val] = 0;
                                     oneSrcPtr.pop_back();
                                 }
                                 spec.destruct(one);
                                 spec.get_copy(one, state(pp));
-                                q.branch[b] = 1;
+                                q[b] = 1;
                                 oneSrcPtr.emplace_back(i, jj, b);
                                 break;
                             case 2:
-                                q.branch[b] = 0;
+                                q[b] = 0;
                                 break;
                             default:
-                                q.branch[b] = 1;
+                                q[b] = 1;
                                 oneSrcPtr.emplace_back(i, jj, b);
                                 break;
                         }
@@ -294,7 +293,7 @@ class DdBuilder : BuilderBase {
                     spec.destruct(state(pp));
                     allZero = false;
                 } else if (ii == i - 1) {
-                    srcPtr(pp) = &q.branch[b];
+                    srcPtr(pp) = &q[b];
                     pp = spec_node_table[ii].alloc_front(specNodeSize);
                     allZero = false;
                 } else {
@@ -303,7 +302,7 @@ class DdBuilder : BuilderBase {
                         spec_node_table[ii].alloc_front(specNodeSize);
                     spec.get_copy(state(ppp), state(pp));
                     spec.destruct(state(pp));
-                    srcPtr(ppp) = &q.branch[b];
+                    srcPtr(ppp) = &q[b];
                     if (ii < lowestChild) {
                         lowestChild = ii;
                     }
@@ -374,8 +373,8 @@ class ZddSubsetter : BuilderBase {
 
     ZddSubsetter<T, S>(const ZddSubsetter<T, S>&) = default;
     ZddSubsetter<T, S>& operator=(const ZddSubsetter<T, S>&) = default;
-    ZddSubsetter<T, S>(ZddSubsetter<T, S>&&) = default;
-    ZddSubsetter<T, S>& operator=(ZddSubsetter<T, S>&&) = default;
+    ZddSubsetter<T, S>(ZddSubsetter<T, S>&&) noexcept = default;
+    ZddSubsetter<T, S>& operator=(ZddSubsetter<T, S>&&) noexcept = default;
 
     /**
      * Initializes the builder.
@@ -503,7 +502,7 @@ class ZddSubsetter : BuilderBase {
 
                 for (int b = 0; b < AR; ++b) {
                     if (nodeId(p) == 0) {
-                        q.branch[b] = 0;
+                        q[b] = 0;
                         continue;
                     }
 
@@ -524,12 +523,12 @@ class ZddSubsetter : BuilderBase {
 
                     if (ii <= 0 || kk <= 0) {
                         if (ii == 0 || kk == 0) {
-                            q.branch[b] = 0;
+                            q[b] = 0;
                         } else {
                             if (oneSrcPtr.empty()) {  // the first 1-terminal
                                                       // candidate
                                 spec.get_copy(one, tmpState);
-                                q.branch[b] = 1;
+                                q[b] = 1;
                                 oneSrcPtr.emplace_back(i, jj, b);
                             } else {
                                 switch (spec.merge_states(one, tmpState)) {
@@ -538,20 +537,20 @@ class ZddSubsetter : BuilderBase {
                                             NodeBranchId const& nbi =
                                                 oneSrcPtr.back();
                                             assert(nbi.row >= i);
-                                            output[nbi.row][nbi.col]
-                                                .branch[nbi.val] = 0;
+                                            output[nbi.row][nbi.col][nbi.val] =
+                                                0;
                                             oneSrcPtr.pop_back();
                                         }
                                         spec.destruct(one);
                                         spec.get_copy(one, tmpState);
-                                        q.branch[b] = 1;
+                                        q[b] = 1;
                                         oneSrcPtr.emplace_back(i, jj, b);
                                         break;
                                     case 2:
-                                        q.branch[b] = 0;
+                                        q[b] = 0;
                                         break;
                                     default:
-                                        q.branch[b] = 1;
+                                        q[b] = 1;
                                         oneSrcPtr.emplace_back(i, jj, b);
                                         break;
                                 }
@@ -566,7 +565,7 @@ class ZddSubsetter : BuilderBase {
                         SpecNode* pp = work[ii][f.col()].alloc_front(
                             pools[ii], specNodeSize);
                         spec.get_copy(state(pp), tmpState);
-                        srcPtr(pp) = &q.branch[b];
+                        srcPtr(pp) = &q[b];
                         if (ii < lowestChild) {
                             lowestChild = ii;
                         }

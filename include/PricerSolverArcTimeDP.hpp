@@ -1,8 +1,8 @@
 #include <memory>
 #include <vector>
+#include "Instance.h"
 #include "PricerSolverBase.hpp"
 #include "gurobi_c++.h"
-#include "solver.h"
 
 // using std::vector;
 class PricerSolverArcTimeDp : public PricerSolverBase {
@@ -35,31 +35,41 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     vector1d_dbl   solution_x;
 
    public:
-    PricerSolverArcTimeDp(GPtrArray*  _jobs,
-                          int         _num_machines,
-                          int         _Hmax,
-                          const char* p_name,
-                          double      _UB);
+    // PricerSolverArcTimeDp(GPtrArray*  _jobs,
+    //                       int         _num_machines,
+    //                       int         _Hmax,
+    //                       const char* p_name,
+    //                       double      _UB);
+
+    PricerSolverArcTimeDp(const Instance& instance);
+    PricerSolverArcTimeDp(const PricerSolverArcTimeDp&) = default;
+    PricerSolverArcTimeDp(PricerSolverArcTimeDp&&) = default;
+    PricerSolverArcTimeDp& operator=(const PricerSolverArcTimeDp&) = default;
+    PricerSolverArcTimeDp& operator=(PricerSolverArcTimeDp&&) = default;
+
     ~PricerSolverArcTimeDp() override;
-    PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
-        : PricerSolverBase(src),
-          Hmax(src.Hmax),
-          n(src.n),
-          vector_jobs(),
-          nb_edges_removed(src.nb_edges_removed),
-          lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
-          solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
-        for (auto i = 0; i < n; ++i) {
-            vector_jobs.push_back(static_cast<Job*>(jobs[i]));
-        }
-        job_init(&j0, 0, 0, 0);
-        j0.job = n;
-        vector_jobs.push_back(&j0);
+    // PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
+    //     : PricerSolverBase(src),
+    //       Hmax(src.Hmax),
+    //       n(src.n),
+    //       j0(),
+    //       vector_jobs(),
+    //       nb_edges_removed(src.nb_edges_removed),
+    //       lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
+    //       solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
+    //     for (auto i = 0; i < n; ++i) {
+    //         vector_jobs.push_back((*jobs)[i].get());
+    //     }
 
-        init_table();
-    }
+    //     j0.job = n;
+    //     vector_jobs.push_back(&j0);
 
-    std::unique_ptr<PricerSolverBase> clone() override { return nullptr; };
+    //     init_table();
+    // }
+
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
+        return std::make_unique<PricerSolverArcTimeDp>(*this);
+    };
 
     void init_table();
 
@@ -76,7 +86,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         const double*                                    columns,
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
         int                                              num_columns) override;
-    void add_constraint(Job* job, GPtrArray* list, int order) override;
+    // void add_constraint(Job* job, GPtrArray* list, int order) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* pi) override;
@@ -90,8 +100,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     size_t get_nb_vertices() override;
     int    get_num_layers() override;
     void   print_num_paths() override;
-    bool   check_schedule_set(GPtrArray* set) override;
-    void   make_schedule_set_feasible(GPtrArray* set) override;
+    bool   check_schedule_set(const std::vector<Job*>& set) override;
 
     void forward_evaluator(double* pi);
     void backward_evaluator(double* _pi);
@@ -99,11 +108,10 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     int delta1(const int& i, const int& j, const int& t) {
         Job* tmp_i = vector_jobs[i];
         Job* tmp_j = vector_jobs[j];
-        return (value_Fj(t, tmp_i) +
-                value_Fj(t + tmp_j->processing_time, tmp_j)) -
-               (value_Fj(t + tmp_j->processing_time - tmp_i->processing_time,
-                         tmp_j) +
-                value_Fj(t + tmp_j->processing_time, tmp_i));
+        return (tmp_i->weighted_tardiness(t) +
+                tmp_j->weighted_tardiness_start(t))  -
+               (tmp_j->weighted_tardiness_start(t - tmp_i->processing_time) +
+                tmp_i->weighted_tardiness(t + tmp_j->processing_time));
     }
 
     void remove_arc(const int& i, const int& j, const int& t) {
@@ -115,10 +123,8 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     int delta2(const int& j, const int& t) {
         Job* tmp_j = vector_jobs[j];
-        return value_Fj(t, tmp_j) - value_Fj(t + 1, tmp_j);
+        return tmp_j->weighted_tardiness(t) - tmp_j->weighted_tardiness(t + 1);
     }
-
-    int* get_take() override { return nullptr; }
 
     void update_constraints() override {}
 

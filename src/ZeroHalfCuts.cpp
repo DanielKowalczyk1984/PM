@@ -92,8 +92,8 @@ void ZeroHalfCuts::init_table() {
 
     for (auto i = root.row(); i > 0; i--) {
         for (auto& it : (*table)[i]) {
-            auto& n0 = table->node(it.branch[0]);
-            auto& n1 = table->node(it.branch[1]);
+            auto& n0 = table->node(it[0]);
+            auto& n1 = table->node(it[1]);
 
             n0.in_edges[0].push_back(it.ptr_node_id);
             n0.in_degree[0]++;
@@ -130,7 +130,7 @@ void ZeroHalfCuts::init_coeff_node(NodeBdd<>* node) {
 }
 
 void ZeroHalfCuts::construct_cut() {
-    auto* data = new GenericData();
+    std::unique_ptr<GenericData> data = std::make_unique<GenericData>();
 
     auto add_coeff_constr = [&](const auto& it) {
         auto& node = table->node(it);
@@ -168,7 +168,7 @@ void ZeroHalfCuts::construct_cut() {
     //     }
     // };
 
-    std::for_each(node_ids.begin(), node_ids.end(), add_coeff_constr);
+    std::ranges::for_each(node_ids, add_coeff_constr);
     // std::for_each(node_ids_lift.begin(), node_ids_lift.end(),
     // add_coeff_constr); std::for_each(node_ids.begin(), node_ids.end(),
     // print_node_ids); fmt::print("\n");
@@ -191,7 +191,8 @@ void ZeroHalfCuts::construct_cut() {
     }
     // fmt::print("test rhs = {}\n", rhs);
     std::shared_ptr<ConstraintGeneric> constr{
-        std::make_shared<ConstraintGeneric>(data, -floor(rhs / HALF))};
+        std::make_shared<ConstraintGeneric>(data.release(),
+                                            -floor(rhs / HALF))};
     // data->list_coeff();
     // fmt::print("RHS = {}\n",
     //            -floor((2.0 * q.get(GRB_DoubleAttr_Xn) + 1 + rhs) / 2.0));
@@ -257,8 +258,8 @@ void ZeroHalfCuts::generate_cuts() {
                 }
             };
 
-            for (auto i = root.row(); i > 0; i--) {
-                for (auto& it : (*table)[i]) {
+            for (auto k = root.row(); k > 0; k--) {
+                for (auto& it : (*table)[k]) {
                     auto j = it.get_nb_job();
                     auto x = jobs_var[j].get(GRB_DoubleAttr_Xn);
                     if (x > EPS_CUT) {
@@ -275,7 +276,7 @@ void ZeroHalfCuts::generate_cuts() {
             // }
             // fmt::print("\n");
 
-            std::for_each(node_ids.begin(), node_ids.end(), calc_coeff_cut);
+            std::ranges::for_each(node_ids, calc_coeff_cut);
 
             // for (auto& iter : node_ids) {
             //     auto& node = table->node(iter);
@@ -331,9 +332,9 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
 
     for (size_t i = 0U; i < 2; i++) {
         if (node.lp_x.at(i) > EPS_CUT) {
-            auto& child = table->node(node.branch.at(i));
+            auto& child = table->node(node.at(i));
             if (!child.lp_visited) {
-                if (node.branch.at(i) == 1) {
+                if (node.at(i) == 1) {
                     child.sigma = model->addVar(0.0, 1.0, 0.0, 'B',
                                                 fmt::format("sigma_terminal"));
                 } else {
@@ -343,7 +344,7 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
                                     child.get_weight()));
                 }
 
-                node_ids.push_back(node.branch.at(i));
+                node_ids.push_back(node.at(i));
                 auto& s_source = node.sigma;
                 auto& s_head = child.sigma;
                 auto  str_y = fmt::format("y_{}_{}", node.get_nb_job(),
@@ -359,7 +360,7 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
                     expr += jobs_var[node.get_nb_job()];
                 }
                 model->addConstr(expr, '=', 0.0);
-                dfs(node.branch.at(i));
+                dfs(node.at(i));
             } else {
                 auto& s_source = node.sigma;
                 auto& s_head = child.sigma;
@@ -386,10 +387,10 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
     auto& node = table->node(v);
 
     for (int k = 0; k < 2; k++) {
-        if (node.branch.at(k) <= 1) {
+        if (node.at(k) <= 1) {
             continue;
         }
-        auto& child_node = table->node(node.branch.at(k));
+        auto& child_node = table->node(node.at(k));
 
         if (node.lp_x.at(k) == 0.0 && !child_node.lp_visited) {
             child_node.coeff_cut[0] += 1.0;
@@ -404,8 +405,8 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
                     }
                 }
             }
-            node_ids_lift.push_back(node.branch.at(k));
-            dfs_lift(node.branch.at(k));
+            node_ids_lift.push_back(node.at(k));
+            dfs_lift(node.at(k));
         }
     }
 }

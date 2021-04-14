@@ -1,12 +1,13 @@
 #ifndef PRICER_SOLVER_SIMPLE_DP_HPP
 #define PRICER_SOLVER_SIMPLE_DP_HPP
 #include <memory>
+#include "Instance.h"
 #include "PricerSolverBase.hpp"
 #include "gurobi_c++.h"
 
 class PricerSolverSimpleDp : public PricerSolverBase {
    private:
-    int                            Hmax;
+    size_t                         Hmax;
     size_t                         size_graph;
     std::vector<Job*>              A;
     std::vector<double>            F;
@@ -19,11 +20,17 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     std::vector<double>            solution_x;
 
    public:
-    PricerSolverSimpleDp(GPtrArray*  _jobs,
-                         int         _num_machines,
-                         int         _Hmax,
-                         const char* p_name,
-                         double      _UB);
+    // PricerSolverSimpleDp(GPtrArray*  _jobs,
+    //                      int         _num_machines,
+    //                      int         _Hmax,
+    //                      const char* p_name,
+    //                      double      _UB);
+
+    PricerSolverSimpleDp(const Instance& instance);
+    PricerSolverSimpleDp& operator=(const PricerSolverSimpleDp&) = default;
+    PricerSolverSimpleDp& operator=(PricerSolverSimpleDp&&) = default;
+    PricerSolverSimpleDp(PricerSolverSimpleDp&&) = default;
+
     PricerSolverSimpleDp(const PricerSolverSimpleDp& src)
         : PricerSolverBase(src),
           Hmax(src.Hmax),
@@ -37,9 +44,12 @@ class PricerSolverSimpleDp : public PricerSolverBase {
           solution_x(convex_constr_id * (Hmax + 1)) {
         init_table();
     };
-    ~PricerSolverSimpleDp() override;
 
-    std::unique_ptr<PricerSolverBase> clone() override { return nullptr; };
+    ~PricerSolverSimpleDp() override = default;
+
+    std::unique_ptr<PricerSolverBase> clone() const override {
+        return std::make_unique<PricerSolverSimpleDp>(*this);
+    };
 
     void init_table();
 
@@ -56,7 +66,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
         int                                              num_columns) override;
 
-    void   add_constraint(Job* job, GPtrArray* list, int order) override;
+    // void   add_constraint(Job* job, GPtrArray* list, int order) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;
@@ -67,19 +77,12 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     int    get_num_layers() override;
     void   print_num_paths() override;
 
-    bool check_schedule_set(GPtrArray* set) override;
-    void make_schedule_set_feasible(GPtrArray* set) override;
+    bool check_schedule_set(const std::vector<Job*>& set) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;
     void                    forward_evaluator(double* _pi);
     void                    backward_evaluator(double* _pi);
-
-    int* get_take() override {
-        // int* tmp = take.data();
-        // take = nullptr;
-        return take.data();
-    }
 
     void update_constraints() override {}
 

@@ -6,7 +6,8 @@
 #include <memory>
 #include "branch-and-bound/btree.h"
 #include "branch-and-bound/state.h"
-#include "wctprivate.h"
+// #include "wctprivate.h"
+class NodeData;
 
 class BranchNodeBase : public State {
     struct BranchCand {
@@ -27,7 +28,9 @@ class BranchNodeBase : public State {
     BranchNodeBase& operator=(BranchNodeBase&&) = default;
     BranchNodeBase& operator=(const BranchNodeBase&) = delete;
     ~BranchNodeBase() override = default;
-    std::unique_ptr<State> clone() const override { return nullptr; }
+    [[nodiscard]] std::unique_ptr<State> clone() const override {
+        return nullptr;
+    }
 
     void branch(BTree* bt) final;
     void compute_bounds(BTree* bt) final;
@@ -49,7 +52,7 @@ class BranchNodeBase : public State {
     static constexpr double ERROR = 1e-12;
     static constexpr double IntegerTolerance = 1e-3;
     static constexpr double TargetBrTimeValue = 0.5;
-    static constexpr int    NumStrBrCandidates = 16;
+    static constexpr int    NumStrBrCandidates = 40;
 };
 
 #endif  // __BRANCHNODE_H__

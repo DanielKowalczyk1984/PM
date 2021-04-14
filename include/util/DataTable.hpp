@@ -28,12 +28,14 @@
 #include <cassert>
 #include <cstddef>
 #include <ostream>
+#include <range/v3/numeric/accumulate.hpp>
+#include <range/v3/view/transform.hpp>
 #include <vector>
 // #include "MyVector.hpp"
 
 template <typename T>
-class DataTable {
-    std::vector<std::vector<T> > table;
+class DataTable : public std::vector<std::vector<T>> {
+    // std::vector<std::vector<T> > table;
 
     //    DataTable(DataTable const& o);
     //    DataTable& operator=(DataTable const& o);
@@ -43,14 +45,14 @@ class DataTable {
      * Constructor.
      * @param n the number of rows.
      */
-    explicit DataTable(int n = 0) : table(n) {}
+    explicit DataTable(int n = 0) : std::vector<std::vector<T>>(n) {}
 
     /** Copy constructor */
     // DataTable(const DataTable& other) : table(other.table) {}
     DataTable(const DataTable& other) = default;
 
     /** Move Constructor */
-    DataTable(DataTable&& other) = default;
+    DataTable(DataTable&& other) noexcept = default;
 
     /** Copy Assignment operator */
     DataTable& operator=(const DataTable& other) = delete;
@@ -61,7 +63,7 @@ class DataTable {
     // }
 
     /** Move assignment operator */
-    DataTable& operator=(DataTable&& other) = default;
+    DataTable& operator=(DataTable&& other) noexcept = default;
     // noexcept {
     //     table = other.table;
     //     return *this;
@@ -102,15 +104,15 @@ class DataTable {
      * @param n the number of rows.
      */
     void init(int n = 0) {
-        table.clear();
-        table.resize(n);
+        this->clear();
+        this->resize(n);
     }
 
     /**
      * Resizes the table rows.
      * @param n the number of rows.
      */
-    void setNumRows(int n) { table.resize(n); }
+    void setNumRows(int n) { this->resize(n); }
 
     /**
      * Clears and initializes a row.
@@ -118,8 +120,8 @@ class DataTable {
      * @param size new size of the row.
      */
     void initRow(int i, size_t size) {
-        table[i].clear();
-        table[i].resize(size);
+        (*this)[i].clear();
+        (*this)[i].resize(size);
     }
 
     //    /**
@@ -148,26 +150,25 @@ class DataTable {
      * @return the new column index.
      */
     size_t addColumn(int i) {
-        table[i].push_back(T());
-        return table[i].size() - 1;
+        (*this)[i].push_back(T());
+        return (*this)[i].size() - 1;
     }
 
     /**
      * Gets the number of rows.
      * @return the number of rows.
      */
-    int numRows() const { return table.size(); }
+    [[nodiscard]] size_t numRows() const { return this->size(); }
 
     /**
      * Gets the total number of elements in the table.
      * @return the total number of elements in the table.
      */
-    size_t totalSize() const {
-        size_t k = 0;
-        for (size_t i = 0; i < table.size(); ++i) {
-            k += table[i].size();
-        }
-        return k;
+    [[nodiscard]] size_t totalSize() const {
+        auto tmp_view = (*this) | ranges::views::transform(
+                                      [](auto& it) { return it.size(); });
+
+        return ranges::accumulate(tmp_view, 0UL);
     }
 
     /**
@@ -175,14 +176,14 @@ class DataTable {
      * @param i row index.
      * @return vector of elements on the row.
      */
-    std::vector<T>& operator[](size_t i) { return table[i]; }
+    // std::vector<T>& operator[](size_t i) { return (*this)[i]; }
 
     /**
      * Accesses to a row.
      * @param i row index.
      * @return vector of elements on the row.
      */
-    std::vector<T> const& operator[](size_t i) const { return table[i]; }
+    // std::vector<T> const& operator[](size_t i) const { return (*this)[i]; }
 
     friend std::ostream& operator<<(std::ostream& os, DataTable const& o) {
         for (int i = 0; i < o.numRows(); ++i) {
