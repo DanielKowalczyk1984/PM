@@ -105,3 +105,8 @@ docs/*
 wt*_solutions
 .clangd/*
 .cache/
+
+.idea/
+cmake-build-*/
+debug/
+release/

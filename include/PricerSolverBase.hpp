@@ -2,26 +2,28 @@
 #define PRICER_SOLVER_BASE_HPP
 
 #include <gurobi_c++.h>
-#include <solution.h>
-#include <MIP_defs.hpp>
-#include <OptimalSolution.hpp>
-#include <cstddef>
 #include <memory>
+#include <span>
+#include <vector>
+#include "Instance.h"
+#include "MIP_defs.hpp"
 #include "ModelInterface.hpp"
-#include "scheduleset.h"
-#include "wctprivate.h"
+#include "OptimalSolution.hpp"
+
+struct NodeData;
+struct ScheduleSet;
 
 struct PricerSolverBase {
    public:
-    GPtrArray* jobs;
+    const std::vector<std::shared_ptr<Job>>& jobs;
 
     int convex_constr_id;
     int convex_rhs;
 
     std::string problem_name;
 
-    std::unique_ptr<GRBEnv>   env;
-    std::unique_ptr<GRBModel> model;
+    std::shared_ptr<GRBEnv> env;
+    GRBModel                model;
 
     ReformulationModel reformulation_model;
 
@@ -30,14 +32,17 @@ struct PricerSolverBase {
     double constLB;
     double UB;
 
+    static constexpr double EPS_SOLVER = 1e-6;
+    static constexpr double RC_FIXING = 1e-1;
+    static constexpr int    ALIGN = 60;
+    static constexpr int    ALIGN_HALF = 60;
+
     std::vector<BddCoeff> lp_sol;
     /**
      * Default constructors
      */
-    PricerSolverBase(GPtrArray*  _jobs,
-                     int         _num_machines,
-                     const char* p_name,
-                     double      _UB);
+    explicit PricerSolverBase(const Instance& instance);
+
     /**
      * Copy constructor
      */
@@ -63,10 +68,7 @@ struct PricerSolverBase {
      */
     virtual ~PricerSolverBase();
 
-    /**
-     * init_table
-     */
-    virtual void init_table() = 0;
+    virtual std::unique_ptr<PricerSolverBase> clone() const = 0;
 
     /**
      * Pricing Algorithm
@@ -84,25 +86,25 @@ struct PricerSolverBase {
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;
-    virtual void construct_lp_sol_from_rmp(const double*    columns,
-                                           const GPtrArray* schedule_sets,
-                                           int              num_columns) = 0;
+    virtual void construct_lp_sol_from_rmp(
+        const double*                                    columns,
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
+        int                                              num_columns) = 0;
 
     /**
      * Constraint on the solver
      */
 
-    virtual void add_constraint(Job* job, GPtrArray* list, int order) = 0;
     virtual void insert_constraints_lp(NodeData* pd) = 0;
     virtual int  add_constraints();
     virtual void remove_constraints(int first, int nb_del);
     virtual void update_rows_coeff(int first);
 
     virtual void update_coeff_constraints() = 0;
-    virtual void calculate_job_time(std::vector<std::vector<double>>& v){};
-    virtual void add_constraint(ConstraintBase* constr) {
-        reformulation_model.add_constraint(constr);
-    };
+    virtual void calculate_job_time(std::vector<std::vector<double>>* v){};
+    // virtual void add_constraint(ConstraintBase* constr) {
+    //     reformulation_model.add_constraint(constr);
+    // };
 
     virtual void split_job_time(int _job, int _time, bool _left) {}
 
@@ -112,21 +114,24 @@ struct PricerSolverBase {
     virtual void iterate_zdd() = 0;
     virtual void print_num_paths() = 0;
     double       get_UB();
-    void         update_UB(double _UB);
+    void         update_UB(double _ub);
 
     virtual int    get_num_remove_nodes() = 0;
     virtual int    get_num_remove_edges() = 0;
     virtual int    get_num_layers() = 0;
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
-    virtual bool   check_schedule_set(GPtrArray* set) = 0;
-    virtual void   make_schedule_set_feasible(GPtrArray* set) = 0;
+    // virtual bool   check_schedule_set(GPtrArray* set) = 0;
+    virtual bool check_schedule_set(const std::vector<Job*>& set) {
+        return true;
+    };
+    // virtual void make_schedule_set_feasible(GPtrArray* set) = 0;
+    virtual void make_schedule_set_feasible(std::vector<Job*>& set){};
     /**
      * Some printing functions
      */
     virtual void   create_dot_zdd(const char* name) = 0;
     virtual void   print_number_nodes_edges() = 0;
-    virtual int*   get_take() = 0;
     virtual int    get_int_attr_model(enum MIP_Attr);
     virtual double get_dbl_attr_model(enum MIP_Attr);
 
@@ -138,7 +143,8 @@ struct PricerSolverBase {
     virtual double compute_reduced_cost(const OptimalSolution<>& sol,
                                         double*                  pi,
                                         double*                  lhs);
-    virtual double compute_lagrange(const OptimalSolution<>& sol, double* pi);
+    virtual double compute_lagrange(const OptimalSolution<>&   sol,
+                                    const std::vector<double>& pi);
 
     virtual double compute_subgradient(const OptimalSolution<>& sol,
                                        double*                  subgradient);

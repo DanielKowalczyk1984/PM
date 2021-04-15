@@ -1,8 +1,9 @@
 #ifndef NODE_ID_HPP
 #define NODE_ID_HPP
 
-#include <stdint.h>
 #include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <ostream>
 
 int const NODE_ROW_BITS = 20;
@@ -21,10 +22,13 @@ uint64_t const NODE_ATTR_MASK = uint64_t(1) << NODE_ATTR_OFFSET;
 class NodeId {
     uint64_t code_;
 
+    static constexpr size_t HASH_CONSTANT = 314159257;
+
    public:
-    NodeId() {  // 'code_' is not initialized in the default constructor for
-                // SPEED.
-    }
+    NodeId() = default;
+    // {  // 'code_' is not initialized in the default constructor for
+    //    // SPEED.
+    // }
 
     NodeId(uint64_t code) : code_(code) {}
 
@@ -36,9 +40,9 @@ class NodeId {
         setAttr(attr);
     }
 
-    int row() const { return code_ >> NODE_ROW_OFFSET; }
+    [[nodiscard]] size_t row() const { return code_ >> NODE_ROW_OFFSET; }
 
-    size_t col() const { return code_ & NODE_COL_MAX; }
+    [[nodiscard]] size_t col() const { return code_ & NODE_COL_MAX; }
 
     void setAttr(bool val) {
         if (val) {
@@ -48,15 +52,15 @@ class NodeId {
         }
     }
 
-    bool getAttr() const { return (code_ & NODE_ATTR_MASK) != 0; }
+    [[nodiscard]] bool getAttr() const { return (code_ & NODE_ATTR_MASK) != 0; }
 
-    NodeId withoutAttr() const { return code_ & ~NODE_ATTR_MASK; }
+    [[nodiscard]] NodeId withoutAttr() const { return code_ & ~NODE_ATTR_MASK; }
 
-    bool hasEmpty() const { return code_ == 1 || getAttr(); }
+    [[nodiscard]] bool hasEmpty() const { return code_ == 1 || getAttr(); }
 
-    uint64_t code() const { return code_ & ~NODE_ATTR_MASK; }
+    [[nodiscard]] uint64_t code() const { return code_ & ~NODE_ATTR_MASK; }
 
-    size_t hash() const { return code() * 314159257; }
+    [[nodiscard]] size_t hash() const { return code() * HASH_CONSTANT; }
 
     bool operator==(NodeId const& o) const { return code() == o.code(); }
 
@@ -76,11 +80,13 @@ class NodeId {
     NodeId(const NodeId&) = default;
     NodeId(NodeId&&) = default;
     NodeId& operator=(NodeId&&) = default;
+    ~NodeId() = default;
 
     friend std::ostream& operator<<(std::ostream& os, NodeId const& o) {
         os << o.row() << ":" << o.col();
-        if (o.code_ & NODE_ATTR_MASK)
+        if (o.code_ & NODE_ATTR_MASK) {
             os << "+";
+        }
         return os;
     }
 };

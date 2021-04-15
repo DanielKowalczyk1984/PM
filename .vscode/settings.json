@@ -1,6 +1,6 @@
 {
     "cmake.configureOnOpen": false,
-    "C_Cpp.errorSquiggles": "Disabled",
+    "C_Cpp.errorSquiggles": "Enabled",
     "cmake.preferredGenerators": [
         "Unix Makefiles",
         "Ninja"
@@ -14,17 +14,29 @@
         "Bsetdblparam",
         "Bsetintattr",
         "Chvatal",
+        "Crandstate",
         "GRB*",
         "Hiroaki",
         "Iwashita",
         "Kowalczyk",
         "MINATO",
         "NTDDI",
+        "SPQs",
         "Sauppe",
+        "Solns",
+        "Unex",
         "Unported",
         "Vasek",
+        "atic",
+        "bfstree",
+        "bisearch",
+        "brfs",
+        "brfstree",
         "cbfs",
+        "cbfstree",
         "cofeb",
+        "cppcoreguidelines",
+        "dfstree",
         "gboolean",
         "gconstpointer",
         "gint",
@@ -41,7 +53,6 @@
         "wentgnes",
         "zeit"
     ],
-    "cquery.cacheDirectory": "${workspaceFolder}/.vscode/cquery_cached_index/",
     "files.associations": {
         "*.ipynb": "jupyter",
         "format": "cpp",
@@ -116,6 +127,17 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "regex": "cpp",
+        "cassert": "cpp",
+        "cerrno": "cpp",
+        "cfloat": "cpp",
+        "ciso646": "cpp",
+        "climits": "cpp",
+        "queue": "cpp",
+        "stack": "cpp",
+        "version": "cpp",
+        "*.inc": "cpp",
+        "*.def": "c"
     }
 }

@@ -1,40 +1,44 @@
 #ifndef NODE_BDD_REDUCER_HPP
 #define NODE_BDD_REDUCER_HPP
 
+#include <fmt/core.h>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <ostream>
+#include <span>
 #include <stdexcept>
 
 #include <NodeBdd.hpp>
 #include <NodeBddTable.hpp>
+#include <unordered_set>
+#include <vector>
 #include "util/MyHashTable.hpp"
 // #include "tdzdd/util/MyList.hpp"
 #include "util/MyVector.hpp"
 
 template <typename T, bool BDD, bool ZDD>
 class DdReducer {
-    NodeTableEntity<T>&          input;
-    TableHandler<T>              oldDiagram;
-    TableHandler<T>              newDiagram;
-    NodeTableEntity<T>&          output;
-    MyVector<MyVector<NodeId> >  newIdTable;
-    MyVector<MyVector<NodeId*> > rootPtr;
-    int                          counter = 1;
+    TableHandler<T>                   oldDiagram;
+    NodeTableEntity<T>&               input;
+    TableHandler<T>                   newDiagram;
+    NodeTableEntity<T>&               output;
+    std::vector<std::vector<NodeId>>  newIdTable;
+    std::vector<std::vector<NodeId*>> rootPtr;
+    int                               counter = 1;
 
-    struct ReducNodeInfo {
+    struct ReduceNodeInfo {
         NodeBdd<T> children;
         size_t     column;
 
-        size_t hash() const { return children.hash(); }
+        [[nodiscard]] size_t hash() const { return children.hash(); }
 
-        bool operator==(ReducNodeInfo const& o) const {
+        bool operator==(ReduceNodeInfo const& o) const {
             return children == o.children;
         }
 
-        friend std::ostream& operator<<(std::ostream&        os,
-                                        ReducNodeInfo const& o) {
+        friend std::ostream& operator<<(std::ostream&         os,
+                                        ReduceNodeInfo const& o) {
             return os << "(" << o.children << " -> " << o.column << ")";
         }
     };
@@ -43,14 +47,14 @@ class DdReducer {
 
    public:
     explicit DdReducer(TableHandler<T>& diagram, bool useMP = false)
-        : input(diagram.privateEntity()),
-          oldDiagram(diagram),
+        : oldDiagram(std::move(diagram)),
+          input(*oldDiagram),
           newDiagram(input.numRows()),
-          output(newDiagram.privateEntity()),
+          output(*newDiagram),
           newIdTable(input.numRows()),
           rootPtr(input.numRows()),
           readyForSequentialReduction(false) {
-        diagram = newDiagram;
+        diagram = std::move(newDiagram);
 
         input.initTerminals();
         input.makeIndex(useMP);
@@ -67,18 +71,21 @@ class DdReducer {
      * in order to make lower-level index safe.
      */
     void makeReadyForSequentialReduction() {
-        if (readyForSequentialReduction)
+        if (readyForSequentialReduction) {
             return;
+        }
 
         for (int i = 2; i < input.numRows(); ++i) {
-            size_t const m = input[i].size();
-            T* const     tt = input[i].data();
+            // size_t const    m = input[i].size();
+            // std::span const tt{input[i].data(), input[i].size()};
+            // T* const     tt = input[i].data();
 
-            for (size_t j = 0; j < m; ++j) {
-                for (int b = 0; b < 2; ++b) {
-                    NodeId& f = tt[j].branch[b];
-                    if (f.row() == 0)
+            for (auto& it : input[i]) {
+                for (auto& f : it) {
+                    // NodeId& f = it[b];
+                    if (f.row() == 0) {
                         continue;
+                    }
 
                     NodeId f0 = input.child(f, 0);
                     NodeId deletable = 0;
@@ -129,19 +136,21 @@ class DdReducer {
     void algorithmR(int i) {
         makeReadyForSequentialReduction();
         size_t const m = input[i].size();
-        T* const     tt = input[i].data();
+        // T* const     tt = input[i].data();
 
-        MyVector<NodeId>& newId = newIdTable[i];
+        std::vector<NodeId>& newId = newIdTable[i];
         newId.resize(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j) {
-            NodeId& f0 = tt[j].branch[0];
-            NodeId& f1 = tt[j].branch[1];
+            NodeId& f0 = input[i][j][0];
+            NodeId& f1 = input[i][j][1];
 
-            if (f0.row() != 0)
+            if (f0.row() != 0) {
                 f0 = newIdTable[f0.row()][f0.col()];
-            if (f1.row() != 0)
+            }
+            if (f1.row() != 0) {
                 f1 = newIdTable[f1.row()][f1.col()];
+            }
 
             if (ZDD && f1 == 0) {
                 newId[j] = f0;
@@ -152,9 +161,9 @@ class DdReducer {
         }
 
         {
-            MyVector<int> const& levels = input.lowerLevels(counter);
-            for (int const* t = levels.begin(); t != levels.end(); ++t) {
-                newIdTable[*t].clear();
+            auto const& levels = input.lowerLevels(counter);
+            for (auto& t : levels) {
+                newIdTable[t].clear();
             }
         }
         size_t mm = 0;
@@ -165,44 +174,42 @@ class DdReducer {
                 continue;
             }
 
-            NodeId& g0 = tt[j].branch[0];
+            NodeId& g0 = input[i][j][0];
             assert(newId[j].row() == counter + 1);
             newId[j] = NodeId(counter, mm++, g0.hasEmpty());
         }
 
-        MyVector<int> const& levels = input.lowerLevels(counter);
-        for (int const* t = levels.begin(); t != levels.end(); ++t) {
-            input[*t].clear();
+        std::vector<int> const& levels = input.lowerLevels(counter);
+        for (auto& t : levels) {
+            input[t].clear();
         }
 
         if (mm > 0u) {
             output.initRow(counter, mm);
-            T* nt = output[counter].data();
+            std::span<T> nt{output[counter].data(), output[counter].size()};
 
             for (size_t j = 0; j < m; ++j) {
                 // NodeId const& f0 = tt[j].branch[0];
-                NodeId const& f1 = tt[j].branch[1];
+                NodeId const& f1 = input[i][j][1];
 
                 if (ZDD && f1 == 0) {  // forwarded
                     assert(newId[j].row() < counter);
                 } else {
                     assert(newId[j].row() == counter);
                     size_t k = newId[j].col();
-                    nt[k] = std::move(tt[j]);
-                    nt[k].set_head_node();
+                    nt[k] = input[i][j];
+                    nt[k].set_node_id_label(newId[j]);
                     if (nt[k].ptr_node_id != nullptr) {
                         *(nt[k].ptr_node_id) = newId[j];
                     }
-                    nt[k].child[0] = &(output.node(nt[k].branch[0]));
-                    nt[k].child[1] = &(output.node(nt[k].branch[1]));
                 }
             }
 
             counter++;
         }
 
-        for (size_t k = 0; k < rootPtr[i].size(); ++k) {
-            NodeId& root = *rootPtr[i][k];
+        for (auto& k : rootPtr[i]) {
+            NodeId& root = *k;
             root = newId[root.col()];
         }
     }
@@ -213,21 +220,23 @@ class DdReducer {
      */
     void algorithmZdd(int i) {
         makeReadyForSequentialReduction();
-        size_t const m = input[i].size();
-        T* const     tt = input[i].data();
-        NodeId const mark(i, m);
+        size_t const       m = input[i].size();
+        std::span<T> const tt{input[i].data(), input[i].size()};
+        NodeId const       mark(i, m);
 
-        MyVector<NodeId>& newId = newIdTable[i];
+        auto& newId = newIdTable[i];
         newId.resize(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j) {
-            NodeId& f0 = tt[j].branch[0];
-            NodeId& f1 = tt[j].branch[1];
+            NodeId& f0 = tt[j][0];
+            NodeId& f1 = tt[j][1];
 
-            if (f0.row() != 0)
+            if (f0.row() != 0) {
                 f0 = newIdTable[f0.row()][f0.col()];
-            if (f1.row() != 0)
+            }
+            if (f1.row() != 0) {
                 f1 = newIdTable[f1.row()][f1.col()];
+            }
 
             if (ZDD && f1 == 0) {
                 newId[j] = f0;
@@ -246,9 +255,9 @@ class DdReducer {
         }
 
         {
-            MyVector<int> const& levels = input.lowerLevels(i);
-            for (int const* t = levels.begin(); t != levels.end(); ++t) {
-                newIdTable[*t].clear();
+            std::vector<int> const& levels = input.lowerLevels(i);
+            for (auto& t : levels) {
+                newIdTable[t].clear();
             }
         }
         size_t mm = 0;
@@ -256,14 +265,15 @@ class DdReducer {
         for (size_t j = 0; j < m; ++j) {
             NodeId const f(i, j);
             assert(newId[j].row() <= i + 1);
-            if (newId[j].row() <= i)
+            if (newId[j].row() <= i) {
                 continue;
+            }
 
             for (size_t k = j; k < m;) {  // for each g in f0-equivalent list
                 assert(j <= k);
                 NodeId const g(i, k);
-                NodeId&      g0 = tt[k].branch[0];
-                NodeId&      g1 = tt[k].branch[1];
+                NodeId&      g0 = tt[k][0];
+                NodeId&      g1 = tt[k][1];
                 NodeId&      g10 = input.child(g1, 0);
                 NodeId&      g11 = input.child(g1, 1);
                 assert(g1 != mark);
@@ -284,18 +294,18 @@ class DdReducer {
             }
         }
 
-        MyVector<int> const& levels = input.lowerLevels(i);
-        for (int const* t = levels.begin(); t != levels.end(); ++t) {
-            input[*t].clear();
+        std::vector<int> const& levels = input.lowerLevels(i);
+        for (auto& t : levels) {
+            input[t].clear();
         }
 
         if (mm > 0u) {
             output.initRow(i, mm);
-            T* nt = output[i].data();
+            std::span<T> nt{output[i].data(), output[i].size()};
 
             for (size_t j = 0; j < m; ++j) {
-                NodeId const& f0 = tt[j].branch[0];
-                NodeId const& f1 = tt[j].branch[1];
+                NodeId const& f0 = tt[j][0];
+                NodeId const& f1 = tt[j][1];
 
                 if (f1 == mark) {  // forwarded
                     assert(f0.row() == i);
@@ -306,18 +316,17 @@ class DdReducer {
                 } else {
                     assert(newId[j].row() == i);
                     size_t k = newId[j].col();
-                    nt[k].set_head_node();
-                    nt[k] = std::move(tt[j]);
-                    nt[k].child[0] = &(output.node(nt[k].branch[0]));
-                    nt[k].child[1] = &(output.node(nt[k].branch[1]));
+                    nt[k] = tt[j];
+                    fmt::print("test {}\n", nt[k].coeff_list[1].size());
+                    nt[k].set_node_id_label(newId[j]);
                 }
             }
 
             counter++;
         }
 
-        for (size_t k = 0; k < rootPtr[i].size(); ++k) {
-            NodeId& root = *rootPtr[i][k];
+        for (auto& k : rootPtr[i]) {
+            NodeId& root = *k;
             root = newId[root.col()];
         }
     }
@@ -334,22 +343,25 @@ class DdReducer {
         {
             // MyList<ReducNodeInfo> rni;
             // MyHashTable<ReducNodeInfo const*> uniq(m * 2);
-            MyHashTable<NodeBdd<T> const*> uniq(m * 2);
+            std::unordered_set<NodeBdd<T> const*> uniq(
+                m * 2, MyHashDefault<NodeBdd<T> const*>(),
+                MyHashDefault<NodeBdd<T> const*>());
 
             for (size_t j = 0; j < m; ++j) {
                 NodeBdd<T>* const p0 = input[i].data();
                 NodeBdd<T>&       f = input[i][j];
 
                 // make f canonical
-                NodeId& f0 = f.branch[0];
+                NodeId& f0 = f[0];
                 f0 = newIdTable[f0.row()][f0.col()];
                 NodeId deletable = BDD ? f0 : 0;
                 bool   del = BDD || ZDD || (f0 == 0);
                 for (int b = 1; b < 2; ++b) {
-                    NodeId& ff = f.branch[b];
+                    NodeId& ff = f[b];
                     ff = newIdTable[ff.row()][ff.col()];
-                    if (ff != deletable)
+                    if (ff != deletable) {
                         del = false;
+                    }
                 }
 
                 if (del) {  // f is redundant
@@ -366,9 +378,9 @@ class DdReducer {
             }
         }
 
-        MyVector<int> const& levels = input.lowerLevels(i);
-        for (int const* t = levels.begin(); t != levels.end(); ++t) {
-            newIdTable[*t].clear();
+        std::vector<int> const& levels = input.lowerLevels(i);
+        for (auto& t : levels) {
+            newIdTable[t].clear();
         }
 
         output.initRow(i, jj);
@@ -377,11 +389,10 @@ class DdReducer {
             NodeId const& ff = newIdTable[i][j];
             if (ff.row() == i) {
                 output[i][ff.col()] = input[i][j];
-                output[i][ff.col()].set_head_node();
                 output[i][ff.col()].child[0] =
-                    &(output.node(output[i][ff.col()].branch[0]));
+                    &(output.node(output[i][ff.col()][0]));
                 output[i][ff.col()].child[1] =
-                    &(output.node(output[i][ff.col()].branch[1]));
+                    &(output.node(output[i][ff.col()][1]));
             }
         }
 

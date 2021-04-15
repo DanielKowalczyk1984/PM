@@ -3,18 +3,20 @@ cmake_minimum_required(VERSION 3.15)
 project(
   PM
   VERSION 0.1.0
-  LANGUAGES CXX C)
+  LANGUAGES CXX C
+  DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
+)
 
 #
 # Set project options
 #
 
 # Define a local module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake
-                      ${CMAKE_SOURCE_DIR})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR})
 
-include(cmake/StandardSettings.cmake)
-include(cmake/Utils.cmake)
+include(StandardSettings)
+include(Utils)
+include(StaticAnalyzers)
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 
 #
@@ -27,14 +29,22 @@ include(ConfigSafeGuards)
 # Enable package managers
 #
 
-include(cmake/Conan.cmake)
-include(cmake/Vcpkg.cmake)
+include(Conan)
+include(Vcpkg)
 
 #
 # code coverage
 #
 
 find_package(codecov)
+
+#
+# Third Party packages
+#
+
+find_package(Gurobi)
+add_subdirectory(or-utils)
+add_subdirectory(branch-and-bound)
 
 #
 # Create library, setup header and source files
@@ -62,36 +72,39 @@ else()
 endif()
 message(STATUS "Added all header and implementation files.\n")
 
-# Find Gurobi
-find_package(Gurobi)
-
-add_subdirectory(or-utils)
-add_subdirectory(branch-and-bound)
-
 #
 # Set the project standard and warnings
 #
 
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
-  target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
+  target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 else()
-  target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+  target_compile_features(${PROJECT_NAME}_LIB PUBLIC cxx_std_20)
 endif()
 
-include(cmake/CompilerWarnings.cmake)
+include(CompilerWarnings)
 set_project_warnings(${PROJECT_NAME})
+# set_project_warnings(${PROJECT_NAME}_LIB)
 
 verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
 
-# Set the flags for compiling add_definitions(-Wall -Wno-deprecated -pedantic
-# -Wmissing-declarations -Wpointer-arith -Wcast-qual -Wcast-align
-# -Wwrite-strings)
+# Set the flags for compiling add_definitions(-Wall -Wno-deprecated -pedantic -Wmissing-declarations
+# -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O5 -std=c++17 -m64")
+# RelWIthDebInfo Flags
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -m64")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO
+    "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+)
+
+# Release Flags
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  -m64")
 set(CMAKE_C_FLAGS_RELEASE
     "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17 -O0 -m64")
+
+# Debug Flags
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -m64")
 set(CMAKE_C_FLAGS_DEBUG
     "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
@@ -103,39 +116,44 @@ set(CMAKE_C_FLAGS_DEBUG
 # Allow usage of header files in the `src` directory, but only for utilities
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
   target_include_directories(
-    ${PROJECT_NAME}
-    INTERFACE $<INSTALL_INTERFACE:include>
-              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+    ${PROJECT_NAME} INTERFACE $<INSTALL_INTERFACE:include>
+                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  )
 else()
   target_include_directories(
     ${PROJECT_NAME}
-    PUBLIC $<INSTALL_INTERFACE:include>
-           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    PUBLIC $<INSTALL_INTERFACE:include> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
 
   if(${PROJECT_NAME}_BUILD_EXECUTABLE)
     target_include_directories(
       ${PROJECT_NAME}_LIB
       PUBLIC $<INSTALL_INTERFACE:include>
              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-             ${CONAN_INCLUDE_DIRS_FMT}
              ${GUROBI_INCLUDE_DIR}
-             ${GLIB_INCLUDE_DIRS}
-             ORUtils::ORUtils
-             branch-and-bound
-      PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-    conan_target_link_libraries(${PROJECT_NAME}_LIB)
+             ${CONAN_INCLUDE_DIRS_FMT}
+             ${CONAN_INCLUDE_DIRS_BOOST}
+             ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
+             ${CONAN_INCLUDE_DIRS_RANGE-V3}
+             ${CONAN_INCLUDE_DIRS_EIGEN}
+      PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
 
     target_link_libraries(
       ${PROJECT_NAME}_LIB
       ${GUROBI_LIBRARY}
       ${GUROBI_CXX_LIBRARY}
-      ${GLIB_LIBRARIES}
+      CONAN_PKG::fmt
+      CONAN_PKG::boost
+      CONAN_PKG::docopt.cpp
+      CONAN_PKG::range-v3
+      CONAN_PKG::eigen
       ORUtils::ORUtils
-      branch-and-bound
+      branch-and-bound::branch-and-bound
       -lm
-      -lpthread)
+      -lpthread
+    )
 
     target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_LIB)
   endif()
@@ -156,8 +174,8 @@ endif()
 verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.\n")
 
 #
-# Format the project using the `clang-format` target (i.e: cmake --build build
-# --target clang-format)
+# Format the project using the `clang-format` target (i.e: cmake --build build --target
+# clang-format)
 #
 
 add_clang_format_target()
@@ -170,12 +188,14 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
   ${PROJECT_NAME}ConfigVersion.cmake
   VERSION ${PROJECT_VERSION}
-  COMPATIBILITY SameMajorVersion)
+  COMPATIBILITY SameMajorVersion
+)
 
 configure_package_config_file(
   ${CMAKE_CURRENT_LIST_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)
 
 # Include CppCcheck
 include(CppcheckTargets)
@@ -186,5 +206,4 @@ include(dev-tools)
 
 # include Doxygen
 include(cmake/Doxygen.cmake)
-# set_property(TARGET ${PROJECT_NAME}
-# PROPERTY OUTPUT_NAME "${PROJECT_NAME}$<CONFIG>${_output}" )
+# set_property(TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME "${PROJECT_NAME}$<CONFIG>${_output}" )

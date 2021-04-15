@@ -2,19 +2,29 @@
 #define __PRICINGSTABILIZATION_H__
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 #include "OptimalSolution.hpp"
-#include "PricerSolverBase.hpp"
 
+class PricerSolverBase;
 class PricingStabilizationBase {
    public:
-    PricingStabilizationBase(PricerSolverBase* _solver);
+    explicit PricingStabilizationBase(PricerSolverBase*    _solver,
+                                      std::vector<double>& _pi_out);
     PricingStabilizationBase(PricingStabilizationBase&&) = default;
-    PricingStabilizationBase(const PricingStabilizationBase&) = default;
-    PricingStabilizationBase& operator=(PricingStabilizationBase&&) = default;
+    PricingStabilizationBase(const PricingStabilizationBase&) = delete;
+    PricingStabilizationBase& operator=(PricingStabilizationBase&&) = delete;
     PricingStabilizationBase& operator=(const PricingStabilizationBase&) =
-        default;
-    virtual ~PricingStabilizationBase();
+        delete;
+    virtual ~PricingStabilizationBase() = default;
+    virtual std::unique_ptr<PricingStabilizationBase> clone(
+        PricerSolverBase*,
+        std::vector<double>&);
+
+    static constexpr double EPS_RC = -1e-10;
+    static constexpr double ETA_DIFF = 1e-4;
+    static constexpr double EPS_STAB = 1e-9;
+    static constexpr int    RC_FIXING_RATE = 20;
 
    public:
     PricerSolverBase* solver;
@@ -25,8 +35,9 @@ class PricingStabilizationBase {
     double eta_sep{};
     double eta_out{};
 
-    std::vector<double> pi_in;
-    std::vector<double> pi_sep;
+    std::vector<double>& pi_out;
+    std::vector<double>  pi_in;
+    std::vector<double>  pi_sep;
 
     int update_stab_center{};
     int iterations{};
@@ -37,142 +48,110 @@ class PricingStabilizationBase {
     OptimalSolution<>& get_sol();
     bool               get_update_stab_center();
     double             get_reduced_cost();
+    double             get_eps_stab_solver();
     virtual double     get_eta_in();
     virtual double     get_eta_sep();
-    virtual void       solve(double eta_out, double* _pi_out, double* _lhs);
+    virtual void       solve(double eta_out, double* _lhs);
     virtual int        stopping_criteria();
     virtual void       update_duals();
     virtual void       reduced_cost_fixing();
     virtual void       remove_constraints(int first, int nb_del);
     virtual void       update_continueLP(int _continueLP);
     virtual int        do_reduced_cost_fixing();
+    virtual void       update_continueLP(double obj);
 };
 
 class PricingStabilizationStat : public PricingStabilizationBase {
    public:
-    PricingStabilizationStat(PricerSolverBase* _solver);
+    explicit PricingStabilizationStat(PricerSolverBase*    _solver,
+                                      std::vector<double>& _pi_out);
     PricingStabilizationStat(PricingStabilizationStat&&) = default;
-    PricingStabilizationStat(const PricingStabilizationStat&) = default;
-    PricingStabilizationStat& operator=(PricingStabilizationStat&&) = default;
+    PricingStabilizationStat(const PricingStabilizationStat&) = delete;
+    PricingStabilizationStat& operator=(PricingStabilizationStat&&) = delete;
     PricingStabilizationStat& operator=(const PricingStabilizationStat&) =
-        default;
-    virtual ~PricingStabilizationStat();
+        delete;
+    ~PricingStabilizationStat() override = default;
 
-    std::vector<double> pi_out;
+    static constexpr double ALPHA = 0.8;
+    static constexpr double ALPHA_CHG = 0.1;
+    static constexpr double ALPHA_MAX = 0.99;
 
-    double alpha{0.8};
+    double alpha{ALPHA};
     double alphabar{};
-
-    int update{};
-
-    int k{};
-    // int node_stab{};
-    int hasstabcenter{};
-    // int in_mispricing_schedule{};
-    // int update_stab_center{};
-
-    // PricerSolverBase* solver;
-    // OptimalSolution<> sol{};
-
-    int nb_rows;
-
-    void compute_pi_eta_sep(double _alpha_bar) {
-        int    i;
-        double beta_bar = 1.0 - _alpha_bar;
-
-        for (i = 0; i < solver->reformulation_model.get_nb_constraints(); ++i) {
-            pi_sep[i] = _alpha_bar * pi_in[i] + (1.0 - _alpha_bar) * pi_out[i];
-        }
-
-        eta_sep = _alpha_bar * (eta_in) + beta_bar * (eta_out);
-    }
+    int    update{};
+    int    k{};
+    int    hasstabcenter{};
+    void   compute_pi_eta_sep(double _alpha_bar);
 
    public:
-    virtual void solve(double  _eta_out,
-                       double* _pi_out,
-                       double* _lhs_coeff) override;
+    void solve(double _eta_out, double* _lhs_coeff) override;
 
-    virtual double get_eta_in() final;
-    virtual int    stopping_criteria() final;
-    virtual void   update_duals() override;
-    virtual void   remove_constraints(int first, int nb_del) override;
-    // double diff_eta_in_eta_out();
+    double get_eta_in() final;
+    int    stopping_criteria() final;
+    void   update_duals() override;
+    void   remove_constraints(int first, int nb_del) override;
+    std::unique_ptr<PricingStabilizationBase> clone(
+        PricerSolverBase*,
+        std::vector<double>&) override;
 };
 
 class PricingStabilizationDynamic : public PricingStabilizationStat {
    public:
-    PricingStabilizationDynamic(PricerSolverBase* _solver);
+    explicit PricingStabilizationDynamic(PricerSolverBase*    _solver,
+                                         std::vector<double>& _pi_out);
     PricingStabilizationDynamic(PricingStabilizationDynamic&&) = default;
-    PricingStabilizationDynamic(const PricingStabilizationDynamic&) = default;
+    PricingStabilizationDynamic(const PricingStabilizationDynamic&) = delete;
     PricingStabilizationDynamic& operator=(PricingStabilizationDynamic&&) =
-        default;
+        delete;
     PricingStabilizationDynamic& operator=(const PricingStabilizationDynamic&) =
-        default;
-    virtual ~PricingStabilizationDynamic();
+        delete;
+    ~PricingStabilizationDynamic() override = default;
+
+    std::unique_ptr<PricingStabilizationBase> clone(
+        PricerSolverBase*,
+        std::vector<double>&) override;
+
     std::vector<double> subgradient;
     double              subgradientnorm{};
     double              subgradientproduct{};
     double              dualdiffnorm{};
 
-    virtual void solve(double  _eta_out,
-                       double* _pi_out,
-                       double* _lhs_coeff) override;
-    virtual void update_duals() override;
-    virtual void remove_constraints(int first, int nb_del) override;
+    void solve(double _eta_out, double* _lhs_coeff) override;
+    void update_duals() override;
+    void remove_constraints(int first, int nb_del) override;
 
-    void compute_subgradient(const OptimalSolution<double>& sol) {
-        solver->compute_subgradient(sol, subgradient.data());
-
-        // subgradientnorm = 0.0;
-
-        // for (int i = 0; i < nb_rows; ++i) {
-        //     double sqr = SQR(subgradient_in[i]);
-
-        //     if (sqr > 0.00001) {
-        //         subgradientnorm += sqr;
-        //     }
-        // }
-
-        // subgradientnorm = SQRT(subgradientnorm);
-    }
-
-    void adjust_alpha() {
-        double sum = 0.0;
-
-        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
-             ++i) {
-            sum += subgradient[i] * (pi_out[i] - pi_in[i]);
-        }
-
-        if (sum > 0) {
-            alphabar = std::max<double>(0, alphabar - 0.1);
-        } else {
-            alphabar = std::min<double>(0.9, alphabar + (1 - alphabar) * 0.05);
-        }
-    }
+    void compute_subgradient(const OptimalSolution<double>& _sol);
+    void adjust_alpha();
 };
 
 class PricingStabilizationHybrid : public PricingStabilizationDynamic {
    public:
-    PricingStabilizationHybrid(PricerSolverBase* pricer_solver);
+    explicit PricingStabilizationHybrid(PricerSolverBase*    pricer_solver,
+                                        std::vector<double>& _pi_out);
+
     PricingStabilizationHybrid(PricingStabilizationHybrid&&) = default;
-    PricingStabilizationHybrid(const PricingStabilizationHybrid&) = default;
+    PricingStabilizationHybrid(const PricingStabilizationHybrid&) = delete;
     PricingStabilizationHybrid& operator=(PricingStabilizationHybrid&&) =
-        default;
+        delete;
     PricingStabilizationHybrid& operator=(const PricingStabilizationHybrid&) =
-        default;
-    virtual ~PricingStabilizationHybrid();
+        delete;
+    ~PricingStabilizationHybrid() override = default;
+
+    std::unique_ptr<PricingStabilizationBase> clone(
+        PricerSolverBase*,
+        std::vector<double>&) override;
 
     std::vector<double> subgradient_in;
 
-    double       beta{};
-    double       hybridfactor{};
-    int          in_mispricing_schedule{};
-    virtual void update_duals() override;
-    virtual void remove_constraints(int first, int nb_del) override;
+    double beta{};
+    double hybridfactor{};
+    int    in_mispricing_schedule{};
+
+    void update_duals() override;
+    void remove_constraints(int first, int nb_del) override;
 
    private:
-    virtual void solve(double _eta_out, double* _pi_out, double* _lhs) override;
+    void solve(double _eta_out, double* _lhs) override;
 
     void update_hybrid() {
         if (hasstabcenter && !in_mispricing_schedule && alpha > 0.0) {
@@ -182,139 +161,25 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
         }
     }
 
-    void calculate_dualdiffnorm() {
-        dualdiffnorm = 0.0;
+    void calculate_dualdiffnorm();
 
-        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
-             ++i) {
-            double dualdiff = SQR(pi_in[i] - pi_out[i]);
-            if (dualdiff > 0.00001) {
-                dualdiffnorm += dualdiff;
-            }
-        }
+    void calculate_beta();
 
-        dualdiffnorm = SQRT(dualdiffnorm);
-    }
+    void calculate_hybridfactor();
 
-    void calculate_beta() {
-        beta = 0.0;
-        for (int i = 0; i < solver->convex_constr_id; ++i) {
-            double dualdiff = ABS(pi_out[i] - pi_in[i]);
-            double product = dualdiff * std::abs(subgradient_in[i]);
+    bool is_stabilized();
 
-            if (product > 1e-6) {
-                beta += product;
-            }
-        }
+    double compute_dual(auto i);
 
-        if (subgradientnorm > 1e-5) {
-            beta = beta / (subgradientnorm * dualdiffnorm);
-        }
-    }
+    void update_stabcenter(const OptimalSolution<double>& _sol);
 
-    void calculate_hybridfactor() {
-        double aux_norm = 0.0;
-        for (int i = 0; i < solver->convex_constr_id; ++i) {
-            double aux_double = SQR(
-                (beta - 1.0) * (pi_out[i] - pi_in[i]) +
-                beta * (subgradient_in[i] * dualdiffnorm / subgradientnorm));
-            if (aux_double > 1e-6) {
-                aux_norm += aux_double;
-            }
-        }
-        aux_norm = SQRT(aux_norm);
+    void compute_subgradient_norm(const OptimalSolution<double>& _sol);
 
-        hybridfactor = ((1 - alpha) * dualdiffnorm) / aux_norm;
-    }
+    void update_subgradientproduct();
 
-    bool is_stabilized() {
-        if (in_mispricing_schedule) {
-            return alphabar > 0.0;
-        }
-        return alpha > 0.0;
-    }
+    void update_alpha_misprice();
 
-    double compute_dual(int i) {
-        double usedalpha = alpha;
-        double usedbeta = beta;
-
-        if (in_mispricing_schedule) {
-            usedalpha = alphabar;
-            usedbeta = 0.0;
-        }
-
-        if (hasstabcenter && (usedbeta == 0.0 || usedalpha == 0.0)) {
-            return usedalpha * pi_in[i] + (1.0 - usedalpha) * pi_out[i];
-        } else if (hasstabcenter && usedbeta > 0.0) {
-            double dual =
-                pi_in[i] +
-                hybridfactor *
-                    (beta * (pi_in[i] + subgradient_in[i] * dualdiffnorm /
-                                            subgradientnorm) +
-                     (1.0 - beta) * pi_out[i] - pi_in[i]);
-            return CC_MAX(dual, 0.0);
-        }
-
-        return pi_out[i];
-    }
-
-    void update_stabcenter(const OptimalSolution<double>& sol) {
-        if (eta_sep > eta_in) {
-            pi_in = pi_sep;
-            compute_subgradient_norm(sol);
-            eta_in = eta_sep;
-            hasstabcenter = 1;
-            update_stab_center = true;
-            solver->calculate_constLB(pi_sep.data());
-            solver->evaluate_nodes(pi_sep.data());
-        }
-    }
-
-    void compute_subgradient_norm(const OptimalSolution<double>& sol) {
-        // double* subgradient_in = &g_array_index(pd->subgradient_in, double,
-        // 0); double* rhs = &g_array_index(pd->rhs, double, 0);
-        // fill_dbl(subgradient_in, pd->nb_rows, 1.0);
-        // subgradient_in[pd->nb_jobs] = 0.0;
-        solver->compute_subgradient(sol, subgradient_in.data());
-
-        // for (guint i = 0; i < sol.jobs->len; i++) {
-        //     Job* tmp_j = reinterpret_cast<Job*>(g_ptr_array_index(sol.jobs,
-        //     i)); subgradient_in[tmp_j->job] += rhs[pd->nb_jobs] * 1.0;
-        // }
-
-        subgradientnorm = 0.0;
-
-        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
-             ++i) {
-            double sqr = SQR(subgradient_in[i]);
-
-            if (sqr > 0.00001) {
-                subgradientnorm += sqr;
-            }
-        }
-
-        subgradientnorm = SQRT(subgradientnorm);
-    }
-    void update_subgradientproduct() {
-        subgradientproduct = 0.0;
-        for (int i = 0; i < solver->reformulation_model.get_nb_constraints();
-             ++i) {
-            subgradientproduct += (pi_out[i] - pi_in[i]) * subgradient_in[i];
-        }
-    }
-
-    void update_alpha_misprice() {
-        k++;
-        alphabar = CC_MAX(0.0, 1 - k * (1.0 - alpha));
-    }
-
-    void update_alpha() {
-        if (subgradientproduct > 0.0) {
-            alpha = std::max(0.0, alpha - 0.1);
-        } else {
-            alpha = std::min(0.99, alpha + (1.0 - alpha) * 0.1);
-        }
-    }
+    void update_alpha();
 };
 
 #endif  // __PRICINGSTABILIZATION_H__

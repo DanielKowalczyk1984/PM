@@ -210,12 +210,12 @@ class MemoryPool {
 /**
  * Collection of memory pools.
  */
-typedef MyVector<MemoryPool> MemoryPools;
+typedef std::vector<MemoryPool> MemoryPools;
 
-template <>
-inline void MyVector<MemoryPool>::moveElement(MemoryPool& from,
-                                              MemoryPool& to) {
-    to.moveFrom(from);
-}
+// template <>
+// inline void MyVector<MemoryPool>::moveElement(MemoryPool& from,
+//                                               MemoryPool& to) {
+//     to.moveFrom(from);
+// }
 
 // } // namespace tdzdd

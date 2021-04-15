@@ -53,3 +53,5 @@ function mainGenGraph(FileName::String)
     dagFlowInstance = DagFlowInstanceModule.readDAGFlowArcsInstance(FileName)
     DAGIntFlow.setupIP(dagFlowInstance, FileName)
 end
+
+mainGenGraph("Data/wt007_graph_bis/wt007_081_2.dat")

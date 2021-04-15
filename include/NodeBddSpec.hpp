@@ -25,8 +25,12 @@
 #ifndef NODE_BDD_SPEC_HPP
 #define NODE_BDD_SPEC_HPP
 
+#include <bits/stdint-uintn.h>
 #include <cassert>
+#include <cstddef>
 #include <iostream>
+#include <range/v3/view/zip.hpp>
+#include <span>
 #include <stdexcept>
 #include "NodeBddDumper.hpp"
 
@@ -111,24 +115,30 @@ class DdSpecBase {
     }
 
    private:
+    static constexpr int HASH_CONST_BASE = 314159257;
     template <typename T, typename I>
     static size_t rawHashCode_(void const* p) {
-        size_t   h = 0;
-        I const* a = static_cast<I const*>(p);
-        for (size_t i = 0; i < sizeof(T) / sizeof(I); ++i) {
-            h += a[i];
-            h *= 314159257;
+        size_t h = 0;
+        // auto*     a = static_cast<I const*>(p);
+        std::span aux{static_cast<I const*>(p), sizeof(T) / sizeof(I)};
+        for (auto const& it : aux) {
+            h += it;
+            h *= HASH_CONST_BASE;
         }
         return h;
     }
 
     template <typename T, typename I>
     static size_t rawEqualTo_(void const* p1, void const* p2) {
-        I const* a1 = static_cast<I const*>(p1);
-        I const* a2 = static_cast<I const*>(p2);
-        for (size_t i = 0; i < sizeof(T) / sizeof(I); ++i) {
-            if (a1[i] != a2[i])
+        // I const*  a1 = static_cast<I const*>(p1);
+        // I const*  a2 = static_cast<I const*>(p2);
+        std::span aux1{static_cast<I const*>(p1), sizeof(T) / sizeof(I)};
+        std::span aux2{static_cast<I const*>(p2), sizeof(T) / sizeof(I)};
+
+        for (auto&& [it1, it2] : ranges::views::zip(aux1, aux2)) {
+            if (it1 != it2) {
                 return false;
+            }
         }
         return true;
     }
@@ -142,8 +152,8 @@ class DdSpecBase {
         if (sizeof(T) % sizeof(unsigned int) == 0) {
             return rawHashCode_<T, unsigned int>(&o);
         }
-        if (sizeof(T) % sizeof(unsigned short) == 0) {
-            return rawHashCode_<T, unsigned short>(&o);
+        if (sizeof(T) % sizeof(std::uint16_t) == 0) {
+            return rawHashCode_<T, std::uint16_t>(&o);
         }
         return rawHashCode_<T, unsigned char>(&o);
     }
@@ -156,8 +166,8 @@ class DdSpecBase {
         if (sizeof(T) % sizeof(unsigned int) == 0) {
             return rawEqualTo_<T, unsigned int>(&o1, &o2);
         }
-        if (sizeof(T) % sizeof(unsigned short) == 0) {
-            return rawEqualTo_<T, unsigned short>(&o1, &o2);
+        if (sizeof(T) % sizeof(std::uint16_t) == 0) {
+            return rawEqualTo_<T, std::uint16_t>(&o1, &o2);
         }
         return rawEqualTo_<T, unsigned char>(&o1, &o2);
     }
@@ -179,7 +189,7 @@ class DdSpecBase {
 template <typename S, int AR = 2>
 class StatelessDdSpec : public DdSpecBase<S, AR> {
    public:
-    int datasize() const { return 0; }
+    [[nodiscard]] int datasize() const { return 0; }
 
     int get_root(void* p) { return this->entity().getRoot(); }
 
@@ -240,7 +250,7 @@ class StatelessDdSpec : public DdSpecBase<S, AR> {
 template <typename S, typename T, int AR = 2>
 class DdSpec : public DdSpecBase<S, AR> {
    public:
-    typedef T State;
+    using State = T;
 
    private:
     static State& state(void* p) { return *static_cast<State*>(p); }
@@ -250,7 +260,7 @@ class DdSpec : public DdSpecBase<S, AR> {
     }
 
    public:
-    int datasize() const { return sizeof(State); }
+    [[nodiscard]] int datasize() const { return sizeof(State); }
 
     void construct(void* p) { new (p) State(); }
 
@@ -342,41 +352,44 @@ class DdSpec : public DdSpecBase<S, AR> {
 template <typename S, typename T, int AR = 2>
 class PodArrayDdSpec : public DdSpecBase<S, AR> {
    public:
-    typedef T State;
+    using State = T;
 
    private:
-    typedef size_t Word;
+    using Word = size_t;
 
-    int arraySize;
-    int dataWords;
+    int arraySize{};
+    int dataWords{};
 
     static State* state(void* p) { return static_cast<State*>(p); }
 
     static State const* state(void const* p) {
         return static_cast<State const*>(p);
     }
+    static constexpr size_t HASH_CONST_POD_ARRAY = 314159257;
 
    protected:
     void setArraySize(int n) {
         assert(0 <= n);
-        if (arraySize >= 0)
+        if (arraySize >= 0) {
             throw std::runtime_error(
                 "Cannot set array size twice; use setArraySize(int) only once "
                 "in the constructor of DD spec.");
+        }
         arraySize = n;
         dataWords = (n * sizeof(State) + sizeof(Word) - 1) / sizeof(Word);
     }
 
-    int getArraySize() const { return arraySize; }
+    [[nodiscard]] int getArraySize() const { return arraySize; }
 
    public:
     PodArrayDdSpec() : arraySize(-1), dataWords(-1) {}
 
-    int datasize() const {
-        if (dataWords < 0)
+    [[nodiscard]] int datasize() const {
+        if (dataWords < 0) {
             throw std::runtime_error(
                 "Array size is unknown; please set it by setArraySize(int) in "
                 "the constructor of DD spec.");
+        }
         return dataWords * sizeof(Word);
     }
 
@@ -414,7 +427,7 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
         size_t      h = 0;
         while (pa != pz) {
             h += *pa++;
-            h *= 314159257;
+            h *= HASH_CONST_POD_ARRAY;
         }
         return h;
     }
@@ -424,8 +437,9 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
         Word const* qa = static_cast<Word const*>(q);
         Word const* pz = pa + dataWords;
         while (pa != pz) {
-            if (*pa++ != *qa++)
+            if (*pa++ != *qa++) {
                 return false;
+            }
         }
         return true;
     }
@@ -433,8 +447,9 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
     void printState(std::ostream& os, State const* a) const {
         os << "[";
         for (int i = 0; i < arraySize; ++i) {
-            if (i > 0)
+            if (i > 0) {
                 os << ",";
+            }
             os << a[i];
         }
         os << "]";
@@ -475,16 +490,18 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
 template <typename S, typename TS, typename TA, int AR = 2>
 class HybridDdSpec : public DdSpecBase<S, AR> {
    public:
-    typedef TS S_State;
-    typedef TA A_State;
+    using S_State = TS;
+    using A_State = TA;
 
    private:
-    typedef size_t   Word;
+    using Word = size_t;
     static int const S_WORDS =
         (sizeof(S_State) + sizeof(Word) - 1) / sizeof(Word);
+    static constexpr size_t HASH_HYBRID_SPEC1 = 271828171;
+    static constexpr size_t HASH_HYBRID_SPEC2 = 314159257;
 
-    int arraySize;
-    int dataWords;
+    int arraySize{};
+    int dataWords{};
 
     static S_State& s_state(void* p) { return *static_cast<S_State*>(p); }
 
@@ -509,12 +526,12 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
             S_WORDS + (n * sizeof(A_State) + sizeof(Word) - 1) / sizeof(Word);
     }
 
-    int getArraySize() const { return arraySize; }
+    [[nodiscard]] int getArraySize() const { return arraySize; }
 
    public:
     HybridDdSpec() : arraySize(-1), dataWords(-1) {}
 
-    int datasize() const { return dataWords * sizeof(Word); }
+    [[nodiscard]] int datasize() const { return dataWords * sizeof(Word); }
 
     void construct(void* p) { new (p) S_State(); }
 
@@ -566,13 +583,13 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
 
     size_t hash_code(void const* p, int level) const {
         size_t h = this->entity().hashCodeAtLevel(s_state(p), level);
-        h *= 271828171;
+        h *= HASH_HYBRID_SPEC1;
         Word const* pa = static_cast<Word const*>(p);
         Word const* pz = pa + dataWords;
         pa += S_WORDS;
         while (pa != pz) {
             h += *pa++;
-            h *= 314159257;
+            h *= HASH_HYBRID_SPEC2;
         }
         return h;
     }
@@ -588,16 +605,18 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
     }
 
     bool equal_to(void const* p, void const* q, int level) const {
-        if (!this->entity().equalToAtLevel(s_state(p), s_state(q), level))
+        if (!this->entity().equalToAtLevel(s_state(p), s_state(q), level)) {
             return false;
+        }
         Word const* pa = static_cast<Word const*>(p);
         Word const* qa = static_cast<Word const*>(q);
         Word const* pz = pa + dataWords;
         pa += S_WORDS;
         qa += S_WORDS;
         while (pa != pz) {
-            if (*pa++ != *qa++)
+            if (*pa++ != *qa++) {
                 return false;
+            }
         }
         return true;
     }
@@ -607,8 +626,9 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
                     A_State const* a) const {
         os << "[" << s << ":";
         for (int i = 0; i < arraySize; ++i) {
-            if (i > 0)
+            if (i > 0) {
                 os << ",";
+            }
             os << a[i];
         }
         os << "]";
@@ -631,5 +651,3 @@ template <typename S, typename TS, typename TA, int AR = 2>
 class PodHybridDdSpec : public HybridDdSpec<S, TS, TA, AR> {};
 
 #endif  // NODE_BDD_SPEC_HPP
-
-// } // namespace tdzdd

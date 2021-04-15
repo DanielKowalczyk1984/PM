@@ -1,5 +1,8 @@
+#include <memory>
+#include "Instance.h"
 #include "PricerEvaluateBdd.hpp"
 #include "PricerSolverBdd.hpp"
+// #include "interval.h"
 
 class PricerSolverBddBackwardSimple : public PricerSolverBdd {
    private:
@@ -8,24 +11,27 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
     BackwardBddFarkasDouble farkas_evaluator;
 
    public:
-    PricerSolverBddBackwardSimple(GPtrArray*  _jobs,
-                                  int         _num_machines,
-                                  GPtrArray*  _ordered_jobs,
-                                  const char* p_name,
-                                  int         _Hmax,
-                                  int*        _take_jobs,
-                                  double      _UB);
+    explicit PricerSolverBddBackwardSimple(const Instance& instance);
+
+    PricerSolverBddBackwardSimple(const PricerSolverBddBackwardSimple&) =
+        default;
+    PricerSolverBddBackwardSimple(PricerSolverBddBackwardSimple&&) = default;
+    PricerSolverBddBackwardSimple& operator=(PricerSolverBddBackwardSimple&&) =
+        default;
+    PricerSolverBddBackwardSimple& operator=(
+        const PricerSolverBddBackwardSimple&) = delete;
+    ~PricerSolverBddBackwardSimple() override = default;
+
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
+        return std::make_unique<PricerSolverBddBackwardSimple>(*this);
+    };
+
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;
-    void                    compute_labels(double* _pi);
+
+    void compute_labels(double* _pi);
     void evaluate_nodes(double* pi, int UB, double LB) override;
     void evaluate_nodes(double* pi) final;
-    PricerSolverBddBackwardSimple(const PricerSolverBddBackwardSimple& src,
-                                  GPtrArray* _ordered_jobs)
-        : PricerSolverBdd(src, _ordered_jobs),
-          evaluator(src.evaluator),
-          reversed_evaluator(src.reversed_evaluator),
-          farkas_evaluator(src.farkas_evaluator){};
 };
 
 class PricerSolverBddBackwardCycle : public PricerSolverBdd {
@@ -35,23 +41,24 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
     BackwardBddFarkasDouble farkas_evaluator;
 
    public:
-    PricerSolverBddBackwardCycle(GPtrArray*  _jobs,
-                                 int         _num_machines,
-                                 GPtrArray*  _ordered_jobs,
-                                 const char* p_name,
-                                 int         _Hmax,
-                                 int*        _take_jobs,
-                                 double      _UB);
+    explicit PricerSolverBddBackwardCycle(const Instance& instance);
+
+    PricerSolverBddBackwardCycle& operator=(
+        const PricerSolverBddBackwardCycle&) = delete;
+    PricerSolverBddBackwardCycle& operator=(PricerSolverBddBackwardCycle&&) =
+        default;
+    PricerSolverBddBackwardCycle(PricerSolverBddBackwardCycle&&) = default;
+    PricerSolverBddBackwardCycle(const PricerSolverBddBackwardCycle&) = default;
+    ~PricerSolverBddBackwardCycle() override = default;
+
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
+        return std::make_unique<PricerSolverBddBackwardCycle>(*this);
+    };
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;
-    void                    compute_labels(double* _pi);
+
+    void compute_labels(double* _pi);
     void evaluate_nodes(double* pi, int UB, double LB) override;
     void evaluate_nodes(double* pi) final;
-    PricerSolverBddBackwardCycle(const PricerSolverBddBackwardCycle& src,
-                                 GPtrArray* _ordered_jobs)
-        : PricerSolverBdd(src, _ordered_jobs),
-          evaluator(src.evaluator),
-          reversed_evaluator(src.reversed_evaluator),
-          farkas_evaluator(src.farkas_evaluator){};
 };

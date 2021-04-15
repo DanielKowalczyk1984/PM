@@ -1,94 +1,129 @@
 #ifndef WCT_PRIVATE_H
 #define WCT_PRIVATE_H
 
+#include <bits/c++config.h>
+#include <functional>
+#include <memory>
+#include <vector>
+#include "Instance.h"
 #include "MIP_defs.hpp"
+#include "Parms.h"
+#include "PricingStabilization.hpp"
+#include "Solution.hpp"
 #include "Statistics.h"
-#include "binomial-heap.h"
-// #include "branch-and-boundwrapper.h"
-#include "interval.h"
 #include "lp.h"
-#include "pricingstabilizationwrapper.h"
-#include "scheduleset.h"
-#include "solver.h"
-#include "util.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct ScheduleSet;
+struct NodeData;
+
+class BranchBoundTree;
 
 /**
  * wct data types nodes of branch and bound tree
  */
-typedef enum {
-    initialized = 0,
-    LP_bound_estimated = 1,
-    LP_bound_computed = 2,
-    submitted_for_branching = 3,
-    infeasible = 4,
-    finished = 5,
-} NodeDataStatus;
+/**
+ *  CONSTANTS NODEDATA STRUCTURE
+ *
+ */
+
+constexpr int    NB_CUTS = 2000;
+constexpr int    NB_CG_ITERATIONS = 1000000;
+constexpr int    CLEANUP_ITERATION = 30;
+constexpr double EPS = 1e-6;
+constexpr double EPS_BOUND = 1e-9;
+
+enum problem_status {
+    no_sol = 0,
+    lp_feasible = 1,
+    feasible = 2,
+    meta_heuristic = 3,
+    optimal = 4
+};
 
 /**
  * problem data
  */
-typedef struct _Problem Problem;
+class Problem {
+   private:
+    /** Different Parameters */
+    Parms parms;
+    /*Cpu time measurement + Statistics*/
+    Statistics stat;
+    /** Instance data*/
+    Instance instance;
 
-/**
- * node data
- */
-typedef struct _NodeData NodeData;
+    std::unique_ptr<BranchBoundTree> tree;
+    std::unique_ptr<NodeData>        root_pd;
 
-typedef struct BranchNodeBase  BranchNode;
-typedef struct BranchBoundTree BranchBoundTree;
+    problem_status status;
 
-BranchNode* new_branch_node(int _isRoot, NodeData* data);
-void        delete_branch_node(BranchNode* node);
-size_t      call_getDepth(BranchNode* state);
-int         call_getDomClassID(BranchNode* state);
-double      call_getObjValue(BranchNode* state);
-double      call_getLB(BranchNode* state);
-double      call_getUB(BranchNode* state);
-int         call_getID(BranchNode* state);
-int         call_getParentID(BranchNode* state);
-void        call_setID(BranchNode* state, int i);
-int         isDominated(BranchNode* state);
-int         wasProcessed(BranchNode* state);
+    /* Best Solution*/
+    Sol opt_sol;
 
-BranchBoundTree* new_branch_bound_tree(NodeData* data,
-                                       int       _probtype,
-                                       int       _isIntProb);
-void             delete_branch_bound_tree(BranchBoundTree* tree);
-void             call_branch_and_bound_explore(BranchBoundTree* tree);
+   public:
+    /** All methods of problem class */
+    int  to_screen();
+    void to_csv();
+    void solve();
+    /** Heuristic related */
+    void heuristic();
+    /** Constructors */
+    Problem(int argc, const char** argv);
+    Problem(const Problem&) = delete;
+    Problem(Problem&&) = delete;
+    Problem& operator=(const Problem&) = delete;
+    Problem& operator=(Problem&&) = delete;
+    ~Problem();
+    friend NodeData;
 
-struct _NodeData {
-    // The id and depth of the node in the B&B tree
-    int id;
+    class ProblemException : public std::exception {
+       public:
+        ProblemException(const char* const msg = nullptr) : errmsg(msg) {}
+
+        [[nodiscard]] const char* what() const noexcept override {
+            return (errmsg);
+        }
+
+       private:
+        const char* errmsg;
+    };
+};
+
+struct NodeData {
+    enum NodeDataStatus {
+        initialized = 0,
+        LP_bound_estimated = 1,
+        LP_bound_computed = 2,
+        submitted_for_branching = 3,
+        infeasible = 4,
+        finished = 5,
+    };
+
     int depth;
 
     NodeDataStatus status;
 
     // The instance information
-    GPtrArray* jobarray;
-    int        nb_jobs;
-    int        nb_machines;
-    int        H_max;
-    int        H_min;
-    int        off;
-    /** data about the intervals */
-    GPtrArray* local_intervals;
-    GPtrArray* ordered_jobs;
+    const Parms&    parms;
+    const Instance& instance;
+    Statistics&     stat;
+    Sol&            opt_sol;
+    std::string     pname;
+
+    int nb_jobs;
+    int nb_machines;
 
     // The column generation lp information
-    wctlp*  RMP;
-    double* lambda;
-    // double* x_e;
+    std::unique_ptr<wctlp, std::function<void(wctlp*)>> RMP;
 
-    GArray* pi;
-    GArray* slack;
-    GArray* rhs;
-    GArray* lhs_coeff;
-    GArray* id_row;
-    GArray* coeff_row;
+    std::vector<double> lambda;
+
+    std::vector<double> pi;
+    std::vector<double> slack;
+    std::vector<double> rhs;
+    std::vector<double> lhs_coeff;
+    std::vector<int>    id_row;
+    std::vector<double> coeff_row;
 
     int nb_rows;
     int nb_cols;
@@ -106,14 +141,14 @@ struct _NodeData {
     int id_pseudo_schedules;
 
     // PricerSolver
-    PricerSolver* solver;
+    std::unique_ptr<PricerSolverBase> solver;
 
     // Columns
-    int          zero_count;
-    ScheduleSet* newsets;
-    int          nb_new_sets;
-    int*         column_status;
-    GPtrArray*   localColPool;
+    int                                       zero_count;
+    std::shared_ptr<ScheduleSet>              newsets;
+    int                                       nb_new_sets;
+    std::vector<int>                          column_status;
+    std::vector<std::shared_ptr<ScheduleSet>> localColPool;
 
     int lower_bound;
     int upper_bound;
@@ -127,152 +162,73 @@ struct _NodeData {
     int iterations;
 
     /** Wentges smoothing technique */
-    PricingStabilization* solver_stab;
-    int                   update;
+    std::unique_ptr<PricingStabilizationBase> solver_stab;
 
     // Best Solution
-    GPtrArray* best_schedule;
-    int        best_objective;
+    std::vector<std::shared_ptr<ScheduleSet>> best_schedule;
+    int                                       best_objective;
 
     // maxiterations and retireage
-    int maxiterations;
     int retirementage;
 
     /** Branching strategies */
-    int choose;
-    /** conflict */
-    int*      elist_same;
-    int       edge_count_same;
-    int*      elist_differ;
-    int       edge_count_differ;
-    NodeData* same_children;
-    int       nb_same;
-    NodeData* diff_children;
-    int       nb_diff;
-    Job *     v1, *v2;
-    /** ahv branching */
-    NodeData* duetime_child;
-    int       nb_duetime;
-    NodeData* releasetime_child;
-    int       nb_releasetime;
-    int       branch_job;
-    int       completiontime;
-    /** wide branching conflict */
-    int*       v1_wide;
-    int*       v2_wide;
-    int        nb_wide;
-    NodeData** same_children_wide;
-    NodeData** diff_children_wide;
+    int branch_job;
+    int completiontime;
+    int less;
 
     /**
      * ptr to the parent node
      */
-    NodeData* parent;
+    explicit NodeData(Problem* problem);
+    NodeData(const NodeData&);
+    NodeData& operator=(const NodeData&) = delete;
+    NodeData& operator=(NodeData&&) = delete;
+    NodeData(NodeData&&) = delete;
+    ~NodeData();
 
-    /** Some additional pointers to data needed */
-    Parms*      parms;
-    Statistics* stat;
-    Solution*   opt_sol;
+    void prune_duplicated_sets();
+    void add_solution_to_colpool(const Sol&);
 
-    char pname[MAX_PNAME_LEN];
+    int build_rmp();
+    /** lowerbound.cpp */
+    int  delete_unused_rows();
+    int  delete_old_schedules();
+    int  delete_infeasible_schedules();
+    int  compute_objective();
+    int  solve_relaxation();
+    int  compute_lower_bound();
+    int  check_schedules();
+    int  print_x();
+    void make_pi_feasible_farkas_pricing();
+
+    /** PricerSolverWrappers.cpp */
+    void build_solve_mip();
+    void construct_lp_sol_from_rmp();
+    void generate_cuts();
+    int  delete_unused_rows_range(int first, int last);
+    int  call_update_rows_coeff();
+    bool check_schedule_set(ScheduleSet* set);
+    void make_schedule_set_feasible(ScheduleSet* set);
+
+    /** StabilizationWrappers.cpp */
+    int  solve_pricing();
+    void solve_farkas_dbl();
+
+    [[nodiscard]] std::unique_ptr<NodeData> clone() const;
+
+    int add_scheduleset_to_rmp(ScheduleSet* set);
+
+   private:
+    int add_lhs_scheduleset_to_rmp(ScheduleSet* set);
+
+    /** lowerbound.cpp */
+    int  grow_ages();
+    void print_ages();
+
+    /** StabilizationWrappers.cpp */
+    int grab_integer_solution(std::vector<double> const& x, double tolerance);
+
+    static constexpr double min_nb_del_row_ratio = 0.9;
 };
-
-/**
- * wct problem data type
- */
-
-typedef enum {
-    no_sol = 0,
-    lp_feasible = 1,
-    feasible = 2,
-    meta_heuristic = 3,
-    optimal = 4
-} problem_status;
-
-struct _Problem {
-    Parms            parms;
-    NodeData*        root_pd;
-    BranchBoundTree* tree;
-    /** Job data in EDD order */
-    GPtrArray* g_job_array;
-    GPtrArray* list_solutions;
-    /** Summary of jobs */
-    int nb_jobs;
-    int p_sum;
-    int pmax;
-    int pmin;
-    int dmax;
-    int dmin;
-    int H_min;
-    int H_max;
-    int off;
-    int nb_machines;
-
-    int    nb_data_nodes;
-    int    global_upper_bound;
-    int    global_lower_bound;
-    double rel_error;
-    int    root_upper_bound;
-    int    root_lower_bound;
-    double root_rel_error;
-    int    maxdepth;
-
-    problem_status status;
-
-    /* All partial schedules*/
-    GPtrArray* ColPool;
-    /** Maximum number of artificial columns */
-    int maxArtificials;
-    /** Actual number of artificial columns */
-    /* Best Solution*/
-    Solution* opt_sol;
-    /*heap variables*/
-    BinomialHeap* br_heap_a;
-    GPtrArray*    unexplored_states;
-    GQueue*       non_empty_level_pqs;
-    unsigned int  last_explored;
-    int           mult_key;
-    int           found;
-    /*Cpu time measurement + Statistics*/
-    Statistics stat;
-};
-
-/*Initialization and free memory for the problem*/
-void problem_init(Problem* problem);
-void problem_free(Problem* problem);
-
-/*Initialize pmc data*/
-void      nodedata_init(NodeData* pd, Problem* prob);
-void      nodedata_init_null(NodeData* pd);
-int       set_id_and_name(NodeData* pd, int id, const char* fname);
-NodeData* new_node_data(NodeData* pd);
-
-/*Free the Nodedata*/
-void lp_node_data_free(NodeData* pd);
-void children_data_free(NodeData* pd);
-void nodedata_free(NodeData* pd);
-void temporary_data_free(NodeData* pd);
-
-/**
- * solver zdd
- */
-int  build_solve_mip(NodeData* pd);
-int  construct_lp_sol_from_rmp(NodeData* pd);
-int  check_schedule_set(ScheduleSet* set, NodeData* pd);
-void make_schedule_set_feasible(NodeData* pd, ScheduleSet* set);
-
-void get_mip_statistics(NodeData* pd, enum MIP_Attr c);
-
-/**
- * pricing algorithms
- */
-int solve_pricing(NodeData* pd);
-int solve_farkas_dbl(NodeData* pd);
-int generate_cuts(NodeData* pd);
-int delete_unused_rows_range(NodeData* pd, int first, int last);
-int call_update_rows_coeff(NodeData* pd);
-#ifdef __cplusplus
-}
-#endif
 
 #endif

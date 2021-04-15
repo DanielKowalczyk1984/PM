@@ -1,6 +1,8 @@
 #ifndef BACKWARD_ZDD_HPP
 #define BACKWARD_ZDD_HPP
 #include <algorithm>
+#include <cstddef>
+#include <limits>
 #include "NodeBddEval.hpp"
 #include "OptimalSolution.hpp"
 #include "ZddNode.hpp"
@@ -8,21 +10,22 @@
 template <typename T = double>
 class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
    protected:
-    T*  pi;
-    int num_jobs;
+    T*     pi{nullptr};
+    size_t num_jobs{};
 
    public:
     BackwardZDDBase(T* _pi, int _num_jobs) : pi(_pi), num_jobs(_num_jobs){};
-    explicit BackwardZDDBase(int _num_jobs)
-        : pi(nullptr),
-          num_jobs(_num_jobs){};
-    BackwardZDDBase()
-        : Eval<NodeZdd<T>, OptimalSolution<T>>(),
-          pi(nullptr),
-          num_jobs(0){};
-    ~BackwardZDDBase(){};
+    explicit BackwardZDDBase(int _num_jobs) : num_jobs(_num_jobs){};
+    BackwardZDDBase() = default;
+    BackwardZDDBase<T>(const BackwardZDDBase<T>&) = default;
+    BackwardZDDBase<T>& operator=(const BackwardZDDBase<T>&) = default;
+    BackwardZDDBase<T>(BackwardZDDBase<T>&&) = default;
+    BackwardZDDBase<T>& operator=(BackwardZDDBase<T>&&) = default;
+    ~BackwardZDDBase() = default;
 
-    void initialize_pi(T* _pi) { pi = _pi; }
+    void   initialize_pi(T* _pi) { pi = _pi; }
+    T*     get_pi() const { return pi; }
+    size_t get_num_jobs() const { return num_jobs; }
 
     virtual void initializenode(NodeZdd<T>& n) const = 0;
     virtual void initializerootnode(NodeZdd<T>& n) const = 0;
@@ -31,10 +34,10 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
 
 template <typename T = double>
 class BackwardZddSimple : public BackwardZDDBase<T> {
-   public:
     using BackwardZDDBase<T>::pi;
     using BackwardZDDBase<T>::num_jobs;
 
+   public:
     BackwardZddSimple() : BackwardZDDBase<T>(){};
     BackwardZddSimple(T* _pi, int _num_jobs)
         : BackwardZDDBase<T>(_pi, _num_jobs){};
@@ -48,33 +51,35 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
             auto weight = it->weight;
             auto p0 = it->n;
             auto p1 = it->y;
-            auto result = value_Fj(weight + tmp_j->processing_time, tmp_j) -
-                          pi[tmp_j->job];
+            auto result = tmp_j->weighted_tardiness_start(weight);
 
             auto obj0 = p0->backward_label[0].get_f();
             auto obj1 = p1->backward_label[0].get_f() + result;
 
             if (obj0 > obj1) {
-                it->backward_label[0].update_solution(obj1, nullptr, true);
+                it->backward_label[0].backward_update(obj1, true);
             } else {
-                it->backward_label[0].update_solution(obj0, nullptr, false);
+                it->backward_label[0].backward_update(obj0, false);
             }
         }
     }
 
     void initializenode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
+            it->backward_label[0].reset();
         }
     }
 
     void initializerootnode(NodeZdd<T>& n) const override {
+        std::span aux{BackwardZDDBase<T>::get_pi(),
+                      BackwardZDDBase<T>::get_num_jobs() + 1};
         for (auto& it : n.list) {
-            it->backward_label[0].f = pi[num_jobs];
+            it->backward_label[0].get_f() =
+                aux[BackwardZDDBase<T>::get_num_jobs()];
         }
     }
 
-    OptimalSolution<T> get_objective(NodeZdd<T>& n) const {
+    OptimalSolution<T> get_objective(NodeZdd<T>& n) const override {
         OptimalSolution<T> sol(pi[num_jobs]);
 
         auto m = std::min_element(n.list.begin(), n.list.end(),
@@ -105,7 +110,6 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
    public:
     using BackwardZDDBase<T>::pi;
     using BackwardZDDBase<T>::num_jobs;
-
     BackwardZddCycle() : BackwardZDDBase<T>(){};
     BackwardZddCycle(T* _pi, int _num_jobs)
         : BackwardZDDBase<T>(_pi, _num_jobs){};
@@ -118,54 +122,53 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
             int                           weight{it->get_weight()};
             std::shared_ptr<SubNodeZdd<>> p0{it->n};
             std::shared_ptr<SubNodeZdd<>> p1{it->y};
-            T result{value_Fj(weight + tmp_j->processing_time, tmp_j) -
-                     pi[tmp_j->job]};
+            T result{tmp_j->weighted_tardiness_start(weight) - pi[tmp_j->job]};
 
-            Job* prev_job{p1->backward_label[0].get_prev_job()};
+            Job* prev_job{p1->backward_label[0].prev_job_backward()};
 
-            it->backward_label[0].update_label(&(p0->backward_label[0]));
-            it->backward_label[1].update_label(&(p0->backward_label[1]));
+            it->backward_label[0].backward_update(&(p0->backward_label[0]));
+            it->backward_label[1].backward_update(&(p0->backward_label[1]));
             bool diff = bool_diff_Fij(weight, prev_job, tmp_j);
             bool diff1 = bool_diff_Fij(
-                weight, p1->backward_label[0].get_prev_job(), tmp_j);
+                weight, p1->backward_label[0].prev_job_backward(), tmp_j);
 
             if (prev_job != tmp_j && diff) {
                 T obj1{p1->backward_label[0].get_f() + result};
                 T obj2{p1->backward_label[1].get_f() + result};
 
                 if (obj1 < it->backward_label[0].get_f()) {
-                    if (tmp_j != it->backward_label[0].get_prev_job()) {
-                        it->backward_label[1].update_label(
+                    if (tmp_j != it->backward_label[0].prev_job_backward()) {
+                        it->backward_label[1].backward_update(
                             &(p0->backward_label[0]));
                     }
 
-                    it->backward_label[0].update_label(&(p1->backward_label[0]),
-                                                       obj1, true);
+                    it->backward_label[0].backward_update(
+                        &(p1->backward_label[0]), obj1, true);
                 } else if (obj1 < it->backward_label[1].get_f() &&
-                           tmp_j != it->backward_label[0].get_prev_job() &&
+                           tmp_j != it->backward_label[0].prev_job_backward() &&
                            diff1) {
-                    it->backward_label[1].update_label(&(p1->backward_label[0]),
-                                                       obj1, true);
+                    it->backward_label[1].backward_update(
+                        &(p1->backward_label[0]), obj1, true);
                 } else if (obj2 < it->backward_label[1].get_f() &&
-                           tmp_j != it->backward_label[0].get_prev_job()) {
-                    it->backward_label[1].update_label(&(p1->backward_label[1]),
-                                                       obj2, true);
+                           tmp_j != it->backward_label[0].prev_job_backward()) {
+                    it->backward_label[1].backward_update(
+                        &(p1->backward_label[1]), obj2, true);
                 }
             } else {
                 T obj1 = p1->backward_label[1].get_f() + result;
 
                 if (obj1 < it->backward_label[0].get_f()) {
-                    if (tmp_j != it->backward_label[0].get_prev_job()) {
-                        it->backward_label[1].update_label(
+                    if (tmp_j != it->backward_label[0].prev_job_backward()) {
+                        it->backward_label[1].backward_update(
                             &(p0->backward_label[0]));
                     }
 
-                    it->backward_label[0].update_label(&(p1->backward_label[1]),
-                                                       obj1, true);
+                    it->backward_label[0].backward_update(
+                        &(p1->backward_label[1]), obj1, true);
                 } else if (obj1 < it->backward_label[1].get_f() &&
-                           tmp_j != it->backward_label[0].get_prev_job()) {
-                    it->backward_label[1].update_label(&(p1->backward_label[1]),
-                                                       obj1, true);
+                           tmp_j != it->backward_label[0].prev_job_backward()) {
+                    it->backward_label[1].backward_update(
+                        &(p1->backward_label[1]), obj1, true);
                 }
             }
         }
@@ -173,13 +176,13 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
 
     void initializenode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->backward_label[0].update_solution(DBL_MAX / 2, nullptr, false);
+            it->backward_label[0].reset();
         }
     }
 
     void initializerootnode(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->backward_label[0].f = pi[num_jobs];
+            it->backward_label[0].get_f() = pi[num_jobs];
         }
     }
 
