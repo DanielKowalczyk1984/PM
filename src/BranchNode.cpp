@@ -159,6 +159,8 @@ void BranchNodeBase::branch(BTree* bt) {
                 left_solver->get_is_integer_solution()) {
                 fathom_left = true;
             }
+            left_gain = std::abs(left_node_branch->pd->LP_lower_bound -
+                                 pd->LP_lower_bound);
 
             // build the right node and solve its root LP only
 
@@ -183,11 +185,14 @@ void BranchNodeBase::branch(BTree* bt) {
                 right_solver->get_is_integer_solution()) {
                 fathom_right = true;
             }
+            right_gain = std::abs(right_node_branch->pd->LP_lower_bound -
+                                  pd->LP_lower_bound);
 
             // update the branching choice
-            auto min_gain = std::min(right_gain, left_gain);
+            auto min_gain =
+                std::max(right_gain, EPS) * std::max(EPS, left_gain);
 
-            if (min_gain > best_min_gain || fathom_left || fathom_right) {
+            if (min_gain > best_min_gain) {
                 best_min_gain = min_gain;
                 best_job = i;
                 best_time = middle_time[i];
@@ -196,9 +201,9 @@ void BranchNodeBase::branch(BTree* bt) {
                 best_left = std::move(left_node_branch);
             }
 
-            if (fathom_left || fathom_right) {
-                break;
-            }
+            // if (fathom_left || fathom_right) {
+            //     break;
+            // }
         }
     }
 

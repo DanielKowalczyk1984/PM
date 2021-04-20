@@ -133,14 +133,27 @@ Problem::Problem(int argc, const char** argv)
      * @brief Initialization of the B&B tree
      *
      */
-    stat.start_resume_timer(Statistics::bb_timer);
-    tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
-    tree->explore();
-    stat.global_upper_bound = static_cast<int>(tree->get_UB()) + instance.off;
-    stat.global_lower_bound = static_cast<int>(tree->get_LB()) + instance.off;
-    stat.rel_error = (stat.global_upper_bound - stat.global_lower_bound) /
-                     (EPS + stat.global_lower_bound);
-    stat.suspend_timer(Statistics::bb_timer);
+    if (true) {
+        stat.start_resume_timer(Statistics::bb_timer);
+        tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
+        tree->explore();
+        stat.global_upper_bound =
+            static_cast<int>(tree->get_UB()) + instance.off;
+        stat.global_lower_bound =
+            static_cast<int>(tree->get_LB()) + instance.off;
+        stat.rel_error = (stat.global_upper_bound - stat.global_lower_bound) /
+                         (EPS + stat.global_lower_bound);
+        stat.suspend_timer(Statistics::bb_timer);
+    } else {
+        root_pd->build_rmp();
+        root_pd->solve_relaxation();
+        root_pd->stat.start_resume_timer(Statistics::lb_root_timer);
+        root_pd->compute_lower_bound();
+        stat.suspend_timer(Statistics::lb_root_timer);
+        tmp_solver->build_mip();
+        // set_lb(pd->lower_bound);
+        // set_obj_value(pd->LP_lower_bound);
+    }
     to_csv();
 }
 

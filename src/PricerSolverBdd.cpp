@@ -36,7 +36,24 @@ PricerSolverBdd::PricerSolverBdd(const Instance& instance)
       original_model(reformulation_model),
       H_min{instance.H_min},
       H_max(instance.H_max) {
-    remove_layers_init();
+    // remove_layers_init();
+
+    auto& table = *(decision_diagram.getDiagram());
+
+    auto i = decision_diagram.topLevel();
+    ordered_jobs_new |= ranges::actions::remove_if([&](const auto& tmp) {
+        bool remove = std::ranges::all_of(
+            table[i], [&](const auto& n) { return n[1] == 0; });
+        --i;
+        return remove;
+    });
+
+    if (dbg_lvl() > 0) {
+        fmt::print("{0: <{2}}{1}\n", "The new number of layers",
+                   ordered_jobs_new.size(), ALIGN);
+    }
+
+
     decision_diagram.compressBdd();
     init_table();
     cleanup_arcs();
@@ -475,13 +492,13 @@ double PricerSolverBdd::compute_lagrange(const OptimalSolution<>&   sol,
             tmp_nodeid = tmp_node[0];
         }
 
-        for (auto&& [constr, pi] :
+        for (auto&& [constr, pi_tmp] :
              ranges::views::zip(reformulation_model, pi) |
                  ranges::views::drop(convex_constr_id + 1)) {
             auto coeff = (*constr)(key);
 
             if (fabs(coeff) > EPS_SOLVER) {
-                result -= coeff * pi;
+                result -= coeff * pi_tmp;
             }
         }
     }
@@ -521,29 +538,29 @@ void PricerSolverBdd::remove_layers_init() {
 }
 
 void PricerSolverBdd::remove_layers() {
-    auto& table = *(decision_diagram.getDiagram());
+    // auto& table = *(decision_diagram.getDiagram());
 
-    auto i = decision_diagram.topLevel();
+    // auto i = decision_diagram.topLevel();
 
-    ordered_jobs_new |= ranges::actions::remove_if([&](const auto& tmp) {
-        auto remove = true;
+    // ordered_jobs_new |= ranges::actions::remove_if([&](const auto& tmp) {
+    //     auto remove = true;
 
-        for (auto& iter : table[i]) {
-            if (iter.calc[1]) {
-                remove = false;
-            } else {
-                auto& cur_node_1 = iter[1];
-                cur_node_1 = 0;
-            }
-        }
-        --i;
-        return remove;
-    });
+    //     for (auto& iter : table[i]) {
+    //         if (iter.calc[1]) {
+    //             remove = false;
+    //         } else {
+    //             auto& cur_node_1 = iter[1];
+    //             cur_node_1 = 0;
+    //         }
+    //     }
+    //     --i;
+    //     return remove;
+    // });
 
-    if (dbg_lvl() > 0) {
-        fmt::print("{0: <{2}}{1}\n", "The new number of layers",
-                   ordered_jobs_new.size(), ALIGN);
-    }
+    // if (dbg_lvl() > 0) {
+    //     fmt::print("{0: <{2}}{1}\n", "The new number of layers",
+    //                ordered_jobs_new.size(), ALIGN);
+    // }
 }
 
 void PricerSolverBdd::remove_edges() {
