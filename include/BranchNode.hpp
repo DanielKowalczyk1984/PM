@@ -8,19 +8,7 @@
 #include "branch-and-bound/state.h"
 // #include "wctprivate.h"
 class NodeData;
-
 class BranchNodeBase : public State {
-    struct BranchCand {
-        double score{EPS_BRANCH};
-        int    job{-1};
-
-        BranchCand() = default;
-
-        bool operator<(const BranchCand& other) const {
-            return (score < other.score);
-        };
-    };
-
    public:
     explicit BranchNodeBase(std::unique_ptr<NodeData> pd, bool isRoot = false);
     BranchNodeBase(BranchNodeBase&&) = default;
@@ -48,11 +36,35 @@ class BranchNodeBase : public State {
    private:
     std::unique_ptr<NodeData> pd;
 
-    static constexpr double EPS_BRANCH = 1e-4;
     static constexpr double ERROR = 1e-12;
     static constexpr double IntegerTolerance = 1e-3;
     static constexpr double TargetBrTimeValue = 0.3;
     static constexpr int    NumStrBrCandidates = 32;
 };
+
+struct BranchCand {
+    double score{EPS_BRANCH};
+    int    job{-1};
+    int    t{-1};
+
+    // std::unique_ptr<BranchNodeBase> left{nullptr};
+    // std::unique_ptr<BranchNodeBase> right{nullptr};
+
+    BranchCand() = default;
+
+    bool operator<(const BranchCand& other) const {
+        return (score < other.score);
+    };
+    static constexpr double EPS_BRANCH = 1e-4;
+};
+
+namespace std {
+template <>
+struct less<BranchCand> {
+    constexpr bool operator()(auto const& lhs, auto const& rhs) {
+        return rhs < lhs;  // or use boost::hash_combine
+    }
+};
+}  // namespace std
 
 #endif  // __BRANCHNODE_H__
