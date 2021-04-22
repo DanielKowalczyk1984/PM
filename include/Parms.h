@@ -10,13 +10,14 @@
 
 #ifndef INCLUDE_WCTPARMS_H_
 #define INCLUDE_WCTPARMS_H_
+#include <functional>
 #include <string>
 
 static const std::string USAGE =
     R"(PM.
 
 Usage:
-  bin/PM [-S <kn> -pmBRZH -n <nl> -b <br> -a <ln> -l <x> -f <y> -d --no_strong_branching --alpha <mn>] FILE NB
+  bin/PM [-s <sn> -S <kn> -pmBRZH -n <nl> -b <br> -a <ln> -l <x> -f <y> -d --no_strong_branching --alpha <mn>] FILE NB
   bin/PM (-h | --help)
   bin/PM --version
 
@@ -28,6 +29,7 @@ Options:
   -h --help                     Show this screen.
   --version                     Show version.
   -d --debug                    Turn on the debugging.
+  -s --scoring_function=<sn>    Set scoring function branching[default: 0]
   -S --stab_method=<kn>         Stabilization technique: 0 = no stabilization, 1 = stabilization wentgnes, 2 = stabilization dynamic[default: 1].
   -a --pricing_solver=<ln>      Set pricing solver: 0 = bdd backward cycle, 1 = bdd forward simple, 2 = bdd forward cycle,
                                                     3 = bdd backward simple, 4 = bdd backward cycle, 5 = zdd forward simple,
@@ -115,6 +117,14 @@ enum MIP_solver {
     use_mip_solver = 1,
 };
 
+enum Scoring_Parameter {
+    min_scoring_parameter = 0,
+    product_scoring_parameter = min_scoring_parameter,
+    min_function_scoring_parameter = 1,
+    weighted_sum_scoring_parameter = 2,
+    weighted_product_scoring_parameter = 3,
+};
+
 enum reduced_cost_fixing_param {
     min_reduced_cost = 1,
     yes_reduced_cost = min_reduced_cost,
@@ -133,15 +143,17 @@ struct Parms {
      */
     int                    init_upper_bound;
     enum BBExploreStrategy bb_explore_strategy;
+    enum Scoring_Parameter scoring_parameter;
     // int                    bb_branch_strategy;
-    int    use_strong_branching;
-    int    bb_node_limit;
-    int    nb_iterations_rvnd;
-    double branching_cpu_limit;
-    double alpha;
-    int    pricing_solver;
-    int    mip_solver;
-    int    use_heuristic;
+    int                                   use_strong_branching;
+    int                                   bb_node_limit;
+    int                                   nb_iterations_rvnd;
+    double                                branching_cpu_limit;
+    double                                alpha;
+    int                                   pricing_solver;
+    int                                   mip_solver;
+    int                                   use_heuristic;
+    std::function<double(double, double)> scoring_function;
 
     enum reduced_cost_fixing_param reduce_cost_fixing;
 
@@ -188,6 +200,7 @@ struct Parms {
     int parms_set_bb_explore_strategy(int strategy);
     int parms_set_bb_node_limit(int node_limit);
     int parms_set_print(int print);
+    int parms_set_scoring_function(int scoring);
 
     /*Functions for defining the filesname*/
     int parms_set_file(std::string const& fname);
@@ -202,6 +215,10 @@ struct Parms {
      * @return int
      */
     int parse_cmd(int argc, const char** argv);
+
+   private:
+    static constexpr double                mu = 5.0 / 6.0;
+    static constexpr std::array<double, 2> beta = {1.5, 0.5};
 };
 
 #endif  // INCLUDE_WCTPARMS_H_
