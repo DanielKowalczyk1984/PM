@@ -4,15 +4,20 @@
 #include <limits>
 #include <memory>
 #include <numeric>
+#include <range/v3/action/sort.hpp>
+#include <range/v3/algorithm/sort.hpp>
 #include <range/v3/numeric/iota.hpp>
 #include <range/v3/view/enumerate.hpp>
 #include <range/v3/view/filter.hpp>
 #include <span>
+#include "Parms.h"
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
 #include "branch-and-bound/btree.h"
 #include "util.h"
 #include "wctprivate.h"
+
+using std::ranges::sort;
 
 BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
     : State(_isRoot),
@@ -29,10 +34,10 @@ BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
 }
 
 void BranchNodeBase::branch(BTree* bt) {
-    auto* solver = pd->solver.get();
-    auto  nb_jobs = pd->nb_jobs;
-    auto  strong_branching =
-        ((pd->opt_sol.tw - pd->LP_lower_bound) < (1.0 + IntegerTolerance));
+    auto*       solver = pd->solver.get();
+    auto        nb_jobs = pd->nb_jobs;
+    auto        strong_branching = false;
+    const auto& parms = pd->parms;
 
     if (!strong_branching && dbg_lvl() > 0) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
@@ -70,32 +75,30 @@ void BranchNodeBase::branch(BTree* bt) {
         auto  accum = 0.0;
         auto  dist_zero = 0.0;
         auto* job = (solver->jobs)[i].get();
-        for (auto&& [t, x] : x_job_time[i] | ranges::views::enumerate) {
+        for (auto&& [t, x] : x_job_time[i] | ranges::views::enumerate |
+                                 ranges::views::filter([&](auto tmp) {
+                                     return (tmp.second > EPS);
+                                 })) {
             accum += x;
-            // avg_completion_time[i] +=
-            //     x_job_time[i][t] * (t + job->processing_time);
-            // if (x_job_time[i][t] > 1e-5) {
-            //     min_completion_time[i] = std::min(
-            //         min_completion_time[i], double(t +
-            //         job->processing_time));
-            // }
-
-            if ((accum >= (1.0 - TargetBrTimeValue)) && (x > EPS) &&
-                (prev != -1) && (middle_time[i] == -1)) {
+            if ((accum >= (1.0 - TargetBrTimeValue)) && (prev != -1) &&
+                (middle_time[i] == -1)) {
                 middle_time[i] = (t + job->processing_time + prev) / 2;
-                branch_scores[i] = double(middle_time[i]) * accum - dist_zero;
+                branch_scores[i] =
+                    double(job->weighted_tardiness(middle_time[i])) * accum -
+                    dist_zero;
             }
 
             if (middle_time[i] != -1) {
                 branch_scores[i] +=
-                    double(t + job->processing_time - middle_time[i] + 1) * x;
+                    double(job->weighted_tardiness(t + job->processing_time) -
+                           job->weighted_tardiness(middle_time[i])) *
+                    x;
             }
 
-            dist_zero += double(t + job->processing_time) * x;
+            dist_zero +=
+                double(job->weighted_tardiness(t + job->processing_time)) * x;
 
-            if (x > EPS) {
-                prev = t + job->processing_time;
-            }
+            prev = t + job->processing_time;
         }
 
         // branch_scores[i] = avg_completion_time[i] - min_completion_time[i];
@@ -115,6 +118,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
     std::unique_ptr<BranchNodeBase> best_right = nullptr;
     std::unique_ptr<BranchNodeBase> best_left = nullptr;
+    best_cand |= ranges::actions::sort(std::less<BranchCand>());
     for (auto& it : best_cand | ranges::views::filter(
                                     [](auto& tmp) { return tmp.job != -1; })) {
         auto i = it.job;
@@ -159,17 +163,20 @@ void BranchNodeBase::branch(BTree* bt) {
                 left_solver->get_is_integer_solution()) {
                 fathom_left = true;
             }
-            left_gain = std::abs(left_node_branch->pd->LP_lower_bound -
-                                 pd->LP_lower_bound);
+            left_gain =
+                (parms.scoring_parameter == weighted_sum_scoring_parameter)
+                    ? left_node_branch->pd->LP_lower_bound / pd->LP_lower_bound
+                    : std::abs(left_node_branch->pd->LP_lower_bound -
+                               pd->LP_lower_bound);
 
             // build the right node and solve its root LP only
 
             auto  right = pd->clone();
             auto* right_solver = right->solver.get();
-            auto  right_node_branch =
+            right_solver->split_job_time(i, middle_time[i], false);
+            auto right_node_branch =
                 std::make_unique<BranchNodeBase>(std::move(right));
 
-            right_solver->split_job_time(i, middle_time[i], false);
             right_node_branch->compute_bounds(bt);
 
             approx = right_gain;
@@ -185,14 +192,17 @@ void BranchNodeBase::branch(BTree* bt) {
                 right_solver->get_is_integer_solution()) {
                 fathom_right = true;
             }
-            right_gain = std::abs(right_node_branch->pd->LP_lower_bound -
-                                  pd->LP_lower_bound);
+
+            right_gain =
+                (parms.scoring_parameter == weighted_sum_scoring_parameter)
+                    ? right_node_branch->pd->LP_lower_bound / pd->LP_lower_bound
+                    : std::abs(right_node_branch->pd->LP_lower_bound -
+                               pd->LP_lower_bound);
 
             // update the branching choice
-            auto min_gain =
-                std::max(right_gain, EPS) * std::max(EPS, left_gain);
+            auto min_gain = parms.scoring_function(left_gain, right_gain);
 
-            if (min_gain > best_min_gain) {
+            if (min_gain > best_min_gain || fathom_left || fathom_right) {
                 best_min_gain = min_gain;
                 best_job = i;
                 best_time = middle_time[i];
@@ -201,9 +211,9 @@ void BranchNodeBase::branch(BTree* bt) {
                 best_left = std::move(left_node_branch);
             }
 
-            // if (fathom_left || fathom_right) {
-            //     break;
-            // }
+            if (fathom_left || fathom_right) {
+                break;
+            }
         }
     }
 
@@ -251,8 +261,8 @@ void BranchNodeBase::branch(BTree* bt) {
             best_time;
         best_left->pd->less = 0;
         best_right->pd->less = 1;
-        bt->process_state(std::move(best_left));
         bt->process_state(std::move(best_right));
+        bt->process_state(std::move(best_left));
         bt->set_state_bounds_computed(false);
     }
 
