@@ -33,13 +33,15 @@ class BranchNodeBase : public State {
         return get_obj_value() < other.get_obj_value();
     };
 
+    NodeData* get_data_ptr() const { return pd.get(); }
+
    private:
     std::unique_ptr<NodeData> pd;
 
     static constexpr double ERROR = 1e-12;
     static constexpr double IntegerTolerance = 1e-3;
     static constexpr double TargetBrTimeValue = 0.3;
-    static constexpr int    NumStrBrCandidates = 32;
+    static constexpr int    NumStrBrCandidates = 45;
 };
 
 struct BranchCand {
@@ -47,10 +49,12 @@ struct BranchCand {
     int    job{-1};
     int    t{-1};
 
-    // std::unique_ptr<BranchNodeBase> left{nullptr};
-    // std::unique_ptr<BranchNodeBase> right{nullptr};
+    std::unique_ptr<BranchNodeBase> left;
+    std::unique_ptr<BranchNodeBase> right;
 
     BranchCand() = default;
+
+    BranchCand(int _job, int _t, const NodeData* parrent);
 
     bool operator<(const BranchCand& other) const {
         return (score < other.score);
