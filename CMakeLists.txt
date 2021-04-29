@@ -51,7 +51,7 @@ add_subdirectory(branch-and-bound)
 #
 
 # Find all headers and implementation files
-include(cmake/SourcesAndHeaders.cmake)
+include(SourcesAndHeaders)
 
 if(${PROJECT_NAME}_BUILD_EXECUTABLE)
   add_executable(${PROJECT_NAME} ${exe_sources})
@@ -65,6 +65,7 @@ endif()
 verbose_message("Found the following header files:")
 verbose_message(${headers})
 verbose_message("Found the following source files:")
+
 if(${PROJECT_NAME}_BUILD_EXECUTABLE)
   verbose_message(${exe_sources})
 else()
@@ -197,13 +198,5 @@ configure_package_config_file(
   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
 
-# Include CppCcheck
-include(CppcheckTargets)
-include(customCppCheck)
-
-# Include dev-tools
-include(dev-tools)
-
 # include Doxygen
-include(cmake/Doxygen.cmake)
-# set_property(TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME "${PROJECT_NAME}$<CONFIG>${_output}" )
+include(Doxygen)
