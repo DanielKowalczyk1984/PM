@@ -18,18 +18,17 @@ results = workdir.joinpath(Path("./results"))
 %gui qt
 
 
-def gui_fname(dir=None):
+def gui_file_name(dir=None):
     """Select a file via a dialog and return the file name."""
     if dir is None:
         dir = './'
-    fname = QFileDialog.getOpenFileName(None, "Select data file...",
-                                        dir, filter="CSV Files (*.csv)")
-    print(fname)
-    return fname[0]
+    file_name = QFileDialog.getOpenFileName(None, "Select data file...",
+                                            dir, filter="CSV Files (*.csv)")
+    return file_name[0]
 
 
 # %% Load the data of the new results
-file_name = gui_fname()
+file_name = gui_file_name(workdir.__str__())
 file_path = Path(file_name)
 data = pd.read_csv(file_name)
 match = re.search(r'CG_overall\_(\d{2})\_(\d{2})\_(\d{2})\.csv', file_name)
@@ -37,7 +36,7 @@ year = match.group(1)
 month = match.group(2)
 day = match.group(3)
 
-# %% create result path
+# %% create result directory and copy results to that directory
 
 results_path = results.joinpath("./results_{}_{}_{}".format(year, month, day))
 
@@ -72,7 +71,7 @@ data['reduction'] = (data['first_size_graph'] -
 data['Inst'] = data.NameInstance.apply(
     lambda x:  int(re.search(r'.*\_(\d+)', x).group(1)))
 
-# %%
+# %% Compute summary results for CG over all solvers
 summary_grouped = data.groupby(['pricing_solver', 'n', 'm'])
 aggregation = {"tot_lb": {np.max, np.mean},
                "gap": {np.max, np.mean},
@@ -89,7 +88,7 @@ summary_write.columns = ["_".join(x) for x in summary_write.columns.ravel()]
 summary_write.to_csv(results_path.joinpath(
     "/CG_summary_{}_{}_{}.csv".format(year, month, day)))
 
-# %%
+# %% pivot results for all pricing_solvers
 all_instances = data.pivot_table(values=['tot_lb', 'gap', 'first_size_graph', 'reduction', 'opt', 'rel_error', 'nb_generated_col',
                                          'global_lower_bound', 'global_upper_bound', 'tot_cputime', 'tot_bb'], index=['n', 'm', 'Inst'], columns=['pricing_solver'])
 all_instances.columns.set_levels(
@@ -99,7 +98,7 @@ all_instances.to_csv(
     results_path.joinpath(
         "/CG_allinstances_{}_{}_{}.csv".format(year, month, day)))
 
-# %%
+# %% Load results of Pessoa et al. and Oliveira qnd Pessoa
 df_pessoa = pd.read_csv(results.joinpath("all_pessoa.csv"))
 df_pessoa.Opt = df_pessoa.Opt.apply(str)
 df_pessoa['best'] = df_pessoa.apply(lambda x: re.search(
@@ -108,7 +107,7 @@ df_pessoa.best = df_pessoa.best.apply(pd.to_numeric)
 
 df_oliveira = pd.read_csv(results.joinpath("oliveira_overall.csv"))
 
-# %%
+# %% Merge our results with results of Oliveira
 df_all = pd.merge(data, df_oliveira, on=['Inst', 'n', 'm'])
 
 
