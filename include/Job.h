@@ -8,10 +8,10 @@
 
 struct Job {
     int job{};
-    int weight{};
     int processing_time{};
-    int release_time{};
     int due_time{};
+    int weight{};
+    int release_time{};
 
     Job() = default;
     Job(int p, int w, int d);
