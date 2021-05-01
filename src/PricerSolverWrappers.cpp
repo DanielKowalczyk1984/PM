@@ -34,8 +34,8 @@ int NodeData::delete_unused_rows_range(int first, int last) {
     solver->remove_constraints(first, last - first + 1);
     solver_stab->remove_constraints(first, last - first + 1);
     pi.erase(pi.begin(), pi.begin() + last - first + 1);
-    pi.erase(rhs.begin(), rhs.begin() + last - first + 1);
-    pi.erase(lhs_coeff.begin(), lhs_coeff.begin() + last - first + 1);
+    rhs.erase(rhs.begin(), rhs.begin() + last - first + 1);
+    lhs_coeff.erase(lhs_coeff.begin(), lhs_coeff.begin() + last - first + 1);
 
     return val;
 }

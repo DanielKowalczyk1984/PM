@@ -79,6 +79,7 @@ Problem::Problem(int argc, const char** argv)
         case zdd_solver_backward_cycle:
             root_pd->solver =
                 std::make_unique<PricerSolverZddBackwardCycle>(instance);
+            break;
         case dp_solver:
             root_pd->solver = std::make_unique<PricerSolverSimpleDp>(instance);
             break;

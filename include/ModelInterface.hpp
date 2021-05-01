@@ -183,7 +183,7 @@ class BddCoeff : public VariableKeyBase {
 
     inline void set_row(int _row) { row = _row; }
 
-    [[nodiscard]] inline int get_row() const { return row; }
+    [[nodiscard]] inline size_t get_row() const { return row; }
 
     friend bool operator==(const BddCoeff& lhs, const BddCoeff& rhs) {
         return lhs.get_j() == rhs.get_j() && lhs.get_t() == rhs.get_t() &&
@@ -371,7 +371,7 @@ class OriginalModel : public std::vector<OriginalConstraint<T>> {
    public:
     explicit OriginalModel(const ReformulationModel& model)
         : std::vector<OriginalConstraint<T>>(
-              vs::iota(0UL, model.size()) | vs::transform([&](int i) {
+              vs::iota(0UL, model.size()) | vs::transform([&](auto i) {
                   return OriginalConstraint<T>(model[i]);
               }) |
               ranges::to<std::vector<OriginalConstraint<T>>>()) {}

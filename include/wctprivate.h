@@ -99,7 +99,7 @@ struct NodeData {
         finished = 5,
     };
 
-    int depth;
+    size_t depth;
 
     NodeDataStatus status;
 
