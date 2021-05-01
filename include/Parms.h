@@ -10,6 +10,7 @@
 
 #ifndef INCLUDE_WCTPARMS_H_
 #define INCLUDE_WCTPARMS_H_
+#include <cstddef>
 #include <functional>
 #include <string>
 
@@ -141,14 +142,13 @@ struct Parms {
     /**
      * General parameters
      */
-    int                    init_upper_bound;
-    enum BBExploreStrategy bb_explore_strategy;
-    enum Scoring_Parameter scoring_parameter;
-    // int                    bb_branch_strategy;
+    int                                   init_upper_bound;
+    enum BBExploreStrategy                bb_explore_strategy;
+    enum Scoring_Parameter                scoring_parameter;
     int                                   use_strong_branching;
     int                                   bb_node_limit;
     int                                   nb_iterations_rvnd;
-    double                                branching_cpu_limit;
+    size_t                                branching_cpu_limit;
     double                                alpha;
     int                                   pricing_solver;
     int                                   mip_solver;
@@ -179,7 +179,7 @@ struct Parms {
     ~Parms() = default;
 
     /*Functions for setting some parameters*/
-    int parms_set_branching_cpu_limit(double limit);
+    int parms_set_branching_cpu_limit(size_t limit);
     int parms_set_alpha(double alpha);
     int parms_set_strong_branching(int strong);
     int parms_set_mip_solver(int usage);
