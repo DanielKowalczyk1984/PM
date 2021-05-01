@@ -45,7 +45,7 @@
 
 class BuilderBase {
    protected:
-    static int const headerSize = 1;
+    static size_t const headerSize = 1;
 
     /* SpecNode
      * ┌────────┬────────┬────────┬─────

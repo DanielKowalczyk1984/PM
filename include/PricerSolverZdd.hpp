@@ -59,8 +59,8 @@ class PricerSolverZdd : public PricerSolverBase {
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
-        int                                              num_columns) override;
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
+        override;
     bool   check_schedule_set(const std::vector<Job*>& set) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;

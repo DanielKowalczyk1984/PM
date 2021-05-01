@@ -42,7 +42,7 @@ class NodeBdd : public NodeBase {
      * Constructor
      */
     NodeBdd() = default;
-    NodeBdd(int i, int j) : NodeBase(i, j) {}
+    NodeBdd(size_t i, size_t j) : NodeBase(i, j) {}
 
     NodeBdd<T>(const NodeBdd<T>& src) = default;
     NodeBdd<T>(NodeBdd<T>&& src) noexcept = default;
@@ -113,14 +113,14 @@ class NodeBdd : public NodeBase {
     }
 
     void set_node_id_label(NodeId _id) {
-        for (int j = 0; j < 2; j++) {
+        for (auto j = 0UL; j < 2; j++) {
             backward_label[j].set_node_id(_id);
             forward_label[j].set_node_id(_id);
         }
     }
 
     void set_job_label(Job* _job) {
-        for (int j = 0; j < 2; j++) {
+        for (auto j = 0UL; j < 2; j++) {
             backward_label[j].set_job(_job);
             forward_label[j].set_job(_job);
         }

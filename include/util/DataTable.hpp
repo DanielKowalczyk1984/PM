@@ -45,7 +45,8 @@ class DataTable : public std::vector<std::vector<T>> {
      * Constructor.
      * @param n the number of rows.
      */
-    explicit DataTable(int n = 0) : std::vector<std::vector<T>>(n) {}
+    // explicit DataTable(int n = 0) : std::vector<std::vector<T>>(n) {}
+    explicit DataTable(size_t n = 0) : std::vector<std::vector<T>>(n) {}
 
     /** Copy constructor */
     // DataTable(const DataTable& other) : table(other.table) {}

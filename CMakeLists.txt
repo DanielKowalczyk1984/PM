@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 
 project(
   PM
@@ -7,17 +7,8 @@ project(
   DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
 )
 
-#
-# Set project options
-#
-
 # Define a local module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR})
-
-include(StandardSettings)
-include(Utils)
-include(StaticAnalyzers)
-message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 
 #
 # Prevent building in the source directory
@@ -26,11 +17,21 @@ message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 include(ConfigSafeGuards)
 
 #
+# Set project options
+#
+
+include(StandardSettings)
+include(Utils)
+include(StaticAnalyzers)
+message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
+
+#
 # Enable package managers
 #
 
 include(Conan)
 include(Vcpkg)
+include(CPM)
 
 #
 # code coverage
@@ -88,9 +89,6 @@ set_project_warnings(${PROJECT_NAME})
 # set_project_warnings(${PROJECT_NAME}_LIB)
 
 verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
-
-# Set the flags for compiling add_definitions(-Wall -Wno-deprecated -pedantic -Wmissing-declarations
-# -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings)
 
 # RelWIthDebInfo Flags
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -m64")

@@ -424,16 +424,15 @@ void PricerSolverZdd::reduce_cost_fixing(double* pi, int UB, double LB) {
 
 void PricerSolverZdd::construct_lp_sol_from_rmp(
     const double*                                    columns,
-    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
-    int                                              num_columns) {
+    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) {
     auto&     table = *(decision_diagram->getDiagram());
     std::span aux_cols{columns, schedule_sets.size()};
     // std::span aux_sets{schedule_sets->pdata, schedule_sets->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    for (int i = 0; i < num_columns; ++i) {
+    for (int i = 0; i < schedule_sets.size(); ++i) {
         if (aux_cols[i] > EPS_SOLVER) {
-            size_t counter = 0;
-            auto*  tmp = schedule_sets[i].get();
+            auto  counter = 0UL;
+            auto* tmp = schedule_sets[i].get();
             // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->pdata};
             NodeId                        tmp_nodeid(decision_diagram->root());
             std::shared_ptr<SubNodeZdd<>> tmp_sub_node =

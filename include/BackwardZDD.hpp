@@ -14,18 +14,18 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
     size_t num_jobs{};
 
    public:
-    BackwardZDDBase(T* _pi, int _num_jobs) : pi(_pi), num_jobs(_num_jobs){};
-    explicit BackwardZDDBase(int _num_jobs) : num_jobs(_num_jobs){};
+    BackwardZDDBase(T* _pi, size_t _num_jobs) : pi(_pi), num_jobs(_num_jobs){};
+    explicit BackwardZDDBase(size_t _num_jobs) : num_jobs(_num_jobs){};
     BackwardZDDBase() = default;
     BackwardZDDBase<T>(const BackwardZDDBase<T>&) = default;
     BackwardZDDBase<T>& operator=(const BackwardZDDBase<T>&) = default;
-    BackwardZDDBase<T>(BackwardZDDBase<T>&&) = default;
-    BackwardZDDBase<T>& operator=(BackwardZDDBase<T>&&) = default;
+    BackwardZDDBase<T>(BackwardZDDBase<T>&&) noexcept = default;
+    BackwardZDDBase<T>& operator=(BackwardZDDBase<T>&&) noexcept = default;
     ~BackwardZDDBase() = default;
 
-    void   initialize_pi(T* _pi) { pi = _pi; }
-    T*     get_pi() const { return pi; }
-    size_t get_num_jobs() const { return num_jobs; }
+    void                 initialize_pi(T* _pi) { pi = _pi; }
+    T*                   get_pi() const { return pi; }
+    [[nodiscard]] size_t get_num_jobs() const { return num_jobs; }
 
     virtual void initializenode(NodeZdd<T>& n) const = 0;
     virtual void initializerootnode(NodeZdd<T>& n) const = 0;
@@ -41,7 +41,8 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
     BackwardZddSimple() : BackwardZDDBase<T>(){};
     BackwardZddSimple(T* _pi, int _num_jobs)
         : BackwardZDDBase<T>(_pi, _num_jobs){};
-    explicit BackwardZddSimple(int _num_jobs) : BackwardZDDBase<T>(_num_jobs){};
+    explicit BackwardZddSimple(size_t _num_jobs)
+        : BackwardZDDBase<T>(_num_jobs){};
 
     void evalNode(NodeZdd<T>& n) const override {
         Job* tmp_j = n.get_job();
@@ -113,7 +114,8 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
     BackwardZddCycle() : BackwardZDDBase<T>(){};
     BackwardZddCycle(T* _pi, int _num_jobs)
         : BackwardZDDBase<T>(_pi, _num_jobs){};
-    explicit BackwardZddCycle(int _num_jobs) : BackwardZDDBase<T>(_num_jobs){};
+    explicit BackwardZddCycle(size_t _num_jobs)
+        : BackwardZDDBase<T>(_num_jobs){};
 
     void evalNode(NodeZdd<T>& n) const override {
         Job* tmp_j = n.get_job();

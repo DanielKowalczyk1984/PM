@@ -2,7 +2,9 @@
 #include <numeric>
 #include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/numeric/iota.hpp>
+#include <range/v3/view/drop.hpp>
 #include <range/v3/view/enumerate.hpp>
+#include <range/v3/view/take.hpp>
 #include <vector>
 #include "Instance.h"
 #include "Statistics.h"
@@ -22,8 +24,9 @@ int NodeData::grab_integer_solution(std::vector<double> const& x,
     best_schedule.clear();
 
     for (const auto&& [i, tmp_schedule] :
-         localColPool | ranges::views::enumerate) {
-        if (x[i + id_pseudo_schedules] >= 1.0 - tolerance) {
+         localColPool | ranges::views::enumerate |
+             ranges::views::drop(id_pseudo_schedules)) {
+        if (x[i] >= 1.0 - tolerance) {
             auto aux = std::make_shared<ScheduleSet>(*tmp_schedule);
             best_schedule.emplace_back(aux);
 
@@ -130,14 +133,14 @@ int NodeData::build_rmp() {
     id_art_var_convex = nb_jobs;
     id_art_var_cuts = nb_jobs + 1;
     id_next_var_cuts = id_art_var_cuts;
-    int nb_vars = nb_jobs + 1 + max_nb_cuts;
+    auto nb_vars = nb_jobs + 1 + max_nb_cuts;
     id_pseudo_schedules = nb_vars;
 
     std::vector<double> lb(nb_vars, 0.0);
     std::vector<double> ub(nb_vars, GRB_INFINITY);
     std::vector<double> obj(nb_vars, 100.0 * (opt_sol.tw + 1));
     std::vector<char>   vtype(nb_vars, GRB_CONTINUOUS);
-    std::vector<int>    start_vars(nb_vars + 1, nb_jobs + 1);
+    std::vector<int>    start_vars(nb_vars + 1, nb_jobs + 1UL);
 
     start_vars[nb_vars] = nb_jobs + 1;
 
@@ -161,13 +164,13 @@ int NodeData::build_rmp() {
      * Some aux variables for column generation
      */
 
-    pi.resize(nb_rows, 0.0);
-    slack.resize(nb_rows, 0.0);
-    rhs.resize(nb_rows, 0.0);
+    pi.resize(nb_jobs + 1, 0.0);
+    slack.resize(nb_jobs + 1, 0.0);
+    rhs.resize(nb_jobs + 1, 0.0);
     lp_interface_get_rhs(RMP.get(), rhs.data());
-    lhs_coeff.resize(nb_rows, 0.0);
-    id_row.reserve(nb_rows);
-    coeff_row.reserve(nb_rows);
+    lhs_coeff.resize(nb_jobs + 1, 0.0);
+    id_row.reserve(nb_jobs + 1);
+    coeff_row.reserve(nb_jobs + 1);
 
     return 0;
 }

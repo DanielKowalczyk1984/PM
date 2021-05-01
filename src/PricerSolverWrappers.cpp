@@ -11,10 +11,9 @@ void NodeData::construct_lp_sol_from_rmp() {
     lp_interface_get_nb_cols(RMP.get(), &nb_cols);
     assert(nb_cols - id_pseudo_schedules == localColPool.size());
 
-    lambda.resize(nb_cols - id_pseudo_schedules, 0.0);
+    lambda.resize(localColPool.size(), 0.0);
     lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
-    solver->construct_lp_sol_from_rmp(lambda.data(), localColPool,
-                                      localColPool.size());
+    solver->construct_lp_sol_from_rmp(lambda.data(), localColPool);
 }
 
 void NodeData::generate_cuts() {

@@ -181,7 +181,7 @@ class BddCoeff : public VariableKeyBase {
 
     inline void set_value(double _value) { value = _value; }
 
-    inline void set_row(int _row) { row = _row; }
+    inline void set_row(size_t _row) { row = _row; }
 
     [[nodiscard]] inline size_t get_row() const { return row; }
 

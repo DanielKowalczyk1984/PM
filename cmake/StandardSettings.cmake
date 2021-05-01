@@ -11,6 +11,10 @@ option(${PROJECT_NAME}_USE_ALT_NAMES
        ON
 )
 
+if(NOT PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  return()
+endif()
+
 #
 # Compiler options
 #
@@ -69,8 +73,9 @@ option(${PROJECT_NAME}_ENABLE_DOXYGEN "Enable Doxygen documentation builds of so
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(${PROJECT_NAME}_VERBOSE_OUTPUT
-       "Enable verbose output, allowing for a better understanding of each step taken." ON
+       "Enable verbose output, allowing for a better understanding of each step taken." OFF
 )
+
 option(${PROJECT_NAME}_GENERATE_EXPORT_HEADER
        "Create a `project_export.h` file containing all exported symbols." OFF
 )
@@ -98,6 +103,7 @@ endif()
 option(${PROJECT_NAME}_ENABLE_CCACHE
        "Enable the usage of Ccache, in order to speed up rebuild times." ON
 )
+
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
   set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)

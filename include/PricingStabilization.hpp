@@ -39,9 +39,9 @@ class PricingStabilizationBase {
     std::vector<double>  pi_in;
     std::vector<double>  pi_sep;
 
-    int update_stab_center{};
-    int iterations{};
-    int previous_fix{};
+    int    update_stab_center{};
+    size_t iterations{};
+    size_t previous_fix{};
 
     bool continueLP{};
 

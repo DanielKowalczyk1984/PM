@@ -2,6 +2,7 @@
 #define PRICER_SOLVER_BASE_HPP
 
 #include <gurobi_c++.h>
+#include <cstddef>
 #include <memory>
 #include <span>
 #include <vector>
@@ -17,8 +18,8 @@ struct PricerSolverBase {
    public:
     const std::vector<std::shared_ptr<Job>>& jobs;
 
-    int convex_constr_id;
-    int convex_rhs;
+    size_t convex_constr_id;
+    int    convex_rhs;
 
     std::string problem_name;
 
@@ -88,8 +89,7 @@ struct PricerSolverBase {
     virtual void build_mip() = 0;
     virtual void construct_lp_sol_from_rmp(
         const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
-        int                                              num_columns) = 0;
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) = 0;
 
     /**
      * Constraint on the solver
@@ -98,10 +98,11 @@ struct PricerSolverBase {
     virtual void insert_constraints_lp(NodeData* pd) = 0;
     virtual int  add_constraints();
     virtual void remove_constraints(int first, int nb_del);
-    virtual void update_rows_coeff(int first);
+    virtual void update_rows_coeff(size_t first);
 
     virtual void update_coeff_constraints() = 0;
-    virtual void calculate_job_time(std::vector<std::vector<double>>* v){};
+    virtual void calculate_job_time(
+        [[maybe_unused]] std::vector<std::vector<double>>* v){};
     // virtual void add_constraint(ConstraintBase* constr) {
     //     reformulation_model.add_constraint(constr);
     // };

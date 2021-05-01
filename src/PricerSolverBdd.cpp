@@ -53,7 +53,6 @@ PricerSolverBdd::PricerSolverBdd(const Instance& instance)
                    ordered_jobs_new.size(), ALIGN);
     }
 
-
     decision_diagram.compressBdd();
     init_table();
     cleanup_arcs();
@@ -98,7 +97,7 @@ void PricerSolverBdd::construct_mipgraph() {
 
     auto index{0U};
     for (auto i = decision_diagram.topLevel(); i >= 0; i--) {
-        for (auto j = 0U; j < table[i].size(); j++) {
+        for (auto j = 0UL; j < table[i].size(); j++) {
             if (NodeId(i, j) != 0 &&
                 (table[i][j].calc[1] || table[i][j].calc[0])) {
                 table[i][j].key =
@@ -1190,17 +1189,14 @@ void PricerSolverBdd::equivalent_paths_filtering() {
 
 void PricerSolverBdd::construct_lp_sol_from_rmp(
     const double*                                    columns,
-    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
-    int                                              num_columns) {
+    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) {
     auto& table = *(decision_diagram.getDiagram());
     for (auto i = decision_diagram.topLevel(); i >= 0; i--) {
         for (auto& it : table[i]) {
             it.reset_lp_x();
         }
     }
-    auto                    nb_columns = static_cast<size_t>(num_columns);
-    std::span<const double> aux_cols{columns, nb_columns};
-    assert(nb_columns == schedule_sets.size());
+    std::span<const double> aux_cols{columns, schedule_sets.size()};
 
     set_is_integer_solution(true);
     for (auto&& [i, x] : aux_cols | ranges::views::enumerate) {
@@ -1349,8 +1345,9 @@ void PricerSolverBdd::remove_constraints(int first, int nb_del) {
     reformulation_model.delete_constraints(first, nb_del);
 }
 
-void PricerSolverBdd::update_rows_coeff(int first) {
-    for (int k = first; k < original_model.get_nb_constraints(); k++) {
+void PricerSolverBdd::update_rows_coeff(size_t first) {
+    for (auto k :
+         ranges::views::ints(first, original_model.get_nb_constraints())) {
         auto& aux = original_model.get_coeff_list(k);
         for (auto& it : aux) {
             it->set_row(k);

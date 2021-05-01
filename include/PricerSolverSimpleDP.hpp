@@ -47,7 +47,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
 
     ~PricerSolverSimpleDp() override = default;
 
-    std::unique_ptr<PricerSolverBase> clone() const override {
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return std::make_unique<PricerSolverSimpleDp>(*this);
     };
 
@@ -63,8 +63,8 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
-        int                                              num_columns) override;
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
+        override;
 
     // void   add_constraint(Job* job, GPtrArray* list, int order) override;
     void   iterate_zdd() override;
