@@ -2,6 +2,7 @@
 #define NODE_BDD_TABLE_HPP
 
 #include <fmt/core.h>
+#include <cstddef>
 #include <memory>
 #include "NodeBdd.hpp"
 #include "util/DataTable.hpp"
@@ -22,11 +23,15 @@ class NodeTableEntity : public data_table_node<T> {
      * Constructor.
      * @param n the number of rows.
      */
-    explicit NodeTableEntity(int n = 1) : data_table_node<T>(n) {
+    // explicit NodeTableEntity(int n = 1) : data_table_node<T>(n) {
+    //     assert(n >= 1);
+    //     initTerminals();
+    // }
+
+    explicit NodeTableEntity(size_t n = 1) : data_table_node<T>(n) {
         assert(n >= 1);
         initTerminals();
     }
-
     NodeTableEntity<T>(const NodeTableEntity<T>&) = default;
     NodeTableEntity<T>& operator=(const NodeTableEntity<T>&) = delete;
     NodeTableEntity<T>& operator=(NodeTableEntity<T>&&) noexcept = default;
@@ -50,7 +55,7 @@ class NodeTableEntity : public data_table_node<T> {
         my_vector<T>& t = (*this)[0];
         t.resize(2);
 
-        for (int j = 0; j < 2; ++j) {
+        for (auto j = 0UL; j < 2; ++j) {
             t[j] = T(j, j);
         }
     }
@@ -159,7 +164,9 @@ class NodeTableEntity : public data_table_node<T> {
      * @param b child branch.
      * @return the @p b-child of @p f.
      */
-    NodeId child(NodeId f, int b) const { return child(f.row(), f.col(), b); }
+    NodeId child(NodeId f, size_t b) const {
+        return child(f.row(), f.col(), b);
+    }
 
     /**
      * Gets a reference to a child node ID.
@@ -167,7 +174,7 @@ class NodeTableEntity : public data_table_node<T> {
      * @param b child branch.
      * @return the @p b-child of @p f.
      */
-    NodeId& child(NodeId f, int b) { return child(f.row(), f.col(), b); }
+    NodeId& child(NodeId f, size_t b) { return child(f.row(), f.col(), b); }
 
     /**
      * Gets a child node ID.
@@ -176,7 +183,7 @@ class NodeTableEntity : public data_table_node<T> {
      * @param b child branch.
      * @return the @p b-child of the parent.
      */
-    NodeId child(int i, size_t j, int b) const {
+    NodeId child(size_t i, size_t j, size_t b) const {
         assert(0 <= b && b < 2);
         return (*this)[i][j][b];
     }
@@ -188,7 +195,7 @@ class NodeTableEntity : public data_table_node<T> {
      * @param b child branch.
      * @return the @p b-child of the parent.
      */
-    NodeId& child(int i, size_t j, int b) {
+    NodeId& child(size_t i, size_t j, size_t b) {
         assert(0 <= b && b < 2);
         return (*this)[i][j][b];
     }

@@ -241,8 +241,8 @@ class DdReducer {
             if (ZDD && f1 == 0) {
                 newId[j] = f0;
             } else {
-                NodeId& f00 = input.child(f0, 0);
-                NodeId& f01 = input.child(f0, 1);
+                NodeId& f00 = input.child(f0, 0UL);
+                NodeId& f01 = input.child(f0, 1UL);
 
                 if (f01 != mark) {  // the first touch from this level
                     f01 = mark;     // mark f0 as touched

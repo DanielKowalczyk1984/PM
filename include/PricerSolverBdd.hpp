@@ -63,8 +63,8 @@ class PricerSolverBdd : public PricerSolverBase {
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
-        int                                              num_columns) override;
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
+        override;
     // void make_schedule_set_feasible(GPtrArray* set) override;
     void calculate_job_time(std::vector<std::vector<double>>* v) override;
     void split_job_time(int _job, int _time, bool _left) override;
@@ -74,7 +74,7 @@ class PricerSolverBdd : public PricerSolverBase {
     // void add_constraint(Job* job, GPtrArray* list, int order) override;
     void print_num_paths() override;
     void remove_constraints(int first, int nb_del) override;
-    void update_rows_coeff(int first) override;
+    void update_rows_coeff(size_t first) override;
     void insert_constraints_lp(NodeData* pd) override;
 
     int get_num_remove_nodes() override;
@@ -85,7 +85,9 @@ class PricerSolverBdd : public PricerSolverBase {
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
 
-    inline DdStructure<NodeBdd<double>>& get_decision_diagram() { return decision_diagram; }
+    inline DdStructure<NodeBdd<double>>& get_decision_diagram() {
+        return decision_diagram;
+    }
 
     inline int get_nb_removed_edges() { return nb_removed_edges; }
 

@@ -12,7 +12,7 @@
 #include "wctprivate.h"
 
 NodeData::NodeData(Problem* problem)
-    : depth(0),
+    : depth(0UL),
       status(initialized),
       instance(problem->instance),
       nb_jobs(instance.nb_jobs),

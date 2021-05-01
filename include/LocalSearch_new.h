@@ -4,6 +4,7 @@
 #include <bits/ranges_algo.h>
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <list>
 #include <random>
@@ -30,8 +31,8 @@ struct SlopeType {
           alpha(_alpha) {}
 
     int                operator()(int t) { return c + alpha * (t - b1); };
-    [[nodiscard]] bool in_interval(int c) const {
-        return (b1 <= c) && (c < b2);
+    [[nodiscard]] bool in_interval(int _c) const {
+        return (b1 <= _c) && (_c < b2);
     };
 };
 
@@ -56,14 +57,14 @@ using SlopeList = std::list<SlopeType>;
 using SlopeListIt = std::list<SlopeType>::iterator;
 
 struct LocalSearchData {
-    LocalSearchData(int _nb_jobs, int _nb_machines);
+    LocalSearchData(size_t _nb_jobs, size_t _nb_machines);
     void RVND(Sol& sol);
 
    private:
-    int  nb_jobs;
-    int  nb_machines;
-    bool updated{};
-    int  iterations{};
+    size_t nb_jobs;
+    size_t nb_machines;
+    bool   updated{};
+    int    iterations{};
 
     constexpr static int nb_moves = 15;
 

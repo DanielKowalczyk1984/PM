@@ -2,6 +2,7 @@
 #define WCT_PRIVATE_H
 
 #include <bits/c++config.h>
+#include <cstddef>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -99,7 +100,7 @@ struct NodeData {
         finished = 5,
     };
 
-    int depth;
+    size_t depth;
 
     NodeDataStatus status;
 
@@ -110,8 +111,8 @@ struct NodeData {
     Sol&            opt_sol;
     std::string     pname;
 
-    int nb_jobs;
-    int nb_machines;
+    size_t nb_jobs;
+    int    nb_machines;
 
     // The column generation lp information
     std::unique_ptr<wctlp, std::function<void(wctlp*)>> RMP;
@@ -129,16 +130,16 @@ struct NodeData {
     int nb_cols;
 
     // cut generation information
-    int max_nb_cuts;
-    int id_convex_constraint;
-    int id_assignment_constraint;
-    int id_valid_cuts;
+    size_t max_nb_cuts;
+    int    id_convex_constraint;
+    int    id_assignment_constraint;
+    int    id_valid_cuts;
 
-    int id_art_var_convex;
-    int id_art_var_assignment;
-    int id_art_var_cuts;
-    int id_next_var_cuts;
-    int id_pseudo_schedules;
+    size_t id_art_var_convex;
+    int    id_art_var_assignment;
+    size_t id_art_var_cuts;
+    size_t id_next_var_cuts;
+    int    id_pseudo_schedules;
 
     // PricerSolver
     std::unique_ptr<PricerSolverBase> solver;

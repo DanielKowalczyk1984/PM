@@ -2,6 +2,7 @@
 #include <fmt/core.h>
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <limits>
 #include <memory>
 #include <numeric>
@@ -63,8 +64,8 @@ void BranchNodeBase::branch(BTree* bt) {
     solver->calculate_job_time(&x_job_time);
 
     // initialize the order for evaluating the branching jobs
-    std::vector<int> ord(nb_jobs);
-    ranges::iota(ord, 0);
+    std::vector<size_t> ord(nb_jobs);
+    ranges::iota(ord, 0UL);
 
     // initialize the middle times and scores used for branching
     std::vector<int>        middle_time(nb_jobs, -1);
@@ -138,7 +139,7 @@ void BranchNodeBase::branch(BTree* bt) {
     for (auto& it :
          best_cand | ranges::views::take(1) |
              ranges::views::filter([](auto& tmp) { return tmp.job != -1; })) {
-        auto i = it.job;
+        auto i = static_cast<size_t>(it.job);
         fmt::print("score {}\n", it.score);
 
         auto  left_gain = 0.0;

@@ -148,13 +148,14 @@ void Instance::find_division() {
                 t.push_back(min->right);
                 special_pairs.erase(min);
 
-                std::erase_if(special_pairs, [&t](auto& it) -> bool {
+                std::erase_if(special_pairs, [&t](auto& it_tmp) -> bool {
                     auto tmp = t.back();
-                    if ((tmp >= it.left && tmp <= it.right) ||
-                        (tmp + it.jobs[1]->processing_time >= it.I->b)) {
+                    if ((tmp >= it_tmp.left && tmp <= it_tmp.right) ||
+                        (tmp + it_tmp.jobs[1]->processing_time >=
+                         it_tmp.I->b)) {
                         return true;
                     } else {
-                        it.right = tmp + it.jobs[1]->processing_time;
+                        it_tmp.right = tmp + it_tmp.jobs[1]->processing_time;
                         return false;
                     }
                 });

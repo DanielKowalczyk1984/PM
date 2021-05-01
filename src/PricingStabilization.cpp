@@ -150,7 +150,7 @@ PricingStabilizationStat::PricingStabilizationStat(PricerSolverBase*    _solver,
  * @param _lhs_coeff
  */
 void PricingStabilizationStat::solve(double _eta_out, double* _lhs_coeff) {
-    k = 0.0;
+    k = 0;
     bool mispricing = true;
     update = 0;
 
@@ -159,7 +159,7 @@ void PricingStabilizationStat::solve(double _eta_out, double* _lhs_coeff) {
     update_stab_center = false;
 
     do {
-        k += 1.0;
+        k += 1;
         alphabar =
             (hasstabcenter) ? std::max(0.0, 1.0 - k * (1.0 - alpha)) : 0.0;
         compute_pi_eta_sep(alphabar);
@@ -248,7 +248,7 @@ PricingStabilizationDynamic::PricingStabilizationDynamic(
 {}
 
 void PricingStabilizationDynamic::solve(double _eta_out, double* _lhs) {
-    k = 0.0;
+    k = 0;
     double result_sep{};
     bool   mispricing = true;
     update = 0;
@@ -258,7 +258,7 @@ void PricingStabilizationDynamic::solve(double _eta_out, double* _lhs) {
     update_stab_center = false;
 
     do {
-        k += 1.0;
+        k += 1;
         alphabar = hasstabcenter ? std::max(0.0, 1.0 - k * (1 - alpha)) : 0.0;
         compute_pi_eta_sep(alphabar);
         auto aux_sol = std::move(solver->pricing_algorithm(pi_sep.data()));
@@ -406,7 +406,7 @@ void PricingStabilizationHybrid::solve(double _eta_out,
 
         stabilized = is_stabilized();
 
-        for (int i = 0; i < solver->reformulation_model.size(); ++i) {
+        for (auto i = 0UL; i < solver->reformulation_model.size(); ++i) {
             pi_sep[i] = compute_dual(i);
         }
 

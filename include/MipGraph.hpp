@@ -68,8 +68,8 @@ class ColorWriterEdgeIndex {
     explicit ColorWriterEdgeIndex(const MipGraph& _g) : g{_g} {}
 
     void operator()(std::ostream& output, const Edge& _edge) {
-        int  index = g[_edge].id;
-        bool high = g[_edge].high;
+        auto index = g[_edge].id;
+        auto high = g[_edge].high;
 
         if (high) {
             output << "[label = " << index << "]";

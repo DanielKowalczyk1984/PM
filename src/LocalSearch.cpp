@@ -1,6 +1,7 @@
 #include <bits/c++config.h>
 #include <fmt/core.h>
 #include <algorithm>
+#include <cstddef>
 #include <cstdio>
 #include <limits>
 #include <memory>
@@ -13,7 +14,7 @@
 #include "Solution.hpp"
 #include "util.h"
 
-LocalSearchData::LocalSearchData(int _nb_jobs, int _nb_machines)
+LocalSearchData::LocalSearchData(size_t _nb_jobs, size_t _nb_machines)
     : nb_jobs(_nb_jobs),
       nb_machines(_nb_machines),
       W(_nb_machines, VectorInt(_nb_jobs)),

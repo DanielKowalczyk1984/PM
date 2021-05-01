@@ -96,7 +96,7 @@ int NodeData::delete_unused_rows() {
 
 int NodeData::delete_old_schedules() {
     int val = 0;
-    int min_numdel = floor(nb_jobs * min_nb_del_row_ratio);
+    int min_numdel = static_cast<int>(floor(nb_jobs * min_nb_del_row_ratio));
     /** pd->zero_count can be deprecated! */
     zero_count = 0;
 
@@ -113,13 +113,13 @@ int NodeData::delete_old_schedules() {
         assert(nb_cols - id_pseudo_schedules == localColPool.size());
 
         localColPool |= ranges::actions::remove_if([&](const auto& it) {
-            auto val = false;
+            auto aux = false;
             if (it->age > retirementage) {
                 dellist.emplace_back(iter + id_pseudo_schedules);
-                val = true;
+                aux = true;
             }
             iter++;
-            return val;
+            return aux;
         });
 
         lp_interface_delete_cols_array(RMP.get(), dellist.data(),
@@ -319,13 +319,13 @@ int NodeData::compute_objective() {
 
 int NodeData::solve_relaxation() {
     int    val = 0;
-    int    status = 0;
+    int    status_RMP = 0;
     double real_time_solve_lp = 0.0;
 
     /** Compute LP relaxation */
     real_time_solve_lp = getRealTime();
     stat.start_resume_timer(Statistics::solve_lp_timer);
-    val = lp_interface_optimize(RMP.get(), &status);
+    val = lp_interface_optimize(RMP.get(), &status_RMP);
     // CCcheck_val_2(val, "lp_interface_optimize failed");
     stat.suspend_timer(Statistics::solve_lp_timer);
     real_time_solve_lp = getRealTime() - real_time_solve_lp;
@@ -340,7 +340,7 @@ int NodeData::solve_relaxation() {
         print_ages();
     }
 
-    switch (status) {
+    switch (status_RMP) {
         case LP_INTERFACE_OPTIMAL:
             /** grow ages of the different columns */
             grow_ages();
@@ -356,17 +356,13 @@ int NodeData::solve_relaxation() {
             break;
     }
 
-CLEAN:
-
     return val;
 }
 
 int NodeData::estimate_lower_bound(int _iter) {
-    auto j = 0;
     auto val = 0;
     auto has_cols = 1;
     auto has_cuts = 0;
-    auto nb_non_improvements = 0;
     auto status_RMP = GRB_LOADED;
     auto real_time_pricing = 0.0;
 
@@ -458,11 +454,9 @@ int NodeData::estimate_lower_bound(int _iter) {
 }
 
 int NodeData::compute_lower_bound() {
-    auto j = 0;
     auto val = 0;
     auto has_cols = 1;
     auto has_cuts = 0;
-    auto nb_non_improvements = 0;
     auto status_RMP = GRB_LOADED;
     auto real_time_pricing = 0.0;
 
@@ -611,7 +605,7 @@ int NodeData::compute_lower_bound() {
     }
     // } while (depth == 1);
 
-    if (depth == 0) {
+    if (depth == 0UL) {
         stat.global_lower_bound =
             std::max(lower_bound + instance.off, stat.global_lower_bound);
         stat.root_lower_bound = stat.global_lower_bound;
@@ -626,19 +620,17 @@ int NodeData::compute_lower_bound() {
     stat.nb_generated_col += iterations;
     stat.suspend_timer(Statistics::lb_timer);
 
-CLEAN:
     return val;
 }
 
 int NodeData::print_x() {
     int val = 0;
-    int nb_cols = 0;
-    int status = 0;
+    int status_RMP = 0;
 
-    val = lp_interface_status(RMP.get(), &status);
+    val = lp_interface_status(RMP.get(), &status_RMP);
     // CCcheck_val_2(val, "Failed in lp_interface_status");
 
-    switch (status) {
+    switch (status_RMP) {
         case GRB_OPTIMAL:
             val = lp_interface_get_nb_cols(RMP.get(), &nb_cols);
             assert(localColPool.size() == nb_cols - id_pseudo_schedules);
@@ -657,15 +649,13 @@ int NodeData::print_x() {
             break;
     }
 
-CLEAN:
-
     return val;
 }
 
 int NodeData::check_schedules() {
-    int status = 0;
+    int status_RMP = 0;
 
-    lp_interface_status(RMP.get(), &status);
+    lp_interface_status(RMP.get(), &status_RMP);
     lp_interface_get_nb_cols(RMP.get(), &nb_cols);
     assert(nb_cols - id_pseudo_schedules == localColPool.size());
     if (dbg_lvl() > 1) {

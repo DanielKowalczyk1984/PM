@@ -189,7 +189,7 @@ class DdSpecBase {
 template <typename S, int AR = 2>
 class StatelessDdSpec : public DdSpecBase<S, AR> {
    public:
-    [[nodiscard]] int datasize() const { return 0; }
+    [[nodiscard]] size_t datasize() const { return 0UL; }
 
     int get_root(void* p) { return this->entity().getRoot(); }
 
@@ -260,7 +260,7 @@ class DdSpec : public DdSpecBase<S, AR> {
     }
 
    public:
-    [[nodiscard]] int datasize() const { return sizeof(State); }
+    [[nodiscard]] size_t datasize() const { return sizeof(State); }
 
     void construct(void* p) { new (p) State(); }
 
@@ -384,7 +384,7 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
    public:
     PodArrayDdSpec() : arraySize(-1), dataWords(-1) {}
 
-    [[nodiscard]] int datasize() const {
+    [[nodiscard]] size_t datasize() const {
         if (dataWords < 0) {
             throw std::runtime_error(
                 "Array size is unknown; please set it by setArraySize(int) in "
@@ -531,7 +531,7 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
    public:
     HybridDdSpec() : arraySize(-1), dataWords(-1) {}
 
-    [[nodiscard]] int datasize() const { return dataWords * sizeof(Word); }
+    [[nodiscard]] size_t datasize() const { return dataWords * sizeof(Word); }
 
     void construct(void* p) { new (p) S_State(); }
 
