@@ -57,7 +57,7 @@ class NodeBdd : public NodeBase {
 
     [[nodiscard]] Job* get_job() const { return job; }
 
-    [[nodiscard]] inline int get_nb_job() const { return job->job; }
+    [[nodiscard]] inline size_t get_nb_job() const { return job->job; }
 
     void reset_reduced_costs() { reduced_cost = cost; }
 
