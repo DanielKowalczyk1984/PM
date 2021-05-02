@@ -19,7 +19,7 @@ int Job::weighted_tardiness_start(int S) {
 //     return job < other.job;
 // }
 
-//extern inline int value_Fj(int C, Job* j);
+// extern inline int value_Fj(int C, Job* j);
 
 int value_diff_Fij(int C, Job* i, Job* j) {
     auto val = i->weighted_tardiness_start(C - j->processing_time);
@@ -35,7 +35,7 @@ int bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) {
                                                 _prev, tmp_j) >= 0);
 }
 
-//int arctime_diff_Fij(int weight, Job* i, Job* j) {
+// int arctime_diff_Fij(int weight, Job* i, Job* j) {
 //    auto val = i->weighted_tardiness(weight);
 //    val += j->weighted_tardiness(weight + j->processing_time);
 //    val -= j->weighted_tardiness_start(weight - i->processing_time);

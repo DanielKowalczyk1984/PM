@@ -19,7 +19,7 @@ struct PricerSolverBase {
     const std::vector<std::shared_ptr<Job>>& jobs;
 
     size_t convex_constr_id;
-    int    convex_rhs;
+    size_t convex_rhs;
 
     std::string problem_name;
 
@@ -69,7 +69,7 @@ struct PricerSolverBase {
      */
     virtual ~PricerSolverBase();
 
-    virtual std::unique_ptr<PricerSolverBase> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<PricerSolverBase> clone() const = 0;
 
     /**
      * Pricing Algorithm
@@ -81,8 +81,6 @@ struct PricerSolverBase {
      * Reduced cost fixing
      */
 
-    virtual void reduce_cost_fixing(double* pi, int UB, double LB) = 0;
-    virtual void evaluate_nodes(double* pi, int UB, double LB) = 0;
     virtual void evaluate_nodes(double* pi) = 0;
 
     /** Original Mip formulation */
@@ -107,7 +105,9 @@ struct PricerSolverBase {
     //     reformulation_model.add_constraint(constr);
     // };
 
-    virtual void split_job_time(int _job, int _time, bool _left) {}
+    virtual void split_job_time([[maybe_unused]] int  _job,
+                                [[maybe_unused]] int  _time,
+                                [[maybe_unused]] bool _left) {}
 
     /**
      * Some getters
@@ -123,11 +123,13 @@ struct PricerSolverBase {
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
     // virtual bool   check_schedule_set(GPtrArray* set) = 0;
-    virtual bool check_schedule_set(const std::vector<Job*>& set) {
+    virtual bool check_schedule_set(
+        [[maybe_unused]] const std::vector<Job*>& set) {
         return true;
     };
     // virtual void make_schedule_set_feasible(GPtrArray* set) = 0;
-    virtual void make_schedule_set_feasible(std::vector<Job*>& set){};
+    virtual void make_schedule_set_feasible(
+        [[maybe_unused]] std::vector<Job*>& set){};
     /**
      * Some printing functions
      */

@@ -362,7 +362,7 @@ int NodeData::solve_relaxation() {
 int NodeData::estimate_lower_bound(int _iter) {
     auto val = 0;
     auto has_cols = 1;
-    auto has_cuts = 0;
+    // auto has_cuts = 0;
     auto status_RMP = GRB_LOADED;
     auto real_time_pricing = 0.0;
 
@@ -392,7 +392,7 @@ int NodeData::estimate_lower_bound(int _iter) {
     // solve_relaxation(problem, pd);
     do {
         has_cols = 1;
-        has_cuts = 0;
+        // has_cuts = 0;
         while ((iterations < _iter) && has_cols &&
                stat.total_timer(Statistics::cputime_timer) <=
                    parms.branching_cpu_limit) {
@@ -456,7 +456,7 @@ int NodeData::estimate_lower_bound(int _iter) {
 int NodeData::compute_lower_bound() {
     auto val = 0;
     auto has_cols = 1;
-    auto has_cuts = 0;
+    // auto has_cuts = 0;
     auto status_RMP = GRB_LOADED;
     auto real_time_pricing = 0.0;
 
@@ -486,7 +486,7 @@ int NodeData::compute_lower_bound() {
     // solve_relaxation(problem, pd);
     do {
         has_cols = 1;
-        has_cuts = 0;
+        // has_cuts = 0;
         while ((iterations < NB_CG_ITERATIONS) && has_cols &&
                stat.total_timer(Statistics::cputime_timer) <=
                    parms.branching_cpu_limit) {

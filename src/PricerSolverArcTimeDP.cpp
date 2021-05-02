@@ -15,9 +15,9 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
     : PricerSolverBase(instance),
       Hmax(instance.H_max),
       n(instance.nb_jobs),
-      j0(),
       size_graph(0u),
       vector_jobs(),
+      j0(),
       nb_edges_removed{},
       lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
       solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
@@ -137,7 +137,7 @@ void PricerSolverArcTimeDp::init_table() {
         }
     }
 
-    for (int j = 0; j < n + 1; j++) {
+    for (auto j = 0UL; j < n + 1; j++) {
         for (int t = 0; t <= Hmax; t++) {
             if (reversed_graph[j][t].empty()) {
                 backward_F[j][t] = std::numeric_limits<double>::max() / 2;
@@ -146,13 +146,6 @@ void PricerSolverArcTimeDp::init_table() {
     }
 
     fmt::print("Number of arcs in ATI formulation = {}\n", size_graph);
-}
-
-void PricerSolverArcTimeDp::evaluate_nodes(double*                 pi,
-                                           [[maybe_unused]] int    UB,
-                                           [[maybe_unused]] double LB) {
-    forward_evaluator(pi);
-    backward_evaluator(pi);
 }
 
 void PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
@@ -164,14 +157,15 @@ void PricerSolverArcTimeDp::build_mip() {
     fmt::print("Building Mip model for the arcTI formulation\n");
 
     /** Constructing variables */
-    for (int j = 0; j < n + 1; j++) {
+    for (auto j = 0UL; j < n + 1; j++) {
         for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
             for (auto& it : graph[j][t]) {
                 double cost = vector_jobs[j]->weighted_tardiness_start(t);
-                double UB = (it->job == vector_jobs[j]->job) ? convex_rhs : 1.0;
-                auto   s =
+                double tmp =
+                    (it->job == vector_jobs[j]->job) ? convex_rhs : 1.0;
+                auto s =
                     (it->job == vector_jobs[j]->job) ? GRB_INTEGER : GRB_BINARY;
-                arctime_x[it->job][j][t] = model.addVar(0.0, UB, cost, s);
+                arctime_x[it->job][j][t] = model.addVar(0.0, tmp, cost, s);
             }
         }
     }
@@ -183,7 +177,7 @@ void PricerSolverArcTimeDp::build_mip() {
     std::vector<char>       sense(convex_constr_id, GRB_GREATER_EQUAL);
     std::vector<double>     rhs(convex_constr_id, 1.0);
 
-    for (int j = 0; j < n; j++) {
+    for (auto j = 0UL; j < n; j++) {
         for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
             for (auto& it : graph[j][t]) {
                 assignment[j] += arctime_x[it->job][j][t];
@@ -195,7 +189,7 @@ void PricerSolverArcTimeDp::build_mip() {
         model.addConstrs(assignment.data(), sense.data(), rhs.data(), nullptr,
                          convex_constr_id));
 
-    for (int i = 0; i < n; i++) {
+    for (auto i = 0UL; i < n; i++) {
         for (int t = 0; t <= Hmax - vector_jobs[i]->processing_time; t++) {
             GRBLinExpr expr{};
             for (auto& it : graph[i][t]) {
@@ -230,7 +224,7 @@ void PricerSolverArcTimeDp::build_mip() {
     }
     model.addConstr(expr, GRB_EQUAL, convex_rhs);
 
-    for (int j = 0; j < n + 1; j++) {
+    for (auto j = 0UL; j < n + 1; j++) {
         for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
             for (auto& it : graph[j][t]) {
                 arctime_x[it->job][j][t].set(
@@ -250,7 +244,7 @@ void PricerSolverArcTimeDp::build_mip() {
     model.optimize();
 
     if (model.get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
-        for (int j = 0; j < n; j++) {
+        for (auto j = 0UL; j < n; j++) {
             for (int t = 0; t <= Hmax - vector_jobs[j]->processing_time; t++) {
                 for (auto& it : graph[j][t]) {
                     auto a = arctime_x[it->job][j][t].get(GRB_DoubleAttr_X);
@@ -264,44 +258,6 @@ void PricerSolverArcTimeDp::build_mip() {
     }
 }
 
-void PricerSolverArcTimeDp::reduce_cost_fixing(double* pi, int UB, double LB) {
-    evaluate_nodes(pi, UB, LB);
-    std::span aux_pi{pi, reformulation_model.size()};
-
-    for (auto&& [j, tmp] :
-         vector_jobs | ranges::views::take(n) | ranges::views::enumerate) {
-        // Job* tmp = vector_jobs[j];
-        for (int t = 0; t <= Hmax - tmp->processing_time; t++) {
-            auto it = graph[j][t].begin();
-            while (it != graph[j][t].end()) {
-                double result =
-                    forward_F[(*it)->job][t - (*it)->processing_time] +
-                    tmp->weighted_tardiness_start(t) - aux_pi[tmp->job] +
-                    backward_F[tmp->job][t + tmp->processing_time];
-                if (result + aux_pi[n] +
-                        (convex_rhs - 1) * (forward_F[n][Hmax] + aux_pi[n]) +
-                        LB >
-                    UB - 1 + RC_FIXING) {
-                    size_graph--;
-                    nb_edges_removed++;
-                    // Job* tmp_j = (*it);
-                    auto pend = std::find(reversed_graph[(*it)->job][t].begin(),
-                                          reversed_graph[(*it)->job][t].end(),
-                                          vector_jobs[j]);
-                    reversed_graph[(*it)->job][t].erase(pend);
-                    graph[j][t].erase(it);
-                } else {
-                    it++;
-                }
-            }
-        }
-    }
-
-    fmt::print(
-        "size_graph after reduced cost fixing = {} and edges removed = {}\n",
-        size_graph, nb_edges_removed);
-}
-
 PricerSolverArcTimeDp::~PricerSolverArcTimeDp() = default;
 
 void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
@@ -310,7 +266,7 @@ void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
     std::span aux_pi{_pi, reformulation_model.size()};
 
     for (int t = Hmax - 1; t >= 0; --t) {
-        for (int i = 0; i <= n; ++i) {
+        for (auto i = 0UL; i <= n; ++i) {
             // Job* tmp = vector_jobs[i];
             backward_F[i][t] = ((i == n) && (t == Hmax))
                                    ? 0.0
@@ -358,7 +314,7 @@ void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
     std::span aux_pi{_pi, reformulation_model.size()};
 
     for (int t = 0; t < Hmax + 1; ++t) {
-        for (int j = 0; j <= n; ++j) {
+        for (auto j = 0UL; j <= n; ++j) {
             Job* tmp = vector_jobs[j];
             A[j][t] = nullptr;
             B[j][t] = -1;
@@ -411,8 +367,8 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     int T = Hmax;
 
     while (T > 0) {
-        int aux_job = A[job][T]->job;
-        int aux_T = B[job][T];
+        auto aux_job = A[job][T]->job;
+        int  aux_T = B[job][T];
         if (aux_job != n) {
             v.push_back(vector_jobs[aux_job]);
             sol.C_max += vector_jobs[aux_job]->processing_time;
@@ -493,7 +449,7 @@ int PricerSolverArcTimeDp::get_num_remove_edges() {
 
 size_t PricerSolverArcTimeDp::get_nb_edges() {
     size_t nb_edges = 0u;
-    for (int j = 0; j < n + 1; j++) {
+    for (auto j = 0UL; j < n + 1; j++) {
         for (int t = 0; t < Hmax + 1; t++) {
             nb_edges += graph[j][t].size();
         }
@@ -503,7 +459,7 @@ size_t PricerSolverArcTimeDp::get_nb_edges() {
 
 size_t PricerSolverArcTimeDp::get_nb_vertices() {
     size_t nb_vertices = 0u;
-    for (int j = 0; j < n + 1; j++) {
+    for (auto j = 0UL; j < n + 1; j++) {
         for (int t = 0; t < Hmax + 1; t++) {
             if (!graph[j][t].empty()) {
                 nb_vertices++;

@@ -4,13 +4,14 @@
 #include <gurobi_c++.h>
 #include <algorithm>
 #include <memory>
+#include <range/v3/all.hpp>
 #include <vector>
 #include "ModelInterface.hpp"
 #include "NodeBddTable.hpp"
 #include "NodeId.hpp"
 
-ZeroHalfCuts::ZeroHalfCuts(int                 _nb_jobs,
-                           int                 _nb_machines,
+ZeroHalfCuts::ZeroHalfCuts(size_t              _nb_jobs,
+                           size_t              _nb_machines,
                            ReformulationModel* _rmp_model,
                            NodeId const&       _root,
                            NodeTableEntity<>*  _table)
@@ -48,7 +49,7 @@ bool ZeroHalfCuts::add_cuts() {
 
 void ZeroHalfCuts::generate_model() {
     try {
-        for (int i = 0; i < nb_jobs; i++) {
+        for (auto i : ranges::views::ints(0UL, nb_jobs)) {
             jobs_var[i] =
                 model->addVar(0.0, 1.0, 0.0, 'B', fmt::format("jobs_{}", i));
         }
@@ -80,26 +81,24 @@ void ZeroHalfCuts::generate_model() {
 }
 
 void ZeroHalfCuts::init_table() {
-    for (auto i = root.row(); i >= 0; i--) {
-        for (auto& it : (*table)[i]) {
-            it.in_degree = {};
-            // it.in_degree_1 = 0;
-            it.in_edges[0].clear();
-            it.in_edges[1].clear();
-            it.coeff_cut = {};
-        }
+    for (auto& it : (*table) | ranges::views::join) {
+        it.in_degree = {};
+        // it.in_degree_1 = 0;
+        it.in_edges[0].clear();
+        it.in_edges[1].clear();
+        it.coeff_cut = {};
     }
 
-    for (auto i = root.row(); i > 0; i--) {
-        for (auto& it : (*table)[i]) {
-            auto& n0 = table->node(it[0]);
-            auto& n1 = table->node(it[1]);
+    for (auto& it : *table | ranges::views::take(root.row() + 1) |
+                        ranges::views::drop(1) | ranges::views::reverse |
+                        ranges::views::join) {
+        auto& n0 = table->node(it[0]);
+        auto& n1 = table->node(it[1]);
 
-            n0.in_edges[0].push_back(it.ptr_node_id);
-            n0.in_degree[0]++;
-            n1.in_edges[1].push_back(it.ptr_node_id);
-            n1.in_degree[1]++;
-        }
+        n0.in_edges[0].push_back(it.ptr_node_id);
+        n0.in_degree[0]++;
+        n1.in_edges[1].push_back(it.ptr_node_id);
+        n1.in_degree[1]++;
     }
 }
 
@@ -117,7 +116,7 @@ void ZeroHalfCuts::init_coeff_cut() {
 }
 
 void ZeroHalfCuts::init_coeff_node(NodeBdd<>* node) {
-    for (int k = 0; k < 2; k++) {
+    for (auto k : ranges::views::ints(0UL, 2UL)) {
         node->coeff_cut.at(k) = 0.0;
         for (auto& it : node->in_edges.at(k)) {
             auto aux = it.lock();
@@ -135,7 +134,7 @@ void ZeroHalfCuts::construct_cut() {
     auto add_coeff_constr = [&](const auto& it) {
         auto& node = table->node(it);
 
-        for (int k = 0; k < 2; k++) {
+        for (auto k = 0UL; k < 2; k++) {
             auto coeff = floor(node.coeff_cut.at(k) / HALF);
             if (coeff > EPS_CUT) {
                 data->add_coeff_hash_table(node.get_nb_job(), node.get_weight(),
@@ -246,7 +245,7 @@ void ZeroHalfCuts::generate_cuts() {
                         add = true;
                     }
 
-                    for (int j = 0; j < 2; j++) {
+                    for (auto j : ranges::views::ints(0UL, 2UL)) {
                         for (auto& it_aux : node.in_edges.at(j)) {
                             auto aux = it_aux.lock();
                             if (aux) {
@@ -330,7 +329,7 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
     auto& node = table->node(v);
     node.lp_visited = true;
 
-    for (size_t i = 0U; i < 2; i++) {
+    for (auto i : ranges::views::ints(0UL, 2UL)) {
         if (node.lp_x.at(i) > EPS_CUT) {
             auto& child = table->node(node.at(i));
             if (!child.lp_visited) {
@@ -369,7 +368,7 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
                 auto  str_r = fmt::format("r_{}_{}", node.get_nb_job(),
                                          node.get_weight());
                 auto& y = node.y.at(i) = model->addVar(
-                    0.0, GRB_INFINITY, (node.lp_x)[i], 'B', str_y);
+                    0.0, GRB_INFINITY, (node.lp_x).at(i), 'B', str_y);
                 auto& r = node.r.at(i) =
                     model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
                 GRBLinExpr expr = -s_head + s_source - y - HALF * r;
@@ -386,7 +385,7 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
 void ZeroHalfCuts::dfs_lift(const NodeId& v) {
     auto& node = table->node(v);
 
-    for (int k = 0; k < 2; k++) {
+    for (auto k : ranges::views::ints(0UL, 2UL)) {
         if (node.at(k) <= 1) {
             continue;
         }
@@ -396,7 +395,7 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
             child_node.coeff_cut[0] += 1.0;
             child_node.coeff_cut[1] += 1.0;
 
-            for (int j = 0; j < 2; j++) {
+            for (auto j : ranges::views::ints(0UL, 2UL)) {
                 for (auto& it : child_node.in_edges.at(j)) {
                     auto aux = it.lock();
                     if (aux) {

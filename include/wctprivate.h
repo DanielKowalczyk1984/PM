@@ -112,7 +112,7 @@ struct NodeData {
     std::string     pname;
 
     size_t nb_jobs;
-    int    nb_machines;
+    size_t nb_machines;
 
     // The column generation lp information
     std::unique_ptr<wctlp, std::function<void(wctlp*)>> RMP;

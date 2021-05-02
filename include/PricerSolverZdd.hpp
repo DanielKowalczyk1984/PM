@@ -43,15 +43,13 @@ class PricerSolverZdd : public PricerSolverBase {
           ordered_jobs_new(src.ordered_jobs_new),
           mip_graph(src.mip_graph) {}
 
-    ~PricerSolverZdd() = default;
-    std::unique_ptr<PricerSolverBase> clone() const override {
+    ~PricerSolverZdd() override = default;
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return nullptr;
     };
 
     void init_table();
-    void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
-    void reduce_cost_fixing(double* pi, int UB, double LB) override;
     void remove_layers();
     void remove_edges();
 

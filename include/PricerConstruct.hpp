@@ -24,7 +24,7 @@ class conflict_state {
 
 class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     const std::vector<std::pair<Job*, Interval*>>* ptr_vector{};
-    int                                            nb_layers;
+    size_t                                         nb_layers;
 
    public:
     explicit PricerConstruct(const Instance& instance)
@@ -69,12 +69,12 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
    private:
     [[nodiscard]] int min_job(int j, int state, int value) const {
-        int val = nb_layers;
+        auto val = nb_layers;
         // auto* tmp = static_cast<job_interval_pair*>(aux_list[j])->j;
         auto* tmp = (*ptr_vector)[j].first;
 
         if (value) {
-            for (int i = j + 1; i < nb_layers; ++i) {
+            for (size_t i = j + 1; i < nb_layers; ++i) {
                 auto& tmp_pair = (*ptr_vector)[i];
                 auto* tmp_j = tmp_pair.first;
                 auto* tmp_interval = tmp_pair.second;
@@ -93,7 +93,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
                 }
             }
         } else {
-            for (int i = j + 1; i < nb_layers; ++i) {
+            for (size_t i = j + 1; i < nb_layers; ++i) {
                 auto& tmp_pair = (*ptr_vector)[i];
                 auto* tmp_j = tmp_pair.first;
                 auto* tmp_interval = tmp_pair.second;
@@ -232,11 +232,11 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
 class ConflictConstraints
     : public DdSpec<ConflictConstraints, conflict_state, 2> {
-    int                                  nb_jobs;
+    size_t                               nb_jobs;
     std::vector<boost::dynamic_bitset<>> differsets;
     std::vector<boost::dynamic_bitset<>> samesets;
 
-    bool takeable(int job, conflict_state& state) {
+    bool takeable(size_t job, conflict_state& state) {
         if (state.remove[job]) {
             return false;
         }
@@ -244,7 +244,7 @@ class ConflictConstraints
         return true;
     }
 
-    bool leaveable(int job, conflict_state& state) {
+    bool leaveable(size_t job, conflict_state& state) {
         if (state.add[job]) {
             return false;
         }
@@ -253,7 +253,7 @@ class ConflictConstraints
     }
 
    public:
-    ConflictConstraints(int    _nb_jobs,
+    ConflictConstraints(size_t _nb_jobs,
                         int*   elist_same,
                         size_t edge_count_same,
                         int*   elist_differ,
@@ -265,16 +265,16 @@ class ConflictConstraints
         differsets.resize(_nb_jobs);
         samesets.resize(_nb_jobs);
 
-        for (int i = 0; i < _nb_jobs; i++) {
+        for (auto i = 0UL; i < _nb_jobs; i++) {
             differsets[i].resize(_nb_jobs);
             samesets[i].resize(_nb_jobs);
         }
 
-        for (int i = 0; i < edge_count_same; ++i) {
+        for (auto i = 0UL; i < edge_count_same; ++i) {
             samesets[aux_same[2 * i]][aux_same[2 * i + 1]] = true;
         }
 
-        for (int i = 0; i < edge_count_differ; ++i) {
+        for (auto i = 0UL; i < edge_count_differ; ++i) {
             differsets[aux_diff[2 * i]][aux_diff[2 * i + 1]] = true;
         }
     };
@@ -292,9 +292,9 @@ class ConflictConstraints
     }
 
     int getChild(conflict_state& state, int level, int take) {
-        int job = nb_jobs - level;
-        int _j = 0;
-        assert(0 <= job && job <= nb_jobs - 1);
+        size_t job = nb_jobs - level;
+        size_t _j = 0UL;
+        assert(0UL <= job && job <= nb_jobs - 1);
 
         if (samesets[job].intersects(differsets[job])) {
             return 0;
@@ -367,10 +367,10 @@ class ConflictConstraints
         return val;
     }
 
-    int min_job(int j, conflict_state* state) const {
-        int val = nb_jobs;
+    size_t min_job(size_t j, conflict_state* state) const {
+        auto val = nb_jobs;
 
-        for (int i = j + 1; i < nb_jobs; ++i) {
+        for (auto i = j + 1; i < nb_jobs; ++i) {
             if (!state->remove[i]) {
                 val = i;
                 break;

@@ -390,38 +390,6 @@ void PricerSolverZdd::build_mip() {
     }
 }
 
-void PricerSolverZdd::reduce_cost_fixing(double* pi, int UB, double LB) {
-    /** Remove Layers */
-    evaluate_nodes(pi, UB, LB);
-    remove_layers();
-    remove_edges();
-    init_table();
-    evaluate_nodes(pi, UB, LB);
-    remove_edges();
-    init_table();
-    construct_mipgraph();
-}
-
-// void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
-//     std::cout << decision_diagram->size() << '\n';
-//     scheduling constr(job, ordered_jobs_new, order);
-//     // std::ofstream outf("min1.gv");
-//     // NodeTableEntity<NodeZdd<>>& table =
-//     // decision_diagram->getDiagram().privateEntity(); ColorWriterVertex
-//     // vertex_writer(g, table); boost::write_graphviz(outf, g,
-//     vertex_writer); decision_diagram->zddSubset(constr);
-//     // outf.close();
-//     // decision_diagram->compressBdd();
-//     init_table();
-//     std::cout << decision_diagram->size() << '\n';
-//     construct_mipgraph();
-//     // NodeTableEntity<NodeZdd<>>& table1 =
-//     // decision_diagram->getDiagram().privateEntity(); ColorWriterVertex
-//     // vertex_writer1(g, table1); outf = std::ofstream("min2.gv");
-//     // boost::write_graphviz(outf, g, vertex_writer1);
-//     // outf.close();
-// }
-
 void PricerSolverZdd::construct_lp_sol_from_rmp(
     const double*                                    columns,
     const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) {
@@ -429,7 +397,7 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(
     std::span aux_cols{columns, schedule_sets.size()};
     // std::span aux_sets{schedule_sets->pdata, schedule_sets->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    for (int i = 0; i < schedule_sets.size(); ++i) {
+    for (auto i = 0UL; i < schedule_sets.size(); ++i) {
         if (aux_cols[i] > EPS_SOLVER) {
             auto  counter = 0UL;
             auto* tmp = schedule_sets[i].get();

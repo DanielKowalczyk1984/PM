@@ -42,7 +42,7 @@ int NodeData::delete_unused_rows_range(int first, int last) {
 int NodeData::call_update_rows_coeff() {
     int val = 0;
 
-    solver->update_rows_coeff(id_valid_cuts);
+    solver->update_rows_coeff(nb_jobs + 1);
 
     return val;
 }

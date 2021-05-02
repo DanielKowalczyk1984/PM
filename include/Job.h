@@ -7,11 +7,11 @@
 #include <memory>
 
 struct Job {
-    int job{};
-    int processing_time{};
-    int due_time{};
-    int weight{};
-    int release_time{};
+    size_t job{};
+    int    processing_time{};
+    int    due_time{};
+    int    weight{};
+    int    release_time{};
 
     Job() = default;
     Job(int p, int w, int d);

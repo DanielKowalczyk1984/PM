@@ -113,14 +113,14 @@ class DataTable : public std::vector<std::vector<T>> {
      * Resizes the table rows.
      * @param n the number of rows.
      */
-    void setNumRows(int n) { this->resize(n); }
+    void setNumRows(size_t n) { this->resize(n); }
 
     /**
      * Clears and initializes a row.
      * @param i row index.
      * @param size new size of the row.
      */
-    void initRow(int i, size_t size) {
+    void initRow(size_t i, size_t size) {
         (*this)[i].clear();
         (*this)[i].resize(size);
     }

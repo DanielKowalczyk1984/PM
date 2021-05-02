@@ -1,6 +1,7 @@
 #ifndef ZDD_NODE_HPP
 #define ZDD_NODE_HPP
 #include <OptimalSolution.hpp>
+#include <cstddef>
 #include <memory>
 #include <vector>
 #include "Label.hpp"
@@ -94,7 +95,7 @@ class NodeZdd : public NodeBase {
      */
     NodeZdd() = default;
 
-    NodeZdd(int i, int j) : NodeBase(i, j) {}
+    NodeZdd(size_t i, size_t j) : NodeBase(i, j) {}
 
     NodeZdd<T>(const NodeZdd<T>& src) = default;
     NodeZdd<T>(NodeZdd<T>&& src) noexcept = default;

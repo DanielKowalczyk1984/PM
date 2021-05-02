@@ -74,13 +74,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     void init_table();
 
-    void reduce_cost_fixing([[maybe_unused]] double* pi,
-                            [[maybe_unused]] int     UB,
-                            [[maybe_unused]] double  LB) override;
-    void evaluate_nodes([[maybe_unused]] double* pi,
-                        [[maybe_unused]] int     UB,
-                        [[maybe_unused]] double  LB) override;
-
     void evaluate_nodes([[maybe_unused]] double* pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(

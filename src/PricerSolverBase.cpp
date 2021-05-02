@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <range/v3/view/enumerate.hpp>
 #include "Instance.h"
 #include "gurobi_c.h"
 
@@ -180,7 +181,8 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
 
     for (auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
-        for (int c = 0; const auto& constr : reformulation_model) {
+        for (const auto&& [c, constr] :
+             reformulation_model | ranges::views::enumerate) {
             if (c == convex_constr_id) {
                 continue;
             }
@@ -190,7 +192,6 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
                 result -= coeff * aux_pi[c];
                 aux_lhs[c] += coeff;
             }
-            ++c;
         }
     }
 
@@ -220,7 +221,7 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>&   sol,
             result -= coeff * dual;
         }
 
-        for (int c = convex_constr_id + 1; c < reformulation_model.size();
+        for (auto c = convex_constr_id + 1; c < reformulation_model.size();
              c++) {
             double dual_ = pi[c];
             double coeff_ = (*reformulation_model[c])(k);
@@ -267,7 +268,7 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
             aux_subgradient[k.get_j()] -= coeff * convex_rhs;
         }
 
-        for (int c = convex_constr_id + 1; c < reformulation_model.size();
+        for (auto c = convex_constr_id + 1; c < reformulation_model.size();
              c++) {
             auto coeff_ = (*reformulation_model[c])(k);
 
@@ -301,11 +302,6 @@ void PricerSolverBase::calculate_constLB(double* pi) {
 
 // void call_update_UB(PricerSolverBase* solver, double _ub) {
 //     solver->update_UB(_ub);
-// }
-
-// void call_evaluate_nodes(PricerSolverBase* solver, double* pi) {
-//     solver->calculate_constLB(pi);
-//     solver->evaluate_nodes(pi);
 // }
 
 // int call_is_integer_solution(PricerSolverBase* solver) {

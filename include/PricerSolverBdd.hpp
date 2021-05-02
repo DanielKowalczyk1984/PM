@@ -40,8 +40,6 @@ class PricerSolverBdd : public PricerSolverBase {
     ~PricerSolverBdd() override;
     [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override = 0;
 
-    void evaluate_nodes(double* pi, int UB, double LB) override = 0;
-
     void                  check_infeasible_arcs();
     void                  topdown_filtering();
     void                  bottum_up_filtering();
@@ -59,7 +57,6 @@ class PricerSolverBdd : public PricerSolverBase {
     // bool check_schedule_set(GPtrArray* set) override;
     bool check_schedule_set(const std::vector<Job*>& set) override;
 
-    void reduce_cost_fixing(double* pi, int UB, double LB) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                                    columns,

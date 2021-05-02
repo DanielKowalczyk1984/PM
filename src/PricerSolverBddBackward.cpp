@@ -1,5 +1,6 @@
 #include "PricerSolverBddBackward.hpp"
 #include <fmt/core.h>
+#include <range/v3/all.hpp>
 #include "Instance.h"
 #include "PricerSolverBdd.hpp"
 #include "util.h"
@@ -42,46 +43,6 @@ void PricerSolverBddBackwardSimple::compute_labels(double* _pi) {
     get_decision_diagram().compute_labels_forward(reversed_evaluator);
 }
 
-void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi,
-                                                   int     UB,
-                                                   double  LB) {
-    auto& table = *(get_decision_diagram().getDiagram());
-    compute_labels(pi);
-    std::span aux_pi{pi, reformulation_model.size()};
-    auto      reduced_cost =
-        table.node(1).forward_label[0].get_f() + aux_pi[convex_constr_id];
-    auto removed_edges = false;
-    auto nb_edges_removed_evaluate = 0;
-
-    /** check for each node the Lagrangian dual */
-    for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
-        for (auto& it : table[i]) {
-            auto& child = table.node(it[1]);
-            auto  result = it.forward_label[0].get_f() +
-                          child.backward_label[0].get_f() + it.reduced_cost[1] +
-                          aux_pi[convex_constr_id];
-
-            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (LB + aux_nb_machines * reduced_cost + result > UB + RC_FIXING &&
-                (it.calc[1])) {
-                it.calc[1] = false;
-                removed_edges = true;
-                add_nb_removed_edges();
-                nb_edges_removed_evaluate++;
-            }
-        }
-    }
-
-    if (removed_edges) {
-        // std::cout << "Number of edges removed by evaluate_nodes \t= "<<
-        // nb_edges_removed_evaluate << "\n"; std::cout << "Total number of
-        // edges removed \t\t\t= " << get_nb_removed_edges() << "\n";
-        remove_layers();
-        remove_edges();
-        // init_table();
-    }
-}
-
 void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi) {
     auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
@@ -90,24 +51,28 @@ void PricerSolverBddBackwardSimple::evaluate_nodes(double* pi) {
     auto nb_removed_edges_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
-    for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
-        for (auto& it : table[i]) {
-            auto& child = table.node(it[1]);
-            auto  result = it.forward_label[0].get_f() +
-                          child.backward_label[0].get_f() + it.reduced_cost[1];
+    // for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
+    //     for (auto& it : table[i]) {
+    for (auto& it :
+         table | ranges::views::take(get_decision_diagram().topLevel() + 1) |
+             ranges::views ::drop(1) | ranges::views::reverse |
+             ranges::views::join) {
+        auto& child = table.node(it[1]);
+        auto  result = it.forward_label[0].get_f() +
+                      child.backward_label[0].get_f() + it.reduced_cost[1];
 
-            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
+        auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
 
-            if (constLB + aux_nb_machines * reduced_cost + result >
-                    UB + RC_FIXING &&
-                (it.calc[1])) {
-                it.calc[1] = false;
-                removed_edges = true;
-                add_nb_removed_edges();
-                nb_removed_edges_evaluate++;
-            }
+        if (constLB + aux_nb_machines * reduced_cost + result >
+                UB + RC_FIXING &&
+            (it.calc[1])) {
+            it.calc[1] = false;
+            removed_edges = true;
+            add_nb_removed_edges();
+            nb_removed_edges_evaluate++;
         }
     }
+    // }
 
     if (removed_edges) {
         if (dbg_lvl() > 0) {
@@ -163,73 +128,6 @@ void PricerSolverBddBackwardCycle::compute_labels(double* _pi) {
     get_decision_diagram().compute_labels_forward(reversed_evaluator);
 }
 
-void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi,
-                                                  int     UB,
-                                                  double  LB) {
-    auto& table = *(get_decision_diagram().getDiagram());
-    compute_labels(pi);
-    auto reduced_cost =
-        table.node(get_decision_diagram().root()).backward_label[0].get_f();
-    auto removed_edges = false;
-    auto nb_removed_edges_evaluate = 0;
-
-    /** check for each node the Lagrangian dual */
-    for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
-        for (auto& it : table[i]) {
-            auto& child = table.node(it[1]);
-
-            // if (it.forward_label[0].prev_job_forward() != job &&
-            //     it.child[1]->backward_label[0].prev_job_backward() != job) {
-            auto result = it.forward_label[0].get_f() +
-                          child.backward_label[0].get_f() + it.reduced_cost[1];
-
-            // } else if (it.forward_label[0].prev_job_forward() == job &&
-            //            it.child[1]->backward_label[0].prev_job_backward() !=
-            //            job)
-            //            {
-            //     result = it.forward_label[1].get_f() +
-            //              it.child[1]->backward_label[0].get_f() +
-            //              it.reduced_cost[1];
-            // } else if (it.forward_label[0].prev_job_forward() != job &&
-            //            it.child[1]->backward_label[0].prev_job_backward() ==
-            //            job)
-            //            {
-            //     result = it.forward_label[0].get_f() +
-            //              it.child[1]->backward_label[1].get_f() +
-            //              it.reduced_cost[1];
-            // } else {
-            //     result = it.forward_label[1].get_f() +
-            //              it.child[1]->backward_label[1].get_f() +
-            //              it.reduced_cost[1];
-            // }
-
-            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (constLB + aux_nb_machines * reduced_cost + result >
-                    UB + RC_FIXING &&
-                (it.calc[1])) {
-                it.calc[1] = false;
-                removed_edges = true;
-                add_nb_removed_edges();
-                nb_removed_edges_evaluate++;
-            }
-        }
-    }
-
-    if (removed_edges) {
-        if (dbg_lvl() > 0) {
-            fmt::print("Number of edges removed by evaluate nodes {0: <{1}}\n",
-                       nb_removed_edges_evaluate, ALIGN_HALF);
-            fmt::print("Total number of edges removed {0: <{1}}\n",
-                       get_nb_removed_edges(), ALIGN_HALF);
-            fmt::print("Number of edges {0: <{1}}\n", get_nb_edges(),
-                       ALIGN_HALF);
-        }
-        remove_layers();
-        remove_edges();
-        // init_table();
-    }
-}
-
 void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
     auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
@@ -239,41 +137,45 @@ void PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
     auto nb_removed_edges_evaluate = 0;
 
     /** check for each node the Lagrangian dual */
-    for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
-        for (auto& it : table[i]) {
-            auto* job = it.get_job();
-            auto  result{0.0};
-            auto& child = table.node(it[1]);
+    // for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
+    //     for (auto& it : table[i]) {
+    for (auto& it :
+         table | ranges::views::take(get_decision_diagram().topLevel() + 1) |
+             ranges::views ::drop(1) | ranges::views::reverse |
+             ranges::views::join) {
+        auto* job = it.get_job();
+        auto  result{0.0};
+        auto& child = table.node(it[1]);
 
-            if (it.forward_label[0].prev_job_forward() != job &&
-                child.backward_label[0].prev_job_backward() != job) {
-                result = it.forward_label[0].get_f() +
-                         child.backward_label[0].get_f() + it.reduced_cost[1];
+        if (it.forward_label[0].prev_job_forward() != job &&
+            child.backward_label[0].prev_job_backward() != job) {
+            result = it.forward_label[0].get_f() +
+                     child.backward_label[0].get_f() + it.reduced_cost[1];
 
-            } else if (it.forward_label[0].prev_job_forward() == job &&
-                       child.backward_label[0].prev_job_backward() != job) {
-                result = it.forward_label[1].get_f() +
-                         child.backward_label[0].get_f() + it.reduced_cost[1];
-            } else if (it.forward_label[0].prev_job_forward() != job &&
-                       child.backward_label[0].prev_job_backward() == job) {
-                result = it.forward_label[0].get_f() +
-                         child.backward_label[1].get_f() + it.reduced_cost[1];
-            } else {
-                result = it.forward_label[1].get_f() +
-                         child.backward_label[1].get_f() + it.reduced_cost[1];
-            }
+        } else if (it.forward_label[0].prev_job_forward() == job &&
+                   child.backward_label[0].prev_job_backward() != job) {
+            result = it.forward_label[1].get_f() +
+                     child.backward_label[0].get_f() + it.reduced_cost[1];
+        } else if (it.forward_label[0].prev_job_forward() != job &&
+                   child.backward_label[0].prev_job_backward() == job) {
+            result = it.forward_label[0].get_f() +
+                     child.backward_label[1].get_f() + it.reduced_cost[1];
+        } else {
+            result = it.forward_label[1].get_f() +
+                     child.backward_label[1].get_f() + it.reduced_cost[1];
+        }
 
-            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (constLB + aux_nb_machines * reduced_cost + result >
-                    UB - 1.0 + RC_FIXING &&
-                (it.calc[1])) {
-                it.calc[1] = false;
-                removed_edges = true;
-                add_nb_removed_edges();
-                nb_removed_edges_evaluate++;
-            }
+        auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
+        if (constLB + aux_nb_machines * reduced_cost + result >
+                UB - 1.0 + RC_FIXING &&
+            (it.calc[1])) {
+            it.calc[1] = false;
+            removed_edges = true;
+            add_nb_removed_edges();
+            nb_removed_edges_evaluate++;
         }
     }
+    // }
 
     if (removed_edges) {
         if (dbg_lvl() > 0) {

@@ -49,8 +49,8 @@ struct BranchCand {
     int    job{-1};
     int    t{-1};
 
-    std::unique_ptr<BranchNodeBase> left;
-    std::unique_ptr<BranchNodeBase> right;
+    // std::unique_ptr<BranchNodeBase> left{};
+    // std::unique_ptr<BranchNodeBase> right{};
 
     BranchCand() = default;
 

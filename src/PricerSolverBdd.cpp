@@ -7,8 +7,6 @@
 #include <memory>
 #include <range/v3/action/remove_if.hpp>
 #include <range/v3/all.hpp>
-#include <range/v3/view/enumerate.hpp>
-#include <range/v3/view/reverse.hpp>
 #include <ranges>
 #include <vector>
 #include "Instance.h"
@@ -75,8 +73,8 @@ PricerSolverBdd::PricerSolverBdd(const PricerSolverBdd& src)
       ordered_jobs_new(src.ordered_jobs_new),
       mip_graph(src.mip_graph),
       original_model(src.original_model),
-      H_max(src.H_max),
-      H_min(src.H_min) {
+      H_min(src.H_min),
+      H_max(src.H_max) {
     // remove_layers_init();
     // decision_diagram.compressBdd();
     // size_graph = decision_diagram.size();
@@ -378,7 +376,7 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
             tmp_nodeid = tmp_node[0];
         }
 
-        for (int c = convex_constr_id + 1; c < reformulation_model.size();
+        for (auto c = convex_constr_id + 1; c < reformulation_model.size();
              ++c) {
             auto* constr = reformulation_model[c].get();
             auto  dual = aux_pi[c];
@@ -408,7 +406,7 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
     auto      tmp_nodeid(decision_diagram.root());
     auto      counter = 0U;
     auto      nb_constraints = reformulation_model.size();
-    auto      convex_rhs = -reformulation_model[convex_constr_id]->get_rhs();
+    auto      rhs = -reformulation_model[convex_constr_id]->get_rhs();
     std::span aux_subgradient{sub_gradient, nb_constraints};
 
     for (auto&& [i, constr] : reformulation_model | ranges::views::enumerate) {
@@ -432,25 +430,25 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
             auto  coeff = (*constr)(key);
 
             if (fabs(coeff) > EPS_SOLVER) {
-                aux_subgradient[key.get_j()] -= coeff * convex_rhs;
+                aux_subgradient[key.get_j()] -= coeff * rhs;
             }
         } else {
             tmp_nodeid = tmp_node[0];
         }
 
-        for (int c = convex_constr_id + 1; c < reformulation_model.size();
+        for (auto c = convex_constr_id + 1; c < reformulation_model.size();
              c++) {
             // auto dual = pi[c];
             auto* constr = reformulation_model[c].get();
             auto  coeff = (*constr)(key);
 
             if (fabs(coeff) > EPS_SOLVER) {
-                aux_subgradient[c] -= coeff * convex_rhs;
+                aux_subgradient[c] -= coeff * rhs;
             }
         }
     }
 
-    aux_subgradient[convex_constr_id] += convex_rhs;
+    aux_subgradient[convex_constr_id] += rhs;
     assert(aux_subgradient[convex_constr_id] == 0.0);
     // sub_gradient[nb_jobs] = 0.0;
     assert(tmp_nodeid == 1);
@@ -616,7 +614,7 @@ void PricerSolverBdd::remove_edges() {
 
     out_file_mip << '\n';
 
-    for (int i = 0; i < convex_constr_id; i++) {
+    for (auto i = 0UL; i < convex_constr_id; i++) {
         out_file_mip << index_edge[i].size() << " ";
         for (auto& it : index_edge[i]) {
             out_file_mip << it << " ";
@@ -774,18 +772,6 @@ void PricerSolverBdd::build_mip() {
     } catch (...) {
         fmt::print("Exception during optimization\n");
     }
-}
-
-void PricerSolverBdd::reduce_cost_fixing(double* pi, int UB, double LB) {
-    /** Remove Layers */
-    if (dbg_lvl() > 0) {
-        fmt::print("Starting Reduced cost fixing\n");
-    }
-    evaluate_nodes(pi, UB, LB);
-    bottum_up_filtering();
-    topdown_filtering();
-    cleanup_arcs();
-    construct_mipgraph();
 }
 
 void PricerSolverBdd::cleanup_arcs() {
