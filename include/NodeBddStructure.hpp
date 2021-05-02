@@ -29,6 +29,9 @@
 #include <cassert>
 #include <climits>
 #include <ostream>
+#include <range/v3/view/drop.hpp>
+#include <range/v3/view/join.hpp>
+#include <range/v3/view/take.hpp>
 #include <set>
 #include <stdexcept>
 #include <vector>
@@ -327,7 +330,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
 
     template <typename R>
     R evaluate_backward(Eval<T, R>& evaluator) {
-        int   n = root_.row();
+        auto  n = root_.row();
         auto& work = *diagram;
         evaluator.set_table(&(*diagram));
 
@@ -338,11 +341,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         }
 
         evaluator.initializerootnode(work.node(1));
-        for (int i = 1; i <= n; ++i) {
-            for (auto& it : work[i]) {
-                evaluator.initializenode(it);
-                evaluator.evalNode(it);
-            }
+        for (auto& it : work | ranges::views::take(n + 1) |
+                            ranges::views::drop(1) | ranges::views::join) {
+            evaluator.initializenode(it);
+            evaluator.evalNode(it);
         }
 
         return evaluator.get_objective(work.node(root()));
@@ -350,7 +352,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
 
     template <typename R>
     void compute_labels_backward(Eval<T, R>& evaluator) {
-        int   n = root_.row();
+        auto  n = root_.row();
         auto& work = *(getDiagram());
         evaluator.set_table(&(*diagram));
 
@@ -360,12 +362,13 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
         }
 
         evaluator.initializerootnode(work.node(1));
-        for (int i = 1; i <= n; ++i) {
-            for (auto& it : work[i]) {
-                evaluator.initializenode(it);
-                evaluator.evalNode(it);
-            }
+        // for (int i = 1; i <= n; ++i) {
+        for (auto& it : work | ranges::views::take(n + 1) |
+                            ranges::views::drop(1) | ranges::views::join) {
+            evaluator.initializenode(it);
+            evaluator.evalNode(it);
         }
+        // }
     }
 
     template <typename R>
