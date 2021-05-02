@@ -233,14 +233,14 @@ class NodeTableEntity : public data_table_node<T> {
      * @param useMP use an algorithm for multiple processors.
      */
     void makeIndex(bool useMP = false) const {
-        int const n = this->numRows() - 1;
+        size_t const n = this->numRows() - 1;
         higherLevelTable.clear();
         higherLevelTable.resize(n + 1);
         lowerLevelTable.clear();
         lowerLevelTable.resize(n + 1);
         my_vector<bool> lowerMark(n + 1);
 
-        for (int i = n; i >= 1; --i) {
+        for (auto i = n; i >= 1; --i) {
             my_vector<T> const& node = (*this)[i];
             size_t const        m = node.size();
             int                 lowest = i;
@@ -365,7 +365,7 @@ class NodeTableEntity : public data_table_node<T> {
 
                     if (ff == 1) {
                         terminal1 = true;
-                        os << "  \"" << f << "\" -> \"$\"";
+                        os << "  \"" << f << R"(" -> "$")";
                     } else {
                         ff.setAttr(false);
                         os << "  \"" << f << "\" -> \"" << ff << "\"";
@@ -416,7 +416,7 @@ class TableHandler {
         unsigned           refCount;
         NodeTableEntity<T> entity;
 
-        explicit Object(int n) : refCount(1), entity(n) {}
+        explicit Object(size_t n) : refCount(1), entity(n) {}
 
         explicit Object(const NodeTableEntity<T>& _entity)
             : refCount(1),
@@ -444,7 +444,7 @@ class TableHandler {
     Object* pointer;
 
    public:
-    explicit TableHandler(int n = 1) : pointer(new Object(n)) {}
+    explicit TableHandler(size_t n = 1) : pointer(new Object(n)) {}
 
     TableHandler<T>(TableHandler<T> const& o)
         : pointer(new Object(o.pointer->entity)){};
