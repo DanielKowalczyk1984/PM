@@ -26,6 +26,7 @@
 #define NODE_BDD_SWEEPER_HPP
 
 #include <cassert>
+#include <cstddef>
 #include <ostream>
 #include <vector>
 
@@ -46,7 +47,7 @@ class DdSweeper {
     NodeTableEntity<T>&        diagram;
     std::vector<NodeBranchId>* oneSrcPtr;
 
-    std::vector<int>    sweepLevel;
+    std::vector<size_t> sweepLevel;
     std::vector<size_t> deadCount;
     size_t              allCount;
     size_t              maxCount;
@@ -111,8 +112,8 @@ class DdSweeper {
         deadCount[current] = count;
         allCount += diagram[current].size();
 
-        int k = sweepLevel[current - 1];
-        for (int i = sweepLevel[current]; i > k; --i) {
+        auto k = sweepLevel[current - 1];
+        for (auto i = sweepLevel[current]; i > k; --i) {
             deadCount[k] += deadCount[i];
             deadCount[i] = 0;
         }
@@ -125,7 +126,7 @@ class DdSweeper {
 
         std::vector<std::vector<NodeId>> newId(diagram.numRows());
 
-        for (int i = k; i < diagram.numRows(); ++i) {
+        for (auto i = k; i < diagram.numRows(); ++i) {
             size_t m = diagram[i].size();
             newId[i].resize(m);
 
@@ -135,7 +136,7 @@ class DdSweeper {
                 T&   p = diagram[i][j];
                 bool dead = true;
 
-                for (int b = 0; b < 2; ++b) {
+                for (auto b = 0UL; b < 2; ++b) {
                     auto& f = p[b];
                     if (f.row() >= k) {
                         f = newId[f.row()][f.col()];
