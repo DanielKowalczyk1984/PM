@@ -25,7 +25,7 @@ class DdReducer {
     NodeTableEntity<T>&               output;
     std::vector<std::vector<NodeId>>  newIdTable;
     std::vector<std::vector<NodeId*>> rootPtr;
-    int                               counter = 1;
+    size_t                            counter = 1;
 
     struct ReduceNodeInfo {
         NodeBdd<T> children;
@@ -75,7 +75,7 @@ class DdReducer {
             return;
         }
 
-        for (int i = 2; i < input.numRows(); ++i) {
+        for (auto i = 2UL; i < input.numRows(); ++i) {
             // size_t const    m = input[i].size();
             // std::span const tt{input[i].data(), input[i].size()};
             // T* const     tt = input[i].data();
@@ -91,7 +91,7 @@ class DdReducer {
                     NodeId deletable = 0;
                     bool   del = true;
 
-                    for (int bb = ZDD ? 1 : 0; bb < 2; ++bb) {
+                    for (size_t bb = ZDD ? 1UL : 0UL; bb < 2; ++bb) {
                         if (input.child(f, bb) != deletable) {
                             del = false;
                         }
@@ -133,7 +133,7 @@ class DdReducer {
      * Reduces one level using Algorithm-R.
      * @param i level.
      */
-    void algorithmR(int i) {
+    void algorithmR(size_t i) {
         makeReadyForSequentialReduction();
         size_t const m = input[i].size();
         // T* const     tt = input[i].data();
@@ -218,7 +218,7 @@ class DdReducer {
      * Reduces one level using Algorithm-R.
      * @param i level.
      */
-    void algorithmZdd(int i) {
+    void algorithmZdd(size_t i) {
         makeReadyForSequentialReduction();
         size_t const       m = input[i].size();
         std::span<T> const tt{input[i].data(), input[i].size()};
