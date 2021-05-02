@@ -70,19 +70,19 @@ class BuilderBase {
 
     static void const* state(SpecNode const* p) { return p + headerSize; }
 
-    static size_t getSpecNodeSize(int n) {
-        if (n < 0) {
-            throw std::runtime_error("storage size is not initialized!!!");
-        }
+    static size_t getSpecNodeSize(size_t n) {
+        // if (n < 0) {
+        //     throw std::runtime_error("storage size is not initialized!!!");
+        // }
         return headerSize + (n + sizeof(SpecNode) - 1) / sizeof(SpecNode);
     }
 
     template <typename SPEC>
     struct Hasher {
-        SPEC const& spec;
-        int const   level;
+        SPEC const&  spec;
+        size_t const level;
 
-        Hasher(SPEC const& _spec, int _level) : spec(_spec), level(_level) {}
+        Hasher(SPEC const& _spec, size_t _level) : spec(_spec), level(_level) {}
 
         size_t operator()(SpecNode const* p) const {
             return spec.hash_code(state(p), level);
@@ -104,7 +104,7 @@ class DdBuilder : BuilderBase {
     static int const AR = Spec::ARITY;
 
     Spec                spec;
-    int const           specNodeSize;
+    size_t const        specNodeSize;
     NodeTableEntity<T>& output;
     DdSweeper<T>        sweeper;
 
@@ -114,7 +114,7 @@ class DdBuilder : BuilderBase {
     void* const               one;
     std::vector<NodeBranchId> oneSrcPtr;
 
-    void init(int n) {
+    void init(size_t n) {
         spec_node_table.resize(n + 1);
         if (n >= output.numRows()) {
             output.setNumRows(n + 1);
@@ -123,7 +123,7 @@ class DdBuilder : BuilderBase {
     }
 
    public:
-    DdBuilder(Spec const& _spec, TableHandler<T>& _output, int n = 0)
+    DdBuilder(Spec const& _spec, TableHandler<T>& _output, size_t n = 0UL)
         : spec(_spec),
           specNodeSize(getSpecNodeSize(_spec.datasize())),
           output(*_output),
@@ -189,13 +189,13 @@ class DdBuilder : BuilderBase {
      * Builds one level.
      * @param i level.
      */
-    void construct(int i) {
-        assert(0 < i && size_t(i) < spec_node_table.size());
+    void construct(size_t i) {
+        assert(0UL < i && size_t(i) < spec_node_table.size());
 
         MyList<SpecNode>& spec_nodes = spec_node_table[i];
         size_t            j0 = output[i].size();
         size_t            m = j0;
-        int               lowestChild = i - 1;
+        size_t            lowestChild = i - 1;
         size_t            deadCount = 0;
 
         {
