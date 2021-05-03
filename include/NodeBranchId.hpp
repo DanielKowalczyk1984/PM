@@ -4,12 +4,12 @@
 
 struct NodeBranchId {
     size_t col;
-    int    row;
+    size_t row;
     int    val;
 
     NodeBranchId() = default;
 
-    NodeBranchId(int _row, size_t _col, int _val)
+    NodeBranchId(size_t _row, size_t _col, int _val)
         : col(_col),
           row(_row),
           val(_val) {}
