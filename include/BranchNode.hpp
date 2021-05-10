@@ -33,7 +33,7 @@ class BranchNodeBase : public State {
         return get_obj_value() < other.get_obj_value();
     };
 
-    NodeData* get_data_ptr() const { return pd.get(); }
+    [[nodiscard]] NodeData* get_data_ptr() const { return pd.get(); }
 
    private:
     std::unique_ptr<NodeData> pd;
@@ -41,7 +41,7 @@ class BranchNodeBase : public State {
     static constexpr double ERROR = 1e-12;
     static constexpr double IntegerTolerance = 1e-3;
     static constexpr double TargetBrTimeValue = 0.3;
-    static constexpr int    NumStrBrCandidates = 45;
+    static constexpr size_t NumStrBrCandidates = 45;
 };
 
 struct BranchCand {
@@ -53,6 +53,8 @@ struct BranchCand {
     // std::unique_ptr<BranchNodeBase> right{};
 
     BranchCand() = default;
+
+    BranchCand(double _score, int _job, int _t);
 
     BranchCand(int _job, int _t, const NodeData* parrent);
 

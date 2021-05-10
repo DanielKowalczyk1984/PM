@@ -3,8 +3,10 @@
 #include <fmt/core.h>
 #include <cstddef>
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/view/reverse.hpp>
 #include <range/v3/view/take.hpp>
 #include <string>
@@ -67,9 +69,9 @@ void Instance::calculate_H_max_H_min() {
 
     auto tmp = p_sum;
     H_min = p_sum;
-    ranges::for_each(
+    tmp = ranges::accumulate(
         jobs | ranges::views::reverse | ranges::views::take(nb_machines - 1),
-        [&tmp](auto& tmp_j) { tmp -= tmp_j->processing_time; });
+        p_sum, std::minus<>{}, [](auto& it) { return it->processing_time; });
 
     H_min = static_cast<int>(ceil(tmp / nb_machines));
     fmt::print(
@@ -78,7 +80,7 @@ void Instance::calculate_H_max_H_min() {
         H_max, H_min, pmax, pmin, p_sum, off);
 
     std::ranges::sort(jobs, [](const auto& x, const auto& y) -> bool {
-        if (x->due_time > y->due_time) {
+        if ((x->due_time > y->due_time)) {
             return (false);
         } else if (x->due_time < y->due_time) {
             return (true);
@@ -97,7 +99,7 @@ void Instance::calculate_H_max_H_min() {
         }
     });
 
-    int index = 0;
+    auto index = 0UL;
     std::ranges::for_each(jobs, [&index](auto& it) { it->job = index++; });
 }
 
@@ -105,7 +107,7 @@ void Instance::find_division() {
     int prev = 0;
 
     std::vector<std::shared_ptr<Interval>> tmp_ptr_vec{};
-    for (auto i = 0; i < nb_jobs && prev < H_max; ++i) {
+    for (auto i = 0UL; i < nb_jobs && prev < H_max; ++i) {
         auto tmp = std::min(H_max, jobs[i]->due_time);
         if (prev < tmp) {
             tmp_ptr_vec.push_back(std::make_shared<Interval>(prev, tmp, jobs));

@@ -377,7 +377,7 @@ void PricingStabilizationHybrid::update_duals() {
 std::unique_ptr<PricingStabilizationBase> PricingStabilizationHybrid::clone(
     PricerSolverBase*    _solver,
     std::vector<double>& _pi_out) {
-    return std::make_unique<PricingStabilizationBase>(solver, _pi_out);
+    return std::make_unique<PricingStabilizationBase>(_solver, _pi_out);
 }
 
 void PricingStabilizationHybrid::remove_constraints(int first, int nb_del) {

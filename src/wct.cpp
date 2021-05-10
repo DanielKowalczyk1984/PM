@@ -4,7 +4,9 @@
 #include <memory>
 #include <range/v3/action/sort.hpp>
 #include <range/v3/action/unique.hpp>
+#include <range/v3/algorithm/equal.hpp>
 #include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/functional/comparisons.hpp>
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
 #include "lp.h"
@@ -14,7 +16,11 @@
 NodeData::NodeData(Problem* problem)
     : depth(0UL),
       status(initialized),
+      parms(problem->parms),
       instance(problem->instance),
+      stat(problem->stat),
+      opt_sol(problem->opt_sol),
+      pname("tmp"),
       nb_jobs(instance.nb_jobs),
       nb_machines(instance.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
@@ -56,11 +62,7 @@ NodeData::NodeData(Problem* problem)
       retirementage(static_cast<int>(sqrt(nb_jobs)) + CLEANUP_ITERATION),
       branch_job(-1),
       completiontime(0),
-      less(-1),
-      parms(problem->parms),
-      stat(problem->stat),
-      opt_sol(problem->opt_sol),
-      pname("tmp") {}
+      less(-1) {}
 
 NodeData::NodeData(const NodeData& src)
     : depth(src.depth + 1),
@@ -119,15 +121,18 @@ std::unique_ptr<NodeData> NodeData::clone() const {
 }
 
 void NodeData::prune_duplicated_sets() {
-    auto equal_func = [](auto const& l, auto const& r) { return (*l) == (*r); };
+    // auto equal_func = [](auto const& l, auto const& r) { return (*l) == (*r);
+    // };
 
     if (localColPool.empty() || localColPool.size() == 1) {
         return;
     }
 
     localColPool |=
-        ranges::actions::sort(std::less<std::shared_ptr<ScheduleSet>>()) |
-        ranges::actions::unique(equal_func);
+        ranges::actions::sort(std::less<>{},
+                              [](auto& tmp) { return tmp->job_list; }) |
+        ranges::actions::unique(ranges::equal_to{},
+                                [](auto& tmp) { return tmp->job_list; });
     // std::ranges::sort(localColPool,
     // std::less<std::shared_ptr<ScheduleSet>>()); localColPool.erase(
     //     std::unique(localColPool.begin(), localColPool.end(), equal_func),

@@ -14,7 +14,6 @@
 #include <unordered_set>
 #include <vector>
 #include "util/MyHashTable.hpp"
-// #include "tdzdd/util/MyList.hpp"
 #include "util/MyVector.hpp"
 
 template <typename T, bool BDD, bool ZDD>
@@ -26,22 +25,6 @@ class DdReducer {
     std::vector<std::vector<NodeId>>  newIdTable;
     std::vector<std::vector<NodeId*>> rootPtr;
     size_t                            counter = 1;
-
-    struct ReduceNodeInfo {
-        NodeBdd<T> children;
-        size_t     column;
-
-        [[nodiscard]] size_t hash() const { return children.hash(); }
-
-        bool operator==(ReduceNodeInfo const& o) const {
-            return children == o.children;
-        }
-
-        friend std::ostream& operator<<(std::ostream&         os,
-                                        ReduceNodeInfo const& o) {
-            return os << "(" << o.children << " -> " << o.column << ")";
-        }
-    };
 
     bool readyForSequentialReduction;
 
@@ -120,7 +103,7 @@ class DdReducer {
      * @param i level.
      * @param useMP use an algorithm for multiple processors.
      */
-    void reduce(int i) {
+    void reduce(size_t i) {
         if (BDD) {
             algorithmZdd(i);
         } else if (ZDD) {
@@ -179,7 +162,7 @@ class DdReducer {
             newId[j] = NodeId(counter, mm++, g0.hasEmpty());
         }
 
-        std::vector<int> const& levels = input.lowerLevels(counter);
+        std::vector<size_t> const& levels = input.lowerLevels(counter);
         for (auto& t : levels) {
             input[t].clear();
         }
@@ -255,7 +238,7 @@ class DdReducer {
         }
 
         {
-            std::vector<int> const& levels = input.lowerLevels(i);
+            auto const& levels = input.lowerLevels(i);
             for (auto& t : levels) {
                 newIdTable[t].clear();
             }
@@ -294,7 +277,7 @@ class DdReducer {
             }
         }
 
-        std::vector<int> const& levels = input.lowerLevels(i);
+        auto const& levels = input.lowerLevels(i);
         for (auto& t : levels) {
             input[t].clear();
         }

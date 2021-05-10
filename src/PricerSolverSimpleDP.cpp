@@ -3,6 +3,7 @@
 #include <gurobi_c++.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <cstddef>
 #include <range/v3/all.hpp>
 #include <vector>
 #include "Instance.h"
@@ -276,11 +277,11 @@ void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name) {
 
 void PricerSolverSimpleDp::print_number_nodes_edges() {}
 
-int PricerSolverSimpleDp::get_num_remove_nodes() {
+size_t PricerSolverSimpleDp::get_num_remove_nodes() {
     return 0;
 }
 
-int PricerSolverSimpleDp::get_num_remove_edges() {
+size_t PricerSolverSimpleDp::get_num_remove_edges() {
     return 0;
 }
 

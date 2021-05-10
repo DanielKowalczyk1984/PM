@@ -15,8 +15,8 @@
 class PricerSolverBdd : public PricerSolverBase {
     DdStructure<NodeBdd<double>> decision_diagram;
     size_t                       size_graph;
-    int                          nb_removed_edges{};
-    int                          nb_removed_nodes{};
+    size_t                       nb_removed_edges{};
+    size_t                       nb_removed_nodes{};
 
     std::vector<std::pair<Job*, Interval*>> ordered_jobs_new;
 
@@ -64,7 +64,7 @@ class PricerSolverBdd : public PricerSolverBase {
         override;
     // void make_schedule_set_feasible(GPtrArray* set) override;
     void calculate_job_time(std::vector<std::vector<double>>* v) override;
-    void split_job_time(int _job, int _time, bool _left) override;
+    void split_job_time(size_t _job, int _time, bool _left) override;
     void iterate_zdd() override;
     void create_dot_zdd(const char* name) override;
     void print_number_nodes_edges() override;
@@ -74,10 +74,10 @@ class PricerSolverBdd : public PricerSolverBase {
     void update_rows_coeff(size_t first) override;
     void insert_constraints_lp(NodeData* pd) override;
 
-    int get_num_remove_nodes() override;
-    int get_num_remove_edges() override;
-    int get_num_layers() override;
-    int add_constraints() override;
+    size_t get_num_remove_nodes() override;
+    size_t get_num_remove_edges() override;
+    int    get_num_layers() override;
+    int    add_constraints() override;
 
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;

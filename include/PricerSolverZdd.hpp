@@ -1,7 +1,9 @@
 #ifndef PRICER_SOLVER_ZDD_HPP
 #define PRICER_SOLVER_ZDD_HPP
 
+#include <stddef.h>
 #include <NodeBddStructure.hpp>
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -17,8 +19,8 @@ class PricerSolverZdd : public PricerSolverBase {
     std::unique_ptr<DdStructure<NodeZdd<double>>> decision_diagram;
 
     size_t size_graph{};
-    int    nb_removed_edges{};
-    int    nb_removed_nodes{};
+    size_t nb_removed_edges{};
+    size_t nb_removed_nodes{};
 
     // GPtrArray*                              ordered_jobs;
     std::vector<std::pair<Job*, Interval*>> ordered_jobs_new;
@@ -63,8 +65,8 @@ class PricerSolverZdd : public PricerSolverBase {
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;
-    int    get_num_remove_nodes() override;
-    int    get_num_remove_edges() override;
+    size_t get_num_remove_nodes() override;
+    size_t get_num_remove_edges() override;
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
     int    get_num_layers() override;

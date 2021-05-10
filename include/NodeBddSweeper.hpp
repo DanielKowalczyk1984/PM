@@ -90,7 +90,7 @@ class DdSweeper {
      * @param child the level at which edges from this level are completed.
      * @param count the number of dead nodes at this level.
      */
-    void update(int current, int child, size_t count) {
+    void update(size_t current, size_t child, size_t count) {
         assert(1 <= current);
         assert(0 <= child);
         if (current <= 1) {
@@ -102,7 +102,7 @@ class DdSweeper {
             deadCount.resize(current + 2);
         }
 
-        for (int i = child; i <= current; ++i) {
+        for (size_t i = child; i <= current; ++i) {
             if (sweepLevel[i] > 0) {
                 break;
             }

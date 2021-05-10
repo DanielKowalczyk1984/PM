@@ -1,12 +1,10 @@
 #include "PricerSolverBase.hpp"
-#include <bits/ranges_algobase.h>
 #include <fmt/core.h>
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <range/v3/view/enumerate.hpp>
 #include "Instance.h"
-#include "gurobi_c.h"
 
 /**
  * PricerSolverBase default COnstructor
@@ -76,7 +74,7 @@ PricerSolverBase::PricerSolverBase(const PricerSolverBase& other)
     model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
     model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
     model.set(GRB_IntParam_Presolve, GRB_PRESOLVE_AGGRESSIVE);
-};
+}
 
 PricerSolverBase::~PricerSolverBase() = default;
 
@@ -90,7 +88,7 @@ void PricerSolverBase::remove_constraints(int first, int nb_del) {
     reformulation_model.delete_constraints(first, nb_del);
 }
 
-void PricerSolverBase::update_rows_coeff(size_t first) {}
+void PricerSolverBase::update_rows_coeff([[maybe_unused]] size_t first) {}
 
 void PricerSolverBase::print_num_paths() {}
 
@@ -234,13 +232,13 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>&   sol,
 
     result = std::min(0.0, result);
 
-    for (int c = 0; const auto& constr : reformulation_model) {
+    for (const auto&& [c, constr] :
+         reformulation_model | ranges::views::enumerate) {
         if (c == convex_constr_id) {
             continue;
         }
 
         dual_bound += constr->get_rhs() * pi[c];
-        ++c;
     }
 
     result = -reformulation_model[convex_constr_id]->get_rhs() * result;
@@ -252,7 +250,7 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>&   sol,
 double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
                                              double* subgradient) {
     std::span aux_subgradient{subgradient, reformulation_model.size()};
-    auto      convex_rhs = -reformulation_model[convex_constr_id]->get_rhs();
+    auto      rhs = -reformulation_model[convex_constr_id]->get_rhs();
 
     for (size_t i = 0; const auto& constr : reformulation_model) {
         aux_subgradient[i] = constr->get_rhs();
@@ -265,7 +263,7 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
         auto            coeff = (*constr)(k);
 
         if (fabs(coeff) > EPS_SOLVER) {
-            aux_subgradient[k.get_j()] -= coeff * convex_rhs;
+            aux_subgradient[k.get_j()] -= coeff * rhs;
         }
 
         for (auto c = convex_constr_id + 1; c < reformulation_model.size();
@@ -273,12 +271,12 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
             auto coeff_ = (*reformulation_model[c])(k);
 
             if (fabs(coeff_) > EPS_SOLVER) {
-                aux_subgradient[c] -= coeff_ * convex_rhs;
+                aux_subgradient[c] -= coeff_ * rhs;
             }
         }
     }
 
-    aux_subgradient[convex_constr_id] += convex_rhs;
+    aux_subgradient[convex_constr_id] += rhs;
 
     return 0.0;
 }
@@ -286,12 +284,12 @@ double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
 void PricerSolverBase::calculate_constLB(double* pi) {
     constLB = 0.0;
     std::span aux_pi{pi, reformulation_model.size()};
-    for (int i = 0; const auto& constr : reformulation_model) {
-        if (i == convex_constr_id) {
+    for (const auto&& [c, constr] :
+         reformulation_model | ranges::views::enumerate) {
+        if (c == convex_constr_id) {
             continue;
         }
-        constLB += constr->get_rhs() * aux_pi[i];
-        ++i;
+        constLB += constr->get_rhs() * aux_pi[c];
     }
 }
 

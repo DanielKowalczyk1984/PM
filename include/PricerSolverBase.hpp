@@ -105,9 +105,9 @@ struct PricerSolverBase {
     //     reformulation_model.add_constraint(constr);
     // };
 
-    virtual void split_job_time([[maybe_unused]] int  _job,
-                                [[maybe_unused]] int  _time,
-                                [[maybe_unused]] bool _left) {}
+    virtual void split_job_time([[maybe_unused]] size_t _job,
+                                [[maybe_unused]] int    _time,
+                                [[maybe_unused]] bool   _left) {}
 
     /**
      * Some getters
@@ -117,8 +117,8 @@ struct PricerSolverBase {
     double       get_UB();
     void         update_UB(double _ub);
 
-    virtual int    get_num_remove_nodes() = 0;
-    virtual int    get_num_remove_edges() = 0;
+    virtual size_t get_num_remove_nodes() = 0;
+    virtual size_t get_num_remove_edges() = 0;
     virtual int    get_num_layers() = 0;
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;

@@ -1,13 +1,14 @@
 #include "Solution.hpp"
+#include <bits/ranges_algo.h>
 #include <fmt/core.h>
 #include <algorithm>
+#include <cstddef>
+#include <cstdio>
 #include <memory>
 #include <random>
-#include <range/v3/action/shuffle.hpp>
-#include <range/v3/action/sort.hpp>
-#include <range/v3/range/conversion.hpp>
-#include <range/v3/view/enumerate.hpp>
-#include <range/v3/view/transform.hpp>
+#include <range/v3/action/erase.hpp>
+#include <range/v3/action/insert.hpp>
+#include <range/v3/all.hpp>
 #include <vector>
 #include "Instance.h"
 #include "Interval.h"
@@ -23,11 +24,14 @@ void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
                            [](const auto& tmp_j) { return tmp_j.get(); });
     std::ranges::sort(tmp, cmp_jobs_edd);
 
-    std::make_heap(machines.begin(), machines.end(), cmp_machines_completion);
+    // std::make_heap(machines.begin(), machines.end(),
+    // cmp_machines_completion);
+    ranges::make_heap(machines, ranges::greater{}, &Machine::completion_time);
+
     for (auto& it : tmp) {
         add_job_front_machine(it);
-        std::push_heap(machines.begin(), machines.end(),
-                       cmp_machines_completion);
+        ranges::push_heap(machines, ranges::greater{},
+                          &Machine::completion_time);
     }
 }
 
@@ -52,8 +56,8 @@ void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
 
     for (auto& it : tmp) {
         add_job_front_machine(it);
-        std::push_heap(machines.begin(), machines.end(),
-                       cmp_machines_completion);
+        ranges::push_heap(machines, ranges::greater{},
+                          &Machine::completion_time);
     }
 }
 
@@ -70,8 +74,8 @@ void Sol::construct_random_fisher_yates(
 
     for (auto& it : tmp) {
         add_job_front_machine(it);
-        std::push_heap(machines.begin(), machines.end(),
-                       cmp_machines_completion);
+        ranges::push_heap(machines, ranges::greater{},
+                          &Machine::completion_time);
     }
 }
 
@@ -87,8 +91,8 @@ void Sol::construct_random_shuffle(const std::vector<std::shared_ptr<Job>>& v) {
 
     for (auto& it : tmp) {
         add_job_front_machine(it);
-        std::push_heap(machines.begin(), machines.end(),
-                       cmp_machines_completion);
+        ranges::push_heap(machines, ranges::greater{},
+                          &Machine::completion_time);
     }
 }
 
@@ -119,7 +123,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
         }
 
         auto u_it = u[m.job_list.back()->job];
-        while (u_it != -1) {
+        while (u_it + 1 != 0UL) {
             auto& I = intervals[u_it];
             auto& Q_tmp = Q[u_it];
             auto& Q_in_tmp = Q_in[u_it];
@@ -130,7 +134,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                     auto cmp = compare_edd(I->a, I->b);
                     std::ranges::sort(Q_in_tmp, cmp);
 
-                    int j = 0;
+                    auto j = 0UL;
                     for (auto& it : Q_in_tmp) {
                         Q_tmp[j + 1] = it;
                         C += it->processing_time;
@@ -178,8 +182,8 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                             Q_tmp.erase(
                                 std::remove(Q_tmp.begin(), Q_tmp.end(), tmp_in),
                                 Q_tmp.end());
-                            int old_u = u_it - 1;
-                            while (old_u != -1) {
+                            auto old_u = u_it - 1;
+                            while (old_u + 1 != 0) {
                                 auto& tmp_I = intervals[old_u];
                                 if (c[tmp_in->job] <= tmp_I->b &&
                                     c[tmp_in->job] > tmp_I->a) {
@@ -231,7 +235,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
     }
 }
 
-void Sol::perturb_swap_inter(int l1, int l2, std::mt19937& mt) {
+void Sol::perturb_swap_inter(size_t l1, size_t l2, std::mt19937& mt) {
     std::uniform_int_distribution dist(0UL, nb_machines - 1);
 
     auto m1 = dist(mt);
@@ -260,7 +264,7 @@ void Sol::perturb_swap_inter(int l1, int l2, std::mt19937& mt) {
 }
 
 void Sol::add_job_front_machine(Job* job) {
-    std::pop_heap(machines.begin(), machines.end(), cmp_machines_completion);
+    ranges::pop_heap(machines, ranges::greater{}, &Machine::completion_time);
     auto& m = machines.back();
     m.add_job(job);
     tw += job->weighted_tardiness(m.completion_time);
@@ -313,10 +317,10 @@ Sol::Sol(const Instance& instance)
       nb_jobs{instance.nb_jobs},
       nb_machines{instance.nb_machines},
       c(nb_jobs, -1),
-      u(nb_jobs, -1),
+      u(nb_jobs),
       off{instance.off} {}
 
-void Sol::update_insertion_move(int i, int j, int k, int l) {
+void Sol::update_insertion_move(size_t i, size_t j, size_t k, size_t l) {
     auto& m = machines[k];
     auto  begin = m.job_list.begin();
     tw -= m.total_weighted_tardiness;
@@ -328,7 +332,7 @@ void Sol::update_insertion_move(int i, int j, int k, int l) {
     tw += m.total_weighted_tardiness;
 }
 
-void Sol::update_swap_move(int i, int j, int k, int l1, int l2) {
+void Sol::update_swap_move(size_t i, size_t j, size_t k, size_t l1, size_t l2) {
     auto& m = machines[k];
     auto& vec_m = machines[k].job_list;
     tw -= m.total_weighted_tardiness;
@@ -337,13 +341,22 @@ void Sol::update_swap_move(int i, int j, int k, int l1, int l2) {
     auto it2 = vec_m.begin() + j;
 
     swap_ranges(it1, it1 + l1, it2, it2 + l2);
+    // ranges::swap_ranges(
+    //     machines[k].job_list | ranges::views::drop(i) |
+    //     ranges::views::take(l1), machines[k].job_list |
+    //     ranges::views::drop(j) |
+    //         ranges::views::take(l2));
 
     m.reset_machine(c);
 
     tw += m.total_weighted_tardiness;
 }
 
-void Sol::update_insertion_move_inter(int i, int j, int k, int l, int m) {
+void Sol::update_insertion_move_inter(size_t i,
+                                      size_t j,
+                                      size_t k,
+                                      size_t l,
+                                      size_t m) {
     auto& m1 = machines[k];
     auto& m2 = machines[l];
     auto  begin1 = m1.job_list.begin();
@@ -360,11 +373,20 @@ void Sol::update_insertion_move_inter(int i, int j, int k, int l, int m) {
     tw += m1.total_weighted_tardiness + m2.total_weighted_tardiness;
 }
 
-void Sol::update_swap_move_inter(int i, int j, int k1, int k2, int l1, int l2) {
+void Sol::update_swap_move_inter(size_t i,
+                                 size_t j,
+                                 size_t k1,
+                                 size_t k2,
+                                 size_t l1,
+                                 size_t l2) {
     auto it1 = machines[k1].job_list.begin() + i;
     auto it2 = machines[k2].job_list.begin() + j;
 
-    std::ranges::swap_ranges(it1, it1 + l1, it2, it2 + l2);
+    // std::ranges::swap_ranges(it1, it1 + l1, it2, it2 + l2);
+    ranges::swap_ranges(machines[k1].job_list | ranges::views::drop(i) |
+                            ranges::views::take(l1),
+                        machines[k2].job_list | ranges::views::drop(j) |
+                            ranges::views::take(l2));
 
     if (l1 < l2) {
         machines[k1].job_list.insert(it1 + l1, it2 + l1, it2 + l2);

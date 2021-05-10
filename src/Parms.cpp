@@ -3,7 +3,11 @@
 #include <fmt/core.h>
 #include <algorithm>
 #include <cstddef>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/drop.hpp>
+#include <range/v3/view/transform.hpp>
 #include <regex>
+#include <span>
 #include <string>
 #include "util.h"
 #include "wctprivate.h"
@@ -167,8 +171,15 @@ static std::string find_match(std::string const& _instance_file) {
 int Parms::parse_cmd(int argc, const char** argv) {
     int val = 0;
 
-    auto args =
-        docopt::docopt_parse(USAGE, {argv + 1, argv + argc}, true, "PM 0.1");
+    std::span tmp_char{argv, static_cast<size_t>(argc)};
+
+    auto args = docopt::docopt_parse(
+        USAGE,
+        tmp_char | ranges::views::drop(1) |
+            ranges::views::transform(
+                [](auto tmp) -> std::string { return std::string(tmp); }) |
+            ranges::to_vector,
+        true, "PM 0.1");
 
     /** Set CPU limit for branching */
     parms_set_branching_cpu_limit(

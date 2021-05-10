@@ -1,6 +1,5 @@
 #ifndef __INSTANCE_H__
 #define __INSTANCE_H__
-#include <bits/c++config.h>
 #include <fmt/core.h>
 #include <cstddef>
 #include <filesystem>

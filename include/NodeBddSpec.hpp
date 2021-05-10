@@ -34,11 +34,6 @@
 #include <stdexcept>
 #include "NodeBddDumper.hpp"
 
-// #include "NodeBddBuilder.hpp"
-// #include "dd/DepthFirstSearcher.hpp"
-// #include "util/demangle.hpp"
-// #include "util/MessageHandler.hpp"
-
 /**
  * Base class of DD specs.
  *
@@ -68,10 +63,10 @@
  * @tparam S the class implementing this class.
  * @tparam AR arity of the nodes.
  */
-template <typename S, int AR = 2>
+template <typename S, size_t AR = 2>
 class DdSpecBase {
    public:
-    static int const ARITY = AR;
+    static size_t const ARITY = AR;
 
     S& entity() { return *static_cast<S*>(this); }
 
@@ -186,14 +181,14 @@ class DdSpecBase {
  * @tparam S the class implementing this class.
  * @tparam AR arity of the nodes.
  */
-template <typename S, int AR = 2>
+template <typename S, size_t AR = 2>
 class StatelessDdSpec : public DdSpecBase<S, AR> {
    public:
     [[nodiscard]] size_t datasize() const { return 0UL; }
 
-    int get_root(void* p) { return this->entity().getRoot(); }
+    int get_root([[maybe_unused]] void* p) { return this->entity().getRoot(); }
 
-    int get_child(void* p, int level, int value) {
+    int get_child([[maybe_unused]] void* p, int level, int value) {
         assert(0 <= value && value < S::ARITY);
         return this->entity().getChild(level, value);
     }
@@ -247,7 +242,7 @@ class StatelessDdSpec : public DdSpecBase<S, AR> {
  * @tparam T data type.
  * @tparam AR arity of the nodes.
  */
-template <typename S, typename T, int AR = 2>
+template <typename S, typename T, size_t AR = 2>
 class DdSpec : public DdSpecBase<S, AR> {
    public:
     using State = T;
@@ -349,7 +344,7 @@ class DdSpec : public DdSpecBase<S, AR> {
  * @tparam T data type of array elements.
  * @tparam AR arity of the nodes.
  */
-template <typename S, typename T, int AR = 2>
+template <typename S, typename T, size_t AR = 2>
 class PodArrayDdSpec : public DdSpecBase<S, AR> {
    public:
     using State = T;
@@ -487,7 +482,7 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
  * @tparam TA data type of array elements.
  * @tparam AR arity of the nodes.
  */
-template <typename S, typename TS, typename TA, int AR = 2>
+template <typename S, typename TS, typename TA, size_t AR = 2>
 class HybridDdSpec : public DdSpecBase<S, AR> {
    public:
     using S_State = TS;
@@ -647,7 +642,7 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
 };
 
 /* for backward compatibility */
-template <typename S, typename TS, typename TA, int AR = 2>
+template <typename S, typename TS, typename TA, size_t AR = 2>
 class PodHybridDdSpec : public HybridDdSpec<S, TS, TA, AR> {};
 
 #endif  // NODE_BDD_SPEC_HPP
