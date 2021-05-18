@@ -194,7 +194,7 @@ void Problem::heuristic() {
     Sol sol{instance};
     sol = best_sol;
     // int iterations = 0;
-    for (auto i = 0UL; i < IR; ++i) {
+    for (auto i = 0UL; i < IR && best_sol.tw != 0; ++i) {
         Sol sol1{instance};
         // sol1.construct_random_shuffle(instance.jobs);
         // sol = sol1;
