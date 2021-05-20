@@ -97,9 +97,9 @@ void PricerSolverArcTimeDp::init_table() {
         Job* tmp_i = vector_jobs[i];
         for (auto j = i + 1; j < n; ++j) {
             Job* tmp_j = vector_jobs[j];
-            for (int t = tmp_i->processing_time;
+            for (size_t t = tmp_i->processing_time;
                  t <= Hmax - tmp_j->processing_time; ++t) {
-                if (delta1(i, j, t) >= 0) {
+                if (delta1(i, j, static_cast<int>(t)) >= 0) {
                     remove_arc(i, j, t);
                     size_graph--;
                 } else {
@@ -161,7 +161,7 @@ void PricerSolverArcTimeDp::build_mip() {
     for (auto j = 0UL; j < n + 1; j++) {
         for (auto t = 0UL; t + vector_jobs[j]->processing_time <= Hmax; t++) {
             for (auto& it : graph[j][t]) {
-                double cost = vector_jobs[j]->weighted_tardiness_start(t);
+                double cost = vector_jobs[j]->weighted_tardiness_start(static_cast<int>(t));
                 double tmp =
                     (it->job == vector_jobs[j]->job) ? static_cast<double>(convex_rhs) : 1.0;
                 auto s =
@@ -223,7 +223,7 @@ void PricerSolverArcTimeDp::build_mip() {
     for (auto& it : reversed_graph[n][0]) {
         expr += arctime_x[n][it->job][0];
     }
-    model.addConstr(expr, GRB_EQUAL, convex_rhs);
+    model.addConstr(expr, GRB_EQUAL, static_cast<double>(convex_rhs));
 
     for (auto j = 0UL; j < n + 1; j++) {
         for (auto t : ranges::views::ints(
