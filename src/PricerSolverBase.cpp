@@ -6,43 +6,12 @@
 #include <range/v3/view/enumerate.hpp>
 #include "Instance.h"
 
-/**
- * PricerSolverBase default COnstructor
- **/
-// PricerSolverBase::PricerSolverBase(GPtrArray*  _jobs,
-//                                    int         _num_machines,
-//                                    const char* _p_name,
-//                                    double      _ub)
-//     : jobs(_jobs->pdata, _jobs->len),
-//       convex_constr_id(_jobs->len),
-//       convex_rhs(_num_machines),
-//       problem_name(_p_name),
-//       env(std::make_shared<GRBEnv>()),
-//       model(GRBModel(*env)),
-//       reformulation_model(_jobs->len, _num_machines),
-//       is_integer_solution(false),
-//       constLB(0.0),
-//       UB(_ub)
-
-// {
-//     try {
-//         model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
-//         model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
-//         model.set(GRB_IntParam_Presolve, GRB_PRESOLVE_AGGRESSIVE);
-//     } catch (const GRBException& e) {
-//         fmt::print("Error code = {}\n", e.getErrorCode());
-//         fmt::print(e.getMessage());
-//     } catch (...) {
-//         fmt::print("Exception during optimization\n");
-//     }
-// }
-
 PricerSolverBase::PricerSolverBase(const Instance& instance)
     : jobs(instance.jobs),
       convex_constr_id(instance.nb_jobs),
       convex_rhs(instance.nb_machines),
       problem_name(),
-      env(std::make_shared<GRBEnv>()),
+      env(genv),
       model(GRBModel(*env)),
       reformulation_model(instance.nb_jobs, instance.nb_machines),
       is_integer_solution(false),
@@ -292,21 +261,9 @@ void PricerSolverBase::calculate_constLB(double* pi) {
         constLB += constr->get_rhs() * aux_pi[c];
     }
 }
+/*-------------------------------------------------------------------------*/
+/*------------------initialize static members------------------------------*/
+/*-------------------------------------------------------------------------*/
 
-// extern "C" {
-// double call_get_UB(PricerSolverBase* solver) {
-//     return solver->get_UB();
-// }
-
-// void call_update_UB(PricerSolverBase* solver, double _ub) {
-//     solver->update_UB(_ub);
-// }
-
-// int call_is_integer_solution(PricerSolverBase* solver) {
-//     return solver->get_is_integer_solution();
-// }
-// }
-
-// inline std::vector<BddCoeff>& PricerSolverBase::get_lp_sol() {
-//     return lp_sol;
-// };
+const std::shared_ptr<GRBEnv> PricerSolverBase::genv =
+    std::make_shared<GRBEnv>();
