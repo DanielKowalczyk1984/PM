@@ -37,17 +37,20 @@ void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
 
 void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
     auto cmp_jobs_spt = [](const auto x, const auto y) -> bool {
-        if (x->processing_time > y->processing_time) {
-            return false;
-        } else if (x->due_time > y->due_time) {
-            return false;
-        } else if (x->weight > y->weight) {
-            return false;
-        } else if (x->job > y->job) {
-            return false;
-        } else {
-            return true;
-        }
+        // if (x->processing_time > y->processing_time) {
+        //     return false;
+        // } else if (x->due_time > y->due_time) {
+        //     return false;
+        // } else if (x->weight > y->weight) {
+        //     return false;
+        // } else if (x->job > y->job) {
+        //     return false;
+        // } else {
+        //     return true;
+        // }
+
+        return std::tie(x->processing_time, x->due_time, x->weight, x->job) <
+               std::tie(y->processing_time, y->due_time, y->weight, y->job);
     };
 
     auto tmp =
