@@ -80,23 +80,26 @@ void Instance::calculate_H_max_H_min() {
         H_max, H_min, pmax, pmin, p_sum, off);
 
     std::ranges::sort(jobs, [](const auto& x, const auto& y) -> bool {
-        if ((x->due_time > y->due_time)) {
-            return (false);
-        } else if (x->due_time < y->due_time) {
-            return (true);
-        } else if (x->processing_time > y->processing_time) {
-            return (false);
-        } else if (x->processing_time < y->processing_time) {
-            return (true);
-        } else if (x->weight < y->weight) {
-            return (false);
-        } else if (x->weight > y->weight) {
-            return (true);
-        } else if (x->job > y->job) {
-            return (false);
-        } else {
-            return (true);
-        }
+        // if ((x->due_time > y->due_time)) {
+        //     return (false);
+        // } else if (x->due_time < y->due_time) {
+        //     return (true);
+        // } else if (x->processing_time > y->processing_time) {
+        //     return (false);
+        // } else if (x->processing_time < y->processing_time) {
+        //     return (true);
+        // } else if (x->weight < y->weight) {
+        //     return (false);
+        // } else if (x->weight > y->weight) {
+        //     return (true);
+        // } else if (x->job > y->job) {
+        //     return (false);
+        // } else {
+        //     return (true);
+        // }
+
+        return std::tie(x->due_time, x->processing_time, x->weight, x->job) <
+               std::tie(y->due_time, y->processing_time, y->weight, y->job);
     });
 
     auto index = 0UL;
