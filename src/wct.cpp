@@ -1,4 +1,5 @@
 #include <fmt/core.h>
+#include <array>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -118,6 +119,21 @@ std::unique_ptr<NodeData> NodeData::clone() const {
     auto aux = std::make_unique<NodeData>(*this);
 
     return aux;
+}
+
+std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
+    auto aux = std::make_unique<NodeData>(*this);
+    aux->branch_job = _j;
+    aux->completiontime = _t;
+    aux->less = _left;
+    aux->solver->split_job_time(_j, _t, _left);
+    return aux;
+}
+
+std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
+                                                                      int _t) {
+    return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, _t, false),
+                                                    clone(_j, _t, true)};
 }
 
 void NodeData::prune_duplicated_sets() {
