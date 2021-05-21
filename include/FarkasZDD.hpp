@@ -11,10 +11,9 @@ class BackwardBddFarkas : public BackwardBddBase<T> {
         n.reset_reduced_costs_farkas();
 
         const double* dual = BackwardBddBase<T>::get_pi();
-        for (int k = 0; k < 2; k++) {
-            for (auto it = n.coeff_list[k].begin(); it != n.coeff_list[k].end();
-                 it++) {
-                auto aux = it->lock();
+        for (auto& list : n.coeff_list) {
+            for (auto& it : list) {
+                auto aux = it.lock();
                 if (aux) {
                     n.adjust_reduced_costs(
                         aux->get_coeff() * dual[aux->get_row()],

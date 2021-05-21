@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 
 project(
   PM
@@ -7,17 +7,8 @@ project(
   DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
 )
 
-#
-# Set project options
-#
-
 # Define a local module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR})
-
-include(StandardSettings)
-include(Utils)
-include(StaticAnalyzers)
-message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 
 #
 # Prevent building in the source directory
@@ -26,11 +17,21 @@ message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 include(ConfigSafeGuards)
 
 #
+# Set project options
+#
+
+include(StandardSettings)
+include(Utils)
+include(StaticAnalyzers)
+message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
+
+#
 # Enable package managers
 #
 
 include(Conan)
 include(Vcpkg)
+include(CPM)
 
 #
 # code coverage
@@ -43,6 +44,7 @@ find_package(codecov)
 #
 
 find_package(Gurobi)
+include(CoinOR)
 add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 
@@ -51,7 +53,7 @@ add_subdirectory(branch-and-bound)
 #
 
 # Find all headers and implementation files
-include(cmake/SourcesAndHeaders.cmake)
+include(SourcesAndHeaders)
 
 if(${PROJECT_NAME}_BUILD_EXECUTABLE)
   add_executable(${PROJECT_NAME} ${exe_sources})
@@ -65,6 +67,7 @@ endif()
 verbose_message("Found the following header files:")
 verbose_message(${headers})
 verbose_message("Found the following source files:")
+
 if(${PROJECT_NAME}_BUILD_EXECUTABLE)
   verbose_message(${exe_sources})
 else()
@@ -83,30 +86,27 @@ else()
 endif()
 
 include(CompilerWarnings)
-set_project_warnings(${PROJECT_NAME})
-# set_project_warnings(${PROJECT_NAME}_LIB)
+set_project_warnings(${PROJECT_NAME}) 
+set_project_warnings(${PROJECT_NAME}_LIB)
 
 verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
 
-# Set the flags for compiling add_definitions(-Wall -Wno-deprecated -pedantic -Wmissing-declarations
-# -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings)
-
 # RelWIthDebInfo Flags
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -m64")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -mtune=native -fPIC")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO
-    "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+    "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99 -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
 
 # Release Flags
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  -m64")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native  -fPIC")
 set(CMAKE_C_FLAGS_RELEASE
-    "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+    "${CMAKE_C_FLAGS_RELEASE} -std=c99 -D_XOPEN_SOURCE=500 -mtune=native -Wnested-externs -Wstrict-prototypes"
 )
 
 # Debug Flags
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -m64")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -mtune=native -O0 -fPIC")
 set(CMAKE_C_FLAGS_DEBUG
-    "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+    "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
 
 #
@@ -136,7 +136,6 @@ else()
              ${CONAN_INCLUDE_DIRS_BOOST}
              ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
              ${CONAN_INCLUDE_DIRS_RANGE-V3}
-             ${CONAN_INCLUDE_DIRS_EIGEN}
       PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
@@ -148,7 +147,6 @@ else()
       CONAN_PKG::boost
       CONAN_PKG::docopt.cpp
       CONAN_PKG::range-v3
-      CONAN_PKG::eigen
       ORUtils::ORUtils
       branch-and-bound::branch-and-bound
       -lm
@@ -197,13 +195,5 @@ configure_package_config_file(
   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
 
-# Include CppCcheck
-include(CppcheckTargets)
-include(customCppCheck)
-
-# Include dev-tools
-include(dev-tools)
-
 # include Doxygen
-include(cmake/Doxygen.cmake)
-# set_property(TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME "${PROJECT_NAME}$<CONFIG>${_output}" )
+include(Doxygen)

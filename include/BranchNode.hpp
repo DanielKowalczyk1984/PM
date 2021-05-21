@@ -8,19 +8,7 @@
 #include "branch-and-bound/state.h"
 // #include "wctprivate.h"
 class NodeData;
-
 class BranchNodeBase : public State {
-    struct BranchCand {
-        double score{EPS_BRANCH};
-        int    job{-1};
-
-        BranchCand() = default;
-
-        bool operator<(const BranchCand& other) const {
-            return (score < other.score);
-        };
-    };
-
    public:
     explicit BranchNodeBase(std::unique_ptr<NodeData> pd, bool isRoot = false);
     BranchNodeBase(BranchNodeBase&&) = default;
@@ -38,21 +26,33 @@ class BranchNodeBase : public State {
     bool is_terminal_state() final;
     void apply_final_pruning_tests(BTree* bt) final;
     void update_data(double upper_bound) final;
-    // std::unique_ptr<State> clone() { return nullptr; };  // "copy
-    // constructor"
     void print(const BTree* bt) const override;
-    bool operator<(const State& other) final {
-        return get_obj_value() < other.get_obj_value();
-    };
+
+    [[nodiscard]] NodeData* get_data_ptr() const { return pd.get(); }
 
    private:
     std::unique_ptr<NodeData> pd;
 
-    static constexpr double EPS_BRANCH = 1e-4;
     static constexpr double ERROR = 1e-12;
     static constexpr double IntegerTolerance = 1e-3;
-    static constexpr double TargetBrTimeValue = 0.5;
-    static constexpr int    NumStrBrCandidates = 40;
+    static constexpr double TargetBrTimeValue = 0.2;
+    static constexpr size_t NumStrBrCandidates = 25;
 };
 
+struct BranchCand {
+    double score{EPS_BRANCH};
+    int    job{-1};
+    int    t{-1};
+
+    // std::unique_ptr<BranchNodeBase> left{};
+    // std::unique_ptr<BranchNodeBase> right{};
+
+    BranchCand() = default;
+
+    BranchCand(double _score, int _job, int _t);
+
+    BranchCand(int _job, int _t, const NodeData* parrent);
+
+    static constexpr double EPS_BRANCH = 1e-4;
+};
 #endif  // __BRANCHNODE_H__

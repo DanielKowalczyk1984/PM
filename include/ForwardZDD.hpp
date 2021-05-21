@@ -1,6 +1,7 @@
 #ifndef DURATION_ZDD_HPP
 #define DURATION_ZDD_HPP
 #include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <vector>
 #include "ForwardBDD.hpp"
@@ -11,13 +12,13 @@
 template <typename T = double>
 class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
    protected:
-    T*  pi;
-    int num_jobs;
+    T*     pi;
+    size_t num_jobs;
 
    public:
-    ForwardZddBase(T* _pi, int _num_jobs) : pi(_pi), num_jobs(_num_jobs) {}
+    ForwardZddBase(T* _pi, size_t _num_jobs) : pi(_pi), num_jobs(_num_jobs) {}
 
-    explicit ForwardZddBase(int _num_jobs)
+    explicit ForwardZddBase(size_t _num_jobs)
         : Eval<NodeZdd<T>, OptimalSolution<T>>(),
           pi(nullptr),
           num_jobs(_num_jobs) {}
@@ -78,10 +79,10 @@ class ForwardZddCycle : public ForwardZddBase<T> {
     using ForwardZddBase<T>::num_jobs;
 
    public:
-    ForwardZddCycle(T* _pi, int _num_jobs)
+    ForwardZddCycle(T* _pi, size_t _num_jobs)
         : ForwardZddBase<T>(_pi, _num_jobs) {}
 
-    explicit ForwardZddCycle(int _num_jobs) : ForwardZddBase<T>(_num_jobs) {}
+    explicit ForwardZddCycle(size_t _num_jobs) : ForwardZddBase<T>(_num_jobs) {}
 
     ForwardZddCycle() : ForwardZddBase<T>() {
         pi = nullptr;
@@ -208,10 +209,11 @@ class ForwardZddSimple : public ForwardZddBase<T> {
     using ForwardZddBase<T>::num_jobs;
 
    public:
-    ForwardZddSimple(T* _pi, int _num_jobs)
+    ForwardZddSimple(T* _pi, size_t _num_jobs)
         : ForwardZddBase<T>(_pi, _num_jobs) {}
 
-    explicit ForwardZddSimple(int _num_jobs) : ForwardZddBase<T>(_num_jobs) {}
+    explicit ForwardZddSimple(size_t _num_jobs)
+        : ForwardZddBase<T>(_num_jobs) {}
 
     ForwardZddSimple() {
         pi = nullptr;

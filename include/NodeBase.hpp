@@ -36,7 +36,7 @@ class NodeBase : public std::array<NodeId, 2> {
 
     friend std::ostream& operator<<(std::ostream& os, NodeBase const& o) {
         os << "(" << o[0];
-        for (int i = 1; i < 2; ++i) {
+        for (auto i = 1UL; i < 2; ++i) {
             os << "," << o[i];
         }
         return os << ")";

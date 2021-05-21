@@ -15,8 +15,8 @@
 class PricerSolverBdd : public PricerSolverBase {
     DdStructure<NodeBdd<double>> decision_diagram;
     size_t                       size_graph;
-    int                          nb_removed_edges{};
-    int                          nb_removed_nodes{};
+    size_t                       nb_removed_edges{};
+    size_t                       nb_removed_nodes{};
 
     std::vector<std::pair<Job*, Interval*>> ordered_jobs_new;
 
@@ -40,8 +40,6 @@ class PricerSolverBdd : public PricerSolverBase {
     ~PricerSolverBdd() override;
     [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override = 0;
 
-    void evaluate_nodes(double* pi, int UB, double LB) override = 0;
-
     void                  check_infeasible_arcs();
     void                  topdown_filtering();
     void                  bottum_up_filtering();
@@ -59,33 +57,34 @@ class PricerSolverBdd : public PricerSolverBase {
     // bool check_schedule_set(GPtrArray* set) override;
     bool check_schedule_set(const std::vector<Job*>& set) override;
 
-    void reduce_cost_fixing(double* pi, int UB, double LB) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
-        int                                              num_columns) override;
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
+        override;
     // void make_schedule_set_feasible(GPtrArray* set) override;
     void calculate_job_time(std::vector<std::vector<double>>* v) override;
-    void split_job_time(int _job, int _time, bool _left) override;
+    void split_job_time(size_t _job, int _time, bool _left) override;
     void iterate_zdd() override;
     void create_dot_zdd(const char* name) override;
     void print_number_nodes_edges() override;
     // void add_constraint(Job* job, GPtrArray* list, int order) override;
     void print_num_paths() override;
     void remove_constraints(int first, int nb_del) override;
-    void update_rows_coeff(int first) override;
+    void update_rows_coeff(size_t first) override;
     void insert_constraints_lp(NodeData* pd) override;
 
-    int get_num_remove_nodes() override;
-    int get_num_remove_edges() override;
-    int get_num_layers() override;
-    int add_constraints() override;
+    size_t get_num_remove_nodes() override;
+    size_t get_num_remove_edges() override;
+    int    get_num_layers() override;
+    int    add_constraints() override;
 
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
 
-    inline DdStructure<NodeBdd<double>>& get_decision_diagram() { return decision_diagram; }
+    inline DdStructure<NodeBdd<double>>& get_decision_diagram() {
+        return decision_diagram;
+    }
 
     inline int get_nb_removed_edges() { return nb_removed_edges; }
 

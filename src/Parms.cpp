@@ -1,16 +1,24 @@
 #include "Parms.h"
 #include <docopt/docopt.h>
 #include <fmt/core.h>
+#include <algorithm>
+#include <cstddef>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/drop.hpp>
+#include <range/v3/view/transform.hpp>
 #include <regex>
+#include <span>
 #include <string>
 #include "util.h"
+#include "wctprivate.h"
 
-const double TIME_LIMIT = 7200.0;
+const size_t TIME_LIMIT = 7200;
 const double ALPHA_STAB_INIT = 0.8;
 
 Parms::Parms()
     : init_upper_bound(INT_MAX),
       bb_explore_strategy(min_bb_explore_strategy),
+      scoring_parameter(min_scoring_parameter),
       use_strong_branching(min_strong_branching),
       bb_node_limit(0),
       nb_iterations_rvnd(3),
@@ -48,7 +56,7 @@ int Parms::parms_set_pname(std::string const& fname) {
     return 0;
 }
 
-int Parms::parms_set_branching_cpu_limit(double limit) {
+int Parms::parms_set_branching_cpu_limit(size_t limit) {
     branching_cpu_limit = limit;
     return 0;
 }
@@ -117,6 +125,37 @@ int Parms::parms_set_pricing_solver(int solver) {
     return 0;
 }
 
+int Parms::parms_set_scoring_function(int scoring) {
+    scoring_parameter = static_cast<Scoring_Parameter>(scoring);
+    switch (scoring_parameter) {
+        case min_scoring_parameter:
+            scoring_function = [](double left, double right) {
+                return std::max(left, EPS) * std::max(right, EPS);
+            };
+
+            break;
+        case min_function_scoring_parameter:
+            scoring_function = [](double left, double right) {
+                return std::min(left, right);
+            };
+            break;
+        case weighted_sum_scoring_parameter:
+            scoring_function = [](double left, double right) {
+                return (1.0 - mu) * std::max(left, right) +
+                       mu * std::min(left, right);
+            };
+            break;
+        case weighted_product_scoring_parameter:
+            scoring_function = [](double left, double right) {
+                return std::pow(std::max(left - 1.0, EPS), beta[0]) *
+                       std::pow(std::max(right - 1.0, EPS), beta[1]);
+            };
+            break;
+    }
+
+    return 0;
+}
+
 static std::string find_match(std::string const& _instance_file) {
     std::regex  regexp{"^.*(wt[0-9]*_[0-9]*).*$"};
     std::smatch match{};
@@ -132,12 +171,19 @@ static std::string find_match(std::string const& _instance_file) {
 int Parms::parse_cmd(int argc, const char** argv) {
     int val = 0;
 
-    auto args =
-        docopt::docopt_parse(USAGE, {argv + 1, argv + argc}, true, "PM 0.1");
+    std::span tmp_char{argv, static_cast<size_t>(argc)};
+
+    auto args = docopt::docopt_parse(
+        USAGE,
+        tmp_char | ranges::views::drop(1) |
+            ranges::views::transform(
+                [](auto tmp) -> std::string { return std::string(tmp); }) |
+            ranges::to_vector,
+        true, "PM 0.1");
 
     /** Set CPU limit for branching */
     parms_set_branching_cpu_limit(
-        static_cast<double>(args["--cpu_limit"].asLong()));
+        static_cast<size_t>(args["--cpu_limit"].asLong()));
     /** Set number of iterations in rvnd */
     parms_set_nb_iterations_rvnd(
         static_cast<int>(args["--nb_rvnb_it"].asLong()));
@@ -154,6 +200,8 @@ int Parms::parse_cmd(int argc, const char** argv) {
         static_cast<int>(args["--pricing_solver"].asLong()));
     /** Set the stabilization method */
     parms_set_stab_technique(static_cast<int>(args["--stab_method"].asLong()));
+    parms_set_scoring_function(
+        static_cast<int>(args["--scoring_function"].asLong()));
     parms_set_branchandbound(args["--no_branch_and_bound"].asBool());
     parms_set_strong_branching(!(args["--no_strong_branching"].asBool()));
     parms_set_alpha(std::stod(args["--alpha"].asString()));

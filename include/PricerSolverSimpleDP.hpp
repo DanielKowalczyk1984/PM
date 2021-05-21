@@ -1,5 +1,6 @@
 #ifndef PRICER_SOLVER_SIMPLE_DP_HPP
 #define PRICER_SOLVER_SIMPLE_DP_HPP
+#include <cstddef>
 #include <memory>
 #include "Instance.h"
 #include "PricerSolverBase.hpp"
@@ -47,31 +48,25 @@ class PricerSolverSimpleDp : public PricerSolverBase {
 
     ~PricerSolverSimpleDp() override = default;
 
-    std::unique_ptr<PricerSolverBase> clone() const override {
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return std::make_unique<PricerSolverSimpleDp>(*this);
     };
 
     void init_table();
 
-    void evaluate_nodes([[maybe_unused]] double* pi,
-                        [[maybe_unused]] int     UB,
-                        [[maybe_unused]] double  LB) override;
     void evaluate_nodes([[maybe_unused]] double* pi) override;
-    void reduce_cost_fixing([[maybe_unused]] double* pi,
-                            [[maybe_unused]] int     UB,
-                            [[maybe_unused]] double  LB) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
-        int                                              num_columns) override;
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
+        override;
 
     // void   add_constraint(Job* job, GPtrArray* list, int order) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;
-    int    get_num_remove_nodes() override;
-    int    get_num_remove_edges() override;
+    size_t get_num_remove_nodes() override;
+    size_t get_num_remove_edges() override;
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
     int    get_num_layers() override;

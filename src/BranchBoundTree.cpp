@@ -29,7 +29,7 @@ BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
 
     tree->set_global_ub(double(root->opt_sol.tw));
     tree->set_retain_states(false);
-    tree->set_time_limit(root->parms.branchandbound);
+    tree->set_time_limit(root->parms.branching_cpu_limit);
     tree->set_node_limit(root->parms.bb_node_limit);
     auto aux = root->depth;
     auto node = std::make_unique<BranchNodeBase>(std::move(root), true);

@@ -4,6 +4,7 @@
 #include <bits/ranges_algo.h>
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <list>
 #include <random>
@@ -30,8 +31,8 @@ struct SlopeType {
           alpha(_alpha) {}
 
     int                operator()(int t) { return c + alpha * (t - b1); };
-    [[nodiscard]] bool in_interval(int c) const {
-        return (b1 <= c) && (c < b2);
+    [[nodiscard]] bool in_interval(int _c) const {
+        return (b1 <= _c) && (_c < b2);
     };
 };
 
@@ -56,14 +57,14 @@ using SlopeList = std::list<SlopeType>;
 using SlopeListIt = std::list<SlopeType>::iterator;
 
 struct LocalSearchData {
-    LocalSearchData(int _nb_jobs, int _nb_machines);
+    LocalSearchData(size_t _nb_jobs, size_t _nb_machines);
     void RVND(Sol& sol);
 
    private:
-    int  nb_jobs;
-    int  nb_machines;
-    bool updated{};
-    int  iterations{};
+    size_t nb_jobs;
+    size_t nb_machines;
+    bool   updated{};
+    int    iterations{};
 
     constexpr static int nb_moves = 15;
 
@@ -108,14 +109,16 @@ struct LocalSearchData {
 
     void calculate_W(const Sol& sol);
     void calculate_g(Sol& sol);
-    void create_processing_insertion_operator(const Sol& sol, int l);
-    void create_processing_insertion_operator_inter(const Sol& sol, int l);
-    void create_processing_list_swap(const Sol& sol, int l1, int l2);
-    void create_processing_list_swap_inter(const Sol& sol, int l1, int l2);
-    void swap_operator(Sol& sol, int l1, int l2);
-    void swap_operator_inter(Sol& sol, int l1, int l2);
-    void insertion_operator(Sol& sol, int l);
-    void insertion_operator_inter(Sol& sol, int l);
+    void create_processing_insertion_operator(const Sol& sol, size_t l);
+    void create_processing_insertion_operator_inter(const Sol& sol, size_t l);
+    void create_processing_list_swap(const Sol& sol, size_t l1, size_t l2);
+    void create_processing_list_swap_inter(const Sol& sol,
+                                           size_t     l1,
+                                           size_t     l2);
+    void swap_operator(Sol& sol, size_t l1, size_t l2);
+    void swap_operator_inter(Sol& sol, size_t l1, size_t l2);
+    void insertion_operator(Sol& sol, size_t l);
+    void insertion_operator_inter(Sol& sol, size_t l);
 };
 
 struct PerturbOperator {
@@ -128,14 +131,14 @@ struct PerturbOperator {
 
     PerturbOperator()
         : perturbation_list{
-              [&](Sol& sol) { sol.perturb_swap_inter(1, 2, gen); },
-              [&](Sol& sol) { sol.perturb_swap_inter(1, 2, gen); },
-              [&](Sol& sol) { sol.perturb_swap_inter(1, 3, gen); },
-              [&](Sol& sol) { sol.perturb_swap_inter(1, 3, gen); },
-              [&](Sol& sol) { sol.perturb_swap_inter(2, 2, gen); },
-              [&](Sol& sol) { sol.perturb_swap_inter(2, 2, gen); },
-              [&](Sol& sol) { sol.perturb_swap_inter(2, 3, gen); },
-              [&](Sol& sol) { sol.perturb_swap_inter(2, 3, gen); }},
+              [&](Sol& sol) { sol.perturb_swap_inter(1UL, 2UL, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(1UL, 2UL, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(1UL, 3UL, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(1UL, 3UL, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(2UL, 2UL, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(2UL, 2UL, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(2UL, 3UL, gen); },
+              [&](Sol& sol) { sol.perturb_swap_inter(2UL, 3UL, gen); }},
           dist(0, max_nb_perturbations - 1) {}
     void operator()(Sol& sol) {
         std::ranges::shuffle(perturbation_list.begin(), perturbation_list.end(),

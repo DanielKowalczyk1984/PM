@@ -10,7 +10,7 @@ function runBenchmark(){
     instances=($(ls $HOME/Papers/PM/implementation/instances/wt{040,050,100}/*{1,6}.dat))
     machines=4
     solvers=4
-    printf "%s\n" "${instances[@]}" | xargs -I{} printf "{} %s\n" "${machines[@]}" | xargs -I{} printf "-a %s {}\n" "${solvers[@]}" | parallel --no-notice -P 2 --eta --colsep ' ' "build/bin/PM -f 2000 -S 1 {}";
+    printf "%s\n" "${instances[@]}" | xargs -I{} printf "{} %s\n" "${machines[@]}" | xargs -I{} printf "-a %s {}\n" "${solvers[@]}" | parallel --no-notice -P 3 --eta --colsep ' ' "build/bin/PM -s 3 -f 5000 -S 1 {}";
 }
 
 

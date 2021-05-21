@@ -1,6 +1,5 @@
 #ifndef __INSTANCE_H__
 #define __INSTANCE_H__
-#include <bits/c++config.h>
 #include <fmt/core.h>
 #include <cstddef>
 #include <filesystem>
@@ -42,9 +41,11 @@ struct Instance {
     ~Instance() = default;
     class InstanceException : public std::exception {
        public:
-        InstanceException(const char* const msg = nullptr) : errmsg(msg) { }
+        InstanceException(const char* const msg = nullptr) : errmsg(msg) {}
 
-        [[nodiscard]] const char* what() const noexcept override { return (errmsg); }
+        [[nodiscard]] const char* what() const noexcept override {
+            return (errmsg);
+        }
 
        private:
         const char* errmsg;

@@ -45,7 +45,7 @@
 
 class BuilderBase {
    protected:
-    static int const headerSize = 1;
+    static size_t const headerSize = 1;
 
     /* SpecNode
      * ┌────────┬────────┬────────┬─────
@@ -70,26 +70,26 @@ class BuilderBase {
 
     static void const* state(SpecNode const* p) { return p + headerSize; }
 
-    static size_t getSpecNodeSize(int n) {
-        if (n < 0) {
-            throw std::runtime_error("storage size is not initialized!!!");
-        }
+    static size_t getSpecNodeSize(size_t n) {
+        // if (n < 0) {
+        //     throw std::runtime_error("storage size is not initialized!!!");
+        // }
         return headerSize + (n + sizeof(SpecNode) - 1) / sizeof(SpecNode);
     }
 
     template <typename SPEC>
     struct Hasher {
-        SPEC const& spec;
-        int const   level;
+        SPEC const&  spec;
+        size_t const level;
 
-        Hasher(SPEC const& _spec, int _level) : spec(_spec), level(_level) {}
+        Hasher(SPEC const& _spec, size_t _level) : spec(_spec), level(_level) {}
 
         size_t operator()(SpecNode const* p) const {
-            return spec.hash_code(state(p), level);
+            return spec.hash_code(state(p), static_cast<int>(level));
         }
 
         size_t operator()(SpecNode const* p, SpecNode const* q) const {
-            return spec.equal_to(state(p), state(q), level);
+            return spec.equal_to(state(p), state(q), static_cast<int>(level));
         }
     };
 };
@@ -101,10 +101,10 @@ template <typename S, typename T = NodeBdd<double>>
 class DdBuilder : BuilderBase {
     using Spec = S;
     using UniqTable = std::unordered_set<SpecNode*, Hasher<Spec>, Hasher<Spec>>;
-    static int const AR = Spec::ARITY;
+    static size_t const AR = Spec::ARITY;
 
     Spec                spec;
-    int const           specNodeSize;
+    size_t const        specNodeSize;
     NodeTableEntity<T>& output;
     DdSweeper<T>        sweeper;
 
@@ -114,7 +114,7 @@ class DdBuilder : BuilderBase {
     void* const               one;
     std::vector<NodeBranchId> oneSrcPtr;
 
-    void init(int n) {
+    void init(size_t n) {
         spec_node_table.resize(n + 1);
         if (n >= output.numRows()) {
             output.setNumRows(n + 1);
@@ -123,7 +123,7 @@ class DdBuilder : BuilderBase {
     }
 
    public:
-    DdBuilder(Spec const& _spec, TableHandler<T>& _output, int n = 0)
+    DdBuilder(Spec const& _spec, TableHandler<T>& _output, size_t n = 0UL)
         : spec(_spec),
           specNodeSize(getSpecNodeSize(_spec.datasize())),
           output(*_output),
@@ -173,7 +173,7 @@ class DdBuilder : BuilderBase {
             root = n ? 1 : 0;
             n = 0;
         } else {
-            init(n);
+            init(static_cast<size_t>(n));
             schedule(&root, n, tmpState);
         }
 
@@ -189,13 +189,13 @@ class DdBuilder : BuilderBase {
      * Builds one level.
      * @param i level.
      */
-    void construct(int i) {
-        assert(0 < i && size_t(i) < spec_node_table.size());
+    void construct(size_t i) {
+        assert(0UL < i && size_t(i) < spec_node_table.size());
 
         MyList<SpecNode>& spec_nodes = spec_node_table[i];
         size_t            j0 = output[i].size();
         size_t            m = j0;
-        int               lowestChild = i - 1;
+        size_t            lowestChild = i - 1;
         size_t            deadCount = 0;
 
         {
@@ -235,13 +235,13 @@ class DdBuilder : BuilderBase {
         }
 
         output[i].resize(m);
-        T* const  output_data = output[i].data();
+        // T* const  output_data = output[i].data();
         size_t    jj = j0;
         SpecNode* pp = spec_node_table[i - 1].alloc_front(specNodeSize);
 
         for (; !spec_nodes.empty(); spec_nodes.pop_front()) {
             SpecNode* p = spec_nodes.front();
-            T&        q = output_data[jj];
+            T&        q = output[i][jj];
 
             if (nodeId(p) == 1) {
                 spec.destruct(state(p));
@@ -250,19 +250,20 @@ class DdBuilder : BuilderBase {
 
             bool allZero = true;
 
-            for (int b = 0; b < AR; ++b) {
+            for (auto b = 0UL; b < AR; ++b) {
                 if (nodeId(p) == 0) {
                     q[b] = 0;
                     continue;
                 }
 
                 spec.get_copy(state(pp), state(p));
-                int ii = spec.get_child(state(pp), i, b);
+                size_t ii = spec.get_child(state(pp), static_cast<int>(i),
+                                           static_cast<int>(b));
 
-                if (ii == 0) {
+                if (ii == 0UL) {
                     q[b] = 0;
                     spec.destruct(state(pp));
-                } else if (ii < 0) {
+                } else if (ii + 1 == 0) {
                     if (oneSrcPtr.empty()) {  // the first 1-terminal candidate
                         spec.get_copy(one, state(pp));
                         q[b] = 1;
@@ -292,12 +293,12 @@ class DdBuilder : BuilderBase {
                     }
                     spec.destruct(state(pp));
                     allZero = false;
-                } else if (ii == i - 1) {
+                } else if (ii + 1 == i) {
                     srcPtr(pp) = &q[b];
                     pp = spec_node_table[ii].alloc_front(specNodeSize);
                     allZero = false;
                 } else {
-                    assert(ii < i - 1);
+                    assert(ii + 1 < i);
                     SpecNode* ppp =
                         spec_node_table[ii].alloc_front(specNodeSize);
                     spec.get_copy(state(ppp), state(pp));
@@ -336,7 +337,7 @@ class ZddSubsetter : BuilderBase {
     // std::remove_reference<S>::type>::type Spec;
     using Spec = S;
     using UniqTable = std::unordered_set<SpecNode*, Hasher<Spec>, Hasher<Spec>>;
-    static int const AR = Spec::ARITY;
+    static size_t const AR = Spec::ARITY;
 
     Spec                              spec;
     int const                         specNodeSize;
@@ -386,7 +387,7 @@ class ZddSubsetter : BuilderBase {
         void* const       tmpState = tmp.data();
         int               n = spec.get_root(tmpState);
 
-        int k = (root == 1) ? -1 : root.row();
+        int k = (root == 1) ? -1 : static_cast<int>(root.row());
 
         while (n != 0 && k != 0 && n != k) {
             if (n < k) {
@@ -428,7 +429,7 @@ class ZddSubsetter : BuilderBase {
      * Builds one level.
      * @param i level.
      */
-    void subset(int i) {
+    void subset(size_t i) {
         assert(0 < i && i < output.numRows());
         assert(output.numRows() - pools.size() == 0);
 
@@ -437,7 +438,7 @@ class ZddSubsetter : BuilderBase {
         void* const        tmpState = tmp.data();
         size_t const       m = input[i].size();
         size_t             mm = 0;
-        int                lowestChild = i - 1;
+        auto                lowestChild = i - 1;
         size_t             deadCount = 0;
 
         if (work[i].empty()) {
@@ -484,14 +485,14 @@ class ZddSubsetter : BuilderBase {
         }
 
         output.initRow(i, mm);
-        T* const output_data = output[i].data();
-        size_t   jj = 0;
+        // T* const output_data = output[i].data();
+        size_t jj = 0;
 
         for (size_t j = 0; j < m; ++j) {
             MyListOnPool<SpecNode>& list = work[i][j];
 
             for (auto p : list) {
-                T& q = output_data[jj];
+                T& q = output[i][jj];
 
                 if (nodeId(p) == 1) {
                     spec.destruct(state(p));
@@ -599,7 +600,7 @@ class ZddSubsetter : BuilderBase {
         while (f.row() > zerosupLevel) {
             f = input.child(f, 0);
         }
-        return (f == 1) ? -1 : f.row();
+        return (f == 1) ? -1 : static_cast<int>(f.row());
     }
 
     int downSpec(void* p, int level, int b, int zerosupLevel) {

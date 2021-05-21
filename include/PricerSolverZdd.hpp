@@ -1,7 +1,9 @@
 #ifndef PRICER_SOLVER_ZDD_HPP
 #define PRICER_SOLVER_ZDD_HPP
 
+#include <stddef.h>
 #include <NodeBddStructure.hpp>
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -17,8 +19,8 @@ class PricerSolverZdd : public PricerSolverBase {
     std::unique_ptr<DdStructure<NodeZdd<double>>> decision_diagram;
 
     size_t size_graph{};
-    int    nb_removed_edges{};
-    int    nb_removed_nodes{};
+    size_t nb_removed_edges{};
+    size_t nb_removed_nodes{};
 
     // GPtrArray*                              ordered_jobs;
     std::vector<std::pair<Job*, Interval*>> ordered_jobs_new;
@@ -43,15 +45,13 @@ class PricerSolverZdd : public PricerSolverBase {
           ordered_jobs_new(src.ordered_jobs_new),
           mip_graph(src.mip_graph) {}
 
-    ~PricerSolverZdd() = default;
-    std::unique_ptr<PricerSolverBase> clone() const override {
+    ~PricerSolverZdd() override = default;
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return nullptr;
     };
 
     void init_table();
-    void evaluate_nodes(double* pi, int UB, double LB) override = 0;
 
-    void reduce_cost_fixing(double* pi, int UB, double LB) override;
     void remove_layers();
     void remove_edges();
 
@@ -59,14 +59,14 @@ class PricerSolverZdd : public PricerSolverBase {
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets,
-        int                                              num_columns) override;
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
+        override;
     bool   check_schedule_set(const std::vector<Job*>& set) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;
-    int    get_num_remove_nodes() override;
-    int    get_num_remove_edges() override;
+    size_t get_num_remove_nodes() override;
+    size_t get_num_remove_edges() override;
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
     int    get_num_layers() override;

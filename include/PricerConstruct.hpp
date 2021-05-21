@@ -24,7 +24,7 @@ class conflict_state {
 
 class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     const std::vector<std::pair<Job*, Interval*>>* ptr_vector{};
-    int                                            nb_layers;
+    size_t                                         nb_layers;
 
    public:
     explicit PricerConstruct(const Instance& instance)
@@ -68,13 +68,13 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     ~PricerConstruct() = default;
 
    private:
-    [[nodiscard]] int min_job(int j, int state, int value) const {
-        int val = nb_layers;
+    [[nodiscard]] size_t min_job(size_t j, int state, int value) const {
+        auto val = nb_layers;
         // auto* tmp = static_cast<job_interval_pair*>(aux_list[j])->j;
         auto* tmp = (*ptr_vector)[j].first;
 
         if (value) {
-            for (int i = j + 1; i < nb_layers; ++i) {
+            for (size_t i = j + 1; i < nb_layers; ++i) {
                 auto& tmp_pair = (*ptr_vector)[i];
                 auto* tmp_j = tmp_pair.first;
                 auto* tmp_interval = tmp_pair.second;
@@ -93,7 +93,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
                 }
             }
         } else {
-            for (int i = j + 1; i < nb_layers; ++i) {
+            for (size_t i = j + 1; i < nb_layers; ++i) {
                 auto& tmp_pair = (*ptr_vector)[i];
                 auto* tmp_j = tmp_pair.first;
                 auto* tmp_interval = tmp_pair.second;
@@ -230,226 +230,226 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 //     }
 // };
 
-class ConflictConstraints
-    : public DdSpec<ConflictConstraints, conflict_state, 2> {
-    int                                  nb_jobs;
-    std::vector<boost::dynamic_bitset<>> differsets;
-    std::vector<boost::dynamic_bitset<>> samesets;
+// class ConflictConstraints
+//     : public DdSpec<ConflictConstraints, conflict_state, 2> {
+//     size_t                               nb_jobs;
+//     std::vector<boost::dynamic_bitset<>> differsets;
+//     std::vector<boost::dynamic_bitset<>> samesets;
 
-    bool takeable(int job, conflict_state& state) {
-        if (state.remove[job]) {
-            return false;
-        }
+//     bool takeable(size_t job, conflict_state& state) {
+//         if (state.remove[job]) {
+//             return false;
+//         }
 
-        return true;
-    }
+//         return true;
+//     }
 
-    bool leaveable(int job, conflict_state& state) {
-        if (state.add[job]) {
-            return false;
-        }
+//     bool leaveable(size_t job, conflict_state& state) {
+//         if (state.add[job]) {
+//             return false;
+//         }
 
-        return true;
-    }
+//         return true;
+//     }
 
-   public:
-    ConflictConstraints(int    _nb_jobs,
-                        int*   elist_same,
-                        size_t edge_count_same,
-                        int*   elist_differ,
-                        size_t edge_count_differ)
-        : nb_jobs(_nb_jobs) {
-        std::span aux_same{elist_same, edge_count_same};
-        std::span aux_diff{elist_differ, edge_count_differ};
+//    public:
+//     ConflictConstraints(size_t _nb_jobs,
+//                         int*   elist_same,
+//                         size_t edge_count_same,
+//                         int*   elist_differ,
+//                         size_t edge_count_differ)
+//         : nb_jobs(_nb_jobs) {
+//         std::span aux_same{elist_same, edge_count_same};
+//         std::span aux_diff{elist_differ, edge_count_differ};
 
-        differsets.resize(_nb_jobs);
-        samesets.resize(_nb_jobs);
+//         differsets.resize(_nb_jobs);
+//         samesets.resize(_nb_jobs);
 
-        for (int i = 0; i < _nb_jobs; i++) {
-            differsets[i].resize(_nb_jobs);
-            samesets[i].resize(_nb_jobs);
-        }
+//         for (auto i = 0UL; i < _nb_jobs; i++) {
+//             differsets[i].resize(_nb_jobs);
+//             samesets[i].resize(_nb_jobs);
+//         }
 
-        for (int i = 0; i < edge_count_same; ++i) {
-            samesets[aux_same[2 * i]][aux_same[2 * i + 1]] = true;
-        }
+//         for (auto i = 0UL; i < edge_count_same; ++i) {
+//             samesets[aux_same[2 * i]][aux_same[2 * i + 1]] = true;
+//         }
 
-        for (int i = 0; i < edge_count_differ; ++i) {
-            differsets[aux_diff[2 * i]][aux_diff[2 * i + 1]] = true;
-        }
-    };
+//         for (auto i = 0UL; i < edge_count_differ; ++i) {
+//             differsets[aux_diff[2 * i]][aux_diff[2 * i + 1]] = true;
+//         }
+//     };
 
-    ~ConflictConstraints() = default;
-    ConflictConstraints(const ConflictConstraints&) = default;
-    ConflictConstraints(ConflictConstraints&&) = default;
-    ConflictConstraints& operator=(ConflictConstraints&&) = default;
-    ConflictConstraints& operator=(const ConflictConstraints&) = default;
+//     ~ConflictConstraints() = default;
+//     ConflictConstraints(const ConflictConstraints&) = default;
+//     ConflictConstraints(ConflictConstraints&&) = default;
+//     ConflictConstraints& operator=(ConflictConstraints&&) = default;
+//     ConflictConstraints& operator=(const ConflictConstraints&) = default;
 
-    int getRoot(conflict_state& state) const {
-        state.add.resize(nb_jobs);
-        state.remove.resize(nb_jobs);
-        return nb_jobs;
-    }
+//     int getRoot(conflict_state& state) const {
+//         state.add.resize(nb_jobs);
+//         state.remove.resize(nb_jobs);
+//         return nb_jobs;
+//     }
 
-    int getChild(conflict_state& state, int level, int take) {
-        int job = nb_jobs - level;
-        int _j = 0;
-        assert(0 <= job && job <= nb_jobs - 1);
+//     int getChild(conflict_state& state, int level, int take) {
+//         size_t job = nb_jobs - level;
+//         size_t _j = 0UL;
+//         assert(0UL <= job && job <= nb_jobs - 1);
 
-        if (samesets[job].intersects(differsets[job])) {
-            return 0;
-        }
+//         if (samesets[job].intersects(differsets[job])) {
+//             return 0;
+//         }
 
-        if (level - 1 == 0 && take) {
-            return (!state.remove[job]) ? -1 : 0;
-        } else if (level - 1 == 0) {
-            return (!state.add[job]) ? -1 : 0;
-        }
+//         if (level - 1 == 0 && take) {
+//             return (!state.remove[job]) ? -1 : 0;
+//         } else if (level - 1 == 0) {
+//             return (!state.add[job]) ? -1 : 0;
+//         }
 
-        if (take) {
-            if (!takeable(job, state)) {
-                return 0;
-            }
+//         if (take) {
+//             if (!takeable(job, state)) {
+//                 return 0;
+//             }
 
-            state.add |= samesets[job];
-            state.remove |= differsets[job];
-        } else {
-            if (!leaveable(job, state)) {
-                return 0;
-            }
+//             state.add |= samesets[job];
+//             state.remove |= differsets[job];
+//         } else {
+//             if (!leaveable(job, state)) {
+//                 return 0;
+//             }
 
-            state.remove |= samesets[job];
-        }
+//             state.remove |= samesets[job];
+//         }
 
-        _j = min_job(job, &state);
+//         _j = min_job(job, &state);
 
-        if (_j == nb_jobs && take) {
-            return (!state.remove[job]) ? -1 : 0;
-        } else if (_j == nb_jobs) {
-            return (!state.add[job]) ? -1 : 0;
-        }
+//         if (_j == nb_jobs && take) {
+//             return (!state.remove[job]) ? -1 : 0;
+//         } else if (_j == nb_jobs) {
+//             return (!state.add[job]) ? -1 : 0;
+//         }
 
-        assert(_j < nb_jobs);
-        return nb_jobs - _j;
-    }
+//         assert(_j < nb_jobs);
+//         return nb_jobs - _j;
+//     }
 
-    [[nodiscard]] bool equalTo(conflict_state const& state1,
-                               conflict_state const& state2) const {
-        if (state2.add != state1.add) {
-            return false;
-        }
+//     [[nodiscard]] bool equalTo(conflict_state const& state1,
+//                                conflict_state const& state2) const {
+//         if (state2.add != state1.add) {
+//             return false;
+//         }
 
-        if (state2.remove != state1.remove) {
-            return false;
-        }
+//         if (state2.remove != state1.remove) {
+//             return false;
+//         }
 
-        return true;
-    }
+//         return true;
+//     }
 
-    [[nodiscard]] size_t hashCode(conflict_state const& state) const {
-        size_t val = 0;
-        size_t it = state.add.find_first();
+//     [[nodiscard]] size_t hashCode(conflict_state const& state) const {
+//         size_t val = 0;
+//         size_t it = state.add.find_first();
 
-        while (it != boost::dynamic_bitset<>::npos) {
-            // val += 1213657 * it;
-            boost::hash_combine(val, it);
-            it = state.add.find_next(it);
-        }
+//         while (it != boost::dynamic_bitset<>::npos) {
+//             // val += 1213657 * it;
+//             boost::hash_combine(val, it);
+//             it = state.add.find_next(it);
+//         }
 
-        it = state.remove.find_first();
+//         it = state.remove.find_first();
 
-        while (it != boost::dynamic_bitset<>::npos) {
-            // val += 487239 * it;
-            boost::hash_combine(val, it);
-            it = state.remove.find_next(it);
-        }
+//         while (it != boost::dynamic_bitset<>::npos) {
+//             // val += 487239 * it;
+//             boost::hash_combine(val, it);
+//             it = state.remove.find_next(it);
+//         }
 
-        return val;
-    }
+//         return val;
+//     }
 
-    int min_job(int j, conflict_state* state) const {
-        int val = nb_jobs;
+//     size_t min_job(size_t j, conflict_state* state) const {
+//         auto val = nb_jobs;
 
-        for (int i = j + 1; i < nb_jobs; ++i) {
-            if (!state->remove[i]) {
-                val = i;
-                break;
-            }
-        }
+//         for (auto i = j + 1; i < nb_jobs; ++i) {
+//             if (!state->remove[i]) {
+//                 val = i;
+//                 break;
+//             }
+//         }
 
-        return val;
-    }
-};
+//         return val;
+//     }
+// };
 
-class scheduling : public DdSpec<scheduling, int, 2> {
-    Job*                                           job;
-    const std::vector<std::pair<Job*, Interval*>>* ptr_vector;
-    // GPtrArray*                                     list_layers;
-    // std::span<void*>                               aux_list;
-    int nb_layers;
-    int order;
+// class scheduling : public DdSpec<scheduling, int, 2> {
+//     Job*                                           job;
+//     const std::vector<std::pair<Job*, Interval*>>* ptr_vector;
+//     // GPtrArray*                                     list_layers;
+//     // std::span<void*>                               aux_list;
+//     int nb_layers;
+//     int order;
 
-   public:
-    explicit scheduling(Job*                                     _job,
-                        std::vector<std::pair<Job*, Interval*>>& _vector_pair,
-                        int                                      _order)
-        : job(_job),
-          ptr_vector(&_vector_pair),
-          nb_layers(_vector_pair.size()),
-          order(_order) {}
+//    public:
+//     explicit scheduling(Job*                                     _job,
+//                         std::vector<std::pair<Job*, Interval*>>&
+//                         _vector_pair, int _order)
+//         : job(_job),
+//           ptr_vector(&_vector_pair),
+//           nb_layers(_vector_pair.size()),
+//           order(_order) {}
 
-    scheduling(const scheduling&) = default;
-    scheduling(scheduling&&) = default;
-    scheduling& operator=(const scheduling&) = default;
-    scheduling& operator=(scheduling&&) = default;
-    ~scheduling() = default;
+//     scheduling(const scheduling&) = default;
+//     scheduling(scheduling&&) = default;
+//     scheduling& operator=(const scheduling&) = default;
+//     scheduling& operator=(scheduling&&) = default;
+//     ~scheduling() = default;
 
-    int getRoot(int& state) const {
-        state = 0;
-        return nb_layers;
-    }
+//     int getRoot(int& state) const {
+//         state = 0;
+//         return nb_layers;
+//     }
 
-    int getChild(int& state, int level, int take) {
-        auto j = nb_layers - level;
-        // assert(0 <= j && j <= nb_layers - 1);
-        auto& tmp = (*ptr_vector)[j];
-        auto* tmp_j = tmp.first;
+//     int getChild(int& state, int level, int take) {
+//         auto j = nb_layers - level;
+//         // assert(0 <= j && j <= nb_layers - 1);
+//         auto& tmp = (*ptr_vector)[j];
+//         auto* tmp_j = tmp.first;
 
-        if (level - 1 == 0 && take) {
-            if (tmp_j != job) {
-                return -1;
-            } else {
-                if (state == 0) {
-                    return -1;
-                }
-                return 0;
-            }
-        } else if (level - 1 == 0) {
-            return -1;
-        }
+//         if (level - 1 == 0 && take) {
+//             if (tmp_j != job) {
+//                 return -1;
+//             } else {
+//                 if (state == 0) {
+//                     return -1;
+//                 }
+//                 return 0;
+//             }
+//         } else if (level - 1 == 0) {
+//             return -1;
+//         }
 
-        if (take) {
-            if (tmp_j != job) {
-                // state++;
-                j++;
-                return nb_layers - j;
-            } else {
-                if (state == 0) {
-                    state++;
-                    j++;
-                    return nb_layers - j;
-                } else if (state >= order) {
-                    state = 1;
-                    j++;
-                    return nb_layers - j;
-                } else {
-                    state++;
-                    return 0;
-                }
-            }
-        } else {
-            j++;
-            return nb_layers - j;
-        }
-    }
-};
+//         if (take) {
+//             if (tmp_j != job) {
+//                 // state++;
+//                 j++;
+//                 return nb_layers - j;
+//             } else {
+//                 if (state == 0) {
+//                     state++;
+//                     j++;
+//                     return nb_layers - j;
+//                 } else if (state >= order) {
+//                     state = 1;
+//                     j++;
+//                     return nb_layers - j;
+//                 } else {
+//                     state++;
+//                     return 0;
+//                 }
+//             }
+//         } else {
+//             j++;
+//             return nb_layers - j;
+//         }
+//     }
+// };

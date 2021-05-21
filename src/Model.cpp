@@ -2,7 +2,9 @@
 #include <numeric>
 #include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/numeric/iota.hpp>
+#include <range/v3/view/drop.hpp>
 #include <range/v3/view/enumerate.hpp>
+#include <range/v3/view/take.hpp>
 #include <vector>
 #include "Instance.h"
 #include "Statistics.h"
@@ -22,8 +24,9 @@ int NodeData::grab_integer_solution(std::vector<double> const& x,
     best_schedule.clear();
 
     for (const auto&& [i, tmp_schedule] :
-         localColPool | ranges::views::enumerate) {
-        if (x[i + id_pseudo_schedules] >= 1.0 - tolerance) {
+         localColPool | ranges::views::enumerate |
+             ranges::views::drop(id_pseudo_schedules)) {
+        if (x[i] >= 1.0 - tolerance) {
             auto aux = std::make_shared<ScheduleSet>(*tmp_schedule);
             best_schedule.emplace_back(aux);
 
@@ -66,17 +69,18 @@ int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
         }
     }
 
-    int len = id_row.size();
+    auto len = id_row.size();
 
     auto cost = static_cast<double>(set->total_weighted_completion_time);
-    lp_interface_addcol(RMP.get(), len, id_row.data(), coeff_row.data(), cost,
-                        0.0, GRB_INFINITY, lp_interface_CONT, nullptr);
+    lp_interface_addcol(RMP.get(), static_cast<int>(len), id_row.data(),
+                        coeff_row.data(), cost, 0.0, GRB_INFINITY,
+                        lp_interface_CONT, nullptr);
 
     return 0;
 }
 
 int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
-    auto  row_ind = 0;
+    // auto  row_ind = 0;
     auto  var_ind = 0;
     auto  cval = 0.0;
     auto  cost = static_cast<double>(set->total_weighted_completion_time);
@@ -87,14 +91,22 @@ int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
     lp_interface_addcol(lp, 0, nullptr, nullptr, cost, 0.0, GRB_INFINITY,
                         lp_interface_CONT, nullptr);
 
-    for (auto& it : set->job_list) {
-        row_ind = it->job;
-        lp_interface_getcoeff(lp, &row_ind, &var_ind, &cval);
-        cval += 1.0;
-        lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
-    }
+    // for (auto& it : set->job_list) {
+    //     row_ind = static_cast<int>(it->job);
+    //     lp_interface_getcoeff(lp, &row_ind, &var_ind, &cval);
+    //     cval += 1.0;
+    //     lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
+    // }
+    ranges::for_each(
+        set->job_list,
+        [&](auto ind) {
+            lp_interface_getcoeff(lp, &ind, &var_ind, &cval);
+            cval += 1.0;
+            lp_interface_chgcoeff(lp, 1, &ind, &var_ind, &cval);
+        },
+        [](const auto tmp) { return static_cast<int>(tmp->job); });
 
-    row_ind = nb_jobs;
+    auto row_ind = static_cast<int>(nb_jobs);
     cval = -1.0;
     lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
 
@@ -110,8 +122,9 @@ int NodeData::build_rmp() {
      * add assignment constraints
      */
     lp_interface_get_nb_rows(RMP.get(), &(id_assignment_constraint));
-    lp_interface_addrows(RMP.get(), nb_jobs, 0, start.data(), nullptr, nullptr,
-                         sense.data(), rhs_tmp.data(), nullptr);
+    lp_interface_addrows(RMP.get(), static_cast<int>(nb_jobs), 0, start.data(),
+                         nullptr, nullptr, sense.data(), rhs_tmp.data(),
+                         nullptr);
 
     /**
      * add number of machines constraint (convexification)
@@ -130,24 +143,25 @@ int NodeData::build_rmp() {
     id_art_var_convex = nb_jobs;
     id_art_var_cuts = nb_jobs + 1;
     id_next_var_cuts = id_art_var_cuts;
-    int nb_vars = nb_jobs + 1 + max_nb_cuts;
-    id_pseudo_schedules = nb_vars;
+    auto nb_vars = nb_jobs + 1 + max_nb_cuts;
+    id_pseudo_schedules = static_cast<int>(nb_vars);
 
     std::vector<double> lb(nb_vars, 0.0);
     std::vector<double> ub(nb_vars, GRB_INFINITY);
     std::vector<double> obj(nb_vars, 100.0 * (opt_sol.tw + 1));
     std::vector<char>   vtype(nb_vars, GRB_CONTINUOUS);
-    std::vector<int>    start_vars(nb_vars + 1, nb_jobs + 1);
+    std::vector<int> start_vars(nb_vars + 1, static_cast<int>(nb_jobs + 1UL));
 
-    start_vars[nb_vars] = nb_jobs + 1;
+    start_vars[nb_vars] = static_cast<int>(nb_jobs + 1);
 
     std::vector<int> rows_ind(nb_jobs + 1);
     ranges::iota(rows_ind, 0);
     std::vector<double> coeff_vals(nb_jobs + 1, 1.0);
     coeff_vals[nb_jobs] = -1.0;
-    ranges::iota(start_vars.begin(), start_vars.begin() + nb_jobs + 1, 0);
+    ranges::iota(start_vars | ranges::views::take(nb_jobs + 1), 0);
 
-    lp_interface_addcols(RMP.get(), nb_vars, nb_jobs + 1, start_vars.data(),
+    lp_interface_addcols(RMP.get(), static_cast<int>(nb_vars),
+                         static_cast<int>(nb_jobs + 1), start_vars.data(),
                          rows_ind.data(), coeff_vals.data(), obj.data(),
                          lb.data(), ub.data(), vtype.data(), nullptr);
     lp_interface_get_nb_cols(RMP.get(), &(id_pseudo_schedules));
@@ -161,13 +175,13 @@ int NodeData::build_rmp() {
      * Some aux variables for column generation
      */
 
-    pi.resize(nb_rows, 0.0);
-    slack.resize(nb_rows, 0.0);
-    rhs.resize(nb_rows, 0.0);
+    pi.resize(nb_jobs + 1, 0.0);
+    slack.resize(nb_jobs + 1, 0.0);
+    rhs.resize(nb_jobs + 1, 0.0);
     lp_interface_get_rhs(RMP.get(), rhs.data());
-    lhs_coeff.resize(nb_rows, 0.0);
-    id_row.reserve(nb_rows);
-    coeff_row.reserve(nb_rows);
+    lhs_coeff.resize(nb_jobs + 1, 0.0);
+    id_row.reserve(nb_jobs + 1);
+    coeff_row.reserve(nb_jobs + 1);
 
     return 0;
 }

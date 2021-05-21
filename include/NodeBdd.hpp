@@ -27,7 +27,7 @@ class NodeBdd : public NodeBase {
     std::array<double, 2>   lp_x{0.0, 0.0};
 
     std::array<bool, 2>     calc{true, true};
-    int                     key{-1};
+    size_t                  key{};
     bool                    visited{false};
     bool                    lp_visited{false};
     boost::dynamic_bitset<> all{};
@@ -42,7 +42,7 @@ class NodeBdd : public NodeBase {
      * Constructor
      */
     NodeBdd() = default;
-    NodeBdd(int i, int j) : NodeBase(i, j) {}
+    NodeBdd(size_t i, size_t j) : NodeBase(i, j) {}
 
     NodeBdd<T>(const NodeBdd<T>& src) = default;
     NodeBdd<T>(NodeBdd<T>&& src) noexcept = default;
@@ -57,7 +57,7 @@ class NodeBdd : public NodeBase {
 
     [[nodiscard]] Job* get_job() const { return job; }
 
-    [[nodiscard]] inline int get_nb_job() const { return job->job; }
+    [[nodiscard]] inline size_t get_nb_job() const { return job->job; }
 
     void reset_reduced_costs() { reduced_cost = cost; }
 
@@ -68,7 +68,7 @@ class NodeBdd : public NodeBase {
         lp_visited = false;
     }
 
-    void add_coeff_list(const std::shared_ptr<BddCoeff> ptr, bool high) {
+    void add_coeff_list(const std::shared_ptr<BddCoeff>& ptr, bool high) {
         if (high) {
             coeff_list[1].push_back(ptr);
         } else {
@@ -113,14 +113,14 @@ class NodeBdd : public NodeBase {
     }
 
     void set_node_id_label(NodeId _id) {
-        for (int j = 0; j < 2; j++) {
+        for (auto j = 0UL; j < 2; j++) {
             backward_label[j].set_node_id(_id);
             forward_label[j].set_node_id(_id);
         }
     }
 
     void set_job_label(Job* _job) {
-        for (int j = 0; j < 2; j++) {
+        for (auto j = 0UL; j < 2; j++) {
             backward_label[j].set_job(_job);
             forward_label[j].set_job(_job);
         }
