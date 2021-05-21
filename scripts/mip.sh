@@ -7,8 +7,8 @@ SRC_DIR=`dirname "$BASH_SOURCE"`/..
 # Invoke MIP on the rdlp instance files in paralel. All output is collected in a single output file
 # Only output lines marked with a 'tag' are preserved in the final output. This is convenient to remove debug output.
 function runBenchmark(){
-    instances=($(ls $HOME/Papers/PM/implementation/instances/wt{040,050}/*{1,6}.dat))
-    machines=(4 2)
+    instances=($(ls $HOME/Papers/PM/implementation/instances/wt{040,050,100}/*{1,6}.dat))
+    machines=4
     solvers=4
     printf "%s\n" "${instances[@]}" | xargs -I{} printf "{} %s\n" "${machines[@]}" | xargs -I{} printf "-a %s {}\n" "${solvers[@]}" | parallel --no-notice -P 3 --eta --colsep ' ' "build/bin/PM -s 3 -f 5000 -S 1 {}";
 }
