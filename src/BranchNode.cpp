@@ -1,22 +1,9 @@
 #include "BranchNode.hpp"
 #include <fmt/core.h>
 #include <algorithm>
-#include <cstddef>
-#include <limits>
 #include <memory>
 #include <numeric>
-#include <range/v3/action/sort.hpp>
-#include <range/v3/algorithm/any_of.hpp>
-#include <range/v3/algorithm/count.hpp>
-#include <range/v3/algorithm/count_if.hpp>
-#include <range/v3/numeric/iota.hpp>
-#include <range/v3/view/counted.hpp>
-#include <range/v3/view/enumerate.hpp>
-#include <range/v3/view/filter.hpp>
-#include <range/v3/view/take.hpp>
-#include <range/v3/view/zip.hpp>
-#include <span>
-#include <utility>
+#include <range/v3/all.hpp>
 #include <vector>
 #include "Parms.h"
 #include "PricerSolverBase.hpp"
@@ -41,11 +28,11 @@ BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
 
 void BranchNodeBase::branch(BTree* bt) {
     auto*       solver = pd->solver.get();
-    auto        strong_branching = false;
+    auto        no_strong_branching = !pd->parms.use_strong_branching;
     const auto& instance = pd->instance;
     const auto& parms = pd->parms;
 
-    if (!strong_branching && dbg_lvl() > 0) {
+    if (!no_strong_branching && dbg_lvl() > 0) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
     }
 
@@ -82,10 +69,10 @@ void BranchNodeBase::branch(BTree* bt) {
             return false;
         }};
 
-        auto C_range{x_j | ranges::views::enumerate |
-                     ranges::views::filter(is_positive)};
+        auto positive_range{x_j | ranges::views::enumerate |
+                            ranges::views::filter(is_positive)};
 
-        for (auto&& [t, x] : C_range) {
+        for (auto&& [t, x] : positive_range) {
             accum += x;
             if ((accum >= (1.0 - TargetBrTimeValue)) && (prev != -1) &&
                 (middle_time == -1)) {
@@ -124,28 +111,10 @@ void BranchNodeBase::branch(BTree* bt) {
     best_cand |= ranges::actions::sort(std::greater{}, &BranchCand::score);
 
     for (auto& it : best_cand | ranges::views::take(nb_cand)) {
-        auto i = static_cast<size_t>(it.job);
-
-        auto  left_gain = 0.0;
-        auto  right_gain = 0.0;
-        auto* job = pd->instance.jobs[i].get();
-
-        if (strong_branching) {
-            for (auto&& [t, x] : x_job_time[i] | ranges::views::enumerate) {
-                if (t + job->processing_time <= it.t) {
-                    left_gain += x;
-                } else {
-                    right_gain += x;
-                }
-            }
-
-            auto min_gain = std::min(right_gain, left_gain);
-
-            if (min_gain > best_min_gain) {
-                best_min_gain = min_gain;
-                best_job = it.job;
-                best_time = it.t;
-            }
+        if (no_strong_branching) {
+            best_job = it.job;
+            best_time = it.t;
+            break;
         } else {
             auto data_nodes{pd->create_child_nodes(it.job, it.t)};
             std::array<std::unique_ptr<BranchNodeBase>, 2> child_nodes;
@@ -209,26 +178,12 @@ void BranchNodeBase::branch(BTree* bt) {
     }
 
     /** Process the branching nodes insert them in the tree */
-    if (strong_branching) {
-        auto  left = pd->clone();
-        auto* left_solver = left->solver.get();
-        auto  left_node_branch =
-            std::make_unique<BranchNodeBase>(std::move(left));
-        left_solver->split_job_time(best_job, best_time, false);
-        left_node_branch->pd->branch_job = best_job;
-        left_node_branch->pd->completiontime = best_time;
-        left_node_branch->pd->less = 0;
-        bt->process_state(std::move(left_node_branch));
-
-        auto  right = pd->clone();
-        auto* right_solver = right->solver.get();
-        auto  right_node_branch =
-            std::make_unique<BranchNodeBase>(std::move(right));
-        right_solver->split_job_time(best_job, best_time, true);
-        right_node_branch->pd->branch_job = best_job;
-        right_node_branch->pd->completiontime = best_time;
-        right_node_branch->pd->less = 1;
-        bt->process_state(std::move(right_node_branch));
+    if (no_strong_branching) {
+        auto data_nodes{pd->create_child_nodes(best_job, best_time)};
+        for (auto& data : data_nodes) {
+            auto aux = std::make_unique<BranchNodeBase>(std::move(data));
+            bt->process_state(std::move(aux));
+        }
     } else {
         bt->set_state_bounds_computed(true);
         bt->process_state(std::move(best_right));
