@@ -2,6 +2,7 @@
 #define WCT_PRIVATE_H
 
 #include <bits/c++config.h>
+#include <array>
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -112,7 +113,7 @@ struct NodeData {
     std::string     pname;
 
     size_t nb_jobs;
-    int    nb_machines;
+    size_t nb_machines;
 
     // The column generation lp information
     std::unique_ptr<wctlp, std::function<void(wctlp*)>> RMP;
@@ -216,7 +217,12 @@ struct NodeData {
     int  solve_pricing();
     void solve_farkas_dbl();
 
-    [[nodiscard]] std::unique_ptr<NodeData> clone() const;
+    [[nodiscard]] std::unique_ptr<NodeData>  clone() const;
+    [[nodiscard]] std::unique_ptr<NodeData>  clone(size_t _j,
+                                                   int    _t,
+                                                   bool   _left) const;
+    std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
+                                                                int    _t);
 
     int add_scheduleset_to_rmp(ScheduleSet* set);
 

@@ -1,6 +1,7 @@
 #ifndef NODE_BDD_DUMPER_HPP
 #define NODE_BDD_DUMPER_HPP
 
+#include <cstddef>
 #include <unordered_set>
 #include "NodeBdd.hpp"
 #include "util/MyHashTable.hpp"
@@ -14,8 +15,8 @@
 template <typename S, typename T = NodeBdd<double>>
 class DdDumper {
     using Spec = S;
-    static int const AR = Spec::ARITY;
-    static int const headerSize = 1;
+    static size_t const AR = Spec::ARITY;
+    static int const    headerSize = 1;
 
     /* SpecNode
      * ┌────────┬────────┬────────┬─────

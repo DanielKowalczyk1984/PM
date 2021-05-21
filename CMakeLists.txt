@@ -44,6 +44,7 @@ find_package(codecov)
 #
 
 find_package(Gurobi)
+include(CoinOR)
 add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 
@@ -85,27 +86,27 @@ else()
 endif()
 
 include(CompilerWarnings)
-set_project_warnings(${PROJECT_NAME})
-# set_project_warnings(${PROJECT_NAME}_LIB)
+set_project_warnings(${PROJECT_NAME}) 
+set_project_warnings(${PROJECT_NAME}_LIB)
 
 verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
 
 # RelWIthDebInfo Flags
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -m64")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -mtune=native -fPIC")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO
-    "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+    "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99 -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
 
 # Release Flags
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  -m64")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native  -fPIC")
 set(CMAKE_C_FLAGS_RELEASE
-    "${CMAKE_C_FLAGS_RELEASE} -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+    "${CMAKE_C_FLAGS_RELEASE} -std=c99 -D_XOPEN_SOURCE=500 -mtune=native -Wnested-externs -Wstrict-prototypes"
 )
 
 # Debug Flags
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -m64")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -mtune=native -O0 -fPIC")
 set(CMAKE_C_FLAGS_DEBUG
-    "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -m64 -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+    "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
 )
 
 #
@@ -135,7 +136,6 @@ else()
              ${CONAN_INCLUDE_DIRS_BOOST}
              ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
              ${CONAN_INCLUDE_DIRS_RANGE-V3}
-             ${CONAN_INCLUDE_DIRS_EIGEN}
       PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
@@ -147,7 +147,6 @@ else()
       CONAN_PKG::boost
       CONAN_PKG::docopt.cpp
       CONAN_PKG::range-v3
-      CONAN_PKG::eigen
       ORUtils::ORUtils
       branch-and-bound::branch-and-bound
       -lm

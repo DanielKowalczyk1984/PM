@@ -19,7 +19,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     using vector1d_int = std::vector<int>;
 
    private:
-    int            Hmax;
+    size_t         Hmax;
     size_t         n;
     size_t         size_graph;
     vector3d_jobs  graph;
@@ -74,13 +74,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     void init_table();
 
-    void reduce_cost_fixing([[maybe_unused]] double* pi,
-                            [[maybe_unused]] int     UB,
-                            [[maybe_unused]] double  LB) override;
-    void evaluate_nodes([[maybe_unused]] double* pi,
-                        [[maybe_unused]] int     UB,
-                        [[maybe_unused]] double  LB) override;
-
     void evaluate_nodes([[maybe_unused]] double* pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
@@ -95,8 +88,8 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
     void   print_number_nodes_edges() override;
-    int    get_num_remove_nodes() override;
-    int    get_num_remove_edges() override;
+    size_t get_num_remove_nodes() override;
+    size_t get_num_remove_edges() override;
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
     int    get_num_layers() override;
@@ -115,7 +108,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
                 tmp_i->weighted_tardiness(t + tmp_j->processing_time));
     }
 
-    void remove_arc(const size_t& i, const size_t& j, const int& t) {
+    void remove_arc(const size_t& i, const size_t& j, const size_t& t) {
         Job* tmp_i = vector_jobs[i];
         // auto it = graph[j][t].find(tmp_i);
         auto pend = std::remove(graph[j][t].begin(), graph[j][t].end(), tmp_i);

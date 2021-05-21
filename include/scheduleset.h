@@ -40,20 +40,20 @@ struct ScheduleSet {
     void recalculate();
 };
 
-namespace std {
-template <>
-struct less<std::shared_ptr<ScheduleSet>> {
-    constexpr bool operator()(auto const& lhs, auto const& rhs) {
-        return (*lhs) < (*rhs);  // or use boost::hash_combine
-    }
-};
-template <>
-struct equal_to<std::shared_ptr<ScheduleSet>> {
-    constexpr bool operator()(auto const& lhs, auto const& rhs) {
-        return (*lhs) == (*rhs);  // or use boost::hash_combine
-    }
-};
+// namespace std {
+// template <>
+// struct less<std::shared_ptr<ScheduleSet>> {
+//     constexpr bool operator()(auto const& lhs, auto const& rhs) {
+//         return (*lhs) < (*rhs);  // or use boost::hash_combine
+//     }
+// };
+// template <>
+// struct equal_to<std::shared_ptr<ScheduleSet>> {
+//     constexpr bool operator()(auto const& lhs, auto const& rhs) {
+//         return (*lhs) == (*rhs);  // or use boost::hash_combine
+//     }
+// };
 
-}  // namespace std
+// }  // namespace std
 
 #endif  // SCHEDULESET_H

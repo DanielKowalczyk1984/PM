@@ -92,11 +92,11 @@ summary_write.to_csv(results_path.joinpath(
 all_instances = data.pivot_table(values=['tot_lb', 'gap', 'first_size_graph', 'reduction', 'opt', 'rel_error', 'nb_generated_col',
                                          'global_lower_bound', 'global_upper_bound', 'tot_cputime', 'tot_bb'], index=['n', 'm', 'Inst'], columns=['pricing_solver'])
 all_instances.columns.set_levels(
-    ['AFBC', 'TI_BDD'], level=1, inplace=True)
+    ['AFBC'], level=1, inplace=True)
 all_instances.columns = ["_".join(x) for x in all_instances.columns.ravel()]
 all_instances.to_csv(
     results_path.joinpath(
-        "/CG_allinstances_{}_{}_{}.csv".format(year, month, day)))
+        "CG_allinstances_{}_{}_{}.csv".format(year, month, day)))
 
 # %% Load results of Pessoa et al. and Oliveira qnd Pessoa
 df_pessoa = pd.read_csv(results.joinpath("all_pessoa.csv"))
@@ -112,9 +112,9 @@ df_all = pd.merge(data, df_oliveira, on=['Inst', 'n', 'm'])
 
 
 # %% Compute overall performance profile curve
-
+df_all['tot_bb'] = 0.6*df_all['tot_bb']
 df_all['best_solver'] = df_all[['tot_bb', 'TimeOliveira']].min(axis=1)
-df_all['ratio_tot_bb_best'] = 0.6*df_all['tot_bb'] / df_all['best_solver']
+df_all['ratio_tot_bb_best'] = df_all['tot_bb'] / df_all['best_solver']
 
 df_all['ratio_TimeOliveira_best'] = df_all['TimeOliveira'] / \
     df_all['best_solver']
@@ -134,7 +134,7 @@ width, height = plt.figaspect(1.68)
 fig, ax = plt.subplots(figsize=(width, height), dpi=200)
 ax.step(sorted_ratio_tot_bb, yvals, label='BDD')
 ax.step(sorted_ratio_TimeOliveira, yvalues, label='ATIF')
-ax.set_xlim([10**0, 8])
+ax.set_xlim([10**0, 100])
 # ax.set_title(
 #     r"Performance profile for instances with $m = %d$ and $n = %d$"
 #     % (i, j))
@@ -164,7 +164,7 @@ for n in [40, 50]:
         fig, ax = plt.subplots(figsize=(width, height), dpi=200)
         ax.step(sorted_ratio_tot_bb, yvals, label='BDD')
         ax.step(sorted_ratio_TimeOliveira, yvalues, label='ATIF')
-        ax.set_xlim([10**0, 8])
+        ax.set_xlim([10**0, 100])
         ax.set_title(
             "Performance profile for instances with $m = {}$ and $n = $".format(m, n))
         ax.set_xlabel(r"$\tau$")

@@ -27,7 +27,7 @@ class NodeBdd : public NodeBase {
     std::array<double, 2>   lp_x{0.0, 0.0};
 
     std::array<bool, 2>     calc{true, true};
-    int                     key{-1};
+    size_t                  key{};
     bool                    visited{false};
     bool                    lp_visited{false};
     boost::dynamic_bitset<> all{};
@@ -57,7 +57,7 @@ class NodeBdd : public NodeBase {
 
     [[nodiscard]] Job* get_job() const { return job; }
 
-    [[nodiscard]] inline int get_nb_job() const { return job->job; }
+    [[nodiscard]] inline size_t get_nb_job() const { return job->job; }
 
     void reset_reduced_costs() { reduced_cost = cost; }
 
@@ -68,7 +68,7 @@ class NodeBdd : public NodeBase {
         lp_visited = false;
     }
 
-    void add_coeff_list(const std::shared_ptr<BddCoeff> ptr, bool high) {
+    void add_coeff_list(const std::shared_ptr<BddCoeff>& ptr, bool high) {
         if (high) {
             coeff_list[1].push_back(ptr);
         } else {

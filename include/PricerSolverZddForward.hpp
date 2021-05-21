@@ -18,8 +18,7 @@ class PricerSolverSimple : public PricerSolverZdd {
     explicit PricerSolverSimple(const Instance& instance);
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     void                    compute_labels(double* _pi);
-    void evaluate_nodes(double* pi, int UB, double LB) override;
-    void evaluate_nodes(double* pi) final;
+    void                    evaluate_nodes(double* pi) final;
     PricerSolverSimple(const PricerSolverSimple&) = default;
 };
 
@@ -37,8 +36,7 @@ class PricerSolverZddCycle : public PricerSolverZdd {
     explicit PricerSolverZddCycle(const Instance& instance);
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     void                    compute_labels(double* _pi);
-    void evaluate_nodes(double* pi, int UB, double LB) override;
-    void evaluate_nodes(double* pi) final;
+    void                    evaluate_nodes(double* pi) final;
     PricerSolverZddCycle(const PricerSolverZddCycle&) = default;
 };
 

@@ -1,5 +1,6 @@
 #ifndef __SOLUTION_NEW_H__
 #define __SOLUTION_NEW_H__
+#include <cstddef>
 #include <memory>
 #include <random>
 #include <vector>
@@ -45,8 +46,8 @@ struct Sol {
     size_t nb_jobs{};
     size_t nb_machines{};
 
-    std::vector<int> c{};
-    std::vector<int> u{};
+    std::vector<int>    c{};
+    std::vector<size_t> u{};
 
     int tw{};
     int off{};
@@ -64,21 +65,25 @@ struct Sol {
     void construct_random_fisher_yates(const VecJobPtr& v);
     void construct_random_shuffle(const VecJobPtr& v);
     void canonical_order(const VecIntervalPtr& intervals);
-    void perturb_swap_inter(int l1, int l2, std::mt19937& mt);
+    void perturb_swap_inter(size_t l1, size_t l2, std::mt19937& mt);
 
-    void update_insertion_move(int i, int j, int k, int l);
-    void update_swap_move(int i, int j, int k, int l1, int l2);
-    void update_insertion_move_inter(int i, int j, int k, int l, int m);
-    void update_swap_move_inter(int i, int j, int k1, int k2, int l1, int l2);
+    void update_insertion_move(size_t i, size_t j, size_t k, size_t l);
+    void update_swap_move(size_t i, size_t j, size_t k, size_t l1, size_t l2);
+    void update_insertion_move_inter(size_t i,
+                                     size_t j,
+                                     size_t k,
+                                     size_t l,
+                                     size_t m);
+    void update_swap_move_inter(size_t i,
+                                size_t j,
+                                size_t k1,
+                                size_t k2,
+                                size_t l1,
+                                size_t l2);
     void print_solution();
 
    private:
     void add_job_front_machine(Job* job);
-
-    static constexpr auto cmp_machines_completion =
-        [](const auto& lhs, const auto& rhs) -> bool {
-        return lhs.completion_time > rhs.completion_time;
-    };
     void calculate_partition(const VecIntervalPtr& v);
 };
 

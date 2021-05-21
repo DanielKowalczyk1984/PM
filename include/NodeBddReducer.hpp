@@ -14,7 +14,6 @@
 #include <unordered_set>
 #include <vector>
 #include "util/MyHashTable.hpp"
-// #include "tdzdd/util/MyList.hpp"
 #include "util/MyVector.hpp"
 
 template <typename T, bool BDD, bool ZDD>
@@ -25,23 +24,7 @@ class DdReducer {
     NodeTableEntity<T>&               output;
     std::vector<std::vector<NodeId>>  newIdTable;
     std::vector<std::vector<NodeId*>> rootPtr;
-    int                               counter = 1;
-
-    struct ReduceNodeInfo {
-        NodeBdd<T> children;
-        size_t     column;
-
-        [[nodiscard]] size_t hash() const { return children.hash(); }
-
-        bool operator==(ReduceNodeInfo const& o) const {
-            return children == o.children;
-        }
-
-        friend std::ostream& operator<<(std::ostream&         os,
-                                        ReduceNodeInfo const& o) {
-            return os << "(" << o.children << " -> " << o.column << ")";
-        }
-    };
+    size_t                            counter = 1;
 
     bool readyForSequentialReduction;
 
@@ -75,7 +58,7 @@ class DdReducer {
             return;
         }
 
-        for (int i = 2; i < input.numRows(); ++i) {
+        for (auto i = 2UL; i < input.numRows(); ++i) {
             // size_t const    m = input[i].size();
             // std::span const tt{input[i].data(), input[i].size()};
             // T* const     tt = input[i].data();
@@ -91,7 +74,7 @@ class DdReducer {
                     NodeId deletable = 0;
                     bool   del = true;
 
-                    for (int bb = ZDD ? 1 : 0; bb < 2; ++bb) {
+                    for (size_t bb = ZDD ? 1UL : 0UL; bb < 2; ++bb) {
                         if (input.child(f, bb) != deletable) {
                             del = false;
                         }
@@ -120,7 +103,7 @@ class DdReducer {
      * @param i level.
      * @param useMP use an algorithm for multiple processors.
      */
-    void reduce(int i) {
+    void reduce(size_t i) {
         if (BDD) {
             algorithmZdd(i);
         } else if (ZDD) {
@@ -133,7 +116,7 @@ class DdReducer {
      * Reduces one level using Algorithm-R.
      * @param i level.
      */
-    void algorithmR(int i) {
+    void algorithmR(size_t i) {
         makeReadyForSequentialReduction();
         size_t const m = input[i].size();
         // T* const     tt = input[i].data();
@@ -179,7 +162,7 @@ class DdReducer {
             newId[j] = NodeId(counter, mm++, g0.hasEmpty());
         }
 
-        std::vector<int> const& levels = input.lowerLevels(counter);
+        std::vector<size_t> const& levels = input.lowerLevels(counter);
         for (auto& t : levels) {
             input[t].clear();
         }
@@ -218,7 +201,7 @@ class DdReducer {
      * Reduces one level using Algorithm-R.
      * @param i level.
      */
-    void algorithmZdd(int i) {
+    void algorithmZdd(size_t i) {
         makeReadyForSequentialReduction();
         size_t const       m = input[i].size();
         std::span<T> const tt{input[i].data(), input[i].size()};
@@ -255,7 +238,7 @@ class DdReducer {
         }
 
         {
-            std::vector<int> const& levels = input.lowerLevels(i);
+            auto const& levels = input.lowerLevels(i);
             for (auto& t : levels) {
                 newIdTable[t].clear();
             }
@@ -294,7 +277,7 @@ class DdReducer {
             }
         }
 
-        std::vector<int> const& levels = input.lowerLevels(i);
+        auto const& levels = input.lowerLevels(i);
         for (auto& t : levels) {
             input[t].clear();
         }

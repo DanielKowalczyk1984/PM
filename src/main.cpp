@@ -3,10 +3,10 @@
 #include "Parms.h"
 #include "wctprivate.h"
 
-int main(int ac, const char** av) {
+int main(int argc, const char** argv) {
     int val = 0;
     try {
-        Problem problem(ac, av);
+        Problem problem(argc, argv);
     } catch (docopt::DocoptExitHelp const&) {
         fmt::print(USAGE);
     } catch (docopt::DocoptExitVersion const&) {

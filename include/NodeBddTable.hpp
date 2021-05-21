@@ -15,8 +15,8 @@ using my_vector = std::vector<T>;
 
 template <typename T = NodeBdd<double>>
 class NodeTableEntity : public data_table_node<T> {
-    mutable my_vector<my_vector<int>> higherLevelTable;
-    mutable my_vector<my_vector<int>> lowerLevelTable;
+    mutable my_vector<my_vector<size_t>> higherLevelTable;
+    mutable my_vector<my_vector<size_t>> lowerLevelTable;
 
    public:
     /**
@@ -52,7 +52,7 @@ class NodeTableEntity : public data_table_node<T> {
      * Initializes the terminal nodes.
      */
     void initTerminals() {
-        my_vector<T>& t = (*this)[0];
+        auto& t = (*this)[0];
         t.resize(2);
 
         for (auto j = 0UL; j < 2; ++j) {
@@ -233,18 +233,18 @@ class NodeTableEntity : public data_table_node<T> {
      * @param useMP use an algorithm for multiple processors.
      */
     void makeIndex(bool useMP = false) const {
-        int const n = this->numRows() - 1;
+        size_t const n = this->numRows() - 1;
         higherLevelTable.clear();
         higherLevelTable.resize(n + 1);
         lowerLevelTable.clear();
         lowerLevelTable.resize(n + 1);
         my_vector<bool> lowerMark(n + 1);
 
-        for (int i = n; i >= 1; --i) {
-            my_vector<T> const& node = (*this)[i];
-            size_t const        m = node.size();
-            int                 lowest = i;
-            my_vector<bool>     myLower(n + 1);
+        for (auto i = n; i >= 1; --i) {
+            auto const&     node = (*this)[i];
+            auto const      m = node.size();
+            auto            lowest = i;
+            my_vector<bool> myLower(n + 1);
 
             if (useMP) {
 #ifdef _OPENMP
@@ -268,10 +268,10 @@ class NodeTableEntity : public data_table_node<T> {
 #endif
             } else {
                 for (size_t j = 0; j < m; ++j) {
-                    for (int b = 0; b < 2; ++b) {
-                        int const ii = node[j][b].row();
+                    for (auto b = 0UL; b < 2; ++b) {
+                        auto const ii = node[j][b].row();
 
-                        if (ii == 0) {
+                        if (ii == 0UL) {
                             continue;
                         }
 
@@ -288,9 +288,9 @@ class NodeTableEntity : public data_table_node<T> {
             }
 
             higherLevelTable[lowest].push_back(i);
-            my_vector<int>& lower = lowerLevelTable[i];
+            auto& lower = lowerLevelTable[i];
 
-            for (int ii = lowest; ii < i; ++ii) {
+            for (size_t ii = lowest; ii < i; ++ii) {
                 if (myLower[ii]) {
                     lower.push_back(ii);
                 }
@@ -303,7 +303,7 @@ class NodeTableEntity : public data_table_node<T> {
      * the given level and that does not refer any lower levels.
      * @param level the level.
      */
-    my_vector<int> const& higherLevels(int level) const {
+    my_vector<size_t> const& higherLevels(int level) const {
         if (higherLevelTable.empty()) {
             makeIndex();
         }
@@ -317,7 +317,7 @@ class NodeTableEntity : public data_table_node<T> {
      * any higher levels.
      * @param level the level.
      */
-    my_vector<int> const& lowerLevels(int level) const {
+    my_vector<size_t> const& lowerLevels(size_t level) const {
         if (lowerLevelTable.empty()) {
             makeIndex();
         }
@@ -365,7 +365,7 @@ class NodeTableEntity : public data_table_node<T> {
 
                     if (ff == 1) {
                         terminal1 = true;
-                        os << "  \"" << f << "\" -> \"$\"";
+                        os << "  \"" << f << R"(" -> "$")";
                     } else {
                         ff.setAttr(false);
                         os << "  \"" << f << "\" -> \"" << ff << "\"";
@@ -416,7 +416,7 @@ class TableHandler {
         unsigned           refCount;
         NodeTableEntity<T> entity;
 
-        explicit Object(int n) : refCount(1), entity(n) {}
+        explicit Object(size_t n) : refCount(1), entity(n) {}
 
         explicit Object(const NodeTableEntity<T>& _entity)
             : refCount(1),
@@ -444,7 +444,7 @@ class TableHandler {
     Object* pointer;
 
    public:
-    explicit TableHandler(int n = 1) : pointer(new Object(n)) {}
+    explicit TableHandler(size_t n = 1) : pointer(new Object(n)) {}
 
     TableHandler<T>(TableHandler<T> const& o)
         : pointer(new Object(o.pointer->entity)){};

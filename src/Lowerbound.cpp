@@ -1,7 +1,9 @@
 #include <bits/ranges_algo.h>
 #include <fmt/core.h>
+#include <memory>
 #include <range/v3/action/remove_if.hpp>
 #include <range/v3/numeric/inner_product.hpp>
+#include <range/v3/view/drop.hpp>
 #include <range/v3/view/enumerate.hpp>
 #include <range/v3/view/zip.hpp>
 #include <vector>
@@ -9,7 +11,6 @@
 #include "Job.h"
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
-#include "gurobi_c.h"
 #include "lp.h"
 #include "scheduleset.h"
 #include "util.h"
@@ -65,8 +66,8 @@ int NodeData::delete_unused_rows() {
     int it = id_valid_cuts;
     int first_del = -1;
     int last_del = -1;
-    for (int i = id_valid_cuts; i < nb_rows; i++) {
-        if (std::fabs(slack[i]) < EPS) {
+    for (auto s : slack | ranges::views::drop(id_valid_cuts)) {
+        if (std::fabs(s) < EPS) {
             if (first_del != -1) {
                 val = delete_unused_rows_range(first_del, last_del);
                 it = it - (last_del - first_del);
@@ -96,7 +97,8 @@ int NodeData::delete_unused_rows() {
 
 int NodeData::delete_old_schedules() {
     int val = 0;
-    int min_numdel = static_cast<int>(floor(nb_jobs * min_nb_del_row_ratio));
+    int min_numdel = static_cast<int>(
+        floor(static_cast<int>(nb_jobs) * min_nb_del_row_ratio));
     /** pd->zero_count can be deprecated! */
     zero_count = 0;
 
@@ -123,7 +125,7 @@ int NodeData::delete_old_schedules() {
         });
 
         lp_interface_delete_cols_array(RMP.get(), dellist.data(),
-                                       dellist.size());
+                                       static_cast<int>(dellist.size()));
 
         if (dbg_lvl() > 1) {
             fmt::print("Deleted {} out of {} columns with age > {}.\n",
@@ -159,7 +161,8 @@ int NodeData::delete_infeasible_schedules() {
         return val;
     });
 
-    lp_interface_delete_cols_array(RMP.get(), dellist.data(), dellist.size());
+    lp_interface_delete_cols_array(RMP.get(), dellist.data(),
+                                   static_cast<int>(dellist.size()));
 
     if (dbg_lvl() > 1) {
         fmt::print(
@@ -303,7 +306,7 @@ int NodeData::compute_objective() {
     LP_lower_bound_BB = std::min(LP_lower_bound, LP_lower_bound_dual);
     LP_lower_min = std::min(LP_lower_min, LP_lower_bound_BB);
 
-    if (iterations % (nb_jobs) == 0 && dbg_lvl() > 0) {
+    if (static_cast<int>(iterations) % (nb_jobs) == 0 && dbg_lvl() > 0) {
         fmt::print(
             "Current primal LP objective: {:19.16f}  (LP_dual-bound "
             "{:19.16f}, "
@@ -362,7 +365,7 @@ int NodeData::solve_relaxation() {
 int NodeData::estimate_lower_bound(int _iter) {
     auto val = 0;
     auto has_cols = 1;
-    auto has_cuts = 0;
+    // auto has_cuts = 0;
     auto status_RMP = GRB_LOADED;
     auto real_time_pricing = 0.0;
 
@@ -392,7 +395,7 @@ int NodeData::estimate_lower_bound(int _iter) {
     // solve_relaxation(problem, pd);
     do {
         has_cols = 1;
-        has_cuts = 0;
+        // has_cuts = 0;
         while ((iterations < _iter) && has_cols &&
                stat.total_timer(Statistics::cputime_timer) <=
                    parms.branching_cpu_limit) {
@@ -456,7 +459,7 @@ int NodeData::estimate_lower_bound(int _iter) {
 int NodeData::compute_lower_bound() {
     auto val = 0;
     auto has_cols = 1;
-    auto has_cuts = 0;
+    // auto has_cuts = 0;
     auto status_RMP = GRB_LOADED;
     auto real_time_pricing = 0.0;
 
@@ -486,7 +489,7 @@ int NodeData::compute_lower_bound() {
     // solve_relaxation(problem, pd);
     do {
         has_cols = 1;
-        has_cuts = 0;
+        // has_cuts = 0;
         while ((iterations < NB_CG_ITERATIONS) && has_cols &&
                stat.total_timer(Statistics::cputime_timer) <=
                    parms.branching_cpu_limit) {
@@ -634,7 +637,7 @@ int NodeData::print_x() {
         case GRB_OPTIMAL:
             val = lp_interface_get_nb_cols(RMP.get(), &nb_cols);
             assert(localColPool.size() == nb_cols - id_pseudo_schedules);
-            lambda.resize(nb_cols - id_pseudo_schedules, 0.0);
+            lambda.resize(localColPool.size(), 0.0);
             val = lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
 
             for (auto i = 0UL; auto& it : localColPool) {

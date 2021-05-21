@@ -1,6 +1,7 @@
 #include "wctprivate.h"
 #include <fmt/core.h>
 #include <boost/timer/timer.hpp>
+#include <cstddef>
 #include <limits>
 #include <memory>
 #include <vector>
@@ -167,8 +168,8 @@ void Problem::solve() {
 }
 
 void Problem::heuristic() {
-    auto                         ILS = instance.nb_jobs / 2;
-    auto                         IR = parms.nb_iterations_rvnd;
+    // auto                         ILS = instance.nb_jobs / 2;
+    auto IR = static_cast<size_t>(parms.nb_iterations_rvnd);
     boost::timer::auto_cpu_timer timer_heuristic;
 
     Sol best_sol{instance};
@@ -193,7 +194,7 @@ void Problem::heuristic() {
     Sol sol{instance};
     sol = best_sol;
     // int iterations = 0;
-    for (auto i = 0UL; i < IR; ++i) {
+    for (auto i = 0UL; i < IR && best_sol.tw != 0; ++i) {
         Sol sol1{instance};
         // sol1.construct_random_shuffle(instance.jobs);
         // sol = sol1;

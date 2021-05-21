@@ -3,6 +3,8 @@
 #include <gurobi_c++.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <cstddef>
+#include <range/v3/all.hpp>
 #include <vector>
 #include "Instance.h"
 #include "PricerSolverBase.hpp"
@@ -29,12 +31,12 @@ void PricerSolverSimpleDp::init_table() {
     backward_graph = std::vector<std::vector<Job*>>(Hmax + 1);
     forward_graph = std::vector<std::vector<Job*>>(Hmax + 1);
 
-    for (int t = 0; t < Hmax + 1; t++) {
-        for (int i = 1; i < convex_constr_id + 1; i++) {
+    for (auto t = 0UL; t < Hmax + 1; t++) {
+        for (auto i = 1UL; i < convex_constr_id + 1; i++) {
             auto  j = i - 1;
             auto* job = jobs[j].get();
 
-            if (t >= job->processing_time) {
+            if (t >= static_cast<size_t>(job->processing_time)) {
                 forward_graph[t].push_back(job);
                 size_graph++;
             }
@@ -48,58 +50,9 @@ void PricerSolverSimpleDp::init_table() {
     fmt::print("Number of arcs in TI formulation = {}\n", size_graph);
 }
 
-void PricerSolverSimpleDp::evaluate_nodes(double*                 pi,
-                                          [[maybe_unused]] int    UB,
-                                          [[maybe_unused]] double LB) {
-    forward_evaluator(pi);
-    backward_evaluator(pi);
-}
-
 void PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
     forward_evaluator(pi);
     backward_evaluator(pi);
-}
-
-void PricerSolverSimpleDp::reduce_cost_fixing(double* pi, int UB, double LB) {
-    evaluate_nodes(pi, UB, LB);
-    std::span aux_pi{pi, reformulation_model.size()};
-    int       counter = 0;
-    int       x = 0;
-
-    for (int t = 0; t < Hmax + 1; t++) {
-        auto it = forward_graph[t].begin();
-        while (it != forward_graph[t].end()) {
-            double result = F[t - (*it)->processing_time] +
-                            (*it)->weighted_tardiness(t) - aux_pi[(*it)->job] +
-                            backward_F[t];
-            if (LB + result + (convex_rhs - 1) * F[Hmax] > UB + RC_FIXING) {
-                size_graph--;
-                it = forward_graph[t].erase(it);
-            } else {
-                it++;
-            }
-        }
-
-        x += forward_graph[t].size();
-
-        auto iter = backward_graph[t].begin();
-        while (iter != backward_graph[t].end()) {
-            double result = F[t] + (*iter)->weighted_tardiness_start(t) -
-                            aux_pi[(*iter)->job] +
-                            backward_F[t + (*iter)->processing_time];
-            if (LB + result + (convex_rhs - 1) * F[Hmax] > UB + RC_FIXING) {
-                take[(*iter)->job * (Hmax + 1) + t] = false;
-                // iter = backward_graph[t].erase(iter);
-            } else {
-                take[(*iter)->job * (Hmax + 1) + t] = true;
-            }
-            iter++;
-        }
-
-        counter += backward_graph[t].size();
-    }
-
-    fmt::print("new size of TI formulation = {} {} {}", size_graph, counter, x);
 }
 
 void PricerSolverSimpleDp::build_mip() {
@@ -107,7 +60,7 @@ void PricerSolverSimpleDp::build_mip() {
         fmt::print("Building Mip model for the TI formulation\n");
 
         /** Constructing variables */
-        for (int t = 0; t < Hmax + 1; t++) {
+        for (auto t = 0UL; t < Hmax + 1; t++) {
             for (auto& it : backward_graph[t]) {
                 double cost = it->weighted_tardiness_start(t);
                 double ub = take[(it->job) * (Hmax + 1) + t] ? 1.0 : 0.0;
@@ -123,7 +76,7 @@ void PricerSolverSimpleDp::build_mip() {
         std::vector<char>       sense(convex_constr_id, GRB_EQUAL);
         std::vector<double>     rhs(convex_constr_id, 1.0);
 
-        for (int t = 0; t <= Hmax; t++) {
+        for (auto t = 0UL; t <= Hmax; t++) {
             for (auto& it : backward_graph[t]) {
                 assignment[it->job] += TI_x[it->job * (Hmax + 1) + t];
             }
@@ -142,7 +95,7 @@ void PricerSolverSimpleDp::build_mip() {
         for (auto t = 0UL; t <= Hmax; t++) {
             auto add_constraint = false;
             for (auto& it : backward_graph[t]) {
-                for (int s = std::max(0UL, t - it->processing_time); s <= t;
+                for (auto s = std::max(0UL, t - it->processing_time); s <= t;
                      s++) {
                     if (std::find(backward_graph[s].begin(),
                                   backward_graph[s].end(),
@@ -168,7 +121,7 @@ void PricerSolverSimpleDp::build_mip() {
         std::cerr << e.getMessage() << '\n';
     }
 
-    for (int t = 0; t <= Hmax; t++) {
+    for (auto t = 0UL; t <= Hmax; t++) {
         for (auto& it : backward_graph[t]) {
             TI_x[it->job * (Hmax + 1) + t].set(
                 GRB_DoubleAttr_Start, solution_x[(it->job) * (Hmax + 1) + t]);
@@ -186,13 +139,13 @@ void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     F[0] = aux_pi[convex_constr_id];
     A[0] = nullptr;
 
-    for (int t = 1; t < Hmax + 1; t++) {
+    for (auto t = 1UL; t < Hmax + 1; t++) {
         F[t] = DBL_MAX / 2;
         A[t] = nullptr;
     }
 
     /** Recursion */
-    for (int t = 1; t < Hmax + 1; t++) {
+    for (auto t = 1UL; t < Hmax + 1; t++) {
         for (auto& it : forward_graph[t]) {
             if (F[t - it->processing_time] +
                     static_cast<double>(it->weighted_tardiness(t)) -
@@ -214,11 +167,11 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     backward_F[Hmax] = 0.0;
     std::span aux_pi{_pi, reformulation_model.size()};
 
-    for (int t = 0; t < Hmax; t++) {
+    for (auto t = 0UL; t < Hmax; t++) {
         backward_F[t] = DBL_MAX / 2;
     }
 
-    for (auto t = Hmax - 1; t >= 0UL; t--) {
+    for (auto t : ranges::views::ints(0UL, Hmax) | ranges::views::reverse) {
         for (auto& it : backward_graph[t]) {
             auto tt = t + it->processing_time;
             if (backward_F[tt] +
@@ -248,7 +201,7 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     /** Find optimal solution */
     opt_sol.obj = std::numeric_limits<double>::max();
 
-    for (int i = 0; i < Hmax + 1; i++) {
+    for (auto i = 0UL; i < Hmax + 1; i++) {
         if (F[i] < opt_sol.obj) {
             opt_sol.C_max = i;
             opt_sol.obj = F[i];
@@ -306,11 +259,11 @@ void PricerSolverSimpleDp::iterate_zdd() {}
 void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name) {
     boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS>
         graph;
-    for (int t = 0; t <= Hmax; t++) {
+    for (auto t = 0UL; t <= Hmax; t++) {
         boost::add_vertex(graph);
     }
 
-    for (int t = 0; t < Hmax; t++) {
+    for (auto t = 0UL; t < Hmax; t++) {
         for (auto& it : backward_graph[t]) {
             boost::add_edge(t, t + it->processing_time, graph);
         }
@@ -324,17 +277,17 @@ void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name) {
 
 void PricerSolverSimpleDp::print_number_nodes_edges() {}
 
-int PricerSolverSimpleDp::get_num_remove_nodes() {
+size_t PricerSolverSimpleDp::get_num_remove_nodes() {
     return 0;
 }
 
-int PricerSolverSimpleDp::get_num_remove_edges() {
+size_t PricerSolverSimpleDp::get_num_remove_edges() {
     return 0;
 }
 
 size_t PricerSolverSimpleDp::get_nb_edges() {
     size_t nb_edges = 0u;
-    for (int t = 0; t < Hmax + 1; t++) {
+    for (auto t = 0UL; t < Hmax + 1; t++) {
         nb_edges += forward_graph[t].size();
     }
     return nb_edges;
@@ -342,7 +295,7 @@ size_t PricerSolverSimpleDp::get_nb_edges() {
 
 size_t PricerSolverSimpleDp::get_nb_vertices() {
     size_t nb_vertices = 0u;
-    for (int t = 0; t < Hmax + 1; t++) {
+    for (auto t = 0UL; t < Hmax + 1; t++) {
         if (!forward_graph[t].empty()) {
             nb_vertices++;
         }

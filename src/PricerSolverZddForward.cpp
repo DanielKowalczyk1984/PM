@@ -1,4 +1,5 @@
 #include "PricerSolverZddForward.hpp"
+#include <range/v3/all.hpp>
 #include "Instance.h"
 #include "PricerSolverZdd.hpp"
 
@@ -40,38 +41,6 @@ void PricerSolverSimple::compute_labels(double* _pi) {
     decision_diagram->compute_labels_backward(reversed_evaluator);
 }
 
-void PricerSolverSimple::evaluate_nodes(double* pi, int UB, double LB) {
-    auto& table = *(decision_diagram->getDiagram());
-    compute_labels(pi);
-    double reduced_cost =
-        table.node(decision_diagram->root()).list[0]->backward_label[0].get_f();
-
-    nb_removed_edges = 0;
-
-    // /** check for each node the Lagrangian dual */
-    for (int i = decision_diagram->topLevel(); i > 0; i--) {
-        for (auto& it : table[i]) {
-            for (auto& iter : it.list) {
-                int    w = iter->get_weight();
-                Job*   job = it.get_job();
-                double result = iter->forward_label[0].get_f() +
-                                iter->y->backward_label[0].get_f() -
-                                job->weighted_tardiness_start(w) +
-                                pi[job->job] + pi[convex_constr_id];
-                auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-                if (LB - aux_nb_machines * reduced_cost - result >
-                        UB - 1 + RC_FIXING &&
-                    (iter->calc_yes)) {
-                    iter->calc_yes = false;
-                    nb_removed_edges++;
-                }
-            }
-        }
-    }
-
-    fmt::print("removed edges = {}\n", nb_removed_edges);
-}
-
 void PricerSolverSimple::evaluate_nodes(double* pi) {
     auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
@@ -81,21 +50,21 @@ void PricerSolverSimple::evaluate_nodes(double* pi) {
     nb_removed_edges = 0;
 
     // /** check for each node the Lagrangian dual */
-    for (int i = decision_diagram->topLevel(); i > 0; i--) {
-        for (auto& it : table[i]) {
-            for (auto& iter : it.list) {
-                int    w = iter->get_weight();
-                Job*   job = it.get_job();
-                double result = iter->forward_label[0].get_f() +
-                                iter->y->backward_label[0].get_f() -
-                                job->weighted_tardiness_start(w) + pi[job->job];
-                auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-                if (constLB + aux_nb_machines * reduced_cost + result >
-                        UB - 1 + RC_FIXING &&
-                    (iter->calc_yes)) {
-                    iter->calc_yes = false;
-                    nb_removed_edges++;
-                }
+    for (auto& it : table |
+                        ranges::views::take(decision_diagram->topLevel() + 1) |
+                        ranges::views ::drop(1) | ranges::views::join) {
+        for (auto& iter : it.list) {
+            int    w = iter->get_weight();
+            Job*   job = it.get_job();
+            double result = iter->forward_label[0].get_f() +
+                            iter->y->backward_label[0].get_f() -
+                            job->weighted_tardiness_start(w) + pi[job->job];
+            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
+            if (constLB + aux_nb_machines * reduced_cost + result >
+                    UB - 1 + RC_FIXING &&
+                (iter->calc_yes)) {
+                iter->calc_yes = false;
+                nb_removed_edges++;
             }
         }
     }
@@ -138,77 +107,6 @@ void PricerSolverZddCycle::compute_labels(double* _pi) {
     decision_diagram->compute_labels_backward(reversed_evaluator);
 }
 
-void PricerSolverZddCycle::evaluate_nodes(double* pi, int UB, double LB) {
-    auto& table = *(decision_diagram->getDiagram());
-    compute_labels(pi);
-    double reduced_cost =
-        table.node(decision_diagram->root()).list[0]->backward_label[0].get_f();
-    nb_removed_edges = 0;
-
-    /** check for each node the Lagrangian dual */
-    for (int i = decision_diagram->topLevel(); i > 0; i--) {
-        for (auto& it : table[i]) {
-            auto* job = it.get_job();
-            for (auto& iter : it.list) {
-                auto w = iter->get_weight();
-
-                auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-                if (iter->forward_label[0].prev_job_forward() != job) {
-                    if (iter->y->backward_label[0].prev_job_backward() != job) {
-                        auto result = iter->forward_label[0].get_f() +
-                                      iter->y->backward_label[0].get_f() -
-                                      job->weighted_tardiness_start(w) +
-                                      pi[job->job] + pi[convex_constr_id];
-                        if (LB - aux_nb_machines * reduced_cost - result >
-                                UB + RC_FIXING &&
-                            (iter->calc_yes)) {
-                            iter->calc_yes = false;
-                            nb_removed_edges++;
-                        }
-                    } else {
-                        auto result = iter->forward_label[0].get_f() +
-                                      iter->y->backward_label[1].get_f() -
-                                      job->weighted_tardiness_start(w) +
-                                      pi[job->job] + pi[convex_constr_id];
-                        if (LB - aux_nb_machines * reduced_cost - result >
-                                UB + RC_FIXING &&
-                            (iter->calc_yes)) {
-                            iter->calc_yes = false;
-                            nb_removed_edges++;
-                        }
-                    }
-                } else {
-                    if (iter->y->backward_label[0].prev_job_backward() != job) {
-                        auto result = iter->forward_label[1].get_f() +
-                                      iter->y->backward_label[0].get_f() -
-                                      job->weighted_tardiness_start(w) +
-                                      pi[job->job] + pi[convex_constr_id];
-                        if (LB - aux_nb_machines * reduced_cost - result >
-                                UB + RC_FIXING &&
-                            (iter->calc_yes)) {
-                            iter->calc_yes = false;
-                            nb_removed_edges++;
-                        }
-                    } else {
-                        auto result = iter->forward_label[1].get_f() +
-                                      iter->y->backward_label[1].get_f() -
-                                      job->weighted_tardiness_start(w) +
-                                      pi[job->job] + pi[convex_constr_id];
-                        if (LB - aux_nb_machines * reduced_cost - result >
-                                UB + RC_FIXING &&
-                            (iter->calc_yes)) {
-                            iter->calc_yes = false;
-                            nb_removed_edges++;
-                        }
-                    }
-                }
-            }
-
-            fmt::print("removed edges = {}\n", nb_removed_edges);
-        }
-    }
-}
-
 void PricerSolverZddCycle::evaluate_nodes(double* pi) {
     auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
@@ -217,60 +115,60 @@ void PricerSolverZddCycle::evaluate_nodes(double* pi) {
     nb_removed_edges = 0;
 
     /** check for each node the Lagrangian dual */
-    for (int i = decision_diagram->topLevel(); i > 0; i--) {
-        for (auto& it : table[i]) {
-            auto* job = it.get_job();
-            for (auto& iter : it.list) {
-                auto w = iter->get_weight();
+    for (auto& it : table |
+                        ranges::views::take(decision_diagram->topLevel() + 1) |
+                        ranges::views ::drop(1) | ranges::views::join) {
+        auto* job = it.get_job();
+        for (auto& iter : it.list) {
+            auto w = iter->get_weight();
 
-                auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-                if (iter->forward_label[0].prev_job_forward() != job) {
-                    if (iter->y->backward_label[0].prev_job_backward() != job) {
-                        auto result = iter->forward_label[0].get_f() +
-                                      iter->y->backward_label[0].get_f() -
-                                      job->weighted_tardiness_start(w) +
-                                      pi[job->job];
-                        if (constLB - aux_nb_machines * reduced_cost - result >
-                                UB + RC_FIXING &&
-                            (iter->calc_yes)) {
-                            iter->calc_yes = false;
-                            nb_removed_edges++;
-                        }
-                    } else {
-                        auto result = iter->forward_label[0].get_f() +
-                                      iter->y->backward_label[1].get_f() -
-                                      job->weighted_tardiness_start(w) +
-                                      pi[job->job];
-                        if (constLB - aux_nb_machines * reduced_cost - result >
-                                UB + RC_FIXING &&
-                            (iter->calc_yes)) {
-                            iter->calc_yes = false;
-                            nb_removed_edges++;
-                        }
+            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
+            if (iter->forward_label[0].prev_job_forward() != job) {
+                if (iter->y->backward_label[0].prev_job_backward() != job) {
+                    auto result = iter->forward_label[0].get_f() +
+                                  iter->y->backward_label[0].get_f() -
+                                  job->weighted_tardiness_start(w) +
+                                  pi[job->job];
+                    if (constLB - aux_nb_machines * reduced_cost - result >
+                            UB + RC_FIXING &&
+                        (iter->calc_yes)) {
+                        iter->calc_yes = false;
+                        nb_removed_edges++;
                     }
                 } else {
-                    if (iter->y->backward_label[0].prev_job_backward() != job) {
-                        auto result = iter->forward_label[1].get_f() +
-                                      iter->y->backward_label[0].get_f() -
-                                      job->weighted_tardiness_start(w) +
-                                      pi[job->job];
-                        if (constLB - aux_nb_machines * reduced_cost - result >
-                                UB + RC_FIXING &&
-                            (iter->calc_yes)) {
-                            iter->calc_yes = false;
-                            nb_removed_edges++;
-                        }
-                    } else {
-                        auto result = iter->forward_label[1].get_f() +
-                                      iter->y->backward_label[1].get_f() -
-                                      job->weighted_tardiness_start(w) +
-                                      pi[job->job];
-                        if (constLB - aux_nb_machines * reduced_cost - result >
-                                UB + RC_FIXING &&
-                            (iter->calc_yes)) {
-                            iter->calc_yes = false;
-                            nb_removed_edges++;
-                        }
+                    auto result = iter->forward_label[0].get_f() +
+                                  iter->y->backward_label[1].get_f() -
+                                  job->weighted_tardiness_start(w) +
+                                  pi[job->job];
+                    if (constLB - aux_nb_machines * reduced_cost - result >
+                            UB + RC_FIXING &&
+                        (iter->calc_yes)) {
+                        iter->calc_yes = false;
+                        nb_removed_edges++;
+                    }
+                }
+            } else {
+                if (iter->y->backward_label[0].prev_job_backward() != job) {
+                    auto result = iter->forward_label[1].get_f() +
+                                  iter->y->backward_label[0].get_f() -
+                                  job->weighted_tardiness_start(w) +
+                                  pi[job->job];
+                    if (constLB - aux_nb_machines * reduced_cost - result >
+                            UB + RC_FIXING &&
+                        (iter->calc_yes)) {
+                        iter->calc_yes = false;
+                        nb_removed_edges++;
+                    }
+                } else {
+                    auto result = iter->forward_label[1].get_f() +
+                                  iter->y->backward_label[1].get_f() -
+                                  job->weighted_tardiness_start(w) +
+                                  pi[job->job];
+                    if (constLB - aux_nb_machines * reduced_cost - result >
+                            UB + RC_FIXING &&
+                        (iter->calc_yes)) {
+                        iter->calc_yes = false;
+                        nb_removed_edges++;
                     }
                 }
             }

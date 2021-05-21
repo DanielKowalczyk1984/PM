@@ -19,13 +19,13 @@ namespace vs = ranges::views;
 
 class VariableKeyBase {
    private:
-    int  j{-1};
-    int  t{-1};
-    bool high{false};
-    bool root{false};
+    size_t j{};
+    int    t{-1};
+    bool   high{false};
+    bool   root{false};
 
    public:
-    VariableKeyBase(int _j, int _t, bool _high = true, bool _root = false)
+    VariableKeyBase(size_t _j, int _t, bool _high = true, bool _root = false)
         : j(_j),
           t(_t),
           high(_high),
@@ -33,7 +33,7 @@ class VariableKeyBase {
 
     VariableKeyBase() = default;
 
-    [[nodiscard]] inline int get_j() const { return j; }
+    [[nodiscard]] inline size_t get_j() const { return j; }
 
     [[nodiscard]] inline int get_t() const { return t; }
 
@@ -41,7 +41,7 @@ class VariableKeyBase {
 
     [[nodiscard]] inline bool get_high() const { return high; }
 
-    inline void set_j(int _j) { j = _j; }
+    inline void set_j(size_t _j) { j = _j; }
 
     inline void set_t(int _t) { t = _t; }
 
@@ -95,10 +95,10 @@ class ConstraintBase {
 
 class ConstraintAssignment : public ConstraintBase {
    private:
-    int row;
+    size_t row;
 
    public:
-    explicit ConstraintAssignment(int _row)
+    explicit ConstraintAssignment(size_t _row)
         : ConstraintBase('>', 1.0),
           row(_row) {}
 
@@ -131,7 +131,7 @@ class ConstraintConvex : public ConstraintBase {
 
 class ReformulationModel : public std::vector<std::shared_ptr<ConstraintBase>> {
    public:
-    ReformulationModel(int nb_assignments, int nb_machines);
+    ReformulationModel(size_t nb_assignments, size_t nb_machines);
     ReformulationModel(ReformulationModel&&) = default;
     ReformulationModel& operator=(ReformulationModel&&) = default;
     ReformulationModel(const ReformulationModel&) = default;
@@ -157,7 +157,7 @@ class BddCoeff : public VariableKeyBase {
     double value;
 
    public:
-    BddCoeff(int    _j,
+    BddCoeff(size_t _j,
              int    _t,
              double _coeff,
              double _value = 0.0,
@@ -240,7 +240,7 @@ class GenericData : public std::unordered_map<VariableKeyBase, double> {
     GenericData& operator=(GenericData&&) = default;
     GenericData& operator=(const GenericData&) = default;
 
-    void add_coeff_hash_table(int _j, int _t, bool _high, double _coeff) {
+    void add_coeff_hash_table(size_t _j, int _t, bool _high, double _coeff) {
         VariableKeyBase key(_j, _t, _high);
 
         auto it = this->find(key);
@@ -388,7 +388,7 @@ class OriginalModel : public std::vector<OriginalConstraint<T>> {
 
     ConstraintBase* get_constraint(int c) { return (*this)[c].get_constr(); }
 
-    inline std::list<std::shared_ptr<T>>& get_coeff_list(int c) {
+    inline std::list<std::shared_ptr<T>>& get_coeff_list(size_t c) {
         return (*this)[c].get_coeff_list();
     }
 

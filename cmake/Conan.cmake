@@ -2,10 +2,8 @@ if(${PROJECT_NAME}_ENABLE_CONAN)
   #
   # Setup Conan requires and options here:
   #
-
-  set(CONAN_REQUIRES boost/1.73.0 fmt/7.1.3 docopt.cpp/0.6.3 range-v3/0.11.0 eigen/3.3.9)
-
-  set(CONAN_OPTIONS "pcre:with_utf=True" "pcre:with_unicode_properties=True")
+  set(CONAN_REQUIRES boost/1.73.0 fmt/7.1.3 docopt.cpp/0.6.3 range-v3/0.11.0)
+  set(CONAN_OPTIONS "")
 
   #
   # If `conan.cmake` (from https://github.com/conan-io/cmake-conan) does not exist, download it.

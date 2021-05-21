@@ -2,6 +2,7 @@
 #define __ZEROHALFCUTS_H__
 
 #include <gurobi_c++.h>
+#include <cstddef>
 #include <memory>
 #include <span>
 #include <vector>
@@ -12,8 +13,8 @@
 
 class ZeroHalfCuts {
    public:
-    ZeroHalfCuts(int                 _nb_jobs,
-                 int                 _nb_machines,
+    ZeroHalfCuts(size_t              _nb_jobs,
+                 size_t              _nb_machines,
                  ReformulationModel* _rmp_model,
                  NodeId const&       _root,
                  NodeTableEntity<>*  _table);
@@ -32,8 +33,8 @@ class ZeroHalfCuts {
    private:
     std::unique_ptr<GRBEnv>                         env;
     std::unique_ptr<GRBModel>                       model;
-    int                                             nb_jobs;
-    int                                             nb_machines;
+    size_t                                          nb_jobs;
+    size_t                                          nb_machines;
     ReformulationModel*                             rmp_model;
     NodeId                                          root;
     NodeTableEntity<>*                              table;

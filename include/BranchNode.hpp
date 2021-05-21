@@ -26,22 +26,17 @@ class BranchNodeBase : public State {
     bool is_terminal_state() final;
     void apply_final_pruning_tests(BTree* bt) final;
     void update_data(double upper_bound) final;
-    // std::unique_ptr<State> clone() { return nullptr; };  // "copy
-    // constructor"
     void print(const BTree* bt) const override;
-    bool operator<(const State& other) final {
-        return get_obj_value() < other.get_obj_value();
-    };
 
-    NodeData* get_data_ptr() const { return pd.get(); }
+    [[nodiscard]] NodeData* get_data_ptr() const { return pd.get(); }
 
    private:
     std::unique_ptr<NodeData> pd;
 
     static constexpr double ERROR = 1e-12;
     static constexpr double IntegerTolerance = 1e-3;
-    static constexpr double TargetBrTimeValue = 0.3;
-    static constexpr int    NumStrBrCandidates = 45;
+    static constexpr double TargetBrTimeValue = 0.2;
+    static constexpr size_t NumStrBrCandidates = 25;
 };
 
 struct BranchCand {
@@ -49,26 +44,15 @@ struct BranchCand {
     int    job{-1};
     int    t{-1};
 
-    std::unique_ptr<BranchNodeBase> left;
-    std::unique_ptr<BranchNodeBase> right;
+    // std::unique_ptr<BranchNodeBase> left{};
+    // std::unique_ptr<BranchNodeBase> right{};
 
     BranchCand() = default;
 
+    BranchCand(double _score, int _job, int _t);
+
     BranchCand(int _job, int _t, const NodeData* parrent);
 
-    bool operator<(const BranchCand& other) const {
-        return (score < other.score);
-    };
     static constexpr double EPS_BRANCH = 1e-4;
 };
-
-namespace std {
-template <>
-struct less<BranchCand> {
-    constexpr bool operator()(auto const& lhs, auto const& rhs) {
-        return rhs < lhs;  // or use boost::hash_combine
-    }
-};
-}  // namespace std
-
 #endif  // __BRANCHNODE_H__

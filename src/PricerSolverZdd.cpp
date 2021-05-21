@@ -2,6 +2,9 @@
 #include <fmt/core.h>
 #include <NodeBddStructure.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <cstddef>
+#include <range/v3/view/iota.hpp>
+#include <range/v3/view/reverse.hpp>
 #include <vector>
 #include "Instance.h"
 #include "OptimalSolution.hpp"
@@ -114,13 +117,14 @@ void PricerSolverZdd::init_table() {
         table.node(decision_diagram->root()).list.pop_back();
     }
 
-    for (size_t i = decision_diagram->topLevel(); i >= 0; i--) {
+    for (auto i : ranges::views::ints(0UL, decision_diagram->root().row() + 1) |
+                      ranges::views::reverse) {
         size_t layer = ordered_jobs_new.size() - i;
         auto&  tmp_pair = ordered_jobs_new[layer];
         // static_cast<job_interval_pair*>(span_ordered_job[layer]);
 
         for (auto& it : table[i]) {
-            if (i != 0) {
+            if (i != 0UL) {
                 it.set_job(tmp_pair.first);
                 auto& n0 = table.node(it[0]);
                 auto& n1 = table.node(it[1]);
@@ -147,43 +151,12 @@ OptimalSolution<double> PricerSolverZdd::farkas_pricing(
 }
 
 void PricerSolverZdd::remove_layers_init() {
-    // int   first_del = -1;
-    // int   last_del = -1;
-    // int   it = 0;
     auto& table = *(decision_diagram->getDiagram());
 
-    // /** remove the unnecessary layers of the bdd */
-    // for (int i = decision_diagram->topLevel(); i > 0; i--) {
-    //     if (std::any_of(table[i].begin(), table[i].end(),
-    //                     [](NodeZdd<>& n) { return n.branch[1] != 0; })) {
-    //         if (first_del != -1) {
-    //             g_ptr_array_remove_range(ordered_jobs, first_del,
-    //                                      last_del - first_del + 1);
-    //             it = it - (last_del - first_del);
-    //             first_del = last_del = -1;
-    //         } else {
-    //             it++;
-    //         }
-    //     } else {
-    //         if (first_del == -1) {
-    //             first_del = it;
-    //             last_del = first_del;
-    //         } else {
-    //             last_del++;
-    //         }
-
-    //         it++;
-    //     }
-    // }
-
-    // if (first_del != -1) {
-    //     g_ptr_array_remove_range(ordered_jobs, first_del,
-    //                              last_del - first_del + 1);
-    // }
-    auto i = decision_diagram->topLevel();
+    auto i = decision_diagram->root().row();
     ordered_jobs_new.erase(
         std::remove_if(ordered_jobs_new.begin(), ordered_jobs_new.end(),
-                       [&](const auto& tmp) {
+                       [&]([[maybe_unused]] const auto& tmp) {
                            bool remove = std::ranges::all_of(
                                table[i],
                                [&](const auto& n) { return n[1] == 0; });
@@ -251,10 +224,10 @@ void PricerSolverZdd::remove_layers() {
     //     g_ptr_array_remove_range(ordered_jobs, first_del,
     //                              last_del - first_del + 1);
     // }
-    auto i = decision_diagram->topLevel();
+    auto i = decision_diagram->root().row();
     ordered_jobs_new.erase(
         std::remove_if(ordered_jobs_new.begin(), ordered_jobs_new.end(),
-                       [&](const auto& tmp) {
+                       [&]([[maybe_unused]] const auto& tmp) {
                            bool remove_layer = true;
 
                            for (auto& iter : table[i]) {
@@ -390,38 +363,6 @@ void PricerSolverZdd::build_mip() {
     }
 }
 
-void PricerSolverZdd::reduce_cost_fixing(double* pi, int UB, double LB) {
-    /** Remove Layers */
-    evaluate_nodes(pi, UB, LB);
-    remove_layers();
-    remove_edges();
-    init_table();
-    evaluate_nodes(pi, UB, LB);
-    remove_edges();
-    init_table();
-    construct_mipgraph();
-}
-
-// void PricerSolverZdd::add_constraint(Job* job, GPtrArray* list, int order) {
-//     std::cout << decision_diagram->size() << '\n';
-//     scheduling constr(job, ordered_jobs_new, order);
-//     // std::ofstream outf("min1.gv");
-//     // NodeTableEntity<NodeZdd<>>& table =
-//     // decision_diagram->getDiagram().privateEntity(); ColorWriterVertex
-//     // vertex_writer(g, table); boost::write_graphviz(outf, g,
-//     vertex_writer); decision_diagram->zddSubset(constr);
-//     // outf.close();
-//     // decision_diagram->compressBdd();
-//     init_table();
-//     std::cout << decision_diagram->size() << '\n';
-//     construct_mipgraph();
-//     // NodeTableEntity<NodeZdd<>>& table1 =
-//     // decision_diagram->getDiagram().privateEntity(); ColorWriterVertex
-//     // vertex_writer1(g, table1); outf = std::ofstream("min2.gv");
-//     // boost::write_graphviz(outf, g, vertex_writer1);
-//     // outf.close();
-// }
-
 void PricerSolverZdd::construct_lp_sol_from_rmp(
     const double*                                    columns,
     const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) {
@@ -429,7 +370,7 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(
     std::span aux_cols{columns, schedule_sets.size()};
     // std::span aux_sets{schedule_sets->pdata, schedule_sets->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    for (int i = 0; i < schedule_sets.size(); ++i) {
+    for (auto i = 0UL; i < schedule_sets.size(); ++i) {
         if (aux_cols[i] > EPS_SOLVER) {
             auto  counter = 0UL;
             auto* tmp = schedule_sets[i].get();
@@ -523,11 +464,11 @@ void PricerSolverZdd::print_number_nodes_edges() {
                nb_removed_nodes);
 }
 
-int PricerSolverZdd::get_num_remove_nodes() {
+size_t PricerSolverZdd::get_num_remove_nodes() {
     return nb_removed_nodes;
 }
 
-int PricerSolverZdd::get_num_remove_edges() {
+size_t PricerSolverZdd::get_num_remove_edges() {
     return nb_removed_edges;
 }
 

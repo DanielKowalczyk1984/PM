@@ -19,7 +19,7 @@ struct PricerSolverBase {
     const std::vector<std::shared_ptr<Job>>& jobs;
 
     size_t convex_constr_id;
-    int    convex_rhs;
+    size_t convex_rhs;
 
     std::string problem_name;
 
@@ -33,10 +33,11 @@ struct PricerSolverBase {
     double constLB;
     double UB;
 
-    static constexpr double EPS_SOLVER = 1e-6;
-    static constexpr double RC_FIXING = 1e-4;
-    static constexpr int    ALIGN = 60;
-    static constexpr int    ALIGN_HALF = 60;
+    static const std::shared_ptr<GRBEnv> genv;
+    static constexpr double              EPS_SOLVER = 1e-6;
+    static constexpr double              RC_FIXING = 1e-4;
+    static constexpr int                 ALIGN = 60;
+    static constexpr int                 ALIGN_HALF = 60;
 
     std::vector<BddCoeff> lp_sol;
     /**
@@ -69,7 +70,7 @@ struct PricerSolverBase {
      */
     virtual ~PricerSolverBase();
 
-    virtual std::unique_ptr<PricerSolverBase> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<PricerSolverBase> clone() const = 0;
 
     /**
      * Pricing Algorithm
@@ -81,8 +82,6 @@ struct PricerSolverBase {
      * Reduced cost fixing
      */
 
-    virtual void reduce_cost_fixing(double* pi, int UB, double LB) = 0;
-    virtual void evaluate_nodes(double* pi, int UB, double LB) = 0;
     virtual void evaluate_nodes(double* pi) = 0;
 
     /** Original Mip formulation */
@@ -107,7 +106,9 @@ struct PricerSolverBase {
     //     reformulation_model.add_constraint(constr);
     // };
 
-    virtual void split_job_time(int _job, int _time, bool _left) {}
+    virtual void split_job_time([[maybe_unused]] size_t _job,
+                                [[maybe_unused]] int    _time,
+                                [[maybe_unused]] bool   _left) {}
 
     /**
      * Some getters
@@ -117,17 +118,19 @@ struct PricerSolverBase {
     double       get_UB();
     void         update_UB(double _ub);
 
-    virtual int    get_num_remove_nodes() = 0;
-    virtual int    get_num_remove_edges() = 0;
+    virtual size_t get_num_remove_nodes() = 0;
+    virtual size_t get_num_remove_edges() = 0;
     virtual int    get_num_layers() = 0;
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
     // virtual bool   check_schedule_set(GPtrArray* set) = 0;
-    virtual bool check_schedule_set(const std::vector<Job*>& set) {
+    virtual bool check_schedule_set(
+        [[maybe_unused]] const std::vector<Job*>& set) {
         return true;
     };
     // virtual void make_schedule_set_feasible(GPtrArray* set) = 0;
-    virtual void make_schedule_set_feasible(std::vector<Job*>& set){};
+    virtual void make_schedule_set_feasible(
+        [[maybe_unused]] std::vector<Job*>& set){};
     /**
      * Some printing functions
      */
