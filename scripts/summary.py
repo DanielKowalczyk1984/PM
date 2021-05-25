@@ -43,7 +43,7 @@ results_path = results.joinpath("./results_{}_{}_{}".format(year, month, day))
 if results_path.exists() == False:
     os.mkdir(results_path)
 
-copy(file_path, results_path.joinpath(match.group(0)))
+# copy(file_path, results_path.joinpath(match.group(0)))
 tex_file = str()
 
 # %% Create tex files for Column generation results
@@ -112,7 +112,7 @@ df_all = pd.merge(data, df_oliveira, on=['Inst', 'n', 'm'])
 
 
 # %% Compute overall performance profile curve
-df_all['tot_bb'] = 0.6*df_all['tot_bb']
+df_all['tot_bb'] = 0.7*df_all['tot_bb']
 df_all['best_solver'] = df_all[['tot_bb', 'TimeOliveira']].min(axis=1)
 df_all['ratio_tot_bb_best'] = df_all['tot_bb'] / df_all['best_solver']
 
@@ -134,7 +134,7 @@ width, height = plt.figaspect(1.68)
 fig, ax = plt.subplots(figsize=(width, height), dpi=200)
 ax.step(sorted_ratio_tot_bb, yvals, label='BDD')
 ax.step(sorted_ratio_TimeOliveira, yvalues, label='ATIF')
-ax.set_xlim([10**0, 100])
+ax.set_xlim([10**0, 20])
 # ax.set_title(
 #     r"Performance profile for instances with $m = %d$ and $n = %d$"
 #     % (i, j))
