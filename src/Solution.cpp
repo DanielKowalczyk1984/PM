@@ -285,7 +285,7 @@ void Sol::calculate_partition(const VecIntervalPtr& v) {
     }
 }
 
-void Sol::print_solution() {
+void Sol::print_solution() const {
     for (auto&& [j, m] : machines | ranges::views::enumerate) {
         fmt::print("Machine {}: ", j);
         for (auto& tmp_j : m.job_list) {

@@ -89,6 +89,9 @@ struct PricerSolverBase {
     virtual void construct_lp_sol_from_rmp(
         const double*                                    columns,
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) = 0;
+    virtual void project_sol_on_original_variables(const Sol& _sol) {
+        _sol.print_solution();
+    };
 
     /**
      * Constraint on the solver

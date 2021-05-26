@@ -1,6 +1,7 @@
 #ifndef __SOLUTION_NEW_H__
 #define __SOLUTION_NEW_H__
 #include <cstddef>
+#include <limits>
 #include <memory>
 #include <random>
 #include <vector>
@@ -49,7 +50,7 @@ struct Sol {
     std::vector<int>    c{};
     std::vector<size_t> u{};
 
-    int tw{};
+    int tw{std::numeric_limits<int>::max()};
     int off{};
 
     Sol() = default;
@@ -80,7 +81,7 @@ struct Sol {
                                 size_t k2,
                                 size_t l1,
                                 size_t l2);
-    void print_solution();
+    void print_solution() const;
 
    private:
     void add_job_front_machine(Job* job);

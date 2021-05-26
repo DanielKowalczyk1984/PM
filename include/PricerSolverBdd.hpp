@@ -62,6 +62,8 @@ class PricerSolverBdd : public PricerSolverBase {
         const double*                                    columns,
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
         override;
+
+    void project_sol_on_original_variables(const Sol& _sol) override;
     // void make_schedule_set_feasible(GPtrArray* set) override;
     void calculate_job_time(std::vector<std::vector<double>>* v) override;
     void split_job_time(size_t _job, int _time, bool _left) override;
