@@ -18,7 +18,7 @@ static const std::string USAGE =
     R"(PM.
 
 Usage:
-  bin/PM [-s <sn> -S <kn> -pmBRZH -n <nl> -b <br> -a <ln> -l <x> -f <y> -d --no_strong_branching --alpha <mn>] FILE NB
+  bin/PM [-s <sn> -S <kn> -pmBRZHMd -n <nl> -b <br> -a <ln> -l <x> -f <y> --no_strong_branching --alpha <mn>] FILE NB
   bin/PM (-h | --help)
   bin/PM --version
 
@@ -45,6 +45,7 @@ Options:
   -H --no_heuristic             Don't apply heuristic.
   -B --no_branch_and_bound      Don't apply branch-and-bound.
   --no_strong_branching         Don't apply strong branching.
+  -M --use_mip_solver              Use MIP solver.
   -b --branching_strategy=<br>  Set branch-and-bound exploration strategy: 0 = DFS, 1 = BFS, 2 = BrFS, 3 = CBFS[default: 0].
   -n --node_limit=<nl>          Set a limit on the number of nodes that can be explored.[default: 0]. Default meaning that all nodes should be explored.
 )";
@@ -154,6 +155,7 @@ struct Parms {
     int                                   mip_solver;
     int                                   use_heuristic;
     std::function<double(double, double)> scoring_function;
+    bool                                  use_mip_solver;
 
     enum reduced_cost_fixing_param reduce_cost_fixing;
 
@@ -206,6 +208,7 @@ struct Parms {
     int parms_set_file(std::string const& fname);
     int parms_set_pname(std::string const& fname);
     int parms_set_nb_machines(int nb_machines);
+    int parms_set_use_mip_solver(bool _use_solver);
     /**
     @brief Parse the commands with docopt
      *

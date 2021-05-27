@@ -1,5 +1,6 @@
 #include <bits/ranges_algo.h>
 #include <fmt/core.h>
+#include <cmath>
 #include <memory>
 #include <range/v3/action/remove_if.hpp>
 #include <range/v3/numeric/inner_product.hpp>
@@ -492,7 +493,8 @@ int NodeData::compute_lower_bound() {
         // has_cuts = 0;
         while ((iterations < NB_CG_ITERATIONS) && has_cols &&
                stat.total_timer(Statistics::cputime_timer) <=
-                   parms.branching_cpu_limit) {
+                   parms.branching_cpu_limit &&
+               solver->get_nb_vertices() != 0) {
             /**
              * Delete old columns
              */
@@ -582,6 +584,10 @@ int NodeData::compute_lower_bound() {
                     // call_update_duals(pd->solver_stab);
                     // lp_interface_write(pd->RMP, "test.lp");
                     // }
+                } else {
+                    LP_lower_bound_dual = LP_lower_bound = LP_lower_bound_BB =
+                        solver_stab->get_eta_in();
+                    lower_bound = static_cast<int>(ceil(LP_lower_bound_BB));
                 }
                 break;
 

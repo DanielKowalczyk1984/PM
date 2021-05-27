@@ -50,9 +50,11 @@ void PricerSolverSimpleDp::init_table() {
     fmt::print("Number of arcs in TI formulation = {}\n", size_graph);
 }
 
-void PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
+bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
     forward_evaluator(pi);
     backward_evaluator(pi);
+
+    return false;
 }
 
 void PricerSolverSimpleDp::build_mip() {

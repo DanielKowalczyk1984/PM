@@ -22,6 +22,7 @@
 #include "PricerConstruct.hpp"
 #include "PricerSolverBase.hpp"
 #include "ZeroHalfCuts.hpp"
+#include "gurobi_c.h"
 #include "lp.h"
 #include "scheduleset.h"
 #include "util.h"
@@ -687,15 +688,18 @@ void PricerSolverBdd::build_mip() {
             // static_cast<EdgeData*>(it.first->get_property());
             auto& high = mip_graph[*it.first].high;
             auto& x = mip_graph[*it.first].x;
+            auto& n =
+                table.node(mip_graph[source(*it.first, mip_graph)].node_id);
             if (high) {
-                auto& n =
-                    table.node(mip_graph[source(*it.first, mip_graph)].node_id);
                 double cost =
                     n.get_job()->weighted_tardiness_start(n.get_weight());
                 x = m.addVar(0.0, 1.0, cost, GRB_BINARY);
+                x.set(GRB_DoubleAttr_Start, n.best_sol_x[1]);
+
             } else {
                 x = m.addVar(0.0, static_cast<double>(convex_rhs), 0.0,
-                             GRB_CONTINUOUS);
+                             GRB_INTEGER);
+                x.set(GRB_DoubleAttr_Start, n.best_sol_x[0]);
             }
         }
 
@@ -771,7 +775,6 @@ void PricerSolverBdd::build_mip() {
         //         solution_x[edge_index_list[*it.first]]);
         // }
         // model.write("original_" + problem_name + ".lp");
-        m.write("test.lp");
         auto presolve = m.presolve();
         m.optimize();
     } catch (GRBException& e) {
@@ -1261,6 +1264,35 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
     // std::ofstream outf(file_name);
     // boost::write_graphviz(outf, mip_graph, vertex_writer, edge_writer);
     // outf.close();
+}
+
+void PricerSolverBdd::project_sol_on_original_variables(const Sol& _sol) {
+    auto& table = *(decision_diagram.getDiagram());
+    for (auto& m : _sol.machines) {
+        auto counter = 0u;
+        auto tmp_nodeid(decision_diagram.root());
+
+        while (tmp_nodeid > 1) {
+            Job* tmp_j = nullptr;
+
+            if (counter < m.job_list.size()) {
+                tmp_j = m.job_list[counter];
+            }
+
+            auto& tmp_node = table.node(tmp_nodeid);
+
+            if (tmp_j == tmp_node.get_job()) {
+                tmp_node.best_sol_x[1] += 1.0;
+                tmp_nodeid = tmp_node[1];
+                counter++;
+            } else {
+                tmp_node.best_sol_x[0] += 1.0;
+                tmp_nodeid = tmp_node[0];
+            }
+        }
+
+        assert(tmp_nodeid == 1);
+    }
 }
 
 void PricerSolverBdd::calculate_job_time(std::vector<std::vector<double>>* v) {

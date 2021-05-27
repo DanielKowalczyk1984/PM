@@ -22,7 +22,7 @@ BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
         pd->compute_lower_bound();
         pd->stat.suspend_timer(Statistics::lb_root_timer);
         set_lb(pd->lower_bound);
-        set_obj_value(pd->LP_lower_bound);
+        // set_obj_value(pd->LP_lower_bound);
     }
 }
 

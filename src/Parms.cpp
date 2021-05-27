@@ -27,6 +27,7 @@ Parms::Parms()
       pricing_solver(bdd_solver_backward_cycle),
       mip_solver(min_mip_solver),
       use_heuristic(min_use_heuristic),
+      use_mip_solver(false),
       reduce_cost_fixing(min_reduced_cost),
       branchandbound(min_branch_and_bound),
       stab_technique(min_stab),
@@ -125,6 +126,11 @@ int Parms::parms_set_pricing_solver(int solver) {
     return 0;
 }
 
+int Parms::parms_set_use_mip_solver(bool _use_solver) {
+    use_mip_solver = _use_solver;
+    return 0;
+}
+
 int Parms::parms_set_scoring_function(int scoring) {
     scoring_parameter = static_cast<Scoring_Parameter>(scoring);
     switch (scoring_parameter) {
@@ -200,6 +206,7 @@ int Parms::parse_cmd(int argc, const char** argv) {
         static_cast<int>(args["--pricing_solver"].asLong()));
     /** Set the stabilization method */
     parms_set_stab_technique(static_cast<int>(args["--stab_method"].asLong()));
+    parms_set_use_mip_solver(args["--use_mip_solver"].asBool());
     parms_set_scoring_function(
         static_cast<int>(args["--scoring_function"].asLong()));
     parms_set_branchandbound(args["--no_branch_and_bound"].asBool());

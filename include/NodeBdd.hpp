@@ -25,6 +25,7 @@ class NodeBdd : public NodeBase {
     std::array<double, 2>   cost{0.0, 0.0};
     std::array<double, 2>   reduced_cost{0.0, 0.0};
     std::array<double, 2>   lp_x{0.0, 0.0};
+    std::array<double, 2>   best_sol_x{0.0, 0.0};
 
     std::array<bool, 2>     calc{true, true};
     size_t                  key{};

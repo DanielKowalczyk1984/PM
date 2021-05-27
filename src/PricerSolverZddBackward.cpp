@@ -31,7 +31,7 @@ void PricerSolverZddBackwardSimple::compute_labels(double* _pi) {
     decision_diagram->compute_labels_forward(reversed_evaluator);
 }
 
-void PricerSolverZddBackwardSimple::evaluate_nodes(double* pi) {
+bool PricerSolverZddBackwardSimple::evaluate_nodes(double* pi) {
     auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
     double reduced_cost =
@@ -60,6 +60,8 @@ void PricerSolverZddBackwardSimple::evaluate_nodes(double* pi) {
     }
 
     fmt::print("removed edges = {}\n", nb_removed_edges);
+
+    return nb_removed_edges;
 }
 
 // PricerSolverZddBackwardCycle::PricerSolverZddBackwardCycle(
@@ -100,7 +102,7 @@ void PricerSolverZddBackwardCycle::compute_labels(double* _pi) {
     decision_diagram->compute_labels_forward(reversed_evaluator);
 }
 
-void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
+bool PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
     auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
     double reduced_cost =
@@ -164,4 +166,6 @@ void PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) {
     }
 
     fmt::print("removed edges = {}\n", nb_removed_edges);
+
+    return nb_removed_edges;
 }

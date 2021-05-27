@@ -54,7 +54,7 @@ class PricingStabilizationBase {
     virtual void       solve(double eta_out, double* _lhs);
     virtual int        stopping_criteria();
     virtual void       update_duals();
-    virtual void       reduced_cost_fixing();
+    virtual bool       reduced_cost_fixing();
     virtual void       remove_constraints(int first, int nb_del);
     virtual void       update_continueLP(int _continueLP);
     virtual int        do_reduced_cost_fixing();

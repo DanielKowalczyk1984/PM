@@ -149,9 +149,10 @@ void PricerSolverArcTimeDp::init_table() {
     fmt::print("Number of arcs in ATI formulation = {}\n", size_graph);
 }
 
-void PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
+bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
     forward_evaluator(pi);
     backward_evaluator(pi);
+    return false;
 }
 
 void PricerSolverArcTimeDp::build_mip() {
@@ -161,10 +162,12 @@ void PricerSolverArcTimeDp::build_mip() {
     for (auto j = 0UL; j < n + 1; j++) {
         for (auto t = 0UL; t + vector_jobs[j]->processing_time <= Hmax; t++) {
             for (auto& it : graph[j][t]) {
-                double cost = vector_jobs[j]->weighted_tardiness_start(static_cast<int>(t));
-                double tmp =
-                    (it->job == vector_jobs[j]->job) ? static_cast<double>(convex_rhs) : 1.0;
-                auto s =
+                double cost = vector_jobs[j]->weighted_tardiness_start(
+                    static_cast<int>(t));
+                double tmp = (it->job == vector_jobs[j]->job)
+                                 ? static_cast<double>(convex_rhs)
+                                 : 1.0;
+                auto   s =
                     (it->job == vector_jobs[j]->job) ? GRB_INTEGER : GRB_BINARY;
                 arctime_x[it->job][j][t] = model.addVar(0.0, tmp, cost, s);
             }
