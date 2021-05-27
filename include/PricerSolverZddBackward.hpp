@@ -18,7 +18,7 @@ class PricerSolverZddBackwardSimple : public PricerSolverZdd {
     PricerSolverZddBackwardSimple(const Instance& instance);
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     void                    compute_labels(double* _pi);
-    void                    evaluate_nodes(double* pi) final;
+    bool                    evaluate_nodes(double* pi) final;
     PricerSolverZddBackwardSimple(const PricerSolverZddBackwardSimple&) =
         default;
 };
@@ -44,7 +44,7 @@ class PricerSolverZddBackwardCycle : public PricerSolverZdd {
         const PricerSolverZddBackwardCycle&) = delete;
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     void                    compute_labels(double* _pi);
-    void                    evaluate_nodes(double* pi) final;
+    bool                    evaluate_nodes(double* pi) final;
 };
 
 #endif  // PRICER_SOLVER_ZDD_BACKWARD_HPP

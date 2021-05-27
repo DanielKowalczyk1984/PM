@@ -42,7 +42,7 @@ class PricerSolverBddSimple : public PricerSolverBdd {
     OptimalSolution<double> farkas_pricing(double* _pi) override;
 
     void compute_labels(double* _pi);
-    void evaluate_nodes(double* pi) final;
+    bool evaluate_nodes(double* pi) final;
 };
 
 class PricerSolverBddCycle : public PricerSolverBdd {
@@ -78,7 +78,7 @@ class PricerSolverBddCycle : public PricerSolverBdd {
     OptimalSolution<double> farkas_pricing(double* _pi) override;
 
     void compute_labels(double* _pi);
-    void evaluate_nodes(double* pi) final;
+    bool evaluate_nodes(double* pi) final;
 };
 
 #endif  // PRICER_SOLVER_BDD_FORWARD_HPP

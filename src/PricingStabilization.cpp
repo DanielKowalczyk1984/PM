@@ -88,10 +88,10 @@ void PricingStabilizationBase::update_duals() {
     }
 }
 
-void PricingStabilizationBase::reduced_cost_fixing() {
+bool PricingStabilizationBase::reduced_cost_fixing() {
     previous_fix = iterations;
     solver->calculate_constLB(pi_sep.data());
-    solver->evaluate_nodes(pi_sep.data());
+    return solver->evaluate_nodes(pi_sep.data());
 }
 
 void PricingStabilizationBase::remove_constraints(int first, int nb_del) {

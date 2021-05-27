@@ -10,6 +10,7 @@
 #include "MIP_defs.hpp"
 #include "ModelInterface.hpp"
 #include "OptimalSolution.hpp"
+#include "Solution.hpp"
 
 struct NodeData;
 struct ScheduleSet;
@@ -82,7 +83,7 @@ struct PricerSolverBase {
      * Reduced cost fixing
      */
 
-    virtual void evaluate_nodes(double* pi) = 0;
+    virtual bool evaluate_nodes(double* pi) = 0;
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;

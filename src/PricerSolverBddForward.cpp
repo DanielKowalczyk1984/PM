@@ -33,7 +33,7 @@ void PricerSolverBddSimple::compute_labels(double* _pi) {
     get_decision_diagram().compute_labels_backward(reversed_evaluator);
 }
 
-void PricerSolverBddSimple::evaluate_nodes(double* pi) {
+bool PricerSolverBddSimple::evaluate_nodes(double* pi) {
     auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
     auto reduced_cost = table.node(1).forward_label[0].get_f();
@@ -72,6 +72,8 @@ void PricerSolverBddSimple::evaluate_nodes(double* pi) {
         cleanup_arcs();
         construct_mipgraph();
     }
+
+    return removed_edges;
 }
 
 /**
@@ -104,7 +106,7 @@ void PricerSolverBddCycle::compute_labels(double* _pi) {
     get_decision_diagram().compute_labels_backward(reversed_evaluator);
 }
 
-void PricerSolverBddCycle::evaluate_nodes(double* pi) {
+bool PricerSolverBddCycle::evaluate_nodes(double* pi) {
     auto& table = *(get_decision_diagram().getDiagram());
     compute_labels(pi);
     auto reduced_cost = table.node(1).forward_label[0].get_f();
@@ -161,4 +163,6 @@ void PricerSolverBddCycle::evaluate_nodes(double* pi) {
         cleanup_arcs();
         construct_mipgraph();
     }
+
+    return removed_edges;
 }
