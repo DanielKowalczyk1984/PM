@@ -48,7 +48,7 @@ Problem::Problem(int argc, const char** argv)
 
     stat.suspend_timer(Statistics::heuristic_timer);
     /**
-     * @brief Build DD at the root node
+     * @brief Create pricing solver
      *
      */
     stat.start_resume_timer(Statistics::build_dd_timer);
@@ -135,7 +135,7 @@ Problem::Problem(int argc, const char** argv)
      * @brief Initialization of the B&B tree
      *
      */
-    if (true) {
+    if (!parms.use_mip_solver) {
         stat.start_resume_timer(Statistics::bb_timer);
         tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
         tree->explore();
@@ -152,6 +152,7 @@ Problem::Problem(int argc, const char** argv)
         root_pd->stat.start_resume_timer(Statistics::lb_root_timer);
         root_pd->compute_lower_bound();
         stat.suspend_timer(Statistics::lb_root_timer);
+        tmp_solver->project_sol_on_original_variables(opt_sol);
         tmp_solver->build_mip();
         // set_lb(pd->lower_bound);
         // set_obj_value(pd->LP_lower_bound);
