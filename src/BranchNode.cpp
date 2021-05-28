@@ -16,13 +16,16 @@ BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
     : State(_isRoot),
       pd(std::move(_pd)) {
     if (_isRoot) {
+        set_ub(double(pd->opt_sol.tw));
         pd->build_rmp();
         pd->solve_relaxation();
         pd->stat.start_resume_timer(Statistics::lb_root_timer);
         pd->compute_lower_bound();
         pd->stat.suspend_timer(Statistics::lb_root_timer);
         set_lb(pd->lower_bound);
-        // set_obj_value(pd->LP_lower_bound);
+        if (pd->solver->get_is_integer_solution()) {
+            set_obj_value(pd->LP_lower_bound);
+        }
     }
 }
 
@@ -213,7 +216,8 @@ void BranchNodeBase::assess_dominance([[maybe_unused]] State* otherState) {}
 
 bool BranchNodeBase::is_terminal_state() {
     auto* solver = pd->solver.get();
-    return solver->get_is_integer_solution();
+    set_feasible(pd->status != NodeData::infeasible);
+    return (solver->get_is_integer_solution() || !is_feasible());
 }
 
 void BranchNodeBase::apply_final_pruning_tests(BTree* bt) {}
@@ -246,27 +250,7 @@ void BranchNodeBase::print(const BTree* bt) const {
 
 BranchCand::BranchCand(int _job, int _t, const NodeData* parent)
     : job(_job),
-      t(_t) {
-    //   left(std::move(std::make_unique<BranchNodeBase>(parrent->clone()))),
-    //   right(std::mo(std::make_unique<BranchNodeBase>(parrent->clone()))) {
-    // auto* left_data_ptr = left->get_data_ptr();
-    // auto* right_data_ptr = right->get_data_ptr();
-
-    // left_data_ptr->solver->split_job_time(job, t, true);
-    // left_data_ptr->build_rmp();
-    // left_data_ptr->solve_relaxation();
-    // left_data_ptr->estimate_lower_bound(10);
-
-    // right_data_ptr->solver->split_job_time(job, t, false);
-    // right_data_ptr->build_rmp();
-    // right_data_ptr->solve_relaxation();
-    // right_data_ptr->estimate_lower_bound(10);
-
-    // score = std::min(right_data_ptr->LP_lower_bound -
-    // parrent->LP_lower_bound,
-    //                  left_data_ptr->LP_lower_bound -
-    //                  parrent->LP_lower_bound);
-}
+      t(_t) {}
 
 BranchCand::BranchCand(double _score, int _job, int _t)
     : score(_score),
