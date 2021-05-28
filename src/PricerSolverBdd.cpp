@@ -676,8 +676,9 @@ void PricerSolverBdd::add_inequality(std::vector<int> v1) {
 }
 
 void PricerSolverBdd::build_mip() {
-    GRBModel m(*env);
-    m.set(GRB_IntParam_OutputFlag, 1);
+    // GRBModel m(*env);
+    model.reset(1);
+    model.set(GRB_IntParam_OutputFlag, 1);
     try {
         fmt::print("Building Mip model for the extended formulation:\n");
         auto& table = *(decision_diagram.getDiagram());
@@ -693,17 +694,17 @@ void PricerSolverBdd::build_mip() {
             if (high) {
                 double cost =
                     n.get_job()->weighted_tardiness_start(n.get_weight());
-                x = m.addVar(0.0, 1.0, cost, GRB_BINARY);
+                x = model.addVar(0.0, 1.0, cost, GRB_BINARY);
                 x.set(GRB_DoubleAttr_Start, n.best_sol_x[1]);
 
             } else {
-                x = m.addVar(0.0, static_cast<double>(convex_rhs), 0.0,
-                             GRB_INTEGER);
+                x = model.addVar(0.0, static_cast<double>(convex_rhs), 0.0,
+                                 GRB_INTEGER);
                 x.set(GRB_DoubleAttr_Start, n.best_sol_x[0]);
             }
         }
 
-        m.update();
+        model.update();
 
         /** Assignment constraints */
         auto assignment{
@@ -722,9 +723,9 @@ void PricerSolverBdd::build_mip() {
         }
 
         std::unique_ptr<GRBConstr> assignment_constrs(
-            m.addConstrs(assignment.data(), sense.data(), rhs.data(), nullptr,
-                         convex_constr_id));
-        m.update();
+            model.addConstrs(assignment.data(), sense.data(), rhs.data(),
+                             nullptr, convex_constr_id));
+        model.update();
 
         /** Flow constraints */
         auto num_vertices = boost::num_vertices(mip_graph);
@@ -763,9 +764,9 @@ void PricerSolverBdd::build_mip() {
         }
 
         std::unique_ptr<GRBConstr> flow_constrs(
-            m.addConstrs(flow_conservation_constr.data(), sense_flow.data(),
-                         rhs_flow.data(), nullptr, num_vertices));
-        m.update();
+            model.addConstrs(flow_conservation_constr.data(), sense_flow.data(),
+                             rhs_flow.data(), nullptr, num_vertices));
+        model.update();
         // for (auto it = edges(mip_graph); it.first != it.second;
         // it.first++) {
         //     // edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart,
@@ -775,8 +776,8 @@ void PricerSolverBdd::build_mip() {
         //         solution_x[edge_index_list[*it.first]]);
         // }
         // model.write("original_" + problem_name + ".lp");
-        auto presolve = m.presolve();
-        m.optimize();
+        // auto presolve = model.presolve();
+        model.optimize();
     } catch (GRBException& e) {
         fmt::print("Error code = {}\n", e.getErrorCode());
         fmt::print(e.getMessage());

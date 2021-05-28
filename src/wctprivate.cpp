@@ -128,6 +128,7 @@ Problem::Problem(int argc, const char** argv)
     }
 
     root_pd->solver->update_UB(opt_sol.tw);
+    root_pd->upper_bound = opt_sol.tw;
     stat.root_upper_bound = opt_sol.tw + instance.off;
     stat.global_upper_bound = opt_sol.tw + instance.off;
 
