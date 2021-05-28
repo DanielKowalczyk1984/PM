@@ -87,6 +87,7 @@ struct PricerSolverBase {
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;
+    bool         evaluate_mip_model();
     virtual void construct_lp_sol_from_rmp(
         const double*                                    columns,
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) = 0;
