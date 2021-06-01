@@ -492,7 +492,7 @@ int NodeData::compute_lower_bound() {
         has_cols = 1;
         // has_cuts = 0;
         while ((iterations < NB_CG_ITERATIONS) && has_cols &&
-               solver->get_nb_vertices() != 0) {
+               solver->structure_feasible()) {
             /**
              * Delete old columns
              */
@@ -557,13 +557,13 @@ int NodeData::compute_lower_bound() {
                  * Compute the objective function
                  */
                 solve_relaxation();
-                if (!localColPool.empty()) {
+                if (!localColPool.empty() && solver->structure_feasible()) {
                     status = LP_bound_computed;
                     construct_lp_sol_from_rmp();
                 } else {
                     status = infeasible;
                     LP_lower_bound_dual = LP_lower_bound = LP_lower_bound_BB =
-                        solver_stab->get_eta_in();
+                        upper_bound;
                     lower_bound = static_cast<int>(ceil(LP_lower_bound_BB));
                 }
                 break;

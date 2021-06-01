@@ -80,7 +80,6 @@ int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
 }
 
 int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
-    // auto  row_ind = 0;
     auto  var_ind = 0;
     auto  cval = 0.0;
     auto  cost = static_cast<double>(set->total_weighted_completion_time);
@@ -91,12 +90,6 @@ int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
     lp_interface_addcol(lp, 0, nullptr, nullptr, cost, 0.0, GRB_INFINITY,
                         lp_interface_CONT, nullptr);
 
-    // for (auto& it : set->job_list) {
-    //     row_ind = static_cast<int>(it->job);
-    //     lp_interface_getcoeff(lp, &row_ind, &var_ind, &cval);
-    //     cval += 1.0;
-    //     lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
-    // }
     ranges::for_each(
         set->job_list,
         [&](auto ind) {
