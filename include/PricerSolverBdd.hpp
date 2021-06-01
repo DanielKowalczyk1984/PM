@@ -83,6 +83,7 @@ class PricerSolverBdd : public PricerSolverBase {
 
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
+    bool   structure_feasible() override;
 
     inline DdStructure<NodeBdd<double>>& get_decision_diagram() {
         return decision_diagram;

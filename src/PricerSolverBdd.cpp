@@ -1454,6 +1454,11 @@ size_t PricerSolverBdd::get_nb_vertices() {
     return num_vertices(mip_graph);
 }
 
+bool PricerSolverBdd::structure_feasible() {
+    return (get_nb_vertices() != 0 &&
+            decision_diagram.root().row() >= jobs.size());
+}
+
 int PricerSolverBdd::get_num_layers() {
     return decision_diagram.topLevel();
 }

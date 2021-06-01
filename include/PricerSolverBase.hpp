@@ -128,6 +128,7 @@ struct PricerSolverBase {
     virtual int    get_num_layers() = 0;
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
+    virtual bool   structure_feasible() { return true; }
     // virtual bool   check_schedule_set(GPtrArray* set) = 0;
     virtual bool check_schedule_set(
         [[maybe_unused]] const std::vector<Job*>& set) {
