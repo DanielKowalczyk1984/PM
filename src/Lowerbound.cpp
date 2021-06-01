@@ -492,9 +492,7 @@ int NodeData::compute_lower_bound() {
         has_cols = 1;
         // has_cuts = 0;
         while ((iterations < NB_CG_ITERATIONS) && has_cols &&
-               stat.total_timer(Statistics::cputime_timer) <=
-                   parms.branching_cpu_limit &&
-               solver->get_nb_vertices() != 0) {
+               solver->structure_feasible()) {
             /**
              * Delete old columns
              */
@@ -558,35 +556,14 @@ int NodeData::compute_lower_bound() {
                 /**
                  * Compute the objective function
                  */
-                // retirementage = 0;
-                // delete_old_schedules(pd);
                 solve_relaxation();
-                // double obj;
-                // lp_interface_objval(pd->RMP, &obj);
-                // printf("test objval = %f\n", obj);
-                // check_schedules(pd);
-                // delete_infeasible_schedules(pd);
-                // solve_relaxation(pd);
-                // lp_interface_objval(pd->RMP, &obj);
-                // printf("test objval = %f\n", obj);
-                // printf("----------------\n");
-                // compute_objective(pd);
-                if (!localColPool.empty()) {
+                if (!localColPool.empty() && solver->structure_feasible()) {
+                    status = LP_bound_computed;
                     construct_lp_sol_from_rmp();
-                    // CCcheck_val_2(val, "Failed in construct lp sol
-                    // from rmp\n"); solve_relaxation(pd);
-                    // delete_old_schedules(pd); delete_unused_rows(pd);
-                    // solve_relaxation(pd);
-                    // construct_lp_sol_from_rmp(pd);
-                    // if (!call_is_integer_solution(pd->solver)) {
-                    // has_cuts = (generate_cuts(pd) > 0);
-                    // has_cuts = 0;
-                    // call_update_duals(pd->solver_stab);
-                    // lp_interface_write(pd->RMP, "test.lp");
-                    // }
                 } else {
+                    status = infeasible;
                     LP_lower_bound_dual = LP_lower_bound = LP_lower_bound_BB =
-                        solver_stab->get_eta_in();
+                        upper_bound;
                     lower_bound = static_cast<int>(ceil(LP_lower_bound_BB));
                 }
                 break;
@@ -598,20 +575,20 @@ int NodeData::compute_lower_bound() {
         }
     } while (false);
 
-    if (iterations < NB_CG_ITERATIONS &&
-        stat.total_timer(Statistics::cputime_timer) <=
-            parms.branching_cpu_limit) {
-    } else {
-        switch (status_RMP) {
-            case GRB_OPTIMAL:
-                status = LP_bound_computed;
-                break;
+    // if (iterations < NB_CG_ITERATIONS &&
+    //     stat.total_timer(Statistics::cputime_timer) <=
+    //         parms.branching_cpu_limit) {
+    // } else {
+    //     switch (status_RMP) {
+    //         case GRB_OPTIMAL:
+    //             status = LP_bound_computed;
+    //             break;
 
-            case GRB_INFEASIBLE:
-                status = infeasible;
-                break;
-        }
-    }
+    //         case GRB_INFEASIBLE:
+    //             status = infeasible;
+    //             break;
+    //     }
+    // }
     // } while (depth == 1);
 
     if (depth == 0UL) {

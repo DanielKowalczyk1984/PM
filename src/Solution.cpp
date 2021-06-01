@@ -23,6 +23,7 @@ void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
     std::ranges::transform(v, std::back_inserter(tmp),
                            [](const auto& tmp_j) { return tmp_j.get(); });
     std::ranges::sort(tmp, cmp_jobs_edd);
+    tw = 0;
 
     // std::make_heap(machines.begin(), machines.end(),
     // cmp_machines_completion);
@@ -53,6 +54,7 @@ void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
                std::tie(y->processing_time, y->due_time, y->weight, y->job);
     };
 
+    tw = 0;
     auto tmp =
         v | ranges::views::transform([](const auto ptr) { return ptr.get(); }) |
         ranges::to<std::vector>() | ranges::actions::sort(cmp_jobs_spt);
@@ -70,6 +72,7 @@ void Sol::construct_random_fisher_yates(
         v | ranges::views::transform([](const auto ptr) { return ptr.get(); }) |
         ranges::to<std::vector>();
 
+    tw = 0;
     for (auto i = 0UL; i < tmp.size() - 1; i++) {
         auto j = i + rand() % (tmp.size() - i);
         std::swap(tmp[i], tmp[j]);
@@ -85,7 +88,7 @@ void Sol::construct_random_fisher_yates(
 void Sol::construct_random_shuffle(const std::vector<std::shared_ptr<Job>>& v) {
     std::random_device         rd;
     std::default_random_engine rng(rd());
-
+    tw = 0;
     auto tmp =
         v | ranges::views::transform([](const auto ptr) { return ptr.get(); }) |
         ranges::to<std::vector>();

@@ -87,6 +87,7 @@ struct PricerSolverBase {
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;
+    bool         evaluate_mip_model();
     virtual void construct_lp_sol_from_rmp(
         const double*                                    columns,
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) = 0;
@@ -127,6 +128,7 @@ struct PricerSolverBase {
     virtual int    get_num_layers() = 0;
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
+    virtual bool   structure_feasible() { return true; }
     // virtual bool   check_schedule_set(GPtrArray* set) = 0;
     virtual bool check_schedule_set(
         [[maybe_unused]] const std::vector<Job*>& set) {

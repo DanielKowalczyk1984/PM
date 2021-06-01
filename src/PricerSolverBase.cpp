@@ -53,6 +53,25 @@ int PricerSolverBase::add_constraints() {
     return val;
 }
 
+bool PricerSolverBase::evaluate_mip_model() {
+    int opt_status = model.get(GRB_IntAttr_Status);
+
+    double objval = 0;
+    if (opt_status == GRB_OPTIMAL) {
+        objval = model.get(GRB_DoubleAttr_ObjVal);
+        update_UB(objval);
+        return objval < UB;
+    } else if (opt_status == GRB_INF_OR_UNBD) {
+        return false;
+    } else if (opt_status == GRB_INFEASIBLE) {
+        return false;
+    } else if (opt_status == GRB_UNBOUNDED) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
 void PricerSolverBase::remove_constraints(int first, int nb_del) {
     reformulation_model.delete_constraints(first, nb_del);
 }
