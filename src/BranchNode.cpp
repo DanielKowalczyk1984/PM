@@ -31,11 +31,10 @@ BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
 
 void BranchNodeBase::branch(BTree* bt) {
     auto*       solver = pd->solver.get();
-    auto        no_strong_branching = !pd->parms.use_strong_branching;
     const auto& instance = pd->instance;
     const auto& parms = pd->parms;
 
-    if (!no_strong_branching && dbg_lvl() > 0) {
+    if (!parms.strong_branching && dbg_lvl() > 0) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
     }
 
@@ -77,7 +76,7 @@ void BranchNodeBase::branch(BTree* bt) {
 
         for (auto&& [t, x] : positive_range) {
             accum += x;
-            if ((accum >= (1.0 - TargetBrTimeValue)) && (prev != -1) &&
+            if ((accum >= (1.0 - parms.branching_point)) && (prev != -1) &&
                 (middle_time == -1)) {
                 middle_time = (t + job->processing_time + prev) / 2;
                 branch_score =
@@ -110,58 +109,53 @@ void BranchNodeBase::branch(BTree* bt) {
 
     std::unique_ptr<BranchNodeBase> best_right = nullptr;
     std::unique_ptr<BranchNodeBase> best_left = nullptr;
-    auto nb_cand = std::min(NumStrBrCandidates, best_cand.size());
+    auto nb_cand = std::min(std::max(parms.strong_branching, 1),
+                            static_cast<int>(best_cand.size()));
     best_cand |= ranges::actions::sort(std::greater{}, &BranchCand::score);
 
     for (auto& it : best_cand | ranges::views::take(nb_cand)) {
-        if (no_strong_branching) {
-            best_job = it.job;
-            best_time = it.t;
-            break;
-        } else {
-            auto data_nodes{pd->create_child_nodes(it.job, it.t)};
-            std::array<std::unique_ptr<BranchNodeBase>, 2> child_nodes;
-            std::array<double, 2>                          scores{};
-            std::array<bool, 2>                            fathom{};
-            auto                                           left = true;
+        auto data_nodes{pd->create_child_nodes(it.job, it.t)};
+        std::array<std::unique_ptr<BranchNodeBase>, 2> child_nodes;
+        std::array<double, 2>                          scores{};
+        std::array<bool, 2>                            fathom{};
+        auto                                           left = true;
 
-            for (auto&& [data, node, score, f] :
-                 ranges::views::zip(data_nodes, child_nodes, scores, fathom)) {
-                node = std::make_unique<BranchNodeBase>(std::move(data));
-                node->compute_bounds(bt);
+        for (auto&& [data, node, score, f] :
+             ranges::views::zip(data_nodes, child_nodes, scores, fathom)) {
+            node = std::make_unique<BranchNodeBase>(std::move(data));
+            node->compute_bounds(bt);
 
-                auto cost = node->pd->LP_lower_bound;
-                if (dbg_lvl() > 0) {
-                    fmt::print(
-                        "STRONG BRANCHING {} PROBE: j = {}, t = {},"
-                        " DWM LB = {:9.2f} in iterations {} \n\n",
-                        left ? "LEFT" : "RIGHT", it.job, it.t,
-                        cost + pd->instance.off, node->pd->iterations);
-                }
-                if (cost >= pd->opt_sol.tw - 1.0 + IntegerTolerance ||
-                    node->get_data_ptr()->solver->get_is_integer_solution()) {
-                    f = true;
-                }
-                score =
-                    (parms.scoring_parameter == weighted_sum_scoring_parameter)
+            auto cost = node->pd->LP_lower_bound;
+            if (dbg_lvl() > 0) {
+                fmt::print(
+                    "STRONG BRANCHING {} PROBE: j = {}, t = {},"
+                    " DWM LB = {:9.2f} in iterations {} \n\n",
+                    left ? "LEFT" : "RIGHT", it.job, it.t,
+                    cost + pd->instance.off, node->pd->iterations);
+            }
+            if (cost >= pd->opt_sol.tw - 1.0 + IntegerTolerance ||
+                node->get_data_ptr()->solver->get_is_integer_solution()) {
+                f = true;
+            }
+            score = (parms.scoring_parameter == weighted_sum_scoring_parameter)
                         ? cost / pd->LP_lower_bound
                         : std::abs(cost - pd->LP_lower_bound);
-                left = false;
-            }
-
-            auto best_score = parms.scoring_function(scores[0], scores[1]);
-
-            if (best_score > best_min_gain ||
-                ranges::any_of(fathom, ranges::identity{})) {
-                best_min_gain = best_score;
-                best_right = std::move(child_nodes[1]);
-                best_left = std::move(child_nodes[0]);
-            }
-
-            if (ranges::any_of(fathom, std::identity{})) {
-                break;
-            }
+            left = false;
         }
+
+        auto best_score = parms.scoring_function(scores[0], scores[1]);
+
+        if (best_score > best_min_gain ||
+            ranges::any_of(fathom, ranges::identity{})) {
+            best_min_gain = best_score;
+            best_right = std::move(child_nodes[1]);
+            best_left = std::move(child_nodes[0]);
+        }
+
+        if (ranges::any_of(fathom, std::identity{})) {
+            break;
+        }
+        // }
     }
 
     if (best_cand.empty()) {
@@ -181,18 +175,10 @@ void BranchNodeBase::branch(BTree* bt) {
     }
 
     /** Process the branching nodes insert them in the tree */
-    if (no_strong_branching) {
-        auto data_nodes{pd->create_child_nodes(best_job, best_time)};
-        for (auto& data : data_nodes) {
-            auto aux = std::make_unique<BranchNodeBase>(std::move(data));
-            bt->process_state(std::move(aux));
-        }
-    } else {
-        bt->set_state_bounds_computed(true);
-        bt->process_state(std::move(best_right));
-        bt->process_state(std::move(best_left));
-        bt->set_state_bounds_computed(false);
-    }
+    bt->set_state_bounds_computed(true);
+    bt->process_state(std::move(best_right));
+    bt->process_state(std::move(best_left));
+    bt->set_state_bounds_computed(false);
 
     bt->update_global_lb();
 

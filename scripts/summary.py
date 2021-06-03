@@ -31,7 +31,7 @@ def gui_file_name(dir=None):
 file_name = gui_file_name(workdir.__str__())
 file_path = Path(file_name)
 data = pd.read_csv(file_name)
-match = re.search(r'CG_overall\_(\d{2})\_(\d{2})\_(\d{2})\.csv', file_name)
+match = re.search(r'CG_overall\_(20\d{2})\_(\d{2})\_(\d{2})\.csv', file_name)
 year = match.group(1)
 month = match.group(2)
 day = match.group(3)
@@ -134,7 +134,7 @@ width, height = plt.figaspect(1.68)
 fig, ax = plt.subplots(figsize=(width, height), dpi=200)
 ax.step(sorted_ratio_tot_bb, yvals, label='BDD')
 ax.step(sorted_ratio_TimeOliveira, yvalues, label='ATIF')
-ax.set_xlim([10**0, 20])
+ax.set_xlim([10**0, 100])
 # ax.set_title(
 #     r"Performance profile for instances with $m = %d$ and $n = %d$"
 #     % (i, j))

@@ -19,11 +19,12 @@ Parms::Parms()
     : init_upper_bound(INT_MAX),
       bb_explore_strategy(min_bb_explore_strategy),
       scoring_parameter(min_scoring_parameter),
-      use_strong_branching(min_strong_branching),
+      strong_branching(),
       bb_node_limit(0),
       nb_iterations_rvnd(3),
       branching_cpu_limit(TIME_LIMIT),
       alpha(ALPHA_STAB_INIT),
+      branching_point(TargetBrTimeValue),
       pricing_solver(bdd_solver_backward_cycle),
       mip_solver(min_mip_solver),
       use_heuristic(min_use_heuristic),
@@ -82,7 +83,7 @@ int Parms::parms_set_reduce_cost(int usage) {
 }
 
 int Parms::parms_set_strong_branching(int strong) {
-    use_strong_branching = strong;
+    strong_branching = strong;
     return 0;
 }
 
@@ -210,8 +211,9 @@ int Parms::parse_cmd(int argc, const char** argv) {
     parms_set_scoring_function(
         static_cast<int>(args["--scoring_function"].asLong()));
     parms_set_branchandbound(args["--no_branch_and_bound"].asBool());
-    parms_set_strong_branching(!(args["--no_strong_branching"].asBool()));
+    parms_set_strong_branching((args["--strong_branching"].asLong()));
     parms_set_alpha(std::stod(args["--alpha"].asString()));
+    branching_point = std::stod(args["--branching_point"].asString());
     parms_set_bb_explore_strategy(
         static_cast<int>(args["--branching_strategy"].asLong()));
     parms_set_bb_node_limit(static_cast<int>(args["--node_limit"].asLong()));
