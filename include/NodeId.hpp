@@ -20,7 +20,7 @@ uint64_t const NODE_ROW_MASK = NODE_ROW_MAX << NODE_ROW_OFFSET;
 uint64_t const NODE_ATTR_MASK = uint64_t(1) << NODE_ATTR_OFFSET;
 
 class NodeId {
-    uint64_t code_;
+    uint64_t code_{};
 
     static constexpr size_t HASH_CONSTANT = 314159257;
 

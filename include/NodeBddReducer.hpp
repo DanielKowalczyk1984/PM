@@ -182,8 +182,8 @@ class DdReducer {
                     size_t k = newId[j].col();
                     nt[k] = input[i][j];
                     nt[k].set_node_id_label(newId[j]);
-                    if (nt[k].ptr_node_id != nullptr) {
-                        *(nt[k].ptr_node_id) = newId[j];
+                    if (nt[k].ptr_node_id != 0) {
+                        nt[k].ptr_node_id = newId[j];
                     }
                 }
             }

@@ -1,11 +1,17 @@
 #include <bits/ranges_algo.h>
 #include <fmt/core.h>
 #include <cmath>
+#include <cstdio>
+#include <functional>
 #include <memory>
 #include <range/v3/action/remove_if.hpp>
+#include <range/v3/algorithm/sort.hpp>
 #include <range/v3/numeric/inner_product.hpp>
+#include <range/v3/range/conversion.hpp>
 #include <range/v3/view/drop.hpp>
 #include <range/v3/view/enumerate.hpp>
+#include <range/v3/view/filter.hpp>
+#include <range/v3/view/transform.hpp>
 #include <range/v3/view/zip.hpp>
 #include <vector>
 #include "Instance.h"
@@ -486,10 +492,12 @@ int NodeData::compute_lower_bound() {
 
     check_schedules();
     delete_infeasible_schedules();
+    int refined = 0;
 
     // solve_relaxation(problem, pd);
     do {
         has_cols = 1;
+        refined = false;
         // has_cuts = 0;
         while ((iterations < NB_CG_ITERATIONS) && has_cols &&
                solver->structure_feasible()) {
@@ -557,9 +565,19 @@ int NodeData::compute_lower_bound() {
                  * Compute the objective function
                  */
                 solve_relaxation();
+
                 if (!localColPool.empty() && solver->structure_feasible()) {
                     status = LP_bound_computed;
+                    // fmt::print("LP = {} {}\n", LP_lower_bound,
+                    //            solver->get_nb_vertices());
                     construct_lp_sol_from_rmp();
+                    if (parms.refine_bdd && depth == 0UL) {
+                        refined = print_x();
+                    }
+                    // fmt::print("refined = {} {} {}\n", refined,
+                    // LP_lower_bound,
+                    //            solver->get_nb_vertices());
+                    // getchar();
                 } else {
                     status = infeasible;
                     LP_lower_bound_dual = LP_lower_bound = LP_lower_bound_BB =
@@ -573,7 +591,7 @@ int NodeData::compute_lower_bound() {
                 lp_interface_write(RMP.get(), "infeasible_RMP.lp");
                 lp_interface_compute_IIS(RMP.get());
         }
-    } while (false);
+    } while (refined);
 
     // if (iterations < NB_CG_ITERATIONS &&
     //     stat.total_timer(Statistics::cputime_timer) <=
@@ -614,7 +632,7 @@ int NodeData::print_x() {
     int status_RMP = 0;
 
     val = lp_interface_status(RMP.get(), &status_RMP);
-    // CCcheck_val_2(val, "Failed in lp_interface_status");
+    std::vector<std::pair<std::shared_ptr<ScheduleSet>, double>> paths;
 
     switch (status_RMP) {
         case GRB_OPTIMAL:
@@ -623,19 +641,32 @@ int NodeData::print_x() {
             lambda.resize(localColPool.size(), 0.0);
             val = lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
 
-            for (auto i = 0UL; auto& it : localColPool) {
-                if (lambda[i] > EPS) {
-                    std::ranges::for_each(it->job_list, [](const Job* j) {
-                        fmt::print("{} ", j->job);
-                    });
-                    fmt::print("\n");
-                }
-                ++i;
+            for (auto&& [it, x] :
+                 ranges::views::zip(localColPool, lambda) |
+                     ranges::views::filter(
+                         [](const auto x) { return x > EPS; },
+                         [](const auto& tmp) { return tmp.second; })) {
+                paths.emplace_back(it, x);
             }
             break;
     }
 
-    return val;
+    ranges::sort(paths, std::greater<>{},
+                 [](const auto& tmp) { return tmp.second; });
+
+    auto refined = solver->refinement_structure(
+        paths |
+        ranges::views::transform([](const auto& tmp) { return tmp.first; }) |
+        ranges::to_vector);
+
+    if (refined) {
+        check_schedules();
+        delete_infeasible_schedules();
+        solve_relaxation();
+    }
+    // getchar();
+
+    return refined;
 }
 
 int NodeData::check_schedules() {

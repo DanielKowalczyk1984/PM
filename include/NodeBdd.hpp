@@ -21,11 +21,11 @@ class NodeBdd : public NodeBase {
     std::array<std::vector<std::weak_ptr<BddCoeff>>, 2> coeff_list{};
     std::array<std::vector<std::weak_ptr<NodeId>>, 2>   in_edges{};
 
-    std::shared_ptr<NodeId> ptr_node_id{nullptr};
-    std::array<double, 2>   cost{0.0, 0.0};
-    std::array<double, 2>   reduced_cost{0.0, 0.0};
-    std::array<double, 2>   lp_x{0.0, 0.0};
-    std::array<double, 2>   best_sol_x{0.0, 0.0};
+    NodeId                ptr_node_id{};
+    std::array<double, 2> cost{0.0, 0.0};
+    std::array<double, 2> reduced_cost{0.0, 0.0};
+    std::array<double, 2> lp_x{0.0, 0.0};
+    std::array<double, 2> best_sol_x{0.0, 0.0};
 
     std::array<bool, 2>     calc{true, true};
     size_t                  key{};
@@ -93,10 +93,10 @@ class NodeBdd : public NodeBase {
     bool operator!=(NodeBdd const& o) const { return !operator==(o); }
 
     friend std::ostream& operator<<(std::ostream& os, NodeBdd const& o) {
-        os << "(" << o.branch[0];
+        os << "(" << o[0];
 
         for (int i = 1; i < 2; ++i) {
-            os << "," << o.branch[i];
+            os << "," << o[i];
         }
 
         return os << ")";

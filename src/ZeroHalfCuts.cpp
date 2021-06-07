@@ -95,9 +95,9 @@ void ZeroHalfCuts::init_table() {
         auto& n0 = table->node(it[0]);
         auto& n1 = table->node(it[1]);
 
-        n0.in_edges[0].push_back(it.ptr_node_id);
+        // n0.in_edges[0].push_back(it.ptr_node_id);
         n0.in_degree[0]++;
-        n1.in_edges[1].push_back(it.ptr_node_id);
+        // n1.in_edges[1].push_back(it.ptr_node_id);
         n1.in_degree[1]++;
     }
 }

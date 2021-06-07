@@ -18,7 +18,7 @@ static const std::string USAGE =
     R"(PM.
 
 Usage:
-  bin/PM [-s <sn> -S <kn> -pmBRZHMd -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp>] FILE NB
+  bin/PM [-s <sn> -S <kn> -pmBRZHMd -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp> --refinement] FILE NB
   bin/PM (-h | --help)
   bin/PM --version
 
@@ -41,12 +41,13 @@ Options:
   --alpha=<mn>                  Stabilization factor[default: 0.8].
   --branching_point=<brp>       Branching point[default: 0.2].
   -p --print_csv                Print csv-files.
+  -r --refinement               Refine decision diagram.
   -m --mip_solver               Use mip solver to solve the original formulation.
   -R --no_rc_fixing             Don't apply reduce cost fixing.
   -H --no_heuristic             Don't apply heuristic.
   -B --no_branch_and_bound      Don't apply branch-and-bound.
-  -c --strong_branching=<sb>       Don't apply strong branching[default: 20].
-  -M --use_mip_solver              Use MIP solver.
+  -c --strong_branching=<sb>    Don't apply strong branching[default: 20].
+  -M --use_mip_solver           Use MIP solver.
   -b --branching_strategy=<br>  Set branch-and-bound exploration strategy: 0 = DFS, 1 = BFS, 2 = BrFS, 3 = CBFS[default: 0].
   -n --node_limit=<nl>          Set a limit on the number of nodes that can be explored.[default: 0]. Default meaning that all nodes should be explored.
 )";
@@ -152,6 +153,7 @@ struct Parms {
     int                                   use_heuristic;
     std::function<double(double, double)> scoring_function;
     bool                                  use_mip_solver;
+    bool                                  refine_bdd;
 
     enum reduced_cost_fixing_param reduce_cost_fixing;
 

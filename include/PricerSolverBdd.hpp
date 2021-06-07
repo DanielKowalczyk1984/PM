@@ -106,6 +106,9 @@ class PricerSolverBdd : public PricerSolverBase {
     double compute_subgradient(const OptimalSolution<>& sol,
                                double*                  sub_gradient) override;
 
+    bool refinement_structure(
+        const std::vector<std::shared_ptr<ScheduleSet>>& paths) override;
+
     void update_constraints() override {}
 
     void update_coeff_constraints() override;

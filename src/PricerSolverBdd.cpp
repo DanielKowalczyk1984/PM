@@ -1,7 +1,10 @@
 #include "PricerSolverBdd.hpp"
 #include <bits/ranges_algo.h>
 #include <fmt/core.h>
+#include <fmt/ostream.h>
+#include <fmt/printf.h>
 #include <gurobi_c++.h>
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <cstddef>
 #include <limits>
@@ -239,7 +242,7 @@ void PricerSolverBdd::init_table() {
                 n1.set_node_id_label(node[1]);
                 node.set_job_label(aux_job);
 
-                node.ptr_node_id = std::make_shared<NodeId>(i, it);
+                node.ptr_node_id = NodeId(i, it);
                 node.set_job(aux_job);
                 n0.init_node(w);
                 n1.init_node(w + p);
@@ -247,9 +250,9 @@ void PricerSolverBdd::init_table() {
                 node.cost[1] = aux_job->weighted_tardiness_start(w);
 
                 n0.in_degree[0]++;
-                n0.in_edges[0].push_back(node.ptr_node_id);
+                // n0.in_edges[0].push_back(node.ptr_node_id);
                 n1.in_degree[1]++;
-                n1.in_edges[1].push_back(node.ptr_node_id);
+                // n1.in_edges[1].push_back(node.ptr_node_id);
 
             } else {
                 auto& node = table.node(NodeId(i, it));
@@ -463,6 +466,85 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
     return result;
 }
 
+bool PricerSolverBdd::refinement_structure(
+    const std::vector<std::shared_ptr<ScheduleSet>>& paths) {
+    bool              refined_structure = false;
+    auto&             table = *decision_diagram.getDiagram();
+    std::vector<bool> refined_jobs(jobs.size(), false);
+    for (auto& path : paths) {
+        std::vector<NodeId> P;
+        std::vector<bool>   L;
+        std::vector<NodeId> S;
+        std::vector<size_t> index_P;
+
+        S.resize(jobs.size(), NodeId());
+        index_P.resize(jobs.size(), 0UL);
+
+        P.push_back(decision_diagram.root());
+        auto job_it = path->job_list.begin();
+        Job* conflict_job{nullptr};
+
+        while (P.back() > 1) {
+            auto& tmp_node{table.node(P.back())};
+            auto* tmp_job{job_it != path->job_list.end() ? *job_it : nullptr};
+
+            if (tmp_job == tmp_node.get_job()) {
+                if (S[tmp_job->job] != 0) {
+                    conflict_job = tmp_job;
+                    break;
+                }
+                S[tmp_job->job] = P.back();
+                index_P[tmp_job->job] = P.size() - 1;
+                P.push_back(tmp_node[1]);
+                L.push_back(true);
+                ++job_it;
+            } else {
+                P.push_back(tmp_node[0]);
+                L.push_back(false);
+            }
+        }
+
+        if (conflict_job) {
+            auto nodeid_new = P[index_P[conflict_job->job]];
+            refined_jobs[conflict_job->job] = true;
+            for (auto&& label :
+                 L | ranges::views::drop(index_P[conflict_job->job])) {
+                auto& p = table.node(nodeid_new);
+                auto& c = table.node(p[label]);
+                auto  w = c;
+                nodeid_new =
+                    NodeId(p[label].row(), table[p[label].row()].size());
+
+                if (conflict_job == c.get_job()) {
+                    w[0] = c[0];
+                    w[1] = 0;
+                } else {
+                    w[1] = c[1];
+                }
+
+                w.set_node_id_label(nodeid_new);
+                w.all = boost::dynamic_bitset<>{convex_constr_id, 0};
+
+                table[p[label].row()].emplace_back(w);
+
+                p[label] = nodeid_new;
+            }
+            refined_structure = true;
+        }
+    }
+
+    if (refined_structure) {
+        remove_layers();
+        remove_edges();
+        bottum_up_filtering();
+        topdown_filtering();
+        cleanup_arcs();
+        construct_mipgraph();
+    }
+
+    return refined_structure;
+}
+
 double PricerSolverBdd::compute_lagrange(const OptimalSolution<>&   sol,
                                          const std::vector<double>& pi) {
     double result = sol.cost;
@@ -575,7 +657,7 @@ void PricerSolverBdd::remove_edges() {
     for (auto& iter : table | ranges::views::drop(1) | ranges::views::join) {
         if (!iter.calc[1]) {
             auto& cur_node_1 = iter[1];
-            iter.ptr_node_id.reset();
+            iter.ptr_node_id = 0;
             cur_node_1 = 0;
         }
 

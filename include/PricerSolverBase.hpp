@@ -84,6 +84,10 @@ struct PricerSolverBase {
      */
 
     virtual bool evaluate_nodes(double* pi) = 0;
+    virtual bool refinement_structure(
+        const std::vector<std::shared_ptr<ScheduleSet>>& paths) {
+        return false;
+    };
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;
