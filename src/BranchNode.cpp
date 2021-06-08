@@ -111,7 +111,7 @@ void BranchNodeBase::branch(BTree* bt) {
     std::unique_ptr<BranchNodeBase> best_left = nullptr;
     auto nb_cand = std::min(std::max(parms.strong_branching, 1),
                             static_cast<int>(best_cand.size()));
-    best_cand |= ranges::actions::sort(std::greater{}, &BranchCand::score);
+    best_cand |= ranges::actions::sort(std::greater<>{}, &BranchCand::score);
 
     for (auto& it : best_cand | ranges::views::take(nb_cand)) {
         auto data_nodes{pd->create_child_nodes(it.job, it.t)};
@@ -233,10 +233,6 @@ void BranchNodeBase::print(const BTree* bt) const {
         bt->getGlobalLB() + pd->instance.off, 0.0, pd->branch_job,
         pd->completiontime, bt->get_run_time_start(), pd->iterations);
 }
-
-BranchCand::BranchCand(int _job, int _t, const NodeData* parent)
-    : job(_job),
-      t(_t) {}
 
 BranchCand::BranchCand(double _score, int _job, int _t)
     : score(_score),

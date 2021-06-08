@@ -168,8 +168,10 @@ bool PricerSolverBddBackwardCycle::evaluate_nodes(double* pi) {
         }
 
         auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-        if (constLB + aux_nb_machines * reduced_cost + result >
-                UB - 1.0 + RC_FIXING &&
+        if (((constLB + aux_nb_machines * reduced_cost + result >
+              UB - 1.0 + RC_FIXING) ||
+             (it.get_job()->weighted_tardiness_start(it.get_weight()) >
+              UB - 1.0 + RC_FIXING)) &&
             (it.calc[1])) {
             it.calc[1] = false;
             removed_edges = true;

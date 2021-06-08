@@ -32,11 +32,11 @@ class NodeTableEntity : public data_table_node<T> {
         assert(n >= 1);
         initTerminals();
     }
-    NodeTableEntity<T>(const NodeTableEntity<T>&) = default;
+    NodeTableEntity(const NodeTableEntity<T>&) = default;
     NodeTableEntity<T>& operator=(const NodeTableEntity<T>&) = delete;
     NodeTableEntity<T>& operator=(NodeTableEntity<T>&&) noexcept = default;
-    NodeTableEntity<T>(NodeTableEntity<T>&&) noexcept = default;
-    ~NodeTableEntity<T>() = default;
+    NodeTableEntity(NodeTableEntity<T>&&) noexcept = default;
+    ~NodeTableEntity() = default;
 
     /**
      * Clears and initializes the table.
@@ -446,7 +446,7 @@ class TableHandler {
    public:
     explicit TableHandler(size_t n = 1) : pointer(new Object(n)) {}
 
-    TableHandler<T>(TableHandler<T> const& o)
+    TableHandler(TableHandler<T> const& o)
         : pointer(new Object(o.pointer->entity)){};
 
     //     : pointer(o.pointer) {
@@ -474,11 +474,11 @@ class TableHandler {
         return *this;
     }
 
-    TableHandler<T>(TableHandler<T>&& o) noexcept : pointer(o.pointer) {
+    TableHandler(TableHandler<T>&& o) noexcept : pointer(o.pointer) {
         o.pointer = nullptr;
     }
 
-    ~TableHandler<T>() {
+    ~TableHandler() {
         if (pointer) {
             pointer->deref();
         }

@@ -77,7 +77,7 @@ double PricingStabilizationBase::get_eta_sep() {
     return eta_in;
 }
 
-int PricingStabilizationBase::stopping_criteria() {
+bool PricingStabilizationBase::stopping_criteria() {
     return eta_out - eta_in > ETA_DIFF;
 }
 
@@ -199,7 +199,7 @@ double PricingStabilizationStat::get_eta_in() {
     return eta_in;
 }
 
-int PricingStabilizationStat::stopping_criteria() {
+bool PricingStabilizationStat::stopping_criteria() {
     return !(eta_in > (eta_out - ETA_DIFF));
 }
 

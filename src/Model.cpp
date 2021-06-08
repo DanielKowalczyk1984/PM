@@ -69,12 +69,10 @@ int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
         }
     }
 
-    auto len = id_row.size();
-
-    auto cost = static_cast<double>(set->total_weighted_completion_time);
-    lp_interface_addcol(RMP.get(), static_cast<int>(len), id_row.data(),
-                        coeff_row.data(), cost, 0.0, GRB_INFINITY,
-                        lp_interface_CONT, nullptr);
+    auto cost = set->total_weighted_completion_time;
+    lp_interface_addcol(RMP.get(), static_cast<int>(id_row.size()),
+                        id_row.data(), coeff_row.data(), cost, 0.0,
+                        GRB_INFINITY, lp_interface_CONT, nullptr);
 
     return 0;
 }

@@ -142,9 +142,9 @@ class DdBuilder : BuilderBase {
         }
     }
 
-    DdBuilder<S, T>(const DdBuilder<S, T>&) = default;
+    DdBuilder(const DdBuilder<S, T>&) = default;
     DdBuilder<S, T>& operator=(const DdBuilder<S, T>&) = default;
-    DdBuilder<S, T>(DdBuilder<S, T>&&) noexcept = default;
+    DdBuilder(DdBuilder<S, T>&&) noexcept = default;
     DdBuilder<S, T>& operator=(DdBuilder<S, T>&&) noexcept = default;
 
     /**
@@ -372,9 +372,9 @@ class ZddSubsetter : BuilderBase {
         }
     }
 
-    ZddSubsetter<T, S>(const ZddSubsetter<T, S>&) = default;
+    ZddSubsetter(const ZddSubsetter<T, S>&) = default;
     ZddSubsetter<T, S>& operator=(const ZddSubsetter<T, S>&) = default;
-    ZddSubsetter<T, S>(ZddSubsetter<T, S>&&) noexcept = default;
+    ZddSubsetter(ZddSubsetter<T, S>&&) noexcept = default;
     ZddSubsetter<T, S>& operator=(ZddSubsetter<T, S>&&) noexcept = default;
 
     /**
@@ -438,7 +438,7 @@ class ZddSubsetter : BuilderBase {
         void* const        tmpState = tmp.data();
         size_t const       m = input[i].size();
         size_t             mm = 0;
-        auto                lowestChild = i - 1;
+        auto               lowestChild = i - 1;
         size_t             deadCount = 0;
 
         if (work[i].empty()) {

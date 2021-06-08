@@ -49,8 +49,6 @@ struct BranchCand {
 
     BranchCand(double _score, int _job, int _t);
 
-    BranchCand(int _job, int _t, const NodeData* parrent);
-
     static constexpr double EPS_BRANCH = 1e-4;
 };
 #endif  // __BRANCHNODE_H__

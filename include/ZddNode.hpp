@@ -28,8 +28,8 @@ class SubNodeZdd {
     NodeId      node_id{};
     NodeZdd<T>* node_ptr{nullptr};
 
-    SubNodeZdd<T>() = default;
-    ~SubNodeZdd<T>() = default;
+    SubNodeZdd() = default;
+    ~SubNodeZdd() = default;
 
     explicit SubNodeZdd(int _weight) : weight{_weight} {}
 
@@ -97,11 +97,11 @@ class NodeZdd : public NodeBase {
 
     NodeZdd(size_t i, size_t j) : NodeBase(i, j) {}
 
-    NodeZdd<T>(const NodeZdd<T>& src) = default;
-    NodeZdd<T>(NodeZdd<T>&& src) noexcept = default;
+    NodeZdd(const NodeZdd<T>& src) = default;
+    NodeZdd(NodeZdd<T>&& src) noexcept = default;
     NodeZdd<T>& operator=(const NodeZdd<T>& src) = default;
     NodeZdd<T>& operator=(NodeZdd<T>&& src) noexcept = default;
-    ~NodeZdd<T>() = default;
+    ~NodeZdd() = default;
 
     bool operator==(NodeZdd const& o) const {
         for (int i = 0; i < 2; ++i) {

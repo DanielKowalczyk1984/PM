@@ -1,8 +1,8 @@
 #ifndef OPTIMAL_SOLUTION_HPP
 #define OPTIMAL_SOLUTION_HPP
-#include <bits/ranges_algo.h>
 #include <fmt/core.h>
 #include <iostream>
+#include <range/v3/algorithm/reverse.hpp>
 #include <span>
 #include <vector>
 #include "Job.h"
@@ -16,21 +16,22 @@ class OptimalSolution {
     std::vector<Job*> jobs{};
 
     /** Default constructor */
-    OptimalSolution<T>() = default;
+    OptimalSolution() = default;
 
     explicit OptimalSolution<T>(T _obj) : obj(_obj) {}
 
     /** Copy constructor */
-    OptimalSolution<T>(const OptimalSolution<T>& other) = delete;
+    OptimalSolution(const OptimalSolution<T>& other) = delete;
 
     /** Move constructor */
-    OptimalSolution<T>(OptimalSolution<T>&& other) noexcept = default;
+    OptimalSolution(OptimalSolution<T>&& other) noexcept = default;
 
     /** Copy assignment operator */
     OptimalSolution<T>& operator=(const OptimalSolution<T>& other) = delete;
 
     /** Move assignment operator */
-    OptimalSolution<T>& operator=(OptimalSolution<T>&& other) noexcept = default;
+    OptimalSolution<T>& operator=(OptimalSolution<T>&& other) noexcept =
+        default;
 
     /** Destructor */
     ~OptimalSolution() = default;
@@ -59,7 +60,7 @@ class OptimalSolution {
         obj += _pi;
     }
 
-    void reverse_jobs() { std::ranges::reverse(jobs); }
+    void reverse_jobs() { ranges::reverse(jobs); }
 };
 
 #endif  // OPTIMAL_SOLUTION_HPP

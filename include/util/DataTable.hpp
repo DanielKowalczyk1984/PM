@@ -70,7 +70,7 @@ class DataTable : public std::vector<std::vector<T>> {
     //     return *this;
     // }
 
-    ~DataTable<T>() = default;
+    ~DataTable() = default;
 
     //    template<typename U>
     //    DataTable(DataTable<U> const& o)

@@ -41,11 +41,11 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
     virtual void initializerootnode(NodeBdd<T>& n) const = 0;
     virtual void evalNode(NodeBdd<T>& n) const = 0;
 
-    BackwardBddBase<T>(const BackwardBddBase<T>&) = default;
-    BackwardBddBase<T>(BackwardBddBase<T>&&) noexcept = default;
+    BackwardBddBase(const BackwardBddBase<T>&) = default;
+    BackwardBddBase(BackwardBddBase<T>&&) noexcept = default;
     BackwardBddBase<T>& operator=(const BackwardBddBase<T>&) = default;
     BackwardBddBase<T>& operator=(BackwardBddBase<T>&&) noexcept = default;
-    virtual ~BackwardBddBase<T>() = default;
+    virtual ~BackwardBddBase() = default;
 };
 
 template <typename T = double>
@@ -96,17 +96,17 @@ class BackwardBddSimple : public BackwardBddBase<T> {
         n.backward_label[0].get_f() = 0;
     }
 
-    BackwardBddSimple<T>(const BackwardBddSimple<T>&) = default;
-    BackwardBddSimple<T>(BackwardBddSimple<T>&&) noexcept = default;
+    BackwardBddSimple(const BackwardBddSimple<T>&) = default;
+    BackwardBddSimple(BackwardBddSimple<T>&&) noexcept = default;
     BackwardBddSimple<T>& operator=(const BackwardBddSimple<T>&) = default;
     BackwardBddSimple<T>& operator=(BackwardBddSimple<T>&&) noexcept = default;
-    virtual ~BackwardBddSimple<T>() = default;
+    virtual ~BackwardBddSimple() = default;
 };
 
 template <typename T = double>
 class BackwardBddCycle : public BackwardBddBase<T> {
    public:
-    BackwardBddCycle<T>() = default;
+    BackwardBddCycle() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
         auto* tmp_j = n.get_job();
@@ -195,11 +195,11 @@ class BackwardBddCycle : public BackwardBddBase<T> {
         n.backward_label[0].get_f() = 0.0;
     }
 
-    BackwardBddCycle<T>(const BackwardBddCycle<T>&) = default;
-    BackwardBddCycle<T>(BackwardBddCycle<T>&&) noexcept = default;
+    BackwardBddCycle(const BackwardBddCycle<T>&) = default;
+    BackwardBddCycle(BackwardBddCycle<T>&&) noexcept = default;
     BackwardBddCycle<T>& operator=(const BackwardBddCycle<T>&) = default;
     BackwardBddCycle<T>& operator=(BackwardBddCycle<T>&&) noexcept = default;
-    virtual ~BackwardBddCycle<T>() = default;
+    virtual ~BackwardBddCycle() = default;
 };
 
 #endif  // BACKWARD_BDD_HPP

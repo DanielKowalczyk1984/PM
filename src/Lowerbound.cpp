@@ -1,10 +1,10 @@
-#include <bits/ranges_algo.h>
 #include <fmt/core.h>
 #include <cmath>
 #include <cstdio>
 #include <functional>
 #include <memory>
 #include <range/v3/action/remove_if.hpp>
+#include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/algorithm/sort.hpp>
 #include <range/v3/numeric/inner_product.hpp>
 #include <range/v3/range/conversion.hpp>
@@ -102,7 +102,7 @@ int NodeData::delete_unused_rows() {
     return val;
 }
 
-int NodeData::delete_old_schedules() {
+int NodeData::delete_old_columns() {
     int val = 0;
     int min_numdel = static_cast<int>(
         floor(static_cast<int>(nb_jobs) * min_nb_del_row_ratio));
@@ -146,21 +146,18 @@ int NodeData::delete_old_schedules() {
     return val;
 }
 
-int NodeData::delete_infeasible_schedules() {
-    auto count = localColPool.size();
+int NodeData::delete_infeasible_columns() {
     /** pd->zero_count can be deprecated! */
     zero_count = 0;
 
     int iter = 0;
     lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    assert(nb_cols - id_pseudo_schedules == count);
+    assert(nb_cols - id_pseudo_schedules == localColPool.size());
     std::vector<int> dellist{};
-
-    // std::erase_if(localColPool, );
 
     localColPool |= ranges::actions::remove_if([&](auto& it) {
         auto val = false;
-        if (!it->del) {
+        if (!solver->check_schedule_set(it->job_list)) {
             dellist.emplace_back(iter + id_pseudo_schedules);
             val = true;
         }
@@ -177,7 +174,7 @@ int NodeData::delete_infeasible_schedules() {
             "reduce "
             "cost "
             "fixing).\n",
-            dellist.size(), count);
+            dellist.size(), localColPool.size());
     }
 
     lp_interface_get_nb_cols(RMP.get(), &nb_cols);
@@ -313,7 +310,7 @@ int NodeData::compute_objective() {
     LP_lower_bound_BB = std::min(LP_lower_bound, LP_lower_bound_dual);
     LP_lower_min = std::min(LP_lower_min, LP_lower_bound_BB);
 
-    if (static_cast<int>(iterations) % (nb_jobs) == 0 && dbg_lvl() > 0) {
+    if (iterations % (nb_jobs) == 0 && dbg_lvl() > 0) {
         fmt::print(
             "Current primal LP objective: {:19.16f}  (LP_dual-bound "
             "{:19.16f}, "
@@ -343,7 +340,6 @@ int NodeData::solve_relaxation() {
 
     if (dbg_lvl() > 1) {
         fmt::print("Simplex took {} seconds.\n", real_time_solve_lp);
-        fflush(stdout);
     }
 
     if (dbg_lvl() > 1) {
@@ -396,8 +392,8 @@ int NodeData::estimate_lower_bound(int _iter) {
         val = build_rmp();
     }
 
-    check_schedules();
-    delete_infeasible_schedules();
+    // check_schedules();
+    delete_infeasible_columns();
 
     // solve_relaxation(problem, pd);
     do {
@@ -465,10 +461,11 @@ int NodeData::estimate_lower_bound(int _iter) {
 
 int NodeData::compute_lower_bound() {
     auto val = 0;
-    auto has_cols = 1;
+    auto has_cols{true};
     // auto has_cuts = 0;
     auto status_RMP = GRB_LOADED;
     auto real_time_pricing = 0.0;
+    auto old_LP_bound = 0.0;
 
     if (dbg_lvl() > 1) {
         fmt::print(
@@ -490,13 +487,12 @@ int NodeData::compute_lower_bound() {
         val = build_rmp();
     }
 
-    check_schedules();
-    delete_infeasible_schedules();
-    int refined = 0;
+    delete_infeasible_columns();
+    auto refined{false};
 
     // solve_relaxation(problem, pd);
     do {
-        has_cols = 1;
+        has_cols = true;
         refined = false;
         // has_cuts = 0;
         while ((iterations < NB_CG_ITERATIONS) && has_cols &&
@@ -506,7 +502,7 @@ int NodeData::compute_lower_bound() {
              */
             if (zero_count > nb_jobs * min_nb_del_row_ratio &&
                 status == GRB_OPTIMAL) {
-                delete_old_schedules();
+                delete_old_columns();
             }
             solve_relaxation();
 
@@ -568,21 +564,22 @@ int NodeData::compute_lower_bound() {
 
                 if (!localColPool.empty() && solver->structure_feasible()) {
                     status = LP_bound_computed;
-                    // fmt::print("LP = {} {}\n", LP_lower_bound,
-                    //            solver->get_nb_vertices());
-                    construct_lp_sol_from_rmp();
-                    if (parms.refine_bdd && depth == 0UL) {
-                        refined = print_x();
+                    if (std::abs(old_LP_bound - LP_lower_bound) < EPS) {
+                        nb_non_improvements++;
+                    } else {
+                        nb_non_improvements = 0;
                     }
-                    // fmt::print("refined = {} {} {}\n", refined,
-                    // LP_lower_bound,
-                    //            solver->get_nb_vertices());
-                    // getchar();
+                    old_LP_bound = LP_lower_bound;
+                    construct_lp_sol_from_rmp();
+                    if (parms.refine_bdd && nb_non_improvements < 2) {
+                        refined = refinement();
+                    }
+
                 } else {
                     status = infeasible;
                     LP_lower_bound_dual = LP_lower_bound = LP_lower_bound_BB =
                         upper_bound;
-                    lower_bound = static_cast<int>(ceil(LP_lower_bound_BB));
+                    lower_bound = upper_bound;
                 }
                 break;
 
@@ -627,19 +624,28 @@ int NodeData::compute_lower_bound() {
     return val;
 }
 
-int NodeData::print_x() {
-    int val = 0;
-    int status_RMP = 0;
+bool NodeData::refinement() {
+    auto status_RMP = 0;
+    auto refined{false};
 
-    val = lp_interface_status(RMP.get(), &status_RMP);
+    lp_interface_status(RMP.get(), &status_RMP);
     std::vector<std::pair<std::shared_ptr<ScheduleSet>, double>> paths;
+    // using ptr_file = std::unique_ptr<std::FILE, std::function<int(FILE*)>>;
+    // ptr_file file = nullptr;
+
+    // std::string file_name = "cols.txt";
+    // if (access(file_name.c_str(), F_OK) != -1) {
+    //     file = ptr_file(std::fopen(file_name.c_str(), "a"), &fclose);
+    // } else {
+    //     file = ptr_file(std::fopen(file_name.c_str(), "w"), &fclose);
+    // }
 
     switch (status_RMP) {
         case GRB_OPTIMAL:
-            val = lp_interface_get_nb_cols(RMP.get(), &nb_cols);
+            lp_interface_get_nb_cols(RMP.get(), &nb_cols);
             assert(localColPool.size() == nb_cols - id_pseudo_schedules);
             lambda.resize(localColPool.size(), 0.0);
-            val = lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
+            lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
 
             for (auto&& [it, x] :
                  ranges::views::zip(localColPool, lambda) |
@@ -648,43 +654,22 @@ int NodeData::print_x() {
                          [](const auto& tmp) { return tmp.second; })) {
                 paths.emplace_back(it, x);
             }
+
+            ranges::sort(paths, std::greater<>{},
+                         [](const auto& tmp) { return tmp.second; });
+
+            refined = solver->refinement_structure(
+                paths | ranges::views::transform([](const auto& tmp) {
+                    return tmp.first;
+                }) |
+                ranges::to_vector);
+
+            if (refined) {
+                delete_infeasible_columns();
+                solve_relaxation();
+            }
             break;
     }
 
-    ranges::sort(paths, std::greater<>{},
-                 [](const auto& tmp) { return tmp.second; });
-
-    auto refined = solver->refinement_structure(
-        paths |
-        ranges::views::transform([](const auto& tmp) { return tmp.first; }) |
-        ranges::to_vector);
-
-    if (refined) {
-        check_schedules();
-        delete_infeasible_schedules();
-        solve_relaxation();
-    }
-    // getchar();
-
     return refined;
-}
-
-int NodeData::check_schedules() {
-    int status_RMP = 0;
-
-    lp_interface_status(RMP.get(), &status_RMP);
-    lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    assert(nb_cols - id_pseudo_schedules == localColPool.size());
-    if (dbg_lvl() > 1) {
-        fmt::print("number of cols check {}\n", nb_cols - id_pseudo_schedules);
-    }
-    for (auto& col : localColPool) {
-        if (check_schedule_set(col.get())) {
-            col->del = 1;
-        } else {
-            col->del = 0;
-        }
-    }
-
-    return 0;
 }

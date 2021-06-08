@@ -149,13 +149,13 @@ class Eval {
     void set_table(NodeTableEntity<T>* _table) { table = _table; }
 
     NodeTableEntity<T>* get_table() const { return table; }
-    Eval<T, R>() : table(nullptr){};
+    Eval() : table(nullptr){};
 
-    Eval<T, R>(const Eval<T, R>&) = default;
-    Eval<T, R>(Eval<T, R>&&) noexcept = default;
+    Eval(const Eval<T, R>&) = default;
+    Eval(Eval<T, R>&&) noexcept = default;
 
     Eval<T, R>& operator=(const Eval<T, R>&) = default;
 
     Eval<T, R>& operator=(Eval<T, R>&&) noexcept = default;
-    virtual ~Eval<T, R>() = default;
+    virtual ~Eval() = default;
 };

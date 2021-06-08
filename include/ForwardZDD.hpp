@@ -28,7 +28,7 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
         num_jobs = 0;
     }
 
-    ~ForwardZddBase<T>() = default;
+    ~ForwardZddBase() = default;
 
     // ForwardZddBase(const ForwardZddBase<T>& src) {
     //     pi = src.pi;
@@ -67,8 +67,8 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
         return sol;
     }
 
-    ForwardZddBase<T>(const ForwardZddBase<T>&) = default;
-    ForwardZddBase<T>(ForwardZddBase<T>&&) noexcept = default;
+    ForwardZddBase(const ForwardZddBase<T>&) = default;
+    ForwardZddBase(ForwardZddBase<T>&&) noexcept = default;
     ForwardZddBase<T>& operator=(const ForwardZddBase<T>&) = default;
     ForwardZddBase<T>& operator=(ForwardZddBase<T>&&) noexcept = default;
 };
@@ -88,7 +88,7 @@ class ForwardZddCycle : public ForwardZddBase<T> {
         pi = nullptr;
         num_jobs = 0;
     }
-    ~ForwardZddCycle<T>() = default;
+    ~ForwardZddCycle() = default;
 
     // ForwardZddCycle(const ForwardZddCycle<T>& src) {
     //     pi = src.pi;
@@ -197,8 +197,8 @@ class ForwardZddCycle : public ForwardZddBase<T> {
         }
     }
 
-    ForwardZddCycle<T>(const ForwardZddCycle<T>&) = default;
-    ForwardZddCycle<T>(ForwardZddCycle<T>&&) noexcept = default;
+    ForwardZddCycle(const ForwardZddCycle<T>&) = default;
+    ForwardZddCycle(ForwardZddCycle<T>&&) noexcept = default;
     ForwardZddCycle<T>& operator=(const ForwardZddCycle<T>&) = default;
     ForwardZddCycle<T>& operator=(ForwardZddCycle<T>&&) noexcept = default;
 };
@@ -220,7 +220,7 @@ class ForwardZddSimple : public ForwardZddBase<T> {
         num_jobs = 0;
     }
 
-    ~ForwardZddSimple<T>() = default;
+    ~ForwardZddSimple() = default;
 
     // ForwardZddSimple(const ForwardZddSimple<T>& src) {
     //     pi = src.pi;
@@ -277,8 +277,8 @@ class ForwardZddSimple : public ForwardZddBase<T> {
             }
         }
     }
-    ForwardZddSimple<T>(const ForwardZddSimple<T>&) = default;
-    ForwardZddSimple<T>(ForwardZddSimple<T>&&) noexcept = default;
+    ForwardZddSimple(const ForwardZddSimple<T>&) = default;
+    ForwardZddSimple(ForwardZddSimple<T>&&) noexcept = default;
     ForwardZddSimple<T>& operator=(const ForwardZddSimple<T>&) = default;
     ForwardZddSimple<T>& operator=(ForwardZddSimple<T>&&) noexcept = default;
 };

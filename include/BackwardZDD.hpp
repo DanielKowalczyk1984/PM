@@ -17,9 +17,9 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
     BackwardZDDBase(T* _pi, size_t _num_jobs) : pi(_pi), num_jobs(_num_jobs){};
     explicit BackwardZDDBase(size_t _num_jobs) : num_jobs(_num_jobs){};
     BackwardZDDBase() = default;
-    BackwardZDDBase<T>(const BackwardZDDBase<T>&) = default;
+    BackwardZDDBase(const BackwardZDDBase<T>&) = default;
     BackwardZDDBase<T>& operator=(const BackwardZDDBase<T>&) = default;
-    BackwardZDDBase<T>(BackwardZDDBase<T>&&) noexcept = default;
+    BackwardZDDBase(BackwardZDDBase<T>&&) noexcept = default;
     BackwardZDDBase<T>& operator=(BackwardZDDBase<T>&&) noexcept = default;
     ~BackwardZDDBase() = default;
 

@@ -15,11 +15,11 @@ class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
 
    public:
     ForwardBddBase() = default;
-    ForwardBddBase<T>(const ForwardBddBase<T>& src) = default;
-    ForwardBddBase<T>(ForwardBddBase<T>&&) noexcept = default;
+    ForwardBddBase(const ForwardBddBase<T>& src) = default;
+    ForwardBddBase(ForwardBddBase<T>&&) noexcept = default;
     ForwardBddBase<T>& operator=(ForwardBddBase<T>&&) noexcept = default;
     ForwardBddBase<T>& operator=(const ForwardBddBase<T>&) = default;
-    virtual ~ForwardBddBase<T>() = default;
+    virtual ~ForwardBddBase() = default;
 
     void set_pi(double* _pi) { pi = _pi; }
 
@@ -55,11 +55,11 @@ template <typename T = double>
 class ForwardBddCycle : public ForwardBddBase<T> {
    public:
     ForwardBddCycle() = default;
-    ForwardBddCycle<T>(const ForwardBddCycle<T>& src) = default;
-    ForwardBddCycle<T>(ForwardBddCycle<T>&&) noexcept = default;
+    ForwardBddCycle(const ForwardBddCycle<T>& src) = default;
+    ForwardBddCycle(ForwardBddCycle<T>&&) noexcept = default;
     ForwardBddCycle<T>& operator=(const ForwardBddCycle<T>&) = default;
     ForwardBddCycle<T>& operator=(ForwardBddCycle<T>&&) noexcept = default;
-    virtual ~ForwardBddCycle<T>() = default;
+    virtual ~ForwardBddCycle() = default;
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {
@@ -158,13 +158,13 @@ class ForwardBddCycle : public ForwardBddBase<T> {
 template <typename T = double>
 class ForwardBddSimple : public ForwardBddBase<T> {
    public:
-    ForwardBddSimple<T>() = default;
+    ForwardBddSimple() = default;
 
     ForwardBddSimple(const ForwardBddSimple<T>&) = default;
     ForwardBddSimple<T>& operator=(const ForwardBddSimple<T>&) = default;
     ForwardBddSimple(ForwardBddSimple<T>&&) noexcept = default;
     ForwardBddSimple<T>& operator=(ForwardBddSimple<T>&&) noexcept = default;
-    virtual ~ForwardBddSimple<T>() = default;
+    virtual ~ForwardBddSimple() = default;
 
     void initializenode(NodeBdd<T>& n) const override {
         if (n.get_weight() == 0) {

@@ -45,11 +45,11 @@ class NodeBdd : public NodeBase {
     NodeBdd() = default;
     NodeBdd(size_t i, size_t j) : NodeBase(i, j) {}
 
-    NodeBdd<T>(const NodeBdd<T>& src) = default;
-    NodeBdd<T>(NodeBdd<T>&& src) noexcept = default;
+    NodeBdd(const NodeBdd<T>& src) = default;
+    NodeBdd(NodeBdd<T>&& src) noexcept = default;
     NodeBdd<T>& operator=(const NodeBdd<T>& src) = default;
     NodeBdd<T>& operator=(NodeBdd<T>&& src) noexcept = default;
-    ~NodeBdd<T>() = default;
+    ~NodeBdd() = default;
 
     void set_weight(int _weight) { weight = _weight; }
 

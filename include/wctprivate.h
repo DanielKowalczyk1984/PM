@@ -194,14 +194,13 @@ struct NodeData {
     int build_rmp();
     /** lowerbound.cpp */
     int  delete_unused_rows();
-    int  delete_old_schedules();
-    int  delete_infeasible_schedules();
+    int  delete_old_columns();
+    int  delete_infeasible_columns();
     int  compute_objective();
     int  solve_relaxation();
     int  compute_lower_bound();
     int  estimate_lower_bound(int _iter);
-    int  check_schedules();
-    int  print_x();
+    bool refinement();
     void make_pi_feasible_farkas_pricing();
 
     /** PricerSolverWrappers.cpp */

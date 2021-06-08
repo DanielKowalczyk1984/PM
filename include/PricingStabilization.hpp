@@ -52,7 +52,7 @@ class PricingStabilizationBase {
     virtual double     get_eta_in();
     virtual double     get_eta_sep();
     virtual void       solve(double eta_out, double* _lhs);
-    virtual int        stopping_criteria();
+    virtual bool       stopping_criteria();
     virtual void       update_duals();
     virtual bool       reduced_cost_fixing();
     virtual void       remove_constraints(int first, int nb_del);
@@ -87,7 +87,7 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     void solve(double _eta_out, double* _lhs_coeff) override;
 
     double get_eta_in() final;
-    int    stopping_criteria() final;
+    bool   stopping_criteria() final;
     void   update_duals() override;
     void   remove_constraints(int first, int nb_del) override;
     std::unique_ptr<PricingStabilizationBase> clone(

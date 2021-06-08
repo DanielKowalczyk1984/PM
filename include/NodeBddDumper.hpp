@@ -83,8 +83,8 @@ class DdDumper {
         }
     }
 
-    DdDumper<S, T>(DdDumper<S, T>&&) noexcept = default;
-    DdDumper<S, T>(const DdDumper<S, T>&) = default;
+    DdDumper(DdDumper<S, T>&&) noexcept = default;
+    DdDumper(const DdDumper<S, T>&) = default;
     DdDumper<S, T>& operator=(const DdDumper<S, T>&) = default;
     DdDumper<S, T>& operator=(DdDumper<S, T>&&) noexcept = default;
 

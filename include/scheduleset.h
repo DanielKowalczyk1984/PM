@@ -9,10 +9,10 @@
 #include "Solution.hpp"
 
 struct ScheduleSet {
-    int age{};
-    int del{};
-    int total_processing_time{};
-    int total_weighted_completion_time{};
+    int    age{};
+    bool   del{};
+    int    total_processing_time{};
+    double total_weighted_completion_time{};
 
     std::vector<Job*> job_list{};
 

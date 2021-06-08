@@ -1,5 +1,4 @@
 #include "PricerSolverBdd.hpp"
-#include <bits/ranges_algo.h>
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <fmt/printf.h>
@@ -9,10 +8,7 @@
 #include <cstddef>
 #include <limits>
 #include <memory>
-#include <range/v3/action/remove_if.hpp>
 #include <range/v3/all.hpp>
-#include <range/v3/view/reverse.hpp>
-#include <ranges>
 #include <vector>
 #include "Instance.h"
 #include "Job.h"
@@ -468,9 +464,8 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
 
 bool PricerSolverBdd::refinement_structure(
     const std::vector<std::shared_ptr<ScheduleSet>>& paths) {
-    bool              refined_structure = false;
-    auto&             table = *decision_diagram.getDiagram();
-    std::vector<bool> refined_jobs(jobs.size(), false);
+    bool  refined_structure = false;
+    auto& table = *decision_diagram.getDiagram();
     for (auto& path : paths) {
         std::vector<NodeId> P;
         std::vector<bool>   L;
@@ -506,7 +501,6 @@ bool PricerSolverBdd::refinement_structure(
 
         if (conflict_job) {
             auto nodeid_new = P[index_P[conflict_job->job]];
-            refined_jobs[conflict_job->job] = true;
             for (auto&& label :
                  L | ranges::views::drop(index_P[conflict_job->job])) {
                 auto& p = table.node(nodeid_new);
@@ -534,8 +528,9 @@ bool PricerSolverBdd::refinement_structure(
     }
 
     if (refined_structure) {
-        remove_layers();
-        remove_edges();
+        decision_diagram.compressBdd();
+        nb_removed_nodes -= size_graph;
+        size_graph = decision_diagram.size();
         bottum_up_filtering();
         topdown_filtering();
         cleanup_arcs();
@@ -987,7 +982,7 @@ void PricerSolverBdd::topdown_filtering() {
         // std::cout << "Number edges removed total \t\t\t= " <<
         // nb_removed_edges
         //           << "\n";
-        remove_layers();
+        // remove_layers();
         remove_edges();
         cleanup_arcs();
         // init_table();
@@ -1039,7 +1034,7 @@ void PricerSolverBdd::bottum_up_filtering() {
         // std::cout << "Number edges removed total \t\t\t= " <<
         // nb_removed_edges
         //           << "\n";
-        remove_layers();
+        // remove_layers();
         remove_edges();
         cleanup_arcs();
         // init_table();

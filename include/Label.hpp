@@ -21,12 +21,12 @@ class Label {
     /**
      * Constructor
      */
-    Label<N, T>() = default;
-    Label<N, T>(const Label<N, T>& src) = default;
-    Label<N, T>(Label<N, T>&& src) noexcept = default;
+    Label() = default;
+    Label(const Label<N, T>& src) = default;
+    Label(Label<N, T>&& src) noexcept = default;
     Label<N, T>& operator=(const Label<N, T>& src) = default;
     Label<N, T>& operator=(Label<N, T>&& src) noexcept = default;
-    ~Label<N, T>() = default;
+    ~Label() = default;
 
     void set_f(T _f) { f = _f; }
 

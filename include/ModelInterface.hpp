@@ -343,8 +343,8 @@ class OriginalConstraint {
     ~OriginalConstraint() = default;
     OriginalConstraint(OriginalConstraint&&) noexcept = default;
     OriginalConstraint& operator=(OriginalConstraint&&) noexcept = default;
-    OriginalConstraint<T>(const OriginalConstraint<T>&) = default;
-    OriginalConstraint<T>& operator=(const OriginalConstraint<T>&) = default;
+    OriginalConstraint(const OriginalConstraint<T>&) = default;
+    OriginalConstraint& operator=(const OriginalConstraint<T>&) = default;
 
     inline std::list<std::shared_ptr<T>>& get_coeff_list() {
         return coeff_list;
