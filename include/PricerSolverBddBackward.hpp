@@ -1,5 +1,7 @@
 #include <memory>
+#include <vector>
 #include "Instance.h"
+#include "NodeBdd.hpp"
 #include "PricerEvaluateBdd.hpp"
 #include "PricerSolverBdd.hpp"
 // #include "interval.h"
@@ -29,8 +31,8 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;
 
-    void compute_labels(double* _pi);
-    bool evaluate_nodes(double* pi) final;
+    double evaluate_rc_arc(NodeBdd<>& n) override;
+    void   compute_labels(double* _pi) override;
 };
 
 class PricerSolverBddBackwardCycle : public PricerSolverBdd {
@@ -57,6 +59,6 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
     OptimalSolution<double> pricing_algorithm(double* _pi) override;
     OptimalSolution<double> farkas_pricing(double* _pi) override;
 
-    void compute_labels(double* _pi);
-    bool evaluate_nodes(double* pi) final;
+    double evaluate_rc_arc(NodeBdd<>& n) override;
+    void   compute_labels(double* _pi) override;
 };

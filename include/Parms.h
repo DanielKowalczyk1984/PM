@@ -18,7 +18,7 @@ static const std::string USAGE =
     R"(PM.
 
 Usage:
-  bin/PM [-s <sn> -S <kn> -pmBRZHMd -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp> --refinement] FILE NB
+  bin/PM [-s <sn> -S <kn> -pmBRZHMd -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp> --refinement --enumerate] FILE NB
   bin/PM (-h | --help)
   bin/PM --version
 
@@ -42,6 +42,7 @@ Options:
   --branching_point=<brp>       Branching point[default: 0.2].
   -p --print_csv                Print csv-files.
   -r --refinement               Refine decision diagram.
+  -e --enumerate                Enumerate elementary paths.
   -m --mip_solver               Use mip solver to solve the original formulation.
   -R --no_rc_fixing             Don't apply reduce cost fixing.
   -H --no_heuristic             Don't apply heuristic.
@@ -154,6 +155,7 @@ struct Parms {
     std::function<double(double, double)> scoring_function;
     bool                                  use_mip_solver;
     bool                                  refine_bdd;
+    bool                                  enumerate;
 
     enum reduced_cost_fixing_param reduce_cost_fixing;
 

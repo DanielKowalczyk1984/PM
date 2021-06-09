@@ -31,7 +31,6 @@
 #include "scheduleset.h"
 #include "util.h"
 #include "wctprivate.h"
-using std::vector;
 
 PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     : PricerSolverBase(instance),
@@ -600,10 +599,75 @@ void PricerSolverBdd::enumerate_columns() {
                 return;
             }
         }
-        // for (auto& p : path) {
-        //     fmt::print("{} {} ", table.node(p.first).get_nb_job(), p.second);
-        // }
-        // fmt::print("\n");
+    } while (true);
+}
+
+void PricerSolverBdd::enumerate_columns(double* _pi) {
+    auto& table = *get_decision_diagram().getDiagram();
+    auto  root_id = get_decision_diagram().root();
+    compute_labels(_pi);
+    auto reduced_cost = table.node(root_id).backward_label[0].get_f();
+
+    auto cursor = 0;
+    auto begin = true;
+
+    std::vector<std::tuple<NodeId, bool, boost::dynamic_bitset<>>> path{};
+    auto iterations = 0UL;
+    auto empty = boost::dynamic_bitset<>{jobs.size(), 0};
+    auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
+
+    do {
+        auto f = begin ? root_id : NodeId(0, 0);
+        for (;;) {
+            begin = false;
+            while (f > 1) { /* down */
+                auto& s = table[f.row()][f.col()];
+                auto& set = !path.empty() ? std::get<2>(path.back()) : empty;
+                auto  rc = (constLB + aux_nb_machines * reduced_cost +
+                           evaluate_rc_arc(s)) < UB;
+
+                if (s[0] != 0) {
+                    cursor = path.size();
+                    path.emplace_back(f, false, set);
+                    f = s[0];
+                } else if (!set[s.get_nb_job()] && rc) {
+                    path.emplace_back(f, true, set);
+                    std::get<2>(path.back())[s.get_nb_job()] = true;
+                    f = s[1];
+                } else {
+                    f = 0;
+                }
+            }
+
+            if (f == 1) {
+                break; /* found */
+            }
+
+            for (; cursor >= 0; --cursor) { /* up */
+                auto& sel = path[cursor];
+                auto& ss =
+                    table[std::get<0>(sel).row()][std::get<0>(sel).col()];
+                auto rc = (constLB + aux_nb_machines * reduced_cost +
+                           evaluate_rc_arc(ss)) < UB;
+                if (!std::get<1>(sel) && ss[1] != 0 &&
+                    !std::get<2>(sel)[ss.get_nb_job()] && rc) {
+                    f = std::get<0>(sel);
+                    std::get<1>(sel) = true;
+                    path.resize(cursor + 1);
+                    std::get<2>(path.back()) = std::get<2>(sel);
+                    std::get<2>(path.back())[ss.get_nb_job()] = true;
+                    f = get_decision_diagram().child(f, 1);
+                    break;
+                }
+            }
+            iterations++;
+
+            if (cursor < 0) { /* end() state */
+                fmt::print("number of elementary paths with rc {}\n",
+                           iterations);
+                return;
+            }
+        }
     } while (true);
 }
 
@@ -787,6 +851,57 @@ void PricerSolverBdd::remove_edges() {
     out_file_mip << "99 99\n";
 
     out_file_mip.close();
+}
+
+bool PricerSolverBdd::evaluate_nodes(double* pi) {
+    auto& table = *get_decision_diagram().getDiagram();
+    compute_labels(pi);
+    auto reduced_cost =
+        table.node(get_decision_diagram().root()).backward_label[0].get_f();
+
+    auto removed_edges = false;
+    auto nb_removed_edges_evaluate = 0;
+    auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
+
+    /** check for each node the Lagrangian dual */
+    // for (int i = get_decision_diagram().topLevel(); i > 0; i--) {
+    //     for (auto& it : table[i]) {
+    for (auto& it :
+         table | ranges::views::take(get_decision_diagram().topLevel() + 1) |
+             ranges::views ::drop(1) | ranges::views::reverse |
+             ranges::views::join) {
+        if (((constLB + aux_nb_machines * reduced_cost + evaluate_rc_arc(it) >
+              UB - 1.0 + RC_FIXING) ||
+             (it.get_job()->weighted_tardiness_start(it.get_weight()) >
+              UB - 1.0 + RC_FIXING)) &&
+            (it.calc[1])) {
+            it.calc[1] = false;
+            removed_edges = true;
+            add_nb_removed_edges();
+            nb_removed_edges_evaluate++;
+        }
+    }
+
+    if (removed_edges) {
+        if (dbg_lvl() > 0) {
+            fmt::print("{0: <{2}}{1}\n",
+                       "Number of edges removed by evaluate "
+                       "nodes",
+                       nb_removed_edges_evaluate, ALIGN);
+            fmt::print("{0: <{2}}{1}\n", "Total number of edges removed",
+                       get_nb_removed_edges(), ALIGN);
+            fmt::print("{0: <{2}}{1}\n", "Number of edges", get_nb_edges(),
+                       ALIGN);
+        }
+        remove_layers();
+        remove_edges();
+        bottum_up_filtering();
+        topdown_filtering();
+        cleanup_arcs();
+        construct_mipgraph();
+    }
+
+    return removed_edges;
 }
 
 void PricerSolverBdd::add_inequality(std::vector<int> v1, std::vector<int> v2) {

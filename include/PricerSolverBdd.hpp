@@ -38,7 +38,6 @@ class PricerSolverBdd : public PricerSolverBase {
     PricerSolverBdd& operator=(PricerSolverBdd&&) = default;
     PricerSolverBdd& operator=(const PricerSolverBdd&) = delete;
     ~PricerSolverBdd() override;
-    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override = 0;
 
     void                  check_infeasible_arcs();
     void                  topdown_filtering();
@@ -50,6 +49,13 @@ class PricerSolverBdd : public PricerSolverBase {
     bool refinement_structure(
         const std::vector<std::shared_ptr<ScheduleSet>>& paths) override;
     void enumerate_columns() override;
+    void enumerate_columns(double* _pi) override;
+    bool evaluate_nodes(double* _pi) override;
+
+    bool check_schedule_set(const std::vector<Job*>& set) override;
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override = 0;
+    virtual double evaluate_rc_arc(NodeBdd<>& n) = 0;
+    virtual void   compute_labels(double* _pi) = 0;
 
     void remove_layers();
     void remove_edges();
@@ -59,7 +65,6 @@ class PricerSolverBdd : public PricerSolverBase {
     void init_table();
 
     // bool check_schedule_set(GPtrArray* set) override;
-    bool check_schedule_set(const std::vector<Job*>& set) override;
 
     void build_mip() override;
     void construct_lp_sol_from_rmp(
@@ -67,14 +72,12 @@ class PricerSolverBdd : public PricerSolverBase {
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
         override;
 
-    void project_sol_on_original_variables(const Sol& _sol) override;
-    // void make_schedule_set_feasible(GPtrArray* set) override;
-    void calculate_job_time(std::vector<std::vector<double>>* v) override;
-    void split_job_time(size_t _job, int _time, bool _left) override;
-    void iterate_zdd() override;
-    void create_dot_zdd(const char* name) override;
-    void print_number_nodes_edges() override;
-    // void add_constraint(Job* job, GPtrArray* list, int order) override;
+    void   project_sol_on_original_variables(const Sol& _sol) override;
+    void   calculate_job_time(std::vector<std::vector<double>>* v) override;
+    void   split_job_time(size_t _job, int _time, bool _left) override;
+    void   iterate_zdd() override;
+    void   create_dot_zdd(const char* name) override;
+    void   print_number_nodes_edges() override;
     size_t print_num_paths() override;
     void   remove_constraints(int first, int nb_del) override;
     void   update_rows_coeff(size_t first) override;

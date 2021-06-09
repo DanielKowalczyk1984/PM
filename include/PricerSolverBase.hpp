@@ -89,6 +89,7 @@ struct PricerSolverBase {
         return false;
     };
     virtual void enumerate_columns(){};
+    virtual void enumerate_columns(double* _pi){};
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;

@@ -30,6 +30,7 @@ Parms::Parms()
       use_heuristic(min_use_heuristic),
       use_mip_solver(false),
       refine_bdd(false),
+      enumerate(false),
       reduce_cost_fixing(min_reduced_cost),
       branchandbound(min_branch_and_bound),
       stab_technique(min_stab),
@@ -216,6 +217,7 @@ int Parms::parse_cmd(int argc, const char** argv) {
     parms_set_alpha(std::stod(args["--alpha"].asString()));
     branching_point = std::stod(args["--branching_point"].asString());
     refine_bdd = args["--refinement"].asBool();
+    enumerate = args["--enumerate"].asBool();
     parms_set_bb_explore_strategy(
         static_cast<int>(args["--branching_strategy"].asLong()));
     parms_set_bb_node_limit(static_cast<int>(args["--node_limit"].asLong()));
