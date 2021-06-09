@@ -3,13 +3,18 @@
 #include <fmt/ostream.h>
 #include <fmt/printf.h>
 #include <gurobi_c++.h>
+#include <bitset>
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <cstddef>
+#include <cstdio>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <range/v3/all.hpp>
+#include <utility>
 #include <vector>
+#include "CardinalityPaths.hpp"
 #include "Instance.h"
 #include "Job.h"
 #include "MipGraph.hpp"
@@ -538,6 +543,68 @@ bool PricerSolverBdd::refinement_structure(
     }
 
     return refined_structure;
+}
+
+void PricerSolverBdd::enumerate_columns() {
+    auto& table = *decision_diagram.getDiagram();
+    auto  cursor = 0;
+    auto  begin = true;
+    std::vector<std::tuple<NodeId, bool, boost::dynamic_bitset<>>> path{};
+    auto iterations = 0UL;
+    auto empty = boost::dynamic_bitset<>{jobs.size(), 0};
+
+    do {
+        auto f = begin ? decision_diagram.root() : NodeId(0, 0);
+        for (;;) {
+            begin = false;
+            while (f > 1) { /* down */
+                auto const& s = table[f.row()][f.col()];
+                auto& set = !path.empty() ? std::get<2>(path.back()) : empty;
+
+                if (s[0] != 0) {
+                    cursor = path.size();
+                    path.emplace_back(f, false, set);
+                    f = s[0];
+                } else if (!set[s.get_nb_job()]) {
+                    path.emplace_back(f, true, set);
+                    std::get<2>(path.back())[s.get_nb_job()] = true;
+                    f = s[1];
+                } else {
+                    f = 0;
+                }
+            }
+
+            if (f == 1) {
+                break; /* found */
+            }
+
+            for (; cursor >= 0; --cursor) { /* up */
+                auto&       sel = path[cursor];
+                auto const& ss =
+                    table[std::get<0>(sel).row()][std::get<0>(sel).col()];
+                if (!std::get<1>(sel) && ss[1] != 0 &&
+                    !std::get<2>(sel)[ss.get_nb_job()]) {
+                    f = std::get<0>(sel);
+                    std::get<1>(sel) = true;
+                    path.resize(cursor + 1);
+                    std::get<2>(path.back()) = std::get<2>(sel);
+                    std::get<2>(path.back())[ss.get_nb_job()] = true;
+                    f = decision_diagram.child(f, 1);
+                    break;
+                }
+            }
+            iterations++;
+
+            if (cursor < 0) { /* end() state */
+                fmt::print("number of elementary paths {}\n", iterations);
+                return;
+            }
+        }
+        // for (auto& p : path) {
+        //     fmt::print("{} {} ", table.node(p.first).get_nb_job(), p.second);
+        // }
+        // fmt::print("\n");
+    } while (true);
 }
 
 double PricerSolverBdd::compute_lagrange(const OptimalSolution<>&   sol,
@@ -1504,10 +1571,11 @@ void PricerSolverBdd::iterate_zdd() {
 }
 
 void PricerSolverBdd::create_dot_zdd(const char* name) {
-    std::ofstream file;
-    file.open(name);
-    // decision_diagram.dumpDot(file);
-    file.close();
+    auto&             table_bis = *(decision_diagram.getDiagram());
+    ColorWriterVertex vertex_writer(mip_graph, table_bis);
+    std::ofstream     outf(name);
+    boost::write_graphviz(outf, mip_graph, vertex_writer);
+    outf.close();
 }
 
 void PricerSolverBdd::print_number_nodes_edges() {
@@ -1540,4 +1608,8 @@ int PricerSolverBdd::get_num_layers() {
     return decision_diagram.topLevel();
 }
 
-void PricerSolverBdd::print_num_paths() {}
+void PricerSolverBdd::print_num_paths() {
+    auto evaluator = CardinalityPaths();
+    fmt::print("number of paths {}\n",
+               decision_diagram.evaluate_backward(evaluator));
+}

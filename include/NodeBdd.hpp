@@ -4,6 +4,7 @@
 #include <gurobi_c++.h>
 #include <array>
 #include <boost/dynamic_bitset.hpp>
+#include <cstddef>
 #include <memory>
 #include "Label.hpp"
 #include "ModelInterface.hpp"
@@ -29,6 +30,7 @@ class NodeBdd : public NodeBase {
 
     std::array<bool, 2>     calc{true, true};
     size_t                  key{};
+    size_t                  nb_paths{};
     bool                    visited{false};
     bool                    lp_visited{false};
     boost::dynamic_bitset<> all{};

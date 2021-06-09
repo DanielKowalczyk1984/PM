@@ -574,7 +574,12 @@ int NodeData::compute_lower_bound() {
                     if (parms.refine_bdd && nb_non_improvements < 2) {
                         refined = refinement();
                     }
-
+                    // solver->create_dot_zdd("test.txt");
+                    if (solver->get_nb_vertices() < 1000) {
+                        solver->print_num_paths();
+                        solver->enumerate_columns();
+                        getchar();
+                    }
                 } else {
                     status = infeasible;
                     LP_lower_bound_dual = LP_lower_bound = LP_lower_bound_BB =

@@ -47,6 +47,10 @@ class PricerSolverBdd : public PricerSolverBase {
     [[maybe_unused]] void print_representation_file();
     void                  cleanup_arcs();
 
+    bool refinement_structure(
+        const std::vector<std::shared_ptr<ScheduleSet>>& paths) override;
+    void enumerate_columns() override;
+
     void remove_layers();
     void remove_edges();
     void remove_layers_init();
@@ -105,9 +109,6 @@ class PricerSolverBdd : public PricerSolverBase {
 
     double compute_subgradient(const OptimalSolution<>& sol,
                                double*                  sub_gradient) override;
-
-    bool refinement_structure(
-        const std::vector<std::shared_ptr<ScheduleSet>>& paths) override;
 
     void update_constraints() override {}
 

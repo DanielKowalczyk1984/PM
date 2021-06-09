@@ -1,9 +1,7 @@
 #ifndef OPTIMAL_SOLUTION_HPP
 #define OPTIMAL_SOLUTION_HPP
-#include <fmt/core.h>
 #include <iostream>
 #include <range/v3/algorithm/reverse.hpp>
-#include <span>
 #include <vector>
 #include "Job.h"
 

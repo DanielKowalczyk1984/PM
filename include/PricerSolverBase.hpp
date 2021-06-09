@@ -88,6 +88,7 @@ struct PricerSolverBase {
         const std::vector<std::shared_ptr<ScheduleSet>>& paths) {
         return false;
     };
+    virtual void enumerate_columns(){};
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;

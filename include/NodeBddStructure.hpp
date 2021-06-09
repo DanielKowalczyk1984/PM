@@ -31,11 +31,13 @@
 #include <cstddef>
 #include <ostream>
 #include <range/v3/view/drop.hpp>
+#include <range/v3/view/filter.hpp>
 #include <range/v3/view/join.hpp>
 #include <range/v3/view/reverse.hpp>
 #include <range/v3/view/take.hpp>
 #include <set>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "NodeBddBuilder.hpp"
@@ -464,10 +466,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
             }
         };
 
-        DdStructure const&     dd;
-        int                    cursor;
-        std::vector<Selection> path;
-        std::set<int>          itemset;
+        DdStructure const&                   dd;
+        int                                  cursor;
+        std::vector<std::pair<NodeId, bool>> path;
+        std::set<int>                        itemset;
 
        public:
         const_iterator(DdStructure const& _dd, bool begin)
@@ -507,10 +509,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
 
                     if (s[0] != 0) {
                         cursor = path.size();
-                        path.push_back(Selection(f, false));
+                        path.emplace_back(f, false);
                         f = s[0];
                     } else {
-                        path.push_back(Selection(f, true));
+                        path.emplace_back(f, true);
                         f = s[1];
                     }
                 }
@@ -520,12 +522,12 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
                 }
 
                 for (; cursor >= 0; --cursor) { /* up */
-                    Selection&  sel = path[cursor];
+                    auto&       sel = path[cursor];
                     auto const& ss =
-                        (*dd.diagram)[sel.node.row()][sel.node.col()];
-                    if (sel.val == false && ss[1] != 0) {
-                        f = sel.node;
-                        sel.val = true;
+                        (*dd.diagram)[sel.first.row()][sel.first.col()];
+                    if (sel.second == false && ss[1] != 0) {
+                        f = sel.first;
+                        sel.second = true;
                         path.resize(cursor + 1);
                         f = dd.diagram->child(f, 1);
                         break;
@@ -539,10 +541,10 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
                 }
             }
 
-            for (size_t i = 0; i < path.size(); ++i) {
-                if (path[i].val) {
-                    itemset.insert(path[i].node.row());
-                }
+            for (auto& it : path | ranges::views::filter([](const auto& tmp) {
+                                return tmp.second;
+                            })) {
+                itemset.insert(it.first.row());
             }
         }
     };

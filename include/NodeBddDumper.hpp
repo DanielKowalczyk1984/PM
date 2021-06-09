@@ -181,7 +181,7 @@ class DdDumper {
             os << "\"];\n";
 
             for (int b = 0; b < AR; ++b) {
-                NodeId& child = nodeList[j].branch[b];
+                NodeId& child = nodeList[j][b];
 
                 if (nodeId(p) == 0) {
                     child = 0;
@@ -256,7 +256,7 @@ class DdDumper {
         for (size_t j = 0; j < m; ++j) {
             for (int b = 0; b < AR; ++b) {
                 NodeId f(i, j);
-                NodeId child = nodeList[j].branch[b];
+                NodeId child = nodeList[j][b];
                 if (child == 0) {
                     continue;
                 }

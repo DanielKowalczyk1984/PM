@@ -25,7 +25,7 @@ void swap_ranges(IT start_a, IT end_a, IT start_b, IT end_b) {
 struct Machine {
     VecJobRawPtr job_list{};
 
-    int completion_time{};
+    int total_processing_time{};
     int total_weighted_tardiness{};
 
     bool updated{true};

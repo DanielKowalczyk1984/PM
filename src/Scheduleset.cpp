@@ -5,7 +5,7 @@
 #include <vector>
 
 ScheduleSet::ScheduleSet(const Machine& m)
-    : total_processing_time(m.completion_time),
+    : total_processing_time(m.total_processing_time),
       total_weighted_completion_time(m.total_weighted_tardiness),
       job_list(m.job_list) {}
 

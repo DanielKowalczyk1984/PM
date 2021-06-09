@@ -80,7 +80,7 @@ int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
 int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
     auto  var_ind = 0;
     auto  cval = 0.0;
-    auto  cost = static_cast<double>(set->total_weighted_completion_time);
+    auto  cost = set->total_weighted_completion_time;
     auto* lp = RMP.get();
 
     lp_interface_get_nb_cols(lp, &(nb_cols));

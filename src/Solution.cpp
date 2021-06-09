@@ -27,12 +27,13 @@ void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
 
     // std::make_heap(machines.begin(), machines.end(),
     // cmp_machines_completion);
-    ranges::make_heap(machines, ranges::greater{}, &Machine::completion_time);
+    ranges::make_heap(machines, ranges::greater{},
+                      &Machine::total_processing_time);
 
     for (auto& it : tmp) {
         add_job_front_machine(it);
         ranges::push_heap(machines, ranges::greater{},
-                          &Machine::completion_time);
+                          &Machine::total_processing_time);
     }
 }
 
@@ -62,7 +63,7 @@ void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
     for (auto& it : tmp) {
         add_job_front_machine(it);
         ranges::push_heap(machines, ranges::greater{},
-                          &Machine::completion_time);
+                          &Machine::total_processing_time);
     }
 }
 
@@ -81,7 +82,7 @@ void Sol::construct_random_fisher_yates(
     for (auto& it : tmp) {
         add_job_front_machine(it);
         ranges::push_heap(machines, ranges::greater{},
-                          &Machine::completion_time);
+                          &Machine::total_processing_time);
     }
 }
 
@@ -98,7 +99,7 @@ void Sol::construct_random_shuffle(const std::vector<std::shared_ptr<Job>>& v) {
     for (auto& it : tmp) {
         add_job_front_machine(it);
         ranges::push_heap(machines, ranges::greater{},
-                          &Machine::completion_time);
+                          &Machine::total_processing_time);
     }
 }
 
@@ -225,15 +226,15 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
 
         m.job_list.clear();
         m.total_weighted_tardiness = 0;
-        m.completion_time = 0;
+        m.total_processing_time = 0;
         for (auto it = 0UL; it < intervals.size(); it++) {
             auto& Q_tmp = Q[it];
             for (auto& job_Q : Q_tmp) {
                 m.job_list.push_back(job_Q);
-                m.completion_time += job_Q->processing_time;
-                c[job_Q->job] = m.completion_time;
+                m.total_processing_time += job_Q->processing_time;
+                c[job_Q->job] = m.total_processing_time;
                 m.total_weighted_tardiness +=
-                    job_Q->weighted_tardiness(m.completion_time);
+                    job_Q->weighted_tardiness(m.total_processing_time);
             }
         }
 
@@ -270,11 +271,12 @@ void Sol::perturb_swap_inter(size_t l1, size_t l2, std::mt19937& mt) {
 }
 
 void Sol::add_job_front_machine(Job* job) {
-    ranges::pop_heap(machines, ranges::greater{}, &Machine::completion_time);
+    ranges::pop_heap(machines, ranges::greater{},
+                     &Machine::total_processing_time);
     auto& m = machines.back();
     m.add_job(job);
-    tw += job->weighted_tardiness(m.completion_time);
-    c[job->job] = m.completion_time;
+    tw += job->weighted_tardiness(m.total_processing_time);
+    c[job->job] = m.total_processing_time;
 }
 
 void Sol::calculate_partition(const VecIntervalPtr& v) {
@@ -294,7 +296,7 @@ void Sol::print_solution() const {
         for (auto& tmp_j : m.job_list) {
             fmt::print("{} ", tmp_j->job);
         }
-        fmt::print("with C = {}, TW = {}, {} jobs\n", m.completion_time,
+        fmt::print("with C = {}, TW = {}, {} jobs\n", m.total_processing_time,
                    m.total_weighted_tardiness, m.job_list.size());
     }
     fmt::print("with total weighted tardiness {}\n", tw + off);
@@ -302,19 +304,20 @@ void Sol::print_solution() const {
 
 void Machine::add_job(Job* job) {
     job_list.push_back(job);
-    completion_time += job->processing_time;
-    total_weighted_tardiness += job->weighted_tardiness(completion_time);
+    total_processing_time += job->processing_time;
+    total_weighted_tardiness += job->weighted_tardiness(total_processing_time);
 }
 
 void Machine::reset_machine(std::vector<int>& c) {
-    completion_time = 0;
+    total_processing_time = 0;
     total_weighted_tardiness = 0;
     updated = true;
 
     for (const auto& it : job_list) {
-        completion_time += it->processing_time;
-        c[it->job] = completion_time;
-        total_weighted_tardiness += it->weighted_tardiness(completion_time);
+        total_processing_time += it->processing_time;
+        c[it->job] = total_processing_time;
+        total_weighted_tardiness +=
+            it->weighted_tardiness(total_processing_time);
     }
 }
 
