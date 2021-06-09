@@ -484,4 +484,6 @@ int PricerSolverZdd::get_num_layers() {
     return decision_diagram->topLevel();
 }
 
-void PricerSolverZdd::print_num_paths() {}
+size_t PricerSolverZdd::print_num_paths() {
+    return 0UL;
+}

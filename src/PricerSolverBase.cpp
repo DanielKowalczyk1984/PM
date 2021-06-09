@@ -1,6 +1,7 @@
 #include "PricerSolverBase.hpp"
 #include <fmt/core.h>
 #include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <memory>
 #include <range/v3/view/enumerate.hpp>
@@ -78,7 +79,9 @@ void PricerSolverBase::remove_constraints(int first, int nb_del) {
 
 void PricerSolverBase::update_rows_coeff([[maybe_unused]] size_t first) {}
 
-void PricerSolverBase::print_num_paths() {}
+size_t PricerSolverBase::print_num_paths() {
+    return 0UL;
+}
 
 double PricerSolverBase::get_UB() {
     return UB;

@@ -70,7 +70,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
     int    get_num_layers() override;
-    void   print_num_paths() override;
+    size_t print_num_paths() override;
 
     bool check_schedule_set(const std::vector<Job*>& set) override;
 

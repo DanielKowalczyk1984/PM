@@ -70,7 +70,7 @@ class PricerSolverZdd : public PricerSolverBase {
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;
     int    get_num_layers() override;
-    void   print_num_paths() override;
+    size_t print_num_paths() override;
     void   remove_layers_init();
 
     OptimalSolution<double> farkas_pricing(double* pi) override;

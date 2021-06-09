@@ -123,10 +123,10 @@ struct PricerSolverBase {
     /**
      * Some getters
      */
-    virtual void iterate_zdd() = 0;
-    virtual void print_num_paths() = 0;
-    double       get_UB();
-    void         update_UB(double _ub);
+    virtual void   iterate_zdd() = 0;
+    virtual size_t print_num_paths() = 0;
+    double         get_UB();
+    void           update_UB(double _ub);
 
     virtual size_t get_num_remove_nodes() = 0;
     virtual size_t get_num_remove_edges() = 0;

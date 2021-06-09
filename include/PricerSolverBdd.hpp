@@ -75,10 +75,10 @@ class PricerSolverBdd : public PricerSolverBase {
     void create_dot_zdd(const char* name) override;
     void print_number_nodes_edges() override;
     // void add_constraint(Job* job, GPtrArray* list, int order) override;
-    void print_num_paths() override;
-    void remove_constraints(int first, int nb_del) override;
-    void update_rows_coeff(size_t first) override;
-    void insert_constraints_lp(NodeData* pd) override;
+    size_t print_num_paths() override;
+    void   remove_constraints(int first, int nb_del) override;
+    void   update_rows_coeff(size_t first) override;
+    void   insert_constraints_lp(NodeData* pd) override;
 
     size_t get_num_remove_nodes() override;
     size_t get_num_remove_edges() override;

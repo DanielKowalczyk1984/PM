@@ -1571,8 +1571,8 @@ void PricerSolverBdd::iterate_zdd() {
 }
 
 void PricerSolverBdd::create_dot_zdd(const char* name) {
-    auto&             table_bis = *(decision_diagram.getDiagram());
-    ColorWriterVertex vertex_writer(mip_graph, table_bis);
+    auto&             table = *(decision_diagram.getDiagram());
+    ColorWriterVertex vertex_writer(mip_graph, table);
     std::ofstream     outf(name);
     boost::write_graphviz(outf, mip_graph, vertex_writer);
     outf.close();
@@ -1608,8 +1608,7 @@ int PricerSolverBdd::get_num_layers() {
     return decision_diagram.topLevel();
 }
 
-void PricerSolverBdd::print_num_paths() {
+size_t PricerSolverBdd::print_num_paths() {
     auto evaluator = CardinalityPaths();
-    fmt::print("number of paths {}\n",
-               decision_diagram.evaluate_backward(evaluator));
+    return decision_diagram.evaluate_backward(evaluator);
 }

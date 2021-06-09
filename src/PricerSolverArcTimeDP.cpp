@@ -479,7 +479,9 @@ int PricerSolverArcTimeDp::get_num_layers() {
     return 0;
 }
 
-void PricerSolverArcTimeDp::print_num_paths() {}
+size_t PricerSolverArcTimeDp::print_num_paths() {
+    return 0UL;
+}
 
 bool PricerSolverArcTimeDp::check_schedule_set(const std::vector<Job*>& set) {
     // std::span aux_set{set->pdata, set->len};

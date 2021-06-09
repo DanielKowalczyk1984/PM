@@ -309,7 +309,9 @@ int PricerSolverSimpleDp::get_num_layers() {
     return 0;
 }
 
-void PricerSolverSimpleDp::print_num_paths() {}
+size_t PricerSolverSimpleDp::print_num_paths() {
+    return 0UL;
+}
 
 bool PricerSolverSimpleDp::check_schedule_set(
     [[maybe_unused]] const std::vector<Job*>& set) {
