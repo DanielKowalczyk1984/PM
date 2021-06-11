@@ -5,6 +5,7 @@
 #include <numeric>
 #include <range/v3/algorithm/lower_bound.hpp>
 #include <range/v3/all.hpp>
+#include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/numeric/inner_product.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/iota.hpp>
@@ -100,11 +101,11 @@ void BranchNodeBase::branch(BTree* bt) {
 
         //     prev = t + job->processing_time;
         // }
-
-        if (std::abs(*lb_it - sum) > EPS) {
-            best_cand.emplace_back(
-                std::max(std::ceil(sum) - sum, sum - std::floor(sum)), job->job,
-                *lb_it - 1);
+        if (*lb_it - sum > EPS && *lb_it - sum < 1 - EPS) {
+            auto z_bar =
+                ranges::accumulate(x_j | ranges::views::take(*lb_it), 0.0);
+            best_cand.emplace_back(std::max(z_bar, 1 - z_bar), job->job,
+                                   *lb_it - 1);
         }
     }
 
@@ -170,7 +171,7 @@ void BranchNodeBase::branch(BTree* bt) {
                  x_job_time[j] | ranges::views::enumerate |
                      ranges::views::filter(
                          [&](const auto& tmp) { return (tmp.second > EPS); })) {
-                fmt::print(stderr, " ({},{})", t + job->processing_time, x);
+                fmt::print(stderr, " ({},{})", t, x);
             }
             fmt::print(stderr, "\n");
         }
