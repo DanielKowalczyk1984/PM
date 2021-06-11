@@ -1523,12 +1523,17 @@ void PricerSolverBdd::project_sol_on_original_variables(const Sol& _sol) {
     }
 }
 
-void PricerSolverBdd::calculate_job_time(std::vector<std::vector<double>>* v) {
+std::vector<std::vector<double>>& PricerSolverBdd::calculate_job_time() {
+    ranges::fill(x_bar | ranges::views::join, 0.0);
+    ranges::fill(z_bar | ranges::views::join, 0.0);
+
     for (auto& it : lp_sol) {
         if (it.get_high()) {
-            (*v)[it.get_j()][it.get_t()] += it.get_value();
+            x_bar[it.get_j()][it.get_t()] += it.get_value();
         }
     }
+
+    return x_bar;
 }
 
 void PricerSolverBdd::split_job_time(size_t _job, int _time, bool _left) {
@@ -1540,14 +1545,12 @@ void PricerSolverBdd::split_job_time(size_t _job, int _time, bool _left) {
                         ranges::views::drop(1) | ranges::views::reverse |
                         ranges::views::join) {
         if (_left) {
-            if (it.get_weight() + it.get_job()->processing_time <= _time &&
-                it.get_nb_job() == _job) {
+            if (it.get_weight() <= _time && it.get_nb_job() == _job) {
                 it.calc[1] = false;
                 removed_edges = true;
             }
         } else {
-            if (it.get_weight() + it.get_job()->processing_time > _time &&
-                it.get_nb_job() == _job) {
+            if (it.get_weight() > _time && it.get_nb_job() == _job) {
                 it.calc[1] = false;
                 removed_edges = true;
             }

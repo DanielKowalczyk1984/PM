@@ -17,7 +17,13 @@ PricerSolverBase::PricerSolverBase(const Instance& instance)
       reformulation_model(instance.nb_jobs, instance.nb_machines),
       is_integer_solution(false),
       constLB(0.0),
-      UB(std::numeric_limits<int>::max()) {
+      UB(std::numeric_limits<int>::max()),
+      x_bar(std::vector<std::vector<double>>(
+          instance.nb_jobs,
+          std::vector<double>(instance.H_max + 1, 0.0))),
+      z_bar(std::vector<std::vector<double>>(
+          instance.nb_jobs,
+          std::vector<double>(instance.H_max + 1, 0.0))) {
     try {
         model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
         model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
@@ -40,7 +46,9 @@ PricerSolverBase::PricerSolverBase(const PricerSolverBase& other)
       reformulation_model(other.reformulation_model),
       is_integer_solution(other.is_integer_solution),
       constLB(other.constLB),
-      UB(other.UB) {
+      UB(other.UB),
+      x_bar(other.x_bar),
+      z_bar(other.z_bar) {
     model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
     model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
     model.set(GRB_IntParam_Presolve, GRB_PRESOLVE_AGGRESSIVE);

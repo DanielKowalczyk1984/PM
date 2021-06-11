@@ -34,6 +34,9 @@ struct PricerSolverBase {
     double constLB;
     double UB;
 
+    std::vector<std::vector<double>> x_bar;
+    std::vector<std::vector<double>> z_bar;
+
     static const std::shared_ptr<GRBEnv> genv;
     static constexpr double              EPS_SOLVER = 1e-6;
     static constexpr double              RC_FIXING = 1e-4;
@@ -110,9 +113,10 @@ struct PricerSolverBase {
     virtual void remove_constraints(int first, int nb_del);
     virtual void update_rows_coeff(size_t first);
 
-    virtual void update_coeff_constraints() = 0;
-    virtual void calculate_job_time(
-        [[maybe_unused]] std::vector<std::vector<double>>* v){};
+    virtual void                              update_coeff_constraints() = 0;
+    virtual std::vector<std::vector<double>>& calculate_job_time() {
+        return x_bar;
+    };
     // virtual void add_constraint(ConstraintBase* constr) {
     //     reformulation_model.add_constraint(constr);
     // };

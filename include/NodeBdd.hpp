@@ -6,6 +6,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <cstddef>
 #include <memory>
+#include "BranchHistory.hpp"
 #include "Label.hpp"
 #include "ModelInterface.hpp"
 #include "NodeBase.hpp"
@@ -13,8 +14,9 @@
 template <typename T = double>
 class NodeBdd : public NodeBase {
    private:
-    Job* job{nullptr};
-    int  weight{};
+    Job*                           job{nullptr};
+    int                            weight{};
+    std::shared_ptr<BranchHistory> br_history{};
 
    public:
     std::array<Label<NodeBdd<T>, T>, 2>                 forward_label{};

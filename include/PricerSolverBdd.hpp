@@ -30,6 +30,7 @@ class PricerSolverBdd : public PricerSolverBase {
     int H_min;
     int H_max;
 
+
    public:
     explicit PricerSolverBdd(const Instance& instance);
 
@@ -73,7 +74,7 @@ class PricerSolverBdd : public PricerSolverBase {
         override;
 
     void   project_sol_on_original_variables(const Sol& _sol) override;
-    void   calculate_job_time(std::vector<std::vector<double>>* v) override;
+    std::vector<std::vector<double>> &calculate_job_time() override;
     void   split_job_time(size_t _job, int _time, bool _left) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;
