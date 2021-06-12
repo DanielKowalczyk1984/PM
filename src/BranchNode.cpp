@@ -69,8 +69,13 @@ void BranchNodeBase::branch(BTree* bt) {
         //     }
         //     return false;
         // }};
-        auto sum = ranges::inner_product(x_j, ranges::views::iota(0), 0.0);
-        auto lb_it = ranges::lower_bound(ranges::views::iota(0), sum);
+        auto aux_vec = ranges::views::iota(0UL, x_j.size()) |
+                       ranges::views::transform([&](const auto& tmp) {
+                           return job->weighted_tardiness_start(tmp);
+                       }) |
+                       ranges::to_vector;
+        auto sum = ranges::inner_product(x_j, aux_vec, 0.0);
+        auto lb_it = ranges::lower_bound(aux_vec, sum);
         // fmt::print("test {} {}\n", *lb_it, sum);
 
         // auto positive_range{x_j | ranges::views::enumerate |
@@ -101,11 +106,15 @@ void BranchNodeBase::branch(BTree* bt) {
 
         //     prev = t + job->processing_time;
         // }
-        if (*lb_it - sum > EPS && *lb_it - sum < 1 - EPS) {
-            auto z_bar =
-                ranges::accumulate(x_j | ranges::views::take(*lb_it), 0.0);
-            best_cand.emplace_back(std::max(z_bar, 1 - z_bar), job->job,
-                                   *lb_it - 1);
+        // fmt::print("{} {} {}\n", *lb_it, sum, *lb_it - sum);
+        if (*lb_it - sum > EPS) {
+            // auto z_bar =
+            //     ranges::accumulate(x_j | ranges::views::take(*lb_it), 0.0);
+            best_cand.emplace_back(
+                *lb_it - sum, job->job,
+                ranges::distance(aux_vec.begin(), lb_it) - 1);
+        } else {
+            // fmt::print("{} {} {}\n", *lb_it, sum, *lb_it - sum);
         }
     }
 
@@ -175,6 +184,7 @@ void BranchNodeBase::branch(BTree* bt) {
             }
             fmt::print(stderr, "\n");
         }
+        fmt::print("test = {}", pd->LP_lower_bound);
 
         exit(-1);
     }
