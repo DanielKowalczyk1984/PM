@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 #include <numeric>
+#include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/algorithm/lower_bound.hpp>
 #include <range/v3/all.hpp>
 #include <range/v3/numeric/accumulate.hpp>
@@ -75,6 +76,7 @@ void BranchNodeBase::branch(BTree* bt) {
                        }) |
                        ranges::to_vector;
         auto sum = ranges::inner_product(x_j, aux_vec, 0.0);
+        auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
         auto lb_it = ranges::lower_bound(aux_vec, sum);
         // fmt::print("test {} {}\n", *lb_it, sum);
 
@@ -107,15 +109,35 @@ void BranchNodeBase::branch(BTree* bt) {
         //     prev = t + job->processing_time;
         // }
         // fmt::print("{} {} {}\n", *lb_it, sum, *lb_it - sum);
-        if (*lb_it - sum > EPS) {
+        if (*lb_it - sum > 1.0e-9 &&
+            std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
             // auto z_bar =
             //     ranges::accumulate(x_j | ranges::views::take(*lb_it), 0.0);
             best_cand.emplace_back(
                 *lb_it - sum, job->job,
                 ranges::distance(aux_vec.begin(), lb_it) - 1);
+            // if (pd->iterations == 1) {V
+            //     auto t_tmp = ranges::distance(aux_vec.begin(), lb_it) - 1;
+            //     fmt::print("{} {} {} {} {} {}\n", *lb_it, sum, *lb_it - sum,
+            //                job->job, t_tmp,
+            //                job->weighted_tardiness_start(t_tmp));
+            //     ranges::for_each(
+            //         x_j | ranges::views::filter(
+            //                   [](const auto& x) { return x > EPS; }),
+            //         [](const auto tmp_x) { fmt::print("{} ", tmp_x); });
+            //     fmt::print("\n");
+            // }
         } else {
-            // fmt::print("{} {} {}\n", *lb_it, sum, *lb_it - sum);
+            auto br_point_it = ranges::lower_bound(part_sum, 0.5);
+            if (std::min(*br_point_it - std::floor(*br_point_it),
+                         std::ceil(*br_point_it) - *br_point_it) > EPS) {
+                auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
+                best_cand.emplace_back(*br_point_it, job->job, tmp_t);
+            }
         }
+    }
+    if (pd->iterations == 1) {
+        getchar();
     }
 
     auto best_min_gain = 0.0;
