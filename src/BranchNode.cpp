@@ -133,7 +133,8 @@ void BranchNodeBase::branch(BTree* bt) {
         for (auto&& [x_j, job] :
              ranges::views::zip(x_job_time, instance.jobs)) {
             auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
-            auto br_point_it = ranges::lower_bound(part_sum, 0.5);
+            auto br_point_it =
+                ranges::lower_bound(part_sum, parms.branching_point - EPS);
             if (std::min(*br_point_it - std::floor(*br_point_it),
                          std::ceil(*br_point_it) - *br_point_it) > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
