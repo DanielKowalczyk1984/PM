@@ -76,7 +76,6 @@ void BranchNodeBase::branch(BTree* bt) {
                        }) |
                        ranges::to_vector;
         auto sum = ranges::inner_product(x_j, aux_vec, 0.0);
-        auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
         auto lb_it = ranges::lower_bound(aux_vec, sum);
         // fmt::print("test {} {}\n", *lb_it, sum);
 
@@ -127,7 +126,13 @@ void BranchNodeBase::branch(BTree* bt) {
             //         [](const auto tmp_x) { fmt::print("{} ", tmp_x); });
             //     fmt::print("\n");
             // }
-        } else {
+        }
+    }
+
+    if (best_cand.empty()) {
+        for (auto&& [x_j, job] :
+             ranges::views::zip(x_job_time, instance.jobs)) {
+            auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
             auto br_point_it = ranges::lower_bound(part_sum, 0.5);
             if (std::min(*br_point_it - std::floor(*br_point_it),
                          std::ceil(*br_point_it) - *br_point_it) > EPS) {
@@ -135,9 +140,6 @@ void BranchNodeBase::branch(BTree* bt) {
                 best_cand.emplace_back(*br_point_it, job->job, tmp_t);
             }
         }
-    }
-    if (pd->iterations == 1) {
-        getchar();
     }
 
     auto best_min_gain = 0.0;
