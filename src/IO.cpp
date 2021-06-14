@@ -1,11 +1,17 @@
 #include <fmt/chrono.h>
 #include <fmt/core.h>
-#include <unistd.h>
-#include <functional>
-#include <memory>
-#include "BranchBoundTree.hpp"
-#include "Statistics.h"
-#include "wctprivate.h"
+#include <unistd.h>             // for access, F_OK
+#include <cstdio>               // for fopen, fclose, FILE
+#include <ctime>                // for localtime, time, time_t
+#include <functional>           // for function
+#include <memory>               // for operator==, unique_ptr
+#include <string>               // for string, basic_string
+#include "BranchBoundTree.hpp"  // for BranchBoundTree
+#include "Instance.h"           // for Instance
+#include "Parms.h"              // for Parms
+#include "Statistics.h"         // for Statistics, Statistics::bb_timer, Sta...
+#include "util.h"               // for CCutil_timer, CCutil_stop_timer, getR...
+#include "wctprivate.h"         // for Problem, Problem::ProblemException
 
 void Problem::to_csv() {
     using ptr_file = std::unique_ptr<std::FILE, std::function<int(FILE*)>>;

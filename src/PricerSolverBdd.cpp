@@ -2,35 +2,74 @@
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 #include <fmt/printf.h>
-#include <gurobi_c++.h>
-#include <bitset>
-#include <boost/dynamic_bitset/dynamic_bitset.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <cstddef>
-#include <cstdio>
-#include <functional>
-#include <limits>
-#include <memory>
-#include <range/v3/all.hpp>
-#include <utility>
-#include <vector>
-#include "CardinalityPaths.hpp"
-#include "Instance.h"
-#include "Job.h"
-#include "MipGraph.hpp"
-#include "ModelInterface.hpp"
-#include "NodeBdd.hpp"
-#include "NodeBddStructure.hpp"
-#include "NodeId.hpp"
-#include "OptimalSolution.hpp"
-#include "PricerConstruct.hpp"
-#include "PricerSolverBase.hpp"
-#include "ZeroHalfCuts.hpp"
-#include "gurobi_c.h"
-#include "lp.h"
-#include "scheduleset.h"
-#include "util.h"
-#include "wctprivate.h"
+#include <gurobi_c++.h>                                // for GRBLinExpr
+#include <algorithm>                                   // for find, min, all_of
+#include <array>                                       // for array, array<>...
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>     // for dynamic_bitset
+#include <boost/graph/adjacency_list.hpp>              // for source, target
+#include <boost/graph/detail/adjacency_list.hpp>       // for undirected_edg...
+#include <boost/graph/detail/edge.hpp>                 // for edge_desc_impl
+#include <boost/graph/graphviz.hpp>                    // for write_graphviz
+#include <boost/iterator/iterator_facade.hpp>          // for operator!=
+#include <boost/pending/property.hpp>                  // for lookup_one_pro...
+#include <boost/range/irange.hpp>                      // for integer_iterator
+#include <cassert>                                     // for assert
+#include <cmath>                                       // for fabs
+#include <cstddef>                                     // for size_t
+#include <ext/alloc_traits.h>                          // for __alloc_traits...
+#include <limits>                                      // for numeric_limits
+#include <list>                                        // for operator==, list
+#include <memory>                                      // for allocator, mak...
+#include <ostream>                                     // for operator<<
+#include <range/v3/action/action.hpp>                  // for operator|=
+#include <range/v3/action/remove_if.hpp>               // for remove_if, rem...
+#include <range/v3/algorithm/all_of.hpp>               // for all_of
+#include <range/v3/algorithm/fill.hpp>                 // for fill, fill_fn
+#include <range/v3/algorithm/max.hpp>                  // for max, max_fn
+#include <range/v3/functional/comparisons.hpp>         // for less
+#include <range/v3/functional/identity.hpp>            // for identity
+#include <range/v3/iterator/diffmax_t.hpp>             // for operator<=
+#include <range/v3/iterator/reverse_iterator.hpp>      // for reverse_cursor
+#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
+#include <range/v3/view/all.hpp>                       // for all_t
+#include <range/v3/view/drop.hpp>                      // for drop, drop_fn
+#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
+#include <range/v3/view/iota.hpp>                      // for iota_view, ints
+#include <range/v3/view/join.hpp>                      // for join_view, joi...
+#include <range/v3/view/reverse.hpp>                   // for reverse_view
+#include <range/v3/view/subrange.hpp>                  // for subrange
+#include <range/v3/view/take.hpp>                      // for take_view, take
+#include <range/v3/view/zip.hpp>                       // for zip_view, zip
+#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
+#include <set>                                         // for operator==
+#include <span>                                        // for span
+#include <string>                                      // for char_traits
+#include <tuple>                                       // for tuple, get
+#include <utility>                                     // for pair, move
+#include <vector>                                      // for vector, _Bit_r...
+#include "CardinalityPaths.hpp"                        // for CardinalityPaths
+#include "Instance.h"                                  // for Instance
+#include "Job.h"                                       // for Job, value_dif...
+#include "Label.hpp"                                   // for Label
+#include "MipGraph.hpp"                                // for MipGraph, Colo...
+#include "ModelInterface.hpp"                          // for BddCoeff, Refo...
+#include "NodeBdd.hpp"                                 // for NodeBdd
+#include "NodeBddStructure.hpp"                        // for DdStructure
+#include "NodeBddTable.hpp"                            // for NodeTableEntity
+#include "NodeId.hpp"                                  // for NodeId
+#include "OptimalSolution.hpp"                         // for OptimalSolution
+#include "PricerConstruct.hpp"                         // for PricerConstruct
+#include "PricerSolverBase.hpp"                        // for PricerSolverBa...
+#include "Solution.hpp"                                // for Machine, VecJo...
+#include "ZeroHalfCuts.hpp"                            // for ZeroHalfCuts
+#include "gurobi_c.h"                                  // for GRB_EQUAL, GRB...
+#include "lp.h"                                        // for lp_interface_g...
+#include "scheduleset.h"                               // for ScheduleSet
+#include "util.h"                                      // for dbg_lvl
+#include "util/MyList.hpp"                             // for MyList
+#include "wctprivate.h"                                // for NodeData
+
+using fmt::print;
 
 PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     : PricerSolverBase(instance),

@@ -1,13 +1,13 @@
 #include "PricingStabilization.hpp"
-#include <fmt/core.h>
-#include <cmath>
-#include <memory>
-#include <span>
-#include <vector>
-#include "Parms.h"
-#include "PricerSolverBase.hpp"
-#include "util.h"
-
+#include <fmt/core.h>            // for print
+#include <algorithm>             // for max, min
+#include <cmath>                 // for sqrt
+#include <memory>                // for make_unique, unique_ptr
+#include <utility>               // for move
+#include <vector>                // for vector
+#include "ModelInterface.hpp"    // for ReformulationModel
+#include "PricerSolverBase.hpp"  // for PricerSolverBase
+#include "util.h"                // for dbg_lvl, SQR
 /**
  * @brief Construct a new Pricing Stabilization Base:: Pricing Stabilization
  * Base object

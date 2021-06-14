@@ -10,9 +10,12 @@
 
 #ifndef INCLUDE_WCTPARMS_H_
 #define INCLUDE_WCTPARMS_H_
-#include <cstddef>
-#include <functional>
-#include <string>
+
+// #include <string>
+#include <array>       // for array
+#include <cstddef>     // for size_t
+#include <functional>  // for function
+#include <string>      // for allocator, string
 
 static const std::string USAGE =
     R"(PM.
@@ -164,7 +167,7 @@ struct Parms {
      */
     int                 branchandbound;
     enum StabTechniques stab_technique;
-    int                 print;
+    int                 print_csv;
 
     std::string jobfile;
     std::string pname;

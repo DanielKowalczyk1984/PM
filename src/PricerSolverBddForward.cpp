@@ -1,8 +1,20 @@
+// #include "PricerSolverBddForward.hpp"
+// #include <fmt/core.h>
+// #include <range/v3/all.hpp>
+// #include "Instance.h"
+// #include "PricerSolverBdd.hpp"
 #include "PricerSolverBddForward.hpp"
-#include <fmt/core.h>
-#include <range/v3/all.hpp>
-#include "Instance.h"
-#include "PricerSolverBdd.hpp"
+#include <fmt/core.h>                            // for print
+#include <array>                                 // for array
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=
+#include <range/v3/view/join.hpp>                // for join_view
+#include <range/v3/view/view.hpp>                // for operator|
+#include "Instance.h"                            // for Instance
+#include "Label.hpp"                             // for Label
+#include "NodeBddStructure.hpp"                  // for DdStructure
+#include "NodeBddTable.hpp"                      // for NodeTableEntity, Tab...
+#include "PricerSolverBase.hpp"                  // for PricerSolverBase::ALIGN
+#include "PricerSolverBdd.hpp"                   // for PricerSolverBdd
 
 /**
  *  bdd solver pricersolver for the flow formulation

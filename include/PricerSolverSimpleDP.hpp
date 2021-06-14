@@ -1,11 +1,15 @@
 #ifndef PRICER_SOLVER_SIMPLE_DP_HPP
 #define PRICER_SOLVER_SIMPLE_DP_HPP
-#include <cstddef>
-#include <memory>
-#include "Instance.h"
-#include "PricerSolverBase.hpp"
-#include "gurobi_c++.h"
-
+#include <cstddef>               // for size_t
+#include <memory>                // for make_unique, unique_ptr, shared_ptr
+#include <vector>                // for vector
+#include "Instance.h"            // for Instance
+#include "OptimalSolution.hpp"   // for OptimalSolution
+#include "PricerSolverBase.hpp"  // for PricerSolverBase
+#include "gurobi_c++.h"          // for GRBVar
+struct Job;
+struct NodeData;
+struct ScheduleSet;
 class PricerSolverSimpleDp : public PricerSolverBase {
    private:
     size_t                         Hmax;

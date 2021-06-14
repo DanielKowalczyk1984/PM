@@ -1,7 +1,10 @@
-#include <docopt/docopt.h>
-#include <fmt/core.h>
-#include "Parms.h"
-#include "wctprivate.h"
+#include <bits/exception.h>  // for exception
+#include <docopt/docopt.h>   // for DocoptArgumentError, DocoptLanguageError
+#include <fmt/core.h>        // for print
+#include <cstdio>            // for stderr
+#include <string>            // for string
+#include "Parms.h"           // for USAGE
+#include "wctprivate.h"      // for Problem
 
 int main(int argc, const char** argv) {
     int val = 0;

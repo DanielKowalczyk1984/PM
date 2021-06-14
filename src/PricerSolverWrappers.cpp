@@ -1,7 +1,16 @@
-#include "PricerSolverBase.hpp"
-#include "Statistics.h"
-#include "scheduleset.h"
-#include "wctprivate.h"
+// #include "PricerSolverBase.hpp"
+// #include "PricingStabilization.hpp"
+// #include "Statistics.h"
+// #include "scheduleset.h"
+// #include "wctprivate.h"
+#include <cassert>                   // for assert
+#include <memory>                    // for unique_ptr
+#include <vector>                    // for vector
+#include "PricerSolverBase.hpp"      // for PricerSolverBase
+#include "PricingStabilization.hpp"  // for PricingStabilizationBase
+#include "lp.h"                      // for lp_interface_deleterows, lp_inte...
+#include "scheduleset.h"             // for ScheduleSet
+#include "wctprivate.h"              // for NodeData
 
 void NodeData::build_solve_mip() {
     solver->build_mip();

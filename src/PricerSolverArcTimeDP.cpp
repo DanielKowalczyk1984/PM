@@ -1,17 +1,22 @@
 #include "PricerSolverArcTimeDP.hpp"
 #include <fmt/core.h>
-#include <cstddef>
-#include <iostream>
-#include <limits>
-#include <range/v3/view/enumerate.hpp>
-#include <range/v3/view/iota.hpp>
-#include <range/v3/view/reverse.hpp>
-#include <range/v3/view/take.hpp>
-#include <vector>
-#include "Instance.h"
-#include "PricerSolverBase.hpp"
-#include "gurobi_c++.h"
-#include "scheduleset.h"
+#include <cstddef>                                 // for size_t
+#include <limits>                                  // for numeric_limits
+#include <range/v3/iterator/basic_iterator.hpp>    // for basic_iterator
+#include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
+#include <range/v3/view/iota.hpp>                  // for iota_view, iota_vi...
+#include <range/v3/view/reverse.hpp>               // for reverse_fn, revers...
+#include <range/v3/view/view.hpp>                  // for operator|, view_cl...
+#include <span>                                    // for span
+#include <string>                                  // for char_traits, opera...
+#include <utility>                                 // for move
+#include <vector>                                  // for vector, vector<>::...
+#include "Instance.h"                              // for Instance
+#include "ModelInterface.hpp"                      // for ReformulationModel
+#include "PricerSolverBase.hpp"                    // for PricerSolverBase
+#include "gurobi_c++.h"                            // for GRBLinExpr, GRBModel
+#include "gurobi_c.h"                              // for GRB_EQUAL, GRB_BINARY
+#include "scheduleset.h"  // for ScheduleSet#include "PricerSolverArcTimeDP.hpp"
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
     : PricerSolverBase(instance),

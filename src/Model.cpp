@@ -1,21 +1,42 @@
+// #include <numeric>
+// #include <range/v3/algorithm/for_each.hpp>
+// #include <range/v3/numeric/iota.hpp>
+// #include <range/v3/view/drop.hpp>
+// #include <range/v3/view/enumerate.hpp>
+// #include <range/v3/view/take.hpp>
+// #include <vector>
+// #include "Instance.h"
+// #include "Statistics.h"
+// #include "lp.h"
+// #include "scheduleset.h"
+// #include "wctprivate.h"
 #include <fmt/core.h>
-#include <numeric>
-#include <range/v3/algorithm/for_each.hpp>
-#include <range/v3/numeric/iota.hpp>
-#include <range/v3/view/drop.hpp>
-#include <range/v3/view/enumerate.hpp>
-#include <range/v3/view/take.hpp>
-#include <vector>
-#include "Instance.h"
-#include "Statistics.h"
-#include "lp.h"
-#include "scheduleset.h"
-#include "wctprivate.h"
-
+#include <cassert>                                     // for assert
+#include <cmath>                                       // for abs
+#include <cstdio>                                      // for fflush, size_t
+#include <memory>                                      // for shared_ptr
+#include <range/v3/algorithm/for_each.hpp>             // for for_each, for_...
+#include <range/v3/functional/identity.hpp>            // for identity
+#include <range/v3/iterator/basic_iterator.hpp>        // for basic_iterator
+#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
+#include <range/v3/numeric/iota.hpp>                   // for iota, iota_fn
+#include <range/v3/range_fwd.hpp>                      // for move
+#include <range/v3/view/drop.hpp>                      // for drop_view, drop
+#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
+#include <range/v3/view/take.hpp>                      // for take_view, take
+#include <range/v3/view/view.hpp>                      // for operator|, vie...
+#include <range/v3/view/zip.hpp>                       // for zip_view
+#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
+#include <vector>                                      // for vector
+#include "Solution.hpp"                                // for Sol
+#include "gurobi_c.h"                                  // for GRB_INFINITY
+#include "lp.h"                                        // for lp_interface_g...
+#include "scheduleset.h"                               // for ScheduleSet
+#include "wctprivate.h"                                // for NodeData, EPS_...
 int NodeData::grab_integer_solution(std::vector<double> const& x,
                                     double                     tolerance) {
     auto incumbent = 0.0;
-    auto tot_weighted = 0;
+    auto tot_weighted = 0.0;
 
     lp_interface_objval(RMP.get(), &incumbent);
     lp_interface_get_nb_cols(RMP.get(), &nb_cols);

@@ -1,9 +1,9 @@
 #ifndef PRICER_SOLVER_ZDD_FORWARD_HPP
 #define PRICER_SOLVER_ZDD_FORWARD_HPP
-#include "Instance.h"
-#include "PricerEvaluateZdd.hpp"
-#include "PricerSolverZdd.hpp"
-
+#include "Instance.h"             // for Instance
+#include "OptimalSolution.hpp"    // for OptimalSolution
+#include "PricerEvaluateZdd.hpp"  // for BackwardZddCycleDouble, BackwardZdd...
+#include "PricerSolverZdd.hpp"    // for PricerSolverZdd
 class PricerSolverSimple : public PricerSolverZdd {
    private:
     ForwardZddSimpleDouble  evaluator;

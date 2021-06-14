@@ -1,10 +1,17 @@
-#include <memory>
-#include <vector>
-#include "Instance.h"
-#include "NodeBdd.hpp"
-#include "PricerEvaluateBdd.hpp"
-#include "PricerSolverBdd.hpp"
+// #include <memory>
+// #include <vector>
+// #include "Instance.h"
+// #include "NodeBdd.hpp"
+// #include "PricerEvaluateBdd.hpp"
+// #include "PricerSolverBdd.hpp"
 // #include "interval.h"
+#include <memory>                 // for make_unique, unique_ptr
+#include "Instance.h"             // for Instance
+#include "NodeBdd.hpp"            // for NodeBdd
+#include "OptimalSolution.hpp"    // for OptimalSolution
+#include "PricerEvaluateBdd.hpp"  // for BackwardBddFarkasDouble, BackwardBd...
+#include "PricerSolverBdd.hpp"    // for PricerSolverBdd
+struct PricerSolverBase;
 
 class PricerSolverBddBackwardSimple : public PricerSolverBdd {
    private:

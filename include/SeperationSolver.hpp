@@ -1,10 +1,9 @@
 #ifndef SEPARATION_SOLVER_HPP
 #define SEPARATION_SOLVER_HPP
 
-#include "ModelInterface.hpp"
-#include "PricerSolverBase.hpp"
-// #include "wctprivate.h"
-
+#include <vector>  // for vector
+class ConstraintBase;
+struct PricerSolverBase;
 class SeperationSolver {
    public:
     explicit SeperationSolver(PricerSolverBase* _solver);

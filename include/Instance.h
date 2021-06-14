@@ -1,15 +1,16 @@
 #ifndef __INSTANCE_H__
 #define __INSTANCE_H__
-#include <fmt/core.h>
-#include <cstddef>
-#include <filesystem>
-#include <limits>
-#include <memory>
-#include <vector>
-
-#include "Interval.h"
-#include "Job.h"
-#include "Parms.h"
+#include <chrono>      // for filesystem
+#include <cstddef>     // for size_t
+#include <exception>   // for exception
+#include <filesystem>  // for path
+#include <limits>      // for numeric_limits
+#include <memory>      // for shared_ptr
+#include <utility>     // for pair
+#include <vector>      // for vector
+struct Interval;
+struct Job;
+struct Parms;
 
 namespace fs = std::filesystem;
 

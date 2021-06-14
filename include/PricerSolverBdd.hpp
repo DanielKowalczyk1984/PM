@@ -1,16 +1,37 @@
 #ifndef PRICER_SOLVER_BDD_HPP
 #define PRICER_SOLVER_BDD_HPP
-#include <memory>
-#include <range/v3/view/drop.hpp>
-#include <unordered_map>
-#include <vector>
-#include "Instance.h"
-#include "MipGraph.hpp"
-#include "ModelInterface.hpp"
-#include "NodeBdd.hpp"
-#include "NodeBddStructure.hpp"
-#include "OptimalSolution.hpp"
-#include "PricerSolverBase.hpp"
+// #include <memory>
+// #include <range/v3/view/drop.hpp>
+// #include <unordered_map>
+// #include <vector>
+// #include "Instance.h"
+// #include "MipGraph.hpp"
+// #include "ModelInterface.hpp"
+// #include "NodeBdd.hpp"
+// #include "NodeBddStructure.hpp"
+// #include "OptimalSolution.hpp"
+// #include "PricerSolverBase.hpp"
+
+#include <boost/move/utility_core.hpp>           // for move
+#include <cstddef>                               // for size_t
+#include <memory>                                // for unique_ptr, shared_ptr
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=
+#include <range/v3/view/filter.hpp>              // for filter_view
+#include <range/v3/view/view.hpp>                // for operator|
+#include <utility>                               // for pair
+#include <vector>                                // for vector
+#include "Instance.h"                            // for Instance
+#include "MipGraph.hpp"                          // for MipGraph
+#include "ModelInterface.hpp"                    // for OriginalModel
+#include "NodeBdd.hpp"                           // for NodeBdd
+#include "NodeBddStructure.hpp"                  // for DdStructure
+#include "OptimalSolution.hpp"                   // for OptimalSolution
+#include "PricerSolverBase.hpp"                  // for PricerSolverBase
+struct Interval;
+struct Job;
+struct NodeData;
+struct ScheduleSet;
+struct Sol;
 
 class PricerSolverBdd : public PricerSolverBase {
     DdStructure<NodeBdd<double>> decision_diagram;
@@ -29,7 +50,6 @@ class PricerSolverBdd : public PricerSolverBase {
 
     int H_min;
     int H_max;
-
 
    public:
     explicit PricerSolverBdd(const Instance& instance);
@@ -73,8 +93,8 @@ class PricerSolverBdd : public PricerSolverBase {
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
         override;
 
-    void   project_sol_on_original_variables(const Sol& _sol) override;
-    std::vector<std::vector<double>> &calculate_job_time() override;
+    void project_sol_on_original_variables(const Sol& _sol) override;
+    std::vector<std::vector<double>>& calculate_job_time() override;
     void   split_job_time(size_t _job, int _time, bool _left) override;
     void   iterate_zdd() override;
     void   create_dot_zdd(const char* name) override;

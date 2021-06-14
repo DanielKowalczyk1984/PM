@@ -1,12 +1,11 @@
 #ifndef __PRICINGSTABILIZATION_H__
 #define __PRICINGSTABILIZATION_H__
 
-#include <algorithm>
-#include <memory>
-#include <vector>
-#include "OptimalSolution.hpp"
-
-class PricerSolverBase;
+#include <cstddef>              // for size_t
+#include <memory>               // for unique_ptr
+#include <vector>               // for vector
+#include "OptimalSolution.hpp"  // for OptimalSolution
+struct PricerSolverBase;        // lines 9-9
 class PricingStabilizationBase {
    public:
     explicit PricingStabilizationBase(PricerSolverBase*    _solver,

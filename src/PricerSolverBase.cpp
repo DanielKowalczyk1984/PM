@@ -1,11 +1,30 @@
+// #include "PricerSolverBase.hpp"
+// #include <fmt/core.h>
+// #include <algorithm>
+// #include <cstddef>
+// #include <limits>
+// #include <memory>
+// #include <range/v3/view/enumerate.hpp>
+// #include "Instance.h"
 #include "PricerSolverBase.hpp"
-#include <fmt/core.h>
-#include <algorithm>
-#include <cstddef>
-#include <limits>
-#include <memory>
-#include <range/v3/view/enumerate.hpp>
-#include "Instance.h"
+#include <fmt/core.h>                                  // for print
+#include <math.h>                                      // for fabs
+#include <algorithm>                                   // for min, __fill_fn
+#include <cstddef>                                     // for size_t
+#include <ext/alloc_traits.h>                          // for __alloc_traits...
+#include <limits>                                      // for numeric_limits
+#include <memory>                                      // for __shared_ptr_a...
+#include <range/v3/iterator/basic_iterator.hpp>        // for basic_iterator
+#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
+#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
+#include <range/v3/view/view.hpp>                      // for operator|
+#include <range/v3/view/zip.hpp>                       // for zip_view
+#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
+#include <span>                                        // for span
+#include "Instance.h"                                  // for Instance
+#include "Job.h"                                       // for Job
+#include "gurobi_c++.h"                                // for GRBModel, GRBEnv
+#include "gurobi_c.h"                                  // for GRB_INFEASIBLE
 
 PricerSolverBase::PricerSolverBase(const Instance& instance)
     : jobs(instance.jobs),

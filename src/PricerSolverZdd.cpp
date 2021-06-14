@@ -1,18 +1,43 @@
+// #include "PricerSolverZdd.hpp"
+// #include <NodeBddStructure.hpp>
+// #include <boost/graph/graphviz.hpp>
+// #include <cstddef>
+// #include <range/v3/view/iota.hpp>
+// #include <range/v3/view/reverse.hpp>
+// #include <vector>
+// #include "Instance.h"
+// #include "OptimalSolution.hpp"
+// #include "PricerConstruct.hpp"
+// #include "Statistics.h"
+// #include "ZddNode.hpp"
+// #include "scheduleset.h"
 #include "PricerSolverZdd.hpp"
 #include <fmt/core.h>
-#include <NodeBddStructure.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <cstddef>
-#include <range/v3/view/iota.hpp>
-#include <range/v3/view/reverse.hpp>
-#include <vector>
-#include "Instance.h"
-#include "OptimalSolution.hpp"
-#include "PricerConstruct.hpp"
-#include "Statistics.h"
-#include "ZddNode.hpp"
-#include "scheduleset.h"
-
+#include <NodeBddStructure.hpp>                    // for DdStructure, DdStr...
+#include <algorithm>                               // for remove_if, fill
+#include <array>                                   // for array
+#include <boost/graph/detail/adjacency_list.hpp>   // for num_edges
+#include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
+#include <iostream>                                // for operator<<, cout
+#include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
+#include <range/v3/view/iota.hpp>                  // for iota_view, ints
+#include <range/v3/view/reverse.hpp>               // for reverse_fn, revers...
+#include <range/v3/view/zip.hpp>                   // for zip_view
+#include <set>                                     // for operator==, _Rb_tr...
+#include <span>                                    // for span
+#include <string>                                  // for char_traits, opera...
+#include <vector>                                  // for vector<>::iterator
+#include "Instance.h"                              // for Instance
+#include "Job.h"                                   // for Job
+#include "NodeBddTable.hpp"                        // for NodeTableEntity
+#include "NodeId.hpp"                              // for NodeId
+#include "OptimalSolution.hpp"                     // for OptimalSolution
+#include "PricerConstruct.hpp"                     // for PricerConstruct
+#include "ZddNode.hpp"                             // for NodeZdd, SubNodeZdd
+#include "gurobi_c++.h"                            // for GRBException
+#include "scheduleset.h"                           // for ScheduleSet
+#include "util.h"                                  // for dbg_lvl
+#include "util/MyList.hpp"                         // for MyList
 PricerSolverZdd::PricerSolverZdd(const Instance& instance)
     : PricerSolverBase(instance),
       decision_diagram(
@@ -453,10 +478,10 @@ void PricerSolverZdd::iterate_zdd() {
 }
 
 void PricerSolverZdd::create_dot_zdd(const char* name) {
-    std::ofstream file;
-    file.open(name);
-    // decision_diagram->dumpDot(file);
-    file.close();
+    // std::ofstream file;
+    // file.open(name);
+    // // decision_diagram->dumpDot(file);
+    // file.close();
 }
 
 void PricerSolverZdd::print_number_nodes_edges() {

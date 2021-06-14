@@ -1,18 +1,43 @@
-#include <fmt/core.h>
-#include <array>
-#include <functional>
-#include <limits>
-#include <memory>
-#include <range/v3/action/sort.hpp>
-#include <range/v3/action/unique.hpp>
-#include <range/v3/algorithm/equal.hpp>
-#include <range/v3/algorithm/for_each.hpp>
-#include <range/v3/functional/comparisons.hpp>
-#include "PricerSolverBase.hpp"
-#include "Statistics.h"
-#include "lp.h"
-#include "scheduleset.h"
-#include "wctprivate.h"
+// #include <fmt/core.h>
+// #include <array>
+// #include <functional>
+// #include <limits>
+// #include <memory>
+// #include <range/v3/action/sort.hpp>
+// #include <range/v3/action/unique.hpp>
+// #include <range/v3/algorithm/equal.hpp>
+// #include <range/v3/algorithm/for_each.hpp>
+// #include <range/v3/functional/comparisons.hpp>
+// #include "PricerSolverBase.hpp"
+// #include "PricingStabilization.hpp"
+// #include "Statistics.h"
+// #include "lp.h"
+// #include "scheduleset.h"
+// #include "wctprivate.h"
+
+#include <array>                                // for array
+#include <cfloat>                               // for DBL_MAX
+#include <cmath>                                // for sqrt
+#include <concepts/concepts.hpp>                // for return_t
+#include <cstddef>                              // for size_t
+#include <functional>                           // for less, function
+#include <limits>                               // for numeric_limits
+#include <memory>                               // for shared_ptr, unique_ptr
+#include <range/v3/action/action.hpp>           // for action_closure, opera...
+#include <range/v3/action/sort.hpp>             // for sort, sort_fn
+#include <range/v3/action/unique.hpp>           // for unique, unique_fn
+#include <range/v3/functional/bind_back.hpp>    // for bind_back_fn_
+#include <range/v3/functional/comparisons.hpp>  // for equal_to
+#include <range/v3/functional/compose.hpp>      // for composed
+#include <utility>                              // for move
+#include <vector>                               // for vector
+#include "Instance.h"                           // for Instance
+#include "PricerSolverBase.hpp"                 // for PricerSolverBase
+#include "PricingStabilization.hpp"             // for PricingStabilizationBase
+#include "Solution.hpp"                         // for Sol
+#include "lp.h"                                 // for lp_interface_create
+#include "scheduleset.h"                        // for ScheduleSet
+#include "wctprivate.h"                         // for NodeData, Problem
 
 NodeData::NodeData(Problem* problem)
     : depth(0UL),

@@ -1,10 +1,24 @@
+// #include "PricerSolverBddBackward.hpp"
+// #include <fmt/core.h>
+// #include <range/v3/all.hpp>
+// #include "Instance.h"
+// #include "NodeBdd.hpp"
+// #include "PricerSolverBdd.hpp"
+// #include "util.h"
 #include "PricerSolverBddBackward.hpp"
-#include <fmt/core.h>
-#include <range/v3/all.hpp>
-#include "Instance.h"
-#include "NodeBdd.hpp"
-#include "PricerSolverBdd.hpp"
-#include "util.h"
+#include <fmt/core.h>                            // for print
+#include <array>                                 // for array
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=
+#include <range/v3/view/join.hpp>                // for join_view
+#include <range/v3/view/view.hpp>                // for operator|
+#include "Instance.h"                            // for Instance
+#include "Label.hpp"                             // for Label
+#include "NodeBdd.hpp"                           // for NodeBdd
+#include "NodeBddStructure.hpp"                  // for DdStructure
+#include "NodeBddTable.hpp"                      // for TableHandler, NodeTa...
+#include "PricerSolverBase.hpp"                  // for PricerSolverBase::ALIGN
+#include "PricerSolverBdd.hpp"                   // for PricerSolverBdd
+#include "util.h"                                // for dbg_lvl
 
 /**
  * backward bdd pricersolver for the flow formulation that takes care of the

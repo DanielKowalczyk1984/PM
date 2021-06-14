@@ -1,8 +1,10 @@
 #ifndef __STATISTICS_H__
 #define __STATISTICS_H__
-#include <string>
-#include "Parms.h"
-#include "util.h"
+
+#include <cstddef>  // for size_t
+#include <string>   // for string
+#include "util.h"   // for CCutil_timer
+struct Parms;
 
 struct Statistics {
     int    global_upper_bound;

@@ -1,7 +1,15 @@
+// #include "Interval.h"
+// #include <bits/ranges_algo.h>
+// #include <cmath>
+// #include <memory>
 #include "Interval.h"
-#include <bits/ranges_algo.h>
-#include <cmath>
-#include <memory>
+#include <algorithm>   // for __sort_fn, sort
+#include <cmath>       // for ceil
+#include <functional>  // for identity, __invoke
+#include <memory>      // for shared_ptr, __shared_ptr_access, swap
+#include <ranges>      // for next
+#include <utility>     // for move
+#include "Job.h"       // for Job, value_diff_Fij
 
 Interval::Interval(int _a, int _b, const vector_ptr_jobs& _sigma)
     : a(_a),

@@ -1,8 +1,10 @@
-
-
-#include <scheduleset.h>
-#include <range/v3/algorithm/for_each.hpp>
-#include <vector>
+#include "scheduleset.h"                     // for ScheduleSet
+#include <range/v3/algorithm/for_each.hpp>   // for for_each, for_each_fn
+#include <range/v3/functional/identity.hpp>  // for identity
+#include <utility>                           // for move
+#include "Job.h"                             // for Job
+#include "OptimalSolution.hpp"               // for OptimalSolution
+#include "Solution.hpp"                      // for Machine
 
 ScheduleSet::ScheduleSet(const Machine& m)
     : total_processing_time(m.total_processing_time),

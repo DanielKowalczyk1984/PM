@@ -340,7 +340,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
 
         if (this->size() == 0) {
             // fmt::print("empty DDstructure\n");
-            R retval;
+            R retval{};
             return retval;
         }
 

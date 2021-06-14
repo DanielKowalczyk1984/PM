@@ -1,18 +1,53 @@
+// #include "Solution.hpp"
+// #include <bits/ranges_algo.h>
+// #include <fmt/core.h>
+// #include <algorithm>
+// #include <cstddef>
+// #include <cstdio>
+// #include <memory>
+// #include <random>
+// #include <range/v3/action/erase.hpp>
+// #include <range/v3/action/insert.hpp>
+// #include <range/v3/all.hpp>
+// #include <vector>
+// #include "Instance.h"
+// #include "Interval.h"
+// #include "Job.h"
+
 #include "Solution.hpp"
-#include <bits/ranges_algo.h>
-#include <fmt/core.h>
-#include <algorithm>
-#include <cstddef>
-#include <cstdio>
-#include <memory>
-#include <random>
-#include <range/v3/action/erase.hpp>
-#include <range/v3/action/insert.hpp>
-#include <range/v3/all.hpp>
-#include <vector>
-#include "Instance.h"
-#include "Interval.h"
-#include "Job.h"
+#include <fmt/core.h>                                  // for print
+#include <algorithm>                                   // for remove, __sort_fn
+#include <compare>                                     // for operator<
+#include <cstddef>                                     // for size_t
+#include <cstdlib>                                     // for rand
+#include <ext/alloc_traits.h>                          // for __alloc_traits...
+#include <functional>                                  // for identity
+#include <memory>                                      // for allocator_trai...
+#include <random>                                      // for mt19937, unifo...
+#include <range/v3/action/action.hpp>                  // for action_closure
+#include <range/v3/action/shuffle.hpp>                 // for shuffle, shuff...
+#include <range/v3/action/sort.hpp>                    // for sort, sort_fn
+#include <range/v3/algorithm/heap_algorithm.hpp>       // for push_heap, pus...
+#include <range/v3/algorithm/swap_ranges.hpp>          // for swap_ranges
+#include <range/v3/functional/comparisons.hpp>         // for greater
+#include <range/v3/functional/identity.hpp>            // for identity
+#include <range/v3/iterator/basic_iterator.hpp>        // for operator-, bas...
+#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
+#include <range/v3/range/conversion.hpp>               // for operator|, to
+#include <range/v3/view/drop.hpp>                      // for drop, drop_fn
+#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
+#include <range/v3/view/subrange.hpp>                  // for subrange
+#include <range/v3/view/take.hpp>                      // for take_view, take
+#include <range/v3/view/transform.hpp>                 // for transform_view
+#include <range/v3/view/view.hpp>                      // for operator|, vie...
+#include <range/v3/view/zip.hpp>                       // for zip_view
+#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
+#include <tuple>                                       // for operator<=>, tie
+#include <utility>                                     // for move, swap
+#include <vector>                                      // for vector
+#include "Instance.h"                                  // for Instance
+#include "Interval.h"                                  // for Interval, comp...
+#include "Job.h"                                       // for Job
 
 void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
     auto cmp_jobs_edd = [](const auto lhs, const auto rhs) -> bool {
@@ -138,7 +173,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                 if (Q_in_tmp.size() + 1 == Q_tmp.size()) {
                     auto C = c[Q_in_tmp.front()->job] -
                              Q_in_tmp.front()->processing_time;
-                    auto cmp = compare_edd(I->a, I->b);
+                    compare_edd cmp = compare_edd(I->a, I->b);
                     std::ranges::sort(Q_in_tmp, cmp);
 
                     auto j = 0UL;

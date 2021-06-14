@@ -1,9 +1,21 @@
-#include <cstddef>
-#include <memory>
-#include <vector>
-#include "Instance.h"
-#include "PricerSolverBase.hpp"
-#include "gurobi_c++.h"
+// #include <cstddef>
+// #include <memory>
+// #include <vector>
+// #include "Instance.h"
+// #include "PricerSolverBase.hpp"
+// #include "gurobi_c++.h"
+#include <algorithm>             // for remove
+#include <cstddef>               // for size_t
+#include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
+#include <memory>                // for allocator_traits<>::value_type, make...
+#include <vector>                // for vector
+#include "Instance.h"            // for Instance
+#include "Job.h"                 // for Job
+#include "OptimalSolution.hpp"   // for OptimalSolution
+#include "PricerSolverBase.hpp"  // for PricerSolverBase
+#include "gurobi_c++.h"          // for GRBVar
+struct NodeData;
+struct ScheduleSet;
 
 // using std::vector;
 class PricerSolverArcTimeDp : public PricerSolverBase {

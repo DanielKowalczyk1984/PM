@@ -1,9 +1,15 @@
 #ifndef __INTERVAL_H__
 #define __INTERVAL_H__
-#include <array>
-#include <cstddef>
-#include <memory>
-#include <vector>
+// #include <array>
+// #include <cstddef>
+// #include <memory>
+// #include <vector>
+// #include "Job.h"
+#include <array>    // for array
+#include <compare>  // for operator>
+#include <memory>   // for shared_ptr
+#include <tuple>    // for operator<=>, tie
+#include <vector>   // for vector
 #include "Job.h"
 
 struct compare_edd {
@@ -57,18 +63,7 @@ struct compare_edd {
                        std::tie(w_rhs, rhs->processing_time);
             }
         }
-    }
-};
-
-struct negate_compare_edd {
-    compare_edd S;
-
-    negate_compare_edd(int a, int b) : S(a, b) {}
-
-    bool operator()(const std::shared_ptr<Job> lhs,
-                    const std::shared_ptr<Job> rhs) {
-        return !S(lhs, rhs);
-    }
+    };
 };
 
 struct Interval {

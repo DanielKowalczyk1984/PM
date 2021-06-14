@@ -1,19 +1,43 @@
 #ifndef PRICER_SOLVER_ZDD_HPP
 #define PRICER_SOLVER_ZDD_HPP
-
-#include <stddef.h>
-#include <NodeBddStructure.hpp>
-#include <cstddef>
-#include <memory>
-#include <utility>
-#include <vector>
-#include "MipGraph.hpp"
-#include "OptimalSolution.hpp"
-#include "PricerSolverBase.hpp"
-#include "Statistics.h"
-#include "ZddNode.hpp"
-#include "wctprivate.h"
-
+// #include <range/v3/iterator/basic_iterator.hpp>  // for operator!=
+// #include <range/v3/view/filter.hpp>              // for filter_view
+// #include <range/v3/view/view.hpp>                // for operator|
+// #include "Instance.h"                            // for Instance
+// struct Interval;
+// struct Job;
+// struct NodeData;
+// struct ScheduleSet;
+// #include <stddef.h>
+// #include <NodeBddStructure.hpp>
+// #include <cstddef>
+// #include <memory>
+// #include <utility>
+// #include <vector>
+// #include "MipGraph.hpp"
+// #include "OptimalSolution.hpp"
+// #include "PricerSolverBase.hpp"
+// #include "Statistics.h"
+// #include "ZddNode.hpp"
+// #include "wctprivate.h"
+// #include <stddef.h>                              // for size_t
+#include <stddef.h>                              // for size_t
+#include <NodeBddStructure.hpp>                  // for DdStructure
+#include <memory>                                // for unique_ptr, shared_ptr
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=
+#include <range/v3/view/filter.hpp>              // for filter_view
+#include <range/v3/view/view.hpp>                // for operator|
+#include <utility>                               // for pair
+#include <vector>                                // for vector
+#include "Instance.h"                            // for Instance
+#include "MipGraph.hpp"                          // for MipGraph
+#include "OptimalSolution.hpp"                   // for OptimalSolution
+#include "PricerSolverBase.hpp"                  // for PricerSolverBase
+#include "ZddNode.hpp"                           // for NodeZdd
+struct Interval;                                 // lines 36-36
+struct Job;                                      // lines 37-37
+struct NodeData;                                 // lines 38-38
+struct ScheduleSet;                              // lines 39-39
 class PricerSolverZdd : public PricerSolverBase {
    public:
     std::unique_ptr<DdStructure<NodeZdd<double>>> decision_diagram;

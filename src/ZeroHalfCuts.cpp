@@ -1,14 +1,37 @@
+// #include "ZeroHalfCuts.hpp"
+// #include <fmt/core.h>
+// #include <fmt/format.h>
+// #include <gurobi_c++.h>
+// #include <algorithm>
+// #include <memory>
+// #include <range/v3/all.hpp>
+// #include <vector>
+// #include "ModelInterface.hpp"
+// #include "NodeBddTable.hpp"
+// #include "NodeId.hpp"
 #include "ZeroHalfCuts.hpp"
-#include <fmt/core.h>
-#include <fmt/format.h>
-#include <gurobi_c++.h>
-#include <algorithm>
-#include <memory>
-#include <range/v3/all.hpp>
-#include <vector>
-#include "ModelInterface.hpp"
-#include "NodeBddTable.hpp"
-#include "NodeId.hpp"
+#include <fmt/format.h>                          // for format, print
+#include <gurobi_c++.h>                          // for GRBModel, GRBVar
+#include <algorithm>                             // for __for_each_fn, for_each
+#include <array>                                 // for array, array<>::valu...
+#include <cmath>                                 // for floor
+#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
+#include <functional>                            // for identity
+#include <memory>                                // for shared_ptr, unique_ptr
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, basic_it...
+#include <range/v3/view/drop.hpp>                // for drop, drop_fn
+#include <range/v3/view/iota.hpp>                // for iota_view, iota_view...
+#include <range/v3/view/join.hpp>                // for join_view<>::cursor
+#include <range/v3/view/reverse.hpp>             // for reverse_view, revers...
+#include <range/v3/view/subrange.hpp>            // for subrange
+#include <range/v3/view/take.hpp>                // for take_view, take, tak...
+#include <range/v3/view/view.hpp>                // for operator|, view_closure
+#include <utility>                               // for move
+#include <vector>                                // for vector
+#include "ModelInterface.hpp"                    // for ConstraintGeneric
+#include "NodeBddTable.hpp"                      // for NodeTableEntity
+#include "NodeId.hpp"                            // for NodeId
+#include "gurobi_c.h"                            // for GRB_INFINITY, GRB_PR...
 
 ZeroHalfCuts::ZeroHalfCuts(size_t              _nb_jobs,
                            size_t              _nb_machines,

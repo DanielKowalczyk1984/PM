@@ -1,22 +1,22 @@
 #include "wctprivate.h"
-#include <fmt/core.h>
-#include <boost/timer/timer.hpp>
-#include <cstddef>
-#include <limits>
-#include <memory>
-#include <vector>
-#include "BranchBoundTree.hpp"
-#include "Instance.h"
-#include "LocalSearch_new.h"
-#include "PricerSolverArcTimeDP.hpp"
-#include "PricerSolverBddBackward.hpp"
-#include "PricerSolverBddForward.hpp"
-#include "PricerSolverSimpleDP.hpp"
-#include "PricerSolverZddBackward.hpp"
-#include "PricerSolverZddForward.hpp"
-#include "PricingStabilization.hpp"
-#include "Solution.hpp"
-#include "Statistics.h"
+#include <fmt/core.h>                   // for print
+#include <boost/timer/timer.hpp>        // for auto_cpu_timer
+#include <cstddef>                      // for size_t
+#include <memory>                       // for make_unique, unique_ptr, shar...
+#include <utility>                      // for move
+#include "BranchBoundTree.hpp"          // for BranchBoundTree
+#include "Instance.h"                   // for Instance
+#include "LocalSearch_new.h"            // for LocalSearchData, PerturbOperator
+#include "PricerSolverArcTimeDP.hpp"    // for PricerSolverArcTimeDp
+#include "PricerSolverBase.hpp"         // for PricerSolverBase
+#include "PricerSolverBddBackward.hpp"  // for PricerSolverBddBackwardCycle
+#include "PricerSolverBddForward.hpp"   // for PricerSolverBddCycle, PricerS...
+#include "PricerSolverSimpleDP.hpp"     // for PricerSolverSimpleDp
+#include "PricerSolverZddBackward.hpp"  // for PricerSolverZddBackwardCycle
+#include "PricerSolverZddForward.hpp"   // for PricerSolverSimple, PricerSol...
+#include "PricingStabilization.hpp"     // for PricingStabilizationBase, Pri...
+#include "Solution.hpp"                 // for Sol
+#include "Statistics.h"                 // for Statistics, Statistics::bb_timer
 
 Problem::~Problem() = default;
 
@@ -164,7 +164,7 @@ Problem::Problem(int argc, const char** argv)
 NodeData::~NodeData() = default;
 void Problem::solve() {
     tree->explore();
-    if (parms.print) {
+    if (parms.print_csv) {
         to_csv();
     }
 }

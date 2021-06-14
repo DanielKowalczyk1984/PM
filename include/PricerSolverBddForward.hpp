@@ -1,8 +1,15 @@
 #ifndef PRICER_SOLVER_BDD_FORWARD_HPP
 #define PRICER_SOLVER_BDD_FORWARD_HPP
-#include "NodeBdd.hpp"
-#include "PricerEvaluateBdd.hpp"
-#include "PricerSolverBdd.hpp"
+// #include "NodeBdd.hpp"
+// #include "PricerEvaluateBdd.hpp"
+// #include "PricerSolverBdd.hpp"
+#include <memory>                 // for make_unique, unique_ptr
+#include "Instance.h"             // for Instance
+#include "NodeBdd.hpp"            // for NodeBdd
+#include "OptimalSolution.hpp"    // for OptimalSolution
+#include "PricerEvaluateBdd.hpp"  // for BackwardBddFarkasDouble, BackwardBd...
+#include "PricerSolverBdd.hpp"    // for PricerSolverBdd
+struct PricerSolverBase;
 
 class PricerSolverBddSimple : public PricerSolverBdd {
    private:

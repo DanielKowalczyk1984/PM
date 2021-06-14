@@ -1,8 +1,24 @@
 #include "PricerSolverZddForward.hpp"
-#include <range/v3/all.hpp>
-#include "Instance.h"
-#include "PricerSolverZdd.hpp"
-
+#include <fmt/core.h>                            // for print
+#include <array>                                 // for array
+#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
+#include <iostream>                              // for operator<<, basic_os...
+#include <memory>                                // for __shared_ptr_access
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, basic_it...
+#include <range/v3/view/drop.hpp>                // for drop, drop_fn
+#include <range/v3/view/join.hpp>                // for join_view, join_view...
+#include <range/v3/view/subrange.hpp>            // for subrange
+#include <range/v3/view/take.hpp>                // for take_view, take, tak...
+#include <range/v3/view/view.hpp>                // for operator|, view_closure
+#include <vector>                                // for vector
+#include "Instance.h"                            // for Instance
+#include "Job.h"                                 // for Job
+#include "Label.hpp"                             // for Label
+#include "NodeBddStructure.hpp"                  // for DdStructure
+#include "NodeBddTable.hpp"                      // for NodeTableEntity, Tab...
+#include "PricerSolverBase.hpp"                  // for PricerSolverBase::RC...
+#include "PricerSolverZdd.hpp"                   // for PricerSolverZdd
+#include "ZddNode.hpp"                           // for SubNodeZdd, NodeZdd
 /**
  *  zdd solver pricersolver for the flow formulation
  */

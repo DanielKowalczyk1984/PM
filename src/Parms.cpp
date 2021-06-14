@@ -1,16 +1,36 @@
+// #include "Parms.h"
+// #include <docopt/docopt.h>
+// #include <fmt/core.h>
+// #include <algorithm>
+// #include <cstddef>
+// #include <range/v3/range/conversion.hpp>
+// #include <range/v3/view/drop.hpp>
+// #include <range/v3/view/transform.hpp>
+// #include <regex>
+// #include <span>
+// #include <string>
+// #include "util.h"
+// #include "wctprivate.h"
 #include "Parms.h"
-#include <docopt/docopt.h>
-#include <fmt/core.h>
-#include <algorithm>
-#include <cstddef>
-#include <range/v3/range/conversion.hpp>
-#include <range/v3/view/drop.hpp>
-#include <range/v3/view/transform.hpp>
-#include <regex>
-#include <span>
-#include <string>
-#include "util.h"
-#include "wctprivate.h"
+#include <docopt/docopt.h>                       // for value, docopt_parse
+#include <fmt/core.h>                            // for print
+#include <algorithm>                             // for max, min
+#include <climits>                               // for INT_MAX
+#include <cmath>                                 // for pow
+#include <cstddef>                               // for size_t
+#include <map>                                   // for map
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator-, operator!=
+#include <range/v3/range/conversion.hpp>         // for to_container::fn
+#include <range/v3/view/drop.hpp>                // for drop, drop_fn
+#include <range/v3/view/subrange.hpp>            // for subrange
+#include <range/v3/view/transform.hpp>           // for transform_view, tran...
+#include <range/v3/view/view.hpp>                // for operator|, view_closure
+#include <regex>                                 // for regex_search, match_...
+#include <span>                                  // for span
+#include <string>                                // for allocator, string, stod
+#include <vector>                                // for vector
+#include "util.h"                                // for dbg_lvl, program_header
+#include "wctprivate.h"                          // for EPS
 
 const size_t TIME_LIMIT = 7200;
 const double ALPHA_STAB_INIT = 0.8;
@@ -34,7 +54,7 @@ Parms::Parms()
       reduce_cost_fixing(min_reduced_cost),
       branchandbound(min_branch_and_bound),
       stab_technique(min_stab),
-      print(min_print_size),
+      print_csv(min_print_size),
       jobfile(),
       pname(),
       nb_jobs(0),
@@ -120,7 +140,7 @@ int Parms::parms_set_stab_technique(int _stab_technique) {
 }
 
 int Parms::parms_set_print(int _print) {
-    print = _print;
+    print_csv = _print;
     return 0;
 }
 

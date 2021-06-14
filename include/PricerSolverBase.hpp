@@ -1,19 +1,29 @@
 #ifndef PRICER_SOLVER_BASE_HPP
 #define PRICER_SOLVER_BASE_HPP
 
-#include <gurobi_c++.h>
-#include <cstddef>
-#include <memory>
-#include <span>
-#include <vector>
-#include "Instance.h"
-#include "MIP_defs.hpp"
-#include "ModelInterface.hpp"
-#include "OptimalSolution.hpp"
-#include "Solution.hpp"
-
-struct NodeData;
-struct ScheduleSet;
+// #include <gurobi_c++.h>
+// #include <cstddef>
+// #include <memory>
+// #include <span>
+// #include <vector>
+// #include "Instance.h"
+// #include "MIP_defs.hpp"
+// #include "ModelInterface.hpp"
+// #include "OptimalSolution.hpp"
+// #include "Solution.hpp"
+#include <gurobi_c++.h>         // for GRBModel
+#include <cstddef>              // for size_t
+#include <memory>               // for shared_ptr, unique_ptr
+#include <string>               // for string
+#include <vector>               // for vector
+#include "Instance.h"           // for Instance
+#include "MIP_defs.hpp"         // for MIP_Attr
+#include "ModelInterface.hpp"   // for BddCoeff, ReformulationModel
+#include "OptimalSolution.hpp"  // for OptimalSolution
+#include "Solution.hpp"         // for Sol
+struct Job;
+struct NodeData;     // lines 15-15
+struct ScheduleSet;  // lines 16-16
 
 struct PricerSolverBase {
    public:
@@ -88,11 +98,12 @@ struct PricerSolverBase {
 
     virtual bool evaluate_nodes(double* pi) = 0;
     virtual bool refinement_structure(
-        const std::vector<std::shared_ptr<ScheduleSet>>& paths) {
+        [[maybe_unused]] const std::vector<std::shared_ptr<ScheduleSet>>&
+            paths) {
         return false;
     };
     virtual void enumerate_columns(){};
-    virtual void enumerate_columns(double* _pi){};
+    virtual void enumerate_columns([[maybe_unused]] double* _pi){};
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;

@@ -21,6 +21,12 @@ include(ConfigSafeGuards)
 #
 
 include(StandardSettings)
+find_program(IWYU_PATH NAMES include-what-you-use iwyu)
+if(NOT IWYU_PATH)
+  message(FATAL_ERROR "Could not find the program include-what-you-use")
+endif()
+set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+set(CMAKE_C_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
 include(Utils)
 include(StaticAnalyzers)
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
@@ -86,7 +92,7 @@ else()
 endif()
 
 include(CompilerWarnings)
-set_project_warnings(${PROJECT_NAME}) 
+set_project_warnings(${PROJECT_NAME})
 set_project_warnings(${PROJECT_NAME}_LIB)
 
 verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")

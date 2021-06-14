@@ -1,9 +1,22 @@
-#include <fmt/core.h>
-#include <memory>
-#include "PricerSolverBase.hpp"
-#include "Statistics.h"
-#include "scheduleset.h"
-#include "wctprivate.h"
+// #include <fmt/core.h>
+// #include <memory>
+// #include "PricerSolverBase.hpp"
+// #include "PricingStabilization.hpp"
+// #include "Statistics.h"
+// #include "scheduleset.h"
+// #include "wctprivate.h"
+#include <ext/alloc_traits.h>        // for __alloc_traits<>::value_type
+#include <memory>                    // for shared_ptr, unique_ptr, make_shared
+#include <utility>                   // for move
+#include <vector>                    // for vector
+#include "OptimalSolution.hpp"       // for OptimalSolution
+#include "Parms.h"                   // for Parms, yes_reduced_cost
+#include "PricerSolverBase.hpp"      // for PricerSolverBase
+#include "PricingStabilization.hpp"  // for PricingStabilizationBase
+#include "Statistics.h"              // for Statistics, Statistics::reduced_...
+#include "lp.h"                      // for lp_interface_objval
+#include "scheduleset.h"             // for ScheduleSet
+#include "wctprivate.h"              // for NodeData, EPS_BOUND, EPS
 
 int NodeData::solve_pricing() {
     int val = 0;

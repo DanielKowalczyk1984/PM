@@ -1,20 +1,26 @@
 #include "Instance.h"
-#include <bits/ranges_algo.h>
-#include <fmt/core.h>
-#include <cstddef>
-#include <fstream>
-#include <functional>
-#include <memory>
-#include <range/v3/algorithm/for_each.hpp>
-#include <range/v3/numeric/accumulate.hpp>
-#include <range/v3/view/reverse.hpp>
-#include <range/v3/view/take.hpp>
-#include <string>
-#include <utility>
-#include <vector>
-#include "Interval.h"
-#include "Job.h"
-#include "util.h"
+#include <fmt/core.h>                            // for print
+#include <algorithm>                             // for min, max, min_element
+#include <cmath>                                 // for ceil, floor
+#include <compare>                               // for operator<
+#include <cstddef>                               // for size_t
+#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
+#include <fstream>                               // for basic_istream::opera...
+#include <functional>                            // for identity, __invoke
+#include <memory>                                // for shared_ptr, __shared...
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, operator+
+#include <range/v3/numeric/accumulate.hpp>       // for accumulate, accumula...
+#include <range/v3/view/reverse.hpp>             // for reverse_view, revers...
+#include <range/v3/view/take.hpp>                // for take_view, take, tak...
+#include <range/v3/view/view.hpp>                // for operator|, view_closure
+#include <ranges>                                // for next
+#include <string>                                // for getline, string
+#include <tuple>                                 // for tie, operator<=>
+#include <utility>                               // for move, pair, make_pair
+#include <vector>                                // for vector, erase_if
+#include "Interval.h"                            // for IntervalPair, Interval
+#include "Job.h"                                 // for Job
+#include "Parms.h"                               // for Parms
 
 Instance::Instance(const Parms& _parms)
     : path_to_instance(_parms.jobfile),

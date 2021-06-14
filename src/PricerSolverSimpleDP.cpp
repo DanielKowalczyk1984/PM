@@ -1,15 +1,34 @@
 #include "PricerSolverSimpleDP.hpp"
 #include <fmt/core.h>
-#include <gurobi_c++.h>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <cstddef>
-#include <range/v3/all.hpp>
-#include <vector>
-#include "Instance.h"
-#include "PricerSolverBase.hpp"
-#include "scheduleset.h"
-
+#include <gurobi_c++.h>                            // for GRBLinExpr, GRBModel
+#include <algorithm>                               // for fill, find, max
+#include <boost/graph/adjacency_list.hpp>          // for adjacency_list
+#include <boost/graph/detail/adjacency_list.hpp>   // for edges, get, num_edges
+#include <boost/graph/detail/edge.hpp>             // for operator!=, operat...
+#include <boost/graph/graph_selectors.hpp>         // for bidirectionalS
+#include <boost/graph/graphviz.hpp>                // for write_graphviz
+#include <boost/iterator/iterator_facade.hpp>      // for operator!=, operat...
+#include <boost/pending/property.hpp>              // for no_property
+#include <cstddef>                                 // for size_t
+#include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
+#include <fstream>                                 // for operator<<, basic_...
+#include <iostream>                                // for cerr
+#include <limits>                                  // for numeric_limits
+#include <list>                                    // for operator==
+#include <range/v3/iterator/basic_iterator.hpp>    // for basic_iterator
+#include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
+#include <range/v3/view/iota.hpp>                  // for iota_view, ints
+#include <range/v3/view/reverse.hpp>               // for reverse_fn, revers...
+#include <range/v3/view/view.hpp>                  // for operator|, view_cl...
+#include <span>                                    // for span
+#include <string>                                  // for char_traits, opera...
+#include <utility>                                 // for move
+#include <vector>                                  // for vector, vector<>::...
+#include "Instance.h"                              // for Instance
+#include "Job.h"                                   // for Job
+#include "ModelInterface.hpp"                      // for ReformulationModel
+#include "PricerSolverBase.hpp"                    // for PricerSolverBase
+#include "scheduleset.h"                           // for ScheduleSet
 /**
  * Pricersolver for the TI index formulation
  */
@@ -67,7 +86,7 @@ void PricerSolverSimpleDp::build_mip() {
                 double cost = it->weighted_tardiness_start(t);
                 double ub = take[(it->job) * (Hmax + 1) + t] ? 1.0 : 0.0;
                 TI_x[it->job * (Hmax + 1) + t] =
-                    model.addVar(0.0, ub, cost, GRB_BINARY);
+                    model.addVar(0.0, ub, cost, 'B');
             }
         }
 
@@ -75,7 +94,7 @@ void PricerSolverSimpleDp::build_mip() {
 
         /** Assignment variables */
         std::vector<GRBLinExpr> assignment(convex_constr_id, GRBLinExpr());
-        std::vector<char>       sense(convex_constr_id, GRB_EQUAL);
+        std::vector<char>       sense(convex_constr_id, '=');
         std::vector<double>     rhs(convex_constr_id, 1.0);
 
         for (auto t = 0UL; t <= Hmax; t++) {
@@ -109,7 +128,7 @@ void PricerSolverSimpleDp::build_mip() {
             }
 
             if (add_constraint) {
-                interval_sense[t] = GRB_LESS_EQUAL;
+                interval_sense[t] = '<';
                 interval_rhs[t] = convex_rhs;
 
                 model.addConstr(interval_constr[t], interval_sense[t],
@@ -142,7 +161,7 @@ void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     A[0] = nullptr;
 
     for (auto t = 1UL; t < Hmax + 1; t++) {
-        F[t] = DBL_MAX / 2;
+        F[t] = std::numeric_limits<double>::max() / 2;
         A[t] = nullptr;
     }
 
@@ -170,7 +189,7 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     std::span aux_pi{_pi, reformulation_model.size()};
 
     for (auto t = 0UL; t < Hmax; t++) {
-        backward_F[t] = DBL_MAX / 2;
+        backward_F[t] = std::numeric_limits<double>::max() / 2;
     }
 
     for (auto t : ranges::views::ints(0UL, Hmax) | ranges::views::reverse) {

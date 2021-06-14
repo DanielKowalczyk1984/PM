@@ -300,7 +300,7 @@ void BranchNodeRelBranching::branch(BTree* bt) {
         auto prev = -1;
 
         auto sum = ranges::inner_product(x_j, ranges::views::iota(0), 0.0);
-        auto lb = ranges::lower_bound(ranges::views::iota(0), sum);
+        auto lb_sum_t = ranges::lower_bound(ranges::views::iota(0), sum);
         // for (auto&& [t, x] : x_j | ranges::views::enumerate) {
         //     if (t > sum) {
         //         break;

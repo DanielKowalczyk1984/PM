@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 #include "Instance.h"
+#include "Interval.h"
 #include "NodeBddSpec.hpp"
 
 class conflict_state {

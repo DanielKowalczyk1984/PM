@@ -9,8 +9,8 @@
 #include "branch-and-bound/btree.h"
 #include "branch-and-bound/state.h"
 // #include "wctprivate.h"
-class NodeData;
-class Instance;
+struct NodeData;
+struct Instance;
 class BranchNodeBase : public State {
    public:
     explicit BranchNodeBase(std::unique_ptr<NodeData> pd, bool isRoot = false);
