@@ -21,52 +21,6 @@
 #include "scheduleset.h"                               // for ScheduleSet
 #include "wctprivate.h"                                // for NodeData, EPS_...
 
-int NodeData::grab_integer_solution(std::vector<double> const& x,
-                                    double                     tolerance) {
-    auto incumbent = 0.0;
-    auto tot_weighted = 0.0;
-
-    lp_interface_objval(RMP.get(), &incumbent);
-    lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    assert(nb_cols - id_pseudo_schedules == localColPool.size());
-
-    best_schedule.clear();
-
-    for (const auto&& [i, tmp_schedule] :
-         localColPool | ranges::views::enumerate |
-             ranges::views::drop(id_pseudo_schedules)) {
-        if (x[i] >= 1.0 - tolerance) {
-            auto aux = std::make_shared<ScheduleSet>(*tmp_schedule);
-            best_schedule.emplace_back(aux);
-
-            tot_weighted += aux->total_weighted_completion_time;
-
-            if (best_schedule.size() > nb_machines) {
-                fmt::print(
-                    "ERROR: \"Integral\" solution turned out to be not "
-                    "integral!\n");
-                fflush(stdout);
-            }
-        }
-    }
-
-    /** Write a check function */
-    fmt::print("Intermediate schedule:\n");
-    fmt::print("with total weight {}\n", tot_weighted);
-    assert(fabs((double)tot_weighted - incumbent) <= EPS);
-
-    if (tot_weighted < upper_bound) {
-        upper_bound = tot_weighted;
-        best_objective = tot_weighted;
-    }
-
-    if (upper_bound == lower_bound) {
-        status = finished;
-    }
-
-    return 0;
-}
-
 int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
     id_row.clear();
     coeff_row.clear();

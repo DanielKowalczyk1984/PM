@@ -117,7 +117,6 @@ struct NodeData {
     std::unique_ptr<wctlp, std::function<void(wctlp*)>> RMP;
 
     std::vector<double> lambda;
-
     std::vector<double> pi;
     std::vector<double> slack;
     std::vector<double> rhs;
@@ -164,10 +163,6 @@ struct NodeData {
     /** Wentges smoothing technique */
     std::unique_ptr<PricingStabilizationBase> solver_stab;
 
-    // Best Solution
-    std::vector<std::shared_ptr<ScheduleSet>> best_schedule;
-    int                                       best_objective;
-
     // maxiterations and retireage
     int retirementage;
 
@@ -207,8 +202,6 @@ struct NodeData {
     void generate_cuts();
     int  delete_unused_rows_range(int first, int last);
     int  call_update_rows_coeff();
-    bool check_schedule_set(ScheduleSet* set);
-    void make_schedule_set_feasible(ScheduleSet* set);
 
     /** StabilizationWrappers.cpp */
     int  solve_pricing();
@@ -229,9 +222,6 @@ struct NodeData {
     /** lowerbound.cpp */
     int  grow_ages();
     void print_ages();
-
-    /** StabilizationWrappers.cpp */
-    int grab_integer_solution(std::vector<double> const& x, double tolerance);
 
     static constexpr double min_nb_del_row_ratio = 0.9;
 };

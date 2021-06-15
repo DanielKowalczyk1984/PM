@@ -209,7 +209,7 @@ void Problem::heuristic() {
             if (sol.tw < best_sol.tw) {
                 best_sol = sol;
                 root_pd->add_solution_to_colpool(best_sol);
-                i = 0;
+                i /= 2;
             }
         }
 

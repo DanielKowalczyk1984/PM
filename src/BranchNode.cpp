@@ -6,6 +6,7 @@
 #include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/algorithm/lower_bound.hpp>
 #include <range/v3/all.hpp>
+#include <range/v3/functional/comparisons.hpp>
 #include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/numeric/inner_product.hpp>
 #include <range/v3/range/conversion.hpp>
@@ -56,20 +57,6 @@ void BranchNodeBase::branch(BTree* bt) {
     std::vector<BranchCand> best_cand{};
 
     for (auto&& [x_j, job] : ranges::views::zip(x_job_time, instance.jobs)) {
-        // auto prev = -1;
-        // auto accum = 0.0;
-        // auto dist_zero = 0.0;
-        // auto frac_sol = false;
-        // auto middle_time = -1;
-        // auto branch_score = 0.0;
-        // auto C_count = 0;
-        // auto is_positive{[&C_count](const auto& tmp) {
-        //     if (std::get<1>(tmp) > EPS) {
-        //         C_count++;
-        //         return true;
-        //     }
-        //     return false;
-        // }};
         auto aux_vec = ranges::views::iota(0UL, x_j.size()) |
                        ranges::views::transform([&](const auto& tmp) {
                            return job->weighted_tardiness_start(tmp);
@@ -77,55 +64,11 @@ void BranchNodeBase::branch(BTree* bt) {
                        ranges::to_vector;
         auto sum = ranges::inner_product(x_j, aux_vec, 0.0);
         auto lb_it = ranges::lower_bound(aux_vec, sum);
-        // fmt::print("test {} {}\n", *lb_it, sum);
-
-        // auto positive_range{x_j | ranges::views::enumerate |
-        //                     ranges::views::filter(is_positive)};
-
-        // for (auto&& [t, x] : positive_range) {
-        //     accum += x;
-        //     if ((accum >= (1.0 - parms.branching_point)) && (prev != -1) &&
-        //         (middle_time == -1)) {
-        //         middle_time = (t + job->processing_time + prev) / 2;
-        //         branch_score =
-        //             double(job->weighted_tardiness(middle_time)) * accum -
-        //             dist_zero;
-        //     }
-
-        //     if (middle_time != -1) {
-        //         branch_score +=
-        //             double(job->weighted_tardiness(t + job->processing_time)
-        //             -
-        //                    job->weighted_tardiness(middle_time)) *
-        //             x;
-        //         frac_sol = true;
-        //     }
-
-        //     dist_zero +=
-        //         double(job->weighted_tardiness(t + job->processing_time)) *
-        //         x;
-
-        //     prev = t + job->processing_time;
-        // }
-        // fmt::print("{} {} {}\n", *lb_it, sum, *lb_it - sum);
-        if (*lb_it - sum > 1.0e-9 &&
+        if (*lb_it - sum > EPS &&
             std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
-            // auto z_bar =
-            //     ranges::accumulate(x_j | ranges::views::take(*lb_it), 0.0);
             best_cand.emplace_back(
                 *lb_it - sum, job->job,
                 ranges::distance(aux_vec.begin(), lb_it) - 1);
-            // if (pd->iterations == 1) {V
-            //     auto t_tmp = ranges::distance(aux_vec.begin(), lb_it) - 1;
-            //     fmt::print("{} {} {} {} {} {}\n", *lb_it, sum, *lb_it - sum,
-            //                job->job, t_tmp,
-            //                job->weighted_tardiness_start(t_tmp));
-            //     ranges::for_each(
-            //         x_j | ranges::views::filter(
-            //                   [](const auto& x) { return x > EPS; }),
-            //         [](const auto tmp_x) { fmt::print("{} ", tmp_x); });
-            //     fmt::print("\n");
-            // }
         }
     }
 
@@ -143,6 +86,35 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
+    if (best_cand.empty()) {
+        for (auto&& [x_j, job] :
+             ranges::views::zip(x_job_time, instance.jobs)) {
+            auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
+            auto br_point_it = ranges::upper_bound(part_sum, 0.0);
+            if (std::min(*br_point_it - std::floor(*br_point_it),
+                         std::ceil(*br_point_it) - *br_point_it) > EPS) {
+                auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
+                best_cand.emplace_back(*br_point_it, job->job, tmp_t);
+            }
+        }
+    }
+
+    if (best_cand.empty()) {
+        fmt::print(stderr, "ERROR: no branching found!\n");
+        for (auto&& [j, job] : instance.jobs | ranges::views::enumerate) {
+            fmt::print(stderr, "j={}:", j);
+            for (auto&& [t, x] :
+                 x_job_time[j] | ranges::views::enumerate |
+                     ranges::views::filter(
+                         [&](const auto& tmp) { return (tmp.second > EPS); })) {
+                fmt::print(stderr, " ({},{})", t, x);
+            }
+            fmt::print(stderr, "\n");
+        }
+
+        exit(-1);
+    }
+
     auto best_min_gain = 0.0;
     auto best_job = -1;
     auto best_time = 0;
@@ -153,6 +125,7 @@ void BranchNodeBase::branch(BTree* bt) {
                             static_cast<int>(best_cand.size()));
     best_cand |= ranges::actions::sort(std::greater<>{}, &BranchCand::score);
 
+    auto nb_non_improvements = 0UL;
     for (auto& it : best_cand | ranges::views::take(nb_cand)) {
         auto data_nodes{pd->create_child_nodes(it.job, it.t)};
         std::array<std::unique_ptr<BranchNodeBase>, 2> child_nodes;
@@ -190,28 +163,15 @@ void BranchNodeBase::branch(BTree* bt) {
             best_min_gain = best_score;
             best_right = std::move(child_nodes[1]);
             best_left = std::move(child_nodes[0]);
+            nb_non_improvements = 0;
+        } else {
+            nb_non_improvements++;
         }
 
-        if (ranges::any_of(fathom, std::identity{})) {
+        if (ranges::any_of(fathom, std::identity{}) ||
+            nb_non_improvements > 3) {
             break;
         }
-    }
-
-    if (best_cand.empty()) {
-        fmt::print(stderr, "ERROR: no branching found!\n");
-        for (auto&& [j, job] : instance.jobs | ranges::views::enumerate) {
-            fmt::print(stderr, "j={}:", j);
-            for (auto&& [t, x] :
-                 x_job_time[j] | ranges::views::enumerate |
-                     ranges::views::filter(
-                         [&](const auto& tmp) { return (tmp.second > EPS); })) {
-                fmt::print(stderr, " ({},{})", t, x);
-            }
-            fmt::print(stderr, "\n");
-        }
-        fmt::print("test = {}", pd->LP_lower_bound);
-
-        exit(-1);
     }
 
     /** Process the branching nodes insert them in the tree */
