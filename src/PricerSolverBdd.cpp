@@ -1,7 +1,5 @@
 #include "PricerSolverBdd.hpp"
-#include <fmt/core.h>
-#include <fmt/ostream.h>
-#include <fmt/printf.h>
+#include <fmt/core.h>                                  // for print
 #include <gurobi_c++.h>                                // for GRBLinExpr
 #include <algorithm>                                   // for find, min, all_of
 #include <array>                                       // for array, array<>...
@@ -68,8 +66,6 @@
 #include "util.h"                                      // for dbg_lvl
 #include "util/MyList.hpp"                             // for MyList
 #include "wctprivate.h"                                // for NodeData
-
-using fmt::print;
 
 PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     : PricerSolverBase(instance),

@@ -1,41 +1,22 @@
 #ifndef WCT_PRIVATE_H
 #define WCT_PRIVATE_H
-#include <bits/exception.h>  // for exception
-#include <array>             // for array
-#include <cstddef>           // for size_t
-#include <functional>        // for function
-#include <memory>            // for unique_ptr, shared_ptr
-#include <string>            // for string
-#include <vector>            // for vector
-#include "Instance.h"        // for Instance
-#include "Parms.h"           // for Parms
-#include "Solution.hpp"      // for Sol
-#include "Statistics.h"      // for Statistics
-#include "lp.h"              // for wctlp
-class BranchBoundTree;       // lines 21-21
+#include <array>         // for array
+#include <cstddef>       // for size_t
+#include <exception>     // for exception
+#include <functional>    // for function
+#include <memory>        // for unique_ptr, shared_ptr
+#include <string>        // for string
+#include <vector>        // for vector
+#include "Instance.h"    // for Instance
+#include "Parms.h"       // for Parms
+#include "Solution.hpp"  // for Sol
+#include "Statistics.h"  // for Statistics
+#include "lp.h"          // for wctlp
+class BranchBoundTree;   // lines 21-21
 class PricingStabilizationBase;
 struct NodeData;  // lines 19-19
 struct PricerSolverBase;
 struct ScheduleSet;  // lines 18-18
-
-// #include <bits/c++config.h>
-// #include <array>
-// #include <cstddef>
-// #include <functional>
-// #include <memory>
-// #include <vector>
-// #include "Instance.h"
-// #include "MIP_defs.hpp"
-// #include "Parms.h"
-// #include "PricingStabilization.hpp"
-// #include "Solution.hpp"
-// #include "Statistics.h"
-// #include "lp.h"
-
-// struct ScheduleSet;
-// struct NodeData;
-
-// class BranchBoundTree;
 
 /**
  * wct data types nodes of branch and bound tree

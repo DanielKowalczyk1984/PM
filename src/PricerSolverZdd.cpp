@@ -1,19 +1,6 @@
-// #include "PricerSolverZdd.hpp"
-// #include <NodeBddStructure.hpp>
-// #include <boost/graph/graphviz.hpp>
-// #include <cstddef>
-// #include <range/v3/view/iota.hpp>
-// #include <range/v3/view/reverse.hpp>
-// #include <vector>
-// #include "Instance.h"
-// #include "OptimalSolution.hpp"
-// #include "PricerConstruct.hpp"
-// #include "Statistics.h"
-// #include "ZddNode.hpp"
-// #include "scheduleset.h"
 #include "PricerSolverZdd.hpp"
-#include <fmt/core.h>
-#include <NodeBddStructure.hpp>                    // for DdStructure, DdStr...
+#include <fmt/core.h>                              // for print
+#include <gurobi_c++.h>                            // for GRBException
 #include <algorithm>                               // for remove_if, fill
 #include <array>                                   // for array
 #include <boost/graph/detail/adjacency_list.hpp>   // for num_edges
@@ -29,15 +16,16 @@
 #include <vector>                                  // for vector<>::iterator
 #include "Instance.h"                              // for Instance
 #include "Job.h"                                   // for Job
+#include "NodeBddStructure.hpp"                    // for DdStructure, DdStr...
 #include "NodeBddTable.hpp"                        // for NodeTableEntity
 #include "NodeId.hpp"                              // for NodeId
 #include "OptimalSolution.hpp"                     // for OptimalSolution
 #include "PricerConstruct.hpp"                     // for PricerConstruct
 #include "ZddNode.hpp"                             // for NodeZdd, SubNodeZdd
-#include "gurobi_c++.h"                            // for GRBException
 #include "scheduleset.h"                           // for ScheduleSet
 #include "util.h"                                  // for dbg_lvl
 #include "util/MyList.hpp"                         // for MyList
+
 PricerSolverZdd::PricerSolverZdd(const Instance& instance)
     : PricerSolverBase(instance),
       decision_diagram(

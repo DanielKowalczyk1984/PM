@@ -1,18 +1,5 @@
-// #include <numeric>
-// #include <range/v3/algorithm/for_each.hpp>
-// #include <range/v3/numeric/iota.hpp>
-// #include <range/v3/view/drop.hpp>
-// #include <range/v3/view/enumerate.hpp>
-// #include <range/v3/view/take.hpp>
-// #include <vector>
-// #include "Instance.h"
-// #include "Statistics.h"
-// #include "lp.h"
-// #include "scheduleset.h"
-// #include "wctprivate.h"
 #include <fmt/core.h>
 #include <cassert>                                     // for assert
-#include <cmath>                                       // for abs
 #include <cstdio>                                      // for fflush, size_t
 #include <memory>                                      // for shared_ptr
 #include <range/v3/algorithm/for_each.hpp>             // for for_each, for_...
@@ -33,6 +20,7 @@
 #include "lp.h"                                        // for lp_interface_g...
 #include "scheduleset.h"                               // for ScheduleSet
 #include "wctprivate.h"                                // for NodeData, EPS_...
+
 int NodeData::grab_integer_solution(std::vector<double> const& x,
                                     double                     tolerance) {
     auto incumbent = 0.0;
