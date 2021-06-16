@@ -30,7 +30,7 @@ def gui_file_name(dir=None):
 # %% Load the data of the new results
 file_name = gui_file_name(workdir.__str__())
 file_path = Path(file_name)
-data = pd.read_csv(file_name)
+data = pd.read_csv(file_name, index_col=False)
 match = re.search(r'CG_overall\_(20\d{2})\_(\d{2})\_(\d{2})\.csv', file_name)
 year = match.group(1)
 month = match.group(2)
