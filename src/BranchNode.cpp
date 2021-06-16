@@ -77,13 +77,32 @@ void BranchNodeBase::branch(BTree* bt) {
     if (best_cand.empty()) {
         for (auto&& [x_j, job] :
              ranges::views::zip(x_job_time, instance.jobs)) {
+            auto aux_vec =
+                ranges::views::iota(0UL, x_j.size()) |
+                ranges::views::transform([&](const auto& tmp) { return tmp; }) |
+                ranges::to_vector;
+            auto sum = ranges::inner_product(x_j, aux_vec, 0.0);
+            auto lb_it = ranges::lower_bound(aux_vec, sum);
+            if (*lb_it - sum > EPS &&
+                std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
+                auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
+                best_cand.emplace_back(
+                    std::min(*lb_it - sum, sum - (tmp_t - 1)), job->job, tmp_t);
+            }
+        }
+    }
+
+    if (best_cand.empty()) {
+        for (auto&& [x_j, job] :
+             ranges::views::zip(x_job_time, instance.jobs)) {
             auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
             auto br_point_it =
                 ranges::lower_bound(part_sum, parms.branching_point - EPS);
-            if (std::min(*br_point_it - std::floor(*br_point_it),
-                         std::ceil(*br_point_it) - *br_point_it) > EPS) {
+            auto aux = std::min(*br_point_it - std::floor(*br_point_it),
+                                std::ceil(*br_point_it) - *br_point_it);
+            if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                best_cand.emplace_back(*br_point_it, job->job, tmp_t);
+                best_cand.emplace_back(aux, job->job, tmp_t);
             }
         }
     }
@@ -93,10 +112,11 @@ void BranchNodeBase::branch(BTree* bt) {
              ranges::views::zip(x_job_time, instance.jobs)) {
             auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
             auto br_point_it = ranges::upper_bound(part_sum, 0.0);
-            if (std::min(*br_point_it - std::floor(*br_point_it),
-                         std::ceil(*br_point_it) - *br_point_it) > EPS) {
+            auto aux = std::min(*br_point_it - std::floor(*br_point_it),
+                                std::ceil(*br_point_it) - *br_point_it);
+            if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                best_cand.emplace_back(*br_point_it, job->job, tmp_t);
+                best_cand.emplace_back(aux, job->job, tmp_t);
             }
         }
     }
