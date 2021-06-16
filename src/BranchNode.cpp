@@ -86,8 +86,8 @@ void BranchNodeBase::branch(BTree* bt) {
             if (*lb_it - sum > EPS &&
                 std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
                 auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
-                best_cand.emplace_back(
-                    std::min(*lb_it - sum, sum - (tmp_t - 1)), job->job, tmp_t);
+                best_cand.emplace_back(std::min(*lb_it - sum, sum - (tmp_t)),
+                                       job->job, tmp_t);
             }
         }
     }
@@ -191,7 +191,7 @@ void BranchNodeBase::branch(BTree* bt) {
         }
 
         if (ranges::any_of(fathom, std::identity{}) ||
-            nb_non_improvements > 3) {
+            nb_non_improvements > 5) {
             break;
         }
     }
