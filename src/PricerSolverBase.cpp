@@ -1,11 +1,3 @@
-// #include "PricerSolverBase.hpp"
-// #include <fmt/core.h>
-// #include <algorithm>
-// #include <cstddef>
-// #include <limits>
-// #include <memory>
-// #include <range/v3/view/enumerate.hpp>
-// #include "Instance.h"
 #include "PricerSolverBase.hpp"
 #include <fmt/core.h>                                  // for print
 #include <math.h>                                      // for fabs
@@ -32,7 +24,7 @@ PricerSolverBase::PricerSolverBase(const Instance& instance)
       convex_rhs(instance.nb_machines),
       problem_name(),
       env(genv),
-      model(GRBModel(*env)),
+      model(*env),
       reformulation_model(instance.nb_jobs, instance.nb_machines),
       is_integer_solution(false),
       constLB(0.0),
@@ -61,7 +53,7 @@ PricerSolverBase::PricerSolverBase(const PricerSolverBase& other)
       convex_rhs(other.convex_rhs),
       problem_name(other.problem_name),
       env(other.env),
-      model(other.model),
+      model(*genv),
       reformulation_model(other.reformulation_model),
       is_integer_solution(other.is_integer_solution),
       constLB(other.constLB),

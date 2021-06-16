@@ -66,9 +66,11 @@ void BranchNodeBase::branch(BTree* bt) {
         auto lb_it = ranges::lower_bound(aux_vec, sum);
         if (*lb_it - sum > EPS &&
             std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
+            auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
             best_cand.emplace_back(
-                *lb_it - sum, job->job,
-                ranges::distance(aux_vec.begin(), lb_it) - 1);
+                std::min(*lb_it - sum,
+                         sum - job->weighted_tardiness_start(tmp_t)),
+                job->job, tmp_t);
         }
     }
 
@@ -81,7 +83,7 @@ void BranchNodeBase::branch(BTree* bt) {
             if (std::min(*br_point_it - std::floor(*br_point_it),
                          std::ceil(*br_point_it) - *br_point_it) > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                best_cand.emplace_back(*br_point_it, job->job, tmp_t);
+                best_cand.emplace_back(*br_point_it, job->job, tmp_t - 1);
             }
         }
     }
@@ -205,7 +207,16 @@ bool BranchNodeBase::is_terminal_state() {
     return (solver->get_is_integer_solution() || !is_feasible());
 }
 
-void BranchNodeBase::apply_final_pruning_tests(BTree* bt) {}
+void BranchNodeBase::apply_final_pruning_tests(BTree* bt) {
+    auto* pricing_solver = get_pricersolver();
+    auto* pd_ptr = get_data_ptr();
+    if (pricing_solver->get_nb_vertices() /
+            double(pd->stat.size_graph_after_reduced_cost_fixing) <
+        0.4) {
+        fmt::print("MIPPING !!!!!\n");
+        pricing_solver->build_mip();
+    }
+}
 
 void BranchNodeBase::update_data(double upper_bound) {
     // auto* statistics = pd->stat;

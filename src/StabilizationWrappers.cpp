@@ -26,15 +26,15 @@ int NodeData::solve_pricing() {
     if (solver_stab->get_update_stab_center()) {
         if (solver_stab->do_reduced_cost_fixing() &&
             parms.reduce_cost_fixing == yes_reduced_cost) {
-            // stat.start_resume_timer(Statistics::reduced_cost_fixing_timer);
-            // solver_stab->reduced_cost_fixing();
-            // stat.suspend_timer(Statistics::reduced_cost_fixing_timer);
-            // // check_schedules();
-            // delete_infeasible_columns();
-            // solve_relaxation();
-            // double obj{};
-            // lp_interface_objval(RMP.get(), &obj);
-            // solver_stab->update_continueLP(obj);
+            stat.start_resume_timer(Statistics::reduced_cost_fixing_timer);
+            solver_stab->reduced_cost_fixing();
+            stat.suspend_timer(Statistics::reduced_cost_fixing_timer);
+            // check_schedules();
+            delete_infeasible_columns();
+            solve_relaxation();
+            double obj{};
+            lp_interface_objval(RMP.get(), &obj);
+            solver_stab->update_continueLP(obj);
         }
     } else {
         // if (!solver_stab->continueLP) {
