@@ -83,7 +83,7 @@ void BranchNodeBase::branch(BTree* bt) {
             if (std::min(*br_point_it - std::floor(*br_point_it),
                          std::ceil(*br_point_it) - *br_point_it) > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                best_cand.emplace_back(*br_point_it, job->job, tmp_t - 1);
+                best_cand.emplace_back(*br_point_it, job->job, tmp_t);
             }
         }
     }
