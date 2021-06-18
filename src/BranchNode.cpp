@@ -168,7 +168,7 @@ void BranchNodeBase::branch(BTree* bt) {
                     left ? "LEFT" : "RIGHT", it.job, it.t,
                     cost + pd->instance.off, node->pd->iterations);
             }
-            if (cost >= pd->opt_sol.tw - 1.0 + IntegerTolerance ||
+            if (cost >= bt->getGlobalUB() - 1.0 + IntegerTolerance ||
                 node->get_data_ptr()->solver->get_is_integer_solution()) {
                 f = true;
             }

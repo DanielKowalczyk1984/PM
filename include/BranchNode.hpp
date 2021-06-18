@@ -8,7 +8,7 @@
 #include "PricerSolverBase.hpp"
 #include "branch-and-bound/btree.h"
 #include "branch-and-bound/state.h"
-// #include "wctprivate.h"
+
 struct NodeData;
 struct Instance;
 class BranchNodeBase : public State {
