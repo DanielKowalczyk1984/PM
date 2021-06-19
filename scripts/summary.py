@@ -111,8 +111,10 @@ df_oliveira = pd.read_csv(results.joinpath("oliveira_overall.csv"))
 df_all = pd.merge(data, df_oliveira, on=['Inst', 'n', 'm'])
 
 
-# %% Compute overall performance profile curve
+# %% scale cpu time
 df_all['tot_bb'] = 0.7*df_all['tot_bb']
+
+# %% Compute overall performance profile curve
 df_all['best_solver'] = df_all[['tot_bb', 'TimeOliveira']].min(axis=1)
 df_all['ratio_tot_bb_best'] = df_all['tot_bb'] / df_all['best_solver']
 
@@ -134,7 +136,7 @@ width, height = plt.figaspect(1.68)
 fig, ax = plt.subplots(figsize=(width, height), dpi=200)
 ax.step(sorted_ratio_tot_bb, yvals, label='BDD')
 ax.step(sorted_ratio_TimeOliveira, yvalues, label='ATIF')
-ax.set_xlim([10**0, 100])
+ax.set_xlim([10**0, 10])
 # ax.set_title(
 #     r"Performance profile for instances with $m = %d$ and $n = %d$"
 #     % (i, j))
