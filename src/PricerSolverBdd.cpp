@@ -893,6 +893,15 @@ bool PricerSolverBdd::evaluate_nodes(double* pi) {
             add_nb_removed_edges();
             nb_removed_edges_evaluate++;
         }
+        if (((constLB + aux_nb_machines * reduced_cost +
+                  evaluate_rc_low_arc(it) >
+              UB - 1.0 + RC_FIXING)) &&
+            (it.calc[0])) {
+            it.calc[0] = false;
+            removed_edges = true;
+            add_nb_removed_edges();
+            nb_removed_edges_evaluate++;
+        }
     }
 
     if (removed_edges) {
@@ -1671,6 +1680,13 @@ bool PricerSolverBdd::check_schedule_set(const std::vector<Job*>& set) {
     }
 
     return (tmp_nodeid == 1 && it == set.end());
+}
+
+double PricerSolverBdd::evaluate_rc_low_arc(NodeBdd<>& n) {
+    auto& table = *(get_decision_diagram().getDiagram());
+    auto& child = table.node(n[0]);
+    return n.forward_label[0].get_f() + child.backward_label[0].get_f() +
+           n.reduced_cost[0];
 }
 
 void PricerSolverBdd::iterate_zdd() {

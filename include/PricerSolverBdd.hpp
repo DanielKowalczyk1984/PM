@@ -76,6 +76,7 @@ class PricerSolverBdd : public PricerSolverBase {
     bool check_schedule_set(const std::vector<Job*>& set) override;
     [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override = 0;
     virtual double evaluate_rc_arc(NodeBdd<>& n) = 0;
+    double         evaluate_rc_low_arc(NodeBdd<>& n);
     virtual void   compute_labels(double* _pi) = 0;
 
     void remove_layers();
