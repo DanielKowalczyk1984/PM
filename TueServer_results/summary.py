@@ -116,7 +116,7 @@ df_all = pd.merge(data, df_oliveira, on=['Inst', 'n', 'm'])
 
 
 # %%  Scale cpu time
-df_all['tot_bb'] = 0.df_all['tot_bb']
+df_all['tot_bb'] = 0.6*df_all['tot_bb']
 
 # %% Compute overall performance profile curve
 df_all['best_solver'] = df_all[['tot_bb', 'TimeOliveira']].min(axis=1)
@@ -153,7 +153,7 @@ tikz_save(results_path.joinpath(name_file))
 plt.savefig(results_path.joinpath('profile_curve_overall_{}_{}_{}.pdf'.format(
     year, month, day)), dpi=200)
 # %% Compute performance profile curves per instance class
-for n in [40, 50]:
+for n in [40, 50, 100]:
     for m in [2, 4]:
         sorted_ratio_tot_bb = df_all.loc[(df_all['n'] == n) & (
             df_all["m"] == m), "ratio_tot_bb_best"].sort_values()
