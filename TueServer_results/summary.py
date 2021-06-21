@@ -8,6 +8,7 @@ import os
 import sys
 from shutil import copy, copyfile
 from pathlib import Path
+from pandas.core import groupby
 
 from tikzplotlib import save as tikz_save
 import matplotlib.pyplot as plt
@@ -39,7 +40,8 @@ day = match.group(3)
 
 # %% filter by branching_point
 
-data = data[data['branching_point'] == 0.5]
+aux_data = data[data['branching_point'] == 0.4]
+
 # %% create result directory and copy results to that directory
 
 results_path = results.joinpath("./results_{}_{}_{}".format(year, month, day))
@@ -111,12 +113,27 @@ df_pessoa.best = df_pessoa.best.apply(pd.to_numeric)
 
 df_oliveira = pd.read_csv(workdir.joinpath("oliveira_overall.csv"))
 
+# %%
+df_oliveira = df_oliveira[df_oliveira['OptFound'] == 1]
+
+# %%
+aux_data = data[data['opt']]
+
 # %% Merge our results with results of Oliveira
-df_all = pd.merge(data, df_oliveira, on=['Inst', 'n', 'm'])
+df_all = pd.merge(aux_data, df_oliveira, on=['Inst', 'n', 'm'])
+
+# %%
+agg = {"tot_bb": {np.mean, np.max, np.min}, "opt": np.sum,
+       "TimeOliveira": {np.mean, np.max, np.min}}
+grouped = df_all.groupby(['n', 'm'])
 
 
 # %%  Scale cpu time
 df_all['tot_bb'] = 0.6*df_all['tot_bb']
+# df_all = df_all[df_all['tot_bb'] <= 0.6*7200]
+
+# %%
+grouped.agg(agg)
 
 # %% Compute overall performance profile curve
 df_all['best_solver'] = df_all[['tot_bb', 'TimeOliveira']].min(axis=1)
@@ -140,18 +157,15 @@ width, height = plt.figaspect(1.68)
 fig, ax = plt.subplots(figsize=(width, height), dpi=200)
 ax.step(sorted_ratio_tot_bb, yvals, label='BDD')
 ax.step(sorted_ratio_TimeOliveira, yvalues, label='ATIF')
-ax.set_xlim([10**0, 20])
-# ax.set_title(
-#     r"Performance profile for instances with $m = %d$ and $n = %d$"
-#     % (i, j))
+ax.set_xlim([10.0**0, 40])
 ax.set_xlabel(r"$\tau$")
 ax.set_ylabel(r"$P(r_{p,s} \leq \tau)$")
 ax.legend(loc='lower right')
-# plt.savefig('profile_curve%d_%d.pdf' % (i, j), dpi=200)
 name_file = 'profile_curve_overall_{}_{}_{}.tex'.format(year, month, day)
 tikz_save(results_path.joinpath(name_file))
 plt.savefig(results_path.joinpath('profile_curve_overall_{}_{}_{}.pdf'.format(
     year, month, day)), dpi=200)
+
 # %% Compute performance profile curves per instance class
 for n in [40, 50, 100]:
     for m in [2, 4]:
@@ -170,7 +184,7 @@ for n in [40, 50, 100]:
         fig, ax = plt.subplots(figsize=(width, height), dpi=200)
         ax.step(sorted_ratio_tot_bb, yvals, label='BDD')
         ax.step(sorted_ratio_TimeOliveira, yvalues, label='ATIF')
-        ax.set_xlim([10**0, 10])
+        ax.set_xlim([10.0**0, 100])
         ax.set_title(
             "Performance profile for instances with $m = {}$ and $n = $".format(m, n))
         ax.set_xlabel(r"$\tau$")
