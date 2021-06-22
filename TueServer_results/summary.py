@@ -38,9 +38,23 @@ year = match.group(1)
 month = match.group(2)
 day = match.group(3)
 
+# %% Calculate some extra columns
+data['gap'] = (data['global_upper_bound'] - data['global_lower_bound']
+               )/(data['global_lower_bound'] + 0.00001)
+data['opt'] = data['global_lower_bound'] == data['global_upper_bound']
+data['reduction'] = (data['first_size_graph'] -
+                     data['size_after_reduced_cost'])/(data['first_size_graph'] + 0.000001)
+data['Inst'] = data.NameInstance.apply(
+    lambda x:  int(re.search(r'.*\_(\d+)', x).group(1)))
+for it in ['tot_real_time', 'tot_cputime', 'tot_bb', 'tot_lb', 'tot_lb_root', 'tot_heuristic', 'tot_build_dd', 'tot_pricing', 'tot_reduce_cost_fixing']:
+    data[it] = 0.6*data[it]
+
+# %%
+grouped_br_point = data.groupby(['n', 'm', 'branching_point'])
+grouped_br_point.agg({'opt': np.sum})
 # %% filter by branching_point
 
-aux_data = data[data['branching_point'] == 0.4]
+aux_data = data[data['branching_point'] == 0.5]
 
 # %% create result directory and copy results to that directory
 
@@ -68,14 +82,6 @@ os.popen("sd  \"CG_summary_20191024.csv\" \"CG_summary_{}_{}_{}.csv\" ".format(
 os.popen("sd  \"CG_allinstances_20191024.csv\" \"CG_allinstances_{}_{}_{}.csv\" ".format(
     year, month, day)+tex_file)
 
-# %% Calculate some extra columns
-data['gap'] = (data['global_upper_bound'] - data['global_lower_bound']
-               )/(data['global_lower_bound'] + 0.00001)
-data['opt'] = data['global_lower_bound'] == data['global_upper_bound']
-data['reduction'] = (data['first_size_graph'] -
-                     data['size_after_reduced_cost'])/(data['first_size_graph'] + 0.000001)
-data['Inst'] = data.NameInstance.apply(
-    lambda x:  int(re.search(r'.*\_(\d+)', x).group(1)))
 
 # %% Compute summary results for CG over all solvers
 summary_grouped = data.groupby(['pricing_solver', 'n', 'm'])
@@ -114,40 +120,37 @@ df_pessoa.best = df_pessoa.best.apply(pd.to_numeric)
 df_oliveira = pd.read_csv(workdir.joinpath("oliveira_overall.csv"))
 
 # %%
-df_oliveira = df_oliveira[df_oliveira['OptFound'] == 1]
+df_oliveira_opt = df_oliveira[(df_oliveira['OptFound'] == 1)]
 
 # %%
-aux_data = data[data['opt']]
+data_opt = aux_data[(aux_data['opt'])]
 
 # %% Merge our results with results of Oliveira
-df_all = pd.merge(aux_data, df_oliveira, on=['Inst', 'n', 'm'])
+df_all_opt = pd.merge(data_opt, df_oliveira_opt, on=['Inst', 'n', 'm'])
 
 # %%
 agg = {"tot_bb": {np.mean, np.max, np.min}, "opt": np.sum,
-       "TimeOliveira": {np.mean, np.max, np.min}}
-grouped = df_all.groupby(['n', 'm'])
-
-
-# %%  Scale cpu time
-df_all['tot_bb'] = 0.6*df_all['tot_bb']
-# df_all = df_all[df_all['tot_bb'] <= 0.6*7200]
-
-# %%
+       "TimeOliveira": {np.mean, np.max, np.min}, "OptFound": np.sum}
+grouped = df_all_opt.groupby(['n', 'm'])
 grouped.agg(agg)
 
+
+# %%
+
 # %% Compute overall performance profile curve
-df_all['best_solver'] = df_all[['tot_bb', 'TimeOliveira']].min(axis=1)
-df_all['ratio_tot_bb_best'] = df_all['tot_bb'] / df_all['best_solver']
+df_all_opt['best_solver'] = df_all_opt[['tot_bb', 'TimeOliveira']].min(axis=1)
+df_all_opt['ratio_tot_bb_best'] = df_all_opt['tot_bb'] / \
+    df_all_opt['best_solver']
 
-df_all['ratio_TimeOliveira_best'] = df_all['TimeOliveira'] / \
-    df_all['best_solver']
+df_all_opt['ratio_TimeOliveira_best'] = df_all_opt['TimeOliveira'] / \
+    df_all_opt['best_solver']
 
-sorted_ratio_tot_bb = df_all[['ratio_tot_bb_best']
-                             ].sort_values(by='ratio_tot_bb_best')
+sorted_ratio_tot_bb = df_all_opt[['ratio_tot_bb_best']
+                                 ].sort_values(by='ratio_tot_bb_best')
 yvals = np.arange(len(sorted_ratio_tot_bb)) / \
     float(len(sorted_ratio_tot_bb) - 1.0)
 
-sorted_ratio_TimeOliveira = df_all[['ratio_TimeOliveira_best']].sort_values(
+sorted_ratio_TimeOliveira = df_all_opt[['ratio_TimeOliveira_best']].sort_values(
     by='ratio_TimeOliveira_best')
 
 yvalues = np.arange(len(sorted_ratio_TimeOliveira)) / \
@@ -157,7 +160,7 @@ width, height = plt.figaspect(1.68)
 fig, ax = plt.subplots(figsize=(width, height), dpi=200)
 ax.step(sorted_ratio_tot_bb, yvals, label='BDD')
 ax.step(sorted_ratio_TimeOliveira, yvalues, label='ATIF')
-ax.set_xlim([10.0**0, 40])
+ax.set_xlim([10.0**0, 100])
 ax.set_xlabel(r"$\tau$")
 ax.set_ylabel(r"$P(r_{p,s} \leq \tau)$")
 ax.legend(loc='lower right')
@@ -169,13 +172,13 @@ plt.savefig(results_path.joinpath('profile_curve_overall_{}_{}_{}.pdf'.format(
 # %% Compute performance profile curves per instance class
 for n in [40, 50, 100]:
     for m in [2, 4]:
-        sorted_ratio_tot_bb = df_all.loc[(df_all['n'] == n) & (
-            df_all["m"] == m), "ratio_tot_bb_best"].sort_values()
+        sorted_ratio_tot_bb = df_all_opt.loc[(df_all_opt['n'] == n) & (
+            df_all_opt["m"] == m), "ratio_tot_bb_best"].sort_values()
         yvals = np.arange(len(sorted_ratio_tot_bb)) / \
             float(len(sorted_ratio_tot_bb) - 1.0)
 
-        sorted_ratio_TimeOliveira = df_all.loc[(df_all['n'] == n) & (
-            df_all["m"] == m), "ratio_TimeOliveira_best"].sort_values()
+        sorted_ratio_TimeOliveira = df_all_opt.loc[(df_all_opt['n'] == n) & (
+            df_all_opt["m"] == m), "ratio_TimeOliveira_best"].sort_values()
 
         yvalues = np.arange(len(sorted_ratio_TimeOliveira)) / \
             float(len(sorted_ratio_TimeOliveira) - 1.0)
