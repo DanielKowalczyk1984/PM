@@ -3,7 +3,6 @@
 
 #include <array>
 #include <functional>
-#include "NodeId.hpp"
 class BranchHistory {
    public:
     BranchHistory();
