@@ -10,8 +10,10 @@
 #include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/numeric/inner_product.hpp>
 #include <range/v3/range/conversion.hpp>
+#include <range/v3/view/enumerate.hpp>
 #include <range/v3/view/iota.hpp>
 #include <range/v3/view/partial_sum.hpp>
+#include <range/v3/view/zip.hpp>
 #include <vector>
 #include "Parms.h"
 #include "PricerSolverBase.hpp"
@@ -52,8 +54,8 @@ void BranchNodeBase::branch(BTree* bt) {
     }
 
     auto& x_job_time = solver->calculate_job_time();
+    auto  x_ref = solver->get_pair_x();
 
-    // initialize the middle times and scores used for branching
     std::vector<BranchCand> best_cand{};
 
     for (auto&& [x_j, job] : ranges::views::zip(x_job_time, instance.jobs)) {
@@ -68,8 +70,9 @@ void BranchNodeBase::branch(BTree* bt) {
             std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
             auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
             best_cand.emplace_back(
-                std::min(*lb_it - sum,
-                         sum - job->weighted_tardiness_start(tmp_t)),
+                std::min((*lb_it - sum) / (1.0 - x_ref.second[job->job][tmp_t]),
+                         (sum - job->weighted_tardiness_start(tmp_t)) /
+                             (x_ref.second[job->job][tmp_t])),
                 job->job, tmp_t);
         }
     }
@@ -145,7 +148,8 @@ void BranchNodeBase::branch(BTree* bt) {
     std::unique_ptr<BranchNodeBase> best_left = nullptr;
     auto nb_cand = std::min(std::max(parms.strong_branching, 1),
                             static_cast<int>(best_cand.size()));
-    best_cand |= ranges::actions::sort(std::greater<>{}, &BranchCand::score);
+    best_cand |= ranges::actions::sort(
+        std::greater<>{}, [](const auto& tmp) { return tmp.score; });
 
     auto nb_non_improvements = 0UL;
     for (auto& it : best_cand | ranges::views::take(nb_cand)) {
@@ -154,6 +158,7 @@ void BranchNodeBase::branch(BTree* bt) {
         std::array<double, 2>                          scores{};
         std::array<bool, 2>                            fathom{};
         auto                                           left = true;
+        // fmt::print("camd score = {} {} {}\n", it.score, it.job, it.t);
 
         for (auto&& [data, node, score, f] :
              ranges::views::zip(data_nodes, child_nodes, scores, fathom)) {
@@ -176,9 +181,11 @@ void BranchNodeBase::branch(BTree* bt) {
                         ? cost / pd->LP_lower_bound
                         : std::abs(cost - pd->LP_lower_bound);
             left = false;
+            // fmt::print("score = {} {}\n", score, cost);
         }
 
         auto best_score = parms.scoring_function(scores[0], scores[1]);
+        // fmt::print("score = {} {} {}\n", best_score, scores[0], scores[1]);
 
         if (best_score > best_min_gain ||
             ranges::any_of(fathom, ranges::identity{})) {
@@ -276,6 +283,7 @@ BranchNodeRelBranching::BranchNodeRelBranching(std::unique_ptr<NodeData> _data,
 void BranchNodeRelBranching::branch(BTree* bt) {
     auto*       node_data = get_data_ptr();
     auto*       pricing_solver = get_pricersolver();
+    auto&       parms = node_data->parms;
     const auto& instance = get_instance_info();
 
     if (bt->getGlobalUB() < node_data->upper_bound) {
@@ -284,26 +292,95 @@ void BranchNodeRelBranching::branch(BTree* bt) {
     }
 
     auto& x_job_time = pricing_solver->calculate_job_time();
+    auto& aux_branch_history = bt->get_branch_history();
 
-    std::vector<BranchCand> best_cand{};
+    std::vector<BranchCand> candidates{};
 
-    for (auto&& [x_j, job] : ranges::views::zip(x_job_time, instance.jobs)) {
-        auto prev = -1;
+    auto ref_x = pricing_solver->get_pair_x();
 
-        auto sum = ranges::inner_product(x_j, ranges::views::iota(0), 0.0);
-        auto lb_sum_t = ranges::lower_bound(ranges::views::iota(0), sum);
-        // for (auto&& [t, x] : x_j | ranges::views::enumerate) {
-        //     if (t > sum) {
-        //         break;
-        //     }
-
-        //     prev = t;
-        // }
-
-        if (true) {
-            // best_cand.emplace_back(sum -, job->job, prev);
+    for (auto&& [z_j, job] : ranges::views::zip(ref_x.second, instance.jobs)) {
+        for (auto&& [t, x_j_t] : z_j | ranges::views::enumerate) {
+            auto left_gain = x_j_t - std::floor(x_j_t);
+            auto right_gain = std::ceil(x_j_t) - x_j_t;
+            if (std::min(left_gain, right_gain) > EPS) {
+                auto aux_it =
+                    aux_branch_history.find(job->job * instance.H_max + t);
+                if (aux_it != aux_branch_history.end()) {
+                    candidates.emplace_back(
+                        aux_it->second.compute_score(parms.scoring_function,
+                                                     left_gain, right_gain),
+                        job->job, t);
+                }
+            }
         }
     }
+
+    for (auto&& [x_j, job] : ranges::views::zip(x_job_time, instance.jobs)) {
+        auto aux_vec = ranges::views::iota(0UL, x_j.size()) |
+                       ranges::views::transform([&](const auto& tmp) {
+                           return job->weighted_tardiness_start(tmp);
+                       }) |
+                       ranges::to_vector;
+        auto sum = ranges::inner_product(x_j, aux_vec, 0.0);
+        auto lb_it = ranges::lower_bound(aux_vec, sum);
+        if (*lb_it - sum > EPS &&
+            std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
+            auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
+            candidates.emplace_back(
+                std::min(*lb_it - sum,
+                         sum - job->weighted_tardiness_start(tmp_t)),
+                job->job, tmp_t);
+        }
+    }
+
+    if (candidates.empty()) {
+        for (auto&& [x_j, job] :
+             ranges::views::zip(x_job_time, instance.jobs)) {
+            auto aux_vec =
+                ranges::views::iota(0UL, x_j.size()) |
+                ranges::views::transform([&](const auto& tmp) { return tmp; }) |
+                ranges::to_vector;
+            auto sum = ranges::inner_product(x_j, aux_vec, 0.0);
+            auto lb_it = ranges::lower_bound(aux_vec, sum);
+            if (*lb_it - sum > EPS &&
+                std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
+                auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
+                candidates.emplace_back(std::min(*lb_it - sum, sum - (tmp_t)),
+                                        job->job, tmp_t);
+            }
+        }
+    }
+
+    if (candidates.empty()) {
+        for (auto&& [x_j, job] :
+             ranges::views::zip(x_job_time, instance.jobs)) {
+            auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
+            auto br_point_it =
+                ranges::lower_bound(part_sum, parms.branching_point - EPS);
+            auto aux = std::min(*br_point_it - std::floor(*br_point_it),
+                                std::ceil(*br_point_it) - *br_point_it);
+            if (aux > EPS) {
+                auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
+                candidates.emplace_back(aux, job->job, tmp_t);
+            }
+        }
+    }
+
+    if (candidates.empty()) {
+        for (auto&& [x_j, job] :
+             ranges::views::zip(x_job_time, instance.jobs)) {
+            auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
+            auto br_point_it = ranges::upper_bound(part_sum, 0.0);
+            auto aux = std::min(*br_point_it - std::floor(*br_point_it),
+                                std::ceil(*br_point_it) - *br_point_it);
+            if (aux > EPS) {
+                auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
+                candidates.emplace_back(aux, job->job, tmp_t);
+            }
+        }
+    }
+
+    candidates |= ranges::actions::sort(std::greater<>{}, &BranchCand::score);
 
     std::unique_ptr<BranchNodeRelBranching> best_right = nullptr;
     std::unique_ptr<BranchNodeRelBranching> best_left = nullptr;
