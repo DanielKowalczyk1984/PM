@@ -1,20 +1,10 @@
 #ifndef PRICER_SOLVER_BASE_HPP
 #define PRICER_SOLVER_BASE_HPP
-
-// #include <gurobi_c++.h>
-// #include <cstddef>
-// #include <memory>
-// #include <span>
-// #include <vector>
-// #include "Instance.h"
-// #include "MIP_defs.hpp"
-// #include "ModelInterface.hpp"
-// #include "OptimalSolution.hpp"
-// #include "Solution.hpp"
 #include <gurobi_c++.h>         // for GRBModel
 #include <cstddef>              // for size_t
 #include <memory>               // for shared_ptr, unique_ptr
 #include <string>               // for string
+#include <utility>              // for ref
 #include <vector>               // for vector
 #include "Instance.h"           // for Instance
 #include "MIP_defs.hpp"         // for MIP_Attr
@@ -128,9 +118,12 @@ struct PricerSolverBase {
     virtual std::vector<std::vector<double>>& calculate_job_time() {
         return x_bar;
     };
-    // virtual void add_constraint(ConstraintBase* constr) {
-    //     reformulation_model.add_constraint(constr);
-    // };
+
+    std::pair<std::vector<std::vector<double>>&,
+              std::vector<std::vector<double>>&>
+    get_pair_x() {
+        return std::make_pair(std::ref(x_bar), std::ref(z_bar));
+    }
 
     virtual void split_job_time([[maybe_unused]] size_t _job,
                                 [[maybe_unused]] int    _time,
@@ -150,12 +143,10 @@ struct PricerSolverBase {
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
     virtual bool   structure_feasible() { return true; }
-    // virtual bool   check_schedule_set(GPtrArray* set) = 0;
-    virtual bool check_schedule_set(
-        [[maybe_unused]] const std::vector<Job*>& set) {
+    virtual bool   check_schedule_set(
+          [[maybe_unused]] const std::vector<Job*>& set) {
         return true;
     };
-    // virtual void make_schedule_set_feasible(GPtrArray* set) = 0;
     virtual void make_schedule_set_feasible(
         [[maybe_unused]] std::vector<Job*>& set){};
     /**
@@ -193,8 +184,6 @@ struct PricerSolverBase {
     inline std::vector<BddCoeff>& get_lp_sol();
 
     void calculate_constLB(double* pi);
-
-    // virtual void compute_lhs_coeff(GArray *lhs_coeff, ScheduleSet* set) = 0;
 };
 
 #endif  // PRICER_SOLVER_BASE_HPP
