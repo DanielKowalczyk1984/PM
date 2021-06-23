@@ -29,11 +29,13 @@
 #include <range/v3/iterator/diffmax_t.hpp>             // for operator<=
 #include <range/v3/iterator/reverse_iterator.hpp>      // for reverse_cursor
 #include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
+#include <range/v3/numeric/partial_sum.hpp>            // for partial_sum
 #include <range/v3/view/all.hpp>                       // for all_t
 #include <range/v3/view/drop.hpp>                      // for drop, drop_fn
 #include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
 #include <range/v3/view/iota.hpp>                      // for iota_view, ints
 #include <range/v3/view/join.hpp>                      // for join_view, joi...
+#include <range/v3/view/partial_sum.hpp>               // for partial_sum
 #include <range/v3/view/reverse.hpp>                   // for reverse_view
 #include <range/v3/view/subrange.hpp>                  // for subrange
 #include <range/v3/view/take.hpp>                      // for take_view, take
@@ -1575,6 +1577,11 @@ std::vector<std::vector<double>>& PricerSolverBdd::calculate_job_time() {
         if (it.get_high()) {
             x_bar[it.get_j()][it.get_t()] += it.get_value();
         }
+    }
+
+    for (auto&& [x_j, z_j] : ranges::views::zip(x_bar, z_bar)) {
+        z_j =
+            ranges::views::partial_sum(x_j, std::plus<>{}) | ranges::to_vector;
     }
 
     return x_bar;
