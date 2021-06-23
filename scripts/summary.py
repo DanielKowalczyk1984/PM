@@ -8,6 +8,7 @@ import os
 import sys
 from shutil import copy, copyfile
 from pathlib import Path
+from pandas.core import groupby
 
 from tikzplotlib import save as tikz_save
 import matplotlib.pyplot as plt
@@ -36,6 +37,18 @@ year = match.group(1)
 month = match.group(2)
 day = match.group(3)
 
+# %% Calculate some extra columns
+data['gap'] = (data['global_upper_bound'] - data['global_lower_bound']
+               )/(data['global_lower_bound'] + 0.00001)
+data['opt'] = data['global_lower_bound'] == data['global_upper_bound']
+data['reduction'] = (data['first_size_graph'] -
+                     data['size_after_reduced_cost'])/(data['first_size_graph'] + 0.000001)
+data['Inst'] = data.NameInstance.apply(
+    lambda x:  int(re.search(r'.*\_(\d+)', x).group(1)))
+
+for it in data.columns[3:12]:
+    data[it] = 0.7*data[it]
+
 # %% create result directory and copy results to that directory
 
 results_path = results.joinpath("./results_{}_{}_{}".format(year, month, day))
@@ -62,14 +75,6 @@ os.popen("sd  \"CG_summary_20191024.csv\" \"CG_summary_{}_{}_{}.csv\" ".format(
 os.popen("sd  \"CG_allinstances_20191024.csv\" \"CG_allinstances_{}_{}_{}.csv\" ".format(
     year, month, day)+tex_file)
 
-# %% Calculate some extra columns
-data['gap'] = (data['global_upper_bound'] - data['global_lower_bound']
-               )/(data['global_lower_bound'] + 0.00001)
-data['opt'] = data['global_lower_bound'] == data['global_upper_bound']
-data['reduction'] = (data['first_size_graph'] -
-                     data['size_after_reduced_cost'])/(data['first_size_graph'] + 0.000001)
-data['Inst'] = data.NameInstance.apply(
-    lambda x:  int(re.search(r'.*\_(\d+)', x).group(1)))
 
 # %% Compute summary results for CG over all solvers
 summary_grouped = data.groupby(['pricing_solver', 'n', 'm'])
@@ -111,9 +116,6 @@ df_oliveira = pd.read_csv(results.joinpath("oliveira_overall.csv"))
 df_all = pd.merge(data, df_oliveira, on=['Inst', 'n', 'm'])
 
 
-# %% scale cpu time
-df_all['tot_bb'] = 0.7*df_all['tot_bb']
-
 # %% Compute overall performance profile curve
 df_all['best_solver'] = df_all[['tot_bb', 'TimeOliveira']].min(axis=1)
 df_all['ratio_tot_bb_best'] = df_all['tot_bb'] / df_all['best_solver']
@@ -136,7 +138,7 @@ width, height = plt.figaspect(1.68)
 fig, ax = plt.subplots(figsize=(width, height), dpi=200)
 ax.step(sorted_ratio_tot_bb, yvals, label='BDD')
 ax.step(sorted_ratio_TimeOliveira, yvalues, label='ATIF')
-ax.set_xlim([10**0, 10])
+ax.set_xlim([10**0, 100])
 # ax.set_title(
 #     r"Performance profile for instances with $m = %d$ and $n = %d$"
 #     % (i, j))
@@ -177,5 +179,3 @@ for n in [40, 50]:
         tikz_save(results_path.joinpath(name_file))
         plt.savefig(results_path.joinpath('profile_curve_{}_{}_{}_{}_{}.pdf'.format(
             n, m, year, month, day)), dpi=200)
-
-# %%
