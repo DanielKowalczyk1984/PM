@@ -126,7 +126,7 @@ df_oliveira_opt = df_oliveira[(df_oliveira['OptFound'] == 1)]
 data_opt = aux_data[(aux_data['opt'])]
 
 # %% Merge our results with results of Oliveira
-df_all_opt = pd.merge(data_opt, df_oliveira_opt, on=['Inst', 'n', 'm'])
+df_all_opt = pd.merge(aux_data, df_oliveira, on=['Inst', 'n', 'm'])
 
 # %%
 agg = {"tot_bb": {np.mean, np.max, np.min}, "opt": np.sum,
@@ -160,7 +160,7 @@ width, height = plt.figaspect(1.68)
 fig, ax = plt.subplots(figsize=(width, height), dpi=200)
 ax.step(sorted_ratio_tot_bb, yvals, label='BDD')
 ax.step(sorted_ratio_TimeOliveira, yvalues, label='ATIF')
-ax.set_xlim([10.0**0, 100])
+ax.set_xlim([10.0**0, 10])
 ax.set_xlabel(r"$\tau$")
 ax.set_ylabel(r"$P(r_{p,s} \leq \tau)$")
 ax.legend(loc='lower right')
