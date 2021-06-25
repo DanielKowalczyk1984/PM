@@ -407,7 +407,7 @@ int NodeData::estimate_lower_bound(int _iter) {
     }
 
     // check_schedules();
-    delete_infeasible_columns();
+    // delete_infeasible_columns();
 
     // solve_relaxation(problem, pd);
     do {
@@ -501,7 +501,7 @@ int NodeData::compute_lower_bound() {
         val = build_rmp();
     }
 
-    delete_infeasible_columns();
+    // delete_infeasible_columns();
     auto refined{false};
 
     // solve_relaxation(problem, pd);

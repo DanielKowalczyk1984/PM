@@ -15,6 +15,7 @@
 // #include "scheduleset.h"
 // #include "wctprivate.h"
 
+#include <fmt/core.h>
 #include <array>                                // for array
 #include <cfloat>                               // for DBL_MAX
 #include <cmath>                                // for sqrt
@@ -148,6 +149,9 @@ std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
     aux->completiontime = _t;
     aux->less = _left;
     aux->solver->split_job_time(_j, _t, _left);
+    aux->build_rmp();
+    aux->delete_infeasible_columns();
+    aux->solve_relaxation();
     return aux;
 }
 

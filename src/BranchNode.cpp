@@ -1,6 +1,7 @@
 #include "BranchNode.hpp"
 #include <fmt/core.h>
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <numeric>
 #include <range/v3/algorithm/for_each.hpp>
@@ -69,11 +70,8 @@ void BranchNodeBase::branch(BTree* bt) {
         if (*lb_it - sum > EPS &&
             std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
             auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
-            best_cand.emplace_back(
-                std::min((*lb_it - sum) / (1.0 - x_ref.second[job->job][tmp_t]),
-                         (sum - job->weighted_tardiness_start(tmp_t)) /
-                             (x_ref.second[job->job][tmp_t])),
-                job->job, tmp_t);
+            best_cand.emplace_back(pd->LP_lower_bound,
+                                   pd->create_child_nodes(job->job, tmp_t));
         }
     }
 
@@ -89,8 +87,8 @@ void BranchNodeBase::branch(BTree* bt) {
             if (*lb_it - sum > EPS &&
                 std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
                 auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
-                best_cand.emplace_back(std::min(*lb_it - sum, sum - (tmp_t)),
-                                       job->job, tmp_t);
+                best_cand.emplace_back(pd->LP_lower_bound,
+                                       pd->create_child_nodes(job->job, tmp_t));
             }
         }
     }
@@ -105,7 +103,8 @@ void BranchNodeBase::branch(BTree* bt) {
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                best_cand.emplace_back(aux, job->job, tmp_t);
+                best_cand.emplace_back(pd->LP_lower_bound,
+                                       pd->create_child_nodes(job->job, tmp_t));
             }
         }
     }
@@ -119,7 +118,8 @@ void BranchNodeBase::branch(BTree* bt) {
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                best_cand.emplace_back(aux, job->job, tmp_t);
+                best_cand.emplace_back(pd->LP_lower_bound,
+                                       pd->create_child_nodes(job->job, tmp_t));
             }
         }
     }
@@ -136,7 +136,6 @@ void BranchNodeBase::branch(BTree* bt) {
             }
             fmt::print(stderr, "\n");
         }
-
         exit(-1);
     }
 
@@ -153,15 +152,14 @@ void BranchNodeBase::branch(BTree* bt) {
 
     auto nb_non_improvements = 0UL;
     for (auto& it : best_cand | ranges::views::take(nb_cand)) {
-        auto data_nodes{pd->create_child_nodes(it.job, it.t)};
+        // auto data_nodes{pd->create_child_nodes(it.job, it.t)};
         std::array<std::unique_ptr<BranchNodeBase>, 2> child_nodes;
         std::array<double, 2>                          scores{};
         std::array<bool, 2>                            fathom{};
         auto                                           left = true;
-        // fmt::print("camd score = {} {} {}\n", it.score, it.job, it.t);
 
-        for (auto&& [data, node, score, f] :
-             ranges::views::zip(data_nodes, child_nodes, scores, fathom)) {
+        for (auto&& [data, node, score, f] : ranges::views::zip(
+                 it.data_child_nodes, child_nodes, scores, fathom)) {
             node = std::make_unique<BranchNodeBase>(std::move(data));
             node->compute_bounds(bt);
 
@@ -170,8 +168,9 @@ void BranchNodeBase::branch(BTree* bt) {
                 fmt::print(
                     "STRONG BRANCHING {} PROBE: j = {}, t = {},"
                     " DWM LB = {:9.2f} in iterations {} \n\n",
-                    left ? "LEFT" : "RIGHT", it.job, it.t,
-                    cost + pd->instance.off, node->pd->iterations);
+                    left ? "LEFT" : "RIGHT", node->pd->branch_job,
+                    node->pd->completiontime, cost + pd->instance.off,
+                    node->pd->iterations);
             }
             if (cost >= bt->getGlobalUB() - 1.0 + IntegerTolerance ||
                 node->get_data_ptr()->solver->get_is_integer_solution()) {
@@ -181,11 +180,9 @@ void BranchNodeBase::branch(BTree* bt) {
                         ? cost / pd->LP_lower_bound
                         : std::abs(cost - pd->LP_lower_bound);
             left = false;
-            // fmt::print("score = {} {}\n", score, cost);
         }
 
         auto best_score = parms.scoring_function(scores[0], scores[1]);
-        // fmt::print("score = {} {} {}\n", best_score, scores[0], scores[1]);
 
         if (best_score > best_min_gain ||
             ranges::any_of(fathom, ranges::identity{})) {
@@ -217,8 +214,6 @@ void BranchNodeBase::branch(BTree* bt) {
 }
 
 void BranchNodeBase::compute_bounds(BTree* bt) {
-    pd->build_rmp();
-    pd->solve_relaxation();
     pd->compute_lower_bound();
     set_lb(pd->lower_bound);
     if (pd->solver->get_is_integer_solution()) {
@@ -271,10 +266,20 @@ void BranchNodeBase::print(const BTree* bt) const {
         pd->completiontime, bt->get_run_time_start(), pd->iterations);
 }
 
-BranchCand::BranchCand(double _score, int _job, int _t)
+BranchCand::BranchCand(double                                     _score,
+                       std::array<std::unique_ptr<NodeData>, 2>&& child_nodes)
     : score(_score),
-      job(_job),
-      t(_t) {}
+      data_child_nodes(std::move(child_nodes)) {
+    const auto&           parms = data_child_nodes[0]->parms;
+    std::array<double, 2> scores{};
+
+    for (auto&& [node, s] : ranges::views::zip(data_child_nodes, scores)) {
+        s = (parms.scoring_parameter == weighted_sum_scoring_parameter)
+                ? _score / node->LP_lower_bound
+                : std::abs(_score - node->LP_lower_bound);
+    }
+    score = parms.scoring_function(scores[0], scores[1]);
+}
 
 BranchNodeRelBranching::BranchNodeRelBranching(std::unique_ptr<NodeData> _data,
                                                bool                      isRoot)
@@ -309,7 +314,7 @@ void BranchNodeRelBranching::branch(BTree* bt) {
                     candidates.emplace_back(
                         aux_it->second.compute_score(parms.scoring_function,
                                                      left_gain, right_gain),
-                        job->job, t);
+                        node_data->create_child_nodes(job->job, t));
                 }
             }
         }
@@ -327,9 +332,8 @@ void BranchNodeRelBranching::branch(BTree* bt) {
             std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
             auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
             candidates.emplace_back(
-                std::min(*lb_it - sum,
-                         sum - job->weighted_tardiness_start(tmp_t)),
-                job->job, tmp_t);
+                node_data->LP_lower_bound,
+                node_data->create_child_nodes(job->job, tmp_t));
         }
     }
 
@@ -345,8 +349,9 @@ void BranchNodeRelBranching::branch(BTree* bt) {
             if (*lb_it - sum > EPS &&
                 std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
                 auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
-                candidates.emplace_back(std::min(*lb_it - sum, sum - (tmp_t)),
-                                        job->job, tmp_t);
+                candidates.emplace_back(
+                    node_data->LP_lower_bound,
+                    node_data->create_child_nodes(job->job, tmp_t));
             }
         }
     }
@@ -361,7 +366,9 @@ void BranchNodeRelBranching::branch(BTree* bt) {
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                candidates.emplace_back(aux, job->job, tmp_t);
+                candidates.emplace_back(
+                    node_data->LP_lower_bound,
+                    node_data->create_child_nodes(job->job, tmp_t));
             }
         }
     }
@@ -375,7 +382,9 @@ void BranchNodeRelBranching::branch(BTree* bt) {
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                candidates.emplace_back(aux, job->job, tmp_t);
+                candidates.emplace_back(
+                    node_data->LP_lower_bound,
+                    node_data->create_child_nodes(job->job, tmp_t));
             }
         }
     }
