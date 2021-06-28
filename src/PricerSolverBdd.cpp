@@ -978,12 +978,12 @@ void PricerSolverBdd::build_mip() {
                 double cost =
                     n.get_job()->weighted_tardiness_start(n.get_weight());
                 x = model.addVar(0.0, 1.0, cost, GRB_BINARY);
-                x.set(GRB_DoubleAttr_Start, n.best_sol_x[1]);
+                // x.set(GRB_DoubleAttr_Start, n.best_sol_x[1]);
 
             } else {
                 x = model.addVar(0.0, static_cast<double>(convex_rhs), 0.0,
                                  GRB_INTEGER);
-                x.set(GRB_DoubleAttr_Start, n.best_sol_x[0]);
+                // x.set(GRB_DoubleAttr_Start, n.best_sol_x[0]);
             }
         }
 
@@ -1050,16 +1050,23 @@ void PricerSolverBdd::build_mip() {
             model.addConstrs(flow_conservation_constr.data(), sense_flow.data(),
                              rhs_flow.data(), nullptr, num_vertices));
         model.update();
-        // for (auto it = edges(mip_graph); it.first != it.second;
-        // it.first++) {
-        //     // edge_var_list[*it.first].x.set(GRB_DoubleAttr_PStart,
-        //     // lp_x[edge_index_list[*it.first]]);
-        //     edge_var_list[*it.first].x.set(
-        //         GRB_DoubleAttr_Start,
-        //         solution_x[edge_index_list[*it.first]]);
-        // }
-        // model.write("original_" + problem_name + ".lp");
-        // auto presolve = model.presolve();
+        for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
+            // auto* data =
+            // static_cast<EdgeData*>(it.first->get_property());
+            auto& high = mip_graph[*it.first].high;
+            auto& x = mip_graph[*it.first].x;
+            auto& n =
+                table.node(mip_graph[source(*it.first, mip_graph)].node_id);
+            if (high) {
+                x.set(GRB_DoubleAttr_Start, n.best_sol_x[1]);
+                if (n.best_sol_x[1] > EPS) {
+                    fmt::print("test {}\n", n.best_sol_x[1]);
+                }
+
+            } else {
+                x.set(GRB_DoubleAttr_Start, n.best_sol_x[0]);
+            }
+        }
         model.optimize();
     } catch (GRBException& e) {
         fmt::print("Error code = {}\n", e.getErrorCode());

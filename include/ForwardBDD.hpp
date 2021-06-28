@@ -85,19 +85,21 @@ class ForwardBddCycle : public ForwardBddBase<T> {
         const auto* dual = ForwardBddBase<T>::get_pi();
 
         n.reset_reduced_costs();
+        n.adjust_reduced_costs(dual[tmp_j->job], true);
+        n.adjust_reduced_costs(0.0, false);
 
-        for (auto& list : n.coeff_list) {
-            list |= ranges::actions::remove_if([&](auto& it) {
-                auto aux = it.lock();
-                if (aux) {
-                    n.adjust_reduced_costs(
-                        aux->get_coeff() * dual[aux->get_row()],
-                        aux->get_high());
-                    return false;
-                }
-                return true;
-            });
-        }
+        // for (auto& list : n.coeff_list) {
+        //     list |= ranges::actions::remove_if([&](auto& it) {
+        //         auto aux = it.lock();
+        //         if (aux) {
+        //             n.adjust_reduced_costs(
+        //                 aux->get_coeff() * dual[aux->get_row()],
+        //                 aux->get_high());
+        //             return false;
+        //         }
+        //         return true;
+        //     });
+        // }
 
         /**
          * High edge calculation

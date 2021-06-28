@@ -1,23 +1,4 @@
-// #include <fmt/core.h>
-// #include <array>
-// #include <functional>
-// #include <limits>
-// #include <memory>
-// #include <range/v3/action/sort.hpp>
-// #include <range/v3/action/unique.hpp>
-// #include <range/v3/algorithm/equal.hpp>
-// #include <range/v3/algorithm/for_each.hpp>
-// #include <range/v3/functional/comparisons.hpp>
-// #include "PricerSolverBase.hpp"
-// #include "PricingStabilization.hpp"
-// #include "Statistics.h"
-// #include "lp.h"
-// #include "scheduleset.h"
-// #include "wctprivate.h"
-
-#include <fmt/core.h>
 #include <array>                                // for array
-#include <cfloat>                               // for DBL_MAX
 #include <cmath>                                // for sqrt
 #include <concepts/concepts.hpp>                // for return_t
 #include <cstddef>                              // for size_t
@@ -80,7 +61,7 @@ NodeData::NodeData(Problem* problem)
       LP_lower_bound(0.0),
       LP_lower_bound_dual(0.0),
       LP_lower_bound_BB(0.0),
-      LP_lower_min(DBL_MAX),
+      LP_lower_min(std::numeric_limits<double>::max()),
       nb_non_improvements(0),
       iterations(0),
       solver_stab(nullptr),
@@ -152,6 +133,7 @@ std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
     aux->build_rmp();
     aux->delete_infeasible_columns();
     aux->solve_relaxation();
+    aux->estimate_lower_bound(10);
     return aux;
 }
 

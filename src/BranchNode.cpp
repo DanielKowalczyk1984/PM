@@ -195,7 +195,7 @@ void BranchNodeBase::branch(BTree* bt) {
         }
 
         if (ranges::any_of(fathom, std::identity{}) ||
-            nb_non_improvements > 5) {
+            nb_non_improvements > 3) {
             break;
         }
     }
@@ -248,22 +248,23 @@ void BranchNodeBase::update_data(double upper_bound) {
 void BranchNodeBase::print(const BTree* bt) const {
     auto* solver = pd->solver.get();
     if (get_is_root_node()) {
-        fmt::print("{0:^10}|{1:^30}|{2:^30}|{3:^10}|{4:^10}|\n", "Nodes",
+        fmt::print("{0:^10}|{1:^55}|{2:^30}|{3:^10}|{4:^10}|\n", "Nodes",
                    "Current Node", "Objective Bounds", "Branch", "Work");
         fmt::print(
-            R"({0:^5}{1:^5}|{2:^10}{3:^10}{10:^10}|{4:>10}{5:>10}{6:>10}|{7:>5}{8:>5}|{9:>5}{11:>5}
+            R"({0:^5}{1:^5}|{2:>10}{3:>10}{10:>10}{12:>25}|{4:>10}{5:>10}{6:>10}|{7:>5}{8:>5}|{9:>5}{11:>5}
 )",
             "Expl", "UnEx", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
-            "Time", "Time", "Size", "Iter");
+            "Time", "Time", "Size", "Iter", "NB Paths");
     }
     fmt::print(
-        R"({0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}|{5:10.2f}{6:10.2f}{7:10.2f}|{8:>5}{9:>5}|{10:>5}{11:>5}|
+        R"({0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}{12:>25}|{5:10.2f}{6:10.2f}{7:10.2f}|{8:>5}{9:>5}|{10:>5}{11:>5}|
 )",
         bt->get_nb_nodes_explored(), bt->get_nb_nodes(),
         pd->LP_lower_bound + pd->instance.off, pd->depth,
         solver->get_nb_vertices(), bt->getGlobalUB() + pd->instance.off,
         bt->getGlobalLB() + pd->instance.off, 0.0, pd->branch_job,
-        pd->completiontime, bt->get_run_time_start(), pd->iterations);
+        pd->completiontime, bt->get_run_time_start(), pd->iterations,
+        solver->print_num_paths());
 }
 
 BranchCand::BranchCand(double                                     _score,

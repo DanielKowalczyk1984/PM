@@ -1,10 +1,3 @@
-// #include <fmt/core.h>
-// #include <memory>
-// #include "PricerSolverBase.hpp"
-// #include "PricingStabilization.hpp"
-// #include "Statistics.h"
-// #include "scheduleset.h"
-// #include "wctprivate.h"
 #include <ext/alloc_traits.h>        // for __alloc_traits<>::value_type
 #include <memory>                    // for shared_ptr, unique_ptr, make_shared
 #include <utility>                   // for move
@@ -29,7 +22,6 @@ int NodeData::solve_pricing() {
             stat.start_resume_timer(Statistics::reduced_cost_fixing_timer);
             solver_stab->reduced_cost_fixing();
             stat.suspend_timer(Statistics::reduced_cost_fixing_timer);
-            // check_schedules();
             delete_infeasible_columns();
             solve_relaxation();
             double obj{};
