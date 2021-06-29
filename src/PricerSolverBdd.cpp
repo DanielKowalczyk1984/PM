@@ -978,12 +978,9 @@ void PricerSolverBdd::build_mip() {
                 double cost =
                     n.get_job()->weighted_tardiness_start(n.get_weight());
                 x = model.addVar(0.0, 1.0, cost, GRB_BINARY);
-                // x.set(GRB_DoubleAttr_Start, n.best_sol_x[1]);
-
             } else {
                 x = model.addVar(0.0, static_cast<double>(convex_rhs), 0.0,
                                  GRB_INTEGER);
-                // x.set(GRB_DoubleAttr_Start, n.best_sol_x[0]);
             }
         }
 
@@ -1059,9 +1056,6 @@ void PricerSolverBdd::build_mip() {
                 table.node(mip_graph[source(*it.first, mip_graph)].node_id);
             if (high) {
                 x.set(GRB_DoubleAttr_Start, n.best_sol_x[1]);
-                if (n.best_sol_x[1] > EPS) {
-                    fmt::print("test {}\n", n.best_sol_x[1]);
-                }
 
             } else {
                 x.set(GRB_DoubleAttr_Start, n.best_sol_x[0]);

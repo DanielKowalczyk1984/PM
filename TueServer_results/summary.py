@@ -50,8 +50,8 @@ for it in ['tot_real_time', 'tot_cputime', 'tot_bb', 'tot_lb', 'tot_lb_root', 't
     data[it] = 0.6*data[it]
 
 # %%
-grouped_br_point = data.groupby(['n', 'm', 'branching_point'])
-grouped_br_point.agg({'opt': np.sum})
+grouped_br_point = data.groupby(['n', 'm', 'Inst'])
+grouped_br_point.agg({'opt': np.sum}).to_csv("opt.csv")
 # %% filter by branching_point
 
 aux_data = data[data['branching_point'] == 0.5]
@@ -129,9 +129,9 @@ data_opt = aux_data[(aux_data['opt'])]
 df_all_opt = pd.merge(aux_data, df_oliveira, on=['Inst', 'n', 'm'])
 
 # %%
-agg = {"tot_bb": {np.mean, np.max, np.min}, "opt": np.sum,
-       "TimeOliveira": {np.mean, np.max, np.min}, "OptFound": np.sum}
-grouped = df_all_opt.groupby(['n', 'm'])
+agg = {"tot_bb": {np.mean, np.max, np.min}, "tot_lb_root": {
+    np.mean, np.min, np.max}, "opt": np.sum}
+grouped = aux_data.groupby(['n', 'm'])
 grouped.agg(agg)
 
 

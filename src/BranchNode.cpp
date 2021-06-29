@@ -2,9 +2,11 @@
 #include <fmt/core.h>
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <memory>
 #include <numeric>
 #include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/algorithm/heap_algorithm.hpp>
 #include <range/v3/algorithm/lower_bound.hpp>
 #include <range/v3/all.hpp>
 #include <range/v3/functional/comparisons.hpp>
@@ -55,9 +57,11 @@ void BranchNodeBase::branch(BTree* bt) {
     }
 
     auto& x_job_time = solver->calculate_job_time();
-    auto  x_ref = solver->get_pair_x();
 
-    std::vector<BranchCand> best_cand{};
+    std::array<BranchCand, 16> best_cand{};
+
+    ranges::make_heap(best_cand, std::less<>{},
+                      [](const auto& tmp) { return tmp.score; });
 
     for (auto&& [x_j, job] : ranges::views::zip(x_job_time, instance.jobs)) {
         auto aux_vec = ranges::views::iota(0UL, x_j.size()) |
@@ -70,8 +74,13 @@ void BranchNodeBase::branch(BTree* bt) {
         if (*lb_it - sum > EPS &&
             std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
             auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
-            best_cand.emplace_back(pd->LP_lower_bound,
-                                   pd->create_child_nodes(job->job, tmp_t));
+            auto aux = BranchCand(pd->LP_lower_bound,
+                                  pd->create_child_nodes(job->job, tmp_t));
+            ranges::make_heap(best_cand, std::greater<>{},
+                              [](const auto& tmp) { return tmp.score; });
+            if (aux.score > best_cand.front().score) {
+                std::swap(aux, best_cand.front());
+            }
         }
     }
 
@@ -87,8 +96,13 @@ void BranchNodeBase::branch(BTree* bt) {
             if (*lb_it - sum > EPS &&
                 std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
                 auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
-                best_cand.emplace_back(pd->LP_lower_bound,
-                                       pd->create_child_nodes(job->job, tmp_t));
+                auto aux = BranchCand(pd->LP_lower_bound,
+                                      pd->create_child_nodes(job->job, tmp_t));
+                ranges::make_heap(best_cand, std::greater<>{},
+                                  [](const auto& tmp) { return tmp.score; });
+                if (aux.score > best_cand.front().score) {
+                    std::swap(aux, best_cand.front());
+                }
             }
         }
     }
@@ -103,8 +117,14 @@ void BranchNodeBase::branch(BTree* bt) {
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                best_cand.emplace_back(pd->LP_lower_bound,
-                                       pd->create_child_nodes(job->job, tmp_t));
+                auto aux_data =
+                    BranchCand(pd->LP_lower_bound,
+                               pd->create_child_nodes(job->job, tmp_t));
+                ranges::make_heap(best_cand, std::greater<>{},
+                                  [](const auto& tmp) { return tmp.score; });
+                if (aux_data.score > best_cand.front().score) {
+                    std::swap(aux_data, best_cand.front());
+                }
             }
         }
     }
@@ -118,8 +138,14 @@ void BranchNodeBase::branch(BTree* bt) {
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                best_cand.emplace_back(pd->LP_lower_bound,
-                                       pd->create_child_nodes(job->job, tmp_t));
+                auto aux_data =
+                    BranchCand(pd->LP_lower_bound,
+                               pd->create_child_nodes(job->job, tmp_t));
+                ranges::make_heap(best_cand, std::greater<>{},
+                                  [](const auto& tmp) { return tmp.score; });
+                if (aux_data.score > best_cand.front().score) {
+                    std::swap(aux_data, best_cand.front());
+                }
             }
         }
     }
@@ -143,16 +169,19 @@ void BranchNodeBase::branch(BTree* bt) {
     auto best_job = -1;
     auto best_time = 0;
 
-    std::unique_ptr<BranchNodeBase> best_right = nullptr;
-    std::unique_ptr<BranchNodeBase> best_left = nullptr;
+    std::array<std::unique_ptr<BranchNodeBase>, 2> best{};
     auto nb_cand = std::min(std::max(parms.strong_branching, 1),
                             static_cast<int>(best_cand.size()));
+
     best_cand |= ranges::actions::sort(
         std::greater<>{}, [](const auto& tmp) { return tmp.score; });
 
+    auto rng_best_cand = best_cand | ranges::views::filter([](const auto& tmp) {
+                             return (tmp.score > 0.0);
+                         });
+
     auto nb_non_improvements = 0UL;
-    for (auto& it : best_cand | ranges::views::take(nb_cand)) {
-        // auto data_nodes{pd->create_child_nodes(it.job, it.t)};
+    for (auto& it : rng_best_cand | ranges::views::take(nb_cand)) {
         std::array<std::unique_ptr<BranchNodeBase>, 2> child_nodes;
         std::array<double, 2>                          scores{};
         std::array<bool, 2>                            fathom{};
@@ -187,8 +216,7 @@ void BranchNodeBase::branch(BTree* bt) {
         if (best_score > best_min_gain ||
             ranges::any_of(fathom, ranges::identity{})) {
             best_min_gain = best_score;
-            best_right = std::move(child_nodes[1]);
-            best_left = std::move(child_nodes[0]);
+            best = std::move(child_nodes);
             nb_non_improvements = 0;
         } else {
             nb_non_improvements++;
@@ -202,8 +230,9 @@ void BranchNodeBase::branch(BTree* bt) {
 
     /** Process the branching nodes insert them in the tree */
     bt->set_state_bounds_computed(true);
-    bt->process_state(std::move(best_right));
-    bt->process_state(std::move(best_left));
+    for (auto& it : best) {
+        bt->process_state(std::move(it));
+    }
     bt->set_state_bounds_computed(false);
     bt->update_global_lb();
 

@@ -55,14 +55,12 @@ class BranchNodeRelBranching : public BranchNodeBase {
 };
 
 struct BranchCand {
-    double                                   score{EPS_BRANCH};
+    double                                   score{};
     std::array<std::unique_ptr<NodeData>, 2> data_child_nodes;
 
     BranchCand() = default;
 
     BranchCand(double                                     _score,
                std::array<std::unique_ptr<NodeData>, 2>&& child_nodes);
-
-    static constexpr double EPS_BRANCH = 1e-4;
 };
 #endif  // __BRANCHNODE_H__

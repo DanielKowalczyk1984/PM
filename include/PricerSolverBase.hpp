@@ -109,10 +109,11 @@ struct PricerSolverBase {
      * Constraint on the solver
      */
 
-    virtual void insert_constraints_lp(NodeData* pd) = 0;
-    virtual int  add_constraints();
-    virtual void remove_constraints(int first, int nb_del);
-    virtual void update_rows_coeff(size_t first);
+    virtual void   insert_constraints_lp(NodeData* pd) = 0;
+    virtual int    add_constraints();
+    virtual void   remove_constraints(int first, int nb_del);
+    virtual void   update_rows_coeff(size_t first);
+    virtual size_t get_size_data() { return 0UL; };
 
     virtual void                              update_coeff_constraints() = 0;
     virtual std::vector<std::vector<double>>& calculate_job_time() {
