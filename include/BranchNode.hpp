@@ -55,7 +55,8 @@ class BranchNodeRelBranching : public BranchNodeBase {
 };
 
 struct BranchCand {
-    double                                   score{};
+    double                                   score{std::numeric_limits<double>::lowest()};
+    bool                                     empty{true};
     std::array<std::unique_ptr<NodeData>, 2> data_child_nodes;
 
     BranchCand() = default;

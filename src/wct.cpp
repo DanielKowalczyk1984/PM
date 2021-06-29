@@ -133,6 +133,7 @@ std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
     aux->build_rmp();
     aux->delete_infeasible_columns();
     aux->solve_relaxation();
+    aux->estimate_lower_bound(10);
     return aux;
 }
 

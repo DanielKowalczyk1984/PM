@@ -84,7 +84,7 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
-    if (best_cand.empty()) {
+    if (ranges::all_of(best_cand,[](const auto& tmp){return tmp.empty;})) {
         for (auto&& [x_j, job] :
              ranges::views::zip(x_job_time, instance.jobs)) {
             auto aux_vec =
@@ -107,7 +107,7 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
-    if (best_cand.empty()) {
+    if (ranges::all_of(best_cand,[](const auto& tmp){return tmp.empty;})) {
         for (auto&& [x_j, job] :
              ranges::views::zip(x_job_time, instance.jobs)) {
             auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
@@ -129,7 +129,7 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
-    if (best_cand.empty()) {
+    if (ranges::all_of(best_cand,[](const auto& tmp){return tmp.empty;})) {
         for (auto&& [x_j, job] :
              ranges::views::zip(x_job_time, instance.jobs)) {
             auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
@@ -150,7 +150,7 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
-    if (best_cand.empty()) {
+    if (ranges::all_of(best_cand,[](const auto& tmp){return tmp.empty;})) {
         fmt::print(stderr, "ERROR: no branching found!\n");
         for (auto&& [j, job] : instance.jobs | ranges::views::enumerate) {
             fmt::print(stderr, "j={}:", j);
@@ -165,7 +165,7 @@ void BranchNodeBase::branch(BTree* bt) {
         exit(-1);
     }
 
-    auto best_min_gain = 0.0;
+    auto best_min_gain = std::numeric_limits<double>::min();
     auto best_job = -1;
     auto best_time = 0;
 
@@ -177,7 +177,7 @@ void BranchNodeBase::branch(BTree* bt) {
         std::greater<>{}, [](const auto& tmp) { return tmp.score; });
 
     auto rng_best_cand = best_cand | ranges::views::filter([](const auto& tmp) {
-                             return (tmp.score > 0.0);
+                             return !(tmp.empty);
                          });
 
     auto nb_non_improvements = 0UL;
@@ -309,6 +309,7 @@ BranchCand::BranchCand(double                                     _score,
                 : std::abs(_score - node->LP_lower_bound);
     }
     score = parms.scoring_function(scores[0], scores[1]);
+    empty = false;
 }
 
 BranchNodeRelBranching::BranchNodeRelBranching(std::unique_ptr<NodeData> _data,
