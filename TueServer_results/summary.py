@@ -49,12 +49,7 @@ data['Inst'] = data.NameInstance.apply(
 for it in ['tot_real_time', 'tot_cputime', 'tot_bb', 'tot_lb', 'tot_lb_root', 'tot_heuristic', 'tot_build_dd', 'tot_pricing', 'tot_reduce_cost_fixing']:
     data[it] = 0.6*data[it]
 
-# %%
-grouped_br_point = data.groupby(['n', 'm', 'Inst'])
-grouped_br_point.agg({'opt': np.sum}).to_csv("opt.csv")
-# %% filter by branching_point
-
-aux_data = data[data['branching_point'] == 0.5]
+aux_data = data[data['pricing_solver'] == 3]
 
 # %% create result directory and copy results to that directory
 
@@ -129,9 +124,9 @@ data_opt = aux_data[(aux_data['opt'])]
 df_all_opt = pd.merge(aux_data, df_oliveira, on=['Inst', 'n', 'm'])
 
 # %%
-agg = {"tot_bb": {np.mean, np.max, np.min}, "tot_lb_root": {
+agg = {"tot_bb": {np.mean, np.max, np.min}, "TimeOliveira": {np.mean, np.max, np.min},  "tot_lb_root": {
     np.mean, np.min, np.max}, "opt": np.sum}
-grouped = aux_data.groupby(['n', 'm'])
+grouped = df_all_opt.groupby(['n', 'm'])
 grouped.agg(agg)
 
 
