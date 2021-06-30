@@ -21,7 +21,7 @@ static const std::string USAGE =
     R"(PM.
 
 Usage:
-  bin/PM [-s <sn> -S <kn> -pmBRZHMd -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp> --refinement --enumerate] FILE NB
+  bin/PM [-s <sn> -S <kn> -pmBRZHMdP -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp> --refinement --enumerate] FILE NB
   bin/PM (-h | --help)
   bin/PM --version
 
@@ -54,6 +54,7 @@ Options:
   -M --use_mip_solver           Use MIP solver.
   -b --branching_strategy=<br>  Set branch-and-bound exploration strategy: 0 = DFS, 1 = BFS, 2 = BrFS, 3 = CBFS[default: 0].
   -n --node_limit=<nl>          Set a limit on the number of nodes that can be explored.[default: 0]. Default meaning that all nodes should be explored.
+  -P --pruning_test             Use pruning test in branch and bound tree.
 )";
 
 enum BBNodeSelection {
@@ -159,6 +160,7 @@ struct Parms {
     bool                                  use_mip_solver;
     bool                                  refine_bdd;
     bool                                  enumerate;
+    bool                                  pruning_test;
 
     enum reduced_cost_fixing_param reduce_cost_fixing;
 

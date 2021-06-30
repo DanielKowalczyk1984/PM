@@ -84,7 +84,7 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
-    if (ranges::all_of(best_cand,[](const auto& tmp){return tmp.empty;})) {
+    if (ranges::all_of(best_cand, [](const auto& tmp) { return tmp.empty; })) {
         for (auto&& [x_j, job] :
              ranges::views::zip(x_job_time, instance.jobs)) {
             auto aux_vec =
@@ -107,7 +107,7 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
-    if (ranges::all_of(best_cand,[](const auto& tmp){return tmp.empty;})) {
+    if (ranges::all_of(best_cand, [](const auto& tmp) { return tmp.empty; })) {
         for (auto&& [x_j, job] :
              ranges::views::zip(x_job_time, instance.jobs)) {
             auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
@@ -129,7 +129,7 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
-    if (ranges::all_of(best_cand,[](const auto& tmp){return tmp.empty;})) {
+    if (ranges::all_of(best_cand, [](const auto& tmp) { return tmp.empty; })) {
         for (auto&& [x_j, job] :
              ranges::views::zip(x_job_time, instance.jobs)) {
             auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
@@ -150,7 +150,7 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
-    if (ranges::all_of(best_cand,[](const auto& tmp){return tmp.empty;})) {
+    if (ranges::all_of(best_cand, [](const auto& tmp) { return tmp.empty; })) {
         fmt::print(stderr, "ERROR: no branching found!\n");
         for (auto&& [j, job] : instance.jobs | ranges::views::enumerate) {
             fmt::print(stderr, "j={}:", j);
@@ -260,12 +260,12 @@ bool BranchNodeBase::is_terminal_state() {
 
 void BranchNodeBase::apply_final_pruning_tests(BTree* bt) {
     auto* pricing_solver = get_pricersolver();
-    auto* pd_ptr = get_data_ptr();
-    if (pricing_solver->get_nb_vertices() /
-            double(pd->stat.size_graph_after_reduced_cost_fixing) <
-        0.4) {
-        fmt::print("MIPPING !!!!!\n");
+    // auto* pd_ptr = get_data_ptr();
+    if (pricing_solver->print_num_paths() < 240000000000) {
+        pricing_solver->project_sol_on_original_variables(pd->opt_sol);
         pricing_solver->build_mip();
+        auto feasible_aux = pricing_solver->evaluate_mip_model();
+        set_dominated(!feasible_aux);
     }
 }
 

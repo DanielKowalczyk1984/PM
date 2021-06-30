@@ -961,7 +961,7 @@ void PricerSolverBdd::add_inequality(std::vector<int> v1) {
 void PricerSolverBdd::build_mip() {
     // GRBModel m(*env);
     // model.reset(1);
-    model.set(GRB_IntParam_OutputFlag, 1);
+    // model.set(GRB_IntParam_OutputFlag, 1);
     try {
         fmt::print("Building Mip model for the extended formulation:\n");
         auto& table = *(decision_diagram.getDiagram());
