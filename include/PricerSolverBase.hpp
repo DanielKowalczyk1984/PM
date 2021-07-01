@@ -101,6 +101,10 @@ struct PricerSolverBase {
     virtual void construct_lp_sol_from_rmp(
         const double*                                    columns,
         const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) = 0;
+
+    bool compute_sub_optimal_duals(
+        const double*                                    columns,
+        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets);
     virtual void project_sol_on_original_variables(const Sol& _sol) {
         _sol.print_solution();
     };
@@ -166,6 +170,8 @@ struct PricerSolverBase {
     virtual double compute_reduced_cost(const OptimalSolution<>& sol,
                                         double*                  pi,
                                         double*                  lhs);
+    virtual double compute_reduced_cost(const OptimalSolution<>& sol,
+                                        double*                  pi);
     virtual double compute_lagrange(const OptimalSolution<>&   sol,
                                     const std::vector<double>& pi);
 

@@ -895,15 +895,15 @@ bool PricerSolverBdd::evaluate_nodes(double* pi) {
             add_nb_removed_edges();
             nb_removed_edges_evaluate++;
         }
-        if (((constLB + aux_nb_machines * reduced_cost +
-                  evaluate_rc_low_arc(it) >
-              UB - 1.0 + RC_FIXING)) &&
-            (it.calc[0])) {
-            it.calc[0] = false;
-            removed_edges = true;
-            add_nb_removed_edges();
-            nb_removed_edges_evaluate++;
-        }
+        // if (((constLB + aux_nb_machines * reduced_cost +
+        //           evaluate_rc_low_arc(it) >
+        //       UB - 1.0 + RC_FIXING)) &&
+        //     (it.calc[0])) {
+        //     it.calc[0] = false;
+        //     removed_edges = true;
+        //     add_nb_removed_edges();
+        //     nb_removed_edges_evaluate++;
+        // }
     }
 
     if (removed_edges) {

@@ -585,8 +585,13 @@ int NodeData::compute_lower_bound() {
                     }
                     old_LP_bound = LP_lower_bound;
                     construct_lp_sol_from_rmp();
+                    if (parms.suboptimal_duals) {
+                        refined = solver->compute_sub_optimal_duals(
+                            lambda.data(), localColPool);
+                        delete_infeasible_columns();
+                    }
                     if (parms.refine_bdd && nb_non_improvements < 2) {
-                        refined = refinement();
+                        refined = refined || refinement();
                     }
                 } else {
                     status = infeasible;
