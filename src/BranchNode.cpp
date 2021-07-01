@@ -57,6 +57,7 @@ void BranchNodeBase::branch(BTree* bt) {
     }
 
     auto& x_job_time = solver->calculate_job_time();
+    auto  x_ref = solver->get_pair_x();
 
     std::array<BranchCand, 16> best_cand{};
 
@@ -74,6 +75,10 @@ void BranchNodeBase::branch(BTree* bt) {
         if (*lb_it - sum > EPS &&
             std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
             auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
+            while (x_ref.second[job->job][tmp_t] ==
+                   x_ref.second[job->job][tmp_t + 1]) {
+                tmp_t += 1;
+            }
             auto aux = BranchCand(pd->LP_lower_bound,
                                   pd->create_child_nodes(job->job, tmp_t));
             ranges::make_heap(best_cand, std::greater<>{},
@@ -96,6 +101,10 @@ void BranchNodeBase::branch(BTree* bt) {
             if (*lb_it - sum > EPS &&
                 std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
                 auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
+                while (x_ref.second[job->job][tmp_t] ==
+                       x_ref.second[job->job][tmp_t + 1]) {
+                    tmp_t += 1;
+                }
                 auto aux = BranchCand(pd->LP_lower_bound,
                                       pd->create_child_nodes(job->job, tmp_t));
                 ranges::make_heap(best_cand, std::greater<>{},
@@ -117,6 +126,10 @@ void BranchNodeBase::branch(BTree* bt) {
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
+                while (x_ref.second[job->job][tmp_t] ==
+                       x_ref.second[job->job][tmp_t + 1]) {
+                    tmp_t += 1;
+                }
                 auto aux_data =
                     BranchCand(pd->LP_lower_bound,
                                pd->create_child_nodes(job->job, tmp_t));
