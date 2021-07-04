@@ -23,7 +23,7 @@ class PricingStabilizationBase {
     static constexpr double EPS_RC = -1e-10;
     static constexpr double ETA_DIFF = 1e-4;
     static constexpr double EPS_STAB = 1e-9;
-    static constexpr int    RC_FIXING_RATE = 100;
+    static constexpr int    RC_FIXING_RATE = 50;
 
    public:
     PricerSolverBase* solver;
