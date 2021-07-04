@@ -895,15 +895,15 @@ bool PricerSolverBdd::evaluate_nodes(double* pi) {
             add_nb_removed_edges();
             nb_removed_edges_evaluate++;
         }
-        // if (((constLB + aux_nb_machines * reduced_cost +
-        //           evaluate_rc_low_arc(it) >
-        //       UB - 1.0 + RC_FIXING)) &&
-        //     (it.calc[0])) {
-        //     it.calc[0] = false;
-        //     removed_edges = true;
-        //     add_nb_removed_edges();
-        //     nb_removed_edges_evaluate++;
-        // }
+        if (((constLB + aux_nb_machines * reduced_cost +
+                  evaluate_rc_low_arc(it) >
+              UB - 1.0 + RC_FIXING)) &&
+            (it.calc[0])) {
+            it.calc[0] = false;
+            removed_edges = true;
+            add_nb_removed_edges();
+            nb_removed_edges_evaluate++;
+        }
     }
 
     if (removed_edges) {
@@ -1083,7 +1083,7 @@ void PricerSolverBdd::cleanup_arcs() {
     for (auto& it : table |
                         ranges::views::take(decision_diagram.topLevel() + 1) |
                         ranges::views::drop(1) | ranges::views::join) {
-        it.calc = {true, true};
+        // it.calc = {true, true};
         for (size_t i = 0UL; i < 2; ++i) {
             auto& cur_node = table.node(it[i]);
             it.backward_distance.at(i) =
@@ -1135,7 +1135,7 @@ void PricerSolverBdd::topdown_filtering() {
         // for (auto& it : table[i]) {
         it.visited = false;
         it.all = boost::dynamic_bitset<>{convex_constr_id, 0};
-        it.calc[1] = true;
+        // it.calc[1] = true;
         // }
     }
 
@@ -1206,7 +1206,7 @@ void PricerSolverBdd::bottum_up_filtering() {
         for (auto& it : table[i]) {
             it.visited = false;
             it.all = boost::dynamic_bitset<>{convex_constr_id, 0};
-            it.calc[1] = true;
+            // it.calc[1] = true;
         }
     }
 
@@ -1327,7 +1327,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
                         ranges::views::join) {
         it.visited = false;
         it.all = boost::dynamic_bitset<>{convex_constr_id, 0};
-        it.calc = {true, true};
+        // it.calc = {true, true};
         auto& n0 = table.node(it[0]);
         n0.in_degree[0]++;
         auto& n1 = table.node(it[1]);
