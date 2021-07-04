@@ -46,6 +46,7 @@ void BranchNodeBase::branch(BTree* bt) {
     auto*       solver = get_pricersolver();
     const auto& instance = get_instance_info();
     const auto& parms = pd->parms;
+    auto&       stat = pd->stat;
 
     if (!parms.strong_branching && dbg_lvl() > 0) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
@@ -75,8 +76,9 @@ void BranchNodeBase::branch(BTree* bt) {
         if (*lb_it - sum > EPS &&
             std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
             auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
-            while (x_ref.second[job->job][tmp_t] ==
-                   x_ref.second[job->job][tmp_t + 1]) {
+            while ((x_ref.second[job->job][tmp_t] ==
+                    x_ref.second[job->job][tmp_t + 1]) &&
+                   job->weighted_tardiness_start(tmp_t) == 0) {
                 tmp_t += 1;
             }
             auto aux = BranchCand(pd->LP_lower_bound,
@@ -101,8 +103,9 @@ void BranchNodeBase::branch(BTree* bt) {
             if (*lb_it - sum > EPS &&
                 std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
                 auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
-                while (x_ref.second[job->job][tmp_t] ==
-                       x_ref.second[job->job][tmp_t + 1]) {
+                while ((x_ref.second[job->job][tmp_t] ==
+                        x_ref.second[job->job][tmp_t + 1]) &&
+                       (job->weighted_tardiness_start(tmp_t) == 0)) {
                     tmp_t += 1;
                 }
                 auto aux = BranchCand(pd->LP_lower_bound,
@@ -126,8 +129,9 @@ void BranchNodeBase::branch(BTree* bt) {
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
-                while (x_ref.second[job->job][tmp_t] ==
-                       x_ref.second[job->job][tmp_t + 1]) {
+                while ((x_ref.second[job->job][tmp_t] ==
+                        x_ref.second[job->job][tmp_t + 1]) &&
+                       (job->weighted_tardiness_start(tmp_t))) {
                     tmp_t += 1;
                 }
                 auto aux_data =
@@ -151,6 +155,11 @@ void BranchNodeBase::branch(BTree* bt) {
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
                 auto tmp_t = ranges::distance(part_sum.begin(), br_point_it);
+                while ((x_ref.second[job->job][tmp_t] ==
+                        x_ref.second[job->job][tmp_t + 1]) &&
+                       (job->weighted_tardiness_start(tmp_t))) {
+                    tmp_t += 1;
+                }
                 auto aux_data =
                     BranchCand(pd->LP_lower_bound,
                                pd->create_child_nodes(job->job, tmp_t));
@@ -198,7 +207,7 @@ void BranchNodeBase::branch(BTree* bt) {
         std::array<std::unique_ptr<BranchNodeBase>, 2> child_nodes;
         std::array<double, 2>                          scores{};
         std::array<bool, 2>                            fathom{};
-        auto                                           left = true;
+        auto                                           left = false;
 
         for (auto&& [data, node, score, f] : ranges::views::zip(
                  it.data_child_nodes, child_nodes, scores, fathom)) {
@@ -221,7 +230,7 @@ void BranchNodeBase::branch(BTree* bt) {
             score = (parms.scoring_parameter == weighted_sum_scoring_parameter)
                         ? cost / pd->LP_lower_bound
                         : std::abs(cost - pd->LP_lower_bound);
-            left = false;
+            left = true;
         }
 
         auto best_score = parms.scoring_function(scores[0], scores[1]);
