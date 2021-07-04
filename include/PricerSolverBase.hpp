@@ -2,6 +2,7 @@
 #define PRICER_SOLVER_BASE_HPP
 #include <gurobi_c++.h>         // for GRBModel
 #include <cstddef>              // for size_t
+#include <functional>           // for reference_wrapper, ref
 #include <memory>               // for shared_ptr, unique_ptr
 #include <string>               // for string
 #include <utility>              // for ref
