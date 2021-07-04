@@ -1,9 +1,8 @@
 #include "PricerSolverBase.hpp"
-#include <fmt/core.h>  // for print
-#include <math.h>      // for fabs
-#include <algorithm>   // for min, __fill_fn
-#include <cstddef>     // for size_t
-#include <cstdio>
+#include <fmt/core.h>                                  // for print
+#include <math.h>                                      // for fabs
+#include <algorithm>                                   // for min, __fill_fn
+#include <cstddef>                                     // for size_t
 #include <ext/alloc_traits.h>                          // for __alloc_traits...
 #include <limits>                                      // for numeric_limits
 #include <memory>                                      // for __shared_ptr_a...
@@ -11,18 +10,17 @@
 #include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
 #include <range/v3/range/conversion.hpp>               // for to_container::fn
 #include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
-#include <range/v3/view/transform.hpp>
-#include <range/v3/view/view.hpp>      // for operator|
-#include <range/v3/view/zip.hpp>       // for zip_view
-#include <range/v3/view/zip_with.hpp>  // for iter_zip_with_...
-#include <span>                        // for span
-#include <vector>
-#include "Instance.h"    // for Instance
-#include "Job.h"         // for Job
-#include "gurobi_c++.h"  // for GRBModel, GRBEnv
-#include "gurobi_c.h"    // for GRB_INFEASIBLE
+#include <range/v3/view/transform.hpp>                 // for trqnsform_view
+#include <range/v3/view/view.hpp>                      // for operator|
+#include <range/v3/view/zip.hpp>                       // for zip_view
+#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
+#include <span>                                        // for span
+#include <vector>                                      // for vector
+#include "Instance.h"                                  // for Instance
+#include "Job.h"                                       // for Job
+#include "gurobi_c++.h"                                // for GRBModel, GRBEnv
+#include "gurobi_c.h"                                  // for GRB_INFEASIBLE
 #include "scheduleset.h"
-#include "wctprivate.h"
 
 PricerSolverBase::PricerSolverBase(const Instance& instance)
     : jobs(instance.jobs),
@@ -118,26 +116,26 @@ bool PricerSolverBase::compute_sub_optimal_duals(
 
     std::span<const double> aux_cols{columns, schedule_sets.size()};
 
-    for (auto&& [i, x] : aux_cols | ranges::views::enumerate) {
+    for (auto&& [set, x] : ranges::views::zip(schedule_sets, aux_cols)) {
         if (x > EPS_SOLVER) {
-            auto* tmp = schedule_sets[i].get();
+            // auto* tmp = schedule_sets[i].get();
             eta.emplace_back(sub_optimal.addVar(0.0, GRB_INFINITY, 1.0, 'C'));
             GRBLinExpr expr = -last;
-            for (auto& it : tmp->job_list) {
+            for (auto& it : set->job_list) {
                 expr += beta[it->job];
             }
             expr += eta.back();
             sub_optimal.addConstr(expr, '=',
-                                  tmp->total_weighted_completion_time);
-            LB += tmp->total_weighted_completion_time * x;
+                                  set->total_weighted_completion_time);
+            LB += set->total_weighted_completion_time * x;
         } else {
-            auto*      tmp = schedule_sets[i].get();
+            // auto*      tmp = schedule_sets[i].get();
             GRBLinExpr expr = -last;
-            for (auto& it : tmp->job_list) {
+            for (auto& it : set->job_list) {
                 expr += beta[it->job];
             }
             sub_optimal.addConstr(expr, '<',
-                                  tmp->total_weighted_completion_time);
+                                  set->total_weighted_completion_time);
         }
     }
 
@@ -145,7 +143,7 @@ bool PricerSolverBase::compute_sub_optimal_duals(
     for (auto& it : beta) {
         expr += it;
     }
-    sub_optimal.addConstr(expr, '>', LB - 1.0e-4);
+    sub_optimal.addConstr(expr, '>', LB - 1e-2);
 
     auto cont = false;
     do {
@@ -165,14 +163,13 @@ bool PricerSolverBase::compute_sub_optimal_duals(
             rc -= pi[it->job];
         }
 
-        if (rc < -1.0e-4) {
+        if (rc < -1e-4) {
             GRBLinExpr expr_pricing = -last;
             for (auto& it : sol.jobs) {
                 expr_pricing += beta[it->job];
             }
             sub_optimal.addConstr(expr_pricing, '<', sol.cost);
             cont = true;
-            // fmt::print("add constr\n");
         } else {
             cont = false;
             calculate_constLB(pi.data());
