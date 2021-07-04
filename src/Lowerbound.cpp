@@ -155,6 +155,9 @@ int NodeData::delete_old_columns() {
         lp_interface_get_nb_cols(RMP.get(), &nb_cols);
         assert(localColPool.size() == nb_cols - id_pseudo_schedules);
         zero_count = 0;
+        if (!dellist.empty()) {
+            solve_relaxation();
+        }
     }
 
     return val;
@@ -504,7 +507,7 @@ int NodeData::compute_lower_bound() {
     // delete_infeasible_columns();
     auto refined{false};
 
-    // solve_relaxation(problem, pd);
+    solve_relaxation();
     do {
         has_cols = true;
         refined = false;
@@ -518,7 +521,6 @@ int NodeData::compute_lower_bound() {
                 status == GRB_OPTIMAL) {
                 delete_old_columns();
             }
-            solve_relaxation();
 
             /**
              * Solve the pricing problem
@@ -578,12 +580,6 @@ int NodeData::compute_lower_bound() {
 
                 if (!localColPool.empty() && solver->structure_feasible()) {
                     status = LP_bound_computed;
-                    if (std::abs(old_LP_bound - LP_lower_bound) < EPS) {
-                        nb_non_improvements++;
-                    } else {
-                        nb_non_improvements = 0;
-                    }
-                    old_LP_bound = LP_lower_bound;
                     construct_lp_sol_from_rmp();
                     if (parms.suboptimal_duals) {
                         refined = solver->compute_sub_optimal_duals(
@@ -591,6 +587,12 @@ int NodeData::compute_lower_bound() {
                         delete_infeasible_columns();
                     }
                     if (parms.refine_bdd && nb_non_improvements < 2) {
+                        if (std::abs(old_LP_bound - LP_lower_bound) < EPS) {
+                            nb_non_improvements++;
+                        } else {
+                            nb_non_improvements = 0;
+                        }
+                        old_LP_bound = LP_lower_bound;
                         refined = refined || refinement();
                     }
                 } else {
@@ -613,7 +615,6 @@ int NodeData::compute_lower_bound() {
         fmt::print("computing elementary paths\n");
         solver->enumerate_columns();
         solver->enumerate_columns(pi.data());
-        getchar();
     }
 
     // if (iterations < NB_CG_ITERATIONS &&
