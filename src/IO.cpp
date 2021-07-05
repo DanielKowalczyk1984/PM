@@ -37,7 +37,7 @@ void Problem::to_csv() {
         }
         fmt::print(
             file.get(),
-            R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
+            R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
 )",
             "NameInstance", "n", "m", "tot_real_time", "tot_cputime", "tot_bb",
             "tot_lb", "tot_lb_root", "tot_heuristic", "tot_build_dd",
@@ -48,9 +48,10 @@ void Problem::to_csv() {
             "date", "nb_iterations_rvnd", "stabilization", "alpha",
             "pricing_solver", "first_size_graph", "size_after_reduced_cost",
             "strong_branching", "branching_point", "refinement", "pruning_test",
-            "suboptimal_duals", "mip_nb_vars", "mip_nb_constr", "mip_obj_bound",
-            "mip_obj_bound_lp", "mip_rel_gap", "mip_run_time", "mip_status",
-            "mip_nb_iter_simplex", "mip_nb_nodes");
+            "suboptimal_duals", "scoring_parameter", "mip_nb_vars",
+            "mip_nb_constr", "mip_obj_bound", "mip_obj_bound_lp", "mip_rel_gap",
+            "mip_run_time", "mip_status", "mip_nb_iter_simplex",
+            "mip_nb_nodes");
     }
 
     // for (int i = MIP_Attr_Run_Time; i <= MIP_Attr_Nb_Nodes &&
@@ -61,7 +62,7 @@ void Problem::to_csv() {
 
     fmt::print(
         file.get(),
-        R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{:%y/%m/%d},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
+        R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{:%y/%m/%d},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
 )",
         stat.pname, instance.nb_jobs, instance.nb_machines,
         stat.real_time_total, stat.total_timer(Statistics::cputime_timer),
@@ -79,10 +80,10 @@ void Problem::to_csv() {
         parms.pricing_solver, stat.first_size_graph,
         stat.size_graph_after_reduced_cost_fixing, parms.strong_branching,
         parms.branching_point, parms.refine_bdd, parms.pruning_test,
-        parms.suboptimal_duals, stat.mip_nb_vars, stat.mip_nb_constr,
-        stat.mip_obj_bound, stat.mip_obj_bound_lp, stat.mip_rel_gap,
-        stat.mip_run_time, stat.mip_status, stat.mip_nb_iter_simplex,
-        stat.mip_nb_nodes);
+        parms.suboptimal_duals, parms.scoring_parameter, stat.mip_nb_vars,
+        stat.mip_nb_constr, stat.mip_obj_bound, stat.mip_obj_bound_lp,
+        stat.mip_rel_gap, stat.mip_run_time, stat.mip_status,
+        stat.mip_nb_iter_simplex, stat.mip_nb_nodes);
 }
 
 int Problem::to_screen() {
