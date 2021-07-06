@@ -2,6 +2,7 @@
 #define __BRANCHNODE_H__
 
 #include <fmt/core.h>
+#include <cstddef>
 #include <limits>
 #include <memory>
 #include "Instance.h"
@@ -35,6 +36,8 @@ class BranchNodeBase : public State {
     [[nodiscard]] const Instance&   get_instance_info() const;
     [[nodiscard]] PricerSolverBase* get_pricersolver() const;
 
+    static constexpr size_t NbCandidates = 16;
+
    private:
     std::unique_ptr<NodeData> pd;
     static constexpr double   ERROR = 1e-12;
@@ -54,14 +57,20 @@ class BranchNodeRelBranching : public BranchNodeBase {
     void branch(BTree* bt) override;
 };
 
-struct BranchCand {
-    double                                   score{std::numeric_limits<double>::lowest()};
-    bool                                     empty{true};
+struct BranchCandidate {
+    double score{std::numeric_limits<double>::lowest()};
+    bool   empty{true};
     std::array<std::unique_ptr<NodeData>, 2> data_child_nodes;
 
-    BranchCand() = default;
+    BranchCandidate() = default;
+    BranchCandidate(const BranchCandidate&) = delete;
+    BranchCandidate(BranchCandidate&&) = default;
+    BranchCandidate& operator=(const BranchCandidate&) = delete;
+    BranchCandidate& operator=(BranchCandidate&&) = default;
+    ~BranchCandidate() = default;
 
-    BranchCand(double                                     _score,
-               std::array<std::unique_ptr<NodeData>, 2>&& child_nodes);
+    BranchCandidate(double                                     _score,
+                    std::array<std::unique_ptr<NodeData>, 2>&& child_nodes);
+    BranchCandidate(double _score);
 };
 #endif  // __BRANCHNODE_H__
