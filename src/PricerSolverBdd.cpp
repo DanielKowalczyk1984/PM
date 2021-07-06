@@ -1064,7 +1064,7 @@ void PricerSolverBdd::build_mip() {
         model.optimize();
     } catch (GRBException& e) {
         fmt::print("Error code = {}\n", e.getErrorCode());
-        fmt::print(e.getMessage());
+        fmt::print("{}", e.getMessage());
     } catch (...) {
         fmt::print("Exception during optimization\n");
     }

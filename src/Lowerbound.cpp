@@ -3,7 +3,6 @@
 #include <cassert>                                     // for assert
 #include <cmath>                                       // for ceil, floor, fabs
 #include <compare>                                     // for operator<
-#include <cstdio>                                      // for getchar
 #include <functional>                                  // for identity, greater
 #include <memory>                                      // for unique_ptr
 #include <range/v3/action/action.hpp>                  // for operator|=
@@ -384,8 +383,7 @@ int NodeData::solve_relaxation() {
 
 int NodeData::estimate_lower_bound(int _iter) {
     auto val = 0;
-    auto has_cols = 1;
-    // auto has_cuts = 0;
+    auto has_cols = true;
     auto status_RMP = GRB_LOADED;
     auto real_time_pricing = 0.0;
 
@@ -409,68 +407,52 @@ int NodeData::estimate_lower_bound(int _iter) {
         val = build_rmp();
     }
 
-    // check_schedules();
-    // delete_infeasible_columns();
+    has_cols = true;
+    // has_cuts = 0;
+    while ((iterations < _iter) && has_cols &&
+           stat.total_timer(Statistics::cputime_timer) <=
+               parms.branching_cpu_limit) {
+        /**
+         * Solve the pricing problem
+         */
+        real_time_pricing = getRealTime();
+        stat.start_resume_timer(Statistics::pricing_timer);
+        val = lp_interface_status(RMP.get(), &status_RMP);
 
-    // solve_relaxation(problem, pd);
-    do {
-        has_cols = 1;
-        // has_cuts = 0;
-        while ((iterations < _iter) && has_cols &&
-               stat.total_timer(Statistics::cputime_timer) <=
-                   parms.branching_cpu_limit) {
-            /**
-             * Delete old columns
-             */
-            // if (zero_count > nb_jobs * min_nb_del_row_ratio &&
-            //     status == GRB_OPTIMAL) {
-            //     delete_old_schedules();
-            // }
-            solve_relaxation();
+        switch (status_RMP) {
+            case GRB_OPTIMAL:
+                status = infeasible;
+                val = solve_pricing();
+                break;
 
-            /**
-             * Solve the pricing problem
-             */
-            real_time_pricing = getRealTime();
-            stat.start_resume_timer(Statistics::pricing_timer);
-            val = lp_interface_status(RMP.get(), &status_RMP);
-
-            switch (status_RMP) {
-                case GRB_OPTIMAL:
-                    status = infeasible;
-
-                    val = solve_pricing();
-                    break;
-
-                case GRB_INFEASIBLE:
-                    solve_farkas_dbl();
-                    break;
-            }
-            iterations++;
-
-            stat.suspend_timer(Statistics::pricing_timer);
-            real_time_pricing = getRealTime() - real_time_pricing;
-            stat.real_time_pricing += real_time_pricing;
-
-            switch (status_RMP) {
-                case GRB_OPTIMAL:
-                    has_cols = (solver_stab->stopping_criteria() &&
-                                solver_stab->get_eta_in() <
-                                    upper_bound - 1.0 + EPS_BOUND);
-                    // nb_new_sets = 0;
-                    // || nb_non_improvements > 5;  // ||
-                    // (ceil(eta_in - 0.00001) >= eta_out);
-
-                    break;
-
-                case GRB_INFEASIBLE:
-                    has_cols = (nb_new_sets == 0);
-                    // nb_new_sets = 0;
-                    break;
-            }
+            case GRB_INFEASIBLE:
+                solve_farkas_dbl();
+                break;
         }
+        iterations++;
 
-    } while (false);
+        stat.suspend_timer(Statistics::pricing_timer);
+        real_time_pricing = getRealTime() - real_time_pricing;
+        stat.real_time_pricing += real_time_pricing;
+
+        switch (status_RMP) {
+            case GRB_OPTIMAL:
+                has_cols =
+                    (solver_stab->stopping_criteria() &&
+                     solver_stab->get_eta_in() < upper_bound - 1.0 + EPS_BOUND);
+                // nb_new_sets = 0;
+                // || nb_non_improvements > 5;  // ||
+                // (ceil(eta_in - 0.00001) >= eta_out);
+
+                break;
+
+            case GRB_INFEASIBLE:
+                has_cols = (nb_new_sets == 0);
+                // nb_new_sets = 0;
+                break;
+        }
+    }
+
     stat.suspend_timer(Statistics::lb_timer);
 
     return val;

@@ -1,7 +1,7 @@
 #include "PricerSolverBase.hpp"
 #include <fmt/core.h>                                  // for print
-#include <math.h>                                      // for fabs
 #include <algorithm>                                   // for min, __fill_fn
+#include <cmath>                                       // for fabs
 #include <cstddef>                                     // for size_t
 #include <ext/alloc_traits.h>                          // for __alloc_traits...
 #include <limits>                                      // for numeric_limits
@@ -45,7 +45,7 @@ PricerSolverBase::PricerSolverBase(const Instance& instance)
         model.set(GRB_IntParam_Presolve, GRB_PRESOLVE_AGGRESSIVE);
     } catch (const GRBException& e) {
         fmt::print("Error code = {}\n", e.getErrorCode());
-        fmt::print(e.getMessage());
+        fmt::print("{}", e.getMessage());
     } catch (...) {
         fmt::print("Exception during optimization\n");
     }
@@ -143,7 +143,7 @@ bool PricerSolverBase::compute_sub_optimal_duals(
     for (auto& it : beta) {
         expr += it;
     }
-    sub_optimal.addConstr(expr, '>', LB - 1e-2);
+    sub_optimal.addConstr(expr, '>', LB - RC_FIXING);
 
     auto cont = false;
     do {
@@ -163,7 +163,7 @@ bool PricerSolverBase::compute_sub_optimal_duals(
             rc -= pi[it->job];
         }
 
-        if (rc < -1e-4) {
+        if (rc < -RC_FIXING) {
             GRBLinExpr expr_pricing = -last;
             for (auto& it : sol.jobs) {
                 expr_pricing += beta[it->job];
@@ -301,8 +301,10 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
 
     return result;
 }
-double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
-                                              double*                  pi) {
+
+double PricerSolverBase::compute_reduced_cost_simple(
+    const OptimalSolution<>& sol,
+    double*                  pi) {
     double result = sol.cost;
     // auto      nb_constraints = reformulation_model.get_nb_constraints();
     std::span aux_pi{pi, reformulation_model.size()};

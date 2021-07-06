@@ -105,7 +105,7 @@ void PricerSolverSimpleDp::build_mip() {
 
         std::unique_ptr<GRBConstr> assignment_constrs(
             model.addConstrs(assignment.data(), sense.data(), rhs.data(),
-                             nullptr, convex_constr_id));
+                             nullptr, static_cast<int>(convex_constr_id)));
 
         model.update();
 
@@ -129,7 +129,7 @@ void PricerSolverSimpleDp::build_mip() {
 
             if (add_constraint) {
                 interval_sense[t] = '<';
-                interval_rhs[t] = convex_rhs;
+                interval_rhs[t] = static_cast<double>(convex_rhs);
 
                 model.addConstr(interval_constr[t], interval_sense[t],
                                 interval_rhs[t]);

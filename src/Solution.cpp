@@ -1,21 +1,8 @@
 // #include "Solution.hpp"
 // #include <bits/ranges_algo.h>
-// #include <fmt/core.h>
-// #include <algorithm>
-// #include <cstddef>
-// #include <cstdio>
-// #include <memory>
-// #include <random>
-// #include <range/v3/action/erase.hpp>
-// #include <range/v3/action/insert.hpp>
-// #include <range/v3/all.hpp>
-// #include <vector>
-// #include "Instance.h"
-// #include "Interval.h"
-// #include "Job.h"
-
 #include "Solution.hpp"
-#include <fmt/core.h>                                  // for print
+#include <fmt/core.h>  // for print
+#include <fmt/format.h>
 #include <algorithm>                                   // for remove, __sort_fn
 #include <compare>                                     // for operator<
 #include <cstddef>                                     // for size_t
@@ -328,10 +315,10 @@ void Sol::calculate_partition(const VecIntervalPtr& v) {
 void Sol::print_solution() const {
     for (auto&& [j, m] : machines | ranges::views::enumerate) {
         fmt::print("Machine {}: ", j);
-        for (auto& tmp_j : m.job_list) {
-            fmt::print("{} ", tmp_j->job);
-        }
-        fmt::print("with C = {}, TW = {}, {} jobs\n", m.total_processing_time,
+        auto rng = m.job_list | ranges::views::transform(
+                                    [](const auto& tmp) { return tmp->job; });
+        fmt::print("{}", fmt::join(rng, " "));
+        fmt::print(" with C = {}, TW = {}, {} jobs\n", m.total_processing_time,
                    m.total_weighted_tardiness, m.job_list.size());
     }
     fmt::print("with total weighted tardiness {}\n", tw + off);

@@ -214,6 +214,8 @@ struct NodeData {
     std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
                                                                 int    _t);
 
+    std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
+                                                                long   _t);
     int add_scheduleset_to_rmp(ScheduleSet* set);
 
    private:
@@ -223,6 +225,7 @@ struct NodeData {
     int  grow_ages();
     void print_ages();
 
+    static constexpr int    NB_ESTIMATE_IT = 20;
     static constexpr double min_nb_del_row_ratio = 0.9;
 };
 

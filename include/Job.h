@@ -19,9 +19,11 @@ struct Job {
     ~Job() = default;
 
     int weighted_tardiness(int C);
+    int weighted_tardiness(size_t C);
     int weighted_tardiness_start(int S);
+    int weighted_tardiness_start(size_t S);
+    int weighted_tardiness_start(long S);
 };
-
 
 int value_diff_Fij(int C, Job* i, Job* j);
 int bool_diff_Fij(int, Job*, Job*);
