@@ -16,12 +16,11 @@
 void Problem::to_csv() {
     using ptr_file = std::unique_ptr<std::FILE, std::function<int(FILE*)>>;
 
-    ptr_file    file{};
-    std::time_t result = std::time(nullptr);
-    const auto  current_t = std::localtime(&result);
+    ptr_file file{};
+    auto     result = std::time(nullptr);
 
     std::string file_name =
-        fmt::format("CG_overall_{:%Y_%m_%d}.csv", *current_t);
+        fmt::format("CG_overall_{:%Y_%m_%d}.csv", fmt::localtime(result));
     stat.real_time_total = getRealTime() - stat.real_time_total;
     CCutil_stop_timer(&(stat.tot_cputime), 0);
 
@@ -75,9 +74,9 @@ void Problem::to_csv() {
         stat.total_timer(Statistics::reduced_cost_fixing_timer), stat.rel_error,
         stat.global_lower_bound, stat.global_upper_bound, stat.root_rel_error,
         stat.root_upper_bound, stat.root_lower_bound, stat.nb_generated_col,
-        stat.nb_generated_col_root, tree->get_nb_nodes_explored(), *current_t,
-        parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
-        parms.pricing_solver, stat.first_size_graph,
+        stat.nb_generated_col_root, tree->get_nb_nodes_explored(),
+        fmt::localtime(result), parms.nb_iterations_rvnd, parms.stab_technique,
+        parms.alpha, parms.pricing_solver, stat.first_size_graph,
         stat.size_graph_after_reduced_cost_fixing, parms.strong_branching,
         parms.branching_point, parms.refine_bdd, parms.pruning_test,
         parms.suboptimal_duals, parms.scoring_parameter, stat.mip_nb_vars,
