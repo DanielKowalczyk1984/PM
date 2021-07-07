@@ -65,7 +65,8 @@ NodeData::NodeData(Problem* problem)
       nb_non_improvements(0),
       iterations(0),
       solver_stab(nullptr),
-      retirementage(static_cast<int>(sqrt(nb_jobs)) + CLEANUP_ITERATION),
+      retirementage(static_cast<int>(sqrt(static_cast<double>(nb_jobs))) +
+                    CLEANUP_ITERATION),
       branch_job(-1),
       completiontime(0),
       less(-1) {}
@@ -133,7 +134,7 @@ std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
     aux->build_rmp();
     aux->delete_infeasible_columns();
     aux->solve_relaxation();
-    aux->estimate_lower_bound(10);
+    aux->estimate_lower_bound(instance.nb_machines);
     return aux;
 }
 
@@ -141,6 +142,13 @@ std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
                                                                       int _t) {
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, _t, false),
                                                     clone(_j, _t, true)};
+}
+
+std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
+                                                                      long _t) {
+    auto aux_t = static_cast<int>(_t);
+    return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, aux_t, false),
+                                                    clone(_j, aux_t, true)};
 }
 
 void NodeData::prune_duplicated_sets() {
