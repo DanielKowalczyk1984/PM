@@ -494,9 +494,9 @@ size_t PricerSolverArcTimeDp::get_num_remove_edges() {
 
 size_t PricerSolverArcTimeDp::get_nb_edges() {
     auto nb_edges = 0UL;
-    for (auto j = 0UL; j < n + 1; j++) {
-        for (auto t : ranges::views::ints(0UL, Hmax + 1)) {
-            nb_edges += graph[j][t].size();
+    for (auto& it : graph) {
+        for (auto& it_in : it) {
+            nb_edges += it_in.size();
         }
     }
     return nb_edges;
@@ -504,9 +504,9 @@ size_t PricerSolverArcTimeDp::get_nb_edges() {
 
 size_t PricerSolverArcTimeDp::get_nb_vertices() {
     size_t nb_vertices = 0u;
-    for (auto j = 0UL; j < n + 1; j++) {
-        for (auto t : ranges::views::ints(0UL, Hmax + 1)) {
-            if (!graph[j][t].empty()) {
+    for (auto& it : graph) {
+        for (auto& it_in : it) {
+            if (!it_in.empty()) {
                 nb_vertices++;
             }
         }

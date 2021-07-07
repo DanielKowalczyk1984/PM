@@ -623,7 +623,7 @@ int NodeData::compute_lower_bound() {
         stat.root_rel_error = static_cast<double>(stat.global_upper_bound -
                                                   stat.global_lower_bound) /
                               (stat.global_lower_bound + EPS);
-        stat.size_graph_after_reduced_cost_fixing = solver->get_nb_vertices();
+        stat.size_graph_after_reduced_cost_fixing = solver->get_nb_edges();
         stat.nb_generated_col_root = iterations;
     }
 

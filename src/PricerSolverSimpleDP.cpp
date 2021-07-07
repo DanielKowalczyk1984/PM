@@ -308,16 +308,16 @@ size_t PricerSolverSimpleDp::get_num_remove_edges() {
 
 size_t PricerSolverSimpleDp::get_nb_edges() {
     size_t nb_edges = 0u;
-    for (auto t = 0UL; t < Hmax + 1; t++) {
-        nb_edges += forward_graph[t].size();
+    for (auto& it : forward_graph) {
+        nb_edges += it.size();
     }
     return nb_edges;
 }
 
 size_t PricerSolverSimpleDp::get_nb_vertices() {
     size_t nb_vertices = 0u;
-    for (auto t = 0UL; t < Hmax + 1; t++) {
-        if (!forward_graph[t].empty()) {
+    for (auto& it : forward_graph) {
+        if (!it.empty()) {
             nb_vertices++;
         }
     }

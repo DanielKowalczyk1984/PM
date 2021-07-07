@@ -96,7 +96,7 @@ Problem::Problem(int argc, const char** argv)
             break;
     }
     stat.suspend_timer(Statistics::build_dd_timer);
-    stat.first_size_graph = root_pd->solver->get_nb_vertices();
+    stat.first_size_graph = root_pd->solver->get_nb_edges();
 
     /**
      * @brief Initial stabilization method
