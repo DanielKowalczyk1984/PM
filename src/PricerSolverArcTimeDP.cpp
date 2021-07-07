@@ -168,9 +168,9 @@ bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
                     forward_F[(*it)->job][t - (*it)->processing_time] +
                     tmp->weighted_tardiness_start(t) - pi[tmp->job] +
                     backward_F[tmp->job][t + tmp->processing_time];
-                if (result + pi[n] +
+                if (result +
                         static_cast<double>(convex_rhs - 1) *
-                            (forward_F[n][Hmax] + pi[n]) +
+                            (forward_F[n][Hmax]) +
                         constLB >
                     UB - 1 + RC_FIXING) {
                     size_graph--;
@@ -180,7 +180,7 @@ bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
                         std::find(reversed_graph[(*it)->job][t].begin(),
                                   reversed_graph[(*it)->job][t].end(), tmp);
                     reversed_graph[(*it)->job][t].erase(pend);
-                    graph[tmp->job][t].erase(it);
+                    it = graph[tmp->job][t].erase(it);
                 } else {
                     it++;
                 }
