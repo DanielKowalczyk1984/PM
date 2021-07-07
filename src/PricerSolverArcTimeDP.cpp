@@ -6,16 +6,17 @@
 #include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
 #include <range/v3/view/iota.hpp>                  // for iota_view, iota_vi...
 #include <range/v3/view/reverse.hpp>               // for reverse_fn, revers...
-#include <range/v3/view/view.hpp>                  // for operator|, view_cl...
-#include <span>                                    // for span
-#include <string>                                  // for char_traits, opera...
-#include <utility>                                 // for move
-#include <vector>                                  // for vector, vector<>::...
-#include "Instance.h"                              // for Instance
-#include "ModelInterface.hpp"                      // for ReformulationModel
-#include "PricerSolverBase.hpp"                    // for PricerSolverBase
-#include "gurobi_c++.h"                            // for GRBLinExpr, GRBModel
-#include "gurobi_c.h"                              // for GRB_EQUAL, GRB_BINARY
+#include <range/v3/view/take.hpp>
+#include <range/v3/view/view.hpp>  // for operator|, view_cl...
+#include <span>                    // for span
+#include <string>                  // for char_traits, opera...
+#include <utility>                 // for move
+#include <vector>                  // for vector, vector<>::...
+#include "Instance.h"              // for Instance
+#include "ModelInterface.hpp"      // for ReformulationModel
+#include "PricerSolverBase.hpp"    // for PricerSolverBase
+#include "gurobi_c++.h"            // for GRBLinExpr, GRBModel
+#include "gurobi_c.h"              // for GRB_EQUAL, GRB_BINARY
 #include "scheduleset.h"  // for ScheduleSet#include "PricerSolverArcTimeDP.hpp"
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
@@ -157,7 +158,40 @@ void PricerSolverArcTimeDp::init_table() {
 bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
     forward_evaluator(pi);
     backward_evaluator(pi);
-    return false;
+    auto num_edges_removed = 0;
+
+    for (auto tmp : vector_jobs | ranges::views::take(n)) {
+        for (int t = 0; t <= Hmax - tmp->processing_time; t++) {
+            auto it = graph[tmp->job][t].begin();
+            while (it != graph[tmp->job][t].end()) {
+                double result =
+                    forward_F[(*it)->job][t - (*it)->processing_time] +
+                    tmp->weighted_tardiness_start(t) - pi[tmp->job] +
+                    backward_F[tmp->job][t + tmp->processing_time];
+                if (result + pi[n] +
+                        static_cast<double>(convex_rhs - 1) *
+                            (forward_F[n][Hmax] + pi[n]) +
+                        constLB >
+                    UB - 1 + RC_FIXING) {
+                    size_graph--;
+                    num_edges_removed++;
+                    // Job* tmp_j = (*it);
+                    auto pend =
+                        std::find(reversed_graph[(*it)->job][t].begin(),
+                                  reversed_graph[(*it)->job][t].end(), tmp);
+                    reversed_graph[(*it)->job][t].erase(pend);
+                    graph[tmp->job][t].erase(it);
+                } else {
+                    it++;
+                }
+            }
+        }
+    }
+
+    // std::cout << "size_graph after reduced cost fixing = " << size_graph
+    //           << " and edges removed = " << num_edges_removed << "\n";
+
+    return (num_edges_removed > 0);
 }
 
 void PricerSolverArcTimeDp::build_mip() {

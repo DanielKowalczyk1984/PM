@@ -49,7 +49,6 @@ data['Inst'] = data.NameInstance.apply(
 for it in ['tot_real_time', 'tot_cputime', 'tot_bb', 'tot_lb', 'tot_lb_root', 'tot_heuristic', 'tot_build_dd', 'tot_pricing', 'tot_reduce_cost_fixing']:
     data[it] = 0.6*data[it]
 
-aux_data = data[data['pricing_solver'] == 3]
 
 # %% create result directory and copy results to that directory
 
@@ -81,19 +80,21 @@ os.popen("sd  \"CG_allinstances_20191024.csv\" \"CG_allinstances_{}_{}_{}.csv\" 
 # %% Compute summary results for CG over all solvers
 summary_grouped = data.groupby(['pricing_solver', 'n', 'm'])
 aggregation = {"tot_lb": {np.max, np.mean},
+               "tot_lb_root": {np.max, np.mean},
                "gap": {np.max, np.mean},
                "first_size_graph": {np.max, np.mean},
+               "size_after_reduced_cost": {np.max, np.mean},
                "opt": np.sum,
                "reduction": {np.max, np.mean},
                "tot_cputime": {np.max, np.mean}}
 summary_write = summary_grouped.agg(aggregation).pivot_table(index=['n', 'm'], values=[
-    'tot_lb', 'gap', 'first_size_graph', 'reduction', 'opt'], columns=['pricing_solver'])
+    'tot_lb', 'tot_lb_root', 'size_after_reduced_cost', 'gap', 'first_size_graph', 'reduction', 'opt'], columns=['pricing_solver'])
 print(summary_write.columns)
 summary_write.columns.set_levels(
-    ['AFBC', 'TI_BDD'], level=2, inplace=True)
+    ['AFBC', 'TI', 'ATI'], level=2, inplace=True)
 summary_write.columns = ["_".join(x) for x in summary_write.columns.ravel()]
 summary_write.to_csv(results_path.joinpath(
-    "/CG_summary_{}_{}_{}.csv".format(year, month, day)))
+    "CG_summary_{}_{}_{}.csv".format(year, month, day)))
 
 # %% pivot results for all pricing_solvers
 all_instances = data.pivot_table(values=['tot_lb', 'gap', 'first_size_graph', 'reduction', 'opt', 'rel_error', 'nb_generated_col',
@@ -121,7 +122,7 @@ df_oliveira_opt = df_oliveira[(df_oliveira['OptFound'] == 1)]
 data_opt = aux_data[(aux_data['opt'])]
 
 # %% Merge our results with results of Oliveira
-df_all_opt = pd.merge(aux_data, df_oliveira, on=['Inst', 'n', 'm'])
+df_all_opt = pd.merge(data, df_oliveira, on=['Inst', 'n', 'm'])
 
 # %%
 agg = {"tot_bb": {np.mean, np.max, np.min}, "TimeOliveira": {np.mean, np.max, np.min},  "tot_lb_root": {
