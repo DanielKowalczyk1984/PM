@@ -73,7 +73,53 @@ bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
     forward_evaluator(pi);
     backward_evaluator(pi);
 
-    return false;
+    std::span aux_pi{pi, reformulation_model.size()};
+    int       counter = 0;
+    int       x = 0;
+    auto      num_removed = 0;
+
+    for (int t = 0UL; t < Hmax + 1; t++) {
+        auto it = forward_graph[t].begin();
+        while (it != forward_graph[t].end()) {
+            double result = F[t - (*it)->processing_time] -
+                            2 * aux_pi[convex_constr_id] +
+                            (*it)->weighted_tardiness(t) - aux_pi[(*it)->job] +
+                            backward_F[t];
+
+            if (constLB + result +
+                    (static_cast<double>(convex_rhs) - 1.0) * F[Hmax] >
+                UB - 1.0 + RC_FIXING) {
+                --size_graph;
+                it = forward_graph[t].erase(it);
+                ++num_removed;
+            } else {
+                it++;
+            }
+        }
+
+        x += forward_graph[t].size();
+
+        auto iter = backward_graph[t].begin();
+        while (iter != backward_graph[t].end()) {
+            double result = F[t] + (*iter)->weighted_tardiness_start(t) -
+                            aux_pi[(*iter)->job] +
+                            backward_F[t + (*iter)->processing_time] -
+                            2 * aux_pi[convex_constr_id];
+            if (constLB + result +
+                    static_cast<double>(convex_rhs - 1) * F[Hmax] >
+                UB - 1.0 + RC_FIXING) {
+                take[(*iter)->job * (Hmax + 1) + t] = false;
+                iter = backward_graph[t].erase(iter);
+            } else {
+                take[(*iter)->job * (Hmax + 1) + t] = true;
+                iter++;
+            }
+        }
+
+        counter += backward_graph[t].size();
+    }
+
+    return (num_removed > 0);
 }
 
 void PricerSolverSimpleDp::build_mip() {

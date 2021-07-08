@@ -160,13 +160,15 @@ bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
     backward_evaluator(pi);
     auto num_edges_removed = 0;
 
+    std::span aux_pi{pi, reformulation_model.size()};
+
     for (auto tmp : vector_jobs | ranges::views::take(n)) {
         for (int t = 0; t <= Hmax - tmp->processing_time; t++) {
             auto it = graph[tmp->job][t].begin();
             while (it != graph[tmp->job][t].end()) {
                 double result =
                     forward_F[(*it)->job][t - (*it)->processing_time] +
-                    tmp->weighted_tardiness_start(t) - pi[tmp->job] +
+                    tmp->weighted_tardiness_start(t) - aux_pi[tmp->job] +
                     backward_F[tmp->job][t + tmp->processing_time];
                 if (result +
                         static_cast<double>(convex_rhs - 1) *
@@ -175,7 +177,6 @@ bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
                     UB - 1 + RC_FIXING) {
                     size_graph--;
                     num_edges_removed++;
-                    // Job* tmp_j = (*it);
                     auto pend =
                         std::find(reversed_graph[(*it)->job][t].begin(),
                                   reversed_graph[(*it)->job][t].end(), tmp);
@@ -187,9 +188,6 @@ bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
             }
         }
     }
-
-    // std::cout << "size_graph after reduced cost fixing = " << size_graph
-    //           << " and edges removed = " << num_edges_removed << "\n";
 
     return (num_edges_removed > 0);
 }
