@@ -81,13 +81,12 @@ bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
     for (int t = 0UL; t < Hmax + 1; t++) {
         auto it = forward_graph[t].begin();
         while (it != forward_graph[t].end()) {
-            double result = F[t - (*it)->processing_time] -
-                            2 * aux_pi[convex_constr_id] +
+            double result = F[t - (*it)->processing_time] +
                             (*it)->weighted_tardiness(t) - aux_pi[(*it)->job] +
-                            backward_F[t];
+                            backward_F[t + (*it)->processing_time];
 
             if (constLB + result +
-                    (static_cast<double>(convex_rhs) - 1.0) * F[Hmax] >
+                    static_cast<double>(convex_rhs - 1.0) * F[Hmax] >
                 UB - 1.0 + RC_FIXING) {
                 --size_graph;
                 it = forward_graph[t].erase(it);
@@ -103,8 +102,7 @@ bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
         while (iter != backward_graph[t].end()) {
             double result = F[t] + (*iter)->weighted_tardiness_start(t) -
                             aux_pi[(*iter)->job] +
-                            backward_F[t + (*iter)->processing_time] -
-                            2 * aux_pi[convex_constr_id];
+                            backward_F[t + (*iter)->processing_time];
             if (constLB + result +
                     static_cast<double>(convex_rhs - 1) * F[Hmax] >
                 UB - 1.0 + RC_FIXING) {
@@ -203,7 +201,7 @@ void PricerSolverSimpleDp::build_mip() {
 void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     /** Initialisation */
     std::span aux_pi{_pi, reformulation_model.size()};
-    F[0] = aux_pi[convex_constr_id];
+    F[0] = 0.0;
     A[0] = nullptr;
 
     for (auto t = 1UL; t < Hmax + 1; t++) {
