@@ -85,9 +85,6 @@ bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
                             (*it)->weighted_tardiness(t) - aux_pi[(*it)->job] +
                             backward_F[t + (*it)->processing_time];
 
-            fmt::print("test {}\n",
-                       constLB + result +
-                           static_cast<double>(convex_rhs - 1.0) * F[Hmax]);
             if (constLB + result +
                     static_cast<double>(convex_rhs - 1.0) * F[Hmax] >
                 UB - 1.0 + RC_FIXING) {
