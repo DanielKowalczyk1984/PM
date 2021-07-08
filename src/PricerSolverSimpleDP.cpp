@@ -83,7 +83,7 @@ bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
         while (it != forward_graph[t].end()) {
             double result = F[t - (*it)->processing_time] +
                             (*it)->weighted_tardiness(t) - aux_pi[(*it)->job] +
-                            backward_F[t + (*it)->processing_time];
+                            backward_F[t];
 
             if (constLB + result +
                     static_cast<double>(convex_rhs - 1.0) * F[Hmax] >
