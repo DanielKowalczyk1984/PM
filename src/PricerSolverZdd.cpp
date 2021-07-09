@@ -465,7 +465,7 @@ void PricerSolverZdd::iterate_zdd() {
     }
 }
 
-void PricerSolverZdd::create_dot_zdd(const char* name) {
+void PricerSolverZdd::create_dot_zdd([[maybe_unused]] const char* name) {
     // std::ofstream file;
     // file.open(name);
     // // decision_diagram->dumpDot(file);

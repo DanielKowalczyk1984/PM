@@ -13,6 +13,7 @@
 #include <NodeBddTable.hpp>
 #include <unordered_set>
 #include <vector>
+#include "NodeId.hpp"
 #include "util/MyHashTable.hpp"
 #include "util/MyVector.hpp"
 
@@ -211,8 +212,8 @@ class DdReducer {
         newId.resize(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j) {
-            NodeId& f0 = tt[j][0];
-            NodeId& f1 = tt[j][1];
+            auto& f0 = tt[j][0];
+            auto& f1 = tt[j][1];
 
             if (f0.row() != 0) {
                 f0 = newIdTable[f0.row()][f0.col()];
@@ -224,8 +225,8 @@ class DdReducer {
             if (ZDD && f1 == 0) {
                 newId[j] = f0;
             } else {
-                NodeId& f00 = input.child(f0, 0UL);
-                NodeId& f01 = input.child(f0, 1UL);
+                auto& f00 = input.child(f0, 0UL);
+                auto& f01 = input.child(f0, 1UL);
 
                 if (f01 != mark) {  // the first touch from this level
                     f01 = mark;     // mark f0 as touched
@@ -245,23 +246,23 @@ class DdReducer {
         }
         size_t mm = 0;
 
-        for (size_t j = 0; j < m; ++j) {
+        for (auto j = 0UL; j < m; ++j) {
             NodeId const f(i, j);
             assert(newId[j].row() <= i + 1);
             if (newId[j].row() <= i) {
                 continue;
             }
 
-            for (size_t k = j; k < m;) {  // for each g in f0-equivalent list
+            for (auto k = j; k < m;) {  // for each g in f0-equivalent list
                 assert(j <= k);
                 NodeId const g(i, k);
-                NodeId&      g0 = tt[k][0];
-                NodeId&      g1 = tt[k][1];
-                NodeId&      g10 = input.child(g1, 0);
-                NodeId&      g11 = input.child(g1, 1);
+                auto&        g0 = tt[k][0];
+                auto&        g1 = tt[k][1];
+                auto&        g10 = input.child(g1, 0);
+                auto&        g11 = input.child(g1, 1);
                 assert(g1 != mark);
                 assert(newId[k].row() == i + 1);
-                size_t next = newId[k].col();
+                auto next = newId[k].col();
 
                 if (g11 != f) {  // the first touch to g1 in f0-equivalent list
                     g11 = f;     // mark g1 as touched
@@ -287,8 +288,8 @@ class DdReducer {
             std::span<T> nt{output[i].data(), output[i].size()};
 
             for (size_t j = 0; j < m; ++j) {
-                NodeId const& f0 = tt[j][0];
-                NodeId const& f1 = tt[j][1];
+                auto const& f0 = tt[j][0];
+                auto const& f1 = tt[j][1];
 
                 if (f1 == mark) {  // forwarded
                     assert(f0.row() == i);
@@ -298,9 +299,8 @@ class DdReducer {
                     assert(newId[j].row() < i);
                 } else {
                     assert(newId[j].row() == i);
-                    size_t k = newId[j].col();
+                    auto k = newId[j].col();
                     nt[k] = tt[j];
-                    fmt::print("test {}\n", nt[k].coeff_list[1].size());
                     nt[k].set_node_id_label(newId[j]);
                 }
             }
@@ -309,7 +309,7 @@ class DdReducer {
         }
 
         for (auto& k : rootPtr[i]) {
-            NodeId& root = *k;
+            auto& root = *k;
             root = newId[root.col()];
         }
     }
@@ -319,9 +319,9 @@ class DdReducer {
      * @param i level.
      */
     void reduce_(int i) {
-        size_t const m = input[i].size();
+        auto const m = input[i].size();
         newIdTable[i].resize(m);
-        size_t jj = 0;
+        auto jj = 0UL;
 
         {
             // MyList<ReducNodeInfo> rni;
@@ -368,8 +368,8 @@ class DdReducer {
 
         output.initRow(i, jj);
 
-        for (size_t j = 0; j < m; ++j) {
-            NodeId const& ff = newIdTable[i][j];
+        for (auto j = 0UL; j < m; ++j) {
+            auto const& ff = newIdTable[i][j];
             if (ff.row() == i) {
                 output[i][ff.col()] = input[i][j];
                 output[i][ff.col()].child[0] =
@@ -381,7 +381,7 @@ class DdReducer {
 
         input[i].clear();
 
-        for (size_t k = 0; k < rootPtr[i].size(); ++k) {
+        for (auto k = 0UL; k < rootPtr[i].size(); ++k) {
             NodeId& root = *rootPtr[i][k];
             root = newIdTable[i][root.col()];
         }

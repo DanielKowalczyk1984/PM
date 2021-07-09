@@ -74,11 +74,11 @@ bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
     backward_evaluator(pi);
 
     std::span aux_pi{pi, reformulation_model.size()};
-    int       counter = 0;
-    int       x = 0;
+    auto      counter = 0UL;
+    auto      x = 0UL;
     auto      num_removed = 0;
 
-    for (int t = 0UL; t < Hmax + 1; t++) {
+    for (auto t = 0UL; t < Hmax + 1; ++t) {
         auto it = forward_graph[t].begin();
         while (it != forward_graph[t].end()) {
             double result = F[t - (*it)->processing_time] +
@@ -86,7 +86,7 @@ bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
                             backward_F[t];
 
             if (constLB + result +
-                    static_cast<double>(convex_rhs - 1.0) * F[Hmax] >
+                    static_cast<double>(convex_rhs - 1) * F[Hmax] >
                 UB - 1.0 + RC_FIXING) {
                 --size_graph;
                 it = forward_graph[t].erase(it);
