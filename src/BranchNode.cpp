@@ -83,7 +83,8 @@ void BranchNodeBase::branch(BTree* bt) {
             return std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS;
         });
 
-    for (auto&& [x_j, job] : rng_sum_wt | ranges::views::take(8)) {
+    for (auto&& [x_j, job] :
+         rng_sum_wt | ranges::views::take(std::min(50UL, instance.nb_jobs))) {
         // auto aux_vec = ranges::views::iota(0UL, x_j.size()) |
         //                ranges::views::transform([&](const auto& tmp) {
         //                    return job->weighted_tardiness_start(tmp);
@@ -118,7 +119,8 @@ void BranchNodeBase::branch(BTree* bt) {
                 return std::min(sum - std::floor(sum), std::ceil(sum) - sum) >
                        EPS;
             });
-        for (auto&& [x_j, job] : rng_t | ranges::views::take(25)) {
+        for (auto&& [x_j, job] :
+             rng_t | ranges::views::take(std::min(50UL, instance.nb_jobs))) {
             // auto aux_vec =
             //     ranges::views::iota(0UL, x_j.size()) |
             //     ranges::views::transform([&](const auto& tmp) { return tmp;
