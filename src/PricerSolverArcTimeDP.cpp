@@ -1,7 +1,8 @@
 #include "PricerSolverArcTimeDP.hpp"
 #include <fmt/core.h>
-#include <cstddef>                                 // for size_t
-#include <limits>                                  // for numeric_limits
+#include <cstddef>  // for size_t
+#include <limits>   // for numeric_limits
+#include <range/v3/algorithm/find.hpp>
 #include <range/v3/iterator/basic_iterator.hpp>    // for basic_iterator
 #include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
 #include <range/v3/view/iota.hpp>                  // for iota_view, iota_vi...
@@ -29,7 +30,7 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
       nb_edges_removed{},
       lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
       solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
-    for (auto i = 0UL; i < n; ++i) {
+    for (auto i : ranges::views::ints(0UL, n)) {
         vector_jobs.push_back((jobs)[i].get());
     }
     j0.job = n;
@@ -37,8 +38,6 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
 
     init_table();
 }
-
-#pragma clang diagnostic pop
 
 void PricerSolverArcTimeDp::init_table() {
     graph = vector3d_jobs(n + 1);
@@ -78,7 +77,8 @@ void PricerSolverArcTimeDp::init_table() {
         for (auto t : ranges::views::ints(0UL, Hmax + 1)) {
             for (auto& it : vector_jobs) {
                 int p = (it->job != j) ? it->processing_time : 1;
-                if (it != tmp && t >= p && t + tmp->processing_time <= Hmax) {
+                if (it != tmp && static_cast<int>(t) >= p &&
+                    t + tmp->processing_time <= Hmax) {
                     graph[j][t].push_back(it);
                     size_graph++;
                 }
@@ -89,7 +89,7 @@ void PricerSolverArcTimeDp::init_table() {
     graph[n] = vector2d_jobs(Hmax + 1);
     for (auto t : ranges::views::ints(0UL, Hmax + 1)) {
         for (auto& it : vector_jobs) {
-            if (t >= it->processing_time) {
+            if (static_cast<int>(t) >= it->processing_time) {
                 graph[n][t].push_back(it);
                 size_graph++;
             }
@@ -120,13 +120,14 @@ void PricerSolverArcTimeDp::init_table() {
 
     for (auto j = 0UL; j < n; ++j) {
         Job* tmp_j = vector_jobs[j];
-        for (int t = tmp_j->processing_time; t < Hmax; ++t) {
+        for (auto t : ranges::views::ints(
+                 static_cast<size_t>(tmp_j->processing_time), Hmax)) {
             if (delta2(j, t) <= 0) {
                 remove_arc(n, j, t - tmp_j->processing_time + 1);
-                size_graph--;
+                --size_graph;
             } else {
                 remove_arc(j, n, t);
-                size_graph--;
+                --size_graph;
             }
         }
     }
@@ -163,7 +164,7 @@ bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
     std::span aux_pi{pi, reformulation_model.size()};
 
     for (auto tmp : vector_jobs | ranges::views::take(n)) {
-        for (int t = 0; t <= Hmax - tmp->processing_time; t++) {
+        for (auto t = 0UL; t <= Hmax - tmp->processing_time; t++) {
             auto it = graph[tmp->job][t].begin();
             while (it != graph[tmp->job][t].end()) {
                 double result =
@@ -174,12 +175,11 @@ bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
                         static_cast<double>(convex_rhs - 1) *
                             (forward_F[n][Hmax]) +
                         constLB >
-                    UB - 1 + RC_FIXING) {
+                    UB - 1.0 + RC_FIXING) {
                     size_graph--;
                     num_edges_removed++;
                     auto pend =
-                        std::find(reversed_graph[(*it)->job][t].begin(),
-                                  reversed_graph[(*it)->job][t].end(), tmp);
+                        ranges::find(reversed_graph[(*it)->job][t], tmp);
                     reversed_graph[(*it)->job][t].erase(pend);
                     it = graph[tmp->job][t].erase(it);
                 } else {

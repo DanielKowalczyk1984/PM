@@ -127,7 +127,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         graph[j][t].erase(pend);
     }
 
-    int delta2(const size_t& j, const int& t) {
+    int delta2(const size_t& j, const size_t& t) {
         Job* tmp_j = vector_jobs[j];
         return tmp_j->weighted_tardiness(t) - tmp_j->weighted_tardiness(t + 1);
     }
