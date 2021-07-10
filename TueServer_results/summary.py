@@ -1,5 +1,6 @@
 
-# %%
+# %% import everything you need
+import subprocess
 from PyQt5.QtWidgets import QFileDialog
 import re
 import pandas as pd
@@ -16,7 +17,10 @@ import matplotlib.pyplot as plt
 workdir = Path.cwd()
 results = workdir.joinpath(Path("./results"))
 plt.style.use('ggplot')
-# %%
+my_env = os.environ.copy()
+my_env["PATH"] = "/home/daniel/.cargo/bin:" + my_env["PATH"]
+
+# %% define function to grab latest results
 %gui qt
 
 
@@ -46,8 +50,6 @@ data['reduction'] = (data['first_size_graph'] -
                      data['size_after_reduced_cost'])/(data['first_size_graph'] + 0.000001)
 data['Inst'] = data.NameInstance.apply(
     lambda x:  int(re.search(r'.*\_(\d+)', x).group(1)))
-for it in ['tot_real_time', 'tot_cputime', 'tot_bb', 'tot_lb', 'tot_lb_root', 'tot_heuristic', 'tot_build_dd', 'tot_pricing', 'tot_reduce_cost_fixing']:
-    data[it] = 0.6*data[it]
 
 
 # %% create result directory and copy results to that directory
@@ -63,18 +65,15 @@ tex_file = str()
 # %% Create tex files for Column generation results
 template_dir_path = workdir.joinpath("./template_dir")
 for lst in template_dir_path.iterdir():
-    if lst.name == "CG_tables_template.tex":
+    if lst.name == "template_table.tex":
         copy(lst, results_path.joinpath(
             "CG_tables_{}_{}_{}.tex".format(year, month, day)))
         tex_file = str(results_path.joinpath(
             "CG_tables_{}_{}_{}.tex".format(year, month, day)))
     else:
         copy(lst, results_path.joinpath(lst.name))
-
-os.popen("sd  \"CG_summary_20191024.csv\" \"CG_summary_{}_{}_{}.csv\" ".format(
-    year, month, day)+tex_file)
-os.popen("sd  \"CG_allinstances_20191024.csv\" \"CG_allinstances_{}_{}_{}.csv\" ".format(
-    year, month, day)+tex_file)
+r = subprocess.run(["CG_summary_20191004.csv", "CG_summary_{}_{}_{}.csv ".format(
+    year, month, day), tex_file], executable='sd', env=my_env)
 
 
 # %% Compute summary results for CG over all solvers
@@ -89,9 +88,9 @@ aggregation = {"tot_lb": {np.max, np.mean},
                "tot_cputime": {np.max, np.mean}}
 summary_write = summary_grouped.agg(aggregation).pivot_table(index=['n', 'm'], values=[
     'tot_lb', 'tot_lb_root', 'size_after_reduced_cost', 'gap', 'first_size_graph', 'reduction', 'opt'], columns=['pricing_solver'])
-print(summary_write.columns)
 summary_write.columns.set_levels(
     ['AFBC', 'TI', 'ATI'], level=2, inplace=True)
+print(summary_write.columns)
 summary_write.columns = ["_".join(x) for x in summary_write.columns.ravel()]
 summary_write.to_csv(results_path.joinpath(
     "CG_summary_{}_{}_{}.csv".format(year, month, day)))
@@ -122,6 +121,8 @@ df_oliveira_opt = df_oliveira[(df_oliveira['OptFound'] == 1)]
 data_opt = aux_data[(aux_data['opt'])]
 
 # %% Merge our results with results of Oliveira
+for it in ['tot_real_time', 'tot_cputime', 'tot_bb', 'tot_lb', 'tot_lb_root', 'tot_heuristic', 'tot_build_dd', 'tot_pricing', 'tot_reduce_cost_fixing']:
+    data[it] = 0.6*data[it]
 df_all_opt = pd.merge(data, df_oliveira, on=['Inst', 'n', 'm'])
 
 # %%
