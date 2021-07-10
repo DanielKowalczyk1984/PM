@@ -47,7 +47,6 @@ find_package(codecov)
 #
 
 find_package(Gurobi)
-include(CoinOR)
 add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 
