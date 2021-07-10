@@ -85,14 +85,6 @@ void BranchNodeBase::branch(BTree* bt) {
 
     for (auto&& [x_j, job] :
          rng_sum_wt | ranges::views::take(std::min(50UL, instance.nb_jobs))) {
-        // auto aux_vec = ranges::views::iota(0UL, x_j.size()) |
-        //                ranges::views::transform([&](const auto& tmp) {
-        //                    return job->weighted_tardiness_start(tmp);
-        //                }) |
-        //                ranges::to<std::vector>;
-        // auto sum = ranges::inner_product(x_j, aux_vec, 0.0);
-        // auto lb_it = ranges::lower_bound(aux_vec, sum);
-        // if (std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS) {
         while ((x_ref.second[job->job][tmp_t] ==
                 x_ref.second[job->job][tmp_t + 1]) &&
                job->weighted_tardiness_start(tmp_t) == 0) {
@@ -121,15 +113,6 @@ void BranchNodeBase::branch(BTree* bt) {
             });
         for (auto&& [x_j, job] :
              rng_t | ranges::views::take(std::min(50UL, instance.nb_jobs))) {
-            // auto aux_vec =
-            //     ranges::views::iota(0UL, x_j.size()) |
-            //     ranges::views::transform([&](const auto& tmp) { return tmp;
-            //     }) | ranges::to_vector;
-            // auto sum = ranges::inner_product(x_j, aux_vec, 0.0);
-            // auto lb_it = ranges::lower_bound(aux_vec, sum);
-            // if (std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS)
-            // {
-            // auto tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
             while ((x_ref.second[job->job][tmp_t] ==
                     x_ref.second[job->job][tmp_t + 1]) &&
                    (job->weighted_tardiness_start(tmp_t) == 0)) {
