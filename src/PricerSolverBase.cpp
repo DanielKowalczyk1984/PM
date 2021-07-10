@@ -81,18 +81,19 @@ bool PricerSolverBase::evaluate_mip_model() {
     int opt_status = model.get(GRB_IntAttr_Status);
 
     double objval = 0;
-    if (opt_status == GRB_OPTIMAL) {
-        objval = model.get(GRB_DoubleAttr_ObjVal);
-        update_UB(objval);
-        return objval < UB;
-    } else if (opt_status == GRB_INF_OR_UNBD) {
-        return false;
-    } else if (opt_status == GRB_INFEASIBLE) {
-        return false;
-    } else if (opt_status == GRB_UNBOUNDED) {
-        return false;
-    } else {
-        return true;
+    switch (opt_status) {
+        case GRB_OPTIMAL:
+            objval = model.get(GRB_DoubleAttr_ObjVal);
+            update_UB(objval);
+            return objval < UB;
+            break;
+        case GRB_INFEASIBLE:
+        case GRB_INF_OR_UNBD:
+        case GRB_UNBOUNDED:
+            return false;
+            break;
+        default:
+            return true;
     }
 }
 
@@ -423,7 +424,8 @@ void PricerSolverBase::calculate_constLB(double* pi) {
     }
 }
 /*-------------------------------------------------------------------------*/
-/*------------------initialize static members------------------------------*/
+/*------------------initialize static
+ * members------------------------------*/
 /*-------------------------------------------------------------------------*/
 
 const std::shared_ptr<GRBEnv> PricerSolverBase::genv =
