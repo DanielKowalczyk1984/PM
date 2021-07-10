@@ -43,7 +43,7 @@ BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
     tree->set_global_ub(double(root->opt_sol.tw));
     tree->set_retain_states(false);
     tree->set_final_test_usage(parms.pruning_test);
-    tree->set_time_limit(parms.branching_cpu_limit);
+    tree->set_time_limit(static_cast<int>(parms.branching_cpu_limit));
     tree->set_node_limit(parms.bb_node_limit);
     tree->set_only_root_node(parms.bb_node_limit == 1);
     auto aux = root->depth;
