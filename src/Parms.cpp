@@ -235,7 +235,8 @@ int Parms::parse_cmd(int argc, const char** argv) {
     parms_set_scoring_function(
         static_cast<int>(args["--scoring_function"].asLong()));
     parms_set_branchandbound(args["--no_branch_and_bound"].asBool());
-    parms_set_strong_branching((args["--strong_branching"].asLong()));
+    parms_set_strong_branching(
+        static_cast<int>(args["--strong_branching"].asLong()));
     parms_set_alpha(std::stod(args["--alpha"].asString()));
     branching_point = std::stod(args["--branching_point"].asString());
     refine_bdd = args["--refinement"].asBool();
