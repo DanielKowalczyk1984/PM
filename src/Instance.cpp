@@ -65,9 +65,11 @@ Instance::Instance(const Parms& _parms)
 void Instance::calculate_H_max_H_min() {
     auto temp = p_sum - pmax;
     auto temp_dbl = static_cast<double>(temp);
-    temp_dbl = floor(temp_dbl / nb_machines);
+    auto tmp_m = static_cast<double>(nb_machines);
+    temp_dbl = floor(temp_dbl / tmp_m);
+
     H_max = static_cast<int>(temp_dbl) + pmax;
-    H_min = static_cast<int>(ceil(temp_dbl / nb_machines)) - pmax;
+    H_min = static_cast<int>(ceil(temp_dbl / tmp_m)) - pmax;
 
     std::ranges::sort(jobs, [](const auto& lhs, const auto& rhs) -> bool {
         return (lhs->processing_time < rhs->processing_time);
@@ -79,7 +81,7 @@ void Instance::calculate_H_max_H_min() {
         jobs | ranges::views::reverse | ranges::views::take(nb_machines - 1),
         p_sum, std::minus<>{}, [](auto& it) { return it->processing_time; });
 
-    H_min = static_cast<int>(ceil(tmp / nb_machines));
+    H_min = static_cast<int>(ceil(tmp / tmp_m));
     fmt::print(
         R"(H_max = {}, H_min = {},  pmax = {}, pmin = {}, p_sum = {}, off = {}
 )",
