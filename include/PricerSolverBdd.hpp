@@ -1,17 +1,5 @@
 #ifndef PRICER_SOLVER_BDD_HPP
 #define PRICER_SOLVER_BDD_HPP
-// #include <memory>
-// #include <range/v3/view/drop.hpp>
-// #include <unordered_map>
-// #include <vector>
-// #include "Instance.h"
-// #include "MipGraph.hpp"
-// #include "ModelInterface.hpp"
-// #include "NodeBdd.hpp"
-// #include "NodeBddStructure.hpp"
-// #include "OptimalSolution.hpp"
-// #include "PricerSolverBase.hpp"
-
 #include <boost/move/utility_core.hpp>           // for move
 #include <cstddef>                               // for size_t
 #include <memory>                                // for unique_ptr, shared_ptr
