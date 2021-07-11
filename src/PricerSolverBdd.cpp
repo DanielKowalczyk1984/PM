@@ -1,14 +1,15 @@
 #include "PricerSolverBdd.hpp"
-#include <fmt/core.h>                                  // for print
-#include <gurobi_c++.h>                                // for GRBLinExpr
-#include <algorithm>                                   // for find, min, all_of
-#include <array>                                       // for array, array<>...
-#include <boost/dynamic_bitset/dynamic_bitset.hpp>     // for dynamic_bitset
-#include <boost/graph/adjacency_list.hpp>              // for source, target
-#include <boost/graph/detail/adjacency_list.hpp>       // for undirected_edg...
-#include <boost/graph/detail/edge.hpp>                 // for edge_desc_impl
-#include <boost/graph/graphviz.hpp>                    // for write_graphviz
-#include <boost/iterator/iterator_facade.hpp>          // for operator!=
+#include <fmt/core.h>                               // for print
+#include <gurobi_c++.h>                             // for GRBLinExpr
+#include <algorithm>                                // for find, min, all_of
+#include <array>                                    // for array, array<>...
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
+#include <boost/graph/adjacency_list.hpp>           // for source, target
+#include <boost/graph/detail/adjacency_list.hpp>    // for undirected_edg...
+#include <boost/graph/detail/edge.hpp>              // for edge_desc_impl
+#include <boost/graph/graphviz.hpp>                 // for write_graphviz
+#include <boost/iterator/iterator_facade.hpp>       // for operator!=
+#include <boost/multiprecision/cpp_int.hpp>
 #include <boost/pending/property.hpp>                  // for lookup_one_pro...
 #include <boost/range/irange.hpp>                      // for integer_iterator
 #include <cassert>                                     // for assert
@@ -1749,7 +1750,7 @@ int PricerSolverBdd::get_num_layers() {
     return decision_diagram.topLevel();
 }
 
-size_t PricerSolverBdd::print_num_paths() {
+boost::multiprecision::cpp_int PricerSolverBdd::print_num_paths() {
     auto evaluator = CardinalityPaths();
     return decision_diagram.evaluate_backward(evaluator);
 }

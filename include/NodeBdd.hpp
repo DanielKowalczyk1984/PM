@@ -4,6 +4,7 @@
 #include <gurobi_c++.h>
 #include <array>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <cstddef>
 #include <memory>
 #include "Label.hpp"
@@ -28,18 +29,18 @@ class NodeBdd : public NodeBase {
     std::array<double, 2> lp_x{0.0, 0.0};
     std::array<double, 2> best_sol_x{0.0, 0.0};
 
-    std::array<bool, 2>     calc{true, true};
-    size_t                  key{};
-    size_t                  nb_paths{};
-    bool                    visited{false};
-    bool                    lp_visited{false};
-    boost::dynamic_bitset<> all{};
-    std::array<int, 2>      backward_distance{};
-    std::array<int, 2>      in_degree{};
-    std::array<GRBVar, 2>   y{};
-    std::array<GRBVar, 2>   r{};
-    GRBVar                  sigma{};
-    std::array<double, 2>   coeff_cut{0.0, 0.0};
+    std::array<bool, 2>            calc{true, true};
+    size_t                         key{};
+    boost::multiprecision::cpp_int nb_paths{};
+    bool                           visited{false};
+    bool                           lp_visited{false};
+    boost::dynamic_bitset<>        all{};
+    std::array<int, 2>             backward_distance{};
+    std::array<int, 2>             in_degree{};
+    std::array<GRBVar, 2>          y{};
+    std::array<GRBVar, 2>          r{};
+    GRBVar                         sigma{};
+    std::array<double, 2>          coeff_cut{0.0, 0.0};
 
     /**
      * Constructor

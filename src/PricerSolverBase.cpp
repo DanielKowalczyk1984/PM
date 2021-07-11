@@ -1,6 +1,7 @@
 #include "PricerSolverBase.hpp"
-#include <fmt/core.h>                                  // for print
-#include <algorithm>                                   // for min, __fill_fn
+#include <fmt/core.h>  // for print
+#include <algorithm>   // for min, __fill_fn
+#include <boost/multiprecision/cpp_int.hpp>
 #include <cmath>                                       // for fabs
 #include <cstddef>                                     // for size_t
 #include <ext/alloc_traits.h>                          // for __alloc_traits...
@@ -188,7 +189,7 @@ void PricerSolverBase::remove_constraints(int first, int nb_del) {
 
 void PricerSolverBase::update_rows_coeff([[maybe_unused]] size_t first) {}
 
-size_t PricerSolverBase::print_num_paths() {
+boost::multiprecision::cpp_int PricerSolverBase::print_num_paths() {
     return 0UL;
 }
 

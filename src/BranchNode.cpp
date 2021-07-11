@@ -3,6 +3,7 @@
 #include <fmt/format.h>
 #include <algorithm>
 #include <array>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <cmath>
 #include <cstddef>
 #include <memory>
@@ -27,6 +28,21 @@
 #include "branch-and-bound/btree.h"
 #include "util.h"
 #include "wctprivate.h"
+
+namespace fmt {
+template <>
+struct formatter<boost::multiprecision::cpp_int> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const boost::multiprecision::cpp_int& p, FormatContext& ctx) {
+        return format_to(ctx.begin(), "boost::number");
+    }
+};
+}  // namespace fmt
 
 BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
     : State(_isRoot),
@@ -325,7 +341,7 @@ void BranchNodeBase::print(const BTree* bt) const {
         solver->get_nb_vertices(), bt->getGlobalUB() + pd->instance.off,
         bt->getGlobalLB() + pd->instance.off, 0.0, pd->branch_job,
         pd->completiontime, bt->get_run_time_start(), pd->iterations,
-        solver->print_num_paths());
+        solver->print_num_paths().str());
 }
 
 BranchCandidate::BranchCandidate(

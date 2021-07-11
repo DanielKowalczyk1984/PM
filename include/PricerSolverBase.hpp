@@ -1,6 +1,7 @@
 #ifndef PRICER_SOLVER_BASE_HPP
 #define PRICER_SOLVER_BASE_HPP
-#include <gurobi_c++.h>         // for GRBModel
+#include <gurobi_c++.h>  // for GRBModel
+#include <boost/multiprecision/cpp_int.hpp>
 #include <cstddef>              // for size_t
 #include <functional>           // for reference_wrapper, ref
 #include <memory>               // for shared_ptr, unique_ptr
@@ -17,6 +18,8 @@ struct NodeData;     // lines 15-15
 struct ScheduleSet;  // lines 16-16
 
 struct PricerSolverBase {
+    using cpp_int = boost::multiprecision::cpp_int;
+
    public:
     const std::vector<std::shared_ptr<Job>>& jobs;
 
@@ -138,10 +141,10 @@ struct PricerSolverBase {
     /**
      * Some getters
      */
-    virtual void   iterate_zdd() = 0;
-    virtual size_t print_num_paths() = 0;
-    double         get_UB();
-    void           update_UB(double _ub);
+    virtual void    iterate_zdd() = 0;
+    virtual cpp_int print_num_paths() = 0;
+    double          get_UB();
+    void            update_UB(double _ub);
 
     virtual size_t get_num_remove_nodes() = 0;
     virtual size_t get_num_remove_edges() = 0;

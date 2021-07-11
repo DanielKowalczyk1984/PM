@@ -1,9 +1,10 @@
 #include "PricerSolverZdd.hpp"
-#include <fmt/core.h>                              // for print
-#include <gurobi_c++.h>                            // for GRBException
-#include <algorithm>                               // for remove_if, fill
-#include <array>                                   // for array
-#include <boost/graph/detail/adjacency_list.hpp>   // for num_edges
+#include <fmt/core.h>                             // for print
+#include <gurobi_c++.h>                           // for GRBException
+#include <algorithm>                              // for remove_if, fill
+#include <array>                                  // for array
+#include <boost/graph/detail/adjacency_list.hpp>  // for num_edges
+#include <boost/multiprecision/cpp_int.hpp>
 #include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
 #include <iostream>                                // for operator<<, cout
 #include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
@@ -497,6 +498,6 @@ int PricerSolverZdd::get_num_layers() {
     return decision_diagram->topLevel();
 }
 
-size_t PricerSolverZdd::print_num_paths() {
-    return 0UL;
+boost::multiprecision::cpp_int PricerSolverZdd::print_num_paths() {
+    return 0;
 }

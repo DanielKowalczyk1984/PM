@@ -1,13 +1,14 @@
 #include "PricerSolverSimpleDP.hpp"
 #include <fmt/core.h>
-#include <gurobi_c++.h>                            // for GRBLinExpr, GRBModel
-#include <algorithm>                               // for fill, find, max
-#include <boost/graph/adjacency_list.hpp>          // for adjacency_list
-#include <boost/graph/detail/adjacency_list.hpp>   // for edges, get, num_edges
-#include <boost/graph/detail/edge.hpp>             // for operator!=, operat...
-#include <boost/graph/graph_selectors.hpp>         // for bidirectionalS
-#include <boost/graph/graphviz.hpp>                // for write_graphviz
-#include <boost/iterator/iterator_facade.hpp>      // for operator!=, operat...
+#include <gurobi_c++.h>                           // for GRBLinExpr, GRBModel
+#include <algorithm>                              // for fill, find, max
+#include <boost/graph/adjacency_list.hpp>         // for adjacency_list
+#include <boost/graph/detail/adjacency_list.hpp>  // for edges, get, num_edges
+#include <boost/graph/detail/edge.hpp>            // for operator!=, operat...
+#include <boost/graph/graph_selectors.hpp>        // for bidirectionalS
+#include <boost/graph/graphviz.hpp>               // for write_graphviz
+#include <boost/iterator/iterator_facade.hpp>     // for operator!=, operat...
+#include <boost/multiprecision/cpp_int.hpp>
 #include <boost/pending/property.hpp>              // for no_property
 #include <cstddef>                                 // for size_t
 #include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
@@ -372,8 +373,8 @@ int PricerSolverSimpleDp::get_num_layers() {
     return 0;
 }
 
-size_t PricerSolverSimpleDp::print_num_paths() {
-    return 0UL;
+boost::multiprecision::cpp_int PricerSolverSimpleDp::print_num_paths() {
+    return 0;
 }
 
 bool PricerSolverSimpleDp::check_schedule_set(

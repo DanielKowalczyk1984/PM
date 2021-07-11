@@ -1,5 +1,6 @@
 #include "PricerSolverArcTimeDP.hpp"
 #include <fmt/core.h>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <cstddef>  // for size_t
 #include <limits>   // for numeric_limits
 #include <range/v3/algorithm/find.hpp>
@@ -516,8 +517,8 @@ int PricerSolverArcTimeDp::get_num_layers() {
     return 0;
 }
 
-size_t PricerSolverArcTimeDp::print_num_paths() {
-    return 0UL;
+boost::multiprecision::cpp_int PricerSolverArcTimeDp::print_num_paths() {
+    return 0;
 }
 
 bool PricerSolverArcTimeDp::check_schedule_set(const std::vector<Job*>& set) {
