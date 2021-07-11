@@ -15,8 +15,8 @@ struct Statistics {
     int    root_lower_bound;
     double root_rel_error;
 
-    int    nb_generated_col;
-    int    nb_generated_col_root;
+    size_t nb_generated_col;
+    size_t nb_generated_col_root;
     size_t first_size_graph;
     size_t size_graph_after_reduced_cost_fixing;
 

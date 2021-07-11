@@ -381,7 +381,7 @@ int NodeData::solve_relaxation() {
     return val;
 }
 
-int NodeData::estimate_lower_bound(int _iter) {
+int NodeData::estimate_lower_bound(size_t _iter) {
     auto val = 0;
     auto has_cols = true;
     auto status_RMP = GRB_LOADED;
@@ -429,7 +429,7 @@ int NodeData::estimate_lower_bound(int _iter) {
                 solve_farkas_dbl();
                 break;
         }
-        iterations++;
+        ++iterations;
 
         stat.suspend_timer(Statistics::pricing_timer);
         real_time_pricing = getRealTime() - real_time_pricing;
@@ -513,7 +513,7 @@ int NodeData::compute_lower_bound() {
 
             switch (status_RMP) {
                 case GRB_OPTIMAL:
-                    iterations++;
+                    ++iterations;
                     status = infeasible;
 
                     val = solve_pricing();

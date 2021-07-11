@@ -27,7 +27,7 @@ struct ScheduleSet;  // lines 18-18
  */
 
 constexpr int    NB_CUTS = 2000;
-constexpr int    NB_CG_ITERATIONS = 1000000;
+constexpr auto   NB_CG_ITERATIONS = 1000000UL;
 constexpr int    CLEANUP_ITERATION = 30;
 constexpr double EPS = 1e-6;
 constexpr double EPS_BOUND = 1e-9;
@@ -157,8 +157,8 @@ struct NodeData {
     double LP_lower_bound_BB;
     double LP_lower_min;
 
-    int nb_non_improvements;
-    int iterations;
+    int    nb_non_improvements;
+    size_t iterations;
 
     /** Wentges smoothing technique */
     std::unique_ptr<PricingStabilizationBase> solver_stab;
@@ -167,9 +167,9 @@ struct NodeData {
     int retirementage;
 
     /** Branching strategies */
-    int branch_job;
-    int completiontime;
-    int less;
+    size_t branch_job;
+    int    completiontime;
+    int    less;
 
     /**
      * ptr to the parent node
@@ -192,7 +192,7 @@ struct NodeData {
     int  compute_objective();
     int  solve_relaxation();
     int  compute_lower_bound();
-    int  estimate_lower_bound(int _iter);
+    int  estimate_lower_bound(size_t _iter);
     bool refinement();
     void make_pi_feasible_farkas_pricing();
 

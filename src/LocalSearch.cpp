@@ -14,7 +14,6 @@
 #include <range/v3/view/filter.hpp>
 #include <range/v3/view/iota.hpp>
 #include <range/v3/view/take.hpp>
-#include <ranges>
 #include <vector>
 #include "Job.h"
 #include "LocalSearch_new.h"
@@ -818,11 +817,11 @@ void LocalSearchData::calculate_g(Sol& sol) {
         for (auto it = m.job_list.begin(); it != m.job_list.end(); it++) {
             VecJobRawPtr lateness_sort(it, m.job_list.end());
 
-            std::ranges::sort(lateness_sort,
-                              [&sol](const auto& lhs, const auto& rhs) -> bool {
-                                  return (sol.c[lhs->job] - lhs->due_time >
-                                          sol.c[rhs->job] - rhs->due_time);
-                              });
+            ranges::sort(lateness_sort,
+                         [&sol](const auto& lhs, const auto& rhs) -> bool {
+                             return (sol.c[lhs->job] - lhs->due_time >
+                                     sol.c[rhs->job] - rhs->due_time);
+                         });
 
             int  tw{0};
             int  w{0};

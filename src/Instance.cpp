@@ -8,12 +8,14 @@
 #include <fstream>                               // for basic_istream::opera...
 #include <functional>                            // for identity, __invoke
 #include <memory>                                // for shared_ptr, __shared...
+#include <range/v3/algorithm/for_each.hpp>       // for for_each
+#include <range/v3/algorithm/sort.hpp>           // for sort
 #include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, operator+
 #include <range/v3/numeric/accumulate.hpp>       // for accumulate, accumula...
+#include <range/v3/view/for_each.hpp>            // for for_each
 #include <range/v3/view/reverse.hpp>             // for reverse_view, revers...
 #include <range/v3/view/take.hpp>                // for take_view, take, tak...
 #include <range/v3/view/view.hpp>                // for operator|, view_closure
-#include <ranges>                                // for next
 #include <string>                                // for getline, string
 #include <tuple>                                 // for tie, operator<=>
 #include <utility>                               // for move, pair, make_pair
@@ -71,7 +73,7 @@ void Instance::calculate_H_max_H_min() {
     H_max = static_cast<int>(temp_dbl) + pmax;
     H_min = static_cast<int>(ceil(temp_dbl / tmp_m)) - pmax;
 
-    std::ranges::sort(jobs, [](const auto& lhs, const auto& rhs) -> bool {
+    ranges::sort(jobs, [](const auto& lhs, const auto& rhs) -> bool {
         return (lhs->processing_time < rhs->processing_time);
     });
 
@@ -87,7 +89,7 @@ void Instance::calculate_H_max_H_min() {
 )",
         H_max, H_min, pmax, pmin, p_sum, off);
 
-    std::ranges::sort(jobs, [](const auto& x, const auto& y) -> bool {
+    ranges::sort(jobs, [](const auto& x, const auto& y) -> bool {
         // if ((x->due_time > y->due_time)) {
         //     return (false);
         // } else if (x->due_time < y->due_time) {
@@ -111,7 +113,7 @@ void Instance::calculate_H_max_H_min() {
     });
 
     auto index = 0UL;
-    std::ranges::for_each(jobs, [&index](auto& it) { it->job = index++; });
+    ranges::for_each(jobs, [&index](auto& it) { it->job = index++; });
 }
 
 void Instance::find_division() {

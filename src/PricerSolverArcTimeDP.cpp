@@ -80,7 +80,7 @@ void PricerSolverArcTimeDp::init_table() {
                 if (it != tmp && static_cast<int>(t) >= p &&
                     t + tmp->processing_time <= Hmax) {
                     graph[j][t].push_back(it);
-                    size_graph++;
+                    ++size_graph;
                 }
             }
         }
@@ -91,7 +91,7 @@ void PricerSolverArcTimeDp::init_table() {
         for (auto& it : vector_jobs) {
             if (static_cast<int>(t) >= it->processing_time) {
                 graph[n][t].push_back(it);
-                size_graph++;
+                ++size_graph;
             }
         }
     }

@@ -63,11 +63,11 @@ NodeData::NodeData(Problem* problem)
       LP_lower_bound_BB(0.0),
       LP_lower_min(std::numeric_limits<double>::max()),
       nb_non_improvements(0),
-      iterations(0),
+      iterations(0UL),
       solver_stab(nullptr),
       retirementage(static_cast<int>(sqrt(static_cast<double>(nb_jobs))) +
                     CLEANUP_ITERATION),
-      branch_job(-1),
+      branch_job(),
       completiontime(0),
       less(-1) {}
 
@@ -112,10 +112,10 @@ NodeData::NodeData(const NodeData& src)
       LP_lower_bound_BB(src.LP_lower_bound_BB),
       LP_lower_min(src.LP_lower_min),
       nb_non_improvements(0),
-      iterations(0),
+      iterations(0UL),
       solver_stab(src.solver_stab->clone(solver.get(), pi)),
       retirementage(src.retirementage),
-      branch_job(-1),
+      branch_job(),
       completiontime(-1),
       less(-1) {}
 
