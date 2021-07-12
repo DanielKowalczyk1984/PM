@@ -106,7 +106,7 @@ void BranchNodeBase::branch(BTree* bt) {
                job->weighted_tardiness_start(tmp_t) == 0) {
             tmp_t += 1;
         }
-        auto aux = BranchCandidate(pd->LP_lower_bound,
+        auto aux = BranchCandidate(pd->get_score_value(),
                                    pd->create_child_nodes(job->job, tmp_t));
         ranges::make_heap(candidates, std::greater<>{},
                           [](const auto& tmp) { return tmp.score; });
@@ -134,7 +134,7 @@ void BranchNodeBase::branch(BTree* bt) {
                    (job->weighted_tardiness_start(tmp_t) == 0)) {
                 tmp_t += 1;
             }
-            auto aux = BranchCandidate(pd->LP_lower_bound,
+            auto aux = BranchCandidate(pd->get_score_value(),
                                        pd->create_child_nodes(job->job, tmp_t));
             ranges::make_heap(candidates, std::greater<>{},
                               [](const auto& tmp) { return tmp.score; });
@@ -161,7 +161,7 @@ void BranchNodeBase::branch(BTree* bt) {
                     tmp_t += 1;
                 }
                 auto aux_data =
-                    BranchCandidate(pd->LP_lower_bound,
+                    BranchCandidate(pd->get_score_value(),
                                     pd->create_child_nodes(job->job, tmp_t));
                 ranges::make_heap(candidates, std::greater<>{},
                                   [](const auto& tmp) { return tmp.score; });
@@ -187,7 +187,7 @@ void BranchNodeBase::branch(BTree* bt) {
                     tmp_t += 1;
                 }
                 auto aux_data =
-                    BranchCandidate(pd->LP_lower_bound,
+                    BranchCandidate(pd->get_score_value(),
                                     pd->create_child_nodes(job->job, tmp_t));
                 ranges::make_heap(candidates, std::greater<>{},
                                   [](const auto& tmp) { return tmp.score; });
@@ -259,7 +259,7 @@ void BranchNodeBase::branch(BTree* bt) {
             left = true;
         }
 
-        auto best_score = parms.scoring_function(scores[0], scores[1]);
+        auto best_score = parms.scoring_function(scores);
 
         if (best_score > best_min_gain ||
             ranges::any_of(fathom, ranges::identity{})) {
@@ -325,16 +325,16 @@ void BranchNodeBase::update_data(double upper_bound) {
 void BranchNodeBase::print(const BTree* bt) const {
     auto* solver = pd->solver.get();
     if (get_is_root_node()) {
-        fmt::print("{0:^10}|{1:^55}|{2:^30}|{3:^10}|{4:^10}|\n", "Nodes",
+        fmt::print("{0:^10}|{1:^75}|{2:^30}|{3:^10}|{4:^10}|\n", "Nodes",
                    "Current Node", "Objective Bounds", "Branch", "Work");
         fmt::print(
-            R"({0:^5}{1:^5}|{2:>10}{3:>10}{10:>10}{12:>25}|{4:>10}{5:>10}{6:>10}|{7:>5}{8:>5}|{9:>5}{11:>5}|
+            R"({0:^5}{1:^5}|{2:>10}{3:>10}{10:>10}{12:>45}|{4:>10}{5:>10}{6:>10}|{7:>5}{8:>5}|{9:>5}{11:>5}|
 )",
             "Expl", "UnEx", "Obj", "Depth", "Primal", "Dual", "Gap", "Job",
             "Time", "Time", "Size", "Iter", "NB Paths");
     }
     fmt::print(
-        R"({0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}{12:>25}|{5:10.2f}{6:10.2f}{7:10.2f}|{8:>5}{9:>5}|{10:>5}{11:>5}|
+        R"({0:>5}{1:>5}|{2:10.2f}{3:>10}{4:>10}{12:>45}|{5:10.2f}{6:10.2f}{7:10.2f}|{8:>5}{9:>5}|{10:>5}{11:>5}|
 )",
         bt->get_nb_nodes_explored(), bt->get_nb_nodes(),
         pd->LP_lower_bound + pd->instance.off, pd->depth,
@@ -354,10 +354,10 @@ BranchCandidate::BranchCandidate(
 
     for (auto&& [node, s] : ranges::views::zip(data_child_nodes, scores)) {
         s = (parms.scoring_parameter == weighted_sum_scoring_parameter)
-                ? _score / node->LP_lower_bound
-                : std::abs(_score - node->LP_lower_bound);
+                ? _score / node->get_score_value()
+                : std::abs(_score - node->get_score_value());
     }
-    score = parms.scoring_function(scores[0], scores[1]);
+    score = parms.scoring_function(scores);
     empty = false;
 }
 

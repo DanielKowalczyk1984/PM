@@ -1,3 +1,4 @@
+#include <fmt/core.h>
 #include <array>                                // for array
 #include <cmath>                                // for sqrt
 #include <concepts/concepts.hpp>                // for return_t

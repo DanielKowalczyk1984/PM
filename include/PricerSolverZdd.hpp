@@ -1,26 +1,5 @@
 #ifndef PRICER_SOLVER_ZDD_HPP
 #define PRICER_SOLVER_ZDD_HPP
-// #include <range/v3/iterator/basic_iterator.hpp>  // for operator!=
-// #include <range/v3/view/filter.hpp>              // for filter_view
-// #include <range/v3/view/view.hpp>                // for operator|
-// #include "Instance.h"                            // for Instance
-// struct Interval;
-// struct Job;
-// struct NodeData;
-// struct ScheduleSet;
-// #include <stddef.h>
-// #include <NodeBddStructure.hpp>
-// #include <cstddef>
-// #include <memory>
-// #include <utility>
-// #include <vector>
-// #include "MipGraph.hpp"
-// #include "OptimalSolution.hpp"
-// #include "PricerSolverBase.hpp"
-// #include "Statistics.h"
-// #include "ZddNode.hpp"
-// #include "wctprivate.h"
-// #include <stddef.h>                              // for size_t
 #include <NodeBddStructure.hpp>                  // for DdStructure
 #include <cstddef>                               // for size_t
 #include <memory>                                // for unique_ptr, shared_ptr

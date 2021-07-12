@@ -493,7 +493,6 @@ int NodeData::compute_lower_bound() {
     do {
         has_cols = true;
         refined = false;
-        // has_cuts = 0;
         while ((iterations < NB_CG_ITERATIONS) && has_cols &&
                solver->structure_feasible()) {
             /**
@@ -568,14 +567,15 @@ int NodeData::compute_lower_bound() {
                             lambda.data(), localColPool);
                         delete_infeasible_columns();
                     }
-                    if (parms.refine_bdd && nb_non_improvements < 2) {
+                    if (parms.refine_bdd && nb_non_improvements < 2 &&
+                        !refined) {
                         if (std::abs(old_LP_bound - LP_lower_bound) < EPS) {
                             nb_non_improvements++;
                         } else {
                             nb_non_improvements = 0;
                         }
                         old_LP_bound = LP_lower_bound;
-                        refined = refined || refinement();
+                        refined = refinement();
                     }
                 } else {
                     status = infeasible;
@@ -639,15 +639,6 @@ bool NodeData::refinement() {
 
     lp_interface_status(RMP.get(), &status_RMP);
     std::vector<std::pair<std::shared_ptr<ScheduleSet>, double>> paths;
-    // using ptr_file = std::unique_ptr<std::FILE, std::function<int(FILE*)>>;
-    // ptr_file file = nullptr;
-
-    // std::string file_name = "cols.txt";
-    // if (access(file_name.c_str(), F_OK) != -1) {
-    //     file = ptr_file(std::fopen(file_name.c_str(), "a"), &fclose);
-    // } else {
-    //     file = ptr_file(std::fopen(file_name.c_str(), "w"), &fclose);
-    // }
 
     switch (status_RMP) {
         case GRB_OPTIMAL:

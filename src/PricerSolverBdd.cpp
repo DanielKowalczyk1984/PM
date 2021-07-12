@@ -537,8 +537,6 @@ bool PricerSolverBdd::refinement_structure(
                 if (conflict_job == c.get_job()) {
                     w[0] = c[0];
                     w[1] = 0;
-                } else {
-                    w[1] = c[1];
                 }
 
                 w.set_node_id_label(nodeid_new);
@@ -570,7 +568,7 @@ void PricerSolverBdd::enumerate_columns() {
     auto  cursor = 0;
     auto  begin = true;
     std::vector<std::tuple<NodeId, bool, boost::dynamic_bitset<>>> path{};
-    auto iterations = 0UL;
+    auto iterations = boost::multiprecision::cpp_int{};
     auto empty = boost::dynamic_bitset<>{jobs.size(), 0};
 
     do {
@@ -595,6 +593,7 @@ void PricerSolverBdd::enumerate_columns() {
             }
 
             if (f == 1) {
+                ++iterations;
                 break; /* found */
             }
 
@@ -613,10 +612,9 @@ void PricerSolverBdd::enumerate_columns() {
                     break;
                 }
             }
-            iterations++;
 
             if (cursor < 0) { /* end() state */
-                fmt::print("number of elementary paths {}\n", iterations);
+                fmt::print("number of elementary paths {}\n", iterations.str());
                 return;
             }
         }
@@ -633,7 +631,7 @@ void PricerSolverBdd::enumerate_columns(double* _pi) {
     auto begin = true;
 
     std::vector<std::tuple<NodeId, bool, boost::dynamic_bitset<>>> path{};
-    auto iterations = 0UL;
+    auto iterations = boost::multiprecision::cpp_int{};
     auto empty = boost::dynamic_bitset<>{jobs.size(), 0};
     auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
 
@@ -661,6 +659,7 @@ void PricerSolverBdd::enumerate_columns(double* _pi) {
             }
 
             if (f == 1) {
+                ++iterations;
                 break; /* found */
             }
 
@@ -681,11 +680,10 @@ void PricerSolverBdd::enumerate_columns(double* _pi) {
                     break;
                 }
             }
-            iterations++;
 
             if (cursor < 0) { /* end() state */
                 fmt::print("number of elementary paths with rc {}\n",
-                           iterations);
+                           iterations.str());
                 return;
             }
         }

@@ -1,20 +1,8 @@
-// #include "Parms.h"
-// #include <docopt/docopt.h>
-// #include <fmt/core.h>
-// #include <algorithm>
-// #include <cstddef>
-// #include <range/v3/range/conversion.hpp>
-// #include <range/v3/view/drop.hpp>
-// #include <range/v3/view/transform.hpp>
-// #include <regex>
-// #include <span>
-// #include <string>
-// #include "util.h"
-// #include "wctprivate.h"
 #include "Parms.h"
 #include <docopt/docopt.h>                       // for value, docopt_parse
 #include <fmt/core.h>                            // for print
 #include <algorithm>                             // for max, min
+#include <array>                                 // for array
 #include <climits>                               // for INT_MAX
 #include <cmath>                                 // for pow
 #include <cstddef>                               // for size_t
@@ -39,6 +27,7 @@ Parms::Parms()
     : init_upper_bound(INT_MAX),
       bb_explore_strategy(min_bb_explore_strategy),
       scoring_parameter(min_scoring_parameter),
+      scoring_value(min_scoring_value),
       strong_branching(),
       bb_node_limit(0),
       nb_iterations_rvnd(3),
@@ -160,28 +149,31 @@ int Parms::parms_set_scoring_function(int scoring) {
     scoring_parameter = static_cast<Scoring_Parameter>(scoring);
     switch (scoring_parameter) {
         case min_scoring_parameter:
-            scoring_function = [](double left, double right) {
-                return std::max(left, EPS) * std::max(right, EPS);
+            scoring_function = [](const std::array<double, 2>& a) {
+                return std::max(a[0], EPS) * std::max(a[1], EPS);
             };
 
             break;
         case min_function_scoring_parameter:
-            scoring_function = [](double left, double right) {
-                return std::min(left, right);
+            scoring_function = [](const std::array<double, 2>& a) {
+                return ranges::min(a);
             };
             break;
         case weighted_sum_scoring_parameter:
-            scoring_function = [](double left, double right) {
-                return (1.0 - mu) * std::max(left, right) +
-                       mu * std::min(left, right);
+            scoring_function = [](const std::array<double, 2>& a) {
+                return (1.0 - mu) * ranges::max(a) + mu * ranges::min(a);
             };
             break;
         case weighted_product_scoring_parameter:
-            scoring_function = [](double left, double right) {
-                return std::pow(std::max(left - 1.0, EPS), beta[0]) *
-                       std::pow(std::max(right - 1.0, EPS), beta[1]);
+            scoring_function = [](const std::array<double, 2>& a) {
+                return std::pow(std::max(a[0] - 1.0, EPS), beta[0]) *
+                       std::pow(std::max(a[1] - 1.0, EPS), beta[1]);
             };
             break;
+        case max_function_scoring_parameter:
+            scoring_function = [](const std::array<double, 2>& a) {
+                return ranges::max(a);
+            };
     }
 
     return 0;

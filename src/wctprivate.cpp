@@ -169,6 +169,19 @@ void Problem::solve() {
     }
 }
 
+double NodeData::get_score_value() {
+    switch (parms.scoring_value) {
+        case (size_scoring_value):
+            return static_cast<double>(solver->get_nb_edges());
+            break;
+        case (nb_paths_scoring_value):
+            return static_cast<double>(solver->print_num_paths());
+            break;
+        default:
+            return LP_lower_bound;
+    }
+}
+
 void Problem::heuristic() {
     // auto                         ILS = instance.nb_jobs / 2;
     auto IR = static_cast<size_t>(parms.nb_iterations_rvnd);

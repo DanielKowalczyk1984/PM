@@ -203,6 +203,9 @@ struct NodeData {
     int  delete_unused_rows_range(int first, int last);
     int  call_update_rows_coeff();
 
+    /** small getters */
+    double get_score_value();
+
     /** StabilizationWrappers.cpp */
     int  solve_pricing();
     void solve_farkas_dbl();

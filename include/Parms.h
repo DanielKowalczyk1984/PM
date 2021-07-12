@@ -21,7 +21,7 @@ static const std::string USAGE =
     R"(PM.
 
 Usage:
-  bin/PM [-s <sn> -S <kn> -pmBRZHMdPD -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp> --refinement --enumerate] FILE NB
+  bin/PM [-s <sn> -S <kn> -pmBRZHMdPD -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp> --refinement --enumerate --scoring_value=<sv>] FILE NB
   bin/PM (-h | --help)
   bin/PM --version
 
@@ -43,6 +43,7 @@ Options:
   -f --nb_rvnb_it=<y>           Number of iterations in RVND[default: 5000].
   --alpha=<mn>                  Stabilization factor[default: 0.8].
   --branching_point=<brp>       Branching point[default: 0.5].
+  --scoring_value=<sv>          Scoring value[default:0].  
   -p --print_csv                Print csv-files.
   -r --refinement               Refine decision diagram.
   -e --enumerate                Enumerate elementary paths.
@@ -127,6 +128,14 @@ enum Scoring_Parameter {
     min_function_scoring_parameter = 1,
     weighted_sum_scoring_parameter = 2,
     weighted_product_scoring_parameter = 3,
+    max_function_scoring_parameter = 4,
+};
+
+enum Scoring_Value {
+    min_scoring_value = 0,
+    lb_scoring_value = min_scoring_value,
+    size_scoring_value,
+    nb_paths_scoring_value,
 };
 
 enum reduced_cost_fixing_param {
@@ -145,24 +154,25 @@ struct Parms {
     /**
      * General parameters
      */
-    int                                   init_upper_bound;
-    enum BBExploreStrategy                bb_explore_strategy;
-    enum Scoring_Parameter                scoring_parameter;
-    int                                   strong_branching;
-    int                                   bb_node_limit;
-    int                                   nb_iterations_rvnd;
-    size_t                                branching_cpu_limit;
-    double                                alpha;
-    double                                branching_point;
-    int                                   pricing_solver;
-    int                                   mip_solver;
-    int                                   use_heuristic;
-    std::function<double(double, double)> scoring_function;
-    bool                                  use_mip_solver;
-    bool                                  refine_bdd;
-    bool                                  enumerate;
-    bool                                  pruning_test;
-    bool                                  suboptimal_duals;
+    int                                                init_upper_bound;
+    enum BBExploreStrategy                             bb_explore_strategy;
+    enum Scoring_Parameter                             scoring_parameter;
+    enum Scoring_Value                                 scoring_value;
+    int                                                strong_branching;
+    int                                                bb_node_limit;
+    int                                                nb_iterations_rvnd;
+    size_t                                             branching_cpu_limit;
+    double                                             alpha;
+    double                                             branching_point;
+    int                                                pricing_solver;
+    int                                                mip_solver;
+    int                                                use_heuristic;
+    std::function<double(const std::array<double, 2>)> scoring_function;
+    bool                                               use_mip_solver;
+    bool                                               refine_bdd;
+    bool                                               enumerate;
+    bool                                               pruning_test;
+    bool                                               suboptimal_duals;
 
     enum reduced_cost_fixing_param reduce_cost_fixing;
 
