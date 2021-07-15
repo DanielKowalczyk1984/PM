@@ -43,7 +43,7 @@ struct NodeData {
     size_t nb_machines;
 
     // The column generation lp information
-    std::unique_ptr<wctlp, std::function<void(wctlp*)>> RMP;
+    std::unique_ptr<lp_interface, std::function<void(lp_interface*)>> RMP;
 
     std::vector<double> lambda;
     std::vector<double> pi;
