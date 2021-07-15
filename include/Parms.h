@@ -240,6 +240,7 @@ struct Parms {
     static constexpr double                mu = 5.0 / 6.0;
     static constexpr std::array<double, 2> beta = {1.5, 0.5};
     static constexpr double                TargetBrTimeValue = 0.45;
+    static constexpr auto                  EPS = 1e-6;
 };
 
 #endif  // INCLUDE_WCTPARMS_H_

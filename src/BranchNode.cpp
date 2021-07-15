@@ -22,12 +22,12 @@
 #include <range/v3/view/partial_sum.hpp>
 #include <range/v3/view/zip.hpp>
 #include <vector>
+#include "NodeData.h"
 #include "Parms.h"
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
 #include "branch-and-bound/btree.h"
 #include "util.h"
-#include "wctprivate.h"
 
 namespace fmt {
 template <>

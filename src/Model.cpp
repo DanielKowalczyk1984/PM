@@ -16,10 +16,10 @@
 #include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
 #include <vector>                                      // for vector
 #include "Column.h"                                    // for ScheduleSet
+#include "NodeData.h"                                  // for NodeData
 #include "Solution.hpp"                                // for Sol
 #include "gurobi_c.h"                                  // for GRB_INFINITY
 #include "lp.h"                                        // for lp_interface_g...
-#include "wctprivate.h"                                // for NodeData, EPS_...
 
 int NodeData::add_lhs_scheduleset_to_rmp(Column* set) {
     id_row.clear();

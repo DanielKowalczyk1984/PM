@@ -4,7 +4,7 @@
 #include <exception>        // for exception
 #include <string>           // for string
 #include "Parms.h"          // for USAGE
-#include "wctprivate.h"     // for Problem
+#include "Problem.h"        // for Problem
 
 int main(int argc, const char** argv) {
     int val = 0;

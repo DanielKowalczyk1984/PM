@@ -157,8 +157,13 @@ struct NodeData {
     int  grow_ages();
     void print_ages();
 
-    static constexpr int    NB_ESTIMATE_IT = 20;
-    static constexpr double min_nb_del_row_ratio = 0.9;
+    static constexpr auto CLEANUP_ITERATION = 30;
+    static constexpr auto EPS = 1e-6;
+    static constexpr auto EPS_BOUND = 1e-9;
+    static constexpr auto min_nb_del_row_ratio = 0.9;
+    static constexpr auto NB_CG_ITERATIONS = 1000000UL;
+    static constexpr auto NB_CUTS = 2000;
+    static constexpr auto NB_ESTIMATE_IT = 20;
 };
 
 #endif  // __NODEDATA_H__

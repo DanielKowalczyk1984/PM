@@ -26,8 +26,8 @@ set(sources
     "src/Solution.cpp"
     "src/StabilizationWrappers.cpp"
     "src/Statistics.cpp"
-    "src/wct.cpp"
-    "src/wctprivate.cpp"
+    "src/NodeData.cpp"
+    "src/Problem.cpp"
     "src/ZeroHalfCuts.cpp"
     "src/ZeroHalfSystem.cpp"
 )

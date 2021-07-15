@@ -58,6 +58,7 @@
 #include "NodeBdd.hpp"                                 // for NodeBdd
 #include "NodeBddStructure.hpp"                        // for DdStructure
 #include "NodeBddTable.hpp"                            // for NodeTableEntity
+#include "NodeData.h"                                  // for NodeData
 #include "NodeId.hpp"                                  // for NodeId
 #include "OptimalSolution.hpp"                         // for OptimalSolution
 #include "PricerConstruct.hpp"                         // for PricerConstruct
@@ -68,7 +69,6 @@
 #include "lp.h"                                        // for lp_interface_g...
 #include "util.h"                                      // for dbg_lvl
 #include "util/MyList.hpp"                             // for MyList
-#include "wctprivate.h"                                // for NodeData
 
 PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     : PricerSolverBase(instance),

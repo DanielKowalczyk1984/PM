@@ -25,16 +25,16 @@
 #include <range/v3/view/zip.hpp>                       // for zip_view, zip
 #include <utility>                                     // for move, pair
 #include <vector>                                      // for vector
-#include "Column.h"
-#include "Instance.h"                // for Instance
-#include "Parms.h"                   // for Parms
-#include "PricerSolverBase.hpp"      // for PricerSolverBase
-#include "PricingStabilization.hpp"  // for PricingStabili...
-#include "Statistics.h"              // for Statistics
-#include "gurobi_c.h"                // for GRB_OPTIMAL
-#include "lp.h"                      // for lp_interface_g...
-#include "util.h"                    // for dbg_lvl, getRe...
-#include "wctprivate.h"              // for NodeData, EPS
+#include "Column.h"                                    // for Column
+#include "Instance.h"                                  // for Instance
+#include "NodeData.h"                                  // for NodeData
+#include "Parms.h"                                     // for Parms
+#include "PricerSolverBase.hpp"                        // for PricerSolverBase
+#include "PricingStabilization.hpp"                    // for PricingStabili...
+#include "Statistics.h"                                // for Statistics
+#include "gurobi_c.h"                                  // for GRB_OPTIMAL
+#include "lp.h"                                        // for lp_interface_g...
+#include "util.h"                                      // for dbg_lvl, getRe...
 
 /** Help function for column generation */
 void NodeData::print_ages() {

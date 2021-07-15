@@ -1,3 +1,4 @@
+#include "NodeData.h"  // for NodeData
 #include <fmt/core.h>
 #include <array>                                // for array
 #include <cmath>                                // for sqrt
@@ -18,9 +19,9 @@
 #include "Instance.h"                           // for Instance
 #include "PricerSolverBase.hpp"                 // for PricerSolverBase
 #include "PricingStabilization.hpp"             // for PricingStabilizationBase
+#include "Problem.h"                            // for Problem
 #include "Solution.hpp"                         // for Sol
 #include "lp.h"                                 // for lp_interface_create
-#include "wctprivate.h"                         // for NodeData, Problem
 
 NodeData::NodeData(Problem* problem)
     : depth(0UL),
@@ -126,6 +127,8 @@ std::unique_ptr<NodeData> NodeData::clone() const {
     return aux;
 }
 
+NodeData::~NodeData() = default;
+
 std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
     auto aux = std::make_unique<NodeData>(*this);
     aux->branch_job = _j;
@@ -174,5 +177,18 @@ void NodeData::prune_duplicated_sets() {
 void NodeData::add_solution_to_colpool(const Sol& sol) {
     for (auto& it : sol.machines) {
         localColPool.emplace_back(std::make_shared<Column>(it));
+    }
+}
+
+double NodeData::get_score_value() {
+    switch (parms.scoring_value) {
+        case (size_scoring_value):
+            return static_cast<double>(solver->get_nb_edges());
+            break;
+        case (nb_paths_scoring_value):
+            return static_cast<double>(solver->print_num_paths());
+            break;
+        default:
+            return LP_lower_bound;
     }
 }

@@ -9,9 +9,9 @@
 #include "BranchBoundTree.hpp"  // for BranchBoundTree
 #include "Instance.h"           // for Instance
 #include "Parms.h"              // for Parms
+#include "Problem.h"            // for Problem
 #include "Statistics.h"         // for Statistics, Statistics::bb_timer, Sta...
 #include "util.h"               // for CCutil_timer, CCutil_stop_timer, getR...
-#include "wctprivate.h"         // for Problem, Problem::ProblemException
 
 void Problem::to_csv() {
     using ptr_file = std::unique_ptr<std::FILE, std::function<int(FILE*)>>;

@@ -3,13 +3,13 @@
 #include <utility>                   // for move
 #include <vector>                    // for vector
 #include "Column.h"                  // for ScheduleSet
+#include "NodeData.h"                // for NodeData
 #include "OptimalSolution.hpp"       // for OptimalSolution
 #include "Parms.h"                   // for Parms, yes_reduced_cost
 #include "PricerSolverBase.hpp"      // for PricerSolverBase
 #include "PricingStabilization.hpp"  // for PricingStabilizationBase
 #include "Statistics.h"              // for Statistics, Statistics::reduced_...
 #include "lp.h"                      // for lp_interface_objval
-#include "wctprivate.h"              // for NodeData, EPS_BOUND, EPS
 
 int NodeData::solve_pricing() {
     int val = 0;

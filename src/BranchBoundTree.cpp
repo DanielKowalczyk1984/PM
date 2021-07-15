@@ -1,17 +1,8 @@
-// #include "BranchBoundTree.hpp"
-// #include <memory>
-// #include "BranchNode.hpp"
-// #include "Parms.h"
-// #include "Statistics.h"
-// #include "branch-and-bound/bfstree.h"
-// #include "branch-and-bound/brfstree.h"
-// #include "branch-and-bound/cbfstree.h"
-// #include "branch-and-bound/dfstree.h"
-// #include "wctprivate.h"
 #include "BranchBoundTree.hpp"
 #include <memory>                       // for make_unique, unique_ptr
 #include <utility>                      // for move
 #include "BranchNode.hpp"               // for BranchNodeBase
+#include "NodeData.h"                   // for NodeData
 #include "Parms.h"                      // for Parms, bb_bfs_strategy, bb_br...
 #include "Solution.hpp"                 // for Sol
 #include "branch-and-bound/bfstree.h"   // for BFSTree
@@ -19,7 +10,6 @@
 #include "branch-and-bound/cbfstree.h"  // for CBFSTree
 #include "branch-and-bound/dfstree.h"   // for DFSTree
 #include "branch-and-bound/state.h"     // for State
-#include "wctprivate.h"                 // for NodeData
 
 BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
                                  int                       _probType,

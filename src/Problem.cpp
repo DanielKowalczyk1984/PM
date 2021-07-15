@@ -1,4 +1,3 @@
-#include "wctprivate.h"
 #include <fmt/core.h>                   // for print
 #include <boost/timer/timer.hpp>        // for auto_cpu_timer
 #include <cstddef>                      // for size_t
@@ -7,6 +6,7 @@
 #include "BranchBoundTree.hpp"          // for BranchBoundTree
 #include "Instance.h"                   // for Instance
 #include "LocalSearch_new.h"            // for LocalSearchData, PerturbOperator
+#include "NodeData.h"                   // for NodeData
 #include "PricerSolverArcTimeDP.hpp"    // for PricerSolverArcTimeDp
 #include "PricerSolverBase.hpp"         // for PricerSolverBase
 #include "PricerSolverBddBackward.hpp"  // for PricerSolverBddBackwardCycle
@@ -15,8 +15,9 @@
 #include "PricerSolverZddBackward.hpp"  // for PricerSolverZddBackwardCycle
 #include "PricerSolverZddForward.hpp"   // for PricerSolverSimple, PricerSol...
 #include "PricingStabilization.hpp"     // for PricingStabilizationBase, Pri...
-#include "Solution.hpp"                 // for Sol
-#include "Statistics.h"                 // for Statistics, Statistics::bb_timer
+#include "Problem.h"
+#include "Solution.hpp"  // for Sol
+#include "Statistics.h"  // for Statistics, Statistics::bb_timer
 
 Problem::~Problem() = default;
 
@@ -161,24 +162,10 @@ Problem::Problem(int argc, const char** argv)
     to_csv();
 }
 
-NodeData::~NodeData() = default;
 void Problem::solve() {
     tree->explore();
     if (parms.print_csv) {
         to_csv();
-    }
-}
-
-double NodeData::get_score_value() {
-    switch (parms.scoring_value) {
-        case (size_scoring_value):
-            return static_cast<double>(solver->get_nb_edges());
-            break;
-        case (nb_paths_scoring_value):
-            return static_cast<double>(solver->print_num_paths());
-            break;
-        default:
-            return LP_lower_bound;
     }
 }
 

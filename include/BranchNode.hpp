@@ -36,12 +36,14 @@ class BranchNodeBase : public State {
     [[nodiscard]] const Instance&   get_instance_info() const;
     [[nodiscard]] PricerSolverBase* get_pricersolver() const;
 
-    static constexpr size_t NbCandidates = 16;
+    static constexpr auto NbCandidates = 16UL;
+    static constexpr auto EPS = 1e-6;
 
    private:
     std::unique_ptr<NodeData> pd;
-    static constexpr double   ERROR = 1e-12;
-    static constexpr double   IntegerTolerance = 1e-3;
+
+    static constexpr auto ERROR = 1e-12;
+    static constexpr auto IntegerTolerance = 1e-3;
 };
 
 class BranchNodeRelBranching : public BranchNodeBase {
