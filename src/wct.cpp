@@ -14,12 +14,12 @@
 #include <range/v3/functional/compose.hpp>      // for composed
 #include <utility>                              // for move
 #include <vector>                               // for vector
+#include "Column.h"                             // for ScheduleSet
 #include "Instance.h"                           // for Instance
 #include "PricerSolverBase.hpp"                 // for PricerSolverBase
 #include "PricingStabilization.hpp"             // for PricingStabilizationBase
 #include "Solution.hpp"                         // for Sol
 #include "lp.h"                                 // for lp_interface_create
-#include "scheduleset.h"                        // for ScheduleSet
 #include "wctprivate.h"                         // for NodeData, Problem
 
 NodeData::NodeData(Problem* problem)

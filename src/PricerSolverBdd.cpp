@@ -49,6 +49,7 @@
 #include <utility>                                     // for pair, move
 #include <vector>                                      // for vector, _Bit_r...
 #include "CardinalityPaths.hpp"                        // for CardinalityPaths
+#include "Column.h"                                    // for ScheduleSet
 #include "Instance.h"                                  // for Instance
 #include "Job.h"                                       // for Job, value_dif...
 #include "Label.hpp"                                   // for Label
@@ -65,7 +66,6 @@
 #include "ZeroHalfCuts.hpp"                            // for ZeroHalfCuts
 #include "gurobi_c.h"                                  // for GRB_EQUAL, GRB...
 #include "lp.h"                                        // for lp_interface_g...
-#include "scheduleset.h"                               // for ScheduleSet
 #include "util.h"                                      // for dbg_lvl
 #include "util/MyList.hpp"                             // for MyList
 #include "wctprivate.h"                                // for NodeData

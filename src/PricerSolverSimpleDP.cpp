@@ -25,11 +25,11 @@
 #include <string>                                  // for char_traits, opera...
 #include <utility>                                 // for move
 #include <vector>                                  // for vector, vector<>::...
+#include "Column.h"                                // for ScheduleSet
 #include "Instance.h"                              // for Instance
 #include "Job.h"                                   // for Job
 #include "ModelInterface.hpp"                      // for ReformulationModel
 #include "PricerSolverBase.hpp"                    // for PricerSolverBase
-#include "scheduleset.h"                           // for ScheduleSet
 /**
  * Pricersolver for the TI index formulation
  */

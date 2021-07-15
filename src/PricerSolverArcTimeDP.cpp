@@ -14,12 +14,12 @@
 #include <string>                  // for char_traits, opera...
 #include <utility>                 // for move
 #include <vector>                  // for vector, vector<>::...
-#include "Instance.h"              // for Instance
-#include "ModelInterface.hpp"      // for ReformulationModel
-#include "PricerSolverBase.hpp"    // for PricerSolverBase
-#include "gurobi_c++.h"            // for GRBLinExpr, GRBModel
-#include "gurobi_c.h"              // for GRB_EQUAL, GRB_BINARY
-#include "scheduleset.h"  // for ScheduleSet#include "PricerSolverArcTimeDP.hpp"
+#include "Column.h"    // for ScheduleSet#include "PricerSolverArcTimeDP.hpp"
+#include "Instance.h"  // for Instance
+#include "ModelInterface.hpp"    // for ReformulationModel
+#include "PricerSolverBase.hpp"  // for PricerSolverBase
+#include "gurobi_c++.h"          // for GRBLinExpr, GRBModel
+#include "gurobi_c.h"            // for GRB_EQUAL, GRB_BINARY
 
 PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
     : PricerSolverBase(instance),

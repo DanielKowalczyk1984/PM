@@ -21,7 +21,7 @@ set(sources
     "src/PricerSolverZddBackward.cpp"
     "src/PricerSolverZddForward.cpp"
     "src/PricingStabilization.cpp"
-    "src/Scheduleset.cpp"
+    "src/Column.cpp"
     "src/SeperationSolver.cpp"
     "src/Solution.cpp"
     "src/StabilizationWrappers.cpp"

@@ -15,6 +15,7 @@
 #include <span>                                    // for span
 #include <string>                                  // for char_traits, opera...
 #include <vector>                                  // for vector<>::iterator
+#include "Column.h"                                // for ScheduleSet
 #include "Instance.h"                              // for Instance
 #include "Job.h"                                   // for Job
 #include "NodeBddStructure.hpp"                    // for DdStructure, DdStr...
@@ -23,7 +24,6 @@
 #include "OptimalSolution.hpp"                     // for OptimalSolution
 #include "PricerConstruct.hpp"                     // for PricerConstruct
 #include "ZddNode.hpp"                             // for NodeZdd, SubNodeZdd
-#include "scheduleset.h"                           // for ScheduleSet
 #include "util.h"                                  // for dbg_lvl
 #include "util/MyList.hpp"                         // for MyList
 

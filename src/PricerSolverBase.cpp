@@ -17,11 +17,11 @@
 #include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
 #include <span>                                        // for span
 #include <vector>                                      // for vector
-#include "Instance.h"                                  // for Instance
-#include "Job.h"                                       // for Job
-#include "gurobi_c++.h"                                // for GRBModel, GRBEnv
-#include "gurobi_c.h"                                  // for GRB_INFEASIBLE
-#include "scheduleset.h"
+#include "Column.h"
+#include "Instance.h"    // for Instance
+#include "Job.h"         // for Job
+#include "gurobi_c++.h"  // for GRBModel, GRBEnv
+#include "gurobi_c.h"    // for GRB_INFEASIBLE
 
 PricerSolverBase::PricerSolverBase(const Instance& instance)
     : jobs(instance.jobs),
