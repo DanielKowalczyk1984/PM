@@ -78,8 +78,8 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
 
         for (int i = 1; i <= n; ++i) {
             table.initRow(i, 1);
-            for (int b = 0; b < 2; ++b) {
-                table[i][0][b] = f;
+            for (auto& it : table[i][0]) {
+                it = f;
             }
             f = NodeId(i, 0);
         }
