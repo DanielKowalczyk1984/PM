@@ -15,7 +15,7 @@
 #include "PricerSolverBase.hpp"  // for PricerSolverBase
 #include "gurobi_c++.h"          // for GRBVar
 struct NodeData;
-struct ScheduleSet;
+struct Column;
 
 // using std::vector;
 class PricerSolverArcTimeDp : public PricerSolverBase {
@@ -89,9 +89,8 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     bool evaluate_nodes([[maybe_unused]] double* pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
-        const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
-        override;
+        const double*                               columns,
+        const std::vector<std::shared_ptr<Column>>& schedule_sets) override;
     // void add_constraint(Job* job, GPtrArray* list, int order) override;
 
     OptimalSolution<double> pricing_algorithm(double* _pi) override;

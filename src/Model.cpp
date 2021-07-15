@@ -21,7 +21,7 @@
 #include "scheduleset.h"                               // for ScheduleSet
 #include "wctprivate.h"                                // for NodeData, EPS_...
 
-int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
+int NodeData::add_lhs_scheduleset_to_rmp(Column* set) {
     id_row.clear();
     coeff_row.clear();
 
@@ -40,7 +40,7 @@ int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
     return 0;
 }
 
-int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
+int NodeData::add_scheduleset_to_rmp(Column* set) {
     auto  var_ind = 0;
     auto  cval = 0.0;
     auto  cost = set->total_weighted_completion_time;

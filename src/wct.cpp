@@ -173,6 +173,6 @@ void NodeData::prune_duplicated_sets() {
 
 void NodeData::add_solution_to_colpool(const Sol& sol) {
     for (auto& it : sol.machines) {
-        localColPool.emplace_back(std::make_shared<ScheduleSet>(it));
+        localColPool.emplace_back(std::make_shared<Column>(it));
     }
 }

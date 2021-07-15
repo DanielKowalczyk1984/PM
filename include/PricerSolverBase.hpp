@@ -14,8 +14,8 @@
 #include "OptimalSolution.hpp"  // for OptimalSolution
 #include "Solution.hpp"         // for Sol
 struct Job;
-struct NodeData;     // lines 15-15
-struct ScheduleSet;  // lines 16-16
+struct NodeData;  // lines 15-15
+struct Column;    // lines 16-16
 
 struct PricerSolverBase {
     using cpp_int = boost::multiprecision::cpp_int;
@@ -92,8 +92,7 @@ struct PricerSolverBase {
 
     virtual bool evaluate_nodes(double* pi) = 0;
     virtual bool refinement_structure(
-        [[maybe_unused]] const std::vector<std::shared_ptr<ScheduleSet>>&
-            paths) {
+        [[maybe_unused]] const std::vector<std::shared_ptr<Column>>& paths) {
         return false;
     };
     virtual void enumerate_columns(){};
@@ -103,12 +102,12 @@ struct PricerSolverBase {
     virtual void build_mip() = 0;
     bool         evaluate_mip_model();
     virtual void construct_lp_sol_from_rmp(
-        const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) = 0;
+        const double*                               columns,
+        const std::vector<std::shared_ptr<Column>>& schedule_sets) = 0;
 
     bool compute_sub_optimal_duals(
-        const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets);
+        const double*                               columns,
+        const std::vector<std::shared_ptr<Column>>& schedule_sets);
     virtual void project_sol_on_original_variables(const Sol& _sol) {
         _sol.print_solution();
     };

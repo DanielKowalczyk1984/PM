@@ -638,7 +638,7 @@ bool NodeData::refinement() {
     auto refined{false};
 
     lp_interface_status(RMP.get(), &status_RMP);
-    std::vector<std::pair<std::shared_ptr<ScheduleSet>, double>> paths;
+    std::vector<std::pair<std::shared_ptr<Column>, double>> paths;
 
     switch (status_RMP) {
         case GRB_OPTIMAL:

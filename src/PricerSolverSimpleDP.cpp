@@ -302,8 +302,8 @@ OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing(
 }
 
 void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
-    const double*                                    columns,
-    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) {
+    const double*                               columns,
+    const std::vector<std::shared_ptr<Column>>& schedule_sets) {
     std::span aux_cols{columns, schedule_sets.size()};
     // std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);

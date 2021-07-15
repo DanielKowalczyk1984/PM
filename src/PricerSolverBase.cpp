@@ -99,8 +99,8 @@ bool PricerSolverBase::evaluate_mip_model() {
 }
 
 bool PricerSolverBase::compute_sub_optimal_duals(
-    const double*                                    columns,
-    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) {
+    const double*                               columns,
+    const std::vector<std::shared_ptr<Column>>& schedule_sets) {
     GRBModel sub_optimal(*genv);
     // sub_optimal.set(GRB_IntParam_OutputFlag, 1);
     sub_optimal.set(GRB_IntAttr_ModelSense, GRB_MAXIMIZE);

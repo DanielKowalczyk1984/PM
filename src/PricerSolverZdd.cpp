@@ -378,8 +378,8 @@ void PricerSolverZdd::build_mip() {
 }
 
 void PricerSolverZdd::construct_lp_sol_from_rmp(
-    const double*                                    columns,
-    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) {
+    const double*                               columns,
+    const std::vector<std::shared_ptr<Column>>& schedule_sets) {
     auto&     table = *(decision_diagram->getDiagram());
     std::span aux_cols{columns, schedule_sets.size()};
     // std::span aux_sets{schedule_sets->pdata, schedule_sets->len};

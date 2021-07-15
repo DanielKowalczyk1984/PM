@@ -47,7 +47,7 @@ int NodeData::solve_pricing() {
         solver_stab->continueLP &&
         (solver_stab->get_eta_in() < upper_bound - 1.0 + EPS_BOUND)) {
         localColPool.emplace_back(
-            std::make_shared<ScheduleSet>(std::move(solver_stab->get_sol())));
+            std::make_shared<Column>(std::move(solver_stab->get_sol())));
         val = add_lhs_scheduleset_to_rmp(localColPool.back().get());
         // solve_relaxation();
         // double obj{};
@@ -77,7 +77,7 @@ void NodeData::solve_farkas_dbl() {
     OptimalSolution<double> s = solver->farkas_pricing(pi.data());
 
     if (s.obj < EPS) {
-        localColPool.emplace_back(std::make_shared<ScheduleSet>(std::move(s)));
+        localColPool.emplace_back(std::make_shared<Column>(std::move(s)));
         add_lhs_scheduleset_to_rmp(localColPool.back().get());
     } else {
         nb_new_sets = 0;

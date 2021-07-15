@@ -16,7 +16,7 @@
 struct Interval;                                 // lines 36-36
 struct Job;                                      // lines 37-37
 struct NodeData;                                 // lines 38-38
-struct ScheduleSet;                              // lines 39-39
+struct Column;                                   // lines 39-39
 class PricerSolverZdd : public PricerSolverBase {
    public:
     std::unique_ptr<DdStructure<NodeZdd<double>>> decision_diagram;
@@ -61,9 +61,8 @@ class PricerSolverZdd : public PricerSolverBase {
     void construct_mipgraph();
     void build_mip() override;
     void construct_lp_sol_from_rmp(
-        const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
-        override;
+        const double*                               columns,
+        const std::vector<std::shared_ptr<Column>>& schedule_sets) override;
     bool    check_schedule_set(const std::vector<Job*>& set) override;
     void    iterate_zdd() override;
     void    create_dot_zdd(const char* name) override;

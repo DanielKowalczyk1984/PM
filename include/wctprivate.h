@@ -16,7 +16,7 @@ class BranchBoundTree;   // lines 21-21
 class PricingStabilizationBase;
 struct NodeData;  // lines 19-19
 struct PricerSolverBase;
-struct ScheduleSet;  // lines 18-18
+struct Column;  // lines 18-18
 
 /**
  * wct data types nodes of branch and bound tree
@@ -143,11 +143,11 @@ struct NodeData {
     std::unique_ptr<PricerSolverBase> solver;
 
     // Columns
-    int                                       zero_count;
-    std::shared_ptr<ScheduleSet>              newsets;
-    int                                       nb_new_sets;
-    std::vector<int>                          column_status;
-    std::vector<std::shared_ptr<ScheduleSet>> localColPool;
+    int                                  zero_count;
+    std::shared_ptr<Column>              newsets;
+    int                                  nb_new_sets;
+    std::vector<int>                     column_status;
+    std::vector<std::shared_ptr<Column>> localColPool;
 
     int lower_bound;
     int upper_bound;
@@ -219,10 +219,10 @@ struct NodeData {
 
     std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
                                                                 long   _t);
-    int add_scheduleset_to_rmp(ScheduleSet* set);
+    int add_scheduleset_to_rmp(Column* set);
 
    private:
-    int add_lhs_scheduleset_to_rmp(ScheduleSet* set);
+    int add_lhs_scheduleset_to_rmp(Column* set);
 
     /** lowerbound.cpp */
     int  grow_ages();

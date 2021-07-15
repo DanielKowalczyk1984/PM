@@ -488,7 +488,7 @@ double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
 }
 
 bool PricerSolverBdd::refinement_structure(
-    const std::vector<std::shared_ptr<ScheduleSet>>& paths) {
+    const std::vector<std::shared_ptr<Column>>& paths) {
     bool  refined_structure = false;
     auto& table = *decision_diagram.getDiagram();
     for (auto& path : paths) {
@@ -1473,8 +1473,8 @@ void PricerSolverBdd::equivalent_paths_filtering() {
 }
 
 void PricerSolverBdd::construct_lp_sol_from_rmp(
-    const double*                                    columns,
-    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) {
+    const double*                               columns,
+    const std::vector<std::shared_ptr<Column>>& schedule_sets) {
     auto& table = *(decision_diagram.getDiagram());
     for (auto& it : table |
                         ranges::views::take(decision_diagram.root().row() + 1) |

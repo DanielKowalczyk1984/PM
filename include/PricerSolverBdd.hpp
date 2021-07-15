@@ -18,7 +18,7 @@
 struct Interval;
 struct Job;
 struct NodeData;
-struct ScheduleSet;
+struct Column;
 struct Sol;
 
 class PricerSolverBdd : public PricerSolverBase {
@@ -56,7 +56,7 @@ class PricerSolverBdd : public PricerSolverBase {
     void                  cleanup_arcs();
 
     bool refinement_structure(
-        const std::vector<std::shared_ptr<ScheduleSet>>& paths) override;
+        const std::vector<std::shared_ptr<Column>>& paths) override;
     void enumerate_columns() override;
     void enumerate_columns(double* _pi) override;
     bool evaluate_nodes(double* _pi) override;
@@ -78,9 +78,8 @@ class PricerSolverBdd : public PricerSolverBase {
 
     void build_mip() override;
     void construct_lp_sol_from_rmp(
-        const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
-        override;
+        const double*                               columns,
+        const std::vector<std::shared_ptr<Column>>& schedule_sets) override;
 
     void project_sol_on_original_variables(const Sol& _sol) override;
     std::vector<std::vector<double>>& calculate_job_time() override;

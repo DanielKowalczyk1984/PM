@@ -8,7 +8,7 @@
 #include "OptimalSolution.hpp"
 #include "Solution.hpp"
 
-struct ScheduleSet {
+struct Column {
     int    age{};
     bool   del{};
     int    total_processing_time{};
@@ -16,20 +16,20 @@ struct ScheduleSet {
 
     std::vector<Job*> job_list{};
 
-    ScheduleSet() = default;
-    explicit ScheduleSet(const Machine&);
-    explicit ScheduleSet(OptimalSolution<double>&& pricing_solution);
-    ~ScheduleSet() = default;
-    ScheduleSet(ScheduleSet&&) = default;
-    ScheduleSet& operator=(ScheduleSet&&) = default;
-    ScheduleSet(const ScheduleSet&) = default;
-    ScheduleSet& operator=(const ScheduleSet&) = default;
+    Column() = default;
+    explicit Column(const Machine&);
+    explicit Column(OptimalSolution<double>&& pricing_solution);
+    ~Column() = default;
+    Column(Column&&) = default;
+    Column& operator=(Column&&) = default;
+    Column(const Column&) = default;
+    Column& operator=(const Column&) = default;
 
-    bool operator<(ScheduleSet const& other);
-    bool operator==(ScheduleSet const& other) const;
-    bool operator<=>(ScheduleSet const& other);
+    bool operator<(Column const& other);
+    bool operator==(Column const& other) const;
+    bool operator<=>(Column const& other);
 
-    friend std::ostream& operator<<(std::ostream& os, const ScheduleSet& set) {
+    friend std::ostream& operator<<(std::ostream& os, const Column& set) {
         for (auto& it : set.job_list) {
             os << it->job << " ";
         }
