@@ -1,14 +1,3 @@
-// #include "ZeroHalfCuts.hpp"
-// #include <fmt/core.h>
-// #include <fmt/format.h>
-// #include <gurobi_c++.h>
-// #include <algorithm>
-// #include <memory>
-// #include <range/v3/all.hpp>
-// #include <vector>
-// #include "ModelInterface.hpp"
-// #include "NodeBddTable.hpp"
-// #include "NodeId.hpp"
 #include "ZeroHalfCuts.hpp"
 #include <fmt/format.h>                          // for format, print
 #include <gurobi_c++.h>                          // for GRBModel, GRBVar
@@ -20,12 +9,14 @@
 #include <memory>                                // for shared_ptr, unique_ptr
 #include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, basic_it...
 #include <range/v3/view/drop.hpp>                // for drop, drop_fn
+#include <range/v3/view/filter.hpp>              // for filter
 #include <range/v3/view/iota.hpp>                // for iota_view, iota_view...
 #include <range/v3/view/join.hpp>                // for join_view<>::cursor
 #include <range/v3/view/reverse.hpp>             // for reverse_view, revers...
 #include <range/v3/view/subrange.hpp>            // for subrange
 #include <range/v3/view/take.hpp>                // for take_view, take, tak...
 #include <range/v3/view/view.hpp>                // for operator|, view_closure
+#include <range/v3/view/zip.hpp>                 // for zip
 #include <utility>                               // for move
 #include <vector>                                // for vector
 #include "ModelInterface.hpp"                    // for ConstraintGeneric
@@ -351,70 +342,71 @@ void ZeroHalfCuts::generate_cuts() {
 void ZeroHalfCuts::dfs(const NodeId& v) {
     auto& node = table->node(v);
     node.lp_visited = true;
+    std::array<bool, 2> edges_type{false, true};
 
-    for (auto i : ranges::views::ints(0UL, 2UL)) {
-        if (node.lp_x.at(i) > EPS_CUT) {
-            auto& child = table->node(node.at(i));
-            if (!child.lp_visited) {
-                if (node.at(i) == 1) {
-                    child.sigma = model->addVar(0.0, 1.0, 0.0, 'B',
-                                                fmt::format("sigma_terminal"));
-                } else {
-                    child.sigma = model->addVar(
-                        0.0, 1.0, 0.0, 'B',
-                        fmt::format("sigma_{}_{}", child.get_nb_job(),
-                                    child.get_weight()));
-                }
-
-                node_ids.push_back(node.at(i));
-                auto& s_source = node.sigma;
-                auto& s_head = child.sigma;
-                auto  str_y = fmt::format("y_{}_{}", node.get_nb_job(),
-                                         node.get_weight());
-                auto  str_r = fmt::format("r_{}_{}", node.get_nb_job(),
-                                         node.get_weight());
-                auto& y = node.y.at(i) = model->addVar(
-                    0.0, GRB_INFINITY, node.lp_x.at(i), 'B', str_y);
-                auto& r = node.r.at(i) =
-                    model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
-                GRBLinExpr expr = -s_head + s_source - y - HALF * r;
-                if (i) {
-                    expr += jobs_var[node.get_nb_job()];
-                }
-                model->addConstr(expr, '=', 0.0);
-                dfs(node.at(i));
+    for (auto [child_id, x, y, r, high] :
+         ranges::views::zip(node, node.lp_x, node.y, node.r, edges_type) |
+             ranges::views::filter(
+                 [](const auto& tmp) { return tmp > EPS_CUT; },
+                 [](const auto& tmp) { return std::get<1>(tmp); })) {
+        // if (x > EPS_CUT) {
+        auto& child = table->node(child_id);
+        if (!child.lp_visited) {
+            if (child_id == 1) {
+                child.sigma = model->addVar(0.0, 1.0, 0.0, 'B',
+                                            fmt::format("sigma_terminal"));
             } else {
-                auto& s_source = node.sigma;
-                auto& s_head = child.sigma;
-                auto  str_y = fmt::format("y_{}_{}", node.get_nb_job(),
-                                         node.get_weight());
-                auto  str_r = fmt::format("r_{}_{}", node.get_nb_job(),
-                                         node.get_weight());
-                auto& y = node.y.at(i) = model->addVar(
-                    0.0, GRB_INFINITY, (node.lp_x).at(i), 'B', str_y);
-                auto& r = node.r.at(i) =
-                    model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
-                GRBLinExpr expr = -s_head + s_source - y - HALF * r;
-                if (i) {
-                    expr += jobs_var[node.get_nb_job()];
-                }
-
-                model->addConstr(expr, '=', 0.0);
+                child.sigma =
+                    model->addVar(0.0, 1.0, 0.0, 'B',
+                                  fmt::format("sigma_{}_{}", child.get_nb_job(),
+                                              child.get_weight()));
             }
+
+            node_ids.push_back(child_id);
+            auto& s_source = node.sigma;
+            auto& s_head = child.sigma;
+            auto  str_y =
+                fmt::format("y_{}_{}", node.get_nb_job(), node.get_weight());
+            auto str_r =
+                fmt::format("r_{}_{}", node.get_nb_job(), node.get_weight());
+            y = model->addVar(0.0, GRB_INFINITY, x, 'B', str_y);
+            r = model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
+            GRBLinExpr expr = -s_head + s_source - y - HALF * r;
+            if (high) {
+                expr += jobs_var[node.get_nb_job()];
+            }
+            model->addConstr(expr, '=', 0.0);
+            dfs(child_id);
+        } else {
+            auto& s_source = node.sigma;
+            auto& s_head = child.sigma;
+            auto  str_y =
+                fmt::format("y_{}_{}", node.get_nb_job(), node.get_weight());
+            auto str_r =
+                fmt::format("r_{}_{}", node.get_nb_job(), node.get_weight());
+            y = model->addVar(0.0, GRB_INFINITY, x, 'B', str_y);
+            r = model->addVar(0.0, GRB_INFINITY, 0.0, 'I', str_r);
+            GRBLinExpr expr = -s_head + s_source - y - HALF * r;
+            if (high) {
+                expr += jobs_var[node.get_nb_job()];
+            }
+
+            model->addConstr(expr, '=', 0.0);
         }
+        // }
     }
 }
 
 void ZeroHalfCuts::dfs_lift(const NodeId& v) {
     auto& node = table->node(v);
 
-    for (auto k : ranges::views::ints(0UL, 2UL)) {
-        if (node.at(k) <= 1) {
+    for (auto [child, x] : ranges::views::zip(node, node.lp_x)) {
+        if (child <= 1) {
             continue;
         }
-        auto& child_node = table->node(node.at(k));
+        auto& child_node = table->node(child);
 
-        if (node.lp_x.at(k) == 0.0 && !child_node.lp_visited) {
+        if (x == 0.0 && !child_node.lp_visited) {
             child_node.coeff_cut[0] += 1.0;
             child_node.coeff_cut[1] += 1.0;
 
@@ -427,8 +419,8 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
                     }
                 }
             }
-            node_ids_lift.push_back(node.at(k));
-            dfs_lift(node.at(k));
+            node_ids_lift.push_back(child);
+            dfs_lift(child);
         }
     }
 }

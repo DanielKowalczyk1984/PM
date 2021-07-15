@@ -23,8 +23,7 @@ const size_t TIME_LIMIT = 7200;
 const double ALPHA_STAB_INIT = 0.8;
 
 Parms::Parms()
-    : init_upper_bound(INT_MAX),
-      bb_explore_strategy(min_bb_explore_strategy),
+    : bb_explore_strategy(min_bb_explore_strategy),
       scoring_parameter(min_scoring_parameter),
       scoring_value(min_scoring_value),
       strong_branching(),
@@ -34,7 +33,6 @@ Parms::Parms()
       alpha(ALPHA_STAB_INIT),
       branching_point(TargetBrTimeValue),
       pricing_solver(bdd_solver_backward_cycle),
-      mip_solver(min_mip_solver),
       use_heuristic(min_use_heuristic),
       use_mip_solver(false),
       refine_bdd(false),
@@ -42,7 +40,6 @@ Parms::Parms()
       pruning_test(false),
       suboptimal_duals(false),
       reduce_cost_fixing(min_reduced_cost),
-      branchandbound(min_branch_and_bound),
       stab_technique(min_stab),
       print_csv(min_print_size),
       jobfile(),
@@ -80,11 +77,6 @@ int Parms::parms_set_alpha(double _alpha) {
     return 0;
 }
 
-int Parms::parms_set_mip_solver(int usage) {
-    mip_solver = usage;
-    return 0;
-}
-
 int Parms::parms_set_use_heuristic(int usage) {
     use_heuristic = usage;
     return 0;
@@ -106,11 +98,6 @@ int Parms::parms_set_nb_machines(int _nb_machines) {
 
 int Parms::parms_set_nb_iterations_rvnd(int nb_iterations) {
     nb_iterations_rvnd = nb_iterations;
-    return 0;
-}
-
-int Parms::parms_set_branchandbound(int bound) {
-    branchandbound = bound;
     return 0;
 }
 
@@ -211,8 +198,6 @@ int Parms::parse_cmd(int argc, const char** argv) {
         static_cast<int>(args["--nb_rvnb_it"].asLong()));
     /** Print statistics to csv files */
     parms_set_print(args["--print_csv"].asBool());
-    /** Use MIP solver or not */
-    parms_set_mip_solver(args["--mip_solver"].asBool());
     /** Use reduced cost fixing */
     parms_set_reduce_cost(!(args["--no_rc_fixing"].asBool()));
     /** Use heuristic or not */
@@ -225,7 +210,6 @@ int Parms::parse_cmd(int argc, const char** argv) {
     parms_set_use_mip_solver(args["--use_mip_solver"].asBool());
     parms_set_scoring_function(
         static_cast<int>(args["--scoring_function"].asLong()));
-    parms_set_branchandbound(args["--no_branch_and_bound"].asBool());
     parms_set_strong_branching(
         static_cast<int>(args["--strong_branching"].asLong()));
     parms_set_alpha(std::stod(args["--alpha"].asString()));

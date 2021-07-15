@@ -58,6 +58,7 @@ class PricingStabilizationBase {
     virtual void       update_continueLP(int _continueLP);
     virtual int        do_reduced_cost_fixing();
     virtual void       update_continueLP(double obj);
+    virtual void       set_alpha([[maybe_unused]] double _alpha){};
 };
 
 class PricingStabilizationStat : public PricingStabilizationBase {
@@ -89,6 +90,7 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     bool   stopping_criteria() final;
     void   update_duals() override;
     void   remove_constraints(int first, int nb_del) override;
+    void   set_alpha(double _alpha) override;
     std::unique_ptr<PricingStabilizationBase> clone(
         PricerSolverBase*,
         std::vector<double>&) override;

@@ -1,15 +1,6 @@
 #ifndef __SOLUTION_NEW_H__
 #define __SOLUTION_NEW_H__
-// #include <cstddef>
-// #include <limits>
-// #include <memory>
-// #include <random>
-// #include <vector>
-// // #include "Instance.h"
-// #include "Interval.h"
-// #include "Job.h"
 
-// struct Instance;
 #include <algorithm>  // for rotate
 #include <cstddef>    // for size_t
 #include <iterator>   // for operator+
@@ -17,9 +8,11 @@
 #include <memory>     // for shared_ptr
 #include <random>     // for mt19937
 #include <vector>     // for vector
-struct Instance;      // lines 12-12
-struct Interval;
-struct Job;
+
+/** Forward declaration */
+struct Instance;  // lines 60-60
+struct Interval;  // lines 19-19
+struct Job;       // lines 17-17
 
 using VecJobPtr = std::vector<std::shared_ptr<Job>>;
 using VecJobRawPtr = std::vector<Job*>;

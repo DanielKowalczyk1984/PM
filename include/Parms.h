@@ -1,17 +1,6 @@
-////////////////////////////////////////////////////////////////
-//                                                            //
-//  wctparms.h                                                //
-//  wct                                                       //
-//                                                            //
-//  Created by Daniel on 20/02/14.                            //
-//  Copyright (c) 2014 Daniel Kowalczyk. All rights reserved. //
-//                                                            //
-////////////////////////////////////////////////////////////////
+#ifndef __PARMS_H__
+#define __PARMS_H__
 
-#ifndef INCLUDE_WCTPARMS_H_
-#define INCLUDE_WCTPARMS_H_
-
-// #include <string>
 #include <array>       // for array
 #include <cstddef>     // for size_t
 #include <functional>  // for function
@@ -21,7 +10,7 @@ static const std::string USAGE =
     R"(PM.
 
 Usage:
-  bin/PM [-s <sn> -S <kn> -pmBRZHMdPD -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp> --refinement --enumerate --scoring_value=<sv>] FILE NB
+  bin/PM [-s <sn> -S <kn> -pRZHMdPD -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp> --refinement --enumerate --scoring_value=<sv>] FILE NB
   bin/PM (-h | --help)
   bin/PM --version
 
@@ -47,11 +36,9 @@ Options:
   -p --print_csv                Print csv-files.
   -r --refinement               Refine decision diagram.
   -e --enumerate                Enumerate elementary paths.
-  -m --mip_solver               Use mip solver to solve the original formulation.
   -R --no_rc_fixing             Don't apply reduce cost fixing.
   -H --no_heuristic             Don't apply heuristic.
-  -B --no_branch_and_bound      Don't apply branch-and-bound.
-  -c --strong_branching=<sb>    Don't apply strong branching[default: 20].
+  -c --strong_branching=<sb>    Don't apply strong branching[default: 8].
   -M --use_mip_solver           Use MIP solver.
   -b --branching_strategy=<br>  Set branch-and-bound exploration strategy: 0 = DFS, 1 = BFS, 2 = BrFS, 3 = CBFS[default: 0].
   -n --node_limit=<nl>          Set a limit on the number of nodes that can be explored.[default: 0]. Default meaning that all nodes should be explored.
@@ -154,7 +141,6 @@ struct Parms {
     /**
      * General parameters
      */
-    int                                                init_upper_bound;
     enum BBExploreStrategy                             bb_explore_strategy;
     enum Scoring_Parameter                             scoring_parameter;
     enum Scoring_Value                                 scoring_value;
@@ -165,7 +151,6 @@ struct Parms {
     double                                             alpha;
     double                                             branching_point;
     int                                                pricing_solver;
-    int                                                mip_solver;
     int                                                use_heuristic;
     std::function<double(const std::array<double, 2>)> scoring_function;
     bool                                               use_mip_solver;
@@ -179,7 +164,6 @@ struct Parms {
     /**
      * column generation
      */
-    int                 branchandbound;
     enum StabTechniques stab_technique;
     int                 print_csv;
 
@@ -201,7 +185,6 @@ struct Parms {
     int parms_set_branching_cpu_limit(size_t limit);
     int parms_set_alpha(double alpha);
     int parms_set_strong_branching(int strong);
-    int parms_set_mip_solver(int usage);
     int parms_set_use_heuristic(int usage);
     int parms_set_reduce_cost(int usage);
     int parms_set_nb_iterations_rvnd(int nb_sol);
@@ -215,7 +198,6 @@ struct Parms {
     /**
      * Branch-and-Bound parameters
      */
-    int parms_set_branchandbound(int bound);
     int parms_set_bb_explore_strategy(int strategy);
     int parms_set_bb_node_limit(int node_limit);
     int parms_set_print(int print);
@@ -243,4 +225,4 @@ struct Parms {
     static constexpr auto                  EPS = 1e-6;
 };
 
-#endif  // INCLUDE_WCTPARMS_H_
+#endif  // __PARMS_H__

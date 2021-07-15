@@ -1,3 +1,4 @@
+#include "Problem.h"
 #include <fmt/core.h>                   // for print
 #include <boost/timer/timer.hpp>        // for auto_cpu_timer
 #include <cstddef>                      // for size_t
@@ -15,9 +16,8 @@
 #include "PricerSolverZddBackward.hpp"  // for PricerSolverZddBackwardCycle
 #include "PricerSolverZddForward.hpp"   // for PricerSolverSimple, PricerSol...
 #include "PricingStabilization.hpp"     // for PricingStabilizationBase, Pri...
-#include "Problem.h"
-#include "Solution.hpp"  // for Sol
-#include "Statistics.h"  // for Statistics, Statistics::bb_timer
+#include "Solution.hpp"                 // for Sol
+#include "Statistics.h"                 // for Statistics, Statistics::bb_timer
 
 Problem::~Problem() = default;
 
@@ -129,6 +129,7 @@ Problem::Problem(int argc, const char** argv)
     }
 
     root_pd->solver->update_UB(opt_sol.tw);
+    root_pd->solver_stab->set_alpha(parms.alpha);
     root_pd->upper_bound = opt_sol.tw;
     stat.root_upper_bound = opt_sol.tw + instance.off;
     stat.global_upper_bound = opt_sol.tw + instance.off;
@@ -159,7 +160,9 @@ Problem::Problem(int argc, const char** argv)
         // set_lb(pd->lower_bound);
         // set_obj_value(pd->LP_lower_bound);
     }
-    to_csv();
+    if (parms.print_csv) {
+        to_csv();
+    }
 }
 
 void Problem::solve() {

@@ -218,6 +218,11 @@ void PricingStabilizationStat::remove_constraints(int first, int nb_del) {
     auto it_sep = pi_sep.begin() + first;
     pi_sep.erase(it_sep, it_sep + nb_del);
 }
+
+void PricingStabilizationStat::set_alpha(double _alpha) {
+    alpha = _alpha;
+}
+
 void PricingStabilizationStat::compute_pi_eta_sep(double _alpha_bar) {
     double beta_bar = 1.0 - _alpha_bar;
 

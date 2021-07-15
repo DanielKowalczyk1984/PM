@@ -1,7 +1,3 @@
-// #include "Interval.h"
-// #include <bits/ranges_algo.h>
-// #include <cmath>
-// #include <memory>
 #include "Interval.h"
 #include <algorithm>   // for __sort_fn, sort
 #include <cmath>       // for ceil
