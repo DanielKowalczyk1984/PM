@@ -488,8 +488,8 @@ void BranchNodeRelBranching::branch(BTree* bt) {
     candidates |=
         ranges::actions::sort(std::greater<>{}, &BranchCandidate::score);
 
-    for (auto& it : candidates) {
-    }
+    // for (auto& it : candidates) {
+    // }
 
     std::array<std::unique_ptr<BranchNodeRelBranching>, 2> best = {nullptr,
                                                                    nullptr};

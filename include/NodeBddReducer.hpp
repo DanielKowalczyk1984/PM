@@ -324,8 +324,6 @@ class DdReducer {
         auto jj = 0UL;
 
         {
-            // MyList<ReducNodeInfo> rni;
-            // MyHashTable<ReducNodeInfo const*> uniq(m * 2);
             std::unordered_set<NodeBdd<T> const*> uniq(
                 m * 2, MyHashDefault<NodeBdd<T> const*>(),
                 MyHashDefault<NodeBdd<T> const*>());
