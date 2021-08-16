@@ -43,25 +43,27 @@ struct Statistics {
     CCutil_timer tot_heuristic;
     CCutil_timer tot_reduce_cost_fixing;
 
-    double      real_time_build_dd;
-    double      real_time_total;
-    double      real_time_branch_and_bound;
-    double      real_time_strong_branching;
-    double      real_time_lb_root;
-    double      real_time_lb;
-    double      real_time_solve_lp;
-    double      real_time_pricing;
-    double      real_time_heuristic;
-    int         mip_nb_vars;
-    int         mip_nb_constr;
-    double      mip_obj_bound;
-    double      mip_obj_bound_lp;
-    double      mip_rel_gap;
-    double      mip_run_time;
-    int         mip_status;
-    double      mip_nb_iter_simplex;
-    double      mip_nb_nodes;
-    int         mip_reduced_cost_fixing;
+    double real_time_build_dd;
+    double real_time_total;
+    double real_time_branch_and_bound;
+    double real_time_strong_branching;
+    double real_time_lb_root;
+    double real_time_lb;
+    double real_time_solve_lp;
+    double real_time_pricing;
+    double real_time_heuristic;
+
+    int    mip_nb_vars;
+    int    mip_nb_constr;
+    double mip_obj_bound;
+    double mip_obj_bound_lp;
+    double mip_rel_gap;
+    double mip_run_time;
+    int    mip_status;
+    double mip_nb_iter_simplex;
+    double mip_nb_nodes;
+    int    mip_reduced_cost_fixing;
+
     std::string pname;
 
     void   start_resume_timer(TimerType _type);
