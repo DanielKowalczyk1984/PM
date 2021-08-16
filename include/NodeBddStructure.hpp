@@ -60,7 +60,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     /**
      * Default constructor.
      */
-    DdStructure() : root_(0) {}
+    DdStructure() = default;
     DdStructure(const DdStructure<T>&) = default;
     DdStructure(DdStructure<T>&&) noexcept = default;
     DdStructure<T>& operator=(const DdStructure<T>&) = delete;
@@ -575,7 +575,7 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     /**
      * Implements DdSpec.
      */
-    size_t getChild(NodeId& f, [[maybe_unused]] int level, int value) const {
+    size_t getChild(NodeId& f, [[maybe_unused]] int level, size_t value) const {
         assert(level > 0 && level == f.row());
         assert(0 <= value && value < 2);
         f = child(f, value);

@@ -19,22 +19,23 @@
 #include <range/v3/view/drop.hpp>                      // for drop, drop_fn
 #include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
 #include <range/v3/view/filter.hpp>                    // for filter_view
-#include <range/v3/view/subrange.hpp>                  // for subrange
-#include <range/v3/view/transform.hpp>                 // for transform_view
-#include <range/v3/view/view.hpp>                      // for operator|, vie...
-#include <range/v3/view/zip.hpp>                       // for zip_view, zip
-#include <utility>                                     // for move, pair
-#include <vector>                                      // for vector
-#include "Column.h"                                    // for Column
-#include "Instance.h"                                  // for Instance
-#include "NodeData.h"                                  // for NodeData
-#include "Parms.h"                                     // for Parms
-#include "PricerSolverBase.hpp"                        // for PricerSolverBase
-#include "PricingStabilization.hpp"                    // for PricingStabili...
-#include "Statistics.h"                                // for Statistics
-#include "gurobi_c.h"                                  // for GRB_OPTIMAL
-#include "lp.h"                                        // for lp_interface_g...
-#include "util.h"                                      // for dbg_lvl, getRe...
+#include <range/v3/view/for_each.hpp>
+#include <range/v3/view/subrange.hpp>   // for subrange
+#include <range/v3/view/transform.hpp>  // for transform_view
+#include <range/v3/view/view.hpp>       // for operator|, vie...
+#include <range/v3/view/zip.hpp>        // for zip_view, zip
+#include <utility>                      // for move, pair
+#include <vector>                       // for vector
+#include "Column.h"                     // for Column
+#include "Instance.h"                   // for Instance
+#include "NodeData.h"                   // for NodeData
+#include "Parms.h"                      // for Parms
+#include "PricerSolverBase.hpp"         // for PricerSolverBase
+#include "PricingStabilization.hpp"     // for PricingStabili...
+#include "Statistics.h"                 // for Statistics
+#include "gurobi_c.h"                   // for GRB_OPTIMAL
+#include "lp.h"                         // for lp_interface_g...
+#include "util.h"                       // for dbg_lvl, getRe...
 
 /** Help function for column generation */
 void NodeData::print_ages() {
@@ -57,19 +58,20 @@ int NodeData::grow_ages() {
         // CCcheck_val_2(val, "Failed in lp_interface_basis_cols");
         zero_count = 0;
 
-        std::ranges::for_each(
-            localColPool | ranges::views::enumerate, [&](auto&& it) {
-                if (column_status[it.first] == lp_interface_LOWER ||
-                    column_status[it.first] == lp_interface_FREE) {
-                    it.second->age++;
+        auto zipped = ranges::view::zip(column_status, localColPool);
 
-                    if (it.second->age > retirementage) {
-                        zero_count++;
-                    }
-                } else {
-                    it.second->age = 0;
+        std::ranges::for_each(zipped, [&](auto&& it) {
+            if (it.first == lp_interface_LOWER ||
+                it.first == lp_interface_FREE) {
+                it.second->age++;
+
+                if (it.second->age > retirementage) {
+                    zero_count++;
                 }
-            });
+            } else {
+                it.second->age = 0;
+            }
+        });
     }
 
     return val;

@@ -184,7 +184,7 @@ class NodeTableEntity : public data_table_node<T> {
      * @return the @p b-child of the parent.
      */
     NodeId child(size_t i, size_t j, size_t b) const {
-        assert(0 <= b && b < 2);
+        assert(b < 2UL);
         return (*this)[i][j][b];
     }
 
@@ -196,7 +196,7 @@ class NodeTableEntity : public data_table_node<T> {
      * @return the @p b-child of the parent.
      */
     NodeId& child(size_t i, size_t j, size_t b) {
-        assert(0 <= b && b < 2);
+        assert(b < 2UL);
         return (*this)[i][j][b];
     }
 

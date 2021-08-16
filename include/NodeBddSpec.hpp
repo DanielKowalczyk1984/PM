@@ -173,7 +173,7 @@ class DdSpecBase {
  *
  * Every implementation must have the following functions:
  * - int getRoot()
- * - int getChild(int level, int value)
+ * - int getChild(int level, size_t value)
  *
  * Optionally, the following functions can be overloaded:
  * - void printLevel(std::ostream& os, int level) const
@@ -188,8 +188,8 @@ class StatelessDdSpec : public DdSpecBase<S, AR> {
 
     int get_root([[maybe_unused]] void* p) { return this->entity().getRoot(); }
 
-    int get_child([[maybe_unused]] void* p, int level, int value) {
-        assert(0 <= value && value < S::ARITY);
+    int get_child([[maybe_unused]] void* p, int level, size_t value) {
+        assert(value < S::ARITY);
         return this->entity().getChild(level, value);
     }
 
@@ -227,7 +227,7 @@ class StatelessDdSpec : public DdSpecBase<S, AR> {
  *
  * Every implementation must have the following functions:
  * - int getRoot(T& state)
- * - int getChild(T& state, int level, int value)
+ * - int getChild(T& state, int level, size_t value)
  *
  * Optionally, the following functions can be overloaded:
  * - void construct(void* p)
@@ -264,8 +264,8 @@ class DdSpec : public DdSpecBase<S, AR> {
         return this->entity().getRoot(state(p));
     }
 
-    int get_child(void* p, int level, int value) {
-        assert(0 <= value && value < S::ARITY);
+    int get_child(void* p, int level, size_t value) {
+        assert(value < S::ARITY);
         return this->entity().getChild(state(p), level, value);
     }
 
@@ -333,7 +333,7 @@ class DdSpec : public DdSpecBase<S, AR> {
  *
  * Every implementation must have the following functions:
  * - int getRoot(T* array)
- * - int getChild(T* array, int level, int value)
+ * - int getChild(T* array, int level, size_t value)
  *
  * Optionally, the following functions can be overloaded:
  * - void mergeStates(T* array1, T* array2)
@@ -390,8 +390,8 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
 
     int get_root(void* p) { return this->entity().getRoot(state(p)); }
 
-    int get_child(void* p, int level, int value) {
-        assert(0 <= value && value < S::ARITY);
+    int get_child(void* p, int level, size_t value) {
+        assert(value < S::ARITY);
         return this->entity().getChild(state(p), level, value);
     }
 
@@ -416,7 +416,7 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
 
     // void destructLevel(int level) {}
 
-    size_t hash_code(void const* p, int level) const {
+    size_t hash_code(void const* p, [[maybe_unused]] int level) const {
         Word const* pa = static_cast<Word const*>(p);
         Word const* pz = pa + dataWords;
         size_t      h = 0;
@@ -427,7 +427,9 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
         return h;
     }
 
-    bool equal_to(void const* p, void const* q, int level) const {
+    bool equal_to(void const*          p,
+                  void const*          q,
+                  [[maybe_unused]] int level) const {
         Word const* pa = static_cast<Word const*>(p);
         Word const* qa = static_cast<Word const*>(q);
         Word const* pz = pa + dataWords;
@@ -466,7 +468,7 @@ class PodArrayDdSpec : public DdSpecBase<S, AR> {
  *
  * Every implementation must have the following functions:
  * - int getRoot(TS& scalar, TA* array)
- * - int getChild(TS& scalar, TA* array, int level, int value)
+ * - int getChild(TS& scalar, TA* array, int level, size_t value)
  *
  * Optionally, the following functions can be overloaded:
  * - void construct(void* p)
@@ -535,7 +537,7 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
         return this->entity().getRoot(s_state(p), a_state(p));
     }
 
-    int get_child(void* p, int level, int value) {
+    int get_child(void* p, int level, size_t value) {
         assert(0 <= value && value < S::ARITY);
         return this->entity().getChild(s_state(p), a_state(p), level, value);
     }
@@ -544,9 +546,10 @@ class HybridDdSpec : public DdSpecBase<S, AR> {
 
     void get_copy(void* to, void const* from) {
         this->entity().getCopy(to, s_state(from));
-        Word const* pa = static_cast<Word const*>(from);
-        Word const* pz = pa + dataWords;
-        Word*       qa = static_cast<Word*>(to);
+        auto const* pa = static_cast<Word const*>(from);
+
+        auto const* pz = pa + dataWords;
+        auto*       qa = static_cast<Word*>(to);
         pa += S_WORDS;
         qa += S_WORDS;
         while (pa != pz) {

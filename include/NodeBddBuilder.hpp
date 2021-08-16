@@ -192,11 +192,11 @@ class DdBuilder : BuilderBase {
     void construct(size_t i) {
         assert(0UL < i && size_t(i) < spec_node_table.size());
 
-        MyList<SpecNode>& spec_nodes = spec_node_table[i];
-        size_t            j0 = output[i].size();
-        size_t            m = j0;
-        size_t            lowestChild = i - 1;
-        size_t            deadCount = 0;
+        auto&  spec_nodes = spec_node_table[i];
+        size_t j0 = output[i].size();
+        size_t m = j0;
+        size_t lowestChild = i - 1;
+        size_t deadCount = 0;
 
         {
             Hasher<Spec> hasher(spec, i);
@@ -257,8 +257,7 @@ class DdBuilder : BuilderBase {
                 }
 
                 spec.get_copy(state(pp), state(p));
-                size_t ii = spec.get_child(state(pp), static_cast<int>(i),
-                                           static_cast<int>(b));
+                size_t ii = spec.get_child(state(pp), static_cast<int>(i), b);
 
                 if (ii == 0UL) {
                     q[b] = 0;
@@ -447,8 +446,8 @@ class ZddSubsetter : BuilderBase {
         assert(work[i].size() == m);
 
         for (size_t j = 0; j < m; ++j) {
-            MyListOnPool<SpecNode>& list = work[i][j];
-            size_t                  n = list.size();
+            auto& list = work[i][j];
+            auto  n = list.size();
 
             if (n >= 2) {
                 UniqTable uniq(n * 2, hasher, hasher);
@@ -492,14 +491,14 @@ class ZddSubsetter : BuilderBase {
             MyListOnPool<SpecNode>& list = work[i][j];
 
             for (auto p : list) {
-                T& q = output[i][jj];
+                auto& q = output[i][jj];
 
                 if (nodeId(p) == 1) {
                     spec.destruct(state(p));
                     continue;
                 }
 
-                bool allZero = true;
+                auto allZero = true;
 
                 for (int b = 0; b < AR; ++b) {
                     if (nodeId(p) == 0) {

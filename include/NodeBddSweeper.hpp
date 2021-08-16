@@ -92,7 +92,6 @@ class DdSweeper {
      */
     void update(size_t current, size_t child, size_t count) {
         assert(1 <= current);
-        assert(0 <= child);
         if (current <= 1) {
             return;
         }

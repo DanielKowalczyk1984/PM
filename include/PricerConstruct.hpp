@@ -42,7 +42,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         return nb_layers;
     };
 
-    int getChild(int& state, int level, int value) const {
+    int getChild(int& state, int level, size_t value) const {
         auto layer = nb_layers - level;
         // assert(0 <= layer && layer <= nb_layers - 1);
         // auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[layer]);
@@ -69,7 +69,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     ~PricerConstruct() = default;
 
    private:
-    [[nodiscard]] size_t min_job(size_t j, int state, int value) const {
+    [[nodiscard]] size_t min_job(size_t j, int state, size_t value) const {
         auto val = nb_layers;
         // auto* tmp = static_cast<job_interval_pair*>(aux_list[j])->j;
         auto* tmp = (*ptr_vector)[j].first;
@@ -94,7 +94,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
                 }
             }
         } else {
-            for (size_t i = j + 1; i < nb_layers; ++i) {
+            for (auto i = j + 1; i < nb_layers; ++i) {
                 auto& tmp_pair = (*ptr_vector)[i];
                 auto* tmp_j = tmp_pair.first;
                 auto* tmp_interval = tmp_pair.second;
