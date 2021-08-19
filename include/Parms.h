@@ -125,7 +125,7 @@ enum Scoring_Value {
     nb_paths_scoring_value,
 };
 
-enum reduced_cost_fixing_param {
+enum ReducedCostFixingParam {
     min_reduced_cost = 1,
     yes_reduced_cost = min_reduced_cost,
     no_reduced_cost = 0,
@@ -138,28 +138,25 @@ enum use_heuristic {
 };
 
 struct Parms {
-    /**
-     * General parameters
-     */
-    enum BBExploreStrategy                             bb_explore_strategy;
-    enum Scoring_Parameter                             scoring_parameter;
-    enum Scoring_Value                                 scoring_value;
-    int                                                strong_branching;
-    int                                                bb_node_limit;
-    int                                                nb_iterations_rvnd;
-    size_t                                             branching_cpu_limit;
-    double                                             alpha;
-    double                                             branching_point;
-    int                                                pricing_solver;
-    int                                                use_heuristic;
-    std::function<double(const std::array<double, 2>)> scoring_function;
-    bool                                               use_mip_solver;
-    bool                                               refine_bdd;
-    bool                                               enumerate;
-    bool                                               pruning_test;
-    bool                                               suboptimal_duals;
+    enum BBExploreStrategy                              bb_explore_strategy;
+    enum Scoring_Parameter                              scoring_parameter;
+    enum Scoring_Value                                  scoring_value;
+    int                                                 strong_branching;
+    int                                                 bb_node_limit;
+    int                                                 nb_iterations_rvnd;
+    size_t                                              branching_cpu_limit;
+    double                                              alpha;
+    double                                              branching_point;
+    int                                                 pricing_solver;
+    int                                                 use_heuristic;
+    std::function<double(const std::array<double, 2>&)> scoring_function;
+    bool                                                use_mip_solver;
+    bool                                                refine_bdd;
+    bool                                                enumerate;
+    bool                                                pruning_test;
+    bool                                                suboptimal_duals;
 
-    enum reduced_cost_fixing_param reduce_cost_fixing;
+    enum ReducedCostFixingParam reduce_cost_fixing;
 
     /**
      * column generation
@@ -181,41 +178,7 @@ struct Parms {
     Parms& operator=(Parms&&) = default;
     ~Parms() = default;
 
-    /*Functions for setting some parameters*/
-    int parms_set_branching_cpu_limit(size_t limit);
-    int parms_set_alpha(double alpha);
-    int parms_set_strong_branching(int strong);
-    int parms_set_use_heuristic(int usage);
-    int parms_set_reduce_cost(int usage);
-    int parms_set_nb_iterations_rvnd(int nb_sol);
-
-    /**
-     * Column Generation parameters
-     */
-    int parms_set_pricing_solver(int solver);
-    int parms_set_stab_technique(int stab_technique);
-
-    /**
-     * Branch-and-Bound parameters
-     */
-    int parms_set_bb_explore_strategy(int strategy);
-    int parms_set_bb_node_limit(int node_limit);
-    int parms_set_print(int print);
     int parms_set_scoring_function(int scoring);
-
-    /*Functions for defining the filesname*/
-    int parms_set_file(std::string const& fname);
-    int parms_set_pname(std::string const& fname);
-    int parms_set_nb_machines(int nb_machines);
-    int parms_set_use_mip_solver(bool _use_solver);
-    /**
-    @brief Parse the commands with docopt
-     *
-     * @param argc
-     * @param argv
-     * @param parms
-     * @return int
-     */
     int parse_cmd(int argc, const char** argv);
 
    private:

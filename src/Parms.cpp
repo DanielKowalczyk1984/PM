@@ -57,80 +57,6 @@ Parms::Parms(int argc, const char** argv) : Parms() {
     }
 }
 
-int Parms::parms_set_file(std::string const& fname) {
-    jobfile = std::string(fname);
-    return 0;
-}
-
-int Parms::parms_set_pname(std::string const& fname) {
-    pname = fname;
-    return 0;
-}
-
-int Parms::parms_set_branching_cpu_limit(size_t limit) {
-    branching_cpu_limit = limit;
-    return 0;
-}
-
-int Parms::parms_set_alpha(double _alpha) {
-    alpha = _alpha;
-    return 0;
-}
-
-int Parms::parms_set_use_heuristic(int usage) {
-    use_heuristic = usage;
-    return 0;
-}
-int Parms::parms_set_reduce_cost(int usage) {
-    reduce_cost_fixing = static_cast<reduced_cost_fixing_param>(usage);
-    return 0;
-}
-
-int Parms::parms_set_strong_branching(int strong) {
-    strong_branching = strong;
-    return 0;
-}
-
-int Parms::parms_set_nb_machines(int _nb_machines) {
-    nb_machines = _nb_machines;
-    return 0;
-}
-
-int Parms::parms_set_nb_iterations_rvnd(int nb_iterations) {
-    nb_iterations_rvnd = nb_iterations;
-    return 0;
-}
-
-int Parms::parms_set_bb_explore_strategy(int strategy) {
-    bb_explore_strategy = static_cast<BBExploreStrategy>(strategy);
-    return 0;
-}
-
-int Parms::parms_set_bb_node_limit(int node_limit) {
-    bb_node_limit = node_limit;
-    return 0;
-}
-
-int Parms::parms_set_stab_technique(int _stab_technique) {
-    stab_technique = static_cast<StabTechniques>(_stab_technique);
-    return 0;
-}
-
-int Parms::parms_set_print(int _print) {
-    print_csv = _print;
-    return 0;
-}
-
-int Parms::parms_set_pricing_solver(int solver) {
-    pricing_solver = solver;
-    return 0;
-}
-
-int Parms::parms_set_use_mip_solver(bool _use_solver) {
-    use_mip_solver = _use_solver;
-    return 0;
-}
-
 int Parms::parms_set_scoring_function(int scoring) {
     scoring_parameter = static_cast<Scoring_Parameter>(scoring);
     switch (scoring_parameter) {
@@ -190,43 +116,39 @@ int Parms::parse_cmd(int argc, const char** argv) {
             ranges::to_vector,
         true, "PM 0.1");
 
-    /** Set CPU limit for branching */
-    parms_set_branching_cpu_limit(
-        static_cast<size_t>(args["--cpu_limit"].asLong()));
-    /** Set number of iterations in rvnd */
-    parms_set_nb_iterations_rvnd(
-        static_cast<int>(args["--nb_rvnb_it"].asLong()));
-    /** Print statistics to csv files */
-    parms_set_print(args["--print_csv"].asBool());
-    /** Use reduced cost fixing */
-    parms_set_reduce_cost(!(args["--no_rc_fixing"].asBool()));
-    /** Use heuristic or not */
-    parms_set_use_heuristic(!(args["--no_heuristic"].asBool()));
-    /** Set the pricing solver */
-    parms_set_pricing_solver(
-        static_cast<int>(args["--pricing_solver"].asLong()));
-    /** Set the stabilization method */
-    parms_set_stab_technique(static_cast<int>(args["--stab_method"].asLong()));
-    parms_set_use_mip_solver(args["--use_mip_solver"].asBool());
+    bb_node_limit = static_cast<int>(args["--node_limit"].asLong());
+    branching_cpu_limit = static_cast<size_t>(args["--cpu_limit"].asLong());
+    nb_iterations_rvnd = static_cast<int>(args["--nb_rvnb_it"].asLong());
+    pricing_solver = static_cast<int>(args["--pricing_solver"].asLong());
+    strong_branching = static_cast<int>(args["--strong_branching"].asLong());
+
+    bb_explore_strategy = static_cast<BBExploreStrategy>(
+        static_cast<int>(args["--branching_strategy"].asLong()));
+    stab_technique = static_cast<StabTechniques>(
+        static_cast<int>(args["--stab_method"].asLong()));
+
+    alpha = std::stod(args["--alpha"].asString());
+    branching_point = std::stod(args["--branching_point"].asString());
+
+    reduce_cost_fixing =
+        static_cast<ReducedCostFixingParam>(!(args["--no_rc_fixing"].asBool()));
+    enumerate = args["--enumerate"].asBool();
+    print_csv = args["--print_csv"].asBool();
+    pruning_test = args["--pruning_test"].asBool();
+    refine_bdd = args["--refinement"].asBool();
+    suboptimal_duals = args["--suboptimal_duals"].asBool();
+    use_heuristic = !(args["--no_heuristic"].asBool());
+    use_mip_solver = args["--use_mip_solver"].asBool();
+
     parms_set_scoring_function(
         static_cast<int>(args["--scoring_function"].asLong()));
-    parms_set_strong_branching(
-        static_cast<int>(args["--strong_branching"].asLong()));
-    parms_set_alpha(std::stod(args["--alpha"].asString()));
-    branching_point = std::stod(args["--branching_point"].asString());
-    refine_bdd = args["--refinement"].asBool();
-    enumerate = args["--enumerate"].asBool();
-    pruning_test = args["--pruning_test"].asBool();
-    suboptimal_duals = args["--suboptimal_duals"].asBool();
-    parms_set_bb_explore_strategy(
-        static_cast<int>(args["--branching_strategy"].asLong()));
-    parms_set_bb_node_limit(static_cast<int>(args["--node_limit"].asLong()));
+
     /** Determine the name of the instance */
     auto file_name = args["FILE"].asString();
-    parms_set_file(file_name);
-    parms_set_pname(find_match(file_name));
+    jobfile = std::string(file_name);
+    pname = find_match(file_name);
     /** Set the number of machines */
-    parms_set_nb_machines(static_cast<int>(args["NB"].asLong()));
+    nb_machines = static_cast<int>(args["NB"].asLong());
 
     return val;
 }
