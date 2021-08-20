@@ -70,9 +70,9 @@ void ZeroHalfCuts::generate_model() {
 
         auto& root_node = table->node(root);
         auto& terminal_node = table->node(1);
-        terminal_node.lp_visited = false;
-        root_node.sigma =
-            model->addVar(0.0, 1.0, 0.0, 'B', fmt::format("sigma_root"));
+        terminal_node.update_lp_visited(false);
+        root_node.set_sigma(
+            model->addVar(0.0, 1.0, 0.0, 'B', fmt::format("sigma_root")));
         node_ids.push_back(root);
 
         dfs(root);
@@ -83,7 +83,8 @@ void ZeroHalfCuts::generate_model() {
         q = model->addVar(0.0, GRB_INFINITY, 0.0, 'I');
 
         expr.addTerms(coeffs.data(), jobs_var.data(), coeffs.size());
-        expr += m * root_node.sigma - m * terminal_node.sigma - HALF * q;
+        expr += m * root_node.get_sigma() - m * terminal_node.get_sigma() -
+                HALF * q;
         model->addConstr(expr, '=', 1.0);
         model->update();
         init_table();
@@ -96,11 +97,11 @@ void ZeroHalfCuts::generate_model() {
 
 void ZeroHalfCuts::init_table() {
     for (auto& it : (*table) | ranges::views::join) {
-        it.in_degree = {};
+        // it.in_degree = {};
+        it.reset_in_degree();
         // it.in_degree_1 = 0;
-        it.in_edges[0].clear();
-        it.in_edges[1].clear();
-        it.coeff_cut = {};
+        it.reset_in_edges();
+        it.reset_coeff_cut();
     }
 
     for (auto& it : *table | ranges::views::take(root.row() + 1) |
@@ -110,9 +111,11 @@ void ZeroHalfCuts::init_table() {
         auto& n1 = table->node(it[1]);
 
         // n0.in_edges[0].push_back(it.ptr_node_id);
-        n0.in_degree[0]++;
+        n0.update_in_degree(false);
+        // n0.in_degree[0]++;
         // n1.in_edges[1].push_back(it.ptr_node_id);
-        n1.in_degree[1]++;
+        // n1.in_degree[1]++;
+        n1.update_in_degree(true);
     }
 }
 
@@ -130,13 +133,13 @@ void ZeroHalfCuts::init_coeff_cut() {
 }
 
 void ZeroHalfCuts::init_coeff_node(NodeBdd<>* node) {
-    for (auto k : ranges::views::ints(0UL, 2UL)) {
-        node->coeff_cut.at(k) = 0.0;
-        for (auto& it : node->in_edges.at(k)) {
+    for (auto k : {false, true}) {
+        node->reset_coeff_cut(k);
+        for (auto& it : node->get_in_edges(k)) {
             auto aux = it.lock();
             if (aux) {
                 auto& aux_node = table->node(*aux);
-                aux_node.coeff_cut.at(k) = 0.0;
+                aux_node.reset_coeff_cut(k);
             }
         }
     }
@@ -148,18 +151,18 @@ void ZeroHalfCuts::construct_cut() {
     auto add_coeff_constr = [&](const auto& it) {
         auto& node = table->node(it);
 
-        for (auto k = 0UL; k < 2; k++) {
-            auto coeff = floor(node.coeff_cut.at(k) / HALF);
+        for (auto k : {false, true}) {
+            auto coeff = floor(node.get_coeff_cut(k) / HALF);
             if (coeff > EPS_CUT) {
                 data->add_coeff_hash_table(node.get_nb_job(), node.get_weight(),
                                            k, -coeff);
             }
 
-            for (auto& iter : node.in_edges.at(k)) {
+            for (auto& iter : node.get_in_edges(k)) {
                 auto aux = iter.lock();
                 if (aux) {
                     auto& aux_node = table->node(*aux);
-                    auto  coeff_in = floor(aux_node.coeff_cut.at(k) / 2);
+                    auto  coeff_in = floor(aux_node.get_coeff_cut(k) / 2);
                     if (coeff_in < -EPS_CUT) {
                         data->add_coeff_hash_table(aux_node.get_nb_job(),
                                                    aux_node.get_weight(), k,
@@ -189,10 +192,10 @@ void ZeroHalfCuts::construct_cut() {
     auto& root_node = table->node(root);
     auto& terminal_node = table->node(1);
     auto  rhs = 0.0;
-    rhs += (root_node.sigma.get(GRB_DoubleAttr_Xn) > EPS_CUT)
+    rhs += (root_node.get_sigma().get(GRB_DoubleAttr_Xn) > EPS_CUT)
                ? static_cast<double>(nb_machines)
                : 0.0;
-    rhs += (terminal_node.sigma.get(GRB_DoubleAttr_Xn) > EPS_CUT)
+    rhs += (terminal_node.get_sigma().get(GRB_DoubleAttr_Xn) > EPS_CUT)
                ? -static_cast<double>(nb_machines)
                : 0.0;
 
@@ -249,22 +252,25 @@ void ZeroHalfCuts::generate_cuts() {
             bool add = false;
             auto calc_coeff_cut = [&](const auto& it) {
                 auto& node = table->node(it);
-                auto  x = node.sigma.get(GRB_DoubleAttr_Xn);
+                auto  x = node.get_sigma().get(GRB_DoubleAttr_Xn);
                 if (x > EPS_CUT) {
                     if (it > 1) {
-                        node.coeff_cut[0] += 1.0;
-                        node.coeff_cut[1] += 1.0;
+                        // node.coeff_cut[0] += 1.0;
+                        // node.coeff_cut[1] += 1.0;
+                        for (auto k : {false, true}) {
+                            node.update_coeff_cut(k);
+                        }
                         // fmt::print("Node {} {}\n", node.get_nb_job(),
                         //    node.get_weight());
                         add = true;
                     }
 
-                    for (auto j : ranges::views::ints(0UL, 2UL)) {
-                        for (auto& it_aux : node.in_edges.at(j)) {
+                    for (auto j : {false, true}) {
+                        for (auto& it_aux : node.get_in_edges(j)) {
                             auto aux = it_aux.lock();
                             if (aux) {
                                 auto& aux_node = table->node(*aux);
-                                aux_node.coeff_cut.at(j) -= 1.0;
+                                aux_node.reduce_coeff_cut(j);
                             }
                         }
                     }
@@ -276,7 +282,7 @@ void ZeroHalfCuts::generate_cuts() {
                     auto j = it.get_nb_job();
                     auto x = jobs_var[j].get(GRB_DoubleAttr_Xn);
                     if (x > EPS_CUT) {
-                        it.coeff_cut[1] += 1.0;
+                        it.update_coeff_cut(true);
                     }
                 }
             }
@@ -341,30 +347,31 @@ void ZeroHalfCuts::generate_cuts() {
 
 void ZeroHalfCuts::dfs(const NodeId& v) {
     auto& node = table->node(v);
-    node.lp_visited = true;
+    node.update_lp_visited(true);
     std::array<bool, 2> edges_type{false, true};
 
     for (auto [child_id, x, y, r, high] :
-         ranges::views::zip(node, node.lp_x, node.y, node.r, edges_type) |
+         ranges::views::zip(node, node.get_lp_x(), node.get_y(), node.get_r(),
+                            edges_type) |
              ranges::views::filter(
                  [](const auto& tmp) { return tmp > EPS_CUT; },
                  [](const auto& tmp) { return std::get<1>(tmp); })) {
         // if (x > EPS_CUT) {
         auto& child = table->node(child_id);
-        if (!child.lp_visited) {
+        if (!child.get_lp_visited()) {
             if (child_id == 1) {
-                child.sigma = model->addVar(0.0, 1.0, 0.0, 'B',
-                                            fmt::format("sigma_terminal"));
+                child.set_sigma(model->addVar(0.0, 1.0, 0.0, 'B',
+                                              fmt::format("sigma_terminal")));
             } else {
-                child.sigma =
+                child.set_sigma(
                     model->addVar(0.0, 1.0, 0.0, 'B',
                                   fmt::format("sigma_{}_{}", child.get_nb_job(),
-                                              child.get_weight()));
+                                              child.get_weight())));
             }
 
             node_ids.push_back(child_id);
-            auto& s_source = node.sigma;
-            auto& s_head = child.sigma;
+            auto& s_source = node.get_sigma();
+            auto& s_head = child.get_sigma();
             auto  str_y =
                 fmt::format("y_{}_{}", node.get_nb_job(), node.get_weight());
             auto str_r =
@@ -378,8 +385,8 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
             model->addConstr(expr, '=', 0.0);
             dfs(child_id);
         } else {
-            auto& s_source = node.sigma;
-            auto& s_head = child.sigma;
+            auto& s_source = node.get_sigma();
+            auto& s_head = child.get_sigma();
             auto  str_y =
                 fmt::format("y_{}_{}", node.get_nb_job(), node.get_weight());
             auto str_r =
@@ -400,22 +407,26 @@ void ZeroHalfCuts::dfs(const NodeId& v) {
 void ZeroHalfCuts::dfs_lift(const NodeId& v) {
     auto& node = table->node(v);
 
-    for (auto [child, x] : ranges::views::zip(node, node.lp_x)) {
+    for (auto [child, x] : ranges::views::zip(node, node.get_lp_x())) {
         if (child <= 1) {
             continue;
         }
         auto& child_node = table->node(child);
 
-        if (x == 0.0 && !child_node.lp_visited) {
-            child_node.coeff_cut[0] += 1.0;
-            child_node.coeff_cut[1] += 1.0;
+        if (x == 0.0 && !child_node.get_lp_visited()) {
+            // child_node.coeff_cut[0] += 1.0;
+            // child_node.coeff_cut[1] += 1.0;
 
-            for (auto j : ranges::views::ints(0UL, 2UL)) {
-                for (auto& it : child_node.in_edges.at(j)) {
+            for (auto j : {false, true}) {
+                child_node.update_coeff_cut(j);
+            }
+
+            for (auto j : {false, true}) {
+                for (auto& it : child_node.get_in_edges(j)) {
                     auto aux = it.lock();
                     if (aux) {
                         auto& aux_node = table->node(*aux);
-                        aux_node.coeff_cut.at(j) -= 1.0;
+                        aux_node.reduce_coeff_cut(j);
                     }
                 }
             }

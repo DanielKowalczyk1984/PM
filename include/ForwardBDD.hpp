@@ -41,7 +41,8 @@ class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
             auto& node = table_tmp->node(aux_prev_node->get_node_id());
             Job*  aux_job = node.get_job();
             sol.C_max += aux_job->processing_time;
-            sol.push_job_back(aux_job, node.get_weight(), node.reduced_cost[1]);
+            sol.push_job_back(aux_job, node.get_weight(),
+                              node.get_reduced_cost()[1]);
             ptr_node = aux_prev_node;
         }
 
@@ -108,7 +109,7 @@ class ForwardBddCycle : public ForwardBddBase<T> {
         auto* aux1 = p1.forward_label[0].prev_job_forward();
 
         if (prev != tmp_j) {
-            auto g = n.forward_label[0].get_f() + n.reduced_cost[1];
+            auto g = n.forward_label[0].get_f() + n.get_reduced_cost()[1];
             if (g < p1.forward_label[0].get_f()) {
                 if (aux1 != tmp_j) {
                     p1.forward_label[1].forward_update(p1.forward_label[0]);
@@ -120,7 +121,7 @@ class ForwardBddCycle : public ForwardBddBase<T> {
                                                    true);
             }
         } else {
-            auto g = n.forward_label[1].get_f() + n.reduced_cost[1];
+            auto g = n.forward_label[1].get_f() + n.get_reduced_cost()[1];
             prev = n.forward_label[1].prev_job_forward();
 
             if (g < p1.forward_label[0].get_f()) {
@@ -139,8 +140,8 @@ class ForwardBddCycle : public ForwardBddBase<T> {
          * Low edge calculation
          */
         aux1 = p0.forward_label[0].prev_job_forward();
-        auto g = n.forward_label[0].get_f() + n.reduced_cost[0];
-        auto g1 = n.forward_label[1].get_f() + n.reduced_cost[0];
+        auto g = n.forward_label[0].get_f() + n.get_reduced_cost()[0];
+        auto g1 = n.forward_label[1].get_f() + n.get_reduced_cost()[0];
         if (g < p0.forward_label[0].get_f()) {
             if (prev != aux1) {
                 p0.forward_label[1].forward_update(p0.forward_label[0]);
@@ -187,7 +188,7 @@ class ForwardBddSimple : public ForwardBddBase<T> {
         n.reset_reduced_costs();
         const auto* dual = ForwardBddBase<T>::get_pi();
 
-        for (auto& list : n.coeff_list) {
+        for (auto& list : n.get_coeff_list()) {
             list |= ranges::actions::remove_if([&](auto& it) {
                 auto aux = it.lock();
                 if (aux) {
@@ -203,7 +204,7 @@ class ForwardBddSimple : public ForwardBddBase<T> {
         /**
          * High edge calculation
          */
-        auto g = n.forward_label[0].get_f() + n.reduced_cost[1];
+        auto g = n.forward_label[0].get_f() + n.get_reduced_cost()[1];
         if (g < p1.forward_label[0].get_f()) {
             p1.forward_label[0].forward_update(g, &(n.forward_label[0]), true);
         }
@@ -211,7 +212,7 @@ class ForwardBddSimple : public ForwardBddBase<T> {
         /**
          * Low edge calculation
          */
-        g = n.forward_label[0].get_f() + n.reduced_cost[0];
+        g = n.forward_label[0].get_f() + n.get_reduced_cost()[0];
         if (g < p0.forward_label[0].get_f()) {
             p0.forward_label[0].forward_update(g, n.forward_label[0]);
         }

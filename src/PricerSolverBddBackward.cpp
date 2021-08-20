@@ -55,7 +55,7 @@ double PricerSolverBddBackwardSimple::evaluate_rc_arc(NodeBdd<>& node) {
     auto& table = *(get_decision_diagram().getDiagram());
     auto& child = table.node(node[1]);
     return node.forward_label[0].get_f() + child.backward_label[0].get_f() +
-           node.reduced_cost[1];
+           node.get_reduced_cost()[1];
 }
 
 /**
@@ -102,17 +102,17 @@ double PricerSolverBddBackwardCycle::evaluate_rc_arc(NodeBdd<>& s) {
     if (s.forward_label[0].prev_job_forward() != job &&
         child.backward_label[0].prev_job_backward() != job) {
         return s.forward_label[0].get_f() + child.backward_label[0].get_f() +
-               s.reduced_cost[1];
+               s.get_reduced_cost()[1];
     } else if (s.forward_label[0].prev_job_forward() == job &&
                child.backward_label[0].prev_job_backward() != job) {
         return s.forward_label[1].get_f() + child.backward_label[0].get_f() +
-               s.reduced_cost[1];
+               s.get_reduced_cost()[1];
     } else if (s.forward_label[0].prev_job_forward() != job &&
                child.backward_label[0].prev_job_backward() == job) {
         return s.forward_label[0].get_f() + child.backward_label[1].get_f() +
-               s.reduced_cost[1];
+               s.get_reduced_cost()[1];
     } else {
         return s.forward_label[1].get_f() + child.backward_label[1].get_f() +
-               s.reduced_cost[1];
+               s.get_reduced_cost()[1];
     }
 }

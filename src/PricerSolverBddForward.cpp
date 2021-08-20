@@ -50,7 +50,7 @@ double PricerSolverBddSimple::evaluate_rc_arc(NodeBdd<>& n) {
 
     auto& child = table.node(n[1]);
     return n.forward_label[0].get_f() + child.backward_label[0].get_f() +
-           n.reduced_cost[1];
+           n.get_reduced_cost()[1];
 }
 
 // bool PricerSolverBddSimple::evaluate_nodes(double* pi) {
@@ -134,18 +134,18 @@ double PricerSolverBddCycle::evaluate_rc_arc(NodeBdd<>& n) {
     if (n.forward_label[0].prev_job_forward() != job &&
         child.backward_label[0].prev_job_backward() != job) {
         return n.forward_label[0].get_f() + child.backward_label[0].get_f() +
-               n.reduced_cost[1];
+               n.get_reduced_cost()[1];
     } else if (n.forward_label[0].prev_job_forward() == job &&
                child.backward_label[0].prev_job_backward() != job) {
         return n.forward_label[1].get_f() + child.backward_label[0].get_f() +
-               n.reduced_cost[1];
+               n.get_reduced_cost()[1];
     } else if (n.forward_label[0].prev_job_forward() != job &&
                child.backward_label[0].prev_job_backward() == job) {
         return n.forward_label[0].get_f() + child.backward_label[1].get_f() +
-               n.reduced_cost[1];
+               n.get_reduced_cost()[1];
     } else {
         return n.forward_label[1].get_f() + child.backward_label[1].get_f() +
-               n.reduced_cost[1];
+               n.get_reduced_cost()[1];
     }
 }
 
