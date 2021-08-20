@@ -2,7 +2,7 @@ if(${PROJECT_NAME}_ENABLE_CONAN)
   #
   # Setup Conan requires and options here:
   #
-  set(CONAN_REQUIRES boost/1.73.0 fmt/8.0.0 docopt.cpp/0.6.3 range-v3/0.11.0)
+  set(CONAN_REQUIRES boost/1.73.0 fmt/8.0.0 docopt.cpp/0.6.3 range-v3/0.11.0 jsonformoderncpp/3.7.0)
   set(CONAN_OPTIONS
       "
     boost:without_context=True
