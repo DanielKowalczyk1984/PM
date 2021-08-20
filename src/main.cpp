@@ -3,8 +3,8 @@
 #include <cstdio>           // for stderr
 #include <exception>        // for exception
 #include <string>           // for string
-#include "Parms.h"          // for USAGE
 #include "Problem.h"        // for Problem
+#include "Usage.hpp"        // for USAGE
 
 int main(int argc, const char** argv) {
     int val = 0;
