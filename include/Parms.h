@@ -15,23 +15,17 @@ enum BBNodeSelection {
 };
 
 enum PricingSolver {
-    bdd_solver_simple = 1,
-    bdd_solver_cycle = 2,
-    bdd_solver_backward_simple = 3,
-    bdd_solver_backward_cycle = 4,
-    zdd_solver_simple = 5,
-    zdd_solver_cycle = 6,
-    zdd_solver_backward_simple = 7,
-    zdd_solver_backward_cycle = 8,
-    dp_solver = 9,
-    ati_solver = 10,
-    dp_bdd_solver = 11,
-};
-
-enum BranchandBound {
-    min_branch_and_bound = 0,
-    no_branch_and_bound = 1,
-    yes_branch_and_bound = min_branch_and_bound,
+    bdd_solver_simple = 0,
+    bdd_solver_cycle = 1,
+    bdd_solver_backward_simple = 2,
+    bdd_solver_backward_cycle = 3,
+    zdd_solver_simple = 4,
+    zdd_solver_cycle = 5,
+    zdd_solver_backward_simple = 6,
+    zdd_solver_backward_cycle = 7,
+    dp_solver = 8,
+    ati_solver = 9,
+    dp_bdd_solver = 10
 };
 
 enum StabTechniques {
@@ -42,31 +36,12 @@ enum StabTechniques {
     min_stab = stab_wentgnes,
 };
 
-enum print {
-    min_print_size = 0,
-    use_print = 1,
-};
-
-enum BBBranchStrategy {
-    min_bb_strategy = 0,
-    conflict_strategy = min_bb_strategy,
-    ahv_strategy = 1,
-    cbfs_conflict_strategy = 2,
-    cbfs_ahv_strategy = 3,
-};
-
 enum BBExploreStrategy {
     min_bb_explore_strategy = 0,
     bb_dfs_strategy = min_bb_explore_strategy,
     bb_bfs_strategy = 1,
     bb_brfs_strategy = 2,
     bb_cbfs_strategy = 3,
-};
-
-enum MIP_solver {
-    min_mip_solver = 0,
-    no_mip_solver = min_mip_solver,
-    use_mip_solver = 1,
 };
 
 enum Scoring_Parameter {
@@ -81,20 +56,8 @@ enum Scoring_Parameter {
 enum Scoring_Value {
     min_scoring_value = 0,
     lb_scoring_value = min_scoring_value,
-    size_scoring_value,
-    nb_paths_scoring_value,
-};
-
-enum ReducedCostFixingParam {
-    min_reduced_cost = 1,
-    yes_reduced_cost = min_reduced_cost,
-    no_reduced_cost = 0,
-};
-
-enum use_heuristic {
-    min_use_heuristic = 1,
-    yes_use_heuristic = min_use_heuristic,
-    no_use_heuristic = 0,
+    size_scoring_value = 1,
+    nb_paths_scoring_value = 2,
 };
 
 struct Parms {
@@ -107,7 +70,7 @@ struct Parms {
     size_t                                              branching_cpu_limit;
     double                                              alpha;
     double                                              branching_point;
-    int                                                 pricing_solver;
+    enum PricingSolver                                  pricing_solver;
     int                                                 use_heuristic;
     std::function<double(const std::array<double, 2>&)> scoring_function;
     bool                                                use_mip_solver;
@@ -115,14 +78,13 @@ struct Parms {
     bool                                                enumerate;
     bool                                                pruning_test;
     bool                                                suboptimal_duals;
-
-    enum ReducedCostFixingParam reduce_cost_fixing;
+    bool                                                reduce_cost_fixing;
+    enum StabTechniques                                 stab_technique;
 
     /**
      * column generation
      */
-    enum StabTechniques stab_technique;
-    int                 print_csv;
+    int print_csv;
 
     std::string jobfile;
     std::string pname;

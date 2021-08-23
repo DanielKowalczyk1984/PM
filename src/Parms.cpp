@@ -3,10 +3,11 @@
 #include <fmt/core.h>                            // for print
 #include <algorithm>                             // for max, min
 #include <array>                                 // for array
-#include <climits>                               // for INT_MAX
 #include <cmath>                                 // for pow
 #include <cstddef>                               // for size_t
+#include <fstream>                               // for ifstream
 #include <map>                                   // for map
+#include <nlohmann/json.hpp>                     // for json
 #include <range/v3/iterator/basic_iterator.hpp>  // for operator-, operator!=
 #include <range/v3/range/conversion.hpp>         // for to_container::fn
 #include <range/v3/view/drop.hpp>                // for drop, drop_fn
@@ -17,10 +18,48 @@
 #include <span>                                  // for span
 #include <string>                                // for allocator, string, stod
 #include <vector>                                // for vector
+#include "Usage.hpp"                             // for USAGE
 #include "util.h"                                // for dbg_lvl, program_header
 
 const size_t TIME_LIMIT = 7200;
 const double ALPHA_STAB_INIT = 0.8;
+
+NLOHMANN_JSON_SERIALIZE_ENUM(PricingSolver,
+                             {{bdd_solver_simple, "BddForward"},
+                              {bdd_solver_cycle, "BddForwardCycle"},
+                              {bdd_solver_backward_simple, "BddBackward"},
+                              {bdd_solver_backward_cycle, "BddBackwardCycle"},
+                              {zdd_solver_simple, "ZddForward"},
+                              {zdd_solver_cycle, "ZddForwardCycle"},
+                              {zdd_solver_backward_simple, "ZddBackward"},
+                              {zdd_solver_backward_cycle, "ZddBackwardCycle"},
+                              {dp_solver, "Time-Indexed"},
+                              {ati_solver, "Arc-Time-Indexed"},
+                              {dp_bdd_solver, "Hybrid"}});
+
+NLOHMANN_JSON_SERIALIZE_ENUM(StabTechniques,
+                             {
+                                 {no_stab, "NoStabilization"},
+                                 {stab_wentgnes, "WentgnesStab"},
+                                 {stab_dynamic, "DynamicStab"},
+                                 {stab_hybrid, "HybridStab"},
+                             });
+
+NLOHMANN_JSON_SERIALIZE_ENUM(BBExploreStrategy,
+                             {{min_bb_explore_strategy, "dfs"},
+                              {bb_dfs_strategy, "dfs"},
+                              {bb_bfs_strategy, "bfs"},
+                              {bb_brfs_strategy, "brfs"},
+                              {bb_cbfs_strategy, "cbfs"}});
+
+NLOHMANN_JSON_SERIALIZE_ENUM(Scoring_Parameter,
+                             {{min_scoring_parameter, "ProductScoring"},
+                              {product_scoring_parameter, "ProductScoring"},
+                              {min_function_scoring_parameter, "MinFunction"},
+                              {max_function_scoring_parameter, "MaxFunction"},
+                              {weighted_sum_scoring_parameter, " WeightedSum"},
+                              {weighted_product_scoring_parameter,
+                               "WeightedProduct"}})
 
 Parms::Parms()
     : bb_explore_strategy(min_bb_explore_strategy),
@@ -33,15 +72,15 @@ Parms::Parms()
       alpha(ALPHA_STAB_INIT),
       branching_point(TargetBrTimeValue),
       pricing_solver(bdd_solver_backward_cycle),
-      use_heuristic(min_use_heuristic),
+      use_heuristic(true),
       use_mip_solver(false),
       refine_bdd(false),
       enumerate(false),
       pruning_test(false),
       suboptimal_duals(false),
-      reduce_cost_fixing(min_reduced_cost),
+      reduce_cost_fixing(true),
       stab_technique(min_stab),
-      print_csv(min_print_size),
+      print_csv(false),
       jobfile(),
       pname(),
       nb_jobs(0),
@@ -116,32 +155,59 @@ int Parms::parse_cmd(int argc, const char** argv) {
             ranges::to_vector,
         true, "PM 0.1");
 
-    bb_node_limit = static_cast<int>(args["--node_limit"].asLong());
-    branching_cpu_limit = static_cast<size_t>(args["--cpu_limit"].asLong());
-    nb_iterations_rvnd = static_cast<int>(args["--nb_rvnb_it"].asLong());
-    pricing_solver = static_cast<int>(args["--pricing_solver"].asLong());
-    strong_branching = static_cast<int>(args["--strong_branching"].asLong());
+    if (!args["--json"].asBool()) {
+        bb_node_limit = static_cast<int>(args["--node_limit"].asLong());
+        branching_cpu_limit = static_cast<size_t>(args["--cpu_limit"].asLong());
+        nb_iterations_rvnd = static_cast<int>(args["--nb_rvnb_it"].asLong());
+        pricing_solver =
+            static_cast<PricingSolver>(args["--pricing_solver"].asLong());
+        strong_branching =
+            static_cast<int>(args["--strong_branching"].asLong());
 
-    bb_explore_strategy = static_cast<BBExploreStrategy>(
-        static_cast<int>(args["--branching_strategy"].asLong()));
-    stab_technique = static_cast<StabTechniques>(
-        static_cast<int>(args["--stab_method"].asLong()));
+        bb_explore_strategy = static_cast<BBExploreStrategy>(
+            static_cast<int>(args["--branching_strategy"].asLong()));
+        stab_technique = static_cast<StabTechniques>(
+            static_cast<int>(args["--stab_method"].asLong()));
 
-    alpha = std::stod(args["--alpha"].asString());
-    branching_point = std::stod(args["--branching_point"].asString());
+        alpha = std::stod(args["--alpha"].asString());
+        branching_point = std::stod(args["--branching_point"].asString());
 
-    reduce_cost_fixing =
-        static_cast<ReducedCostFixingParam>(!(args["--no_rc_fixing"].asBool()));
-    enumerate = args["--enumerate"].asBool();
-    print_csv = args["--print_csv"].asBool();
-    pruning_test = args["--pruning_test"].asBool();
-    refine_bdd = args["--refinement"].asBool();
-    suboptimal_duals = args["--suboptimal_duals"].asBool();
-    use_heuristic = !(args["--no_heuristic"].asBool());
-    use_mip_solver = args["--use_mip_solver"].asBool();
+        reduce_cost_fixing = !(args["--no_rc_fixing"].asBool());
+        enumerate = args["--enumerate"].asBool();
+        print_csv = args["--print_csv"].asBool();
+        pruning_test = args["--pruning_test"].asBool();
+        refine_bdd = args["--refinement"].asBool();
+        suboptimal_duals = args["--suboptimal_duals"].asBool();
+        use_heuristic = !(args["--no_heuristic"].asBool());
+        use_mip_solver = args["--use_mip_solver"].asBool();
+        parms_set_scoring_function(
+            static_cast<int>(args["--scoring_function"].asLong()));
 
-    parms_set_scoring_function(
-        static_cast<int>(args["--scoring_function"].asLong()));
+    } else {
+        nlohmann::json j;
+        std::ifstream  file(args["<json_file>"].asString());
+        file >> j;
+        j.at("bb_explore_strategy").get_to(bb_explore_strategy);
+        j.at("scoring_parameter").get_to(scoring_parameter);
+        j.at("scoring_value").get_to(scoring_value);
+        j.at("strong_branching").get_to(strong_branching);
+        j.at("bb_node_limit").get_to(bb_node_limit);
+        j.at("nb_iterations_rvnd").get_to(nb_iterations_rvnd);
+        j.at("branching_cpu_limit").get_to(branching_cpu_limit);
+        j.at("alpha").get_to(alpha);
+        j.at("branching_point").get_to(branching_point);
+        j.at("pricing_solver").get_to(pricing_solver);
+        j.at("use_heuristic").get_to(use_heuristic);
+        j.at("use_mip_solver").get_to(use_mip_solver);
+        j.at("refine_bdd").get_to(refine_bdd);
+        j.at("enumerate").get_to(enumerate);
+        j.at("pruning_test").get_to(pruning_test);
+        j.at("suboptimal_duals").get_to(suboptimal_duals);
+        j.at("reduce_cost_fixing").get_to(reduce_cost_fixing);
+        j.at("stab_technique").get_to(stab_technique);
+        j.at("print_csv").get_to(print_csv);
+        parms_set_scoring_function(scoring_parameter);
+    }
 
     /** Determine the name of the instance */
     auto file_name = args["FILE"].asString();
