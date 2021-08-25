@@ -4,9 +4,9 @@
 #include <vector>                    // for vector
 #include "Column.h"                  // for ScheduleSet
 #include "NodeData.h"                // for NodeData
-#include "OptimalSolution.hpp"       // for OptimalSolution
 #include "Parms.h"                   // for Parms, yes_reduced_cost
 #include "PricerSolverBase.hpp"      // for PricerSolverBase
+#include "PricingSolution.hpp"       // for PricingSolution
 #include "PricingStabilization.hpp"  // for PricingStabilizationBase
 #include "Statistics.h"              // for Statistics, Statistics::reduced_...
 #include "lp.h"                      // for lp_interface_objval
@@ -73,7 +73,7 @@ int NodeData::solve_pricing() {
 }
 
 void NodeData::solve_farkas_dbl() {
-    OptimalSolution<double> s = solver->farkas_pricing(pi.data());
+    PricingSolution<double> s = solver->farkas_pricing(pi.data());
 
     if (s.obj < EPS) {
         localColPool.emplace_back(std::make_shared<Column>(std::move(s)));

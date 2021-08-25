@@ -1,15 +1,15 @@
 #include "PricerSolverBdd.hpp"
-#include <fmt/core.h>                               // for print
-#include <gurobi_c++.h>                             // for GRBLinExpr
-#include <algorithm>                                // for find, min, all_of
-#include <array>                                    // for array, array<>...
-#include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
-#include <boost/graph/adjacency_list.hpp>           // for source, target
-#include <boost/graph/detail/adjacency_list.hpp>    // for undirected_edg...
-#include <boost/graph/detail/edge.hpp>              // for edge_desc_impl
-#include <boost/graph/graphviz.hpp>                 // for write_graphviz
-#include <boost/iterator/iterator_facade.hpp>       // for operator!=
-#include <boost/multiprecision/cpp_int.hpp>
+#include <fmt/core.h>                                  // for print
+#include <gurobi_c++.h>                                // for GRBLinExpr
+#include <algorithm>                                   // for find, min, all_of
+#include <array>                                       // for array, array<>...
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>     // for dynamic_bitset
+#include <boost/graph/adjacency_list.hpp>              // for source, target
+#include <boost/graph/detail/adjacency_list.hpp>       // for undirected_edg...
+#include <boost/graph/detail/edge.hpp>                 // for edge_desc_impl
+#include <boost/graph/graphviz.hpp>                    // for write_graphviz
+#include <boost/iterator/iterator_facade.hpp>          // for operator!=
+#include <boost/multiprecision/cpp_int.hpp>            // for big_cpp
 #include <boost/pending/property.hpp>                  // for lookup_one_pro...
 #include <boost/range/irange.hpp>                      // for integer_iterator
 #include <cassert>                                     // for assert
@@ -60,9 +60,9 @@
 #include "NodeBddTable.hpp"                            // for NodeTableEntity
 #include "NodeData.h"                                  // for NodeData
 #include "NodeId.hpp"                                  // for NodeId
-#include "OptimalSolution.hpp"                         // for OptimalSolution
 #include "PricerConstruct.hpp"                         // for PricerConstruct
 #include "PricerSolverBase.hpp"                        // for PricerSolverBa...
+#include "PricingSolution.hpp"                         // for PricingSolution
 #include "Solution.hpp"                                // for Machine, VecJo...
 #include "ZeroHalfCuts.hpp"                            // for ZeroHalfCuts
 #include "gurobi_c.h"                                  // for GRB_EQUAL, GRB...
@@ -384,7 +384,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     pd->coeff_row.resize(reformulation_model.size(), 0.0);
 }
 
-double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
+double PricerSolverBdd::compute_reduced_cost(const PricingSolution<>& sol,
                                              double*                  pi,
                                              double*                  lhs) {
     double    result = sol.cost;
@@ -439,7 +439,7 @@ double PricerSolverBdd::compute_reduced_cost(const OptimalSolution<>& sol,
     return result;
 }
 
-double PricerSolverBdd::compute_subgradient(const OptimalSolution<>& sol,
+double PricerSolverBdd::compute_subgradient(const PricingSolution<>& sol,
                                             double* sub_gradient) {
     double    result = sol.cost;
     auto&     table = *decision_diagram.getDiagram();
@@ -696,7 +696,7 @@ void PricerSolverBdd::enumerate_columns(double* _pi) {
     } while (true);
 }
 
-double PricerSolverBdd::compute_lagrange(const OptimalSolution<>&   sol,
+double PricerSolverBdd::compute_lagrange(const PricingSolution<>&   sol,
                                          const std::vector<double>& pi) {
     double result = sol.cost;
     auto   dual_bound = 0.0;
@@ -934,33 +934,6 @@ bool PricerSolverBdd::evaluate_nodes(double* pi) {
     }
 
     return removed_edges;
-}
-
-void PricerSolverBdd::add_inequality(std::vector<int> v1, std::vector<int> v2) {
-    GRBLinExpr expr1;
-    for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-        auto* data = static_cast<EdgeData*>(it.first->get_property());
-        if (std::find(v1.begin(), v1.end(), mip_graph[*it.first].id) !=
-            v1.end()) {
-            expr1 += mip_graph[*it.first].x;
-        }
-
-        if (std::find(v2.begin(), v2.end(), data->id) != v2.end()) {
-            expr1 -= mip_graph[*it.first].x;
-        }
-    }
-    model.addConstr(expr1, GRB_EQUAL, 0);
-}
-
-void PricerSolverBdd::add_inequality(std::vector<int> v1) {
-    GRBLinExpr expr1;
-    for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
-        auto* data = static_cast<EdgeData*>(it.first->get_property());
-        if (std::find(v1.begin(), v1.end(), data->id) != v1.end()) {
-            expr1 += mip_graph[*it.first].x;
-        }
-    }
-    model.addConstr(expr1, GRB_EQUAL, convex_rhs);
 }
 
 void PricerSolverBdd::build_mip() {
@@ -1209,13 +1182,6 @@ void PricerSolverBdd::topdown_filtering() {
     }
 
     if (removed_edges) {
-        // std::cout << "Removing edges based on top-down iteration\n";
-        // std::cout << "Number edges removed top-bottom \t\t= "
-        //           << nb_edges_removed_tmp << "\n";
-        // std::cout << "Number edges removed total \t\t\t= " <<
-        // nb_removed_edges
-        //           << "\n";
-        // remove_layers();
         remove_edges();
         cleanup_arcs();
         // init_table();
@@ -1268,12 +1234,6 @@ void PricerSolverBdd::bottum_up_filtering() {
     }
 
     if (removed_edges) {
-        // std::cout << "removing edges based on bottum-up iteration\n";
-        // std::cout << "Number edges removed bottum-up iteration \t\t= "
-        //           << nb_edges_removed_tmp << "\n";
-        // std::cout << "Number edges removed total \t\t\t= " <<
-        // nb_removed_edges
-        //           << "\n";
         // remove_layers();
         remove_edges();
         cleanup_arcs();
@@ -1521,8 +1481,8 @@ void PricerSolverBdd::equivalent_paths_filtering() {
 }
 
 void PricerSolverBdd::construct_lp_sol_from_rmp(
-    const double*                               columns,
-    const std::vector<std::shared_ptr<Column>>& schedule_sets) {
+    const double*                               lambda,
+    const std::vector<std::shared_ptr<Column>>& columns) {
     auto& table = *(decision_diagram.getDiagram());
     for (auto& it : table |
                         ranges::views::take(decision_diagram.root().row() + 1) |
@@ -1531,12 +1491,12 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         it.reset_lp_x();
         // }
     }
-    std::span<const double> aux_cols{columns, schedule_sets.size()};
+    std::span<const double> aux_cols{lambda, columns.size()};
 
     set_is_integer_solution(true);
     for (auto&& [i, x] : aux_cols | ranges::views::enumerate) {
         if (x > EPS_SOLVER) {
-            auto* tmp = schedule_sets[i].get();
+            auto* tmp = columns[i].get();
             auto  it = tmp->job_list.begin();
             auto  tmp_nodeid(decision_diagram.root());
 
@@ -1724,10 +1684,11 @@ void PricerSolverBdd::update_rows_coeff(size_t first) {
     }
 }
 
-bool PricerSolverBdd::check_schedule_set(const std::vector<Job*>& set) {
-    auto& table = *(decision_diagram.getDiagram());
-    auto  tmp_nodeid(decision_diagram.root());
-    auto  it = set.begin();
+bool PricerSolverBdd::check_column(Column const* col) {
+    const auto& set = col->job_list;
+    auto&       table = *(decision_diagram.getDiagram());
+    auto        tmp_nodeid(decision_diagram.root());
+    auto        it = set.begin();
 
     while (tmp_nodeid > 1) {
         auto& tmp_node = table.node(tmp_nodeid);
@@ -1749,28 +1710,6 @@ double PricerSolverBdd::evaluate_rc_low_arc(NodeBdd<>& n) {
     auto& child = table.node(n[0]);
     return n.forward_label[0].get_f() + child.backward_label[0].get_f() +
            n.get_reduced_cost()[0];
-}
-
-void PricerSolverBdd::iterate_zdd() {
-    DdStructure<NodeBdd<double>>::const_iterator it = decision_diagram.begin();
-
-    for (; it != decision_diagram.end(); ++it) {
-        auto i = (*it).begin();
-
-        for (; i != (*it).end(); ++i) {
-            fmt::print("{} ", ordered_jobs_new.size() - *i);
-        }
-
-        fmt::print("\n");
-    }
-}
-
-void PricerSolverBdd::create_dot_zdd(const char* name) {
-    auto&             table = *(decision_diagram.getDiagram());
-    ColorWriterVertex vertex_writer(mip_graph, table);
-    std::ofstream     outf(name);
-    boost::write_graphviz(outf, mip_graph, vertex_writer);
-    outf.close();
 }
 
 size_t PricerSolverBdd::get_nb_edges() {

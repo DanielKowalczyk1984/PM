@@ -4,11 +4,11 @@
 #include <cstddef>
 #include <limits>
 #include "NodeBddEval.hpp"
-#include "OptimalSolution.hpp"
+#include "PricingSolution.hpp"
 #include "ZddNode.hpp"
 
 template <typename T = double>
-class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
+class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
    protected:
     T*     pi{nullptr};
     size_t num_jobs{};
@@ -80,8 +80,8 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
         }
     }
 
-    OptimalSolution<T> get_objective(NodeZdd<T>& n) const override {
-        OptimalSolution<T> sol(pi[num_jobs]);
+    PricingSolution<T> get_objective(NodeZdd<T>& n) const override {
+        PricingSolution<T> sol(pi[num_jobs]);
 
         auto m = std::min_element(n.list.begin(), n.list.end(),
                                   compare_sub_nodes<T>);
@@ -188,8 +188,8 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
         }
     }
 
-    OptimalSolution<T> get_objective(NodeZdd<>& n) const override {
-        OptimalSolution<T> sol(pi[num_jobs]);
+    PricingSolution<T> get_objective(NodeZdd<>& n) const override {
+        PricingSolution<T> sol(pi[num_jobs]);
         auto               m = std::min_element(n.list.begin(), n.list.end(),
                                   compare_sub_nodes<T>);
         Label<SubNodeZdd<T>, T>* aux_label = &((*m)->backward_label[0]);

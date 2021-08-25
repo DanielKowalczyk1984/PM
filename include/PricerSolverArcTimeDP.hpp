@@ -11,8 +11,8 @@
 #include <vector>                // for vector
 #include "Instance.h"            // for Instance
 #include "Job.h"                 // for Job
-#include "OptimalSolution.hpp"   // for OptimalSolution
 #include "PricerSolverBase.hpp"  // for PricerSolverBase
+#include "PricingSolution.hpp"   // for PricingSolution
 #include "gurobi_c++.h"          // for GRBVar
 struct NodeData;
 struct Column;
@@ -89,19 +89,17 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     bool evaluate_nodes([[maybe_unused]] double* pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
-        const double*                               columns,
-        const std::vector<std::shared_ptr<Column>>& schedule_sets) override;
+        const double*                               lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) override;
     // void add_constraint(Job* job, GPtrArray* list, int order) override;
 
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
-    OptimalSolution<double> farkas_pricing(double* pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> farkas_pricing(double* pi) override;
 
-    void    iterate_zdd() override;
-    void    create_dot_zdd(const char* name) override;
     size_t  get_nb_edges() override;
     size_t  get_nb_vertices() override;
     cpp_int print_num_paths() override;
-    bool    check_schedule_set(const std::vector<Job*>& set) override;
+    bool    check_column(Column const* set) override;
 
     void forward_evaluator(double* pi);
     void backward_evaluator(double* _pi);
@@ -132,17 +130,4 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
 
     void update_coeff_constraints() override {}
-    // double compute_reduced_cost(const OptimalSolution<>&s, double *pi, double
-    // *lhs) override {
-    //     double result = 0.0;
-
-    //     return result;
-    // }
-
-    // double compute_lagrange(const OptimalSolution<> &sol, double *pi)
-    // override {
-    //     double result = 0.0;
-
-    //     return result;
-    // }
 };

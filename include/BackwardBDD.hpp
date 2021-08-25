@@ -6,10 +6,10 @@
 #include <span>
 #include "NodeBdd.hpp"
 #include "NodeBddEval.hpp"
-#include "OptimalSolution.hpp"
+#include "PricingSolution.hpp"
 
 template <typename T = double>
-class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
+class BackwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
     double* pi{};
 
    public:
@@ -19,10 +19,10 @@ class BackwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
 
     [[nodiscard]] const double* get_pi() const { return pi; }
 
-    OptimalSolution<T> get_objective(NodeBdd<T>& n) const {
-        OptimalSolution<T> sol(0.0);
+    PricingSolution<T> get_objective(NodeBdd<T>& n) const {
+        PricingSolution<T> sol(0.0);
         auto*              aux_label = &(n.backward_label[0]);
-        auto* table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
+        auto* table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
 
         do {
             auto tmp_node_id = aux_label->get_node_id();
@@ -54,7 +54,7 @@ class BackwardBddSimple : public BackwardBddBase<T> {
     BackwardBddSimple() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
-        auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
+        auto  table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
         auto& p0_tmp = table_tmp->node(n[0]);
         auto& p1_tmp = table_tmp->node(n[1]);
 
@@ -110,7 +110,7 @@ class BackwardBddCycle : public BackwardBddBase<T> {
 
     void evalNode(NodeBdd<T>& n) const override {
         auto* tmp_j = n.get_job();
-        auto* table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
+        auto* table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
         auto& p0_tmp = table_tmp->node(n[0]);
         auto& p1_tmp = table_tmp->node(n[1]);
         const auto dual = BackwardBddBase<T>::get_pi();

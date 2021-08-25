@@ -3,7 +3,7 @@
 #include <range/v3/functional/identity.hpp>  // for identity
 #include <utility>                           // for move
 #include "Job.h"                             // for Job
-#include "OptimalSolution.hpp"               // for OptimalSolution
+#include "PricingSolution.hpp"               // for PricingSolution
 #include "Solution.hpp"                      // for Machine
 
 Column::Column(const Machine& m)
@@ -11,7 +11,7 @@ Column::Column(const Machine& m)
       total_weighted_completion_time(m.total_weighted_tardiness),
       job_list(m.job_list) {}
 
-Column::Column(OptimalSolution<double>&& pricing_solution)
+Column::Column(PricingSolution<double>&& pricing_solution)
     : total_processing_time(pricing_solution.C_max),
       total_weighted_completion_time(pricing_solution.cost),
       job_list(std::move(pricing_solution.jobs)) {}

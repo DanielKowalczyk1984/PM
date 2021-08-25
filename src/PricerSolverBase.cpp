@@ -17,11 +17,11 @@
 #include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
 #include <span>                                        // for span
 #include <vector>                                      // for vector
-#include "Column.h"
-#include "Instance.h"    // for Instance
-#include "Job.h"         // for Job
-#include "gurobi_c++.h"  // for GRBModel, GRBEnv
-#include "gurobi_c.h"    // for GRB_INFEASIBLE
+#include "Column.h"                                    // for Column
+#include "Instance.h"                                  // for Instance
+#include "Job.h"                                       // for Job
+#include "gurobi_c++.h"                                // for GRBModel, GRBEnv
+#include "gurobi_c.h"                                  // for GRB_INFEASIBLE
 
 PricerSolverBase::PricerSolverBase(const Instance& instance)
     : jobs(instance.jobs),
@@ -99,8 +99,8 @@ bool PricerSolverBase::evaluate_mip_model() {
 }
 
 bool PricerSolverBase::compute_sub_optimal_duals(
-    const double*                               columns,
-    const std::vector<std::shared_ptr<Column>>& schedule_sets) {
+    const double*                               lambda,
+    const std::vector<std::shared_ptr<Column>>& columns) {
     GRBModel sub_optimal(*genv);
     // sub_optimal.set(GRB_IntParam_OutputFlag, 1);
     sub_optimal.set(GRB_IntAttr_ModelSense, GRB_MAXIMIZE);
@@ -116,11 +116,11 @@ bool PricerSolverBase::compute_sub_optimal_duals(
     auto last = sub_optimal.addVar(
         0.0, GRB_INFINITY, -static_cast<double>(convex_rhs), GRB_CONTINUOUS);
 
-    std::span<const double> aux_cols{columns, schedule_sets.size()};
+    std::span<const double> aux_cols{lambda, columns.size()};
 
-    for (auto&& [set, x] : ranges::views::zip(schedule_sets, aux_cols)) {
+    for (auto&& [set, x] : ranges::views::zip(columns, aux_cols)) {
         if (x > EPS_SOLVER) {
-            // auto* tmp = schedule_sets[i].get();
+            // auto* tmp = columns[i].get();
             eta.emplace_back(sub_optimal.addVar(0.0, GRB_INFINITY, 1.0, 'C'));
             GRBLinExpr expr = -last;
             for (auto& it : set->job_list) {
@@ -131,7 +131,7 @@ bool PricerSolverBase::compute_sub_optimal_duals(
                                   set->total_weighted_completion_time);
             LB += set->total_weighted_completion_time * x;
         } else {
-            // auto*      tmp = schedule_sets[i].get();
+            // auto*      tmp = columns[i].get();
             GRBLinExpr expr = -last;
             for (auto& it : set->job_list) {
                 expr += beta[it->job];
@@ -269,7 +269,7 @@ double PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) {
     return val;
 }
 
-double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
+double PricerSolverBase::compute_reduced_cost(const PricingSolution<>& sol,
                                               double*                  pi,
                                               double*                  lhs) {
     double result = sol.cost;
@@ -305,7 +305,7 @@ double PricerSolverBase::compute_reduced_cost(const OptimalSolution<>& sol,
 }
 
 double PricerSolverBase::compute_reduced_cost_simple(
-    const OptimalSolution<>& sol,
+    const PricingSolution<>& sol,
     double*                  pi) {
     double result = sol.cost;
     // auto      nb_constraints = reformulation_model.get_nb_constraints();
@@ -335,7 +335,7 @@ double PricerSolverBase::compute_reduced_cost_simple(
     return result;
 }
 
-double PricerSolverBase::compute_lagrange(const OptimalSolution<>&   sol,
+double PricerSolverBase::compute_lagrange(const PricingSolution<>&   sol,
                                           const std::vector<double>& pi) {
     double result = sol.cost;
     double dual_bound = 0.0;
@@ -379,7 +379,7 @@ double PricerSolverBase::compute_lagrange(const OptimalSolution<>&   sol,
     return result;
 }
 
-double PricerSolverBase::compute_subgradient(const OptimalSolution<>& sol,
+double PricerSolverBase::compute_subgradient(const PricingSolution<>& sol,
                                              double* subgradient) {
     std::span aux_subgradient{subgradient, reformulation_model.size()};
     auto      rhs = -reformulation_model[convex_constr_id]->get_rhs();

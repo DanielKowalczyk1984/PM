@@ -1,14 +1,14 @@
 #include "PricerSolverSimpleDP.hpp"
 #include <fmt/core.h>
-#include <gurobi_c++.h>                           // for GRBLinExpr, GRBModel
-#include <algorithm>                              // for fill, find, max
-#include <boost/graph/adjacency_list.hpp>         // for adjacency_list
-#include <boost/graph/detail/adjacency_list.hpp>  // for edges, get, num_edges
-#include <boost/graph/detail/edge.hpp>            // for operator!=, operat...
-#include <boost/graph/graph_selectors.hpp>        // for bidirectionalS
-#include <boost/graph/graphviz.hpp>               // for write_graphviz
-#include <boost/iterator/iterator_facade.hpp>     // for operator!=, operat...
-#include <boost/multiprecision/cpp_int.hpp>
+#include <gurobi_c++.h>                            // for GRBLinExpr, GRBModel
+#include <algorithm>                               // for fill, find, max
+#include <boost/graph/adjacency_list.hpp>          // for adjacency_list
+#include <boost/graph/detail/adjacency_list.hpp>   // for edges, get, num_edges
+#include <boost/graph/detail/edge.hpp>             // for operator!=, operat...
+#include <boost/graph/graph_selectors.hpp>         // for bidirectionalS
+#include <boost/graph/graphviz.hpp>                // for write_graphviz
+#include <boost/iterator/iterator_facade.hpp>      // for operator!=, operat...
+#include <boost/multiprecision/cpp_int.hpp>        // for cpp_int
 #include <boost/pending/property.hpp>              // for no_property
 #include <cstddef>                                 // for size_t
 #include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
@@ -257,8 +257,8 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     }
 }
 
-OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
-    OptimalSolution<double> opt_sol;
+PricingSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
+    PricingSolution<double> opt_sol;
     opt_sol.cost = 0;
     std::vector<Job*> v;
 
@@ -294,22 +294,22 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     return opt_sol;
 }
 
-OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing(
+PricingSolution<double> PricerSolverSimpleDp::farkas_pricing(
     [[maybe_unused]] double* _pi) {
-    OptimalSolution<double> opt_sol;
+    PricingSolution<double> opt_sol;
 
     return opt_sol;
 }
 
 void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
-    const double*                               columns,
-    const std::vector<std::shared_ptr<Column>>& schedule_sets) {
-    std::span aux_cols{columns, schedule_sets.size()};
-    // std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
+    const double*                               lambda,
+    const std::vector<std::shared_ptr<Column>>& columns) {
+    std::span aux_cols{lambda, columns.size()};
+    // std::span aux_columns{columns->pdata, columns->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    for (auto k = 0UL; k < schedule_sets.size(); k++) {
+    for (auto k = 0UL; k < columns.size(); k++) {
         if (aux_cols[k] > EPS_SOLVER) {
-            auto* tmp = schedule_sets[k].get();
+            auto* tmp = columns[k].get();
             int   t = 0;
             // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
             for (auto& it : tmp->job_list) {
@@ -320,26 +320,25 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     }
 }
 
-void PricerSolverSimpleDp::iterate_zdd() {}
+// void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name)
+// {
+//     boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS>
+//         graph;
+//     for (auto t = 0UL; t <= Hmax; t++) {
+//         boost::add_vertex(graph);
+//     }
 
-void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name) {
-    boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS>
-        graph;
-    for (auto t = 0UL; t <= Hmax; t++) {
-        boost::add_vertex(graph);
-    }
-
-    for (auto t = 0UL; t < Hmax; t++) {
-        for (auto& it : backward_graph[t]) {
-            boost::add_edge(t, t + it->processing_time, graph);
-        }
-    }
-    auto file_name = "TI_representation_" + problem_name + "_" +
-                     std::to_string(convex_rhs) + ".gv";
-    auto otf = std::ofstream(file_name);
-    boost::write_graphviz(otf, graph);
-    otf.close();
-}
+//     for (auto t = 0UL; t < Hmax; t++) {
+//         for (auto& it : backward_graph[t]) {
+//             boost::add_edge(t, t + it->processing_time, graph);
+//         }
+//     }
+//     auto file_name = "TI_representation_" + problem_name + "_" +
+//                      std::to_string(convex_rhs) + ".gv";
+//     auto otf = std::ofstream(file_name);
+//     boost::write_graphviz(otf, graph);
+//     otf.close();
+// }
 
 size_t PricerSolverSimpleDp::get_nb_edges() {
     size_t nb_edges = 0u;
@@ -363,8 +362,7 @@ boost::multiprecision::cpp_int PricerSolverSimpleDp::print_num_paths() {
     return 0;
 }
 
-bool PricerSolverSimpleDp::check_schedule_set(
-    [[maybe_unused]] const std::vector<Job*>& set) {
+bool PricerSolverSimpleDp::check_column([[maybe_unused]] Column const* set) {
     // int t = 0;
     // for(unsigned int j = 0; j < set->len; j++) {
     //     Job* tmp_j = static_cast<Job*>() g_ptr_array_index()atic_cast<set,

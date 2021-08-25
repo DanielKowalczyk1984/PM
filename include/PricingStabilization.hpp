@@ -4,7 +4,7 @@
 #include <cstddef>              // for size_t
 #include <memory>               // for unique_ptr
 #include <vector>               // for vector
-#include "OptimalSolution.hpp"  // for OptimalSolution
+#include "PricingSolution.hpp"  // for PricingSolution
 struct PricerSolverBase;        // lines 9-9
 class PricingStabilizationBase {
    public:
@@ -27,7 +27,7 @@ class PricingStabilizationBase {
 
    public:
     PricerSolverBase* solver;
-    OptimalSolution<> sol;
+    PricingSolution<> sol;
 
     double reduced_cost{};
     double eta_in{};
@@ -44,7 +44,7 @@ class PricingStabilizationBase {
 
     bool continueLP{};
 
-    OptimalSolution<>& get_sol();
+    PricingSolution<>& get_sol();
     bool               get_update_stab_center();
     double             get_reduced_cost();
     double             get_eps_stab_solver();
@@ -121,7 +121,7 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
     void update_duals() override;
     void remove_constraints(int first, int nb_del) override;
 
-    void compute_subgradient(const OptimalSolution<double>& _sol);
+    void compute_subgradient(const PricingSolution<double>& _sol);
     void adjust_alpha();
 };
 
@@ -172,9 +172,9 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
     double compute_dual(auto i);
 
-    void update_stabcenter(const OptimalSolution<double>& _sol);
+    void update_stabcenter(const PricingSolution<double>& _sol);
 
-    void compute_subgradient_norm(const OptimalSolution<double>& _sol);
+    void compute_subgradient_norm(const PricingSolution<double>& _sol);
 
     void update_subgradientproduct();
 

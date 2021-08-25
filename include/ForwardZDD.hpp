@@ -6,11 +6,11 @@
 #include <vector>
 #include "ForwardBDD.hpp"
 #include "NodeBddEval.hpp"
-#include "OptimalSolution.hpp"
+#include "PricingSolution.hpp"
 #include "ZddNode.hpp"
 
 template <typename T = double>
-class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
+class ForwardZddBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
    protected:
     T*     pi;
     size_t num_jobs;
@@ -19,11 +19,11 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
     ForwardZddBase(T* _pi, size_t _num_jobs) : pi(_pi), num_jobs(_num_jobs) {}
 
     explicit ForwardZddBase(size_t _num_jobs)
-        : Eval<NodeZdd<T>, OptimalSolution<T>>(),
+        : Eval<NodeZdd<T>, PricingSolution<T>>(),
           pi(nullptr),
           num_jobs(_num_jobs) {}
 
-    ForwardZddBase() : Eval<NodeZdd<T>, OptimalSolution<T>>() {
+    ForwardZddBase() : Eval<NodeZdd<T>, PricingSolution<T>>() {
         pi = nullptr;
         num_jobs = 0;
     }
@@ -43,8 +43,8 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
 
     virtual void evalNode(NodeZdd<T>& n) const = 0;
 
-    OptimalSolution<T> get_objective(NodeZdd<T>& n) const {
-        OptimalSolution<T> sol(pi[num_jobs]);
+    PricingSolution<T> get_objective(NodeZdd<T>& n) const {
+        PricingSolution<T> sol(pi[num_jobs]);
         auto               m = std::min_element(n.list.begin(), n.list.end(),
                                   compare_sub_nodes<T>);
 #ifndef NDEBUG

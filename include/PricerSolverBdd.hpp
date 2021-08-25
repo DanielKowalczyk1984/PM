@@ -13,8 +13,8 @@
 #include "ModelInterface.hpp"                    // for OriginalModel
 #include "NodeBdd.hpp"                           // for NodeBdd
 #include "NodeBddStructure.hpp"                  // for DdStructure
-#include "OptimalSolution.hpp"                   // for OptimalSolution
 #include "PricerSolverBase.hpp"                  // for PricerSolverBase
+#include "PricingSolution.hpp"                   // for PricingSolution
 struct Interval;
 struct Job;
 struct NodeData;
@@ -61,7 +61,7 @@ class PricerSolverBdd : public PricerSolverBase {
     void enumerate_columns(double* _pi) override;
     bool evaluate_nodes(double* _pi) override;
 
-    bool check_schedule_set(const std::vector<Job*>& set) override;
+    bool check_column(Column const* set) override;
     [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override = 0;
     virtual double evaluate_rc_arc(NodeBdd<>& n) = 0;
     double         evaluate_rc_low_arc(NodeBdd<>& n);
@@ -74,18 +74,14 @@ class PricerSolverBdd : public PricerSolverBase {
     void init_coeff_constraints();
     void init_table();
 
-    // bool check_schedule_set(GPtrArray* set) override;
-
     void build_mip() override;
     void construct_lp_sol_from_rmp(
-        const double*                               columns,
-        const std::vector<std::shared_ptr<Column>>& schedule_sets) override;
+        const double*                               lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) override;
 
     void project_sol_on_original_variables(const Sol& _sol) override;
     std::vector<std::vector<double>>& calculate_job_time() override;
     void    split_job_time(size_t _job, int _time, bool _left) override;
-    void    iterate_zdd() override;
-    void    create_dot_zdd(const char* name) override;
     cpp_int print_num_paths() override;
     void    remove_constraints(int first, int nb_del) override;
     void    update_rows_coeff(size_t first) override;
@@ -109,16 +105,14 @@ class PricerSolverBdd : public PricerSolverBase {
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 
    private:
-    void add_inequality(std::vector<int> v1, std::vector<int> v2);
-    void add_inequality(std::vector<int> v1);
-
-    double compute_reduced_cost(const OptimalSolution<>& sol,
+    double compute_reduced_cost(const PricingSolution<>& sol,
                                 double*                  pi,
                                 double*                  lhs) override;
-    double compute_lagrange(const OptimalSolution<>&   sol,
+
+    double compute_lagrange(const PricingSolution<>&   sol,
                             const std::vector<double>& pi) override;
 
-    double compute_subgradient(const OptimalSolution<>& sol,
+    double compute_subgradient(const PricingSolution<>& sol,
                                double*                  sub_gradient) override;
 
     void update_constraints() override {}

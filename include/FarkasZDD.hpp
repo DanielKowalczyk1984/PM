@@ -22,7 +22,7 @@ class BackwardBddFarkas : public BackwardBddBase<T> {
             }
         }
 
-        auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
+        auto  table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
         auto& p0 = table_tmp->node(n[0]);
         auto& p1 = table_tmp->node(n[1]);
 

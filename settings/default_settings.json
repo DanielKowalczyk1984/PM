@@ -4,7 +4,7 @@
 	"scoring_value": 0,
 	"strong_branching": 8,
 	"bb_node_limit": 0,
-	"nb_iterations_rvnd": 2000,
+	"nb_iterations_rvnd": 5000,
 	"branching_cpu_limit": 7200.0,
 	"alpha": 0.8,
 	"branching_point": 0.5,

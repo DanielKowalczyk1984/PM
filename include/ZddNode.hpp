@@ -1,6 +1,6 @@
 #ifndef ZDD_NODE_HPP
 #define ZDD_NODE_HPP
-#include <OptimalSolution.hpp>
+#include <PricingSolution.hpp>
 #include <cstddef>
 #include <memory>
 #include <vector>

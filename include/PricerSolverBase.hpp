@@ -11,7 +11,7 @@
 #include "Instance.h"           // for Instance
 #include "MIP_defs.hpp"         // for MIP_Attr
 #include "ModelInterface.hpp"   // for BddCoeff, ReformulationModel
-#include "OptimalSolution.hpp"  // for OptimalSolution
+#include "PricingSolution.hpp"  // for PricingSolution
 #include "Solution.hpp"         // for Sol
 struct Job;
 struct NodeData;  // lines 15-15
@@ -48,47 +48,17 @@ struct PricerSolverBase {
     static constexpr int                 ALIGN_HALF = 60;
 
     std::vector<BddCoeff> lp_sol;
-    /**
-     * Default constructors
-     */
     explicit PricerSolverBase(const Instance& instance);
-
-    /**
-     * Copy constructor
-     */
     PricerSolverBase(const PricerSolverBase& other);
-
-    /**
-     * Move Constructor
-     */
     PricerSolverBase(PricerSolverBase&& other) noexcept;
-
-    /**
-     * Move Constructor
-     */
     PricerSolverBase& operator=(const PricerSolverBase& other);
-
-    /**
-     * Move assignment operator
-     */
     PricerSolverBase& operator=(PricerSolverBase&& other) noexcept;
-
-    /**
-     * Destructor
-     */
     virtual ~PricerSolverBase();
 
     [[nodiscard]] virtual std::unique_ptr<PricerSolverBase> clone() const = 0;
 
-    /**
-     * Pricing Algorithm
-     */
-    virtual OptimalSolution<double> pricing_algorithm(double* _pi) = 0;
-    virtual OptimalSolution<double> farkas_pricing(double* _pi) = 0;
-
-    /**
-     * Reduced cost fixing
-     */
+    virtual PricingSolution<double> pricing_algorithm(double* _pi) = 0;
+    virtual PricingSolution<double> farkas_pricing(double* _pi) = 0;
 
     virtual bool evaluate_nodes(double* pi) = 0;
     virtual bool refinement_structure(
@@ -102,12 +72,12 @@ struct PricerSolverBase {
     virtual void build_mip() = 0;
     bool         evaluate_mip_model();
     virtual void construct_lp_sol_from_rmp(
-        const double*                               columns,
-        const std::vector<std::shared_ptr<Column>>& schedule_sets) = 0;
+        const double*                               lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) = 0;
 
     bool compute_sub_optimal_duals(
-        const double*                               columns,
-        const std::vector<std::shared_ptr<Column>>& schedule_sets);
+        const double*                               lambda,
+        const std::vector<std::shared_ptr<Column>>& columns);
     virtual void project_sol_on_original_variables(const Sol& _sol) {
         _sol.print_solution();
     };
@@ -140,7 +110,6 @@ struct PricerSolverBase {
     /**
      * Some getters
      */
-    virtual void    iterate_zdd() = 0;
     virtual cpp_int print_num_paths() = 0;
     double          get_UB();
     void            update_UB(double _ub);
@@ -148,16 +117,13 @@ struct PricerSolverBase {
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
     virtual bool   structure_feasible() { return true; }
-    virtual bool   check_schedule_set(
-          [[maybe_unused]] const std::vector<Job*>& set) {
+    virtual bool   check_column([[maybe_unused]] Column const* set) {
         return true;
     };
-    virtual void make_schedule_set_feasible(
-        [[maybe_unused]] std::vector<Job*>& set){};
+
     /**
      * Some printing functions
      */
-    virtual void   create_dot_zdd(const char* name) = 0;
     virtual int    get_int_attr_model(enum MIP_Attr);
     virtual double get_dbl_attr_model(enum MIP_Attr);
 
@@ -166,17 +132,17 @@ struct PricerSolverBase {
      */
 
     virtual void   update_constraints() = 0;
-    virtual double compute_reduced_cost(const OptimalSolution<>& sol,
+    virtual double compute_reduced_cost(const PricingSolution<>& sol,
                                         double*                  pi,
                                         double*                  lhs);
 
-    virtual double compute_reduced_cost_simple(const OptimalSolution<>& sol,
+    virtual double compute_reduced_cost_simple(const PricingSolution<>& sol,
                                                double*                  pi);
 
-    virtual double compute_lagrange(const OptimalSolution<>&   sol,
+    virtual double compute_lagrange(const PricingSolution<>&   sol,
                                     const std::vector<double>& pi);
 
-    virtual double compute_subgradient(const OptimalSolution<>& sol,
+    virtual double compute_subgradient(const PricingSolution<>& sol,
                                        double*                  subgradient);
 
     inline void set_is_integer_solution(bool _is_solution) {

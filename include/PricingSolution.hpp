@@ -6,7 +6,7 @@
 #include "Job.h"
 
 template <typename T = double>
-class OptimalSolution {
+class PricingSolution {
    public:
     T                 obj{};
     int               cost{};
@@ -14,28 +14,28 @@ class OptimalSolution {
     std::vector<Job*> jobs{};
 
     /** Default constructor */
-    OptimalSolution() = default;
+    PricingSolution() = default;
 
-    explicit OptimalSolution<T>(T _obj) : obj(_obj) {}
+    explicit PricingSolution<T>(T _obj) : obj(_obj) {}
 
     /** Copy constructor */
-    OptimalSolution(const OptimalSolution<T>& other) = delete;
+    PricingSolution(const PricingSolution<T>& other) = delete;
 
     /** Move constructor */
-    OptimalSolution(OptimalSolution<T>&& other) noexcept = default;
+    PricingSolution(PricingSolution<T>&& other) noexcept = default;
 
     /** Copy assignment operator */
-    OptimalSolution<T>& operator=(const OptimalSolution<T>& other) = delete;
+    PricingSolution<T>& operator=(const PricingSolution<T>& other) = delete;
 
     /** Move assignment operator */
-    OptimalSolution<T>& operator=(OptimalSolution<T>&& other) noexcept =
+    PricingSolution<T>& operator=(PricingSolution<T>&& other) noexcept =
         default;
 
     /** Destructor */
-    ~OptimalSolution() = default;
+    ~PricingSolution() = default;
 
     friend std::ostream& operator<<(std::ostream&             os,
-                                    OptimalSolution<T> const& o) {
+                                    PricingSolution<T> const& o) {
         os << "obj = " << o.obj << "," << std::endl
            << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
 

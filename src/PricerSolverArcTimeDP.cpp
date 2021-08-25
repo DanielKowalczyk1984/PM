@@ -400,9 +400,9 @@ void PricerSolverArcTimeDp::forward_evaluator(double* _pi) {
     }
 }
 
-OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
+PricingSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     std::span               aux_pi{_pi, reformulation_model.size()};
-    OptimalSolution<double> sol(aux_pi[n]);
+    PricingSolution<double> sol(aux_pi[n]);
     std::vector<Job*>       v;
 
     forward_evaluator(_pi);
@@ -432,23 +432,23 @@ OptimalSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     return sol;
 }
 
-OptimalSolution<double> PricerSolverArcTimeDp::farkas_pricing(
+PricingSolution<double> PricerSolverArcTimeDp::farkas_pricing(
     [[maybe_unused]] double* _pi) {
-    OptimalSolution<double> opt_sol;
+    PricingSolution<double> opt_sol;
 
     return opt_sol;
 }
 
 void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
-    const double*                               columns,
-    const std::vector<std::shared_ptr<Column>>& schedule_sets) {
+    const double*                               lambda,
+    const std::vector<std::shared_ptr<Column>>& columns) {
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    // std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
-    std::span aux_cols{columns, schedule_sets.size()};
-    for (auto k = 0UL; k < schedule_sets.size(); k++) {
+    // std::span aux_columns{columns->pdata, columns->len};
+    std::span aux_cols{lambda, columns.size()};
+    for (auto k = 0UL; k < columns.size(); k++) {
         if (aux_cols[k] > 0.0) {
             auto  counter = 0UL;
-            auto* tmp = schedule_sets[k].get();
+            auto* tmp = columns[k].get();
             // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
             auto i = n;
             auto t = 0UL;
@@ -477,10 +477,6 @@ void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     }
 }
 
-void PricerSolverArcTimeDp::iterate_zdd() {}
-
-void PricerSolverArcTimeDp::create_dot_zdd([[maybe_unused]] const char* name) {}
-
 size_t PricerSolverArcTimeDp::get_nb_edges() {
     auto nb_edges = 0UL;
     for (auto& it : graph) {
@@ -507,11 +503,12 @@ boost::multiprecision::cpp_int PricerSolverArcTimeDp::print_num_paths() {
     return 0;
 }
 
-bool PricerSolverArcTimeDp::check_schedule_set(const std::vector<Job*>& set) {
+bool PricerSolverArcTimeDp::check_column(Column const* col) {
     // std::span aux_set{set->pdata, set->len};
-    size_t counter = set.size() - 1;
-    auto   i = n;
-    auto   t = 0UL;
+    const auto& set = col->job_list;
+    size_t      counter = set.size() - 1;
+    auto        i = n;
+    auto        t = 0UL;
 
     while (t < Hmax + 1) {
         Job* tmp_j = nullptr;

@@ -33,13 +33,13 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     evaluator.set_table(&(*(get_decision_diagram().getDiagram())));
 }
 
-OptimalSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
+PricingSolution<double> PricerSolverBddBackwardSimple::pricing_algorithm(
     double* _pi) {
     evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(evaluator);
 }
 
-OptimalSolution<double> PricerSolverBddBackwardSimple::farkas_pricing(
+PricingSolution<double> PricerSolverBddBackwardSimple::farkas_pricing(
     double* _pi) {
     farkas_evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(farkas_evaluator);
@@ -75,13 +75,13 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     evaluator.set_table(&(*(get_decision_diagram().getDiagram())));
 }
 
-OptimalSolution<double> PricerSolverBddBackwardCycle::pricing_algorithm(
+PricingSolution<double> PricerSolverBddBackwardCycle::pricing_algorithm(
     double* _pi) {
     evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(evaluator);
 }
 
-OptimalSolution<double> PricerSolverBddBackwardCycle::farkas_pricing(
+PricingSolution<double> PricerSolverBddBackwardCycle::farkas_pricing(
     double* _pi) {
     farkas_evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(farkas_evaluator);

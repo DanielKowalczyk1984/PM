@@ -58,7 +58,7 @@ int NodeData::grow_ages() {
         // CCcheck_val_2(val, "Failed in lp_interface_basis_cols");
         zero_count = 0;
 
-        auto zipped = ranges::view::zip(column_status, localColPool);
+        auto zipped = ranges::views::zip(column_status, localColPool);
 
         std::ranges::for_each(zipped, [&](auto&& it) {
             if (it.first == lp_interface_LOWER ||
@@ -175,7 +175,7 @@ int NodeData::delete_infeasible_columns() {
 
     localColPool |= ranges::actions::remove_if([&](auto& it) {
         auto val = false;
-        if (!solver->check_schedule_set(it->job_list)) {
+        if (!solver->check_column(it.get())) {
             dellist.emplace_back(iter + id_pseudo_schedules);
             val = true;
         }
@@ -569,7 +569,7 @@ int NodeData::compute_lower_bound() {
                             lambda.data(), localColPool);
                         delete_infeasible_columns();
                     }
-                    if (parms.refine_bdd && nb_non_improvements < 2 &&
+                    if (parms.refine_bdd && nb_non_improvements < 5 &&
                         !refined) {
                         if (std::abs(old_LP_bound - LP_lower_bound) < EPS) {
                             nb_non_improvements++;

@@ -4,8 +4,8 @@
 #include <memory>                // for make_unique, unique_ptr, shared_ptr
 #include <vector>                // for vector
 #include "Instance.h"            // for Instance
-#include "OptimalSolution.hpp"   // for OptimalSolution
 #include "PricerSolverBase.hpp"  // for PricerSolverBase
+#include "PricingSolution.hpp"   // for PricingSolution
 #include "gurobi_c++.h"          // for GRBVar
 struct Job;
 struct NodeData;
@@ -61,20 +61,17 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     bool evaluate_nodes([[maybe_unused]] double* pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
-        const double*                               columns,
-        const std::vector<std::shared_ptr<Column>>& schedule_sets) override;
+        const double*                               lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) override;
 
-    // void   add_constraint(Job* job, GPtrArray* list, int order) override;
-    void    iterate_zdd() override;
-    void    create_dot_zdd(const char* name) override;
     size_t  get_nb_edges() override;
     size_t  get_nb_vertices() override;
     cpp_int print_num_paths() override;
 
-    bool check_schedule_set(const std::vector<Job*>& set) override;
+    bool check_column(Column const* set) override;
 
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
-    OptimalSolution<double> farkas_pricing(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> farkas_pricing(double* _pi) override;
     void                    forward_evaluator(double* _pi);
     void                    backward_evaluator(double* _pi);
 

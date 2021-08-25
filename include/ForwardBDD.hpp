@@ -7,10 +7,10 @@
 #include <range/v3/action/remove_if.hpp>
 #include "NodeBdd.hpp"
 #include "NodeBddEval.hpp"
-#include "OptimalSolution.hpp"
+#include "PricingSolution.hpp"
 
 template <typename T = double>
-class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
+class ForwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
     double* pi{};
 
    public:
@@ -31,10 +31,10 @@ class ForwardBddBase : public Eval<NodeBdd<T>, OptimalSolution<T>> {
 
     virtual void evalNode(NodeBdd<T>& n) const = 0;
 
-    OptimalSolution<T> get_objective(NodeBdd<T>& n) const {
-        OptimalSolution<T>    sol(0.0);
+    PricingSolution<T> get_objective(NodeBdd<T>& n) const {
+        PricingSolution<T>    sol(0.0);
         Label<NodeBdd<T>, T>* ptr_node = &(n.forward_label[0]);
-        auto table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
+        auto table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
 
         while (ptr_node->get_previous() != nullptr) {
             Label<NodeBdd<T>, T>* aux_prev_node = ptr_node->get_previous();
@@ -80,7 +80,7 @@ class ForwardBddCycle : public ForwardBddBase<T> {
 
     void evalNode(NodeBdd<T>& n) const override {
         auto* tmp_j = n.get_job();
-        auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
+        auto  table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
         auto& p0 = table_tmp->node(n[0]);
         auto& p1 = table_tmp->node(n[1]);
         const auto* dual = ForwardBddBase<T>::get_pi();
@@ -182,7 +182,7 @@ class ForwardBddSimple : public ForwardBddBase<T> {
     }
 
     void evalNode(NodeBdd<T>& n) const override {
-        auto* table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
+        auto* table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
         auto& p0 = table_tmp->node(n[0]);
         auto& p1 = table_tmp->node(n[1]);
         n.reset_reduced_costs();

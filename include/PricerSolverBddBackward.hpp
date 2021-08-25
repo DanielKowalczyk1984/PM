@@ -1,16 +1,9 @@
-// #include <memory>
-// #include <vector>
-// #include "Instance.h"
-// #include "NodeBdd.hpp"
-// #include "PricerEvaluateBdd.hpp"
-// #include "PricerSolverBdd.hpp"
-// #include "interval.h"
 #include <memory>                 // for make_unique, unique_ptr
 #include "Instance.h"             // for Instance
 #include "NodeBdd.hpp"            // for NodeBdd
-#include "OptimalSolution.hpp"    // for OptimalSolution
 #include "PricerEvaluateBdd.hpp"  // for BackwardBddFarkasDouble, BackwardBd...
 #include "PricerSolverBdd.hpp"    // for PricerSolverBdd
+#include "PricingSolution.hpp"    // for PricingSolution
 struct PricerSolverBase;
 
 class PricerSolverBddBackwardSimple : public PricerSolverBdd {
@@ -35,8 +28,8 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
         return std::make_unique<PricerSolverBddBackwardSimple>(*this);
     };
 
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
-    OptimalSolution<double> farkas_pricing(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> farkas_pricing(double* _pi) override;
 
     double evaluate_rc_arc(NodeBdd<>& n) override;
     void   compute_labels(double* _pi) override;
@@ -63,8 +56,8 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
         return std::make_unique<PricerSolverBddBackwardCycle>(*this);
     };
 
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
-    OptimalSolution<double> farkas_pricing(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> farkas_pricing(double* _pi) override;
 
     double evaluate_rc_arc(NodeBdd<>& n) override;
     void   compute_labels(double* _pi) override;

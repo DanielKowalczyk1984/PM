@@ -21,8 +21,8 @@
 #include "NodeBddStructure.hpp"                    // for DdStructure, DdStr...
 #include "NodeBddTable.hpp"                        // for NodeTableEntity
 #include "NodeId.hpp"                              // for NodeId
-#include "OptimalSolution.hpp"                     // for OptimalSolution
 #include "PricerConstruct.hpp"                     // for PricerConstruct
+#include "PricingSolution.hpp"                     // for PricingSolution
 #include "ZddNode.hpp"                             // for NodeZdd, SubNodeZdd
 #include "util.h"                                  // for dbg_lvl
 #include "util/MyList.hpp"                         // for MyList
@@ -157,9 +157,9 @@ void PricerSolverZdd::init_table() {
     }
 }
 
-OptimalSolution<double> PricerSolverZdd::farkas_pricing(
+PricingSolution<double> PricerSolverZdd::farkas_pricing(
     [[maybe_unused]] double* pi) {
-    OptimalSolution<double> sol;
+    PricingSolution<double> sol;
 
     return sol;
 }
@@ -378,16 +378,16 @@ void PricerSolverZdd::build_mip() {
 }
 
 void PricerSolverZdd::construct_lp_sol_from_rmp(
-    const double*                               columns,
-    const std::vector<std::shared_ptr<Column>>& schedule_sets) {
+    const double*                               lambda,
+    const std::vector<std::shared_ptr<Column>>& columns) {
     auto&     table = *(decision_diagram->getDiagram());
-    std::span aux_cols{columns, schedule_sets.size()};
-    // std::span aux_sets{schedule_sets->pdata, schedule_sets->len};
+    std::span aux_cols{lambda, columns.size()};
+    // std::span aux_sets{columns->pdata, columns->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    for (auto i = 0UL; i < schedule_sets.size(); ++i) {
+    for (auto i = 0UL; i < columns.size(); ++i) {
         if (aux_cols[i] > EPS_SOLVER) {
             auto  counter = 0UL;
-            auto* tmp = schedule_sets[i].get();
+            auto* tmp = columns[i].get();
             // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->pdata};
             NodeId                        tmp_nodeid(decision_diagram->root());
             std::shared_ptr<SubNodeZdd<>> tmp_sub_node =
@@ -425,8 +425,9 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(
     // outf.close();
 }
 
-bool PricerSolverZdd::check_schedule_set(const std::vector<Job*>& set) {
-    auto weight = 0UL;
+bool PricerSolverZdd::check_column(Column const* col) {
+    auto        weight = 0UL;
+    const auto& set = col->job_list;
     // std::span aux_jobs{set->pdata, set->len};
     auto&  table = *(decision_diagram->getDiagram());
     NodeId tmp_nodeid(decision_diagram->root());
@@ -450,27 +451,6 @@ bool PricerSolverZdd::check_schedule_set(const std::vector<Job*>& set) {
     }
 
     return (weight == set.size());
-}
-
-void PricerSolverZdd::iterate_zdd() {
-    DdStructure<NodeZdd<double>>::const_iterator it = decision_diagram->begin();
-
-    for (; it != decision_diagram->end(); ++it) {
-        auto i = (*it).begin();
-
-        for (; i != (*it).end(); ++i) {
-            std::cout << ordered_jobs_new.size() - *i << " ";
-        }
-
-        std::cout << '\n';
-    }
-}
-
-void PricerSolverZdd::create_dot_zdd([[maybe_unused]] const char* name) {
-    // std::ofstream file;
-    // file.open(name);
-    // // decision_diagram->dumpDot(file);
-    // file.close();
 }
 
 size_t PricerSolverZdd::get_nb_edges() {

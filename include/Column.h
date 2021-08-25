@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 #include "ModelInterface.hpp"
-#include "OptimalSolution.hpp"
+#include "PricingSolution.hpp"
 #include "Solution.hpp"
 
 struct Column {
@@ -18,7 +18,7 @@ struct Column {
 
     Column() = default;
     explicit Column(const Machine&);
-    explicit Column(OptimalSolution<double>&& pricing_solution);
+    explicit Column(PricingSolution<double>&& pricing_solution);
     ~Column() = default;
     Column(Column&&) = default;
     Column& operator=(Column&&) = default;

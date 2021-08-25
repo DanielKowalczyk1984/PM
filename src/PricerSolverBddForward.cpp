@@ -28,12 +28,12 @@ PricerSolverBddSimple::PricerSolverBddSimple(const Instance& instance)
     fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", ALIGN, get_nb_edges());
 }
 
-OptimalSolution<double> PricerSolverBddSimple::pricing_algorithm(double* _pi) {
+PricingSolution<double> PricerSolverBddSimple::pricing_algorithm(double* _pi) {
     evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_forward(evaluator);
 }
 
-OptimalSolution<double> PricerSolverBddSimple::farkas_pricing(double* _pi) {
+PricingSolution<double> PricerSolverBddSimple::farkas_pricing(double* _pi) {
     farkas_evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(farkas_evaluator);
 }
@@ -109,12 +109,12 @@ PricerSolverBddCycle::PricerSolverBddCycle(const Instance& instance)
     fmt::print("{0: <{1}}{2}\n", "Number of edges BDD", ALIGN, get_nb_edges());
 }
 
-OptimalSolution<double> PricerSolverBddCycle::pricing_algorithm(double* _pi) {
+PricingSolution<double> PricerSolverBddCycle::pricing_algorithm(double* _pi) {
     evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_forward(evaluator);
 }
 
-OptimalSolution<double> PricerSolverBddCycle::farkas_pricing(double* _pi) {
+PricingSolution<double> PricerSolverBddCycle::farkas_pricing(double* _pi) {
     farkas_evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(farkas_evaluator);
 }

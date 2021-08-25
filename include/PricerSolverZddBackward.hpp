@@ -2,9 +2,9 @@
 #define PRICER_SOLVER_ZDD_BACKWARD_HPP
 
 #include "Instance.h"             // for Instance
-#include "OptimalSolution.hpp"    // for OptimalSolution
 #include "PricerEvaluateZdd.hpp"  // for BackwardZddCycleDouble, BackwardZdd...
 #include "PricerSolverZdd.hpp"    // for PricerSolverZdd
+#include "PricingSolution.hpp"    // for PricingSolution
 
 class PricerSolverZddBackwardSimple : public PricerSolverZdd {
    private:
@@ -18,7 +18,7 @@ class PricerSolverZddBackwardSimple : public PricerSolverZdd {
     //                               const char* p_name,
     //                               double      _UB);
     PricerSolverZddBackwardSimple(const Instance& instance);
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
     void                    compute_labels(double* _pi);
     bool                    evaluate_nodes(double* pi) final;
     PricerSolverZddBackwardSimple(const PricerSolverZddBackwardSimple&) =
@@ -44,7 +44,7 @@ class PricerSolverZddBackwardCycle : public PricerSolverZdd {
         delete;
     PricerSolverZddBackwardCycle& operator=(
         const PricerSolverZddBackwardCycle&) = delete;
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
     void                    compute_labels(double* _pi);
     bool                    evaluate_nodes(double* pi) final;
 };
