@@ -938,9 +938,6 @@ bool PricerSolverBdd::evaluate_nodes(double* pi) {
 
 void PricerSolverBdd::add_inequality(std::vector<int> v1, std::vector<int> v2) {
     GRBLinExpr expr1;
-    // EdgeVarAccessor   edge_var_list(get(boost::edge_weight2_t(),
-    // mip_graph)); EdgeIndexAccessor
-    // edge_index_list(get(boost::edge_index_t(), mip_graph));
     for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
         auto* data = static_cast<EdgeData*>(it.first->get_property());
         if (std::find(v1.begin(), v1.end(), mip_graph[*it.first].id) !=
@@ -1776,19 +1773,6 @@ void PricerSolverBdd::create_dot_zdd(const char* name) {
     outf.close();
 }
 
-void PricerSolverBdd::print_number_nodes_edges() {
-    fmt::print("removed edges = {}, removed nodes = {}\n", nb_removed_edges,
-               nb_removed_nodes);
-}
-
-size_t PricerSolverBdd::get_num_remove_nodes() {
-    return nb_removed_nodes;
-}
-
-size_t PricerSolverBdd::get_num_remove_edges() {
-    return nb_removed_edges;
-}
-
 size_t PricerSolverBdd::get_nb_edges() {
     return num_edges(mip_graph);
 }
@@ -1800,10 +1784,6 @@ size_t PricerSolverBdd::get_nb_vertices() {
 bool PricerSolverBdd::structure_feasible() {
     return (get_nb_vertices() != 0 &&
             decision_diagram.root().row() >= jobs.size());
-}
-
-int PricerSolverBdd::get_num_layers() {
-    return decision_diagram.topLevel();
 }
 
 boost::multiprecision::cpp_int PricerSolverBdd::print_num_paths() {

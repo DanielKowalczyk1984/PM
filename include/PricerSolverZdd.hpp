@@ -66,12 +66,8 @@ class PricerSolverZdd : public PricerSolverBase {
     bool    check_schedule_set(const std::vector<Job*>& set) override;
     void    iterate_zdd() override;
     void    create_dot_zdd(const char* name) override;
-    void    print_number_nodes_edges() override;
-    size_t  get_num_remove_nodes() override;
-    size_t  get_num_remove_edges() override;
     size_t  get_nb_edges() override;
     size_t  get_nb_vertices() override;
-    int     get_num_layers() override;
     cpp_int print_num_paths() override;
     void    remove_layers_init();
 

@@ -341,16 +341,6 @@ void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name) {
     otf.close();
 }
 
-void PricerSolverSimpleDp::print_number_nodes_edges() {}
-
-size_t PricerSolverSimpleDp::get_num_remove_nodes() {
-    return 0;
-}
-
-size_t PricerSolverSimpleDp::get_num_remove_edges() {
-    return 0;
-}
-
 size_t PricerSolverSimpleDp::get_nb_edges() {
     size_t nb_edges = 0u;
     for (auto& it : forward_graph) {
@@ -367,10 +357,6 @@ size_t PricerSolverSimpleDp::get_nb_vertices() {
         }
     }
     return nb_vertices;
-}
-
-int PricerSolverSimpleDp::get_num_layers() {
-    return 0;
 }
 
 boost::multiprecision::cpp_int PricerSolverSimpleDp::print_num_paths() {

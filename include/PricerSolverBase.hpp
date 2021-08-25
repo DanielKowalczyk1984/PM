@@ -145,9 +145,6 @@ struct PricerSolverBase {
     double          get_UB();
     void            update_UB(double _ub);
 
-    virtual size_t get_num_remove_nodes() = 0;
-    virtual size_t get_num_remove_edges() = 0;
-    virtual int    get_num_layers() = 0;
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
     virtual bool   structure_feasible() { return true; }
@@ -161,7 +158,6 @@ struct PricerSolverBase {
      * Some printing functions
      */
     virtual void   create_dot_zdd(const char* name) = 0;
-    virtual void   print_number_nodes_edges() = 0;
     virtual int    get_int_attr_model(enum MIP_Attr);
     virtual double get_dbl_attr_model(enum MIP_Attr);
 

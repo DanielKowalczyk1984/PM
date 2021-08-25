@@ -86,16 +86,12 @@ class PricerSolverBdd : public PricerSolverBase {
     void    split_job_time(size_t _job, int _time, bool _left) override;
     void    iterate_zdd() override;
     void    create_dot_zdd(const char* name) override;
-    void    print_number_nodes_edges() override;
     cpp_int print_num_paths() override;
     void    remove_constraints(int first, int nb_del) override;
     void    update_rows_coeff(size_t first) override;
     void    insert_constraints_lp(NodeData* pd) override;
 
-    size_t get_num_remove_nodes() override;
-    size_t get_num_remove_edges() override;
-    int    get_num_layers() override;
-    int    add_constraints() override;
+    int add_constraints() override;
 
     size_t get_nb_edges() override;
     size_t get_nb_vertices() override;

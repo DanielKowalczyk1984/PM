@@ -473,29 +473,12 @@ void PricerSolverZdd::create_dot_zdd([[maybe_unused]] const char* name) {
     // file.close();
 }
 
-void PricerSolverZdd::print_number_nodes_edges() {
-    fmt::print("removed edges = %d, removed nodes = {}\n", nb_removed_edges,
-               nb_removed_nodes);
-}
-
-size_t PricerSolverZdd::get_num_remove_nodes() {
-    return nb_removed_nodes;
-}
-
-size_t PricerSolverZdd::get_num_remove_edges() {
-    return nb_removed_edges;
-}
-
 size_t PricerSolverZdd::get_nb_edges() {
     return num_edges(mip_graph);
 }
 
 size_t PricerSolverZdd::get_nb_vertices() {
     return decision_diagram->size();
-}
-
-int PricerSolverZdd::get_num_layers() {
-    return decision_diagram->topLevel();
 }
 
 boost::multiprecision::cpp_int PricerSolverZdd::print_num_paths() {

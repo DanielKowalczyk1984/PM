@@ -481,16 +481,6 @@ void PricerSolverArcTimeDp::iterate_zdd() {}
 
 void PricerSolverArcTimeDp::create_dot_zdd([[maybe_unused]] const char* name) {}
 
-void PricerSolverArcTimeDp::print_number_nodes_edges() {}
-
-size_t PricerSolverArcTimeDp::get_num_remove_nodes() {
-    return 0;
-}
-
-size_t PricerSolverArcTimeDp::get_num_remove_edges() {
-    return nb_edges_removed;
-}
-
 size_t PricerSolverArcTimeDp::get_nb_edges() {
     auto nb_edges = 0UL;
     for (auto& it : graph) {
@@ -511,10 +501,6 @@ size_t PricerSolverArcTimeDp::get_nb_vertices() {
         }
     }
     return nb_vertices;
-}
-
-int PricerSolverArcTimeDp::get_num_layers() {
-    return 0;
 }
 
 boost::multiprecision::cpp_int PricerSolverArcTimeDp::print_num_paths() {
