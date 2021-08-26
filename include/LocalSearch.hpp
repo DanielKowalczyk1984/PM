@@ -1,7 +1,6 @@
-#ifndef __LOCALSEARCH_NEW_H__
-#define __LOCALSEARCH_NEW_H__
+#ifndef __LOCALSEARCH_HPP__
+#define __LOCALSEARCH_HPP__
 
-#include <bits/ranges_algo.h>
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -150,4 +149,4 @@ struct PerturbOperator {
     }
 };
 
-#endif  // __LOCALSEARCH_NEW_H__
+#endif  // __LOCALSEARCH_HPP__

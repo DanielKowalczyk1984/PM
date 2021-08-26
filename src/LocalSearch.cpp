@@ -1,3 +1,4 @@
+#include "LocalSearch.hpp"
 #include <bits/c++config.h>
 #include <fmt/core.h>
 #include <algorithm>
@@ -16,7 +17,6 @@
 #include <range/v3/view/take.hpp>
 #include <vector>
 #include "Job.h"
-#include "LocalSearch_new.h"
 #include "Solution.hpp"
 #include "util.h"
 

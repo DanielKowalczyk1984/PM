@@ -6,7 +6,7 @@
 #include <utility>                      // for move
 #include "BranchBoundTree.hpp"          // for BranchBoundTree
 #include "Instance.h"                   // for Instance
-#include "LocalSearch_new.h"            // for LocalSearchData, PerturbOperator
+#include "LocalSearch.hpp"              // for LocalSearchData, PerturbOperator
 #include "NodeData.h"                   // for NodeData
 #include "PricerSolverArcTimeDP.hpp"    // for PricerSolverArcTimeDp
 #include "PricerSolverBase.hpp"         // for PricerSolverBase
