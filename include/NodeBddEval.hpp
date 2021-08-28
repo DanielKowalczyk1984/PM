@@ -24,10 +24,7 @@
 
 #pragma once
 
-#include <cassert>
-#include <iostream>
-#include "NodeBddTable.hpp"
-#include "util/DataTable.hpp"
+#include "NodeBddTable.hpp"  // for NodeTableEntity
 
 /**
  * Collection of child node values/levels for

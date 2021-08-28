@@ -1,10 +1,12 @@
 #ifndef NODE_BASE_HPP
 #define NODE_BASE_HPP
 
-#include <array>
-#include <boost/functional/hash.hpp>
-#include <cstddef>
-#include "NodeId.hpp"
+#include <array>                                // for array
+#include <boost/container_hash/extensions.hpp>  // for hash_combine
+#include <cstddef>                              // for size_t
+#include <ostream>                              // for operator<<, ostream
+#include "NodeId.hpp"                           // for NodeId, operator<<
+
 class NodeBase : public std::array<NodeId, 2> {
    public:
     NodeBase() : std::array<NodeId, 2>{} {};

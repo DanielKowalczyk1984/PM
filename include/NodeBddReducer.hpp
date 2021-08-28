@@ -1,21 +1,32 @@
 #ifndef NODE_BDD_REDUCER_HPP
 #define NODE_BDD_REDUCER_HPP
 
-#include <fmt/core.h>
-#include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <ostream>
-#include <span>
-#include <stdexcept>
+// #include <fmt/core.h>
+// #include <cassert>
+// #include <cmath>
+// #include <cstddef>
+// #include <ostream>
+// #include <span>
+// #include <stdexcept>
 
-#include <NodeBdd.hpp>
-#include <NodeBddTable.hpp>
-#include <unordered_set>
-#include <vector>
-#include "NodeId.hpp"
-#include "util/MyHashTable.hpp"
-#include "util/MyVector.hpp"
+// #include <NodeBdd.hpp>
+// #include <NodeBddTable.hpp>
+// #include <unordered_set>
+// #include <vector>
+// #include "NodeId.hpp"
+// #include "util/MyHashTable.hpp"
+// #include "util/MyVector.hpp"
+#include <NodeBdd.hpp>           // for NodeBdd
+#include <NodeBddTable.hpp>      // for TableHandler, NodeTableEntity
+#include <cassert>               // for assert
+#include <cstddef>               // for size_t
+#include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
+#include <memory>                // for allocator_traits<>::value_type
+#include <span>                  // for span
+#include <unordered_set>         // for unordered_set
+#include <vector>                // for vector
+#include "NodeId.hpp"            // for NodeId
+#include "util/MyHashTable.hpp"  // for MyHashDefault
 
 template <typename T, bool BDD, bool ZDD>
 class DdReducer {

@@ -1,17 +1,16 @@
 #ifndef __BRANCHNODE_H__
 #define __BRANCHNODE_H__
 
-#include <fmt/core.h>
-#include <cstddef>
-#include <limits>
-#include <memory>
-#include "Instance.h"
-#include "PricerSolverBase.hpp"
-#include "branch-and-bound/btree.h"
-#include "branch-and-bound/state.h"
+#include <array>                     // for array
+#include <limits>                    // for numeric_limits
+#include <memory>                    // for unique_ptr
+#include "branch-and-bound/state.h"  // for State
 
-struct NodeData;
+class BTree;
 struct Instance;
+struct NodeData;
+struct PricerSolverBase;
+
 class BranchNodeBase : public State {
    public:
     explicit BranchNodeBase(std::unique_ptr<NodeData> pd, bool isRoot = false);

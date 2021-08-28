@@ -1,22 +1,19 @@
 #ifndef PRICER_SOLVER_ZDD_HPP
 #define PRICER_SOLVER_ZDD_HPP
-#include <NodeBddStructure.hpp>                  // for DdStructure
-#include <cstddef>                               // for size_t
-#include <memory>                                // for unique_ptr, shared_ptr
-#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=
-#include <range/v3/view/filter.hpp>              // for filter_view
-#include <range/v3/view/view.hpp>                // for operator|
-#include <utility>                               // for pair
-#include <vector>                                // for vector
-#include "Instance.h"                            // for Instance
-#include "MipGraph.hpp"                          // for MipGraph
-#include "PricerSolverBase.hpp"                  // for PricerSolverBase
-#include "PricingSolution.hpp"                   // for PricingSolution
-#include "ZddNode.hpp"                           // for NodeZdd
-struct Interval;                                 // lines 36-36
-struct Job;                                      // lines 37-37
-struct NodeData;                                 // lines 38-38
-struct Column;                                   // lines 39-39
+#include <NodeBddStructure.hpp>  // for DdStructure
+#include <cstddef>               // for size_t
+#include <memory>                // for unique_ptr, shared_ptr
+#include <utility>               // for pair
+#include <vector>                // for vector
+#include "Instance.h"            // for Instance
+#include "MipGraph.hpp"          // for MipGraph
+#include "PricerSolverBase.hpp"  // for PricerSolverBase, PricerSolverBase::...
+#include "PricingSolution.hpp"   // for PricingSolution
+#include "ZddNode.hpp"           // for NodeZdd
+struct Column;                   // lines 19-19
+struct Interval;                 // lines 16-16
+struct Job;                      // lines 17-17
+struct NodeData;                 // lines 18-18
 class PricerSolverZdd : public PricerSolverBase {
    public:
     std::unique_ptr<DdStructure<NodeZdd<double>>> decision_diagram;

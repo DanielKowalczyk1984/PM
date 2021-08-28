@@ -1,20 +1,17 @@
 #ifndef PRICER_SOLVER_BDD_HPP
 #define PRICER_SOLVER_BDD_HPP
-#include <boost/move/utility_core.hpp>           // for move
-#include <cstddef>                               // for size_t
-#include <memory>                                // for unique_ptr, shared_ptr
-#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=
-#include <range/v3/view/filter.hpp>              // for filter_view
-#include <range/v3/view/view.hpp>                // for operator|
-#include <utility>                               // for pair
-#include <vector>                                // for vector
-#include "Instance.h"                            // for Instance
-#include "MipGraph.hpp"                          // for MipGraph
-#include "ModelInterface.hpp"                    // for OriginalModel
-#include "NodeBdd.hpp"                           // for NodeBdd
-#include "NodeBddStructure.hpp"                  // for DdStructure
-#include "PricerSolverBase.hpp"                  // for PricerSolverBase
-#include "PricingSolution.hpp"                   // for PricingSolution
+#include <cstddef>               // for size_t
+#include <memory>                // for unique_ptr, shared_ptr
+#include <utility>               // for pair
+#include <vector>                // for vector
+#include "Instance.h"            // for Instance
+#include "MipGraph.hpp"          // for MipGraph
+#include "ModelInterface.hpp"    // for OriginalModel
+#include "NodeBdd.hpp"           // for NodeBdd
+#include "NodeBddStructure.hpp"  // for DdStructure
+#include "NodeBddTable.hpp"      // for NodeTableEntity, TableHandler
+#include "PricerSolverBase.hpp"  // for PricerSolverBase
+#include "PricingSolution.hpp"   // for PricingSolution²
 struct Interval;
 struct Job;
 struct NodeData;

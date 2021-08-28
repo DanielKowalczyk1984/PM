@@ -1,12 +1,15 @@
 #ifndef ZDD_NODE_HPP
 #define ZDD_NODE_HPP
-#include <PricingSolution.hpp>
-#include <cstddef>
-#include <memory>
-#include <vector>
-#include "Label.hpp"
-#include "NodeBase.hpp"
-
+#include <array>         // for array
+#include <cstddef>       // for size_t
+#include <memory>        // for shared_ptr, make_shared
+#include <ostream>       // for operator<<, ostream
+#include <vector>        // for vector
+#include "Job.h"         // for Job
+#include "NodeBase.hpp"  // for NodeBase
+#include "NodeId.hpp"    // for NodeId
+template <typename N, typename T>
+class Label;
 template <typename T = double>
 class NodeZdd;
 

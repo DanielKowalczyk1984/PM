@@ -1,12 +1,11 @@
 #ifndef SCHEDULESET_H
 #define SCHEDULESET_H
-// #include <fmt/ostream.h>
-#include <functional>
-#include <memory>
-#include <vector>
-#include "ModelInterface.hpp"
-#include "PricingSolution.hpp"
-#include "Solution.hpp"
+
+#include <ostream>              // for operator<<, ostream, basic_ostream::o...
+#include <vector>               // for vector
+#include "Job.h"                // for Job
+#include "PricingSolution.hpp"  // for PricingSolution
+struct Machine;
 
 struct Column {
     int    age{};

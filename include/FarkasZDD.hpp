@@ -1,6 +1,10 @@
-#include <limits>
-#include "BackwardBDD.hpp"
-#include "NodeBddEval.hpp"
+#ifndef __FARKASZDD_H__
+#define __FARKASZDD_H__
+
+#include "BackwardBDD.hpp"      // for BackwardBddBase
+#include "NodeBdd.hpp"          // for NodeBdd
+#include "NodeBddEval.hpp"      // for Eval
+#include "PricingSolution.hpp"  // for PricingSolution
 
 template <typename T = double>
 class BackwardBddFarkas : public BackwardBddBase<T> {
@@ -46,6 +50,4 @@ class BackwardBddFarkas : public BackwardBddBase<T> {
         n.backward_label[0].get_f() = 0.0;
     }
 };
-/**
- * Farkas
- */
+#endif  // __FARKASZDD_H__

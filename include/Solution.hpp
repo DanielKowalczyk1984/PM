@@ -1,13 +1,11 @@
 #ifndef __SOLUTION_NEW_H__
 #define __SOLUTION_NEW_H__
 
-#include <algorithm>  // for rotate
-#include <cstddef>    // for size_t
-#include <iterator>   // for operator+
-#include <limits>     // for numeric_limits
-#include <memory>     // for shared_ptr
-#include <random>     // for mt19937
-#include <vector>     // for vector
+#include <cstddef>  // for size_t
+#include <limits>   // for numeric_limits
+#include <memory>   // for shared_ptr
+#include <random>   // for mt19937
+#include <vector>   // for vector
 
 /** Forward declaration */
 struct Instance;  // lines 60-60

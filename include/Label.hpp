@@ -1,9 +1,9 @@
 #ifndef LABEL_HPP
 #define LABEL_HPP
 
-#include <limits>
-#include "Job.h"
-#include "NodeId.hpp"
+#include <limits>      // for numeric_limits
+#include "NodeId.hpp"  // for NodeId
+struct Job;
 
 template <typename N, typename T>
 class Label {

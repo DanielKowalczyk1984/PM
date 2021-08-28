@@ -1,12 +1,9 @@
 #ifndef BACKWARD_BDD_HPP
 #define BACKWARD_BDD_HPP
-#include <fmt/core.h>
-#include <limits>
-#include <range/v3/action/remove_if.hpp>
-#include <span>
-#include "NodeBdd.hpp"
-#include "NodeBddEval.hpp"
-#include "PricingSolution.hpp"
+#include <range/v3/action/remove_if.hpp>  // for remove_if
+#include "NodeBdd.hpp"                    // for NodeBdd
+#include "NodeBddEval.hpp"                // for Eval
+#include "PricingSolution.hpp"            // for PricingSolution
 
 template <typename T = double>
 class BackwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {

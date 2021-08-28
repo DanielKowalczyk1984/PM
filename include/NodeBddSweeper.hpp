@@ -25,15 +25,24 @@
 #ifndef NODE_BDD_SWEEPER_HPP
 #define NODE_BDD_SWEEPER_HPP
 
-#include <cassert>
-#include <cstddef>
-#include <ostream>
-#include <vector>
+// #include <cassert>
+// #include <cstddef>
+// #include <ostream>
+// #include <vector>
 
-#include "NodeBdd.hpp"
-#include "NodeBddTable.hpp"
-#include "NodeBranchId.hpp"
-#include "util/MyVector.hpp"
+// #include "NodeBdd.hpp"
+// #include "NodeBddTable.hpp"
+// #include "NodeBranchId.hpp"
+// #include "util/MyVector.hpp"
+#include <cassert>             // for assert
+#include <cstddef>             // for size_t
+#include <ext/alloc_traits.h>  // for __alloc_traits<>::value_type
+#include <memory>              // for allocator_traits<>::value_type
+#include <vector>              // for vector
+#include "NodeBdd.hpp"         // for NodeBdd
+#include "NodeBddTable.hpp"    // for NodeTableEntity
+#include "NodeBranchId.hpp"    // for NodeBranchId
+#include "NodeId.hpp"          // for NodeId
 
 /**
  * On-the-fly DD cleaner.

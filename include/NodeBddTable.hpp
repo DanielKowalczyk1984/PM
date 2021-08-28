@@ -1,12 +1,16 @@
 #ifndef NODE_BDD_TABLE_HPP
 #define NODE_BDD_TABLE_HPP
 
-#include <fmt/core.h>
-#include <cstddef>
-#include <memory>
-#include "NodeBdd.hpp"
-#include "util/DataTable.hpp"
-#include "util/MyVector.hpp"
+#include <assert.h>            // for assert
+#include <cstddef>             // for size_t
+#include <memory>              // for allocator, allocator_traits<>::value_type
+#include <ostream>             // for operator<<, ostream, basic_ostream
+#include <stdexcept>           // for runtime_error
+#include <string>              // for operator<<, char_traits, string
+#include <vector>              // for vector, _Bit_reference, vector<>::refe...
+#include "NodeBdd.hpp"         // for NodeBdd
+#include "NodeId.hpp"          // for NodeId, operator<<
+#include "util/DataTable.hpp"  // for DataTable
 
 template <typename T>
 using data_table_node = DataTable<T>;

@@ -25,13 +25,11 @@
 #ifndef DATA_TABLE_HPP
 #define DATA_TABLE_HPP
 
-#include <cassert>
-#include <cstddef>
-#include <ostream>
-#include <range/v3/numeric/accumulate.hpp>
-#include <range/v3/view/transform.hpp>
-#include <vector>
-// #include "MyVector.hpp"
+#include <cstddef>                          // for size_t
+#include <ostream>                          // for operator<<, ostream, basi...
+#include <range/v3/numeric/accumulate.hpp>  // for accumulate
+#include <range/v3/view/transform.hpp>      // for transform
+#include <vector>                           // for vector
 
 template <typename T>
 class DataTable : public std::vector<std::vector<T>> {

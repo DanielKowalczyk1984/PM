@@ -17,6 +17,7 @@
 #include <vector>                               // for vector
 #include "Column.h"                             // for ScheduleSet
 #include "Instance.h"                           // for Instance
+#include "Parms.h"                              // for Parms
 #include "PricerSolverBase.hpp"                 // for PricerSolverBase
 #include "PricingStabilization.hpp"             // for PricingStabilizationBase
 #include "Problem.h"                            // for Problem

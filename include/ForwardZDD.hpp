@@ -1,13 +1,16 @@
 #ifndef DURATION_ZDD_HPP
 #define DURATION_ZDD_HPP
-#include <algorithm>
-#include <cstddef>
-#include <limits>
-#include <vector>
-#include "ForwardBDD.hpp"
-#include "NodeBddEval.hpp"
-#include "PricingSolution.hpp"
-#include "ZddNode.hpp"
+
+#include <assert.h>             // for assert
+#include <cstddef>              // for size_t
+#include <limits>               // for numeric_limits
+#include <memory>               // for shared_ptr
+#include "Job.h"                // for value_diff_Fij, Job
+#include "NodeBddEval.hpp"      // for Eval
+#include "PricingSolution.hpp"  // for PricingSolution
+#include "ZddNode.hpp"          // for NodeZdd, SubNodeZdd, compare_sub_nodes
+template <typename N, typename T>
+class Label;
 
 template <typename T = double>
 class ForwardZddBase : public Eval<NodeZdd<T>, PricingSolution<T>> {

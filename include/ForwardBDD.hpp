@@ -1,13 +1,14 @@
 #ifndef FORWARD_BDD_HPP
 #define FORWARD_BDD_HPP
 // #include <tdzdd/DdEval.hpp>
-#include <fmt/core.h>
-#include <array>
-#include <limits>
-#include <range/v3/action/remove_if.hpp>
-#include "NodeBdd.hpp"
-#include "NodeBddEval.hpp"
-#include "PricingSolution.hpp"
+#include <limits>                         // for numeric_limits
+#include <range/v3/action/remove_if.hpp>  // for remove_if
+#include "Job.h"                          // for Job
+#include "NodeBdd.hpp"                    // for NodeBdd
+#include "NodeBddEval.hpp"                // for Eval
+#include "PricingSolution.hpp"            // for PricingSolution
+template <typename N, typename T>
+class Label;
 
 template <typename T = double>
 class ForwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {

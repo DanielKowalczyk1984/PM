@@ -25,23 +25,38 @@
 #ifndef NODE_BDD_BUILDER_HPP
 #define NODE_BDD_BUILDER_HPP
 
-#include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <memory>
-#include <ostream>
-#include <stdexcept>
-#include <unordered_set>
+// #include <cassert>
+// #include <cmath>
+// #include <cstddef>
+// #include <memory>
+// #include <ostream>
+// #include <stdexcept>
+// #include <unordered_set>
 
-#include "NodeBdd.hpp"
-#include "NodeBddSpec.hpp"
-#include "NodeBddSweeper.hpp"
-#include "NodeBddTable.hpp"
-#include "NodeBranchId.hpp"
-#include "util/MemoryPool.hpp"
-#include "util/MyHashTable.hpp"
-#include "util/MyList.hpp"
-#include "util/MyVector.hpp"
+// #include "NodeBdd.hpp"
+// #include "NodeBddSpec.hpp"
+// #include "NodeBddSweeper.hpp"
+// #include "NodeBddTable.hpp"
+// #include "NodeBranchId.hpp"
+// #include "util/MemoryPool.hpp"
+// #include "util/MyHashTable.hpp"
+// #include "util/MyList.hpp"
+// #include "util/MyVector.hpp"
+#include <stdint.h>             // for int64_t
+#include <cassert>              // for assert
+#include <cstddef>              // for size_t
+#include <ext/alloc_traits.h>   // for __alloc_traits<>::value_type
+#include <memory>               // for allocator_traits<>::value_type
+#include <unordered_set>        // for unordered_set
+#include <vector>               // for vector
+#include "NodeBdd.hpp"          // for NodeBdd
+#include "NodeBddSweeper.hpp"   // for DdSweeper
+#include "NodeBddTable.hpp"     // for NodeTableEntity, TableHandler
+#include "NodeBranchId.hpp"     // for NodeBranchId
+#include "NodeId.hpp"           // for NodeId
+#include "util/DataTable.hpp"   // for DataTable
+#include "util/MemoryPool.hpp"  // for MemoryPools
+#include "util/MyList.hpp"      // for MyList, MyListOnPool, MyListOnPool<>:...
 
 class BuilderBase {
    protected:

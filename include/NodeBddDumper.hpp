@@ -1,12 +1,22 @@
 #ifndef NODE_BDD_DUMPER_HPP
 #define NODE_BDD_DUMPER_HPP
 
-#include <cstddef>
-#include <unordered_set>
-#include "NodeBdd.hpp"
-#include "util/MyHashTable.hpp"
-#include "util/MyList.hpp"
-#include "util/MyVector.hpp"
+// #include <cstddef>
+// #include <unordered_set>
+// #include "NodeBdd.hpp"
+// #include "util/MyHashTable.hpp"
+// #include "util/MyList.hpp"
+// #include "util/MyVector.hpp"
+#include <assert.h>         // for assert
+#include <cstddef>          // for size_t
+#include <ostream>          // for operator<<, ostream, basic_ostream, basic...
+#include <stdexcept>        // for runtime_error
+#include <string>           // for operator<<, char_traits, string
+#include <unordered_set>    // for unordered_set
+#include <vector>           // for vector
+#include "NodeBdd.hpp"      // for NodeBdd
+#include "NodeId.hpp"       // for NodeId, operator<<
+#include "util/MyList.hpp"  // for MyList
 
 /**
  * DD dumper.

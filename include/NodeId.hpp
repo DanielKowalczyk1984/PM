@@ -1,10 +1,9 @@
 #ifndef NODE_ID_HPP
 #define NODE_ID_HPP
 
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <ostream>
+#include <cstddef>  // for size_t
+#include <cstdint>  // for unint64_t
+#include <ostream>  // for operator <<, ostream, basic_ostream...
 
 int const NODE_ROW_BITS = 20;
 int const NODE_ATTR_BITS = 1;

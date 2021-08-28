@@ -9,7 +9,6 @@
 #include "PricingSolution.hpp"       // for PricingSolution
 #include "PricingStabilization.hpp"  // for PricingStabilizationBase
 #include "Statistics.h"              // for Statistics, Statistics::reduced_...
-#include "lp.h"                      // for lp_interface_objval
 
 int NodeData::solve_pricing() {
     int val = 0;

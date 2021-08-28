@@ -1,12 +1,13 @@
-#include <boost/container_hash/hash_fwd.hpp>
-#include <boost/dynamic_bitset.hpp>
-#include <cstddef>
-#include <span>
-#include <utility>
-#include <vector>
-#include "Instance.h"
-#include "Interval.h"
-#include "NodeBddSpec.hpp"
+#include <assert.h>                                 // for assert
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
+#include <cstddef>                                  // for size_t
+#include <memory>                                   // for allocator_traits<...
+#include <utility>                                  // for pair
+#include <vector>                                   // for vector, allocator
+#include "Instance.h"                               // for Instance
+#include "Interval.h"                               // for Interval
+#include "Job.h"                                    // for Job
+#include "NodeBddSpec.hpp"                          // for DdSpec
 
 class conflict_state {
    public:

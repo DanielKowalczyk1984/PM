@@ -25,14 +25,23 @@
 #ifndef NODE_BDD_SPEC_HPP
 #define NODE_BDD_SPEC_HPP
 
-#include <bits/stdint-uintn.h>
-#include <cassert>
-#include <cstddef>
-#include <iostream>
-#include <range/v3/view/zip.hpp>
-#include <span>
-#include <stdexcept>
-#include "NodeBddDumper.hpp"
+// #include <bits/stdint-uintn.h>
+// #include <cassert>
+// #include <cstddef>
+// #include <iostream>
+// #include <range/v3/view/zip.hpp>
+// #include <span>
+// #include <stdexcept>
+// #include "NodeBddDumper.hpp"
+#include <stdint.h>               // for uint16_t
+#include <cassert>                // for assert
+#include <cstddef>                // for size_t
+#include <iostream>               // for ostream, operator<<, basic_ostream:...
+#include <new>                    // for operator new
+#include <range/v3/view/zip.hpp>  // for zip
+#include <stdexcept>              // for runtime_error
+#include <string>                 // for allocator, string
+#include "NodeBddDumper.hpp"      // for DdDumper
 
 /**
  * Base class of DD specs.

@@ -24,28 +24,54 @@
 
 #pragma once
 
-#include <fmt/core.h>
-#include <algorithm>
-#include <cassert>
-#include <climits>
-#include <cstddef>
-#include <ostream>
-#include <range/v3/view/drop.hpp>
-#include <range/v3/view/filter.hpp>
-#include <range/v3/view/join.hpp>
-#include <range/v3/view/reverse.hpp>
-#include <range/v3/view/take.hpp>
-#include <set>
-#include <stdexcept>
-#include <utility>
-#include <vector>
+// #include <fmt/core.h>
+// #include <algorithm>
+// #include <cassert>
+// #include <climits>
+// #include <cstddef>
+// #include <ostream>
+// #include <range/v3/view/drop.hpp>
+// #include <range/v3/view/filter.hpp>
+// #include <range/v3/view/iota.hpp>
+// #include <range/v3/view/join.hpp>
+// #include <range/v3/view/reverse.hpp>
+// #include <range/v3/view/take.hpp>
+// #include <set>
+// #include <stdexcept>
+// #include <utility>
+// #include <vector>
 
-#include "NodeBddBuilder.hpp"
-#include "NodeBddReducer.hpp"
-#include "NodeBddTable.hpp"
+// #include "NodeBddBuilder.hpp"
+// #include "NodeBddReducer.hpp"
+// #include "NodeBddTable.hpp"
 
-#include "NodeBddEval.hpp"
-#include "NodeBddSpec.hpp"
+// #include "NodeBddEval.hpp"
+// #include "NodeBddSpec.hpp"
+#include <array>                                 // for array, array<>::valu...
+#include <cassert>                               // for assert
+#include <cstddef>                               // for size_t
+#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
+#include <memory>                                // for allocator_traits<>::...
+#include <range/v3/iterator/basic_iterator.hpp>  // for basic_iterator, oper...
+#include <range/v3/view/drop.hpp>                // for drop, drop_fn
+#include <range/v3/view/filter.hpp>              // for filter
+#include <range/v3/view/iota.hpp>                // for iota_view<>::cursor
+#include <range/v3/view/join.hpp>                // for join
+#include <range/v3/view/reverse.hpp>             // for reverse
+#include <range/v3/view/take.hpp>                // for take, take_fn
+#include <set>                                   // for set
+#include <utility>                               // for move, pair
+#include <vector>                                // for vector
+#include "NodeBase.hpp"                          // for InitializedNode
+#include "NodeBdd.hpp"                           // for NodeBdd
+#include "NodeBddBuilder.hpp"                    // for DdBuilder, ZddSubsetter
+#include "NodeBddEval.hpp"                       // for Eval
+#include "NodeBddReducer.hpp"                    // for DdReducer
+#include "NodeBddSpec.hpp"                       // for DdSpec, DdSpecBase
+#include "NodeBddTable.hpp"                      // for TableHandler
+#include "NodeId.hpp"                            // for NodeId
+#include "util/DataTable.hpp"                    // for DataTable
+#include "util/MyHashTable.hpp"                  // for MyHashMap
 
 /**
  * Ordered n-ary decision diagram structure.

@@ -1,19 +1,40 @@
 #ifndef NODE_DURATION_HPP
 #define NODE_DURATION_HPP
-#include <fmt/core.h>
-#include <gurobi_c++.h>
-#include <array>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/multiprecision/cpp_int.hpp>
-#include <cstddef>
-#include <memory>
-#include <range/v3/algorithm/any_of.hpp>
-#include <range/v3/functional/arithmetic.hpp>
-#include <range/v3/numeric/accumulate.hpp>
-#include "Label.hpp"
-#include "ModelInterface.hpp"
-#include "NodeBase.hpp"
-#include "NodeId.hpp"
+// #include <fmt/core.h>
+// #include <gurobi_c++.h>
+// #include <array>
+// #include <boost/dynamic_bitset.hpp>
+// #include <boost/multiprecision/cpp_int.hpp>
+// #include <cstddef>
+// #include <memory>
+// #include <range/v3/algorithm/any_of.hpp>
+// #include <range/v3/functional/arithmetic.hpp>
+// #include <range/v3/numeric/accumulate.hpp>
+// #include "Label.hpp"
+// #include "ModelInterface.hpp"
+// #include "NodeBase.hpp"
+// #include "NodeId.hpp"
+
+#include <gurobi_c++.h>                             // for GRBVar
+#include <array>                                    // for array
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
+#include <boost/multiprecision/cpp_int.hpp>         // for cpp_int
+#include <cstddef>                                  // for size_t
+#include <memory>                                   // for allocator, shared...
+#include <ostream>                                  // for operator<<, ostream
+#include <range/v3/algorithm/any_of.hpp>            // for any_of
+#include <range/v3/algorithm/max.hpp>               // for max, max_fn
+#include <range/v3/functional/arithmetic.hpp>       // for plus
+#include <range/v3/functional/comparisons.hpp>      // for less
+#include <range/v3/functional/identity.hpp>         // for identity
+#include <range/v3/numeric/accumulate.hpp>          // for accumulate, accum...
+#include <vector>                                   // for vector
+#include "Job.h"                                    // for Job
+#include "Label.hpp"                                // for Label
+#include "NodeBase.hpp"                             // for NodeBase
+#include "NodeId.hpp"                               // for NodeId
+
+class BddCoeff;
 
 template <typename T = double>
 class NodeBdd : public NodeBase {

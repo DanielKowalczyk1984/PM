@@ -1,22 +1,22 @@
 #ifndef __NODEDATA_H__
 #define __NODEDATA_H__
 
-#include <cstddef>
+#include <array>       // for array
+#include <cstddef>     // for size_t
+#include <functional>  // for function
+#include <memory>      // for unique_ptr, shared_ptr
+#include <string>      // for string
+#include <vector>      // for vector
+#include "lp.h"        // for lp_interface
 
-// #include "Instance.h"    // for Instance
-// #include "Parms.h"       // for Parms
-#include "Solution.hpp"  // for Sol
-#include "Statistics.h"  // for Statistics
-#include "lp.h"
-
-/** Forward Declarations */
-
-class PricingStabilizationBase;
-class Problem;
-struct PricerSolverBase;
-struct Instance;
-struct Parms;
-struct Column;  // lines 18-18
+class PricingStabilizationBase;  // lines 14-14
+class Problem;                   // lines 15-15
+struct Column;                   // lines 19-19
+struct Instance;                 // lines 17-17
+struct Parms;                    // lines 18-18
+struct PricerSolverBase;         // lines 16-16
+struct Sol;
+struct Statistics;
 
 struct NodeData {
     enum NodeDataStatus {

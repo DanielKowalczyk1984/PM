@@ -25,9 +25,14 @@
 #ifndef MY_HASH_TABLE_HPP
 #define MY_HASH_TABLE_HPP
 
-#include <stdint.h>
-#include <cassert>
-#include <ostream>
+// #include <stdint.h>
+// #include <cassert>
+// #include <ostream>
+#include <stddef.h>   // for size_t
+#include <stdint.h>   // for int16_t, int32_t, int64_t, int8_t, uint16_t
+#include <algorithm>  // for max
+#include <cassert>    // for assert
+#include <ostream>    // for operator<<, ostream
 
 // namespace tdzdd {
 
