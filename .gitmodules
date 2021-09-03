@@ -1,7 +1,11 @@
 [submodule "or-utils"]
-	path = or-utils
-	url = git@gitlab.kuleuven.be:u0056096/or-utils.git
+    path = or-utils
+    url = git@gitlab.kuleuven.be:u0056096/or-utils.git
 
 [submodule "branch-and-bound"]
-	path = branch-and-bound
-	url = git@gitlab.kuleuven.be:u0056096/branch-and-bound.git
+    path = branch-and-bound
+    url = git@gitlab.kuleuven.be:u0056096/branch-and-bound.git
+
+[submodule "decision-diagrams"]
+	path = decision-diagrams
+	url = git@github.com:DanielKowalczyk1984/Decision-Diagrams-in-Modern-C.git
