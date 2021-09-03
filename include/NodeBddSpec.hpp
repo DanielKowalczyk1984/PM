@@ -25,14 +25,6 @@
 #ifndef NODE_BDD_SPEC_HPP
 #define NODE_BDD_SPEC_HPP
 
-// #include <bits/stdint-uintn.h>
-// #include <cassert>
-// #include <cstddef>
-// #include <iostream>
-// #include <range/v3/view/zip.hpp>
-// #include <span>
-// #include <stdexcept>
-// #include "NodeBddDumper.hpp"
 #include <stdint.h>               // for uint16_t
 #include <cassert>                // for assert
 #include <cstddef>                // for size_t

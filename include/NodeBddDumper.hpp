@@ -1,20 +1,14 @@
 #ifndef NODE_BDD_DUMPER_HPP
 #define NODE_BDD_DUMPER_HPP
 
-// #include <cstddef>
-// #include <unordered_set>
-// #include "NodeBdd.hpp"
-// #include "util/MyHashTable.hpp"
-// #include "util/MyList.hpp"
-// #include "util/MyVector.hpp"
-#include <assert.h>         // for assert
+#include <cassert>          // for assert
 #include <cstddef>          // for size_t
 #include <ostream>          // for operator<<, ostream, basic_ostream, basic...
 #include <stdexcept>        // for runtime_error
 #include <string>           // for operator<<, char_traits, string
 #include <unordered_set>    // for unordered_set
 #include <vector>           // for vector
-#include "NodeBdd.hpp"      // for NodeBdd
+#include "NodeBase.hpp"     // for NodeBase
 #include "NodeId.hpp"       // for NodeId, operator<<
 #include "util/MyList.hpp"  // for MyList
 
@@ -22,7 +16,7 @@
  * DD dumper.
  * A node table is printed in Graphviz (dot) format.
  */
-template <typename S, typename T = NodeBdd<double>>
+template <typename S>
 class DdDumper {
     using Spec = S;
     static size_t const AR = Spec::ARITY;
@@ -93,10 +87,10 @@ class DdDumper {
         }
     }
 
-    DdDumper(DdDumper<S, T>&&) noexcept = default;
-    DdDumper(const DdDumper<S, T>&) = default;
-    DdDumper<S, T>& operator=(const DdDumper<S, T>&) = default;
-    DdDumper<S, T>& operator=(DdDumper<S, T>&&) noexcept = default;
+    DdDumper(DdDumper<S>&&) noexcept = default;
+    DdDumper(const DdDumper<S>&) = default;
+    DdDumper<S>& operator=(const DdDumper<S>&) = default;
+    DdDumper<S>& operator=(DdDumper<S>&&) noexcept = default;
 
     /**
      * Dumps the node table in Graphviz (dot) format.
@@ -175,11 +169,11 @@ class DdDumper {
 
    private:
     void dumpStep(std::ostream& os, int i) {
-        MyList<SpecNode>& spec_nodes = spec_nodes_table[i];
-        size_t const      m = spec_nodes.size();
-        std::vector<char> tmp(spec.datasize());
-        void* const       tmpState = tmp.data();
-        std::vector<T>    nodeList(m);
+        MyList<SpecNode>&     spec_nodes = spec_nodes_table[i];
+        size_t const          m = spec_nodes.size();
+        std::vector<char>     tmp(spec.datasize());
+        void* const           tmpState = tmp.data();
+        std::vector<NodeBase> nodeList(m);
 
         for (size_t j = m - 1; j + 1 > 0; --j, spec_nodes.pop_front()) {
             NodeId f(i, j);

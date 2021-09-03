@@ -1,23 +1,6 @@
 #ifndef NODE_BDD_REDUCER_HPP
 #define NODE_BDD_REDUCER_HPP
 
-// #include <fmt/core.h>
-// #include <cassert>
-// #include <cmath>
-// #include <cstddef>
-// #include <ostream>
-// #include <span>
-// #include <stdexcept>
-
-// #include <NodeBdd.hpp>
-// #include <NodeBddTable.hpp>
-// #include <unordered_set>
-// #include <vector>
-// #include "NodeId.hpp"
-// #include "util/MyHashTable.hpp"
-// #include "util/MyVector.hpp"
-#include <NodeBdd.hpp>           // for NodeBdd
-#include <NodeBddTable.hpp>      // for TableHandler, NodeTableEntity
 #include <cassert>               // for assert
 #include <cstddef>               // for size_t
 #include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
@@ -25,6 +8,7 @@
 #include <span>                  // for span
 #include <unordered_set>         // for unordered_set
 #include <vector>                // for vector
+#include "NodeBddTable.hpp"      // for TableHandler, NodeTableEntity
 #include "NodeId.hpp"            // for NodeId
 #include "util/MyHashTable.hpp"  // for MyHashDefault
 
@@ -335,13 +319,12 @@ class DdReducer {
         auto jj = 0UL;
 
         {
-            std::unordered_set<NodeBdd<T> const*> uniq(
-                m * 2, MyHashDefault<NodeBdd<T> const*>(),
-                MyHashDefault<NodeBdd<T> const*>());
+            std::unordered_set<T const*> uniq(m * 2, MyHashDefault<T const*>(),
+                                              MyHashDefault<T const*>());
 
             for (size_t j = 0; j < m; ++j) {
-                NodeBdd<T>* const p0 = input[i].data();
-                NodeBdd<T>&       f = input[i][j];
+                auto* const p0 = input[i].data();
+                auto&       f = input[i][j];
 
                 // make f canonical
                 NodeId& f0 = f[0];
@@ -359,7 +342,7 @@ class DdReducer {
                 if (del) {  // f is redundant
                     newIdTable[i][j] = f0;
                 } else {
-                    NodeBdd<T> const* pp = uniq.add(&f);
+                    auto const* pp = uniq.add(&f);
 
                     if (pp == &f) {
                         newIdTable[i][j] = NodeId(i, jj++, f0.hasEmpty());

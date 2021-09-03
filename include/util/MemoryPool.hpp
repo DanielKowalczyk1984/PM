@@ -24,13 +24,8 @@
 
 #pragma once
 
-// #include <cassert>
-// #include <iostream>
-// #include <stdexcept>
-// #include "MyVector.hpp"
-
-#include <stddef.h>  // for size_t
 #include <cassert>   // for assert
+#include <cstddef>   // for size_t
 #include <iostream>  // for operator<<, basic_ostream::operator<<, ostream
 #include <vector>    // for allocator, vector
 
@@ -49,11 +44,11 @@ class MemoryPool {
     static size_t const BLOCK_UNITS = 400000 / UNIT_SIZE;
     static size_t const MAX_ELEMENT_UNIS = BLOCK_UNITS / 10;
 
-    Unit*  blockList;
-    size_t nextUnit;
+    Unit*  blockList{};
+    size_t nextUnit{BLOCK_UNITS};
 
    public:
-    MemoryPool() : blockList(0), nextUnit(BLOCK_UNITS) {}
+    MemoryPool() = default;
 
     // MemoryPool(MemoryPool const& o) : blockList(0), nextUnit(BLOCK_UNITS) {
     //        if (o.blockList != 0) throw std::runtime_error(
@@ -83,15 +78,15 @@ class MemoryPool {
     void moveFrom(MemoryPool& o) {
         blockList = o.blockList;
         nextUnit = o.nextUnit;
-        o.blockList = 0;
+        o.blockList = nullptr;
     }
 
     virtual ~MemoryPool() { clear(); }
 
-    bool empty() const { return blockList == 0; }
+    [[nodiscard]] bool empty() const { return blockList == nullptr; }
 
     void clear() {
-        while (blockList != 0) {
+        while (blockList != nullptr) {
             Unit* block = blockList;
             blockList = blockList->next;
             delete[] block;
@@ -100,9 +95,9 @@ class MemoryPool {
     }
 
     void reuse() {
-        if (blockList == 0)
+        if (blockList == nullptr)
             return;
-        while (blockList->next != 0) {
+        while (blockList->next != nullptr) {
             Unit* block = blockList;
             blockList = blockList->next;
             delete[] block;
@@ -111,9 +106,9 @@ class MemoryPool {
     }
 
     void splice(MemoryPool& o) {
-        if (blockList != 0) {
+        if (blockList != nullptr) {
             Unit** rear = &o.blockList;
-            while (*rear != 0) {
+            while (*rear != nullptr) {
                 rear = &(*rear)->next;
             }
             *rear = blockList;
@@ -122,7 +117,7 @@ class MemoryPool {
         blockList = o.blockList;
         nextUnit = o.nextUnit;
 
-        o.blockList = 0;
+        o.blockList = nullptr;
         o.nextUnit = BLOCK_UNITS;
     }
 
@@ -132,8 +127,8 @@ class MemoryPool {
         if (elementUnits > MAX_ELEMENT_UNIS) {
             size_t m = elementUnits + 1;
             Unit*  block = new Unit[m];
-            if (blockList == 0) {
-                block->next = 0;
+            if (blockList == nullptr) {
+                block->next = nullptr;
                 blockList = block;
             } else {
                 block->next = blockList->next;
@@ -163,30 +158,30 @@ class MemoryPool {
     template <typename T>
     class Allocator : public std::allocator<T> {
        public:
-        MemoryPool* pool;
+        MemoryPool* pool{nullptr};
 
-        template <typename U>
-        struct rebind {
-            typedef Allocator<U> other;
-        };
+        Allocator() noexcept = default;
 
-        Allocator() throw() : pool(0) {}
+        Allocator(MemoryPool& _pool) noexcept : pool(&_pool) {}
 
-        Allocator(MemoryPool& _pool) throw() : pool(&_pool) {}
-
-        Allocator(Allocator const& o) throw() : pool(o.pool) {}
+        Allocator(Allocator const& o) noexcept : pool(o.pool) {}
 
         Allocator& operator=(Allocator const& o) {
+            if (&o == this) {
+                return *this;
+            }
             pool = o.pool;
             return *this;
         }
 
         template <typename U>
-        Allocator(Allocator<U> const& o) throw() : pool(o.pool) {}
+        Allocator(Allocator<U> const& o) noexcept : pool(o.pool) {}
 
-        ~Allocator() throw() {}
+        ~Allocator() noexcept = default;
 
-        T* allocate(size_t n, const void* = 0) { return pool->allocate<T>(n); }
+        T* allocate(size_t n, const void* = nullptr) {
+            return pool->allocate<T>(n);
+        }
 
         void deallocate(T*, size_t) {}
     };
@@ -204,7 +199,7 @@ class MemoryPool {
      */
     friend std::ostream& operator<<(std::ostream& os, MemoryPool const& o) {
         int n = 0;
-        for (Unit* p = o.blockList; p != 0; p = p->next) {
+        for (Unit* p = o.blockList; p != nullptr; p = p->next) {
             ++n;
         }
         return os << "MemoryPool(" << n << ")";
@@ -214,12 +209,4 @@ class MemoryPool {
 /**
  * Collection of memory pools.
  */
-typedef std::vector<MemoryPool> MemoryPools;
-
-// template <>
-// inline void MyVector<MemoryPool>::moveElement(MemoryPool& from,
-//                                               MemoryPool& to) {
-//     to.moveFrom(from);
-// }
-
-// } // namespace tdzdd
+using MemoryPools = std::vector<MemoryPool>;

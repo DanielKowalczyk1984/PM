@@ -33,12 +33,13 @@ using Vertex = boost::graph_traits<MipGraph>::vertex_descriptor;
 
 class ColorWriterEdgeX {
    private:
-    MipGraph&               g;
-    NodeTableEntity<>*      table;
-    static constexpr double EPS_GRAPH = 1e-6;
+    MipGraph&                         g;
+    NodeTableEntity<NodeBdd<double>>* table;
+    static constexpr double           EPS_GRAPH = 1e-6;
 
    public:
-    explicit ColorWriterEdgeX(MipGraph& _g, NodeTableEntity<>* _table)
+    explicit ColorWriterEdgeX(MipGraph&                         _g,
+                              NodeTableEntity<NodeBdd<double>>* _table)
         : g{_g},
           table(_table) {}
 
@@ -85,11 +86,12 @@ class ColorWriterEdgeIndex {
 
 class ColorWriterVertex {
    private:
-    const MipGraph&          g;
-    const NodeTableEntity<>& table;
+    const MipGraph&                         g;
+    const NodeTableEntity<NodeBdd<double>>& table;
 
    public:
-    ColorWriterVertex(const MipGraph& _g, const NodeTableEntity<>& _table)
+    ColorWriterVertex(const MipGraph&                         _g,
+                      const NodeTableEntity<NodeBdd<double>>& _table)
         : g{_g},
           table{_table} {}
 

@@ -1,14 +1,13 @@
 #ifndef NODE_BDD_TABLE_HPP
 #define NODE_BDD_TABLE_HPP
 
-#include <assert.h>            // for assert
+#include <cassert>             // for assert
 #include <cstddef>             // for size_t
 #include <memory>              // for allocator, allocator_traits<>::value_type
 #include <ostream>             // for operator<<, ostream, basic_ostream
 #include <stdexcept>           // for runtime_error
 #include <string>              // for operator<<, char_traits, string
 #include <vector>              // for vector, _Bit_reference, vector<>::refe...
-#include "NodeBdd.hpp"         // for NodeBdd
 #include "NodeId.hpp"          // for NodeId, operator<<
 #include "util/DataTable.hpp"  // for DataTable
 
@@ -17,7 +16,7 @@ using data_table_node = DataTable<T>;
 template <typename T>
 using my_vector = std::vector<T>;
 
-template <typename T = NodeBdd<double>>
+template <typename T>
 class NodeTableEntity : public data_table_node<T> {
     mutable my_vector<my_vector<size_t>> higherLevelTable;
     mutable my_vector<my_vector<size_t>> lowerLevelTable;
@@ -114,10 +113,10 @@ class NodeTableEntity : public data_table_node<T> {
 
                 for (size_t j = 0; j < m; ++j) {
                     for (int b = 0; b < 2; ++b) {
-                        NodeId ff = child(i, j, b);
-                        int    ii = ff.row();
+                        auto ff = child(i, j, b);
+                        auto ii = ff.row();
                         child(i + d, j, b) =
-                            (ii == 0) ? ff : NodeId(ii + d, ff.col());
+                            (ii == 0UL) ? ff : NodeId(ii + d, ff.col());
                     }
                 }
 

@@ -1,3 +1,6 @@
+#ifndef __NODEBDDEVAL_H__
+#define __NODEBDDEVAL_H__
+
 /*
  * TdZdd: a Top-down/Breadth-first Decision Diagram Manipulation Framework
  * by Hiroaki Iwashita <iwashita@erato.ist.hokudai.ac.jp>
@@ -22,137 +25,65 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-
 #include "NodeBddTable.hpp"  // for NodeTableEntity
 
 /**
- * Collection of child node values/levels for
- * DdEval::evalNode function interface.
- * @tparam T data type of work area for each node.
- * @tparam ARITY the number of children for each node.
- */
-// template<typename T, int ARITY>
-// class DdValues {
-//     T * value[ARITY];
-//     int level[ARITY];
-
-// public:
-//     /**
-//      * Returns the value of the b-th child.
-//      * @param b branch index.
-//      * @return value of the b-th child.
-//      */
-//     T const& get(int b) const {
-//         assert(0 <= b && b < ARITY);
-//         return *value[b];
-//     }
-
-//     T  *get_ptr(int b) { return value[b]; }
-
-//     /**
-//      * Returns the level of the b-th child.
-//      * @param b branch index.
-//      * @return level of the b-th child.
-//      */
-//     int getLevel(int b) const {
-//         assert(0 <= b && b < ARITY);
-//         return level[b];
-//     }
-
-//     void setReference(int b, T const& v) {
-//         assert(0 <= b && b < ARITY);
-//         value[b] = &v;
-//     }
-
-//     void setReference(int b, T &v) {
-//         assert(0 <= b && b < ARITY);
-//         value[b] = &v;
-//     }
-
-//     void setReference(int b, T *v) {
-//         assert(0 <= b && b < ARITY);
-//         value[b] = v;
-//     }
-
-//     void setLevel(int b, int i) {
-//         assert(0 <= b && b < ARITY);
-//         level[b] = i;
-//     }
-
-//     friend std::ostream& operator<<(std::ostream& os, DdValues const& o) {
-//         os << "(";
-//         for (int b = 0; b < ARITY; ++b) {
-//             if (b != 0) os << ",";
-//             os << o.value(b) << "@" << o.level(b);
-//         }
-//         return os << ")";
-//     }
-// };
-
-/**
- * Base class of DD evaluators.
+ * @brief Base class of the evaluators
+ * Every derived class needs an implementation of the following functions:
+ * - void initializenode(T&)
+ * - void initializerootnode(T&)
+ * - void evalNode(T&)
+ * - R get_objective(T&)
  *
- * Every implementation must define the following functions:
- * - void evalTerminal(T& v, int id)
- * - void evalNode(T& v, int level, DdValues<T,ARITY> const& values)
- *
- * Optionally, the following functions can be overloaded:
- * - bool showMessages()
- * - void initialize(int level)
- * - R getValue(T const& work)
- * - void destructLevel(int i)
- *
- * @tparam E the class implementing this class.
- * @tparam T data type of work area for each node.
- * @tparam R data type of return value.
+ * @tparam T: type of the Node
+ * @tparam R: type of the Solution
  */
 template <typename T, typename R = T>
 class Eval {
     NodeTableEntity<T>* table;
 
    public:
-    // E& entity() { return *static_cast<E*>(this); }
-
-    // E const& entity() const { return *static_cast<E const*>(this); }
-
-    /**
-     * Returns preference to show messages.
-     * @return true if messages are preferred.
-     */
     [[nodiscard]] virtual bool showMessages() const { return false; }
 
     /**
-     * Initialization.
-     * @param level the maximum level of the DD.
+     * @brief Initialization of the node before evaluation.
+     *
+     * @param n Node at which we initialize
      */
-    // virtual void initialize(int level) {
-    // }
-
-    /**
-     * Makes a result value.
-     * @param v work area value for the root node.
-     * @return final value of the evaluation.
-     */
-
     virtual void initializenode(T& n) const = 0;
 
+    /**
+     * @brief Initialization of the root node
+     *
+     * @param n Root node of the decision diagram
+     */
     virtual void initializerootnode(T& n) const = 0;
 
+    /**
+     * @brief Evaluate the node
+     *
+     * @param n Node at which we evaluate
+     */
     virtual void evalNode(T& n) const = 0;
 
+    /**
+     * @brief Get the objective object by backtracking
+     *
+     * @param n Depends on the direction of the evaluation. If backward
+     * evaluation then n is the root node otherwise we start at terminal node 1.
+     * @return R Solution we want to obtain.
+     */
     virtual R get_objective(T& n) const = 0;
 
     void set_table(NodeTableEntity<T>* _table) { table = _table; }
-
     NodeTableEntity<T>* get_table() const { return table; }
-    Eval() : table(nullptr){};
 
+    /** Default base constructors */
+    Eval() : table(nullptr){};
     Eval(const Eval<T, R>&) = default;
     Eval(Eval<T, R>&&) noexcept = default;
-
     Eval<T, R>& operator=(const Eval<T, R>&) = default;
-
     Eval<T, R>& operator=(Eval<T, R>&&) noexcept = default;
     virtual ~Eval() = default;
 };
+#endif  // __NODEBDDEVAL_H__

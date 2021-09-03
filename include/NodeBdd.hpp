@@ -1,19 +1,5 @@
 #ifndef NODE_DURATION_HPP
 #define NODE_DURATION_HPP
-// #include <fmt/core.h>
-// #include <gurobi_c++.h>
-// #include <array>
-// #include <boost/dynamic_bitset.hpp>
-// #include <boost/multiprecision/cpp_int.hpp>
-// #include <cstddef>
-// #include <memory>
-// #include <range/v3/algorithm/any_of.hpp>
-// #include <range/v3/functional/arithmetic.hpp>
-// #include <range/v3/numeric/accumulate.hpp>
-// #include "Label.hpp"
-// #include "ModelInterface.hpp"
-// #include "NodeBase.hpp"
-// #include "NodeId.hpp"
 
 #include <gurobi_c++.h>                             // for GRBVar
 #include <array>                                    // for array

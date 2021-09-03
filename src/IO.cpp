@@ -13,6 +13,10 @@
 #include "Statistics.h"         // for Statistics, Statistics::bb_timer, Sta...
 #include "util.h"               // for CCutil_timer, CCutil_stop_timer, getR...
 
+/**
+ * @brief Print the results to a csv file with fmt.
+ *
+ */
 void Problem::to_csv() {
     using ptr_file = std::unique_ptr<std::FILE, std::function<int(FILE*)>>;
 

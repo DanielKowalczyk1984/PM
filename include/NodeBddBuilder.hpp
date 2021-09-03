@@ -25,31 +25,13 @@
 #ifndef NODE_BDD_BUILDER_HPP
 #define NODE_BDD_BUILDER_HPP
 
-// #include <cassert>
-// #include <cmath>
-// #include <cstddef>
-// #include <memory>
-// #include <ostream>
-// #include <stdexcept>
-// #include <unordered_set>
-
-// #include "NodeBdd.hpp"
-// #include "NodeBddSpec.hpp"
-// #include "NodeBddSweeper.hpp"
-// #include "NodeBddTable.hpp"
-// #include "NodeBranchId.hpp"
-// #include "util/MemoryPool.hpp"
-// #include "util/MyHashTable.hpp"
-// #include "util/MyList.hpp"
-// #include "util/MyVector.hpp"
-#include <stdint.h>             // for int64_t
 #include <cassert>              // for assert
 #include <cstddef>              // for size_t
+#include <cstdint>              // for int64_t
 #include <ext/alloc_traits.h>   // for __alloc_traits<>::value_type
 #include <memory>               // for allocator_traits<>::value_type
 #include <unordered_set>        // for unordered_set
 #include <vector>               // for vector
-#include "NodeBdd.hpp"          // for NodeBdd
 #include "NodeBddSweeper.hpp"   // for DdSweeper
 #include "NodeBddTable.hpp"     // for NodeTableEntity, TableHandler
 #include "NodeBranchId.hpp"     // for NodeBranchId
@@ -112,7 +94,7 @@ class BuilderBase {
 /**
  * Basic breadth-first DD builder.
  */
-template <typename S, typename T = NodeBdd<double>>
+template <typename S, typename T>
 class DdBuilder : BuilderBase {
     using Spec = S;
     using UniqTable = std::unordered_set<SpecNode*, Hasher<Spec>, Hasher<Spec>>;
@@ -182,7 +164,7 @@ class DdBuilder : BuilderBase {
         sweeper.setRoot(root);
         std::vector<char> tmp(spec.datasize());
         void* const       tmpState = tmp.data();
-        int               n = spec.get_root(tmpState);
+        auto              n = spec.get_root(tmpState);
 
         if (n <= 0) {
             root = n ? 1 : 0;
@@ -205,13 +187,13 @@ class DdBuilder : BuilderBase {
      * @param i level.
      */
     void construct(size_t i) {
-        assert(0UL < i && size_t(i) < spec_node_table.size());
+        assert(0UL < i && i < spec_node_table.size());
 
-        auto&  spec_nodes = spec_node_table[i];
-        size_t j0 = output[i].size();
-        size_t m = j0;
-        size_t lowestChild = i - 1;
-        size_t deadCount = 0;
+        auto& spec_nodes = spec_node_table[i];
+        auto  j0 = output[i].size();
+        auto  m = j0;
+        auto  lowestChild = i - 1;
+        auto  deadCount = 0UL;
 
         {
             Hasher<Spec> hasher(spec, i);
@@ -251,8 +233,8 @@ class DdBuilder : BuilderBase {
 
         output[i].resize(m);
         // T* const  output_data = output[i].data();
-        size_t    jj = j0;
-        SpecNode* pp = spec_node_table[i - 1].alloc_front(specNodeSize);
+        auto  jj = j0;
+        auto* pp = spec_node_table[i - 1].alloc_front(specNodeSize);
 
         for (; !spec_nodes.empty(); spec_nodes.pop_front()) {
             SpecNode* p = spec_nodes.front();
@@ -500,10 +482,10 @@ class ZddSubsetter : BuilderBase {
 
         output.initRow(i, mm);
         // T* const output_data = output[i].data();
-        size_t jj = 0;
+        auto jj = 0UL;
 
         for (size_t j = 0; j < m; ++j) {
-            MyListOnPool<SpecNode>& list = work[i][j];
+            auto& list = work[i][j];
 
             for (auto p : list) {
                 auto& q = output[i][jj];
@@ -515,7 +497,7 @@ class ZddSubsetter : BuilderBase {
 
                 auto allZero = true;
 
-                for (int b = 0; b < AR; ++b) {
+                for (auto b = 0; b < AR; ++b) {
                     if (nodeId(p) == 0) {
                         q[b] = 0;
                         continue;
@@ -523,8 +505,8 @@ class ZddSubsetter : BuilderBase {
 
                     NodeId f(i, j);
                     spec.get_copy(tmpState, state(p));
-                    int kk = downTable(f, b, i - 1);
-                    int ii = downSpec(tmpState, i, b, kk);
+                    auto kk = downTable(f, b, i - 1);
+                    auto ii = downSpec(tmpState, i, b, kk);
 
                     while (ii != 0 && kk != 0 && ii != kk) {
                         if (ii < kk) {
@@ -623,7 +605,7 @@ class ZddSubsetter : BuilderBase {
         }
         assert(level > zerosupLevel);
 
-        int i = spec.get_child(p, level, b);
+        auto i = spec.get_child(p, level, b);
         while (i > zerosupLevel) {
             i = spec.get_child(p, i, 0);
         }

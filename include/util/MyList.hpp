@@ -295,8 +295,8 @@ class MyListOnPool {
         Cell* next;
     };
 
-    Cell*  front_;
-    size_t size_;
+    Cell*  front_{nullptr};
+    size_t size_{};
 
     static size_t dataCells(size_t n) {
         return (n + sizeof(Cell) - 1) / sizeof(Cell);
@@ -311,11 +311,14 @@ class MyListOnPool {
     }
 
    public:
-    MyListOnPool() : front_(0), size_(0) {}
+    MyListOnPool() = default;
 
     MyListOnPool(MyListOnPool const& o) { *this = o; }
 
     MyListOnPool& operator=(MyListOnPool const& o) {
+        if (&o == this) {
+            return *this;
+        }
         if (!o.empty())
             throw std::runtime_error(
                 "MyListOnPool: Can't copy a nonempty object.");
@@ -343,13 +346,13 @@ class MyListOnPool {
      * Returns the number of elements.
      * @return the number of elements.
      */
-    size_t size() const { return size_; }
+    [[nodiscard]] size_t size() const { return size_; }
 
     /**
      * Checks emptiness.
      * @return true if empty.
      */
-    bool empty() const {
+    [[nodiscard]] bool empty() const {
         assert((front_ == 0) == (size_ == 0));
         return front_ == 0;
     }

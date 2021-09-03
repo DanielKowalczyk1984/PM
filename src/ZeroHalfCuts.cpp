@@ -24,11 +24,11 @@
 #include "NodeId.hpp"                            // for NodeId
 #include "gurobi_c.h"                            // for GRB_INFINITY, GRB_PR...
 
-ZeroHalfCuts::ZeroHalfCuts(size_t              _nb_jobs,
-                           size_t              _nb_machines,
-                           ReformulationModel* _rmp_model,
-                           NodeId const&       _root,
-                           NodeTableEntity<>*  _table)
+ZeroHalfCuts::ZeroHalfCuts(size_t                            _nb_jobs,
+                           size_t                            _nb_machines,
+                           ReformulationModel*               _rmp_model,
+                           NodeId const&                     _root,
+                           NodeTableEntity<NodeBdd<double>>* _table)
     : env(std::make_unique<GRBEnv>()),
       model(std::make_unique<GRBModel>(*env)),
       nb_jobs(_nb_jobs),

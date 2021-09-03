@@ -1,3 +1,6 @@
+#ifndef __NODEBDDSTRUCTURE_H__
+#define __NODEBDDSTRUCTURE_H__
+
 /*
  * TdZdd: a Top-down/Breadth-first Decision Diagram Manipulation Framework
  * by Hiroaki Iwashita <iwashita@erato.ist.hokudai.ac.jp>
@@ -22,31 +25,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-
-// #include <fmt/core.h>
-// #include <algorithm>
-// #include <cassert>
-// #include <climits>
-// #include <cstddef>
-// #include <ostream>
-// #include <range/v3/view/drop.hpp>
-// #include <range/v3/view/filter.hpp>
-// #include <range/v3/view/iota.hpp>
-// #include <range/v3/view/join.hpp>
-// #include <range/v3/view/reverse.hpp>
-// #include <range/v3/view/take.hpp>
-// #include <set>
-// #include <stdexcept>
-// #include <utility>
-// #include <vector>
-
-// #include "NodeBddBuilder.hpp"
-// #include "NodeBddReducer.hpp"
-// #include "NodeBddTable.hpp"
-
-// #include "NodeBddEval.hpp"
-// #include "NodeBddSpec.hpp"
 #include <array>                                 // for array, array<>::valu...
 #include <cassert>                               // for assert
 #include <cstddef>                               // for size_t
@@ -63,7 +41,6 @@
 #include <utility>                               // for move, pair
 #include <vector>                                // for vector
 #include "NodeBase.hpp"                          // for InitializedNode
-#include "NodeBdd.hpp"                           // for NodeBdd
 #include "NodeBddBuilder.hpp"                    // for DdBuilder, ZddSubsetter
 #include "NodeBddEval.hpp"                       // for Eval
 #include "NodeBddReducer.hpp"                    // for DdReducer
@@ -77,7 +54,7 @@
  * Ordered n-ary decision diagram structure.
  * @tparam ARITY arity of the nodes.
  */
-template <typename T = NodeBdd<double>>
+template <typename T>
 class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
     TableHandler<T> diagram;  ///< The diagram structure.
     NodeId          root_{};  ///< Root node ID.
@@ -613,3 +590,5 @@ class DdStructure : public DdSpec<DdStructure<T>, NodeId> {
      */
     [[nodiscard]] size_t hashCode(NodeId const& f) const { return f.hash(); }
 };
+
+#endif  // __NODEBDDSTRUCTURE_H__

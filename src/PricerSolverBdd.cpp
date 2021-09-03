@@ -1050,7 +1050,7 @@ void PricerSolverBdd::build_mip() {
 }
 
 void PricerSolverBdd::cleanup_arcs() {
-    NodeTableEntity<>& table = *(decision_diagram.getDiagram());
+    auto& table = *(decision_diagram.getDiagram());
 
     // table.node(0).backward_distance[0] = std::numeric_limits<int>::min();
     // table.node(0).backward_distance[1] = std::numeric_limits<int>::min();
