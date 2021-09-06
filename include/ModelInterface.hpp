@@ -1,22 +1,22 @@
 #ifndef _MODEL_INTERFACE
 #define _MODEL_INTERFACE
 
-#include <bits/c++config.h>
-#include <fmt/core.h>
-#include <boost/functional/hash.hpp>
-#include <cstddef>
-#include <functional>
-#include <iostream>
-#include <list>
-#include <map>
-#include <memory>
-#include <range/v3/range/conversion.hpp>
-#include <range/v3/view/iota.hpp>
-#include <range/v3/view/transform.hpp>
-#include <unordered_map>
-#include <vector>
+#include <fmt/core.h>                           // for print
+#include <boost/container_hash/extensions.hpp>  // for hash_combine
+#include <cmath>                                // for fabs
+#include <cstddef>                              // for size_t
+#include <iostream>                             // for operator<<, size_t
+#include <list>                                 // for list
+#include <memory>                               // for shared_ptr, __shared_...
+#include <range/v3/range/conversion.hpp>        // for to
+#include <range/v3/range_fwd.hpp>               // for views
+#include <range/v3/view/iota.hpp>               // for iota, iota_fn
+#include <range/v3/view/transform.hpp>          // for transform
+#include <unordered_map>                        // for operator==, _Node_ite...
+#include <utility>                              // for move, pair
+#include <variant>                              // for hash
+#include <vector>                               // for vector
 namespace vs = ranges::views;
-
 class VariableKeyBase {
    private:
     size_t j{};
@@ -343,8 +343,8 @@ class OriginalConstraint {
     ~OriginalConstraint() = default;
     OriginalConstraint(OriginalConstraint&&) noexcept = default;
     OriginalConstraint& operator=(OriginalConstraint&&) noexcept = default;
-    OriginalConstraint<T>(const OriginalConstraint<T>&) = default;
-    OriginalConstraint<T>& operator=(const OriginalConstraint<T>&) = default;
+    OriginalConstraint(const OriginalConstraint<T>&) = default;
+    OriginalConstraint& operator=(const OriginalConstraint<T>&) = default;
 
     inline std::list<std::shared_ptr<T>>& get_coeff_list() {
         return coeff_list;

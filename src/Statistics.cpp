@@ -1,14 +1,16 @@
+
 #include "Statistics.h"
-#include "Parms.h"
-#include "util.h"
+#include <limits>
+#include "Parms.h"  // for Parms
+#include "util.h"   // for CCutil_init_timer, CCutil_start_resume_time, CCu...
 
 Statistics::Statistics(const Parms& _parms)
-    : global_upper_bound(INT_MAX),
+    : global_upper_bound(std::numeric_limits<int>::max()),
       global_lower_bound(0),
-      rel_error(DBL_MAX),
-      root_upper_bound(INT_MAX),
+      rel_error(std::numeric_limits<double>::max()),
+      root_upper_bound(std::numeric_limits<int>::max()),
       root_lower_bound(0.0),
-      root_rel_error(DBL_MAX),
+      root_rel_error(std::numeric_limits<double>::max()),
       nb_generated_col(0),
       nb_generated_col_root(0),
       first_size_graph(0),

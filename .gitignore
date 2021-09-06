@@ -29,7 +29,6 @@ test.*
 *.out
 *.app
 
-
 ### https://raw.github.com/github/gitignore/e27b4277e2cd2f2e91ab343419df65f7192ab4dd/Global/SublimeText.gitignore
 
 # cache files for sublime text
@@ -46,7 +45,6 @@ test.*
 
 # sftp configuration file
 sftp-config.json
-
 
 ### https://raw.github.com/github/gitignore/e27b4277e2cd2f2e91ab343419df65f7192ab4dd/CMake.gitignore
 
@@ -110,3 +108,7 @@ wt*_solutions
 cmake-build-*/
 debug/
 release/
+MinFunction*.json
+MaxFunction*.json
+ProductScoring*.json
+Weighted*.json

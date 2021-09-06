@@ -1,17 +1,31 @@
 #include "PricerSolverZdd.hpp"
-#include <fmt/core.h>
-#include <NodeBddStructure.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <cstddef>
-#include <range/v3/view/iota.hpp>
-#include <range/v3/view/reverse.hpp>
-#include <vector>
-#include "Instance.h"
-#include "OptimalSolution.hpp"
-#include "PricerConstruct.hpp"
-#include "Statistics.h"
-#include "ZddNode.hpp"
-#include "scheduleset.h"
+#include <fmt/core.h>                             // for print
+#include <gurobi_c++.h>                           // for GRBException
+#include <algorithm>                              // for remove_if, fill
+#include <array>                                  // for array
+#include <boost/graph/detail/adjacency_list.hpp>  // for num_edges
+#include <boost/multiprecision/cpp_int.hpp>
+#include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
+#include <iostream>                                // for operator<<, cout
+#include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
+#include <range/v3/view/iota.hpp>                  // for iota_view, ints
+#include <range/v3/view/reverse.hpp>               // for reverse_fn, revers...
+#include <range/v3/view/zip.hpp>                   // for zip_view
+#include <set>                                     // for operator==, _Rb_tr...
+#include <span>                                    // for span
+#include <string>                                  // for char_traits, opera...
+#include <vector>                                  // for vector<>::iterator
+#include "Column.h"                                // for ScheduleSet
+#include "Instance.h"                              // for Instance
+#include "Job.h"                                   // for Job
+#include "ModernDD/NodeBddStructure.hpp"                    // for DdStructure, DdStr...
+#include "ModernDD/NodeBddTable.hpp"                        // for NodeTableEntity
+#include "ModernDD/NodeId.hpp"                              // for NodeId
+#include "PricerConstruct.hpp"                     // for PricerConstruct
+#include "PricingSolution.hpp"                     // for PricingSolution
+#include "ZddNode.hpp"                             // for NodeZdd, SubNodeZdd
+#include "util.h"                                  // for dbg_lvl
+#include "util/MyList.hpp"                         // for MyList
 
 PricerSolverZdd::PricerSolverZdd(const Instance& instance)
     : PricerSolverBase(instance),
@@ -143,9 +157,9 @@ void PricerSolverZdd::init_table() {
     }
 }
 
-OptimalSolution<double> PricerSolverZdd::farkas_pricing(
+PricingSolution<double> PricerSolverZdd::farkas_pricing(
     [[maybe_unused]] double* pi) {
-    OptimalSolution<double> sol;
+    PricingSolution<double> sol;
 
     return sol;
 }
@@ -364,16 +378,16 @@ void PricerSolverZdd::build_mip() {
 }
 
 void PricerSolverZdd::construct_lp_sol_from_rmp(
-    const double*                                    columns,
-    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) {
+    const double*                               lambda,
+    const std::vector<std::shared_ptr<Column>>& columns) {
     auto&     table = *(decision_diagram->getDiagram());
-    std::span aux_cols{columns, schedule_sets.size()};
-    // std::span aux_sets{schedule_sets->pdata, schedule_sets->len};
+    std::span aux_cols{lambda, columns.size()};
+    // std::span aux_sets{columns->pdata, columns->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    for (auto i = 0UL; i < schedule_sets.size(); ++i) {
+    for (auto i = 0UL; i < columns.size(); ++i) {
         if (aux_cols[i] > EPS_SOLVER) {
             auto  counter = 0UL;
-            auto* tmp = schedule_sets[i].get();
+            auto* tmp = columns[i].get();
             // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->pdata};
             NodeId                        tmp_nodeid(decision_diagram->root());
             std::shared_ptr<SubNodeZdd<>> tmp_sub_node =
@@ -411,8 +425,9 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(
     // outf.close();
 }
 
-bool PricerSolverZdd::check_schedule_set(const std::vector<Job*>& set) {
-    auto weight = 0UL;
+bool PricerSolverZdd::check_column(Column const* col) {
+    auto        weight = 0UL;
+    const auto& set = col->job_list;
     // std::span aux_jobs{set->pdata, set->len};
     auto&  table = *(decision_diagram->getDiagram());
     NodeId tmp_nodeid(decision_diagram->root());
@@ -438,40 +453,6 @@ bool PricerSolverZdd::check_schedule_set(const std::vector<Job*>& set) {
     return (weight == set.size());
 }
 
-void PricerSolverZdd::iterate_zdd() {
-    DdStructure<NodeZdd<double>>::const_iterator it = decision_diagram->begin();
-
-    for (; it != decision_diagram->end(); ++it) {
-        auto i = (*it).begin();
-
-        for (; i != (*it).end(); ++i) {
-            std::cout << ordered_jobs_new.size() - *i << " ";
-        }
-
-        std::cout << '\n';
-    }
-}
-
-void PricerSolverZdd::create_dot_zdd(const char* name) {
-    std::ofstream file;
-    file.open(name);
-    // decision_diagram->dumpDot(file);
-    file.close();
-}
-
-void PricerSolverZdd::print_number_nodes_edges() {
-    fmt::print("removed edges = %d, removed nodes = {}\n", nb_removed_edges,
-               nb_removed_nodes);
-}
-
-size_t PricerSolverZdd::get_num_remove_nodes() {
-    return nb_removed_nodes;
-}
-
-size_t PricerSolverZdd::get_num_remove_edges() {
-    return nb_removed_edges;
-}
-
 size_t PricerSolverZdd::get_nb_edges() {
     return num_edges(mip_graph);
 }
@@ -480,8 +461,6 @@ size_t PricerSolverZdd::get_nb_vertices() {
     return decision_diagram->size();
 }
 
-int PricerSolverZdd::get_num_layers() {
-    return decision_diagram->topLevel();
+boost::multiprecision::cpp_int PricerSolverZdd::print_num_paths() {
+    return 0;
 }
-
-void PricerSolverZdd::print_num_paths() {}

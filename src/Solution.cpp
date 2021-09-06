@@ -1,18 +1,40 @@
+// #include "Solution.hpp"
+// #include <bits/ranges_algo.h>
 #include "Solution.hpp"
-#include <bits/ranges_algo.h>
-#include <fmt/core.h>
-#include <algorithm>
-#include <cstddef>
-#include <cstdio>
-#include <memory>
-#include <random>
-#include <range/v3/action/erase.hpp>
-#include <range/v3/action/insert.hpp>
-#include <range/v3/all.hpp>
-#include <vector>
-#include "Instance.h"
-#include "Interval.h"
-#include "Job.h"
+#include <fmt/core.h>  // for print
+#include <fmt/format.h>
+#include <algorithm>                                   // for remove, __sort_fn
+#include <compare>                                     // for operator<
+#include <cstddef>                                     // for size_t
+#include <cstdlib>                                     // for rand
+#include <ext/alloc_traits.h>                          // for __alloc_traits...
+#include <functional>                                  // for identity
+#include <memory>                                      // for allocator_trai...
+#include <random>                                      // for mt19937, unifo...
+#include <range/v3/action/action.hpp>                  // for action_closure
+#include <range/v3/action/shuffle.hpp>                 // for shuffle, shuff...
+#include <range/v3/action/sort.hpp>                    // for sort, sort_fn
+#include <range/v3/algorithm/heap_algorithm.hpp>       // for push_heap, pus...
+#include <range/v3/algorithm/swap_ranges.hpp>          // for swap_ranges
+#include <range/v3/functional/comparisons.hpp>         // for greater
+#include <range/v3/functional/identity.hpp>            // for identity
+#include <range/v3/iterator/basic_iterator.hpp>        // for operator-, bas...
+#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
+#include <range/v3/range/conversion.hpp>               // for operator|, to
+#include <range/v3/view/drop.hpp>                      // for drop, drop_fn
+#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
+#include <range/v3/view/subrange.hpp>                  // for subrange
+#include <range/v3/view/take.hpp>                      // for take_view, take
+#include <range/v3/view/transform.hpp>                 // for transform_view
+#include <range/v3/view/view.hpp>                      // for operator|, vie...
+#include <range/v3/view/zip.hpp>                       // for zip_view
+#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
+#include <tuple>                                       // for operator<=>, tie
+#include <utility>                                     // for move, swap
+#include <vector>                                      // for vector
+#include "Instance.h"                                  // for Instance
+#include "Interval.h"                                  // for Interval, comp...
+#include "Job.h"                                       // for Job
 
 void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
     auto cmp_jobs_edd = [](const auto lhs, const auto rhs) -> bool {
@@ -27,12 +49,13 @@ void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
 
     // std::make_heap(machines.begin(), machines.end(),
     // cmp_machines_completion);
-    ranges::make_heap(machines, ranges::greater{}, &Machine::completion_time);
+    ranges::make_heap(machines, ranges::greater{},
+                      &Machine::total_processing_time);
 
     for (auto& it : tmp) {
         add_job_front_machine(it);
         ranges::push_heap(machines, ranges::greater{},
-                          &Machine::completion_time);
+                          &Machine::total_processing_time);
     }
 }
 
@@ -62,7 +85,7 @@ void Sol::construct_spt(const std::vector<std::shared_ptr<Job>>& v) {
     for (auto& it : tmp) {
         add_job_front_machine(it);
         ranges::push_heap(machines, ranges::greater{},
-                          &Machine::completion_time);
+                          &Machine::total_processing_time);
     }
 }
 
@@ -81,7 +104,7 @@ void Sol::construct_random_fisher_yates(
     for (auto& it : tmp) {
         add_job_front_machine(it);
         ranges::push_heap(machines, ranges::greater{},
-                          &Machine::completion_time);
+                          &Machine::total_processing_time);
     }
 }
 
@@ -98,7 +121,7 @@ void Sol::construct_random_shuffle(const std::vector<std::shared_ptr<Job>>& v) {
     for (auto& it : tmp) {
         add_job_front_machine(it);
         ranges::push_heap(machines, ranges::greater{},
-                          &Machine::completion_time);
+                          &Machine::total_processing_time);
     }
 }
 
@@ -137,7 +160,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                 if (Q_in_tmp.size() + 1 == Q_tmp.size()) {
                     auto C = c[Q_in_tmp.front()->job] -
                              Q_in_tmp.front()->processing_time;
-                    auto cmp = compare_edd(I->a, I->b);
+                    compare_edd cmp = compare_edd(I->a, I->b);
                     std::ranges::sort(Q_in_tmp, cmp);
 
                     auto j = 0UL;
@@ -225,15 +248,15 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
 
         m.job_list.clear();
         m.total_weighted_tardiness = 0;
-        m.completion_time = 0;
+        m.total_processing_time = 0;
         for (auto it = 0UL; it < intervals.size(); it++) {
             auto& Q_tmp = Q[it];
             for (auto& job_Q : Q_tmp) {
                 m.job_list.push_back(job_Q);
-                m.completion_time += job_Q->processing_time;
-                c[job_Q->job] = m.completion_time;
+                m.total_processing_time += job_Q->processing_time;
+                c[job_Q->job] = m.total_processing_time;
                 m.total_weighted_tardiness +=
-                    job_Q->weighted_tardiness(m.completion_time);
+                    job_Q->weighted_tardiness(m.total_processing_time);
             }
         }
 
@@ -270,11 +293,12 @@ void Sol::perturb_swap_inter(size_t l1, size_t l2, std::mt19937& mt) {
 }
 
 void Sol::add_job_front_machine(Job* job) {
-    ranges::pop_heap(machines, ranges::greater{}, &Machine::completion_time);
+    ranges::pop_heap(machines, ranges::greater{},
+                     &Machine::total_processing_time);
     auto& m = machines.back();
     m.add_job(job);
-    tw += job->weighted_tardiness(m.completion_time);
-    c[job->job] = m.completion_time;
+    tw += job->weighted_tardiness(m.total_processing_time);
+    c[job->job] = m.total_processing_time;
 }
 
 void Sol::calculate_partition(const VecIntervalPtr& v) {
@@ -291,10 +315,10 @@ void Sol::calculate_partition(const VecIntervalPtr& v) {
 void Sol::print_solution() const {
     for (auto&& [j, m] : machines | ranges::views::enumerate) {
         fmt::print("Machine {}: ", j);
-        for (auto& tmp_j : m.job_list) {
-            fmt::print("{} ", tmp_j->job);
-        }
-        fmt::print("with C = {}, TW = {}, {} jobs\n", m.completion_time,
+        auto rng = m.job_list | ranges::views::transform(
+                                    [](const auto& tmp) { return tmp->job; });
+        fmt::print("{}", fmt::join(rng, " "));
+        fmt::print(" with C = {}, TW = {}, {} jobs\n", m.total_processing_time,
                    m.total_weighted_tardiness, m.job_list.size());
     }
     fmt::print("with total weighted tardiness {}\n", tw + off);
@@ -302,19 +326,20 @@ void Sol::print_solution() const {
 
 void Machine::add_job(Job* job) {
     job_list.push_back(job);
-    completion_time += job->processing_time;
-    total_weighted_tardiness += job->weighted_tardiness(completion_time);
+    total_processing_time += job->processing_time;
+    total_weighted_tardiness += job->weighted_tardiness(total_processing_time);
 }
 
 void Machine::reset_machine(std::vector<int>& c) {
-    completion_time = 0;
+    total_processing_time = 0;
     total_weighted_tardiness = 0;
     updated = true;
 
     for (const auto& it : job_list) {
-        completion_time += it->processing_time;
-        c[it->job] = completion_time;
-        total_weighted_tardiness += it->weighted_tardiness(completion_time);
+        total_processing_time += it->processing_time;
+        c[it->job] = total_processing_time;
+        total_weighted_tardiness +=
+            it->weighted_tardiness(total_processing_time);
     }
 }
 

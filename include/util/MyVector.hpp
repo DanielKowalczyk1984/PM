@@ -25,10 +25,11 @@
 #ifndef MY_VECTOR_HPP
 #define MY_VECTOR_HPP
 
-#include <cassert>
-#include <cstring>
-#include <iostream>
-#include <vector>
+#include <cassert>   // for assert
+#include <cstring>   // for memmove, size_t
+#include <iostream>  // for operator<<, ostream
+#include <new>       // for operator new
+#include <vector>    // for allocator, vector
 
 template <typename T, typename Size = size_t>
 class MyVector {

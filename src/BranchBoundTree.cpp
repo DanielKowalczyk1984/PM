@@ -1,13 +1,15 @@
 #include "BranchBoundTree.hpp"
-#include <memory>
-#include "BranchNode.hpp"
-#include "Parms.h"
-#include "Statistics.h"
-#include "branch-and-bound/bfstree.h"
-#include "branch-and-bound/brfstree.h"
-#include "branch-and-bound/cbfstree.h"
-#include "branch-and-bound/dfstree.h"
-#include "wctprivate.h"
+#include <memory>                       // for make_unique, unique_ptr
+#include <utility>                      // for move
+#include "BranchNode.hpp"               // for BranchNodeBase
+#include "NodeData.h"                   // for NodeData
+#include "Parms.h"                      // for Parms, bb_bfs_strategy, bb_br...
+#include "Solution.hpp"                 // for Sol
+#include "branch-and-bound/bfstree.h"   // for BFSTree
+#include "branch-and-bound/brfstree.h"  // for BrFSTree
+#include "branch-and-bound/cbfstree.h"  // for CBFSTree
+#include "branch-and-bound/dfstree.h"   // for DFSTree
+#include "branch-and-bound/state.h"     // for State
 
 BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
                                  int                       _probType,
@@ -30,8 +32,10 @@ BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
 
     tree->set_global_ub(double(root->opt_sol.tw));
     tree->set_retain_states(false);
-    tree->set_time_limit(parms.branching_cpu_limit);
+    tree->set_final_test_usage(parms.pruning_test);
+    tree->set_time_limit(static_cast<int>(parms.branching_cpu_limit));
     tree->set_node_limit(parms.bb_node_limit);
+    tree->set_only_root_node(parms.bb_node_limit == 1);
     auto aux = root->depth;
     auto node = std::make_unique<BranchNodeBase>(std::move(root), true);
     node->set_depth(aux);

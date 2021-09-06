@@ -1,19 +1,37 @@
 #include "ZeroHalfSystem.hpp"
-#include <boost/dynamic_bitset/dynamic_bitset.hpp>
-#include <cstddef>
-#include <limits>
-#include <range/v3/algorithm/any_of.hpp>
-#include <range/v3/algorithm/for_each.hpp>
-#include <range/v3/algorithm/min.hpp>
-#include <range/v3/numeric/inner_product.hpp>
-#include <range/v3/view/drop.hpp>
-#include <range/v3/view/enumerate.hpp>
-#include <range/v3/view/iota.hpp>
-#include <range/v3/view/join.hpp>
-#include <range/v3/view/stride.hpp>
-#include <range/v3/view/transform.hpp>
-#include <unordered_map>
-#include <vector>
+#include <boost/container_hash/extensions.hpp>         // for hash_combine
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>     // for dynamic_bitset
+#include <cmath>                                       // for ceil
+#include <cstddef>                                     // for size_t
+#include <ext/alloc_traits.h>                          // for __alloc_traits...
+#include <limits>                                      // for numeric_limits
+#include <range/v3/algorithm/any_of.hpp>               // for any_of, any_of_fn
+#include <range/v3/algorithm/for_each.hpp>             // for for_each, for_...
+#include <range/v3/algorithm/min.hpp>                  // for min, min_fn
+#include <range/v3/functional/arithmetic.hpp>          // for multiplies, plus
+#include <range/v3/functional/comparisons.hpp>         // for less
+#include <range/v3/functional/identity.hpp>            // for identity
+#include <range/v3/iterator/basic_iterator.hpp>        // for operator!=
+#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
+#include <range/v3/numeric/inner_product.hpp>          // for inner_product
+#include <range/v3/range/conversion.hpp>               // for to, operator|
+#include <range/v3/range_fwd.hpp>                      // for uncvref_t, views
+#include <range/v3/utility/swap.hpp>                   // for swap
+#include <range/v3/view/all.hpp>                       // for all_t, all_fn
+#include <range/v3/view/drop.hpp>                      // for drop_view, drop
+#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
+#include <range/v3/view/iota.hpp>                      // for iota_view, ints
+#include <range/v3/view/join.hpp>                      // for join_view, joi...
+#include <range/v3/view/ref.hpp>                       // for ref_view
+#include <range/v3/view/stride.hpp>                    // for stride_view
+#include <range/v3/view/subrange.hpp>                  // for subrange
+#include <range/v3/view/transform.hpp>                 // for transform_view
+#include <range/v3/view/view.hpp>                      // for operator|, vie...
+#include <range/v3/view/zip.hpp>                       // for zip_view, zip
+#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
+#include <unordered_map>                               // for unordered_map
+#include <utility>                                     // for move
+#include <vector>                                      // for vector, allocator
 
 namespace vs = ranges::views;
 

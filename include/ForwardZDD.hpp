@@ -1,16 +1,19 @@
 #ifndef DURATION_ZDD_HPP
 #define DURATION_ZDD_HPP
-#include <algorithm>
-#include <cstddef>
-#include <limits>
-#include <vector>
-#include "ForwardBDD.hpp"
-#include "NodeBddEval.hpp"
-#include "OptimalSolution.hpp"
-#include "ZddNode.hpp"
+
+#include <cassert>            // for assert
+#include <cstddef>              // for size_t
+#include <limits>               // for numeric_limits
+#include <memory>               // for shared_ptr
+#include "Job.h"                // for value_diff_Fij, Job
+#include "ModernDD/NodeBddEval.hpp"      // for Eval
+#include "PricingSolution.hpp"  // for PricingSolution
+#include "ZddNode.hpp"          // for NodeZdd, SubNodeZdd, compare_sub_nodes
+template <typename N, typename T>
+class Label;
 
 template <typename T = double>
-class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
+class ForwardZddBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
    protected:
     T*     pi;
     size_t num_jobs;
@@ -19,16 +22,16 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
     ForwardZddBase(T* _pi, size_t _num_jobs) : pi(_pi), num_jobs(_num_jobs) {}
 
     explicit ForwardZddBase(size_t _num_jobs)
-        : Eval<NodeZdd<T>, OptimalSolution<T>>(),
+        : Eval<NodeZdd<T>, PricingSolution<T>>(),
           pi(nullptr),
           num_jobs(_num_jobs) {}
 
-    ForwardZddBase() : Eval<NodeZdd<T>, OptimalSolution<T>>() {
+    ForwardZddBase() : Eval<NodeZdd<T>, PricingSolution<T>>() {
         pi = nullptr;
         num_jobs = 0;
     }
 
-    ~ForwardZddBase<T>() = default;
+    ~ForwardZddBase() = default;
 
     // ForwardZddBase(const ForwardZddBase<T>& src) {
     //     pi = src.pi;
@@ -43,8 +46,8 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
 
     virtual void evalNode(NodeZdd<T>& n) const = 0;
 
-    OptimalSolution<T> get_objective(NodeZdd<T>& n) const {
-        OptimalSolution<T> sol(pi[num_jobs]);
+    PricingSolution<T> get_objective(NodeZdd<T>& n) const {
+        PricingSolution<T> sol(pi[num_jobs]);
         auto               m = std::min_element(n.list.begin(), n.list.end(),
                                   compare_sub_nodes<T>);
 #ifndef NDEBUG
@@ -67,8 +70,8 @@ class ForwardZddBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
         return sol;
     }
 
-    ForwardZddBase<T>(const ForwardZddBase<T>&) = default;
-    ForwardZddBase<T>(ForwardZddBase<T>&&) noexcept = default;
+    ForwardZddBase(const ForwardZddBase<T>&) = default;
+    ForwardZddBase(ForwardZddBase<T>&&) noexcept = default;
     ForwardZddBase<T>& operator=(const ForwardZddBase<T>&) = default;
     ForwardZddBase<T>& operator=(ForwardZddBase<T>&&) noexcept = default;
 };
@@ -88,7 +91,7 @@ class ForwardZddCycle : public ForwardZddBase<T> {
         pi = nullptr;
         num_jobs = 0;
     }
-    ~ForwardZddCycle<T>() = default;
+    ~ForwardZddCycle() = default;
 
     // ForwardZddCycle(const ForwardZddCycle<T>& src) {
     //     pi = src.pi;
@@ -197,8 +200,8 @@ class ForwardZddCycle : public ForwardZddBase<T> {
         }
     }
 
-    ForwardZddCycle<T>(const ForwardZddCycle<T>&) = default;
-    ForwardZddCycle<T>(ForwardZddCycle<T>&&) noexcept = default;
+    ForwardZddCycle(const ForwardZddCycle<T>&) = default;
+    ForwardZddCycle(ForwardZddCycle<T>&&) noexcept = default;
     ForwardZddCycle<T>& operator=(const ForwardZddCycle<T>&) = default;
     ForwardZddCycle<T>& operator=(ForwardZddCycle<T>&&) noexcept = default;
 };
@@ -220,7 +223,7 @@ class ForwardZddSimple : public ForwardZddBase<T> {
         num_jobs = 0;
     }
 
-    ~ForwardZddSimple<T>() = default;
+    ~ForwardZddSimple() = default;
 
     // ForwardZddSimple(const ForwardZddSimple<T>& src) {
     //     pi = src.pi;
@@ -277,8 +280,8 @@ class ForwardZddSimple : public ForwardZddBase<T> {
             }
         }
     }
-    ForwardZddSimple<T>(const ForwardZddSimple<T>&) = default;
-    ForwardZddSimple<T>(ForwardZddSimple<T>&&) noexcept = default;
+    ForwardZddSimple(const ForwardZddSimple<T>&) = default;
+    ForwardZddSimple(ForwardZddSimple<T>&&) noexcept = default;
     ForwardZddSimple<T>& operator=(const ForwardZddSimple<T>&) = default;
     ForwardZddSimple<T>& operator=(ForwardZddSimple<T>&&) noexcept = default;
 };

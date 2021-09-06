@@ -1,8 +1,10 @@
 #ifndef __STATISTICS_H__
 #define __STATISTICS_H__
-#include <string>
-#include "Parms.h"
-#include "util.h"
+
+#include <cstddef>  // for size_t
+#include <string>   // for string
+#include "util.h"   // for CCutil_timer
+struct Parms;
 
 struct Statistics {
     int    global_upper_bound;
@@ -13,8 +15,8 @@ struct Statistics {
     int    root_lower_bound;
     double root_rel_error;
 
-    int    nb_generated_col;
-    int    nb_generated_col_root;
+    size_t nb_generated_col;
+    size_t nb_generated_col_root;
     size_t first_size_graph;
     size_t size_graph_after_reduced_cost_fixing;
 
@@ -41,25 +43,27 @@ struct Statistics {
     CCutil_timer tot_heuristic;
     CCutil_timer tot_reduce_cost_fixing;
 
-    double      real_time_build_dd;
-    double      real_time_total;
-    double      real_time_branch_and_bound;
-    double      real_time_strong_branching;
-    double      real_time_lb_root;
-    double      real_time_lb;
-    double      real_time_solve_lp;
-    double      real_time_pricing;
-    double      real_time_heuristic;
-    int         mip_nb_vars;
-    int         mip_nb_constr;
-    double      mip_obj_bound;
-    double      mip_obj_bound_lp;
-    double      mip_rel_gap;
-    double      mip_run_time;
-    int         mip_status;
-    double      mip_nb_iter_simplex;
-    double      mip_nb_nodes;
-    int         mip_reduced_cost_fixing;
+    double real_time_build_dd;
+    double real_time_total;
+    double real_time_branch_and_bound;
+    double real_time_strong_branching;
+    double real_time_lb_root;
+    double real_time_lb;
+    double real_time_solve_lp;
+    double real_time_pricing;
+    double real_time_heuristic;
+
+    int    mip_nb_vars;
+    int    mip_nb_constr;
+    double mip_obj_bound;
+    double mip_obj_bound_lp;
+    double mip_rel_gap;
+    double mip_run_time;
+    int    mip_status;
+    double mip_nb_iter_simplex;
+    double mip_nb_nodes;
+    int    mip_reduced_cost_fixing;
+
     std::string pname;
 
     void   start_resume_timer(TimerType _type);

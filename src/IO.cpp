@@ -1,21 +1,30 @@
-#include <fmt/chrono.h>
-#include <fmt/core.h>
-#include <unistd.h>
-#include <functional>
-#include <memory>
-#include "BranchBoundTree.hpp"
-#include "Statistics.h"
-#include "wctprivate.h"
+#include <fmt/chrono.h>         // for print
+#include <fmt/format.h>         // for format
+#include <unistd.h>             // for access, F_OK
+#include <cstdio>               // for fopen, fclose, FILE
+#include <ctime>                // for localtime, time, time_t
+#include <functional>           // for function
+#include <memory>               // for operator==, unique_ptr
+#include <string>               // for string, basic_string
+#include "BranchBoundTree.hpp"  // for BranchBoundTree
+#include "Instance.h"           // for Instance
+#include "Parms.h"              // for Parms
+#include "Problem.h"            // for Problem
+#include "Statistics.h"         // for Statistics, Statistics::bb_timer, Sta...
+#include "util.h"               // for CCutil_timer, CCutil_stop_timer, getR...
 
+/**
+ * @brief Print the results to a csv file with fmt.
+ *
+ */
 void Problem::to_csv() {
     using ptr_file = std::unique_ptr<std::FILE, std::function<int(FILE*)>>;
 
-    ptr_file    file{};
-    std::time_t result = std::time(nullptr);
-    const auto  current_t = std::localtime(&result);
+    ptr_file file{};
+    auto     result = std::time(nullptr);
 
     std::string file_name =
-        fmt::format("CG_overall_{:%y_%m_%d}.csv", *current_t);
+        fmt::format("CG_overall_{:%Y_%m_%d}.csv", fmt::localtime(result));
     stat.real_time_total = getRealTime() - stat.real_time_total;
     CCutil_stop_timer(&(stat.tot_cputime), 0);
 
@@ -31,7 +40,7 @@ void Problem::to_csv() {
         }
         fmt::print(
             file.get(),
-            R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
+            R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
 )",
             "NameInstance", "n", "m", "tot_real_time", "tot_cputime", "tot_bb",
             "tot_lb", "tot_lb_root", "tot_heuristic", "tot_build_dd",
@@ -41,6 +50,8 @@ void Problem::to_csv() {
             "nb_generated_col", "nb_generated_col_root", "nb_nodes_explored",
             "date", "nb_iterations_rvnd", "stabilization", "alpha",
             "pricing_solver", "first_size_graph", "size_after_reduced_cost",
+            "strong_branching", "branching_point", "refinement", "pruning_test",
+            "suboptimal_duals", "scoring_parameter", "scoring_value",
             "mip_nb_vars", "mip_nb_constr", "mip_obj_bound", "mip_obj_bound_lp",
             "mip_rel_gap", "mip_run_time", "mip_status", "mip_nb_iter_simplex",
             "mip_nb_nodes");
@@ -54,7 +65,7 @@ void Problem::to_csv() {
 
     fmt::print(
         file.get(),
-        R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{:%y/%m/%d},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
+        R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{:%y/%m/%d},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
 )",
         stat.pname, instance.nb_jobs, instance.nb_machines,
         stat.real_time_total, stat.total_timer(Statistics::cputime_timer),
@@ -67,13 +78,15 @@ void Problem::to_csv() {
         stat.total_timer(Statistics::reduced_cost_fixing_timer), stat.rel_error,
         stat.global_lower_bound, stat.global_upper_bound, stat.root_rel_error,
         stat.root_upper_bound, stat.root_lower_bound, stat.nb_generated_col,
-        stat.nb_generated_col_root, tree->get_nb_nodes_explored(), *current_t,
-        parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
-        parms.pricing_solver, stat.first_size_graph,
-        stat.size_graph_after_reduced_cost_fixing, stat.mip_nb_vars,
-        stat.mip_nb_constr, stat.mip_obj_bound, stat.mip_obj_bound_lp,
-        stat.mip_rel_gap, stat.mip_run_time, stat.mip_status,
-        stat.mip_nb_iter_simplex, stat.mip_nb_nodes);
+        stat.nb_generated_col_root, tree->get_nb_nodes_explored(),
+        fmt::localtime(result), parms.nb_iterations_rvnd, parms.stab_technique,
+        parms.alpha, parms.pricing_solver, stat.first_size_graph,
+        stat.size_graph_after_reduced_cost_fixing, parms.strong_branching,
+        parms.branching_point, parms.refine_bdd, parms.pruning_test,
+        parms.suboptimal_duals, parms.scoring_parameter, parms.scoring_value,
+        stat.mip_nb_vars, stat.mip_nb_constr, stat.mip_obj_bound,
+        stat.mip_obj_bound_lp, stat.mip_rel_gap, stat.mip_run_time,
+        stat.mip_status, stat.mip_nb_iter_simplex, stat.mip_nb_nodes);
 }
 
 int Problem::to_screen() {

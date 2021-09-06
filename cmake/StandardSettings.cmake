@@ -51,6 +51,7 @@ option(${PROJECT_NAME}_USE_CATCH2 "Use the Catch2 project for creating unit test
 # Currently supporting: Clang-Tidy, Cppcheck.
 
 option(${PROJECT_NAME}_ENABLE_CLANG_TIDY "Enable static analysis with Clang-Tidy." OFF)
+option(${PROJECT_NAME}_ENABLE_IWYU "Enable static analysis with include-what-you-use." OFF)
 option(${PROJECT_NAME}_ENABLE_CPPCHECK "Enable static analysis with Cppcheck." OFF)
 
 #

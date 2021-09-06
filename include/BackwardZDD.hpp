@@ -1,14 +1,18 @@
 #ifndef BACKWARD_ZDD_HPP
 #define BACKWARD_ZDD_HPP
-#include <algorithm>
-#include <cstddef>
-#include <limits>
-#include "NodeBddEval.hpp"
-#include "OptimalSolution.hpp"
-#include "ZddNode.hpp"
+#include <array>                     // for array
+#include <cassert>                   // for assert
+#include <cstddef>                   // for size_t
+#include <memory>                    // for shared_ptr, __shared_ptr_access
+#include <vector>                    // for vector
+#include "Job.h"                     // for bool_diff_Fij, Job
+#include "Label.hpp"                 // for Label
+#include "ModernDD/NodeBddEval.hpp"  // for Eval
+#include "PricingSolution.hpp"       // for PricingSolution
+#include "ZddNode.hpp"  // for SubNodeZdd, NodeZdd, compare_sub_nodes
 
 template <typename T = double>
-class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
+class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
    protected:
     T*     pi{nullptr};
     size_t num_jobs{};
@@ -17,9 +21,9 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, OptimalSolution<T>> {
     BackwardZDDBase(T* _pi, size_t _num_jobs) : pi(_pi), num_jobs(_num_jobs){};
     explicit BackwardZDDBase(size_t _num_jobs) : num_jobs(_num_jobs){};
     BackwardZDDBase() = default;
-    BackwardZDDBase<T>(const BackwardZDDBase<T>&) = default;
+    BackwardZDDBase(const BackwardZDDBase<T>&) = default;
     BackwardZDDBase<T>& operator=(const BackwardZDDBase<T>&) = default;
-    BackwardZDDBase<T>(BackwardZDDBase<T>&&) noexcept = default;
+    BackwardZDDBase(BackwardZDDBase<T>&&) noexcept = default;
     BackwardZDDBase<T>& operator=(BackwardZDDBase<T>&&) noexcept = default;
     ~BackwardZDDBase() = default;
 
@@ -80,8 +84,8 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
         }
     }
 
-    OptimalSolution<T> get_objective(NodeZdd<T>& n) const override {
-        OptimalSolution<T> sol(pi[num_jobs]);
+    PricingSolution<T> get_objective(NodeZdd<T>& n) const override {
+        PricingSolution<T> sol(pi[num_jobs]);
 
         auto m = std::min_element(n.list.begin(), n.list.end(),
                                   compare_sub_nodes<T>);
@@ -188,8 +192,8 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
         }
     }
 
-    OptimalSolution<T> get_objective(NodeZdd<>& n) const override {
-        OptimalSolution<T> sol(pi[num_jobs]);
+    PricingSolution<T> get_objective(NodeZdd<>& n) const override {
+        PricingSolution<T> sol(pi[num_jobs]);
         auto               m = std::min_element(n.list.begin(), n.list.end(),
                                   compare_sub_nodes<T>);
         Label<SubNodeZdd<T>, T>* aux_label = &((*m)->backward_label[0]);

@@ -1,34 +1,38 @@
 #include "PricerSolverZddForward.hpp"
-#include <range/v3/all.hpp>
-#include "Instance.h"
-#include "PricerSolverZdd.hpp"
-
+#include <fmt/core.h>                            // for print
+#include <array>                                 // for array
+#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
+#include <iostream>                              // for operator<<, basic_os...
+#include <memory>                                // for __shared_ptr_access
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, basic_it...
+#include <range/v3/view/drop.hpp>                // for drop, drop_fn
+#include <range/v3/view/join.hpp>                // for join_view, join_view...
+#include <range/v3/view/subrange.hpp>            // for subrange
+#include <range/v3/view/take.hpp>                // for take_view, take, tak...
+#include <range/v3/view/view.hpp>                // for operator|, view_closure
+#include <vector>                                // for vector
+#include "Instance.h"                            // for Instance
+#include "Job.h"                                 // for Job
+#include "Label.hpp"                             // for Label
+#include "ModernDD/NodeBddStructure.hpp"                  // for DdStructure
+#include "ModernDD/NodeBddTable.hpp"                      // for NodeTableEntity, Tab...
+#include "PricerSolverBase.hpp"                  // for PricerSolverBase::RC...
+#include "PricerSolverZdd.hpp"                   // for PricerSolverZdd
+#include "ZddNode.hpp"                           // for SubNodeZdd, NodeZdd
 /**
  *  zdd solver pricersolver for the flow formulation
  */
-// PricerSolverSimple::PricerSolverSimple(GPtrArray*  _jobs,
-//                                        int         _num_machines,
-//                                        GPtrArray*  _ordered_jobs,
-//                                        const char* _p_name,
-//                                        double      _ub)
-//     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, _p_name, _ub) {
-//     std::cout << "Constructing ZDD with Forward Simple evaluator" << '\n';
-//     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
-//     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
-//     evaluator = ForwardZddSimpleDouble(convex_constr_id);
-//     reversed_evaluator = BackwardZddSimpleDouble(convex_constr_id);
-// }
 
 PricerSolverSimple::PricerSolverSimple(const Instance& instance)
     : PricerSolverZdd(instance) {
-    std::cout << "Constructing ZDD with Forward Simple evaluator" << '\n';
-    std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
-    std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
+    fmt::print("Constructing ZDD with Forward Simple evaluator\n");
+    fmt::print("number vertices ZDD = {}\n", get_nb_vertices());
+    fmt::print("number edges ZDD = {}\n", get_nb_edges());
     evaluator = ForwardZddSimpleDouble(convex_constr_id);
     reversed_evaluator = BackwardZddSimpleDouble(convex_constr_id);
 }
 
-OptimalSolution<double> PricerSolverSimple::pricing_algorithm(double* _pi) {
+PricingSolution<double> PricerSolverSimple::pricing_algorithm(double* _pi) {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
@@ -74,29 +78,16 @@ bool PricerSolverSimple::evaluate_nodes(double* pi) {
     return nb_removed_edges;
 }
 
-// PricerSolverZddCycle::PricerSolverZddCycle(GPtrArray*  _jobs,
-//                                            int         _num_machines,
-//                                            GPtrArray*  _ordered_jobs,
-//                                            const char* _p_name,
-//                                            double      _ub)
-//     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, _p_name, _ub) {
-//     std::cout << "Constructing ZDD with Forward ZddCycle evaluator" << '\n';
-//     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
-//     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
-//     evaluator = ForwardZddCycleDouble(convex_constr_id);
-//     reversed_evaluator = BackwardZddCycleDouble(convex_constr_id);
-// }
-
 PricerSolverZddCycle::PricerSolverZddCycle(const Instance& instance)
     : PricerSolverZdd(instance) {
-    std::cout << "Constructing ZDD with Forward ZddCycle evaluator" << '\n';
-    std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
-    std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
+    fmt::print("Constructing ZDD with Forward ZddCycle evaluator\n");
+    fmt::print("number vertices ZDD = {}", get_nb_vertices());
+    fmt::print("number edges ZDD = {}", get_nb_edges());
     evaluator = ForwardZddCycleDouble(convex_constr_id);
     reversed_evaluator = BackwardZddCycleDouble(convex_constr_id);
 }
 
-OptimalSolution<double> PricerSolverZddCycle::pricing_algorithm(double* _pi) {
+PricingSolution<double> PricerSolverZddCycle::pricing_algorithm(double* _pi) {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }

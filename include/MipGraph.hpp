@@ -1,12 +1,17 @@
 #ifndef MIP_GRAPH_HPP
 #define MIP_GRAPH_HPP
 
-#include <gurobi_c++.h>
-#include <NodeBddTable.hpp>
-#include <NodeId.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graph_traits.hpp>
-#include <ostream>
+#include <gurobi_c++.h>                     // for GRBVar
+#include <boost/graph/adjacency_list.hpp>   // for source, vecS (ptr only)
+#include <boost/graph/graph_selectors.hpp>  // for bidirectionalS
+#include <boost/graph/graph_traits.hpp>     // for graph_traits, graph_trait...
+#include <boost/pending/property.hpp>       // for lookup_one_property_inter...
+#include <cstddef>                          // for size_t
+#include <ostream>                          // for operator<<, ostream, basi...
+#include "Job.h"                            // for Job
+#include "ModernDD/NodeBddTable.hpp"        // for NodeTableEntity
+#include "ModernDD/NodeId.hpp"              // for NodeId
+#include "NodeBdd.hpp"                      // for NodeBdd, NodeBdd::dbl_array
 
 struct VertexData {
     size_t index{};
@@ -28,13 +33,13 @@ using Vertex = boost::graph_traits<MipGraph>::vertex_descriptor;
 
 class ColorWriterEdgeX {
    private:
-    const MipGraph&          g;
-    const NodeTableEntity<>* table;
-    static constexpr double  EPS_GRAPH = 1e-6;
+    MipGraph&                         g;
+    NodeTableEntity<NodeBdd<double>>* table;
+    static constexpr double           EPS_GRAPH = 1e-6;
 
    public:
-    explicit ColorWriterEdgeX(const MipGraph&          _g,
-                              const NodeTableEntity<>* _table)
+    explicit ColorWriterEdgeX(MipGraph&                         _g,
+                              NodeTableEntity<NodeBdd<double>>* _table)
         : g{_g},
           table(_table) {}
 
@@ -43,14 +48,14 @@ class ColorWriterEdgeX {
         auto& node = table->node(node_id);
 
         if (g[_edge].high) {
-            auto& x = node.lp_x[1];
+            auto& x = node.get_lp_x()[1];
             if (x > EPS_GRAPH) {
                 output << "[label = " << x << ",color = red]";
             } else {
                 output << "[label = " << x << "]";
             }
         } else {
-            auto& x = node.lp_x[0];
+            auto& x = node.get_lp_x()[0];
             if (x > EPS_GRAPH) {
                 output << "[label = " << x << ",color = red, style = dashed]";
             } else {
@@ -81,11 +86,12 @@ class ColorWriterEdgeIndex {
 
 class ColorWriterVertex {
    private:
-    const MipGraph&          g;
-    const NodeTableEntity<>& table;
+    const MipGraph&                         g;
+    const NodeTableEntity<NodeBdd<double>>& table;
 
    public:
-    ColorWriterVertex(const MipGraph& _g, const NodeTableEntity<>& _table)
+    ColorWriterVertex(const MipGraph&                         _g,
+                      const NodeTableEntity<NodeBdd<double>>& _table)
         : g{_g},
           table{_table} {}
 

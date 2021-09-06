@@ -1,17 +1,21 @@
-#include <limits>
-#include "BackwardBDD.hpp"
-#include "NodeBddEval.hpp"
+#ifndef __FARKASZDD_H__
+#define __FARKASZDD_H__
+
+#include "BackwardBDD.hpp"      // for BackwardBddBase
+#include "NodeBdd.hpp"          // for NodeBdd
+#include "ModernDD/NodeBddEval.hpp"      // for Eval
+#include "PricingSolution.hpp"  // for PricingSolution
 
 template <typename T = double>
 class BackwardBddFarkas : public BackwardBddBase<T> {
    public:
-    BackwardBddFarkas<T>() = default;
+    BackwardBddFarkas() = default;
 
     void evalNode(NodeBdd<T>& n) const override {
         n.reset_reduced_costs_farkas();
 
         const double* dual = BackwardBddBase<T>::get_pi();
-        for (auto& list : n.coeff_list) {
+        for (auto& list : n.get_coeff_list()) {
             for (auto& it : list) {
                 auto aux = it.lock();
                 if (aux) {
@@ -22,12 +26,12 @@ class BackwardBddFarkas : public BackwardBddBase<T> {
             }
         }
 
-        auto  table_tmp = Eval<NodeBdd<T>, OptimalSolution<T>>::get_table();
+        auto  table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
         auto& p0 = table_tmp->node(n[0]);
         auto& p1 = table_tmp->node(n[1]);
 
-        T obj0 = p0.backward_label[0].get_f() + n.reduced_cost[0];
-        T obj1 = p1.backward_label[0].get_f() + n.reduced_cost[1];
+        T obj0 = p0.backward_label[0].get_f() + n.get_reduced_cost()[0];
+        T obj1 = p1.backward_label[0].get_f() + n.get_reduced_cost()[1];
 
         if (obj0 > obj1) {
             n.backward_label[0].backward_update(&(p1.backward_label[0]), obj1,
@@ -46,6 +50,4 @@ class BackwardBddFarkas : public BackwardBddBase<T> {
         n.backward_label[0].get_f() = 0.0;
     }
 };
-/**
- * Farkas
- */
+#endif  // __FARKASZDD_H__

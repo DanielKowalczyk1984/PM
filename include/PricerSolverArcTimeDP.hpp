@@ -1,9 +1,18 @@
-#include <cstddef>
-#include <memory>
-#include <vector>
-#include "Instance.h"
-#include "PricerSolverBase.hpp"
-#include "gurobi_c++.h"
+#ifndef __PRICERSOLVERARCTIMEDP_H__
+#define __PRICERSOLVERARCTIMEDP_H__
+
+#include <algorithm>             // for remove
+#include <cstddef>               // for size_t
+#include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
+#include <memory>                // for allocator_traits<>::value_type, make...
+#include <vector>                // for vector
+#include "Instance.h"            // for Instance
+#include "Job.h"                 // for Job
+#include "PricerSolverBase.hpp"  // for PricerSolverBase
+#include "PricingSolution.hpp"   // for PricingSolution
+#include "gurobi_c++.h"          // for GRBVar
+struct NodeData;
+struct Column;
 
 // using std::vector;
 class PricerSolverArcTimeDp : public PricerSolverBase {
@@ -77,24 +86,17 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     bool evaluate_nodes([[maybe_unused]] double* pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
-        const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
-        override;
+        const double*                               lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) override;
     // void add_constraint(Job* job, GPtrArray* list, int order) override;
 
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
-    OptimalSolution<double> farkas_pricing(double* pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> farkas_pricing(double* pi) override;
 
-    void   iterate_zdd() override;
-    void   create_dot_zdd(const char* name) override;
-    void   print_number_nodes_edges() override;
-    size_t get_num_remove_nodes() override;
-    size_t get_num_remove_edges() override;
-    size_t get_nb_edges() override;
-    size_t get_nb_vertices() override;
-    int    get_num_layers() override;
-    void   print_num_paths() override;
-    bool   check_schedule_set(const std::vector<Job*>& set) override;
+    size_t  get_nb_edges() override;
+    size_t  get_nb_vertices() override;
+    cpp_int print_num_paths() override;
+    bool    check_column(Column const* set) override;
 
     void forward_evaluator(double* pi);
     void backward_evaluator(double* _pi);
@@ -115,7 +117,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         graph[j][t].erase(pend);
     }
 
-    int delta2(const size_t& j, const int& t) {
+    int delta2(const size_t& j, const size_t& t) {
         Job* tmp_j = vector_jobs[j];
         return tmp_j->weighted_tardiness(t) - tmp_j->weighted_tardiness(t + 1);
     }
@@ -125,17 +127,5 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
 
     void update_coeff_constraints() override {}
-    // double compute_reduced_cost(const OptimalSolution<>&s, double *pi, double
-    // *lhs) override {
-    //     double result = 0.0;
-
-    //     return result;
-    // }
-
-    // double compute_lagrange(const OptimalSolution<> &sol, double *pi)
-    // override {
-    //     double result = 0.0;
-
-    //     return result;
-    // }
 };
+#endif // __PRICERSOLVERARCTIMEDP_H__

@@ -3,5 +3,15 @@
         "*.ipynb": "jupyter",
         "*.ipp": "cpp",
         "*.tcc": "cpp"
-    }
+    },
+    "cSpell.words": [
+        "Dstructure",
+        "Hiroaki",
+        "Iwashita",
+        "MINATO",
+        "OPENMP",
+        "Unreduction",
+        "guint",
+        "pdata"
+    ]
 }

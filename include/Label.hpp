@@ -1,9 +1,9 @@
 #ifndef LABEL_HPP
 #define LABEL_HPP
 
-#include <limits>
-#include "Job.h"
-#include "NodeId.hpp"
+#include <limits>      // for numeric_limits
+#include "ModernDD/NodeId.hpp"  // for NodeId
+struct Job;
 
 template <typename N, typename T>
 class Label {
@@ -21,12 +21,12 @@ class Label {
     /**
      * Constructor
      */
-    Label<N, T>() = default;
-    Label<N, T>(const Label<N, T>& src) = default;
-    Label<N, T>(Label<N, T>&& src) noexcept = default;
+    Label() = default;
+    Label(const Label<N, T>& src) = default;
+    Label(Label<N, T>&& src) noexcept = default;
     Label<N, T>& operator=(const Label<N, T>& src) = default;
     Label<N, T>& operator=(Label<N, T>&& src) noexcept = default;
-    ~Label<N, T>() = default;
+    ~Label() = default;
 
     void set_f(T _f) { f = _f; }
 

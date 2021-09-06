@@ -1,20 +1,28 @@
 #include "Instance.h"
-#include <bits/ranges_algo.h>
-#include <fmt/core.h>
-#include <cstddef>
-#include <fstream>
-#include <functional>
-#include <memory>
-#include <range/v3/algorithm/for_each.hpp>
-#include <range/v3/numeric/accumulate.hpp>
-#include <range/v3/view/reverse.hpp>
-#include <range/v3/view/take.hpp>
-#include <string>
-#include <utility>
-#include <vector>
-#include "Interval.h"
-#include "Job.h"
-#include "util.h"
+#include <fmt/core.h>                            // for print
+#include <algorithm>                             // for min, max, min_element
+#include <cmath>                                 // for ceil, floor
+#include <compare>                               // for operator<
+#include <cstddef>                               // for size_t
+#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
+#include <fstream>                               // for basic_istream::opera...
+#include <functional>                            // for identity, __invoke
+#include <memory>                                // for shared_ptr, __shared...
+#include <range/v3/algorithm/for_each.hpp>       // for for_each
+#include <range/v3/algorithm/sort.hpp>           // for sort
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, operator+
+#include <range/v3/numeric/accumulate.hpp>       // for accumulate, accumula...
+#include <range/v3/view/for_each.hpp>            // for for_each
+#include <range/v3/view/reverse.hpp>             // for reverse_view, revers...
+#include <range/v3/view/take.hpp>                // for take_view, take, tak...
+#include <range/v3/view/view.hpp>                // for operator|, view_closure
+#include <string>                                // for getline, string
+#include <tuple>                                 // for tie, operator<=>
+#include <utility>                               // for move, pair, make_pair
+#include <vector>                                // for vector, erase_if
+#include "Interval.h"                            // for IntervalPair, Interval
+#include "Job.h"                                 // for Job
+#include "Parms.h"                               // for Parms
 
 Instance::Instance(const Parms& _parms)
     : path_to_instance(_parms.jobfile),
@@ -59,11 +67,13 @@ Instance::Instance(const Parms& _parms)
 void Instance::calculate_H_max_H_min() {
     auto temp = p_sum - pmax;
     auto temp_dbl = static_cast<double>(temp);
-    temp_dbl = floor(temp_dbl / nb_machines);
-    H_max = static_cast<int>(temp_dbl) + pmax;
-    H_min = static_cast<int>(ceil(temp_dbl / nb_machines)) - pmax;
+    auto tmp_m = static_cast<double>(nb_machines);
+    temp_dbl = floor(temp_dbl / tmp_m);
 
-    std::ranges::sort(jobs, [](const auto& lhs, const auto& rhs) -> bool {
+    H_max = static_cast<int>(temp_dbl) + pmax;
+    H_min = static_cast<int>(ceil(temp_dbl / tmp_m)) - pmax;
+
+    ranges::sort(jobs, [](const auto& lhs, const auto& rhs) -> bool {
         return (lhs->processing_time < rhs->processing_time);
     });
 
@@ -73,13 +83,13 @@ void Instance::calculate_H_max_H_min() {
         jobs | ranges::views::reverse | ranges::views::take(nb_machines - 1),
         p_sum, std::minus<>{}, [](auto& it) { return it->processing_time; });
 
-    H_min = static_cast<int>(ceil(tmp / nb_machines));
+    H_min = static_cast<int>(ceil(tmp / tmp_m));
     fmt::print(
         R"(H_max = {}, H_min = {},  pmax = {}, pmin = {}, p_sum = {}, off = {}
 )",
         H_max, H_min, pmax, pmin, p_sum, off);
 
-    std::ranges::sort(jobs, [](const auto& x, const auto& y) -> bool {
+    ranges::sort(jobs, [](const auto& x, const auto& y) -> bool {
         // if ((x->due_time > y->due_time)) {
         //     return (false);
         // } else if (x->due_time < y->due_time) {
@@ -103,7 +113,7 @@ void Instance::calculate_H_max_H_min() {
     });
 
     auto index = 0UL;
-    std::ranges::for_each(jobs, [&index](auto& it) { it->job = index++; });
+    ranges::for_each(jobs, [&index](auto& it) { it->job = index++; });
 }
 
 void Instance::find_division() {

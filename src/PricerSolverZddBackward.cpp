@@ -1,7 +1,23 @@
 #include "PricerSolverZddBackward.hpp"
-#include <fmt/core.h>
-#include <range/v3/all.hpp>
-#include "Instance.h"
+#include <fmt/core.h>                            // for print
+#include <array>                                 // for array
+#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
+#include <iostream>                              // for operator<<, basic_os...
+#include <memory>                                // for __shared_ptr_access
+#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, basic_it...
+#include <range/v3/view/drop.hpp>                // for drop, drop_fn
+#include <range/v3/view/join.hpp>                // for join_view, join_view...
+#include <range/v3/view/subrange.hpp>            // for subrange
+#include <range/v3/view/take.hpp>                // for take_view, take, tak...
+#include <range/v3/view/view.hpp>                // for operator|, view_closure
+#include <vector>                                // for vector
+#include "Instance.h"                            // for Instance
+#include "Job.h"                                 // for Job
+#include "Label.hpp"                             // for Label
+#include "ModernDD/NodeBddStructure.hpp"                  // for DdStructure
+#include "ModernDD/NodeBddTable.hpp"                      // for NodeTableEntity, Tab...
+#include "PricerSolverBase.hpp"                  // for PricerSolverBase::RC...
+#include "ZddNode.hpp"                           // for SubNodeZdd, NodeZdd
 
 /**
  *  bdd solver pricersolver for the flow formulation
@@ -10,14 +26,14 @@
 PricerSolverZddBackwardSimple::PricerSolverZddBackwardSimple(
     const Instance& instance)
     : PricerSolverZdd(instance) {
-    std::cout << "Constructing ZDD with Backward Simple evaluator" << '\n';
-    std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
-    std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
+    fmt::print("Constructing ZDD with Backward Simple evaluator\n");
+    fmt::print("number vertices ZDD = {}\n", get_nb_vertices());
+    fmt::print("number edges ZDD = {}\n", get_nb_edges());
     evaluator = BackwardZddSimpleDouble(convex_constr_id);
     reversed_evaluator = ForwardZddSimpleDouble(convex_constr_id);
 }
 
-OptimalSolution<double> PricerSolverZddBackwardSimple::pricing_algorithm(
+PricingSolution<double> PricerSolverZddBackwardSimple::pricing_algorithm(
     double* _pi) {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_backward(evaluator);
@@ -64,31 +80,17 @@ bool PricerSolverZddBackwardSimple::evaluate_nodes(double* pi) {
     return nb_removed_edges;
 }
 
-// PricerSolverZddBackwardCycle::PricerSolverZddBackwardCycle(
-//     GPtrArray*  _jobs,
-//     int         _num_machines,
-//     GPtrArray*  _ordered_jobs,
-//     const char* _p_name,
-//     double      _ub)
-//     : PricerSolverZdd(_jobs, _num_machines, _ordered_jobs, _p_name, _ub) {
-//     std::cout << "Constructing ZDD with Backward ZddCycle evaluator" << '\n';
-//     std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
-//     std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
-//     evaluator = BackwardZddCycleDouble(convex_constr_id);
-//     reversed_evaluator = ForwardZddCycleDouble(convex_constr_id);
-// }
-
 PricerSolverZddBackwardCycle::PricerSolverZddBackwardCycle(
     const Instance& instance)
     : PricerSolverZdd(instance) {
-    std::cout << "Constructing ZDD with Backward ZddCycle evaluator" << '\n';
-    std::cout << "number vertices ZDD = " << get_nb_vertices() << '\n';
-    std::cout << "number edges ZDD = " << get_nb_edges() << '\n';
+    fmt::print("Constructing ZDD with Backward ZddCycle evaluator\n");
+    fmt::print("number vertices ZDD = {}\n", get_nb_vertices());
+    fmt::print("number edges ZDD = {}\n", get_nb_edges());
     evaluator = BackwardZddCycleDouble(convex_constr_id);
     reversed_evaluator = ForwardZddCycleDouble(convex_constr_id);
 }
 
-OptimalSolution<double> PricerSolverZddBackwardCycle::pricing_algorithm(
+PricingSolution<double> PricerSolverZddBackwardCycle::pricing_algorithm(
     double* _pi) {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_backward(evaluator);

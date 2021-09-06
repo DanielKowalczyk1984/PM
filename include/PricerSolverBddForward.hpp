@@ -1,8 +1,12 @@
 #ifndef PRICER_SOLVER_BDD_FORWARD_HPP
 #define PRICER_SOLVER_BDD_FORWARD_HPP
-#include "PricerEvaluateBdd.hpp"
-#include "PricerSolverBdd.hpp"
-// #include "interval.h"
+#include <memory>                 // for make_unique, unique_ptr
+#include "Instance.h"             // for Instance
+#include "NodeBdd.hpp"            // for NodeBdd
+#include "PricerEvaluateBdd.hpp"  // for BackwardBddFarkasDouble, BackwardBd...
+#include "PricerSolverBdd.hpp"    // for PricerSolverBdd
+#include "PricingSolution.hpp"    // for PricingSolution
+struct PricerSolverBase;
 
 class PricerSolverBddSimple : public PricerSolverBdd {
    private:
@@ -11,19 +15,6 @@ class PricerSolverBddSimple : public PricerSolverBdd {
     BackwardBddFarkasDouble farkas_evaluator;
 
    public:
-    // PricerSolverBddSimple(GPtrArray*  _jobs,
-    //                       int         _num_machines,
-    //                       GPtrArray*  _ordered_jobs,
-    //                       const char* p_name,
-    //                       int         _Hmax,
-    //                       int*        _take_jobs,
-    //                       double      _UB);
-    // PricerSolverBddSimple(const PricerSolverBddSimple& src)
-    //     : PricerSolverBdd(src),
-    //       evaluator(src.evaluator),
-    //       reversed_evaluator(src.reversed_evaluator),
-    //       farkas_evaluator(src.farkas_evaluator){};
-
     explicit PricerSolverBddSimple(const Instance& instance);
 
     PricerSolverBddSimple(const PricerSolverBddSimple&) = default;
@@ -32,17 +23,15 @@ class PricerSolverBddSimple : public PricerSolverBdd {
     PricerSolverBddSimple& operator=(const PricerSolverBddSimple&) = delete;
     virtual ~PricerSolverBddSimple() override = default;
 
-    std::unique_ptr<PricerSolverBase> clone() const override {
-        // auto* tmp =
-        //     g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return std::make_unique<PricerSolverBddSimple>(*this);
     };
 
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
-    OptimalSolution<double> farkas_pricing(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> farkas_pricing(double* _pi) override;
 
-    void compute_labels(double* _pi);
-    bool evaluate_nodes(double* pi) final;
+    double evaluate_rc_arc(NodeBdd<>& n) override;
+    void   compute_labels(double* _pi) override;
 };
 
 class PricerSolverBddCycle : public PricerSolverBdd {
@@ -52,14 +41,6 @@ class PricerSolverBddCycle : public PricerSolverBdd {
     BackwardBddFarkasDouble farkas_evaluator;
 
    public:
-    // PricerSolverBddCycle(GPtrArray*  _jobs,
-    //                      int         _num_machines,
-    //                      GPtrArray*  _ordered_jobs,
-    //                      const char* p_name,
-    //                      int         _Hmax,
-    //                      int*        _take_jobs,
-    //                      double      _UB);
-
     explicit PricerSolverBddCycle(const Instance& instance);
 
     PricerSolverBddCycle(const PricerSolverBddCycle&) = default;
@@ -68,17 +49,15 @@ class PricerSolverBddCycle : public PricerSolverBdd {
     PricerSolverBddCycle& operator=(const PricerSolverBddCycle&) = delete;
     virtual ~PricerSolverBddCycle() override = default;
 
-    std::unique_ptr<PricerSolverBase> clone() const override {
-        // auto* tmp =
-        //     g_ptr_array_copy(get_ordered_jobs(), g_copy_interval_pair, NULL);
+    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return std::make_unique<PricerSolverBddCycle>(*this);
     }
 
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
-    OptimalSolution<double> farkas_pricing(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> farkas_pricing(double* _pi) override;
 
-    void compute_labels(double* _pi);
-    bool evaluate_nodes(double* pi) final;
+    double evaluate_rc_arc(NodeBdd<>& n) override;
+    void   compute_labels(double* _pi) override;
 };
 
 #endif  // PRICER_SOLVER_BDD_FORWARD_HPP

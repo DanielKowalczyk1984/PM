@@ -1,15 +1,16 @@
 #ifndef __SOLUTION_NEW_H__
 #define __SOLUTION_NEW_H__
-#include <cstddef>
-#include <limits>
-#include <memory>
-#include <random>
-#include <vector>
-// #include "Instance.h"
-#include "Interval.h"
-#include "Job.h"
 
-struct Instance;
+#include <cstddef>  // for size_t
+#include <limits>   // for numeric_limits
+#include <memory>   // for shared_ptr
+#include <random>   // for mt19937
+#include <vector>   // for vector
+
+/** Forward declaration */
+struct Instance;  // lines 60-60
+struct Interval;  // lines 19-19
+struct Job;       // lines 17-17
 
 using VecJobPtr = std::vector<std::shared_ptr<Job>>;
 using VecJobRawPtr = std::vector<Job*>;
@@ -25,7 +26,7 @@ void swap_ranges(IT start_a, IT end_a, IT start_b, IT end_b) {
 struct Machine {
     VecJobRawPtr job_list{};
 
-    int completion_time{};
+    int total_processing_time{};
     int total_weighted_tardiness{};
 
     bool updated{true};

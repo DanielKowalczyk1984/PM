@@ -1,12 +1,11 @@
 #ifndef __PRICINGSTABILIZATION_H__
 #define __PRICINGSTABILIZATION_H__
 
-#include <algorithm>
-#include <memory>
-#include <vector>
-#include "OptimalSolution.hpp"
-
-class PricerSolverBase;
+#include <cstddef>              // for size_t
+#include <memory>               // for unique_ptr
+#include <vector>               // for vector
+#include "PricingSolution.hpp"  // for PricingSolution
+struct PricerSolverBase;        // lines 9-9
 class PricingStabilizationBase {
    public:
     explicit PricingStabilizationBase(PricerSolverBase*    _solver,
@@ -24,11 +23,11 @@ class PricingStabilizationBase {
     static constexpr double EPS_RC = -1e-10;
     static constexpr double ETA_DIFF = 1e-4;
     static constexpr double EPS_STAB = 1e-9;
-    static constexpr int    RC_FIXING_RATE = 20;
+    static constexpr int    RC_FIXING_RATE = 50;
 
    public:
     PricerSolverBase* solver;
-    OptimalSolution<> sol;
+    PricingSolution<> sol;
 
     double reduced_cost{};
     double eta_in{};
@@ -45,20 +44,21 @@ class PricingStabilizationBase {
 
     bool continueLP{};
 
-    OptimalSolution<>& get_sol();
+    PricingSolution<>& get_sol();
     bool               get_update_stab_center();
     double             get_reduced_cost();
     double             get_eps_stab_solver();
     virtual double     get_eta_in();
     virtual double     get_eta_sep();
     virtual void       solve(double eta_out, double* _lhs);
-    virtual int        stopping_criteria();
+    virtual bool       stopping_criteria();
     virtual void       update_duals();
     virtual bool       reduced_cost_fixing();
     virtual void       remove_constraints(int first, int nb_del);
     virtual void       update_continueLP(int _continueLP);
     virtual int        do_reduced_cost_fixing();
     virtual void       update_continueLP(double obj);
+    virtual void       set_alpha([[maybe_unused]] double _alpha){};
 };
 
 class PricingStabilizationStat : public PricingStabilizationBase {
@@ -87,9 +87,10 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     void solve(double _eta_out, double* _lhs_coeff) override;
 
     double get_eta_in() final;
-    int    stopping_criteria() final;
+    bool   stopping_criteria() final;
     void   update_duals() override;
     void   remove_constraints(int first, int nb_del) override;
+    void   set_alpha(double _alpha) override;
     std::unique_ptr<PricingStabilizationBase> clone(
         PricerSolverBase*,
         std::vector<double>&) override;
@@ -120,7 +121,7 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
     void update_duals() override;
     void remove_constraints(int first, int nb_del) override;
 
-    void compute_subgradient(const OptimalSolution<double>& _sol);
+    void compute_subgradient(const PricingSolution<double>& _sol);
     void adjust_alpha();
 };
 
@@ -171,9 +172,9 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
     double compute_dual(auto i);
 
-    void update_stabcenter(const OptimalSolution<double>& _sol);
+    void update_stabcenter(const PricingSolution<double>& _sol);
 
-    void compute_subgradient_norm(const OptimalSolution<double>& _sol);
+    void compute_subgradient_norm(const PricingSolution<double>& _sol);
 
     void update_subgradientproduct();
 

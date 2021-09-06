@@ -1,9 +1,9 @@
 #ifndef PRICER_SOLVER_ZDD_FORWARD_HPP
 #define PRICER_SOLVER_ZDD_FORWARD_HPP
-#include "Instance.h"
-#include "PricerEvaluateZdd.hpp"
-#include "PricerSolverZdd.hpp"
-
+#include "Instance.h"             // for Instance
+#include "PricerEvaluateZdd.hpp"  // for BackwardZddCycleDouble, BackwardZdd...
+#include "PricerSolverZdd.hpp"    // for PricerSolverZdd
+#include "PricingSolution.hpp"    // for PricingSolution
 class PricerSolverSimple : public PricerSolverZdd {
    private:
     ForwardZddSimpleDouble  evaluator;
@@ -16,7 +16,7 @@ class PricerSolverSimple : public PricerSolverZdd {
     //                    const char* p_name,
     //                    double      _UB);
     explicit PricerSolverSimple(const Instance& instance);
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
     void                    compute_labels(double* _pi);
     bool                    evaluate_nodes(double* pi) final;
     PricerSolverSimple(const PricerSolverSimple&) = default;
@@ -34,7 +34,7 @@ class PricerSolverZddCycle : public PricerSolverZdd {
     //                      const char* p_name,
     //                      double      _UB);
     explicit PricerSolverZddCycle(const Instance& instance);
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
     void                    compute_labels(double* _pi);
     bool                    evaluate_nodes(double* pi) final;
     PricerSolverZddCycle(const PricerSolverZddCycle&) = default;

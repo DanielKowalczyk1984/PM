@@ -1,15 +1,35 @@
 #include "PricerSolverSimpleDP.hpp"
 #include <fmt/core.h>
-#include <gurobi_c++.h>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <cstddef>
-#include <range/v3/all.hpp>
-#include <vector>
-#include "Instance.h"
-#include "PricerSolverBase.hpp"
-#include "scheduleset.h"
-
+#include <gurobi_c++.h>                            // for GRBLinExpr, GRBModel
+#include <algorithm>                               // for fill, find, max
+#include <boost/graph/adjacency_list.hpp>          // for adjacency_list
+#include <boost/graph/detail/adjacency_list.hpp>   // for edges, get, num_edges
+#include <boost/graph/detail/edge.hpp>             // for operator!=, operat...
+#include <boost/graph/graph_selectors.hpp>         // for bidirectionalS
+#include <boost/graph/graphviz.hpp>                // for write_graphviz
+#include <boost/iterator/iterator_facade.hpp>      // for operator!=, operat...
+#include <boost/multiprecision/cpp_int.hpp>        // for cpp_int
+#include <boost/pending/property.hpp>              // for no_property
+#include <cstddef>                                 // for size_t
+#include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
+#include <fstream>                                 // for operator<<, basic_...
+#include <iostream>                                // for cerr
+#include <limits>                                  // for numeric_limits
+#include <list>                                    // for operator==
+#include <range/v3/iterator/basic_iterator.hpp>    // for basic_iterator
+#include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
+#include <range/v3/view/iota.hpp>                  // for iota_view, ints
+#include <range/v3/view/reverse.hpp>               // for reverse_fn, revers...
+#include <range/v3/view/view.hpp>                  // for operator|, view_cl...
+#include <span>                                    // for span
+#include <string>                                  // for char_traits, opera...
+#include <utility>                                 // for move
+#include <vector>                                  // for vector, vector<>::...
+#include "Column.h"                                // for ScheduleSet
+#include "Instance.h"                              // for Instance
+#include "Job.h"                                   // for Job
+#include "ModelInterface.hpp"                      // for ReformulationModel
+#include "PricerSolverBase.hpp"                    // for PricerSolverBase
 /**
  * Pricersolver for the TI index formulation
  */
@@ -54,7 +74,51 @@ bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
     forward_evaluator(pi);
     backward_evaluator(pi);
 
-    return false;
+    std::span aux_pi{pi, reformulation_model.size()};
+    auto      counter = 0UL;
+    auto      x = 0UL;
+    auto      num_removed = 0;
+
+    for (auto t = 0UL; t < Hmax + 1; ++t) {
+        auto it = forward_graph[t].begin();
+        while (it != forward_graph[t].end()) {
+            double result = F[t - (*it)->processing_time] +
+                            (*it)->weighted_tardiness(t) - aux_pi[(*it)->job] +
+                            backward_F[t];
+
+            if (constLB + result +
+                    static_cast<double>(convex_rhs - 1) * F[Hmax] >
+                UB - 1.0 + RC_FIXING) {
+                --size_graph;
+                it = forward_graph[t].erase(it);
+                ++num_removed;
+            } else {
+                it++;
+            }
+        }
+
+        x += forward_graph[t].size();
+
+        auto iter = backward_graph[t].begin();
+        while (iter != backward_graph[t].end()) {
+            double result = F[t] + (*iter)->weighted_tardiness_start(t) -
+                            aux_pi[(*iter)->job] +
+                            backward_F[t + (*iter)->processing_time];
+            if (constLB + result +
+                    static_cast<double>(convex_rhs - 1) * F[Hmax] >
+                UB - 1.0 + RC_FIXING) {
+                take[(*iter)->job * (Hmax + 1) + t] = false;
+                iter = backward_graph[t].erase(iter);
+            } else {
+                take[(*iter)->job * (Hmax + 1) + t] = true;
+                iter++;
+            }
+        }
+
+        counter += backward_graph[t].size();
+    }
+
+    return (num_removed > 0);
 }
 
 void PricerSolverSimpleDp::build_mip() {
@@ -67,7 +131,7 @@ void PricerSolverSimpleDp::build_mip() {
                 double cost = it->weighted_tardiness_start(t);
                 double ub = take[(it->job) * (Hmax + 1) + t] ? 1.0 : 0.0;
                 TI_x[it->job * (Hmax + 1) + t] =
-                    model.addVar(0.0, ub, cost, GRB_BINARY);
+                    model.addVar(0.0, ub, cost, 'B');
             }
         }
 
@@ -75,7 +139,7 @@ void PricerSolverSimpleDp::build_mip() {
 
         /** Assignment variables */
         std::vector<GRBLinExpr> assignment(convex_constr_id, GRBLinExpr());
-        std::vector<char>       sense(convex_constr_id, GRB_EQUAL);
+        std::vector<char>       sense(convex_constr_id, '=');
         std::vector<double>     rhs(convex_constr_id, 1.0);
 
         for (auto t = 0UL; t <= Hmax; t++) {
@@ -86,7 +150,7 @@ void PricerSolverSimpleDp::build_mip() {
 
         std::unique_ptr<GRBConstr> assignment_constrs(
             model.addConstrs(assignment.data(), sense.data(), rhs.data(),
-                             nullptr, convex_constr_id));
+                             nullptr, static_cast<int>(convex_constr_id)));
 
         model.update();
 
@@ -109,8 +173,8 @@ void PricerSolverSimpleDp::build_mip() {
             }
 
             if (add_constraint) {
-                interval_sense[t] = GRB_LESS_EQUAL;
-                interval_rhs[t] = convex_rhs;
+                interval_sense[t] = '<';
+                interval_rhs[t] = static_cast<double>(convex_rhs);
 
                 model.addConstr(interval_constr[t], interval_sense[t],
                                 interval_rhs[t]);
@@ -138,11 +202,11 @@ void PricerSolverSimpleDp::build_mip() {
 void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     /** Initialisation */
     std::span aux_pi{_pi, reformulation_model.size()};
-    F[0] = aux_pi[convex_constr_id];
+    F[0] = 0.0;
     A[0] = nullptr;
 
     for (auto t = 1UL; t < Hmax + 1; t++) {
-        F[t] = DBL_MAX / 2;
+        F[t] = std::numeric_limits<double>::max() / 2;
         A[t] = nullptr;
     }
 
@@ -170,7 +234,7 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     std::span aux_pi{_pi, reformulation_model.size()};
 
     for (auto t = 0UL; t < Hmax; t++) {
-        backward_F[t] = DBL_MAX / 2;
+        backward_F[t] = std::numeric_limits<double>::max() / 2;
     }
 
     for (auto t : ranges::views::ints(0UL, Hmax) | ranges::views::reverse) {
@@ -193,8 +257,8 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     }
 }
 
-OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
-    OptimalSolution<double> opt_sol;
+PricingSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
+    PricingSolution<double> opt_sol;
     opt_sol.cost = 0;
     std::vector<Job*> v;
 
@@ -230,22 +294,22 @@ OptimalSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     return opt_sol;
 }
 
-OptimalSolution<double> PricerSolverSimpleDp::farkas_pricing(
+PricingSolution<double> PricerSolverSimpleDp::farkas_pricing(
     [[maybe_unused]] double* _pi) {
-    OptimalSolution<double> opt_sol;
+    PricingSolution<double> opt_sol;
 
     return opt_sol;
 }
 
 void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
-    const double*                                    columns,
-    const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets) {
-    std::span aux_cols{columns, schedule_sets.size()};
-    // std::span aux_schedule_sets{schedule_sets->pdata, schedule_sets->len};
+    const double*                               lambda,
+    const std::vector<std::shared_ptr<Column>>& columns) {
+    std::span aux_cols{lambda, columns.size()};
+    // std::span aux_columns{columns->pdata, columns->len};
     std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    for (auto k = 0UL; k < schedule_sets.size(); k++) {
+    for (auto k = 0UL; k < columns.size(); k++) {
         if (aux_cols[k] > EPS_SOLVER) {
-            auto* tmp = schedule_sets[k].get();
+            auto* tmp = columns[k].get();
             int   t = 0;
             // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
             for (auto& it : tmp->job_list) {
@@ -256,63 +320,49 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     }
 }
 
-void PricerSolverSimpleDp::iterate_zdd() {}
+// void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name)
+// {
+//     boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS>
+//         graph;
+//     for (auto t = 0UL; t <= Hmax; t++) {
+//         boost::add_vertex(graph);
+//     }
 
-void PricerSolverSimpleDp::create_dot_zdd([[maybe_unused]] const char* name) {
-    boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS>
-        graph;
-    for (auto t = 0UL; t <= Hmax; t++) {
-        boost::add_vertex(graph);
-    }
-
-    for (auto t = 0UL; t < Hmax; t++) {
-        for (auto& it : backward_graph[t]) {
-            boost::add_edge(t, t + it->processing_time, graph);
-        }
-    }
-    auto file_name = "TI_representation_" + problem_name + "_" +
-                     std::to_string(convex_rhs) + ".gv";
-    auto otf = std::ofstream(file_name);
-    boost::write_graphviz(otf, graph);
-    otf.close();
-}
-
-void PricerSolverSimpleDp::print_number_nodes_edges() {}
-
-size_t PricerSolverSimpleDp::get_num_remove_nodes() {
-    return 0;
-}
-
-size_t PricerSolverSimpleDp::get_num_remove_edges() {
-    return 0;
-}
+//     for (auto t = 0UL; t < Hmax; t++) {
+//         for (auto& it : backward_graph[t]) {
+//             boost::add_edge(t, t + it->processing_time, graph);
+//         }
+//     }
+//     auto file_name = "TI_representation_" + problem_name + "_" +
+//                      std::to_string(convex_rhs) + ".gv";
+//     auto otf = std::ofstream(file_name);
+//     boost::write_graphviz(otf, graph);
+//     otf.close();
+// }
 
 size_t PricerSolverSimpleDp::get_nb_edges() {
     size_t nb_edges = 0u;
-    for (auto t = 0UL; t < Hmax + 1; t++) {
-        nb_edges += forward_graph[t].size();
+    for (auto& it : forward_graph) {
+        nb_edges += it.size();
     }
     return nb_edges;
 }
 
 size_t PricerSolverSimpleDp::get_nb_vertices() {
     size_t nb_vertices = 0u;
-    for (auto t = 0UL; t < Hmax + 1; t++) {
-        if (!forward_graph[t].empty()) {
+    for (auto& it : forward_graph) {
+        if (!it.empty()) {
             nb_vertices++;
         }
     }
     return nb_vertices;
 }
 
-int PricerSolverSimpleDp::get_num_layers() {
+boost::multiprecision::cpp_int PricerSolverSimpleDp::print_num_paths() {
     return 0;
 }
 
-void PricerSolverSimpleDp::print_num_paths() {}
-
-bool PricerSolverSimpleDp::check_schedule_set(
-    [[maybe_unused]] const std::vector<Job*>& set) {
+bool PricerSolverSimpleDp::check_column([[maybe_unused]] Column const* set) {
     // int t = 0;
     // for(unsigned int j = 0; j < set->len; j++) {
     //     Job* tmp_j = static_cast<Job*>() g_ptr_array_index()atic_cast<set,

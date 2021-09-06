@@ -1,64 +1,24 @@
-#include <fmt/core.h>
-#include <numeric>
-#include <range/v3/algorithm/for_each.hpp>
-#include <range/v3/numeric/iota.hpp>
-#include <range/v3/view/drop.hpp>
-#include <range/v3/view/enumerate.hpp>
-#include <range/v3/view/take.hpp>
-#include <vector>
-#include "Instance.h"
-#include "Statistics.h"
-#include "lp.h"
-#include "scheduleset.h"
-#include "wctprivate.h"
+#include <cstdio>                                      // for fflush, size_t
+#include <memory>                                      // for shared_ptr
+#include <range/v3/algorithm/for_each.hpp>             // for for_each, for_...
+#include <range/v3/functional/identity.hpp>            // for identity
+#include <range/v3/iterator/basic_iterator.hpp>        // for basic_iterator
+#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
+#include <range/v3/numeric/iota.hpp>                   // for iota, iota_fn
+#include <range/v3/range_fwd.hpp>                      // for move
+#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
+#include <range/v3/view/take.hpp>                      // for take_view, take
+#include <range/v3/view/view.hpp>                      // for operator|, vie...
+#include <range/v3/view/zip.hpp>                       // for zip_view
+#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
+#include <vector>                                      // for vector
+#include "Column.h"                                    // for ScheduleSet
+#include "NodeData.h"                                  // for NodeData
+#include "Solution.hpp"                                // for Sol
+#include "gurobi_c.h"                                  // for GRB_INFINITY
+#include "lp.h"                                        // for lp_interface_g...
 
-int NodeData::grab_integer_solution(std::vector<double> const& x,
-                                    double                     tolerance) {
-    auto incumbent = 0.0;
-    auto tot_weighted = 0;
-
-    lp_interface_objval(RMP.get(), &incumbent);
-    lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    assert(nb_cols - id_pseudo_schedules == localColPool.size());
-
-    best_schedule.clear();
-
-    for (const auto&& [i, tmp_schedule] :
-         localColPool | ranges::views::enumerate |
-             ranges::views::drop(id_pseudo_schedules)) {
-        if (x[i] >= 1.0 - tolerance) {
-            auto aux = std::make_shared<ScheduleSet>(*tmp_schedule);
-            best_schedule.emplace_back(aux);
-
-            tot_weighted += aux->total_weighted_completion_time;
-
-            if (best_schedule.size() > nb_machines) {
-                fmt::print(
-                    "ERROR: \"Integral\" solution turned out to be not "
-                    "integral!\n");
-                fflush(stdout);
-            }
-        }
-    }
-
-    /** Write a check function */
-    fmt::print("Intermediate schedule:\n");
-    fmt::print("with total weight {}\n", tot_weighted);
-    assert(fabs((double)tot_weighted - incumbent) <= EPS);
-
-    if (tot_weighted < upper_bound) {
-        upper_bound = tot_weighted;
-        best_objective = tot_weighted;
-    }
-
-    if (upper_bound == lower_bound) {
-        status = finished;
-    }
-
-    return 0;
-}
-
-int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
+int NodeData::add_lhs_scheduleset_to_rmp(Column* set) {
     id_row.clear();
     coeff_row.clear();
 
@@ -69,20 +29,18 @@ int NodeData::add_lhs_scheduleset_to_rmp(ScheduleSet* set) {
         }
     }
 
-    auto len = id_row.size();
-
-    auto cost = static_cast<double>(set->total_weighted_completion_time);
-    lp_interface_addcol(RMP.get(), static_cast<int>(len), id_row.data(),
-                        coeff_row.data(), cost, 0.0, GRB_INFINITY,
-                        lp_interface_CONT, nullptr);
+    auto cost = set->total_weighted_completion_time;
+    lp_interface_addcol(RMP.get(), static_cast<int>(id_row.size()),
+                        id_row.data(), coeff_row.data(), cost, 0.0,
+                        GRB_INFINITY, lp_interface_CONT, nullptr);
 
     return 0;
 }
 
-int NodeData::add_scheduleset_to_rmp(ScheduleSet* set) {
+int NodeData::add_scheduleset_to_rmp(Column* set) {
     auto  var_ind = 0;
     auto  cval = 0.0;
-    auto  cost = static_cast<double>(set->total_weighted_completion_time);
+    auto  cost = set->total_weighted_completion_time;
     auto* lp = RMP.get();
 
     lp_interface_get_nb_cols(lp, &(nb_cols));

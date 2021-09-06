@@ -1,11 +1,15 @@
 #ifndef PRICER_SOLVER_SIMPLE_DP_HPP
 #define PRICER_SOLVER_SIMPLE_DP_HPP
-#include <cstddef>
-#include <memory>
-#include "Instance.h"
-#include "PricerSolverBase.hpp"
-#include "gurobi_c++.h"
-
+#include <cstddef>               // for size_t
+#include <memory>                // for make_unique, unique_ptr, shared_ptr
+#include <vector>                // for vector
+#include "Instance.h"            // for Instance
+#include "PricerSolverBase.hpp"  // for PricerSolverBase
+#include "PricingSolution.hpp"   // for PricingSolution
+#include "gurobi_c++.h"          // for GRBVar
+struct Job;
+struct NodeData;
+struct Column;
 class PricerSolverSimpleDp : public PricerSolverBase {
    private:
     size_t                         Hmax;
@@ -21,12 +25,6 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     std::vector<double>            solution_x;
 
    public:
-    // PricerSolverSimpleDp(GPtrArray*  _jobs,
-    //                      int         _num_machines,
-    //                      int         _Hmax,
-    //                      const char* p_name,
-    //                      double      _UB);
-
     PricerSolverSimpleDp(const Instance& instance);
     PricerSolverSimpleDp& operator=(const PricerSolverSimpleDp&) = default;
     PricerSolverSimpleDp& operator=(PricerSolverSimpleDp&&) = default;
@@ -57,25 +55,17 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     bool evaluate_nodes([[maybe_unused]] double* pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
-        const double*                                    columns,
-        const std::vector<std::shared_ptr<ScheduleSet>>& schedule_sets)
-        override;
+        const double*                               lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) override;
 
-    // void   add_constraint(Job* job, GPtrArray* list, int order) override;
-    void   iterate_zdd() override;
-    void   create_dot_zdd(const char* name) override;
-    void   print_number_nodes_edges() override;
-    size_t get_num_remove_nodes() override;
-    size_t get_num_remove_edges() override;
-    size_t get_nb_edges() override;
-    size_t get_nb_vertices() override;
-    int    get_num_layers() override;
-    void   print_num_paths() override;
+    size_t  get_nb_edges() override;
+    size_t  get_nb_vertices() override;
+    cpp_int print_num_paths() override;
 
-    bool check_schedule_set(const std::vector<Job*>& set) override;
+    bool check_column(Column const* set) override;
 
-    OptimalSolution<double> pricing_algorithm(double* _pi) override;
-    OptimalSolution<double> farkas_pricing(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> farkas_pricing(double* _pi) override;
     void                    forward_evaluator(double* _pi);
     void                    backward_evaluator(double* _pi);
 

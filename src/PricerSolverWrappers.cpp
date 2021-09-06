@@ -1,7 +1,10 @@
-#include "PricerSolverBase.hpp"
-#include "Statistics.h"
-#include "scheduleset.h"
-#include "wctprivate.h"
+#include <cassert>                   // for assert
+#include <memory>                    // for unique_ptr
+#include <vector>                    // for vector
+#include "NodeData.h"                // for NodeData
+#include "PricerSolverBase.hpp"      // for PricerSolverBase
+#include "PricingStabilization.hpp"  // for PricingStabilizationBase
+#include "lp.h"                      // for lp_interface_deleterows, lp_inte...
 
 void NodeData::build_solve_mip() {
     solver->build_mip();
@@ -9,7 +12,7 @@ void NodeData::build_solve_mip() {
 
 void NodeData::construct_lp_sol_from_rmp() {
     lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    assert(nb_cols - id_pseudo_schedules == localColPool.size());
+    assert(nb_cols - id_pseudo_schedules == static_cast<int>(localColPool.size()));
 
     lambda.resize(localColPool.size(), 0.0);
     lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
@@ -45,12 +48,4 @@ int NodeData::call_update_rows_coeff() {
     solver->update_rows_coeff(nb_jobs + 1);
 
     return val;
-}
-
-bool NodeData::check_schedule_set(ScheduleSet* set) {
-    return solver->check_schedule_set(set->job_list);
-}
-
-void NodeData::make_schedule_set_feasible(ScheduleSet* set) {
-    solver->make_schedule_set_feasible(set->job_list);
 }
