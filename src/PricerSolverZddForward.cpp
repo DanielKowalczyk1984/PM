@@ -14,8 +14,8 @@
 #include "Instance.h"                            // for Instance
 #include "Job.h"                                 // for Job
 #include "Label.hpp"                             // for Label
-#include "NodeBddStructure.hpp"                  // for DdStructure
-#include "NodeBddTable.hpp"                      // for NodeTableEntity, Tab...
+#include "ModernDD/NodeBddStructure.hpp"                  // for DdStructure
+#include "ModernDD/NodeBddTable.hpp"                      // for NodeTableEntity, Tab...
 #include "PricerSolverBase.hpp"                  // for PricerSolverBase::RC...
 #include "PricerSolverZdd.hpp"                   // for PricerSolverZdd
 #include "ZddNode.hpp"                           // for SubNodeZdd, NodeZdd

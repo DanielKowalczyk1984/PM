@@ -6,8 +6,8 @@
 #include <ostream>       // for operator<<, ostream
 #include <vector>        // for vector
 #include "Job.h"         // for Job
-#include "NodeBase.hpp"  // for NodeBase
-#include "NodeId.hpp"    // for NodeId
+#include "ModernDD/NodeBase.hpp"  // for NodeBase
+#include "ModernDD/NodeId.hpp"    // for NodeId
 template <typename N, typename T>
 class Label;
 template <typename T = double>
@@ -169,7 +169,7 @@ class NodeZdd : public NodeBase {
         }
     }
 
-    void set_node_id_label(NodeId _node_id) {}
+    void set_node_id_label([[maybe_unused]]NodeId _node_id) {}
 };
 
 #endif  // ZDD_NODE_HPP

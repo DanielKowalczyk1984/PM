@@ -2,15 +2,15 @@
 #define MIP_GRAPH_HPP
 
 #include <gurobi_c++.h>                     // for GRBVar
-#include <stddef.h>                         // for size_t
-#include <NodeBddTable.hpp>                 // for NodeTableEntity
-#include <NodeId.hpp>                       // for NodeId
 #include <boost/graph/adjacency_list.hpp>   // for source, vecS (ptr only)
 #include <boost/graph/graph_selectors.hpp>  // for bidirectionalS
 #include <boost/graph/graph_traits.hpp>     // for graph_traits, graph_trait...
 #include <boost/pending/property.hpp>       // for lookup_one_property_inter...
+#include <cstddef>                          // for size_t
 #include <ostream>                          // for operator<<, ostream, basi...
 #include "Job.h"                            // for Job
+#include "ModernDD/NodeBddTable.hpp"        // for NodeTableEntity
+#include "ModernDD/NodeId.hpp"              // for NodeId
 #include "NodeBdd.hpp"                      // for NodeBdd, NodeBdd::dbl_array
 
 struct VertexData {

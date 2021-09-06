@@ -15,8 +15,8 @@
 #include <memory>            // for shared_ptr, unique_ptr
 #include <vector>            // for vector
 #include "NodeBdd.hpp"       // for NodeBdd
-#include "NodeBddTable.hpp"  // for NodeTableEntity
-#include "NodeId.hpp"        // for NodeId
+#include "ModernDD/NodeBddTable.hpp"  // for NodeTableEntity
+#include "ModernDD/NodeId.hpp"        // for NodeId
 class ConstraintGeneric;
 class ReformulationModel;
 class ZeroHalfCuts {

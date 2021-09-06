@@ -1,6 +1,6 @@
 #ifndef PRICER_SOLVER_ZDD_HPP
 #define PRICER_SOLVER_ZDD_HPP
-#include <NodeBddStructure.hpp>  // for DdStructure
+#include "ModernDD/NodeBddStructure.hpp"  // for DdStructure
 #include <cstddef>               // for size_t
 #include <memory>                // for unique_ptr, shared_ptr
 #include <utility>               // for pair

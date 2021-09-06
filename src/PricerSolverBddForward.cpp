@@ -11,8 +11,8 @@
 #include <range/v3/view/view.hpp>                // for operator|
 #include "Instance.h"                            // for Instance
 #include "Label.hpp"                             // for Label
-#include "NodeBddStructure.hpp"                  // for DdStructure
-#include "NodeBddTable.hpp"                      // for NodeTableEntity, Tab...
+#include "ModernDD/NodeBddStructure.hpp"                  // for DdStructure
+#include "ModernDD/NodeBddTable.hpp"                      // for NodeTableEntity, Tab...
 #include "PricerSolverBase.hpp"                  // for PricerSolverBase::ALIGN
 #include "PricerSolverBdd.hpp"                   // for PricerSolverBdd
 

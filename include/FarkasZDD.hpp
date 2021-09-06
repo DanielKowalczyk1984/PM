@@ -3,7 +3,7 @@
 
 #include "BackwardBDD.hpp"      // for BackwardBddBase
 #include "NodeBdd.hpp"          // for NodeBdd
-#include "NodeBddEval.hpp"      // for Eval
+#include "ModernDD/NodeBddEval.hpp"      // for Eval
 #include "PricingSolution.hpp"  // for PricingSolution
 
 template <typename T = double>

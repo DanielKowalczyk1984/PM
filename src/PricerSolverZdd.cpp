@@ -18,9 +18,9 @@
 #include "Column.h"                                // for ScheduleSet
 #include "Instance.h"                              // for Instance
 #include "Job.h"                                   // for Job
-#include "NodeBddStructure.hpp"                    // for DdStructure, DdStr...
-#include "NodeBddTable.hpp"                        // for NodeTableEntity
-#include "NodeId.hpp"                              // for NodeId
+#include "ModernDD/NodeBddStructure.hpp"                    // for DdStructure, DdStr...
+#include "ModernDD/NodeBddTable.hpp"                        // for NodeTableEntity
+#include "ModernDD/NodeId.hpp"                              // for NodeId
 #include "PricerConstruct.hpp"                     // for PricerConstruct
 #include "PricingSolution.hpp"                     // for PricingSolution
 #include "ZddNode.hpp"                             // for NodeZdd, SubNodeZdd

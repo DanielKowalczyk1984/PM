@@ -20,8 +20,8 @@
 #include <utility>                               // for move
 #include <vector>                                // for vector
 #include "ModelInterface.hpp"                    // for ConstraintGeneric
-#include "NodeBddTable.hpp"                      // for NodeTableEntity
-#include "NodeId.hpp"                            // for NodeId
+#include "ModernDD/NodeBddTable.hpp"                      // for NodeTableEntity
+#include "ModernDD/NodeId.hpp"                            // for NodeId
 #include "gurobi_c.h"                            // for GRB_INFINITY, GRB_PR...
 
 ZeroHalfCuts::ZeroHalfCuts(size_t                            _nb_jobs,
@@ -82,7 +82,7 @@ void ZeroHalfCuts::generate_model() {
         auto                m = nb_machines % 2 == 0 ? 0.0 : 1.0;
         q = model->addVar(0.0, GRB_INFINITY, 0.0, 'I');
 
-        expr.addTerms(coeffs.data(), jobs_var.data(), coeffs.size());
+        expr.addTerms(coeffs.data(), jobs_var.data(), static_cast<int>(coeffs.size()));
         expr += m * root_node.get_sigma() - m * terminal_node.get_sigma() -
                 HALF * q;
         model->addConstr(expr, '=', 1.0);

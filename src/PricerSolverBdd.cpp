@@ -56,10 +56,10 @@
 #include "MipGraph.hpp"                                // for MipGraph, Colo...
 #include "ModelInterface.hpp"                          // for BddCoeff, Refo...
 #include "NodeBdd.hpp"                                 // for NodeBdd
-#include "NodeBddStructure.hpp"                        // for DdStructure
-#include "NodeBddTable.hpp"                            // for NodeTableEntity
+#include "ModernDD/NodeBddStructure.hpp"                        // for DdStructure
+#include "ModernDD/NodeBddTable.hpp"                            // for NodeTableEntity
 #include "NodeData.h"                                  // for NodeData
-#include "NodeId.hpp"                                  // for NodeId
+#include "ModernDD/NodeId.hpp"                                  // for NodeId
 #include "PricerConstruct.hpp"                         // for PricerConstruct
 #include "PricerSolverBase.hpp"                        // for PricerSolverBa...
 #include "PricingSolution.hpp"                         // for PricingSolution
@@ -301,7 +301,7 @@ void PricerSolverBdd::init_table() {
 
 void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     lp_interface_get_nb_rows(pd->RMP.get(), &(pd->nb_rows));
-    auto nb_new_constraints = reformulation_model.size() - pd->nb_rows;
+    auto nb_new_constraints = reformulation_model.size() - static_cast<size_t>(pd->nb_rows);
 
     fmt::print("nb rows initial {} {} {}\n", pd->nb_rows,
                reformulation_model.size(), nb_new_constraints);

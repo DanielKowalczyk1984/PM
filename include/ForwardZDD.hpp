@@ -1,12 +1,12 @@
 #ifndef DURATION_ZDD_HPP
 #define DURATION_ZDD_HPP
 
-#include <assert.h>             // for assert
+#include <cassert>            // for assert
 #include <cstddef>              // for size_t
 #include <limits>               // for numeric_limits
 #include <memory>               // for shared_ptr
 #include "Job.h"                // for value_diff_Fij, Job
-#include "NodeBddEval.hpp"      // for Eval
+#include "ModernDD/NodeBddEval.hpp"      // for Eval
 #include "PricingSolution.hpp"  // for PricingSolution
 #include "ZddNode.hpp"          // for NodeZdd, SubNodeZdd, compare_sub_nodes
 template <typename N, typename T>

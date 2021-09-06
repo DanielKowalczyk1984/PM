@@ -1,14 +1,10 @@
 #ifndef FORWARD_BDD_HPP
 #define FORWARD_BDD_HPP
-// #include <tdzdd/DdEval.hpp>
 #include <limits>                         // for numeric_limits
 #include <range/v3/action/remove_if.hpp>  // for remove_if
-#include "Job.h"                          // for Job
+#include "ModernDD/NodeBddEval.hpp"       // for Eval
 #include "NodeBdd.hpp"                    // for NodeBdd
-#include "NodeBddEval.hpp"                // for Eval
 #include "PricingSolution.hpp"            // for PricingSolution
-template <typename N, typename T>
-class Label;
 
 template <typename T = double>
 class ForwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
@@ -33,14 +29,14 @@ class ForwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
     virtual void evalNode(NodeBdd<T>& n) const = 0;
 
     PricingSolution<T> get_objective(NodeBdd<T>& n) const {
-        PricingSolution<T>    sol(0.0);
-        Label<NodeBdd<T>, T>* ptr_node = &(n.forward_label[0]);
+        PricingSolution<T> sol(0.0);
+        auto*              ptr_node = &(n.forward_label[0]);
         auto table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
 
         while (ptr_node->get_previous() != nullptr) {
-            Label<NodeBdd<T>, T>* aux_prev_node = ptr_node->get_previous();
+            auto* aux_prev_node = ptr_node->get_previous();
             auto& node = table_tmp->node(aux_prev_node->get_node_id());
-            Job*  aux_job = node.get_job();
+            auto* aux_job = node.get_job();
             sol.C_max += aux_job->processing_time;
             sol.push_job_back(aux_job, node.get_weight(),
                               node.get_reduced_cost()[1]);
