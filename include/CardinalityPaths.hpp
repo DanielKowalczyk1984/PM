@@ -1,12 +1,12 @@
 #ifndef __CARDINALITYPATHS_H__
 #define __CARDINALITYPATHS_H__
-#include <stddef.h>                          // for size_t
+#include <cstddef>                         // for size_t
 #include <array>                             // for array
 #include <boost/multiprecision/cpp_int.hpp>  // for cpp_int
 #include "NodeBdd.hpp"                       // for NodeBdd
-#include "NodeBddEval.hpp"                   // for Eval
-#include "NodeBddTable.hpp"                  // for NodeTableEntity
-#include "NodeId.hpp"                        // for NodeId
+#include "ModernDD/NodeBddEval.hpp"                   // for Eval
+#include "ModernDD/NodeBddTable.hpp"                  // for NodeTableEntity
+#include "ModernDD/NodeId.hpp"                        // for NodeId
 
 class CardinalityPaths
     : public Eval<NodeBdd<>, boost::multiprecision::cpp_int> {

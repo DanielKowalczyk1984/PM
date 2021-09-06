@@ -2,7 +2,7 @@
 #define LABEL_HPP
 
 #include <limits>      // for numeric_limits
-#include "NodeId.hpp"  // for NodeId
+#include "ModernDD/NodeId.hpp"  // for NodeId
 struct Job;
 
 template <typename N, typename T>

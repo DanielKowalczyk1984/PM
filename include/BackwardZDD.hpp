@@ -1,13 +1,13 @@
 #ifndef BACKWARD_ZDD_HPP
 #define BACKWARD_ZDD_HPP
-#include <assert.h>             // for assert
+#include <cassert>             // for assert
 #include <array>                // for array
 #include <cstddef>              // for size_t
 #include <memory>               // for shared_ptr, __shared_ptr_access
 #include <vector>               // for vector
 #include "Job.h"                // for bool_diff_Fij, Job
 #include "Label.hpp"            // for Label
-#include "NodeBddEval.hpp"      // for Eval
+#include "ModernDD/NodeBddEval.hpp"      // for Eval
 #include "PricingSolution.hpp"  // for PricingSolution
 #include "ZddNode.hpp"          // for SubNodeZdd, NodeZdd, compare_sub_nodes
 

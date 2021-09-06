@@ -7,8 +7,8 @@
 #include "Instance.h"                            // for Instance
 #include "Label.hpp"                             // for Label
 #include "NodeBdd.hpp"                           // for NodeBdd
-#include "NodeBddStructure.hpp"                  // for DdStructure
-#include "NodeBddTable.hpp"                      // for TableHandler, NodeTa...
+#include "ModernDD/NodeBddStructure.hpp"                  // for DdStructure
+#include "ModernDD/NodeBddTable.hpp"                      // for TableHandler, NodeTa...
 #include "PricerSolverBase.hpp"                  // for PricerSolverBase::ALIGN
 #include "PricerSolverBdd.hpp"                   // for PricerSolverBdd
 #include "util.h"                                // for dbg_lvl

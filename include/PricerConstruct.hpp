@@ -1,4 +1,4 @@
-#include <assert.h>                                 // for assert
+#include <cassert>                                 // for assert
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
 #include <cstddef>                                  // for size_t
 #include <memory>                                   // for allocator_traits<...
@@ -7,7 +7,7 @@
 #include "Instance.h"                               // for Instance
 #include "Interval.h"                               // for Interval
 #include "Job.h"                                    // for Job
-#include "NodeBddSpec.hpp"                          // for DdSpec
+#include "ModernDD/NodeBddSpec.hpp"                          // for DdSpec
 
 class conflict_state {
    public:

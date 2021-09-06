@@ -8,8 +8,8 @@
 #include "MipGraph.hpp"          // for MipGraph
 #include "ModelInterface.hpp"    // for OriginalModel
 #include "NodeBdd.hpp"           // for NodeBdd
-#include "NodeBddStructure.hpp"  // for DdStructure
-#include "NodeBddTable.hpp"      // for NodeTableEntity, TableHandler
+#include "ModernDD/NodeBddStructure.hpp"  // for DdStructure
+#include "ModernDD/NodeBddTable.hpp"      // for NodeTableEntity, TableHandler
 #include "PricerSolverBase.hpp"  // for PricerSolverBase
 #include "PricingSolution.hpp"   // for PricingSolution²
 struct Interval;
@@ -97,7 +97,7 @@ class PricerSolverBdd : public PricerSolverBase {
         return decision_diagram;
     }
 
-    inline int get_nb_removed_edges() { return nb_removed_edges; }
+    inline auto get_nb_removed_edges() { return nb_removed_edges; }
 
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 

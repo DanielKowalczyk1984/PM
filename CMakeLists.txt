@@ -46,6 +46,7 @@ find_package(codecov)
 find_package(Gurobi)
 add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
+add_subdirectory(decision-diagrams)
 
 #
 # Create library, setup header and source files
@@ -136,6 +137,7 @@ else()
              ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
              ${CONAN_INCLUDE_DIRS_RANGE-V3}
              ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
+             ModernDD
       PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
@@ -149,6 +151,7 @@ else()
       CONAN_PKG::range-v3
       ORUtils::ORUtils
       branch-and-bound::branch-and-bound
+      ModernDD
       -lm
       -lpthread
     )

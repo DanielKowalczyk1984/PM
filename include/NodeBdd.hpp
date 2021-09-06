@@ -17,8 +17,8 @@
 #include <vector>                                   // for vector
 #include "Job.h"                                    // for Job
 #include "Label.hpp"                                // for Label
-#include "NodeBase.hpp"                             // for NodeBase
-#include "NodeId.hpp"                               // for NodeId
+#include "ModernDD/NodeBase.hpp"                    // for NodeBase
+#include "ModernDD/NodeId.hpp"                      // for NodeId
 
 class BddCoeff;
 
