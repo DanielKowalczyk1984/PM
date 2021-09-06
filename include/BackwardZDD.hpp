@@ -1,15 +1,15 @@
 #ifndef BACKWARD_ZDD_HPP
 #define BACKWARD_ZDD_HPP
-#include <cassert>             // for assert
-#include <array>                // for array
-#include <cstddef>              // for size_t
-#include <memory>               // for shared_ptr, __shared_ptr_access
-#include <vector>               // for vector
-#include "Job.h"                // for bool_diff_Fij, Job
-#include "Label.hpp"            // for Label
-#include "ModernDD/NodeBddEval.hpp"      // for Eval
-#include "PricingSolution.hpp"  // for PricingSolution
-#include "ZddNode.hpp"          // for SubNodeZdd, NodeZdd, compare_sub_nodes
+#include <array>                     // for array
+#include <cassert>                   // for assert
+#include <cstddef>                   // for size_t
+#include <memory>                    // for shared_ptr, __shared_ptr_access
+#include <vector>                    // for vector
+#include "Job.h"                     // for bool_diff_Fij, Job
+#include "Label.hpp"                 // for Label
+#include "ModernDD/NodeBddEval.hpp"  // for Eval
+#include "PricingSolution.hpp"       // for PricingSolution
+#include "ZddNode.hpp"  // for SubNodeZdd, NodeZdd, compare_sub_nodes
 
 template <typename T = double>
 class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
