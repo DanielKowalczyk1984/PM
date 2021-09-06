@@ -25,12 +25,6 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     std::vector<double>            solution_x;
 
    public:
-    // PricerSolverSimpleDp(GPtrArray*  _jobs,
-    //                      int         _num_machines,
-    //                      int         _Hmax,
-    //                      const char* p_name,
-    //                      double      _UB);
-
     PricerSolverSimpleDp(const Instance& instance);
     PricerSolverSimpleDp& operator=(const PricerSolverSimpleDp&) = default;
     PricerSolverSimpleDp& operator=(PricerSolverSimpleDp&&) = default;

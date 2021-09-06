@@ -1,9 +1,6 @@
-// #include <cstddef>
-// #include <memory>
-// #include <vector>
-// #include "Instance.h"
-// #include "PricerSolverBase.hpp"
-// #include "gurobi_c++.h"
+#ifndef __PRICERSOLVERARCTIMEDP_H__
+#define __PRICERSOLVERARCTIMEDP_H__
+
 #include <algorithm>             // for remove
 #include <cstddef>               // for size_t
 #include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
@@ -131,3 +128,4 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     void update_coeff_constraints() override {}
 };
+#endif // __PRICERSOLVERARCTIMEDP_H__
