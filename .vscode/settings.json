@@ -6,12 +6,13 @@
     },
     "cSpell.words": [
         "Dstructure",
+        "guint",
         "Hiroaki",
         "Iwashita",
         "MINATO",
+        "NLOHMANN",
         "OPENMP",
-        "Unreduction",
-        "guint",
-        "pdata"
+        "pdata",
+        "Unreduction"
     ]
 }

@@ -24,7 +24,7 @@
 #include "Job.h"                                 // for Job
 #include "Parms.h"                               // for Parms
 
-Instance::Instance(const Parms& _parms)
+Instance::Instance(Parms const& _parms)
     : path_to_instance(_parms.jobfile),
       nb_machines(_parms.nb_machines) {
     std::ifstream in_file{path_to_instance};
@@ -36,8 +36,8 @@ Instance::Instance(const Parms& _parms)
             ss >> nb_jobs;
         }
 
-        int p{}, d{}, w{};
-        int counter{};
+        int  p{}, d{}, w{};
+        auto counter{0UL};
         while (getline(in_file, str)) {
             std::istringstream ss(str);
             ss >> p >> d >> w;

@@ -20,12 +20,12 @@ namespace vs = ranges::views;
 class VariableKeyBase {
    private:
     size_t j{};
-    int    t{-1};
+    size_t t{};
     bool   high{false};
     bool   root{false};
 
    public:
-    VariableKeyBase(size_t _j, int _t, bool _high = true, bool _root = false)
+    VariableKeyBase(size_t _j, size_t _t, bool _high = true, bool _root = false)
         : j(_j),
           t(_t),
           high(_high),
@@ -35,7 +35,7 @@ class VariableKeyBase {
 
     [[nodiscard]] inline size_t get_j() const { return j; }
 
-    [[nodiscard]] inline int get_t() const { return t; }
+    [[nodiscard]] inline size_t get_t() const { return t; }
 
     [[nodiscard]] inline bool get_root() const { return root; }
 
@@ -43,7 +43,7 @@ class VariableKeyBase {
 
     inline void set_j(size_t _j) { j = _j; }
 
-    inline void set_t(int _t) { t = _t; }
+    inline void set_t(size_t _t) { t = _t; }
 
     inline void set_root(bool _root) { root = _root; }
 
@@ -158,7 +158,7 @@ class BddCoeff : public VariableKeyBase {
 
    public:
     BddCoeff(size_t _j,
-             int    _t,
+             size_t _t,
              double _coeff,
              double _value = 0.0,
              size_t _row = 0UL,
@@ -240,7 +240,7 @@ class GenericData : public std::unordered_map<VariableKeyBase, double> {
     GenericData& operator=(GenericData&&) = default;
     GenericData& operator=(const GenericData&) = default;
 
-    void add_coeff_hash_table(size_t _j, int _t, bool _high, double _coeff) {
+    void add_coeff_hash_table(size_t _j, size_t _t, bool _high, double _coeff) {
         VariableKeyBase key(_j, _t, _high);
 
         auto it = this->find(key);

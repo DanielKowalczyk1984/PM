@@ -34,7 +34,7 @@ class NodeBdd : public NodeBase {
    private:
     /** Job chatacteristics */
     Job*   job{nullptr};
-    int    weight{};
+    size_t weight{};
     size_t key{};
 
     bool   visited{false};
@@ -87,8 +87,8 @@ class NodeBdd : public NodeBase {
     NodeBdd<T>& operator=(NodeBdd<T>&& src) noexcept = default;
     ~NodeBdd() = default;
 
-    void              set_weight(int _weight) { weight = _weight; }
-    [[nodiscard]] int get_weight() const { return weight; }
+    void                 set_weight(int _weight) { weight = _weight; }
+    [[nodiscard]] size_t get_weight() const { return weight; }
 
     [[nodiscard]] Job*          get_job() const { return job; }
     [[nodiscard]] inline size_t get_nb_job() const { return job->job; }
@@ -122,7 +122,7 @@ class NodeBdd : public NodeBase {
         return os << ")";
     }
 
-    void init_node(int                   _weight,
+    void init_node(size_t                _weight,
                    [[maybe_unused]] bool _root_node = false,
                    bool                  _terminal_node = false) {
         if (!_terminal_node) {

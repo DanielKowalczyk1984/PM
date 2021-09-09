@@ -38,7 +38,8 @@ struct formatter<boost::multiprecision::cpp_int> {
     }
 
     template <typename FormatContext>
-    auto format(const boost::multiprecision::cpp_int& p, FormatContext& ctx) {
+    auto format([[maybe_unused]] const boost::multiprecision::cpp_int& p,
+                FormatContext&                                         ctx) {
         return format_to(ctx.begin(), "boost::number");
     }
 };
@@ -309,7 +310,7 @@ bool BranchNodeBase::is_terminal_state() {
 void BranchNodeBase::apply_final_pruning_tests([[maybe_unused]] BTree* bt) {
     auto* pricing_solver = get_pricersolver();
     // auto* pd_ptr = get_data_ptr();
-    if (pricing_solver->print_num_paths() < 240000000000) {
+    if (pricing_solver->print_num_paths() < MAX_NB_PATHS) {
         pricing_solver->project_sol_on_original_variables(pd->opt_sol);
         pricing_solver->build_mip();
         auto feasible_aux = pricing_solver->evaluate_mip_model();
