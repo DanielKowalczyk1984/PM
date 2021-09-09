@@ -55,11 +55,11 @@
 #include "Label.hpp"                                   // for Label
 #include "MipGraph.hpp"                                // for MipGraph, Colo...
 #include "ModelInterface.hpp"                          // for BddCoeff, Refo...
+#include "ModernDD/NodeBddStructure.hpp"               // for DdStructure
+#include "ModernDD/NodeBddTable.hpp"                   // for NodeTableEntity
+#include "ModernDD/NodeId.hpp"                         // for NodeId
 #include "NodeBdd.hpp"                                 // for NodeBdd
-#include "ModernDD/NodeBddStructure.hpp"                        // for DdStructure
-#include "ModernDD/NodeBddTable.hpp"                            // for NodeTableEntity
 #include "NodeData.h"                                  // for NodeData
-#include "ModernDD/NodeId.hpp"                                  // for NodeId
 #include "PricerConstruct.hpp"                         // for PricerConstruct
 #include "PricerSolverBase.hpp"                        // for PricerSolverBa...
 #include "PricingSolution.hpp"                         // for PricingSolution
@@ -76,7 +76,7 @@ PricerSolverBdd::PricerSolverBdd(const Instance& instance)
       size_graph{decision_diagram.size()},
       ordered_jobs_new(instance.vector_pair),
       original_model(reformulation_model),
-      H_min{instance.H_min},
+      H_min{static_cast<size_t>(instance.H_min)},
       H_max(instance.H_max) {
     // remove_layers_init();
 
@@ -253,7 +253,7 @@ void PricerSolverBdd::init_table() {
     auto& table = *(decision_diagram.getDiagram());
     /** init table */
     auto& root = table.node(decision_diagram.root());
-    root.init_node(0, true);
+    root.init_node(0UL, true);
     root.set_node_id_label(decision_diagram.root());
     // root.all = boost::dynamic_bitset<>{convex_constr_id, 0};
     root.reset_all(convex_constr_id);
@@ -268,7 +268,7 @@ void PricerSolverBdd::init_table() {
                 auto& node = table.node(node_id);
                 auto* aux_job = tmp_pair.first;
                 auto  w = node.get_weight();
-                auto  p = aux_job->processing_time;
+                auto  p = static_cast<size_t>(aux_job->processing_time);
 
                 auto& n0 = table.node(node[0]);
                 auto& n1 = table.node(node[1]);
@@ -301,7 +301,8 @@ void PricerSolverBdd::init_table() {
 
 void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     lp_interface_get_nb_rows(pd->RMP.get(), &(pd->nb_rows));
-    auto nb_new_constraints = reformulation_model.size() - static_cast<size_t>(pd->nb_rows);
+    auto nb_new_constraints =
+        reformulation_model.size() - static_cast<size_t>(pd->nb_rows);
 
     fmt::print("nb rows initial {} {} {}\n", pd->nb_rows,
                reformulation_model.size(), nb_new_constraints);
@@ -982,7 +983,7 @@ void PricerSolverBdd::build_mip() {
 
         std::unique_ptr<GRBConstr> assignment_constrs(
             model.addConstrs(assignment.data(), sense.data(), rhs.data(),
-                             nullptr, convex_constr_id));
+                             nullptr, static_cast<int>(convex_constr_id)));
         model.update();
 
         /** Flow constraints */
@@ -1021,9 +1022,9 @@ void PricerSolverBdd::build_mip() {
             }
         }
 
-        std::unique_ptr<GRBConstr> flow_constrs(
-            model.addConstrs(flow_conservation_constr.data(), sense_flow.data(),
-                             rhs_flow.data(), nullptr, num_vertices));
+        std::unique_ptr<GRBConstr> flow_constrs(model.addConstrs(
+            flow_conservation_constr.data(), sense_flow.data(), rhs_flow.data(),
+            nullptr, static_cast<int>(num_vertices)));
         model.update();
         for (auto it = edges(mip_graph); it.first != it.second; it.first++) {
             // auto* data =

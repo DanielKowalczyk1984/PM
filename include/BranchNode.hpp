@@ -43,6 +43,7 @@ class BranchNodeBase : public State {
 
     static constexpr auto ERROR = 1e-12;
     static constexpr auto IntegerTolerance = 1e-3;
+    static constexpr auto MAX_NB_PATHS = 240000000000;
 };
 
 class BranchNodeRelBranching : public BranchNodeBase {

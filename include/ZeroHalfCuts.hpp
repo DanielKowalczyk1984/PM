@@ -1,22 +1,13 @@
 #ifndef __ZEROHALFCUTS_H__
 #define __ZEROHALFCUTS_H__
 
-// #include <gurobi_c++.h>
-// #include <cstddef>
-// #include <memory>
-// #include <span>
-// #include <vector>
-// #include "ModelInterface.hpp"
-// #include "NodeBdd.hpp"
-// #include "NodeBddTable.hpp"
-// #include "NodeId.hpp"
-#include <gurobi_c++.h>      // for GRBVar, GRBEnv, GRBModel
-#include <cstddef>           // for size_t
-#include <memory>            // for shared_ptr, unique_ptr
-#include <vector>            // for vector
-#include "NodeBdd.hpp"       // for NodeBdd
+#include <gurobi_c++.h>               // for GRBVar, GRBEnv, GRBModel
+#include <cstddef>                    // for size_t
+#include <memory>                     // for shared_ptr, unique_ptr
+#include <vector>                     // for vector
 #include "ModernDD/NodeBddTable.hpp"  // for NodeTableEntity
 #include "ModernDD/NodeId.hpp"        // for NodeId
+#include "NodeBdd.hpp"                // for NodeBdd
 class ConstraintGeneric;
 class ReformulationModel;
 class ZeroHalfCuts {

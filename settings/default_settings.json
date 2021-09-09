@@ -7,7 +7,7 @@
 	"nb_iterations_rvnd": 5000,
 	"branching_cpu_limit": 7200.0,
 	"alpha": 0.8,
-	"branching_point": 0.5,
+	"branching_point": 0.6,
 	"pricing_solver": "BddBackwardCycle",
 	"use_heuristic": true,
 	"use_mip_solver": false,

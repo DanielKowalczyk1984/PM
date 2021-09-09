@@ -26,6 +26,7 @@ struct Job {
 };
 
 int value_diff_Fij(int C, Job* i, Job* j);
+int value_diff_Fij(size_t C, Job* i, Job* j);
 int bool_diff_Fij(int, Job*, Job*);
 
 #endif  // JOB_H

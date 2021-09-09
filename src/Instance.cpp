@@ -14,6 +14,7 @@
 #include <range/v3/numeric/accumulate.hpp>       // for accumulate, accumula...
 #include <range/v3/view/for_each.hpp>            // for for_each
 #include <range/v3/view/reverse.hpp>             // for reverse_view, revers...
+#include <range/v3/view/sliding.hpp>             // for sliding
 #include <range/v3/view/take.hpp>                // for take_view, take, tak...
 #include <range/v3/view/view.hpp>                // for operator|, view_closure
 #include <string>                                // for getline, string
@@ -24,7 +25,7 @@
 #include "Job.h"                                 // for Job
 #include "Parms.h"                               // for Parms
 
-Instance::Instance(const Parms& _parms)
+Instance::Instance(Parms const& _parms)
     : path_to_instance(_parms.jobfile),
       nb_machines(_parms.nb_machines) {
     std::ifstream in_file{path_to_instance};
@@ -36,8 +37,8 @@ Instance::Instance(const Parms& _parms)
             ss >> nb_jobs;
         }
 
-        int p{}, d{}, w{};
-        int counter{};
+        int  p{}, d{}, w{};
+        auto counter{0UL};
         while (getline(in_file, str)) {
             std::istringstream ss(str);
             ss >> p >> d >> w;
@@ -123,13 +124,14 @@ void Instance::find_division() {
     for (auto i = 0UL; i < nb_jobs && prev < H_max; ++i) {
         auto tmp = std::min(H_max, jobs[i]->due_time);
         if (prev < tmp) {
-            tmp_ptr_vec.push_back(std::make_shared<Interval>(prev, tmp, jobs));
+            tmp_ptr_vec.emplace_back(
+                std::make_shared<Interval>(prev, tmp, jobs));
             prev = jobs[i]->due_time;
         }
     }
 
     if (prev < H_max) {
-        tmp_ptr_vec.push_back(std::make_shared<Interval>(prev, H_max, jobs));
+        tmp_ptr_vec.emplace_back(std::make_shared<Interval>(prev, H_max, jobs));
     }
 
     for (auto& it : tmp_ptr_vec) {
@@ -178,9 +180,9 @@ void Instance::find_division() {
 
             t.push_back(it->b);
 
-            for (auto i = 1U; i < t.size(); i++) {
+            for (auto&& tmp : t | ranges::views::sliding(2)) {
                 intervals.push_back(
-                    std::make_shared<Interval>(t[i - 1], t[i], jobs));
+                    std::make_shared<Interval>(tmp[0], tmp[1], jobs));
             }
         } else {
             intervals.push_back(std::make_shared<Interval>(it->a, it->b, jobs));

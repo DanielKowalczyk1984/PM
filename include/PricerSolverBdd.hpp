@@ -1,17 +1,17 @@
 #ifndef PRICER_SOLVER_BDD_HPP
 #define PRICER_SOLVER_BDD_HPP
-#include <cstddef>               // for size_t
-#include <memory>                // for unique_ptr, shared_ptr
-#include <utility>               // for pair
-#include <vector>                // for vector
-#include "Instance.h"            // for Instance
-#include "MipGraph.hpp"          // for MipGraph
-#include "ModelInterface.hpp"    // for OriginalModel
-#include "NodeBdd.hpp"           // for NodeBdd
+#include <cstddef>                        // for size_t
+#include <memory>                         // for unique_ptr, shared_ptr
+#include <utility>                        // for pair
+#include <vector>                         // for vector
+#include "Instance.h"                     // for Instance
+#include "MipGraph.hpp"                   // for MipGraph
+#include "ModelInterface.hpp"             // for OriginalModel
 #include "ModernDD/NodeBddStructure.hpp"  // for DdStructure
 #include "ModernDD/NodeBddTable.hpp"      // for NodeTableEntity, TableHandler
-#include "PricerSolverBase.hpp"  // for PricerSolverBase
-#include "PricingSolution.hpp"   // for PricingSolution²
+#include "NodeBdd.hpp"                    // for NodeBdd
+#include "PricerSolverBase.hpp"           // for PricerSolverBase
+#include "PricingSolution.hpp"            // for PricingSolution²
 struct Interval;
 struct Job;
 struct NodeData;
@@ -33,8 +33,8 @@ class PricerSolverBdd : public PricerSolverBase {
     // std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_in;
     // std::unordered_map<int, std::vector<std::weak_ptr<NodeId>>> t_out;
 
-    int H_min;
-    int H_max;
+    size_t H_min;
+    int    H_max;
 
    public:
     explicit PricerSolverBdd(const Instance& instance);
