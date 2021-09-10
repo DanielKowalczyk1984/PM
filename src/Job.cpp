@@ -34,6 +34,16 @@ int value_diff_Fij(int C, Job* i, Job* j) {
     return val;
 }
 
+int value_diff_Fij(size_t C, Job* i, Job* j) {
+    auto j_p = static_cast<size_t>(j->processing_time);
+    auto i_p = static_cast<size_t>(i->processing_time);
+    auto val = i->weighted_tardiness_start(C - j_p);
+    val += j->weighted_tardiness(C + i_p);
+    val -= j->weighted_tardiness(C);
+    val -= i->weighted_tardiness_start(C);
+    return val;
+}
+
 int bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) {
     return (_prev == nullptr) ? 1
                               : (value_diff_Fij(weight + tmp_j->processing_time,

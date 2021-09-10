@@ -33,7 +33,7 @@ struct Instance {
     int    H_max{};
     int    off{};
 
-    Instance(const Parms& _parms);
+    Instance(Parms const& _parms);
 
     Instance(const Instance&) = default;
     Instance& operator=(const Instance&) = delete;

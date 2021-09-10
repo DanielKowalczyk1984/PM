@@ -147,7 +147,7 @@ int Parms::parse_cmd(int argc, const char** argv) {
 
     std::span tmp_char{argv, static_cast<size_t>(argc)};
 
-    auto args = docopt::docopt_parse(
+    auto args = docopt::docopt(
         USAGE,
         tmp_char | ranges::views::drop(1) |
             ranges::views::transform(
@@ -211,10 +211,10 @@ int Parms::parse_cmd(int argc, const char** argv) {
 
     /** Determine the name of the instance */
     auto file_name = args["FILE"].asString();
-    jobfile = std::string(file_name);
+    jobfile = file_name;
     pname = find_match(file_name);
     /** Set the number of machines */
-    nb_machines = static_cast<int>(args["NB"].asLong());
+    nb_machines = static_cast<size_t>(args["NB"].asLong());
 
     return val;
 }

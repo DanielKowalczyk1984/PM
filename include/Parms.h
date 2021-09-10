@@ -89,8 +89,8 @@ struct Parms {
     std::string jobfile;
     std::string pname;
 
-    int nb_jobs;
-    int nb_machines;
+    int    nb_jobs;
+    size_t nb_machines;
     Parms();
     Parms(int argc, const char** argv);
 
