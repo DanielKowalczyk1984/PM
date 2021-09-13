@@ -68,7 +68,6 @@
 #include "gurobi_c.h"                                  // for GRB_EQUAL, GRB...
 #include "lp.h"                                        // for lp_interface_g...
 #include "util.h"                                      // for dbg_lvl
-#include "util/MyList.hpp"                             // for MyList
 
 PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     : PricerSolverBase(instance),
