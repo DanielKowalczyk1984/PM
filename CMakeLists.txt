@@ -137,7 +137,7 @@ else()
              ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
              ${CONAN_INCLUDE_DIRS_RANGE-V3}
              ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
-             ModernDD
+             ModernDD::ModernDD
       PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
@@ -151,7 +151,7 @@ else()
       CONAN_PKG::range-v3
       ORUtils::ORUtils
       branch-and-bound::branch-and-bound
-      ModernDD
+      ModernDD::ModernDD
       -lm
       -lpthread
     )
