@@ -35,6 +35,6 @@ function(add_clang_format_target)
 						WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 			endif()
 
-			message(STATUS "Format the project using the `clang-format` target (i.e: cmake --build build --target clang-format).\n")
+			message(STATUS "Format the project using the `clang-format` target (i.e: cmake --build build --target clang-format).")
     endif()
 endfunction()
