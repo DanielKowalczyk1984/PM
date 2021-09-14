@@ -23,7 +23,7 @@ include(ConfigSafeGuards)
 include(StandardSettings)
 include(Utils)
 include(StaticAnalyzers)
-message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
+message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...")
 
 #
 # Enable package managers
@@ -73,7 +73,7 @@ if(${PROJECT_NAME}_BUILD_EXECUTABLE)
 else()
   verbose_message(${sources})
 endif()
-message(STATUS "Added all header and implementation files.\n")
+message(STATUS "Added all header and implementation files.")
 
 #
 # Set the project standard and warnings
@@ -89,7 +89,7 @@ include(CompilerWarnings)
 set_project_warnings(${PROJECT_NAME})
 set_project_warnings(${PROJECT_NAME}_LIB)
 
-verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.\n")
+verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.")
 
 # RelWIthDebInfo Flags
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -mtune=native -fPIC")
@@ -172,7 +172,7 @@ else()
   add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 endif()
 
-verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.\n")
+verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 
 #
 # Format the project using the `clang-format` target (i.e: cmake --build build --target
