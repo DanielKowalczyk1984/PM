@@ -18,7 +18,7 @@
 #include "gurobi_c.h"                                  // for GRB_INFINITY
 #include "lp.h"                                        // for lp_interface_g...
 
-int NodeData::add_lhs_scheduleset_to_rmp(Column* set) {
+int NodeData::add_lhs_column_to_rmp(Column* set) {
     id_row.clear();
     coeff_row.clear();
 
@@ -37,7 +37,7 @@ int NodeData::add_lhs_scheduleset_to_rmp(Column* set) {
     return 0;
 }
 
-int NodeData::add_scheduleset_to_rmp(Column* set) {
+int NodeData::add_column_to_rmp(Column* set) {
     auto  var_ind = 0;
     auto  cval = 0.0;
     auto  cost = set->total_weighted_completion_time;
@@ -120,7 +120,7 @@ int NodeData::build_rmp() {
     /** add columns from localColPool */
     prune_duplicated_sets();
     ranges::for_each(localColPool,
-                     [&](auto& it) { add_scheduleset_to_rmp(it.get()); });
+                     [&](auto& it) { add_column_to_rmp(it.get()); });
 
     /**
      * Some aux variables for column generation

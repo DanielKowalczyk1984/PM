@@ -148,10 +148,10 @@ struct NodeData {
 
     std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
                                                                 long   _t);
-    int add_scheduleset_to_rmp(Column* set);
+    int                                      add_column_to_rmp(Column* set);
 
    private:
-    int add_lhs_scheduleset_to_rmp(Column* set);
+    int add_lhs_column_to_rmp(Column* set);
 
     /** lowerbound.cpp */
     int  grow_ages();
