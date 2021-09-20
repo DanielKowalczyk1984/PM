@@ -23,6 +23,7 @@ include(ConfigSafeGuards)
 include(StandardSettings)
 include(Utils)
 include(StaticAnalyzers)
+include(SetUpOsi)
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...")
 
 #
@@ -138,6 +139,7 @@ else()
              ${CONAN_INCLUDE_DIRS_RANGE-V3}
              ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
              ModernDD::ModernDD
+             ${OSI_INCLUDE_DIR}
       PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
@@ -152,6 +154,9 @@ else()
       ORUtils::ORUtils
       branch-and-bound::branch-and-bound
       ModernDD::ModernDD
+      ${OSI_LIBRARY}
+      ${OSI_GRB_LIBRARY}
+      ${COINUtils_LIBRARY}
       -lm
       -lpthread
     )
