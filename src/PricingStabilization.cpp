@@ -14,8 +14,9 @@
  *
  * @param _solver
  */
-PricingStabilizationBase::PricingStabilizationBase(PricerSolverBase*    _solver,
-                                                   std::vector<double>& _pi_out)
+PricingStabilizationBase::PricingStabilizationBase(
+    PricerSolverBase*        _solver,
+    std::span<const double>& _pi_out)
     : solver(_solver),
       pi_out(_pi_out),
       pi_in(_solver->convex_constr_id + 1, 0.0),
@@ -31,16 +32,16 @@ PricingStabilizationBase::PricingStabilizationBase(PricerSolverBase*    _solver,
 void PricingStabilizationBase::solve(double _eta_out,
                                      //  const std::vector<double>& _pi_out,
                                      double* _lhs) {
-    solver->calculate_constLB(pi_out.data());
-    sol = solver->pricing_algorithm(pi_out.data());
-    reduced_cost = solver->compute_reduced_cost(sol, pi_out.data(), _lhs);
+    solver->calculate_constLB(pi_out);
+    sol = solver->pricing_algorithm(pi_out);
+    reduced_cost = solver->compute_reduced_cost(sol, pi_out, _lhs);
     eta_sep = solver->compute_lagrange(sol, pi_out);
     update_stab_center = false;
     eta_out = _eta_out;
     continueLP = (eta_in < eta_out);
     if (eta_sep > eta_in) {
         eta_in = eta_sep;
-        pi_in = pi_out;
+        pi_in.assign(pi_out.begin(), pi_out.end());
         update_stab_center = true;
     }
 
@@ -123,8 +124,8 @@ void PricingStabilizationBase::update_continueLP(double obj) {
 }
 
 std::unique_ptr<PricingStabilizationBase> PricingStabilizationBase::clone(
-    PricerSolverBase*    _solver,
-    std::vector<double>& _pi_out) {
+    PricerSolverBase*        _solver,
+    std::span<const double>& _pi_out) {
     return std::make_unique<PricingStabilizationBase>(_solver, _pi_out);
 }
 /**
@@ -138,8 +139,9 @@ std::unique_ptr<PricingStabilizationBase> PricingStabilizationBase::clone(
  *
  * @param _solver
  */
-PricingStabilizationStat::PricingStabilizationStat(PricerSolverBase*    _solver,
-                                                   std::vector<double>& _pi_out)
+PricingStabilizationStat::PricingStabilizationStat(
+    PricerSolverBase*        _solver,
+    std::span<const double>& _pi_out)
     : PricingStabilizationBase(_solver, _pi_out) {}
 
 /**
@@ -168,7 +170,7 @@ void PricingStabilizationStat::solve(double _eta_out, double* _lhs_coeff) {
 
         eta_sep = solver->compute_lagrange(aux_sol, pi_sep);
         reduced_cost =
-            solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs_coeff);
+            solver->compute_reduced_cost(aux_sol, pi_out, _lhs_coeff);
 
         if (reduced_cost < EPS_RC) {
             sol = std::move(aux_sol);
@@ -205,7 +207,7 @@ bool PricingStabilizationStat::stopping_criteria() {
 void PricingStabilizationStat::update_duals() {
     if (solver->reformulation_model.size() != pi_sep.size()) {
         pi_sep.resize(solver->reformulation_model.size(), 0.0);
-        pi_out.resize(solver->reformulation_model.size(), 0.0);
+        // pi_out.resize(solver->reformulation_model.size(), 0.0);
         pi_in.resize(solver->reformulation_model.size(), 0.0);
     }
 }
@@ -213,8 +215,8 @@ void PricingStabilizationStat::update_duals() {
 void PricingStabilizationStat::remove_constraints(int first, int nb_del) {
     auto it_in = pi_in.begin() + first;
     pi_in.erase(it_in, it_in + nb_del);
-    auto it_out = pi_out.begin() + first;
-    pi_out.erase(it_out, it_out + nb_del);
+    // auto it_out = pi_out.begin() + first;
+    // pi_out.erase(it_out, it_out + nb_del);
     auto it_sep = pi_sep.begin() + first;
     pi_sep.erase(it_sep, it_sep + nb_del);
 }
@@ -234,8 +236,8 @@ void PricingStabilizationStat::compute_pi_eta_sep(double _alpha_bar) {
 }
 
 std::unique_ptr<PricingStabilizationBase> PricingStabilizationStat::clone(
-    PricerSolverBase*    _solver,
-    std::vector<double>& _pi_out) {
+    PricerSolverBase*        _solver,
+    std::span<const double>& _pi_out) {
     return std::make_unique<PricingStabilizationStat>(_solver, _pi_out);
 }
 
@@ -244,8 +246,8 @@ std::unique_ptr<PricingStabilizationBase> PricingStabilizationStat::clone(
  */
 
 PricingStabilizationDynamic::PricingStabilizationDynamic(
-    PricerSolverBase*    _solver,
-    std::vector<double>& _pi_out)
+    PricerSolverBase*        _solver,
+    std::span<const double>& _pi_out)
     : PricingStabilizationStat(_solver, _pi_out),
       subgradient(_solver->convex_constr_id + 1, 0.0)
 
@@ -267,8 +269,7 @@ void PricingStabilizationDynamic::solve(double _eta_out, double* _lhs) {
         compute_pi_eta_sep(alphabar);
         auto aux_sol = solver->pricing_algorithm(pi_sep.data());
         result_sep = solver->compute_lagrange(aux_sol, pi_sep);
-        reduced_cost =
-            solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs);
+        reduced_cost = solver->compute_reduced_cost(aux_sol, pi_out, _lhs);
 
         if (reduced_cost < EPS_RC) {
             solver->compute_subgradient(aux_sol, subgradient.data());
@@ -332,14 +333,14 @@ void PricingStabilizationDynamic::adjust_alpha() {
 
 std::unique_ptr<PricingStabilizationBase> PricingStabilizationDynamic::clone(
     PricerSolverBase*    _solver,
-    std::vector<double>& _pi_out) {
+    std::span<const double>& _pi_out) {
     return std::make_unique<PricingStabilizationDynamic>(_solver, _pi_out);
 }
 
 void PricingStabilizationDynamic::update_duals() {
     if (solver->reformulation_model.size() != pi_sep.size()) {
         pi_sep.resize(solver->reformulation_model.size(), 0.0);
-        pi_out.resize(solver->reformulation_model.size(), 0.0);
+        // pi_out.resize(solver->reformulation_model.size(), 0.0);
         pi_in.resize(solver->reformulation_model.size(), 0.0);
         subgradient.resize(solver->reformulation_model.size(), 0.0);
     }
@@ -348,8 +349,8 @@ void PricingStabilizationDynamic::update_duals() {
 void PricingStabilizationDynamic::remove_constraints(int first, int nb_del) {
     auto it_in = pi_in.begin() + first;
     pi_in.erase(it_in, it_in + nb_del);
-    auto it_out = pi_out.begin() + first;
-    pi_out.erase(it_out, it_out + nb_del);
+    // auto it_out = pi_out.begin() + first;
+    // pi_out.erase(it_out, it_out + nb_del);
     auto it_sep = pi_sep.begin() + first;
     pi_sep.erase(it_sep, it_sep + nb_del);
     auto it_sub = subgradient.begin() + first;
@@ -363,15 +364,15 @@ Hybrid object
  * @param pricer_solver
  */
 PricingStabilizationHybrid::PricingStabilizationHybrid(
-    PricerSolverBase*    pricer_solver,
-    std::vector<double>& _pi_out)
+    PricerSolverBase*        pricer_solver,
+    std::span<const double>& _pi_out)
     : PricingStabilizationDynamic(pricer_solver, _pi_out),
       subgradient_in(pricer_solver->convex_constr_id + 1) {}
 
 void PricingStabilizationHybrid::update_duals() {
     if (solver->reformulation_model.size() != pi_sep.size()) {
         pi_sep.resize(solver->reformulation_model.size(), 0.0);
-        pi_out.resize(solver->reformulation_model.size(), 0.0);
+        // pi_out.resize(solver->reformulation_model.size(), 0.0);
         pi_in.resize(solver->reformulation_model.size(), 0.0);
         subgradient_in.resize(solver->reformulation_model.size(), 0.0);
         subgradient.resize(solver->reformulation_model.size(), 0.0);
@@ -379,16 +380,16 @@ void PricingStabilizationHybrid::update_duals() {
 }
 
 std::unique_ptr<PricingStabilizationBase> PricingStabilizationHybrid::clone(
-    PricerSolverBase*    _solver,
-    std::vector<double>& _pi_out) {
+    PricerSolverBase*        _solver,
+    std::span<const double>& _pi_out) {
     return std::make_unique<PricingStabilizationBase>(_solver, _pi_out);
 }
 
 void PricingStabilizationHybrid::remove_constraints(int first, int nb_del) {
     auto it_in = pi_in.begin() + first;
     pi_in.erase(it_in, it_in + nb_del);
-    auto it_out = pi_out.begin() + first;
-    pi_out.erase(it_out, it_out + nb_del);
+    // auto it_out = pi_out.begin() + first;
+    // pi_out.erase(it_out, it_out + nb_del);
     auto it_sep = pi_sep.begin() + first;
     pi_sep.erase(it_sep, it_sep + nb_del);
     auto it_sub = subgradient.begin() + first;
@@ -418,8 +419,7 @@ void PricingStabilizationHybrid::solve(double _eta_out,
         aux_sol = solver->pricing_algorithm(pi_sep.data());
 
         eta_sep = solver->compute_lagrange(aux_sol, pi_sep);
-        reduced_cost =
-            solver->compute_reduced_cost(aux_sol, pi_out.data(), _lhs);
+        reduced_cost = solver->compute_reduced_cost(aux_sol, pi_out, _lhs);
 
         update_stabcenter(aux_sol);
 

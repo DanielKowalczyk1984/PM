@@ -76,7 +76,7 @@ int NodeData::solve_pricing() {
 }
 
 void NodeData::solve_farkas_dbl() {
-    PricingSolution<double> s = solver->farkas_pricing(pi.data());
+    PricingSolution<double> s = solver->farkas_pricing(pi);
 
     if (s.obj < EPS) {
         localColPool.emplace_back(std::make_shared<Column>(std::move(s)));
