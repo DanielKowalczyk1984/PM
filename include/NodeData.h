@@ -155,7 +155,6 @@ struct NodeData {
 
     std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
                                                                 long   _t);
-    int add_column_to_rmp(const Column* set);
 
    private:
     int add_lhs_column_to_rmp(double cost);

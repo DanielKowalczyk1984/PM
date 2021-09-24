@@ -69,37 +69,6 @@ int NodeData::add_lhs_column_to_rmp(double                     cost,
     return 0;
 }
 
-int NodeData::add_column_to_rmp(const Column* set) {
-    auto var_ind = 0;
-    auto cval = 0.0;
-    auto cost = set->total_weighted_completion_time;
-    // auto* lp = RMP.get();
-
-    // lp_interface_get_nb_cols(lp, &(nb_cols));
-    // var_ind = nb_cols;
-    // lp_interface_addcol(lp, 0, nullptr, nullptr, cost, 0.0, GRB_INFINITY,
-    //                     lp_interface_CONT, nullptr);
-
-    osi_rmp->addCol(0, nullptr, nullptr, 0.0, osi_rmp->getInfinity(), cost);
-    solver->compute_lhs(*set, lhs_coeff.data());
-    add_lhs_column_to_rmp(set->total_weighted_completion_time);
-
-    // ranges::for_each(
-    //     set->job_list,
-    //     [&](auto ind) {
-    //         lp_interface_getcoeff(lp, &ind, &var_ind, &cval);
-    //         cval += 1.0;
-    //         lp_interface_chgcoeff(lp, 1, &ind, &var_ind, &cval);
-    //     },
-    //     [](const auto tmp) { return static_cast<int>(tmp->job); });
-
-    // auto row_ind = static_cast<int>(nb_jobs);
-    // cval = -1.0;
-    // lp_interface_chgcoeff(lp, 1, &row_ind, &var_ind, &cval);
-
-    return 0;
-}
-
 void NodeData::create_assignment_constraints() {
     id_assignment_constraint = osi_rmp->getNumRows();
     std::vector<int>    start(nb_jobs + 1, 0);
@@ -168,66 +137,13 @@ int NodeData::build_rmp() {
     osi_rmp->messageHandler()->setPrefix(false);
     osi_rmp->setHintParam(OsiDoReducePrint, true, OsiHintTry);
 
-    // std::vector<int>    start(nb_jobs + 1, 0);
-    // std::vector<double> rhs_tmp(nb_jobs, 1.0);
-    // std::vector<char>   sense(nb_jobs, GRB_GREATER_EQUAL);
-
-    /**
-     * add assignment constraints
-     */
-    // lp_interface_get_nb_rows(RMP.get(), &(id_assignment_constraint));
-    // lp_interface_addrows(RMP.get(), static_cast<int>(nb_jobs), 0,
-    // start.data(),
-    //                      nullptr, nullptr, sense.data(), rhs_tmp.data(),
-    //                      nullptr);
-
-    /**
-     * add number of machines constraint (convexification)
-     */
-    // lp_interface_get_nb_rows(RMP.get(), &(id_convex_constraint));
-    // lp_interface_addrow(RMP.get(), 0, nullptr, nullptr,
-    //                     lp_interface_GREATER_EQUAL,
-    //                     -static_cast<double>(nb_machines), nullptr);
-    // lp_interface_get_nb_rows(RMP.get(), &(id_valid_cuts));
-    // nb_rows = id_valid_cuts;
-
-    /**
-     * construct artificial variables in RMP
-     */
-    // lp_interface_get_nb_cols(RMP.get(), &(id_art_var_assignment));
-    // id_art_var_convex = nb_jobs;
-    // id_art_var_cuts = nb_jobs + 1;
-    // id_next_var_cuts = id_art_var_cuts;
-    // auto nb_vars = nb_jobs + 1 + max_nb_cuts;
-    // id_pseudo_schedules = static_cast<int>(nb_vars);
-
-    // std::vector<double> lb(nb_vars, 0.0);
-    // std::vector<double> ub(nb_vars, GRB_INFINITY);
-    // std::vector<double> obj(nb_vars, 100.0 * (opt_sol.tw + 1));
-    // std::vector<char>   vtype(nb_vars, GRB_CONTINUOUS);
-    // std::vector<int> start_vars(nb_vars + 1, static_cast<int>(nb_jobs +
-    // 1UL));
-
-    // auto nz = static_cast<int>(nb_jobs + 1UL);
-
-    // std::vector<int> rows_ind(nz);
-    // ranges::iota(rows_ind, 0);
-    // std::vector<double> coeff_vals(nz, 1.0);
-    // coeff_vals[nb_jobs] = -1.0;
-    // ranges::iota(start_vars | ranges::views::take(nz), 0);
-
-    // lp_interface_addcols(RMP.get(), static_cast<int>(nb_vars), nz,
-    //                      start_vars.data(), rows_ind.data(),
-    //                      coeff_vals.data(), obj.data(), lb.data(), ub.data(),
-    //                      vtype.data(), nullptr);
-    // lp_interface_get_nb_cols(RMP.get(), &(id_pseudo_schedules));
-
     create_assignment_constraints();
     create_convex_contraint();
     create_artificial_cols();
 
     prune_duplicated_sets();
     add_cols_local_pool();
+    osi_rmp->initialSolve();
 
     /**
      * Some aux variables for column generation
