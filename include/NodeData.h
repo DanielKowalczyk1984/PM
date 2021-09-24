@@ -49,15 +49,16 @@ struct NodeData {
 
     std::unique_ptr<OsiSolverInterface> osi_rmp;
     std::vector<int>                    row_status;
-    // std::span<const double> osi_pi;
 
     std::vector<double> lambda;
-    std::vector<double> pi;
-    std::vector<double> slack;
-    std::vector<double> rhs;
-    std::vector<double> lhs_coeff;
-    std::vector<int>    id_row;
-    std::vector<double> coeff_row;
+    // std::vector<double> pi;
+    std::span<const double> pi;
+    std::vector<double>     slack;
+    // std::vector<double>     rhs;
+    std::span<const double> rhs;
+    std::vector<double>     lhs_coeff;
+    std::vector<int>        id_row;
+    std::vector<double>     coeff_row;
 
     int nb_rows;
     int nb_cols;
