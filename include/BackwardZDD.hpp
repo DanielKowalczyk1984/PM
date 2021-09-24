@@ -4,6 +4,7 @@
 #include <cassert>                   // for assert
 #include <cstddef>                   // for size_t
 #include <memory>                    // for shared_ptr, __shared_ptr_access
+#include <span>                      //for span
 #include <vector>                    // for vector
 #include "Job.h"                     // for bool_diff_Fij, Job
 #include "Label.hpp"                 // for Label
@@ -14,8 +15,8 @@
 template <typename T = double>
 class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
    protected:
-    T*     pi{nullptr};
-    size_t num_jobs{};
+    const T* pi{nullptr};
+    size_t   num_jobs{};
 
    public:
     BackwardZDDBase(T* _pi, size_t _num_jobs) : pi(_pi), num_jobs(_num_jobs){};
@@ -27,8 +28,9 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
     BackwardZDDBase<T>& operator=(BackwardZDDBase<T>&&) noexcept = default;
     ~BackwardZDDBase() = default;
 
-    void                 initialize_pi(T* _pi) { pi = _pi; }
-    T*                   get_pi() const { return pi; }
+    void     initialize_pi(T* _pi) { pi = _pi; }
+    void     initialize_pi(std::span<const T> _pi) { pi = _pi.data(); }
+    const T* get_pi() const { return pi; }
     [[nodiscard]] size_t get_num_jobs() const { return num_jobs; }
 
     virtual void initializenode(NodeZdd<T>& n) const = 0;

@@ -1,18 +1,21 @@
 #ifndef BACKWARD_BDD_HPP
 #define BACKWARD_BDD_HPP
+#include <array>
 #include <range/v3/action/remove_if.hpp>  // for remove_if
+#include <span>                           //for span
+#include "ModernDD/NodeBddEval.hpp"       // for Eval
 #include "NodeBdd.hpp"                    // for NodeBdd
-#include "ModernDD/NodeBddEval.hpp"                // for Eval
 #include "PricingSolution.hpp"            // for PricingSolution
 
 template <typename T = double>
 class BackwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
-    double* pi{};
+    const double* pi{};
 
    public:
     BackwardBddBase() = default;
 
     void set_pi(double* _pi) { pi = _pi; }
+    void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
 
     [[nodiscard]] const double* get_pi() const { return pi; }
 

@@ -58,15 +58,22 @@ struct PricerSolverBase {
     [[nodiscard]] virtual std::unique_ptr<PricerSolverBase> clone() const = 0;
 
     virtual PricingSolution<double> pricing_algorithm(double* _pi) = 0;
+    virtual PricingSolution<double> pricing_algorithm(
+        std::span<const double>& pi) = 0;
     virtual PricingSolution<double> farkas_pricing(double* _pi) = 0;
+    virtual PricingSolution<double> farkas_pricing(
+        std::span<const double>& pi) = 0;
 
     virtual bool evaluate_nodes(double* pi) = 0;
+    virtual bool evaluate_nodes(std::span<const double>& pi) = 0;
     virtual bool refinement_structure(
         [[maybe_unused]] const std::vector<std::shared_ptr<Column>>& paths) {
         return false;
     };
     virtual void enumerate_columns(){};
     virtual void enumerate_columns([[maybe_unused]] double* _pi){};
+    virtual void enumerate_columns(
+        [[maybe_unused]] std::span<const double>& _pi){};
 
     /** Original Mip formulation */
     virtual void build_mip() = 0;
@@ -75,8 +82,15 @@ struct PricerSolverBase {
         const double*                               lambda,
         const std::vector<std::shared_ptr<Column>>& columns) = 0;
 
+    virtual void construct_lp_sol_from_rmp(
+        const std::span<const double>&              lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) = 0;
+
     bool compute_sub_optimal_duals(
         const double*                               lambda,
+        const std::vector<std::shared_ptr<Column>>& columns);
+    bool compute_sub_optimal_duals(
+        const std::span<const double>&              lambda,
         const std::vector<std::shared_ptr<Column>>& columns);
     virtual void project_sol_on_original_variables(const Sol& _sol) {
         _sol.print_solution();
@@ -135,12 +149,22 @@ struct PricerSolverBase {
     virtual double compute_reduced_cost(const PricingSolution<>& sol,
                                         double*                  pi,
                                         double*                  lhs);
+    virtual double compute_reduced_cost(const PricingSolution<>& sol,
+                                        std::span<const double>& pi,
+                                        double*                  lhs);
+
+    virtual void compute_lhs(const PricingSolution<>& sol, double* lhs);
+    virtual void compute_lhs(const Column& sol, double* lhs);
 
     virtual double compute_reduced_cost_simple(const PricingSolution<>& sol,
                                                double*                  pi);
+    virtual double compute_reduced_cost_simple(const PricingSolution<>& sol,
+                                               std::span<const double>& pi);
 
     virtual double compute_lagrange(const PricingSolution<>&   sol,
                                     const std::vector<double>& pi);
+    virtual double compute_lagrange(const PricingSolution<>&       sol,
+                                    const std::span<const double>& pi);
 
     virtual double compute_subgradient(const PricingSolution<>& sol,
                                        double*                  subgradient);
@@ -158,6 +182,7 @@ struct PricerSolverBase {
     inline std::vector<BddCoeff>& get_lp_sol();
 
     void calculate_constLB(double* pi);
+    void calculate_constLB(std::span<const double>& pi);
 };
 
 #endif  // PRICER_SOLVER_BASE_HPP

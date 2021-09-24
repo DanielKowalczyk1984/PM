@@ -1,12 +1,12 @@
 #ifndef PRICER_SOLVER_ZDD_HPP
 #define PRICER_SOLVER_ZDD_HPP
+#include <cstddef>                        // for size_t
+#include <memory>                         // for unique_ptr, shared_ptr
+#include <utility>                        // for pair
+#include <vector>                         // for vector
+#include "Instance.h"                     // for Instance
+#include "MipGraph.hpp"                   // for MipGraph
 #include "ModernDD/NodeBddStructure.hpp"  // for DdStructure
-#include <cstddef>               // for size_t
-#include <memory>                // for unique_ptr, shared_ptr
-#include <utility>               // for pair
-#include <vector>                // for vector
-#include "Instance.h"            // for Instance
-#include "MipGraph.hpp"          // for MipGraph
 #include "PricerSolverBase.hpp"  // for PricerSolverBase, PricerSolverBase::...
 #include "PricingSolution.hpp"   // for PricingSolution
 #include "ZddNode.hpp"           // for NodeZdd
@@ -57,6 +57,9 @@ class PricerSolverZdd : public PricerSolverBase {
     void construct_lp_sol_from_rmp(
         const double*                               lambda,
         const std::vector<std::shared_ptr<Column>>& columns) override;
+    void construct_lp_sol_from_rmp(
+        const std::span<const double>&              lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) override;
     bool    check_column(Column const* set) override;
     size_t  get_nb_edges() override;
     size_t  get_nb_vertices() override;
@@ -64,6 +67,8 @@ class PricerSolverZdd : public PricerSolverBase {
     void    remove_layers_init();
 
     PricingSolution<double> farkas_pricing(double* pi) override;
+    PricingSolution<double> farkas_pricing(
+        std::span<const double>& pi) override;
 
     void update_constraints() override {}
 

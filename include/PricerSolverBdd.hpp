@@ -2,6 +2,7 @@
 #define PRICER_SOLVER_BDD_HPP
 #include <cstddef>                        // for size_t
 #include <memory>                         // for unique_ptr, shared_ptr
+#include <span>                           // for span
 #include <utility>                        // for pair
 #include <vector>                         // for vector
 #include "Instance.h"                     // for Instance
@@ -56,13 +57,16 @@ class PricerSolverBdd : public PricerSolverBase {
         const std::vector<std::shared_ptr<Column>>& paths) override;
     void enumerate_columns() override;
     void enumerate_columns(double* _pi) override;
+    void enumerate_columns(std::span<const double>& _pi) override;
     bool evaluate_nodes(double* _pi) override;
+    bool evaluate_nodes(std::span<const double>& _pi) override;
 
     bool check_column(Column const* set) override;
     [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override = 0;
     virtual double evaluate_rc_arc(NodeBdd<>& n) = 0;
     double         evaluate_rc_low_arc(NodeBdd<>& n);
     virtual void   compute_labels(double* _pi) = 0;
+    virtual void   compute_labels(std::span<const double>& _pi) = 0;
 
     void remove_layers();
     void remove_edges();
@@ -74,6 +78,9 @@ class PricerSolverBdd : public PricerSolverBase {
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                               lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) override;
+    void construct_lp_sol_from_rmp(
+        const std::span<const double>&              lambda,
         const std::vector<std::shared_ptr<Column>>& columns) override;
 
     void project_sol_on_original_variables(const Sol& _sol) override;
@@ -106,8 +113,17 @@ class PricerSolverBdd : public PricerSolverBase {
                                 double*                  pi,
                                 double*                  lhs) override;
 
+    double compute_reduced_cost(const PricingSolution<>& sol,
+                                std::span<const double>& pi,
+                                double*                  lhs) override;
+
+    void compute_lhs(const PricingSolution<>& sol, double* lhs) override;
+    void compute_lhs(const Column& sol, double* lhs) override;
+
     double compute_lagrange(const PricingSolution<>&   sol,
                             const std::vector<double>& pi) override;
+    double compute_lagrange(const PricingSolution<>&       sol,
+                            const std::span<const double>& pi) override;
 
     double compute_subgradient(const PricingSolution<>& sol,
                                double*                  sub_gradient) override;

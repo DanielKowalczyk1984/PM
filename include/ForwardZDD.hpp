@@ -1,22 +1,23 @@
 #ifndef DURATION_ZDD_HPP
 #define DURATION_ZDD_HPP
 
-#include <cassert>            // for assert
-#include <cstddef>              // for size_t
-#include <limits>               // for numeric_limits
-#include <memory>               // for shared_ptr
-#include "Job.h"                // for value_diff_Fij, Job
-#include "ModernDD/NodeBddEval.hpp"      // for Eval
-#include "PricingSolution.hpp"  // for PricingSolution
-#include "ZddNode.hpp"          // for NodeZdd, SubNodeZdd, compare_sub_nodes
+#include <cassert>                   // for assert
+#include <cstddef>                   // for size_t
+#include <limits>                    // for numeric_limits
+#include <memory>                    // for shared_ptr
+#include <span>                      // for span
+#include "Job.h"                     // for value_diff_Fij, Job
+#include "ModernDD/NodeBddEval.hpp"  // for Eval
+#include "PricingSolution.hpp"       // for PricingSolution
+#include "ZddNode.hpp"  // for NodeZdd, SubNodeZdd, compare_sub_nodes
 template <typename N, typename T>
 class Label;
 
 template <typename T = double>
 class ForwardZddBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
    protected:
-    T*     pi;
-    size_t num_jobs;
+    const T* pi;
+    size_t   num_jobs;
 
    public:
     ForwardZddBase(T* _pi, size_t _num_jobs) : pi(_pi), num_jobs(_num_jobs) {}
@@ -39,6 +40,7 @@ class ForwardZddBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
     // }
 
     void initialize_pi(T* _pi) { pi = _pi; }
+    void initialize_pi(std::span<const T> _pi) { pi = _pi.data(); }
 
     virtual void initializenode(NodeZdd<T>& n) const = 0;
 
@@ -249,6 +251,7 @@ class ForwardZddSimple : public ForwardZddBase<T> {
     }
 
     void initialize_pi(T* _pi) { pi = _pi; }
+    void initialize_pi(std::span<const T>& _pi) { pi = _pi.data(); }
 
     void evalNode(NodeZdd<T>& n) const override {
         Job* tmp_j = n.get_job();

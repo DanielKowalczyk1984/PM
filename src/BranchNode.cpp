@@ -292,6 +292,13 @@ void BranchNodeBase::branch(BTree* bt) {
 }
 
 void BranchNodeBase::compute_bounds([[maybe_unused]] BTree* bt) {
+    if (!pd->solver->structure_feasible()) {
+        pd->status = NodeData::infeasible;
+        pd->LP_lower_bound_dual = pd->LP_lower_bound = pd->LP_lower_bound_BB =
+            pd->upper_bound;
+        pd->lower_bound = pd->upper_bound;
+        return;
+    }
     pd->compute_lower_bound();
     set_lb(pd->lower_bound);
     if (pd->solver->get_is_integer_solution()) {

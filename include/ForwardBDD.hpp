@@ -8,7 +8,7 @@
 
 template <typename T = double>
 class ForwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
-    double* pi{};
+    const double* pi{};
 
    public:
     ForwardBddBase() = default;
@@ -19,6 +19,7 @@ class ForwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
     virtual ~ForwardBddBase() = default;
 
     void set_pi(double* _pi) { pi = _pi; }
+    void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
 
     [[nodiscard]] const double* get_pi() const { return pi; }
 

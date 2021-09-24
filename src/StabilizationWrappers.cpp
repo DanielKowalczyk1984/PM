@@ -46,7 +46,11 @@ int NodeData::solve_pricing() {
         (solver_stab->get_eta_in() < upper_bound - 1.0 + EPS_BOUND)) {
         localColPool.emplace_back(
             std::make_shared<Column>(std::move(solver_stab->get_sol())));
-        val = add_lhs_column_to_rmp(localColPool.back().get());
+        // val = add_lhs_column_to_rmp(
+        //     localColPool.back().get()->total_weighted_completion_time);
+
+        val = add_lhs_column_to_rmp(
+            localColPool.back()->total_weighted_completion_time, lhs_coeff);
         // solve_relaxation();
         // double obj{};
         // lp_interface_objval(RMP.get(), &obj);
@@ -76,7 +80,8 @@ void NodeData::solve_farkas_dbl() {
 
     if (s.obj < EPS) {
         localColPool.emplace_back(std::make_shared<Column>(std::move(s)));
-        add_lhs_column_to_rmp(localColPool.back().get());
+        add_lhs_column_to_rmp(
+            localColPool.back().get()->total_weighted_completion_time);
     } else {
         nb_new_sets = 0;
     }

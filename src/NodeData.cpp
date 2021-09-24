@@ -1,5 +1,6 @@
 #include "NodeData.h"  // for NodeData
 #include <fmt/core.h>
+#include <OsiGrbSolverInterface.hpp>
 #include <array>                                // for array
 #include <cmath>                                // for sqrt
 #include <concepts/concepts.hpp>                // for return_t
@@ -35,6 +36,7 @@ NodeData::NodeData(Problem* problem)
       nb_jobs(instance.nb_jobs),
       nb_machines(instance.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
+      osi_rmp(std::make_unique<OsiGrbSolverInterface>()),
       lambda(),
       pi(),
       slack(),
@@ -84,6 +86,7 @@ NodeData::NodeData(const NodeData& src)
       nb_jobs(src.nb_jobs),
       nb_machines(src.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
+      osi_rmp(std::make_unique<OsiGrbSolverInterface>()),
       lambda(),
       pi(),
       slack(),

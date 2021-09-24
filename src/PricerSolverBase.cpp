@@ -278,8 +278,9 @@ double PricerSolverBase::compute_reduced_cost(const PricingSolution<>& sol,
     std::span aux_pi{pi, reformulation_model.size()};
     std::ranges::fill(aux_lhs, 0.0);
 
-    for (auto& it : sol.jobs) {
-        VariableKeyBase k(it->job, 0);
+    for (auto it : sol.jobs | ranges::views::transform(
+                                  [](const auto& tmp) { return tmp->job; })) {
+        VariableKeyBase k(it, 0);
         for (const auto&& [c, constr] :
              reformulation_model | ranges::views::enumerate) {
             if (c == convex_constr_id) {
@@ -302,6 +303,93 @@ double PricerSolverBase::compute_reduced_cost(const PricingSolution<>& sol,
     aux_lhs[convex_constr_id] += coeff;
 
     return result;
+}
+
+double PricerSolverBase::compute_reduced_cost(const PricingSolution<>& sol,
+                                              std::span<const double>& pi,
+                                              double*                  lhs) {
+    double result = sol.cost;
+    // auto      nb_constraints = reformulation_model.get_nb_constraints();
+    std::span aux_lhs{lhs, reformulation_model.size()};
+    std::ranges::fill(aux_lhs, 0.0);
+
+    for (auto it : sol.jobs | ranges::views::transform(
+                                  [](const auto& tmp) { return tmp->job; })) {
+        VariableKeyBase k(it, 0);
+        for (const auto&& [c, constr] :
+             reformulation_model | ranges::views::enumerate) {
+            if (c == convex_constr_id) {
+                continue;
+            }
+            auto coeff = (*constr)(k);
+
+            if (fabs(coeff) > EPS_SOLVER) {
+                result -= coeff * pi[c];
+                aux_lhs[c] += coeff;
+            }
+        }
+    }
+
+    double          dual = pi[convex_constr_id];
+    auto*           constr = reformulation_model[convex_constr_id].get();
+    VariableKeyBase k(0, 0, true);
+    double          coeff = (*constr)(k);
+    result -= coeff * dual;
+    aux_lhs[convex_constr_id] += coeff;
+
+    return result;
+}
+void PricerSolverBase::compute_lhs(const PricingSolution<>& sol, double* lhs) {
+    std::span aux_lhs{lhs, reformulation_model.size()};
+    std::ranges::fill(aux_lhs, 0.0);
+
+    for (auto it : sol.jobs | ranges::views::transform(
+                                  [](const auto& tmp) { return tmp->job; })) {
+        VariableKeyBase k(it, 0);
+        for (const auto&& [c, constr] :
+             reformulation_model | ranges::views::enumerate) {
+            if (c == convex_constr_id) {
+                continue;
+            }
+            auto coeff = (*constr)(k);
+
+            if (fabs(coeff) > EPS_SOLVER) {
+                aux_lhs[c] += coeff;
+            }
+        }
+    }
+
+    auto*           constr = reformulation_model[convex_constr_id].get();
+    VariableKeyBase k(0, 0, true);
+    double          coeff = (*constr)(k);
+    aux_lhs[convex_constr_id] += coeff;
+}
+
+void PricerSolverBase::compute_lhs(const Column& sol, double* lhs) {
+    std::span aux_lhs{lhs, reformulation_model.size()};
+    std::ranges::fill(aux_lhs, 0.0);
+
+    for (auto it : sol.job_list | ranges::views::transform([](const auto& tmp) {
+                       return tmp->job;
+                   })) {
+        VariableKeyBase k(it, 0);
+        for (const auto&& [c, constr] :
+             reformulation_model | ranges::views::enumerate) {
+            if (c == convex_constr_id) {
+                continue;
+            }
+            auto coeff = (*constr)(k);
+
+            if (fabs(coeff) > EPS_SOLVER) {
+                aux_lhs[c] += coeff;
+            }
+        }
+    }
+
+    auto*           constr = reformulation_model[convex_constr_id].get();
+    VariableKeyBase k(0, 0, true);
+    double          coeff = (*constr)(k);
+    aux_lhs[convex_constr_id] += coeff;
 }
 
 double PricerSolverBase::compute_reduced_cost_simple(
@@ -335,11 +423,83 @@ double PricerSolverBase::compute_reduced_cost_simple(
     return result;
 }
 
+double PricerSolverBase::compute_reduced_cost_simple(
+    const PricingSolution<>& sol,
+    std::span<const double>& pi) {
+    double result = sol.cost;
+
+    for (auto& it : sol.jobs) {
+        VariableKeyBase k(it->job, 0);
+        for (const auto&& [c, constr] :
+             reformulation_model | ranges::views::enumerate) {
+            if (c == convex_constr_id) {
+                continue;
+            }
+            auto coeff = (*constr)(k);
+
+            if (fabs(coeff) > EPS_SOLVER) {
+                result -= coeff * pi[c];
+            }
+        }
+    }
+
+    double          dual = pi[convex_constr_id];
+    auto*           constr = reformulation_model[convex_constr_id].get();
+    VariableKeyBase k(0, 0, true);
+    double          coeff = (*constr)(k);
+    result -= coeff * dual;
+
+    return result;
+}
+
 double PricerSolverBase::compute_lagrange(const PricingSolution<>&   sol,
                                           const std::vector<double>& pi) {
     double result = sol.cost;
     double dual_bound = 0.0;
     // std::span aux_pi{pi, reformulation_model.size()};
+
+    for (auto& it : sol.jobs) {
+        VariableKeyBase k(it->job, 0);
+        auto            dual = pi[it->job];
+        auto*           constr = reformulation_model[it->job].get();
+        auto            coeff = (*constr)(k);
+
+        if (fabs(coeff) > EPS_SOLVER) {
+            result -= coeff * dual;
+        }
+
+        for (auto c = convex_constr_id + 1; c < reformulation_model.size();
+             c++) {
+            double dual_ = pi[c];
+            double coeff_ = (*reformulation_model[c])(k);
+
+            if (fabs(coeff_) > EPS_SOLVER) {
+                result -= coeff_ * dual_;
+            }
+        }
+    }
+
+    result = std::min(0.0, result);
+
+    for (const auto&& [c, constr] :
+         reformulation_model | ranges::views::enumerate) {
+        if (c == convex_constr_id) {
+            continue;
+        }
+
+        dual_bound += constr->get_rhs() * pi[c];
+    }
+
+    result = -reformulation_model[convex_constr_id]->get_rhs() * result;
+    result = dual_bound + result;
+
+    return result;
+}
+
+double PricerSolverBase::compute_lagrange(const PricingSolution<>&       sol,
+                                          const std::span<const double>& pi) {
+    double result = sol.cost;
+    double dual_bound = 0.0;
 
     for (auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
@@ -422,6 +582,17 @@ void PricerSolverBase::calculate_constLB(double* pi) {
             continue;
         }
         constLB += constr->get_rhs() * aux_pi[c];
+    }
+}
+
+void PricerSolverBase::calculate_constLB(std::span<const double>& pi) {
+    constLB = 0.0;
+    for (const auto&& [c, constr] :
+         reformulation_model | ranges::views::enumerate) {
+        if (c == convex_constr_id) {
+            continue;
+        }
+        constLB += constr->get_rhs() * pi[c];
     }
 }
 /*-------------------------------------------------------------------------*/

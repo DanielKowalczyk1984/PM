@@ -53,11 +53,15 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void init_table();
 
     bool evaluate_nodes([[maybe_unused]] double* pi) override;
+    bool evaluate_nodes([[maybe_unused]] std::span<const double>& pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                               lambda,
         const std::vector<std::shared_ptr<Column>>& columns) override;
 
+    void construct_lp_sol_from_rmp(
+        const std::span<const double>&              lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) override;
     size_t  get_nb_edges() override;
     size_t  get_nb_vertices() override;
     cpp_int print_num_paths() override;
@@ -65,9 +69,15 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     bool check_column(Column const* set) override;
 
     PricingSolution<double> pricing_algorithm(double* _pi) override;
+    PricingSolution<double> pricing_algorithm(
+        std::span<const double>& _pi) override;
     PricingSolution<double> farkas_pricing(double* _pi) override;
-    void                    forward_evaluator(double* _pi);
-    void                    backward_evaluator(double* _pi);
+    PricingSolution<double> farkas_pricing(
+        std::span<const double>& _pi) override;
+    void forward_evaluator(double* _pi);
+    void forward_evaluator(std::span<const double>& _pi);
+    void backward_evaluator(double* _pi);
+    void backward_evaluator(std::span<const double>& _pi);
 
     void update_constraints() override {}
 

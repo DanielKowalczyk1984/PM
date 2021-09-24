@@ -70,6 +70,57 @@ void PricerSolverSimpleDp::init_table() {
     fmt::print("Number of arcs in TI formulation = {}\n", size_graph);
 }
 
+bool PricerSolverSimpleDp::evaluate_nodes(
+    [[maybe_unused]] std::span<const double>& pi) {
+    forward_evaluator(pi);
+    backward_evaluator(pi);
+
+    auto counter = 0UL;
+    auto x = 0UL;
+    auto num_removed = 0;
+
+    for (auto t = 0UL; t < Hmax + 1; ++t) {
+        auto it = forward_graph[t].begin();
+        while (it != forward_graph[t].end()) {
+            double result = F[t - (*it)->processing_time] +
+                            (*it)->weighted_tardiness(t) - pi[(*it)->job] +
+                            backward_F[t];
+
+            if (constLB + result +
+                    static_cast<double>(convex_rhs - 1) * F[Hmax] >
+                UB - 1.0 + RC_FIXING) {
+                --size_graph;
+                it = forward_graph[t].erase(it);
+                ++num_removed;
+            } else {
+                it++;
+            }
+        }
+
+        x += forward_graph[t].size();
+
+        auto iter = backward_graph[t].begin();
+        while (iter != backward_graph[t].end()) {
+            double result = F[t] + (*iter)->weighted_tardiness_start(t) -
+                            pi[(*iter)->job] +
+                            backward_F[t + (*iter)->processing_time];
+            if (constLB + result +
+                    static_cast<double>(convex_rhs - 1) * F[Hmax] >
+                UB - 1.0 + RC_FIXING) {
+                take[(*iter)->job * (Hmax + 1) + t] = false;
+                iter = backward_graph[t].erase(iter);
+            } else {
+                take[(*iter)->job * (Hmax + 1) + t] = true;
+                iter++;
+            }
+        }
+
+        counter += backward_graph[t].size();
+    }
+
+    return (num_removed > 0);
+}
+
 bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
     forward_evaluator(pi);
     backward_evaluator(pi);
@@ -199,6 +250,35 @@ void PricerSolverSimpleDp::build_mip() {
     model.optimize();
 }
 
+void PricerSolverSimpleDp::forward_evaluator(std::span<const double>& _pi) {
+    /** Initialisation */
+    F[0] = 0.0;
+    A[0] = nullptr;
+
+    for (auto t = 1UL; t < Hmax + 1; t++) {
+        F[t] = std::numeric_limits<double>::max() / 2;
+        A[t] = nullptr;
+    }
+
+    /** Recursion */
+    for (auto t = 1UL; t < Hmax + 1; t++) {
+        for (auto& it : forward_graph[t]) {
+            if (F[t - it->processing_time] +
+                    static_cast<double>(it->weighted_tardiness(t)) -
+                    _pi[it->job] <=
+                F[t]) {
+                F[t] = F[t - it->processing_time] + it->weighted_tardiness(t) -
+                       _pi[it->job];
+                A[t] = it;
+            }
+        }
+
+        if (F[t - 1] <= F[t]) {
+            F[t] = F[t - 1];
+        }
+    }
+}
+
 void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     /** Initialisation */
     std::span aux_pi{_pi, reformulation_model.size()};
@@ -229,6 +309,33 @@ void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     }
 }
 
+void PricerSolverSimpleDp::backward_evaluator(std::span<const double>& _pi) {
+    backward_F[Hmax] = 0.0;
+
+    for (auto t = 0UL; t < Hmax; t++) {
+        backward_F[t] = std::numeric_limits<double>::max() / 2;
+    }
+
+    for (auto t : ranges::views::ints(0UL, Hmax) | ranges::views::reverse) {
+        for (auto& it : backward_graph[t]) {
+            auto tt = t + it->processing_time;
+            if (backward_F[tt] +
+                    static_cast<double>(it->weighted_tardiness(tt)) -
+                    _pi[it->job] <=
+                backward_F[t]) {
+                backward_F[t] =
+                    backward_F[tt] +
+                    static_cast<double>(it->weighted_tardiness(tt)) -
+                    _pi[it->job];
+            }
+        }
+
+        if (backward_F[t + 1] <= backward_F[t]) {
+            backward_F[t] = backward_F[t + 1];
+        }
+    }
+}
+
 void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     backward_F[Hmax] = 0.0;
     std::span aux_pi{_pi, reformulation_model.size()};
@@ -255,6 +362,44 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
             backward_F[t] = backward_F[t + 1];
         }
     }
+}
+
+PricingSolution<double> PricerSolverSimpleDp::pricing_algorithm(
+    std::span<const double>& _pi) {
+    PricingSolution<double> opt_sol;
+    opt_sol.cost = 0;
+    std::vector<Job*> v;
+
+    forward_evaluator(_pi);
+
+    /** Find optimal solution */
+    opt_sol.obj = std::numeric_limits<double>::max();
+
+    for (auto i = 0UL; i < Hmax + 1; i++) {
+        if (F[i] < opt_sol.obj) {
+            opt_sol.C_max = i;
+            opt_sol.obj = F[i];
+        }
+    }
+
+    auto t_min = opt_sol.C_max;
+
+    /** Construct the solution */
+    while (A[t_min] != nullptr) {
+        Job* job = A[t_min];
+        v.push_back(A[t_min]);
+        opt_sol.cost += A[t_min]->weighted_tardiness(t_min);
+        t_min -= job->processing_time;
+    }
+
+    auto it = v.rbegin();
+
+    for (; it != v.rend(); ++it) {
+        opt_sol.jobs.push_back(*it);
+    }
+
+    /** Free the memory */
+    return opt_sol;
 }
 
 PricingSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
@@ -301,6 +446,13 @@ PricingSolution<double> PricerSolverSimpleDp::farkas_pricing(
     return opt_sol;
 }
 
+PricingSolution<double> PricerSolverSimpleDp::farkas_pricing(
+    [[maybe_unused]] std::span<const double>& _pi) {
+    PricingSolution<double> opt_sol;
+
+    return opt_sol;
+}
+
 void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     const double*                               lambda,
     const std::vector<std::shared_ptr<Column>>& columns) {
@@ -314,6 +466,23 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
             // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
             for (auto& it : tmp->job_list) {
                 lp_x[(it->job) * (Hmax + 1) + t] += aux_cols[k];
+                t += it->processing_time;
+            }
+        }
+    }
+}
+void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
+    const std::span<const double>&              lambda,
+    const std::vector<std::shared_ptr<Column>>& columns) {
+    // std::span aux_columns{columns->pdata, columns->len};
+    std::fill(lp_x.begin(), lp_x.end(), 0.0);
+    for (auto k = 0UL; k < columns.size(); k++) {
+        if (lambda[k] > EPS_SOLVER) {
+            auto* tmp = columns[k].get();
+            int   t = 0;
+            // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
+            for (auto& it : tmp->job_list) {
+                lp_x[(it->job) * (Hmax + 1) + t] += lambda[k];
                 t += it->processing_time;
             }
         }
