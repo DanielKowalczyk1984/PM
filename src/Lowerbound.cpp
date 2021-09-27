@@ -19,24 +19,24 @@
 #include <range/v3/view/drop.hpp>                      // for drop, drop_fn
 #include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
 #include <range/v3/view/filter.hpp>                    // for filter_view
-#include <range/v3/view/for_each.hpp>
-#include <range/v3/view/subrange.hpp>  // for subrange
-#include <range/v3/view/take.hpp>
-#include <range/v3/view/transform.hpp>  // for transform_view
-#include <range/v3/view/view.hpp>       // for operator|, vie...
-#include <range/v3/view/zip.hpp>        // for zip_view, zip
-#include <utility>                      // for move, pair
-#include <vector>                       // for vector
-#include "Column.h"                     // for Column
-#include "Instance.h"                   // for Instance
-#include "NodeData.h"                   // for NodeData
-#include "Parms.h"                      // for Parms
-#include "PricerSolverBase.hpp"         // for PricerSolverBase
-#include "PricingStabilization.hpp"     // for PricingStabili...
-#include "Statistics.h"                 // for Statistics
-#include "gurobi_c.h"                   // for GRB_OPTIMAL
-#include "lp.h"                         // for lp_interface_g...
-#include "util.h"                       // for dbg_lvl, getRe...
+#include <range/v3/view/for_each.hpp>                  // for each
+#include <range/v3/view/subrange.hpp>                  // for subrange
+#include <range/v3/view/take.hpp>                      // for take
+#include <range/v3/view/transform.hpp>                 // for transform_view
+#include <range/v3/view/view.hpp>                      // for operator|, vie...
+#include <range/v3/view/zip.hpp>                       // for zip_view, zip
+#include <utility>                                     // for move, pair
+#include <vector>                                      // for vector
+#include "Column.h"                                    // for Column
+#include "Instance.h"                                  // for Instance
+#include "NodeData.h"                                  // for NodeData
+#include "Parms.h"                                     // for Parms
+#include "PricerSolverBase.hpp"                        // for PricerSolverBase
+#include "PricingStabilization.hpp"                    // for PricingStabili...
+#include "Statistics.h"                                // for Statistics
+#include "gurobi_c.h"                                  // for GRB_OPTIMAL
+#include "lp.h"                                        // for lp_interface_g...
+#include "util.h"                                      // for dbg_lvl, getRe...
 
 /** Help function for column generation */
 void NodeData::print_ages() {
@@ -368,9 +368,9 @@ int NodeData::compute_objective() {
 }
 
 int NodeData::solve_relaxation() {
-    int    val = 0;
-    int    status_RMP = 0;
-    double real_time_solve_lp = 0.0;
+    auto val = 0;
+    auto status_RMP = false;
+    auto real_time_solve_lp = 0.0;
 
     /** Compute LP relaxation */
     real_time_solve_lp = getRealTime();
@@ -391,7 +391,8 @@ int NodeData::solve_relaxation() {
         print_ages();
     }
 
-    if (osi_rmp->isProvenOptimal()) {
+    status_RMP = osi_rmp->isProvenOptimal();
+    if (status_RMP) {
         grow_ages();
         pi = std::span<const double>{
             osi_rmp->getRowPrice(), static_cast<size_t>(osi_rmp->getNumRows())};
@@ -462,9 +463,10 @@ int NodeData::estimate_lower_bound(size_t _iter) {
         status_RMP = osi_rmp->isProvenOptimal();
 
         if (status_RMP) {
-            status = infeasible;
+            status = LP_bound_estimated;
             val = solve_pricing();
         } else if (osi_rmp->isProvenPrimalInfeasible()) {
+            status = infeasible;
             solve_farkas_dbl();
         }
 
@@ -478,6 +480,7 @@ int NodeData::estimate_lower_bound(size_t _iter) {
         //         solve_farkas_dbl();
         //         break;
         // }
+
         ++iterations;
 
         stat.suspend_timer(Statistics::pricing_timer);
@@ -547,8 +550,8 @@ int NodeData::compute_lower_bound() {
             /**
              * Delete old columns
              */
-            if (zero_count > nb_jobs * min_nb_del_row_ratio &&
-                status == GRB_OPTIMAL) {
+            status_RMP = osi_rmp->isProvenOptimal();
+            if (zero_count > nb_jobs * min_nb_del_row_ratio && status_RMP) {
                 delete_old_columns();
             }
 
@@ -559,12 +562,12 @@ int NodeData::compute_lower_bound() {
             stat.start_resume_timer(Statistics::pricing_timer);
             // val = lp_interface_status(RMP.get(), &status_RMP);
 
-            status_RMP = osi_rmp->isProvenOptimal();
             if (status_RMP) {
                 ++iterations;
-                status = infeasible;
+                status = LP_bound_estimated;
                 solve_pricing();
             } else {
+                status = infeasible;
                 solve_farkas_dbl();
             }
 
@@ -620,9 +623,12 @@ int NodeData::compute_lower_bound() {
                 status = LP_bound_computed;
                 construct_lp_sol_from_rmp();
                 if (parms.suboptimal_duals) {
-                    refined = solver->compute_sub_optimal_duals(lambda.data(),
-                                                                localColPool);
+                    refined =
+                        solver->compute_sub_optimal_duals(lambda, localColPool);
                     delete_infeasible_columns();
+                    if (refined) {
+                        status = LP_bound_estimated;
+                    }
                 }
                 if (parms.refine_bdd &&
                     nb_non_improvements < NB_NON_IMPROVEMENTS && !refined) {
@@ -633,6 +639,9 @@ int NodeData::compute_lower_bound() {
                     }
                     old_LP_bound = LP_lower_bound;
                     refined = refinement();
+                    if (refined) {
+                        status = LP_bound_estimated;
+                    }
                 }
             } else {
                 status = infeasible;
@@ -706,13 +715,13 @@ bool NodeData::refinement() {
                (nb_cols - id_pseudo_schedules));
         // lambda.resize(localColPool.size(), 0.0);
         // lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
-        auto lambda_osi = std::span<const double>{osi_rmp->getColSolution(),
-                                                  static_cast<size_t>(nb_cols)};
+        lambda = std::span<const double>{osi_rmp->getColSolution(),
+                                         static_cast<size_t>(nb_cols)};
 
         for (auto&& [it, x] :
              ranges::views::zip(
                  localColPool,
-                 lambda_osi | ranges::views::drop(id_pseudo_schedules)) |
+                 lambda | ranges::views::drop(id_pseudo_schedules)) |
                  //  ranges::views::zip(localColPool, lambda) |
                  ranges::views::filter(
                      [](const auto x) { return x > EPS; },

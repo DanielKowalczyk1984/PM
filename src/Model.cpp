@@ -145,10 +145,6 @@ int NodeData::build_rmp() {
     add_cols_local_pool();
     osi_rmp->initialSolve();
 
-    /**
-     * Some aux variables for column generation
-     */
-    // osi_rmp->initialSolve();
     // pi.resize(nb_jobs + 1, 0.0);
     slack.resize(nb_jobs + 1, 0.0);
     // rhs.resize(nb_jobs + 1, 0.0);

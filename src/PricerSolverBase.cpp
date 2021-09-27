@@ -183,6 +183,91 @@ bool PricerSolverBase::compute_sub_optimal_duals(
     return removed;
 }
 
+bool PricerSolverBase::compute_sub_optimal_duals(
+    const std::span<const double>&              lambda,
+    const std::vector<std::shared_ptr<Column>>& columns) {
+    GRBModel sub_optimal(*genv);
+    // sub_optimal.set(GRB_IntParam_OutputFlag, 1);
+    sub_optimal.set(GRB_IntAttr_ModelSense, GRB_MAXIMIZE);
+    std::vector<GRBVar> beta{jobs.size()};
+    std::vector<GRBVar> eta;
+    double              LB{};
+    auto                removed = false;
+
+    for (auto& it : beta) {
+        it = sub_optimal.addVar(0.0, GRB_INFINITY, 1.0, GRB_CONTINUOUS);
+    }
+
+    auto last = sub_optimal.addVar(
+        0.0, GRB_INFINITY, -static_cast<double>(convex_rhs), GRB_CONTINUOUS);
+
+    // std::span<const double> aux_cols{lambda, columns.size()};
+
+    for (auto&& [set, x] : ranges::views::zip(columns, lambda)) {
+        if (x > EPS_SOLVER) {
+            // auto* tmp = columns[i].get();
+            eta.emplace_back(sub_optimal.addVar(0.0, GRB_INFINITY, 1.0, 'C'));
+            GRBLinExpr expr = -last;
+            for (auto& it : set->job_list) {
+                expr += beta[it->job];
+            }
+            expr += eta.back();
+            sub_optimal.addConstr(expr, '=',
+                                  set->total_weighted_completion_time);
+            LB += set->total_weighted_completion_time * x;
+        } else {
+            // auto*      tmp = columns[i].get();
+            GRBLinExpr expr = -last;
+            for (auto& it : set->job_list) {
+                expr += beta[it->job];
+            }
+            sub_optimal.addConstr(expr, '<',
+                                  set->total_weighted_completion_time);
+        }
+    }
+
+    GRBLinExpr expr = -static_cast<double>(convex_rhs) * last;
+    for (auto& it : beta) {
+        expr += it;
+    }
+    sub_optimal.addConstr(expr, '>', LB - RC_FIXING);
+
+    auto cont = false;
+    do {
+        sub_optimal.update();
+        sub_optimal.optimize();
+
+        auto pi = beta |
+                  ranges::views::transform([&](const auto& tmp) -> double {
+                      return tmp.get(GRB_DoubleAttr_X);
+                  }) |
+                  ranges::to_vector;
+        pi.push_back(last.get(GRB_DoubleAttr_X));
+
+        auto sol = pricing_algorithm(pi.data());
+        auto rc = sol.cost + pi.back();
+        for (auto& it : sol.jobs) {
+            rc -= pi[it->job];
+        }
+
+        if (rc < -RC_FIXING) {
+            GRBLinExpr expr_pricing = -last;
+            for (auto& it : sol.jobs) {
+                expr_pricing += beta[it->job];
+            }
+            sub_optimal.addConstr(expr_pricing, '<', sol.cost);
+            cont = true;
+        } else {
+            cont = false;
+            calculate_constLB(pi.data());
+            removed = evaluate_nodes(pi.data());
+        }
+
+    } while (cont);
+
+    return removed;
+}
+
 void PricerSolverBase::remove_constraints(int first, int nb_del) {
     reformulation_model.delete_constraints(first, nb_del);
 }

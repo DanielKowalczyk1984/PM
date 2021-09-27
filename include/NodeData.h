@@ -50,7 +50,8 @@ struct NodeData {
     std::unique_ptr<OsiSolverInterface> osi_rmp;
     std::vector<int>                    row_status;
 
-    std::vector<double> lambda;
+    // std::vector<double> lambda;
+    std::span<const double> lambda;
     // std::vector<double> pi;
     std::span<const double> pi;
     std::vector<double>     slack;
@@ -80,8 +81,6 @@ struct NodeData {
 
     // Columns
     int                                  zero_count;
-    std::shared_ptr<Column>              newsets;
-    int                                  nb_new_sets;
     std::vector<int>                     column_status;
     std::vector<std::shared_ptr<Column>> localColPool;
 

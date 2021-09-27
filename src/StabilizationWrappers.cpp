@@ -82,7 +82,8 @@ void NodeData::solve_farkas_dbl() {
         localColPool.emplace_back(std::make_shared<Column>(std::move(s)));
         add_lhs_column_to_rmp(
             localColPool.back().get()->total_weighted_completion_time);
-    } else {
-        nb_new_sets = 0;
     }
+
+    solve_relaxation();
+    solver_stab->update_continueLP(LP_lower_bound);
 }
