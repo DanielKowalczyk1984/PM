@@ -113,3 +113,6 @@ MaxFunction*.json
 ProductScoring*.json
 Weighted*.json
 ThirdParty
+*_build
+*_release
+*_debug
