@@ -20,8 +20,8 @@
 #include <utility>                               // for move
 #include <vector>                                // for vector
 #include "ModelInterface.hpp"                    // for ConstraintGeneric
-#include "ModernDD/NodeBddTable.hpp"                      // for NodeTableEntity
-#include "ModernDD/NodeId.hpp"                            // for NodeId
+#include "ModernDD/NodeBddTable.hpp"             // for NodeTableEntity
+#include "ModernDD/NodeId.hpp"                   // for NodeId
 #include "gurobi_c.h"                            // for GRB_INFINITY, GRB_PR...
 
 ZeroHalfCuts::ZeroHalfCuts(size_t                            _nb_jobs,
@@ -82,7 +82,8 @@ void ZeroHalfCuts::generate_model() {
         auto                m = nb_machines % 2 == 0 ? 0.0 : 1.0;
         q = model->addVar(0.0, GRB_INFINITY, 0.0, 'I');
 
-        expr.addTerms(coeffs.data(), jobs_var.data(), static_cast<int>(coeffs.size()));
+        expr.addTerms(coeffs.data(), jobs_var.data(),
+                      static_cast<int>(coeffs.size()));
         expr += m * root_node.get_sigma() - m * terminal_node.get_sigma() -
                 HALF * q;
         model->addConstr(expr, '=', 1.0);
@@ -136,11 +137,11 @@ void ZeroHalfCuts::init_coeff_node(NodeBdd<>* node) {
     for (auto k : {false, true}) {
         node->reset_coeff_cut(k);
         for (auto& it : node->get_in_edges(k)) {
-            auto aux = it.lock();
-            if (aux) {
-                auto& aux_node = table->node(*aux);
-                aux_node.reset_coeff_cut(k);
-            }
+            // auto aux = it.lock();
+            // if (aux) {
+            //     auto& aux_node = table->node(*aux);
+            //     aux_node.reset_coeff_cut(k);
+            // }
         }
     }
 }
@@ -184,7 +185,7 @@ void ZeroHalfCuts::construct_cut() {
     //     }
     // };
 
-    std::ranges::for_each(node_ids, add_coeff_constr);
+    // std::ranges::for_each(node_ids, add_coeff_constr);
     // std::for_each(node_ids_lift.begin(), node_ids_lift.end(),
     // add_coeff_constr); std::for_each(node_ids.begin(), node_ids.end(),
     // print_node_ids); fmt::print("\n");
@@ -295,7 +296,7 @@ void ZeroHalfCuts::generate_cuts() {
             // }
             // fmt::print("\n");
 
-            std::ranges::for_each(node_ids, calc_coeff_cut);
+            // std::ranges::for_each(node_ids, calc_coeff_cut);
 
             // for (auto& iter : node_ids) {
             //     auto& node = table->node(iter);
@@ -423,10 +424,10 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
 
             for (auto j : {false, true}) {
                 for (auto& it : child_node.get_in_edges(j)) {
-                    auto aux = it.lock();
+                    auto aux = it;
                     if (aux) {
-                        auto& aux_node = table->node(*aux);
-                        aux_node.reduce_coeff_cut(j);
+                        // auto& aux_node = table->node(*aux);
+                        // aux_node.reduce_coeff_cut(j);
                     }
                 }
             }
