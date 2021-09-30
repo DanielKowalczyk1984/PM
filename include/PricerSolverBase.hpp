@@ -125,7 +125,7 @@ struct PricerSolverBase {
      * Some getters
      */
     virtual cpp_int print_num_paths() = 0;
-    double          get_UB();
+    [[nodiscard]] double          get_UB() const;
     void            update_UB(double _ub);
 
     virtual size_t get_nb_vertices() = 0;
@@ -138,7 +138,7 @@ struct PricerSolverBase {
     /**
      * Some printing functions
      */
-    virtual int    get_int_attr_model(enum MIP_Attr);
+    [[maybe_unused]] virtual int    get_int_attr_model(enum MIP_Attr);
     virtual double get_dbl_attr_model(enum MIP_Attr);
 
     /**
@@ -173,13 +173,7 @@ struct PricerSolverBase {
         is_integer_solution = _is_solution;
     }
 
-    inline bool get_is_integer_solution() { return is_integer_solution; }
-
-    inline ReformulationModel* get_reformulation_model() {
-        return &reformulation_model;
-    }
-
-    inline std::vector<BddCoeff>& get_lp_sol();
+    [[nodiscard]] inline bool get_is_integer_solution() const { return is_integer_solution; }
 
     void calculate_constLB(double* pi);
     void calculate_constLB(std::span<const double>& pi);
