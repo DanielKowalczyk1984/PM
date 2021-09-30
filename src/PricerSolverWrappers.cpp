@@ -28,8 +28,8 @@ void NodeData::generate_cuts() {
     // 1. add cuts to reformulation model
 
     solver->add_constraints();
-    solver->insert_constraints_lp(this);
-    solver->update_coeff_constraints();
+    // solver->insert_constraints_lp(this);
+    // solver->update_coeff_constraints();
     // 2. add cuts to lp relaxation wctlp
     // 3. adjust the pricing solver (add constraints to original model)
 }
