@@ -1,8 +1,3 @@
-// #include "PricerSolverBddForward.hpp"
-// #include <fmt/core.h>
-// #include <range/v3/all.hpp>
-// #include "Instance.h"
-// #include "PricerSolverBdd.hpp"
 #include "PricerSolverBddForward.hpp"
 #include <fmt/core.h>                            // for print
 #include <array>                                 // for array
@@ -105,7 +100,7 @@ double PricerSolverBddSimple::evaluate_rc_arc(NodeBdd<>& n) {
 //         fmt::print("Number of edges {0:<{1}}\n", get_nb_edges(), ALIGN_HALF);
 //         remove_layers();
 //         remove_edges();
-//         bottum_up_filtering();
+//         bottom_up_filtering();
 //         topdown_filtering();
 //         cleanup_arcs();
 //         construct_mipgraph();
@@ -235,7 +230,7 @@ double PricerSolverBddCycle::evaluate_rc_arc(NodeBdd<>& n) {
 //         fmt::print("Total number of edges removed {0: <{1}}\n",
 //                    get_nb_removed_edges(), ALIGN_HALF);
 //         fmt::print("Number of edges {0: <{1}}\n", get_nb_edges(),
-//         ALIGN_HALF); remove_layers(); remove_edges(); bottum_up_filtering();
+//         ALIGN_HALF); remove_layers(); remove_edges(); bottom_up_filtering();
 //         topdown_filtering();
 //         cleanup_arcs();
 //         construct_mipgraph();
