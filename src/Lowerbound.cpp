@@ -2,39 +2,27 @@
 #include <algorithm>                                   // for min, __for_eac...
 #include <cassert>                                     // for assert
 #include <cmath>                                       // for ceil, floor, fabs
-#include <compare>                                     // for operator<
 #include <functional>                                  // for identity, greater
 #include <memory>                                      // for unique_ptr
 #include <range/v3/action/action.hpp>                  // for operator|=
 #include <range/v3/action/remove_if.hpp>               // for remove_if, rem...
 #include <range/v3/algorithm/sort.hpp>                 // for sort, sort_fn
-#include <range/v3/functional/arithmetic.hpp>          // for multiplies, plus
 #include <range/v3/functional/identity.hpp>            // for identity
-#include <range/v3/iterator/basic_iterator.hpp>        // for operator!=
-#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
 #include <range/v3/numeric/inner_product.hpp>          // for inner_product
 #include <range/v3/range/conversion.hpp>               // for to_container::fn
-#include <range/v3/view/adaptor.hpp>                   // for adaptor_cursor
-#include <range/v3/view/all.hpp>                       // for all_t
 #include <range/v3/view/drop.hpp>                      // for drop, drop_fn
-#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
 #include <range/v3/view/filter.hpp>                    // for filter_view
-#include <range/v3/view/for_each.hpp>                  // for each
-#include <range/v3/view/subrange.hpp>                  // for subrange
-#include <range/v3/view/take.hpp>                      // for take
 #include <range/v3/view/transform.hpp>                 // for transform_view
 #include <range/v3/view/view.hpp>                      // for operator|, vie...
 #include <range/v3/view/zip.hpp>                       // for zip_view, zip
 #include <utility>                                     // for move, pair
 #include <vector>                                      // for vector
 #include "Column.h"                                    // for Column
-#include "Instance.h"                                  // for Instance
 #include "NodeData.h"                                  // for NodeData
 #include "Parms.h"                                     // for Parms
 #include "PricerSolverBase.hpp"                        // for PricerSolverBase
 #include "PricingStabilization.hpp"                    // for PricingStabili...
 #include "Statistics.h"                                // for Statistics
-#include "gurobi_c.h"                                  // for GRB_OPTIMAL
 #include "lp.h"                                        // for lp_interface_g...
 #include "util.h"                                      // for dbg_lvl, getRe...
 
@@ -643,6 +631,7 @@ int NodeData::compute_lower_bound() {
                         status = LP_bound_estimated;
                     }
                 }
+                generate_cuts();
             } else {
                 status = infeasible;
                 LP_lower_bound_dual = LP_lower_bound = LP_lower_bound_BB =
