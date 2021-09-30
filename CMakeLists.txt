@@ -157,6 +157,7 @@ else()
       ${OSI_LIBRARY}
       ${OSI_GRB_LIBRARY}
       ${COINUtils_LIBRARY}
+      ${CGL_LIBRARY}
       -lm
       -lpthread
     )

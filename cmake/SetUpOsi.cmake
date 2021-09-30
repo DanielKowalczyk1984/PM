@@ -12,7 +12,11 @@ endif()
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/dist")
   set(TMP_GRB_LIB "-L$ENV{GUROBI_HOME}/lib -lgurobi91 -lpthread -lm")
   execute_process(
-    COMMAND ./coinbrew build Osi --with-gurobi-lib=${TMP_GRB_LIB}
+    COMMAND ./coinbrew fetch Cgl@master
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
+  )
+  execute_process(
+    COMMAND ./coinbrew build Cgl --with-gurobi-lib=${TMP_GRB_LIB}
             --with-gurobi-incdir=$ENV{GUROBI_HOME}/include --tests none
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
   )
@@ -43,6 +47,14 @@ find_library(
   PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/dist/lib"
 )
 
+find_library(
+  CGL_LIBRARY
+  NAMES Cgl
+  PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/dist/lib"
+)
+
+message(${CGL_LIBRARY})
+
 # Version detection
 file(READ "${OSI_INCLUDE_DIR}/OsiConfig.h" OSI_CONFIG_H_CONTENTS)
 string(REGEX MATCH "#define OSI_VERSION_MAJOR *([0-9]+)" _dummy "${OSI_CONFIG_H_CONTENTS}")
@@ -57,8 +69,8 @@ include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args(
   OSI
-  REQUIRED_VARS OSI_INCLUDE_DIR OSI_LIBRARY COINUtils_LIBRARY OSI_GRB_LIBRARY
+  REQUIRED_VARS OSI_INCLUDE_DIR OSI_LIBRARY COINUtils_LIBRARY OSI_GRB_LIBRARY CGL_LIBRARY
   VERSION_VAR OSI_VERSION
 )
 
-mark_as_advanced(OSI_INCLUDE_DIR OSI_LIBRARY COINUtils_LIBRARY OSI_GRB_LIBRARY)
+mark_as_advanced(OSI_INCLUDE_DIR OSI_LIBRARY COINUtils_LIBRARY OSI_GRB_LIBRARY CGL_LIBRARY)
