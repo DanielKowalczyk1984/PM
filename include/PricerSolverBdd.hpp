@@ -1,5 +1,6 @@
 #ifndef PRICER_SOLVER_BDD_HPP
 #define PRICER_SOLVER_BDD_HPP
+#include <OsiGrbSolverInterface.hpp>      // for OsiGrbSolverInterface
 #include <cstddef>                        // for size_t
 #include <memory>                         // for unique_ptr, shared_ptr
 #include <span>                           // for span
@@ -12,7 +13,7 @@
 #include "ModernDD/NodeBddTable.hpp"      // for NodeTableEntity, TableHandler
 #include "NodeBdd.hpp"                    // for NodeBdd
 #include "PricerSolverBase.hpp"           // for PricerSolverBase
-#include "PricingSolution.hpp"            // for PricingSolution²
+#include "PricingSolution.hpp"            // for PricingSolution
 struct Interval;
 struct Job;
 struct NodeData;
@@ -21,7 +22,9 @@ struct Sol;
 
 class PricerSolverBdd : public PricerSolverBase {
     DdStructure<NodeBdd<double>> decision_diagram;
-    size_t                       size_graph;
+    size_t                       size_graph{};
+    size_t                       nb_edges{};
+    size_t                       nb_vertices{};
     size_t                       nb_removed_edges{};
     size_t                       nb_removed_nodes{};
 
@@ -37,6 +40,8 @@ class PricerSolverBdd : public PricerSolverBase {
     size_t H_min;
     int    H_max;
 
+    std::unique_ptr<OsiGrbSolverInterface> build_model();
+
    public:
     explicit PricerSolverBdd(const Instance& instance);
 
@@ -46,9 +51,9 @@ class PricerSolverBdd : public PricerSolverBase {
     PricerSolverBdd& operator=(const PricerSolverBdd&) = delete;
     ~PricerSolverBdd() override;
 
-    void                  check_infeasible_arcs();
+    [[maybe_unused]] void check_infeasible_arcs();
     void                  topdown_filtering();
-    void                  bottum_up_filtering();
+    void                  bottom_up_filtering();
     void                  equivalent_paths_filtering();
     [[maybe_unused]] void print_representation_file();
     void                  cleanup_arcs();
@@ -68,12 +73,12 @@ class PricerSolverBdd : public PricerSolverBase {
     virtual void   compute_labels(double* _pi) = 0;
     virtual void   compute_labels(std::span<const double>& _pi) = 0;
 
-    void remove_layers();
-    void remove_edges();
-    void remove_layers_init();
-    void construct_mipgraph();
-    void init_coeff_constraints();
-    void init_table();
+    void                  remove_layers();
+    void                  remove_edges();
+    [[maybe_unused]] void remove_layers_init();
+    void                  construct_mipgraph();
+    void                  init_coeff_constraints();
+    void                  init_table();
 
     void build_mip() override;
     void construct_lp_sol_from_rmp(
