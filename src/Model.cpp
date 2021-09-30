@@ -1,21 +1,10 @@
-#include <fmt/core.h>
 #include <OsiGrbSolverInterface.hpp>
 #include <array>
-#include <cstdio>                                      // for fflush, size_t
-#include <memory>                                      // for shared_ptr
 #include <range/v3/algorithm/for_each.hpp>             // for for_each, for_...
-#include <range/v3/functional/identity.hpp>            // for identity
-#include <range/v3/iterator/basic_iterator.hpp>        // for basic_iterator
-#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
 #include <range/v3/numeric/iota.hpp>                   // for iota, iota_fn
-#include <range/v3/range/conversion.hpp>               // for to_vector
-#include <range/v3/range_fwd.hpp>                      // for move
 #include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
 #include <range/v3/view/take.hpp>                      // for take_view, take
-#include <range/v3/view/transform.hpp>                 // for transform
 #include <range/v3/view/view.hpp>                      // for operator|, vie...
-#include <range/v3/view/zip.hpp>                       // for zip_view
-#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
 #include <span>                                        // for span
 #include <vector>                                      // for vector
 #include "Column.h"                                    // for ScheduleSet
@@ -24,7 +13,6 @@
 #include "Solution.hpp"                                // for Sol
 #include "gurobi_c++.h"
 #include "gurobi_c.h"  // for GRB_INFINITY
-#include "lp.h"        // for lp_interface_g...
 
 int NodeData::add_lhs_column_to_rmp(double cost) {
     id_row.clear();
