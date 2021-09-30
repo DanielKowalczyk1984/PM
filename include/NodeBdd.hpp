@@ -64,12 +64,13 @@ class NodeBdd : public NodeBase {
     int_array in_degree{};
 
     /** Zero-Half cuts formulation variables */
-    bool                                        lp_visited{false};
-    std::array<std::vector<weak_ptr_nodeid>, 2> in_edges{};
-    dbl_array                                   coeff_cut{0.0, 0.0};
-    std::array<GRBVar, 2>                       y{};
-    std::array<GRBVar, 2>                       r{};
-    GRBVar                                      sigma{};
+    bool                               lp_visited{false};
+    std::array<std::vector<size_t>, 2> in_edges{};
+    std::array<size_t, 2>              key_edges{};
+    dbl_array                          coeff_cut{0.0, 0.0};
+    std::array<GRBVar, 2>              y{};
+    std::array<GRBVar, 2>              r{};
+    GRBVar                             sigma{};
 
    public:
     std::array<Label<NodeBdd<T>, T>, 2> forward_label{};
@@ -189,6 +190,9 @@ class NodeBdd : public NodeBase {
 
     /** Functions for manipulation of lp_x */
     [[nodiscard]] dbl_array& get_lp_x() { return lp_x; }
+    auto&                    get_lp_x(bool _high) {
+        return _high ? lp_x[1] : lp_x[0];
+    }
 
     void update_lp_x(double _x, bool _high) {
         if (_high) {
@@ -282,6 +286,25 @@ class NodeBdd : public NodeBase {
     }
 
     auto& get_in_edges(bool _high) { return _high ? in_edges[1] : in_edges[0]; }
+    void  add_in_edge(bool _high, size_t _key_parent) {
+        if (_high) {
+            in_edges[1].emplace_back(_key_parent);
+        } else {
+            in_edges[0].emplace_back(_key_parent);
+        }
+    }
+
+    void set_key_edge(bool _high, size_t _key) {
+        if (_high) {
+            key_edges[1] = _key;
+        } else {
+            key_edges[0] = _key;
+        }
+    }
+
+    auto& get_key_edge(bool _high) {
+        return _high ? key_edges[1] : key_edges[0];
+    }
 
     void reset_coeff_cut() { coeff_cut = {0.0, 0.0}; }
     void reset_coeff_cut(bool _high) {
