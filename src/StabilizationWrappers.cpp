@@ -22,10 +22,6 @@ int NodeData::solve_pricing() {
                 delete_infeasible_columns();
             }
             stat.suspend_timer(Statistics::reduced_cost_fixing_timer);
-            // solve_relaxation();
-            // double obj{};
-            // lp_interface_objval(RMP.get(), &obj);
-            // solver_stab->update_continueLP(obj);
         }
     }
 
@@ -35,10 +31,6 @@ int NodeData::solve_pricing() {
             delete_infeasible_columns();
         }
         stat.suspend_timer(Statistics::reduced_cost_fixing_timer);
-        // solve_relaxation();
-        // double obj{};
-        // lp_interface_objval(RMP.get(), &obj);
-        // solver_stab->update_continueLP(obj);
     }
 
     if (solver_stab->get_reduced_cost() < -EPS_BOUND &&
@@ -51,25 +43,14 @@ int NodeData::solve_pricing() {
 
         val = add_lhs_column_to_rmp(
             localColPool.back()->total_weighted_completion_time, lhs_coeff);
-        // solve_relaxation();
-        // double obj{};
-        // lp_interface_objval(RMP.get(), &obj);
-        // solver_stab->update_continueLP(obj);
-        // nb_non_improvements = 0;
     } else {
         stat.start_resume_timer(Statistics::reduced_cost_fixing_timer);
         if (solver_stab->reduced_cost_fixing()) {
             delete_infeasible_columns();
         }
         stat.suspend_timer(Statistics::reduced_cost_fixing_timer);
-        // solve_relaxation();
-        // double obj{};
-        // lp_interface_objval(RMP.get(), &obj);
-        // solver_stab->update_continueLP(obj);
     }
     solve_relaxation();
-    // double obj{};
-    // lp_interface_objval(RMP.get(), &obj);
     solver_stab->update_continueLP(LP_lower_bound);
 
     return val;
