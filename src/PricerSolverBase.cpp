@@ -4,22 +4,17 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <cmath>                                       // for fabs
 #include <cstddef>                                     // for size_t
-#include <ext/alloc_traits.h>                          // for __alloc_traits...
 #include <limits>                                      // for numeric_limits
 #include <memory>                                      // for __shared_ptr_a...
-#include <range/v3/iterator/basic_iterator.hpp>        // for basic_iterator
-#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
 #include <range/v3/range/conversion.hpp>               // for to_container::fn
 #include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
-#include <range/v3/view/transform.hpp>                 // for trqnsform_view
+#include <range/v3/view/transform.hpp>                 // for transform_view
 #include <range/v3/view/view.hpp>                      // for operator|
 #include <range/v3/view/zip.hpp>                       // for zip_view
-#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
 #include <span>                                        // for span
 #include <vector>                                      // for vector
 #include "Column.h"                                    // for Column
 #include "Instance.h"                                  // for Instance
-#include "Job.h"                                       // for Job
 #include "gurobi_c++.h"                                // for GRBModel, GRBEnv
 #include "gurobi_c.h"                                  // for GRB_INFEASIBLE
 
@@ -81,12 +76,12 @@ int PricerSolverBase::add_constraints() {
 bool PricerSolverBase::evaluate_mip_model() {
     int opt_status = model.get(GRB_IntAttr_Status);
 
-    double objval = 0;
+    double obj_val = 0;
     switch (opt_status) {
         case GRB_OPTIMAL:
-            objval = model.get(GRB_DoubleAttr_ObjVal);
-            update_UB(objval);
-            return objval < UB;
+            obj_val = model.get(GRB_DoubleAttr_ObjVal);
+            update_UB(obj_val);
+            return obj_val < UB;
             break;
         case GRB_INFEASIBLE:
         case GRB_INF_OR_UNBD:
@@ -278,7 +273,7 @@ boost::multiprecision::cpp_int PricerSolverBase::print_num_paths() {
     return 0UL;
 }
 
-double PricerSolverBase::get_UB() {
+[[maybe_unused]] double PricerSolverBase::get_UB() const {
     return UB;
 }
 
@@ -288,7 +283,7 @@ void PricerSolverBase::update_UB(double _ub) {
     }
 }
 
-int PricerSolverBase::get_int_attr_model(enum MIP_Attr c) {
+[[maybe_unused]] int PricerSolverBase::get_int_attr_model(enum MIP_Attr c) {
     int val = -1;
     switch (c) {
         case MIP_Attr_Nb_Vars:
