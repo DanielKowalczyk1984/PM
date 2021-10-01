@@ -9,7 +9,6 @@
 #include "branch-and-bound/brfstree.h"  // for BrFSTree
 #include "branch-and-bound/cbfstree.h"  // for CBFSTree
 #include "branch-and-bound/dfstree.h"   // for DFSTree
-#include "branch-and-bound/state.h"     // for State
 
 BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
                                  int                       _probType,

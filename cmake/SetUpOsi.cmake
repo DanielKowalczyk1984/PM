@@ -53,8 +53,6 @@ find_library(
   PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/dist/lib"
 )
 
-message(${CGL_LIBRARY})
-
 # Version detection
 file(READ "${OSI_INCLUDE_DIR}/OsiConfig.h" OSI_CONFIG_H_CONTENTS)
 string(REGEX MATCH "#define OSI_VERSION_MAJOR *([0-9]+)" _dummy "${OSI_CONFIG_H_CONTENTS}")
