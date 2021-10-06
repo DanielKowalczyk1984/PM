@@ -4,10 +4,10 @@
 #include "FarkasZDD.hpp"
 #include "ForwardBDD.hpp"
 
-using ForwardBddSimpleDouble = ForwardBddSimple<>;
-using ForwardBddCycleDouble = ForwardBddCycle<>;
-using BackwardBddSimpleDouble = BackwardBddSimple<>;
-using BackwardBddFarkasDouble = BackwardBddFarkas<>;
-using BackwardBddCycleDouble = BackwardBddCycle<>;
+using ForwardBddSimpleDouble = ForwardBddSimple;
+using ForwardBddCycleDouble = ForwardBddCycle;
+using BackwardBddSimpleDouble = BackwardBddSimple;
+using BackwardBddFarkasDouble = BackwardBddFarkas;
+using BackwardBddCycleDouble = BackwardBddCycle;
 
 #endif  // PRICER_EVALUATE_BDD_HPP

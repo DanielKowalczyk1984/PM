@@ -1,7 +1,10 @@
 //
 // Created by daniel on 10/6/21.
 //
-#include "VariableKeyBase.h"
+#include <cstddef>
+#include <ostream>
+#include <boost/container_hash/extensions.hpp>  // for hash_combine
+#include "VariableKeyBase.hpp"
 #ifndef PM_BDDCOEFF_H
 #define PM_BDDCOEFF_H
 
@@ -18,43 +21,24 @@ class BddCoeff : public VariableKeyBase {
              double _value = 0.0,
              size_t _row = 0UL,
              bool   _high = true,
-             bool   _root = false)
-        : VariableKeyBase(_j, _t, _high, _root),
-          row(_row),
-          coeff(_coeff),
-          value(_value){};
+             bool   _root = false);
 
-    BddCoeff(const BddCoeff&) = default;
-    BddCoeff& operator=(const BddCoeff&) = default;
-    BddCoeff(BddCoeff&& op) = default;
-    BddCoeff& operator=(BddCoeff&& op) = default;
+    BddCoeff(const BddCoeff&);
+    BddCoeff& operator=(const BddCoeff&);
+    BddCoeff(BddCoeff&& op) noexcept ;
+    BddCoeff& operator=(BddCoeff&& op) noexcept ;
     ~BddCoeff() override = default;
 
-    [[nodiscard]] inline double get_coeff() const { return coeff; }
+    [[nodiscard]] double get_coeff() const;
+    [[nodiscard]] double get_value() const;
+    [[nodiscard]] size_t get_row() const;
+    void set_value(double _value);
+    void set_row(size_t _row);
 
-    [[nodiscard]] inline double get_value() const { return value; }
+    bool operator==(const BddCoeff& other);
 
-    inline void set_value(double _value) { value = _value; }
-
-    inline void set_row(size_t _row) { row = _row; }
-
-    [[nodiscard]] inline size_t get_row() const { return row; }
-
-    friend bool operator==(const BddCoeff& lhs, const BddCoeff& rhs) {
-        return lhs.get_j() == rhs.get_j() && lhs.get_t() == rhs.get_t() &&
-               lhs.get_high() == rhs.get_high();
-    };
-
-    bool operator==(const BddCoeff& other) {
-        return get_j() == other.get_j() && get_t() == other.get_t() &&
-               get_high() == other.get_high();
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const BddCoeff& object) {
-        return os << "(j = " << object.get_j() << ", t = " << object.get_t()
-                  << ", x = " << object.get_value()
-                  << ", high = " << object.get_high() << " )\n";
-    }
+    friend std::ostream& operator<<(std::ostream& os, const BddCoeff& object);
+    friend bool operator==(const BddCoeff& lhs, const BddCoeff& rhs);
 };
 
 namespace std {
@@ -69,5 +53,5 @@ struct hash<BddCoeff> {
         return seed;  // or use boost::hash_combine
     }
 };
-}
+}  // namespace std
 #endif  // PM_BDDCOEFF_H

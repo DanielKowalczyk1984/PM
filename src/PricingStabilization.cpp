@@ -54,7 +54,7 @@ void PricingStabilizationBase::solve(double _eta_out,
     iterations++;
 }
 
-PricingSolution<>& PricingStabilizationBase::get_sol() {
+PricingSolution& PricingStabilizationBase::get_sol() {
     return sol;
 }
 
@@ -166,7 +166,7 @@ void PricingStabilizationStat::solve(double _eta_out, double* _lhs_coeff) {
             (hasstabcenter) ? std::max(0.0, 1.0 - k * (1.0 - alpha)) : 0.0;
         compute_pi_eta_sep(alphabar);
         solver->calculate_constLB(pi_sep.data());
-        PricingSolution<> aux_sol = solver->pricing_algorithm(pi_sep.data());
+        PricingSolution aux_sol = solver->pricing_algorithm(pi_sep.data());
 
         eta_sep = solver->compute_lagrange(aux_sol, pi_sep);
         reduced_cost =
@@ -300,7 +300,7 @@ void PricingStabilizationDynamic::solve(double _eta_out, double* _lhs) {
     }
 }
 void PricingStabilizationDynamic::compute_subgradient(
-    const PricingSolution<double>& _sol) {
+    const PricingSolution& _sol) {
     solver->compute_subgradient(_sol, subgradient.data());
 
     // subgradientnorm = 0.0;
@@ -332,7 +332,7 @@ void PricingStabilizationDynamic::adjust_alpha() {
 }
 
 std::unique_ptr<PricingStabilizationBase> PricingStabilizationDynamic::clone(
-    PricerSolverBase*    _solver,
+    PricerSolverBase*        _solver,
     std::span<const double>& _pi_out) {
     return std::make_unique<PricingStabilizationDynamic>(_solver, _pi_out);
 }
@@ -415,7 +415,7 @@ void PricingStabilizationHybrid::solve(double _eta_out,
             pi_sep[i] = compute_dual(i);
         }
 
-        PricingSolution<double> aux_sol;
+        PricingSolution aux_sol;
         aux_sol = solver->pricing_algorithm(pi_sep.data());
 
         eta_sep = solver->compute_lagrange(aux_sol, pi_sep);
@@ -522,7 +522,7 @@ double PricingStabilizationHybrid::compute_dual(auto i) {
 }
 
 void PricingStabilizationHybrid::update_stabcenter(
-    const PricingSolution<double>& _sol) {
+    const PricingSolution& _sol) {
     if (eta_sep > eta_in) {
         pi_in = pi_sep;
         compute_subgradient_norm(_sol);
@@ -535,7 +535,7 @@ void PricingStabilizationHybrid::update_stabcenter(
 }
 
 void PricingStabilizationHybrid::compute_subgradient_norm(
-    const PricingSolution<double>& _sol) {
+    const PricingSolution& _sol) {
     // double* subgradient_in = &g_array_index(pd->subgradient_in, double,
     // 0); double* rhs = &g_array_index(pd->rhs, double, 0);
     // fill_dbl(subgradient_in, pd->nb_rows, 1.0);

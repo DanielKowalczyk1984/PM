@@ -66,9 +66,8 @@ class PricerSolverZdd : public PricerSolverBase {
     cpp_int print_num_paths() override;
     void    remove_layers_init();
 
-    PricingSolution<double> farkas_pricing(double* pi) override;
-    PricingSolution<double> farkas_pricing(
-        std::span<const double>& pi) override;
+    PricingSolution farkas_pricing(double* pi) override;
+    PricingSolution farkas_pricing(std::span<const double>& pi) override;
 
     void update_constraints() override {}
 

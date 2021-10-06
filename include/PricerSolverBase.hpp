@@ -57,12 +57,10 @@ struct PricerSolverBase {
 
     [[nodiscard]] virtual std::unique_ptr<PricerSolverBase> clone() const = 0;
 
-    virtual PricingSolution<double> pricing_algorithm(double* _pi) = 0;
-    virtual PricingSolution<double> pricing_algorithm(
-        std::span<const double>& pi) = 0;
-    virtual PricingSolution<double> farkas_pricing(double* _pi) = 0;
-    virtual PricingSolution<double> farkas_pricing(
-        std::span<const double>& pi) = 0;
+    virtual PricingSolution pricing_algorithm(double* _pi) = 0;
+    virtual PricingSolution pricing_algorithm(std::span<const double>& pi) = 0;
+    virtual PricingSolution farkas_pricing(double* _pi) = 0;
+    virtual PricingSolution farkas_pricing(std::span<const double>& pi) = 0;
 
     virtual bool evaluate_nodes(double* pi) = 0;
     virtual bool evaluate_nodes(std::span<const double>& pi) = 0;
@@ -124,9 +122,9 @@ struct PricerSolverBase {
     /**
      * Some getters
      */
-    virtual cpp_int print_num_paths() = 0;
-    [[nodiscard]] double          get_UB() const;
-    void            update_UB(double _ub);
+    virtual cpp_int      print_num_paths() = 0;
+    [[nodiscard]] double get_UB() const;
+    void                 update_UB(double _ub);
 
     virtual size_t get_nb_vertices() = 0;
     virtual size_t get_nb_edges() = 0;
@@ -138,42 +136,44 @@ struct PricerSolverBase {
     /**
      * Some printing functions
      */
-    [[maybe_unused]] virtual int    get_int_attr_model(enum MIP_Attr);
-    virtual double get_dbl_attr_model(enum MIP_Attr);
+    [[maybe_unused]] virtual int get_int_attr_model(enum MIP_Attr);
+    virtual double               get_dbl_attr_model(enum MIP_Attr);
 
     /**
      * Constraints auxilary functions
      */
 
     virtual void   update_constraints() = 0;
-    virtual double compute_reduced_cost(const PricingSolution<>& sol,
-                                        double*                  pi,
-                                        double*                  lhs);
-    virtual double compute_reduced_cost(const PricingSolution<>& sol,
+    virtual double compute_reduced_cost(const PricingSolution& sol,
+                                        double*                pi,
+                                        double*                lhs);
+    virtual double compute_reduced_cost(const PricingSolution&   sol,
                                         std::span<const double>& pi,
                                         double*                  lhs);
 
-    virtual void compute_lhs(const PricingSolution<>& sol, double* lhs);
+    virtual void compute_lhs(const PricingSolution& sol, double* lhs);
     virtual void compute_lhs(const Column& sol, double* lhs);
 
-    virtual double compute_reduced_cost_simple(const PricingSolution<>& sol,
-                                               double*                  pi);
-    virtual double compute_reduced_cost_simple(const PricingSolution<>& sol,
+    virtual double compute_reduced_cost_simple(const PricingSolution& sol,
+                                               double*                pi);
+    virtual double compute_reduced_cost_simple(const PricingSolution&   sol,
                                                std::span<const double>& pi);
 
-    virtual double compute_lagrange(const PricingSolution<>&   sol,
+    virtual double compute_lagrange(const PricingSolution&     sol,
                                     const std::vector<double>& pi);
-    virtual double compute_lagrange(const PricingSolution<>&       sol,
+    virtual double compute_lagrange(const PricingSolution&         sol,
                                     const std::span<const double>& pi);
 
-    virtual double compute_subgradient(const PricingSolution<>& sol,
-                                       double*                  subgradient);
+    virtual double compute_subgradient(const PricingSolution& sol,
+                                       double*                subgradient);
 
     inline void set_is_integer_solution(bool _is_solution) {
         is_integer_solution = _is_solution;
     }
 
-    [[nodiscard]] inline bool get_is_integer_solution() const { return is_integer_solution; }
+    [[nodiscard]] inline bool get_is_integer_solution() const {
+        return is_integer_solution;
+    }
 
     void calculate_constLB(double* pi);
     void calculate_constLB(std::span<const double>& pi);

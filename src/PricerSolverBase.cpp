@@ -2,21 +2,21 @@
 #include <fmt/core.h>  // for print
 #include <algorithm>   // for min, __fill_fn
 #include <boost/multiprecision/cpp_int.hpp>
-#include <cmath>                                       // for fabs
-#include <cstddef>                                     // for size_t
-#include <limits>                                      // for numeric_limits
-#include <memory>                                      // for __shared_ptr_a...
-#include <range/v3/range/conversion.hpp>               // for to_container::fn
-#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
-#include <range/v3/view/transform.hpp>                 // for transform_view
-#include <range/v3/view/view.hpp>                      // for operator|
-#include <range/v3/view/zip.hpp>                       // for zip_view
-#include <span>                                        // for span
-#include <vector>                                      // for vector
-#include "Column.h"                                    // for Column
-#include "Instance.h"                                  // for Instance
-#include "gurobi_c++.h"                                // for GRBModel, GRBEnv
-#include "gurobi_c.h"                                  // for GRB_INFEASIBLE
+#include <cmath>                          // for fabs
+#include <cstddef>                        // for size_t
+#include <limits>                         // for numeric_limits
+#include <memory>                         // for __shared_ptr_a...
+#include <range/v3/range/conversion.hpp>  // for to_container::fn
+#include <range/v3/view/enumerate.hpp>    // for enumerate_fn
+#include <range/v3/view/transform.hpp>    // for transform_view
+#include <range/v3/view/view.hpp>         // for operator|
+#include <range/v3/view/zip.hpp>          // for zip_view
+#include <span>                           // for span
+#include <vector>                         // for vector
+#include "Column.h"                       // for Column
+#include "Instance.h"                     // for Instance
+#include "gurobi_c++.h"                   // for GRBModel, GRBEnv
+#include "gurobi_c.h"                     // for GRB_INFEASIBLE
 
 PricerSolverBase::PricerSolverBase(const Instance& instance)
     : jobs(instance.jobs),
@@ -349,9 +349,9 @@ double PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) {
     return val;
 }
 
-double PricerSolverBase::compute_reduced_cost(const PricingSolution<>& sol,
-                                              double*                  pi,
-                                              double*                  lhs) {
+double PricerSolverBase::compute_reduced_cost(const PricingSolution& sol,
+                                              double*                pi,
+                                              double*                lhs) {
     double result = sol.cost;
     // auto      nb_constraints = reformulation_model.get_nb_constraints();
     std::span aux_lhs{lhs, reformulation_model.size()};
@@ -385,7 +385,7 @@ double PricerSolverBase::compute_reduced_cost(const PricingSolution<>& sol,
     return result;
 }
 
-double PricerSolverBase::compute_reduced_cost(const PricingSolution<>& sol,
+double PricerSolverBase::compute_reduced_cost(const PricingSolution&   sol,
                                               std::span<const double>& pi,
                                               double*                  lhs) {
     double result = sol.cost;
@@ -419,7 +419,7 @@ double PricerSolverBase::compute_reduced_cost(const PricingSolution<>& sol,
 
     return result;
 }
-void PricerSolverBase::compute_lhs(const PricingSolution<>& sol, double* lhs) {
+void PricerSolverBase::compute_lhs(const PricingSolution& sol, double* lhs) {
     std::span aux_lhs{lhs, reformulation_model.size()};
     std::ranges::fill(aux_lhs, 0.0);
 
@@ -472,9 +472,8 @@ void PricerSolverBase::compute_lhs(const Column& sol, double* lhs) {
     aux_lhs[convex_constr_id] += coeff;
 }
 
-double PricerSolverBase::compute_reduced_cost_simple(
-    const PricingSolution<>& sol,
-    double*                  pi) {
+double PricerSolverBase::compute_reduced_cost_simple(const PricingSolution& sol,
+                                                     double* pi) {
     double result = sol.cost;
     // auto      nb_constraints = reformulation_model.get_nb_constraints();
     std::span aux_pi{pi, reformulation_model.size()};
@@ -504,7 +503,7 @@ double PricerSolverBase::compute_reduced_cost_simple(
 }
 
 double PricerSolverBase::compute_reduced_cost_simple(
-    const PricingSolution<>& sol,
+    const PricingSolution&   sol,
     std::span<const double>& pi) {
     double result = sol.cost;
 
@@ -532,7 +531,7 @@ double PricerSolverBase::compute_reduced_cost_simple(
     return result;
 }
 
-double PricerSolverBase::compute_lagrange(const PricingSolution<>&   sol,
+double PricerSolverBase::compute_lagrange(const PricingSolution&     sol,
                                           const std::vector<double>& pi) {
     double result = sol.cost;
     double dual_bound = 0.0;
@@ -576,7 +575,7 @@ double PricerSolverBase::compute_lagrange(const PricingSolution<>&   sol,
     return result;
 }
 
-double PricerSolverBase::compute_lagrange(const PricingSolution<>&       sol,
+double PricerSolverBase::compute_lagrange(const PricingSolution&         sol,
                                           const std::span<const double>& pi) {
     double result = sol.cost;
     double dual_bound = 0.0;
@@ -619,7 +618,7 @@ double PricerSolverBase::compute_lagrange(const PricingSolution<>&       sol,
     return result;
 }
 
-double PricerSolverBase::compute_subgradient(const PricingSolution<>& sol,
+double PricerSolverBase::compute_subgradient(const PricingSolution& sol,
                                              double* subgradient) {
     std::span aux_subgradient{subgradient, reformulation_model.size()};
     auto      rhs = -reformulation_model[convex_constr_id]->get_rhs();

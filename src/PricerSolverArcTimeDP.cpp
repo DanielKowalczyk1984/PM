@@ -4,19 +4,15 @@
 #include <cstddef>  // for size_t
 #include <limits>   // for numeric_limits
 #include <range/v3/algorithm/find.hpp>
-#include <range/v3/iterator/basic_iterator.hpp>    // for basic_iterator
-#include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
-#include <range/v3/view/iota.hpp>                  // for iota_view, iota_vi...
-#include <range/v3/view/reverse.hpp>               // for reverse_fn, revers...
+#include <range/v3/view/iota.hpp>     // for iota_view, iota_vi...
+#include <range/v3/view/reverse.hpp>  // for reverse_fn, revers...
 #include <range/v3/view/take.hpp>
 #include <range/v3/view/view.hpp>  // for operator|, view_cl...
 #include <span>                    // for span
 #include <string>                  // for char_traits, opera...
-#include <utility>                 // for move
 #include <vector>                  // for vector, vector<>::...
 #include "Column.h"    // for ScheduleSet#include "PricerSolverArcTimeDP.hpp"
 #include "Instance.h"  // for Instance
-#include "ModelInterface.hpp"    // for ReformulationModel
 #include "PricerSolverBase.hpp"  // for PricerSolverBase
 #include "gurobi_c++.h"          // for GRBLinExpr, GRBModel
 #include "gurobi_c.h"            // for GRB_EQUAL, GRB_BINARY
@@ -529,10 +525,10 @@ void PricerSolverArcTimeDp::forward_evaluator(std::span<const double>& _pi) {
     }
 }
 
-PricingSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
-    std::span               aux_pi{_pi, reformulation_model.size()};
-    PricingSolution<double> sol(aux_pi[n]);
-    std::vector<Job*>       v;
+PricingSolution PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
+    std::span         aux_pi{_pi, reformulation_model.size()};
+    PricingSolution   sol(aux_pi[n]);
+    std::vector<Job*> v;
 
     forward_evaluator(_pi);
 
@@ -561,10 +557,10 @@ PricingSolution<double> PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     return sol;
 }
 
-PricingSolution<double> PricerSolverArcTimeDp::pricing_algorithm(
+PricingSolution PricerSolverArcTimeDp::pricing_algorithm(
     std::span<const double>& _pi) {
-    PricingSolution<double> sol(_pi[n]);
-    std::vector<Job*>       v;
+    PricingSolution   sol(_pi[n]);
+    std::vector<Job*> v;
 
     forward_evaluator(_pi);
 
@@ -593,16 +589,16 @@ PricingSolution<double> PricerSolverArcTimeDp::pricing_algorithm(
     return sol;
 }
 
-PricingSolution<double> PricerSolverArcTimeDp::farkas_pricing(
+PricingSolution PricerSolverArcTimeDp::farkas_pricing(
     [[maybe_unused]] double* _pi) {
-    PricingSolution<double> opt_sol;
+    PricingSolution opt_sol;
 
     return opt_sol;
 }
 
-PricingSolution<double> PricerSolverArcTimeDp::farkas_pricing(
+PricingSolution PricerSolverArcTimeDp::farkas_pricing(
     [[maybe_unused]] std::span<const double>& _pi) {
-    PricingSolution<double> opt_sol;
+    PricingSolution opt_sol;
 
     return opt_sol;
 }

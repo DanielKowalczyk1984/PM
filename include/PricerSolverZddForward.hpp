@@ -16,13 +16,12 @@ class PricerSolverSimple : public PricerSolverZdd {
     PricerSolverSimple& operator=(const PricerSolverSimple&) = delete;
     PricerSolverSimple& operator=(PricerSolverSimple&&) = delete;
 
-    PricingSolution<double> pricing_algorithm(double* _pi) override;
-    PricingSolution<double> pricing_algorithm(
-        std::span<const double>& _pi) override;
-    void compute_labels(double* _pi);
-    void compute_labels(std::span<const double>& _pi);
-    bool evaluate_nodes(double* pi) final;
-    bool evaluate_nodes(std::span<const double>& pi) final;
+    PricingSolution pricing_algorithm(double* _pi) override;
+    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
+    void            compute_labels(double* _pi);
+    void            compute_labels(std::span<const double>& _pi);
+    bool            evaluate_nodes(double* pi) final;
+    bool            evaluate_nodes(std::span<const double>& pi) final;
     ~PricerSolverSimple() override = default;
 };
 
@@ -38,13 +37,12 @@ class PricerSolverZddCycle : public PricerSolverZdd {
     //                      const char* p_name,
     //                      double      _UB);
     explicit PricerSolverZddCycle(const Instance& instance);
-    PricingSolution<double> pricing_algorithm(double* _pi) override;
-    PricingSolution<double> pricing_algorithm(
-        std::span<const double>& _pi) override;
-    void compute_labels(double* _pi);
-    void compute_labels(std::span<const double>& _pi);
-    bool evaluate_nodes(double* pi) final;
-    bool evaluate_nodes(std::span<const double>& pi) final;
+    PricingSolution pricing_algorithm(double* _pi) override;
+    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
+    void            compute_labels(double* _pi);
+    void            compute_labels(std::span<const double>& _pi);
+    bool            evaluate_nodes(double* pi) final;
+    bool            evaluate_nodes(std::span<const double>& pi) final;
     PricerSolverZddCycle(const PricerSolverZddCycle&) = default;
     PricerSolverZddCycle(PricerSolverZddCycle&&) = default;
     PricerSolverZddCycle& operator=(PricerSolverZddCycle&&) = default;

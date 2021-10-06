@@ -6,9 +6,9 @@
 #include "ModernDD/NodeBddEval.hpp"       // for Eval
 #include "NodeBdd.hpp"                    // for NodeBdd
 #include "PricingSolution.hpp"            // for PricingSolution
+#include "BddCoeff.hpp"
 
-template <typename T = double>
-class BackwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
+class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
     const double* pi{};
 
    public:
@@ -19,10 +19,10 @@ class BackwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
 
     [[nodiscard]] const double* get_pi() const { return pi; }
 
-    PricingSolution<T> get_objective(NodeBdd<T>& n) const {
-        PricingSolution<T> sol(0.0);
-        auto*              aux_label = &(n.backward_label[0]);
-        auto* table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
+    PricingSolution get_objective(NodeBdd& n) const {
+        PricingSolution sol(0.0);
+        auto*           aux_label = &(n.backward_label[0]);
+        auto*           table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
 
         do {
             auto tmp_node_id = aux_label->get_node_id();
@@ -37,30 +37,29 @@ class BackwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
         return sol;
     }
 
-    virtual void initializenode(NodeBdd<T>& n) const = 0;
-    virtual void initializerootnode(NodeBdd<T>& n) const = 0;
-    virtual void evalNode(NodeBdd<T>& n) const = 0;
+    void initialize_node(NodeBdd& n) const override = 0;
+    void initializerootnode(NodeBdd& n) const override = 0;
+    void evalNode(NodeBdd& n) const override = 0;
 
-    BackwardBddBase(const BackwardBddBase<T>&) = default;
-    BackwardBddBase(BackwardBddBase<T>&&) noexcept = default;
-    BackwardBddBase<T>& operator=(const BackwardBddBase<T>&) = default;
-    BackwardBddBase<T>& operator=(BackwardBddBase<T>&&) noexcept = default;
-    virtual ~BackwardBddBase() = default;
+    BackwardBddBase(const BackwardBddBase&) = default;
+    BackwardBddBase(BackwardBddBase&&) noexcept = default;
+    BackwardBddBase& operator=(const BackwardBddBase&) = default;
+    BackwardBddBase& operator=(BackwardBddBase&&) noexcept = default;
+    ~BackwardBddBase() override = default;
 };
 
-template <typename T = double>
-class BackwardBddSimple : public BackwardBddBase<T> {
+class BackwardBddSimple : public BackwardBddBase {
    public:
     BackwardBddSimple() = default;
 
-    void evalNode(NodeBdd<T>& n) const override {
-        auto  table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
+    void evalNode(NodeBdd& n) const override {
+        auto  table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
         auto& p0_tmp = table_tmp->node(n[0]);
         auto& p1_tmp = table_tmp->node(n[1]);
 
         n.reset_reduced_costs();
 
-        const double* dual = BackwardBddBase<T>::get_pi();
+        const double* dual = BackwardBddBase::get_pi();
 
         for (auto& list : n.get_coeff_list()) {
             list |= ranges::actions::remove_if([&](auto it) {
@@ -88,32 +87,31 @@ class BackwardBddSimple : public BackwardBddBase<T> {
         }
     }
 
-    void initializenode(NodeBdd<T>& n) const override {
+    void initialize_node(NodeBdd& n) const override {
         n.backward_label[0].reset();
     }
 
-    void initializerootnode(NodeBdd<T>& n) const override {
+    void initializerootnode(NodeBdd& n) const override {
         n.backward_label[0].get_f() = 0;
     }
 
-    BackwardBddSimple(const BackwardBddSimple<T>&) = default;
-    BackwardBddSimple(BackwardBddSimple<T>&&) noexcept = default;
-    BackwardBddSimple<T>& operator=(const BackwardBddSimple<T>&) = default;
-    BackwardBddSimple<T>& operator=(BackwardBddSimple<T>&&) noexcept = default;
-    virtual ~BackwardBddSimple() = default;
+    BackwardBddSimple(const BackwardBddSimple&) = default;
+    BackwardBddSimple(BackwardBddSimple&&) noexcept = default;
+    BackwardBddSimple& operator=(const BackwardBddSimple&) = default;
+    BackwardBddSimple& operator=(BackwardBddSimple&&) noexcept = default;
+    ~BackwardBddSimple() override = default;
 };
 
-template <typename T = double>
-class BackwardBddCycle : public BackwardBddBase<T> {
+class BackwardBddCycle : public BackwardBddBase {
    public:
     BackwardBddCycle() = default;
 
-    void evalNode(NodeBdd<T>& n) const override {
-        auto* tmp_j = n.get_job();
-        auto* table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
-        auto& p0_tmp = table_tmp->node(n[0]);
-        auto& p1_tmp = table_tmp->node(n[1]);
-        const auto dual = BackwardBddBase<T>::get_pi();
+    void evalNode(NodeBdd& n) const override {
+        auto*      tmp_j = n.get_job();
+        auto*      table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto&      p0_tmp = table_tmp->node(n[0]);
+        auto&      p1_tmp = table_tmp->node(n[1]);
+        const auto dual = BackwardBddBase::get_pi();
 
         n.reset_reduced_costs();
 
@@ -192,19 +190,19 @@ class BackwardBddCycle : public BackwardBddBase<T> {
         }
     }
 
-    void initializenode(NodeBdd<T>& n) const override {
+    void initialize_node(NodeBdd& n) const override {
         n.backward_label[0].reset();
     }
 
-    void initializerootnode(NodeBdd<T>& n) const override {
+    void initializerootnode(NodeBdd& n) const override {
         n.backward_label[0].get_f() = 0.0;
     }
 
-    BackwardBddCycle(const BackwardBddCycle<T>&) = default;
-    BackwardBddCycle(BackwardBddCycle<T>&&) noexcept = default;
-    BackwardBddCycle<T>& operator=(const BackwardBddCycle<T>&) = default;
-    BackwardBddCycle<T>& operator=(BackwardBddCycle<T>&&) noexcept = default;
-    virtual ~BackwardBddCycle() = default;
+    BackwardBddCycle(const BackwardBddCycle&) = default;
+    BackwardBddCycle(BackwardBddCycle&&) noexcept = default;
+    BackwardBddCycle& operator=(const BackwardBddCycle&) = default;
+    BackwardBddCycle& operator=(BackwardBddCycle&&) noexcept = default;
+    ~BackwardBddCycle() override = default;
 };
 
 #endif  // BACKWARD_BDD_HPP

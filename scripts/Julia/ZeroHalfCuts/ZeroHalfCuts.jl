@@ -143,115 +143,115 @@ function reduceMat(zhs::ZeroHalfSystem, EPSVAL::Float64, zhsParams::ZeroHalfSepP
   # a column id as value. Each column is converted to a big number
   # (just using binary encoding), if the number already is in the dict then
   # we have found a duplicate column and it is eliminated.
-#     columnDict = Dict{BigInt,Int64}()
-#     j = 1
-#     while j <= zhs.n
-#         val = BigInt(0)
-#         onesCount = 0
-#         lastOne = -1
-#         for i = 1:zhs.m
-#             if zhs.ABar[i,j] == 1
-#                 val += BigInt(2)^(i - 1)
-#                 onesCount += 1
-#                 lastOne = i
-#             end
-#         end
-#         if onesCount == 0
-#       # rule 3:
-#       # column is all zeros. We can delete it.
-#             deleteColumn!(zhs, j)
-#             if zhsParams.printLevel >= 5
-#                 println("Rule 3: Deleting column $j due to all zero column. (m,n)=($(zhs.m),$(zhs.n))")
-#             end
-#         elseif onesCount == 1
-#       # rule 4:
-#       # column is a unit vector. We can get rid of the column if we add xStar[j] to s[i] where i is the row with the single one.
-#             zhs.s[lastOne] += zhs.xStar[j]
-#             deleteColumn!(zhs, j)
-#             if zhsParams.printLevel >= 5
-#                 println("Rule 4: Deleting column $j and updating slack of row $lastOne as it is a unit vector. s[$lastOne]=$(zhs.s[lastOne]). (m,n)=($(zhs.m),$(zhs.n))")
-#             end
-#         elseif haskey(columnDict, val)
-#       # rule 5:
-#       # We have a duplicate column. Delete column j and transfer x value to the
-#       # other "instance" of the column
-#             othercol = columnDict[val]
-#             zhs.xStar[othercol] += zhs.xStar[j]
-#       # delete column j
-#             deleteColumn!(zhs, j)
-#             if zhsParams.printLevel >= 5
-#                 println("Rule 5: Deleting column $j due to duplicate column. (m,n)=($(zhs.m),$(zhs.n))")
-#             end
-#         else
-#       # We have not seen this column before. Add it to the dictionary and go on
-#             columnDict[val] = j
-#             j += 1
-#         end
-#     end
+    columnDict = Dict{BigInt,Int64}()
+    j = 1
+    while j <= zhs.n
+        val = BigInt(0)
+        onesCount = 0
+        lastOne = -1
+        for i = 1:zhs.m
+            if zhs.ABar[i,j] == 1
+                val += BigInt(2)^(i - 1)
+                onesCount += 1
+                lastOne = i
+            end
+        end
+        if onesCount == 0
+      # rule 3:
+      # column is all zeros. We can delete it.
+            deleteColumn!(zhs, j)
+            if zhsParams.printLevel >= 5
+                println("Rule 3: Deleting column $j due to all zero column. (m,n)=($(zhs.m),$(zhs.n))")
+            end
+        elseif onesCount == 1
+      # rule 4:
+      # column is a unit vector. We can get rid of the column if we add xStar[j] to s[i] where i is the row with the single one.
+            zhs.s[lastOne] += zhs.xStar[j]
+            deleteColumn!(zhs, j)
+            if zhsParams.printLevel >= 5
+                println("Rule 4: Deleting column $j and updating slack of row $lastOne as it is a unit vector. s[$lastOne]=$(zhs.s[lastOne]). (m,n)=($(zhs.m),$(zhs.n))")
+            end
+        elseif haskey(columnDict, val)
+      # rule 5:
+      # We have a duplicate column. Delete column j and transfer x value to the
+      # other "instance" of the column
+            othercol = columnDict[val]
+            zhs.xStar[othercol] += zhs.xStar[j]
+      # delete column j
+            deleteColumn!(zhs, j)
+            if zhsParams.printLevel >= 5
+                println("Rule 5: Deleting column $j due to duplicate column. (m,n)=($(zhs.m),$(zhs.n))")
+            end
+        else
+      # We have not seen this column before. Add it to the dictionary and go on
+            columnDict[val] = j
+            j += 1
+        end
+    end
 
-#   # Rule 6: Any row 1\leq j\leq m with slack s_{j}\geq1 can be removed.
-#     i = 1
-#     while i <= zhs.m
-#         if zhs.s[i] >= 1
-#             deleteRow!(zhs, i)
-#             if zhsParams.printLevel >= 5
-#                 println("Rule 6: Deleting row $i due to slack >= 1. (m,n)=($(zhs.m),$(zhs.n))")
-#             end
-#         else
-#             i += 1
-#         end
-#     end
+  # Rule 6: Any row 1\leq j\leq m with slack s_{j}\geq1 can be removed.
+    i = 1
+    while i <= zhs.m
+        if zhs.s[i] >= 1
+            deleteRow!(zhs, i)
+            if zhsParams.printLevel >= 5
+                println("Rule 6: Deleting row $i due to slack >= 1. (m,n)=($(zhs.m),$(zhs.n))")
+            end
+        else
+            i += 1
+        end
+    end
 
-#   # Rule 7. Rows identical in \left(\bar{A},\bar{b}\right) can be eliminated except for one with smallest slack value.
+  # Rule 7. Rows identical in \left(\bar{A},\bar{b}\right) can be eliminated except for one with smallest slack value.
 
-#   # rowDict is a dictionary with a big integer as key and
-#   # a column id as value. Each row (including the RHS) is converted to a big number
-#   # (just using binary encoding), if the number already is in the dict then
-#   # we have found a duplicate row and the one with largest slack is eleminated
-#     rowDict = Dict{BigInt,Int64}()
+  # rowDict is a dictionary with a big integer as key and
+  # a column id as value. Each row (including the RHS) is converted to a big number
+  # (just using binary encoding), if the number already is in the dict then
+  # we have found a duplicate row and the one with largest slack is eleminated
+    rowDict = Dict{BigInt,Int64}()
 
-#     i = 1
-#     while i <= zhs.m
-#         val = BigInt(0)
-#         for j = 1:zhs.n
-#             if zhs.ABar[i,j] == 1
-#                 val += BigInt(2)^(j - 1)
-#             end
-#         end
-#         if zhs.bBar[i] == 1
-#             val += BigInt(2)^zhs.n
-#         end
-#         if zhsParams.printLevel >= 5
-#             println("Testing rule 7. i=$i, val = $val")
-#         end
-#         if haskey(rowDict, val)
-#       # We have a duplicate row.
-#             otherRow = rowDict[val]
-#             if (zhs.s[otherRow] < zhs.s[i])
-#         # otherrow has smallest slack. Then we can just delete row i
-#         # println("Row $i: ", zhs.ABar[i,1:zhs.n], " RHS: ", zhs.bBar[i], "s: ", zhs.s[i])
-#         # println("Row $otherRow: ", zhs.ABar[otherRow,1:zhs.n], " RHS: ", zhs.bBar[otherRow], "s: ", zhs.s[otherRow])
-#                 deleteRow!(zhs, i)
-#                 if zhsParams.printLevel >= 5
-#                     println("Rule 7: Deleting column $i due to duplicate row. (m,n)=($(zhs.m),$(zhs.n))")
-#                 end
-#             else
-#         # this row has smallest slack. Copy to other row and delete this one
-#         # println("Row $i: ", zhs.ABar[i,1:zhs.n], " RHS: ", zhs.bBar[i], "s: ", zhs.s[i])
-#         # println("Row $otherRow: ", zhs.ABar[otherRow,1:zhs.n], " RHS: ", zhs.bBar[otherRow], "s: ", zhs.s[otherRow])
-#                 zhs.rowIdx[otherRow] = zhs.rowIdx[i]
-#                 zhs.s[otherRow] = zhs.s[i]
-#                 deleteRow!(zhs, i)
-#                 if zhsParams.printLevel >= 5
-#                     println("Rule 7: Deleting column $i (was $otherRow)due to duplicate row. (m,n)=($(zhs.m),$(zhs.n))")
-#                 end
-#             end
-#         else
-#       # We have not seen this row before. Add it to the dictionary and go on
-#             rowDict[val] = i
-#             i += 1
-#         end
-#     end
+    i = 1
+    while i <= zhs.m
+        val = BigInt(0)
+        for j = 1:zhs.n
+            if zhs.ABar[i,j] == 1
+                val += BigInt(2)^(j - 1)
+            end
+        end
+        if zhs.bBar[i] == 1
+            val += BigInt(2)^zhs.n
+        end
+        if zhsParams.printLevel >= 5
+            println("Testing rule 7. i=$i, val = $val")
+        end
+        if haskey(rowDict, val)
+      # We have a duplicate row.
+            otherRow = rowDict[val]
+            if (zhs.s[otherRow] < zhs.s[i])
+        # otherrow has smallest slack. Then we can just delete row i
+        # println("Row $i: ", zhs.ABar[i,1:zhs.n], " RHS: ", zhs.bBar[i], "s: ", zhs.s[i])
+        # println("Row $otherRow: ", zhs.ABar[otherRow,1:zhs.n], " RHS: ", zhs.bBar[otherRow], "s: ", zhs.s[otherRow])
+                deleteRow!(zhs, i)
+                if zhsParams.printLevel >= 5
+                    println("Rule 7: Deleting column $i due to duplicate row. (m,n)=($(zhs.m),$(zhs.n))")
+                end
+            else
+        # this row has smallest slack. Copy to other row and delete this one
+        # println("Row $i: ", zhs.ABar[i,1:zhs.n], " RHS: ", zhs.bBar[i], "s: ", zhs.s[i])
+        # println("Row $otherRow: ", zhs.ABar[otherRow,1:zhs.n], " RHS: ", zhs.bBar[otherRow], "s: ", zhs.s[otherRow])
+                zhs.rowIdx[otherRow] = zhs.rowIdx[i]
+                zhs.s[otherRow] = zhs.s[i]
+                deleteRow!(zhs, i)
+                if zhsParams.printLevel >= 5
+                    println("Rule 7: Deleting column $i (was $otherRow)due to duplicate row. (m,n)=($(zhs.m),$(zhs.n))")
+                end
+            end
+        else
+      # We have not seen this row before. Add it to the dictionary and go on
+            rowDict[val] = i
+            i += 1
+        end
+    end
     # if zhsParams.printLevel >= 1
         println("Leaving reduceMat (m,n)=($(zhs.m),$(zhs.n))")
     # end

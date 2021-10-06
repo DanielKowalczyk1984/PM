@@ -68,16 +68,14 @@ class PricerSolverSimpleDp : public PricerSolverBase {
 
     bool check_column(Column const* set) override;
 
-    PricingSolution<double> pricing_algorithm(double* _pi) override;
-    PricingSolution<double> pricing_algorithm(
-        std::span<const double>& _pi) override;
-    PricingSolution<double> farkas_pricing(double* _pi) override;
-    PricingSolution<double> farkas_pricing(
-        std::span<const double>& _pi) override;
-    void forward_evaluator(double* _pi);
-    void forward_evaluator(std::span<const double>& _pi);
-    void backward_evaluator(double* _pi);
-    void backward_evaluator(std::span<const double>& _pi);
+    PricingSolution pricing_algorithm(double* _pi) override;
+    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
+    PricingSolution farkas_pricing(double* _pi) override;
+    PricingSolution farkas_pricing(std::span<const double>& _pi) override;
+    void            forward_evaluator(double* _pi);
+    void            forward_evaluator(std::span<const double>& _pi);
+    void            backward_evaluator(double* _pi);
+    void            backward_evaluator(std::span<const double>& _pi);
 
     void update_constraints() override {}
 

@@ -27,7 +27,7 @@ class PricingStabilizationBase {
 
    public:
     PricerSolverBase* solver;
-    PricingSolution<> sol;
+    PricingSolution   sol;
 
     double reduced_cost{};
     double eta_in{};
@@ -45,21 +45,21 @@ class PricingStabilizationBase {
 
     bool continueLP{};
 
-    PricingSolution<>& get_sol();
-    bool               get_update_stab_center();
-    double             get_reduced_cost();
-    double             get_eps_stab_solver();
-    virtual double     get_eta_in();
-    virtual double     get_eta_sep();
-    virtual void       solve(double eta_out, double* _lhs);
-    virtual bool       stopping_criteria();
-    virtual void       update_duals();
-    virtual bool       reduced_cost_fixing();
-    virtual void       remove_constraints(int first, int nb_del);
-    virtual void       update_continueLP(int _continueLP);
-    virtual int        do_reduced_cost_fixing();
-    virtual void       update_continueLP(double obj);
-    virtual void       set_alpha([[maybe_unused]] double _alpha){};
+    PricingSolution& get_sol();
+    bool             get_update_stab_center();
+    double           get_reduced_cost();
+    double           get_eps_stab_solver();
+    virtual double   get_eta_in();
+    virtual double   get_eta_sep();
+    virtual void     solve(double eta_out, double* _lhs);
+    virtual bool     stopping_criteria();
+    virtual void     update_duals();
+    virtual bool     reduced_cost_fixing();
+    virtual void     remove_constraints(int first, int nb_del);
+    virtual void     update_continueLP(int _continueLP);
+    virtual int      do_reduced_cost_fixing();
+    virtual void     update_continueLP(double obj);
+    virtual void     set_alpha([[maybe_unused]] double _alpha){};
 };
 
 class PricingStabilizationStat : public PricingStabilizationBase {
@@ -122,7 +122,7 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
     void update_duals() override;
     void remove_constraints(int first, int nb_del) override;
 
-    void compute_subgradient(const PricingSolution<double>& _sol);
+    void compute_subgradient(const PricingSolution& _sol);
     void adjust_alpha();
 };
 
@@ -173,9 +173,9 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
     double compute_dual(auto i);
 
-    void update_stabcenter(const PricingSolution<double>& _sol);
+    void update_stabcenter(const PricingSolution& _sol);
 
-    void compute_subgradient_norm(const PricingSolution<double>& _sol);
+    void compute_subgradient_norm(const PricingSolution& _sol);
 
     void update_subgradientproduct();
 

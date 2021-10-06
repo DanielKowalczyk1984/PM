@@ -156,15 +156,14 @@ void PricerSolverZdd::init_table() {
     }
 }
 
-PricingSolution<double> PricerSolverZdd::farkas_pricing(
-    [[maybe_unused]] double* pi) {
-    PricingSolution<double> sol;
+PricingSolution PricerSolverZdd::farkas_pricing([[maybe_unused]] double* pi) {
+    PricingSolution sol;
 
     return sol;
 }
-PricingSolution<double> PricerSolverZdd::farkas_pricing(
+PricingSolution PricerSolverZdd::farkas_pricing(
     [[maybe_unused]] std::span<const double>& pi) {
-    PricingSolution<double> sol;
+    PricingSolution sol;
 
     return sol;
 }

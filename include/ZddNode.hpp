@@ -1,14 +1,14 @@
 #ifndef ZDD_NODE_HPP
 #define ZDD_NODE_HPP
-#include <array>         // for array
-#include <cstddef>       // for size_t
-#include <memory>        // for shared_ptr, make_shared
-#include <ostream>       // for operator<<, ostream
-#include <vector>        // for vector
-#include "Job.h"         // for Job
+#include <array>                  // for array
+#include <cstddef>                // for size_t
+#include <memory>                 // for shared_ptr, make_shared
+#include <ostream>                // for operator<<, ostream
+#include <vector>                 // for vector
+#include "Job.h"                  // for Job
 #include "ModernDD/NodeBase.hpp"  // for NodeBase
 #include "ModernDD/NodeId.hpp"    // for NodeId
-template <typename N, typename T>
+template <typename N>
 class Label;
 template <typename T = double>
 class NodeZdd;
@@ -18,8 +18,8 @@ class SubNodeZdd {
    public:
     int weight{};
 
-    std::array<Label<SubNodeZdd<T>, T>, 2> forward_label{};
-    std::array<Label<SubNodeZdd<T>, T>, 2> backward_label{};
+    std::array<Label<SubNodeZdd<T>>, 2> forward_label{};
+    std::array<Label<SubNodeZdd<T>>, 2> backward_label{};
 
     std::shared_ptr<SubNodeZdd<T>> y{};
     std::shared_ptr<SubNodeZdd<T>> n{};
@@ -68,10 +68,10 @@ class SubNodeZdd {
         return rhs < lhs;
     }
     friend bool operator<=(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs) {
-        return !(lhs > rhs);
+        return lhs <= rhs;
     }
     friend bool operator>=(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs) {
-        return !(lhs < rhs);
+        return lhs >= rhs;
     }
 
     int get_weight() { return weight; }
@@ -169,7 +169,7 @@ class NodeZdd : public NodeBase {
         }
     }
 
-    void set_node_id_label([[maybe_unused]]NodeId _node_id) {}
+    void set_node_id_label([[maybe_unused]] NodeId _node_id) {}
 };
 
 #endif  // ZDD_NODE_HPP

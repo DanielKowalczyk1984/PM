@@ -364,9 +364,9 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     }
 }
 
-PricingSolution<double> PricerSolverSimpleDp::pricing_algorithm(
+PricingSolution PricerSolverSimpleDp::pricing_algorithm(
     std::span<const double>& _pi) {
-    PricingSolution<double> opt_sol;
+    PricingSolution opt_sol;
     opt_sol.cost = 0;
     std::vector<Job*> v;
 
@@ -402,8 +402,8 @@ PricingSolution<double> PricerSolverSimpleDp::pricing_algorithm(
     return opt_sol;
 }
 
-PricingSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
-    PricingSolution<double> opt_sol;
+PricingSolution PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
+    PricingSolution opt_sol;
     opt_sol.cost = 0;
     std::vector<Job*> v;
 
@@ -439,16 +439,16 @@ PricingSolution<double> PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     return opt_sol;
 }
 
-PricingSolution<double> PricerSolverSimpleDp::farkas_pricing(
+PricingSolution PricerSolverSimpleDp::farkas_pricing(
     [[maybe_unused]] double* _pi) {
-    PricingSolution<double> opt_sol;
+    PricingSolution opt_sol;
 
     return opt_sol;
 }
 
-PricingSolution<double> PricerSolverSimpleDp::farkas_pricing(
+PricingSolution PricerSolverSimpleDp::farkas_pricing(
     [[maybe_unused]] std::span<const double>& _pi) {
-    PricingSolution<double> opt_sol;
+    PricingSolution opt_sol;
 
     return opt_sol;
 }

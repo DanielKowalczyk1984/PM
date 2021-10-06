@@ -33,12 +33,12 @@ PricerSolverSimple::PricerSolverSimple(const Instance& instance)
     reversed_evaluator = BackwardZddSimpleDouble(convex_constr_id);
 }
 
-PricingSolution<double> PricerSolverSimple::pricing_algorithm(double* _pi) {
+PricingSolution PricerSolverSimple::pricing_algorithm(double* _pi) {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
 
-PricingSolution<double> PricerSolverSimple::pricing_algorithm(
+PricingSolution PricerSolverSimple::pricing_algorithm(
     std::span<const double>& _pi) {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
@@ -135,12 +135,12 @@ PricerSolverZddCycle::PricerSolverZddCycle(const Instance& instance)
     reversed_evaluator = BackwardZddCycleDouble(convex_constr_id);
 }
 
-PricingSolution<double> PricerSolverZddCycle::pricing_algorithm(double* _pi) {
+PricingSolution PricerSolverZddCycle::pricing_algorithm(double* _pi) {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
 
-PricingSolution<double> PricerSolverZddCycle::pricing_algorithm(
+PricingSolution PricerSolverZddCycle::pricing_algorithm(
     std::span<const double>& _pi) {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);

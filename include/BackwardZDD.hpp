@@ -13,7 +13,7 @@
 #include "ZddNode.hpp"  // for SubNodeZdd, NodeZdd, compare_sub_nodes
 
 template <typename T = double>
-class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
+class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution> {
    protected:
     const T* pi{nullptr};
     size_t   num_jobs{};
@@ -33,7 +33,7 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
     const T* get_pi() const { return pi; }
     [[nodiscard]] size_t get_num_jobs() const { return num_jobs; }
 
-    virtual void initializenode(NodeZdd<T>& n) const = 0;
+    virtual void initialize_node(NodeZdd<T>& n) const = 0;
     virtual void initializerootnode(NodeZdd<T>& n) const = 0;
     virtual void evalNode(NodeZdd<T>& n) const = 0;
 };
@@ -71,7 +71,7 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
         }
     }
 
-    void initializenode(NodeZdd<T>& n) const override {
+    void initialize_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             it->backward_label[0].reset();
         }
@@ -86,8 +86,8 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
         }
     }
 
-    PricingSolution<T> get_objective(NodeZdd<T>& n) const override {
-        PricingSolution<T> sol(pi[num_jobs]);
+    PricingSolution get_objective(NodeZdd<T>& n) const override {
+        PricingSolution sol(pi[num_jobs]);
 
         auto m = std::min_element(n.list.begin(), n.list.end(),
                                   compare_sub_nodes<T>);
@@ -182,7 +182,7 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
         }
     }
 
-    void initializenode(NodeZdd<T>& n) const override {
+    void initialize_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             it->backward_label[0].reset();
         }
@@ -194,11 +194,11 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
         }
     }
 
-    PricingSolution<T> get_objective(NodeZdd<>& n) const override {
-        PricingSolution<T> sol(pi[num_jobs]);
-        auto               m = std::min_element(n.list.begin(), n.list.end(),
-                                  compare_sub_nodes<T>);
-        Label<SubNodeZdd<T>, T>* aux_label = &((*m)->backward_label[0]);
+    PricingSolution get_objective(NodeZdd<>& n) const override {
+        PricingSolution       sol(pi[num_jobs]);
+        auto                  m = std::min_element(n.list.begin(), n.list.end(),
+                                                   compare_sub_nodes<T>);
+        Label<SubNodeZdd<T>>* aux_label = &((*m)->backward_label[0]);
 
         while (aux_label) {
             if (aux_label->get_high()) {
