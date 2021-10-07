@@ -1945,7 +1945,7 @@ std::unique_ptr<OsiGrbSolverInterface> PricerSolverBdd::build_model() {
     auto high_edge = std::vector<bool>(nb_edges);
     auto rhs_lb = std::vector<double>(nb_edges);
     auto rhs_ub = std::vector<double>(nb_edges);
-    auto nodes = std::vector<std::pair<int, int>>(nb_edges);
+    auto nodes = std::vector<std::pair<size_t, size_t>>(nb_edges);
     auto edge_job = std::vector<int>(nb_edges);
 
     nb_edges = 0;

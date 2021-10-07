@@ -45,7 +45,7 @@ class BackwardBddFarkas : public BackwardBddBase {
         n.backward_label[0].reset();
     }
 
-    void initializerootnode(NodeBdd& n) const override {
+    void initialize_root_node(NodeBdd& n) const override {
         n.backward_label[0].get_f() = 0.0;
     }
 };

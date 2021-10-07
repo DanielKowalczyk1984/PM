@@ -18,7 +18,7 @@ class CardinalityPaths : public Eval<NodeBdd, boost::multiprecision::cpp_int> {
         return n.get_nb_paths();
     }
 
-    void initializerootnode(NodeBdd& n) const override { n.reset_nb_paths(); }
+    void initialize_root_node(NodeBdd& n) const override { n.reset_nb_paths(); }
 
     void initialize_node(NodeBdd& n) const override { n.reset_nb_paths(); }
 
@@ -47,7 +47,7 @@ class BackwardDistance : public Eval<NodeBdd, std::array<int, 2>> {
         return {0, 0};
     }
 
-    void initializerootnode([[maybe_unused]] NodeBdd& n) const override {}
+    void initialize_root_node([[maybe_unused]] NodeBdd& n) const override {}
 
     void initialize_node([[maybe_unused]] NodeBdd& n) const override {}
 

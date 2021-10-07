@@ -24,7 +24,7 @@ class ForwardBddBase : public Eval<NodeBdd, PricingSolution> {
 
     virtual void initialize_node(NodeBdd& n) const = 0;
 
-    virtual void initializerootnode(NodeBdd& n) const = 0;
+    virtual void initialize_root_node(NodeBdd& n) const = 0;
 
     virtual void evalNode(NodeBdd& n) const = 0;
 
@@ -69,7 +69,7 @@ class ForwardBddCycle : public ForwardBddBase {
         }
     }
 
-    void initializerootnode(NodeBdd& n) const override {
+    void initialize_root_node(NodeBdd& n) const override {
         n.forward_label[0].get_f() = 0;
         n.forward_label[1].set_f(std::numeric_limits<double>::max());
     }
@@ -172,7 +172,7 @@ class ForwardBddSimple : public ForwardBddBase {
         }
     }
 
-    void initializerootnode(NodeBdd& n) const override {
+    void initialize_root_node(NodeBdd& n) const override {
         n.forward_label[0].get_f() = 0;
     }
 

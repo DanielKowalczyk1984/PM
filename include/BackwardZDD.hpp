@@ -34,7 +34,7 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution> {
     [[nodiscard]] size_t get_num_jobs() const { return num_jobs; }
 
     virtual void initialize_node(NodeZdd<T>& n) const = 0;
-    virtual void initializerootnode(NodeZdd<T>& n) const = 0;
+    virtual void initialize_root_node(NodeZdd<T>& n) const = 0;
     virtual void evalNode(NodeZdd<T>& n) const = 0;
 };
 
@@ -77,7 +77,7 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
         }
     }
 
-    void initializerootnode(NodeZdd<T>& n) const override {
+    void initialize_root_node(NodeZdd<T>& n) const override {
         std::span aux{BackwardZDDBase<T>::get_pi(),
                       BackwardZDDBase<T>::get_num_jobs() + 1};
         for (auto& it : n.list) {
@@ -188,7 +188,7 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
         }
     }
 
-    void initializerootnode(NodeZdd<T>& n) const override {
+    void initialize_root_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             it->backward_label[0].get_f() = pi[num_jobs];
         }

@@ -19,7 +19,7 @@ class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
 
     [[nodiscard]] const double* get_pi() const { return pi; }
 
-    PricingSolution get_objective(NodeBdd& n) const {
+    PricingSolution get_objective(NodeBdd& n) const override {
         PricingSolution sol(0.0);
         auto*           aux_label = &(n.backward_label[0]);
         auto*           table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
@@ -38,7 +38,7 @@ class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
     }
 
     void initialize_node(NodeBdd& n) const override = 0;
-    void initializerootnode(NodeBdd& n) const override = 0;
+    void initialize_root_node(NodeBdd& n) const override = 0;
     void evalNode(NodeBdd& n) const override = 0;
 
     BackwardBddBase(const BackwardBddBase&) = default;
@@ -91,7 +91,7 @@ class BackwardBddSimple : public BackwardBddBase {
         n.backward_label[0].reset();
     }
 
-    void initializerootnode(NodeBdd& n) const override {
+    void initialize_root_node(NodeBdd& n) const override {
         n.backward_label[0].get_f() = 0;
     }
 
@@ -194,7 +194,7 @@ class BackwardBddCycle : public BackwardBddBase {
         n.backward_label[0].reset();
     }
 
-    void initializerootnode(NodeBdd& n) const override {
+    void initialize_root_node(NodeBdd& n) const override {
         n.backward_label[0].get_f() = 0.0;
     }
 
