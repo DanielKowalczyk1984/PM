@@ -25,7 +25,7 @@ class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
         auto*           table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
 
         do {
-            auto tmp_node_id = aux_label->get_node_id();
+            auto& tmp_node_id = aux_label->get_node_id();
             if (aux_label->get_high()) {
                 auto& node = table_tmp->node(tmp_node_id);
                 sol.push_job_back(node.get_job(), node.get_reduced_cost()[1]);

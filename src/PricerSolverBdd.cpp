@@ -17,19 +17,7 @@
 #include <list>                                     // for operator==, list
 #include <memory>                                   // for allocator, mak...
 #include <ostream>                                  // for operator<<
-#include <range/v3/action/action.hpp>               // for operator|=
-#include <range/v3/action/remove_if.hpp>            // for remove_if, rem...
-#include <range/v3/algorithm/all_of.hpp>            // for all_of
-#include <range/v3/algorithm/fill.hpp>              // for fill, fill_fn
-#include <range/v3/view/all.hpp>                    // for all_t
-#include <range/v3/view/drop.hpp>                   // for drop, drop_fn
-#include <range/v3/view/enumerate.hpp>              // for enumerate_fn
-#include <range/v3/view/iota.hpp>                   // for iota_view, ints
-#include <range/v3/view/join.hpp>                   // for join_view, joi...
-#include <range/v3/view/partial_sum.hpp>            // for partial_sum
-#include <range/v3/view/reverse.hpp>                // for reverse_view
-#include <range/v3/view/take.hpp>                   // for take_view, take
-#include <range/v3/view/zip.hpp>                    // for zip_view, zip
+#include <range/v3/all.hpp>
 #include <set>                                      // for operator==
 #include <span>                                     // for span
 #include <string>                                   // for char_traits
@@ -1905,7 +1893,7 @@ void PricerSolverBdd::split_job_time(size_t _job, int _time, bool _left) {
     }
 }
 
-std::unique_ptr<OsiGrbSolverInterface> PricerSolverBdd::build_model() {
+std::unique_ptr<OsiSolverInterface> PricerSolverBdd::build_model() {
     auto& table = *(decision_diagram.getDiagram());
     auto  aux_model = std::make_unique<OsiGrbSolverInterface>();
     nb_vertices = 0UL;
@@ -1920,7 +1908,7 @@ std::unique_ptr<OsiGrbSolverInterface> PricerSolverBdd::build_model() {
     }
 
     for (auto& it : table | view_table) {
-        it.set_key(nb_vertices);
+        it.set_key_model(nb_vertices);
         ++nb_vertices;
         if (it[0] != 0 && it.get_calc(false)) {
             auto& n0 = table.node(it[0]);
@@ -1938,7 +1926,7 @@ std::unique_ptr<OsiGrbSolverInterface> PricerSolverBdd::build_model() {
     }
 
     auto terminal_node = table.node(1);
-    terminal_node.set_key(nb_vertices);
+    terminal_node.set_key_model(nb_vertices);
     ++nb_vertices;
 
     auto cost = std::vector<double>(nb_edges);
@@ -1951,11 +1939,11 @@ std::unique_ptr<OsiGrbSolverInterface> PricerSolverBdd::build_model() {
     nb_edges = 0;
     for (auto& it : table | view_table) {
         for (auto& tmp : it.get_in_edges(false)) {
-            nodes[tmp].second = it.get_key();
+            nodes[tmp].second = it.get_key_model();
         }
 
         for (auto& tmp : it.get_in_edges(true)) {
-            nodes[tmp].second = it.get_key();
+            nodes[tmp].second = it.get_key_model();
         }
 
         if (it[0] != 0 && it.get_calc(false)) {
@@ -1965,7 +1953,7 @@ std::unique_ptr<OsiGrbSolverInterface> PricerSolverBdd::build_model() {
                 aux_model->getInfinity();  // static_cast<double>(convex_rhs);
             high_edge[nb_edges] = false;
             edge_job[nb_edges] = it.get_nb_job();
-            nodes[nb_edges].first = it.get_key();
+            nodes[nb_edges].first = it.get_key_model();
             ++nb_edges;
             nz += 2;
         }
@@ -1977,18 +1965,18 @@ std::unique_ptr<OsiGrbSolverInterface> PricerSolverBdd::build_model() {
             rhs_ub[nb_edges] = aux_model->getInfinity();
             high_edge[nb_edges] = true;
             edge_job[nb_edges] = it.get_nb_job();
-            nodes[nb_edges].first = it.get_key();
+            nodes[nb_edges].first = it.get_key_model();
             ++nb_edges;
             nz += 3;
         }
     }
 
     for (auto& tmp : terminal_node.get_in_edges(false)) {
-        nodes[tmp].second = terminal_node.get_key();
+        nodes[tmp].second = terminal_node.get_key_model();
     }
 
     for (auto& tmp : terminal_node.get_in_edges(true)) {
-        nodes[tmp].second = terminal_node.get_key();
+        nodes[tmp].second = terminal_node.get_key_model();
     }
 
     std::vector<int>    start_vars(nb_edges + 1);
@@ -2020,14 +2008,13 @@ std::unique_ptr<OsiGrbSolverInterface> PricerSolverBdd::build_model() {
         it = 1.0;
     }
     rhs[jobs.size()] = static_cast<double>(convex_rhs);
-    rhs[jobs.size() + terminal_node.get_key()] =
+    rhs[jobs.size() + terminal_node.get_key_model()] =
         -static_cast<double>(convex_rhs);
 
     aux_model->addRows(nb_vertices + jobs.size(), start.data(), nullptr,
                        nullptr, rhs.data(), rhs.data());
     aux_model->addCols(nb_edges, start_vars.data(), rows.data(), coeff.data(),
                        rhs_lb.data(), rhs_ub.data(), cost.data());
-    aux_model->writeLp("test");
 
     return aux_model;
 }
@@ -2036,24 +2023,22 @@ int PricerSolverBdd::add_constraints() {
     auto& table = *(decision_diagram.getDiagram());
     auto  aux_model = build_model();
     // fmt::print("number of nodes = {}\n", table.size());
-    auto sol_x = std::vector<double>(aux_model->getNumCols() + 1, 0.0);
+    // auto sol_x = std::vector<double>(aux_model->getNumCols(), 0.0);
 
-    for (auto& it : table |
-                        ranges::views::take(decision_diagram.topLevel() + 1) |
-                        ranges::views::drop(1) | ranges::views::reverse |
-                        ranges::views::join) {
-        sol_x[it.get_key_edge(false)] = it.get_lp_x(false);
-        sol_x[it.get_key_edge(true)] = it.get_lp_x(true);
-    }
+    // for (auto& it : table |
+    //                     ranges::views::take(decision_diagram.topLevel() + 1) |
+    //                     ranges::views::drop(1) | ranges::views::reverse |
+    //                     ranges::views::join) {
+    //     sol_x[it.get_key_edge(false)] = it.get_lp_x(false);
+    //     sol_x[it.get_key_edge(true)] = it.get_lp_x(true);
+    // }
 
     // // aux_model->setColSolution(sol_x.data());
-    aux_model->messageHandler()->setLogLevel(0);
+    // aux_model->messageHandler()->setLogLevel(0);
     for (int i = 0; i < aux_model->getNumCols(); ++i) {
         aux_model->setInteger(i);
     }
-    // aux_model->initialSolve();
-    auto A = aux_model->getMatrixByRow();
-    // // aux_model->branchAndBound();
+    aux_model->initialSolve();
     // OsiCuts     cuts;
     // CglZeroHalf cg;
     // cg.refreshSolver(aux_model.get());
@@ -2136,7 +2121,7 @@ size_t PricerSolverBdd::get_nb_vertices() {
 }
 
 bool PricerSolverBdd::structure_feasible() {
-    return (get_nb_vertices() != 0 &&
+    return ((decision_diagram.size() != 0) &&
             decision_diagram.root().row() >= jobs.size());
 }
 

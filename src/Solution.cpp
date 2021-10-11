@@ -40,10 +40,10 @@ void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
     auto cmp_jobs_edd = [](const auto lhs, const auto rhs) -> bool {
         return lhs->due_time < rhs->due_time;
     };
-    std::vector<Job*> tmp{};
+    auto tmp = v | ranges::views::transform([](const auto& tmp_j) { return tmp_j.get(); }) | ranges::to_vector;
 
-    std::ranges::transform(v, std::back_inserter(tmp),
-                           [](const auto& tmp_j) { return tmp_j.get(); });
+//    std::ranges::transform(v, std::back_inserter(tmp),
+//                           [](const auto& tmp_j) { return tmp_j.get(); });
     std::ranges::sort(tmp, cmp_jobs_edd);
     tw = 0;
 

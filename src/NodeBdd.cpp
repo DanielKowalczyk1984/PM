@@ -145,6 +145,13 @@ size_t& NodeBdd::get_key() {
     return key;
 }
 
+void NodeBdd::set_key_model(const size_t& _key) {
+    key_model = _key;
+}
+size_t& NodeBdd::get_key_model() {
+    return key_model;
+}
+
 /** Functions for manipulation of lp_visited */
 void NodeBdd::update_lp_visited(bool _update) {
     lp_visited = _update;

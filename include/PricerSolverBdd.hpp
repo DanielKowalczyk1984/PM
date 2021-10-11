@@ -22,11 +22,12 @@ struct Sol;
 
 class PricerSolverBdd : public PricerSolverBase {
     DdStructure<NodeBdd> decision_diagram;
-    size_t               size_graph{};
-    size_t               nb_edges{};
-    size_t               nb_vertices{};
-    size_t               nb_removed_edges{};
-    size_t               nb_removed_nodes{};
+
+    size_t size_graph{};
+    size_t nb_edges{};
+    size_t nb_vertices{};
+    size_t nb_removed_edges{};
+    size_t nb_removed_nodes{};
 
     std::vector<std::pair<Job*, Interval*>> ordered_jobs_new;
 
@@ -40,7 +41,6 @@ class PricerSolverBdd : public PricerSolverBase {
     size_t H_min;
     int    H_max;
 
-    std::unique_ptr<OsiGrbSolverInterface> build_model();
 
    public:
     explicit PricerSolverBdd(const Instance& instance);
@@ -136,6 +136,7 @@ class PricerSolverBdd : public PricerSolverBase {
     void update_constraints() override {}
 
     void update_coeff_constraints() override;
+    std::unique_ptr<OsiSolverInterface> build_model();
 };
 
 #endif  // PRICER_SOLVER_BDD_HPP

@@ -37,6 +37,7 @@ class NodeBdd : public NodeBase {
     Job*   job{nullptr};
     size_t weight{};
     size_t key{};
+    size_t key_model{};
 
     bool   visited{false};
     NodeId ptr_node_id{};
@@ -140,6 +141,8 @@ class NodeBdd : public NodeBase {
     void    set_key(const size_t& _key);
     size_t& get_key();
 
+    void    set_key_model(const size_t& _key);
+    size_t& get_key_model();
     /** Functions for manipulation of lp_visited */
     void update_lp_visited(bool _update);
     [[nodiscard]] bool get_lp_visited() const;
