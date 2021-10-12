@@ -1,8 +1,8 @@
 #include <fmt/chrono.h>         // for print
 #include <fmt/format.h>         // for format
-#include <unistd.h>             // for access, F_OK
 #include <cstdio>               // for fopen, fclose, FILE
 #include <ctime>                // for localtime, time, time_t
+#include <filesystem>           // for path, directory_entry
 #include <functional>           // for function
 #include <memory>               // for operator==, unique_ptr
 #include <string>               // for string, basic_string
@@ -27,8 +27,10 @@ void Problem::to_csv() {
         fmt::format("CG_overall_{:%Y_%m_%d}.csv", fmt::localtime(result));
     stat.real_time_total = getRealTime() - stat.real_time_total;
     CCutil_stop_timer(&(stat.tot_cputime), 0);
+    auto path_file = std::filesystem::current_path() / file_name;
+    std::filesystem::directory_entry tmp_entry_file{path_file};
 
-    if (access(file_name.c_str(), F_OK) != -1) {
+    if (tmp_entry_file.exists()) {
         file = ptr_file(std::fopen(file_name.c_str(), "a"), &fclose);
     } else {
         file = ptr_file(std::fopen(file_name.c_str(), "w"), &fclose);
