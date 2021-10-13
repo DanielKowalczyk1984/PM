@@ -2035,10 +2035,10 @@ int PricerSolverBdd::add_constraints() {
 
     // // aux_model->setColSolution(sol_x.data());
     // aux_model->messageHandler()->setLogLevel(0);
-    for (int i = 0; i < aux_model->getNumCols(); ++i) {
-        aux_model->setInteger(i);
-    }
-    aux_model->initialSolve();
+    // for (int i = 0; i < aux_model->getNumCols(); ++i) {
+    //     aux_model->setInteger(i);
+    // }
+    // aux_model->initialSolve();
     // OsiCuts     cuts;
     // CglZeroHalf cg;
     // cg.refreshSolver(aux_model.get());
