@@ -1,34 +1,31 @@
 #include "ZeroHalfCuts.hpp"
-#include <fmt/format.h>                          // for format, print
-#include <gurobi_c++.h>                          // for GRBModel, GRBVar
-#include <algorithm>                             // for __for_each_fn, for_each
-#include <array>                                 // for array, array<>::valu...
-#include <cmath>                                 // for floor
-#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
-#include <functional>                            // for identity
-#include <memory>                                // for shared_ptr, unique_ptr
-#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, basic_it...
-#include <range/v3/view/drop.hpp>                // for drop, drop_fn
-#include <range/v3/view/filter.hpp>              // for filter
-#include <range/v3/view/iota.hpp>                // for iota_view, iota_view...
-#include <range/v3/view/join.hpp>                // for join_view<>::cursor
-#include <range/v3/view/reverse.hpp>             // for reverse_view, revers...
-#include <range/v3/view/subrange.hpp>            // for subrange
-#include <range/v3/view/take.hpp>                // for take_view, take, tak...
-#include <range/v3/view/view.hpp>                // for operator|, view_closure
-#include <range/v3/view/zip.hpp>                 // for zip
-#include <utility>                               // for move
-#include <vector>                                // for vector
-#include "ModelInterface.hpp"                    // for ConstraintGeneric
-#include "ModernDD/NodeBddTable.hpp"                      // for NodeTableEntity
-#include "ModernDD/NodeId.hpp"                            // for NodeId
-#include "gurobi_c.h"                            // for GRB_INFINITY, GRB_PR...
+#include <fmt/format.h>               // for format, print
+#include <gurobi_c++.h>               // for GRBModel, GRBVar
+#include <algorithm>                  // for __for_each_fn, for_each
+#include <array>                      // for array, array<>::valu...
+#include <cmath>                      // for floor
+#include <functional>                 // for identity
+#include <memory>                     // for shared_ptr, unique_ptr
+#include <range/v3/view/drop.hpp>     // for drop, drop_fn
+#include <range/v3/view/filter.hpp>   // for filter
+#include <range/v3/view/iota.hpp>     // for iota_view, iota_view...
+#include <range/v3/view/join.hpp>     // for join_view<>::cursor
+#include <range/v3/view/reverse.hpp>  // for reverse_view, revers...
+#include <range/v3/view/take.hpp>     // for take_view, take, tak...
+#include <range/v3/view/view.hpp>     // for operator|, view_closure
+#include <range/v3/view/zip.hpp>      // for zip
+#include <utility>                    // for move
+#include <vector>                     // for vector
+#include "ModelInterface.hpp"         // for ConstraintGeneric
+#include "ModernDD/NodeBddTable.hpp"  // for NodeTableEntity
+#include "ModernDD/NodeId.hpp"        // for NodeId
+#include "gurobi_c.h"                 // for GRB_INFINITY, GRB_PR...
 
-ZeroHalfCuts::ZeroHalfCuts(size_t                            _nb_jobs,
-                           size_t                            _nb_machines,
-                           ReformulationModel*               _rmp_model,
-                           NodeId const&                     _root,
-                           NodeTableEntity<NodeBdd<double>>* _table)
+ZeroHalfCuts::ZeroHalfCuts(size_t                    _nb_jobs,
+                           size_t                    _nb_machines,
+                           ReformulationModel*       _rmp_model,
+                           NodeId const&             _root,
+                           NodeTableEntity<NodeBdd>* _table)
     : env(std::make_unique<GRBEnv>()),
       model(std::make_unique<GRBModel>(*env)),
       nb_jobs(_nb_jobs),
@@ -82,7 +79,8 @@ void ZeroHalfCuts::generate_model() {
         auto                m = nb_machines % 2 == 0 ? 0.0 : 1.0;
         q = model->addVar(0.0, GRB_INFINITY, 0.0, 'I');
 
-        expr.addTerms(coeffs.data(), jobs_var.data(), static_cast<int>(coeffs.size()));
+        expr.addTerms(coeffs.data(), jobs_var.data(),
+                      static_cast<int>(coeffs.size()));
         expr += m * root_node.get_sigma() - m * terminal_node.get_sigma() -
                 HALF * q;
         model->addConstr(expr, '=', 1.0);
@@ -132,15 +130,15 @@ void ZeroHalfCuts::init_coeff_cut() {
     node_ids_lift.clear();
 }
 
-void ZeroHalfCuts::init_coeff_node(NodeBdd<>* node) {
+void ZeroHalfCuts::init_coeff_node(NodeBdd* node) {
     for (auto k : {false, true}) {
         node->reset_coeff_cut(k);
         for (auto& it : node->get_in_edges(k)) {
-            auto aux = it.lock();
-            if (aux) {
-                auto& aux_node = table->node(*aux);
-                aux_node.reset_coeff_cut(k);
-            }
+            // auto aux = it.lock();
+            // if (aux) {
+            //     auto& aux_node = table->node(*aux);
+            //     aux_node.reset_coeff_cut(k);
+            // }
         }
     }
 }
@@ -184,7 +182,7 @@ void ZeroHalfCuts::construct_cut() {
     //     }
     // };
 
-    std::ranges::for_each(node_ids, add_coeff_constr);
+    // std::ranges::for_each(node_ids, add_coeff_constr);
     // std::for_each(node_ids_lift.begin(), node_ids_lift.end(),
     // add_coeff_constr); std::for_each(node_ids.begin(), node_ids.end(),
     // print_node_ids); fmt::print("\n");
@@ -295,7 +293,7 @@ void ZeroHalfCuts::generate_cuts() {
             // }
             // fmt::print("\n");
 
-            std::ranges::for_each(node_ids, calc_coeff_cut);
+            // std::ranges::for_each(node_ids, calc_coeff_cut);
 
             // for (auto& iter : node_ids) {
             //     auto& node = table->node(iter);
@@ -423,10 +421,10 @@ void ZeroHalfCuts::dfs_lift(const NodeId& v) {
 
             for (auto j : {false, true}) {
                 for (auto& it : child_node.get_in_edges(j)) {
-                    auto aux = it.lock();
+                    auto aux = it;
                     if (aux) {
-                        auto& aux_node = table->node(*aux);
-                        aux_node.reduce_coeff_cut(j);
+                        // auto& aux_node = table->node(*aux);
+                        // aux_node.reduce_coeff_cut(j);
                     }
                 }
             }

@@ -29,7 +29,7 @@ struct SlopeType {
           c(_c),
           alpha(_alpha) {}
 
-    int                operator()(int t) { return c + alpha * (t - b1); };
+    int                operator()(int t) const { return c + alpha * (t - b1); };
     [[nodiscard]] bool in_interval(int _c) const {
         return (b1 <= _c) && (_c < b2);
     };
@@ -52,8 +52,8 @@ using MatrixProcessingList = std::vector<std::vector<ProcessingListData>>;
 using VectorProcessingList = std::vector<ProcessingListData>;
 using MatrixInt = std::vector<std::vector<int>>;
 using VectorInt = std::vector<int>;
-using SlopeList = std::list<SlopeType>;
-using SlopeListIt = std::list<SlopeType>::iterator;
+using SlopeList = std::vector<SlopeType>;
+using SlopeListIt = std::vector<SlopeType>::iterator;
 
 struct LocalSearchData {
     LocalSearchData(size_t _nb_jobs, size_t _nb_machines);

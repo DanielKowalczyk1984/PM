@@ -8,4 +8,4 @@
 
 [submodule "decision-diagrams"]
 	path = decision-diagrams
-	url = git@github.com:DanielKowalczyk1984/DecisionDiagramsModernCpp.git
+	url = git@gitlab.kuleuven.be:u0056096/DecisionDiagramsModernCpp.git

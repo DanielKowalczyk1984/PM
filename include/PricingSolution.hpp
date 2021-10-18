@@ -5,10 +5,9 @@
 #include <vector>
 #include "Job.h"
 
-template <typename T = double>
 class PricingSolution {
    public:
-    T                 obj{};
+    double            obj{};
     int               cost{};
     int               C_max{};
     std::vector<Job*> jobs{};
@@ -16,26 +15,25 @@ class PricingSolution {
     /** Default constructor */
     PricingSolution() = default;
 
-    explicit PricingSolution<T>(T _obj) : obj(_obj) {}
+    explicit PricingSolution(double _obj) : obj(_obj) {}
 
     /** Copy constructor */
-    PricingSolution(const PricingSolution<T>& other) = delete;
+    PricingSolution(const PricingSolution& other) = delete;
 
     /** Move constructor */
-    PricingSolution(PricingSolution<T>&& other) noexcept = default;
+    PricingSolution(PricingSolution&& other) noexcept = default;
 
     /** Copy assignment operator */
-    PricingSolution<T>& operator=(const PricingSolution<T>& other) = delete;
+    PricingSolution& operator=(const PricingSolution& other) = delete;
 
     /** Move assignment operator */
-    PricingSolution<T>& operator=(PricingSolution<T>&& other) noexcept =
-        default;
+    PricingSolution& operator=(PricingSolution&& other) noexcept = default;
 
     /** Destructor */
     ~PricingSolution() = default;
 
-    friend std::ostream& operator<<(std::ostream&             os,
-                                    PricingSolution<T> const& o) {
+    friend std::ostream& operator<<(std::ostream&          os,
+                                    PricingSolution const& o) {
         os << "obj = " << o.obj << "," << std::endl
            << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
 

@@ -6,32 +6,32 @@
 #include "NodeBdd.hpp"                    // for NodeBdd
 #include "PricingSolution.hpp"            // for PricingSolution
 
-template <typename T = double>
-class ForwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
-    double* pi{};
+class ForwardBddBase : public Eval<NodeBdd, PricingSolution> {
+    const double* pi{};
 
    public:
     ForwardBddBase() = default;
-    ForwardBddBase(const ForwardBddBase<T>& src) = default;
-    ForwardBddBase(ForwardBddBase<T>&&) noexcept = default;
-    ForwardBddBase<T>& operator=(ForwardBddBase<T>&&) noexcept = default;
-    ForwardBddBase<T>& operator=(const ForwardBddBase<T>&) = default;
+    ForwardBddBase(const ForwardBddBase& src) = default;
+    ForwardBddBase(ForwardBddBase&&) noexcept = default;
+    ForwardBddBase& operator=(ForwardBddBase&&) noexcept = default;
+    ForwardBddBase& operator=(const ForwardBddBase&) = default;
     virtual ~ForwardBddBase() = default;
 
     void set_pi(double* _pi) { pi = _pi; }
+    void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
 
     [[nodiscard]] const double* get_pi() const { return pi; }
 
-    virtual void initializenode(NodeBdd<T>& n) const = 0;
+    virtual void initialize_node(NodeBdd& n) const = 0;
 
-    virtual void initializerootnode(NodeBdd<T>& n) const = 0;
+    virtual void initialize_root_node(NodeBdd& n) const = 0;
 
-    virtual void evalNode(NodeBdd<T>& n) const = 0;
+    virtual void evalNode(NodeBdd& n) const = 0;
 
-    PricingSolution<T> get_objective(NodeBdd<T>& n) const {
-        PricingSolution<T> sol(0.0);
-        auto*              ptr_node = &(n.forward_label[0]);
-        auto table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
+    PricingSolution get_objective(NodeBdd& n) const {
+        PricingSolution sol(0.0);
+        auto*           ptr_node = &(n.forward_label[0]);
+        auto            table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
 
         while (ptr_node->get_previous() != nullptr) {
             auto* aux_prev_node = ptr_node->get_previous();
@@ -49,17 +49,16 @@ class ForwardBddBase : public Eval<NodeBdd<T>, PricingSolution<T>> {
     }
 };
 
-template <typename T = double>
-class ForwardBddCycle : public ForwardBddBase<T> {
+class ForwardBddCycle : public ForwardBddBase {
    public:
     ForwardBddCycle() = default;
-    ForwardBddCycle(const ForwardBddCycle<T>& src) = default;
-    ForwardBddCycle(ForwardBddCycle<T>&&) noexcept = default;
-    ForwardBddCycle<T>& operator=(const ForwardBddCycle<T>&) = default;
-    ForwardBddCycle<T>& operator=(ForwardBddCycle<T>&&) noexcept = default;
+    ForwardBddCycle(const ForwardBddCycle& src) = default;
+    ForwardBddCycle(ForwardBddCycle&&) noexcept = default;
+    ForwardBddCycle& operator=(const ForwardBddCycle&) = default;
+    ForwardBddCycle& operator=(ForwardBddCycle&&) noexcept = default;
     virtual ~ForwardBddCycle() = default;
 
-    void initializenode(NodeBdd<T>& n) const override {
+    void initialize_node(NodeBdd& n) const override {
         if (n.get_weight() == 0) {
             n.forward_label[0].forward_update(0, nullptr, false);
             n.forward_label[1].reset();
@@ -70,17 +69,17 @@ class ForwardBddCycle : public ForwardBddBase<T> {
         }
     }
 
-    void initializerootnode(NodeBdd<T>& n) const override {
+    void initialize_root_node(NodeBdd& n) const override {
         n.forward_label[0].get_f() = 0;
         n.forward_label[1].set_f(std::numeric_limits<double>::max());
     }
 
-    void evalNode(NodeBdd<T>& n) const override {
-        auto* tmp_j = n.get_job();
-        auto  table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
-        auto& p0 = table_tmp->node(n[0]);
-        auto& p1 = table_tmp->node(n[1]);
-        const auto* dual = ForwardBddBase<T>::get_pi();
+    void evalNode(NodeBdd& n) const override {
+        auto*       tmp_j = n.get_job();
+        auto        table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto&       p0 = table_tmp->node(n[0]);
+        auto&       p1 = table_tmp->node(n[1]);
+        const auto* dual = ForwardBddBase::get_pi();
 
         n.reset_reduced_costs();
         n.adjust_reduced_costs(dual[tmp_j->job], true);
@@ -155,18 +154,17 @@ class ForwardBddCycle : public ForwardBddBase<T> {
     }
 };
 
-template <typename T = double>
-class ForwardBddSimple : public ForwardBddBase<T> {
+class ForwardBddSimple : public ForwardBddBase {
    public:
     ForwardBddSimple() = default;
 
-    ForwardBddSimple(const ForwardBddSimple<T>&) = default;
-    ForwardBddSimple<T>& operator=(const ForwardBddSimple<T>&) = default;
-    ForwardBddSimple(ForwardBddSimple<T>&&) noexcept = default;
-    ForwardBddSimple<T>& operator=(ForwardBddSimple<T>&&) noexcept = default;
+    ForwardBddSimple(ForwardBddSimple&&) noexcept = default;
+    ForwardBddSimple(const ForwardBddSimple&) = default;
+    ForwardBddSimple& operator=(const ForwardBddSimple&) = default;
+    ForwardBddSimple& operator=(ForwardBddSimple&&) noexcept = default;
     virtual ~ForwardBddSimple() = default;
 
-    void initializenode(NodeBdd<T>& n) const override {
+    void initialize_node(NodeBdd& n) const override {
         if (n.get_weight() == 0) {
             n.forward_label[0].forward_update(0, nullptr, false);
         } else {
@@ -174,16 +172,16 @@ class ForwardBddSimple : public ForwardBddBase<T> {
         }
     }
 
-    void initializerootnode(NodeBdd<T>& n) const override {
+    void initialize_root_node(NodeBdd& n) const override {
         n.forward_label[0].get_f() = 0;
     }
 
-    void evalNode(NodeBdd<T>& n) const override {
-        auto* table_tmp = Eval<NodeBdd<T>, PricingSolution<T>>::get_table();
+    void evalNode(NodeBdd& n) const override {
+        auto* table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
         auto& p0 = table_tmp->node(n[0]);
         auto& p1 = table_tmp->node(n[1]);
         n.reset_reduced_costs();
-        const auto* dual = ForwardBddBase<T>::get_pi();
+        const auto* dual = ForwardBddBase::get_pi();
 
         for (auto& list : n.get_coeff_list()) {
             list |= ranges::actions::remove_if([&](auto& it) {

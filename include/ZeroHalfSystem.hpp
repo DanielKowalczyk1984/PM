@@ -4,15 +4,26 @@
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 #include <cstddef>
 #include <vector>
+#include "CoinPackedVector.hpp"
+#include "ModernDD/NodeBddStructure.hpp"
+#include "NodeBdd.hpp"
+
 class ZeroHalfSystem {
     using MatrixDouble = std::vector<std::vector<double>>;
     using VectorDouble = std::vector<double>;
+    struct ConstraintData {
+        CoinPackedVector        constraint{};
+        double                  slack{};
+        boost::dynamic_bitset<> row_indices{};
+        int                     rhs{};
+    };
 
    public:
     ZeroHalfSystem() = default;
-    ZeroHalfSystem(const MatrixDouble& _A,
+    ZeroHalfSystem(const MatrixDouble& A,
                    const VectorDouble& b,
                    const VectorDouble& _x);
+    ZeroHalfSystem(const DdStructure<NodeBdd>& bdd);
     ZeroHalfSystem(ZeroHalfSystem&&) = default;
     ZeroHalfSystem(const ZeroHalfSystem&) = default;
     ZeroHalfSystem& operator=(ZeroHalfSystem&&) = default;
@@ -20,14 +31,29 @@ class ZeroHalfSystem {
     ~ZeroHalfSystem() = default;
 
    private:
+    std::vector<CoinPackedVector>        assignment_constraints;
+    std::vector<double>                  assignment_slack;
+    std::vector<boost::dynamic_bitset<>> assignment_index;
+    std::vector<int>                     assignment_rhs;
+
+    std::vector<CoinPackedVector>        flow_constraints;
+    std::vector<double>                  flow_slack;
+    std::vector<boost::dynamic_bitset<>> flow_index;
+    std::vector<int>                     flow_rhs;
+
+    int nb_assignments{};
+    int nb_nz_vertices{};
+    int nb_nz_edges{};
+
     std::vector<std::vector<int>> A_bar;
     std::vector<int>              b_bar;
     std::vector<double>           x_star;
     std::vector<double>           slack;
 
     std::vector<boost::dynamic_bitset<>> row_index;
-    size_t                               nb_rows{};
-    size_t                               nb_columns{};
+
+    size_t nb_rows{};
+    size_t nb_columns{};
 
     static constexpr double HALF = 2.0;
     static constexpr double EPS = 1e-6;
@@ -40,6 +66,9 @@ class ZeroHalfSystem {
     void evaluate_rows(const std::vector<int>& _rows);
 
     void add_to_row(size_t i, size_t j);
+
+   public:
+    void generate_cuts();
 };
 
 #endif  // __ZEROHALFSYSTEM_H__

@@ -2,7 +2,6 @@
 #define _MODEL_INTERFACE
 
 #include <fmt/core.h>                           // for print
-#include <boost/container_hash/extensions.hpp>  // for hash_combine
 #include <cmath>                                // for fabs
 #include <cstddef>                              // for size_t
 #include <iostream>                             // for operator<<, size_t
@@ -16,54 +15,11 @@
 #include <utility>                              // for move, pair
 #include <variant>                              // for hash
 #include <vector>                               // for vector
+
+#include "BddCoeff.hpp"
+#include "VariableKeyBase.hpp"
+
 namespace vs = ranges::views;
-class VariableKeyBase {
-   private:
-    size_t j{};
-    size_t t{};
-    bool   high{false};
-    bool   root{false};
-
-   public:
-    VariableKeyBase(size_t _j, size_t _t, bool _high = true, bool _root = false)
-        : j(_j),
-          t(_t),
-          high(_high),
-          root(_root) {}
-
-    VariableKeyBase() = default;
-
-    [[nodiscard]] inline size_t get_j() const { return j; }
-
-    [[nodiscard]] inline size_t get_t() const { return t; }
-
-    [[nodiscard]] inline bool get_root() const { return root; }
-
-    [[nodiscard]] inline bool get_high() const { return high; }
-
-    inline void set_j(size_t _j) { j = _j; }
-
-    inline void set_t(size_t _t) { t = _t; }
-
-    inline void set_root(bool _root) { root = _root; }
-
-    inline void set_high(bool _high) { high = _high; }
-
-    VariableKeyBase(const VariableKeyBase&) = default;
-    VariableKeyBase(VariableKeyBase&&) = default;
-    VariableKeyBase& operator=(const VariableKeyBase&) = default;
-    VariableKeyBase& operator=(VariableKeyBase&&) = default;
-    virtual ~VariableKeyBase() = default;
-
-    bool operator==(const VariableKeyBase& other) const {
-        return (j == other.j && t == other.t && high == other.high);
-    }
-
-    // friend bool operator==(const VariableKeyBase& lhs,
-    //                        const VariableKeyBase& rhs) {
-    //     return (lhs.j == rhs.j && lhs.t == rhs.t && lhs.high == rhs.high);
-    // }
-};
 
 class ConstraintBase {
     char   sense;
@@ -149,84 +105,6 @@ class ReformulationModel : public std::vector<std::shared_ptr<ConstraintBase>> {
         this->erase(it, it + nb_del);
     }
 };
-
-class BddCoeff : public VariableKeyBase {
-   private:
-    size_t row;
-    double coeff;
-    double value;
-
-   public:
-    BddCoeff(size_t _j,
-             size_t _t,
-             double _coeff,
-             double _value = 0.0,
-             size_t _row = 0UL,
-             bool   _high = true,
-             bool   _root = false)
-        : VariableKeyBase(_j, _t, _high, _root),
-          row(_row),
-          coeff(_coeff),
-          value(_value){};
-
-    BddCoeff(const BddCoeff&) = default;
-    BddCoeff& operator=(const BddCoeff&) = default;
-    BddCoeff(BddCoeff&& op) = default;
-    BddCoeff& operator=(BddCoeff&& op) = default;
-    ~BddCoeff() override = default;
-
-    [[nodiscard]] inline double get_coeff() const { return coeff; }
-
-    [[nodiscard]] inline double get_value() const { return value; }
-
-    inline void set_value(double _value) { value = _value; }
-
-    inline void set_row(size_t _row) { row = _row; }
-
-    [[nodiscard]] inline size_t get_row() const { return row; }
-
-    friend bool operator==(const BddCoeff& lhs, const BddCoeff& rhs) {
-        return lhs.get_j() == rhs.get_j() && lhs.get_t() == rhs.get_t() &&
-               lhs.get_high() == rhs.get_high();
-    };
-
-    bool operator==(const BddCoeff& other) {
-        return get_j() == other.get_j() && get_t() == other.get_t() &&
-               get_high() == other.get_high();
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const BddCoeff& object) {
-        return os << "(j = " << object.get_j() << ", t = " << object.get_t()
-                  << ", x = " << object.get_value()
-                  << ", high = " << object.get_high() << " )\n";
-    }
-};
-
-namespace std {
-template <>
-struct hash<BddCoeff> {
-    std::size_t operator()(auto const& s) const noexcept {
-        std::size_t seed = 0;
-        boost::hash_combine(seed, s.get_j());
-        boost::hash_combine(seed, s.get_t());
-        boost::hash_combine(seed, s.get_high());
-
-        return seed;  // or use boost::hash_combine
-    }
-};
-
-template <>
-struct hash<VariableKeyBase> {
-    std::size_t operator()(auto const& s) const noexcept {
-        std::size_t seed = 0;
-        boost::hash_combine(seed, s.get_j());
-        boost::hash_combine(seed, s.get_t());
-        boost::hash_combine(seed, s.get_high());
-
-        return seed;  // or use boost::hash_combine
-    }
-};
-}  // namespace std
 
 class GenericData : public std::unordered_map<VariableKeyBase, double> {
    private:

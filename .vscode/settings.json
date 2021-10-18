@@ -1,18 +1,4 @@
 {
-    "files.associations": {
-        "*.ipynb": "jupyter",
-        "*.ipp": "cpp",
-        "*.tcc": "cpp"
-    },
-    "cSpell.words": [
-        "Dstructure",
-        "guint",
-        "Hiroaki",
-        "Iwashita",
-        "MINATO",
-        "NLOHMANN",
-        "OPENMP",
-        "pdata",
-        "Unreduction"
-    ]
+	"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+	"C_Cpp.errorSquiggles": "Disabled"
 }

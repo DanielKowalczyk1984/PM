@@ -12,11 +12,11 @@ class ConstraintGeneric;
 class ReformulationModel;
 class ZeroHalfCuts {
    public:
-    ZeroHalfCuts(size_t                            _nb_jobs,
-                 size_t                            _nb_machines,
-                 ReformulationModel*               _rmp_model,
-                 NodeId const&                     _root,
-                 NodeTableEntity<NodeBdd<double>>* _table);
+    ZeroHalfCuts(size_t                    _nb_jobs,
+                 size_t                    _nb_machines,
+                 ReformulationModel*       _rmp_model,
+                 NodeId const&             _root,
+                 NodeTableEntity<NodeBdd>* _table);
     ZeroHalfCuts(ZeroHalfCuts&&) = default;
     ZeroHalfCuts(const ZeroHalfCuts&) = delete;
     ZeroHalfCuts& operator=(ZeroHalfCuts&&) = default;
@@ -36,7 +36,7 @@ class ZeroHalfCuts {
     size_t                                          nb_machines;
     ReformulationModel*                             rmp_model;
     NodeId                                          root;
-    NodeTableEntity<NodeBdd<double>>*               table;
+    NodeTableEntity<NodeBdd>*                       table;
     std::vector<NodeId>                             node_ids{};
     std::vector<NodeId>                             node_ids_lift{};
     std::vector<GRBVar>                             jobs_var;
@@ -50,7 +50,7 @@ class ZeroHalfCuts {
     void generate_model();
     void init_table();
     void init_coeff_cut();
-    void init_coeff_node(NodeBdd<>* node);
+    void init_coeff_node(NodeBdd* node);
     void construct_cut();
     void lift_operator();
     void dfs(const NodeId& v);

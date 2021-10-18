@@ -21,17 +21,20 @@ class PricerSolverBddSimple : public PricerSolverBdd {
     PricerSolverBddSimple(PricerSolverBddSimple&&) = default;
     PricerSolverBddSimple& operator=(PricerSolverBddSimple&&) = default;
     PricerSolverBddSimple& operator=(const PricerSolverBddSimple&) = delete;
-    virtual ~PricerSolverBddSimple() override = default;
+    ~PricerSolverBddSimple() override = default;
 
     [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return std::make_unique<PricerSolverBddSimple>(*this);
     };
 
-    PricingSolution<double> pricing_algorithm(double* _pi) override;
-    PricingSolution<double> farkas_pricing(double* _pi) override;
+    PricingSolution pricing_algorithm(double* _pi) override;
+    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
+    PricingSolution farkas_pricing(double* _pi) override;
+    PricingSolution farkas_pricing(std::span<const double>& _pi) override;
 
-    double evaluate_rc_arc(NodeBdd<>& n) override;
+    double evaluate_rc_arc(NodeBdd& n) override;
     void   compute_labels(double* _pi) override;
+    void   compute_labels(std::span<const double>& _pi) override;
 };
 
 class PricerSolverBddCycle : public PricerSolverBdd {
@@ -47,17 +50,20 @@ class PricerSolverBddCycle : public PricerSolverBdd {
     PricerSolverBddCycle(PricerSolverBddCycle&&) = default;
     PricerSolverBddCycle& operator=(PricerSolverBddCycle&&) = default;
     PricerSolverBddCycle& operator=(const PricerSolverBddCycle&) = delete;
-    virtual ~PricerSolverBddCycle() override = default;
+    ~PricerSolverBddCycle() override = default;
 
     [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
         return std::make_unique<PricerSolverBddCycle>(*this);
     }
 
-    PricingSolution<double> pricing_algorithm(double* _pi) override;
-    PricingSolution<double> farkas_pricing(double* _pi) override;
+    PricingSolution pricing_algorithm(double* _pi) override;
+    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
+    PricingSolution farkas_pricing(double* _pi) override;
+    PricingSolution farkas_pricing(std::span<const double>& _pi) override;
 
-    double evaluate_rc_arc(NodeBdd<>& n) override;
+    double evaluate_rc_arc(NodeBdd& n) override;
     void   compute_labels(double* _pi) override;
+    void   compute_labels(std::span<const double>& _pi) override;
 };
 
 #endif  // PRICER_SOLVER_BDD_FORWARD_HPP
