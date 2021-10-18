@@ -4,7 +4,7 @@
 #include "NodeData.h"                // for NodeData
 #include "PricerSolverBase.hpp"      // for PricerSolverBase
 #include "PricingStabilization.hpp"  // for PricingStabilizationBase
-#include "lp.h"                      // for lp_interface_deleterows, lp_inte...
+#include "orutils/lp.h"                      // for lp_interface_deleterows, lp_inte...
 
 void NodeData::build_solve_mip() {
     solver->build_mip();

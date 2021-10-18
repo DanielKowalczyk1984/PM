@@ -23,7 +23,7 @@
 #include "PricingStabilization.hpp"             // for PricingStabilizationBase
 #include "Problem.h"                            // for Problem
 #include "Solution.hpp"                         // for Sol
-#include "lp.h"                                 // for lp_interface_create
+#include "orutils/lp.h"                                 // for lp_interface_create
 
 NodeData::NodeData(Problem* problem)
     : depth(0UL),

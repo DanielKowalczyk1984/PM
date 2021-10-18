@@ -13,7 +13,7 @@
 #include <vector>
 #include "Job.h"
 #include "Solution.hpp"
-#include "util.h"
+#include "orutils/util.h"
 
 LocalSearchData::LocalSearchData(size_t _nb_jobs, size_t _nb_machines)
     : nb_jobs(_nb_jobs),

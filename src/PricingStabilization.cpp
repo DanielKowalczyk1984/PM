@@ -7,7 +7,7 @@
 #include <vector>                // for vector
 #include "ModelInterface.hpp"    // for ReformulationModel
 #include "PricerSolverBase.hpp"  // for PricerSolverBase
-#include "util.h"                // for dbg_lvl, SQR
+#include "orutils/util.h"                // for dbg_lvl, SQR
 /**
  * @brief Construct a new Pricing Stabilization Base:: Pricing Stabilization
  * Base object

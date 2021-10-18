@@ -5,7 +5,7 @@
 #include "NodeBdd.hpp"           // for NodeBdd
 #include "PricerSolverBase.hpp"  // for PricerSolverBase::ALIGN
 #include "PricerSolverBdd.hpp"   // for PricerSolverBdd
-#include "util.h"                // for dbg_lvl
+#include "orutils/util.h"                // for dbg_lvl
 
 /**
  * backward bdd pricersolver for the flow formulation that takes care of the
