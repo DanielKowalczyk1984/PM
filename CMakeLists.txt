@@ -1,44 +1,52 @@
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 
+#
+# Project details
+#
+
 project(
-        PM
-        VERSION 0.1.0
-        LANGUAGES CXX C
-        DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
+  PM
+  VERSION 0.1.0
+  LANGUAGES CXX C
+  DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
 )
 
 # Define a local module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR})
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 #
 # Prevent building in the source directory
 #
 
-include(ConfigSafeGuards)
+include(cmake/ConfigSafeGuards.cmake)
 
 #
 # Set project options
 #
 
-include(StandardSettings)
-include(Utils)
-include(StaticAnalyzers)
-include(SetUpOsi)
+include(cmake/StandardSettings.cmake)
+include(cmake/StaticAnalyzers.cmake)
+include(cmake/Utils.cmake)
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...")
 
+if(UNIX)
+  add_compile_options(
+    "$<$<CONFIG:DEBUG>:-D_DEBUG>"
+  ) # this will allow to use same _DEBUG macro available in both Linux as well as Windows - MSCV
+    # environment. Easy to put Debug specific code.
+endif(UNIX)
+
 #
-# Enable package managers
+# Setup alternative names
 #
 
-include(Conan)
-include(Vcpkg)
-include(CPM)
-
-#
-# code coverage
-#
-
-find_package(codecov)
+if(${PROJECT_NAME}_USE_ALT_NAMES)
+  string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWERCASE)
+  string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
+else()
+  set(PROJECT_NAME_LOWERCASE ${PROJECT_NAME})
+  set(PROJECT_NAME_UPPERCASE ${PROJECT_NAME})
+endif()
 
 #
 # Third Party packages
@@ -48,123 +56,237 @@ find_package(Gurobi)
 add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 add_subdirectory(decision-diagrams)
+include(cmake/SetUpOsi.cmake)
+
+#
+# Enable package managers
+#
+
+include(cmake/Conan.cmake)
+include(cmake/Vcpkg.cmake)
+include(cmake/CPM.cmake)
 
 #
 # Create library, setup header and source files
 #
 
 # Find all headers and implementation files
-include(SourcesAndHeaders)
+include(cmake/SourcesAndHeaders.cmake)
 
-if (${PROJECT_NAME}_BUILD_EXECUTABLE)
-    add_executable(${PROJECT_NAME} ${exe_sources})
+if(${PROJECT_NAME}_BUILD_EXECUTABLE)
+  add_executable(${PROJECT_NAME} ${exe_sources})
+
+  if(${PROJECT_NAME}_VERBOSE_OUTPUT)
+    verbose_message("Found the following sources:")
+    foreach(source IN LISTS exe_sources)
+      verbose_message("* ${source}")
+    endforeach()
+  endif()
+
+  if(${PROJECT_NAME}_ENABLE_UNIT_TESTING)
     add_library(${PROJECT_NAME}_LIB ${headers} ${sources})
-elseif (${PROJECT_NAME}_BUILD_HEADERS_ONLY)
-    add_library(${PROJECT_NAME} INTERFACE)
-else ()
-    add_library(${PROJECT_NAME} ${headers} ${sources} src/NodeBdd.cpp)
-endif ()
 
-verbose_message("Found the following header files:")
-verbose_message(${headers})
-verbose_message("Found the following source files:")
+    if(${PROJECT_NAME}_VERBOSE_OUTPUT)
+      verbose_message("Found the following headers:")
+      foreach(header IN LISTS headers)
+        verbose_message("* ${header}")
+      endforeach()
+    endif()
+  endif()
+elseif(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
+  add_library(${PROJECT_NAME} INTERFACE)
 
-if (${PROJECT_NAME}_BUILD_EXECUTABLE)
-    verbose_message(${exe_sources})
-else ()
-    verbose_message(${sources})
-endif ()
+  if(${PROJECT_NAME}_VERBOSE_OUTPUT)
+    verbose_message("Found the following headers:")
+    foreach(header IN LIST headers)
+      verbose_message("* ${header}")
+    endforeach()
+  endif()
+else()
+  add_library(${PROJECT_NAME} ${headers} ${sources})
+
+  if(${PROJECT_NAME}_VERBOSE_OUTPUT)
+    verbose_message("Found the following sources:")
+    foreach(source IN LISTS sources)
+      verbose_message("* ${source}")
+    endforeach()
+    verbose_message("Found the following headers:")
+    foreach(header IN LISTS headers)
+      verbose_message("* ${header}")
+    endforeach()
+  endif()
+endif()
+
+set_target_properties(
+  ${PROJECT_NAME}
+  PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
+             LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
+             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
+)
+
+if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
+  set_target_properties(
+    ${PROJECT_NAME}_LIB
+    PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
+               LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
+               OUTPUT_NAME ${PROJECT_NAME}
+  )
+endif()
+
+# if (${PROJECT_NAME}_BUILD_EXECUTABLE) add_executable(${PROJECT_NAME} ${exe_sources})
+# add_library(${PROJECT_NAME}_LIB ${headers} ${sources}) elseif (${PROJECT_NAME}_BUILD_HEADERS_ONLY)
+# add_library(${PROJECT_NAME} INTERFACE) else () add_library(${PROJECT_NAME} ${headers} ${sources}
+# src/NodeBdd.cpp) endif ()
+
+# verbose_message("Found the following header files:") verbose_message(${headers})
+# verbose_message("Found the following source files:")
+
+# if (${PROJECT_NAME}_BUILD_EXECUTABLE) verbose_message(${exe_sources}) else ()
+# verbose_message(${sources}) endif ()
 message(STATUS "Added all header and implementation files.")
 
 #
 # Set the project standard and warnings
 #
 
-if (${PROJECT_NAME}_BUILD_HEADERS_ONLY)
-    target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
-else ()
-    target_compile_features(${PROJECT_NAME}_LIB PUBLIC cxx_std_20)
-endif ()
+if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
+  target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+else()
+  target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+endif()
 
-include(CompilerWarnings)
+include(cmake/CompilerWarnings.cmake)
 set_project_warnings(${PROJECT_NAME})
-set_project_warnings(${PROJECT_NAME}_LIB)
 
 verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.")
+
+#
+# Model project dependencies
+#
+
+# Identify and link with the specific "packages" the project uses find_package(package_name
+# package_version REQUIRED package_type [other_options])
+target_link_libraries(
+  ${PROJECT_NAME}
+  PRIVATE
+  ${GUROBI_LIBRARY}
+  ${GUROBI_CXX_LIBRARY}
+  CONAN_PKG::fmt
+  CONAN_PKG::boost
+  CONAN_PKG::docopt.cpp
+  CONAN_PKG::range-v3
+  ORUtils::ORUtils
+  branch-and-bound::branch-and-bound
+  ModernDD::ModernDD
+  ${OSI_LIBRARY}
+  ${OSI_GRB_LIBRARY}
+  ${COINUtils_LIBRARY}
+  ${CGL_LIBRARY}
+  -lm
+  -lpthread
+)
+
+# For Windows, it is necessary to link with the MultiThreaded library. Depending on how the rest of
+# the project's dependencies are linked, it might be necessary to change the line to statically link
+# with the library.
+#
+# This is done as follows:
+#
+# set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+#
+# On Linux and Mac this variable is ignored. If any issues rise from it, try commenting it out and
+# letting CMake decide how to link with it.
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+
+verbose_message("Successfully added all dependencies and linked against them.")
 
 # RelWIthDebInfo Flags
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -mtune=native -fPIC")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO
-        "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99 -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
-        )
+    "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99 -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+)
 
 # Release Flags
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native  -fPIC")
 set(CMAKE_C_FLAGS_RELEASE
-        "${CMAKE_C_FLAGS_RELEASE} -std=c99 -D_XOPEN_SOURCE=500 -mtune=native -Wnested-externs -Wstrict-prototypes"
-        )
+    "${CMAKE_C_FLAGS_RELEASE} -std=c99 -D_XOPEN_SOURCE=500 -mtune=native -Wnested-externs -Wstrict-prototypes"
+)
 
 # Debug Flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -mtune=native -O0 -fPIC")
 set(CMAKE_C_FLAGS_DEBUG
-        "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
-        )
+    "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
+)
 
 #
 # Set the build/user include directories
 #
 
 # Allow usage of header files in the `src` directory, but only for utilities
-if (${PROJECT_NAME}_BUILD_HEADERS_ONLY)
+if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
+  target_include_directories(
+    ${PROJECT_NAME} 
+    INTERFACE 
+    $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  )
+else()
+  target_include_directories(
+    ${PROJECT_NAME}
+    PRIVATE
+    $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE
+    ${GUROBI_INCLUDE_DIR}
+    ${CONAN_INCLUDE_DIRS_BOOST}
+    ${CONAN_INCLUDE_DIRS_FMT}
+    ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
+    ${CONAN_INCLUDE_DIRS_RANGE-V3}
+    ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
+    ${OSI_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ModernDD::ModernDD
+  )
+
+  if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
     target_include_directories(
-            ${PROJECT_NAME} INTERFACE $<INSTALL_INTERFACE:include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        ${PROJECT_NAME}_LIB
+        PUBLIC $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PRIVATE
+        ModernDD::ModernDD
+        ${GUROBI_INCLUDE_DIR}
+        ${OSI_INCLUDE_DIR}
+        ${CONAN_INCLUDE_DIRS_FMT}
+        ${CONAN_INCLUDE_DIRS_BOOST}
+        ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
+        ${CONAN_INCLUDE_DIRS_RANGE-V3}
+        ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
+      PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
-else ()
-    target_include_directories(
-            ${PROJECT_NAME}
-            PUBLIC $<INSTALL_INTERFACE:include> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+
+    target_link_libraries(
+      ${PROJECT_NAME}_LIB
+      PRIVATE
+      ${GUROBI_LIBRARY}
+      ${GUROBI_CXX_LIBRARY}
+      CONAN_PKG::fmt
+      CONAN_PKG::boost
+      CONAN_PKG::docopt.cpp
+      CONAN_PKG::range-v3
+      ORUtils::ORUtils
+      branch-and-bound::branch-and-bound
+      ModernDD::ModernDD
+      ${OSI_LIBRARY}
+      ${OSI_GRB_LIBRARY}
+      ${COINUtils_LIBRARY}
+      ${CGL_LIBRARY}
+      -lm
+      -lpthread
     )
 
-    if (${PROJECT_NAME}_BUILD_EXECUTABLE)
-        target_include_directories(
-                ${PROJECT_NAME}_LIB
-                PUBLIC $<INSTALL_INTERFACE:include>
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                ${GUROBI_INCLUDE_DIR}
-                ${CONAN_INCLUDE_DIRS_FMT}
-                ${CONAN_INCLUDE_DIRS_BOOST}
-                ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
-                ${CONAN_INCLUDE_DIRS_RANGE-V3}
-                ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
-                ModernDD::ModernDD
-                ${OSI_INCLUDE_DIR}
-                PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
-        )
-
-        target_link_libraries(
-                ${PROJECT_NAME}_LIB
-                ${GUROBI_LIBRARY}
-                ${GUROBI_CXX_LIBRARY}
-                CONAN_PKG::fmt
-                CONAN_PKG::boost
-                CONAN_PKG::docopt.cpp
-                CONAN_PKG::range-v3
-                ORUtils::ORUtils
-                branch-and-bound::branch-and-bound
-                ModernDD::ModernDD
-                ${OSI_LIBRARY}
-                ${OSI_GRB_LIBRARY}
-                ${COINUtils_LIBRARY}
-                ${CGL_LIBRARY}
-                -lm
-                -lpthread
-        )
-
-        target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_LIB)
-    endif ()
-endif ()
+  endif()
+endif()
 
 message(STATUS "Finished setting up include directories.")
 
@@ -172,11 +294,11 @@ message(STATUS "Finished setting up include directories.")
 # Provide alias to library for
 #
 
-if (${PROJECT_NAME}_BUILD_EXECUTABLE)
-    add_executable(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
-else ()
-    add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
-endif ()
+if(${PROJECT_NAME}_BUILD_EXECUTABLE)
+  add_executable(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+else()
+  add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+endif()
 
 verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 
@@ -187,21 +309,59 @@ verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 
 add_clang_format_target()
 
+
+#
+# Install library for easy downstream inclusion
+#
+
+include(GNUInstallDirs)
+install(
+  TARGETS
+  ${PROJECT_NAME}
+  EXPORT
+  ${PROJECT_NAME}Targets
+  LIBRARY DESTINATION
+  ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION
+  ${CMAKE_INSTALL_BINDIR}
+  ARCHIVE DESTINATION
+  ${CMAKE_INSTALL_LIBDIR}
+  INCLUDES DESTINATION
+  include
+  PUBLIC_HEADER DESTINATION
+  include
+)
+
+install(
+  EXPORT
+  ${PROJECT_NAME}Targets
+  FILE
+  ${PROJECT_NAME}Targets.cmake
+  NAMESPACE
+  ${PROJECT_NAME}::
+  DESTINATION
+  ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)
+
+
 #
 # Quick `ConfigVersion.cmake` creation
 #
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-        ${PROJECT_NAME}ConfigVersion.cmake
-        VERSION ${PROJECT_VERSION}
-        COMPATIBILITY SameMajorVersion
+  ${PROJECT_NAME}ConfigVersion.cmake
+  VERSION 
+  ${PROJECT_VERSION}
+  COMPATIBILITY
+  SameMajorVersion
 )
 
 configure_package_config_file(
-        ${CMAKE_CURRENT_LIST_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+  INSTALL_DESTINATION
+  ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
 
 # include Doxygen
