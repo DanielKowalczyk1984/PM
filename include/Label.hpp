@@ -1,34 +1,34 @@
 #ifndef LABEL_HPP
 #define LABEL_HPP
 
-#include <limits>      // for numeric_limits
+#include <limits>               // for numeric_limits
 #include "ModernDD/NodeId.hpp"  // for NodeId
 struct Job;
 
-template <typename N, typename T>
+template <typename N>
 class Label {
    private:
-    int          weight{-1};
-    bool         high{false};
-    Label<N, T>* prev_label{nullptr};
-    NodeId       node_id{};
+    int       weight{-1};
+    bool      high{false};
+    Label<N>* prev_label{nullptr};
+    NodeId    node_id{};
 
-    T    f{std::numeric_limits<double>::max()};
-    Job* label_job{nullptr};
-    Job* prev_job{nullptr};
+    double f{std::numeric_limits<double>::max()};
+    Job*   label_job{nullptr};
+    Job*   prev_job{nullptr};
 
    public:
     /**
      * Constructor
      */
     Label() = default;
-    Label(const Label<N, T>& src) = default;
-    Label(Label<N, T>&& src) noexcept = default;
-    Label<N, T>& operator=(const Label<N, T>& src) = default;
-    Label<N, T>& operator=(Label<N, T>&& src) noexcept = default;
+    Label(const Label<N>& src) = default;
+    Label(Label<N>&& src) noexcept = default;
+    Label<N>& operator=(const Label<N>& src) = default;
+    Label<N>& operator=(Label<N>&& src) noexcept = default;
     ~Label() = default;
 
-    void set_f(T _f) { f = _f; }
+    void set_f(double _f) { f = _f; }
 
     void set_job(Job* _job) { label_job = _job; };
 
@@ -40,11 +40,11 @@ class Label {
         high = false;
     }
 
-    T get_f() const { return f; }
+    double get_f() const { return f; }
 
-    T& get_f() { return f; }
+    double& get_f() { return f; }
 
-    Label<N, T>* get_previous() { return prev_label; }
+    Label<N>* get_previous() { return prev_label; }
 
     Job* prev_job_backward() { return prev_job; }
 
@@ -60,30 +60,30 @@ class Label {
         return get_previous() == nullptr ? nullptr : get_previous()->get_job();
     }
 
-    void forward_update(T _f, Label<N, T>* _prev, bool _high = false) {
+    void forward_update(double _f, Label<N>* _prev, bool _high = false) {
         f = _f;
         prev_label = _prev;
         high = _high;
     }
 
-    void forward_update(T _f, Label<N, T>& _node) {
+    void forward_update(double _f, Label<N>& _node) {
         f = _f;
         prev_label = _node.prev_label;
         high = _node.high;
     }
 
-    void forward_update(Label<N, T>& _node) {
+    void forward_update(Label<N>& _node) {
         f = _node.f;
         prev_label = _node.prev_label;
         high = _node.high;
     }
 
-    void backward_update(T _f, bool _high = false) {
+    void backward_update(double _f, bool _high = false) {
         f = _f;
         high = _high;
     }
 
-    void backward_update(Label<N, T>* _n, T _f = 0, bool _high = false) {
+    void backward_update(Label<N>* _n, double _f = .0, bool _high = false) {
         f = _f;
         prev_job = _high ? get_job() : _n->prev_job;
         high = _high;

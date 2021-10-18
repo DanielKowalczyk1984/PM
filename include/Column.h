@@ -17,7 +17,7 @@ struct Column {
 
     Column() = default;
     explicit Column(const Machine&);
-    explicit Column(PricingSolution<double>&& pricing_solution);
+    explicit Column(PricingSolution&& pricing_solution);
     ~Column() = default;
     Column(Column&&) = default;
     Column& operator=(Column&&) = default;

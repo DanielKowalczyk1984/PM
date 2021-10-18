@@ -4,6 +4,7 @@
 #include <cassert>                   // for assert
 #include <cstddef>                   // for size_t
 #include <memory>                    // for shared_ptr, __shared_ptr_access
+#include <span>                      //for span
 #include <vector>                    // for vector
 #include "Job.h"                     // for bool_diff_Fij, Job
 #include "Label.hpp"                 // for Label
@@ -12,10 +13,10 @@
 #include "ZddNode.hpp"  // for SubNodeZdd, NodeZdd, compare_sub_nodes
 
 template <typename T = double>
-class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
+class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution> {
    protected:
-    T*     pi{nullptr};
-    size_t num_jobs{};
+    const T* pi{nullptr};
+    size_t   num_jobs{};
 
    public:
     BackwardZDDBase(T* _pi, size_t _num_jobs) : pi(_pi), num_jobs(_num_jobs){};
@@ -27,12 +28,13 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution<T>> {
     BackwardZDDBase<T>& operator=(BackwardZDDBase<T>&&) noexcept = default;
     ~BackwardZDDBase() = default;
 
-    void                 initialize_pi(T* _pi) { pi = _pi; }
-    T*                   get_pi() const { return pi; }
+    void     initialize_pi(T* _pi) { pi = _pi; }
+    void     initialize_pi(std::span<const T> _pi) { pi = _pi.data(); }
+    const T* get_pi() const { return pi; }
     [[nodiscard]] size_t get_num_jobs() const { return num_jobs; }
 
-    virtual void initializenode(NodeZdd<T>& n) const = 0;
-    virtual void initializerootnode(NodeZdd<T>& n) const = 0;
+    virtual void initialize_node(NodeZdd<T>& n) const = 0;
+    virtual void initialize_root_node(NodeZdd<T>& n) const = 0;
     virtual void evalNode(NodeZdd<T>& n) const = 0;
 };
 
@@ -69,13 +71,13 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
         }
     }
 
-    void initializenode(NodeZdd<T>& n) const override {
+    void initialize_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             it->backward_label[0].reset();
         }
     }
 
-    void initializerootnode(NodeZdd<T>& n) const override {
+    void initialize_root_node(NodeZdd<T>& n) const override {
         std::span aux{BackwardZDDBase<T>::get_pi(),
                       BackwardZDDBase<T>::get_num_jobs() + 1};
         for (auto& it : n.list) {
@@ -84,8 +86,8 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
         }
     }
 
-    PricingSolution<T> get_objective(NodeZdd<T>& n) const override {
-        PricingSolution<T> sol(pi[num_jobs]);
+    PricingSolution get_objective(NodeZdd<T>& n) const override {
+        PricingSolution sol(pi[num_jobs]);
 
         auto m = std::min_element(n.list.begin(), n.list.end(),
                                   compare_sub_nodes<T>);
@@ -180,23 +182,23 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
         }
     }
 
-    void initializenode(NodeZdd<T>& n) const override {
+    void initialize_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             it->backward_label[0].reset();
         }
     }
 
-    void initializerootnode(NodeZdd<T>& n) const override {
+    void initialize_root_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             it->backward_label[0].get_f() = pi[num_jobs];
         }
     }
 
-    PricingSolution<T> get_objective(NodeZdd<>& n) const override {
-        PricingSolution<T> sol(pi[num_jobs]);
-        auto               m = std::min_element(n.list.begin(), n.list.end(),
-                                  compare_sub_nodes<T>);
-        Label<SubNodeZdd<T>, T>* aux_label = &((*m)->backward_label[0]);
+    PricingSolution get_objective(NodeZdd<>& n) const override {
+        PricingSolution       sol(pi[num_jobs]);
+        auto                  m = std::min_element(n.list.begin(), n.list.end(),
+                                                   compare_sub_nodes<T>);
+        Label<SubNodeZdd<T>>* aux_label = &((*m)->backward_label[0]);
 
         while (aux_label) {
             if (aux_label->get_high()) {

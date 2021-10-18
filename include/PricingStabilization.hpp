@@ -8,8 +8,8 @@
 struct PricerSolverBase;        // lines 9-9
 class PricingStabilizationBase {
    public:
-    explicit PricingStabilizationBase(PricerSolverBase*    _solver,
-                                      std::vector<double>& _pi_out);
+    explicit PricingStabilizationBase(PricerSolverBase*        _solver,
+                                      std::span<const double>& _pi_out);
     PricingStabilizationBase(PricingStabilizationBase&&) = default;
     PricingStabilizationBase(const PricingStabilizationBase&) = delete;
     PricingStabilizationBase& operator=(PricingStabilizationBase&&) = delete;
@@ -18,7 +18,7 @@ class PricingStabilizationBase {
     virtual ~PricingStabilizationBase() = default;
     virtual std::unique_ptr<PricingStabilizationBase> clone(
         PricerSolverBase*,
-        std::vector<double>&);
+        std::span<const double>&);
 
     static constexpr double EPS_RC = -1e-10;
     static constexpr double ETA_DIFF = 1e-4;
@@ -27,16 +27,17 @@ class PricingStabilizationBase {
 
    public:
     PricerSolverBase* solver;
-    PricingSolution<> sol;
+    PricingSolution   sol;
 
     double reduced_cost{};
     double eta_in{};
     double eta_sep{};
     double eta_out{};
 
-    std::vector<double>& pi_out;
-    std::vector<double>  pi_in;
-    std::vector<double>  pi_sep;
+    // std::vector<double>& pi_out;
+    std::span<const double>& pi_out;
+    std::vector<double>      pi_in;
+    std::vector<double>      pi_sep;
 
     int    update_stab_center{};
     size_t iterations{};
@@ -44,27 +45,27 @@ class PricingStabilizationBase {
 
     bool continueLP{};
 
-    PricingSolution<>& get_sol();
-    bool               get_update_stab_center();
-    double             get_reduced_cost();
-    double             get_eps_stab_solver();
-    virtual double     get_eta_in();
-    virtual double     get_eta_sep();
-    virtual void       solve(double eta_out, double* _lhs);
-    virtual bool       stopping_criteria();
-    virtual void       update_duals();
-    virtual bool       reduced_cost_fixing();
-    virtual void       remove_constraints(int first, int nb_del);
-    virtual void       update_continueLP(int _continueLP);
-    virtual int        do_reduced_cost_fixing();
-    virtual void       update_continueLP(double obj);
-    virtual void       set_alpha([[maybe_unused]] double _alpha){};
+    PricingSolution& get_sol();
+    bool             get_update_stab_center();
+    double           get_reduced_cost();
+    double           get_eps_stab_solver();
+    virtual double   get_eta_in();
+    virtual double   get_eta_sep();
+    virtual void     solve(double eta_out, double* _lhs);
+    virtual bool     stopping_criteria();
+    virtual void     update_duals();
+    virtual bool     reduced_cost_fixing();
+    virtual void     remove_constraints(int first, int nb_del);
+    virtual void     update_continueLP(int _continueLP);
+    virtual int      do_reduced_cost_fixing();
+    virtual void     update_continueLP(double obj);
+    virtual void     set_alpha([[maybe_unused]] double _alpha){};
 };
 
 class PricingStabilizationStat : public PricingStabilizationBase {
    public:
-    explicit PricingStabilizationStat(PricerSolverBase*    _solver,
-                                      std::vector<double>& _pi_out);
+    explicit PricingStabilizationStat(PricerSolverBase*        _solver,
+                                      std::span<const double>& _pi_out);
     PricingStabilizationStat(PricingStabilizationStat&&) = default;
     PricingStabilizationStat(const PricingStabilizationStat&) = delete;
     PricingStabilizationStat& operator=(PricingStabilizationStat&&) = delete;
@@ -93,13 +94,13 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     void   set_alpha(double _alpha) override;
     std::unique_ptr<PricingStabilizationBase> clone(
         PricerSolverBase*,
-        std::vector<double>&) override;
+        std::span<const double>&) override;
 };
 
 class PricingStabilizationDynamic : public PricingStabilizationStat {
    public:
-    explicit PricingStabilizationDynamic(PricerSolverBase*    _solver,
-                                         std::vector<double>& _pi_out);
+    explicit PricingStabilizationDynamic(PricerSolverBase*        _solver,
+                                         std::span<const double>& _pi_out);
     PricingStabilizationDynamic(PricingStabilizationDynamic&&) = default;
     PricingStabilizationDynamic(const PricingStabilizationDynamic&) = delete;
     PricingStabilizationDynamic& operator=(PricingStabilizationDynamic&&) =
@@ -110,7 +111,7 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
 
     std::unique_ptr<PricingStabilizationBase> clone(
         PricerSolverBase*,
-        std::vector<double>&) override;
+        std::span<const double>&) override;
 
     std::vector<double> subgradient;
     double              subgradientnorm{};
@@ -121,14 +122,14 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
     void update_duals() override;
     void remove_constraints(int first, int nb_del) override;
 
-    void compute_subgradient(const PricingSolution<double>& _sol);
+    void compute_subgradient(const PricingSolution& _sol);
     void adjust_alpha();
 };
 
 class PricingStabilizationHybrid : public PricingStabilizationDynamic {
    public:
-    explicit PricingStabilizationHybrid(PricerSolverBase*    pricer_solver,
-                                        std::vector<double>& _pi_out);
+    explicit PricingStabilizationHybrid(PricerSolverBase*        pricer_solver,
+                                        std::span<const double>& _pi_out);
 
     PricingStabilizationHybrid(PricingStabilizationHybrid&&) = default;
     PricingStabilizationHybrid(const PricingStabilizationHybrid&) = delete;
@@ -140,7 +141,7 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
     std::unique_ptr<PricingStabilizationBase> clone(
         PricerSolverBase*,
-        std::vector<double>&) override;
+        std::span<const double>&) override;
 
     std::vector<double> subgradient_in;
 
@@ -172,9 +173,9 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
     double compute_dual(auto i);
 
-    void update_stabcenter(const PricingSolution<double>& _sol);
+    void update_stabcenter(const PricingSolution& _sol);
 
-    void compute_subgradient_norm(const PricingSolution<double>& _sol);
+    void compute_subgradient_norm(const PricingSolution& _sol);
 
     void update_subgradientproduct();
 

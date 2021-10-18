@@ -1,13 +1,15 @@
 #ifndef __NODEDATA_H__
 #define __NODEDATA_H__
 
-#include <array>       // for array
-#include <cstddef>     // for size_t
-#include <functional>  // for function
-#include <memory>      // for unique_ptr, shared_ptr
-#include <string>      // for string
-#include <vector>      // for vector
-#include "lp.h"        // for lp_interface
+#include <OsiSolverInterface.hpp>  //for OsiSolverInterface
+#include <array>                   // for array
+#include <cstddef>                 // for size_t
+#include <functional>              // for function
+#include <memory>                  // for unique_ptr, shared_ptr
+#include <span>                    // for span
+#include <string>                  // for string
+#include <vector>                  // for vector
+#include "orutils/lp.h"                    // for lp_interface
 
 class PricingStabilizationBase;  // lines 14-14
 class Problem;                   // lines 15-15
@@ -45,13 +47,19 @@ struct NodeData {
     // The column generation lp information
     std::unique_ptr<lp_interface, std::function<void(lp_interface*)>> RMP;
 
-    std::vector<double> lambda;
-    std::vector<double> pi;
-    std::vector<double> slack;
-    std::vector<double> rhs;
-    std::vector<double> lhs_coeff;
-    std::vector<int>    id_row;
-    std::vector<double> coeff_row;
+    std::unique_ptr<OsiSolverInterface> osi_rmp;
+    std::vector<int>                    row_status;
+
+    // std::vector<double> lambda;
+    std::span<const double> lambda;
+    // std::vector<double> pi;
+    std::span<const double> pi;
+    std::vector<double>     slack;
+    // std::vector<double>     rhs;
+    std::span<const double> rhs;
+    std::vector<double>     lhs_coeff;
+    std::vector<int>        id_row;
+    std::vector<double>     coeff_row;
 
     int nb_rows;
     int nb_cols;
@@ -73,8 +81,6 @@ struct NodeData {
 
     // Columns
     int                                  zero_count;
-    std::shared_ptr<Column>              newsets;
-    int                                  nb_new_sets;
     std::vector<int>                     column_status;
     std::vector<std::shared_ptr<Column>> localColPool;
 
@@ -148,10 +154,19 @@ struct NodeData {
 
     std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
                                                                 long   _t);
-    int add_scheduleset_to_rmp(Column* set);
 
    private:
-    int add_lhs_scheduleset_to_rmp(Column* set);
+    int add_lhs_column_to_rmp(double cost);
+    int add_lhs_column_to_rmp(double cost, const std::vector<double>& _lhs);
+
+    /**
+     * @brief Model construction methods
+     *
+     */
+    void create_assignment_constraints();
+    void create_convex_contraint();
+    void create_artificial_cols();
+    void add_cols_local_pool();
 
     /** lowerbound.cpp */
     int  grow_ages();
@@ -164,6 +179,8 @@ struct NodeData {
     static constexpr auto NB_CG_ITERATIONS = 1000000UL;
     static constexpr auto NB_CUTS = 2000;
     static constexpr auto NB_ESTIMATE_IT = 20;
+    static constexpr auto NB_PATHS = 1000000000;
+    static constexpr auto NB_NON_IMPROVEMENTS = 5;
 };
 
 #endif  // __NODEDATA_H__

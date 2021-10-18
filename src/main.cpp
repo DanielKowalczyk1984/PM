@@ -2,7 +2,6 @@
 #include <fmt/core.h>       // for print
 #include <cstdio>           // for stderr
 #include <exception>        // for exception
-#include <string>           // for string
 #include "Problem.h"        // for Problem
 #include "Usage.hpp"        // for USAGE
 

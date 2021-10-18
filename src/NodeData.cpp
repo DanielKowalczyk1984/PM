@@ -1,5 +1,6 @@
 #include "NodeData.h"  // for NodeData
 #include <fmt/core.h>
+#include <OsiGrbSolverInterface.hpp>
 #include <array>                                // for array
 #include <cmath>                                // for sqrt
 #include <concepts/concepts.hpp>                // for return_t
@@ -22,7 +23,7 @@
 #include "PricingStabilization.hpp"             // for PricingStabilizationBase
 #include "Problem.h"                            // for Problem
 #include "Solution.hpp"                         // for Sol
-#include "lp.h"                                 // for lp_interface_create
+#include "orutils/lp.h"                                 // for lp_interface_create
 
 NodeData::NodeData(Problem* problem)
     : depth(0UL),
@@ -35,6 +36,7 @@ NodeData::NodeData(Problem* problem)
       nb_jobs(instance.nb_jobs),
       nb_machines(instance.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
+      osi_rmp(std::make_unique<OsiGrbSolverInterface>()),
       lambda(),
       pi(),
       slack(),
@@ -55,8 +57,6 @@ NodeData::NodeData(Problem* problem)
       id_pseudo_schedules{},
       solver{},
       zero_count{},
-      newsets(nullptr),
-      nb_new_sets(0),
       column_status(),
       localColPool(),
       lower_bound(0),
@@ -84,6 +84,7 @@ NodeData::NodeData(const NodeData& src)
       nb_jobs(src.nb_jobs),
       nb_machines(src.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
+      osi_rmp(std::make_unique<OsiGrbSolverInterface>()),
       lambda(),
       pi(),
       slack(),
@@ -104,8 +105,6 @@ NodeData::NodeData(const NodeData& src)
       id_pseudo_schedules(src.id_pseudo_schedules),
       solver(src.solver->clone()),
       zero_count(),
-      newsets(),
-      nb_new_sets(),
       column_status(),
       localColPool(src.localColPool),
       lower_bound(src.lower_bound),

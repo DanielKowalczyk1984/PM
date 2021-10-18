@@ -84,14 +84,20 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void init_table();
 
     bool evaluate_nodes([[maybe_unused]] double* pi) override;
+    bool evaluate_nodes([[maybe_unused]] std::span<const double>& pi) override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                               lambda,
         const std::vector<std::shared_ptr<Column>>& columns) override;
+    void construct_lp_sol_from_rmp(
+        const std::span<const double>&              lambda,
+        const std::vector<std::shared_ptr<Column>>& columns) override;
     // void add_constraint(Job* job, GPtrArray* list, int order) override;
 
-    PricingSolution<double> pricing_algorithm(double* _pi) override;
-    PricingSolution<double> farkas_pricing(double* pi) override;
+    PricingSolution pricing_algorithm(double* _pi) override;
+    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
+    PricingSolution farkas_pricing(double* pi) override;
+    PricingSolution farkas_pricing(std::span<const double>& pi) override;
 
     size_t  get_nb_edges() override;
     size_t  get_nb_vertices() override;
@@ -99,7 +105,9 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     bool    check_column(Column const* set) override;
 
     void forward_evaluator(double* pi);
+    void forward_evaluator(std::span<const double>& _pi);
     void backward_evaluator(double* _pi);
+    void backward_evaluator(std::span<const double>& _pi);
 
     int delta1(const size_t& i, const size_t& j, const int& t) {
         Job* tmp_i = vector_jobs[i];
@@ -128,4 +136,4 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     void update_coeff_constraints() override {}
 };
-#endif // __PRICERSOLVERARCTIMEDP_H__
+#endif  // __PRICERSOLVERARCTIMEDP_H__

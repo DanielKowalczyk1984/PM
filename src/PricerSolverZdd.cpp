@@ -24,7 +24,7 @@
 #include "PricerConstruct.hpp"                     // for PricerConstruct
 #include "PricingSolution.hpp"                     // for PricingSolution
 #include "ZddNode.hpp"                             // for NodeZdd, SubNodeZdd
-#include "util.h"                                  // for dbg_lvl
+#include "orutils/util.h"                                  // for dbg_lvl
 
 PricerSolverZdd::PricerSolverZdd(const Instance& instance)
     : PricerSolverBase(instance),
@@ -156,9 +156,14 @@ void PricerSolverZdd::init_table() {
     }
 }
 
-PricingSolution<double> PricerSolverZdd::farkas_pricing(
-    [[maybe_unused]] double* pi) {
-    PricingSolution<double> sol;
+PricingSolution PricerSolverZdd::farkas_pricing([[maybe_unused]] double* pi) {
+    PricingSolution sol;
+
+    return sol;
+}
+PricingSolution PricerSolverZdd::farkas_pricing(
+    [[maybe_unused]] std::span<const double>& pi) {
+    PricingSolution sol;
 
     return sol;
 }
@@ -410,6 +415,53 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(
                     counter++;
                 } else {
                     lp_x[tmp_sub_node->low_edge_key] += aux_cols[i];
+                    tmp_nodeid = tmp_node[0];
+                    tmp_sub_node = tmp_sub_node->n;
+                }
+            }
+        }
+    }
+
+    // ColorWriterEdge edge_writer(g, x);
+    // ColorWriterVertex vertex_writer(g, table);
+    // std::ofstream outf("min.gv");
+    // boost::write_graphviz(outf, g, vertex_writer, edge_writer);
+    // outf.close();
+}
+
+void PricerSolverZdd::construct_lp_sol_from_rmp(
+    const std::span<const double>&              lambda,
+    const std::vector<std::shared_ptr<Column>>& columns) {
+    auto& table = *(decision_diagram->getDiagram());
+    // std::span aux_sets{columns->pdata, columns->len};
+    std::fill(lp_x.begin(), lp_x.end(), 0.0);
+    for (auto i = 0UL; i < columns.size(); ++i) {
+        if (lambda[i] > EPS_SOLVER) {
+            auto  counter = 0UL;
+            auto* tmp = columns[i].get();
+            // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->pdata};
+            NodeId                        tmp_nodeid(decision_diagram->root());
+            std::shared_ptr<SubNodeZdd<>> tmp_sub_node =
+                table.node(tmp_nodeid).list[0];
+
+            while (tmp_nodeid > 1) {
+                Job* tmp_j{};
+
+                if (counter < tmp->job_list.size()) {
+                    tmp_j = tmp->job_list[counter];
+                } else {
+                    tmp_j = nullptr;
+                }
+
+                NodeZdd<>& tmp_node = table.node(tmp_nodeid);
+
+                if (tmp_j == tmp_node.get_job()) {
+                    lp_x[tmp_sub_node->high_edge_key] += lambda[i];
+                    tmp_nodeid = tmp_node[1];
+                    tmp_sub_node = tmp_sub_node->y;
+                    counter++;
+                } else {
+                    lp_x[tmp_sub_node->low_edge_key] += lambda[i];
                     tmp_nodeid = tmp_node[0];
                     tmp_sub_node = tmp_sub_node->n;
                 }

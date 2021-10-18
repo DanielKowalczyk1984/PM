@@ -2,11 +2,16 @@
     "configurations": [
         {
             "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
             "defines": [],
-            "compilerPath": "/usr/bin/clang",
-            "cppStandard": "c++20",
-            "intelliSenseMode": "linux-clang-x64",
-            "configurationProvider": "ms-vscode.cmake-tools"
+            "compilerPath": "/home/linuxbrew/.linuxbrew/bin/g++-11",
+            "cStandard": "c17",
+            "intelliSenseMode": "${default}",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "cppStandard": "gnu++20",
+            "compileCommands": "/home/daniel/parallel-machine-bdd/compile_commands.json"
         }
     ],
     "version": 4

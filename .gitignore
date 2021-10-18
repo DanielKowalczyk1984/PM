@@ -76,6 +76,7 @@ build_arch/*
 debug/*
 release/*
 build*/*
+relwithdeb/*
 third_party
 build_ubuntu
 solutions
@@ -112,3 +113,7 @@ MinFunction*.json
 MaxFunction*.json
 ProductScoring*.json
 Weighted*.json
+ThirdParty
+*_build
+*_release
+*_debug

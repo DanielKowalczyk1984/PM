@@ -2,40 +2,29 @@
 #include <algorithm>                                   // for min, __for_eac...
 #include <cassert>                                     // for assert
 #include <cmath>                                       // for ceil, floor, fabs
-#include <compare>                                     // for operator<
 #include <functional>                                  // for identity, greater
 #include <memory>                                      // for unique_ptr
 #include <range/v3/action/action.hpp>                  // for operator|=
 #include <range/v3/action/remove_if.hpp>               // for remove_if, rem...
 #include <range/v3/algorithm/sort.hpp>                 // for sort, sort_fn
-#include <range/v3/functional/arithmetic.hpp>          // for multiplies, plus
 #include <range/v3/functional/identity.hpp>            // for identity
-#include <range/v3/iterator/basic_iterator.hpp>        // for operator!=
-#include <range/v3/iterator/unreachable_sentinel.hpp>  // for operator==
 #include <range/v3/numeric/inner_product.hpp>          // for inner_product
 #include <range/v3/range/conversion.hpp>               // for to_container::fn
-#include <range/v3/view/adaptor.hpp>                   // for adaptor_cursor
-#include <range/v3/view/all.hpp>                       // for all_t
 #include <range/v3/view/drop.hpp>                      // for drop, drop_fn
-#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
 #include <range/v3/view/filter.hpp>                    // for filter_view
-#include <range/v3/view/for_each.hpp>
-#include <range/v3/view/subrange.hpp>   // for subrange
-#include <range/v3/view/transform.hpp>  // for transform_view
-#include <range/v3/view/view.hpp>       // for operator|, vie...
-#include <range/v3/view/zip.hpp>        // for zip_view, zip
-#include <utility>                      // for move, pair
-#include <vector>                       // for vector
-#include "Column.h"                     // for Column
-#include "Instance.h"                   // for Instance
-#include "NodeData.h"                   // for NodeData
-#include "Parms.h"                      // for Parms
-#include "PricerSolverBase.hpp"         // for PricerSolverBase
-#include "PricingStabilization.hpp"     // for PricingStabili...
-#include "Statistics.h"                 // for Statistics
-#include "gurobi_c.h"                   // for GRB_OPTIMAL
-#include "lp.h"                         // for lp_interface_g...
-#include "util.h"                       // for dbg_lvl, getRe...
+#include <range/v3/view/transform.hpp>                 // for transform_view
+#include <range/v3/view/view.hpp>                      // for operator|, vie...
+#include <range/v3/view/zip.hpp>                       // for zip_view, zip
+#include <utility>                                     // for move, pair
+#include <vector>                                      // for vector
+#include "Column.h"                                    // for Column
+#include "NodeData.h"                                  // for NodeData
+#include "Parms.h"                                     // for Parms
+#include "PricerSolverBase.hpp"                        // for PricerSolverBase
+#include "PricingStabilization.hpp"                    // for PricingStabili...
+#include "Statistics.h"                                // for Statistics
+#include "orutils/lp.h"                                        // for lp_interface_g...
+#include "orutils/util.h"                                      // for dbg_lvl, getRe...
 
 /** Help function for column generation */
 void NodeData::print_ages() {
@@ -49,13 +38,22 @@ void NodeData::print_ages() {
 
 int NodeData::grow_ages() {
     int val = 0;
-    lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    assert(((nb_cols - id_pseudo_schedules) == localColPool.size()));
+    // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
+    nb_cols = osi_rmp->getNumCols();
+    assert((nb_cols - id_pseudo_schedules) ==
+           static_cast<int>(localColPool.size()));
     if (!localColPool.empty()) {
-        column_status.resize(localColPool.size());
-        val = lp_interface_basis_cols(RMP.get(), column_status.data(),
-                                      id_pseudo_schedules);
-        // CCcheck_val_2(val, "Failed in lp_interface_basis_cols");
+        // column_status.resize(localColPool.size());
+        // val = lp_interface_basis_cols(RMP.get(), column_status.data(),
+        //   id_pseudo_schedules);
+        // CCcheck_val_2(val, "Failed in
+        // lp_interface_basis_cols");
+        nb_cols = osi_rmp->getNumCols();
+        column_status.resize(nb_cols);
+        nb_rows = osi_rmp->getNumRows();
+        row_status.resize(nb_rows);
+        osi_rmp->getBasisStatus(column_status.data(), row_status.data());
+
         zero_count = 0;
 
         auto zipped = ranges::views::zip(column_status, localColPool);
@@ -81,9 +79,12 @@ int NodeData::delete_unused_rows() {
     int              val = 0;
     std::vector<int> del_indices{};
 
-    lp_interface_get_nb_rows(RMP.get(), &nb_rows);
+    // lp_interface_get_nb_rows(RMP.get(), &nb_rows);
+    nb_rows = osi_rmp->getNumRows();
     // assert(nb_rows == pd->slack->len);
     lp_interface_slack(RMP.get(), slack.data());
+
+    // auto* osi_slack = osi_rmp->getRowActivity();
 
     int it = id_valid_cuts;
     int first_del = -1;
@@ -133,8 +134,10 @@ int NodeData::delete_old_columns() {
     if (zero_count > min_numdel) {
         int              iter = 0;
         std::vector<int> dellist{};
-        lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-        assert(nb_cols - id_pseudo_schedules == localColPool.size());
+        // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
+        nb_cols = osi_rmp->getNumCols();
+        assert((nb_cols - id_pseudo_schedules) ==
+               static_cast<int>(localColPool.size()));
 
         localColPool |= ranges::actions::remove_if([&](const auto& it) {
             auto aux = false;
@@ -146,15 +149,18 @@ int NodeData::delete_old_columns() {
             return aux;
         });
 
-        lp_interface_delete_cols_array(RMP.get(), dellist.data(),
-                                       static_cast<int>(dellist.size()));
+        // lp_interface_delete_cols_array(RMP.get(), dellist.data(),
+        //                                static_cast<int>(dellist.size()));
+        osi_rmp->deleteCols(static_cast<int>(dellist.size()), dellist.data());
 
         if (dbg_lvl() > 1) {
             fmt::print("Deleted {} out of {} columns with age > {}.\n",
                        zero_count, localColPool.size(), retirementage);
         }
-        lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-        assert(localColPool.size() == nb_cols - id_pseudo_schedules);
+        // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
+        nb_cols = osi_rmp->getNumCols();
+        assert(static_cast<int>(localColPool.size()) ==
+               (nb_cols - id_pseudo_schedules));
         zero_count = 0;
         if (!dellist.empty()) {
             solve_relaxation();
@@ -169,8 +175,7 @@ int NodeData::delete_infeasible_columns() {
     zero_count = 0;
 
     int iter = 0;
-    lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    assert(nb_cols - id_pseudo_schedules == localColPool.size());
+    // nb_cols = osi_rmp->getNumCols();
     std::vector<int> dellist{};
 
     localColPool |= ranges::actions::remove_if([&](auto& it) {
@@ -183,8 +188,13 @@ int NodeData::delete_infeasible_columns() {
         return val;
     });
 
-    lp_interface_delete_cols_array(RMP.get(), dellist.data(),
-                                   static_cast<int>(dellist.size()));
+    // lp_interface_delete_cols_array(RMP.get(), dellist.data(),
+    //                                static_cast<int>(dellist.size()));
+    // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
+    osi_rmp->deleteCols(static_cast<int>(dellist.size()), dellist.data());
+    nb_cols = osi_rmp->getNumCols();
+    assert((nb_cols - id_pseudo_schedules) ==
+           static_cast<int>(localColPool.size()));
 
     if (dbg_lvl() > 1) {
         fmt::print(
@@ -195,8 +205,10 @@ int NodeData::delete_infeasible_columns() {
             dellist.size(), localColPool.size());
     }
 
-    lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    assert(localColPool.size() == nb_cols - id_pseudo_schedules);
+    // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
+    nb_cols = osi_rmp->getNumCols();
+    assert(static_cast<int>(localColPool.size()) ==
+           (nb_cols - id_pseudo_schedules));
     if (dbg_lvl() > 1) {
         fmt::print("number of cols = {}\n", nb_cols - id_pseudo_schedules);
     }
@@ -310,7 +322,7 @@ int NodeData::delete_infeasible_columns() {
 // }
 
 int NodeData::compute_objective() {
-    LP_lower_bound_dual = .0;
+    LP_lower_bound_dual = 0.0;
 
     /** compute lower bound with the dual variables */
     assert(nb_rows == pi.size());
@@ -319,7 +331,8 @@ int NodeData::compute_objective() {
     LP_lower_bound_dual -= EPS_BOUND;
 
     /** Get the LP lower bound and compute the lower bound of WCT */
-    lp_interface_objval(RMP.get(), &(LP_lower_bound));
+    // lp_interface_objval(RMP.get(), &(LP_lower_bound));
+    LP_lower_bound = osi_rmp->getObjValue();
     LP_lower_bound -= EPS_BOUND;
     // CCcheck_val_2(val, "lp_interface_objval failed");
     lower_bound = (ceil(LP_lower_bound_dual) < ceil(LP_lower_bound))
@@ -343,14 +356,16 @@ int NodeData::compute_objective() {
 }
 
 int NodeData::solve_relaxation() {
-    int    val = 0;
-    int    status_RMP = 0;
-    double real_time_solve_lp = 0.0;
+    auto val = 0;
+    auto status_RMP = false;
+    auto real_time_solve_lp = 0.0;
 
     /** Compute LP relaxation */
     real_time_solve_lp = getRealTime();
     stat.start_resume_timer(Statistics::solve_lp_timer);
-    val = lp_interface_optimize(RMP.get(), &status_RMP);
+    // val = lp_interface_optimize(RMP.get(), &status_RMP);
+    osi_rmp->resolve();
+    // status_RMP = osi_rmp->get
     // CCcheck_val_2(val, "lp_interface_optimize failed");
     stat.suspend_timer(Statistics::solve_lp_timer);
     real_time_solve_lp = getRealTime() - real_time_solve_lp;
@@ -364,21 +379,34 @@ int NodeData::solve_relaxation() {
         print_ages();
     }
 
-    switch (status_RMP) {
-        case LP_INTERFACE_OPTIMAL:
-            /** grow ages of the different columns */
-            grow_ages();
-            /** get the dual variables and make them feasible */
-            lp_interface_pi(RMP.get(), pi.data());
-            /** Compute the objective function */
-            compute_objective();
-            break;
-
-        case LP_INTERFACE_INFEASIBLE:
-            /** get the dual variables and make them feasible */
-            val = lp_interface_pi_inf(RMP.get(), pi.data());
-            break;
+    status_RMP = osi_rmp->isProvenOptimal();
+    if (status_RMP) {
+        grow_ages();
+        pi = std::span<const double>{
+            osi_rmp->getRowPrice(), static_cast<size_t>(osi_rmp->getNumRows())};
+        compute_objective();
+    } else if (osi_rmp->isProvenPrimalInfeasible()) {
+        /**
+         * @brief get dual variables
+         *
+         */
     }
+
+    // switch (status_RMP) {
+    //     case LP_INTERFACE_OPTIMAL:
+    //         /** grow ages of the different columns */
+    //         grow_ages();
+    //         /** get the dual variables and make them feasible */
+    //         lp_interface_pi(RMP.get(), pi.data());
+    //         /** Compute the objective function */
+    //         compute_objective();
+    //         break;
+
+    //     case LP_INTERFACE_INFEASIBLE:
+    //         /** get the dual variables and make them feasible */
+    //         val = lp_interface_pi_inf(RMP.get(), pi.data());
+    //         break;
+    // }
 
     return val;
 }
@@ -386,7 +414,7 @@ int NodeData::solve_relaxation() {
 int NodeData::estimate_lower_bound(size_t _iter) {
     auto val = 0;
     auto has_cols = true;
-    auto status_RMP = GRB_LOADED;
+    auto status_RMP = false;
     auto real_time_pricing = 0.0;
 
     if (dbg_lvl() > 1) {
@@ -419,39 +447,49 @@ int NodeData::estimate_lower_bound(size_t _iter) {
          */
         real_time_pricing = getRealTime();
         stat.start_resume_timer(Statistics::pricing_timer);
-        val = lp_interface_status(RMP.get(), &status_RMP);
+        // val = lp_interface_status(RMP.get(), &status_RMP);
+        status_RMP = osi_rmp->isProvenOptimal();
 
-        switch (status_RMP) {
-            case GRB_OPTIMAL:
-                status = infeasible;
-                val = solve_pricing();
-                break;
-
-            case GRB_INFEASIBLE:
-                solve_farkas_dbl();
-                break;
+        if (status_RMP) {
+            status = LP_bound_estimated;
+            val = solve_pricing();
+        } else if (osi_rmp->isProvenPrimalInfeasible()) {
+            status = infeasible;
+            solve_farkas_dbl();
         }
+
+        // switch (status_RMP) {
+        //     case GRB_OPTIMAL:
+        //         status = infeasible;
+        //         val = solve_pricing();
+        //         break;
+
+        //     case GRB_INFEASIBLE:
+        //         solve_farkas_dbl();
+        //         break;
+        // }
+
         ++iterations;
 
         stat.suspend_timer(Statistics::pricing_timer);
         real_time_pricing = getRealTime() - real_time_pricing;
         stat.real_time_pricing += real_time_pricing;
 
-        switch (status_RMP) {
-            case GRB_OPTIMAL:
-                has_cols =
-                    (solver_stab->stopping_criteria() &&
-                     solver_stab->get_eta_in() < upper_bound - 1.0 + EPS_BOUND);
-                // nb_new_sets = 0;
-                // || nb_non_improvements > 5;  // ||
-                // (ceil(eta_in - 0.00001) >= eta_out);
+        if (status_RMP) {
+            // case GRB_OPTIMAL:
+            has_cols =
+                (solver_stab->stopping_criteria() &&
+                 solver_stab->get_eta_in() < upper_bound - 1.0 + EPS_BOUND);
+            // nb_new_sets = 0;
+            // || nb_non_improvements > 5;  // ||
+            // (ceil(eta_in - 0.00001) >= eta_out);
 
-                break;
+            // break;
 
-            case GRB_INFEASIBLE:
-                has_cols = (nb_new_sets == 0);
-                // nb_new_sets = 0;
-                break;
+            // case GRB_INFEASIBLE:
+            // has_cols = (nb_new_sets == 0);
+            // nb_new_sets = 0;
+            // break;
         }
     }
 
@@ -464,7 +502,7 @@ int NodeData::compute_lower_bound() {
     auto val = 0;
     auto has_cols{true};
     // auto has_cuts = 0;
-    auto status_RMP = GRB_LOADED;
+    auto status_RMP = false;
     auto real_time_pricing = 0.0;
     auto old_LP_bound = 0.0;
 
@@ -500,8 +538,8 @@ int NodeData::compute_lower_bound() {
             /**
              * Delete old columns
              */
-            if (zero_count > nb_jobs * min_nb_del_row_ratio &&
-                status == GRB_OPTIMAL) {
+            status_RMP = osi_rmp->isProvenOptimal();
+            if (zero_count > nb_jobs * min_nb_del_row_ratio && status_RMP) {
                 delete_old_columns();
             }
 
@@ -510,95 +548,111 @@ int NodeData::compute_lower_bound() {
              */
             real_time_pricing = getRealTime();
             stat.start_resume_timer(Statistics::pricing_timer);
-            val = lp_interface_status(RMP.get(), &status_RMP);
+            // val = lp_interface_status(RMP.get(), &status_RMP);
 
-            switch (status_RMP) {
-                case GRB_OPTIMAL:
-                    ++iterations;
-                    status = infeasible;
-
-                    val = solve_pricing();
-                    break;
-
-                case GRB_INFEASIBLE:
-                    solve_farkas_dbl();
-                    break;
+            if (status_RMP) {
+                ++iterations;
+                status = LP_bound_estimated;
+                solve_pricing();
+            } else {
+                status = infeasible;
+                solve_farkas_dbl();
             }
+
+            // switch (status_RMP) {
+            //     case GRB_OPTIMAL:
+            //         ++iterations;
+            //         status = infeasible;
+            //         val = solve_pricing();
+            //         break;
+
+            //     case GRB_INFEASIBLE:
+            //         solve_farkas_dbl();
+            //         break;
+            // }
 
             stat.suspend_timer(Statistics::pricing_timer);
             real_time_pricing = getRealTime() - real_time_pricing;
             stat.real_time_pricing += real_time_pricing;
 
-            switch (status_RMP) {
-                case GRB_OPTIMAL:
-                    has_cols = (solver_stab->stopping_criteria() &&
-                                solver_stab->get_eta_in() <
-                                    upper_bound - 1.0 + EPS_BOUND);
-                    // nb_new_sets = 0;
-                    // || nb_non_improvements > 5;  // ||
-                    // (ceil(eta_in - 0.00001) >= eta_out);
+            if (status_RMP) {
+                // case GRB_OPTIMAL:
+                has_cols =
+                    (solver_stab->stopping_criteria() &&
+                     solver_stab->get_eta_in() < upper_bound - 1.0 + EPS_BOUND);
+                // nb_new_sets = 0;
+                // || nb_non_improvements > 5;  // ||
+                // (ceil(eta_in - 0.00001) >= eta_out);
 
-                    break;
+                //     break;
 
-                case GRB_INFEASIBLE:
-                    has_cols = (nb_new_sets == 0);
-                    // nb_new_sets = 0;
-                    break;
+                // case GRB_INFEASIBLE:
+                //     has_cols = (nb_new_sets == 0);
+                //     // nb_new_sets = 0;
+                //     break;
             }
         }
 
-        switch (status_RMP) {
-            case GRB_OPTIMAL:
-                if (dbg_lvl() > 1) {
-                    fmt::print(
-                        R"(Found lb = {} ({}) upper_bound = {} (iterations = {}).
+        if (status_RMP) {
+            // case GRB_OPTIMAL:
+            if (dbg_lvl() > 1) {
+                fmt::print(
+                    R"(Found lb = {} ({}) upper_bound = {} (iterations = {}).
 )",
-                        lower_bound, LP_lower_bound, upper_bound, iterations);
-                }
+                    lower_bound, LP_lower_bound, upper_bound, iterations);
+            }
 
-                /**
-                 * Compute the objective function
-                 */
-                solve_relaxation();
+            /**
+             * Compute the objective function
+             */
+            solve_relaxation();
 
-                if (!localColPool.empty() && solver->structure_feasible()) {
-                    status = LP_bound_computed;
-                    construct_lp_sol_from_rmp();
-                    if (parms.suboptimal_duals) {
-                        refined = solver->compute_sub_optimal_duals(
-                            lambda.data(), localColPool);
-                        delete_infeasible_columns();
+            if (!localColPool.empty() && solver->structure_feasible()) {
+                status = LP_bound_computed;
+                construct_lp_sol_from_rmp();
+                if (parms.suboptimal_duals) {
+                    refined =
+                        solver->compute_sub_optimal_duals(lambda, localColPool);
+                    delete_infeasible_columns();
+                    if (refined) {
+                        status = LP_bound_estimated;
                     }
-                    if (parms.refine_bdd && nb_non_improvements < 5 &&
-                        !refined) {
-                        if (std::abs(old_LP_bound - LP_lower_bound) < EPS) {
-                            nb_non_improvements++;
-                        } else {
-                            nb_non_improvements = 0;
-                        }
-                        old_LP_bound = LP_lower_bound;
-                        refined = refinement();
-                    }
-                } else {
-                    status = infeasible;
-                    LP_lower_bound_dual = LP_lower_bound = LP_lower_bound_BB =
-                        upper_bound;
-                    lower_bound = upper_bound;
                 }
-                break;
-
-            case GRB_INFEASIBLE:
+                if (parms.refine_bdd &&
+                    nb_non_improvements < NB_NON_IMPROVEMENTS && !refined) {
+                    if (std::abs(old_LP_bound - LP_lower_bound) < EPS) {
+                        nb_non_improvements++;
+                    } else {
+                        nb_non_improvements = 0;
+                    }
+                    old_LP_bound = LP_lower_bound;
+                    refined = refinement();
+                    if (refined) {
+                        status = LP_bound_estimated;
+                    }
+                }
+                generate_cuts();
+            } else {
                 status = infeasible;
-                lp_interface_write(RMP.get(), "infeasible_RMP.lp");
-                lp_interface_compute_IIS(RMP.get());
+                LP_lower_bound_dual = LP_lower_bound = LP_lower_bound_BB =
+                    upper_bound;
+                lower_bound = upper_bound;
+            }
+            //     break;
+
+            // case GRB_INFEASIBLE:
+            //     status = infeasible;
+            //     // lp_interface_write(RMP.get(), "infeasible_RMP.lp");
+            //     osi_rmp->writeLp("infeasible_RMP");
+            //     // lp_interface_compute_IIS(RMP.get());
         }
     } while (refined);
 
-    if (solver->print_num_paths() < 1000000000 && parms.enumerate &&
+    if (solver->print_num_paths() < NB_PATHS && parms.enumerate &&
         status == LP_bound_computed) {
         fmt::print("computing elementary paths\n");
         solver->enumerate_columns();
-        solver->enumerate_columns(pi.data());
+        solver->enumerate_columns(pi);
     }
 
     // if (iterations < NB_CG_ITERATIONS &&
@@ -636,41 +690,48 @@ int NodeData::compute_lower_bound() {
 }
 
 bool NodeData::refinement() {
-    auto status_RMP = 0;
+    // auto status_RMP = 0;
     auto refined{false};
 
-    lp_interface_status(RMP.get(), &status_RMP);
+    // lp_interface_status(RMP.get(), &status_RMP);
     std::vector<std::pair<std::shared_ptr<Column>, double>> paths;
+    if (osi_rmp->isProvenOptimal()) {
+        // switch (status_RMP) {
+        // case GRB_OPTIMAL:
+        // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
+        nb_cols = osi_rmp->getNumCols();
+        assert(static_cast<int>(localColPool.size()) ==
+               (nb_cols - id_pseudo_schedules));
+        // lambda.resize(localColPool.size(), 0.0);
+        // lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
+        lambda = std::span<const double>{osi_rmp->getColSolution(),
+                                         static_cast<size_t>(nb_cols)};
 
-    switch (status_RMP) {
-        case GRB_OPTIMAL:
-            lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-            assert(localColPool.size() == nb_cols - id_pseudo_schedules);
-            lambda.resize(localColPool.size(), 0.0);
-            lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
+        for (auto&& [it, x] :
+             ranges::views::zip(
+                 localColPool,
+                 lambda | ranges::views::drop(id_pseudo_schedules)) |
+                 //  ranges::views::zip(localColPool, lambda) |
+                 ranges::views::filter(
+                     [](const auto x) { return x > EPS; },
+                     [](const auto& tmp) { return tmp.second; })) {
+            paths.emplace_back(it, x);
+        }
 
-            for (auto&& [it, x] :
-                 ranges::views::zip(localColPool, lambda) |
-                     ranges::views::filter(
-                         [](const auto x) { return x > EPS; },
-                         [](const auto& tmp) { return tmp.second; })) {
-                paths.emplace_back(it, x);
-            }
+        ranges::sort(paths, std::greater<>{},
+                     [](const auto& tmp) { return tmp.second; });
 
-            ranges::sort(paths, std::greater<>{},
-                         [](const auto& tmp) { return tmp.second; });
+        refined = solver->refinement_structure(
+            paths | ranges::views::transform([](const auto& tmp) {
+                return tmp.first;
+            }) |
+            ranges::to_vector);
 
-            refined = solver->refinement_structure(
-                paths | ranges::views::transform([](const auto& tmp) {
-                    return tmp.first;
-                }) |
-                ranges::to_vector);
-
-            if (refined) {
-                delete_infeasible_columns();
-                solve_relaxation();
-            }
-            break;
+        if (refined) {
+            delete_infeasible_columns();
+            solve_relaxation();
+        }
+        // break;
     }
 
     return refined;

@@ -1,24 +1,19 @@
 #include "LocalSearch.hpp"
 #include <bits/c++config.h>
 #include <fmt/core.h>
-#include <algorithm>
 #include <cstddef>
-#include <cstdio>
 #include <functional>
 #include <limits>
-#include <memory>
 #include <range/v3/action/shuffle.hpp>
 #include <range/v3/algorithm/sort.hpp>
 #include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/view/drop.hpp>
 #include <range/v3/view/enumerate.hpp>
-#include <range/v3/view/filter.hpp>
-#include <range/v3/view/iota.hpp>
 #include <range/v3/view/take.hpp>
 #include <vector>
 #include "Job.h"
 #include "Solution.hpp"
-#include "util.h"
+#include "orutils/util.h"
 
 LocalSearchData::LocalSearchData(size_t _nb_jobs, size_t _nb_machines)
     : nb_jobs(_nb_jobs),
