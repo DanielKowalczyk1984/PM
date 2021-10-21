@@ -35,7 +35,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(PricingSolver,
                               {zdd_solver_backward_cycle, "ZddBackwardCycle"},
                               {dp_solver, "Time-Indexed"},
                               {ati_solver, "Arc-Time-Indexed"},
-                              {dp_bdd_solver, "Hybrid"}});
+                              {dp_bdd_solver, "Hybrid"}})
 
 NLOHMANN_JSON_SERIALIZE_ENUM(StabTechniques,
                              {
@@ -43,14 +43,14 @@ NLOHMANN_JSON_SERIALIZE_ENUM(StabTechniques,
                                  {stab_wentgnes, "WentgnesStab"},
                                  {stab_dynamic, "DynamicStab"},
                                  {stab_hybrid, "HybridStab"},
-                             });
+                             })
 
 NLOHMANN_JSON_SERIALIZE_ENUM(BBExploreStrategy,
                              {{min_bb_explore_strategy, "dfs"},
                               {bb_dfs_strategy, "dfs"},
                               {bb_bfs_strategy, "bfs"},
                               {bb_brfs_strategy, "brfs"},
-                              {bb_cbfs_strategy, "cbfs"}});
+                              {bb_cbfs_strategy, "cbfs"}})
 
 NLOHMANN_JSON_SERIALIZE_ENUM(Scoring_Parameter,
                              {{min_scoring_parameter, "ProductScoring"},
