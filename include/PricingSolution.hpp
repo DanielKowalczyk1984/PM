@@ -56,6 +56,12 @@ class PricingSolution {
         obj += _pi;
     }
 
+    inline void push_job_back(Job* _job, size_t C, double _pi) {
+        jobs.emplace_back(_job);
+        cost += _job->weighted_tardiness_start(C);
+        obj += _pi;
+    }
+
     void reverse_jobs() { ranges::reverse(jobs); }
 };
 

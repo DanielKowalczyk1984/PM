@@ -230,7 +230,7 @@ void ZeroHalfSystem::evaluate_rows(const std::vector<int>& _rows) {
 
         // auto test = A_bar | vs::join | ;
         if (odd) {
-            auto left = vs::ints(0UL, nb_columns) | vs::transform([&](int i) {
+            auto left = vs::ints(size_t{}, nb_columns) | vs::transform([&](int i) {
                             return ranges::inner_product(
                                        v | vs::all,
                                        A_bar | vs::join | vs::drop(i) |

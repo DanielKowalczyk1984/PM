@@ -14,7 +14,7 @@ BddCoeff::BddCoeff(size_t    _j,
     : VariableKeyBase(_j, _t, _high, _root),
       row(_row),
       coeff(_coeff),
-      value(_value){};
+      value(_value){}
 
 BddCoeff::BddCoeff(const BddCoeff&) = default;
 BddCoeff& BddCoeff::operator=(const BddCoeff&) = default;
@@ -30,7 +30,7 @@ std::ostream& operator<<(std::ostream& os, const BddCoeff& object) {
 bool operator==(const BddCoeff& lhs, const BddCoeff& rhs) {
     return lhs.get_j() == rhs.get_j() && lhs.get_t() == rhs.get_t() &&
            lhs.get_high() == rhs.get_high();
-};
+}
 
 bool BddCoeff::operator==(const BddCoeff& other) {
     return get_j() == other.get_j() && get_t() == other.get_t() &&
