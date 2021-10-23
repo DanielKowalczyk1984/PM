@@ -2,6 +2,18 @@
 	"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
 	"C_Cpp.errorSquiggles": "Disabled",
 	"cSpell.words": [
-		"coinbrew"
-	]
+		"coinbrew",
+		"docopt",
+		"nowide",
+		"STREQUAL",
+		"TOLOWER",
+		"TOUPPER"
+	],
+	"cmake.configureSettings": {
+		"CMAKE_TOOLCHAIN_FILE": "~/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake",
+	},
+	"files.associations": {
+		"*.ipynb": "jupyter",
+		"regex": "cpp"
+	}
 }
