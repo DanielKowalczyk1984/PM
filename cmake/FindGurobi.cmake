@@ -22,21 +22,15 @@ if(MSVC)
     set(MSVC_YEAR "2015")
   endif()
 
-  if(MT)
-    set(M_FLAG "mt")
-  else()
+  if("${CMAKE_MSVC_RUNTIME_LIBRARY}" STREQUAL "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
     set(M_FLAG "md")
+  else()
+    set(M_FLAG "mt")
   endif()
 
   find_library(
     GUROBI_CXX_LIBRARY
-    NAMES gurobi_c++${M_FLAG}${MSVC_YEAR}
-    HINTS ${GUROBI_DIR} $ENV{GUROBI_HOME}
-    PATH_SUFFIXES lib
-  )
-  find_library(
-    GUROBI_CXX_DEBUG_LIBRARY
-    NAMES gurobi_c++${M_FLAG}d${MSVC_YEAR}
+    NAMES gurobi_c++${M_FLAG}$<$<CONFIG:Debug>:d>${MSVC_YEAR}
     HINTS ${GUROBI_DIR} $ENV{GUROBI_HOME}
     PATH_SUFFIXES lib
   )
@@ -47,7 +41,6 @@ else()
     HINTS ${GUROBI_DIR} $ENV{GUROBI_HOME}
     PATH_SUFFIXES lib
   )
-  set(GUROBI_CXX_DEBUG_LIBRARY ${GUROBI_CXX_LIBRARY})
 endif()
 
 set(GUROBI_LIBRARIES "${GUROBI_CXX_LIBRARY};${GUROBI_LIBRARY}")
