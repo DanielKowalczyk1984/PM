@@ -4,7 +4,6 @@
 #include <cmath>                                 // for ceil, floor
 #include <compare>                               // for operator<
 #include <cstddef>                               // for size_t
-#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
 #include <fstream>                               // for basic_istream::opera...
 #include <functional>                            // for identity, __invoke
 #include <memory>                                // for shared_ptr, __shared...
@@ -143,7 +142,7 @@ void Instance::find_division() {
                 auto intervalpair =
                     IntervalPair(it->a, it->b, job1, job2, it.get());
 
-                if (!(job1->due_time >= it->b) && !(job2->due_time >= it->b) &&
+                if (job1->due_time < it->b && job2->due_time < it->b &&
                     !((it->a + job2->processing_time >= it->b) ||
                       (intervalpair() <= it->a))) {
                     special_pairs.push_back(intervalpair);

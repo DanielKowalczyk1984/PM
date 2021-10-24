@@ -11,7 +11,7 @@
 #include <boost/multiprecision/cpp_int.hpp>        // for cpp_int
 #include <boost/pending/property.hpp>              // for no_property
 #include <cstddef>                                 // for size_t
-#include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
+// #include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
 #include <fstream>                                 // for operator<<, basic_...
 #include <iostream>                                // for cerr
 #include <limits>                                  // for numeric_limits
@@ -75,11 +75,11 @@ bool PricerSolverSimpleDp::evaluate_nodes(
     forward_evaluator(pi);
     backward_evaluator(pi);
 
-    auto counter = 0UL;
-    auto x = 0UL;
+    auto counter = size_t{};
+    auto x = size_t{};
     auto num_removed = 0;
 
-    for (auto t = 0UL; t < Hmax + 1; ++t) {
+    for (auto t = size_t{}; t < Hmax + 1; ++t) {
         auto it = forward_graph[t].begin();
         while (it != forward_graph[t].end()) {
             double result = F[t - (*it)->processing_time] +
@@ -126,11 +126,11 @@ bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
     backward_evaluator(pi);
 
     std::span aux_pi{pi, reformulation_model.size()};
-    auto      counter = 0UL;
-    auto      x = 0UL;
+    auto      counter = size_t{};
+    auto      x = size_t{};
     auto      num_removed = 0;
 
-    for (auto t = 0UL; t < Hmax + 1; ++t) {
+    for (auto t = size_t{}; t < Hmax + 1; ++t) {
         auto it = forward_graph[t].begin();
         while (it != forward_graph[t].end()) {
             double result = F[t - (*it)->processing_time] +
@@ -177,7 +177,7 @@ void PricerSolverSimpleDp::build_mip() {
         fmt::print("Building Mip model for the TI formulation\n");
 
         /** Constructing variables */
-        for (auto t = 0UL; t < Hmax + 1; t++) {
+        for (auto t = size_t{}; t < Hmax + 1; t++) {
             for (auto& it : backward_graph[t]) {
                 double cost = it->weighted_tardiness_start(t);
                 double ub = take[(it->job) * (Hmax + 1) + t] ? 1.0 : 0.0;
@@ -261,7 +261,7 @@ void PricerSolverSimpleDp::forward_evaluator(std::span<const double>& _pi) {
     }
 
     /** Recursion */
-    for (auto t = 1UL; t < Hmax + 1; t++) {
+    for (auto t = size_t{1}; t < Hmax + 1; t++) {
         for (auto& it : forward_graph[t]) {
             if (F[t - it->processing_time] +
                     static_cast<double>(it->weighted_tardiness(t)) -
@@ -291,7 +291,7 @@ void PricerSolverSimpleDp::forward_evaluator(double* _pi) {
     }
 
     /** Recursion */
-    for (auto t = 1UL; t < Hmax + 1; t++) {
+    for (auto t = size_t{1}; t < Hmax + 1; t++) {
         for (auto& it : forward_graph[t]) {
             if (F[t - it->processing_time] +
                     static_cast<double>(it->weighted_tardiness(t)) -
@@ -316,7 +316,7 @@ void PricerSolverSimpleDp::backward_evaluator(std::span<const double>& _pi) {
         backward_F[t] = std::numeric_limits<double>::max() / 2;
     }
 
-    for (auto t : ranges::views::ints(0UL, Hmax) | ranges::views::reverse) {
+    for (auto t : ranges::views::ints(size_t{}, Hmax) | ranges::views::reverse) {
         for (auto& it : backward_graph[t]) {
             auto tt = t + it->processing_time;
             if (backward_F[tt] +
@@ -344,7 +344,7 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
         backward_F[t] = std::numeric_limits<double>::max() / 2;
     }
 
-    for (auto t : ranges::views::ints(0UL, Hmax) | ranges::views::reverse) {
+    for (auto t : ranges::views::ints(size_t{}, Hmax) | ranges::views::reverse) {
         for (auto& it : backward_graph[t]) {
             auto tt = t + it->processing_time;
             if (backward_F[tt] +

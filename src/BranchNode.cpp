@@ -89,7 +89,7 @@ void BranchNodeBase::branch(BTree* bt) {
     auto rng_zip = ranges::views::zip(x_job_time, instance.jobs);
     auto rng_sum_wt =
         rng_zip | ranges::views::filter([&tmp_t](const auto& tmp) {
-            auto aux_vec = ranges::views::iota(0UL, tmp.first.size()) |
+            auto aux_vec = ranges::views::iota(size_t{}, tmp.first.size()) |
                            ranges::views::transform([&](const auto& t) {
                                return tmp.second->weighted_tardiness_start(t);
                            }) |
@@ -101,7 +101,7 @@ void BranchNodeBase::branch(BTree* bt) {
         });
 
     for (auto&& [x_j, job] :
-         rng_sum_wt | ranges::views::take(std::min(50UL, instance.nb_jobs))) {
+         rng_sum_wt | ranges::views::take(std::min(size_t{50}, instance.nb_jobs))) {
         while ((x_ref.second[job->job][tmp_t] ==
                 x_ref.second[job->job][tmp_t + 1]) &&
                job->weighted_tardiness_start(tmp_t) == 0) {
@@ -129,7 +129,7 @@ void BranchNodeBase::branch(BTree* bt) {
                        EPS;
             });
         for (auto&& [x_j, job] :
-             rng_t | ranges::views::take(std::min(50UL, instance.nb_jobs))) {
+             rng_t | ranges::views::take(std::min(size_t{50}, instance.nb_jobs))) {
             while ((x_ref.second[job->job][tmp_t] ==
                     x_ref.second[job->job][tmp_t + 1]) &&
                    (job->weighted_tardiness_start(tmp_t) == 0)) {
@@ -356,7 +356,7 @@ BranchCandidate::BranchCandidate(
     double                                     _score,
     std::array<std::unique_ptr<NodeData>, 2>&& child_nodes)
     : score(_score),
-      data_child_nodes(std::move(child_nodes)) {
+      empty(false), data_child_nodes(std::move(child_nodes)) {
     const auto&           parms = data_child_nodes[0]->parms;
     std::array<double, 2> scores{};
 
@@ -366,7 +366,7 @@ BranchCandidate::BranchCandidate(
                 : std::abs(_score - node->get_score_value());
     }
     score = parms.scoring_function(scores);
-    empty = false;
+
 }
 
 BranchCandidate::BranchCandidate(double _score) : score(_score) {}
@@ -425,7 +425,7 @@ void BranchNodeRelBranching::branch(BTree* bt) {
     }
 
     for (auto&& [x_j, job] : ranges::views::zip(x_job_time, instance.jobs)) {
-        auto aux_vec = ranges::views::iota(0UL, x_j.size()) |
+        auto aux_vec = ranges::views::iota(size_t{}, x_j.size()) |
                        ranges::views::transform([&](const auto& tmp) {
                            return job->weighted_tardiness_start(tmp);
                        }) |

@@ -7,7 +7,7 @@
 #include <compare>                                     // for operator<
 #include <cstddef>                                     // for size_t
 #include <cstdlib>                                     // for rand
-#include <ext/alloc_traits.h>                          // for __alloc_traits...
+// #include <ext/alloc_traits.h>                          // for __alloc_traits...
 #include <functional>                                  // for identity
 #include <memory>                                      // for allocator_trai...
 #include <random>                                      // for mt19937, unifo...
@@ -265,7 +265,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
 }
 
 void Sol::perturb_swap_inter(size_t l1, size_t l2, std::mt19937& mt) {
-    std::uniform_int_distribution dist(0UL, nb_machines - 1);
+    std::uniform_int_distribution dist(size_t{}, nb_machines - 1);
 
     auto m1 = dist(mt);
     auto m2 = dist(mt);
@@ -279,12 +279,12 @@ void Sol::perturb_swap_inter(size_t l1, size_t l2, std::mt19937& mt) {
         return;
     }
 
-    std::uniform_int_distribution dist1(0UL,
+    std::uniform_int_distribution dist1(size_t{},
                                         machines[m1].job_list.size() - l1 - 1);
 
     auto i1 = dist1(mt);
 
-    std::uniform_int_distribution dist2(0UL,
+    std::uniform_int_distribution dist2(size_t{},
                                         machines[m2].job_list.size() - l2 - 1);
 
     auto i2 = dist2(mt);

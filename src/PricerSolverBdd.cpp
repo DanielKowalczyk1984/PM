@@ -221,7 +221,7 @@ void PricerSolverBdd::init_table() {
     root.set_node_id_label(decision_diagram.root());
     root.reset_all(convex_constr_id);
 
-    for (auto i : ranges::views::ints(0UL, decision_diagram.root().row() + 1) |
+    for (auto i : ranges::views::ints(size_t{}, decision_diagram.root().row() + 1) |
                       ranges::views::reverse) {
         for (auto it = 0UL; it < table[i].size(); it++) {
             if (i != 0UL) {
@@ -1396,7 +1396,7 @@ void PricerSolverBdd::topdown_filtering() {
         }
     }
 
-    for (auto i : ranges::views::ints(1UL, decision_diagram.root().row() + 1) |
+    for (auto i : ranges::views::ints(size_t{1}, decision_diagram.root().row() + 1) |
                       ranges::views::reverse) {
         for (auto& it : table[i]) {
             if (it.is_element(it.get_nb_job())) {
@@ -1418,7 +1418,7 @@ void PricerSolverBdd::bottom_up_filtering() {
     auto  removed_edges = false;
     auto  nb_edges_removed_tmp = 0;
     auto& table = *(decision_diagram.getDiagram());
-    for (auto i : ranges::views::ints(1UL, decision_diagram.root().row() + 1) |
+    for (auto i : ranges::views::ints(size_t{1}, decision_diagram.root().row() + 1) |
                       ranges::views::reverse) {
         for (auto& it : table[i]) {
             it.reset_visited();
@@ -1430,7 +1430,7 @@ void PricerSolverBdd::bottom_up_filtering() {
     table.node(1).reset_all(convex_constr_id);
     table.node(0).get_all().flip();
 
-    for (auto i : ranges::views::ints(1UL, decision_diagram.root().row() + 1)) {
+    for (auto i : ranges::views::ints(size_t{1}, decision_diagram.root().row() + 1)) {
         for (auto& it : table[i]) {
             it.add_element(it.get_nb_job());
             it.union_all(table.node(it[1]).get_all());

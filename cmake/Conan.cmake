@@ -39,12 +39,10 @@ if(${PROJECT_NAME}_ENABLE_CONAN)
   endif()
 
   include(${CMAKE_BINARY_DIR}/conan.cmake)
-
-  conan_cmake_configure(REQUIRES ${CONAN_REQUIRES} OPTIONS ${CONAN_OPTIONS} GENERATORS cmake)
+  
+  conan_cmake_configure(REQUIRES ${CONAN_REQUIRES} OPTIONS ${CONAN_OPTIONS} GENERATORS cmake_find_package cmake_paths cmake visual_studio)
   conan_cmake_autodetect(settings)
   conan_cmake_install(PATH_OR_REFERENCE . BUILD missing SETTINGS ${settings})
-  include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
-  conan_basic_setup(TARGETS)
 
   verbose_message("Conan is setup and all requires have been installed. ")
 endif()

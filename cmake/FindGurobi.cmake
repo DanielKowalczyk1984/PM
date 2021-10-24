@@ -21,11 +21,12 @@ if(MSVC)
   elseif(MSVC_TOOLSET_VERSION EQUAL 140)
     set(MSVC_YEAR "2015")
   endif()
-
-  if(MT)
-    set(M_FLAG "mt")
+  string(FIND "${CMAKE_MSVC_RUNTIME_LIBRARY}" "DLL" FOUND_DLL)
+  
+  if(${FOUND_DLL} EQUAL -1)
+  set(M_FLAG "mt")
   else()
-    set(M_FLAG "md")
+  set(M_FLAG "md")
   endif()
 
   find_library(
@@ -34,12 +35,14 @@ if(MSVC)
     HINTS ${GUROBI_DIR} $ENV{GUROBI_HOME}
     PATH_SUFFIXES lib
   )
+
   find_library(
     GUROBI_CXX_DEBUG_LIBRARY
     NAMES gurobi_c++${M_FLAG}d${MSVC_YEAR}
     HINTS ${GUROBI_DIR} $ENV{GUROBI_HOME}
     PATH_SUFFIXES lib
   )
+
 else()
   find_library(
     GUROBI_CXX_LIBRARY

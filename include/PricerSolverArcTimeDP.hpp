@@ -3,7 +3,6 @@
 
 #include <algorithm>             // for remove
 #include <cstddef>               // for size_t
-#include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
 #include <memory>                // for allocator_traits<>::value_type, make...
 #include <vector>                // for vector
 #include "Instance.h"            // for Instance
