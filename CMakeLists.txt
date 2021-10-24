@@ -131,9 +131,9 @@ endif()
 
 set_target_properties(
   ${PROJECT_NAME}
-  PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_<CONFIG> "${CMAKE_BINARY_DIR}/lib/"
-             LIBRARY_OUTPUT_DIRECTORY_<CONFIG> "${CMAKE_BINARY_DIR}/lib/"
-             RUNTIME_OUTPUT_DIRECTORY_<CONFIG> "${CMAKE_BINARY_DIR}/bin/"
+  PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
+             LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
+             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
 )
 
 if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
@@ -194,23 +194,15 @@ target_link_libraries(
           $<IF:$<CONFIG:Debug>,${OSIGRB_LIBRARY_DEBUG},${OSIGRB_LIBRARY}>
           $<IF:$<CONFIG:Debug>,${COINUTILS_LIBRARY_DEBUG},${COINUTILS_LIBRARY}>
           $<IF:$<CONFIG:Debug>,${CGL_LIBRARY_DEBUG},${CGL_LIBRARY}>
+          $<$<LINK_LANG_AND_ID:CXX,GNU>:docopt_s>
+          $<$<LINK_LANG_AND_ID:CXX,MSVC>:docopt>
           fmt::fmt
-          Boost::boost
-          Boost::atomic
-          Boost::chrono
-          Boost::timer
-          Boost::json
-          Boost::random
-          Boost::regex
-          Boost::serialization
-          docopt
+          Boost::atomic Boost::chrono Boost::timer Boost::random
           range-v3::range-v3
           nlohmann_json::nlohmann_json
           ORUtils::ORUtils
           branch-and-bound::branch-and-bound
           ModernDD::ModernDD
-          $<$<LINK_LANG_AND_ID:CXX,GNU>:-lm>
-          $<$<LINK_LANG_AND_ID:CXX,GNU>:-lpthread>
 )
 
 verbose_message("Successfully added all dependencies and linked against them.")
