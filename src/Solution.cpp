@@ -97,7 +97,7 @@ void Sol::construct_random_fisher_yates(
 
     tw = 0;
     for (auto i = 0UL; i < tmp.size() - 1; i++) {
-        auto j = i + rand() % (tmp.size() - i);
+        auto j = i + static_cast<size_t>(rand()) % (tmp.size() - i);
         std::swap(tmp[i], tmp[j]);
     }
 
