@@ -22,11 +22,11 @@ if(MSVC)
     set(MSVC_YEAR "2015")
   endif()
   string(FIND "${CMAKE_MSVC_RUNTIME_LIBRARY}" "DLL" FOUND_DLL)
-  
+
   if(${FOUND_DLL} EQUAL -1)
-  set(M_FLAG "mt")
+    set(M_FLAG "mt")
   else()
-  set(M_FLAG "md")
+    set(M_FLAG "md")
   endif()
 
   find_library(

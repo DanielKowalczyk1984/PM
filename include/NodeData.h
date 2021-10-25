@@ -9,7 +9,7 @@
 #include <span>                    // for span
 #include <string>                  // for string
 #include <vector>                  // for vector
-#include "orutils/lp.h"                    // for lp_interface
+#include "orutils/lp.h"            // for lp_interface
 
 class PricingStabilizationBase;  // lines 14-14
 class Problem;                   // lines 15-15

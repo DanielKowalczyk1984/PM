@@ -5,7 +5,8 @@
 #include <array>                                  // for array
 #include <boost/graph/detail/adjacency_list.hpp>  // for num_edges
 #include <boost/multiprecision/cpp_int.hpp>
-// #include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
+// #include <ext/alloc_traits.h>                      // for
+// __alloc_traits<>::...
 #include <iostream>                                // for operator<<, cout
 #include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
 #include <range/v3/view/iota.hpp>                  // for iota_view, ints
@@ -24,7 +25,7 @@
 #include "PricerConstruct.hpp"                     // for PricerConstruct
 #include "PricingSolution.hpp"                     // for PricingSolution
 #include "ZddNode.hpp"                             // for NodeZdd, SubNodeZdd
-#include "orutils/util.h"                                  // for dbg_lvl
+#include "orutils/util.h"                          // for dbg_lvl
 
 PricerSolverZdd::PricerSolverZdd(const Instance& instance)
     : PricerSolverBase(instance),
@@ -130,8 +131,9 @@ void PricerSolverZdd::init_table() {
         table.node(decision_diagram->root()).list.pop_back();
     }
 
-    for (auto i : ranges::views::ints(size_t{}, decision_diagram->root().row() + 1) |
-                      ranges::views::reverse) {
+    for (auto i :
+         ranges::views::ints(size_t{}, decision_diagram->root().row() + 1) |
+             ranges::views::reverse) {
         size_t layer = ordered_jobs_new.size() - i;
         auto&  tmp_pair = ordered_jobs_new[layer];
         // static_cast<job_interval_pair*>(span_ordered_job[layer]);

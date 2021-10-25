@@ -1,27 +1,27 @@
 #include "ZeroHalfSystem.hpp"
-#include <boost/container_hash/extensions.hpp>         // for hash_combine
-#include <boost/dynamic_bitset/dynamic_bitset.hpp>     // for dynamic_bitset
-#include <cmath>                                       // for ceil
-#include <cstddef>                                     // for size_t
-#include <limits>                                      // for numeric_limits
-#include <range/v3/algorithm/any_of.hpp>               // for any_of, any_of_fn
-#include <range/v3/algorithm/for_each.hpp>             // for for_each, for_...
-#include <range/v3/algorithm/min.hpp>                  // for min, min_fn
-#include <range/v3/numeric/inner_product.hpp>          // for inner_product
-#include <range/v3/range/conversion.hpp>               // for to, operator|
-#include <range/v3/utility/swap.hpp>                   // for swap
-#include <range/v3/view/all.hpp>                       // for all_t, all_fn
-#include <range/v3/view/drop.hpp>                      // for drop_view, drop
-#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
-#include <range/v3/view/iota.hpp>                      // for iota_view, ints
-#include <range/v3/view/join.hpp>                      // for join_view, joi...
-#include <range/v3/view/stride.hpp>                    // for stride_view
-#include <range/v3/view/transform.hpp>                 // for transform_view
-#include <range/v3/view/view.hpp>                      // for operator|, vie...
-#include <range/v3/view/zip.hpp>                       // for zip_view, zip
-#include <range/v3/view/zip_with.hpp>                  // for iter_zip_with_...
-#include <unordered_map>                               // for unordered_map
-#include <vector>                                      // for vector, allocator
+#include <boost/container_hash/extensions.hpp>      // for hash_combine
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
+#include <cmath>                                    // for ceil
+#include <cstddef>                                  // for size_t
+#include <limits>                                   // for numeric_limits
+#include <range/v3/algorithm/any_of.hpp>            // for any_of, any_of_fn
+#include <range/v3/algorithm/for_each.hpp>          // for for_each, for_...
+#include <range/v3/algorithm/min.hpp>               // for min, min_fn
+#include <range/v3/numeric/inner_product.hpp>       // for inner_product
+#include <range/v3/range/conversion.hpp>            // for to, operator|
+#include <range/v3/utility/swap.hpp>                // for swap
+#include <range/v3/view/all.hpp>                    // for all_t, all_fn
+#include <range/v3/view/drop.hpp>                   // for drop_view, drop
+#include <range/v3/view/enumerate.hpp>              // for enumerate_fn
+#include <range/v3/view/iota.hpp>                   // for iota_view, ints
+#include <range/v3/view/join.hpp>                   // for join_view, joi...
+#include <range/v3/view/stride.hpp>                 // for stride_view
+#include <range/v3/view/transform.hpp>              // for transform_view
+#include <range/v3/view/view.hpp>                   // for operator|, vie...
+#include <range/v3/view/zip.hpp>                    // for zip_view, zip
+#include <range/v3/view/zip_with.hpp>               // for iter_zip_with_...
+#include <unordered_map>                            // for unordered_map
+#include <vector>                                   // for vector, allocator
 
 namespace vs = ranges::views;
 
@@ -230,14 +230,15 @@ void ZeroHalfSystem::evaluate_rows(const std::vector<int>& _rows) {
 
         // auto test = A_bar | vs::join | ;
         if (odd) {
-            auto left = vs::ints(size_t{}, nb_columns) | vs::transform([&](int i) {
-                            return ranges::inner_product(
-                                       v | vs::all,
-                                       A_bar | vs::join | vs::drop(i) |
-                                           vs::stride(nb_columns),
-                                       0) %
-                                   2;
-                        });
+            auto left =
+                vs::ints(size_t{}, nb_columns) | vs::transform([&](int i) {
+                    return ranges::inner_product(v | vs::all,
+                                                 A_bar | vs::join |
+                                                     vs::drop(i) |
+                                                     vs::stride(nb_columns),
+                                                 0) %
+                           2;
+                });
             auto val = ranges::inner_product(left, x_star, 0.0);
             if (val < 1 - HALF * EPS) {
                 auto result = row_index[0];
@@ -260,6 +261,4 @@ void ZeroHalfSystem::add_to_row(size_t i, size_t j) {
 }
 ZeroHalfSystem::ZeroHalfSystem(const DdStructure<NodeBdd>& bdd) {
     auto& table = bdd.getDiagram();
-
-
 }

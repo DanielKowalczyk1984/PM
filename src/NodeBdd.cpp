@@ -36,7 +36,8 @@ void NodeBdd::add_coeff_list_clear() {
     }
 }
 
-std::array<std::vector<NodeBdd::weak_ptr_bddcoeff>, 2>& NodeBdd::get_coeff_list() {
+std::array<std::vector<NodeBdd::weak_ptr_bddcoeff>, 2>&
+NodeBdd::get_coeff_list() {
     return coeff_list;
 }
 
@@ -161,7 +162,7 @@ bool NodeBdd::get_lp_visited() const {
 }
 
 /** Functions for manipulation of lp_x */
-[[nodiscard]] NodeBdd::dbl_array & NodeBdd::get_lp_x() {
+[[nodiscard]] NodeBdd::dbl_array& NodeBdd::get_lp_x() {
     return lp_x;
 }
 double& NodeBdd::get_lp_x(bool _high) {

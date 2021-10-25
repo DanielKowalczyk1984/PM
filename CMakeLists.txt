@@ -301,7 +301,17 @@ verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 # clang-format)
 #
 
-add_clang_format_target()
+
+include(cmake/CPM.cmake)
+CPMAddPackage(
+  NAME Format.cmake
+  VERSION 1.7.0
+  GITHUB_REPOSITORY TheLartians/Format.cmake
+  OPTIONS # set to yes skip cmake formatting
+          "FORMAT_SKIP_CMAKE NO"
+          # path to exclude (optional, supports regular expressions)
+          "CMAKE_FORMAT_EXCLUDE cmake/CPM.cmake"
+)
 
 #
 # Install library for easy downstream inclusion

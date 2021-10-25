@@ -1,17 +1,18 @@
 #include "PricerSolverSimpleDP.hpp"
 #include <fmt/core.h>
-#include <gurobi_c++.h>                            // for GRBLinExpr, GRBModel
-#include <algorithm>                               // for fill, find, max
-#include <boost/graph/adjacency_list.hpp>          // for adjacency_list
-#include <boost/graph/detail/adjacency_list.hpp>   // for edges, get, num_edges
-#include <boost/graph/detail/edge.hpp>             // for operator!=, operat...
-#include <boost/graph/graph_selectors.hpp>         // for bidirectionalS
-#include <boost/graph/graphviz.hpp>                // for write_graphviz
-#include <boost/iterator/iterator_facade.hpp>      // for operator!=, operat...
-#include <boost/multiprecision/cpp_int.hpp>        // for cpp_int
-#include <boost/pending/property.hpp>              // for no_property
-#include <cstddef>                                 // for size_t
-// #include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
+#include <gurobi_c++.h>                           // for GRBLinExpr, GRBModel
+#include <algorithm>                              // for fill, find, max
+#include <boost/graph/adjacency_list.hpp>         // for adjacency_list
+#include <boost/graph/detail/adjacency_list.hpp>  // for edges, get, num_edges
+#include <boost/graph/detail/edge.hpp>            // for operator!=, operat...
+#include <boost/graph/graph_selectors.hpp>        // for bidirectionalS
+#include <boost/graph/graphviz.hpp>               // for write_graphviz
+#include <boost/iterator/iterator_facade.hpp>     // for operator!=, operat...
+#include <boost/multiprecision/cpp_int.hpp>       // for cpp_int
+#include <boost/pending/property.hpp>             // for no_property
+#include <cstddef>                                // for size_t
+// #include <ext/alloc_traits.h>                      // for
+// __alloc_traits<>::...
 #include <fstream>                                 // for operator<<, basic_...
 #include <iostream>                                // for cerr
 #include <limits>                                  // for numeric_limits
@@ -316,7 +317,8 @@ void PricerSolverSimpleDp::backward_evaluator(std::span<const double>& _pi) {
         backward_F[t] = std::numeric_limits<double>::max() / 2;
     }
 
-    for (auto t : ranges::views::ints(size_t{}, Hmax) | ranges::views::reverse) {
+    for (auto t :
+         ranges::views::ints(size_t{}, Hmax) | ranges::views::reverse) {
         for (auto& it : backward_graph[t]) {
             auto tt = t + it->processing_time;
             if (backward_F[tt] +
@@ -344,7 +346,8 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
         backward_F[t] = std::numeric_limits<double>::max() / 2;
     }
 
-    for (auto t : ranges::views::ints(size_t{}, Hmax) | ranges::views::reverse) {
+    for (auto t :
+         ranges::views::ints(size_t{}, Hmax) | ranges::views::reverse) {
         for (auto& it : backward_graph[t]) {
             auto tt = t + it->processing_time;
             if (backward_F[tt] +

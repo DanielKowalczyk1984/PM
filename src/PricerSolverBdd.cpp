@@ -18,12 +18,12 @@
 #include <memory>                                   // for allocator, mak...
 #include <ostream>                                  // for operator<<
 #include <range/v3/all.hpp>
-#include <set>                                      // for operator==
-#include <span>                                     // for span
-#include <string>                                   // for char_traits
-#include <tuple>                                    // for tuple, get
-#include <vector>                                   // for vector, _Bit_r...
-#include "CardinalityPaths.hpp"                     // for CardinalityPaths
+#include <set>                   // for operator==
+#include <span>                  // for span
+#include <string>                // for char_traits
+#include <tuple>                 // for tuple, get
+#include <vector>                // for vector, _Bit_r...
+#include "CardinalityPaths.hpp"  // for CardinalityPaths
 #include "CglGomory.hpp"
 #include "CglZeroHalf.hpp"
 #include "Column.h"                   // for ScheduleSet
@@ -40,8 +40,8 @@
 #include "PricingSolution.hpp"        // for PricingSolution
 #include "Solution.hpp"               // for Machine, VecJo...
 #include "gurobi_c.h"                 // for GRB_EQUAL, GRB...
-#include "orutils/lp.h"                       // for lp_interface_g...
-#include "orutils/util.h"                     // for dbg_lvl
+#include "orutils/lp.h"               // for lp_interface_g...
+#include "orutils/util.h"             // for dbg_lvl
 
 PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     : PricerSolverBase(instance),
@@ -221,8 +221,9 @@ void PricerSolverBdd::init_table() {
     root.set_node_id_label(decision_diagram.root());
     root.reset_all(convex_constr_id);
 
-    for (auto i : ranges::views::ints(size_t{}, decision_diagram.root().row() + 1) |
-                      ranges::views::reverse) {
+    for (auto i :
+         ranges::views::ints(size_t{}, decision_diagram.root().row() + 1) |
+             ranges::views::reverse) {
         for (auto it = 0UL; it < table[i].size(); it++) {
             if (i != 0UL) {
                 auto  layer = ordered_jobs_new.size() - i;
@@ -1396,8 +1397,9 @@ void PricerSolverBdd::topdown_filtering() {
         }
     }
 
-    for (auto i : ranges::views::ints(size_t{1}, decision_diagram.root().row() + 1) |
-                      ranges::views::reverse) {
+    for (auto i :
+         ranges::views::ints(size_t{1}, decision_diagram.root().row() + 1) |
+             ranges::views::reverse) {
         for (auto& it : table[i]) {
             if (it.is_element(it.get_nb_job())) {
                 removed_edges = true;
@@ -1418,8 +1420,9 @@ void PricerSolverBdd::bottom_up_filtering() {
     auto  removed_edges = false;
     auto  nb_edges_removed_tmp = 0;
     auto& table = *(decision_diagram.getDiagram());
-    for (auto i : ranges::views::ints(size_t{1}, decision_diagram.root().row() + 1) |
-                      ranges::views::reverse) {
+    for (auto i :
+         ranges::views::ints(size_t{1}, decision_diagram.root().row() + 1) |
+             ranges::views::reverse) {
         for (auto& it : table[i]) {
             it.reset_visited();
             it.reset_all(convex_constr_id);
@@ -1430,7 +1433,8 @@ void PricerSolverBdd::bottom_up_filtering() {
     table.node(1).reset_all(convex_constr_id);
     table.node(0).get_all().flip();
 
-    for (auto i : ranges::views::ints(size_t{1}, decision_diagram.root().row() + 1)) {
+    for (auto i :
+         ranges::views::ints(size_t{1}, decision_diagram.root().row() + 1)) {
         for (auto& it : table[i]) {
             it.add_element(it.get_nb_job());
             it.union_all(table.node(it[1]).get_all());
@@ -2026,8 +2030,8 @@ int PricerSolverBdd::add_constraints() {
     // auto sol_x = std::vector<double>(aux_model->getNumCols(), 0.0);
 
     // for (auto& it : table |
-    //                     ranges::views::take(decision_diagram.topLevel() + 1) |
-    //                     ranges::views::drop(1) | ranges::views::reverse |
+    //                     ranges::views::take(decision_diagram.topLevel() + 1)
+    //                     | ranges::views::drop(1) | ranges::views::reverse |
     //                     ranges::views::join) {
     //     sol_x[it.get_key_edge(false)] = it.get_lp_x(false);
     //     sol_x[it.get_key_edge(true)] = it.get_lp_x(true);

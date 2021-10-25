@@ -3,10 +3,10 @@
 #include <array>
 #include <range/v3/action/remove_if.hpp>  // for remove_if
 #include <span>                           //for span
-#include "ModernDD/NodeBddEval.hpp"       // for Eval
-#include "NodeBdd.hpp"                    // for NodeBdd
-#include "PricingSolution.hpp"            // for PricingSolution
 #include "BddCoeff.hpp"
+#include "ModernDD/NodeBddEval.hpp"  // for Eval
+#include "NodeBdd.hpp"               // for NodeBdd
+#include "PricingSolution.hpp"       // for PricingSolution
 
 class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
     const double* pi{};

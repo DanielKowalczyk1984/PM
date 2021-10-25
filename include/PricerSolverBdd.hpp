@@ -41,7 +41,6 @@ class PricerSolverBdd : public PricerSolverBase {
     size_t H_min;
     int    H_max;
 
-
    public:
     explicit PricerSolverBdd(const Instance& instance);
 
@@ -135,7 +134,7 @@ class PricerSolverBdd : public PricerSolverBase {
 
     void update_constraints() override {}
 
-    void update_coeff_constraints() override;
+    void                                update_coeff_constraints() override;
     std::unique_ptr<OsiSolverInterface> build_model();
 };
 

@@ -1,9 +1,9 @@
 #ifndef __STATISTICS_H__
 #define __STATISTICS_H__
 
-#include <cstddef>  // for size_t
-#include <string>   // for string
-#include "orutils/util.h"   // for CCutil_timer
+#include <cstddef>         // for size_t
+#include <string>          // for string
+#include "orutils/util.h"  // for CCutil_timer
 struct Parms;
 
 struct Statistics {

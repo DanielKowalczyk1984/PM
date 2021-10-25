@@ -4,22 +4,22 @@
 
 #include "BddCoeff.hpp"
 
-BddCoeff::BddCoeff(size_t    _j,
-                   size_t    _t,
+BddCoeff::BddCoeff(size_t _j,
+                   size_t _t,
                    double _coeff,
                    double _value,
-                   size_t    _row,
+                   size_t _row,
                    bool   _high,
                    bool   _root)
     : VariableKeyBase(_j, _t, _high, _root),
       row(_row),
       coeff(_coeff),
-      value(_value){}
+      value(_value) {}
 
 BddCoeff::BddCoeff(const BddCoeff&) = default;
 BddCoeff& BddCoeff::operator=(const BddCoeff&) = default;
-BddCoeff::BddCoeff(BddCoeff&& op)  noexcept = default;
-BddCoeff& BddCoeff::operator=(BddCoeff&& op)  noexcept = default;
+BddCoeff::BddCoeff(BddCoeff&& op) noexcept = default;
+BddCoeff& BddCoeff::operator=(BddCoeff&& op) noexcept = default;
 
 std::ostream& operator<<(std::ostream& os, const BddCoeff& object) {
     return os << "(j = " << object.get_j() << ", t = " << object.get_t()
@@ -37,8 +37,22 @@ bool BddCoeff::operator==(const BddCoeff& other) {
            get_high() == other.get_high();
 }
 
-[[nodiscard]] double BddCoeff::get_coeff() const { return coeff; }
-[[nodiscard]] double BddCoeff::get_value() const { return value; }
-void BddCoeff::set_value(double _value) { value = _value; }
-void BddCoeff::set_row(size_t _row) { row = _row; }
-[[nodiscard]] size_t BddCoeff::get_row() const { return row; }
+[[nodiscard]] double BddCoeff::get_coeff() const {
+    return coeff;
+}
+
+[[nodiscard]] double BddCoeff::get_value() const {
+    return value;
+}
+
+void BddCoeff::set_value(double _value) {
+    value = _value;
+}
+
+void BddCoeff::set_row(size_t _row) {
+    row = _row;
+}
+
+[[nodiscard]] size_t BddCoeff::get_row() const {
+    return row;
+}

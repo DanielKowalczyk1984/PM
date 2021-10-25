@@ -1,20 +1,20 @@
 #ifndef _MODEL_INTERFACE
 #define _MODEL_INTERFACE
 
-#include <fmt/core.h>                           // for print
-#include <cmath>                                // for fabs
-#include <cstddef>                              // for size_t
-#include <iostream>                             // for operator<<, size_t
-#include <list>                                 // for list
-#include <memory>                               // for shared_ptr, __shared_...
-#include <range/v3/range/conversion.hpp>        // for to
-#include <range/v3/range_fwd.hpp>               // for views
-#include <range/v3/view/iota.hpp>               // for iota, iota_fn
-#include <range/v3/view/transform.hpp>          // for transform
-#include <unordered_map>                        // for operator==, _Node_ite...
-#include <utility>                              // for move, pair
-#include <variant>                              // for hash
-#include <vector>                               // for vector
+#include <fmt/core.h>                     // for print
+#include <cmath>                          // for fabs
+#include <cstddef>                        // for size_t
+#include <iostream>                       // for operator<<, size_t
+#include <list>                           // for list
+#include <memory>                         // for shared_ptr, __shared_...
+#include <range/v3/range/conversion.hpp>  // for to
+#include <range/v3/range_fwd.hpp>         // for views
+#include <range/v3/view/iota.hpp>         // for iota, iota_fn
+#include <range/v3/view/transform.hpp>    // for transform
+#include <unordered_map>                  // for operator==, _Node_ite...
+#include <utility>                        // for move, pair
+#include <variant>                        // for hash
+#include <vector>                         // for vector
 
 #include "BddCoeff.hpp"
 #include "VariableKeyBase.hpp"

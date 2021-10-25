@@ -19,7 +19,7 @@
 #include <string>                                // for allocator, string, stod
 #include <vector>                                // for vector
 #include "Usage.hpp"                             // for USAGE
-#include "orutils/util.h"                                // for dbg_lvl, program_header
+#include "orutils/util.h"                        // for dbg_lvl, program_header
 
 const size_t TIME_LIMIT = 7200;
 const double ALPHA_STAB_INIT = 0.8;

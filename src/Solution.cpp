@@ -7,7 +7,6 @@
 #include <compare>                                     // for operator<
 #include <cstddef>                                     // for size_t
 #include <cstdlib>                                     // for rand
-// #include <ext/alloc_traits.h>                          // for __alloc_traits...
 #include <functional>                                  // for identity
 #include <memory>                                      // for allocator_trai...
 #include <random>                                      // for mt19937, unifo...
@@ -40,10 +39,13 @@ void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
     auto cmp_jobs_edd = [](const auto lhs, const auto rhs) -> bool {
         return lhs->due_time < rhs->due_time;
     };
-    auto tmp = v | ranges::views::transform([](const auto& tmp_j) { return tmp_j.get(); }) | ranges::to_vector;
+    auto tmp = v | ranges::views::transform([](const auto& tmp_j) {
+                   return tmp_j.get();
+               }) |
+               ranges::to_vector;
 
-//    std::ranges::transform(v, std::back_inserter(tmp),
-//                           [](const auto& tmp_j) { return tmp_j.get(); });
+    //    std::ranges::transform(v, std::back_inserter(tmp),
+    //                           [](const auto& tmp_j) { return tmp_j.get(); });
     std::ranges::sort(tmp, cmp_jobs_edd);
     tw = 0;
 

@@ -39,8 +39,18 @@ if(${PROJECT_NAME}_ENABLE_CONAN)
   endif()
 
   include(${CMAKE_BINARY_DIR}/conan.cmake)
-  
-  conan_cmake_configure(REQUIRES ${CONAN_REQUIRES} OPTIONS ${CONAN_OPTIONS} GENERATORS cmake_find_package cmake_paths cmake visual_studio)
+
+  conan_cmake_configure(
+    REQUIRES
+    ${CONAN_REQUIRES}
+    OPTIONS
+    ${CONAN_OPTIONS}
+    GENERATORS
+    cmake_find_package
+    cmake_paths
+    cmake
+    visual_studio
+  )
   conan_cmake_autodetect(settings)
   conan_cmake_install(PATH_OR_REFERENCE . BUILD missing SETTINGS ${settings})
 

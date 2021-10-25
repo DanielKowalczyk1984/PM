@@ -1,16 +1,16 @@
 #include <OsiGrbSolverInterface.hpp>
 #include <array>
-#include <range/v3/algorithm/for_each.hpp>             // for for_each, for_...
-#include <range/v3/numeric/iota.hpp>                   // for iota, iota_fn
-#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
-#include <range/v3/view/take.hpp>                      // for take_view, take
-#include <range/v3/view/view.hpp>                      // for operator|, vie...
-#include <span>                                        // for span
-#include <vector>                                      // for vector
-#include "Column.h"                                    // for ScheduleSet
-#include "NodeData.h"                                  // for NodeData
-#include "PricerSolverBase.hpp"                        // for PricerSolverBase
-#include "Solution.hpp"                                // for Sol
+#include <range/v3/algorithm/for_each.hpp>  // for for_each, for_...
+#include <range/v3/numeric/iota.hpp>        // for iota, iota_fn
+#include <range/v3/view/enumerate.hpp>      // for enumerate_fn
+#include <range/v3/view/take.hpp>           // for take_view, take
+#include <range/v3/view/view.hpp>           // for operator|, vie...
+#include <span>                             // for span
+#include <vector>                           // for vector
+#include "Column.h"                         // for ScheduleSet
+#include "NodeData.h"                       // for NodeData
+#include "PricerSolverBase.hpp"             // for PricerSolverBase
+#include "Solution.hpp"                     // for Sol
 #include "gurobi_c++.h"
 #include "gurobi_c.h"  // for GRB_INFINITY
 

@@ -236,7 +236,8 @@ void PricerSolverArcTimeDp::build_mip() {
 
     /** Constructing variables */
     for (auto j = size_t{}; j < n + 1; j++) {
-        for (auto t = size_t{}; t + vector_jobs[j]->processing_time <= Hmax; t++) {
+        for (auto t = size_t{}; t + vector_jobs[j]->processing_time <= Hmax;
+             t++) {
             for (auto& it : graph[j][t]) {
                 double cost = vector_jobs[j]->weighted_tardiness_start(
                     static_cast<int>(t));
@@ -258,7 +259,8 @@ void PricerSolverArcTimeDp::build_mip() {
     std::vector<double>     rhs(convex_constr_id, 1.0);
 
     for (auto j = size_t{}; j < n; j++) {
-        for (auto t = size_t{}; t <= Hmax - vector_jobs[j]->processing_time; t++) {
+        for (auto t = size_t{}; t <= Hmax - vector_jobs[j]->processing_time;
+             t++) {
             for (auto& it : graph[j][t]) {
                 assignment[j] += arctime_x[it->job][j][t];
             }
@@ -347,7 +349,8 @@ void PricerSolverArcTimeDp::backward_evaluator(double* _pi) {
     backward_F[n][Hmax] = 0.0;
     std::span aux_pi{_pi, reformulation_model.size()};
 
-    for (auto t : ranges::views::ints(size_t{}, Hmax) | ranges::views::reverse) {
+    for (auto t :
+         ranges::views::ints(size_t{}, Hmax) | ranges::views::reverse) {
         for (auto i = 0UL; i <= n; ++i) {
             // Job* tmp = vector_jobs[i];
             backward_F[i][t] = ((i == n) && (t == Hmax))
@@ -395,7 +398,8 @@ void PricerSolverArcTimeDp::backward_evaluator(std::span<const double>& _pi) {
     // backward_F[n][T] = 0;
     backward_F[n][Hmax] = 0.0;
 
-    for (auto t : ranges::views::ints(size_t{}, Hmax) | ranges::views::reverse) {
+    for (auto t :
+         ranges::views::ints(size_t{}, Hmax) | ranges::views::reverse) {
         for (auto i = 0UL; i <= n; ++i) {
             // Job* tmp = vector_jobs[i];
             backward_F[i][t] = ((i == n) && (t == Hmax))
@@ -714,7 +718,7 @@ boost::multiprecision::cpp_int PricerSolverArcTimeDp::print_num_paths() {
 bool PricerSolverArcTimeDp::check_column(Column const* col) {
     // std::span aux_set{set->pdata, set->len};
     const auto& set = col->job_list;
-    auto      counter = set.size() - 1;
+    auto        counter = set.size() - 1;
     auto        i = n;
     auto        t = 0UL;
 
