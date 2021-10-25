@@ -67,7 +67,6 @@ endif()
 # Third Party packages
 #
 
-
 add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 add_subdirectory(decision-diagrams)
@@ -131,9 +130,9 @@ endif()
 
 set_target_properties(
   ${PROJECT_NAME}
-  PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
-             LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
-             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
+  PROPERTIES ARCHIVE_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/lib>
+             LIBRARY_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/lib>
+             RUNTIME_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/bin>
 )
 
 if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
@@ -188,8 +187,7 @@ include(cmake/SetUpOsi.cmake)
 
 target_link_libraries(
   ${PROJECT_NAME}
-  PRIVATE ${GUROBI_LIBRARY}
-          $<IF:$<CONFIG:Debug>,${GUROBI_CXX_DEBUG_LIBRARY},${GUROBI_CXX_LIBRARY}>
+  PRIVATE $<IF:$<CONFIG:Debug>,${GUROBI_CXX_DEBUG_LIBRARY},${GUROBI_CXX_LIBRARY}>
           $<IF:$<CONFIG:Debug>,${OSI_LIBRARY_DEBUG},${OSI_LIBRARY}>
           $<IF:$<CONFIG:Debug>,${OSIGRB_LIBRARY_DEBUG},${OSIGRB_LIBRARY}>
           $<IF:$<CONFIG:Debug>,${COINUTILS_LIBRARY_DEBUG},${COINUTILS_LIBRARY}>
@@ -197,7 +195,10 @@ target_link_libraries(
           $<$<LINK_LANG_AND_ID:CXX,GNU>:docopt_s>
           $<$<LINK_LANG_AND_ID:CXX,MSVC>:docopt>
           fmt::fmt
-          Boost::atomic Boost::chrono Boost::timer Boost::random
+          Boost::atomic
+          Boost::chrono
+          Boost::timer
+          Boost::random
           range-v3::range-v3
           nlohmann_json::nlohmann_json
           ORUtils::ORUtils
@@ -344,3 +345,6 @@ configure_package_config_file(
 
 # include Doxygen
 include(cmake/Doxygen.cmake)
+
+# Add Gurobi env to Binary directory
+file(COPY ${CMAKE_SOURCE_DIR}/gurobi.env DESTINATION ${CMAKE_BINARY_DIR}/bin)
