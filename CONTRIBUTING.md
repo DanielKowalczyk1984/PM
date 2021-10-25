@@ -8,7 +8,7 @@ If you are looking for a good way to contribute to the project, please:
 
 * have a look at the [available issue templates](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues).
 
-* look through the [issues that need help](https://github.com/filipdutescu/modern-cpp-template/labels/help%20wanted).
+* look through the [issues that need help](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues?scope=all&state=opened&label_name[]=help%20wanted).
 
 * take a look at a [Pull Request template](PULL_REQUEST_TEMPLATE.md) to get yourself
 started.
@@ -16,27 +16,27 @@ started.
 ## Reporting issues and suggesting new features
 
 If you find that the project is not working properly, please file a report using
-the [Bug Report template](https://github.com/filipdutescu/modern-cpp-template/issues/new?assignees=&labels=bug&template=bug_report.md&title=[BUG]).
+the [Bug Report template](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues?scope=all&state=opened&label_name[]=Bug).
 Should the template provided not suit your needs, feel free to make a
-[custom Bug Report](https://github.com/filipdutescu/modern-cpp-template/issues/new/choose),
+[custom Bug Report](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues/new),
 but please label it accordingly.
 
 We are happy to hear your ideas for how to further improve Parallel-Machine-BDD,
 ensuring it suits your needs. Check the [Issues](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues)
 and see if others have submitted similar feedback. You can upvote existing feedback
-(using the thumbs up reaction/by commenting) or [submit a new suggestion](https://github.com/filipdutescu/modern-cpp-template/labels/feature).
+(using the thumbs up reaction/by commenting) or [submit a new suggestion](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues?scope=all&state=opened&label_name[]=enhancement).
 
-We always look at upvoted items in [Issues](https://github.com/filipdutescu/modern-cpp-template/issues)
+We always look at upvoted items in [Issues](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues)
 when we decide what to work on next. We read the comments and we look forward to
 hearing your input.
 
 ## Finding issues you can help with
 
 Looking for something to work on?
-Issues marked [`good first issue`](https://github.com/filipdutescu/modern-cpp-template/labels/good%20first%20issue)
+Issues marked [`good first issue`](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues?scope=all&state=opened&label_name[]=good%20first%20issue)
 are a good place to start.
 
-You can also check the [`help wanted`](https://github.com/filipdutescu/modern-cpp-template/labels/help%20wanted)
+You can also check the [`help wanted`](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues?scope=all&state=opened&label_name[]=help%20wanted)
 tag to find other issues to help with. If you're interested in working on a fix,
 leave a comment to let everyone know and to help avoid duplicated effort from others.
 
@@ -44,7 +44,7 @@ leave a comment to let everyone know and to help avoid duplicated effort from ot
 
 We highly appreciate any contributions that help us improve the end product, with
 a high emphasis being put on any bug fixes you can manage to create and direct
-improvements which address the top issues reported by Calculator users. Some general
+improvements which address the top issues reported by the users. Some general
 guidelines:
 
 ### DOs
@@ -156,10 +156,10 @@ needs to be merged as separate commits.
 
 ### Continuous Integration
 
-For this project, CI is provided by [GitHub Actions](https://github.com/features/actions),
-with workflows found in the [`.github/workflows` folder](.github/workflows). Workflows
+For this project, CI is provided by [Gitlab CI/CD integration](https://about.gitlab.com/topics/ci-cd/),
+with workflows found in the [`.gitlab/.gitlab-ci.yml` file](.gitlab/.gitlab-ci.yml). Workflows
 are run automatically on every commit made on the master branch, unless told to skip
-for that particular commit.
+for that particular commit. To learn more about CI/CD, you can visit the [Gitlab learn environment](https://about.gitlab.com/learn/continuous-integration/)
 
 To skip CI runs on a particular commit, include either `[skip ci]` or `[ci skip]`
 in the commit message.
@@ -179,7 +179,7 @@ community may participate in the review, but at least one member of the project 
 will ultimately approve the request.
 
 Often, multiple iterations or discussions will be needed to responding to feedback
-from reviewers. Try looking at [past pull requests](https://github.com/filipdutescu/modern-cpp-template/pulls?q=is%3Apr+is%3Aclosed)
+from reviewers. Try looking at [past pull requests](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/merge_requests?scope=all&state=closed)
 to see what the experience might be like.
 
 ## Contributor License Agreement
