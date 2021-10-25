@@ -85,7 +85,7 @@ void BranchNodeBase::branch(BTree* bt) {
     ranges::make_heap(candidates, std::greater<>{},
                       [](const auto& tmp) { return tmp.score; });
 
-    auto tmp_t = 0L;
+    auto tmp_t = 0;
     auto rng_zip = ranges::views::zip(x_job_time, instance.jobs);
     auto rng_sum_wt =
         rng_zip | ranges::views::filter([&tmp_t](const auto& tmp) {

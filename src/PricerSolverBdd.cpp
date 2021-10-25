@@ -1561,7 +1561,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
         std::vector<int> C(num_vertices, 0);
 
         auto& tmp_n = table.node(start_v);
-        visited[tmp_n.get_key()];
+        // visited[tmp_n.get_key()];
         auto stop = false;
 
         while (!queue.empty()) {

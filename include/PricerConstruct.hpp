@@ -40,7 +40,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
     int getRoot(int& state) {
         state = 0;
-        return nb_layers;
+        return static_cast<int>(nb_layers);
     };
 
     int getChild(int& state, int level, size_t value) const {
@@ -64,7 +64,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
             return 0;
         }
         assert(_j < nb_layers);
-        return nb_layers - _j;
+        return static_cast<int>(nb_layers - _j);
     }
 
     ~PricerConstruct() = default;
