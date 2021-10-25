@@ -36,7 +36,7 @@ Issue Number: N/A
 -
 -
 
-### Pull Request Readiness Checklist
+## Pull Request Readiness Checklist
 
 See details at [CONTRIBUTING.md](https://github.com/filipdutescu/modern-cpp-template/blob/master/CONTRIBUTING.md).
 

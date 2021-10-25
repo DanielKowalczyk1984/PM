@@ -6,20 +6,20 @@ ways you can get involved.
 
 If you are looking for a good way to contribute to the project, please:
 
-* have a look at the [available issue templates](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues).
+* have a look at the [available issue templates](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/tree/master/.gitlab/issue_templates) checkout the examples of [good first issues](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues?scope=all&state=opened&label_name[]=good%20first%20issue).
 
-* look through the [issues that need help](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues?scope=all&state=opened&label_name[]=help%20wanted).
+* look through the issues that [need help](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues?scope=all&state=opened&label_name[]=help%20wanted).
 
-* take a look at a [Merge Request template](.gitlab\merge_request_templates\default.md) to get yourself
+* take a look at a Merge Request [template](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/blob/master/.gitlab/merge_request_templates/default.md) to get yourself
 started.
 
 ## Reporting issues and suggesting new features
 
 If you find that the project is not working properly, please file a report using
-the [Bug Report template](.gitlab\issue_templates\Bug.md).
+the [Bug Report template](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/blob/master/.gitlab/issue_templates/Bug.md).
 Should the template provided not suit your needs, feel free to make a
 [custom Bug Report](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues/new),
-but please label it accordingly.
+but please label it accordingly. We refer to the following directory with different issue [templates](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/tree/master/.gitlab/issue_templates). When creating a issue, you can choose one of the different templates automatically.
 
 We are happy to hear your ideas for how to further improve Parallel-Machine-BDD,
 ensuring it suits your needs. Check the [Issues](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/issues)
@@ -50,7 +50,7 @@ guidelines:
 ### DOs
 
 * **DO** create one merge request per Issue, and ensure that the Issue is linked
-in the merge request. You can follow the [Merge Request Template](.gitlab\merge_request_templates\default.md)
+in the merge request. You can follow the [Merge Request Template](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/blob/master/.gitlab/merge_request_templates/default.md)
 for this.
 
 * **DO** follow our [Coding and Style](#style-guidelines) guidelines, and keep code
@@ -157,9 +157,9 @@ needs to be merged as separate commits.
 ### Continuous Integration
 
 For this project, CI is provided by [Gitlab CI/CD integration](https://about.gitlab.com/topics/ci-cd/),
-with workflows found in the [`.gitlab/.gitlab-ci.yml` file](.gitlab/.gitlab-ci.yml). Workflows
+with workflows found in the [`.gitlab/.gitlab-ci.yml`](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/blob/master/.gitlab/.gitlab-ci.yml) file. Workflows
 are run automatically on every commit made on the master branch, unless told to skip
-for that particular commit. To learn more about CI/CD, you can visit the [Gitlab learn environment](https://about.gitlab.com/learn/continuous-integration/)
+for that particular commit. To learn more about CI/CD, you can visit the [Gitlab learning environment](https://about.gitlab.com/learn/continuous-integration/)
 
 To skip CI runs on a particular commit, include either `[skip ci]` or `[ci skip]`
 in the commit message.
@@ -188,7 +188,7 @@ Before we can review and accept a merge request from you, you'll need to sign a
 Contributor License Agreement (CLA). The CLA ensures that the community is free
 to use your contributions. Signing the CLA is a manual process, and you need to
 do it for each merge request made. This is done by checking the boxes in the
-[Merge Request Readiness Checklist of a Merge Request](.gitlab\merge_request_templates\default.md#Pull-Request-Readiness-Checklist).
+[Merge Request Readiness Checklist of a Merge Request](https://gitlab.kuleuven.be/u0056096/parallel-machine-bdd/-/blob/master/.gitlab/merge_request_templates/default.md#Pull-Request-Readiness-Checklist).
 
 ### IMPORTANT
 
