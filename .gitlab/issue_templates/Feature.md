@@ -1,16 +1,30 @@
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated
-when [...]
+## Problem Statement
+<!-- What is the issue being faced and needs addressing? !-->
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+## Who will benefit?
+<!-- Will this fix a problem that only one user has, or will it benefit a lot of people !-->
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Benefits and risks
+<!-- 
+    What benefits does this bring?
+        - reduced support issues
+        - save error prone manual checks
+        - automate labour intensive tasks
+        
+    What risks might this introduce?
+        - May result in more data being shared with staff
+        - requires training materials to be updated
+        - Involves working with a specific vendor for a fixed period.
+!-->
 
-**Provide usage examples**
-A few examples of how the feature should be used. Please make sure they are clear
-and concise.
+## Proposed solution
+<!-- How would you like to see this issue resolved? !-->
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+## Examples
+<!-- Are there any examples of this which exist in other software? !-->
+
+## Priority/Severity
+<!-- Delete as appropriate. The priority and severity assigned may be different to this !-->
+- [ ] High (This will bring a huge increase in performance/productivity/usability/legislative cover)
+- [ ] Medium (This will bring a good increase in performance/productivity/usability)
+- [ ] Low (anything else e.g., trivial, minor improvements)
