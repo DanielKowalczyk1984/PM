@@ -1,24 +1,23 @@
-**Describe the bug**
-A clear and concise description of what the bug is.
+## Quick Information
+<!-- This is to help replicate the issue as closeley as possible !-->
+- **Operating System:** 
+- **Browser:** Chrome / Firefox / Edge / Safari <!-- Delete as appropriate !-->
+- **Device:** Computer / Tablet / Mobile <!-- Delete as appropriate !-->
 
-**To Reproduce**
-Steps to reproduce the behavior:
+## What Happened?
+<!-- A brief description of what happened when you tried to perform an action !-->
 
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+## Expected result
+<!-- What should have happened when you performed the actions !-->
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Steps to reproduce
+<!-- List the steps required to produce the error. These should be as few as possible !-->
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+## Screenshots
+<!-- Any relevant screenshots which show the issue !-->
 
-**Desktop (please complete the following information):**
-
-* OS: [e.g. Windows]
-* Version [e.g. 10]
-
-**Additional context**
-Add any other context about the problem here.
+## Priority/Severity
+<!-- Delete as appropriate. The priority and severity assigned may be different to this !-->
+- [ ] High (anything that impacts the normal user flow or blocks app usage)
+- [ ] Medium (anything that negatively affects the user experience)
+- [ ] Low (anything else e.g., typos, missing icons, layout issues, etc.)
