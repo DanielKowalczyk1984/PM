@@ -60,7 +60,7 @@ bool ZeroHalfCuts::add_cuts() {
 
 void ZeroHalfCuts::generate_model() {
     try {
-        for (auto i : ranges::views::ints(0UL, nb_jobs)) {
+        for (auto i : ranges::views::ints(size_t{}, nb_jobs)) {
             jobs_var[i] =
                 model->addVar(0.0, 1.0, 0.0, 'B', fmt::format("jobs_{}", i));
         }

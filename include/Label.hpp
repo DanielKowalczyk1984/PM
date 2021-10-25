@@ -40,7 +40,7 @@ class Label {
         high = false;
     }
 
-    double get_f() const { return f; }
+    [[nodiscard]] double get_f() const { return f; }
 
     double& get_f() { return f; }
 

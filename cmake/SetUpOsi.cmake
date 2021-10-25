@@ -12,8 +12,7 @@ endif()
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/dist")
   set(TMP_GRB_LIB "-L$ENV{GUROBI_HOME}/lib -lgurobi91 -lpthread -lm")
   execute_process(
-    COMMAND ./coinbrew fetch Cgl@master
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
+    COMMAND ./coinbrew fetch Cgl@master WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
   )
   execute_process(
     COMMAND ./coinbrew build Cgl --with-gurobi-lib=${TMP_GRB_LIB}
@@ -22,36 +21,55 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/dist")
   )
   message("Build Osi completed.")
 endif()
+set(coin_modules "Osi;CoinUtils;OsiGrb;Cgl")
+set(coin_libraries "")
 
-find_path(
-  OSI_INCLUDE_DIR
-  NAMES OsiGrbSolverInterface.hpp
-  PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/dist/include/coin"
-)
+if(${CMAKE_HOST_UNIX})
+  find_path(
+    OSI_INCLUDE_DIR
+    NAMES OsiGrbSolverInterface.hpp
+    PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/include/coin" REQUIRED
+  )
 
-find_library(
-  OSI_LIBRARY
-  NAMES Osi
-  PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/dist/lib"
-)
+  foreach(coin_lib ${coin_modules})
+    string(TOUPPER "${coin_lib}" coin_lib_toupper)
+    find_library(
+      ${coin_lib_toupper}_LIBRARY
+      NAMES ${coin_lib}
+      PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/lib"
+    )
 
-find_library(
-  COINUtils_LIBRARY
-  NAMES CoinUtils
-  PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/dist/lib"
-)
+    find_library(
+      ${coin_lib_toupper}_LIBRARY_DEBUG
+      NAMES ${coin_lib}
+      PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-debug/lib"
+    )
 
-find_library(
-  OSI_GRB_LIBRARY
-  NAMES OsiGrb
-  PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/dist/lib"
-)
+  endforeach()
+elseif(${CMAKE_HOST_WIN32})
+  find_path(
+    OSI_INCLUDE_DIR
+    NAMES OsiGrbSolverInterface.hpp
+    PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-MD/include/coin-or" REQUIRED
+  )
 
-find_library(
-  CGL_LIBRARY
-  NAMES Cgl
-  PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/dist/lib"
-)
+  foreach(coin_lib ${coin_modules})
+    string(TOUPPER "${coin_lib}" coin_lib_toupper)
+    find_library(
+      ${coin_lib_toupper}_LIBRARY
+      NAMES ${coin_lib}
+      PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-MD/lib"
+    )
+
+    find_library(
+      ${coin_lib_toupper}_LIBRARY_DEBUG
+      NAMES ${coin_lib}
+      PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-MDd/lib"
+    )
+
+  endforeach()
+
+endif()
 
 # Version detection
 file(READ "${OSI_INCLUDE_DIR}/OsiConfig.h" OSI_CONFIG_H_CONTENTS)
@@ -67,8 +85,8 @@ include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args(
   OSI
-  REQUIRED_VARS OSI_INCLUDE_DIR OSI_LIBRARY COINUtils_LIBRARY OSI_GRB_LIBRARY CGL_LIBRARY
+  REQUIRED_VARS OSIGRB_LIBRARY_DEBUG
   VERSION_VAR OSI_VERSION
 )
 
-mark_as_advanced(OSI_INCLUDE_DIR OSI_LIBRARY COINUtils_LIBRARY OSI_GRB_LIBRARY CGL_LIBRARY)
+mark_as_advanced(OSI_INCLUDE_DIR OSI_LIBRARY COINUtils_LIBRARY OSIGRB_LIBRARY CGL_LIBRARY)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 #
 # Project details
@@ -11,8 +11,8 @@ project(
   DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
 )
 
-# Define a local module path
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+# # Define a local module path
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
 #
 # Prevent building in the source directory
@@ -27,6 +27,21 @@ include(cmake/ConfigSafeGuards.cmake)
 include(cmake/StandardSettings.cmake)
 include(cmake/StaticAnalyzers.cmake)
 include(cmake/Utils.cmake)
+
+# For Windows, it is necessary to link with the MultiThreaded library. Depending on how the rest of
+# the project's dependencies are linked, it might be necessary to change the line to statically link
+# with the library.
+#
+# This is done as follows:
+#
+# set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+#
+# On Linux and Mac this variable is ignored. If any issues rise from it, try commenting it out and
+# letting CMake decide how to link with it.
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif(MSVC)
+
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...")
 
 if(UNIX)
@@ -52,19 +67,15 @@ endif()
 # Third Party packages
 #
 
-find_package(Gurobi)
 add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 add_subdirectory(decision-diagrams)
-include(cmake/SetUpOsi.cmake)
 
 #
 # Enable package managers
 #
 
 include(cmake/Conan.cmake)
-include(cmake/Vcpkg.cmake)
-include(cmake/CPM.cmake)
 
 #
 # Create library, setup header and source files
@@ -119,9 +130,9 @@ endif()
 
 set_target_properties(
   ${PROJECT_NAME}
-  PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
-             LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
-             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
+  PROPERTIES ARCHIVE_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/lib>
+             LIBRARY_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/lib>
+             RUNTIME_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/bin>
 )
 
 if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
@@ -133,16 +144,6 @@ if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
   )
 endif()
 
-# if (${PROJECT_NAME}_BUILD_EXECUTABLE) add_executable(${PROJECT_NAME} ${exe_sources})
-# add_library(${PROJECT_NAME}_LIB ${headers} ${sources}) elseif (${PROJECT_NAME}_BUILD_HEADERS_ONLY)
-# add_library(${PROJECT_NAME} INTERFACE) else () add_library(${PROJECT_NAME} ${headers} ${sources}
-# src/NodeBdd.cpp) endif ()
-
-# verbose_message("Found the following header files:") verbose_message(${headers})
-# verbose_message("Found the following source files:")
-
-# if (${PROJECT_NAME}_BUILD_EXECUTABLE) verbose_message(${exe_sources}) else ()
-# verbose_message(${sources}) endif ()
 message(STATUS "Added all header and implementation files.")
 
 #
@@ -166,57 +167,58 @@ verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.")
 
 # Identify and link with the specific "packages" the project uses find_package(package_name
 # package_version REQUIRED package_type [other_options])
+find_package(fmt CONFIG REQUIRED)
+find_package(
+  Boost REQUIRED
+  COMPONENTS atomic
+             chrono
+             timer
+             json
+             random
+             regex
+             serialization
+)
+find_package(docopt CONFIG REQUIRED)
+find_package(range-v3 CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
+include(cmake/FindGurobi.cmake)
+include(cmake/SetUpOsi.cmake)
+
 target_link_libraries(
   ${PROJECT_NAME}
-  PRIVATE
-  ${GUROBI_LIBRARY}
-  ${GUROBI_CXX_LIBRARY}
-  CONAN_PKG::fmt
-  CONAN_PKG::boost
-  CONAN_PKG::docopt.cpp
-  CONAN_PKG::range-v3
-  ORUtils::ORUtils
-  branch-and-bound::branch-and-bound
-  ModernDD::ModernDD
-  ${OSI_LIBRARY}
-  ${OSI_GRB_LIBRARY}
-  ${COINUtils_LIBRARY}
-  ${CGL_LIBRARY}
-  -lm
-  -lpthread
+  PRIVATE $<IF:$<CONFIG:Debug>,${GUROBI_CXX_DEBUG_LIBRARY},${GUROBI_CXX_LIBRARY}>
+          $<IF:$<CONFIG:Debug>,${OSI_LIBRARY_DEBUG},${OSI_LIBRARY}>
+          $<IF:$<CONFIG:Debug>,${OSIGRB_LIBRARY_DEBUG},${OSIGRB_LIBRARY}>
+          $<IF:$<CONFIG:Debug>,${COINUTILS_LIBRARY_DEBUG},${COINUTILS_LIBRARY}>
+          $<IF:$<CONFIG:Debug>,${CGL_LIBRARY_DEBUG},${CGL_LIBRARY}>
+          $<$<LINK_LANG_AND_ID:CXX,GNU>:docopt_s>
+          $<$<LINK_LANG_AND_ID:CXX,MSVC>:docopt>
+          fmt::fmt
+          Boost::atomic
+          Boost::chrono
+          Boost::timer
+          Boost::random
+          range-v3::range-v3
+          nlohmann_json::nlohmann_json
+          ORUtils::ORUtils
+          branch-and-bound::branch-and-bound
+          ModernDD::ModernDD
 )
-
-# For Windows, it is necessary to link with the MultiThreaded library. Depending on how the rest of
-# the project's dependencies are linked, it might be necessary to change the line to statically link
-# with the library.
-#
-# This is done as follows:
-#
-# set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-#
-# On Linux and Mac this variable is ignored. If any issues rise from it, try commenting it out and
-# letting CMake decide how to link with it.
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 verbose_message("Successfully added all dependencies and linked against them.")
 
-# RelWIthDebInfo Flags
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -mtune=native -fPIC")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO
-    "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99 -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
-)
+# # RelWIthDebInfo Flags set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
+# -mtune=native -fPIC") set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99
+# -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes" )
 
-# Release Flags
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native  -fPIC")
-set(CMAKE_C_FLAGS_RELEASE
-    "${CMAKE_C_FLAGS_RELEASE} -std=c99 -D_XOPEN_SOURCE=500 -mtune=native -Wnested-externs -Wstrict-prototypes"
-)
+# # Release Flags set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native  -fPIC")
+# set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -std=c99 -D_XOPEN_SOURCE=500 -mtune=native
+# -Wnested-externs -Wstrict-prototypes" )
 
-# Debug Flags
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -mtune=native -O0 -fPIC")
-set(CMAKE_C_FLAGS_DEBUG
-    "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes"
-)
+# # Debug Flags set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -mtune=native -O0 -fPIC")
+# set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -mtune=native -D_XOPEN_SOURCE=500
+# -Wnested-externs -Wstrict-prototypes" )
 
 #
 # Set the build/user include directories
@@ -225,66 +227,58 @@ set(CMAKE_C_FLAGS_DEBUG
 # Allow usage of header files in the `src` directory, but only for utilities
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
   target_include_directories(
-    ${PROJECT_NAME} 
-    INTERFACE 
-    $<INSTALL_INTERFACE:include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    ${PROJECT_NAME} INTERFACE $<INSTALL_INTERFACE:include>
+                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   )
 else()
   target_include_directories(
     ${PROJECT_NAME}
-    PRIVATE
-    $<INSTALL_INTERFACE:include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    PRIVATE
-    ${GUROBI_INCLUDE_DIR}
-    ${CONAN_INCLUDE_DIRS_BOOST}
-    ${CONAN_INCLUDE_DIRS_FMT}
-    ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
-    ${CONAN_INCLUDE_DIRS_RANGE-V3}
-    ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
-    ${OSI_INCLUDE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ModernDD::ModernDD
+    PUBLIC $<INSTALL_INTERFACE:include> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE ModernDD::ModernDD
+            ${GUROBI_INCLUDE_DIR}
+            ${OSI_INCLUDE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${Boost_INCLUDES}
+            ${fmt_INCLUDES}
+            ${docopt_INCLUDES}
+            ${range-v3_INCLUDES}
+            ${nlohmann_json_INCLUDES}
   )
 
   if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
     target_include_directories(
-        ${PROJECT_NAME}_LIB
-        PUBLIC $<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        PRIVATE
-        ModernDD::ModernDD
-        ${GUROBI_INCLUDE_DIR}
-        ${OSI_INCLUDE_DIR}
-        ${CONAN_INCLUDE_DIRS_FMT}
-        ${CONAN_INCLUDE_DIRS_BOOST}
-        ${CONAN_INCLUDE_DIRS_DOCOPT.CPP}
-        ${CONAN_INCLUDE_DIRS_RANGE-V3}
-        ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
-      PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+      ${PROJECT_NAME}_LIB
+      PUBLIC $<INSTALL_INTERFACE:include> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      PRIVATE ModernDD::ModernDD
+              ${GUROBI_INCLUDE_DIR}
+              ${OSI_INCLUDE_DIR}
+              ${Boost_INCLUDES}
+              ${fmt_INCLUDES}
+              ${docopt_INCLUDES}
+              ${range-v3_INCLUDES}
+              ${nlohmann_json_INCLUDES}
+              ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
     target_link_libraries(
       ${PROJECT_NAME}_LIB
-      PRIVATE
-      ${GUROBI_LIBRARY}
-      ${GUROBI_CXX_LIBRARY}
-      CONAN_PKG::fmt
-      CONAN_PKG::boost
-      CONAN_PKG::docopt.cpp
-      CONAN_PKG::range-v3
-      ORUtils::ORUtils
-      branch-and-bound::branch-and-bound
-      ModernDD::ModernDD
-      ${OSI_LIBRARY}
-      ${OSI_GRB_LIBRARY}
-      ${COINUtils_LIBRARY}
-      ${CGL_LIBRARY}
-      -lm
-      -lpthread
+      PRIVATE ${GUROBI_LIBRARY}
+              ${GUROBI_CXX_LIBRARY}
+              ${Boost_INCLUDES}
+              ${fmt_INCLUDES}
+              ${docopt_INCLUDES}
+              ${range-v3_INCLUDES}
+              ${nlohmann_json_INCLUDES}
+              ORUtils::ORUtils
+              branch-and-bound::branch-and-bound
+              ModernDD::ModernDD
+              ${OSI_LIBRARY}
+              ${OSI_GRB_LIBRARY}
+              ${COINUtils_LIBRARY}
+              ${CGL_LIBRARY}
+              -lm
+              -lpthread
     )
-
   endif()
 endif()
 
@@ -309,40 +303,28 @@ verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 
 add_clang_format_target()
 
-
 #
 # Install library for easy downstream inclusion
 #
 
 include(GNUInstallDirs)
 install(
-  TARGETS
-  ${PROJECT_NAME}
-  EXPORT
-  ${PROJECT_NAME}Targets
-  LIBRARY DESTINATION
-  ${CMAKE_INSTALL_LIBDIR}
-  RUNTIME DESTINATION
-  ${CMAKE_INSTALL_BINDIR}
-  ARCHIVE DESTINATION
-  ${CMAKE_INSTALL_LIBDIR}
-  INCLUDES DESTINATION
-  include
-  PUBLIC_HEADER DESTINATION
-  include
+  TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}Targets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  INCLUDES
+  DESTINATION include
+  PUBLIC_HEADER DESTINATION include
 )
 
 install(
-  EXPORT
-  ${PROJECT_NAME}Targets
-  FILE
-  ${PROJECT_NAME}Targets.cmake
-  NAMESPACE
-  ${PROJECT_NAME}::
-  DESTINATION
-  ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}Targets
+  FILE ${PROJECT_NAME}Targets.cmake
+  NAMESPACE ${PROJECT_NAME}::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
-
 
 #
 # Quick `ConfigVersion.cmake` creation
@@ -351,18 +333,18 @@ install(
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
   ${PROJECT_NAME}ConfigVersion.cmake
-  VERSION 
-  ${PROJECT_VERSION}
-  COMPATIBILITY
-  SameMajorVersion
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMajorVersion
 )
 
 configure_package_config_file(
   ${CMAKE_CURRENT_LIST_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-  INSTALL_DESTINATION
-  ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
 
 # include Doxygen
-include(Doxygen)
+include(cmake/Doxygen.cmake)
+
+# Add Gurobi env to Binary directory
+file(COPY ${CMAKE_SOURCE_DIR}/gurobi.env DESTINATION ${CMAKE_BINARY_DIR}/bin)
