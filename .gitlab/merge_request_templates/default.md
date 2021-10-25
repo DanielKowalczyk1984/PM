@@ -12,7 +12,7 @@ Please provide enough information so that others can review your pull request:
 
 <!-- Please try to limit your pull request to one type, submit multiple pull requests if needed. -->
 
-Please check the type of change your PR introduces:
+Please check the type of change your MR introduces:
 
 - [ ] Bugfix
 - [ ] Feature
@@ -36,6 +36,27 @@ Issue Number: N/A
 -
 -
 
+### Pull Request Readiness Checklist
+
+See details at [CONTRIBUTING.md](https://github.com/filipdutescu/modern-cpp-template/blob/master/CONTRIBUTING.md).
+
+* [ ] I agree to contribute to the project under Parallel-Machine-BDD (Unlicense)
+[License](LICENSE).
+
+* [ ] To the best of my knowledge, the proposed patch is not based on a code under
+GPL or other license that is incompatible with Parallel-Machine-BDD
+
+* [ ] The PR is proposed to proper branch
+
+* [ ] There is reference to original bug report and related work
+
+* [ ] There is accuracy test, performance test and test data in the repository,
+if applicable
+
+* [ ] The feature is well documented and sample code can be built with the project
+CMake
+
 ## Other information
 
 <!-- Any other information that is important to this PR such as screenshots of how the component looks before and after the change. -->
+
