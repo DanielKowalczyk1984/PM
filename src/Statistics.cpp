@@ -9,7 +9,7 @@ Statistics::Statistics(const Parms& _parms)
       global_lower_bound(0),
       rel_error(std::numeric_limits<double>::max()),
       root_upper_bound(std::numeric_limits<int>::max()),
-      root_lower_bound(0.0),
+      root_lower_bound(0),
       root_rel_error(std::numeric_limits<double>::max()),
       nb_generated_col(0),
       nb_generated_col_root(0),
