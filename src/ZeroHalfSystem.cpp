@@ -260,5 +260,5 @@ void ZeroHalfSystem::add_to_row(size_t i, size_t j) {
     slack[j] = slack[i] + slack[j];
 }
 ZeroHalfSystem::ZeroHalfSystem(const DdStructure<NodeBdd>& bdd) {
-    auto& table = bdd.getDiagram();
+    // auto& table = bdd.getDiagram();
 }

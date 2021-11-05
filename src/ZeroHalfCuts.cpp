@@ -133,13 +133,13 @@ void ZeroHalfCuts::init_coeff_cut() {
 void ZeroHalfCuts::init_coeff_node(NodeBdd* node) {
     for (auto k : {false, true}) {
         node->reset_coeff_cut(k);
-        for (auto& it : node->get_in_edges(k)) {
+        // for (auto& it : node->get_in_edges(k)) {
             // auto aux = it.lock();
             // if (aux) {
             //     auto& aux_node = table->node(*aux);
             //     aux_node.reset_coeff_cut(k);
             // }
-        }
+        // }
     }
 }
 
