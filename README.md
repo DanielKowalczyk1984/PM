@@ -1,132 +1,59 @@
-[![Actions Status](https://github.com/filipdutescu/modern-cpp-template/workflows/MacOS/badge.svg)](https://github.com/filipdutescu/modern-cpp-template/actions)
-[![Actions Status](https://github.com/filipdutescu/modern-cpp-template/workflows/Windows/badge.svg)](https://github.com/filipdutescu/modern-cpp-template/actions)
-[![Actions Status](https://github.com/filipdutescu/modern-cpp-template/workflows/Ubuntu/badge.svg)](https://github.com/filipdutescu/modern-cpp-template/actions)
-[![codecov](https://codecov.io/gh/filipdutescu/modern-cpp-template/branch/master/graph/badge.svg)](https://codecov.io/gh/filipdutescu/modern-cpp-template)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/filipdutescu/modern-cpp-template)](https://github.com/filipdutescu/modern-cpp-template/releases)
+# Parallel machine scheduling with decision diagrams
 
-# Modern C++ Template
+In this repository, you will find the implementation used to produce the results
+in the following paper:
 
-A quick C++ template for modern CMake projects, aimed to be an easy to use
-starting point.
+We present a new flow-based formulation for identical parallel machine
+scheduling with a regular objective function and no idle time. We use a decision
+diagram containing all the possible sequences of jobs that follow some ordering
+rules to construct the new formulation. These rules do not exclude the optimal
+solution of a given instance but constrain the optimal solution to some
+canonical form. To define these rules, we need to partition the planning horizon
+into non-uniform periods. The novel formulation will have numerous variables and
+constraints. Hence, we apply a Dantzig-Wolfe decomposition to compute the linear
+programming relaxation of the new flow-based formulation in a reasonable amount
+of time.
 
-This is my personal take on such a type of template, thus I might not use the
-best practices or you might disagree with how I do things. Any and all feedback
-is greatly appreciated!
+Moreover, we will see that the resulting lower bound will be stronger than the
+lower bound provided by the linear relaxation of the classical time-indexed
+formulation. We use a Branch-and-Price framework to solve the new formulation.
+Several instances from the literature will be solved for the first time.​
 
-## Features
+## Instructions
 
-* Modern **CMake** configuration and project, which, to the best of my
-knowledge, uses the best practices,
-
-* An example of a **Clang-Format** config, inspired from the base *Google* model,
-with minor tweaks. This is aimed only as a starting point, as coding style
-is a subjective matter, everyone is free to either delete it (for the *LLVM*
-default) or supply their own alternative,
-
-* **Static analyzers** integration, with *Clang-Tidy* and *Cppcheck*, the former
-being the default option,
-
-* **Doxygen** support, through the `ENABLE_DOXYGEN` option, which you can enable
-if you wish to use it,
-
-* **Unit testing** support, through *GoogleTest* (with an option to enable
-*GoogleMock*) or *Catch2*,
-
-* **Code coverage**, enabled by using the `ENABLE_CODE_COVERAGE` option, through
-*Codecov* CI integration,
-
-* **Package manager support**, with *Conan* and *Vcpkg*, through their respective
-options
-
-* **CI workflows for Windows, Linux and MacOS** using *GitHub Actions*, making
-use of the caching features, to ensure minimum run time,
-
-* **.md templates** for: *README*, *Contributing Guideliness*,
-*Issues* and *Pull Requests*,
-
-* **Permissive license** to allow you to integrate it as easily as possible. The
-template is licensed under the [Unlicense](https://unlicense.org/),
-
-* Options to build as a header-only library or executable, not just a static or
-shared library.
-
-* **Ccache** integration, for speeding up rebuild times
-
-## Getting Started
-
-These instructions will get you a copy of the project up and running on your local
-machine for development and testing purposes.
+In order to reproduce the results, you need to perform the following steps after
+downloading the package.  These instructions will get you a copy of the project
+up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
-
-This project is meant to be only a template, thus versions of the software used
-can be change to better suit the needs of the developer(s). If you wish to use the
-template *as-is*, meaning using the versions recommended here, then you will need:
-
 * **CMake v3.15+** - found at [https://cmake.org/](https://cmake.org/)
 
-* **C++ Compiler** - needs to support at least the **C++17** standard, i.e. *MSVC*,
-*GCC*, *Clang*
+* **C++ Compiler** - needs to support at least the **C++20** standard, i.e.
+  *MSVC*, *GCC* at least version 10 for linux based systems, *Clang* at least
+  version 12 for linux based systems.
 
-> ***Note:*** *You also need to be able to provide ***CMake*** a supported
-[generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html).*
+* **Vcpkg** - C/C++ dependency manager from Microsoft. For more information on
+  how to install and to use vcpkg, we refer to [https://vcpkg.io](https://vcpkg.io).
+
+* **Gurobi** - We use the Gurobi optimizer to compute the linear programming
+  (LP) relaxations. You can download Gurobi from the company's
+  [https://www.gurobi.com/](website). Follow the installation instructions that
+  are provide by gurobi. Per Operating system you will need to adjust
+  environment variables such that cmake can find gurobi on your computer. On
+  windows for example the environment variables are automatically set.
+
+* **Osi** - Also [https://github.com/coin-or/Osi](Osi) is used. Osi (Open
+  Solver Interface) provides an abstract class to generic linear LP, together
+  with derived classes for specific solvers. In theory, we can use an arbitrary
+  LP solver (Gurobi, CPLEX, XPress, Soplex, ...) to solve the LP relaxation, but
+  this is not implemented yet. For now, we can only use gurobi. To install Osi,
+  we use coinbrew which can be found
+  [https://coin-or.github.io/coinbrew/](here).
 
 ### Installing
 
-It is fairly easy to install the project, all you need to do is clone if from
-[GitHub](https://github.com/filipdutescu/modern-cpp-template) or
-[generate a new repository from it](https://github.com/filipdutescu/modern-cpp-template/generate)
-(also on **GitHub**).
 
-If you wish to clone the repository, rather than generate from it, you simply need
-to run:
-
-```bash
-git clone https://github.com/filipdutescu/modern-cpp-template/
-```
-
-After finishing getting a copy of the project, with any of the methods above, create
-a new folder in the `include/` folder, with the name of your project.  Edit
-`cmake/SourcesAndHeaders.cmake` to add your files.
-
-You will also need to rename the `cmake/ProjectConfig.cmake.in` file to start with
-the ***exact name of your project***. Such as `cmake/MyNewProjectConfig.cmake.in`.
-You should also make the same changes in the GitHub workflows provided, notably
-[`.github/workflows/ubuntu.yml`](.github/workflows/ubuntu.yml), in which you should
-replace the CMake option `-DProject_ENABLE_CODE_COVERAGE=1` to
-`-DMyNewProject_ENABLE_CODE_COVERAGE=1`.
-
-Finally, change `"Project"` from `CMakeLists.txt`, from
-
-```cmake
-project(
-  "Project"
-  VERSION 0.1.0
-  LANGUAGES CXX
-)
-```
-
-to the ***exact name of your project***, i.e. using the previous name it will become:
-
-```cmake
-project(
-  MyNewProject
-  VERSION 0.1.0
-  LANGUAGES CXX
-)
-```
-
-To install an already built project, you need to run the `install` target with CMake.
-For example:
-
-```bash
-cmake --build build --target install --config Release
-
-# a more general syntax for that command is:
-cmake --build <build_directory> --target install --config <desired_config>
-```
-
-## Building the project
+### Building the project
 
 To build the project, all you need to do, ***after correctly
 [installing the project](README.md#Installing)***, is run a similar **CMake** routine
