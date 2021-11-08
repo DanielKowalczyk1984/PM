@@ -4,9 +4,10 @@ stages:
 
 .build:linux:base:
   stage: 🔨 build
-  image: ubuntu:latest
+  image: ubuntu:21.10
   variables:
     BUILDDIR: "build"
+    GIT_SUBMODULE_STRATEGY: recursive
     GRB_VERSION: "9.1.2"
     GRB_SHORT_VERSION: "9.1"
   before_script:
@@ -15,15 +16,24 @@ stages:
     - export DEBIAN_FRONTEND=noninteractive
     - apt-get --no-install-recommends -y install ${BB_CI_CC_COMPILER} ${BB_CI_CXX_COMPILER} clang-format gcc g++ git cmake wget curl make ninja-build pkg-config python3 python3-pip tar unzip zip
     - pip install -U cmake-format
-    - git clone https://github.com/Microsoft/vcpkg.git
-    - ./vcpkg/bootstrap-vcpkg.sh --useSystemBinaries
-    - ./vcpkg/vcpkg install range-v3 fmt boost-chrono boost-timer
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
     - wget -v https://packages.gurobi.com/${GRB_SHORT_VERSION}/gurobi${GRB_VERSION}_linux64.tar.gz
     - tar -xvf gurobi${GRB_VERSION}_linux64.tar.gz
     - rm gurobi${GRB_VERSION}_linux64.tar.gz
     - mv gurobi* gurobi
     - mv gurobi /opt
     - export GUROBI_HOME=/opt/gurobi/linux64
+    - mkdir ThirdParty
+    - wget -O ThirdParty/coinbrew https://raw.githubusercontent.com/coin-or/coinbrew/master/coinbrew
+    - chmod u+x ThirdParty/coinbrew
+    - cd ThirdParty
+    - ./coinbrew fetch Cgl@master
+    - ./coinbrew build Cgl --no-prompt --prefix="./coin-or-x64-linux-release" --verbosity 4 --with-gurobi-lflags="-L$GUROBI_HOME/lib -lgurobi91 -lpthread -lm" --with-gurobi-cflags="-I$GUROBI_HOME/include" --tests none
+    - cd ..
+    - git clone https://github.com/Microsoft/vcpkg.git
+    - ./vcpkg/bootstrap-vcpkg.sh --useSystemBinaries
+    - ./vcpkg/vcpkg install range-v3 fmt boost-chrono boost-timer boost-atomic boost-json boost-random boost-regex boost-serialization docopt nlohmann-json
   script:
     - mkdir -p ${BUILDDIR}
     - CC=${BB_CI_CC_COMPILER} CXX=${BB_CI_CXX_COMPILER} cmake -B ${BUILDDIR} -S . -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake 
