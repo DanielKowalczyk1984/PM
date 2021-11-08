@@ -1,18 +1,38 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "PricerSolverSimpleDP.hpp"
 #include <fmt/core.h>
-#include <gurobi_c++.h>                           // for GRBLinExpr, GRBModel
-#include <algorithm>                              // for fill, find, max
-#include <boost/graph/adjacency_list.hpp>         // for adjacency_list
-#include <boost/graph/detail/adjacency_list.hpp>  // for edges, get, num_edges
-#include <boost/graph/detail/edge.hpp>            // for operator!=, operat...
-#include <boost/graph/graph_selectors.hpp>        // for bidirectionalS
-#include <boost/graph/graphviz.hpp>               // for write_graphviz
-#include <boost/iterator/iterator_facade.hpp>     // for operator!=, operat...
-#include <boost/multiprecision/cpp_int.hpp>       // for cpp_int
-#include <boost/pending/property.hpp>             // for no_property
-#include <cstddef>                                // for size_t
-// #include <ext/alloc_traits.h>                      // for
-// __alloc_traits<>::...
+#include <gurobi_c++.h>                            // for GRBLinExpr, GRBModel
+#include <algorithm>                               // for fill, find, max
+#include <boost/graph/adjacency_list.hpp>          // for adjacency_list
+#include <boost/graph/detail/adjacency_list.hpp>   // for edges, get, num_edges
+#include <boost/graph/detail/edge.hpp>             // for operator!=, operat...
+#include <boost/graph/graph_selectors.hpp>         // for bidirectionalS
+#include <boost/graph/graphviz.hpp>                // for write_graphviz
+#include <boost/iterator/iterator_facade.hpp>      // for operator!=, operat...
+#include <boost/multiprecision/cpp_int.hpp>        // for cpp_int
+#include <boost/pending/property.hpp>              // for no_property
+#include <cstddef>                                 // for size_t
 #include <fstream>                                 // for operator<<, basic_...
 #include <iostream>                                // for cerr
 #include <limits>                                  // for numeric_limits

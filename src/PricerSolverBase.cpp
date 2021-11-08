@@ -1,22 +1,44 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "PricerSolverBase.hpp"
-#include <fmt/core.h>  // for print
-#include <algorithm>   // for min, __fill_fn
-#include <boost/multiprecision/cpp_int.hpp>
-#include <cmath>                          // for fabs
-#include <cstddef>                        // for size_t
-#include <limits>                         // for numeric_limits
-#include <memory>                         // for __shared_ptr_a...
-#include <range/v3/range/conversion.hpp>  // for to_container::fn
-#include <range/v3/view/enumerate.hpp>    // for enumerate_fn
-#include <range/v3/view/transform.hpp>    // for transform_view
-#include <range/v3/view/view.hpp>         // for operator|
-#include <range/v3/view/zip.hpp>          // for zip_view
-#include <span>                           // for span
-#include <vector>                         // for vector
-#include "Column.h"                       // for Column
-#include "Instance.h"                     // for Instance
-#include "gurobi_c++.h"                   // for GRBModel, GRBEnv
-#include "gurobi_c.h"                     // for GRB_INFEASIBLE
+#include <fmt/core.h>                        // for print
+#include <algorithm>                         // for min, __fill_fn
+#include <boost/multiprecision/cpp_int.hpp>  // ffor cpp_int
+#include <cmath>                             // for fabs
+#include <cstddef>                           // for size_t
+#include <limits>                            // for numeric_limits
+#include <memory>                            // for __shared_ptr_a...
+#include <range/v3/range/conversion.hpp>     // for to_container::fn
+#include <range/v3/view/enumerate.hpp>       // for enumerate_fn
+#include <range/v3/view/transform.hpp>       // for transform_view
+#include <range/v3/view/view.hpp>            // for operator|
+#include <range/v3/view/zip.hpp>             // for zip_view
+#include <span>                              // for span
+#include <vector>                            // for vector
+#include "Column.h"                          // for Column
+#include "Instance.h"                        // for Instance
+#include "gurobi_c++.h"                      // for GRBModel, GRBEnv
+#include "gurobi_c.h"                        // for GRB_INFEASIBLE
 
 PricerSolverBase::PricerSolverBase(const Instance& instance)
     : jobs(instance.jobs),
