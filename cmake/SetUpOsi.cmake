@@ -9,7 +9,7 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/coinbrew")
   message(STATUS "Coinbrew downloaded successfully.")
 endif()
 
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/dist")
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release")
   set(TMP_GRB_LIB "-L$ENV{GUROBI_HOME}/lib -lgurobi91 -lpthread -lm")
   execute_process(
     COMMAND ./coinbrew fetch Cgl@master WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
