@@ -5,11 +5,20 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "PowerShell Launch Script",
+			"type": "PowerShell",
+			"request": "launch",
+			"script": "${workspaceFolder}/scripts/run_experiments.ps1",
+			"cwd": "${workspaceFolder}"
+		},
+		{
 			"name": "(Windows) Launch",
 			"type": "cppvsdbg",
 			"request": "launch",
 			"program": "${workspaceFolder}/build/Release/PM.exe",
-			"args": ["--version"],
+			"args": [
+				"--version"
+			],
 			"stopAtEntry": false,
 			"cwd": "${fileDirname}",
 			"environment": [],
