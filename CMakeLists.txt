@@ -67,6 +67,7 @@ endif()
 # Third Party packages
 #
 
+set(Boost_NO_WARN_NEW_VERSIONS ON)
 add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 add_subdirectory(decision-diagrams)
@@ -168,7 +169,6 @@ verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.")
 # Identify and link with the specific "packages" the project uses find_package(package_name
 # package_version REQUIRED package_type [other_options])
 find_package(fmt CONFIG REQUIRED)
-set(Boost_NO_WARN_NEW_VERSIONS ON)
 find_package(
   Boost REQUIRED
   COMPONENTS atomic
