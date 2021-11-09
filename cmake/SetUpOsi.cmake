@@ -39,11 +39,11 @@ if(${CMAKE_HOST_UNIX})
       PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/lib"
     )
 
-    find_library(
-      ${coin_lib_toupper}_LIBRARY_DEBUG
-      NAMES ${coin_lib}
-      PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-debug/lib"
-    )
+    # find_library(
+    #   ${coin_lib_toupper}_LIBRARY_DEBUG
+    #   NAMES ${coin_lib}
+    #   PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-debug/lib"
+    # )
 
   endforeach()
 elseif(${CMAKE_HOST_WIN32})
