@@ -28,7 +28,7 @@ if(${CMAKE_HOST_UNIX})
   find_path(
     OSI_INCLUDE_DIR
     NAMES OsiGrbSolverInterface.hpp
-    PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/include/coin" REQUIRED
+    PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/include/coin-or" REQUIRED
   )
 
   foreach(coin_lib ${coin_modules})
