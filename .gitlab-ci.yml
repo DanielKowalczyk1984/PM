@@ -40,7 +40,7 @@ cache:
     - cd ..
     - git clone https://github.com/Microsoft/vcpkg.git
     - ./vcpkg/bootstrap-vcpkg.sh --useSystemBinaries
-    - ./vcpkg/vcpkg install range-v3 fmt boost-chrono boost-timer boost-atomic boost-json boost-random boost-regex boost-serialization docopt nlohmann-json
+    - ./vcpkg/vcpkg install range-v3 fmt boost-chrono boost-timer boost-atomic boost-json boost-random boost-regex boost-serialization boost-multiprecision boost-graph docopt nlohmann-json
   script:
     - mkdir -p ${BUILDDIR}
     - CC=${BB_CI_CC_COMPILER} CXX=${BB_CI_CXX_COMPILER} cmake -B ${BUILDDIR} -S . -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -CMAKE_BUILD_TYPE=Release
