@@ -22,7 +22,7 @@ cache:
     - export DEBIAN_FRONTEND=noninteractive
     - apt-get --no-install-recommends -y install gpg-agent software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
     - add-apt-repository -y ppa:ubuntu-toolchain-r/test
-    - apt-get --no-install-recommends -y install ${BB_CI_CC_COMPILER} ${BB_CI_CXX_COMPILER} clang-format git cmake wget curl make ninja-build pkg-config python3 python3-pip tar unzip zip
+    - apt-get --no-install-recommends -y install ${BB_CI_CC_COMPILER} ${BB_CI_CXX_COMPILER} clang-format git gcc g++ cmake wget curl make ninja-build pkg-config python3 python3-pip tar unzip zip
     # - pip install -U cmake-format
     # - git submodule sync --recursive
     # - git submodule update --init --recursive
