@@ -3,7 +3,7 @@ stages:
   - 🔨 build
 
 cache:
-  key: $CI_COMMIT_REF_SLUG
+  key: one-key-to-rule-them-all
   paths:
     - vcpkg/
     - ThirdParty/
@@ -43,8 +43,6 @@ cache:
     when: "on_failure"
     paths:
       - ${BUILDDIR}/
-      - vcpkg
-      - ThirdParty
     expire_in: 5 days
 
 
