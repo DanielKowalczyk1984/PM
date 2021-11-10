@@ -15,6 +15,7 @@ if [ ! -d "./ThirdParty" ]; then
 	if [ ! -d "./coin-or-x64-linux-debug" ]; then 
 		./coinbrew build Cgl --no-prompt --prefix="coin-or-x64-linux-debug" --reconfigure --enable-debug --with-gurobi-lflags="-L$GUROBI_HOME/lib -lgurobi91 -lpthread -lm" --with-gurobi-cflags="-I$GUROBI_HOME/include" --tests none
 	fi
+	cd ..
 
 fi
 
