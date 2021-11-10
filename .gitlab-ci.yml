@@ -24,7 +24,7 @@ cache:
     - export DEBIAN_FRONTEND=noninteractive
     - apt-get --no-install-recommends -y install gpg-agent software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
     - add-apt-repository -y ppa:ubuntu-toolchain-r/test
-    - apt-get --no-install-recommends -y install ${BB_CI_CC_COMPILER} ${BB_CI_CXX_COMPILER} clang-format git gcc g++ wget curl make ninja-build pkg-config python3 python3-pip tar unzip zip
+    - apt-get --no-install-recommends -y install ${BB_CI_CC_COMPILER} ${BB_CI_CXX_COMPILER} clang-format libssl-dev git gcc g++ wget curl make ninja-build pkg-config python3 python3-pip tar unzip zip
     - pip install -U cmake-format
     - wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz
     - tar -zxf cmake-${CMAKE_VERSION}.tar.gz
