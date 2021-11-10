@@ -7,6 +7,7 @@ cache:
   paths:
     - vcpkg/
     - ThirdParty/
+  when: 'always'
 
 .build:linux:base:
   stage: 🔨 build
@@ -36,7 +37,7 @@ cache:
     - ./before_script.sh
   script:
     - mkdir -p ${BUILDDIR}
-    - CC=${BB_CI_CC_COMPILER} CXX=${BB_CI_CXX_COMPILER} cmake -DCMAKE_BUILD_TYPE=Release -B ${BUILDDIR} -S . -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
+    - cmake -DCMAKE_C_COMPILER=${BB_CI_C_COMPILER} -DCMAKE_CXX_COMPILER=${BB_CI_CXX_COMPILER} -DCMAKE_BUILD_TYPE=Release -B ${BUILDDIR} -S . -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
     - cmake --build ${BUILDDIR}
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
