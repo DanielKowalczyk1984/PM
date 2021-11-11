@@ -19,8 +19,8 @@ if [ ! -d "./ThirdParty/Cgl" ]; then
 
 fi
 
-if [ ! -d "./ThirdParty/vcpkg" ]; then
-	git clone https://github.com/Microsoft/vcpkg.git ThirdParty/vcpkg
-	./ThirdParty/vcpkg/bootstrap-vcpkg.sh --useSystemBinaries
-	./ThirdParty/vcpkg/vcpkg install range-v3 fmt boost-chrono boost-timer boost-atomic boost-json boost-random boost-regex boost-serialization boost-multiprecision boost-graph docopt nlohmann-json
+if [ ! -d "../vcpkg" ]; then
+	git clone https://github.com/Microsoft/vcpkg.git ../vcpkg
+	../vcpkg/bootstrap-vcpkg.sh --useSystemBinaries
+	../vcpkg/vcpkg install range-v3 fmt boost-chrono boost-timer boost-atomic boost-json boost-random boost-regex boost-serialization boost-multiprecision boost-graph docopt nlohmann-json
 fi

@@ -6,6 +6,7 @@ cache:
   key: one-key-to-rule-them-all
   paths:
     - ThirdParty/
+    - ../vcpkg
   when: 'always'
 
 .build:linux:base:
