@@ -6,7 +6,6 @@ cache:
   key: one-key-to-rule-them-all
   paths:
     - ThirdParty/
-    - ../vcpkg
   when: 'always'
 
 .build:linux:base:
@@ -17,7 +16,6 @@ cache:
     GIT_SUBMODULE_STRATEGY: recursive
     GRB_VERSION: "9.1.2"
     GRB_SHORT_VERSION: "9.1"
-    CMAKE_VERSION: "3.21.4"
   before_script:
     - apt-get update && apt-get install -y locales && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
     - export LANG=en_US.utf8
