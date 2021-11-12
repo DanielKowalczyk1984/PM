@@ -22,7 +22,6 @@
 
 #include "BranchNode.hpp"
 #include <fmt/core.h>
-#include <fmt/format.h>
 #include <algorithm>
 #include <array>
 #include <boost/multiprecision/cpp_int.hpp>
