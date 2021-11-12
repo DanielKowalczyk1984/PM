@@ -1,6 +1,10 @@
 
 stages:
   - 🔨 build
+  
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ (master|develop)'
 
 cache:
   key: $CI_COMMIT_REF_SLUG

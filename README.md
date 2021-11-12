@@ -26,11 +26,10 @@ downloading the package.  These instructions will get you a copy of the project
 up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
-* **CMake v3.15+** - found at [https://cmake.org/](https://cmake.org/)
+* **CMake v3.21+** - found at [https://cmake.org/](https://cmake.org/)
 
 * **C++ Compiler** - needs to support at least the **C++20** standard, i.e.
-  *MSVC*, *GCC* at least version 10 for linux based systems, *Clang* at least
-  version 12 for linux based systems.
+  *MSVC* at least version 142, *GCC* at least version 10 for linux based systems
 
 * **Vcpkg** - C/C++ dependency manager from Microsoft. For more information on
   how to install and to use vcpkg, we refer to [https://vcpkg.io](https://vcpkg.io).
