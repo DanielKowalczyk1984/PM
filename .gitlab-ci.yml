@@ -3,10 +3,9 @@ stages:
   - 🔨 build
 
 cache:
-  key: one-key-to-rule-them-all
+  key: $CI_COMMIT_REF_SLUG
   paths:
     - ThirdParty/
-  when: 'always'
 
 .build:linux:base:
   stage: 🔨 build
