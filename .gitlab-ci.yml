@@ -14,8 +14,6 @@ cache:
   variables:
     BUILDDIR: "build"
     GIT_SUBMODULE_STRATEGY: recursive
-    GRB_VERSION: "9.1.2"
-    GRB_SHORT_VERSION: "9.1"
   before_script:
     - apt-get update && apt-get install -y locales && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
     - export LANG=en_US.utf8
@@ -26,15 +24,6 @@ cache:
     - pip install -U cmake-format
     - git submodule sync --recursive
     - git submodule update --init --recursive
-    - wget https://packages.gurobi.com/${GRB_SHORT_VERSION}/gurobi${GRB_VERSION}_linux64.tar.gz
-    - tar -xf gurobi${GRB_VERSION}_linux64.tar.gz
-    - rm gurobi${GRB_VERSION}_linux64.tar.gz
-    - mv gurobi* gurobi
-    - mv gurobi /opt
-    - export GUROBI_HOME=/opt/gurobi/linux64
-    - ln -sf $GUROBI_HOME/lib/libgurobi_g++5.2.a $GUROBI_HOME/lib/libgurobi_c++.a
-    - export LD_LIBRARY_PATH=$GUROBI_HOME/lib
-    - ldconfig -v
     - chmod u+x before_script.sh
     - ./before_script.sh
   script:
@@ -59,8 +48,8 @@ build:linux:gcc:
 build:linux:clang:
   extends: .build:linux:base
   variables:    
-    BB_CI_CXX_COMPILER: "clang++-10"
-    BB_CI_CC_COMPILER: "clang-10"
+    BB_CI_CXX_COMPILER: "clang++-13"
+    BB_CI_CC_COMPILER: "clang-13"
 
 
 
