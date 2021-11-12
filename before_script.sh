@@ -4,16 +4,6 @@ export CMAKE_VERSION="3.21.4"
 export GRB_VERSION="9.1.2_linux64"
 export GRB_SHORT_VERSION="9.1"
 
-wget "https://packages.gurobi.com/$GRB_SHORT_VERSION/gurobi$GRB_VERSION.tar.gz"
-tar -xvf gurobi$GRB_VERSION.tar.gz
-rm gurobi$GRB_VERSION.tar.gz
-mv gurobi* gurobi
-mv gurobi /opt
-export GUROBI_HOME=/opt/gurobi/linux64
-ln -sf $GUROBI_HOME/lib/libgurobi_g++5.2.a $GUROBI_HOME/lib/libgurobi_c++.a
-export LD_LIBRARY_PATH=$GUROBI_HOME/lib
-ldconfig -v
-
 mkdir -p ThirdParty
 cd ThirdParty
 
