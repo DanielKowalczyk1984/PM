@@ -12,7 +12,7 @@ mv gurobi /opt
 export GUROBI_HOME=/opt/gurobi/linux64
 ln -sf $GUROBI_HOME/lib/libgurobi_g++5.2.a $GUROBI_HOME/lib/libgurobi_c++.a
 export LD_LIBRARY_PATH=$GUROBI_HOME/lib
-ldconfig -v
+# ldconfig -v
 
 mkdir -p ThirdParty
 cd ThirdParty
