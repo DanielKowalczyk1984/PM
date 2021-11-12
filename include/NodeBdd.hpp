@@ -1,3 +1,25 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #ifndef NODE_DURATION_HPP
 #define NODE_DURATION_HPP
 
@@ -70,8 +92,8 @@ class NodeBdd : public NodeBase {
     std::array<std::vector<size_t>, 2> in_edges{};
     std::array<size_t, 2>              key_edges{};
     dbl_array                          coeff_cut{0.0, 0.0};
-    grb_array            y{};
-    grb_array              r{};
+    grb_array                          y{};
+    grb_array                          r{};
     GRBVar                             sigma{};
 
    public:
@@ -93,9 +115,9 @@ class NodeBdd : public NodeBase {
     void                 set_weight(int _weight);
     [[nodiscard]] size_t get_weight() const;
 
-    [[nodiscard]] Job*          get_job() const;
+    [[nodiscard]] Job*   get_job() const;
     [[nodiscard]] size_t get_nb_job() const;
-    void                        set_job(Job* _job);
+    void                 set_job(Job* _job);
 
     void add_coeff_list(const std::shared_ptr<BddCoeff>& ptr, bool high);
     void add_coeff_list_clear();
@@ -117,15 +139,15 @@ class NodeBdd : public NodeBase {
 
     /** Functions concerning reduced_cost */
     dbl_array& get_reduced_cost();
-    void         reset_reduced_costs();
-    void         reset_reduced_costs_farkas();
-    void         adjust_reduced_costs(double _x, bool high);
+    void       reset_reduced_costs();
+    void       reset_reduced_costs_farkas();
+    void       adjust_reduced_costs(double _x, bool high);
 
     /** Functions concerning ptr_node_id */
-    void  set_ptr_node_id(size_t i, size_t j);
-    void  set_ptr_node_id(const NodeId& _node_id);
+    void    set_ptr_node_id(size_t i, size_t j);
+    void    set_ptr_node_id(const NodeId& _node_id);
     NodeId& get_ptr_node_id();
-    void  reset_ptr_node_id();
+    void    reset_ptr_node_id();
 
     /** Functions for manipulation of nb_paths */
     big_int& get_nb_paths();
@@ -133,8 +155,8 @@ class NodeBdd : public NodeBase {
     void     update_nb_paths(const big_int& x = 1);
 
     /** Functions for manipulation of visited */
-    void reset_visited();
-    void update_visited();
+    void               reset_visited();
+    void               update_visited();
     [[nodiscard]] bool get_visited() const;
 
     /** Functions for manipulation of key */
@@ -144,19 +166,19 @@ class NodeBdd : public NodeBase {
     void    set_key_model(const size_t& _key);
     size_t& get_key_model();
     /** Functions for manipulation of lp_visited */
-    void update_lp_visited(bool _update);
+    void               update_lp_visited(bool _update);
     [[nodiscard]] bool get_lp_visited() const;
 
     /** Functions for manipulation of lp_x */
     [[nodiscard]] dbl_array& get_lp_x();
-    double & get_lp_x(bool _high);
+    double&                  get_lp_x(bool _high);
 
     void update_lp_x(double _x, bool _high);
 
     void reset_lp_x();
 
     /** Functions for manipulation of cost */
-    void set_cost(double _cost) ;
+    void set_cost(double _cost);
 
     /** Functions for manipulation of best_sol_x */
     void   update_best_sol_x(bool _high);
@@ -167,7 +189,7 @@ class NodeBdd : public NodeBase {
     void update_backward_distance(const std::array<int, 2>& _backward_distance,
                                   bool                      _high);
 
-    int_array & get_backward_distance();
+    int_array& get_backward_distance();
 
     /** Functions for manipulation of all */
     void reset_all(size_t _nb_elements);
@@ -183,7 +205,7 @@ class NodeBdd : public NodeBase {
     size_t get_next_all(size_t _index);
 
     /** Functions for manipulation of calc */
-    void reset_calc() ;
+    void reset_calc();
     bool any_of_calc();
 
     bool get_calc(bool _high);
@@ -197,13 +219,13 @@ class NodeBdd : public NodeBase {
 
     bool alternative_paths();
 
-    void reset_in_degree() ;
+    void reset_in_degree();
 
     /** Functions for manipulation of Zero-Half cuts formulation cut problem */
     void reset_in_edges();
 
     std::vector<size_t>& get_in_edges(bool _high);
-    void  add_in_edge(bool _high, size_t _key_parent);
+    void                 add_in_edge(bool _high, size_t _key_parent);
 
     void set_key_edge(bool _high, size_t _key);
 
@@ -216,12 +238,12 @@ class NodeBdd : public NodeBase {
 
     void reduce_coeff_cut(bool _high);
 
-    double get_coeff_cut(bool _high) ;
+    double get_coeff_cut(bool _high);
 
-    grb_array & get_y();
-    grb_array & get_r();
-    void  set_sigma(GRBVar&& _sigma);
-    GRBVar& get_sigma();
+    grb_array& get_y();
+    grb_array& get_r();
+    void       set_sigma(GRBVar&& _sigma);
+    GRBVar&    get_sigma();
 };
 
 #endif  // NODE_DURATION_HPP

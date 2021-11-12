@@ -1,20 +1,42 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #ifndef _MODEL_INTERFACE
 #define _MODEL_INTERFACE
 
-#include <fmt/core.h>                           // for print
-#include <cmath>                                // for fabs
-#include <cstddef>                              // for size_t
-#include <iostream>                             // for operator<<, size_t
-#include <list>                                 // for list
-#include <memory>                               // for shared_ptr, __shared_...
-#include <range/v3/range/conversion.hpp>        // for to
-#include <range/v3/range_fwd.hpp>               // for views
-#include <range/v3/view/iota.hpp>               // for iota, iota_fn
-#include <range/v3/view/transform.hpp>          // for transform
-#include <unordered_map>                        // for operator==, _Node_ite...
-#include <utility>                              // for move, pair
-#include <variant>                              // for hash
-#include <vector>                               // for vector
+#include <fmt/core.h>                     // for print
+#include <cmath>                          // for fabs
+#include <cstddef>                        // for size_t
+#include <iostream>                       // for operator<<, size_t
+#include <list>                           // for list
+#include <memory>                         // for shared_ptr, __shared_...
+#include <range/v3/range/conversion.hpp>  // for to
+#include <range/v3/range_fwd.hpp>         // for views
+#include <range/v3/view/iota.hpp>         // for iota, iota_fn
+#include <range/v3/view/transform.hpp>    // for transform
+#include <unordered_map>                  // for operator==, _Node_ite...
+#include <utility>                        // for move, pair
+#include <variant>                        // for hash
+#include <vector>                         // for vector
 
 #include "BddCoeff.hpp"
 #include "VariableKeyBase.hpp"

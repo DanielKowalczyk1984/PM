@@ -1,5 +1,25 @@
-// #include "Solution.hpp"
-// #include <bits/ranges_algo.h>
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "Solution.hpp"
 #include <fmt/core.h>  // for print
 #include <fmt/format.h>
@@ -7,7 +27,6 @@
 #include <compare>                                     // for operator<
 #include <cstddef>                                     // for size_t
 #include <cstdlib>                                     // for rand
-// #include <ext/alloc_traits.h>                          // for __alloc_traits...
 #include <functional>                                  // for identity
 #include <memory>                                      // for allocator_trai...
 #include <random>                                      // for mt19937, unifo...
@@ -40,10 +59,13 @@ void Sol::construct_edd(std::vector<std::shared_ptr<Job>>& v) {
     auto cmp_jobs_edd = [](const auto lhs, const auto rhs) -> bool {
         return lhs->due_time < rhs->due_time;
     };
-    auto tmp = v | ranges::views::transform([](const auto& tmp_j) { return tmp_j.get(); }) | ranges::to_vector;
+    auto tmp = v | ranges::views::transform([](const auto& tmp_j) {
+                   return tmp_j.get();
+               }) |
+               ranges::to_vector;
 
-//    std::ranges::transform(v, std::back_inserter(tmp),
-//                           [](const auto& tmp_j) { return tmp_j.get(); });
+    //    std::ranges::transform(v, std::back_inserter(tmp),
+    //                           [](const auto& tmp_j) { return tmp_j.get(); });
     std::ranges::sort(tmp, cmp_jobs_edd);
     tw = 0;
 

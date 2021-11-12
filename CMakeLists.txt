@@ -67,6 +67,7 @@ endif()
 # Third Party packages
 #
 
+set(Boost_NO_WARN_NEW_VERSIONS ON)
 add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 add_subdirectory(decision-diagrams)
@@ -301,7 +302,17 @@ verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 # clang-format)
 #
 
-add_clang_format_target()
+
+include(cmake/CPM.cmake)
+CPMAddPackage(
+  NAME Format.cmake
+  VERSION 1.7.0
+  GITHUB_REPOSITORY TheLartians/Format.cmake
+  OPTIONS # set to yes skip cmake formatting
+          "FORMAT_SKIP_CMAKE NO"
+          # path to exclude (optional, supports regular expressions)
+          "CMAKE_FORMAT_EXCLUDE cmake/CPM.cmake"
+)
 
 #
 # Install library for easy downstream inclusion
@@ -347,4 +358,4 @@ configure_package_config_file(
 include(cmake/Doxygen.cmake)
 
 # Add Gurobi env to Binary directory
-file(COPY ${CMAKE_SOURCE_DIR}/gurobi.env DESTINATION ${CMAKE_BINARY_DIR}/bin)
+file(COPY ${CMAKE_SOURCE_DIR}/settings/gurobi.env DESTINATION ${CMAKE_BINARY_DIR}/bin)

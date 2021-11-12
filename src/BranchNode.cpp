@@ -1,3 +1,25 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "BranchNode.hpp"
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -100,8 +122,8 @@ void BranchNodeBase::branch(BTree* bt) {
             return std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS;
         });
 
-    for (auto&& [x_j, job] :
-         rng_sum_wt | ranges::views::take(std::min(size_t{50}, instance.nb_jobs))) {
+    for (auto&& [x_j, job] : rng_sum_wt | ranges::views::take(std::min(
+                                              size_t{50}, instance.nb_jobs))) {
         while ((x_ref.second[job->job][tmp_t] ==
                 x_ref.second[job->job][tmp_t + 1]) &&
                job->weighted_tardiness_start(tmp_t) == 0) {
@@ -128,8 +150,8 @@ void BranchNodeBase::branch(BTree* bt) {
                 return std::min(sum - std::floor(sum), std::ceil(sum) - sum) >
                        EPS;
             });
-        for (auto&& [x_j, job] :
-             rng_t | ranges::views::take(std::min(size_t{50}, instance.nb_jobs))) {
+        for (auto&& [x_j, job] : rng_t | ranges::views::take(std::min(
+                                             size_t{50}, instance.nb_jobs))) {
             while ((x_ref.second[job->job][tmp_t] ==
                     x_ref.second[job->job][tmp_t + 1]) &&
                    (job->weighted_tardiness_start(tmp_t) == 0)) {
@@ -356,7 +378,8 @@ BranchCandidate::BranchCandidate(
     double                                     _score,
     std::array<std::unique_ptr<NodeData>, 2>&& child_nodes)
     : score(_score),
-      empty(false), data_child_nodes(std::move(child_nodes)) {
+      empty(false),
+      data_child_nodes(std::move(child_nodes)) {
     const auto&           parms = data_child_nodes[0]->parms;
     std::array<double, 2> scores{};
 
@@ -366,7 +389,6 @@ BranchCandidate::BranchCandidate(
                 : std::abs(_score - node->get_score_value());
     }
     score = parms.scoring_function(scores);
-
 }
 
 BranchCandidate::BranchCandidate(double _score) : score(_score) {}

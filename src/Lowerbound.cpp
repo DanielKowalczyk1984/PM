@@ -1,30 +1,52 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include <fmt/core.h>
-#include <algorithm>                                   // for min, __for_eac...
-#include <cassert>                                     // for assert
-#include <cmath>                                       // for ceil, floor, fabs
-#include <functional>                                  // for identity, greater
-#include <memory>                                      // for unique_ptr
-#include <range/v3/action/action.hpp>                  // for operator|=
-#include <range/v3/action/remove_if.hpp>               // for remove_if, rem...
-#include <range/v3/algorithm/sort.hpp>                 // for sort, sort_fn
-#include <range/v3/functional/identity.hpp>            // for identity
-#include <range/v3/numeric/inner_product.hpp>          // for inner_product
-#include <range/v3/range/conversion.hpp>               // for to_container::fn
-#include <range/v3/view/drop.hpp>                      // for drop, drop_fn
-#include <range/v3/view/filter.hpp>                    // for filter_view
-#include <range/v3/view/transform.hpp>                 // for transform_view
-#include <range/v3/view/view.hpp>                      // for operator|, vie...
-#include <range/v3/view/zip.hpp>                       // for zip_view, zip
-#include <utility>                                     // for move, pair
-#include <vector>                                      // for vector
-#include "Column.h"                                    // for Column
-#include "NodeData.h"                                  // for NodeData
-#include "Parms.h"                                     // for Parms
-#include "PricerSolverBase.hpp"                        // for PricerSolverBase
-#include "PricingStabilization.hpp"                    // for PricingStabili...
-#include "Statistics.h"                                // for Statistics
-#include "orutils/lp.h"                                        // for lp_interface_g...
-#include "orutils/util.h"                                      // for dbg_lvl, getRe...
+#include <algorithm>                           // for min, __for_eac...
+#include <cassert>                             // for assert
+#include <cmath>                               // for ceil, floor, fabs
+#include <functional>                          // for identity, greater
+#include <memory>                              // for unique_ptr
+#include <range/v3/action/action.hpp>          // for operator|=
+#include <range/v3/action/remove_if.hpp>       // for remove_if, rem...
+#include <range/v3/algorithm/sort.hpp>         // for sort, sort_fn
+#include <range/v3/functional/identity.hpp>    // for identity
+#include <range/v3/numeric/inner_product.hpp>  // for inner_product
+#include <range/v3/range/conversion.hpp>       // for to_container::fn
+#include <range/v3/view/drop.hpp>              // for drop, drop_fn
+#include <range/v3/view/filter.hpp>            // for filter_view
+#include <range/v3/view/transform.hpp>         // for transform_view
+#include <range/v3/view/view.hpp>              // for operator|, vie...
+#include <range/v3/view/zip.hpp>               // for zip_view, zip
+#include <utility>                             // for move, pair
+#include <vector>                              // for vector
+#include "Column.h"                            // for Column
+#include "NodeData.h"                          // for NodeData
+#include "Parms.h"                             // for Parms
+#include "PricerSolverBase.hpp"                // for PricerSolverBase
+#include "PricingStabilization.hpp"            // for PricingStabili...
+#include "Statistics.h"                        // for Statistics
+#include "orutils/lp.h"                        // for lp_interface_g...
+#include "orutils/util.h"                      // for dbg_lvl, getRe...
 
 /** Help function for column generation */
 void NodeData::print_ages() {

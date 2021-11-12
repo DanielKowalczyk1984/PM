@@ -1,11 +1,32 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "PricerSolverZdd.hpp"
-#include <fmt/core.h>                             // for print
-#include <gurobi_c++.h>                           // for GRBException
-#include <algorithm>                              // for remove_if, fill
-#include <array>                                  // for array
-#include <boost/graph/detail/adjacency_list.hpp>  // for num_edges
-#include <boost/multiprecision/cpp_int.hpp>
-// #include <ext/alloc_traits.h>                      // for __alloc_traits<>::...
+#include <fmt/core.h>                              // for print
+#include <gurobi_c++.h>                            // for GRBException
+#include <algorithm>                               // for remove_if, fill
+#include <array>                                   // for array
+#include <boost/graph/detail/adjacency_list.hpp>   // for num_edges
+#include <boost/multiprecision/cpp_int.hpp>        // for cpp_int
 #include <iostream>                                // for operator<<, cout
 #include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
 #include <range/v3/view/iota.hpp>                  // for iota_view, ints
@@ -24,7 +45,7 @@
 #include "PricerConstruct.hpp"                     // for PricerConstruct
 #include "PricingSolution.hpp"                     // for PricingSolution
 #include "ZddNode.hpp"                             // for NodeZdd, SubNodeZdd
-#include "orutils/util.h"                                  // for dbg_lvl
+#include "orutils/util.h"                          // for dbg_lvl
 
 PricerSolverZdd::PricerSolverZdd(const Instance& instance)
     : PricerSolverBase(instance),
@@ -130,8 +151,9 @@ void PricerSolverZdd::init_table() {
         table.node(decision_diagram->root()).list.pop_back();
     }
 
-    for (auto i : ranges::views::ints(size_t{}, decision_diagram->root().row() + 1) |
-                      ranges::views::reverse) {
+    for (auto i :
+         ranges::views::ints(size_t{}, decision_diagram->root().row() + 1) |
+             ranges::views::reverse) {
         size_t layer = ordered_jobs_new.size() - i;
         auto&  tmp_pair = ordered_jobs_new[layer];
         // static_cast<job_interval_pair*>(span_ordered_job[layer]);

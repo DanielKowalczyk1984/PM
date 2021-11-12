@@ -9,7 +9,7 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/coinbrew")
   message(STATUS "Coinbrew downloaded successfully.")
 endif()
 
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/dist")
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release")
   set(TMP_GRB_LIB "-L$ENV{GUROBI_HOME}/lib -lgurobi91 -lpthread -lm")
   execute_process(
     COMMAND ./coinbrew fetch Cgl@master WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
@@ -19,16 +19,16 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/dist")
             --with-gurobi-incdir=$ENV{GUROBI_HOME}/include --tests none
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
   )
-  message("Build Osi completed.")
+  message(STATUS "Build Osi completed.")
 endif()
+
 set(coin_modules "Osi;CoinUtils;OsiGrb;Cgl")
-set(coin_libraries "")
 
 if(${CMAKE_HOST_UNIX})
   find_path(
     OSI_INCLUDE_DIR
     NAMES OsiGrbSolverInterface.hpp
-    PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/include/coin" REQUIRED
+    PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/include/coin-or" REQUIRED
   )
 
   foreach(coin_lib ${coin_modules})
@@ -71,22 +71,16 @@ elseif(${CMAKE_HOST_WIN32})
 
 endif()
 
-# Version detection
-file(READ "${OSI_INCLUDE_DIR}/OsiConfig.h" OSI_CONFIG_H_CONTENTS)
-string(REGEX MATCH "#define OSI_VERSION_MAJOR *([0-9]+)" _dummy "${OSI_CONFIG_H_CONTENTS}")
-set(OSI_VERSION_MAJOR "${CMAKE_MATCH_1}")
-string(REGEX MATCH "#define OSI_VERSION_MINOR *([0-9]+)" _dummy "${OSI_CONFIG_H_CONTENTS}")
-set(OSI_VERSION_MINOR "${CMAKE_MATCH_1}")
-string(REGEX MATCH "#define OSI_VERSION_RELEASE *([0-9]+)" _dummy "${OSI_CONFIG_H_CONTENTS}")
-set(OSI_VERSION_RELEASE "${CMAKE_MATCH_1}")
-set(OSI_VERSION "${OSI_VERSION_MAJOR}.${OSI_VERSION_MINOR}.${OSI_VERSION_RELEASE}")
-
 include(FindPackageHandleStandardArgs)
+foreach(coin_lib ${coin_modules})
+  string(TOUPPER "${coin_lib}" coin_lib_toupper)
 
-find_package_handle_standard_args(
-  OSI
-  REQUIRED_VARS OSIGRB_LIBRARY_DEBUG
-  VERSION_VAR OSI_VERSION
-)
+  find_package_handle_standard_args(${coin_lib_toupper} REQUIRED_VARS ${coin_lib_toupper}_LIBRARY)
 
-mark_as_advanced(OSI_INCLUDE_DIR OSI_LIBRARY COINUtils_LIBRARY OSIGRB_LIBRARY CGL_LIBRARY)
+  find_package_handle_standard_args(
+    ${coin_lib_toupper}_DEBUG REQUIRED_VARS ${coin_lib_toupper}_LIBRARY_DEBUG
+  )
+
+endforeach()
+
+mark_as_advanced(OSI_INCLUDE_DIR OSI_LIBRARY COINUTILS_LIBRARY OSIGRB_LIBRARY CGL_LIBRARY)
