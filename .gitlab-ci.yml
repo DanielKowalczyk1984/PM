@@ -2,10 +2,10 @@
 stages:
   - 🔨 build
   
-workflow:
-  rules:
-    - if: '$CI_COMMIT_BRANCH =~ "(master|develop|.*alpine)"'
-    - if: '$CI_COMMIT_BRANCH =~ "(master|develop|feature\/alpine)"'
+# workflow:
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH =~ "(master|develop|.*alpine)"'
+#     - if: '$CI_COMMIT_BRANCH =~ "(master|develop|feature\/alpine)"'
 
 cache:
   key: $CI_COMMIT_REF_SLUG
