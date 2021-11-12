@@ -32,6 +32,7 @@ cache:
     - mv gurobi* gurobi
     - mv gurobi /opt
     - export GUROBI_HOME=/opt/gurobi/linux64
+    - ln -sf $GUROBI_HOME/lib/libgurobi_g++5.2.a libgurobi_c++.a
     - chmod u+x before_script.sh
     - ./before_script.sh
   script:
