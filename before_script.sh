@@ -7,7 +7,6 @@ export GRB_SHORT_VERSION="9.1"
 mkdir -p ThirdParty
 cd ThirdParty
 
-
 if [ ! -d "./cmake" ]; then
 	wget https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION.tar.gz
 	tar -zxf cmake-$CMAKE_VERSION.tar.gz
