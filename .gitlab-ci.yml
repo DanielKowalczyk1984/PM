@@ -18,6 +18,7 @@ cache:
     BUILDDIR: "build"
     GRB_VERSION: "9.1.2"
     GRB_SHORT_VERSION: "9.1"
+    GIT_SUBMODULE_STRATEGY: recursive
   before_script:
     - apt-get update && apt-get install -y locales && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
     - export LANG=en_US.utf8
