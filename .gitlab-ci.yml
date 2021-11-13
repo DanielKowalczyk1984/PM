@@ -14,21 +14,18 @@ cache:
 
 .build:linux:base:
   stage: 🔨 build
-  image: alpine:3.14
+  image: ubuntu:21.10
   variables:
     BUILDDIR: "build"
     GRB_VERSION: "9.1.2"
     GRB_SHORT_VERSION: "9.1"
   before_script:
-    # - apt-get update && apt-get install -y locales && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
-    # - export LANG=en_US.utf8
-    # - export DEBIAN_FRONTEND=noninteractive
-    # - apt-get --no-install-recommends -y install gpg-agent software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
-    # - add-apt-repository -y ppa:ubuntu-toolchain-r/test
-    # - apt-get --no-install-recommends -y install ${BB_CI_CC_COMPILER} ${BB_CI_CXX_COMPILER} clang-format libssl-dev git gcc g++ wget curl make ninja-build pkg-config python3 python3-pip tar unzip zip
-    - apk add openssl openssl-dev git gcc g++ wget curl make pkgconf python3 py3-pip tar unzip zip bash bash linux-headers build-base dos2unix patch file
-    - pip install -U cmake-format
-    - bash
+    - apt-get update && apt-get install -y locales && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+    - export LANG=en_US.utf8
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get --no-install-recommends -y install gpg-agent software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
+    - add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    - apt-get --no-install-recommends -y install ${BB_CI_CC_COMPILER} ${BB_CI_CXX_COMPILER} clang-format libssl-dev git gcc-10 g++-10 gcc g++ wget curl make ninja-build pkg-config python3 python3-pip tar unzip zip
     # - git submodule sync --recursive
     # - git submodule update --init --recursive
     - wget https://packages.gurobi.com/${GRB_SHORT_VERSION}/gurobi${GRB_VERSION}_linux64.tar.gz
@@ -36,10 +33,11 @@ cache:
     - rm gurobi${GRB_VERSION}_linux64.tar.gz
     - mv gurobi* gurobi
     - mv gurobi /opt
+    - ls /opt
     - export GUROBI_HOME=/opt/gurobi/linux64
     - ln -sf $GUROBI_HOME/lib/libgurobi_g++5.2.a $GUROBI_HOME/lib/libgurobi_c++.a
     - export LD_LIBRARY_PATH=$GUROBI_HOME/lib
-    # - ldconfig -v
+    - ldconfig -v
     - chmod u+x before_script.sh
     - ./before_script.sh
   script:
@@ -57,6 +55,6 @@ cache:
 build:linux:gcc:
   extends: .build:linux:base
   variables:    
-    BB_CI_CXX_COMPILER: "g++"
-    BB_CI_CC_COMPILER: "gcc"
+    BB_CI_CXX_COMPILER: "g++-10"
+    BB_CI_CC_COMPILER: "gcc-10"
 
