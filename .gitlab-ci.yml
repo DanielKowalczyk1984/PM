@@ -30,8 +30,8 @@ cache:
     - apk add openssl openssl-dev git gcc g++ wget curl make pkgconf python3 py3-pip tar unzip zip bash bash linux-headers build-base dos2unix patch file
     - pip install -U cmake-format
     - bash
-    - git submodule sync --recursive
-    - git submodule update --init --recursive
+    # - git submodule sync --recursive
+    # - git submodule update --init --recursive
     - wget https://packages.gurobi.com/${GRB_SHORT_VERSION}/gurobi${GRB_VERSION}_linux64.tar.gz
     - tar -xf gurobi${GRB_VERSION}_linux64.tar.gz
     - rm gurobi${GRB_VERSION}_linux64.tar.gz
