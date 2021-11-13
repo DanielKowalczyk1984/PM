@@ -25,8 +25,6 @@ cd ..
 if [ ! -d "./Cgl" ]; then
 	wget -O coinbrew https://raw.githubusercontent.com/coin-or/coinbrew/master/coinbrew
 	chmod u+x coinbrew
-	export CC=gcc-11
-	export CXX=g++-11
 	./coinbrew fetch Cgl@master
 	if [ ! -d "./coin-or-x64-linux-release" ]; then
 		./coinbrew build Cgl --no-prompt --prefix="coin-or-x64-linux-release" --with-gurobi-lflags="-L$GUROBI_HOME/lib -lgurobi91 -lpthread -lm" --with-gurobi-cflags="-I$GUROBI_HOME/include" --tests none
