@@ -8,20 +8,22 @@ export GUROBI_HOME="/opt/gurobi/linux64"
 mkdir -p ThirdParty
 cd ThirdParty
 
-if [ ! -d "./cmake" ]; then
-	wget https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION.tar.gz
-	tar -zxf cmake-$CMAKE_VERSION.tar.gz
-	rm cmake-$CMAKE_VERSION.tar.gz
-	mv cmake-$CMAKE_VERSION cmake
-	cd cmake
-	./bootstrap
-	make
-else
-	cd cmake
-fi
+# if [ ! -d "./cmake" ]; then
+# 	wget https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION.tar.gz
+# 	tar -zxf cmake-$CMAKE_VERSION.tar.gz
+# 	rm cmake-$CMAKE_VERSION.tar.gz
+# 	mv cmake-$CMAKE_VERSION cmake
+# 	cd cmake
+# 	./bootstrap
+# 	make
+# else
+# 	cd cmake
+# fi
 
-make install
-cd ..
+# make install
+# cd ..
+
+pip install -U cmake
 
 if [ ! -d "./Cgl" ]; then
 	wget -O coinbrew https://raw.githubusercontent.com/coin-or/coinbrew/master/coinbrew
