@@ -17,7 +17,6 @@ cache:
   image: alpine:3.14
   variables:
     BUILDDIR: "build"
-    GIT_SUBMODULE_STRATEGY: recursive
     GRB_VERSION: "9.1.2"
     GRB_SHORT_VERSION: "9.1"
   before_script:
