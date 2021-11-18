@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 #include "NodeBdd.hpp"
-#include <boost/multiprecision/cpp_int.hpp>  // for cpp_int
 
 void NodeBdd::set_weight(int _weight) {
     weight = _weight;

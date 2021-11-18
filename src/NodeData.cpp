@@ -21,23 +21,15 @@
 // SOFTWARE.
 
 #include "NodeData.h"  // for NodeData
-#include <fmt/core.h>
 #include <OsiGrbSolverInterface.hpp>
 #include <array>                                // for array
-#include <cmath>                                // for sqrt
 #include <concepts/concepts.hpp>                // for return_t
 #include <cstddef>                              // for size_t
-#include <functional>                           // for less, function
 #include <limits>                               // for numeric_limits
 #include <memory>                               // for shared_ptr, unique_ptr
 #include <range/v3/action/action.hpp>           // for action_closure, opera...
 #include <range/v3/action/sort.hpp>             // for sort, sort_fn
 #include <range/v3/action/unique.hpp>           // for unique, unique_fn
-#include <range/v3/functional/bind_back.hpp>    // for bind_back_fn_
-#include <range/v3/functional/comparisons.hpp>  // for equal_to
-#include <range/v3/functional/compose.hpp>      // for composed
-#include <utility>                              // for move
-#include <vector>                               // for vector
 #include "Column.h"                             // for ScheduleSet
 #include "Instance.h"                           // for Instance
 #include "Parms.h"                              // for Parms
@@ -45,7 +37,6 @@
 #include "PricingStabilization.hpp"             // for PricingStabilizationBase
 #include "Problem.h"                            // for Problem
 #include "Solution.hpp"                         // for Sol
-#include "orutils/lp.h"                         // for lp_interface_create
 
 NodeData::NodeData(Problem* problem)
     : depth(0UL),

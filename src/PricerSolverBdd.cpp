@@ -356,7 +356,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
                          column_ind.data(), coeff.data(), sense.data(),
                          rhs.data(), nullptr);
     lp_interface_get_nb_rows(pd->RMP.get(), &(pd->nb_rows));
-    pd->id_row.resize(reformulation_model.size(), 0.0);
+    pd->id_row.resize(reformulation_model.size(), 0);
     pd->coeff_row.resize(reformulation_model.size(), 0.0);
 }
 
@@ -565,8 +565,8 @@ double PricerSolverBdd::compute_subgradient(const PricingSolution& sol,
     auto      rhs = -reformulation_model[convex_constr_id]->get_rhs();
     std::span aux_subgradient{sub_gradient, nb_constraints};
 
-    for (auto&& [i, constr] : reformulation_model | ranges::views::enumerate) {
-        aux_subgradient[i] = constr->get_rhs();
+    for (auto&& [constr, subgradient] : ranges::views::zip( reformulation_model, aux_subgradient)) {
+        subgradient = constr->get_rhs();
     }
 
     while (tmp_nodeid > 1) {
@@ -698,7 +698,7 @@ void PricerSolverBdd::enumerate_columns() {
                 auto& set = !path.empty() ? std::get<2>(path.back()) : empty;
 
                 if (s[0] != 0) {
-                    cursor = path.size();
+                    cursor = static_cast<int>(path.size());
                     path.emplace_back(f, false, set);
                     f = s[0];
                 } else if (!set[s.get_nb_job()]) {
@@ -918,13 +918,12 @@ double PricerSolverBdd::compute_lagrange(const PricingSolution&     sol,
 
     result = std::min(0.0, result);
 
-    for (const auto&& [c, constr] :
-         reformulation_model | ranges::views::enumerate) {
-        if (c == convex_constr_id) {
+    for (const auto&& [constr, pi_aux] : ranges::views::zip(reformulation_model, pi)) {
+        if (constr == reformulation_model[convex_constr_id] ) {
             continue;
         }
 
-        dual_bound += constr->get_rhs() * pi[c];
+        dual_bound += constr->get_rhs() * pi_aux;
     }
 
     result = -reformulation_model[convex_constr_id]->get_rhs() * result;
@@ -974,13 +973,12 @@ double PricerSolverBdd::compute_lagrange(const PricingSolution&         sol,
 
     result = std::min(0.0, result);
 
-    for (const auto&& [c, constr] :
-         reformulation_model | ranges::views::enumerate) {
-        if (c == convex_constr_id) {
+    for (const auto&& [constr, pi_aux] : ranges::views::zip(reformulation_model, pi)) {
+        if (constr == reformulation_model[convex_constr_id] ) {
             continue;
         }
 
-        dual_bound += constr->get_rhs() * pi[c];
+        dual_bound += constr->get_rhs() * pi_aux;
     }
 
     result = -reformulation_model[convex_constr_id]->get_rhs() * result;
@@ -1586,7 +1584,7 @@ void PricerSolverBdd::equivalent_paths_filtering() {
             num_vertices, boost::dynamic_bitset(convex_constr_id, 0));
         std::vector<int> C(num_vertices, 0);
 
-        auto& tmp_n = table.node(start_v);
+        // auto& tmp_n = table.node(start_v);
         // visited[tmp_n.get_key()];
         auto stop = false;
 
@@ -1715,9 +1713,9 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
     }
 
     set_is_integer_solution(true);
-    for (auto&& [i, x] : lambda | ranges::views::enumerate) {
+    for (auto&& [x, tmp] : ranges::views::zip(lambda, columns)) {
         if (x > EPS_SOLVER) {
-            auto* tmp = columns[i].get();
+            // auto* tmp = columns[i].get();
             auto  it = tmp->job_list.begin();
             auto  tmp_nodeid(decision_diagram.root());
 
@@ -1777,9 +1775,9 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
     std::span<const double> aux_cols{lambda, columns.size()};
 
     set_is_integer_solution(true);
-    for (auto&& [i, x] : aux_cols | ranges::views::enumerate) {
+    for (auto&& [x, tmp] :  ranges::views::zip(aux_cols, columns)) {
         if (x > EPS_SOLVER) {
-            auto* tmp = columns[i].get();
+            // auto* tmp = columns[i].get();
             auto  it = tmp->job_list.begin();
             auto  tmp_nodeid(decision_diagram.root());
 
@@ -2046,8 +2044,8 @@ std::unique_ptr<OsiSolverInterface> PricerSolverBdd::build_model() {
 }
 
 int PricerSolverBdd::add_constraints() {
-    auto& table = *(decision_diagram.getDiagram());
-    auto  aux_model = build_model();
+    // auto& table = *(decision_diagram.getDiagram());
+    // auto  aux_model = build_model();
     // fmt::print("number of nodes = {}\n", table.size());
     // auto sol_x = std::vector<double>(aux_model->getNumCols(), 0.0);
 

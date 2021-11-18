@@ -22,8 +22,6 @@
 
 #include "LocalSearch.hpp"
 #include <fmt/core.h>
-#include <cstddef>
-#include <functional>
 #include <limits>
 #include <range/v3/action/shuffle.hpp>
 #include <range/v3/algorithm/sort.hpp>

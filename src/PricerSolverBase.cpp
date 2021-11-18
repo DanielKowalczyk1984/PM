@@ -21,18 +21,11 @@
 // SOFTWARE.
 
 #include "PricerSolverBase.hpp"
-#include <fmt/core.h>                        // for print
 #include <algorithm>                         // for min, __fill_fn
-#include <boost/multiprecision/cpp_int.hpp>  // ffor cpp_int
 #include <cmath>                             // for fabs
-#include <cstddef>                           // for size_t
 #include <limits>                            // for numeric_limits
 #include <memory>                            // for __shared_ptr_a...
-#include <range/v3/range/conversion.hpp>     // for to_container::fn
 #include <range/v3/view/enumerate.hpp>       // for enumerate_fn
-#include <range/v3/view/transform.hpp>       // for transform_view
-#include <range/v3/view/view.hpp>            // for operator|
-#include <range/v3/view/zip.hpp>             // for zip_view
 #include <span>                              // for span
 #include <vector>                            // for vector
 #include "Column.h"                          // for Column

@@ -21,7 +21,6 @@
 // SOFTWARE.
 #include "Column.h"                          // for ScheduleSet
 #include <range/v3/algorithm/for_each.hpp>   // for for_each, for_each_fn
-#include <range/v3/functional/identity.hpp>  // for identity
 #include <utility>                           // for move
 #include "Job.h"                             // for Job
 #include "PricingSolution.hpp"               // for PricingSolution

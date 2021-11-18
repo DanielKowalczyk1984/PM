@@ -4,6 +4,9 @@
 	"cSpell.words": [
 		"coinbrew",
 		"docopt",
+		"Hiroaki",
+		"Iwashita",
+		"MINATO",
 		"nowide",
 		"STREQUAL",
 		"TOLOWER",
@@ -14,6 +17,11 @@
 	},
 	"files.associations": {
 		"*.ipynb": "jupyter",
-		"regex": "cpp"
+		"regex": "cpp",
+		"numeric": "cpp",
+		"xtr1common": "cpp",
+		"charconv": "cpp",
+		"format": "cpp",
+		"xutility": "cpp"
 	}
 }

@@ -47,7 +47,7 @@ class NodeBdd : public NodeBase {
    public:
     using dbl_array = std::array<double, 2>;
     using int_array = std::array<int, 2>;
-    using size_t_array = std::array<size_t, 2>;
+    using size_t_array [[maybe_unused]] = std::array<size_t, 2>;
     using bool_array = std::array<bool, 2>;
     using grb_array = std::array<GRBVar, 2>;
     using big_int = boost::multiprecision::cpp_int;

@@ -47,14 +47,14 @@
 
 namespace vs = ranges::views;
 
-ZeroHalfSystem::ZeroHalfSystem(const MatrixDouble& _A,
+ZeroHalfSystem::ZeroHalfSystem(const MatrixDouble& A,
                                const VectorDouble& _b,
                                const VectorDouble& _x)
     : x_star(_x),
-      row_index(_A.size(), boost::dynamic_bitset{_A.size()}) {
+      row_index(A.size(), boost::dynamic_bitset{A.size()}) {
     auto min_elem =
         ranges::min(ranges::min(ranges::views::transform(
-                        _A, [](auto& row) { return ranges::min(row); })),
+                        A, [](auto& row) { return ranges::min(row); })),
                     ranges::min(_b));
 
     auto add_elem = 0.0;
@@ -66,7 +66,7 @@ ZeroHalfSystem::ZeroHalfSystem(const MatrixDouble& _A,
         return static_cast<int>(add_elem + it) % 2;
     };
 
-    A_bar = vs::transform(_A,
+    A_bar = vs::transform(A,
                           [&func_add_value](auto& row) {
                               return vs::transform(row, func_add_value) |
                                      ranges::to<std::vector>();
@@ -76,7 +76,7 @@ ZeroHalfSystem::ZeroHalfSystem(const MatrixDouble& _A,
     b_bar = vs::transform(_b, func_add_value) | ranges::to<std::vector>;
 
     auto tmp = vs::transform(
-        _A, [&_x](auto& row) { return ranges::inner_product(row, _x, 0.0); });
+        A, [&_x](auto& row) { return ranges::inner_product(row, _x, 0.0); });
 
     slack =
         vs::zip_with([](auto lhs, auto rhs) { return lhs - rhs; }, _b, tmp) |

@@ -22,21 +22,16 @@
 #include "Instance.h"
 #include <fmt/core.h>                            // for print
 #include <algorithm>                             // for min, max, min_element
-#include <cmath>                                 // for ceil, floor
-#include <compare>                               // for operator<
 #include <cstddef>                               // for size_t
 #include <fstream>                               // for basic_istream::opera...
-#include <functional>                            // for identity, __invoke
 #include <memory>                                // for shared_ptr, __shared...
 #include <range/v3/algorithm/for_each.hpp>       // for for_each
 #include <range/v3/algorithm/sort.hpp>           // for sort
-#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, operator+
 #include <range/v3/numeric/accumulate.hpp>       // for accumulate, accumula...
 #include <range/v3/view/for_each.hpp>            // for for_each
 #include <range/v3/view/reverse.hpp>             // for reverse_view, revers...
 #include <range/v3/view/sliding.hpp>             // for sliding
 #include <range/v3/view/take.hpp>                // for take_view, take, tak...
-#include <range/v3/view/view.hpp>                // for operator|, view_closure
 #include <string>                                // for getline, string
 #include <tuple>                                 // for tie, operator<=>
 #include <utility>                               // for move, pair, make_pair

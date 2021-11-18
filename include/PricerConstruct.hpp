@@ -79,7 +79,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
         auto _j = min_job(layer, state, value);
 
-        if (!(_j < nb_layers)) {
+        if (_j >= nb_layers) {
             if (state <= tmp_interval->b) {
                 return -1;
             }

@@ -21,17 +21,10 @@
 // SOFTWARE.
 
 #include "PricerSolverArcTimeDP.hpp"
-#include <fmt/core.h>                        // for print
-#include <boost/multiprecision/cpp_int.hpp>  // for cpp_int
-#include <cstddef>                           // for size_t
 #include <limits>                            // for numeric_limits
 #include <range/v3/algorithm/find.hpp>       // for find
-#include <range/v3/range/conversion.hpp>     // for to_vector
-#include <range/v3/view/iota.hpp>            // for iota_view, iota_vi...
 #include <range/v3/view/reverse.hpp>         // for reverse_fn, revers...
 #include <range/v3/view/take.hpp>            // for take
-#include <range/v3/view/transform.hpp>       // for transform
-#include <range/v3/view/view.hpp>            // for operator|, view_cl...
 #include <span>                              // for span
 #include <string>                            // for char_traits, opera...
 #include <vector>                            // for vector, vector<>::...

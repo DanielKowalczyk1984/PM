@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -26,15 +26,12 @@
 #include <range/v3/numeric/iota.hpp>        // for iota, iota_fn
 #include <range/v3/view/enumerate.hpp>      // for enumerate_fn
 #include <range/v3/view/take.hpp>           // for take_view, take
-#include <range/v3/view/view.hpp>           // for operator|, vie...
 #include <span>                             // for span
 #include <vector>                           // for vector
 #include "Column.h"                         // for ScheduleSet
 #include "NodeData.h"                       // for NodeData
 #include "PricerSolverBase.hpp"             // for PricerSolverBase
-#include "Solution.hpp"                     // for Sol
-#include "gurobi_c++.h"
-#include "gurobi_c.h"  // for GRB_INFINITY
+#include "gurobi_c.h"                       // for GRB_INFINITY
 
 int NodeData::add_lhs_column_to_rmp(double cost) {
     id_row.clear();

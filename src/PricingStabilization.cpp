@@ -224,7 +224,7 @@ double PricingStabilizationStat::get_eta_in() {
 }
 
 bool PricingStabilizationStat::stopping_criteria() {
-    return !(eta_in > (eta_out - ETA_DIFF));
+    return eta_in <= (eta_out - ETA_DIFF);
 }
 
 void PricingStabilizationStat::update_duals() {

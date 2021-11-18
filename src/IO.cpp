@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include <fmt/chrono.h>         // for print
-#include <fmt/format.h>         // for format
 #include <cstdio>               // for fopen, fclose, FILE
 #include <ctime>                // for localtime, time, time_t
 #include <filesystem>           // for path, directory_entry
@@ -31,8 +30,7 @@
 #include "Instance.h"           // for Instance
 #include "Parms.h"              // for Parms
 #include "Problem.h"            // for Problem
-#include "Statistics.h"         // for Statistics, Statistics::bb_timer, Sta...
-#include "orutils/util.h"       // for CCutil_timer, CCutil_stop_timer, getR...
+#include "Statistics.h"         // for Statistics, Statistics::bb_timer, Sta....
 
 /**
  * @brief Print the results to a csv file with fmt.

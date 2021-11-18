@@ -174,7 +174,6 @@ find_package(
   COMPONENTS atomic
              chrono
              timer
-             json
              random
              regex
              serialization

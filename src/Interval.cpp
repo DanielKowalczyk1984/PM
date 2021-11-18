@@ -21,10 +21,8 @@
 // SOFTWARE.
 #include "Interval.h"
 #include <algorithm>   // for __sort_fn, sort
-#include <cmath>       // for ceil
 #include <functional>  // for identity, __invoke
 #include <memory>      // for shared_ptr, __shared_ptr_access, swap
-#include <ranges>      // for next
 #include <utility>     // for move
 #include "Job.h"       // for Job, value_diff_Fij
 

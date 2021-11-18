@@ -23,23 +23,17 @@
 #include "Parms.h"
 #include <docopt/docopt.h>                       // for value, docopt_parse
 #include <fmt/core.h>                            // for print
-#include <algorithm>                             // for max, min
 #include <array>                                 // for array
-#include <cmath>                                 // for pow
 #include <cstddef>                               // for size_t
 #include <fstream>                               // for ifstream
-#include <map>                                   // for map
 #include <nlohmann/json.hpp>                     // for json
 #include <range/v3/iterator/basic_iterator.hpp>  // for operator-, operator!=
 #include <range/v3/range/conversion.hpp>         // for to_container::fn
 #include <range/v3/view/drop.hpp>                // for drop, drop_fn
-#include <range/v3/view/subrange.hpp>            // for subrange
 #include <range/v3/view/transform.hpp>           // for transform_view, tran...
-#include <range/v3/view/view.hpp>                // for operator|, view_closure
 #include <regex>                                 // for regex_search, match_...
 #include <span>                                  // for span
 #include <string>                                // for allocator, string, stod
-#include <vector>                                // for vector
 #include "Usage.hpp"                             // for USAGE
 #include "orutils/util.h"                        // for dbg_lvl, program_header
 
