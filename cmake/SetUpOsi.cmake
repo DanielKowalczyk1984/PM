@@ -44,7 +44,6 @@ if(${CMAKE_HOST_UNIX})
       NAMES ${coin_lib}
       PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-debug/lib"
     )
-
   endforeach()
 elseif(${CMAKE_HOST_WIN32})
   find_path(
@@ -66,9 +65,7 @@ elseif(${CMAKE_HOST_WIN32})
       NAMES ${coin_lib}
       PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-MDd/lib"
     )
-
   endforeach()
-
 endif()
 
 include(FindPackageHandleStandardArgs)
