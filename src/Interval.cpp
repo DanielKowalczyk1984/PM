@@ -21,6 +21,7 @@
 // SOFTWARE.
 #include "Interval.h"
 #include <algorithm>   // for __sort_fn, sort
+#include <cmath>
 #include <functional>  // for identity, __invoke
 #include <memory>      // for shared_ptr, __shared_ptr_access, swap
 #include <utility>     // for move
@@ -68,7 +69,7 @@ int IntervalPair::operator()() {
 
         left = jobs[0]->due_time +
                static_cast<int>(
-                   ceil(static_cast<double>(jobs[1]->weight *
+                   std::ceil(static_cast<double>(jobs[1]->weight *
                                             jobs[0]->processing_time) /
                         jobs[0]->weight)) -
                jobs[0]->processing_time;

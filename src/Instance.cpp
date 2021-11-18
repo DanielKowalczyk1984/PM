@@ -22,6 +22,7 @@
 #include "Instance.h"
 #include <fmt/core.h>                            // for print
 #include <algorithm>                             // for min, max, min_element
+#include <cmath>
 #include <cstddef>                               // for size_t
 #include <fstream>                               // for basic_istream::opera...
 #include <memory>                                // for shared_ptr, __shared...
@@ -84,10 +85,10 @@ void Instance::calculate_H_max_H_min() {
     auto temp = p_sum - pmax;
     auto temp_dbl = static_cast<double>(temp);
     auto tmp_m = static_cast<double>(nb_machines);
-    temp_dbl = floor(temp_dbl / tmp_m);
+    temp_dbl = std::floor(temp_dbl / tmp_m);
 
     H_max = static_cast<int>(temp_dbl) + pmax;
-    H_min = static_cast<int>(ceil(temp_dbl / tmp_m)) - pmax;
+    H_min = static_cast<int>(std::ceil(temp_dbl / tmp_m)) - pmax;
 
     ranges::sort(jobs, [](const auto& lhs, const auto& rhs) -> bool {
         return (lhs->processing_time < rhs->processing_time);
