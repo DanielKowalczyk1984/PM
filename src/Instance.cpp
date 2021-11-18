@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -19,27 +19,28 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+
 #include "Instance.h"
-#include <fmt/core.h>                            // for print
-#include <algorithm>                             // for min, max, min_element
-#include <cmath>
-#include <cstddef>                               // for size_t
-#include <fstream>                               // for basic_istream::opera...
-#include <memory>                                // for shared_ptr, __shared...
-#include <range/v3/algorithm/for_each.hpp>       // for for_each
-#include <range/v3/algorithm/sort.hpp>           // for sort
-#include <range/v3/numeric/accumulate.hpp>       // for accumulate, accumula...
-#include <range/v3/view/for_each.hpp>            // for for_each
-#include <range/v3/view/reverse.hpp>             // for reverse_view, revers...
-#include <range/v3/view/sliding.hpp>             // for sliding
-#include <range/v3/view/take.hpp>                // for take_view, take, tak...
-#include <string>                                // for getline, string
-#include <tuple>                                 // for tie, operator<=>
-#include <utility>                               // for move, pair, make_pair
-#include <vector>                                // for vector, erase_if
-#include "Interval.h"                            // for IntervalPair, Interval
-#include "Job.h"                                 // for Job
-#include "Parms.h"                               // for Parms
+#include <fmt/core.h>                       // for print
+#include <algorithm>                        // for min, max, min_element
+#include <cmath>                            // for floor, ceil
+#include <cstddef>                          // for size_t
+#include <fstream>                          // for basic_istream::opera...
+#include <memory>                           // for shared_ptr, __shared...
+#include <range/v3/algorithm/for_each.hpp>  // for for_each
+#include <range/v3/algorithm/sort.hpp>      // for sort
+#include <range/v3/numeric/accumulate.hpp>  // for accumulate, accumula...
+#include <range/v3/view/for_each.hpp>       // for for_each
+#include <range/v3/view/reverse.hpp>        // for reverse_view, revers...
+#include <range/v3/view/sliding.hpp>        // for sliding
+#include <range/v3/view/take.hpp>           // for take_view, take, tak...
+#include <string>                           // for getline, string
+#include <tuple>                            // for tie, operator<=>
+#include <utility>                          // for move, pair, make_pair
+#include <vector>                           // for vector, erase_if
+#include "Interval.h"                       // for IntervalPair, Interval
+#include "Job.h"                            // for Job
+#include "Parms.h"                          // for Parms
 
 Instance::Instance(Parms const& _parms)
     : path_to_instance(_parms.jobfile),
