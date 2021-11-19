@@ -45,16 +45,15 @@ class BddCoeff : public VariableKeyBase {
              bool   _high = true,
              bool   _root = false);
 
-    BddCoeff(const BddCoeff&);
+    BddCoeff(const BddCoeff&) = delete;
     BddCoeff& operator=(const BddCoeff&);
     BddCoeff(BddCoeff&& op) noexcept;
-    BddCoeff& operator=(BddCoeff&& op) noexcept;
+    BddCoeff& operator=(BddCoeff&& op) noexcept = delete;
     ~BddCoeff() override = default;
 
     [[nodiscard]] double get_coeff() const;
     [[nodiscard]] double get_value() const;
     [[nodiscard]] size_t get_row() const;
-    void                 set_value(double _value);
     void                 set_row(size_t _row);
 
     bool operator==(const BddCoeff& other);

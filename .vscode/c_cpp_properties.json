@@ -1,18 +1,18 @@
 {
     "configurations": [
-        {
-            "name": "Linux",
-            "includePath": [
-                "${workspaceFolder}/**"
-            ],
-            "defines": [],
-            "compilerPath": "/home/linuxbrew/.linuxbrew/bin/g++-11",
-            "cStandard": "c17",
-            "intelliSenseMode": "${default}",
-            "configurationProvider": "ms-vscode.cmake-tools",
-            "cppStandard": "gnu++20",
-            "compileCommands": "/home/daniel/parallel-machine-bdd/compile_commands.json"
-        },
+        // {
+        //     "name": "Linux",
+        //     "includePath": [
+        //         "${workspaceFolder}/**"
+        //     ],
+        //     "defines": [],
+        //     "compilerPath": "/home/linuxbrew/.linuxbrew/bin/g++-11",
+        //     "cStandard": "c17",
+        //     "intelliSenseMode": "${default}",
+        //     "configurationProvider": "ms-vscode.cmake-tools",
+        //     "cppStandard": "gnu++20",
+        //     "compileCommands": "/home/daniel/parallel-machine-bdd/compile_commands.json"
+        // },
         {
             "name": "Win64",
             "defines": [

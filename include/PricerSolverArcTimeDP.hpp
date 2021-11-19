@@ -77,8 +77,12 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     PricerSolverArcTimeDp(PricerSolverArcTimeDp&&) = default;
     PricerSolverArcTimeDp& operator=(const PricerSolverArcTimeDp&) = default;
     PricerSolverArcTimeDp& operator=(PricerSolverArcTimeDp&&) = default;
-
     ~PricerSolverArcTimeDp() override;
+
+    PricingSolution pricing_algorithm(double* _pi) override;
+    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
+    PricingSolution farkas_pricing(double* pi) override;
+    PricingSolution farkas_pricing(std::span<const double>& pi) override;
     // PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
     //     : PricerSolverBase(src),
     //       Hmax(src.Hmax),
@@ -115,10 +119,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         const std::vector<std::shared_ptr<Column>>& columns) override;
     // void add_constraint(Job* job, GPtrArray* list, int order) override;
 
-    PricingSolution pricing_algorithm(double* _pi) override;
-    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
-    PricingSolution farkas_pricing(double* pi) override;
-    PricingSolution farkas_pricing(std::span<const double>& pi) override;
 
     size_t  get_nb_edges() override;
     size_t  get_nb_vertices() override;
@@ -152,9 +152,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     }
 
     void update_constraints() override {}
-
     void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
-
     void update_coeff_constraints() override {}
 };
 #endif  // __PRICERSOLVERARCTIMEDP_H__

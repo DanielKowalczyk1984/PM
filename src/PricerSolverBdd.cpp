@@ -616,8 +616,8 @@ bool PricerSolverBdd::refinement_structure(
         std::vector<NodeId> S;
         std::vector<size_t> index_P;
 
-        S.resize(jobs.size(), NodeId());
-        index_P.resize(jobs.size(), 0UL);
+        S.resize(convex_constr_id, NodeId());
+        index_P.resize(convex_constr_id, 0UL);
 
         P.push_back(decision_diagram.root());
         auto job_it = path->job_list.begin();
@@ -687,7 +687,7 @@ void PricerSolverBdd::enumerate_columns() {
     auto  begin = true;
     std::vector<std::tuple<NodeId, bool, boost::dynamic_bitset<>>> path{};
     auto iterations = boost::multiprecision::cpp_int{};
-    auto empty = boost::dynamic_bitset<>{jobs.size(), 0};
+    auto empty = boost::dynamic_bitset<>{convex_constr_id, 0};
 
     do {
         auto f = begin ? decision_diagram.root() : NodeId(0, 0);
@@ -750,7 +750,7 @@ void PricerSolverBdd::enumerate_columns(double* _pi) {
 
     std::vector<std::tuple<NodeId, bool, boost::dynamic_bitset<>>> path{};
     auto iterations = boost::multiprecision::cpp_int{};
-    auto empty = boost::dynamic_bitset<>{jobs.size(), 0};
+    auto empty = boost::dynamic_bitset<>{convex_constr_id, 0};
     auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
 
     do {
@@ -764,7 +764,7 @@ void PricerSolverBdd::enumerate_columns(double* _pi) {
                            evaluate_rc_arc(s)) < UB;
 
                 if (s[0] != 0) {
-                    cursor = path.size();
+                    cursor = static_cast<int>(path.size());
                     path.emplace_back(f, false, set);
                     f = s[0];
                 } else if (!set[s.get_nb_job()] && rc) {
@@ -819,7 +819,7 @@ void PricerSolverBdd::enumerate_columns(std::span<const double>& _pi) {
 
     std::vector<std::tuple<NodeId, bool, boost::dynamic_bitset<>>> path{};
     auto iterations = boost::multiprecision::cpp_int{};
-    auto empty = boost::dynamic_bitset<>{jobs.size(), 0};
+    auto empty = boost::dynamic_bitset<>{convex_constr_id, 0};
     auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
 
     do {
@@ -833,7 +833,7 @@ void PricerSolverBdd::enumerate_columns(std::span<const double>& _pi) {
                            evaluate_rc_arc(s)) < UB;
 
                 if (s[0] != 0) {
-                    cursor = path.size();
+                    cursor = static_cast<int>(path.size());
                     path.emplace_back(f, false, set);
                     f = s[0];
                 } else if (!set[s.get_nb_job()] && rc) {
@@ -1906,13 +1906,10 @@ void PricerSolverBdd::split_job_time(size_t _job, int _time, bool _left) {
         if (dbg_lvl() > 0) {
             auto&             table_bis = *(decision_diagram.getDiagram());
             ColorWriterVertex vertex_writer(mip_graph, table_bis);
-            auto file_name = "split_solution_" + problem_name + "_" +
-                             std::to_string(_job) + "_" +
-                             std::to_string(_time) + "_" +
-                             std::to_string(_left) + ".gv";
-            std::ofstream outf(file_name);
-            boost::write_graphviz(outf, mip_graph, vertex_writer);
-            outf.close();
+            auto file_name = fmt::format("split_solution_{}_{}_{}_{}.gv",problem_name,_job,_time,_left);
+            std::ofstream output_stream(file_name);
+            boost::write_graphviz(output_stream, mip_graph, vertex_writer);
+            output_stream.close();
         }
     }
 }
@@ -1976,7 +1973,7 @@ std::unique_ptr<OsiSolverInterface> PricerSolverBdd::build_model() {
             rhs_ub[nb_edges] =
                 aux_model->getInfinity();  // static_cast<double>(convex_rhs);
             high_edge[nb_edges] = false;
-            edge_job[nb_edges] = it.get_nb_job();
+            edge_job[nb_edges] = static_cast<int>(it.get_nb_job());
             nodes[nb_edges].first = it.get_key_model();
             ++nb_edges;
             nz += 2;
@@ -1988,7 +1985,7 @@ std::unique_ptr<OsiSolverInterface> PricerSolverBdd::build_model() {
             rhs_lb[nb_edges] = 0;
             rhs_ub[nb_edges] = aux_model->getInfinity();
             high_edge[nb_edges] = true;
-            edge_job[nb_edges] = it.get_nb_job();
+            edge_job[nb_edges] = static_cast<int>(it.get_nb_job());
             nodes[nb_edges].first = it.get_key_model();
             ++nb_edges;
             nz += 3;
@@ -2016,28 +2013,28 @@ std::unique_ptr<OsiSolverInterface> PricerSolverBdd::build_model() {
             coeff[nz] = 1.0;
             nz += 1;
         }
-        rows[nz] = jobs.size() + n.first;
+        rows[nz] = static_cast<int>(convex_constr_id + n.first);
         coeff[nz] = 1.0;
         nz += 1;
-        rows[nz] = jobs.size() + n.second;
+        rows[nz] = static_cast<int>(convex_constr_id + n.second);
         coeff[nz] = -1.0;
         nz += 1;
         ++i;
     }
     start_vars[i] = nz;
 
-    std::vector<int>    start(nb_vertices + 1 + jobs.size(), 0);
-    std::vector<double> rhs(nb_vertices + jobs.size(), 0.0);
-    for (auto& it : rhs | ranges::views::take(jobs.size())) {
+    std::vector<int>    start(nb_vertices + 1 + convex_constr_id, 0);
+    std::vector<double> rhs(nb_vertices + convex_constr_id, 0.0);
+    for (auto& it : rhs | ranges::views::take(convex_constr_id)) {
         it = 1.0;
     }
-    rhs[jobs.size()] = static_cast<double>(convex_rhs);
-    rhs[jobs.size() + terminal_node.get_key_model()] =
+    rhs[convex_constr_id] = static_cast<double>(convex_rhs);
+    rhs[convex_constr_id + terminal_node.get_key_model()] =
         -static_cast<double>(convex_rhs);
 
-    aux_model->addRows(nb_vertices + jobs.size(), start.data(), nullptr,
+    aux_model->addRows(static_cast<int>(nb_vertices + convex_constr_id), start.data(), nullptr,
                        nullptr, rhs.data(), rhs.data());
-    aux_model->addCols(nb_edges, start_vars.data(), rows.data(), coeff.data(),
+    aux_model->addCols(static_cast<int>(nb_edges), start_vars.data(), rows.data(), coeff.data(),
                        rhs_lb.data(), rhs_ub.data(), cost.data());
 
     return aux_model;
@@ -2146,7 +2143,7 @@ size_t PricerSolverBdd::get_nb_vertices() {
 
 bool PricerSolverBdd::structure_feasible() {
     return ((decision_diagram.size() != 0) &&
-            decision_diagram.root().row() >= jobs.size());
+            decision_diagram.root().row() >= convex_constr_id);
 }
 
 boost::multiprecision::cpp_int PricerSolverBdd::print_num_paths() {

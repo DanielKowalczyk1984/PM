@@ -34,10 +34,8 @@ BddCoeff::BddCoeff(size_t _j,
       coeff(_coeff),
       value(_value) {}
 
-BddCoeff::BddCoeff(const BddCoeff&) = default;
 BddCoeff& BddCoeff::operator=(const BddCoeff&) = default;
 BddCoeff::BddCoeff(BddCoeff&& op) noexcept = default;
-BddCoeff& BddCoeff::operator=(BddCoeff&& op) noexcept = default;
 
 std::ostream& operator<<(std::ostream& os, const BddCoeff& object) {
     return os << "(j = " << object.get_j() << ", t = " << object.get_t()
@@ -61,10 +59,6 @@ bool BddCoeff::operator==(const BddCoeff& other) {
 
 [[nodiscard]] double BddCoeff::get_value() const {
     return value;
-}
-
-void BddCoeff::set_value(double _value) {
-    value = _value;
 }
 
 void BddCoeff::set_row(size_t _row) {

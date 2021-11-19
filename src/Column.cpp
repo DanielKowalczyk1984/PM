@@ -20,9 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 #include "Column.h"                          // for ScheduleSet
-#include <range/v3/algorithm/for_each.hpp>   // for for_each, for_each_fn
 #include <utility>                           // for move
-#include "Job.h"                             // for Job
 #include "PricingSolution.hpp"               // for PricingSolution
 #include "Solution.hpp"                      // for Machine
 
@@ -73,14 +71,3 @@ Column::Column(PricingSolution&& pricing_solution)
 
 // return job_list == other.job_list;
 // }
-
-void Column::recalculate() {
-    total_processing_time = 0;
-    total_weighted_completion_time = 0;
-
-    ranges::for_each(job_list, [&](Job* j) {
-        total_processing_time += j->processing_time;
-        total_weighted_completion_time +=
-            j->weighted_tardiness(total_processing_time);
-    });
-}

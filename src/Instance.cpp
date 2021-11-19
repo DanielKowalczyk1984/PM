@@ -91,13 +91,12 @@ void Instance::calculate_H_max_H_min() {
     H_max = static_cast<int>(temp_dbl) + pmax;
     H_min = static_cast<int>(std::ceil(temp_dbl / tmp_m)) - pmax;
 
-    ranges::sort(jobs, [](const auto& lhs, const auto& rhs) -> bool {
-        return (lhs->processing_time < rhs->processing_time);
+    ranges::sort(jobs, std::less{}, [](const auto& lhs) {
+        return lhs->processing_time;
     });
 
-    auto tmp = p_sum;
     H_min = p_sum;
-    tmp = ranges::accumulate(
+    auto tmp = ranges::accumulate(
         jobs | ranges::views::reverse | ranges::views::take(nb_machines - 1),
         p_sum, std::minus<>{}, [](auto& it) { return it->processing_time; });
 
@@ -107,28 +106,10 @@ void Instance::calculate_H_max_H_min() {
 )",
         H_max, H_min, pmax, pmin, p_sum, off);
 
-    ranges::sort(jobs, [](const auto& x, const auto& y) -> bool {
-        // if ((x->due_time > y->due_time)) {
-        //     return (false);
-        // } else if (x->due_time < y->due_time) {
-        //     return (true);
-        // } else if (x->processing_time > y->processing_time) {
-        //     return (false);
-        // } else if (x->processing_time < y->processing_time) {
-        //     return (true);
-        // } else if (x->weight < y->weight) {
-        //     return (false);
-        // } else if (x->weight > y->weight) {
-        //     return (true);
-        // } else if (x->job > y->job) {
-        //     return (false);
-        // } else {
-        //     return (true);
-        // }
-
-        return std::tie(x->due_time, x->processing_time, x->weight, x->job) <
-               std::tie(y->due_time, y->processing_time, y->weight, y->job);
-    });
+    auto projection = [](const std::shared_ptr<Job>& x)  {
+        return std::tie(x->due_time, x->processing_time, x->weight, x->job);
+    };
+    ranges::sort(jobs, std::less<>{}, projection);
 
     auto index = 0UL;
     ranges::for_each(jobs, [&index](auto& it) { it->job = index++; });

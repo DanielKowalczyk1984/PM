@@ -39,14 +39,10 @@ int NodeData::add_lhs_column_to_rmp(double cost) {
 
     for (auto const&& [j, it] : lhs_coeff | ranges::views::enumerate) {
         if (std::abs(it) > EPS_BOUND) {
-            id_row.emplace_back(j);
+            id_row.emplace_back(static_cast<int>(j));
             coeff_row.emplace_back(it);
         }
     }
-
-    // lp_interface_addcol(RMP.get(), static_cast<int>(id_row.size()),
-    //                     id_row.data(), coeff_row.data(), cost, 0.0,
-    //                     GRB_INFINITY, lp_interface_CONT, nullptr);
 
     osi_rmp->addCol(static_cast<int>(id_row.size()), id_row.data(),
                     coeff_row.data(), 0.0, osi_rmp->getInfinity(), cost);
@@ -61,14 +57,10 @@ int NodeData::add_lhs_column_to_rmp(double                     cost,
 
     for (auto const&& [j, it] : _lhs | ranges::views::enumerate) {
         if (std::abs(it) > EPS_BOUND) {
-            id_row.emplace_back(j);
+            id_row.emplace_back(static_cast<int>(j));
             coeff_row.emplace_back(it);
         }
     }
-
-    // lp_interface_addcol(RMP.get(), static_cast<int>(id_row.size()),
-    //                     id_row.data(), coeff_row.data(), cost, 0.0,
-    //                     GRB_INFINITY, lp_interface_CONT, nullptr);
 
     osi_rmp->addCol(static_cast<int>(id_row.size()), id_row.data(),
                     coeff_row.data(), 0.0, osi_rmp->getInfinity(), cost);
@@ -101,7 +93,7 @@ void NodeData::create_convex_contraint() {
 void NodeData::create_artificial_cols() {
     id_art_var_assignment = osi_rmp->getNumCols();
     id_art_var_convex = nb_jobs;
-    id_art_var_cuts = nb_jobs + 1;
+    id_art_var_cuts = static_cast<int>(nb_jobs) + 1;
     id_next_var_cuts = id_art_var_cuts;
     auto nb_vars = nb_jobs + 1 + max_nb_cuts;
     id_pseudo_schedules = static_cast<int>(nb_vars);

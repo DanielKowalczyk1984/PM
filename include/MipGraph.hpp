@@ -117,10 +117,10 @@ class ColorWriterVertex {
           table{_table} {}
 
     void operator()(std::ostream& output, const Vertex& _vertex) {
-        NodeId tmp_nodeid = g[_vertex].node_id;
-        if (tmp_nodeid > 1) {
-            output << " [label=\" " << table.node(tmp_nodeid).get_job()->job
-                   << " " << table.node(tmp_nodeid).get_weight() << "\"]";
+        const auto& tmp_node_id = g[_vertex].node_id;
+        if (tmp_node_id > 1) {
+            output << " [label=\" " << table.node(tmp_node_id).get_job()->job
+                   << " " << table.node(tmp_node_id).get_weight() << "\"]";
         }
     }
 };

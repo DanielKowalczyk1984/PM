@@ -135,6 +135,7 @@ class PricerSolverBdd : public PricerSolverBase {
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 
    private:
+   
     double compute_reduced_cost(const PricingSolution& sol,
                                 double*                pi,
                                 double*                lhs) override;

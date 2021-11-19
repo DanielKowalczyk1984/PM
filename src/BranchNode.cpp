@@ -117,7 +117,7 @@ void BranchNodeBase::branch(BTree* bt) {
                            ranges::to<std::vector>;
             auto sum = ranges::inner_product(tmp.first, aux_vec, 0.0);
             auto lb_it = ranges::lower_bound(aux_vec, sum);
-            tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
+            tmp_t = static_cast<int>(ranges::distance(aux_vec.begin(), lb_it)) - 1;
             return std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS;
         });
 
@@ -145,7 +145,7 @@ void BranchNodeBase::branch(BTree* bt) {
                                ranges::to<std::vector>;
                 auto sum = ranges::inner_product(tmp.first, aux_vec, 0.0);
                 auto lb_it = ranges::lower_bound(aux_vec, sum);
-                tmp_t = ranges::distance(aux_vec.begin(), lb_it) - 1;
+                tmp_t = static_cast<int>(ranges::distance(aux_vec.begin(), lb_it)) - 1;
                 return std::min(sum - std::floor(sum), std::ceil(sum) - sum) >
                        EPS;
             });
@@ -176,7 +176,7 @@ void BranchNodeBase::branch(BTree* bt) {
             auto aux = std::min(*br_point_it - std::floor(*br_point_it),
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
-                tmp_t = ranges::distance(part_sum.begin(), br_point_it);
+                tmp_t = static_cast<int>(ranges::distance(part_sum.begin(), br_point_it));
                 while ((x_ref.second[job->job][tmp_t] ==
                         x_ref.second[job->job][tmp_t + 1]) &&
                        (job->weighted_tardiness_start(tmp_t))) {
@@ -202,7 +202,7 @@ void BranchNodeBase::branch(BTree* bt) {
             auto aux = std::min(*br_point_it - std::floor(*br_point_it),
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
-                tmp_t = ranges::distance(part_sum.begin(), br_point_it);
+                tmp_t = static_cast<int>(ranges::distance(part_sum.begin(), br_point_it));
                 while ((x_ref.second[job->job][tmp_t] ==
                         x_ref.second[job->job][tmp_t + 1]) &&
                        (job->weighted_tardiness_start(tmp_t))) {

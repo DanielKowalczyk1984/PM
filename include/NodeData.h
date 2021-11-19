@@ -61,7 +61,6 @@ struct NodeData {
     const Instance& instance;
     Statistics&     stat;
     Sol&            opt_sol;
-    std::string     pname;
 
     size_t nb_jobs;
     size_t nb_machines;
@@ -94,7 +93,7 @@ struct NodeData {
 
     size_t id_art_var_convex;
     int    id_art_var_assignment;
-    size_t id_art_var_cuts;
+    int    id_art_var_cuts;
     int    id_next_var_cuts;
     int    id_pseudo_schedules;
 
@@ -161,21 +160,23 @@ struct NodeData {
     int  call_update_rows_coeff();
 
     /** small getters */
-    double get_score_value();
+    double get_score_value() const;
 
     /** StabilizationWrappers.cpp */
     int  solve_pricing();
     void solve_farkas_dbl();
 
-    [[nodiscard]] std::unique_ptr<NodeData>  clone() const;
-    [[nodiscard]] std::unique_ptr<NodeData>  clone(size_t _j,
-                                                   int    _t,
-                                                   bool   _left) const;
-    std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
-                                                                int    _t);
+    [[nodiscard]] std::unique_ptr<NodeData>                clone() const;
+    [[nodiscard]] std::unique_ptr<NodeData>                clone(size_t _j,
+                                                                 int    _t,
+                                                                 bool   _left) const;
+    [[nodiscard]] std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(
+        size_t _j,
+        int    _t) const;
 
-    std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
-                                                                long   _t);
+    [[nodiscard]] std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(
+        size_t _j,
+        long   _t) const;
 
    private:
     int add_lhs_column_to_rmp(double cost);

@@ -58,8 +58,6 @@ struct Column {
            << " cost = " << set.total_weighted_completion_time << '\n';
         return os;
     }
-
-    void recalculate();
 };
 
 // namespace std {

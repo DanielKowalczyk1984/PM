@@ -45,7 +45,6 @@ NodeData::NodeData(Problem* problem)
       instance(problem->instance),
       stat(problem->stat),
       opt_sol(problem->opt_sol),
-      pname("tmp"),
       nb_jobs(instance.nb_jobs),
       nb_machines(instance.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
@@ -156,13 +155,13 @@ std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
 }
 
 std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
-                                                                      int _t) {
+                                                                      int _t) const {
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, _t, false),
                                                     clone(_j, _t, true)};
 }
 
 std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
-                                                                      long _t) {
+                                                                      long _t) const {
     auto aux_t = static_cast<int>(_t);
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, aux_t, false),
                                                     clone(_j, aux_t, true)};
@@ -193,14 +192,12 @@ void NodeData::add_solution_to_colpool(const Sol& sol) {
     }
 }
 
-double NodeData::get_score_value() {
+double NodeData::get_score_value() const {
     switch (parms.scoring_value) {
         case (size_scoring_value):
             return static_cast<double>(solver->get_nb_edges());
-            break;
         case (nb_paths_scoring_value):
             return static_cast<double>(solver->print_num_paths());
-            break;
         default:
             return LP_lower_bound;
     }
