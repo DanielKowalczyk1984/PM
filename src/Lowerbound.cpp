@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -36,6 +36,7 @@
 #include <utility>                             // for move, pair
 #include <vector>                              // for vector
 #include "Column.h"                            // for Column
+#include "DebugLvl.hpp"                        // for debug_lvl
 #include "NodeData.h"                          // for NodeData
 #include "Parms.h"                             // for Parms
 #include "PricerSolverBase.hpp"                // for PricerSolverBase
@@ -169,7 +170,7 @@ int NodeData::delete_old_columns() {
         //                                static_cast<int>(dellist.size()));
         osi_rmp->deleteCols(static_cast<int>(dellist.size()), dellist.data());
 
-        if (dbg_lvl() > 1) {
+        if (debug_lvl(1)) {
             fmt::print("Deleted {} out of {} columns with age > {}.\n",
                        zero_count, localColPool.size(), retirementage);
         }
@@ -212,7 +213,7 @@ int NodeData::delete_infeasible_columns() {
     assert((nb_cols - id_pseudo_schedules) ==
            static_cast<int>(localColPool.size()));
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print(
             "Deleted {} out of {} columns(infeasible columns after "
             "reduce "
@@ -225,7 +226,7 @@ int NodeData::delete_infeasible_columns() {
     nb_cols = osi_rmp->getNumCols();
     assert(static_cast<int>(localColPool.size()) ==
            (nb_cols - id_pseudo_schedules));
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(2)) {
         fmt::print("number of cols = {}\n", nb_cols - id_pseudo_schedules);
     }
 
@@ -357,7 +358,7 @@ int NodeData::compute_objective() {
     LP_lower_bound_BB = std::min(LP_lower_bound, LP_lower_bound_dual);
     LP_lower_min = std::min(LP_lower_min, LP_lower_bound_BB);
 
-    if (iterations % (nb_jobs) == 0 && dbg_lvl() > 0) {
+    if (iterations % (nb_jobs) == 0 && debug_lvl(0)) {
         fmt::print(
             "Current primal LP objective: {:19.16f}  (LP_dual-bound "
             "{:19.16f}, "
@@ -384,14 +385,12 @@ int NodeData::solve_relaxation() {
     // status_RMP = osi_rmp->get
     // CCcheck_val_2(val, "lp_interface_optimize failed");
     stat.suspend_timer(Statistics::solve_lp_timer);
-    real_time_solve_lp = getRealTime() - real_time_solve_lp;
-    stat.real_time_solve_lp += real_time_solve_lp;
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print("Simplex took {} seconds.\n", real_time_solve_lp);
     }
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         print_ages();
     }
 
@@ -433,7 +432,7 @@ int NodeData::estimate_lower_bound(size_t _iter) {
     auto status_RMP = false;
     auto real_time_pricing = 0.0;
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print(
             R"(Starting compute_lower_bound with lb {} and ub %d at depth {}
 )",
@@ -456,7 +455,7 @@ int NodeData::estimate_lower_bound(size_t _iter) {
     has_cols = true;
     // has_cuts = 0;
     while ((iterations < _iter) && has_cols &&
-           stat.total_timer(Statistics::cputime_timer) <=
+           stat.total_time_nano_sec(Statistics::cputime_timer) <=
                parms.branching_cpu_limit) {
         /**
          * Solve the pricing problem
@@ -488,8 +487,6 @@ int NodeData::estimate_lower_bound(size_t _iter) {
         ++iterations;
 
         stat.suspend_timer(Statistics::pricing_timer);
-        real_time_pricing = getRealTime() - real_time_pricing;
-        stat.real_time_pricing += real_time_pricing;
 
         if (status_RMP) {
             // case GRB_OPTIMAL:
@@ -522,7 +519,7 @@ int NodeData::compute_lower_bound() {
     auto real_time_pricing = 0.0;
     auto old_LP_bound = 0.0;
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print(
             R"(Starting compute_lower_bound with lb {} and ub %d at depth {}
 )",
@@ -589,7 +586,6 @@ int NodeData::compute_lower_bound() {
 
             stat.suspend_timer(Statistics::pricing_timer);
             real_time_pricing = getRealTime() - real_time_pricing;
-            stat.real_time_pricing += real_time_pricing;
 
             if (status_RMP) {
                 // case GRB_OPTIMAL:
@@ -611,7 +607,7 @@ int NodeData::compute_lower_bound() {
 
         if (status_RMP) {
             // case GRB_OPTIMAL:
-            if (dbg_lvl() > 1) {
+            if (debug_lvl(1)) {
                 fmt::print(
                     R"(Found lb = {} ({}) upper_bound = {} (iterations = {}).
 )",

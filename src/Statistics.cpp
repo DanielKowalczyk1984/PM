@@ -10,8 +10,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -37,15 +37,17 @@ Statistics::Statistics(const Parms& _parms)
       nb_generated_col_root(0),
       first_size_graph(0),
       size_graph_after_reduced_cost_fixing(0),
-      real_time_build_dd(0.0),
+      time_build_dd{"tot_build_dd", _parms.use_cpu_time},
+      time_total{"tot_cputime", _parms.use_cpu_time},
+      time_branch_and_bound{"tot_bb", _parms.use_cpu_time},
+      time_strong_branching{"tot_strong_branching", _parms.use_cpu_time},
+      time_lb_root{"tot_lb_root",_parms.use_cpu_time},
+      time_lb{"tot_lb", _parms.use_cpu_time},
+      time_solve_lp{"tot_solve_lp", _parms.use_cpu_time},
+      time_pricing{"tot_pricing", _parms.use_cpu_time},
+      time_heuristic{"tot_heuristic", _parms.use_cpu_time},
+      time_rc_fixing{"total_reduce_cost_fixing", _parms.use_cpu_time},
       real_time_total(getRealTime()),
-      real_time_branch_and_bound(0.0),
-      real_time_strong_branching(0.0),
-      real_time_lb_root(0.0),
-      real_time_lb(0.0),
-      real_time_solve_lp(0.0),
-      real_time_pricing(0.0),
-      real_time_heuristic(0.0),
       mip_nb_vars(0),
       mip_nb_constr(0),
       mip_obj_bound(0.0),
@@ -57,47 +59,37 @@ Statistics::Statistics(const Parms& _parms)
       mip_nb_nodes(0),
       mip_reduced_cost_fixing(),
       pname(_parms.pname) {
-    CCutil_init_timer(&(tot_build_dd), "tot_build_dd");
-    CCutil_init_timer(&(tot_cputime), "tot_cputime");
-    CCutil_init_timer(&(tot_branch_and_bound), "tot_branch_and_bound");
-    CCutil_init_timer(&(tot_strong_branching), "tot_strong_branching");
-    CCutil_init_timer(&(tot_lb_root), "tot_lb_root");
-    CCutil_init_timer(&(tot_lb), "tot_lb");
-    CCutil_init_timer(&(tot_solve_lp), "tot_solve_lp");
-    CCutil_init_timer(&(tot_pricing), "tot_pricing");
-    CCutil_init_timer(&(tot_heuristic), "tot_heuristic");
-    CCutil_init_timer(&(tot_reduce_cost_fixing), "tot_reduce_cost_fixing");
-    CCutil_start_timer(&(tot_cputime));
+    start_resume_timer(cputime_timer);
 }
 
 void Statistics::start_resume_timer(TimerType _type) {
     switch (_type) {
         case build_dd_timer:
-            CCutil_start_resume_time(&tot_build_dd);
+            time_build_dd.resume();
             break;
         case cputime_timer:
-            CCutil_start_resume_time(&tot_cputime);
+            time_total.resume();
             break;
         case bb_timer:
-            CCutil_start_resume_time(&tot_branch_and_bound);
+            time_branch_and_bound.resume();
             break;
         case lb_root_timer:
-            CCutil_start_resume_time(&tot_lb_root);
+            time_lb_root.resume();
             break;
         case lb_timer:
-            CCutil_start_resume_time(&tot_lb);
+            time_lb.resume();
             break;
         case solve_lp_timer:
-            CCutil_start_resume_time(&tot_solve_lp);
+            time_solve_lp.resume();
             break;
         case pricing_timer:
-            CCutil_start_resume_time(&tot_pricing);
+            time_pricing.resume();
             break;
         case heuristic_timer:
-            CCutil_start_resume_time(&tot_heuristic);
+            time_heuristic.resume();
             break;
         case reduced_cost_fixing_timer:
-            CCutil_start_resume_time(&tot_reduce_cost_fixing);
+            time_rc_fixing.resume();
             break;
     }
 }
@@ -105,55 +97,104 @@ void Statistics::start_resume_timer(TimerType _type) {
 void Statistics::suspend_timer(TimerType _type) {
     switch (_type) {
         case build_dd_timer:
-            CCutil_suspend_timer(&tot_build_dd);
+            time_build_dd.stop();
             break;
         case cputime_timer:
-            CCutil_suspend_timer(&tot_cputime);
+            time_total.stop();
             break;
         case bb_timer:
-            CCutil_suspend_timer(&tot_branch_and_bound);
+            time_branch_and_bound.stop();
             break;
         case lb_root_timer:
-            CCutil_suspend_timer(&tot_lb_root);
+            time_lb_root.stop();
             break;
         case lb_timer:
-            CCutil_suspend_timer(&tot_lb);
+            time_lb.stop();
             break;
         case solve_lp_timer:
-            CCutil_suspend_timer(&tot_solve_lp);
+            time_solve_lp.stop();
             break;
         case pricing_timer:
-            CCutil_suspend_timer(&tot_pricing);
+            time_pricing.stop();
             break;
         case heuristic_timer:
-            CCutil_suspend_timer(&tot_heuristic);
+            time_heuristic.stop();
             break;
         case reduced_cost_fixing_timer:
-            CCutil_suspend_timer(&tot_reduce_cost_fixing);
+            time_rc_fixing.stop();
             break;
     }
 }
 
-double Statistics::total_timer(TimerType _type) {
+double Statistics::total_time_dbl(TimerType _type) {
     switch (_type) {
         case build_dd_timer:
-            return CCutil_total_timer(&tot_build_dd, 0);
+            return time_build_dd.dbl_sec();
         case cputime_timer:
-            return CCutil_total_timer(&tot_cputime, 0);
+            return time_total.dbl_sec();
         case bb_timer:
-            return CCutil_total_timer(&tot_branch_and_bound, 0);
+            return time_branch_and_bound.dbl_sec();
         case lb_root_timer:
-            return CCutil_total_timer(&tot_lb_root, 0);
+            return time_lb_root.dbl_sec();
         case lb_timer:
-            return CCutil_total_timer(&tot_lb, 0);
+            return time_lb.dbl_sec();
         case solve_lp_timer:
-            return CCutil_total_timer(&tot_solve_lp, 0);
+            return time_solve_lp.dbl_sec();
         case pricing_timer:
-            return CCutil_total_timer(&tot_pricing, 0);
+            return time_pricing.dbl_sec();
         case heuristic_timer:
-            return CCutil_total_timer(&tot_heuristic, 0);
+            return time_heuristic.dbl_sec();
         case reduced_cost_fixing_timer:
-            return CCutil_total_timer(&tot_reduce_cost_fixing, 0);
+            return time_rc_fixing.dbl_sec();
     }
     return 0.0;
+}
+
+boost::timer::nanosecond_type Statistics::total_time_nano_sec(TimerType _type) {
+    switch (_type) {
+        case build_dd_timer:
+            return time_build_dd.nano_sec();
+        case cputime_timer:
+            return time_total.nano_sec();
+        case bb_timer:
+            return time_branch_and_bound.nano_sec();
+        case lb_root_timer:
+            return time_lb_root.nano_sec();
+        case lb_timer:
+            return time_lb.nano_sec();
+        case solve_lp_timer:
+            return time_solve_lp.nano_sec();
+        case pricing_timer:
+            return time_pricing.nano_sec();
+        case heuristic_timer:
+            return time_heuristic.nano_sec();
+        case reduced_cost_fixing_timer:
+            return time_rc_fixing.nano_sec();
+    }
+    return boost::timer::nanosecond_type{};
+}
+
+std::string Statistics::total_time_str(TimerType          _type,
+                                   short              precision) {
+    switch (_type) {
+        case build_dd_timer:
+            return time_build_dd.str_sec(precision);
+        case cputime_timer:
+            return time_total.str_sec(precision);
+        case bb_timer:
+            return time_branch_and_bound.str_sec(precision);
+        case lb_root_timer:
+            return time_lb_root.str_sec(precision);
+        case lb_timer:
+            return time_lb.str_sec(precision);
+        case solve_lp_timer:
+            return time_solve_lp.str_sec(precision);
+        case pricing_timer:
+            return time_pricing.str_sec(precision);
+        case heuristic_timer:
+            return time_heuristic.str_sec(precision);
+        case reduced_cost_fixing_timer:
+            return time_rc_fixing.str_sec(precision);
+    }
+    return "";
 }

@@ -23,10 +23,12 @@
 #ifndef __PARMS_H__
 #define __PARMS_H__
 
-#include <array>       // for array
+#include <array>  // for array
+#include <boost/timer/timer.hpp>
 #include <cstddef>     // for size_t
 #include <functional>  // for function
 #include <string>      // for allocator, string
+
 
 enum BBNodeSelection {
     min_search_strategy = 0,
@@ -89,7 +91,8 @@ struct Parms {
     int                                                 strong_branching;
     int                                                 bb_node_limit;
     int                                                 nb_iterations_rvnd;
-    size_t                                              branching_cpu_limit;
+    boost::timer::nanosecond_type                       branching_cpu_limit;
+    bool                                                use_cpu_time;
     double                                              alpha;
     double                                              branching_point;
     enum PricingSolver                                  pricing_solver;
@@ -123,7 +126,7 @@ struct Parms {
     ~Parms() = default;
 
     void parms_set_scoring_function(int scoring);
-    void  parse_cmd(int argc, const char** argv);
+    void parse_cmd(int argc, const char** argv);
 
    private:
     static constexpr double                mu = 5.0 / 6.0;

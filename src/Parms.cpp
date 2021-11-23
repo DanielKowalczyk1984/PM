@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -24,6 +24,8 @@
 #include <docopt/docopt.h>                       // for value, docopt_parse
 #include <fmt/core.h>                            // for print
 #include <array>                                 // for array
+#include <boost/chrono/duration.hpp>             //
+#include <boost/timer/timer.hpp>                 // for nano_second_types
 #include <cstddef>                               // for size_t
 #include <fstream>                               // for ifstream
 #include <nlohmann/json.hpp>                     // for json
@@ -34,11 +36,12 @@
 #include <regex>                                 // for regex_search, match_...
 #include <span>                                  // for span
 #include <string>                                // for allocator, string, stod
+#include "DebugLvl.hpp"                          // for debug_lvl
 #include "Usage.hpp"                             // for USAGE
-#include "orutils/util.h"                        // for dbg_lvl, program_header
+#include "orutils/util.h"                        // for program_header
 
-const size_t TIME_LIMIT = 7200;
-const double ALPHA_STAB_INIT = 0.8;
+const boost::timer::nanosecond_type TIME_LIMIT = 7200;
+const double                        ALPHA_STAB_INIT = 0.8;
 
 NLOHMANN_JSON_SERIALIZE_ENUM(PricingSolver,
                              {{bdd_solver_simple, "BddForward"},
@@ -84,7 +87,8 @@ Parms::Parms()
       strong_branching(),
       bb_node_limit(0),
       nb_iterations_rvnd(3),
-      branching_cpu_limit(TIME_LIMIT),
+      branching_cpu_limit(TIME_LIMIT * boost::chrono::nanoseconds::period::den),
+      use_cpu_time{false},
       alpha(ALPHA_STAB_INIT),
       branching_point(TargetBrTimeValue),
       pricing_solver(bdd_solver_backward_cycle),
@@ -107,7 +111,7 @@ Parms::Parms(int argc, const char** argv) : Parms() {
 
     parse_cmd(argc, argv);
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print("Debugging turned on\n");
     }
 }
@@ -169,7 +173,8 @@ void Parms::parse_cmd(int argc, const char** argv) {
 
     if (!args["--json"].asBool()) {
         bb_node_limit = static_cast<int>(args["--node_limit"].asLong());
-        branching_cpu_limit = static_cast<size_t>(args["--cpu_limit"].asLong());
+        branching_cpu_limit = static_cast<boost::timer::nanosecond_type>(
+            args["--cpu_limit"].asLong());
         nb_iterations_rvnd = static_cast<int>(args["--nb_rvnb_it"].asLong());
         pricing_solver =
             static_cast<PricingSolver>(args["--pricing_solver"].asLong());
@@ -206,6 +211,7 @@ void Parms::parse_cmd(int argc, const char** argv) {
         j.at("bb_node_limit").get_to(bb_node_limit);
         j.at("nb_iterations_rvnd").get_to(nb_iterations_rvnd);
         j.at("branching_cpu_limit").get_to(branching_cpu_limit);
+        j.at("use_cpu_time").get_to(use_cpu_time);
         j.at("alpha").get_to(alpha);
         j.at("branching_point").get_to(branching_point);
         j.at("pricing_solver").get_to(pricing_solver);
@@ -218,6 +224,10 @@ void Parms::parse_cmd(int argc, const char** argv) {
         j.at("reduce_cost_fixing").get_to(reduce_cost_fixing);
         j.at("stab_technique").get_to(stab_technique);
         j.at("print_csv").get_to(print_csv);
+        
+        auto aux_dbg = -1;
+        j.at("debug_lvl").get_to(aux_dbg);
+        set_debug_lvl(aux_dbg);
         parms_set_scoring_function(scoring_parameter);
     }
 

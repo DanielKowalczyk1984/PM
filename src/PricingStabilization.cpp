@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
 #include "PricingStabilization.hpp"
 #include <fmt/core.h>            // for print
 #include <algorithm>             // for max, min
@@ -28,9 +27,11 @@
 #include <memory>                // for make_unique, unique_ptr
 #include <utility>               // for move
 #include <vector>                // for vector
+#include "DebugLvl.hpp"          // for debug_lvl
 #include "ModelInterface.hpp"    // for ReformulationModel
 #include "PricerSolverBase.hpp"  // for PricerSolverBase
 #include "orutils/util.h"        // for dbg_lvl, SQR
+
 /**
  * @brief Construct a new Pricing Stabilization Base:: Pricing Stabilization
  * Base object
@@ -68,7 +69,7 @@ void PricingStabilizationBase::solve(double _eta_out,
         update_stab_center = true;
     }
 
-    if (dbg_lvl() > 0) {
+    if (debug_lvl(0)) {
         fmt::print(
             R"(alpha = {1}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f} UB = {4}
 )",
@@ -211,7 +212,7 @@ void PricingStabilizationStat::solve(double _eta_out, double* _lhs_coeff) {
         update_stab_center = true;
     }
 
-    if (iterations % (solver->convex_constr_id) == 0 && dbg_lvl() > 0) {
+    if (iterations % (solver->convex_constr_id) == 0 && debug_lvl(0)) {
         fmt::print(
             R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
 )",
@@ -315,7 +316,7 @@ void PricingStabilizationDynamic::solve(double _eta_out, double* _lhs) {
         }
     }
 
-    if (iterations % solver->convex_constr_id == 0 && dbg_lvl() > 0) {
+    if (iterations % solver->convex_constr_id == 0 && debug_lvl(0)) {
         fmt::print(
             R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
 )",
@@ -463,7 +464,7 @@ void PricingStabilizationHybrid::solve(double _eta_out,
         }
     } while (in_mispricing_schedule && stabilized);
 
-    if (iterations % solver->convex_constr_id == 0 && dbg_lvl() > 0) {
+    if (iterations % solver->convex_constr_id == 0 && debug_lvl(0)) {
         fmt::print(
             R"(alpha = {1:.{0}f}, result of primal bound and Lagragian bound: out = {2:.{0}f}, in = {3:.{0}f}
 )",

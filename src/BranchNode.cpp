@@ -48,7 +48,7 @@
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
 #include "branch-and-bound/btree.h"
-#include "orutils/util.h"
+#include "DebugLvl.hpp"
 
 namespace fmt {
 template <>
@@ -263,7 +263,7 @@ void BranchNodeBase::branch(BTree* bt) {
             node->compute_bounds(bt);
 
             auto cost = node->pd->LP_lower_bound;
-            if (dbg_lvl() > 0) {
+            if (debug_lvl(0)) {
                 fmt::print(
                     "STRONG BRANCHING {} PROBE: j = {}, t = {},"
                     " DWM LB = {:9.2f} in iterations {} \n\n",
@@ -306,7 +306,7 @@ void BranchNodeBase::branch(BTree* bt) {
     bt->set_state_bounds_computed(false);
     bt->update_global_lb();
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print("Branching choice: j = {}, t = {}, best_gain = {}\n",
                    best_job, best_time, best_min_gain + pd->instance.off);
     }
@@ -538,7 +538,7 @@ void BranchNodeRelBranching::branch(BTree* bt) {
     bt->set_state_bounds_computed(false);
     bt->update_global_lb();
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print("Branching choice: j = {}, t = {}, best_gain = {}\n",
                    best_job, best_time, best_min_gain + instance.off);
     }

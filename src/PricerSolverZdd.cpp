@@ -37,6 +37,7 @@
 #include <string>                                  // for char_traits, opera...
 #include <vector>                                  // for vector<>::iterator
 #include "Column.h"                                // for ScheduleSet
+#include "DebugLvl.hpp"                            // for debug_lvl
 #include "Instance.h"                              // for Instance
 #include "Job.h"                                   // for Job
 #include "ModernDD/NodeBddStructure.hpp"           // for DdStructure, DdStr...
@@ -45,7 +46,7 @@
 #include "PricerConstruct.hpp"                     // for PricerConstruct
 #include "PricingSolution.hpp"                     // for PricingSolution
 #include "ZddNode.hpp"                             // for NodeZdd, SubNodeZdd
-#include "orutils/util.h"                          // for dbg_lvl
+// #include "orutils/util.h"                          // for dbg_lvl
 
 PricerSolverZdd::PricerSolverZdd(const Instance& instance)
     : PricerSolverBase(instance),
@@ -205,7 +206,7 @@ void PricerSolverZdd::remove_layers_init() {
                        }),
         ordered_jobs_new.end());
 
-    if (dbg_lvl() > 0) {
+    if (debug_lvl(0)) {
         fmt::print("{0: <{2}}{1}\n", "The new number of layers",
                    ordered_jobs_new.size(), ALIGN);
     }

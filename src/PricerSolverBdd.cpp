@@ -63,7 +63,8 @@
 #include "Solution.hpp"               // for Machine, VecJo...
 #include "gurobi_c.h"                 // for GRB_EQUAL, GRB...
 #include "orutils/lp.h"               // for lp_interface_g...
-#include "orutils/util.h"             // for dbg_lvl
+// #include "orutils/util.h"             // for dbg_lvl
+#include "DebugLvl.hpp"
 
 PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     : PricerSolverBase(instance),
@@ -84,7 +85,7 @@ PricerSolverBdd::PricerSolverBdd(const Instance& instance)
             return remove;
         });
 
-    if (dbg_lvl() > 0) {
+    if (debug_lvl(0)) {
         fmt::print("{0: <{2}}{1}\n", "The new number of layers",
                    ordered_jobs_new.size(), ALIGN);
     }
@@ -96,7 +97,7 @@ PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     topdown_filtering();
     construct_mipgraph();
     init_coeff_constraints();
-    if (dbg_lvl() > 0) {
+    if (debug_lvl(0)) {
         fmt::print("ENDING CONSTRUCTION\n\n");
     }
 }
@@ -1002,7 +1003,7 @@ double PricerSolverBdd::compute_lagrange(const PricingSolution&         sol,
             return remove;
         });
 
-    if (dbg_lvl() > 0) {
+    if (debug_lvl(0)) {
         fmt::print("{0: <{2}}{1}\n", "The new number of layers",
                    ordered_jobs_new.size(), ALIGN);
     }
@@ -1028,7 +1029,7 @@ void PricerSolverBdd::remove_layers() {
     //     return remove;
     // });
 
-    // if (dbg_lvl() > 0) {
+    // if (debug_lvl(0)) {
     //     fmt::print("{0: <{2}}{1}\n", "The new number of layers",
     //                ordered_jobs_new.size(), ALIGN);
     // }
@@ -1147,7 +1148,7 @@ bool PricerSolverBdd::evaluate_nodes(std::span<const double>& pi) {
     }
 
     if (removed_edges) {
-        if (dbg_lvl() > 0) {
+        if (debug_lvl(0)) {
             fmt::print("{0: <{2}}{1}\n",
                        "Number of edges removed by evaluate "
                        "nodes",
@@ -1205,7 +1206,7 @@ bool PricerSolverBdd::evaluate_nodes(double* pi) {
     }
 
     if (removed_edges) {
-        if (dbg_lvl() > 0) {
+        if (debug_lvl(0)) {
             fmt::print("{0: <{2}}{1}\n",
                        "Number of edges removed by evaluate "
                        "nodes",
@@ -1365,7 +1366,7 @@ void PricerSolverBdd::cleanup_arcs() {
     }
 
     if (removed_edges) {
-        if (dbg_lvl() > 0) {
+        if (debug_lvl(0)) {
             fmt::print("{0: <{2}}{1}\n", "Number of edges removed by clean up",
                        nb_edges_removed_tmp, ALIGN);
             fmt::print("{0: <{2}}{1}\n", "Total number of edges removed",
@@ -1753,7 +1754,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         }
     }
 
-    if (is_integer_solution && dbg_lvl() > 1) {
+    if (is_integer_solution && debug_lvl(1)) {
         fmt::print("FOUND INTEGER SOLUTION\n\n");
     }
 
@@ -1822,7 +1823,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         // }
     }
 
-    if (is_integer_solution && dbg_lvl() > 1) {
+    if (is_integer_solution && debug_lvl(1)) {
         fmt::print("FOUND INTEGER SOLUTION\n\n");
     }
 
@@ -1906,7 +1907,7 @@ void PricerSolverBdd::split_job_time(size_t _job, int _time, bool _left) {
         cleanup_arcs();
         construct_mipgraph();
 
-        if (dbg_lvl() > 0) {
+        if (debug_lvl(0)) {
             auto&             table_bis = *(decision_diagram.getDiagram());
             ColorWriterVertex vertex_writer(mip_graph, table_bis);
             auto file_name = fmt::format("split_solution_{}_{}_{}_{}.gv",

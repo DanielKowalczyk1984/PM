@@ -61,6 +61,8 @@
 		"*.ipp": "cpp",
 		"iterator": "cpp",
 		"xlocbuf": "cpp",
-		"*.rh": "cpp"
+		"*.rh": "cpp",
+		"istream": "cpp",
+		"stop_token": "cpp"
 	}
 }
