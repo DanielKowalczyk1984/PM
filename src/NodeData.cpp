@@ -80,7 +80,7 @@ NodeData::NodeData(Problem* problem)
       nb_non_improvements(0),
       iterations(0UL),
       solver_stab(nullptr),
-      retirementage(static_cast<int>(sqrt(static_cast<double>(nb_jobs))) +
+      retirementage(static_cast<int>(sqrt(static_cast<double>(instance.nb_jobs))) +
                     CLEANUP_ITERATION),
       branch_job(),
       completiontime(0),

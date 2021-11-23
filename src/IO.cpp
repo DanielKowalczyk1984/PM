@@ -42,10 +42,9 @@ void Problem::to_csv() {
     ptr_file file{};
     auto     result = std::time(nullptr);
 
-    std::string file_name =
-        fmt::format("CG_overall_{:%Y_%m_%d}.csv", fmt::localtime(result));
-    stat.real_time_total = getRealTime() - stat.real_time_total;
+    auto file_name = fmt::format("CG_overall_{:%Y_%m_%d}.csv", fmt::localtime(result));
     CCutil_stop_timer(&(stat.tot_cputime), 0);
+    stat.real_time_total = getRealTime() - stat.real_time_total;
     auto path_file = std::filesystem::current_path() / file_name;
     std::filesystem::directory_entry tmp_entry_file{path_file};
 
@@ -77,12 +76,6 @@ void Problem::to_csv() {
             "mip_rel_gap", "mip_run_time", "mip_status", "mip_nb_iter_simplex",
             "mip_nb_nodes");
     }
-
-    // for (int i = MIP_Attr_Run_Time; i <= MIP_Attr_Nb_Nodes &&
-    // parms.mip_solver;
-    //      i++) {
-    //     pd->get_mip_statistics(static_cast<MIP_Attr>(i));
-    // }
 
     fmt::print(
         file.get(),

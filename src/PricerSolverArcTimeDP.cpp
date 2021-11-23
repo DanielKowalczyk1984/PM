@@ -26,7 +26,7 @@
 #include <range/v3/view/filter.hpp>     // for filter
 #include <range/v3/view/reverse.hpp>    // for reverse_fn, revers...
 #include <range/v3/view/take.hpp>       // for take
-#include <range/v3/view/zip.hpp>       // for zip
+#include <range/v3/view/zip.hpp>        // for zip
 #include <span>                         // for span
 #include <string>                       // for char_traits, opera...
 #include <vector>                       // for vector, vector<>::...
@@ -69,6 +69,7 @@ void PricerSolverArcTimeDp::init_table() {
 
     forward_F = vector2d_dbl(convex_constr_id + 1);
     backward_F = vector2d_dbl(convex_constr_id + 1);
+
     for (unsigned i = 0; i < convex_constr_id + 1; ++i) {
         forward_F[i] = vector1d_dbl(Hmax + 1, 0.0);
         backward_F[i] = vector1d_dbl(Hmax + 1, 0.0);

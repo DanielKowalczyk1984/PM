@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -39,13 +39,13 @@
 #include <list>                                     // for operator==, list
 #include <memory>                                   // for allocator, mak...
 #include <ostream>                                  // for operator<<
-#include <range/v3/all.hpp>
-#include <set>                   // for operator==
-#include <span>                  // for span
-#include <string>                // for char_traits
-#include <tuple>                 // for tuple, get
-#include <vector>                // for vector, _Bit_r...
-#include "CardinalityPaths.hpp"  // for CardinalityPaths
+#include <range/v3/all.hpp>                         // all range-v3 include
+#include <set>                                      // for operator==
+#include <span>                                     // for span
+#include <string>                                   // for char_traits
+#include <tuple>                                    // for tuple, get
+#include <vector>                                   // for vector, _Bit_r...
+#include "CardinalityPaths.hpp"                     // for CardinalityPaths
 #include "CglGomory.hpp"
 #include "CglZeroHalf.hpp"
 #include "Column.h"                   // for ScheduleSet
@@ -565,7 +565,8 @@ double PricerSolverBdd::compute_subgradient(const PricingSolution& sol,
     auto      rhs = -reformulation_model[convex_constr_id]->get_rhs();
     std::span aux_subgradient{sub_gradient, nb_constraints};
 
-    for (auto&& [constr, subgradient] : ranges::views::zip( reformulation_model, aux_subgradient)) {
+    for (auto&& [constr, subgradient] :
+         ranges::views::zip(reformulation_model, aux_subgradient)) {
         subgradient = constr->get_rhs();
     }
 
@@ -918,8 +919,9 @@ double PricerSolverBdd::compute_lagrange(const PricingSolution&     sol,
 
     result = std::min(0.0, result);
 
-    for (const auto&& [constr, pi_aux] : ranges::views::zip(reformulation_model, pi)) {
-        if (constr == reformulation_model[convex_constr_id] ) {
+    for (const auto&& [constr, pi_aux] :
+         ranges::views::zip(reformulation_model, pi)) {
+        if (constr == reformulation_model[convex_constr_id]) {
             continue;
         }
 
@@ -973,8 +975,9 @@ double PricerSolverBdd::compute_lagrange(const PricingSolution&         sol,
 
     result = std::min(0.0, result);
 
-    for (const auto&& [constr, pi_aux] : ranges::views::zip(reformulation_model, pi)) {
-        if (constr == reformulation_model[convex_constr_id] ) {
+    for (const auto&& [constr, pi_aux] :
+         ranges::views::zip(reformulation_model, pi)) {
+        if (constr == reformulation_model[convex_constr_id]) {
             continue;
         }
 
@@ -1716,8 +1719,8 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
     for (auto&& [x, tmp] : ranges::views::zip(lambda, columns)) {
         if (x > EPS_SOLVER) {
             // auto* tmp = columns[i].get();
-            auto  it = tmp->job_list.begin();
-            auto  tmp_nodeid(decision_diagram.root());
+            auto it = tmp->job_list.begin();
+            auto tmp_nodeid(decision_diagram.root());
 
             while (tmp_nodeid > 1) {
                 Job*  tmp_j = (it != tmp->job_list.end()) ? *it : nullptr;
@@ -1775,11 +1778,11 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
     std::span<const double> aux_cols{lambda, columns.size()};
 
     set_is_integer_solution(true);
-    for (auto&& [x, tmp] :  ranges::views::zip(aux_cols, columns)) {
+    for (auto&& [x, tmp] : ranges::views::zip(aux_cols, columns)) {
         if (x > EPS_SOLVER) {
             // auto* tmp = columns[i].get();
-            auto  it = tmp->job_list.begin();
-            auto  tmp_nodeid(decision_diagram.root());
+            auto it = tmp->job_list.begin();
+            auto tmp_nodeid(decision_diagram.root());
 
             while (tmp_nodeid > 1) {
                 Job*  tmp_j = (it != tmp->job_list.end()) ? *it : nullptr;
@@ -1906,7 +1909,8 @@ void PricerSolverBdd::split_job_time(size_t _job, int _time, bool _left) {
         if (dbg_lvl() > 0) {
             auto&             table_bis = *(decision_diagram.getDiagram());
             ColorWriterVertex vertex_writer(mip_graph, table_bis);
-            auto file_name = fmt::format("split_solution_{}_{}_{}_{}.gv",problem_name,_job,_time,_left);
+            auto file_name = fmt::format("split_solution_{}_{}_{}_{}.gv",
+                                         problem_name, _job, _time, _left);
             std::ofstream output_stream(file_name);
             boost::write_graphviz(output_stream, mip_graph, vertex_writer);
             output_stream.close();
@@ -2032,10 +2036,11 @@ std::unique_ptr<OsiSolverInterface> PricerSolverBdd::build_model() {
     rhs[convex_constr_id + terminal_node.get_key_model()] =
         -static_cast<double>(convex_rhs);
 
-    aux_model->addRows(static_cast<int>(nb_vertices + convex_constr_id), start.data(), nullptr,
-                       nullptr, rhs.data(), rhs.data());
-    aux_model->addCols(static_cast<int>(nb_edges), start_vars.data(), rows.data(), coeff.data(),
-                       rhs_lb.data(), rhs_ub.data(), cost.data());
+    aux_model->addRows(static_cast<int>(nb_vertices + convex_constr_id),
+                       start.data(), nullptr, nullptr, rhs.data(), rhs.data());
+    aux_model->addCols(static_cast<int>(nb_edges), start_vars.data(),
+                       rows.data(), coeff.data(), rhs_lb.data(), rhs_ub.data(),
+                       cost.data());
 
     return aux_model;
 }

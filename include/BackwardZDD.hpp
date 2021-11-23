@@ -158,8 +158,8 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
 
             it->backward_label[0].backward_update(&(p0->backward_label[0]));
             it->backward_label[1].backward_update(&(p0->backward_label[1]));
-            bool diff = bool_diff_Fij(weight, prev_job, tmp_j);
-            bool diff1 = bool_diff_Fij(
+            auto diff = bool_diff_Fij(weight, prev_job, tmp_j);
+            auto diff1 = bool_diff_Fij(
                 weight, p1->backward_label[0].prev_job_backward(), tmp_j);
 
             if (prev_job != tmp_j && diff) {

@@ -65,8 +65,8 @@ int value_diff_Fij(size_t C, Job* i, Job* j) {
     return val;
 }
 
-int bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) {
-    return (_prev == nullptr) ? 1
+bool bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) {
+    return (_prev == nullptr) ? true
                               : (value_diff_Fij(weight + tmp_j->processing_time,
                                                 _prev, tmp_j) >= 0);
 }

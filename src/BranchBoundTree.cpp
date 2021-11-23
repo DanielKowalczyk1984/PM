@@ -50,7 +50,7 @@ BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
             break;
     }
 
-    tree->set_global_ub(double(root->opt_sol.tw));
+    tree->set_global_ub(static_cast<double>(root->opt_sol.tw));
     tree->set_retain_states(false);
     tree->set_final_test_usage(parms.pruning_test);
     tree->set_time_limit(static_cast<int>(parms.branching_cpu_limit));

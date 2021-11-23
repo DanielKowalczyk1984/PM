@@ -112,7 +112,7 @@ Parms::Parms(int argc, const char** argv) : Parms() {
     }
 }
 
-int Parms::parms_set_scoring_function(int scoring) {
+void Parms::parms_set_scoring_function(int scoring) {
     scoring_parameter = static_cast<Scoring_Parameter>(scoring);
     switch (scoring_parameter) {
         case min_scoring_parameter:
@@ -142,8 +142,6 @@ int Parms::parms_set_scoring_function(int scoring) {
                 return ranges::max(a);
             };
     }
-
-    return 0;
 }
 
 static std::string find_match(std::string const& _instance_file) {
@@ -158,9 +156,7 @@ static std::string find_match(std::string const& _instance_file) {
     }
 }
 
-int Parms::parse_cmd(int argc, const char** argv) {
-    int val = 0;
-
+void Parms::parse_cmd(int argc, const char** argv) {
     std::span tmp_char{argv, static_cast<size_t>(argc)};
 
     auto args = docopt::docopt(
@@ -231,6 +227,4 @@ int Parms::parse_cmd(int argc, const char** argv) {
     pname = find_match(file_name);
     /** Set the number of machines */
     nb_machines = static_cast<size_t>(args["NB"].asLong());
-
-    return val;
 }

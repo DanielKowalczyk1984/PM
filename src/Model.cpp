@@ -37,11 +37,19 @@ int NodeData::add_lhs_column_to_rmp(double cost) {
     id_row.clear();
     coeff_row.clear();
 
-    for (auto const&& [j, it] : lhs_coeff | ranges::views::enumerate) {
+    // for (auto const&& [j, it] : lhs_coeff | ranges::views::enumerate) {
+    //     if (std::abs(it) > EPS_BOUND) {
+    //         id_row.emplace_back(static_cast<int>(j));
+    //         coeff_row.emplace_back(it);
+    //     }
+    // }
+
+    for (int j = 0; const auto& it : lhs_coeff) {
         if (std::abs(it) > EPS_BOUND) {
-            id_row.emplace_back(static_cast<int>(j));
+            id_row.emplace_back(j);
             coeff_row.emplace_back(it);
         }
+        j++;
     }
 
     osi_rmp->addCol(static_cast<int>(id_row.size()), id_row.data(),
@@ -119,7 +127,6 @@ void NodeData::create_artificial_cols() {
 }
 
 void NodeData::add_cols_local_pool() {
-    // lp_interface_get_nb_rows(RMP.get(), &nb_rows);
     nb_rows = osi_rmp->getNumRows();
     std::vector<double> _lhs(nb_rows);
     ranges::for_each(localColPool, [&](auto& it) {
@@ -144,7 +151,6 @@ int NodeData::build_rmp() {
     add_cols_local_pool();
     osi_rmp->initialSolve();
 
-    // pi.resize(nb_jobs + 1, 0.0);
     slack.resize(nb_jobs + 1, 0.0);
     // rhs.resize(nb_jobs + 1, 0.0);
     rhs = std::span<const double>(osi_rmp->getRightHandSide(),

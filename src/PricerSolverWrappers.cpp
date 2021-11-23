@@ -38,8 +38,6 @@ void NodeData::construct_lp_sol_from_rmp() {
     assert(nb_cols - id_pseudo_schedules ==
            static_cast<int>(localColPool.size()));
 
-    // lambda.resize(localColPool.size(), 0.0);
-    // lp_interface_x(RMP.get(), lambda.data(), id_pseudo_schedules);
     lambda = std::span<const double>{osi_rmp->getColSolution(),
                                      static_cast<size_t>(nb_cols)};
     solver->construct_lp_sol_from_rmp(lambda.subspan(id_pseudo_schedules),
