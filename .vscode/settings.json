@@ -63,6 +63,7 @@
 		"xlocbuf": "cpp",
 		"*.rh": "cpp",
 		"istream": "cpp",
-		"stop_token": "cpp"
+		"stop_token": "cpp",
+		"exception": "cpp"
 	}
 }

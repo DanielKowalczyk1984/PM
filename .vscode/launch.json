@@ -15,12 +15,25 @@
 			"name": "(Windows) Launch",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/Release/PM.exe",
+			"program": "${workspaceFolder}/build/bin/PM.exe",
 			"args": [
 				"--version"
 			],
 			"stopAtEntry": false,
 			"cwd": "${fileDirname}",
+			"environment": [],
+			"console": "integratedTerminal"
+		},
+		{
+			"name": "Launch",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "PM.exe",
+			"args": [
+				"--json","${workspaceFolder}/settings/default_settings.json", "${workspaceFolder}/instances/wt040/wt040_001.dat", "4"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceRoot}/build/Debug",
 			"environment": [],
 			"console": "integratedTerminal"
 		}
