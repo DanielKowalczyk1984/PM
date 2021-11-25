@@ -23,12 +23,12 @@
 #ifndef __PARMS_H__
 #define __PARMS_H__
 
-#include <array>  // for array
-#include <boost/timer/timer.hpp>
-#include <cstddef>     // for size_t
-#include <functional>  // for function
-#include <string>      // for allocator, string
-
+#include <array>                  // for array
+#include <boost/timer/timer.hpp>  // for boost::timer::nanosecond_type
+#include <cstddef>                // for size_t
+#include <functional>             // for function
+#include <nlohmann/json.hpp>      // for json
+#include <string>                 // for allocator, string
 
 enum BBNodeSelection {
     min_search_strategy = 0,
@@ -84,6 +84,43 @@ enum Scoring_Value {
     nb_paths_scoring_value = 2,
 };
 
+NLOHMANN_JSON_SERIALIZE_ENUM(PricingSolver,
+                             {{bdd_solver_simple, "BddForward"},
+                              {bdd_solver_cycle, "BddForwardCycle"},
+                              {bdd_solver_backward_simple, "BddBackward"},
+                              {bdd_solver_backward_cycle, "BddBackwardCycle"},
+                              {zdd_solver_simple, "ZddForward"},
+                              {zdd_solver_cycle, "ZddForwardCycle"},
+                              {zdd_solver_backward_simple, "ZddBackward"},
+                              {zdd_solver_backward_cycle, "ZddBackwardCycle"},
+                              {dp_solver, "Time-Indexed"},
+                              {ati_solver, "Arc-Time-Indexed"},
+                              {dp_bdd_solver, "Hybrid"}})
+
+NLOHMANN_JSON_SERIALIZE_ENUM(StabTechniques,
+                             {
+                                 {no_stab, "NoStabilization"},
+                                 {stab_wentgnes, "WentgnesStab"},
+                                 {stab_dynamic, "DynamicStab"},
+                                 {stab_hybrid, "HybridStab"},
+                             })
+
+NLOHMANN_JSON_SERIALIZE_ENUM(BBExploreStrategy,
+                             {{min_bb_explore_strategy, "dfs"},
+                              {bb_dfs_strategy, "dfs"},
+                              {bb_bfs_strategy, "bfs"},
+                              {bb_brfs_strategy, "brfs"},
+                              {bb_cbfs_strategy, "cbfs"}})
+
+NLOHMANN_JSON_SERIALIZE_ENUM(Scoring_Parameter,
+                             {{min_scoring_parameter, "ProductScoring"},
+                              {product_scoring_parameter, "ProductScoring"},
+                              {min_function_scoring_parameter, "MinFunction"},
+                              {max_function_scoring_parameter, "MaxFunction"},
+                              {weighted_sum_scoring_parameter, " WeightedSum"},
+                              {weighted_product_scoring_parameter,
+                               "WeightedProduct"}})
+
 struct Parms {
     enum BBExploreStrategy                              bb_explore_strategy;
     enum Scoring_Parameter                              scoring_parameter;
@@ -105,11 +142,11 @@ struct Parms {
     bool                                                suboptimal_duals;
     bool                                                reduce_cost_fixing;
     enum StabTechniques                                 stab_technique;
+    int                                                 print_csv;
 
     /**
      * column generation
      */
-    int print_csv;
 
     std::string jobfile;
     std::string pname;
@@ -125,8 +162,10 @@ struct Parms {
     Parms& operator=(Parms&&) = default;
     ~Parms() = default;
 
-    void parms_set_scoring_function(int scoring);
-    void parse_cmd(int argc, const char** argv);
+    void        parms_set_scoring_function(int scoring);
+    void        parse_cmd(int argc, const char** argv);
+    friend void from_json(const nlohmann::json& j, Parms& p);
+    friend void to_json(nlohmann::json& j, const Parms& p);
 
    private:
     static constexpr double                mu = 5.0 / 6.0;

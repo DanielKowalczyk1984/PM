@@ -24,7 +24,7 @@
 #include <docopt/docopt.h>                       // for value, docopt_parse
 #include <fmt/core.h>                            // for print
 #include <array>                                 // for array
-#include <boost/chrono/duration.hpp>             //
+#include <boost/chrono/duration.hpp>             // for duration::den
 #include <boost/timer/timer.hpp>                 // for nano_second_types
 #include <cstddef>                               // for size_t
 #include <fstream>                               // for ifstream
@@ -42,43 +42,6 @@
 
 const boost::timer::nanosecond_type TIME_LIMIT = 7200;
 const double                        ALPHA_STAB_INIT = 0.8;
-
-NLOHMANN_JSON_SERIALIZE_ENUM(PricingSolver,
-                             {{bdd_solver_simple, "BddForward"},
-                              {bdd_solver_cycle, "BddForwardCycle"},
-                              {bdd_solver_backward_simple, "BddBackward"},
-                              {bdd_solver_backward_cycle, "BddBackwardCycle"},
-                              {zdd_solver_simple, "ZddForward"},
-                              {zdd_solver_cycle, "ZddForwardCycle"},
-                              {zdd_solver_backward_simple, "ZddBackward"},
-                              {zdd_solver_backward_cycle, "ZddBackwardCycle"},
-                              {dp_solver, "Time-Indexed"},
-                              {ati_solver, "Arc-Time-Indexed"},
-                              {dp_bdd_solver, "Hybrid"}})
-
-NLOHMANN_JSON_SERIALIZE_ENUM(StabTechniques,
-                             {
-                                 {no_stab, "NoStabilization"},
-                                 {stab_wentgnes, "WentgnesStab"},
-                                 {stab_dynamic, "DynamicStab"},
-                                 {stab_hybrid, "HybridStab"},
-                             })
-
-NLOHMANN_JSON_SERIALIZE_ENUM(BBExploreStrategy,
-                             {{min_bb_explore_strategy, "dfs"},
-                              {bb_dfs_strategy, "dfs"},
-                              {bb_bfs_strategy, "bfs"},
-                              {bb_brfs_strategy, "brfs"},
-                              {bb_cbfs_strategy, "cbfs"}})
-
-NLOHMANN_JSON_SERIALIZE_ENUM(Scoring_Parameter,
-                             {{min_scoring_parameter, "ProductScoring"},
-                              {product_scoring_parameter, "ProductScoring"},
-                              {min_function_scoring_parameter, "MinFunction"},
-                              {max_function_scoring_parameter, "MaxFunction"},
-                              {weighted_sum_scoring_parameter, " WeightedSum"},
-                              {weighted_product_scoring_parameter,
-                               "WeightedProduct"}})
 
 Parms::Parms()
     : bb_explore_strategy(min_bb_explore_strategy),
@@ -160,6 +123,53 @@ static std::string find_match(std::string const& _instance_file) {
     }
 }
 
+void to_json(nlohmann::json& j, const Parms& p) {
+    j = nlohmann::json{{"bb_explore_strategy", p.bb_explore_strategy},
+                       {"scoring_parameter", p.scoring_parameter},
+                       {"scoring_value", p.scoring_value},
+                       {"strong_branching", p.strong_branching},
+                       {"bb_node_limit", p.bb_node_limit},
+                       {"nb_iterations_rvnd", p.nb_iterations_rvnd},
+                       {"branching_cpu_limit", p.branching_cpu_limit},
+                       {"use_cpu_time", p.use_cpu_time},
+                       {"alpha", p.alpha},
+                       {"branching_point", p.branching_point},
+                       {"pricing_solver", p.pricing_solver},
+                       {"use_heuristic", p.use_heuristic},
+                       {"use_mip_solver", p.use_mip_solver},
+                       {"refine_bdd", p.refine_bdd},
+                       {"enumerate", p.enumerate},
+                       {"pruning_test", p.pruning_test},
+                       {"suboptimal_duals", p.suboptimal_duals},
+                       {"reduce_cost_fixing", p.reduce_cost_fixing},
+                       {"stab_technique", p.stab_technique},
+                       {"print_csv", p.print_csv}};
+}
+
+void from_json(const nlohmann::json& j, Parms& p) {
+    j.at("bb_explore_strategy").get_to(p.bb_explore_strategy);
+    j.at("scoring_parameter").get_to(p.scoring_parameter);
+    j.at("scoring_value").get_to(p.scoring_value);
+    j.at("strong_branching").get_to(p.strong_branching);
+    j.at("bb_node_limit").get_to(p.bb_node_limit);
+    j.at("nb_iterations_rvnd").get_to(p.nb_iterations_rvnd);
+    j.at("branching_cpu_limit").get_to(p.branching_cpu_limit);
+    p.branching_cpu_limit *= boost::chrono::nanoseconds::period::den;
+    j.at("use_cpu_time").get_to(p.use_cpu_time);
+    j.at("alpha").get_to(p.alpha);
+    j.at("branching_point").get_to(p.branching_point);
+    j.at("pricing_solver").get_to(p.pricing_solver);
+    j.at("use_heuristic").get_to(p.use_heuristic);
+    j.at("use_mip_solver").get_to(p.use_mip_solver);
+    j.at("refine_bdd").get_to(p.refine_bdd);
+    j.at("enumerate").get_to(p.enumerate);
+    j.at("pruning_test").get_to(p.pruning_test);
+    j.at("suboptimal_duals").get_to(p.suboptimal_duals);
+    j.at("reduce_cost_fixing").get_to(p.reduce_cost_fixing);
+    j.at("stab_technique").get_to(p.stab_technique);
+    j.at("print_csv").get_to(p.print_csv);
+}
+
 void Parms::parse_cmd(int argc, const char** argv) {
     std::span tmp_char{argv, static_cast<size_t>(argc)};
 
@@ -172,23 +182,40 @@ void Parms::parse_cmd(int argc, const char** argv) {
         true, "PM 0.1");
 
     if (!args["--json"].asBool()) {
+        /**
+         * @brief
+         * All integer parameters
+         */
         bb_node_limit = static_cast<int>(args["--node_limit"].asLong());
         branching_cpu_limit = static_cast<boost::timer::nanosecond_type>(
-            args["--cpu_limit"].asLong());
+                                  args["--cpu_limit"].asLong()) *
+                              boost::chrono::nanoseconds::period::den;
         nb_iterations_rvnd = static_cast<int>(args["--nb_rvnb_it"].asLong());
-        pricing_solver =
-            static_cast<PricingSolver>(args["--pricing_solver"].asLong());
         strong_branching =
             static_cast<int>(args["--strong_branching"].asLong());
 
+        /**
+         * @brief
+         * All the enumeration variables
+         */
+        pricing_solver =
+            static_cast<PricingSolver>(args["--pricing_solver"].asLong());
         bb_explore_strategy = static_cast<BBExploreStrategy>(
             static_cast<int>(args["--branching_strategy"].asLong()));
         stab_technique = static_cast<StabTechniques>(
             static_cast<int>(args["--stab_method"].asLong()));
 
+        /**
+         * @brief
+         * All the double parameters
+         */
         alpha = std::stod(args["--alpha"].asString());
         branching_point = std::stod(args["--branching_point"].asString());
 
+        /**
+         * @brief all the bool parameters
+         *
+         */
         reduce_cost_fixing = !(args["--no_rc_fixing"].asBool());
         enumerate = args["--enumerate"].asBool();
         print_csv = args["--print_csv"].asBool();
@@ -197,6 +224,7 @@ void Parms::parse_cmd(int argc, const char** argv) {
         suboptimal_duals = args["--suboptimal_duals"].asBool();
         use_heuristic = !(args["--no_heuristic"].asBool());
         use_mip_solver = args["--use_mip_solver"].asBool();
+
         parms_set_scoring_function(
             static_cast<int>(args["--scoring_function"].asLong()));
 
@@ -204,27 +232,8 @@ void Parms::parse_cmd(int argc, const char** argv) {
         nlohmann::json j;
         std::ifstream  file(args["<json_file>"].asString());
         file >> j;
-        j.at("bb_explore_strategy").get_to(bb_explore_strategy);
-        j.at("scoring_parameter").get_to(scoring_parameter);
-        j.at("scoring_value").get_to(scoring_value);
-        j.at("strong_branching").get_to(strong_branching);
-        j.at("bb_node_limit").get_to(bb_node_limit);
-        j.at("nb_iterations_rvnd").get_to(nb_iterations_rvnd);
-        j.at("branching_cpu_limit").get_to(branching_cpu_limit);
-        j.at("use_cpu_time").get_to(use_cpu_time);
-        j.at("alpha").get_to(alpha);
-        j.at("branching_point").get_to(branching_point);
-        j.at("pricing_solver").get_to(pricing_solver);
-        j.at("use_heuristic").get_to(use_heuristic);
-        j.at("use_mip_solver").get_to(use_mip_solver);
-        j.at("refine_bdd").get_to(refine_bdd);
-        j.at("enumerate").get_to(enumerate);
-        j.at("pruning_test").get_to(pruning_test);
-        j.at("suboptimal_duals").get_to(suboptimal_duals);
-        j.at("reduce_cost_fixing").get_to(reduce_cost_fixing);
-        j.at("stab_technique").get_to(stab_technique);
-        j.at("print_csv").get_to(print_csv);
-        
+        *this = j.get<Parms>();
+
         auto aux_dbg = -1;
         j.at("debug_lvl").get_to(aux_dbg);
         set_debug_lvl(aux_dbg);
