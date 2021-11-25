@@ -129,12 +129,10 @@ else()
   endif()
 endif()
 
-set_target_properties(
-  ${PROJECT_NAME}
-  PROPERTIES ARCHIVE_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/lib>
-             LIBRARY_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/lib>
-             RUNTIME_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/bin>
-)
+# set_target_properties( ${PROJECT_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY
+# $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/> LIBRARY_OUTPUT_DIRECTORY
+# $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/lib> RUNTIME_OUTPUT_DIRECTORY
+# $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/bin> )
 
 if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
   set_target_properties(
@@ -169,15 +167,7 @@ verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.")
 # Identify and link with the specific "packages" the project uses find_package(package_name
 # package_version REQUIRED package_type [other_options])
 find_package(fmt CONFIG REQUIRED)
-find_package(
-  Boost REQUIRED
-  COMPONENTS atomic
-             chrono
-             timer
-             random
-             regex
-             serialization
-)
+find_package(Boost REQUIRED COMPONENTS atomic chrono timer random regex serialization)
 find_package(docopt CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -187,11 +177,11 @@ include(cmake/SetUpOsi.cmake)
 
 target_link_libraries(
   ${PROJECT_NAME}
-  PRIVATE $<IF:$<CONFIG:Debug>,${GUROBI_CXX_DEBUG_LIBRARY},${GUROBI_CXX_LIBRARY}>
-          $<IF:$<CONFIG:Debug>,${OSI_LIBRARY_DEBUG},${OSI_LIBRARY}>
-          $<IF:$<CONFIG:Debug>,${OSIGRB_LIBRARY_DEBUG},${OSIGRB_LIBRARY}>
-          $<IF:$<CONFIG:Debug>,${COINUTILS_LIBRARY_DEBUG},${COINUTILS_LIBRARY}>
-          $<IF:$<CONFIG:Debug>,${CGL_LIBRARY_DEBUG},${CGL_LIBRARY}>
+  PRIVATE $<IF:$<CONFIG:DEBUG>,${GUROBI_CXX_DEBUG_LIBRARY},${GUROBI_CXX_LIBRARY}>
+          $<IF:$<CONFIG:DEBUG>,${OSI_LIBRARY_DEBUG},${OSI_LIBRARY}>
+          $<IF:$<CONFIG:DEBUG>,${OSIGRB_LIBRARY_DEBUG},${OSIGRB_LIBRARY}>
+          $<IF:$<CONFIG:DEBUG>,${COINUTILS_LIBRARY_DEBUG},${COINUTILS_LIBRARY}>
+          $<IF:$<CONFIG:DEBUG>,${CGL_LIBRARY_DEBUG},${CGL_LIBRARY}>
           $<$<LINK_LANG_AND_ID:CXX,GNU>:docopt_s>
           $<$<LINK_LANG_AND_ID:CXX,MSVC>:docopt>
           fmt::fmt
@@ -300,7 +290,6 @@ verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 # Format the project using the `clang-format` target (i.e: cmake --build build --target
 # clang-format)
 #
-
 
 include(cmake/CPM.cmake)
 CPMAddPackage(
