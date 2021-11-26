@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -22,14 +22,16 @@
 
 #ifndef __INSTANCE_H__
 #define __INSTANCE_H__
-#include <chrono>      // for filesystem
-#include <cstddef>     // for size_t
-#include <exception>   // for exception
-#include <filesystem>  // for path
-#include <limits>      // for numeric_limits
-#include <memory>      // for shared_ptr
-#include <utility>     // for pair
-#include <vector>      // for vector
+#include <fmt/format.h>  // for format
+#include <chrono>        // for filesystem
+#include <cstddef>       // for size_t
+#include <exception>     // for exception
+#include <filesystem>    // for path
+#include <limits>        // for numeric_limits
+#include <memory>        // for shared_ptr
+#include <string>        // for string
+#include <utility>       // for pair
+#include <vector>        // for vector
 struct Interval;
 struct Job;
 struct Parms;
@@ -37,23 +39,23 @@ struct Parms;
 namespace fs = std::filesystem;
 
 struct Instance {
-    fs::path                               path_to_instance{};
-    std::vector<std::shared_ptr<Job>>      jobs;
-    std::vector<std::shared_ptr<Interval>> intervals;
-
+    fs::path                                path_to_instance{};
+    std::vector<std::shared_ptr<Job>>       jobs;
+    std::vector<std::shared_ptr<Interval>>  intervals;
     std::vector<std::pair<Job*, Interval*>> vector_pair;
 
     /** Summary of jobs */
-    size_t nb_jobs{};
-    size_t nb_machines{};
-    int    p_sum{};
-    int    pmax{};
-    int    pmin{std::numeric_limits<int>::max()};
-    int    dmax{};
-    int    dmin{std::numeric_limits<int>::max()};
-    int    H_min{};
-    int    H_max{};
-    int    off{};
+    std::string pname;
+    size_t      nb_jobs{};
+    size_t      nb_machines{};
+    int         p_sum{};
+    int         pmax{};
+    int         pmin{std::numeric_limits<int>::max()};
+    int         dmax{};
+    int         dmin{std::numeric_limits<int>::max()};
+    int         H_min{};
+    int         H_max{};
+    int         off{};
 
     Instance(Parms const& _parms);
 
@@ -62,6 +64,7 @@ struct Instance {
     Instance& operator=(Instance&&) = delete;
     Instance(Instance&&) = default;
     ~Instance() = default;
+
     class InstanceException : public std::exception {
        public:
         InstanceException(const char* const msg = nullptr) : errmsg(msg) {}
@@ -79,4 +82,21 @@ struct Instance {
     void find_division();
 };
 
+template <>
+struct fmt::formatter<Instance> {
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        auto it = ctx.begin(), end = ctx.end();
+
+        if (it != end && *it != '}')
+            throw format_error("invalid format");
+
+        return it;
+    }
+
+    template <typename FormatContext>
+    auto format(const Instance& inst, FormatContext& ctx)
+        -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{},{},{}", inst.nb_jobs, inst.nb_machines,inst.pname);
+    }
+};
 #endif  // __INSTANCE_H__

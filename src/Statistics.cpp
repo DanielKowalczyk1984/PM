@@ -175,7 +175,7 @@ boost::timer::nanosecond_type Statistics::total_time_nano_sec(TimerType _type) {
 }
 
 std::string Statistics::total_time_str(TimerType          _type,
-                                   short              precision) {
+                                   short              precision) const {
     switch (_type) {
         case build_dd_timer:
             return time_build_dd.str_sec(precision);
@@ -198,3 +198,4 @@ std::string Statistics::total_time_str(TimerType          _type,
     }
     return "";
 }
+

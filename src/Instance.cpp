@@ -44,6 +44,7 @@
 
 Instance::Instance(Parms const& _parms)
     : path_to_instance(_parms.jobfile),
+      pname(_parms.pname),
       nb_machines(_parms.nb_machines) {
     std::ifstream in_file{path_to_instance};
 
@@ -91,9 +92,8 @@ void Instance::calculate_H_max_H_min() {
     H_max = static_cast<int>(temp_dbl) + pmax;
     H_min = static_cast<int>(std::ceil(temp_dbl / tmp_m)) - pmax;
 
-    ranges::sort(jobs, std::less{}, [](const auto& lhs) {
-        return lhs->processing_time;
-    });
+    ranges::sort(jobs, std::less{},
+                 [](const auto& lhs) { return lhs->processing_time; });
 
     H_min = p_sum;
     auto tmp = ranges::accumulate(
@@ -106,7 +106,7 @@ void Instance::calculate_H_max_H_min() {
 )",
         H_max, H_min, pmax, pmin, p_sum, off);
 
-    auto projection = [](const std::shared_ptr<Job>& x)  {
+    auto projection = [](const std::shared_ptr<Job>& x) {
         return std::tie(x->due_time, x->processing_time, x->weight, x->job);
     };
     ranges::sort(jobs, std::less<>{}, projection);

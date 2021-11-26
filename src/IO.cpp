@@ -63,47 +63,29 @@ void Problem::to_csv() {
             file.get(),
             R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
 )",
-            "NameInstance", "n", "m", "tot_real_time", stat.time_total.name(),
-            stat.time_branch_and_bound.name(), stat.time_lb.name(), stat.time_lb_root.name(),
-            stat.time_heuristic.name(), stat.time_build_dd.name(), stat.time_pricing.name(),
+            "n", "m", "NameInstance", "tot_real_time", stat.time_total.name(),
+            stat.time_branch_and_bound.name(), stat.time_lb.name(),
+            stat.time_lb_root.name(), stat.time_heuristic.name(),
+            stat.time_build_dd.name(), stat.time_pricing.name(),
             stat.time_rc_fixing.name(), "rel_error", "global_lower_bound",
             "global_upper_bound", "first_rel_error", "global_upper_bound_root",
             "global_lowerbound_root", "nb_generated_col",
-            "nb_generated_col_root", "nb_nodes_explored", "date",
-            "nb_iterations_rvnd", "stabilization", "alpha", "pricing_solver",
-            "first_size_graph", "size_after_reduced_cost", "strong_branching",
-            "branching_point", "refinement", "pruning_test", "suboptimal_duals",
-            "scoring_parameter", "scoring_value", "mip_nb_vars",
-            "mip_nb_constr", "mip_obj_bound", "mip_obj_bound_lp", "mip_rel_gap",
-            "mip_run_time", "mip_status", "mip_nb_iter_simplex",
-            "mip_nb_nodes", "use_cpu_time");
+            "nb_generated_col_root", "first_size_graph",
+            "size_after_reduced_cost", "mip_nb_vars", "mip_nb_constr",
+            "mip_obj_bound", "mip_obj_bound_lp", "mip_rel_gap", "mip_run_time",
+            "mip_status", "mip_nb_iter_simplex", "mip_nb_nodes",
+            "nb_nodes_explored", "date", "nb_iterations_rvnd", "stabilization",
+            "alpha", "pricing_solver", "strong_branching", "branching_point",
+            "refinement", "pruning_test", "suboptimal_duals",
+            "scoring_parameter", "scoring_value", "use_cpu_time");
     }
 
-    fmt::print(
-        file.get(),
-        R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{:%y/%m/%d},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
+    fmt::print(file.get(),
+               R"({},{},{},{:%y/%m/%d},{}
 )",
-        stat.pname, instance.nb_jobs, instance.nb_machines,
-        stat.real_time_total,
-        stat.total_time_str(Statistics::cputime_timer, 5),
-        stat.total_time_str(Statistics::bb_timer, 5),
-        stat.total_time_str(Statistics::lb_timer,5),
-        stat.total_time_str(Statistics::lb_root_timer, 5),
-        stat.total_time_str(Statistics::heuristic_timer, 5),
-        stat.total_time_str(Statistics::build_dd_timer, 5),
-        stat.total_time_str(Statistics::pricing_timer, 5),
-        stat.total_time_str(Statistics::reduced_cost_fixing_timer,5), stat.rel_error,
-        stat.global_lower_bound, stat.global_upper_bound, stat.root_rel_error,
-        stat.root_upper_bound, stat.root_lower_bound, stat.nb_generated_col,
-        stat.nb_generated_col_root, tree->get_nb_nodes_explored(),
-        fmt::localtime(result), parms.nb_iterations_rvnd, parms.stab_technique,
-        parms.alpha, parms.pricing_solver, stat.first_size_graph,
-        stat.size_graph_after_reduced_cost_fixing, parms.strong_branching,
-        parms.branching_point, parms.refine_bdd, parms.pruning_test,
-        parms.suboptimal_duals, parms.scoring_parameter, parms.scoring_value,
-        stat.mip_nb_vars, stat.mip_nb_constr, stat.mip_obj_bound,
-        stat.mip_obj_bound_lp, stat.mip_rel_gap, stat.mip_run_time,
-        stat.mip_status, stat.mip_nb_iter_simplex, stat.mip_nb_nodes,parms.use_cpu_time);
+               fmt::format("{}", instance), fmt::format("{}", stat),
+               tree->get_nb_nodes_explored(), fmt::localtime(result),
+               fmt::format("{}", parms));
 }
 
 int Problem::to_screen() {
@@ -143,6 +125,7 @@ int Problem::to_screen() {
         stat.total_time_str(Statistics::lb_timer, 2),
         stat.total_time_str(Statistics::lb_timer, 2),
         stat.total_time_str(Statistics::pricing_timer, 2),
-        stat.total_time_str(Statistics::build_dd_timer, 2), stat.real_time_total);
+        stat.total_time_str(Statistics::build_dd_timer, 2),
+        stat.real_time_total);
     return val;
 }

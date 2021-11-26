@@ -25,6 +25,7 @@
 
 #include <array>                  // for array
 #include <boost/timer/timer.hpp>  // for boost::timer::nanosecond_type
+#include <fmt/format.h>
 #include <cstddef>                // for size_t
 #include <functional>             // for function
 #include <nlohmann/json.hpp>      // for json
@@ -147,12 +148,12 @@ struct Parms {
     /**
      * column generation
      */
-
     std::string jobfile;
     std::string pname;
 
     int    nb_jobs;
     size_t nb_machines;
+
     Parms();
     Parms(int argc, const char** argv);
 
@@ -172,6 +173,36 @@ struct Parms {
     static constexpr std::array<double, 2> beta = {1.5, 0.5};
     static constexpr double                TargetBrTimeValue = 0.45;
     static constexpr auto                  EPS = 1e-6;
+};
+
+template <> struct fmt::formatter<Parms> {
+  constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+    auto it = ctx.begin(), end = ctx.end();
+
+    if (it != end && *it != '}')
+      throw format_error("invalid format");
+
+    return it;
+  }
+
+  template <typename FormatContext>
+  auto format(const Parms& parms, FormatContext& ctx) -> decltype(ctx.out()) {
+    return format_to(
+        ctx.out(),
+        "{},{},{},{},{},{},{},{},{},{},{},{}",
+        parms.nb_iterations_rvnd,
+        parms.stab_technique,
+        parms.alpha,
+        parms.pricing_solver,
+        parms.strong_branching,
+        parms.branching_point,
+        parms.refine_bdd,
+        parms.pruning_test,
+        parms.suboptimal_duals,
+        parms.scoring_parameter,
+        parms.scoring_value,
+        parms.use_cpu_time);
+  }
 };
 
 #endif  // __PARMS_H__

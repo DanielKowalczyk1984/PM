@@ -23,11 +23,12 @@
 #ifndef __STATISTICS_H__
 #define __STATISTICS_H__
 
-#include <boost/chrono/duration.hpp>
-#include <boost/timer/timer.hpp>  // for cpu_timer
-#include <cstddef>                // for size_t
-#include <string>                 // for string
-#include "orutils/util.h"         // for CCutil_timer
+#include <fmt/format.h>               // for format
+#include <boost/chrono/duration.hpp>  // for den
+#include <boost/timer/timer.hpp>      // for cpu_timer
+#include <cstddef>                    // for size_t
+#include <string>                     // for string
+#include "orutils/util.h"             // for CCutil_timer
 struct Parms;
 
 class Timer : public boost::timer::cpu_timer {
@@ -49,8 +50,7 @@ class Timer : public boost::timer::cpu_timer {
         this->elapsed().clear();
     };
 
-    Timer(const std::string& name_ = "timer",
-          bool          type = false)
+    Timer(const std::string& name_ = "timer", bool type = false)
         : boost::timer::cpu_timer{},
           _name(name_),
           _type(type ? cpu_time : wall_time) {
@@ -161,12 +161,48 @@ struct Statistics {
     void start_resume_timer(TimerType _type);
     void suspend_timer(TimerType _type);
 
-    double                        total_time_dbl(TimerType _type);
-    std::string                   total_time_str(TimerType          _type,
-                                                 short              precision);
+    double      total_time_dbl(TimerType _type);
+    std::string total_time_str(TimerType _type, short precision) const;
     boost::timer::nanosecond_type total_time_nano_sec(TimerType _type);
 
     Statistics(const Parms& parms);
+};
+
+template <>
+struct fmt::formatter<Statistics> {
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        auto it = ctx.begin(), end = ctx.end();
+
+        if (it != end && *it != '}')
+            throw format_error("invalid format");
+
+        return it;
+    }
+
+    template <typename FormatContext>
+    auto format(const Statistics& stat, FormatContext& ctx)
+        -> decltype(ctx.out()) {
+        return format_to(
+            ctx.out(),
+            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}"
+            ",{},{},{},{},{},{}",
+            stat.real_time_total,
+            stat.total_time_str(Statistics::cputime_timer, 5),
+            stat.total_time_str(Statistics::bb_timer, 5),
+            stat.total_time_str(Statistics::lb_timer, 5),
+            stat.total_time_str(Statistics::lb_root_timer, 5),
+            stat.total_time_str(Statistics::heuristic_timer, 5),
+            stat.total_time_str(Statistics::build_dd_timer, 5),
+            stat.total_time_str(Statistics::pricing_timer, 5),
+            stat.total_time_str(Statistics::reduced_cost_fixing_timer, 5),
+            stat.rel_error, stat.global_lower_bound, stat.global_upper_bound,
+            stat.root_rel_error, stat.root_upper_bound, stat.root_lower_bound,
+            stat.nb_generated_col, stat.nb_generated_col_root,
+            stat.first_size_graph, stat.size_graph_after_reduced_cost_fixing,
+            stat.mip_nb_vars, stat.mip_nb_constr, stat.mip_obj_bound,
+            stat.mip_obj_bound_lp, stat.mip_rel_gap, stat.mip_run_time,
+            stat.mip_status, stat.mip_nb_iter_simplex, stat.mip_nb_nodes);
+    };
 };
 
 #endif  // __STATISTICS_H__

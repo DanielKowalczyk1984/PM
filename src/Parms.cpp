@@ -23,6 +23,7 @@
 #include "Parms.h"
 #include <docopt/docopt.h>                       // for value, docopt_parse
 #include <fmt/core.h>                            // for print
+#include <fmt/format.h>                          // for format
 #include <array>                                 // for array
 #include <boost/chrono/duration.hpp>             // for duration::den
 #include <boost/timer/timer.hpp>                 // for nano_second_types
@@ -247,3 +248,5 @@ void Parms::parse_cmd(int argc, const char** argv) {
     /** Set the number of machines */
     nb_machines = static_cast<size_t>(args["NB"].asLong());
 }
+
+
