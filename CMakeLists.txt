@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
+set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg-custom-ports" )
+
 #
 # Project details
 #
