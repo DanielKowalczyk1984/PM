@@ -64,6 +64,8 @@
 		"*.rh": "cpp",
 		"istream": "cpp",
 		"stop_token": "cpp",
-		"exception": "cpp"
+		"exception": "cpp",
+		"locale": "cpp",
+		"xlocale": "cpp"
 	}
 }
