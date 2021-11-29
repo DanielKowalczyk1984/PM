@@ -35,7 +35,7 @@ BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
                                  int                       _probType,
                                  bool                      _isIntProb) {
     auto& parms = root->parms;
-    switch (parms.bb_explore_strategy) {
+    switch (parms.bb_explore_strategy.value()) {
         case min_bb_explore_strategy:
             tree = std::make_unique<DFSTree>(_probType, _isIntProb);
             break;
@@ -52,10 +52,10 @@ BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
 
     tree->set_global_ub(static_cast<double>(root->opt_sol.tw));
     tree->set_retain_states(false);
-    tree->set_final_test_usage(parms.pruning_test);
-    tree->set_time_limit(parms.branching_cpu_limit);
-    tree->set_node_limit(parms.bb_node_limit);
-    tree->set_only_root_node(parms.bb_node_limit == 1);
+    tree->set_final_test_usage(parms.pruning_test.value());
+    tree->set_time_limit(parms.branching_cpu_limit.value());
+    tree->set_node_limit(parms.bb_node_limit.value());
+    tree->set_only_root_node(parms.bb_node_limit.value() == 1);
     auto aux = root->depth;
     auto node = std::make_unique<BranchNodeBase>(std::move(root), true);
     node->set_depth(aux);

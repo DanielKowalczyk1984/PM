@@ -37,7 +37,7 @@ int NodeData::solve_pricing() {
     solver_stab->solve(LP_lower_bound_BB, lhs_coeff.data());
 
     if (solver_stab->get_update_stab_center()) {
-        if (solver_stab->do_reduced_cost_fixing() && parms.reduce_cost_fixing) {
+        if (solver_stab->do_reduced_cost_fixing() && parms.reduce_cost_fixing.value()) {
             stat.start_resume_timer(Statistics::reduced_cost_fixing_timer);
             if (solver_stab->reduced_cost_fixing()) {
                 delete_infeasible_columns();

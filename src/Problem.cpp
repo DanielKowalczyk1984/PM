@@ -57,7 +57,7 @@ Problem::Problem(int argc, const char** argv)
      *feasible solutions
      */
     stat.start_resume_timer(Statistics::heuristic_timer);
-    if (parms.use_heuristic) {
+    if (parms.use_heuristic.value()) {
         heuristic();
     } else {
         Sol best_sol(instance);
@@ -76,7 +76,7 @@ Problem::Problem(int argc, const char** argv)
      *
      */
     stat.start_resume_timer(Statistics::build_dd_timer);
-    switch (parms.pricing_solver) {
+    switch (parms.pricing_solver.value()) {
         case bdd_solver_simple:
             root_pd->solver = std::make_unique<PricerSolverBddSimple>(instance);
             break;
@@ -127,7 +127,7 @@ Problem::Problem(int argc, const char** argv)
      *
      */
     auto* tmp_solver = root_pd->solver.get();
-    switch (parms.stab_technique) {
+    switch (parms.stab_technique.value()) {
         case stab_wentgnes:
             root_pd->solver_stab = std::make_unique<PricingStabilizationStat>(
                 tmp_solver, root_pd->pi);
@@ -152,7 +152,7 @@ Problem::Problem(int argc, const char** argv)
     }
 
     root_pd->solver->update_UB(opt_sol.tw);
-    root_pd->solver_stab->set_alpha(parms.alpha);
+    root_pd->solver_stab->set_alpha(parms.alpha.value());
     root_pd->upper_bound = opt_sol.tw;
     stat.root_upper_bound = opt_sol.tw + instance.off;
     stat.global_upper_bound = opt_sol.tw + instance.off;
@@ -161,7 +161,7 @@ Problem::Problem(int argc, const char** argv)
      * @brief Initialization of the B&B tree
      *
      */
-    if (!parms.use_mip_solver) {
+    if (!parms.use_mip_solver.value()) {
         stat.start_resume_timer(Statistics::bb_timer);
         tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
         tree->explore();
@@ -183,21 +183,21 @@ Problem::Problem(int argc, const char** argv)
         // set_lb(pd->lower_bound);
         // set_obj_value(pd->LP_lower_bound);
     }
-    if (parms.print_csv) {
+    if (parms.print_csv.value()) {
         to_csv();
     }
 }
 
 void Problem::solve() {
     tree->explore();
-    if (parms.print_csv) {
+    if (parms.print_csv.value()) {
         to_csv();
     }
 }
 
 void Problem::heuristic() {
     // auto                         ILS = instance.nb_jobs / 2;
-    auto IR = static_cast<size_t>(parms.nb_iterations_rvnd);
+    auto IR = static_cast<size_t>(parms.nb_iterations_rvnd.value());
     boost::timer::auto_cpu_timer timer_heuristic;
 
     Sol best_sol{instance};

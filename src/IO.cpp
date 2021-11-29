@@ -59,33 +59,17 @@ void Problem::to_csv() {
                             __FILE__, __LINE__)
                     .c_str());
         }
-        fmt::print(
-            file.get(),
-            R"({},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}
+        fmt::print(file.get(),
+                   R"({:n},{:n},{},{},{:n}
 )",
-            "n", "m", "NameInstance", "tot_real_time", stat.time_total.name(),
-            stat.time_branch_and_bound.name(), stat.time_lb.name(),
-            stat.time_lb_root.name(), stat.time_heuristic.name(),
-            stat.time_build_dd.name(), stat.time_pricing.name(),
-            stat.time_rc_fixing.name(), "rel_error", "global_lower_bound",
-            "global_upper_bound", "first_rel_error", "global_upper_bound_root",
-            "global_lowerbound_root", "nb_generated_col",
-            "nb_generated_col_root", "first_size_graph",
-            "size_after_reduced_cost", "mip_nb_vars", "mip_nb_constr",
-            "mip_obj_bound", "mip_obj_bound_lp", "mip_rel_gap", "mip_run_time",
-            "mip_status", "mip_nb_iter_simplex", "mip_nb_nodes",
-            "nb_nodes_explored", "date", "nb_iterations_rvnd", "stabilization",
-            "alpha", "pricing_solver", "strong_branching", "branching_point",
-            "refinement", "pruning_test", "suboptimal_duals",
-            "scoring_parameter", "scoring_value", "use_cpu_time");
+                   instance, stat, "nb_nodes_explored", "date", parms);
     }
 
     fmt::print(file.get(),
-               R"({},{},{},{:%y/%m/%d},{}
+               R"({},{},{},{:%Y-%m-%d},{:v}
 )",
-               fmt::format("{}", instance), fmt::format("{}", stat),
-               tree->get_nb_nodes_explored(), fmt::localtime(result),
-               fmt::format("{}", parms));
+               instance, stat, tree->get_nb_nodes_explored(),
+               fmt::localtime(result), parms);
 }
 
 int Problem::to_screen() {

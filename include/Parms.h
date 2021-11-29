@@ -23,9 +23,9 @@
 #ifndef __PARMS_H__
 #define __PARMS_H__
 
+#include <fmt/format.h>
 #include <array>                  // for array
 #include <boost/timer/timer.hpp>  // for boost::timer::nanosecond_type
-#include <fmt/format.h>
 #include <cstddef>                // for size_t
 #include <functional>             // for function
 #include <nlohmann/json.hpp>      // for json
@@ -123,27 +123,45 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Scoring_Parameter,
                                "WeightedProduct"}})
 
 struct Parms {
-    enum BBExploreStrategy                              bb_explore_strategy;
-    enum Scoring_Parameter                              scoring_parameter;
-    enum Scoring_Value                                  scoring_value;
-    int                                                 strong_branching;
-    int                                                 bb_node_limit;
-    int                                                 nb_iterations_rvnd;
-    boost::timer::nanosecond_type                       branching_cpu_limit;
-    bool                                                use_cpu_time;
-    double                                              alpha;
-    double                                              branching_point;
-    enum PricingSolver                                  pricing_solver;
-    int                                                 use_heuristic;
+    template <typename T>
+    class Parameter {
+        std::string _name;
+        T           _value;
+
+       public:
+        Parameter(const std::string name, const T& value)
+            : _name(name),
+              _value(value) {}
+
+        inline const T&    value() const { return _value; }
+        inline T&          value() { return _value; }
+        const std::string& name() const { return _name; }
+        std::string&       name() { return _name; }
+
+        void set_value(const T& value) { _value = value; }
+    };
+
+    Parameter<BBExploreStrategy>                        bb_explore_strategy;
+    Parameter<StabTechniques>                           stab_technique;
+    Parameter<PricingSolver>                            pricing_solver;
+    Parameter<Scoring_Parameter>                        scoring_parameter;
+    Parameter<Scoring_Value>                            scoring_value;
+    Parameter<int>                                      strong_branching;
+    Parameter<int>                                      bb_node_limit;
+    Parameter<int>                                      nb_iterations_rvnd;
+    Parameter<boost::timer::nanosecond_type>            branching_cpu_limit;
+    Parameter<bool>                                     use_cpu_time;
+    Parameter<double>                                   alpha;
+    Parameter<double>                                   branching_point;
+    Parameter<bool>                                     use_heuristic;
     std::function<double(const std::array<double, 2>&)> scoring_function;
-    bool                                                use_mip_solver;
-    bool                                                refine_bdd;
-    bool                                                enumerate;
-    bool                                                pruning_test;
-    bool                                                suboptimal_duals;
-    bool                                                reduce_cost_fixing;
-    enum StabTechniques                                 stab_technique;
-    int                                                 print_csv;
+    Parameter<bool>                                     use_mip_solver;
+    Parameter<bool>                                     refine_bdd;
+    Parameter<bool>                                     enumerate;
+    Parameter<bool>                                     pruning_test;
+    Parameter<bool>                                     suboptimal_duals;
+    Parameter<bool>                                     reduce_cost_fixing;
+    Parameter<bool>                                     print_csv;
 
     /**
      * column generation
@@ -175,34 +193,62 @@ struct Parms {
     static constexpr auto                  EPS = 1e-6;
 };
 
-template <> struct fmt::formatter<Parms> {
-  constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-    auto it = ctx.begin(), end = ctx.end();
+template <typename T>
+struct fmt::formatter<Parms::Parameter<T>> {
+    char presentation = 'v';
 
-    if (it != end && *it != '}')
-      throw format_error("invalid format");
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        auto it = ctx.begin(), end = ctx.end();
+        if (it != end && (*it == 'v' || *it == 'n'))
+            presentation = *it++;
 
-    return it;
-  }
+        // Check if reached the end of the range:
+        if (it != end && *it != '}')
+            throw format_error("invalid format");
 
-  template <typename FormatContext>
-  auto format(const Parms& parms, FormatContext& ctx) -> decltype(ctx.out()) {
-    return format_to(
-        ctx.out(),
-        "{},{},{},{},{},{},{},{},{},{},{},{}",
-        parms.nb_iterations_rvnd,
-        parms.stab_technique,
-        parms.alpha,
-        parms.pricing_solver,
-        parms.strong_branching,
-        parms.branching_point,
-        parms.refine_bdd,
-        parms.pruning_test,
-        parms.suboptimal_duals,
-        parms.scoring_parameter,
-        parms.scoring_value,
-        parms.use_cpu_time);
-  }
+        return it;
+    }
+
+    template <typename FormatContext>
+    auto format(const Parms::Parameter<T>& p, FormatContext& ctx)
+        -> decltype(ctx.out()) {
+        if (presentation == 'n') {
+            return format_to(ctx.out(), "{}", p.name());
+        }
+        return format_to(ctx.out(), "{}", p.value());
+    }
+};
+
+template <>
+struct fmt::formatter<Parms> {
+    char presentation = 'v';
+
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        auto it = ctx.begin(), end = ctx.end();
+        if (it != end && (*it == 'v' || *it == 'n'))
+            presentation = *it++;
+
+        // Check if reached the end of the range:
+        if (it != end && *it != '}')
+            throw format_error("invalid format");
+
+        return it;
+    }
+
+    template <typename FormatContext>
+    auto format(const Parms& parms, FormatContext& ctx) -> decltype(ctx.out()) {
+        auto aux_format =
+            (presentation == 'n')
+                ? "{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n}"
+                : "{},{},{},{},{},{},{},{},{},{},{},{}";
+
+        return format_to(
+            ctx.out(), aux_format,
+            parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
+            parms.pricing_solver, parms.strong_branching, parms.branching_point,
+            parms.refine_bdd, parms.pruning_test, parms.suboptimal_duals,
+            parms.scoring_parameter, parms.scoring_value, parms.use_cpu_time);
+    }
 };
 
 #endif  // __PARMS_H__

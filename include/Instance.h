@@ -84,9 +84,14 @@ struct Instance {
 
 template <>
 struct fmt::formatter<Instance> {
+    char presentation = 'v';
+
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
         auto it = ctx.begin(), end = ctx.end();
+        if (it != end && (*it == 'v' || *it == 'n'))
+            presentation = *it++;
 
+        // Check if reached the end of the range:
         if (it != end && *it != '}')
             throw format_error("invalid format");
 
@@ -96,7 +101,9 @@ struct fmt::formatter<Instance> {
     template <typename FormatContext>
     auto format(const Instance& inst, FormatContext& ctx)
         -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "{},{},{}", inst.nb_jobs, inst.nb_machines,inst.pname);
+        auto aux_format =
+            (presentation == 'n') ? "n,m,NameInstance" : "{},{},{}";
+        return format_to(ctx.out(), aux_format);
     }
 };
 #endif  // __INSTANCE_H__

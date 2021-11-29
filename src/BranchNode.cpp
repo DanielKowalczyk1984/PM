@@ -89,7 +89,7 @@ void BranchNodeBase::branch(BTree* bt) {
     const auto& parms = pd->parms;
     // auto&       stat = pd->stat;
 
-    if (!parms.strong_branching && dbg_lvl() > 0) {
+    if (!parms.strong_branching.value() && dbg_lvl() > 0) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
     }
 
@@ -172,7 +172,7 @@ void BranchNodeBase::branch(BTree* bt) {
              ranges::views::zip(x_job_time, instance.jobs)) {
             auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
             auto br_point_it =
-                ranges::lower_bound(part_sum, parms.branching_point - EPS);
+                ranges::lower_bound(part_sum, parms.branching_point.value() - EPS);
             auto aux = std::min(*br_point_it - std::floor(*br_point_it),
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {
@@ -240,7 +240,7 @@ void BranchNodeBase::branch(BTree* bt) {
     auto best_time = 0;
 
     std::array<std::unique_ptr<BranchNodeBase>, 2> best{};
-    auto nb_cand = std::min(std::max(parms.strong_branching, 1),
+    auto nb_cand = std::min(std::max(parms.strong_branching.value(), 1),
                             static_cast<int>(candidates.size()));
 
     candidates |= ranges::actions::sort(
@@ -275,7 +275,7 @@ void BranchNodeBase::branch(BTree* bt) {
                 node->get_data_ptr()->solver->get_is_integer_solution()) {
                 f = true;
             }
-            score = (parms.scoring_parameter == weighted_sum_scoring_parameter)
+            score = (parms.scoring_parameter.value() == weighted_sum_scoring_parameter)
                         ? cost / pd->LP_lower_bound
                         : std::abs(cost - pd->LP_lower_bound);
             left = true;
@@ -383,7 +383,7 @@ BranchCandidate::BranchCandidate(
     std::array<double, 2> scores{};
 
     for (auto&& [node, s] : ranges::views::zip(data_child_nodes, scores)) {
-        s = (parms.scoring_parameter == weighted_sum_scoring_parameter)
+        s = (parms.scoring_parameter.value() == weighted_sum_scoring_parameter)
                 ? _score / node->get_score_value()
                 : std::abs(_score - node->get_score_value());
     }
@@ -486,7 +486,7 @@ void BranchNodeRelBranching::branch(BTree* bt) {
              ranges::views::zip(x_job_time, instance.jobs)) {
             auto part_sum = ranges::views::partial_sum(x_j, std::plus<>{});
             auto br_point_it =
-                ranges::lower_bound(part_sum, parms.branching_point - EPS);
+                ranges::lower_bound(part_sum, parms.branching_point.value() - EPS);
             auto aux = std::min(*br_point_it - std::floor(*br_point_it),
                                 std::ceil(*br_point_it) - *br_point_it);
             if (aux > EPS) {

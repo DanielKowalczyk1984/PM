@@ -45,26 +45,27 @@ const boost::timer::nanosecond_type TIME_LIMIT = 7200;
 const double                        ALPHA_STAB_INIT = 0.8;
 
 Parms::Parms()
-    : bb_explore_strategy(min_bb_explore_strategy),
-      scoring_parameter(min_scoring_parameter),
-      scoring_value(min_scoring_value),
-      strong_branching(),
-      bb_node_limit(0),
-      nb_iterations_rvnd(3),
-      branching_cpu_limit(TIME_LIMIT * boost::chrono::nanoseconds::period::den),
-      use_cpu_time{false},
-      alpha(ALPHA_STAB_INIT),
-      branching_point(TargetBrTimeValue),
-      pricing_solver(bdd_solver_backward_cycle),
-      use_heuristic(true),
-      use_mip_solver(false),
-      refine_bdd(false),
-      enumerate(false),
-      pruning_test(false),
-      suboptimal_duals(false),
-      reduce_cost_fixing(true),
-      stab_technique(min_stab),
-      print_csv(false),
+    : bb_explore_strategy{"bb_explore_strategy", min_bb_explore_strategy},
+      stab_technique{"stabilization", min_stab},
+      pricing_solver{"pricing_solver", bdd_solver_backward_cycle},
+      scoring_parameter{"scoring_parameter", min_scoring_parameter},
+      scoring_value{"scoring_value", min_scoring_value},
+      strong_branching{"strong_branching", 0},
+      bb_node_limit{"bb_node_limit", 0},
+      nb_iterations_rvnd{"nb_iterations_rvnd", 3},
+      branching_cpu_limit{"branching_cpu_limit",
+                          TIME_LIMIT * boost::chrono::nanoseconds::period::den},
+      use_cpu_time{"use_cpu_time", false},
+      alpha{"alpha", ALPHA_STAB_INIT},
+      branching_point{"branching_point", TargetBrTimeValue},
+      use_heuristic{"use_heuristic", true},
+      use_mip_solver{"use_mip_solver", false},
+      refine_bdd{"refinement", false},
+      enumerate{"enumerate", false},
+      pruning_test{"pruning_test", false},
+      suboptimal_duals{"suboptimal_duals", false},
+      reduce_cost_fixing{"reduce_cost_fixing", true},
+      print_csv{"print_csv", false},
       jobfile(),
       pname(),
       nb_jobs(0),
@@ -81,8 +82,8 @@ Parms::Parms(int argc, const char** argv) : Parms() {
 }
 
 void Parms::parms_set_scoring_function(int scoring) {
-    scoring_parameter = static_cast<Scoring_Parameter>(scoring);
-    switch (scoring_parameter) {
+    scoring_parameter.set_value(static_cast<Scoring_Parameter>(scoring));
+    switch (scoring_parameter.value()) {
         case min_scoring_parameter:
             scoring_function = [](const std::array<double, 2>& a) {
                 return std::max(a[0], EPS) * std::max(a[1], EPS);
@@ -125,50 +126,50 @@ static std::string find_match(std::string const& _instance_file) {
 }
 
 void to_json(nlohmann::json& j, const Parms& p) {
-    j = nlohmann::json{{"bb_explore_strategy", p.bb_explore_strategy},
-                       {"scoring_parameter", p.scoring_parameter},
-                       {"scoring_value", p.scoring_value},
-                       {"strong_branching", p.strong_branching},
-                       {"bb_node_limit", p.bb_node_limit},
-                       {"nb_iterations_rvnd", p.nb_iterations_rvnd},
-                       {"branching_cpu_limit", p.branching_cpu_limit},
-                       {"use_cpu_time", p.use_cpu_time},
-                       {"alpha", p.alpha},
-                       {"branching_point", p.branching_point},
-                       {"pricing_solver", p.pricing_solver},
-                       {"use_heuristic", p.use_heuristic},
-                       {"use_mip_solver", p.use_mip_solver},
-                       {"refine_bdd", p.refine_bdd},
-                       {"enumerate", p.enumerate},
-                       {"pruning_test", p.pruning_test},
-                       {"suboptimal_duals", p.suboptimal_duals},
-                       {"reduce_cost_fixing", p.reduce_cost_fixing},
-                       {"stab_technique", p.stab_technique},
-                       {"print_csv", p.print_csv}};
+    j = nlohmann::json{{"bb_explore_strategy", p.bb_explore_strategy.value()},
+                       {"stab_technique", p.stab_technique.value()},
+                       {"pricing_solver", p.pricing_solver.value()},
+                       {"scoring_parameter", p.scoring_parameter.value()},
+                       {"scoring_value", p.scoring_value.value()},
+                       {"strong_branching", p.strong_branching.value()},
+                       {"bb_node_limit", p.bb_node_limit.value()},
+                       {"nb_iterations_rvnd", p.nb_iterations_rvnd.value()},
+                       {"branching_cpu_limit", p.branching_cpu_limit.value()},
+                       {"use_cpu_time", p.use_cpu_time.value()},
+                       {"alpha", p.alpha.value()},
+                       {"branching_point", p.branching_point.value()},
+                       {"use_heuristic", p.use_heuristic.value()},
+                       {"use_mip_solver", p.use_mip_solver.value()},
+                       {"refine_bdd", p.refine_bdd.value()},
+                       {"enumerate", p.enumerate.value()},
+                       {"pruning_test", p.pruning_test.value()},
+                       {"suboptimal_duals", p.suboptimal_duals.value()},
+                       {"reduce_cost_fixing", p.reduce_cost_fixing.value()},
+                       {"print_csv", p.print_csv.value()}};
 }
 
 void from_json(const nlohmann::json& j, Parms& p) {
-    j.at("bb_explore_strategy").get_to(p.bb_explore_strategy);
-    j.at("scoring_parameter").get_to(p.scoring_parameter);
-    j.at("scoring_value").get_to(p.scoring_value);
-    j.at("strong_branching").get_to(p.strong_branching);
-    j.at("bb_node_limit").get_to(p.bb_node_limit);
-    j.at("nb_iterations_rvnd").get_to(p.nb_iterations_rvnd);
-    j.at("branching_cpu_limit").get_to(p.branching_cpu_limit);
-    p.branching_cpu_limit *= boost::chrono::nanoseconds::period::den;
-    j.at("use_cpu_time").get_to(p.use_cpu_time);
-    j.at("alpha").get_to(p.alpha);
-    j.at("branching_point").get_to(p.branching_point);
-    j.at("pricing_solver").get_to(p.pricing_solver);
-    j.at("use_heuristic").get_to(p.use_heuristic);
-    j.at("use_mip_solver").get_to(p.use_mip_solver);
-    j.at("refine_bdd").get_to(p.refine_bdd);
-    j.at("enumerate").get_to(p.enumerate);
-    j.at("pruning_test").get_to(p.pruning_test);
-    j.at("suboptimal_duals").get_to(p.suboptimal_duals);
-    j.at("reduce_cost_fixing").get_to(p.reduce_cost_fixing);
-    j.at("stab_technique").get_to(p.stab_technique);
-    j.at("print_csv").get_to(p.print_csv);
+    j.at("bb_explore_strategy").get_to(p.bb_explore_strategy.value());
+    j.at("stab_technique").get_to(p.stab_technique.value());
+    j.at("pricing_solver").get_to(p.pricing_solver.value());
+    j.at("scoring_parameter").get_to(p.scoring_parameter.value());
+    j.at("scoring_value").get_to(p.scoring_value.value());
+    j.at("strong_branching").get_to(p.strong_branching.value());
+    j.at("bb_node_limit").get_to(p.bb_node_limit.value());
+    j.at("nb_iterations_rvnd").get_to(p.nb_iterations_rvnd.value());
+    j.at("branching_cpu_limit").get_to(p.branching_cpu_limit.value());
+    p.branching_cpu_limit.value() *= boost::chrono::nanoseconds::period::den;
+    j.at("use_cpu_time").get_to(p.use_cpu_time.value());
+    j.at("alpha").get_to(p.alpha.value());
+    j.at("branching_point").get_to(p.branching_point.value());
+    j.at("use_heuristic").get_to(p.use_heuristic.value());
+    j.at("use_mip_solver").get_to(p.use_mip_solver.value());
+    j.at("refine_bdd").get_to(p.refine_bdd.value());
+    j.at("enumerate").get_to(p.enumerate.value());
+    j.at("pruning_test").get_to(p.pruning_test.value());
+    j.at("suboptimal_duals").get_to(p.suboptimal_duals.value());
+    j.at("reduce_cost_fixing").get_to(p.reduce_cost_fixing.value());
+    j.at("print_csv").get_to(p.print_csv.value());
 }
 
 void Parms::parse_cmd(int argc, const char** argv) {
@@ -187,44 +188,47 @@ void Parms::parse_cmd(int argc, const char** argv) {
          * @brief
          * All integer parameters
          */
-        bb_node_limit = static_cast<int>(args["--node_limit"].asLong());
-        branching_cpu_limit = static_cast<boost::timer::nanosecond_type>(
-                                  args["--cpu_limit"].asLong()) *
-                              boost::chrono::nanoseconds::period::den;
-        nb_iterations_rvnd = static_cast<int>(args["--nb_rvnb_it"].asLong());
-        strong_branching =
-            static_cast<int>(args["--strong_branching"].asLong());
+        bb_node_limit.set_value(
+            static_cast<int>(args["--node_limit"].asLong()));
+        branching_cpu_limit.set_value(
+            static_cast<boost::timer::nanosecond_type>(
+                args["--cpu_limit"].asLong()) *
+            boost::chrono::nanoseconds::period::den);
+        nb_iterations_rvnd.set_value(
+            static_cast<int>(args["--nb_rvnb_it"].asLong()));
+        strong_branching.set_value(
+            static_cast<int>(args["--strong_branching"].asLong()));
 
         /**
          * @brief
          * All the enumeration variables
          */
-        pricing_solver =
-            static_cast<PricingSolver>(args["--pricing_solver"].asLong());
-        bb_explore_strategy = static_cast<BBExploreStrategy>(
-            static_cast<int>(args["--branching_strategy"].asLong()));
-        stab_technique = static_cast<StabTechniques>(
-            static_cast<int>(args["--stab_method"].asLong()));
+        pricing_solver.set_value(
+            static_cast<PricingSolver>(args["--pricing_solver"].asLong()));
+        bb_explore_strategy.set_value(static_cast<BBExploreStrategy>(
+            static_cast<int>(args["--branching_strategy"].asLong())));
+        stab_technique.set_value(static_cast<StabTechniques>(
+            static_cast<int>(args["--stab_method"].asLong())));
 
         /**
          * @brief
          * All the double parameters
          */
-        alpha = std::stod(args["--alpha"].asString());
-        branching_point = std::stod(args["--branching_point"].asString());
+        alpha.set_value(std::stod(args["--alpha"].asString()));
+        branching_point.set_value(std::stod(args["--branching_point"].asString()));
 
         /**
          * @brief all the bool parameters
          *
          */
-        reduce_cost_fixing = !(args["--no_rc_fixing"].asBool());
-        enumerate = args["--enumerate"].asBool();
-        print_csv = args["--print_csv"].asBool();
-        pruning_test = args["--pruning_test"].asBool();
-        refine_bdd = args["--refinement"].asBool();
-        suboptimal_duals = args["--suboptimal_duals"].asBool();
-        use_heuristic = !(args["--no_heuristic"].asBool());
-        use_mip_solver = args["--use_mip_solver"].asBool();
+        reduce_cost_fixing.set_value(!(args["--no_rc_fixing"].asBool()));
+        enumerate.set_value(args["--enumerate"].asBool());
+        print_csv.set_value(args["--print_csv"].asBool());
+        pruning_test.set_value(args["--pruning_test"].asBool());
+        refine_bdd.set_value(args["--refinement"].asBool());
+        suboptimal_duals.set_value(args["--suboptimal_duals"].asBool());
+        use_heuristic.set_value(!(args["--no_heuristic"].asBool()));
+        use_mip_solver.set_value(args["--use_mip_solver"].asBool());
 
         parms_set_scoring_function(
             static_cast<int>(args["--scoring_function"].asLong()));
@@ -238,7 +242,7 @@ void Parms::parse_cmd(int argc, const char** argv) {
         auto aux_dbg = -1;
         j.at("debug_lvl").get_to(aux_dbg);
         set_debug_lvl(aux_dbg);
-        parms_set_scoring_function(scoring_parameter);
+        parms_set_scoring_function(scoring_parameter.value());
     }
 
     /** Determine the name of the instance */
@@ -248,5 +252,3 @@ void Parms::parse_cmd(int argc, const char** argv) {
     /** Set the number of machines */
     nb_machines = static_cast<size_t>(args["NB"].asLong());
 }
-
-

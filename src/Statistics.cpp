@@ -24,7 +24,6 @@
 #include "Statistics.h"
 #include <limits>
 #include "Parms.h"         // for Parms
-#include "orutils/util.h"  // for CCutil_init_timer, CCutil_start_resume_time, CCu...
 
 Statistics::Statistics(const Parms& _parms)
     : global_upper_bound(std::numeric_limits<int>::max()),
@@ -37,16 +36,16 @@ Statistics::Statistics(const Parms& _parms)
       nb_generated_col_root(0),
       first_size_graph(0),
       size_graph_after_reduced_cost_fixing(0),
-      time_build_dd{"tot_build_dd", _parms.use_cpu_time},
-      time_total{"tot_cputime", _parms.use_cpu_time},
-      time_branch_and_bound{"tot_bb", _parms.use_cpu_time},
-      time_strong_branching{"tot_strong_branching", _parms.use_cpu_time},
-      time_lb_root{"tot_lb_root",_parms.use_cpu_time},
-      time_lb{"tot_lb", _parms.use_cpu_time},
-      time_solve_lp{"tot_solve_lp", _parms.use_cpu_time},
-      time_pricing{"tot_pricing", _parms.use_cpu_time},
-      time_heuristic{"tot_heuristic", _parms.use_cpu_time},
-      time_rc_fixing{"total_reduce_cost_fixing", _parms.use_cpu_time},
+      time_build_dd{"tot_build_dd", _parms.use_cpu_time.value()},
+      time_total{"tot_cputime", _parms.use_cpu_time.value()},
+      time_branch_and_bound{"tot_bb", _parms.use_cpu_time.value()},
+      time_strong_branching{"tot_strong_branching", _parms.use_cpu_time.value()},
+      time_lb_root{"tot_lb_root",_parms.use_cpu_time.value()},
+      time_lb{"tot_lb", _parms.use_cpu_time.value()},
+      time_solve_lp{"tot_solve_lp", _parms.use_cpu_time.value()},
+      time_pricing{"tot_pricing", _parms.use_cpu_time.value()},
+      time_heuristic{"tot_heuristic", _parms.use_cpu_time.value()},
+      time_rc_fixing{"total_reduce_cost_fixing", _parms.use_cpu_time.value()},
       real_time_total(getRealTime()),
       mip_nb_vars(0),
       mip_nb_constr(0),

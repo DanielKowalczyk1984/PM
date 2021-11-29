@@ -33,7 +33,6 @@
 #include "Parms.h"       // for Parms
 #include "Solution.hpp"  // for Sol
 #include "Statistics.h"  // for Statistics
-#include "orutils/lp.h"  // for wctlp
 class BranchBoundTree;   // lines 21-21
 class PricingStabilizationBase;
 struct NodeData;  // lines 19-19

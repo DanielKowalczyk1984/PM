@@ -456,7 +456,7 @@ int NodeData::estimate_lower_bound(size_t _iter) {
     // has_cuts = 0;
     while ((iterations < _iter) && has_cols &&
            stat.total_time_nano_sec(Statistics::cputime_timer) <=
-               parms.branching_cpu_limit) {
+               parms.branching_cpu_limit.value()) {
         /**
          * Solve the pricing problem
          */
@@ -622,7 +622,7 @@ int NodeData::compute_lower_bound() {
             if (!localColPool.empty() && solver->structure_feasible()) {
                 status = LP_bound_computed;
                 construct_lp_sol_from_rmp();
-                if (parms.suboptimal_duals) {
+                if (parms.suboptimal_duals.value()) {
                     refined =
                         solver->compute_sub_optimal_duals(lambda, localColPool);
                     delete_infeasible_columns();
@@ -630,7 +630,7 @@ int NodeData::compute_lower_bound() {
                         status = LP_bound_estimated;
                     }
                 }
-                if (parms.refine_bdd &&
+                if (parms.refine_bdd.value() &&
                     nb_non_improvements < NB_NON_IMPROVEMENTS && !refined) {
                     if (std::abs(old_LP_bound - LP_lower_bound) < EPS) {
                         nb_non_improvements++;
@@ -660,7 +660,7 @@ int NodeData::compute_lower_bound() {
         }
     } while (refined);
 
-    if (solver->print_num_paths() < NB_PATHS && parms.enumerate &&
+    if (solver->print_num_paths() < NB_PATHS && parms.enumerate.value() &&
         status == LP_bound_computed) {
         fmt::print("computing elementary paths\n");
         solver->enumerate_columns();

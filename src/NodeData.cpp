@@ -193,7 +193,7 @@ void NodeData::add_solution_to_colpool(const Sol& sol) {
 }
 
 double NodeData::get_score_value() const {
-    switch (parms.scoring_value) {
+    switch (parms.scoring_value.value()) {
         case (size_scoring_value):
             return static_cast<double>(solver->get_nb_edges());
         case (nb_paths_scoring_value):
