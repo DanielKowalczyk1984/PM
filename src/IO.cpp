@@ -43,7 +43,7 @@ void Problem::to_csv() {
     auto     result = std::time(nullptr);
 
     auto file_name =
-        fmt::format("CG_overall_{:%Y_%m_%d}.csv", fmt::localtime(result));
+        fmt::format("results_{:%Y_%m_%d}.csv", fmt::localtime(result));
     stat.suspend_timer(Statistics::cputime_timer);
     stat.real_time_total = getRealTime() - stat.real_time_total;
     auto path_file = std::filesystem::current_path() / file_name;

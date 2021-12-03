@@ -101,9 +101,12 @@ struct fmt::formatter<Instance> {
     template <typename FormatContext>
     auto format(const Instance& inst, FormatContext& ctx)
         -> decltype(ctx.out()) {
-        auto aux_format =
-            (presentation == 'n') ? "n,m,NameInstance" : "{},{},{}";
-        return format_to(ctx.out(), aux_format);
+        if (presentation == 'n') {
+            return format_to(ctx.out(), "n,m,NameInstance");
+        } else {
+            return format_to(ctx.out(), "{},{},{}", inst.nb_jobs,
+                             inst.nb_machines, inst.pname);
+        }
     }
 };
 #endif  // __INSTANCE_H__
