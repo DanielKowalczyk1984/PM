@@ -62,7 +62,7 @@ struct PricerSolverBase {
     double constLB;
     double UB;
 
-    std::vector<std::vector<double>> x_bar;
+    std::vector<std::list<BddCoeff>> x_bar;
     std::vector<std::vector<double>> z_bar;
 
     static const std::shared_ptr<GRBEnv> genv;
@@ -274,11 +274,11 @@ struct PricerSolverBase {
     };
 
     virtual size_t                            get_size_data() { return 0UL; };
-    virtual std::vector<std::vector<double>>& calculate_job_time() {
+    virtual std::vector<std::list<BddCoeff>>& calculate_job_time() {
         return x_bar;
     };
 
-    std::pair<std::vector<std::vector<double>>&,
+    std::pair<std::vector<std::list<BddCoeff>>&,
               std::vector<std::vector<double>>&>
     get_pair_x() {
         return std::make_pair(std::ref(x_bar), std::ref(z_bar));

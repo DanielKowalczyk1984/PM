@@ -45,9 +45,9 @@ PricerSolverBase::PricerSolverBase(const Instance& instance)
       is_integer_solution(false),
       constLB(0.0),
       UB(std::numeric_limits<int>::max()),
-      x_bar(std::vector<std::vector<double>>(
+      x_bar(std::vector<std::list<BddCoeff>>(
           instance.nb_jobs,
-          std::vector<double>(instance.H_max + 1, 0.0))),
+          std::list<BddCoeff>())),
       z_bar(std::vector<std::vector<double>>(
           instance.nb_jobs,
           std::vector<double>(instance.H_max + 1, 0.0))) {

@@ -110,7 +110,7 @@ class PricerSolverBdd : public PricerSolverBase {
         const std::vector<std::shared_ptr<Column>>& columns) override;
 
     void project_sol_on_original_variables(const Sol& _sol) override;
-    std::vector<std::vector<double>>& calculate_job_time() override;
+    std::vector<std::list<BddCoeff>>& calculate_job_time() override;
     void    split_job_time(size_t _job, int _time, bool _left) override;
     cpp_int print_num_paths() override;
     void    remove_constraints(int first, int nb_del) override;

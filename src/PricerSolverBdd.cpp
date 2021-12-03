@@ -1857,20 +1857,20 @@ void PricerSolverBdd::project_sol_on_original_variables(const Sol& _sol) {
     }
 }
 
-std::vector<std::vector<double>>& PricerSolverBdd::calculate_job_time() {
-    ranges::fill(x_bar | ranges::views::join, 0.0);
+std::vector<std::list<BddCoeff>>& PricerSolverBdd::calculate_job_time() {
+    ranges::for_each(x_bar, [](auto& tmp) { tmp.clear(); });
     ranges::fill(z_bar | ranges::views::join, 0.0);
 
     for (auto& it : lp_sol) {
         if (it.get_high()) {
-            x_bar[it.get_j()][it.get_t()] += it.get_value();
+            x_bar[it.get_j()].emplace_back(it);
         }
     }
 
-    for (auto&& [x_j, z_j] : ranges::views::zip(x_bar, z_bar)) {
-        z_j =
-            ranges::views::partial_sum(x_j, std::plus<>{}) | ranges::to_vector;
-    }
+    // for (auto&& [x_j, z_j] : ranges::views::zip(x_bar, z_bar)) {
+    //     z_j =
+    //         ranges::views::partial_sum(x_j, std::plus<>{}) | ranges::to_vector;
+    // }
 
     return x_bar;
 }
