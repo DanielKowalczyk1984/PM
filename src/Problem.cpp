@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -19,7 +19,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
 
 #include "Problem.h"
 #include <fmt/core.h>                   // for print
@@ -53,8 +52,9 @@ Problem::Problem(int argc, const char** argv)
       status(no_sol),
       opt_sol() {
     /**
-     *@brief Finding heuristic solutions to the problem or start without
-     *feasible solutions
+     * @brief
+     * Finding heuristic solutions to the problem or start without feasible
+     * solutions
      */
     stat.start_resume_timer(Statistics::heuristic_timer);
     if (parms.use_heuristic.value()) {
@@ -69,11 +69,11 @@ Problem::Problem(int argc, const char** argv)
         best_sol.print_solution();
         opt_sol = best_sol;
     }
-
     stat.suspend_timer(Statistics::heuristic_timer);
+
     /**
-     * @brief Create pricing solver
-     *
+     * @brief
+     * Create pricing solver
      */
     stat.start_resume_timer(Statistics::build_dd_timer);
     switch (parms.pricing_solver.value()) {
@@ -123,8 +123,8 @@ Problem::Problem(int argc, const char** argv)
     stat.first_size_graph = root_pd->solver->get_nb_edges();
 
     /**
-     * @brief Initial stabilization method
-     *
+     * @brief
+     * Initial stabilization method
      */
     auto* tmp_solver = root_pd->solver.get();
     switch (parms.stab_technique.value()) {
@@ -158,8 +158,8 @@ Problem::Problem(int argc, const char** argv)
     stat.global_upper_bound = opt_sol.tw + instance.off;
 
     /**
-     * @brief Initialization of the B&B tree
-     *
+     * @brief
+     * Initialization of the B&B tree
      */
     if (!parms.use_mip_solver.value()) {
         stat.start_resume_timer(Statistics::bb_timer);
