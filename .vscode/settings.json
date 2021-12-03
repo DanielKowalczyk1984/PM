@@ -66,6 +66,7 @@
 		"stop_token": "cpp",
 		"exception": "cpp",
 		"locale": "cpp",
-		"xlocale": "cpp"
+		"xlocale": "cpp",
+		"future": "cpp"
 	}
 }
