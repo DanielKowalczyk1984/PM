@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -35,6 +35,7 @@ class BddCoeff : public VariableKeyBase {
     size_t row;
     double coeff;
     double value;
+    double cum_value;
 
    public:
     BddCoeff(size_t _j,
@@ -43,7 +44,8 @@ class BddCoeff : public VariableKeyBase {
              double _value = 0.0,
              size_t _row = 0UL,
              bool   _high = true,
-             bool   _root = false);
+             bool   _root = false,
+             double _cum_value = 0.0);
 
     BddCoeff(const BddCoeff&) = default;
     BddCoeff& operator=(const BddCoeff&);
@@ -53,8 +55,11 @@ class BddCoeff : public VariableKeyBase {
 
     [[nodiscard]] double get_coeff() const;
     [[nodiscard]] double get_value() const;
+    [[nodiscard]] double get_cum_value() const;
     [[nodiscard]] size_t get_row() const;
-    void                 set_row(size_t _row);
+
+    void set_row(size_t _row);
+    void update_cum_value(double _value);
 
     bool operator==(const BddCoeff& other);
 
