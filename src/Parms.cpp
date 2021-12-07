@@ -102,8 +102,8 @@ void Parms::parms_set_scoring_function(int scoring) {
             break;
         case weighted_product_scoring_parameter:
             scoring_function = [](const std::array<double, 2>& a) {
-                return std::pow(std::max(a[0] - 1.0, EPS), beta[0]) *
-                       std::pow(std::max(a[1] - 1.0, EPS), beta[1]);
+                return std::pow(std::max(a[1] - 1.0, EPS), beta[0]) *
+                       std::pow(std::max(a[0] - 1.0, EPS), beta[1]);
             };
             break;
         case max_function_scoring_parameter:

@@ -45,12 +45,10 @@ PricerSolverBase::PricerSolverBase(const Instance& instance)
       is_integer_solution(false),
       constLB(0.0),
       UB(std::numeric_limits<int>::max()),
-      x_bar(std::vector<std::list<BddCoeff>>(
+      x_bar(std::vector<std::vector<BddCoeff>>(
           instance.nb_jobs,
-          std::list<BddCoeff>())),
-      z_bar(std::vector<std::vector<double>>(
-          instance.nb_jobs,
-          std::vector<double>(instance.H_max + 1, 0.0))) {
+          std::vector<BddCoeff>()))
+       {
     try {
         model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
         model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
@@ -74,8 +72,7 @@ PricerSolverBase::PricerSolverBase(const PricerSolverBase& other)
       is_integer_solution(other.is_integer_solution),
       constLB(other.constLB),
       UB(other.UB),
-      x_bar(other.x_bar),
-      z_bar(other.z_bar) {
+      x_bar(other.x_bar) {
     model.set(GRB_IntParam_Method, GRB_METHOD_AUTO);
     model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
     model.set(GRB_IntParam_Presolve, GRB_PRESOLVE_AGGRESSIVE);
