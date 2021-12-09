@@ -62,8 +62,7 @@ struct PricerSolverBase {
     double constLB;
     double UB;
 
-    std::vector<std::vector<double>> x_bar;
-    std::vector<std::vector<double>> z_bar;
+    std::vector<std::vector<BddCoeff>> x_bar;
 
     static const std::shared_ptr<GRBEnv> genv;
 
@@ -71,8 +70,6 @@ struct PricerSolverBase {
     static constexpr double RC_FIXING = 1e-4;
     static constexpr int    ALIGN = 60;
     static constexpr int    ALIGN_HALF = 60;
-
-    std::vector<BddCoeff> lp_sol;
 
     /**
      * @brief Construct a new Pricer Solver Base object
@@ -274,15 +271,9 @@ struct PricerSolverBase {
     };
 
     virtual size_t                            get_size_data() { return 0UL; };
-    virtual std::vector<std::vector<double>>& calculate_job_time() {
+    virtual std::vector<std::vector<BddCoeff>>& calculate_job_time() {
         return x_bar;
     };
-
-    std::pair<std::vector<std::vector<double>>&,
-              std::vector<std::vector<double>>&>
-    get_pair_x() {
-        return std::make_pair(std::ref(x_bar), std::ref(z_bar));
-    }
 
     [[nodiscard]] inline bool get_is_integer_solution() const {
         return is_integer_solution;

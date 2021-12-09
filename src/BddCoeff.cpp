@@ -28,11 +28,13 @@ BddCoeff::BddCoeff(size_t _j,
                    double _value,
                    size_t _row,
                    bool   _high,
-                   bool   _root)
+                   bool   _root,
+                   double _cum_value)
     : VariableKeyBase(_j, _t, _high, _root),
       row(_row),
       coeff(_coeff),
-      value(_value) {}
+      value(_value),
+      cum_value(_cum_value) {}
 
 BddCoeff& BddCoeff::operator=(const BddCoeff&) = default;
 BddCoeff::BddCoeff(BddCoeff&& op) noexcept = default;
@@ -61,10 +63,18 @@ bool BddCoeff::operator==(const BddCoeff& other) {
     return value;
 }
 
+[[nodiscard]] double BddCoeff::get_cum_value() const {
+    return cum_value;
+}
+
 void BddCoeff::set_row(size_t _row) {
     row = _row;
 }
 
 [[nodiscard]] size_t BddCoeff::get_row() const {
     return row;
+}
+
+[[nodiscard]] void BddCoeff::update_cum_value(double _value) {
+    cum_value += _value;
 }

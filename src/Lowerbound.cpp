@@ -473,36 +473,17 @@ int NodeData::estimate_lower_bound(size_t _iter) {
             solve_farkas_dbl();
         }
 
-        // switch (status_RMP) {
-        //     case GRB_OPTIMAL:
-        //         status = infeasible;
-        //         val = solve_pricing();
-        //         break;
-
-        //     case GRB_INFEASIBLE:
-        //         solve_farkas_dbl();
-        //         break;
-        // }
-
         ++iterations;
 
         stat.suspend_timer(Statistics::pricing_timer);
 
         if (status_RMP) {
-            // case GRB_OPTIMAL:
             has_cols =
                 (solver_stab->stopping_criteria() &&
                  solver_stab->get_eta_in() < upper_bound - 1.0 + EPS_BOUND);
-            // nb_new_sets = 0;
-            // || nb_non_improvements > 5;  // ||
-            // (ceil(eta_in - 0.00001) >= eta_out);
-
-            // break;
-
-            // case GRB_INFEASIBLE:
-            // has_cols = (nb_new_sets == 0);
-            // nb_new_sets = 0;
-            // break;
+        } else {
+            has_cols = false;
+            status = infeasible;
         }
     }
 

@@ -1739,7 +1739,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         }
     }
 
-    lp_sol.clear();
+    ranges::for_each(x_bar, [](auto& tmp) { tmp.clear(); });
     for (auto& it : table |
                         ranges::views::take(decision_diagram.topLevel() + 1) |
                         ranges::views::drop(1) | ranges::views::reverse |
@@ -1747,7 +1747,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         it.update_lp_visited(false);
         auto value = it.get_lp_x()[1];
         if (value > EPS_SOLVER) {
-            lp_sol.emplace_back(it.get_nb_job(), it.get_weight(), 0.0, value);
+            x_bar[it.get_nb_job()].emplace_back(it.get_nb_job(), it.get_weight(), 0.0, value);
             if (value < 1.0 - EPS_SOLVER) {
                 set_is_integer_solution(false);
             }
@@ -1801,7 +1801,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         }
     }
 
-    lp_sol.clear();
+    ranges::for_each(x_bar, [](auto& tmp) { tmp.clear(); });
     for (auto& it : table |
                         ranges::views::take(decision_diagram.topLevel() + 1) |
                         ranges::views::drop(1) | ranges::views::reverse |
@@ -1809,7 +1809,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         it.update_lp_visited(false);
         auto value = it.get_lp_x()[1];
         if (value > EPS_SOLVER) {
-            lp_sol.emplace_back(it.get_nb_job(), it.get_weight(), 0.0, value);
+            x_bar[it.get_nb_job()].emplace_back(it.get_nb_job(), it.get_weight(), 0.0, value);
             if (value < 1.0 - EPS_SOLVER) {
                 set_is_integer_solution(false);
             }
@@ -1857,19 +1857,14 @@ void PricerSolverBdd::project_sol_on_original_variables(const Sol& _sol) {
     }
 }
 
-std::vector<std::vector<double>>& PricerSolverBdd::calculate_job_time() {
-    ranges::fill(x_bar | ranges::views::join, 0.0);
-    ranges::fill(z_bar | ranges::views::join, 0.0);
-
-    for (auto& it : lp_sol) {
-        if (it.get_high()) {
-            x_bar[it.get_j()][it.get_t()] += it.get_value();
+std::vector<std::vector<BddCoeff>>& PricerSolverBdd::calculate_job_time() {
+    for (auto&& it : x_bar) {
+        std::ranges::sort (it, std::less<>{}, [](const auto& aux) { return aux.get_t(); });
+        auto value = 0.0;
+        for (auto& x : it) {
+            value += x.get_value();
+            x.update_cum_value(value);
         }
-    }
-
-    for (auto&& [x_j, z_j] : ranges::views::zip(x_bar, z_bar)) {
-        z_j =
-            ranges::views::partial_sum(x_j, std::plus<>{}) | ranges::to_vector;
     }
 
     return x_bar;
