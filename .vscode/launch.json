@@ -5,13 +5,6 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "PowerShell Launch Script",
-			"type": "PowerShell",
-			"request": "launch",
-			"script": "${workspaceFolder}/scripts/run_experiments.ps1",
-			"cwd": "${workspaceFolder}"
-		},
-		{
 			"name": "(Windows) Launch",
 			"type": "cppvsdbg",
 			"request": "launch",
@@ -25,12 +18,25 @@
 			"console": "integratedTerminal"
 		},
 		{
-			"name": "Launch",
+			"name": "Launch RelWithDebInfo (Windows)",
 			"type": "cppvsdbg",
 			"request": "launch",
 			"program": "PM.exe",
 			"args": [
-				"--json","${workspaceFolder}/settings/default_settings.json", "${workspaceFolder}/instances/wt040/wt040_001.dat", "4"
+				"--json","${workspaceFolder}/settings/default_settings.json", "${workspaceFolder}/instances/wt100/wt100_121.dat", "4"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceRoot}/build/RelWithDebInfo",
+			"environment": [],
+			"console": "integratedTerminal"
+		},
+		{
+			"name": "Launch Debug (Windows)",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "PM.exe",
+			"args": [
+				"--json","${workspaceFolder}/settings/default_settings.json", "${workspaceFolder}/instances/wt100/wt100_121.dat", "4"
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceRoot}/build/Debug",
