@@ -90,36 +90,39 @@ void BranchNodeBase::branch(BTree* bt) {
                       [](const auto& tmp) { return tmp.score; });
 
     auto tmp_t = 0;
-    auto rng_zip = ranges::views::zip(solver->calculate_job_time(), instance.jobs);
-    auto rng_sum_wt =
-        rng_zip |
-        ranges::views::filter([&tmp_t, &instance](const auto& tmp_aux) {
-            auto sum = ranges::accumulate(
-                tmp_aux.first, 0.0, [&tmp_aux](auto a, auto b) {
-                    return (
-                        tmp_aux.second->weighted_tardiness_start(b.get_t()) *
-                            b.get_value() +
-                        a);
-                });
+    auto x_ref = solver->calculate_job_time();
+    auto rng_zip = ranges::views::zip(x_ref, instance.jobs);
 
-            if (sum < EPS) {
-                return false;
-            }
-
-            auto aux_vec = ranges::views::iota(int{}, instance.H_max + 1);
-            auto lb_it = ranges::upper_bound(
-                aux_vec, sum, std::less<>(), [&tmp_aux](auto t) {
-                    return tmp_aux.second->weighted_tardiness_start(t);
-                });
-
-            tmp_t = (*lb_it) - 1;
-            return (std::min(sum - std::floor(sum), std::ceil(sum) - sum) >
-                        EPS &&
-                    sum > EPS);
+    /**
+     * @brief
+     * First we deduce branching based on SOS where the coefficients are
+     * associated to the objective function. The objective functions here are
+     * regular objective. Are always applicable  if the objective functions are
+     * regular.
+     */
+    auto rng_sum_wt = ranges::views::filter([&tmp_t,
+                                             &instance](const auto& tmp_aux) {
+        const auto& [x, j] = tmp_aux;
+        auto sum = ranges::accumulate(x, 0.0, [&j](auto a, auto b) {
+            return (j->weighted_tardiness_start(b.get_t()) * b.get_value() + a);
         });
 
-    for (auto&& [x_j, job] : rng_sum_wt | ranges::views::take(std::min(
-                                              size_t{50}, instance.nb_jobs))) {
+        if (sum < EPS) {
+            return false;
+        }
+
+        auto aux_vec = ranges::views::iota(int{}, instance.H_max + 1);
+        auto lb_it = ranges::upper_bound(
+            aux_vec, sum, std::less<>(),
+            [&j](auto t) { return j->weighted_tardiness_start(t); });
+
+        tmp_t = (*lb_it) - 1;
+        return (std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS);
+    });
+
+    for (auto&& [x_j, job] :
+         rng_zip | rng_sum_wt |
+             ranges::views::take(std::min(size_t{50}, instance.nb_jobs))) {
         auto aux = BranchCandidate(pd->get_score_value(),
                                    pd->create_child_nodes(job->job, tmp_t));
         ranges::make_heap(candidates, std::greater<>{},
@@ -129,29 +132,30 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
+    /**
+     * @brief If the previous generator does not construct any branching
+     * candidates even if the solutions are not integer. We apply different
+     * branching scheme based of SOS. Here we look a the ending time.
+     */
     if (ranges::all_of(candidates, [](const auto& tmp) { return tmp.empty; })) {
-        auto rng_t =
-            rng_zip |
-            ranges::views::filter([&tmp_t, &instance](const auto& tmp_aux) {
-                auto sum = ranges::accumulate(
-                    tmp_aux.first, 0.0, [&tmp_aux](auto a, auto b) {
-                        return ((tmp_aux.second->processing_time + b.get_t()) *
-                                    b.get_value() +
-                                a);
-                    });
-                auto aux_vec = ranges::views::iota(int{}, instance.H_max + 1);
-                auto lb_it = ranges::upper_bound(
-                    aux_vec, sum, std::less<>(), [&tmp_aux](auto t) {
-                        return (tmp_aux.second->processing_time + t);
-                    });
-
-                tmp_t = (*lb_it) - 1;
-                return std::min(sum - std::floor(sum), std::ceil(sum) - sum) >
-                       EPS;
+        auto rng_t = ranges::views::filter([&tmp_t,
+                                            &instance](const auto& tmp_aux) {
+            auto&& [x, j] = tmp_aux;
+            auto sum = ranges::accumulate(x, 0.0, [&j](auto a, auto b) {
+                return ((j->processing_time + b.get_t()) * b.get_value() + a);
             });
+            auto aux_vec = ranges::views::iota(int{}, instance.H_max + 1);
+            auto lb_it = ranges::upper_bound(
+                aux_vec, sum, std::less<>(),
+                [&j](auto t) { return (j->processing_time + t); });
 
-        for (auto&& [x_j, job] : rng_t | ranges::views::take(std::min(
-                                             size_t{50}, instance.nb_jobs))) {
+            tmp_t = (*lb_it) - 1;
+            return std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS;
+        });
+
+        for (auto&& [x_j, job] :
+             rng_zip | rng_t |
+                 ranges::views::take(std::min(size_t{50}, instance.nb_jobs))) {
             auto aux = BranchCandidate(pd->get_score_value(),
                                        pd->create_child_nodes(job->job, tmp_t));
             ranges::make_heap(candidates, std::greater<>{},
@@ -162,26 +166,33 @@ void BranchNodeBase::branch(BTree* bt) {
         }
     }
 
+    /**
+     * @brief Here we branch on the cumulative variable z_jt = sum_{t' <= t}
+     * x_jt. We choose the z_jt closest to 0.5.
+     */
     if (ranges::all_of(candidates, [](const auto& tmp) { return tmp.empty; })) {
-        for (auto&& [x_j, job] : rng_zip) {
-            auto br_point_it = ranges::max(x_j, std::less<>{}, [](auto& x) {
-                return 0.5 - std::abs(x.get_cum_value() -
-                                      std::floor(x.get_cum_value()) - 0.5);
-            });
-            auto cum_aux = br_point_it.get_cum_value();
-            auto aux = std::min(cum_aux - std::floor(cum_aux),
-                                std::ceil(cum_aux) - cum_aux);
+        auto rng_cum = ranges::views::filter([&tmp_t](const auto& tmp_aux) {
+                auto&& [x_j, job] = tmp_aux;
 
-            if (aux > EPS) {
+                auto br_point_it = ranges::max(x_j, std::less<>{}, [](auto& x) {
+                    return 0.5 - std::abs(x.get_cum_value() -
+                                          std::floor(x.get_cum_value()) - 0.5);
+                });
+                auto cum_aux = br_point_it.get_cum_value();
+                auto aux = std::min(cum_aux - std::floor(cum_aux),
+                                    std::ceil(cum_aux) - cum_aux);
+
                 tmp_t = static_cast<int>(br_point_it.get_t());
-                auto aux_data =
-                    BranchCandidate(pd->get_score_value(),
-                                    pd->create_child_nodes(job->job, tmp_t));
-                ranges::make_heap(candidates, std::greater<>{},
-                                  [](const auto& tmp) { return tmp.score; });
-                if (aux_data.score > candidates.front().score) {
-                    std::swap(aux_data, candidates.front());
-                }
+                return (aux > EPS);
+        });
+
+        for (auto&& [x_j, job] : rng_zip | rng_cum) {
+            auto aux_data = BranchCandidate(
+                pd->get_score_value(), pd->create_child_nodes(job->job, tmp_t));
+            ranges::make_heap(candidates, std::greater<>{},
+                              [](const auto& tmp) { return tmp.score; });
+            if (aux_data.score > candidates.front().score) {
+                std::swap(aux_data, candidates.front());
             }
         }
     }
@@ -214,6 +225,10 @@ void BranchNodeBase::branch(BTree* bt) {
         ranges::views::filter([](const auto& tmp) { return !(tmp.empty); });
 
     auto nb_non_improvements = 0UL;
+
+    /**
+     * @brief Adding nodes to branch&bound tree.
+     */
     for (auto& it : rng_best_cand | ranges::views::take(nb_cand)) {
         std::array<std::unique_ptr<BranchNodeBase>, 2> child_nodes;
         std::array<double, 2>                          scores{};
