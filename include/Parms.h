@@ -237,13 +237,18 @@ struct fmt::formatter<Parms> {
 
     template <typename FormatContext>
     auto format(const Parms& parms, FormatContext& ctx) -> decltype(ctx.out()) {
-        auto aux_format =
-            (presentation == 'n')
-                ? "{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n}"
-                : "{},{},{},{},{},{},{},{},{},{},{},{}";
-
+        if (presentation == 'n') {
+            return format_to(
+                ctx.out(),
+                "{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n}",
+                parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
+                parms.pricing_solver, parms.strong_branching,
+                parms.branching_point, parms.refine_bdd, parms.pruning_test,
+                parms.suboptimal_duals, parms.scoring_parameter,
+                parms.scoring_value, parms.use_cpu_time);
+        }
         return format_to(
-            ctx.out(), aux_format,
+            ctx.out(), "{},{},{},{},{},{},{},{},{},{},{},{}",
             parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
             parms.pricing_solver, parms.strong_branching, parms.branching_point,
             parms.refine_bdd, parms.pruning_test, parms.suboptimal_duals,
