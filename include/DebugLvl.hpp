@@ -18,6 +18,6 @@ inline bool debug_lvl(int _lvl) {
 
 inline void set_debug_lvl(int _lvl) {
     DebugLevel::_debug_lvl = _lvl;
-};
+}
 
 #endif  // __DEBUGLVL_H__
