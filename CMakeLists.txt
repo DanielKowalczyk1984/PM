@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
-set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg-custom-ports" )
+set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg-custom-ports")
 
 #
 # Project details
@@ -42,6 +42,7 @@ include(cmake/Utils.cmake)
 # letting CMake decide how to link with it.
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif(MSVC)
 
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...")

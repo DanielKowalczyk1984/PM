@@ -48,7 +48,7 @@
 namespace vs = ranges::views;
 
 ZeroHalfSystem::ZeroHalfSystem(const MatrixDouble& A,
-                               const VectorDouble& _b,
+                               [[maybe_unused]] const VectorDouble& _b,
                                const VectorDouble& _x)
     : x_star(_x),
       row_index(A.size(), boost::dynamic_bitset{A.size()}) {

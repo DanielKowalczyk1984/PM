@@ -6,21 +6,20 @@ FROM mcr.microsoft.com/vscode/devcontainers/cpp:0-${VARIANT}
 
 # [Optional] Uncomment this section to install additional packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends wget ca-certificates git curl unzip tar zip
+    && apt-get -y install --no-install-recommends wget ca-certificates git curl unzip tar zip pkg-config
 
 ARG GRB_VERSION=9.1.2
 ARG GRB_SHORT_VERSION=9.1
 
 # install gurobi package and copy the files
 WORKDIR /opt
-
 RUN update-ca-certificates \
     && wget -v https://packages.gurobi.com/${GRB_SHORT_VERSION}/gurobi${GRB_VERSION}_linux64.tar.gz \
     && tar -xvf gurobi${GRB_VERSION}_linux64.tar.gz  \
     && rm -f gurobi${GRB_VERSION}_linux64.tar.gz \
     && mv -f gurobi* gurobi \
     && rm -rf gurobi/linux64/docs \
-    && ln -sf gurobi/linux64/lib/libgurobi_g++5.2.a gurobi/linux64/libgurobi_c++.a
+    && ln -sf /opt/gurobi/linux64/lib/libgurobi_g++5.2.a /opt/gurobi/linux64/libgurobi_c++.a
 
 ENV GUROBI_HOME /opt/gurobi/linux64
 ENV PATH $PATH:$GUROBI_HOME/bin

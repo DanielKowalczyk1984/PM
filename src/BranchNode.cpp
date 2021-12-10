@@ -378,7 +378,7 @@ BranchNodeRelBranching::BranchNodeRelBranching(std::unique_ptr<NodeData> _data,
 void BranchNodeRelBranching::branch(BTree* bt) {
     auto*       node_data = get_data_ptr();
     auto*       pricing_solver = get_pricersolver();
-    auto&       parms = node_data->parms;
+    // auto&       parms = node_data->parms;
     const auto& instance = get_instance_info();
     const auto  Tmax = instance.H_max;
 
@@ -388,8 +388,8 @@ void BranchNodeRelBranching::branch(BTree* bt) {
     }
 
     std::array<BranchCandidate, NbCandidates> candidates{};
-    auto& x_job_time = pricing_solver->calculate_job_time();
-    auto& aux_branch_history = bt->get_branch_history();
+    // auto& x_job_time = pricing_solver->calculate_job_time();
+    // auto& aux_branch_history = bt->get_branch_history();
 
     // for (auto& it : aux_branch_history) {
     //     auto j = it.first / (Tmax + 1);
