@@ -46,25 +46,24 @@
 #include <tuple>                                    // for tuple, get
 #include <vector>                                   // for vector, _Bit_r...
 #include "CardinalityPaths.hpp"                     // for CardinalityPaths
-#include "CglGomory.hpp"
-#include "CglZeroHalf.hpp"
-#include "Column.h"                   // for ScheduleSet
-#include "Instance.h"                 // for Instance
-#include "Job.h"                      // for Job, value_dif...
-#include "MipGraph.hpp"               // for MipGraph, Colo...
-#include "ModelInterface.hpp"         // for BddCoeff, Refo...
-#include "ModernDD/NodeId.hpp"        // for NodeId
-#include "NodeBdd.hpp"                // for NodeBdd
-#include "NodeData.h"                 // for NodeData
-#include "OsiGrbSolverInterface.hpp"  // for OsiGrbSolverInterface
-#include "PricerConstruct.hpp"        // for PricerConstruct
-#include "PricerSolverBase.hpp"       // for PricerSolverBa...
-#include "PricingSolution.hpp"        // for PricingSolution
-#include "Solution.hpp"               // for Machine, VecJo...
-#include "gurobi_c.h"                 // for GRB_EQUAL, GRB...
-#include "orutils/lp.h"               // for lp_interface_g...
-// #include "orutils/util.h"             // for dbg_lvl
-#include "DebugLvl.hpp"
+#include "CglGomory.hpp"                            // for CglGomory
+#include "CglZeroHalf.hpp"                          // for CglZeroHalf
+#include "Column.h"                                 // for ScheduleSet
+#include "DebugLvl.hpp"                             // for DebugLvl
+#include "Instance.h"                               // for Instance
+#include "Job.h"                                    // for Job, value_dif...
+#include "MipGraph.hpp"                             // for MipGraph, Colo...
+#include "ModelInterface.hpp"                       // for BddCoeff, Refo...
+#include "ModernDD/NodeId.hpp"                      // for NodeId
+#include "NodeBdd.hpp"                              // for NodeBdd
+#include "NodeData.h"                               // for NodeData
+#include "OsiGrbSolverInterface.hpp"                // for OsiGrbSolverInterface
+#include "PricerConstruct.hpp"                      // for PricerConstruct
+#include "PricerSolverBase.hpp"                     // for PricerSolverBa...
+#include "PricingSolution.hpp"                      // for PricingSolution
+#include "Solution.hpp"                             // for Machine, VecJo...
+#include "gurobi_c.h"                               // for GRB_EQUAL, GRB...
+#include "orutils/lp.h"                             // for lp_interface_g...
 
 PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     : PricerSolverBase(instance),
@@ -1747,7 +1746,8 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         it.update_lp_visited(false);
         auto value = it.get_lp_x()[1];
         if (value > EPS_SOLVER) {
-            x_bar[it.get_nb_job()].emplace_back(it.get_nb_job(), it.get_weight(), 0.0, value);
+            x_bar[it.get_nb_job()].emplace_back(it.get_nb_job(),
+                                                it.get_weight(), 0.0, value);
             if (value < 1.0 - EPS_SOLVER) {
                 set_is_integer_solution(false);
             }
@@ -1809,7 +1809,8 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         it.update_lp_visited(false);
         auto value = it.get_lp_x()[1];
         if (value > EPS_SOLVER) {
-            x_bar[it.get_nb_job()].emplace_back(it.get_nb_job(), it.get_weight(), 0.0, value);
+            x_bar[it.get_nb_job()].emplace_back(it.get_nb_job(),
+                                                it.get_weight(), 0.0, value);
             if (value < 1.0 - EPS_SOLVER) {
                 set_is_integer_solution(false);
             }
@@ -1859,7 +1860,8 @@ void PricerSolverBdd::project_sol_on_original_variables(const Sol& _sol) {
 
 std::vector<std::vector<BddCoeff>>& PricerSolverBdd::calculate_job_time() {
     for (auto&& it : x_bar) {
-        std::ranges::sort (it, std::less<>{}, [](const auto& aux) { return aux.get_t(); });
+        std::ranges::sort(it, std::less<>{},
+                          [](const auto& aux) { return aux.get_t(); });
         auto value = 0.0;
         for (auto& x : it) {
             value += x.get_value();
