@@ -349,4 +349,4 @@ configure_package_config_file(
 include(cmake/Doxygen.cmake)
 
 # Add Gurobi env to Binary directory
-file(COPY ${CMAKE_SOURCE_DIR}/settings/gurobi.env DESTINATION ${CMAKE_BINARY_DIR}/bin)
+file(COPY ${CMAKE_SOURCE_DIR}/settings/gurobi.env DESTINATION ${CMAKE_BINARY_DIR})
