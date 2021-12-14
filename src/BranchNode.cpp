@@ -214,8 +214,8 @@ void BranchNodeBase::branch(BTree* bt) {
     auto best_time = 0;
 
     std::array<std::unique_ptr<BranchNodeBase>, 2> best{};
-    auto nb_cand = std::min(std::max(parms.strong_branching.value(), 1),
-                            static_cast<int>(candidates.size()));
+    auto nb_cand = (pd->depth <= 7) ? std::min(std::max(parms.strong_branching.value(), 1),
+                            static_cast<int>(candidates.size())) : 1;
 
     candidates |= ranges::actions::sort(
         std::greater<>{}, [](const auto& tmp) { return tmp.score; });
