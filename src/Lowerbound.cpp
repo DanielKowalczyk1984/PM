@@ -342,7 +342,7 @@ int NodeData::compute_objective() {
     LP_lower_bound_dual = 0.0;
 
     /** compute lower bound with the dual variables */
-    assert(nb_rows == pi.size());
+    assert(nb_rows == static_cast<int>(pi.size()));
 
     LP_lower_bound_dual = ranges::inner_product(pi, rhs, 0.0);
     LP_lower_bound_dual -= EPS_BOUND;
@@ -430,7 +430,6 @@ int NodeData::estimate_lower_bound(size_t _iter) {
     auto val = 0;
     auto has_cols = true;
     auto status_RMP = false;
-    auto real_time_pricing = 0.0;
 
     if (debug_lvl(1)) {
         fmt::print(
@@ -460,9 +459,7 @@ int NodeData::estimate_lower_bound(size_t _iter) {
         /**
          * Solve the pricing problem
          */
-        real_time_pricing = getRealTime();
         stat.start_resume_timer(Statistics::pricing_timer);
-        // val = lp_interface_status(RMP.get(), &status_RMP);
         status_RMP = osi_rmp->isProvenOptimal();
 
         if (status_RMP) {

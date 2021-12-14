@@ -380,7 +380,7 @@ void BranchNodeRelBranching::branch(BTree* bt) {
     auto*       pricing_solver = get_pricersolver();
     // auto&       parms = node_data->parms;
     const auto& instance = get_instance_info();
-    const auto  Tmax = instance.H_max;
+    // const auto  Tmax = instance.H_max;
 
     if (bt->getGlobalUB() < node_data->upper_bound) {
         node_data->upper_bound = static_cast<int>(bt->getGlobalUB());
