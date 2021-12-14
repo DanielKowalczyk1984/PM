@@ -1,6 +1,5 @@
 
 # %%
-from PyQt5.QtWidgets import QFileDialog
 import re
 import pandas as pd
 import numpy as np
@@ -15,27 +14,15 @@ import matplotlib.pyplot as plt
 
 workdir = Path.cwd().parent
 results = workdir.joinpath(Path("./results"))
-# %%
-%gui qt
-
-
-def gui_file_name(dir=None):
-    """Select a file via a dialog and return the file name."""
-    if dir is None:
-        dir = './'
-    file_name = QFileDialog.getOpenFileName(None, "Select data file...",
-                                            dir, filter="CSV Files (*.csv)")
-    return file_name[0]
-
 
 # %% Load the data of the new results
-file_name = gui_file_name(workdir.__str__())
+file_name = "~/results_2021_12_10.csv"
 file_path = Path(file_name)
 data = pd.read_csv(file_name, index_col=False)
-match = re.search(r'CG_overall\_(20\d{2})\_(\d{2})\_(\d{2})\.csv', file_name)
-year = match.group(1)
-month = match.group(2)
-day = match.group(3)
+match = re.search(r'(CG_overall|results)\_(20\d{2})\_(\d{2})\_(\d{2})\.csv', file_name)
+year = match.group(2)
+month = match.group(3)
+day = match.group(4)
 
 # %% Calculate some extra columns
 data['gap'] = (data['global_upper_bound'] - data['global_lower_bound']
