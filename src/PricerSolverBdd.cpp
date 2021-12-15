@@ -64,6 +64,7 @@
 #include "Solution.hpp"                             // for Machine, VecJo...
 #include "gurobi_c.h"                               // for GRB_EQUAL, GRB...
 #include "orutils/lp.h"                             // for lp_interface_g...
+#include "orutils/util.h"
 
 PricerSolverBdd::PricerSolverBdd(const Instance& instance)
     : PricerSolverBase(instance),
@@ -1748,7 +1749,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         if (value > EPS_SOLVER) {
             x_bar[it.get_nb_job()].emplace_back(it.get_nb_job(),
                                                 it.get_weight(), 0.0, value);
-            if (value < 1.0 - EPS_SOLVER) {
+            if (safe_frac(value) > 0) {
                 set_is_integer_solution(false);
             }
         }
