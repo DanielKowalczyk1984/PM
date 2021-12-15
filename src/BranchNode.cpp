@@ -37,6 +37,7 @@
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
 #include "branch-and-bound/btree.h"
+#include "orutils/util.h"
 
 namespace fmt {
 template <>
@@ -107,7 +108,7 @@ void BranchNodeBase::branch(BTree* bt) {
             return (j->weighted_tardiness_start(b.get_t()) * b.get_value() + a);
         });
 
-        if (sum < EPS) {
+        if (safe_frac(sum) < EPS) {
             return false;
         }
 
@@ -117,7 +118,7 @@ void BranchNodeBase::branch(BTree* bt) {
             [&j](auto t) { return j->weighted_tardiness_start(t); });
 
         tmp_t = (*lb_it) - 1;
-        return (std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS);
+        return true;
     });
 
     for (auto&& [x_j, job] :
@@ -144,13 +145,18 @@ void BranchNodeBase::branch(BTree* bt) {
             auto sum = ranges::accumulate(x, 0.0, [&j](auto a, auto b) {
                 return ((j->processing_time + b.get_t()) * b.get_value() + a);
             });
+
+            if(safe_frac(sum) < EPS){
+                return false;
+            }
+
             auto aux_vec = ranges::views::iota(int{}, instance.H_max + 1);
             auto lb_it = ranges::upper_bound(
                 aux_vec, sum, std::less<>(),
                 [&j](auto t) { return (j->processing_time + t); });
 
             tmp_t = (*lb_it) - 1;
-            return std::min(sum - std::floor(sum), std::ceil(sum) - sum) > EPS;
+            return true;
         });
 
         for (auto&& [x_j, job] :
@@ -172,18 +178,17 @@ void BranchNodeBase::branch(BTree* bt) {
      */
     if (ranges::all_of(candidates, [](const auto& tmp) { return tmp.empty; })) {
         auto rng_cum = ranges::views::filter([&tmp_t](const auto& tmp_aux) {
-                auto&& [x_j, job] = tmp_aux;
+            auto&& [x_j, job] = tmp_aux;
 
-                auto br_point_it = ranges::max(x_j, std::less<>{}, [](auto& x) {
-                    return 0.5 - std::abs(x.get_cum_value() -
-                                          std::floor(x.get_cum_value()) - 0.5);
-                });
-                auto cum_aux = br_point_it.get_cum_value();
-                auto aux = std::min(cum_aux - std::floor(cum_aux),
-                                    std::ceil(cum_aux) - cum_aux);
+            auto br_point_it = ranges::max(x_j, std::less<>{}, [](auto& x) {
+                return 0.5 - std::abs(x.get_cum_value() -
+                                      std::floor(x.get_cum_value()) - 0.5);
+            });
+            auto cum_aux = br_point_it.get_cum_value();
+            auto aux =  safe_frac(cum_aux);
 
-                tmp_t = static_cast<int>(br_point_it.get_t());
-                return (aux > EPS);
+            tmp_t = static_cast<int>(br_point_it.get_t());
+            return (aux > EPS);
         });
 
         for (auto&& [x_j, job] : rng_zip | rng_cum) {
@@ -214,8 +219,10 @@ void BranchNodeBase::branch(BTree* bt) {
     auto best_time = 0;
 
     std::array<std::unique_ptr<BranchNodeBase>, 2> best{};
-    auto nb_cand = (pd->depth <= 7) ? std::min(std::max(parms.strong_branching.value(), 1),
-                            static_cast<int>(candidates.size())) : 1;
+    auto                                           nb_cand = (pd->depth <= 7)
+                                                                 ? std::min(std::max(parms.strong_branching.value(), 1),
+                                                                            static_cast<int>(candidates.size()))
+                                                                 : 1;
 
     candidates |= ranges::actions::sort(
         std::greater<>{}, [](const auto& tmp) { return tmp.score; });
@@ -266,7 +273,7 @@ void BranchNodeBase::branch(BTree* bt) {
             ranges::any_of(fathom, ranges::identity{})) {
             best_min_gain = best_score;
             best = std::move(child_nodes);
-            nb_non_improvements = 0;
+            nb_non_improvements /= 2;
         } else {
             ++nb_non_improvements;
         }
@@ -376,8 +383,8 @@ BranchNodeRelBranching::BranchNodeRelBranching(std::unique_ptr<NodeData> _data,
     : BranchNodeBase(std::move(_data), isRoot) {}
 
 void BranchNodeRelBranching::branch(BTree* bt) {
-    auto*       node_data = get_data_ptr();
-    auto*       pricing_solver = get_pricersolver();
+    auto* node_data = get_data_ptr();
+    auto* pricing_solver = get_pricersolver();
     // auto&       parms = node_data->parms;
     const auto& instance = get_instance_info();
     // const auto  Tmax = instance.H_max;

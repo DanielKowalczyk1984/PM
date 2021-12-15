@@ -1812,7 +1812,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
         if (value > EPS_SOLVER) {
             x_bar[it.get_nb_job()].emplace_back(it.get_nb_job(),
                                                 it.get_weight(), 0.0, value);
-            if (value < 1.0 - EPS_SOLVER) {
+            if (safe_frac(value) > EPS_SOLVER) {
                 set_is_integer_solution(false);
             }
         }
