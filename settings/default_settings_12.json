@@ -2,7 +2,7 @@
 	"bb_explore_strategy": "dfs",
 	"scoring_parameter": "WeightedProduct",
 	"scoring_value": 0,
-	"strong_branching": 14,
+	"strong_branching": 12,
 	"bb_node_limit": 0,
 	"nb_iterations_rvnd": 10000,
 	"branching_cpu_limit": 7200.0,
