@@ -36,10 +36,10 @@
 			"request": "launch",
 			"program": "PM.exe",
 			"args": [
-				"--json","${workspaceFolder}/settings/default_settings.json", "${workspaceFolder}/instances/wt100/wt100_121.dat", "4"
+				"--json","${workspaceFolder}/settings/default_settings_small.json", "${workspaceFolder}/instances/wt007/wt007_002.dat", "2"
 			],
 			"stopAtEntry": false,
-			"cwd": "${workspaceRoot}/build/Debug",
+			"cwd": "${workspaceRoot}/build",
 			"environment": [],
 			"console": "integratedTerminal"
 		}
