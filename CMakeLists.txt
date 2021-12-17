@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg-custom-ports")
-
 #
 # Project details
 #
@@ -11,7 +10,7 @@ project(
   VERSION 0.1.0
   LANGUAGES CXX C
   DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
-)
+  )
 
 # # Define a local module path
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
@@ -174,6 +173,7 @@ find_package(Boost REQUIRED COMPONENTS atomic chrono timer random regex serializ
 find_package(docopt CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+# find_package(ORUtils CONFIG REQUIRED)
 
 include(cmake/FindGurobi.cmake)
 include(cmake/SetUpOsi.cmake)
@@ -194,7 +194,7 @@ target_link_libraries(
           Boost::random
           range-v3::range-v3
           nlohmann_json::nlohmann_json
-          ORUtils::ORUtils
+          or-utils::or-utils
           branch-and-bound::branch-and-bound
           ModernDD::ModernDD
 )
