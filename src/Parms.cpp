@@ -39,7 +39,7 @@
 #include <string>                                // for allocator, string, stod
 #include "DebugLvl.hpp"                          // for debug_lvl
 #include "Usage.hpp"                             // for USAGE
-#include "orutils/util.h"                        // for program_header
+#include "or-utils/util.h"                        // for program_header
 
 const boost::timer::nanosecond_type TIME_LIMIT = 7200;
 const double                        ALPHA_STAB_INIT = 0.8;

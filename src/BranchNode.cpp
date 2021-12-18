@@ -37,7 +37,7 @@
 #include "PricerSolverBase.hpp"
 #include "Statistics.h"
 #include "branch-and-bound/btree.h"
-#include "orutils/util.h"
+#include "or-utils/util.h"
 
 namespace fmt {
 template <>

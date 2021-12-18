@@ -28,7 +28,7 @@
 #include <boost/timer/timer.hpp>      // for cpu_timer
 #include <cstddef>                    // for size_t
 #include <string>                     // for string
-#include "orutils/util.h"             // for CCutil_timer
+#include "or-utils/util.h"             // for CCutil_timer
 struct Parms;
 
 class Timer : public boost::timer::cpu_timer {
