@@ -77,7 +77,7 @@ void BranchNodeBase::branch(BTree* bt) {
     const auto& instance = get_instance_info();
     const auto& parms = pd->parms;
 
-    if (!parms.strong_branching.value() && dbg_lvl() > 0) {
+    if (!parms.strong_branching.value() && debug_lvl(1)) {
         fmt::print("\nDOING STRONG BRANCHING...\n\n");
     }
 
