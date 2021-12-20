@@ -70,7 +70,6 @@ endif()
 #
 
 set(Boost_NO_WARN_NEW_VERSIONS ON)
-add_subdirectory(or-utils)
 add_subdirectory(branch-and-bound)
 add_subdirectory(decision-diagrams)
 
@@ -173,7 +172,7 @@ find_package(Boost REQUIRED COMPONENTS atomic chrono timer random regex serializ
 find_package(docopt CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
-# find_package(ORUtils CONFIG REQUIRED)
+find_package(or-utils CONFIG REQUIRED)
 
 include(cmake/FindGurobi.cmake)
 include(cmake/SetUpOsi.cmake)
@@ -187,6 +186,7 @@ target_link_libraries(
           $<IF:$<CONFIG:DEBUG>,${CGL_LIBRARY_DEBUG},${CGL_LIBRARY}>
           $<$<LINK_LANG_AND_ID:CXX,GNU>:docopt_s>
           $<$<LINK_LANG_AND_ID:CXX,MSVC>:docopt>
+          ${GUROBI_LIBRARY}
           fmt::fmt
           Boost::atomic
           Boost::chrono
