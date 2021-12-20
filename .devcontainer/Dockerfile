@@ -6,7 +6,10 @@ FROM mcr.microsoft.com/vscode/devcontainers/cpp:0-${VARIANT}
 
 # [Optional] Uncomment this section to install additional packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends wget ca-certificates git curl unzip tar zip pkg-config
+    && apt-get -y install --no-install-recommends wget ca-certificates git curl unzip tar zip pkg-config gfortran 
+
+# packages needed by coin-or
+RUN apt-get -y install --no-install-recommends libgfortran-10-dev libblas-dev liblapack-dev libmetis-dev libnauty2-dev
 
 ARG GRB_VERSION=9.1.2
 ARG GRB_SHORT_VERSION=9.1
@@ -39,3 +42,4 @@ RUN brew install gcc cmake ninja
 RUN git clone https://github.com/Microsoft/vcpkg.git /opt/vcpkg
 WORKDIR /opt/vcpkg
 RUN ./bootstrap-vcpkg.sh && ./vcpkg integrate install && ./vcpkg integrate bash
+
