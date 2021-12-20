@@ -14,6 +14,7 @@
     "boost-serialization",
     "boost-graph",
     "boost-multiprecision",
-    "or-utils"
+    "or-utils",
+    "moderndd"
   ]
 }

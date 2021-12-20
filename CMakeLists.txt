@@ -71,7 +71,6 @@ endif()
 
 set(Boost_NO_WARN_NEW_VERSIONS ON)
 add_subdirectory(branch-and-bound)
-add_subdirectory(decision-diagrams)
 
 #
 # Enable package managers
@@ -173,6 +172,7 @@ find_package(docopt CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(or-utils CONFIG REQUIRED)
+find_package(moderndd CONFIG REQUIRED)
 
 include(cmake/FindGurobi.cmake)
 include(cmake/SetUpOsi.cmake)
