@@ -13,6 +13,7 @@
     "boost-regex",
     "boost-serialization",
     "boost-graph",
-    "boost-multiprecision"
+    "boost-multiprecision",
+    "or-utils"
   ]
 }
