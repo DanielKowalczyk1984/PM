@@ -1,6 +1,6 @@
 {
   "name": "moderndd",
-  "version": "2018.11.1",
+  "version": "2018-11-1",
   "description": "Decision diagrams in modern cpp",
   "homepage": "https://gitlab.kuleuven.be/u0056096/DecisionDiagramsModernCpp.git",
   "dependencies": [

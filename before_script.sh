@@ -24,7 +24,8 @@ if [ ! -d "./Cgl" ]; then
 fi
 
 if [ ! -d "./vcpkg" ]; then
-	git clone https://github.com/Microsoft/vcpkg.git vcpkg
-	./vcpkg/bootstrap-vcpkg.sh 
-	./vcpkg/vcpkg install range-v3 fmt boost-chrono boost-timer boost-atomic boost-json boost-random boost-regex boost-serialization boost-multiprecision boost-graph docopt nlohmann-json
+	rm -rf ./vcpkg
 fi
+git clone https://github.com/Microsoft/vcpkg.git vcpkg
+./vcpkg/bootstrap-vcpkg.sh 
+./vcpkg/vcpkg inegrate install 
