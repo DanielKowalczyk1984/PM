@@ -4,7 +4,7 @@ stages:
   
 workflow:
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ "(master|develop|.*alpine|feature.*)"'
+    - if: '$CI_COMMIT_BRANCH =~ "(master|develop|.*alpine)"'
 
 cache:
   key: $CI_COMMIT_REF_SLUG
