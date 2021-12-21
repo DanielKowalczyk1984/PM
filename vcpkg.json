@@ -15,6 +15,7 @@
     "boost-graph",
     "boost-multiprecision",
     "or-utils",
-    "moderndd"
+    "moderndd",
+    "modernbb"
   ]
 }
