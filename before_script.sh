@@ -28,4 +28,4 @@ if [ ! -d "./vcpkg" ]; then
 fi
 git clone https://github.com/Microsoft/vcpkg.git vcpkg
 ./vcpkg/bootstrap-vcpkg.sh 
-./vcpkg/vcpkg inegrate install 
+./vcpkg/vcpkg integrate install 
