@@ -27,7 +27,7 @@ cache:
     - apt-get --no-install-recommends -y install ${BB_CI_CC_COMPILER} ${BB_CI_CXX_COMPILER} clang-format libssl-dev git gcc g++ wget curl make ninja-build pkg-config python3 python3-pip tar unzip zip
     - pip install cmake
     - wget https://packages.gurobi.com/${GRB_SHORT_VERSION}/gurobi${GRB_VERSION}_linux64.tar.gz
-    - tar -xfv gurobi${GRB_VERSION}_linux64.tar.gz
+    - tar -xvf gurobi${GRB_VERSION}_linux64.tar.gz
     - ls
     - rm gurobi${GRB_VERSION}_linux64.tar.gz
     - mv gurobi* gurobi
