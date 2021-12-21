@@ -70,7 +70,6 @@ endif()
 #
 
 set(Boost_NO_WARN_NEW_VERSIONS ON)
-add_subdirectory(branch-and-bound)
 
 #
 # Enable package managers
@@ -129,11 +128,6 @@ else()
   endif()
 endif()
 
-# set_target_properties( ${PROJECT_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY
-# $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/> LIBRARY_OUTPUT_DIRECTORY
-# $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/lib> RUNTIME_OUTPUT_DIRECTORY
-# $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/bin> )
-
 if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
   set_target_properties(
     ${PROJECT_NAME}_LIB
@@ -173,6 +167,7 @@ find_package(range-v3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(or-utils CONFIG REQUIRED)
 find_package(moderndd CONFIG REQUIRED)
+find_package(branch-and-bound CONFIG REQUIRED)
 
 include(cmake/FindGurobi.cmake)
 include(cmake/SetUpOsi.cmake)
