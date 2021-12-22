@@ -23,7 +23,7 @@ if [ ! -d "./Cgl" ]; then
 	fi
 fi
 
-if [ ! -d "./vcpkg" ]; then
+if [ -d "./vcpkg" ]; then
 	rm -rf ./vcpkg
 fi
 git clone https://github.com/Microsoft/vcpkg.git vcpkg
