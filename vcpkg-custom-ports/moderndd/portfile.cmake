@@ -2,8 +2,8 @@
 vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.kuleuven.be
     OUT_SOURCE_PATH SOURCE_PATH
-    REF v0.0.4
-    SHA512 1badf6530eab6fbb97348157c633979cbaa87c2c0b872b8ddf4354f58db050fa70a8a59f7f84762d0727a5006b1ffeda5d51a0218c6894c23c228f813cfb1940
+    REF v0.0.6
+    SHA512 3c4f86579f816acb67d346010ebff3afdbd0826641142024c6e84d45f12db27bed68836d4cd50b7fe2f7ef40618ec9e80f681899fb44c250db0466d58be0e331
     REPO u0056096/DecisionDiagramsModernCpp
 )
 
