@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
+set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg-custom-ports")
 #
 # Project details
 #
@@ -9,7 +10,7 @@ project(
   VERSION 0.1.0
   LANGUAGES CXX C
   DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
-)
+  )
 
 # # Define a local module path
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
@@ -40,6 +41,7 @@ include(cmake/Utils.cmake)
 # letting CMake decide how to link with it.
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif(MSVC)
 
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...")
@@ -67,9 +69,7 @@ endif()
 # Third Party packages
 #
 
-add_subdirectory(or-utils)
-add_subdirectory(branch-and-bound)
-add_subdirectory(decision-diagrams)
+set(Boost_NO_WARN_NEW_VERSIONS ON)
 
 #
 # Enable package managers
@@ -128,13 +128,6 @@ else()
   endif()
 endif()
 
-set_target_properties(
-  ${PROJECT_NAME}
-  PROPERTIES ARCHIVE_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/lib>
-             LIBRARY_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/lib>
-             RUNTIME_OUTPUT_DIRECTORY $<$<CXX_COMPILER_ID:MSVC,GNU>:${CMAKE_BINARY_DIR}/bin>
-)
-
 if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
   set_target_properties(
     ${PROJECT_NAME}_LIB
@@ -168,32 +161,27 @@ verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.")
 # Identify and link with the specific "packages" the project uses find_package(package_name
 # package_version REQUIRED package_type [other_options])
 find_package(fmt CONFIG REQUIRED)
-find_package(
-  Boost REQUIRED
-  COMPONENTS atomic
-             chrono
-             timer
-             json
-             random
-             regex
-             serialization
-)
+find_package(Boost REQUIRED COMPONENTS atomic chrono timer random regex serialization)
 find_package(docopt CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(or-utils CONFIG REQUIRED)
+find_package(moderndd CONFIG REQUIRED)
+find_package(branch-and-bound CONFIG REQUIRED)
 
 include(cmake/FindGurobi.cmake)
 include(cmake/SetUpOsi.cmake)
 
 target_link_libraries(
   ${PROJECT_NAME}
-  PRIVATE $<IF:$<CONFIG:Debug>,${GUROBI_CXX_DEBUG_LIBRARY},${GUROBI_CXX_LIBRARY}>
-          $<IF:$<CONFIG:Debug>,${OSI_LIBRARY_DEBUG},${OSI_LIBRARY}>
-          $<IF:$<CONFIG:Debug>,${OSIGRB_LIBRARY_DEBUG},${OSIGRB_LIBRARY}>
-          $<IF:$<CONFIG:Debug>,${COINUTILS_LIBRARY_DEBUG},${COINUTILS_LIBRARY}>
-          $<IF:$<CONFIG:Debug>,${CGL_LIBRARY_DEBUG},${CGL_LIBRARY}>
+  PRIVATE $<IF:$<CONFIG:DEBUG>,${GUROBI_CXX_DEBUG_LIBRARY},${GUROBI_CXX_LIBRARY}>
+          $<IF:$<CONFIG:DEBUG>,${OSI_LIBRARY_DEBUG},${OSI_LIBRARY}>
+          $<IF:$<CONFIG:DEBUG>,${OSIGRB_LIBRARY_DEBUG},${OSIGRB_LIBRARY}>
+          $<IF:$<CONFIG:DEBUG>,${COINUTILS_LIBRARY_DEBUG},${COINUTILS_LIBRARY}>
+          $<IF:$<CONFIG:DEBUG>,${CGL_LIBRARY_DEBUG},${CGL_LIBRARY}>
           $<$<LINK_LANG_AND_ID:CXX,GNU>:docopt_s>
           $<$<LINK_LANG_AND_ID:CXX,MSVC>:docopt>
+          ${GUROBI_LIBRARY}
           fmt::fmt
           Boost::atomic
           Boost::chrono
@@ -201,7 +189,7 @@ target_link_libraries(
           Boost::random
           range-v3::range-v3
           nlohmann_json::nlohmann_json
-          ORUtils::ORUtils
+          or-utils::or-utils
           branch-and-bound::branch-and-bound
           ModernDD::ModernDD
 )
@@ -301,7 +289,16 @@ verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 # clang-format)
 #
 
-add_clang_format_target()
+include(cmake/CPM.cmake)
+CPMAddPackage(
+  NAME Format.cmake
+  VERSION 1.7.0
+  GITHUB_REPOSITORY TheLartians/Format.cmake
+  OPTIONS # set to yes skip cmake formatting
+          "FORMAT_SKIP_CMAKE NO"
+          # path to exclude (optional, supports regular expressions)
+          "CMAKE_FORMAT_EXCLUDE cmake/CPM.cmake"
+)
 
 #
 # Install library for easy downstream inclusion
@@ -347,4 +344,4 @@ configure_package_config_file(
 include(cmake/Doxygen.cmake)
 
 # Add Gurobi env to Binary directory
-file(COPY ${CMAKE_SOURCE_DIR}/gurobi.env DESTINATION ${CMAKE_BINARY_DIR}/bin)
+file(COPY ${CMAKE_SOURCE_DIR}/settings/gurobi.env DESTINATION ${CMAKE_BINARY_DIR})

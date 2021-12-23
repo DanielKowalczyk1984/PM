@@ -1,3 +1,25 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #ifndef __PRICERSOLVERARCTIMEDP_H__
 #define __PRICERSOLVERARCTIMEDP_H__
 
@@ -55,8 +77,12 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     PricerSolverArcTimeDp(PricerSolverArcTimeDp&&) = default;
     PricerSolverArcTimeDp& operator=(const PricerSolverArcTimeDp&) = default;
     PricerSolverArcTimeDp& operator=(PricerSolverArcTimeDp&&) = default;
-
     ~PricerSolverArcTimeDp() override;
+
+    PricingSolution pricing_algorithm(double* _pi) override;
+    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
+    PricingSolution farkas_pricing(double* pi) override;
+    PricingSolution farkas_pricing(std::span<const double>& pi) override;
     // PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
     //     : PricerSolverBase(src),
     //       Hmax(src.Hmax),
@@ -93,10 +119,6 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         const std::vector<std::shared_ptr<Column>>& columns) override;
     // void add_constraint(Job* job, GPtrArray* list, int order) override;
 
-    PricingSolution pricing_algorithm(double* _pi) override;
-    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
-    PricingSolution farkas_pricing(double* pi) override;
-    PricingSolution farkas_pricing(std::span<const double>& pi) override;
 
     size_t  get_nb_edges() override;
     size_t  get_nb_vertices() override;
@@ -130,9 +152,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     }
 
     void update_constraints() override {}
-
     void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
-
     void update_coeff_constraints() override {}
 };
 #endif  // __PRICERSOLVERARCTIMEDP_H__

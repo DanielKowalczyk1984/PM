@@ -1,3 +1,25 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #ifndef PRICER_SOLVER_BDD_HPP
 #define PRICER_SOLVER_BDD_HPP
 #include <OsiGrbSolverInterface.hpp>      // for OsiGrbSolverInterface
@@ -40,7 +62,6 @@ class PricerSolverBdd : public PricerSolverBase {
 
     size_t H_min;
     int    H_max;
-
 
    public:
     explicit PricerSolverBdd(const Instance& instance);
@@ -89,7 +110,7 @@ class PricerSolverBdd : public PricerSolverBase {
         const std::vector<std::shared_ptr<Column>>& columns) override;
 
     void project_sol_on_original_variables(const Sol& _sol) override;
-    std::vector<std::vector<double>>& calculate_job_time() override;
+    std::vector<std::vector<BddCoeff>>& calculate_job_time() override;
     void    split_job_time(size_t _job, int _time, bool _left) override;
     cpp_int print_num_paths() override;
     void    remove_constraints(int first, int nb_del) override;
@@ -114,6 +135,7 @@ class PricerSolverBdd : public PricerSolverBase {
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 
    private:
+   
     double compute_reduced_cost(const PricingSolution& sol,
                                 double*                pi,
                                 double*                lhs) override;
@@ -135,7 +157,7 @@ class PricerSolverBdd : public PricerSolverBase {
 
     void update_constraints() override {}
 
-    void update_coeff_constraints() override;
+    void                                update_coeff_constraints() override;
     std::unique_ptr<OsiSolverInterface> build_model();
 };
 

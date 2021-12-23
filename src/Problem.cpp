@@ -1,3 +1,25 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "Problem.h"
 #include <fmt/core.h>                   // for print
 #include <boost/timer/timer.hpp>        // for auto_cpu_timer
@@ -30,11 +52,12 @@ Problem::Problem(int argc, const char** argv)
       status(no_sol),
       opt_sol() {
     /**
-     *@brief Finding heuristic solutions to the problem or start without
-     *feasible solutions
+     * @brief
+     * Finding heuristic solutions to the problem or start without feasible
+     * solutions
      */
     stat.start_resume_timer(Statistics::heuristic_timer);
-    if (parms.use_heuristic) {
+    if (parms.use_heuristic.value()) {
         heuristic();
     } else {
         Sol best_sol(instance);
@@ -46,14 +69,14 @@ Problem::Problem(int argc, const char** argv)
         best_sol.print_solution();
         opt_sol = best_sol;
     }
-
     stat.suspend_timer(Statistics::heuristic_timer);
+
     /**
-     * @brief Create pricing solver
-     *
+     * @brief
+     * Create pricing solver
      */
     stat.start_resume_timer(Statistics::build_dd_timer);
-    switch (parms.pricing_solver) {
+    switch (parms.pricing_solver.value()) {
         case bdd_solver_simple:
             root_pd->solver = std::make_unique<PricerSolverBddSimple>(instance);
             break;
@@ -100,11 +123,11 @@ Problem::Problem(int argc, const char** argv)
     stat.first_size_graph = root_pd->solver->get_nb_edges();
 
     /**
-     * @brief Initial stabilization method
-     *
+     * @brief
+     * Initial stabilization method
      */
     auto* tmp_solver = root_pd->solver.get();
-    switch (parms.stab_technique) {
+    switch (parms.stab_technique.value()) {
         case stab_wentgnes:
             root_pd->solver_stab = std::make_unique<PricingStabilizationStat>(
                 tmp_solver, root_pd->pi);
@@ -129,16 +152,16 @@ Problem::Problem(int argc, const char** argv)
     }
 
     root_pd->solver->update_UB(opt_sol.tw);
-    root_pd->solver_stab->set_alpha(parms.alpha);
+    root_pd->solver_stab->set_alpha(parms.alpha.value());
     root_pd->upper_bound = opt_sol.tw;
     stat.root_upper_bound = opt_sol.tw + instance.off;
     stat.global_upper_bound = opt_sol.tw + instance.off;
 
     /**
-     * @brief Initialization of the B&B tree
-     *
+     * @brief
+     * Initialization of the B&B tree
      */
-    if (!parms.use_mip_solver) {
+    if (!parms.use_mip_solver.value()) {
         stat.start_resume_timer(Statistics::bb_timer);
         tree = std::make_unique<BranchBoundTree>(std::move(root_pd), 0, 1);
         tree->explore();
@@ -160,21 +183,21 @@ Problem::Problem(int argc, const char** argv)
         // set_lb(pd->lower_bound);
         // set_obj_value(pd->LP_lower_bound);
     }
-    if (parms.print_csv) {
+    if (parms.print_csv.value()) {
         to_csv();
     }
 }
 
 void Problem::solve() {
     tree->explore();
-    if (parms.print_csv) {
+    if (parms.print_csv.value()) {
         to_csv();
     }
 }
 
 void Problem::heuristic() {
     // auto                         ILS = instance.nb_jobs / 2;
-    auto IR = static_cast<size_t>(parms.nb_iterations_rvnd);
+    auto IR = static_cast<size_t>(parms.nb_iterations_rvnd.value());
     boost::timer::auto_cpu_timer timer_heuristic;
 
     Sol best_sol{instance};

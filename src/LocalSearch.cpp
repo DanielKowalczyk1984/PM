@@ -1,8 +1,27 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "LocalSearch.hpp"
-// #include <bits/c++config.h>
 #include <fmt/core.h>
-#include <cstddef>
-#include <functional>
 #include <limits>
 #include <range/v3/action/shuffle.hpp>
 #include <range/v3/algorithm/sort.hpp>
@@ -11,9 +30,10 @@
 #include <range/v3/view/enumerate.hpp>
 #include <range/v3/view/take.hpp>
 #include <vector>
+#include "DebugLvl.hpp"
 #include "Job.h"
+#include "Parms.h"
 #include "Solution.hpp"
-#include "orutils/util.h"
 
 LocalSearchData::LocalSearchData(size_t _nb_jobs, size_t _nb_machines)
     : nb_jobs(_nb_jobs),
@@ -169,7 +189,7 @@ void LocalSearchData::insertion_operator(Sol& sol, size_t l) {
     }
 
     if (updated) {
-        if (dbg_lvl()) {
+        if (debug_lvl(0)) {
             sol.print_solution();
         }
 
@@ -177,13 +197,15 @@ void LocalSearchData::insertion_operator(Sol& sol, size_t l) {
         calculate_W(sol);
         calculate_g(sol);
 
-        if (dbg_lvl()) {
+        if (debug_lvl(0)) {
             sol.print_solution();
         }
     }
 }
 
 void LocalSearchData::swap_operator(Sol& sol, size_t l1, size_t l2) {
+    boost::timer::cpu_timer time_swap_operator;
+
     auto        max = 0;
     auto        i_best = 0UL, j_best = 0UL, k_best = 0UL;
     SlopeListIt it;
@@ -365,7 +387,7 @@ void LocalSearchData::swap_operator(Sol& sol, size_t l1, size_t l2) {
 
     /** update to best improvement */
     if (updated) {
-        if (dbg_lvl()) {
+        if (debug_lvl(0)) {
             sol.print_solution();
         }
 
@@ -373,16 +395,16 @@ void LocalSearchData::swap_operator(Sol& sol, size_t l1, size_t l2) {
         calculate_W(sol);
         calculate_g(sol);
 
-        if (dbg_lvl()) {
+        if (debug_lvl(0)) {
             sol.print_solution();
         }
     }
 
-    if (dbg_lvl() > 0) {
+    if (debug_lvl(0)) {
         fmt::print(
             R"(intra swap with l1 = {} and l2 = {}, running time = {} and improvement {} on machine {} on places {} {}
 )",
-            l1, l2, CCutil_zeit(), max, k_best, i_best, j_best);
+            l1, l2, time_swap_operator.format(5, "%ws"), max, k_best, i_best, j_best);
     }
 }
 
@@ -591,19 +613,19 @@ void LocalSearchData::swap_operator_inter(Sol& sol, size_t l1, size_t l2) {
 
     /** update to best improvement */
     if (updated) {
-        if (dbg_lvl()) {
+        if (debug_lvl(0)) {
             sol.print_solution();
         }
         sol.update_swap_move_inter(i_best, j_best, k_best, kk_best, l1, l2);
         calculate_W(sol);
         calculate_g(sol);
 
-        if (dbg_lvl()) {
+        if (debug_lvl(0)) {
             sol.print_solution();
         }
     }
 
-    if (dbg_lvl() > 0) {
+    if (debug_lvl(0)) {
         fmt::print(
             R"(inter insertion with l1 = {} and l2 = {} and improvement {} on machines {} and {} on places {} {}
 )",
@@ -758,24 +780,24 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, size_t l) {
     }
 
     if (updated) {
-        if (dbg_lvl()) {
+        if (debug_lvl(0)) {
             sol.print_solution();
         }
         sol.update_insertion_move_inter(i_best, j_best, k_best, kk_best, l);
         calculate_W(sol);
         calculate_g(sol);
 
-        if (dbg_lvl()) {
+        if (debug_lvl(0)) {
             sol.print_solution();
         }
     }
 
-    if (dbg_lvl() > 0) {
+    if (debug_lvl(0)) {
         fmt::print(
             R"(inter insertion with l = {} and improvement {} on machines {} and {} on places {} {}
 )",
             l, max, k_best, kk_best, i_best, j_best);
-        print_line();
+        fmt::print("{:-^30}", "");
     }
 }
 

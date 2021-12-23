@@ -1,21 +1,35 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "NodeData.h"  // for NodeData
-#include <fmt/core.h>
 #include <OsiGrbSolverInterface.hpp>
 #include <array>                                // for array
-#include <cmath>                                // for sqrt
 #include <concepts/concepts.hpp>                // for return_t
 #include <cstddef>                              // for size_t
-#include <functional>                           // for less, function
 #include <limits>                               // for numeric_limits
 #include <memory>                               // for shared_ptr, unique_ptr
 #include <range/v3/action/action.hpp>           // for action_closure, opera...
 #include <range/v3/action/sort.hpp>             // for sort, sort_fn
 #include <range/v3/action/unique.hpp>           // for unique, unique_fn
-#include <range/v3/functional/bind_back.hpp>    // for bind_back_fn_
-#include <range/v3/functional/comparisons.hpp>  // for equal_to
-#include <range/v3/functional/compose.hpp>      // for composed
-#include <utility>                              // for move
-#include <vector>                               // for vector
 #include "Column.h"                             // for ScheduleSet
 #include "Instance.h"                           // for Instance
 #include "Parms.h"                              // for Parms
@@ -23,7 +37,6 @@
 #include "PricingStabilization.hpp"             // for PricingStabilizationBase
 #include "Problem.h"                            // for Problem
 #include "Solution.hpp"                         // for Sol
-#include "orutils/lp.h"                                 // for lp_interface_create
 
 NodeData::NodeData(Problem* problem)
     : depth(0UL),
@@ -32,7 +45,6 @@ NodeData::NodeData(Problem* problem)
       instance(problem->instance),
       stat(problem->stat),
       opt_sol(problem->opt_sol),
-      pname("tmp"),
       nb_jobs(instance.nb_jobs),
       nb_machines(instance.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
@@ -68,7 +80,7 @@ NodeData::NodeData(Problem* problem)
       nb_non_improvements(0),
       iterations(0UL),
       solver_stab(nullptr),
-      retirementage(static_cast<int>(sqrt(static_cast<double>(nb_jobs))) +
+      retirementage(static_cast<int>(sqrt(static_cast<double>(instance.nb_jobs))) +
                     CLEANUP_ITERATION),
       branch_job(),
       completiontime(0),
@@ -143,13 +155,13 @@ std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
 }
 
 std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
-                                                                      int _t) {
+                                                                      int _t) const {
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, _t, false),
                                                     clone(_j, _t, true)};
 }
 
 std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
-                                                                      long _t) {
+                                                                      long _t) const {
     auto aux_t = static_cast<int>(_t);
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, aux_t, false),
                                                     clone(_j, aux_t, true)};
@@ -180,14 +192,12 @@ void NodeData::add_solution_to_colpool(const Sol& sol) {
     }
 }
 
-double NodeData::get_score_value() {
-    switch (parms.scoring_value) {
+double NodeData::get_score_value() const {
+    switch (parms.scoring_value.value()) {
         case (size_scoring_value):
             return static_cast<double>(solver->get_nb_edges());
-            break;
         case (nb_paths_scoring_value):
             return static_cast<double>(solver->print_num_paths());
-            break;
         default:
             return LP_lower_bound;
     }

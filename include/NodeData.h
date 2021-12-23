@@ -1,3 +1,25 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #ifndef __NODEDATA_H__
 #define __NODEDATA_H__
 
@@ -9,7 +31,7 @@
 #include <span>                    // for span
 #include <string>                  // for string
 #include <vector>                  // for vector
-#include "orutils/lp.h"                    // for lp_interface
+#include "or-utils/lp.h"            // for lp_interface
 
 class PricingStabilizationBase;  // lines 14-14
 class Problem;                   // lines 15-15
@@ -39,7 +61,6 @@ struct NodeData {
     const Instance& instance;
     Statistics&     stat;
     Sol&            opt_sol;
-    std::string     pname;
 
     size_t nb_jobs;
     size_t nb_machines;
@@ -50,12 +71,9 @@ struct NodeData {
     std::unique_ptr<OsiSolverInterface> osi_rmp;
     std::vector<int>                    row_status;
 
-    // std::vector<double> lambda;
     std::span<const double> lambda;
-    // std::vector<double> pi;
     std::span<const double> pi;
     std::vector<double>     slack;
-    // std::vector<double>     rhs;
     std::span<const double> rhs;
     std::vector<double>     lhs_coeff;
     std::vector<int>        id_row;
@@ -72,8 +90,8 @@ struct NodeData {
 
     size_t id_art_var_convex;
     int    id_art_var_assignment;
-    size_t id_art_var_cuts;
-    size_t id_next_var_cuts;
+    int    id_art_var_cuts;
+    int    id_next_var_cuts;
     int    id_pseudo_schedules;
 
     // PricerSolver
@@ -139,21 +157,23 @@ struct NodeData {
     int  call_update_rows_coeff();
 
     /** small getters */
-    double get_score_value();
+    double get_score_value() const;
 
     /** StabilizationWrappers.cpp */
     int  solve_pricing();
     void solve_farkas_dbl();
 
-    [[nodiscard]] std::unique_ptr<NodeData>  clone() const;
-    [[nodiscard]] std::unique_ptr<NodeData>  clone(size_t _j,
-                                                   int    _t,
-                                                   bool   _left) const;
-    std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
-                                                                int    _t);
+    [[nodiscard]] std::unique_ptr<NodeData>                clone() const;
+    [[nodiscard]] std::unique_ptr<NodeData>                clone(size_t _j,
+                                                                 int    _t,
+                                                                 bool   _left) const;
+    [[nodiscard]] std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(
+        size_t _j,
+        int    _t) const;
 
-    std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(size_t _j,
-                                                                long   _t);
+    [[nodiscard]] std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(
+        size_t _j,
+        long   _t) const;
 
    private:
     int add_lhs_column_to_rmp(double cost);

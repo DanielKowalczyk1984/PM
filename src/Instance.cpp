@@ -1,31 +1,50 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "Instance.h"
-#include <fmt/core.h>                            // for print
-#include <algorithm>                             // for min, max, min_element
-#include <cmath>                                 // for ceil, floor
-#include <compare>                               // for operator<
-#include <cstddef>                               // for size_t
-#include <fstream>                               // for basic_istream::opera...
-#include <functional>                            // for identity, __invoke
-#include <memory>                                // for shared_ptr, __shared...
-#include <range/v3/algorithm/for_each.hpp>       // for for_each
-#include <range/v3/algorithm/sort.hpp>           // for sort
-#include <range/v3/iterator/basic_iterator.hpp>  // for operator!=, operator+
-#include <range/v3/numeric/accumulate.hpp>       // for accumulate, accumula...
-#include <range/v3/view/for_each.hpp>            // for for_each
-#include <range/v3/view/reverse.hpp>             // for reverse_view, revers...
-#include <range/v3/view/sliding.hpp>             // for sliding
-#include <range/v3/view/take.hpp>                // for take_view, take, tak...
-#include <range/v3/view/view.hpp>                // for operator|, view_closure
-#include <string>                                // for getline, string
-#include <tuple>                                 // for tie, operator<=>
-#include <utility>                               // for move, pair, make_pair
-#include <vector>                                // for vector, erase_if
-#include "Interval.h"                            // for IntervalPair, Interval
-#include "Job.h"                                 // for Job
-#include "Parms.h"                               // for Parms
+#include <fmt/core.h>                       // for print
+#include <algorithm>                        // for min, max, min_element
+#include <cmath>                            // for floor, ceil
+#include <cstddef>                          // for size_t
+#include <fstream>                          // for basic_istream::opera...
+#include <memory>                           // for shared_ptr, __shared...
+#include <range/v3/algorithm/for_each.hpp>  // for for_each
+#include <range/v3/algorithm/sort.hpp>      // for sort
+#include <range/v3/numeric/accumulate.hpp>  // for accumulate, accumula...
+#include <range/v3/view/for_each.hpp>       // for for_each
+#include <range/v3/view/reverse.hpp>        // for reverse_view, revers...
+#include <range/v3/view/sliding.hpp>        // for sliding
+#include <range/v3/view/take.hpp>           // for take_view, take, tak...
+#include <string>                           // for getline, string
+#include <tuple>                            // for tie, operator<=>
+#include <utility>                          // for move, pair, make_pair
+#include <vector>                           // for vector, erase_if
+#include "Interval.h"                       // for IntervalPair, Interval
+#include "Job.h"                            // for Job
+#include "Parms.h"                          // for Parms
 
 Instance::Instance(Parms const& _parms)
     : path_to_instance(_parms.jobfile),
+      pname(_parms.pname),
       nb_machines(_parms.nb_machines) {
     std::ifstream in_file{path_to_instance};
 
@@ -68,18 +87,16 @@ void Instance::calculate_H_max_H_min() {
     auto temp = p_sum - pmax;
     auto temp_dbl = static_cast<double>(temp);
     auto tmp_m = static_cast<double>(nb_machines);
-    temp_dbl = floor(temp_dbl / tmp_m);
+    temp_dbl = std::floor(temp_dbl / tmp_m);
 
     H_max = static_cast<int>(temp_dbl) + pmax;
-    H_min = static_cast<int>(ceil(temp_dbl / tmp_m)) - pmax;
+    H_min = static_cast<int>(std::ceil(temp_dbl / tmp_m)) - pmax;
 
-    ranges::sort(jobs, [](const auto& lhs, const auto& rhs) -> bool {
-        return (lhs->processing_time < rhs->processing_time);
-    });
+    ranges::sort(jobs, std::less{},
+                 [](const auto& lhs) { return lhs->processing_time; });
 
-    auto tmp = p_sum;
     H_min = p_sum;
-    tmp = ranges::accumulate(
+    auto tmp = ranges::accumulate(
         jobs | ranges::views::reverse | ranges::views::take(nb_machines - 1),
         p_sum, std::minus<>{}, [](auto& it) { return it->processing_time; });
 
@@ -89,28 +106,10 @@ void Instance::calculate_H_max_H_min() {
 )",
         H_max, H_min, pmax, pmin, p_sum, off);
 
-    ranges::sort(jobs, [](const auto& x, const auto& y) -> bool {
-        // if ((x->due_time > y->due_time)) {
-        //     return (false);
-        // } else if (x->due_time < y->due_time) {
-        //     return (true);
-        // } else if (x->processing_time > y->processing_time) {
-        //     return (false);
-        // } else if (x->processing_time < y->processing_time) {
-        //     return (true);
-        // } else if (x->weight < y->weight) {
-        //     return (false);
-        // } else if (x->weight > y->weight) {
-        //     return (true);
-        // } else if (x->job > y->job) {
-        //     return (false);
-        // } else {
-        //     return (true);
-        // }
-
-        return std::tie(x->due_time, x->processing_time, x->weight, x->job) <
-               std::tie(y->due_time, y->processing_time, y->weight, y->job);
-    });
+    auto projection = [](const std::shared_ptr<Job>& x) {
+        return std::tie(x->due_time, x->processing_time, x->weight, x->job);
+    };
+    ranges::sort(jobs, std::less<>{}, projection);
 
     auto index = 0UL;
     ranges::for_each(jobs, [&index](auto& it) { it->job = index++; });

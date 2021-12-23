@@ -1,33 +1,56 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include <OsiGrbSolverInterface.hpp>
 #include <array>
-#include <range/v3/algorithm/for_each.hpp>             // for for_each, for_...
-#include <range/v3/numeric/iota.hpp>                   // for iota, iota_fn
-#include <range/v3/view/enumerate.hpp>                 // for enumerate_fn
-#include <range/v3/view/take.hpp>                      // for take_view, take
-#include <range/v3/view/view.hpp>                      // for operator|, vie...
-#include <span>                                        // for span
-#include <vector>                                      // for vector
-#include "Column.h"                                    // for ScheduleSet
-#include "NodeData.h"                                  // for NodeData
-#include "PricerSolverBase.hpp"                        // for PricerSolverBase
-#include "Solution.hpp"                                // for Sol
-#include "gurobi_c++.h"
-#include "gurobi_c.h"  // for GRB_INFINITY
+#include <range/v3/algorithm/for_each.hpp>  // for for_each, for_...
+#include <range/v3/numeric/iota.hpp>        // for iota, iota_fn
+#include <range/v3/view/enumerate.hpp>      // for enumerate_fn
+#include <range/v3/view/take.hpp>           // for take_view, take
+#include <span>                             // for span
+#include <vector>                           // for vector
+#include "Column.h"                         // for ScheduleSet
+#include "NodeData.h"                       // for NodeData
+#include "PricerSolverBase.hpp"             // for PricerSolverBase
+#include "gurobi_c.h"                       // for GRB_INFINITY
 
 int NodeData::add_lhs_column_to_rmp(double cost) {
     id_row.clear();
     coeff_row.clear();
 
-    for (auto const&& [j, it] : lhs_coeff | ranges::views::enumerate) {
+    // for (auto const&& [j, it] : lhs_coeff | ranges::views::enumerate) {
+    //     if (std::abs(it) > EPS_BOUND) {
+    //         id_row.emplace_back(static_cast<int>(j));
+    //         coeff_row.emplace_back(it);
+    //     }
+    // }
+
+    for (int j = 0; const auto& it : lhs_coeff) {
         if (std::abs(it) > EPS_BOUND) {
             id_row.emplace_back(j);
             coeff_row.emplace_back(it);
         }
+        j++;
     }
-
-    // lp_interface_addcol(RMP.get(), static_cast<int>(id_row.size()),
-    //                     id_row.data(), coeff_row.data(), cost, 0.0,
-    //                     GRB_INFINITY, lp_interface_CONT, nullptr);
 
     osi_rmp->addCol(static_cast<int>(id_row.size()), id_row.data(),
                     coeff_row.data(), 0.0, osi_rmp->getInfinity(), cost);
@@ -42,14 +65,10 @@ int NodeData::add_lhs_column_to_rmp(double                     cost,
 
     for (auto const&& [j, it] : _lhs | ranges::views::enumerate) {
         if (std::abs(it) > EPS_BOUND) {
-            id_row.emplace_back(j);
+            id_row.emplace_back(static_cast<int>(j));
             coeff_row.emplace_back(it);
         }
     }
-
-    // lp_interface_addcol(RMP.get(), static_cast<int>(id_row.size()),
-    //                     id_row.data(), coeff_row.data(), cost, 0.0,
-    //                     GRB_INFINITY, lp_interface_CONT, nullptr);
 
     osi_rmp->addCol(static_cast<int>(id_row.size()), id_row.data(),
                     coeff_row.data(), 0.0, osi_rmp->getInfinity(), cost);
@@ -82,7 +101,7 @@ void NodeData::create_convex_contraint() {
 void NodeData::create_artificial_cols() {
     id_art_var_assignment = osi_rmp->getNumCols();
     id_art_var_convex = nb_jobs;
-    id_art_var_cuts = nb_jobs + 1;
+    id_art_var_cuts = static_cast<int>(nb_jobs) + 1;
     id_next_var_cuts = id_art_var_cuts;
     auto nb_vars = nb_jobs + 1 + max_nb_cuts;
     id_pseudo_schedules = static_cast<int>(nb_vars);
@@ -108,7 +127,6 @@ void NodeData::create_artificial_cols() {
 }
 
 void NodeData::add_cols_local_pool() {
-    // lp_interface_get_nb_rows(RMP.get(), &nb_rows);
     nb_rows = osi_rmp->getNumRows();
     std::vector<double> _lhs(nb_rows);
     ranges::for_each(localColPool, [&](auto& it) {
@@ -133,7 +151,6 @@ int NodeData::build_rmp() {
     add_cols_local_pool();
     osi_rmp->initialSolve();
 
-    // pi.resize(nb_jobs + 1, 0.0);
     slack.resize(nb_jobs + 1, 0.0);
     // rhs.resize(nb_jobs + 1, 0.0);
     rhs = std::span<const double>(osi_rmp->getRightHandSide(),

@@ -1,31 +1,32 @@
 {
     "configurations": [
         {
-            "name": "Linux",
+            "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${vcpkgRoot}/x64-windows/include"
             ],
-            "defines": [],
-            "compilerPath": "/home/linuxbrew/.linuxbrew/bin/g++-11",
-            "cStandard": "c17",
-            "intelliSenseMode": "${default}",
-            "configurationProvider": "ms-vscode.cmake-tools",
-            "cppStandard": "gnu++20",
-            "compileCommands": "/home/daniel/parallel-machine-bdd/compile_commands.json"
-        },
-        {
-            "name": "Win64",
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe",
-            "cStandard": "c11",
-            "cppStandard": "c++20",
-            "intelliSenseMode": "msvc-x64",
+            "compilerPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.30.30705\\bin\\Hostx64\\x64\\cl.exe",
+            "intelliSenseMode": "windows-msvc-x64",
             "configurationProvider": "ms-vscode.cmake-tools"
+        },
+        {
+            "name": "Ubuntu",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/home/linuxbrew/.linuxbrew/bin/gcc-11",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++20"
         }
     ],
     "version": 4

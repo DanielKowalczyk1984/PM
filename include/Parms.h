@@ -1,10 +1,35 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #ifndef __PARMS_H__
 #define __PARMS_H__
 
-#include <array>       // for array
-#include <cstddef>     // for size_t
-#include <functional>  // for function
-#include <string>      // for allocator, string
+#include <fmt/format.h>
+#include <array>                  // for array
+#include <boost/timer/timer.hpp>  // for boost::timer::nanosecond_type
+#include <cstddef>                // for size_t
+#include <functional>             // for function
+#include <nlohmann/json.hpp>      // for json
+#include <string>                 // for allocator, string
 
 enum BBNodeSelection {
     min_search_strategy = 0,
@@ -60,37 +85,93 @@ enum Scoring_Value {
     nb_paths_scoring_value = 2,
 };
 
+NLOHMANN_JSON_SERIALIZE_ENUM(PricingSolver,
+                             {{bdd_solver_simple, "BddForward"},
+                              {bdd_solver_cycle, "BddForwardCycle"},
+                              {bdd_solver_backward_simple, "BddBackward"},
+                              {bdd_solver_backward_cycle, "BddBackwardCycle"},
+                              {zdd_solver_simple, "ZddForward"},
+                              {zdd_solver_cycle, "ZddForwardCycle"},
+                              {zdd_solver_backward_simple, "ZddBackward"},
+                              {zdd_solver_backward_cycle, "ZddBackwardCycle"},
+                              {dp_solver, "Time-Indexed"},
+                              {ati_solver, "Arc-Time-Indexed"},
+                              {dp_bdd_solver, "Hybrid"}})
+
+NLOHMANN_JSON_SERIALIZE_ENUM(StabTechniques,
+                             {
+                                 {no_stab, "NoStabilization"},
+                                 {stab_wentgnes, "WentgnesStab"},
+                                 {stab_dynamic, "DynamicStab"},
+                                 {stab_hybrid, "HybridStab"},
+                             })
+
+NLOHMANN_JSON_SERIALIZE_ENUM(BBExploreStrategy,
+                             {{min_bb_explore_strategy, "dfs"},
+                              {bb_dfs_strategy, "dfs"},
+                              {bb_bfs_strategy, "bfs"},
+                              {bb_brfs_strategy, "brfs"},
+                              {bb_cbfs_strategy, "cbfs"}})
+
+NLOHMANN_JSON_SERIALIZE_ENUM(Scoring_Parameter,
+                             {{min_scoring_parameter, "ProductScoring"},
+                              {product_scoring_parameter, "ProductScoring"},
+                              {min_function_scoring_parameter, "MinFunction"},
+                              {max_function_scoring_parameter, "MaxFunction"},
+                              {weighted_sum_scoring_parameter, " WeightedSum"},
+                              {weighted_product_scoring_parameter,
+                               "WeightedProduct"}})
+
 struct Parms {
-    enum BBExploreStrategy                              bb_explore_strategy;
-    enum Scoring_Parameter                              scoring_parameter;
-    enum Scoring_Value                                  scoring_value;
-    int                                                 strong_branching;
-    int                                                 bb_node_limit;
-    int                                                 nb_iterations_rvnd;
-    size_t                                              branching_cpu_limit;
-    double                                              alpha;
-    double                                              branching_point;
-    enum PricingSolver                                  pricing_solver;
-    int                                                 use_heuristic;
+    template <typename T>
+    class Parameter {
+        std::string _name;
+        T           _value;
+
+       public:
+        Parameter(const std::string name, const T& value)
+            : _name(name),
+              _value(value) {}
+
+        inline const T&    value() const { return _value; }
+        inline T&          value() { return _value; }
+        const std::string& name() const { return _name; }
+        std::string&       name() { return _name; }
+
+        void set_value(const T& value) { _value = value; }
+    };
+
+    Parameter<BBExploreStrategy>                        bb_explore_strategy;
+    Parameter<StabTechniques>                           stab_technique;
+    Parameter<PricingSolver>                            pricing_solver;
+    Parameter<Scoring_Parameter>                        scoring_parameter;
+    Parameter<Scoring_Value>                            scoring_value;
+    Parameter<int>                                      strong_branching;
+    Parameter<int>                                      bb_node_limit;
+    Parameter<int>                                      nb_iterations_rvnd;
+    Parameter<boost::timer::nanosecond_type>            branching_cpu_limit;
+    Parameter<bool>                                     use_cpu_time;
+    Parameter<double>                                   alpha;
+    Parameter<double>                                   branching_point;
+    Parameter<bool>                                     use_heuristic;
     std::function<double(const std::array<double, 2>&)> scoring_function;
-    bool                                                use_mip_solver;
-    bool                                                refine_bdd;
-    bool                                                enumerate;
-    bool                                                pruning_test;
-    bool                                                suboptimal_duals;
-    bool                                                reduce_cost_fixing;
-    enum StabTechniques                                 stab_technique;
+    Parameter<bool>                                     use_mip_solver;
+    Parameter<bool>                                     refine_bdd;
+    Parameter<bool>                                     enumerate;
+    Parameter<bool>                                     pruning_test;
+    Parameter<bool>                                     suboptimal_duals;
+    Parameter<bool>                                     reduce_cost_fixing;
+    Parameter<bool>                                     print_csv;
 
     /**
      * column generation
      */
-    int print_csv;
-
     std::string jobfile;
     std::string pname;
 
     int    nb_jobs;
     size_t nb_machines;
+
     Parms();
     Parms(int argc, const char** argv);
 
@@ -100,14 +181,79 @@ struct Parms {
     Parms& operator=(Parms&&) = default;
     ~Parms() = default;
 
-    int parms_set_scoring_function(int scoring);
-    int parse_cmd(int argc, const char** argv);
+    void        parms_set_scoring_function(int scoring);
+    void        parse_cmd(int argc, const char** argv);
+    friend void from_json(const nlohmann::json& j, Parms& p);
+    friend void to_json(nlohmann::json& j, const Parms& p);
 
    private:
     static constexpr double                mu = 5.0 / 6.0;
     static constexpr std::array<double, 2> beta = {1.5, 0.5};
     static constexpr double                TargetBrTimeValue = 0.45;
     static constexpr auto                  EPS = 1e-6;
+};
+
+template <typename T>
+struct fmt::formatter<Parms::Parameter<T>> {
+    char presentation = 'v';
+
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        auto it = ctx.begin(), end = ctx.end();
+        if (it != end && (*it == 'v' || *it == 'n'))
+            presentation = *it++;
+
+        // Check if reached the end of the range:
+        if (it != end && *it != '}')
+            throw format_error("invalid format");
+
+        return it;
+    }
+
+    template <typename FormatContext>
+    auto format(const Parms::Parameter<T>& p, FormatContext& ctx)
+        -> decltype(ctx.out()) {
+        if (presentation == 'n') {
+            return format_to(ctx.out(), "{}", p.name());
+        }
+        return format_to(ctx.out(), "{}", p.value());
+    }
+};
+
+template <>
+struct fmt::formatter<Parms> {
+    char presentation = 'v';
+
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        auto it = ctx.begin(), end = ctx.end();
+        if (it != end && (*it == 'v' || *it == 'n'))
+            presentation = *it++;
+
+        // Check if reached the end of the range:
+        if (it != end && *it != '}')
+            throw format_error("invalid format");
+
+        return it;
+    }
+
+    template <typename FormatContext>
+    auto format(const Parms& parms, FormatContext& ctx) -> decltype(ctx.out()) {
+        if (presentation == 'n') {
+            return format_to(
+                ctx.out(),
+                "{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n}",
+                parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
+                parms.pricing_solver, parms.strong_branching,
+                parms.branching_point, parms.refine_bdd, parms.pruning_test,
+                parms.suboptimal_duals, parms.scoring_parameter,
+                parms.scoring_value, parms.use_cpu_time);
+        }
+        return format_to(
+            ctx.out(), "{},{},{},{},{},{},{},{},{},{},{},{}",
+            parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
+            parms.pricing_solver, parms.strong_branching, parms.branching_point,
+            parms.refine_bdd, parms.pruning_test, parms.suboptimal_duals,
+            parms.scoring_parameter, parms.scoring_value, parms.use_cpu_time);
+    }
 };
 
 #endif  // __PARMS_H__

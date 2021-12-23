@@ -1,8 +1,26 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 #include "Column.h"                          // for ScheduleSet
-#include <range/v3/algorithm/for_each.hpp>   // for for_each, for_each_fn
-#include <range/v3/functional/identity.hpp>  // for identity
 #include <utility>                           // for move
-#include "Job.h"                             // for Job
 #include "PricingSolution.hpp"               // for PricingSolution
 #include "Solution.hpp"                      // for Machine
 
@@ -15,52 +33,3 @@ Column::Column(PricingSolution&& pricing_solution)
     : total_processing_time(pricing_solution.C_max),
       total_weighted_completion_time(pricing_solution.cost),
       job_list(std::move(pricing_solution.jobs)) {}
-
-// bool ScheduleSet::operator<(ScheduleSet const& other) {
-// auto& tmp1 = job_list;
-// auto& tmp2 = other.job_list;
-
-// if (tmp1.size() != tmp2.size()) {
-//     return tmp1.size() < tmp2.size();
-// }
-
-// for (auto i = 0UL; i < tmp1.size(); ++i) {
-//     if (tmp1[i]->job != tmp2[i]->job) {
-//         return tmp1[i]->job < tmp2[i]->job;
-//     }
-// }
-
-// return job_list < other.job_list;
-// }
-
-// bool ScheduleSet::operator<(const ScheduleSet& other) {
-//     return job_list < other.job_list;
-// }
-
-// bool ScheduleSet::operator==(ScheduleSet const& other) const {
-// auto& tmp1 = job_list;
-// auto& tmp2 = other.job_list;
-
-// if (tmp1.size() != tmp2.size()) {
-//     return false;
-// }
-
-// for (auto i = 0UL; i < tmp1.size(); ++i) {
-//     if (tmp1[i]->job != tmp2[i]->job) {
-//         return false;
-//     }
-// }
-
-// return job_list == other.job_list;
-// }
-
-void Column::recalculate() {
-    total_processing_time = 0;
-    total_weighted_completion_time = 0;
-
-    ranges::for_each(job_list, [&](Job* j) {
-        total_processing_time += j->processing_time;
-        total_weighted_completion_time +=
-            j->weighted_tardiness(total_processing_time);
-    });
-}

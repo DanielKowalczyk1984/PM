@@ -1,30 +1,47 @@
+// MIT License
+
+// Copyright (c) 2021 Daniel Kowalczyk
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include <fmt/core.h>
-#include <algorithm>                                   // for min, __for_eac...
-#include <cassert>                                     // for assert
-#include <cmath>                                       // for ceil, floor, fabs
-#include <functional>                                  // for identity, greater
-#include <memory>                                      // for unique_ptr
-#include <range/v3/action/action.hpp>                  // for operator|=
-#include <range/v3/action/remove_if.hpp>               // for remove_if, rem...
-#include <range/v3/algorithm/sort.hpp>                 // for sort, sort_fn
-#include <range/v3/functional/identity.hpp>            // for identity
-#include <range/v3/numeric/inner_product.hpp>          // for inner_product
-#include <range/v3/range/conversion.hpp>               // for to_container::fn
-#include <range/v3/view/drop.hpp>                      // for drop, drop_fn
-#include <range/v3/view/filter.hpp>                    // for filter_view
-#include <range/v3/view/transform.hpp>                 // for transform_view
-#include <range/v3/view/view.hpp>                      // for operator|, vie...
-#include <range/v3/view/zip.hpp>                       // for zip_view, zip
-#include <utility>                                     // for move, pair
-#include <vector>                                      // for vector
-#include "Column.h"                                    // for Column
-#include "NodeData.h"                                  // for NodeData
-#include "Parms.h"                                     // for Parms
-#include "PricerSolverBase.hpp"                        // for PricerSolverBase
-#include "PricingStabilization.hpp"                    // for PricingStabili...
-#include "Statistics.h"                                // for Statistics
-#include "orutils/lp.h"                                        // for lp_interface_g...
-#include "orutils/util.h"                                      // for dbg_lvl, getRe...
+#include <algorithm>                           // for min, __for_eac...
+#include <cassert>                             // for assert
+#include <memory>                              // for unique_ptr
+#include <range/v3/action/action.hpp>          // for operator|=
+#include <range/v3/action/remove_if.hpp>       // for remove_if, rem...
+#include <range/v3/algorithm/sort.hpp>         // for sort, sort_fn
+#include <range/v3/numeric/inner_product.hpp>  // for inner_product
+#include <range/v3/range/conversion.hpp>       // for to_container::fn
+#include <range/v3/view/drop.hpp>              // for drop, drop_fn
+#include <range/v3/view/filter.hpp>            // for filter_view
+#include <range/v3/view/transform.hpp>         // for transform_view
+#include <range/v3/view/zip.hpp>               // for zip_view, zip
+#include <utility>                             // for move, pair
+#include <vector>                              // for vector
+#include "Column.h"                            // for Column
+#include "DebugLvl.hpp"                        // for debug_lvl
+#include "NodeData.h"                          // for NodeData
+#include "Parms.h"                             // for Parms
+#include "PricerSolverBase.hpp"                // for PricerSolverBase
+#include "PricingStabilization.hpp"            // for PricingStabili...
+#include "Statistics.h"                        // for Statistics
 
 /** Help function for column generation */
 void NodeData::print_ages() {
@@ -153,7 +170,7 @@ int NodeData::delete_old_columns() {
         //                                static_cast<int>(dellist.size()));
         osi_rmp->deleteCols(static_cast<int>(dellist.size()), dellist.data());
 
-        if (dbg_lvl() > 1) {
+        if (debug_lvl(1)) {
             fmt::print("Deleted {} out of {} columns with age > {}.\n",
                        zero_count, localColPool.size(), retirementage);
         }
@@ -196,7 +213,7 @@ int NodeData::delete_infeasible_columns() {
     assert((nb_cols - id_pseudo_schedules) ==
            static_cast<int>(localColPool.size()));
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print(
             "Deleted {} out of {} columns(infeasible columns after "
             "reduce "
@@ -209,7 +226,7 @@ int NodeData::delete_infeasible_columns() {
     nb_cols = osi_rmp->getNumCols();
     assert(static_cast<int>(localColPool.size()) ==
            (nb_cols - id_pseudo_schedules));
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(2)) {
         fmt::print("number of cols = {}\n", nb_cols - id_pseudo_schedules);
     }
 
@@ -325,7 +342,7 @@ int NodeData::compute_objective() {
     LP_lower_bound_dual = 0.0;
 
     /** compute lower bound with the dual variables */
-    assert(nb_rows == pi.size());
+    assert(nb_rows == static_cast<int>(pi.size()));
 
     LP_lower_bound_dual = ranges::inner_product(pi, rhs, 0.0);
     LP_lower_bound_dual -= EPS_BOUND;
@@ -341,7 +358,7 @@ int NodeData::compute_objective() {
     LP_lower_bound_BB = std::min(LP_lower_bound, LP_lower_bound_dual);
     LP_lower_min = std::min(LP_lower_min, LP_lower_bound_BB);
 
-    if (iterations % (nb_jobs) == 0 && dbg_lvl() > 0) {
+    if (iterations % (nb_jobs) == 0 && debug_lvl(0)) {
         fmt::print(
             "Current primal LP objective: {:19.16f}  (LP_dual-bound "
             "{:19.16f}, "
@@ -368,14 +385,12 @@ int NodeData::solve_relaxation() {
     // status_RMP = osi_rmp->get
     // CCcheck_val_2(val, "lp_interface_optimize failed");
     stat.suspend_timer(Statistics::solve_lp_timer);
-    real_time_solve_lp = getRealTime() - real_time_solve_lp;
-    stat.real_time_solve_lp += real_time_solve_lp;
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print("Simplex took {} seconds.\n", real_time_solve_lp);
     }
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         print_ages();
     }
 
@@ -415,9 +430,8 @@ int NodeData::estimate_lower_bound(size_t _iter) {
     auto val = 0;
     auto has_cols = true;
     auto status_RMP = false;
-    auto real_time_pricing = 0.0;
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print(
             R"(Starting compute_lower_bound with lb {} and ub %d at depth {}
 )",
@@ -440,14 +454,12 @@ int NodeData::estimate_lower_bound(size_t _iter) {
     has_cols = true;
     // has_cuts = 0;
     while ((iterations < _iter) && has_cols &&
-           stat.total_timer(Statistics::cputime_timer) <=
-               parms.branching_cpu_limit) {
+           stat.total_time_nano_sec(Statistics::cputime_timer) <=
+               parms.branching_cpu_limit.value()) {
         /**
          * Solve the pricing problem
          */
-        real_time_pricing = getRealTime();
         stat.start_resume_timer(Statistics::pricing_timer);
-        // val = lp_interface_status(RMP.get(), &status_RMP);
         status_RMP = osi_rmp->isProvenOptimal();
 
         if (status_RMP) {
@@ -458,38 +470,17 @@ int NodeData::estimate_lower_bound(size_t _iter) {
             solve_farkas_dbl();
         }
 
-        // switch (status_RMP) {
-        //     case GRB_OPTIMAL:
-        //         status = infeasible;
-        //         val = solve_pricing();
-        //         break;
-
-        //     case GRB_INFEASIBLE:
-        //         solve_farkas_dbl();
-        //         break;
-        // }
-
         ++iterations;
 
         stat.suspend_timer(Statistics::pricing_timer);
-        real_time_pricing = getRealTime() - real_time_pricing;
-        stat.real_time_pricing += real_time_pricing;
 
         if (status_RMP) {
-            // case GRB_OPTIMAL:
             has_cols =
                 (solver_stab->stopping_criteria() &&
                  solver_stab->get_eta_in() < upper_bound - 1.0 + EPS_BOUND);
-            // nb_new_sets = 0;
-            // || nb_non_improvements > 5;  // ||
-            // (ceil(eta_in - 0.00001) >= eta_out);
-
-            // break;
-
-            // case GRB_INFEASIBLE:
-            // has_cols = (nb_new_sets == 0);
-            // nb_new_sets = 0;
-            // break;
+        } else {
+            has_cols = false;
+            status = infeasible;
         }
     }
 
@@ -506,7 +497,7 @@ int NodeData::compute_lower_bound() {
     auto real_time_pricing = 0.0;
     auto old_LP_bound = 0.0;
 
-    if (dbg_lvl() > 1) {
+    if (debug_lvl(1)) {
         fmt::print(
             R"(Starting compute_lower_bound with lb {} and ub %d at depth {}
 )",
@@ -573,7 +564,6 @@ int NodeData::compute_lower_bound() {
 
             stat.suspend_timer(Statistics::pricing_timer);
             real_time_pricing = getRealTime() - real_time_pricing;
-            stat.real_time_pricing += real_time_pricing;
 
             if (status_RMP) {
                 // case GRB_OPTIMAL:
@@ -595,7 +585,7 @@ int NodeData::compute_lower_bound() {
 
         if (status_RMP) {
             // case GRB_OPTIMAL:
-            if (dbg_lvl() > 1) {
+            if (debug_lvl(1)) {
                 fmt::print(
                     R"(Found lb = {} ({}) upper_bound = {} (iterations = {}).
 )",
@@ -610,7 +600,7 @@ int NodeData::compute_lower_bound() {
             if (!localColPool.empty() && solver->structure_feasible()) {
                 status = LP_bound_computed;
                 construct_lp_sol_from_rmp();
-                if (parms.suboptimal_duals) {
+                if (parms.suboptimal_duals.value()) {
                     refined =
                         solver->compute_sub_optimal_duals(lambda, localColPool);
                     delete_infeasible_columns();
@@ -618,7 +608,7 @@ int NodeData::compute_lower_bound() {
                         status = LP_bound_estimated;
                     }
                 }
-                if (parms.refine_bdd &&
+                if (parms.refine_bdd.value() &&
                     nb_non_improvements < NB_NON_IMPROVEMENTS && !refined) {
                     if (std::abs(old_LP_bound - LP_lower_bound) < EPS) {
                         nb_non_improvements++;
@@ -648,7 +638,7 @@ int NodeData::compute_lower_bound() {
         }
     } while (refined);
 
-    if (solver->print_num_paths() < NB_PATHS && parms.enumerate &&
+    if (solver->print_num_paths() < NB_PATHS && parms.enumerate.value() &&
         status == LP_bound_computed) {
         fmt::print("computing elementary paths\n");
         solver->enumerate_columns();
