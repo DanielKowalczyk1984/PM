@@ -6,14 +6,15 @@ workflow:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ "(master|develop|.*alpine)"'
 
-cache:
-  key: $CI_COMMIT_REF_SLUG
-  paths:
-    - ThirdParty/
-
 .build:linux:base:
   stage: build
   image: ubuntu:21.10
+  cache:
+    paths:
+      - ThirdParty/vcpkg
+      - ThirdParty/coin-or-x64-linux-debug
+      - ThirdParty/coin-or-x64-linux-release
+      - ThirdParty/gurobi
   variables:
     BUILDDIR: "build"
     GRB_VERSION: "9.1.2"
@@ -25,17 +26,8 @@ cache:
     - export DEBIAN_FRONTEND=noninteractive
     - apt-get --no-install-recommends -y install gpg-agent software-properties-common dirmngr apt-transport-https lsb-release ca-certificates
     - add-apt-repository -y ppa:ubuntu-toolchain-r/test
-    - apt-get --no-install-recommends -y install ${BB_CI_CC_COMPILER} ${BB_CI_CXX_COMPILER} clang-format libssl-dev git gcc g++ wget curl make ninja-build pkg-config python3 python3-pip tar unzip zip
+    - apt-get --no-install-recommends -y install ${BB_CI_CC_COMPILER} ${BB_CI_CXX_COMPILER} clang-format libssl-dev git gcc g++ wget curl make ninja-build pkg-config python3 python3-pip tar unzip zip libgfortran-10-dev libblas-dev liblapack-dev libmetis-dev libnauty2-dev
     - pip install cmake
-    - wget https://packages.gurobi.com/${GRB_SHORT_VERSION}/gurobi${GRB_VERSION}_linux64.tar.gz
-    - tar -xvf gurobi${GRB_VERSION}_linux64.tar.gz
-    - rm gurobi${GRB_VERSION}_linux64.tar.gz
-    - mv gurobi${GRB_VERSION_DIR} gurobi
-    - mv gurobi /opt
-    - export GUROBI_HOME=/opt/gurobi/linux64
-    - ln -sf $GUROBI_HOME/lib/libgurobi_g++5.2.a $GUROBI_HOME/lib/libgurobi_c++.a
-    - export LD_LIBRARY_PATH=$GUROBI_HOME/lib
-    - ldconfig -v
     - chmod u+x before_script.sh && ./before_script.sh
   script:
     - mkdir -p ${BUILDDIR}

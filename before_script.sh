@@ -10,7 +10,18 @@ cd ThirdParty
 
 pip install -U cmake
 
-if [ ! -d "./Cgl" ]; then
+if [ ! -d "./gurobi"]; then
+	wget https://packages.gurobi.com/${GRB_SHORT_VERSION}/gurobi${GRB_VERSION}_linux64.tar.gz
+    tar -xvf gurobi${GRB_VERSION}_linux64.tar.gz
+    rm gurobi${GRB_VERSION}_linux64.tar.gz
+    mv gurobi${GRB_VERSION_DIR} gurobi
+    export GUROBI_HOME=/opt/gurobi/linux64
+    - ln -sf $GUROBI_HOME/lib/libgurobi_g++5.2.a $GUROBI_HOME/lib/libgurobi_c++.a
+    - export LD_LIBRARY_PATH=$GUROBI_HOME/lib
+    - ldconfig -v
+fi
+
+if [ ! -d "./coin-or-x64-linux-debug" || ! -d "coin-or-x64-linux-release" ]; then
 	wget -O coinbrew https://raw.githubusercontent.com/coin-or/coinbrew/master/coinbrew
 	chmod u+x coinbrew
 	./coinbrew fetch Cgl@master
@@ -27,5 +38,5 @@ if [ -d "./vcpkg" ]; then
 	rm -rf ./vcpkg
 fi
 git clone https://github.com/Microsoft/vcpkg.git vcpkg
-./vcpkg/bootstrap-vcpkg.sh 
-./vcpkg/vcpkg integrate install 
+./vcpkg/bootstrap-vcpkg.sh
+./vcpkg/vcpkg integrate install
