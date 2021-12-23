@@ -11,6 +11,7 @@ stages:
       - ThirdParty/coin-or-x64-linux-debug
       - ThirdParty/coin-or-x64-linux-release
       - ThirdParty/gurobi
+    when: 'always'
   variables:
     BUILDDIR: "build"
   before_script:
