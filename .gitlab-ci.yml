@@ -2,10 +2,6 @@
 stages:
   - build
   
-workflow:
-  rules:
-    - if: '$CI_COMMIT_BRANCH =~ "(master|develop|.*alpine)"'
-
 .build:linux:base:
   stage: build
   image: ubuntu:21.10
@@ -15,11 +11,9 @@ workflow:
       - ThirdParty/coin-or-x64-linux-debug
       - ThirdParty/coin-or-x64-linux-release
       - ThirdParty/gurobi
+    when: 'always'
   variables:
     BUILDDIR: "build"
-    GRB_VERSION: "9.1.2"
-    GRB_SHORT_VERSION: "9.1"
-    GRB_VERSION_DIR: "912"
   before_script:
     - apt-get update && apt-get install -y locales && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
     - export LANG=en_US.utf8
