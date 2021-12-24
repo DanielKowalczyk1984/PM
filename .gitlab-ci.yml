@@ -24,7 +24,7 @@ stages:
     - pip install cmake
     - chmod u+x before_script.sh && ./before_script.sh
   script:
-    - export GUROBI_HONE=$(pwd)/gurobi/linux64
+    - export GUROBI_HONE=$(pwd}/ThirdParty/gurobi/linux64
     - mkdir -p ${BUILDDIR}
     - cmake -DCMAKE_C_COMPILER=${BB_CI_CC_COMPILER} -DCMAKE_CXX_COMPILER=${BB_CI_CXX_COMPILER} -DCMAKE_BUILD_TYPE=Release -B ${BUILDDIR} -S . -DCMAKE_TOOLCHAIN_FILE=./ThirdParty/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Ninja"
     - cmake --build ${BUILDDIR} --config Debug -j 4

@@ -11,7 +11,6 @@ if(VCPKG_TARGET_IS_WINDOWS)
   set(ENV{GUROBI_HOME} "C:/gurobi912/win64")
 endif()
 vcpkg_cmake_configure(SOURCE_PATH ${SOURCE_PATH} PREFER_NINJA)
-message("test $ENV{GUROBI_HOME}")
 
 vcpkg_cmake_install()
 file(
