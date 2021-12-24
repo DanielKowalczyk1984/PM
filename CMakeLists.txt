@@ -166,7 +166,7 @@ find_package(docopt CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(or-utils CONFIG REQUIRED)
-find_package(moderndd CONFIG REQUIRED)
+find_package(ModernDD CONFIG REQUIRED)
 find_package(branch-and-bound CONFIG REQUIRED)
 
 include(cmake/FindGurobi.cmake)
