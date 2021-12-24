@@ -5,13 +5,13 @@ stages:
 .build:linux:base:
   stage: build
   image: ubuntu:21.10
-  # cache:
-  #   paths:
-  #     - ThirdParty/vcpkg
-  #     - ThirdParty/coin-or-x64-linux-debug
-  #     - ThirdParty/coin-or-x64-linux-release
-  #     - ThirdParty/gurobi
-  #   when: 'always'
+  cache:
+    paths:
+      - ThirdParty/vcpkg
+      - ThirdParty/coin-or-x64-linux-debug
+      - ThirdParty/coin-or-x64-linux-release
+      - ThirdParty/gurobi
+    when: 'always'
   variables:
     BUILDDIR: "build"
   before_script:
