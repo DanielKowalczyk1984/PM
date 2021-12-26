@@ -15,7 +15,7 @@ if [ ! -d "./gurobi" ]; then
     tar -xvf gurobi${GRB_VERSION}.tar.gz
     rm gurobi${GRB_VERSION}.tar.gz
     mv gurobi${GRB_VERSION_DIR} gurobi
-	rm gurobi/linux64/docs
+	rm -rf gurobi/linux64/docs
     export GUROBI_HOME=$(pwd)/gurobi/linux64
     ln -sf $GUROBI_HOME/lib/libgurobi_g++5.2.a $GUROBI_HOME/lib/libgurobi_c++.a
     export LD_LIBRARY_PATH=$GUROBI_HOME/lib
