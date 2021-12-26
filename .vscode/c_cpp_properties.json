@@ -19,7 +19,8 @@
         {
             "name": "Ubuntu",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/build-linux-container/vcpkg_installed/x64-linux/include"
             ],
             "defines": [],
             "compilerPath": "/home/linuxbrew/.linuxbrew/bin/gcc-11",

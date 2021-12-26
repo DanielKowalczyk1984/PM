@@ -75,6 +75,6 @@ void BddCoeff::set_row(size_t _row) {
     return row;
 }
 
-[[nodiscard]] void BddCoeff::update_cum_value(double _value) {
+void BddCoeff::update_cum_value(double _value) {
     cum_value += _value;
 }

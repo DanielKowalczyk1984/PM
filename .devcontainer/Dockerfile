@@ -6,7 +6,7 @@ FROM mcr.microsoft.com/vscode/devcontainers/cpp:0-${VARIANT}
 
 # [Optional] Uncomment this section to install additional packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends wget ca-certificates git curl unzip tar zip pkg-config gfortran 
+    && apt-get -y install --no-install-recommends wget ca-certificates git curl unzip tar zip pkg-config gfortran gcc-11 g++-11
 
 # packages needed by coin-or
 RUN apt-get -y install --no-install-recommends libgfortran-10-dev libblas-dev liblapack-dev libmetis-dev libnauty2-dev
@@ -22,7 +22,7 @@ RUN update-ca-certificates \
     && rm -f gurobi${GRB_VERSION}_linux64.tar.gz \
     && mv -f gurobi* gurobi \
     && rm -rf gurobi/linux64/docs \
-    && ln -sf /opt/gurobi/linux64/lib/libgurobi_g++5.2.a /opt/gurobi/linux64/libgurobi_c++.a
+    && ln -sf /opt/gurobi/linux64/lib/libgurobi_g++5.2.a /opt/gurobi/linux64/lib/libgurobi_c++.a
 
 ENV GUROBI_HOME /opt/gurobi/linux64
 ENV PATH $PATH:$GUROBI_HOME/bin
@@ -36,7 +36,7 @@ RUN apt-get update && bash /tmp/library-scripts/homebrew-debian.sh
 
 # Install the newest version of cmake and gcc
 RUN apt-get -y remove cmake
-RUN brew install gcc cmake ninja
+RUN brew install cmake ninja
 
 # install vcpkg package
 RUN git clone https://github.com/Microsoft/vcpkg.git /opt/vcpkg
