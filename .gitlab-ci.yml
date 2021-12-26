@@ -4,7 +4,7 @@ stages:
   
 .build:linux:base:
   stage: build
-  image: ubuntu:21.10
+  image: ubuntu:21.04
   cache:
     paths:
       - ThirdParty/vcpkg
@@ -39,6 +39,6 @@ stages:
 build:linux:gcc:
   extends: .build:linux:base
   variables:    
-    BB_CI_CXX_COMPILER: "g++-10"
-    BB_CI_CC_COMPILER: "gcc-10"
+    BB_CI_CXX_COMPILER: "g++-11"
+    BB_CI_CC_COMPILER: "gcc-11"
 
