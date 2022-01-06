@@ -76,6 +76,7 @@ build_arch/*
 debug/*
 release/*
 build*/*
+out/*
 relwithdeb/*
 third_party
 build_ubuntu
