@@ -72,12 +72,6 @@ endif()
 set(Boost_NO_WARN_NEW_VERSIONS ON)
 
 #
-# Enable package managers
-#
-
-include(cmake/Conan.cmake)
-
-#
 # Create library, setup header and source files
 #
 
@@ -195,18 +189,6 @@ target_link_libraries(
 )
 
 verbose_message("Successfully added all dependencies and linked against them.")
-
-# # RelWIthDebInfo Flags set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
-# -mtune=native -fPIC") set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99
-# -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes" )
-
-# # Release Flags set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native  -fPIC")
-# set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -std=c99 -D_XOPEN_SOURCE=500 -mtune=native
-# -Wnested-externs -Wstrict-prototypes" )
-
-# # Debug Flags set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -mtune=native -O0 -fPIC")
-# set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -mtune=native -D_XOPEN_SOURCE=500
-# -Wnested-externs -Wstrict-prototypes" )
 
 #
 # Set the build/user include directories
