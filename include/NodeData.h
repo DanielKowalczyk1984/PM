@@ -31,7 +31,7 @@
 #include <span>                    // for span
 #include <string>                  // for string
 #include <vector>                  // for vector
-#include "or-utils/lp.h"            // for lp_interface
+#include "or-utils/lp.h"           // for lp_interface
 
 class PricingStabilizationBase;  // lines 14-14
 class Problem;                   // lines 15-15

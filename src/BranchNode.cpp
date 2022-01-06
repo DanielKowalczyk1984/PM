@@ -146,7 +146,7 @@ void BranchNodeBase::branch(BTree* bt) {
                 return ((j->processing_time + b.get_t()) * b.get_value() + a);
             });
 
-            if(safe_frac(sum) < EPS){
+            if (safe_frac(sum) < EPS) {
                 return false;
             }
 
@@ -185,7 +185,7 @@ void BranchNodeBase::branch(BTree* bt) {
                                       std::floor(x.get_cum_value()) - 0.5);
             });
             auto cum_aux = br_point_it.get_cum_value();
-            auto aux =  safe_frac(cum_aux);
+            auto aux = safe_frac(cum_aux);
 
             tmp_t = static_cast<int>(br_point_it.get_t());
             return (aux > EPS);

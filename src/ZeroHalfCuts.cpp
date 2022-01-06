@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -156,11 +156,11 @@ void ZeroHalfCuts::init_coeff_node(NodeBdd* node) {
     for (auto k : {false, true}) {
         node->reset_coeff_cut(k);
         // for (auto& it : node->get_in_edges(k)) {
-            // auto aux = it.lock();
-            // if (aux) {
-            //     auto& aux_node = table->node(*aux);
-            //     aux_node.reset_coeff_cut(k);
-            // }
+        // auto aux = it.lock();
+        // if (aux) {
+        //     auto& aux_node = table->node(*aux);
+        //     aux_node.reset_coeff_cut(k);
+        // }
         // }
     }
 }

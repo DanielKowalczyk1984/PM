@@ -14,7 +14,7 @@ find_library(
 
 if(MSVC)
   # determine Visual Studio year
-  if(MSVC_TOOLSET_VERSION EQUAL 142)
+  if(MSVC_TOOLSET_VERSION EQUAL 142 OR MSVC_TOOLSET_VERSION EQUAL 143)
     set(MSVC_YEAR "2019")
   elseif(MSVC_TOOLSET_VERSION EQUAL 141)
     set(MSVC_YEAR "2017")

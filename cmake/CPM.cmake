@@ -208,7 +208,7 @@ function(cpm_find_package NAME VERSION)
   find_package(${NAME} ${VERSION} ${EXTRA_ARGS} QUIET)
   if(${CPM_ARGS_NAME}_FOUND)
     message(STATUS "${CPM_INDENT} using local package ${CPM_ARGS_NAME}@${VERSION}")
-    CPMRegisterPackage(${CPM_ARGS_NAME} "${VERSION}")
+    cpmregisterpackage(${CPM_ARGS_NAME} "${VERSION}")
     set(CPM_PACKAGE_FOUND
         YES
         PARENT_SCOPE
@@ -268,7 +268,7 @@ endfunction()
 # checks if a package has been added before
 function(cpm_check_if_package_already_added CPM_ARGS_NAME CPM_ARGS_VERSION)
   if("${CPM_ARGS_NAME}" IN_LIST CPM_PACKAGES)
-    CPMGetPackageVersion(${CPM_ARGS_NAME} CPM_PACKAGE_VERSION)
+    cpmgetpackageversion(${CPM_ARGS_NAME} CPM_PACKAGE_VERSION)
     if("${CPM_PACKAGE_VERSION}" VERSION_LESS "${CPM_ARGS_VERSION}")
       message(
         WARNING
@@ -537,10 +537,8 @@ function(CPMAddPackage)
     set(CPM_${CPM_ARGS_NAME}_SOURCE "")
     CPMAddPackage(
       NAME "${CPM_ARGS_NAME}"
-      SOURCE_DIR "${PACKAGE_SOURCE}"
-      EXCLUDE_FROM_ALL "${CPM_ARGS_EXCLUDE_FROM_ALL}"
-      OPTIONS "${CPM_ARGS_OPTIONS}"
-      SOURCE_SUBDIR "${CPM_ARGS_SOURCE_SUBDIR}"
+      SOURCE_DIR "${PACKAGE_SOURCE}" EXCLUDE_FROM_ALL "${CPM_ARGS_EXCLUDE_FROM_ALL}"
+      OPTIONS "${CPM_ARGS_OPTIONS}" SOURCE_SUBDIR "${CPM_ARGS_SOURCE_SUBDIR}"
       FORCE True
     )
     cpm_export_variables(${CPM_ARGS_NAME})
@@ -574,7 +572,7 @@ function(CPMAddPackage)
     endif()
   endif()
 
-  CPMRegisterPackage("${CPM_ARGS_NAME}" "${CPM_ARGS_VERSION}")
+  cpmregisterpackage("${CPM_ARGS_NAME}" "${CPM_ARGS_VERSION}")
 
   if(DEFINED CPM_ARGS_GIT_TAG)
     set(PACKAGE_INFO "${CPM_ARGS_GIT_TAG}")

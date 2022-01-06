@@ -270,7 +270,7 @@ struct PricerSolverBase {
         return true;
     };
 
-    virtual size_t                            get_size_data() { return 0UL; };
+    virtual size_t                              get_size_data() { return 0UL; };
     virtual std::vector<std::vector<BddCoeff>>& calculate_job_time() {
         return x_bar;
     };

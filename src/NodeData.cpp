@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -22,21 +22,21 @@
 
 #include "NodeData.h"  // for NodeData
 #include <OsiGrbSolverInterface.hpp>
-#include <array>                                // for array
-#include <concepts/concepts.hpp>                // for return_t
-#include <cstddef>                              // for size_t
-#include <limits>                               // for numeric_limits
-#include <memory>                               // for shared_ptr, unique_ptr
-#include <range/v3/action/action.hpp>           // for action_closure, opera...
-#include <range/v3/action/sort.hpp>             // for sort, sort_fn
-#include <range/v3/action/unique.hpp>           // for unique, unique_fn
-#include "Column.h"                             // for ScheduleSet
-#include "Instance.h"                           // for Instance
-#include "Parms.h"                              // for Parms
-#include "PricerSolverBase.hpp"                 // for PricerSolverBase
-#include "PricingStabilization.hpp"             // for PricingStabilizationBase
-#include "Problem.h"                            // for Problem
-#include "Solution.hpp"                         // for Sol
+#include <array>                       // for array
+#include <concepts/concepts.hpp>       // for return_t
+#include <cstddef>                     // for size_t
+#include <limits>                      // for numeric_limits
+#include <memory>                      // for shared_ptr, unique_ptr
+#include <range/v3/action/action.hpp>  // for action_closure, opera...
+#include <range/v3/action/sort.hpp>    // for sort, sort_fn
+#include <range/v3/action/unique.hpp>  // for unique, unique_fn
+#include "Column.h"                    // for ScheduleSet
+#include "Instance.h"                  // for Instance
+#include "Parms.h"                     // for Parms
+#include "PricerSolverBase.hpp"        // for PricerSolverBase
+#include "PricingStabilization.hpp"    // for PricingStabilizationBase
+#include "Problem.h"                   // for Problem
+#include "Solution.hpp"                // for Sol
 
 NodeData::NodeData(Problem* problem)
     : depth(0UL),
@@ -80,8 +80,9 @@ NodeData::NodeData(Problem* problem)
       nb_non_improvements(0),
       iterations(0UL),
       solver_stab(nullptr),
-      retirementage(static_cast<int>(sqrt(static_cast<double>(instance.nb_jobs))) +
-                    CLEANUP_ITERATION),
+      retirementage(
+          static_cast<int>(sqrt(static_cast<double>(instance.nb_jobs))) +
+          CLEANUP_ITERATION),
       branch_job(),
       completiontime(0),
       less(-1) {}
@@ -154,14 +155,16 @@ std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
     return aux;
 }
 
-std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
-                                                                      int _t) const {
+std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(
+    size_t _j,
+    int    _t) const {
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, _t, false),
                                                     clone(_j, _t, true)};
 }
 
-std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
-                                                                      long _t) const {
+std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(
+    size_t _j,
+    long   _t) const {
     auto aux_t = static_cast<int>(_t);
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, aux_t, false),
                                                     clone(_j, aux_t, true)};

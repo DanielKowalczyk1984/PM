@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -47,9 +47,9 @@
 
 namespace vs = ranges::views;
 
-ZeroHalfSystem::ZeroHalfSystem(const MatrixDouble& A,
+ZeroHalfSystem::ZeroHalfSystem(const MatrixDouble&                  A,
                                [[maybe_unused]] const VectorDouble& _b,
-                               const VectorDouble& _x)
+                               const VectorDouble&                  _x)
     : x_star(_x),
       row_index(A.size(), boost::dynamic_bitset{A.size()}) {
     // auto min_elem =
@@ -280,6 +280,7 @@ void ZeroHalfSystem::add_to_row(size_t i, size_t j) {
     row_index[j] = row_index[i] ^ row_index[j];
     slack[j] = slack[i] + slack[j];
 }
-ZeroHalfSystem::ZeroHalfSystem([[maybe_unused]]const DdStructure<NodeBdd>& bdd) {
+ZeroHalfSystem::ZeroHalfSystem(
+    [[maybe_unused]] const DdStructure<NodeBdd>& bdd) {
     // auto& table = bdd.getDiagram();
 }

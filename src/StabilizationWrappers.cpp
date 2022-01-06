@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -37,7 +37,8 @@ int NodeData::solve_pricing() {
     solver_stab->solve(LP_lower_bound_BB, lhs_coeff.data());
 
     if (solver_stab->get_update_stab_center()) {
-        if (solver_stab->do_reduced_cost_fixing() && parms.reduce_cost_fixing.value()) {
+        if (solver_stab->do_reduced_cost_fixing() &&
+            parms.reduce_cost_fixing.value()) {
             stat.start_resume_timer(Statistics::reduced_cost_fixing_timer);
             if (solver_stab->reduced_cost_fixing()) {
                 delete_infeasible_columns();

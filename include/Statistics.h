@@ -28,7 +28,7 @@
 #include <boost/timer/timer.hpp>      // for cpu_timer
 #include <cstddef>                    // for size_t
 #include <string>                     // for string
-#include "or-utils/util.h"             // for CCutil_timer
+#include "or-utils/util.h"            // for CCutil_timer
 struct Parms;
 
 class Timer : public boost::timer::cpu_timer {
@@ -74,7 +74,7 @@ class Timer : public boost::timer::cpu_timer {
 
             case cpu_time:
                 aux = boost::chrono::nanoseconds(this->elapsed().user +
-                                                      this->elapsed().system);
+                                                 this->elapsed().system);
 
                 return static_cast<double>(aux.count()) *
                        boost::chrono::nanoseconds::period::num /
@@ -190,7 +190,8 @@ struct fmt::formatter<Statistics> {
         if (presentation == 'n') {
             return format_to(
                 ctx.out(),
-                "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},"
+                "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}"
+                ","
                 "{},{},{},{},{},{},{}",
                 "tot_real_time", stat.time_total.name(),
                 stat.time_branch_and_bound.name(), stat.time_lb.name(),

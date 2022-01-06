@@ -62,5 +62,4 @@ static const char USAGE[] = R"(PM.
     -s --scoring_function=<sn>    Set scoring function branching[default: 0]
 )";
 
-
 #endif  // __USAGE_H__

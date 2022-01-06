@@ -404,7 +404,8 @@ void LocalSearchData::swap_operator(Sol& sol, size_t l1, size_t l2) {
         fmt::print(
             R"(intra swap with l1 = {} and l2 = {}, running time = {} and improvement {} on machine {} on places {} {}
 )",
-            l1, l2, time_swap_operator.format(5, "%ws"), max, k_best, i_best, j_best);
+            l1, l2, time_swap_operator.format(5, "%ws"), max, k_best, i_best,
+            j_best);
     }
 }
 

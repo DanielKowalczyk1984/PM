@@ -39,7 +39,7 @@
 #include <string>                                // for allocator, string, stod
 #include "DebugLvl.hpp"                          // for debug_lvl
 #include "Usage.hpp"                             // for USAGE
-#include "or-utils/util.h"                        // for program_header
+#include "or-utils/util.h"                       // for program_header
 
 const boost::timer::nanosecond_type TIME_LIMIT = 7200;
 const double                        ALPHA_STAB_INIT = 0.8;
@@ -215,7 +215,8 @@ void Parms::parse_cmd(int argc, const char** argv) {
          * All the double parameters
          */
         alpha.set_value(std::stod(args["--alpha"].asString()));
-        branching_point.set_value(std::stod(args["--branching_point"].asString()));
+        branching_point.set_value(
+            std::stod(args["--branching_point"].asString()));
 
         /**
          * @brief all the bool parameters
