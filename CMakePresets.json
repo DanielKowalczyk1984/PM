@@ -1,0 +1,59 @@
+{
+	"version": 2,
+	"configurePresets": [
+		{
+			"name": "windows64-msvc-2022",
+			"displayName": "Visual Studio Community 2022 - amd64",
+			"description": "Using compilers for Visual Studio 17 2022 (x64 architecture)",
+			"generator": "Ninja",
+			"architecture": {
+				"value": "x64",
+				"strategy": "external"
+			},
+			"binaryDir": "${sourceDir}/out/build/${presetName}",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+				"CMAKE_CXX_COMPILER": "cl",
+				"CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+			}
+		},
+		{
+			"name": "windows64-msvc-2022-release",
+			"displayName": "Visual Studio Community 2022 - amd64 - Release",
+			"description": "Using compilers for Visual Studio 17 2022 (x64 architecture)",
+			"generator": "Ninja",
+			"architecture": {
+				"value": "x64",
+				"strategy": "external"
+			},
+			"binaryDir": "${sourceDir}/out/build/${presetName}",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+				"CMAKE_CXX_COMPILER": "cl",
+				"CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "build-windows64-debug",
+			"configuration": "Debug",
+			"description": "",
+			"displayName": "",
+			"configurePreset": "windows64-msvc-2022"
+		},
+		{
+			"name": "build-windows64-release",
+			"configuration": "Release",
+			"targets": [
+				"PM",
+				"fix-format"
+			],
+			"description": "",
+			"displayName": "",
+			"configurePreset": "windows64-msvc-2022-release"
+		}
+	]
+}

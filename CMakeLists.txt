@@ -12,19 +12,11 @@ project(
   DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
   )
 
-# # Define a local module path
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-
-#
-# Prevent building in the source directory
-#
-
-include(cmake/ConfigSafeGuards.cmake)
-
 #
 # Set project options
 #
 
+include(cmake/ConfigSafeGuards.cmake)
 include(cmake/StandardSettings.cmake)
 include(cmake/StaticAnalyzers.cmake)
 include(cmake/Utils.cmake)
@@ -64,12 +56,6 @@ else()
   set(PROJECT_NAME_LOWERCASE ${PROJECT_NAME})
   set(PROJECT_NAME_UPPERCASE ${PROJECT_NAME})
 endif()
-
-#
-# Third Party packages
-#
-
-set(Boost_NO_WARN_NEW_VERSIONS ON)
 
 #
 # Create library, setup header and source files
@@ -122,15 +108,6 @@ else()
   endif()
 endif()
 
-if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
-  set_target_properties(
-    ${PROJECT_NAME}_LIB
-    PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
-               LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
-               OUTPUT_NAME ${PROJECT_NAME}
-  )
-endif()
-
 message(STATUS "Added all header and implementation files.")
 
 #
@@ -154,6 +131,7 @@ verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.")
 
 # Identify and link with the specific "packages" the project uses find_package(package_name
 # package_version REQUIRED package_type [other_options])
+set(Boost_NO_WARN_NEW_VERSIONS ON)
 find_package(fmt CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS atomic chrono timer random regex serialization)
 find_package(docopt CONFIG REQUIRED)
