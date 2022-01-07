@@ -54,7 +54,7 @@ Makefile
 cmake_install.cmake
 install_manifest.txt
 *.txt
-!or-utils/CMakeLists.txt
+!CMakeLists.txt
 *.png
 *.dot
 *.pdf
