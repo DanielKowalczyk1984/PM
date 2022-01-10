@@ -10,7 +10,7 @@ project(
   VERSION 0.1.0
   LANGUAGES CXX C
   DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
-  )
+)
 
 #
 # Set project options
@@ -113,17 +113,34 @@ message(STATUS "Added all header and implementation files.")
 #
 # Set the project standard and warnings
 #
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-std=c++20" COMPILER_SUPPORTS_CXX20)
+check_cxx_compiler_flag("-std=gnu++20" COMPILER_SUPPORTS_CXX20_GNU)
+check_cxx_compiler_flag("-std:c++20" COMPILER_SUPPORTS_CXX20_MSVC)
 
-if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
+if(${PROJECT_NAME}_BUILD_HEADERS_ONLY
+   AND (COMPILER_SUPPORTS_CXX20
+        OR COMPILER_SUPPORTS_CXX20_GNU
+        OR COMPILER_SUPPORTS_CXX20_MSVC)
+)
   target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
-else()
+elseif(
+  COMPILER_SUPPORTS_CXX20
+  OR COMPILER_SUPPORTS_CXX20_GNU
+  OR COMPILER_SUPPORTS_CXX20_MSVC
+)
   target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+else()
+  message(
+    FATAL_ERROR
+      "The compiler ${CMAKE_CXX_COMPILER} has no C++20 support. Please use a different C++ compiler."
+  )
 endif()
 
 include(cmake/CompilerWarnings.cmake)
 set_project_warnings(${PROJECT_NAME})
 
-verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.")
+message(STATUS "Applied compiler warnings. Using standard C++20.")
 
 #
 # Model project dependencies
