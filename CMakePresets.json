@@ -10,7 +10,7 @@
                 "value": "x64",
                 "strategy": "external"
             },
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
@@ -28,7 +28,7 @@
                 "value": "x64",
                 "strategy": "external"
             },
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
@@ -41,7 +41,7 @@
             "name": "gcc-11-debug",
             "displayName": "GCC 11.1.0 - Debug",
             "description": "Using compilers: C = /bin/x86_64-linux-gnu-gcc-11, CXX = /bin/x86_64-linux-gnu-g++-11 with Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
@@ -55,7 +55,7 @@
             "name": "gcc-11-release",
             "displayName": "GCC 11.1.0 - Release",
             "description": "Using compilers: C = /bin/x86_64-linux-gnu-gcc-11, CXX = /bin/x86_64-linux-gnu-g++-11 with Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",

@@ -8,7 +8,7 @@
 			"name": "(Windows) Launch",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/bin/PM.exe",
+			"program": "${workspaceFolder}/build/windows64-msvc-2022/PM.exe",
 			"args": [
 				"--version"
 			],
@@ -39,7 +39,7 @@
 				"--json","${workspaceFolder}/settings/default_settings_small.json", "${workspaceFolder}/instances/wt007/wt007_002.dat", "2"
 			],
 			"stopAtEntry": false,
-			"cwd": "${workspaceRoot}/build",
+			"cwd": "${workspaceRoot}/build/windows64-msvc-2022",
 			"environment": [],
 			"console": "integratedTerminal"
 		}
