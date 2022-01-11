@@ -48,9 +48,10 @@ class ZeroHalfSystem {
     ZeroHalfSystem(const DdStructure<NodeBdd>& bdd);
     ZeroHalfSystem(ZeroHalfSystem&&) = default;
     ZeroHalfSystem(const ZeroHalfSystem&) = default;
-    ZeroHalfSystem& operator=(ZeroHalfSystem&&) = default;
-    ZeroHalfSystem& operator=(const ZeroHalfSystem&) = default;
     ~ZeroHalfSystem() = default;
+
+    auto operator=(ZeroHalfSystem&&) -> ZeroHalfSystem& = default;
+    auto operator=(const ZeroHalfSystem&) -> ZeroHalfSystem& = default;
 
    private:
     std::vector<CoinPackedVector>        assignment_constraints;

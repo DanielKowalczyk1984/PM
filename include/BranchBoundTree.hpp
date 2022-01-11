@@ -33,15 +33,16 @@ class BranchBoundTree {
                              int                       probType = 0,
                              bool                      isIntProb = true);
     BranchBoundTree(BranchBoundTree&&) = default;
-    BranchBoundTree& operator=(BranchBoundTree&&) = default;
-    BranchBoundTree& operator=(const BranchBoundTree&) = delete;
-    BranchBoundTree(const BranchBoundTree&) = delete;
+    auto operator=(BranchBoundTree&&) -> BranchBoundTree& = default;
     ~BranchBoundTree() = default;
+
+    auto operator=(const BranchBoundTree&) -> BranchBoundTree& = delete;
+    BranchBoundTree(const BranchBoundTree&) = delete;
     void explore() { tree->explore(); }
 
-    [[nodiscard]] double get_UB() const { return tree->getGlobalUB(); }
-    [[nodiscard]] double get_LB() const { return tree->getGlobalLB(); }
-    [[nodiscard]] int    get_nb_nodes_explored() const {
+    [[nodiscard]] auto get_UB() const -> double { return tree->getGlobalUB(); }
+    [[nodiscard]] auto get_LB() const -> double { return tree->getGlobalLB(); }
+    [[nodiscard]] auto get_nb_nodes_explored() const -> int {
         return tree->tStats->get_states_explored();
     }
 

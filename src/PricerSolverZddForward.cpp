@@ -54,13 +54,13 @@ PricerSolverSimple::PricerSolverSimple(const Instance& instance)
     reversed_evaluator = BackwardZddSimpleDouble(convex_constr_id);
 }
 
-PricingSolution PricerSolverSimple::pricing_algorithm(double* _pi) {
+auto PricerSolverSimple::pricing_algorithm(double* _pi) -> PricingSolution {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
 
-PricingSolution PricerSolverSimple::pricing_algorithm(
-    std::span<const double>& _pi) {
+auto PricerSolverSimple::pricing_algorithm(std::span<const double>& _pi)
+    -> PricingSolution {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
@@ -81,7 +81,7 @@ void PricerSolverSimple::compute_labels(std::span<const double>& _pi) {
     decision_diagram->compute_labels_backward(reversed_evaluator);
 }
 
-bool PricerSolverSimple::evaluate_nodes(std::span<const double>& pi) {
+auto PricerSolverSimple::evaluate_nodes(std::span<const double>& pi) -> bool {
     auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
     double reduced_cost =
@@ -114,7 +114,7 @@ bool PricerSolverSimple::evaluate_nodes(std::span<const double>& pi) {
     return nb_removed_edges;
 }
 
-bool PricerSolverSimple::evaluate_nodes(double* pi) {
+auto PricerSolverSimple::evaluate_nodes(double* pi) -> bool {
     auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
     double reduced_cost =
@@ -156,13 +156,13 @@ PricerSolverZddCycle::PricerSolverZddCycle(const Instance& instance)
     reversed_evaluator = BackwardZddCycleDouble(convex_constr_id);
 }
 
-PricingSolution PricerSolverZddCycle::pricing_algorithm(double* _pi) {
+auto PricerSolverZddCycle::pricing_algorithm(double* _pi) -> PricingSolution {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
 
-PricingSolution PricerSolverZddCycle::pricing_algorithm(
-    std::span<const double>& _pi) {
+auto PricerSolverZddCycle::pricing_algorithm(std::span<const double>& _pi)
+    -> PricingSolution {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
 }
@@ -183,7 +183,7 @@ void PricerSolverZddCycle::compute_labels(std::span<const double>& _pi) {
     decision_diagram->compute_labels_backward(reversed_evaluator);
 }
 
-bool PricerSolverZddCycle::evaluate_nodes(std::span<const double>& pi) {
+auto PricerSolverZddCycle::evaluate_nodes(std::span<const double>& pi) -> bool {
     auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
     auto reduced_cost =
@@ -256,7 +256,7 @@ bool PricerSolverZddCycle::evaluate_nodes(std::span<const double>& pi) {
     return nb_removed_edges;
 }
 
-bool PricerSolverZddCycle::evaluate_nodes(double* pi) {
+auto PricerSolverZddCycle::evaluate_nodes(double* pi) -> bool {
     auto& table = *(decision_diagram->getDiagram());
     compute_labels(pi);
     auto reduced_cost =

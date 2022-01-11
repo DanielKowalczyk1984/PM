@@ -60,50 +60,43 @@ class SubNodeZdd {
 
     explicit SubNodeZdd(int _weight, NodeId _node_id)
         : weight{_weight},
-          node_id{_node_id} {
-        // for (unsigned i = 0; i < 2; ++i) {
-        //     forward_label[i].set_head_node(this);
-        //     backward_label[i].set_head_node(this);
-        // }
-    }
+          node_id{_node_id} {}
 
     explicit SubNodeZdd(int _weight, NodeId _node_id, NodeZdd<T>* _node_ptr)
         : weight{_weight},
           node_id{_node_id},
-          node_ptr{_node_ptr} {
-        // for (unsigned i = 0; i < 2; ++i) {
-        //     forward_label[i].set_head_node(this);
-        //     backward_label[i].set_head_node(this);
-        // }
-    }
+          node_ptr{_node_ptr} {}
 
     SubNodeZdd(const SubNodeZdd& other) = default;
     SubNodeZdd(SubNodeZdd&& other) noexcept = default;
-    SubNodeZdd<T>& operator=(const SubNodeZdd<T>& other) = default;
-    SubNodeZdd<T>& operator=(SubNodeZdd<T>&& other) noexcept = default;
+    auto operator=(const SubNodeZdd<T>& other) -> SubNodeZdd<T>& = default;
+    auto operator=(SubNodeZdd<T>&& other) noexcept -> SubNodeZdd<T>& = default;
 
-    friend bool operator<(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs) {
+    auto get_weight() -> int { return weight; }
+    auto get_job() -> Job* { return node_ptr->get_job(); }
+
+    friend auto operator<(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs)
+        -> bool {
         return lhs.forward_label[0].get_f() < rhs.forward_label[0].get_f();
     }
 
-    friend bool operator>(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs) {
+    friend auto operator>(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs)
+        -> bool {
         return rhs < lhs;
     }
-    friend bool operator<=(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs) {
+    friend auto operator<=(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs)
+        -> bool {
         return lhs <= rhs;
     }
-    friend bool operator>=(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs) {
+    friend auto operator>=(const SubNodeZdd<T>& lhs, const SubNodeZdd<T>& rhs)
+        -> bool {
         return lhs >= rhs;
     }
-
-    int get_weight() { return weight; }
-
-    Job* get_job() { return node_ptr->get_job(); }
 };
 
 template <typename T>
-bool compare_sub_nodes(const std::shared_ptr<SubNodeZdd<T>>& lhs,
-                       const std::shared_ptr<SubNodeZdd<T>>& rhs) {
+auto compare_sub_nodes(const std::shared_ptr<SubNodeZdd<T>>& lhs,
+                       const std::shared_ptr<SubNodeZdd<T>>& rhs) -> bool {
     return *lhs < *rhs;
 }
 
@@ -119,16 +112,15 @@ class NodeZdd : public NodeBase {
      * Constructor
      */
     NodeZdd() = default;
-
     NodeZdd(size_t i, size_t j) : NodeBase(i, j) {}
-
     NodeZdd(const NodeZdd<T>& src) = default;
     NodeZdd(NodeZdd<T>&& src) noexcept = default;
-    NodeZdd<T>& operator=(const NodeZdd<T>& src) = default;
-    NodeZdd<T>& operator=(NodeZdd<T>&& src) noexcept = default;
     ~NodeZdd() = default;
 
-    bool operator==(NodeZdd const& o) const {
+    auto operator=(const NodeZdd<T>& src) -> NodeZdd<T>& = default;
+    auto operator=(NodeZdd<T>&& src) noexcept -> NodeZdd<T>& = default;
+
+    auto operator==(NodeZdd const& o) const -> bool {
         for (int i = 0; i < 2; ++i) {
             if ((*this)[i] != o[i]) {
                 return false;
@@ -138,15 +130,25 @@ class NodeZdd : public NodeBase {
         return true;
     }
 
-    void set_job(Job* _job) { job = _job; }
+    [[nodiscard]] inline auto get_nb_job() const -> int { return job->job; }
+    [[nodiscard]] auto        get_job() const -> Job* { return job; }
 
-    [[nodiscard]] Job* get_job() const { return job; }
+    auto operator!=(NodeZdd const& o) const -> bool { return !operator==(o); }
+    auto add_weight(int _weight, NodeId _node_id)
+        -> std::shared_ptr<SubNodeZdd<>> {
+        for (auto& it : list) {
+            if (it->weight == _weight) {
+                return it;
+            }
+        }
 
-    [[nodiscard]] inline int get_nb_job() const { return job->job; }
+        add_sub_node(_weight, _node_id);
 
-    bool operator!=(NodeZdd const& o) const { return !operator==(o); }
+        return list.back();
+    }
 
-    friend std::ostream& operator<<(std::ostream& os, NodeZdd const& o) {
+    friend auto operator<<(std::ostream& os, NodeZdd const& o)
+        -> std::ostream& {
         os << "(" << o.branch[0];
 
         for (int i = 1; i < 2; ++i) {
@@ -156,6 +158,7 @@ class NodeZdd : public NodeBase {
         return os << ")";
     }
 
+    void set_job(Job* _job) { job = _job; }
     void add_sub_node(int                   _weight,
                       NodeId                _node_id,
                       [[maybe_unused]] bool _root_node = false,
@@ -169,18 +172,6 @@ class NodeZdd : public NodeBase {
         //     set_root_node(_root_node);
         //     set_terminal_node(_terminal_node);
         // }
-    }
-
-    std::shared_ptr<SubNodeZdd<>> add_weight(int _weight, NodeId _node_id) {
-        for (auto& it : list) {
-            if (it->weight == _weight) {
-                return it;
-            }
-        }
-
-        add_sub_node(_weight, _node_id);
-
-        return list.back();
     }
 
     void set_node_id(NodeId _node_id) {

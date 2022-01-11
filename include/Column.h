@@ -42,15 +42,16 @@ struct Column {
     explicit Column(PricingSolution&& pricing_solution);
     ~Column() = default;
     Column(Column&&) = default;
-    Column& operator=(Column&&) = default;
     Column(const Column&) = default;
-    Column& operator=(const Column&) = default;
 
-    bool operator<(Column const& other);
-    bool operator==(Column const& other) const;
-    bool operator<=>(Column const& other);
+    auto operator<(Column const& other) -> bool;
+    auto operator==(Column const& other) const -> bool;
+    auto operator<=>(Column const& other) -> bool;
+    auto operator=(const Column&) -> Column& = default;
+    auto operator=(Column&&) -> Column& = default;
 
-    friend std::ostream& operator<<(std::ostream& os, const Column& set) {
+    friend auto operator<<(std::ostream& os, const Column& set)
+        -> std::ostream& {
         for (auto& it : set.job_list) {
             os << it->job << " ";
         }

@@ -31,7 +31,7 @@
 #include "PricingStabilization.hpp"  // for PricingStabilizationBase
 #include "Statistics.h"              // for Statistics, Statistics::reduced_...
 
-int NodeData::solve_pricing() {
+auto NodeData::solve_pricing() -> int {
     int val = 0;
 
     solver_stab->solve(LP_lower_bound_BB, lhs_coeff.data());

@@ -31,9 +31,10 @@ class SeperationSolver {
     explicit SeperationSolver(PricerSolverBase* _solver);
     SeperationSolver(SeperationSolver&&) = default;
     SeperationSolver(const SeperationSolver&) = default;
-    SeperationSolver& operator=(SeperationSolver&&) = default;
-    SeperationSolver& operator=(const SeperationSolver&) = default;
     ~SeperationSolver();
+
+    auto operator=(SeperationSolver&&) -> SeperationSolver& = default;
+    auto operator=(const SeperationSolver&) -> SeperationSolver& = default;
 
    private:
     PricerSolverBase*            solver;

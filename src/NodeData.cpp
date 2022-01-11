@@ -134,7 +134,7 @@ NodeData::NodeData(const NodeData& src)
       completiontime(-1),
       less(-1) {}
 
-std::unique_ptr<NodeData> NodeData::clone() const {
+auto NodeData::clone() const -> std::unique_ptr<NodeData> {
     auto aux = std::make_unique<NodeData>(*this);
 
     return aux;
@@ -142,7 +142,8 @@ std::unique_ptr<NodeData> NodeData::clone() const {
 
 NodeData::~NodeData() = default;
 
-std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
+auto NodeData::clone(size_t _j, int _t, bool _left) const
+    -> std::unique_ptr<NodeData> {
     auto aux = std::make_unique<NodeData>(*this);
     aux->branch_job = _j;
     aux->completiontime = _t;
@@ -155,16 +156,14 @@ std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
     return aux;
 }
 
-std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(
-    size_t _j,
-    int    _t) const {
+auto NodeData::create_child_nodes(size_t _j, int _t) const
+    -> std::array<std::unique_ptr<NodeData>, 2> {
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, _t, false),
                                                     clone(_j, _t, true)};
 }
 
-std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(
-    size_t _j,
-    long   _t) const {
+auto NodeData::create_child_nodes(size_t _j, long _t) const
+    -> std::array<std::unique_ptr<NodeData>, 2> {
     auto aux_t = static_cast<int>(_t);
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, aux_t, false),
                                                     clone(_j, aux_t, true)};
@@ -195,7 +194,7 @@ void NodeData::add_solution_to_colpool(const Sol& sol) {
     }
 }
 
-double NodeData::get_score_value() const {
+auto NodeData::get_score_value() const -> double {
     switch (parms.scoring_value.value()) {
         case (size_scoring_value):
             return static_cast<double>(solver->get_nb_edges());

@@ -38,12 +38,11 @@ class conflict_state {
 
     conflict_state(const conflict_state&) = default;
     conflict_state(conflict_state&&) = default;
-    conflict_state& operator=(const conflict_state&) = default;
-    conflict_state& operator=(conflict_state&&) = default;
-
     conflict_state() = default;
-
     ~conflict_state() = default;
+
+    auto operator=(const conflict_state&) -> conflict_state& = default;
+    auto operator=(conflict_state&&) -> conflict_state& = default;
 };
 
 class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
@@ -57,15 +56,16 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
     PricerConstruct(const PricerConstruct&) = default;
     PricerConstruct(PricerConstruct&&) = default;
-    PricerConstruct& operator=(const PricerConstruct&) = default;
-    PricerConstruct& operator=(PricerConstruct&&) = default;
+    ~PricerConstruct() = default;
+    auto operator=(const PricerConstruct&) -> PricerConstruct& = default;
+    auto operator=(PricerConstruct&&) -> PricerConstruct& = default;
 
-    int getRoot(int& state) {
+    auto getRoot(int& state) -> int {
         state = 0;
         return static_cast<int>(nb_layers);
     };
 
-    int getChild(int& state, int level, size_t value) const {
+    auto getChild(int& state, int level, size_t value) const -> int {
         auto layer = nb_layers - level;
         // assert(0 <= layer && layer <= nb_layers - 1);
         // auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[layer]);
@@ -89,10 +89,9 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         return static_cast<int>(nb_layers - _j);
     }
 
-    ~PricerConstruct() = default;
-
    private:
-    [[nodiscard]] size_t min_job(size_t j, int state, size_t value) const {
+    [[nodiscard]] auto min_job(size_t j, int state, size_t value) const
+        -> size_t {
         auto val = nb_layers;
         // auto* tmp = static_cast<job_interval_pair*>(aux_list[j])->j;
         auto* tmp = (*ptr_vector)[j].first;
@@ -137,7 +136,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         return val;
     }
 
-    int diff_obj(Job* i, Job* j, int C) const {
+    auto diff_obj(Job* i, Job* j, int C) const -> int {
         return i->weighted_tardiness(C) +
                j->weighted_tardiness(C + j->processing_time) -
                (j->weighted_tardiness(C - i->processing_time +

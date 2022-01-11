@@ -67,9 +67,7 @@ Parms::Parms()
       reduce_cost_fixing{"reduce_cost_fixing", true},
       print_csv{"print_csv", false},
       jobfile(),
-      pname(),
-      nb_jobs(0),
-      nb_machines(0) {}
+      pname() {}
 
 Parms::Parms(int argc, const char** argv) : Parms() {
     program_header(argc, argv);
@@ -113,13 +111,13 @@ void Parms::parms_set_scoring_function(int scoring) {
     }
 }
 
-static std::string find_match(std::string const& _instance_file) {
+static auto find_match(std::string const& _instance_file) -> std::string {
     std::regex  regexp{"^.*(wt[0-9]*_[0-9]*).*$"};
     std::smatch match{};
     std::regex_search(_instance_file, match, regexp);
 
     if (match.size() != 2) {
-        return std::string("unknown_problem");
+        return std::string{ "unknown_problem" };
     } else {
         return match[1];
     }

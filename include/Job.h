@@ -36,19 +36,19 @@ struct Job {
     Job(int p, int w, int d);
     Job(const Job&) = default;
     Job(Job&&) = default;
-    Job& operator=(const Job&) = default;
-    Job& operator=(Job&&) = default;
+    auto operator=(const Job&) -> Job& = default;
+    auto operator=(Job&&) -> Job& = default;
     ~Job() = default;
 
-    int weighted_tardiness(int C);
-    int weighted_tardiness(size_t C);
-    int weighted_tardiness_start(int S);
-    int weighted_tardiness_start(size_t S);
-    int weighted_tardiness_start(long S);
+    auto weighted_tardiness(int C) -> int;
+    auto weighted_tardiness(size_t C) -> int;
+    auto weighted_tardiness_start(int S) -> int;
+    auto weighted_tardiness_start(size_t S) -> int;
+    auto weighted_tardiness_start(long S) -> int;
 };
 
-int  value_diff_Fij(int C, Job* i, Job* j);
-int  value_diff_Fij(size_t C, Job* i, Job* j);
-bool bool_diff_Fij(int, Job*, Job*);
+auto value_diff_Fij(int C, Job* i, Job* j) -> int;
+auto value_diff_Fij(size_t C, Job* i, Job* j) -> int;
+auto bool_diff_Fij(int, Job*, Job*) -> bool;
 
 #endif  // JOB_H

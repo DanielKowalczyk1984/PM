@@ -178,13 +178,15 @@ void PricerSolverZdd::init_table() {
     }
 }
 
-PricingSolution PricerSolverZdd::farkas_pricing([[maybe_unused]] double* pi) {
+auto PricerSolverZdd::farkas_pricing([[maybe_unused]] double* pi)
+    -> PricingSolution {
     PricingSolution sol;
 
     return sol;
 }
-PricingSolution PricerSolverZdd::farkas_pricing(
-    [[maybe_unused]] std::span<const double>& pi) {
+
+auto PricerSolverZdd::farkas_pricing(
+    [[maybe_unused]] std::span<const double>& pi) -> PricingSolution {
     PricingSolution sol;
 
     return sol;
@@ -498,7 +500,7 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(
     // outf.close();
 }
 
-bool PricerSolverZdd::check_column(Column const* col) {
+auto PricerSolverZdd::check_column(Column const* col) -> bool {
     auto        weight = 0UL;
     const auto& set = col->job_list;
     // std::span aux_jobs{set->pdata, set->len};
@@ -526,14 +528,14 @@ bool PricerSolverZdd::check_column(Column const* col) {
     return (weight == set.size());
 }
 
-size_t PricerSolverZdd::get_nb_edges() {
+auto PricerSolverZdd::get_nb_edges() -> size_t {
     return num_edges(mip_graph);
 }
 
-size_t PricerSolverZdd::get_nb_vertices() {
+auto PricerSolverZdd::get_nb_vertices() -> size_t {
     return decision_diagram->size();
 }
 
-boost::multiprecision::cpp_int PricerSolverZdd::print_num_paths() {
+auto PricerSolverZdd::print_num_paths() -> boost::multiprecision::cpp_int {
     return 0;
 }

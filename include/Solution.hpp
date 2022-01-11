@@ -55,10 +55,11 @@ struct Machine {
 
     Machine() = default;
     Machine(Machine&&) = default;
-    Machine& operator=(Machine&&) = default;
-    Machine& operator=(const Machine&) = default;
     Machine(const Machine&) = default;
     ~Machine() = default;
+
+    auto operator=(Machine&&) -> Machine& = default;
+    auto operator=(const Machine&) -> Machine& = default;
 
     void add_job(Job* job);
     void reset_machine(std::vector<int>& c);
@@ -79,10 +80,11 @@ struct Sol {
     Sol() = default;
     explicit Sol(const Instance& instance);
     Sol(const Sol&) = default;
-    Sol& operator=(const Sol&) = default;
     Sol(Sol&&) = default;
-    Sol& operator=(Sol&&) = default;
     ~Sol() = default;
+
+    auto operator=(const Sol&) -> Sol& = default;
+    auto operator=(Sol&&) -> Sol& = default;
 
     void construct_edd(VecJobPtr& v);
     void construct_spt(const VecJobPtr& v);

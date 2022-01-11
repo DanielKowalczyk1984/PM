@@ -60,16 +60,17 @@ struct Instance {
     Instance(Parms const& _parms);
 
     Instance(const Instance&) = default;
-    Instance& operator=(const Instance&) = delete;
-    Instance& operator=(Instance&&) = delete;
-    Instance(Instance&&) = default;
     ~Instance() = default;
+    Instance(Instance&&) = default;
+
+    auto operator=(Instance&&) -> Instance& = delete;
+    auto operator=(const Instance&) -> Instance& = delete;
 
     class InstanceException : public std::exception {
        public:
         InstanceException(const char* const msg = nullptr) : errmsg(msg) {}
 
-        [[nodiscard]] const char* what() const noexcept override {
+        [[nodiscard]] auto what() const noexcept -> const char* override {
             return (errmsg);
         }
 

@@ -27,7 +27,7 @@
 #include "Problem.h"        // for Problem
 #include "Usage.hpp"        // for USAGE
 
-int main(int argc, const char** argv) {
+auto main(int argc, const char** argv) -> int {
     int val = 0;
     try {
         Problem problem(argc, argv);

@@ -361,9 +361,9 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
     pd->coeff_row.resize(reformulation_model.size(), 0.0);
 }
 
-double PricerSolverBdd::compute_reduced_cost(const PricingSolution& sol,
-                                             double*                pi,
-                                             double*                lhs) {
+auto PricerSolverBdd::compute_reduced_cost(const PricingSolution& sol,
+                                           double*                pi,
+                                           double* lhs) -> double {
     double    result = sol.cost;
     auto&     table = *decision_diagram.getDiagram();
     auto      tmp_nodeid(decision_diagram.root());
@@ -416,9 +416,9 @@ double PricerSolverBdd::compute_reduced_cost(const PricingSolution& sol,
     return result;
 }
 
-double PricerSolverBdd::compute_reduced_cost(const PricingSolution&   sol,
-                                             std::span<const double>& pi,
-                                             double*                  lhs) {
+auto PricerSolverBdd::compute_reduced_cost(const PricingSolution&   sol,
+                                           std::span<const double>& pi,
+                                           double* lhs) -> double {
     double    result = sol.cost;
     auto&     table = *decision_diagram.getDiagram();
     auto      tmp_nodeid(decision_diagram.root());
@@ -556,8 +556,8 @@ void PricerSolverBdd::compute_lhs(const Column& sol, double* lhs) {
     aux_lhs[convex_constr_id] += coeff;
 }
 
-double PricerSolverBdd::compute_subgradient(const PricingSolution& sol,
-                                            double* sub_gradient) {
+auto PricerSolverBdd::compute_subgradient(const PricingSolution& sol,
+                                          double* sub_gradient) -> double {
     double    result = sol.cost;
     auto&     table = *decision_diagram.getDiagram();
     auto      tmp_nodeid(decision_diagram.root());
@@ -608,8 +608,8 @@ double PricerSolverBdd::compute_subgradient(const PricingSolution& sol,
     return result;
 }
 
-bool PricerSolverBdd::refinement_structure(
-    const std::vector<std::shared_ptr<Column>>& paths) {
+auto PricerSolverBdd::refinement_structure(
+    const std::vector<std::shared_ptr<Column>>& paths) -> bool {
     bool  refined_structure = false;
     auto& table = *decision_diagram.getDiagram();
     for (auto& path : paths) {
@@ -879,8 +879,9 @@ void PricerSolverBdd::enumerate_columns(std::span<const double>& _pi) {
     } while (true);
 }
 
-double PricerSolverBdd::compute_lagrange(const PricingSolution&     sol,
-                                         const std::vector<double>& pi) {
+auto PricerSolverBdd::compute_lagrange(const PricingSolution&     sol,
+                                       const std::vector<double>& pi)
+    -> double {
     double result = sol.cost;
     auto   dual_bound = 0.0;
 
@@ -935,8 +936,9 @@ double PricerSolverBdd::compute_lagrange(const PricingSolution&     sol,
     return result;
 }
 
-double PricerSolverBdd::compute_lagrange(const PricingSolution&         sol,
-                                         const std::span<const double>& pi) {
+auto PricerSolverBdd::compute_lagrange(const PricingSolution&         sol,
+                                       const std::span<const double>& pi)
+    -> double {
     double result = sol.cost;
     auto   dual_bound = 0.0;
 
@@ -1111,7 +1113,7 @@ void PricerSolverBdd::remove_edges() {
     out_file_mip.close();
 }
 
-bool PricerSolverBdd::evaluate_nodes(std::span<const double>& pi) {
+auto PricerSolverBdd::evaluate_nodes(std::span<const double>& pi) -> bool {
     auto& table = *get_decision_diagram().getDiagram();
     compute_labels(pi);
     auto reduced_cost =
@@ -1169,7 +1171,7 @@ bool PricerSolverBdd::evaluate_nodes(std::span<const double>& pi) {
     return removed_edges;
 }
 
-bool PricerSolverBdd::evaluate_nodes(double* pi) {
+auto PricerSolverBdd::evaluate_nodes(double* pi) -> bool {
     auto& table = *get_decision_diagram().getDiagram();
     compute_labels(pi);
     auto reduced_cost =
@@ -1859,7 +1861,8 @@ void PricerSolverBdd::project_sol_on_original_variables(const Sol& _sol) {
     }
 }
 
-std::vector<std::vector<BddCoeff>>& PricerSolverBdd::calculate_job_time() {
+auto PricerSolverBdd::calculate_job_time()
+    -> std::vector<std::vector<BddCoeff>>& {
     for (auto&& it : x_bar) {
         std::ranges::sort(it, std::less<>{},
                           [](const auto& aux) { return aux.get_t(); });
@@ -1917,7 +1920,7 @@ void PricerSolverBdd::split_job_time(size_t _job, int _time, bool _left) {
     }
 }
 
-std::unique_ptr<OsiSolverInterface> PricerSolverBdd::build_model() {
+auto PricerSolverBdd::build_model() -> std::unique_ptr<OsiSolverInterface> {
     auto& table = *(decision_diagram.getDiagram());
     auto  aux_model = std::make_unique<OsiGrbSolverInterface>();
     nb_vertices = 0UL;
@@ -2044,7 +2047,7 @@ std::unique_ptr<OsiSolverInterface> PricerSolverBdd::build_model() {
     return aux_model;
 }
 
-int PricerSolverBdd::add_constraints() {
+auto PricerSolverBdd::add_constraints() -> int {
     // auto& table = *(decision_diagram.getDiagram());
     // auto  aux_model = build_model();
     // fmt::print("number of nodes = {}\n", table.size());
@@ -2107,7 +2110,7 @@ void PricerSolverBdd::update_rows_coeff(size_t first) {
     }
 }
 
-bool PricerSolverBdd::check_column(Column const* col) {
+auto PricerSolverBdd::check_column(Column const* col) -> bool {
     const auto& set = col->job_list;
     auto&       table = *(decision_diagram.getDiagram());
     auto        tmp_nodeid(decision_diagram.root());
@@ -2130,27 +2133,27 @@ bool PricerSolverBdd::check_column(Column const* col) {
     return (tmp_nodeid == 1 && it == set.end() && !counter);
 }
 
-double PricerSolverBdd::evaluate_rc_low_arc(NodeBdd& n) {
+auto PricerSolverBdd::evaluate_rc_low_arc(NodeBdd& n) -> double {
     auto& table = *(get_decision_diagram().getDiagram());
     auto& child = table.node(n[0]);
     return n.forward_label[0].get_f() + child.backward_label[0].get_f() +
            n.get_reduced_cost()[0];
 }
 
-size_t PricerSolverBdd::get_nb_edges() {
+auto PricerSolverBdd::get_nb_edges() -> size_t {
     return num_edges(mip_graph);
 }
 
-size_t PricerSolverBdd::get_nb_vertices() {
+auto PricerSolverBdd::get_nb_vertices() -> size_t {
     return num_vertices(mip_graph);
 }
 
-bool PricerSolverBdd::structure_feasible() {
+auto PricerSolverBdd::structure_feasible() -> bool {
     return ((decision_diagram.size() != 0) &&
             decision_diagram.root().row() >= convex_constr_id);
 }
 
-boost::multiprecision::cpp_int PricerSolverBdd::print_num_paths() {
+auto PricerSolverBdd::print_num_paths() -> boost::multiprecision::cpp_int {
     auto evaluator = CardinalityPaths();
     return decision_diagram.evaluate_backward(evaluator);
 }

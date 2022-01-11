@@ -45,7 +45,7 @@ IntervalPair::IntervalPair(int                         _a,
       jobs{j1, j2},
       I(interval) {}
 
-int IntervalPair::operator()() {
+auto IntervalPair::operator()() -> int {
     left = I->a;
     right = I->a + jobs[1]->processing_time;
 

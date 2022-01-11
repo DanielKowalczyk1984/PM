@@ -50,23 +50,26 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     evaluator.set_table(&(*(get_decision_diagram().getDiagram())));
 }
 
-PricingSolution PricerSolverBddBackwardSimple::pricing_algorithm(double* _pi) {
+auto PricerSolverBddBackwardSimple::pricing_algorithm(double* _pi)
+    -> PricingSolution {
     evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(evaluator);
 }
-PricingSolution PricerSolverBddBackwardSimple::pricing_algorithm(
-    std::span<const double>& pi) {
+
+auto PricerSolverBddBackwardSimple::pricing_algorithm(
+    std::span<const double>& pi) -> PricingSolution {
     evaluator.set_pi(pi);
     return get_decision_diagram().evaluate_backward(evaluator);
 }
 
-PricingSolution PricerSolverBddBackwardSimple::farkas_pricing(double* _pi) {
+auto PricerSolverBddBackwardSimple::farkas_pricing(double* _pi)
+    -> PricingSolution {
     farkas_evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(farkas_evaluator);
 }
 
-PricingSolution PricerSolverBddBackwardSimple::farkas_pricing(
-    std::span<const double>& _pi) {
+auto PricerSolverBddBackwardSimple::farkas_pricing(std::span<const double>& _pi)
+    -> PricingSolution {
     farkas_evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(farkas_evaluator);
 }
@@ -86,7 +89,7 @@ void PricerSolverBddBackwardSimple::compute_labels(
     get_decision_diagram().compute_labels_forward(reversed_evaluator);
 }
 
-double PricerSolverBddBackwardSimple::evaluate_rc_arc(NodeBdd& node) {
+auto PricerSolverBddBackwardSimple::evaluate_rc_arc(NodeBdd& node) -> double {
     auto& table = *(get_decision_diagram().getDiagram());
     auto& child = table.node(node[1]);
     return node.forward_label[0].get_f() + child.backward_label[0].get_f() +
@@ -110,24 +113,26 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     evaluator.set_table(&(*(get_decision_diagram().getDiagram())));
 }
 
-PricingSolution PricerSolverBddBackwardCycle::pricing_algorithm(double* _pi) {
+auto PricerSolverBddBackwardCycle::pricing_algorithm(double* _pi)
+    -> PricingSolution {
     evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(evaluator);
 }
 
-PricingSolution PricerSolverBddBackwardCycle::pricing_algorithm(
-    std::span<const double>& _pi) {
+auto PricerSolverBddBackwardCycle::pricing_algorithm(
+    std::span<const double>& _pi) -> PricingSolution {
     evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(evaluator);
 }
 
-PricingSolution PricerSolverBddBackwardCycle::farkas_pricing(double* _pi) {
+auto PricerSolverBddBackwardCycle::farkas_pricing(double* _pi)
+    -> PricingSolution {
     farkas_evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(farkas_evaluator);
 }
 
-PricingSolution PricerSolverBddBackwardCycle::farkas_pricing(
-    std::span<const double>& _pi) {
+auto PricerSolverBddBackwardCycle::farkas_pricing(std::span<const double>& _pi)
+    -> PricingSolution {
     farkas_evaluator.set_pi(_pi);
     return get_decision_diagram().evaluate_backward(farkas_evaluator);
 }
@@ -147,7 +152,7 @@ void PricerSolverBddBackwardCycle::compute_labels(
     get_decision_diagram().compute_labels_forward(reversed_evaluator);
 }
 
-double PricerSolverBddBackwardCycle::evaluate_rc_arc(NodeBdd& s) {
+auto PricerSolverBddBackwardCycle::evaluate_rc_arc(NodeBdd& s) -> double {
     auto& table = *(get_decision_diagram().getDiagram());
     auto* job = s.get_job();
     auto& child = table.node(s[1]);

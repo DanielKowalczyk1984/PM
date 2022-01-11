@@ -43,30 +43,30 @@ class VariableKeyBase {
                     bool   _root = false);
 
     VariableKeyBase();
+    VariableKeyBase(const VariableKeyBase&);
+    VariableKeyBase(VariableKeyBase&&) noexcept;
+    virtual ~VariableKeyBase() = default;
 
-    [[nodiscard]] size_t get_j() const;
-    [[nodiscard]] size_t get_t() const;
-    [[nodiscard]] bool   get_root() const;
-    [[nodiscard]] bool   get_high() const;
+    [[nodiscard]] auto get_j() const -> size_t;
+    [[nodiscard]] auto get_t() const -> size_t;
+    [[nodiscard]] auto get_root() const -> bool;
+    [[nodiscard]] auto get_high() const -> bool;
 
     void set_j(size_t _j);
     void set_t(size_t _t);
     void set_root(bool _root);
     void set_high(bool _high);
 
-    VariableKeyBase(const VariableKeyBase&);
-    VariableKeyBase(VariableKeyBase&&) noexcept;
-    VariableKeyBase& operator=(const VariableKeyBase&);
-    VariableKeyBase& operator=(VariableKeyBase&&) noexcept;
-    virtual ~VariableKeyBase() = default;
+    auto operator=(const VariableKeyBase&) -> VariableKeyBase&;
+    auto operator=(VariableKeyBase&&) noexcept -> VariableKeyBase&;
 
-    bool operator==(const VariableKeyBase& other) const;
+    auto operator==(const VariableKeyBase& other) const -> bool;
 };
 
 namespace std {
 template <>
 struct hash<VariableKeyBase> {
-    std::size_t operator()(auto const& s) const noexcept {
+    auto operator()(auto const& s) const noexcept -> std::size_t {
         std::size_t seed = 0;
         boost::hash_combine(seed, s.get_j());
         boost::hash_combine(seed, s.get_t());

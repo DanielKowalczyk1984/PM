@@ -45,19 +45,21 @@ class BackwardZDDBase : public Eval<NodeZdd<T>, PricingSolution> {
     explicit BackwardZDDBase(size_t _num_jobs) : num_jobs(_num_jobs){};
     BackwardZDDBase() = default;
     BackwardZDDBase(const BackwardZDDBase<T>&) = default;
-    BackwardZDDBase<T>& operator=(const BackwardZDDBase<T>&) = default;
     BackwardZDDBase(BackwardZDDBase<T>&&) noexcept = default;
-    BackwardZDDBase<T>& operator=(BackwardZDDBase<T>&&) noexcept = default;
-    ~BackwardZDDBase() = default;
+    ~BackwardZDDBase() override = default;
 
-    void     initialize_pi(T* _pi) { pi = _pi; }
-    void     initialize_pi(std::span<const T> _pi) { pi = _pi.data(); }
-    const T* get_pi() const { return pi; }
-    [[nodiscard]] size_t get_num_jobs() const { return num_jobs; }
+    auto operator=(const BackwardZDDBase<T>&) -> BackwardZDDBase<T>& = default;
+    auto operator=(BackwardZDDBase<T>&&) noexcept
+        -> BackwardZDDBase<T>& = default;
 
-    virtual void initialize_node(NodeZdd<T>& n) const = 0;
-    virtual void initialize_root_node(NodeZdd<T>& n) const = 0;
-    virtual void evalNode(NodeZdd<T>& n) const = 0;
+    void initialize_pi(T* _pi) { pi = _pi; }
+    void initialize_pi(std::span<const T> _pi) { pi = _pi.data(); }
+    [[nodiscard]] auto get_pi() const -> const T* { return pi; }
+    [[nodiscard]] auto get_num_jobs() const -> size_t { return num_jobs; }
+
+    void initialize_node(NodeZdd<T>& n) const override = 0;
+    void initialize_root_node(NodeZdd<T>& n) const override = 0;
+    void evalNode(NodeZdd<T>& n) const override = 0;
 };
 
 template <typename T = double>
@@ -108,7 +110,7 @@ class BackwardZddSimple : public BackwardZDDBase<T> {
         }
     }
 
-    PricingSolution get_objective(NodeZdd<T>& n) const override {
+    auto get_objective(NodeZdd<T>& n) const -> PricingSolution override {
         PricingSolution sol(pi[num_jobs]);
 
         auto m = std::min_element(n.list.begin(), n.list.end(),
@@ -216,7 +218,7 @@ class BackwardZddCycle : public BackwardZDDBase<T> {
         }
     }
 
-    PricingSolution get_objective(NodeZdd<>& n) const override {
+    auto get_objective(NodeZdd<>& n) const -> PricingSolution override {
         PricingSolution       sol(pi[num_jobs]);
         auto                  m = std::min_element(n.list.begin(), n.list.end(),
                                                    compare_sub_nodes<T>);

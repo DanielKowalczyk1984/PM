@@ -48,9 +48,11 @@ class PricerSolverSimpleDp : public PricerSolverBase {
 
    public:
     PricerSolverSimpleDp(const Instance& instance);
-    PricerSolverSimpleDp& operator=(const PricerSolverSimpleDp&) = default;
-    PricerSolverSimpleDp& operator=(PricerSolverSimpleDp&&) = default;
     PricerSolverSimpleDp(PricerSolverSimpleDp&&) = default;
+    ~PricerSolverSimpleDp() override = default;
+    auto operator=(PricerSolverSimpleDp&&) -> PricerSolverSimpleDp& = default;
+    auto operator=(const PricerSolverSimpleDp&)
+        -> PricerSolverSimpleDp& = default;
 
     PricerSolverSimpleDp(const PricerSolverSimpleDp& src)
         : PricerSolverBase(src),
@@ -66,16 +68,16 @@ class PricerSolverSimpleDp : public PricerSolverBase {
         init_table();
     };
 
-    ~PricerSolverSimpleDp() override = default;
-
-    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
+    [[nodiscard]] auto clone() const
+        -> std::unique_ptr<PricerSolverBase> override {
         return std::make_unique<PricerSolverSimpleDp>(*this);
     };
 
     void init_table();
 
-    bool evaluate_nodes([[maybe_unused]] double* pi) override;
-    bool evaluate_nodes([[maybe_unused]] std::span<const double>& pi) override;
+    auto evaluate_nodes([[maybe_unused]] double* pi) -> bool override;
+    auto evaluate_nodes([[maybe_unused]] std::span<const double>& pi)
+        -> bool override;
     void build_mip() override;
     void construct_lp_sol_from_rmp(
         const double*                               lambda,
@@ -84,20 +86,22 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     void construct_lp_sol_from_rmp(
         const std::span<const double>&              lambda,
         const std::vector<std::shared_ptr<Column>>& columns) override;
-    size_t  get_nb_edges() override;
-    size_t  get_nb_vertices() override;
-    cpp_int print_num_paths() override;
+    auto get_nb_edges() -> size_t override;
+    auto get_nb_vertices() -> size_t override;
+    auto print_num_paths() -> cpp_int override;
 
-    bool check_column(Column const* set) override;
+    auto check_column(Column const* set) -> bool override;
 
-    PricingSolution pricing_algorithm(double* _pi) override;
-    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
-    PricingSolution farkas_pricing(double* _pi) override;
-    PricingSolution farkas_pricing(std::span<const double>& _pi) override;
-    void            forward_evaluator(double* _pi);
-    void            forward_evaluator(std::span<const double>& _pi);
-    void            backward_evaluator(double* _pi);
-    void            backward_evaluator(std::span<const double>& _pi);
+    auto pricing_algorithm(double* _pi) -> PricingSolution override;
+    auto pricing_algorithm(std::span<const double>& _pi)
+        -> PricingSolution override;
+    auto farkas_pricing(double* _pi) -> PricingSolution override;
+    auto farkas_pricing(std::span<const double>& _pi)
+        -> PricingSolution override;
+    void forward_evaluator(double* _pi);
+    void forward_evaluator(std::span<const double>& _pi);
+    void backward_evaluator(double* _pi);
+    void backward_evaluator(std::span<const double>& _pi);
 
     void update_constraints() override {}
 

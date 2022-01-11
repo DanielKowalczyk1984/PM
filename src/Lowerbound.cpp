@@ -53,7 +53,7 @@ void NodeData::print_ages() {
     fmt::print("\n");
 }
 
-int NodeData::grow_ages() {
+auto NodeData::grow_ages() -> int {
     int val = 0;
     // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
     nb_cols = osi_rmp->getNumCols();
@@ -92,7 +92,7 @@ int NodeData::grow_ages() {
     return val;
 }
 
-int NodeData::delete_unused_rows() {
+auto NodeData::delete_unused_rows() -> int {
     int              val = 0;
     std::vector<int> del_indices{};
 
@@ -135,7 +135,7 @@ int NodeData::delete_unused_rows() {
     return val;
 }
 
-int NodeData::delete_old_columns() {
+auto NodeData::delete_old_columns() -> int {
     int val = 0;
     int min_numdel = static_cast<int>(
         floor(static_cast<int>(nb_jobs) * min_nb_del_row_ratio));
@@ -187,7 +187,7 @@ int NodeData::delete_old_columns() {
     return val;
 }
 
-int NodeData::delete_infeasible_columns() {
+auto NodeData::delete_infeasible_columns() -> int {
     /** pd->zero_count can be deprecated! */
     zero_count = 0;
 
@@ -338,7 +338,7 @@ int NodeData::delete_infeasible_columns() {
 //     g_ptr_array_foreach(localColPool, g_make_pi_feasible_farkas, this);
 // }
 
-int NodeData::compute_objective() {
+auto NodeData::compute_objective() -> int {
     LP_lower_bound_dual = 0.0;
 
     /** compute lower bound with the dual variables */
@@ -372,7 +372,7 @@ int NodeData::compute_objective() {
     return 0;
 }
 
-int NodeData::solve_relaxation() {
+auto NodeData::solve_relaxation() -> int {
     auto val = 0;
     auto status_RMP = false;
     auto real_time_solve_lp = 0.0;
@@ -426,7 +426,7 @@ int NodeData::solve_relaxation() {
     return val;
 }
 
-int NodeData::estimate_lower_bound(size_t _iter) {
+auto NodeData::estimate_lower_bound(size_t _iter) -> int {
     auto val = 0;
     auto has_cols = true;
     auto status_RMP = false;
@@ -489,12 +489,11 @@ int NodeData::estimate_lower_bound(size_t _iter) {
     return val;
 }
 
-int NodeData::compute_lower_bound() {
+auto NodeData::compute_lower_bound() -> int {
     auto val = 0;
     auto has_cols{true};
     // auto has_cuts = 0;
     auto status_RMP = false;
-    auto real_time_pricing = 0.0;
     auto old_LP_bound = 0.0;
 
     if (debug_lvl(1)) {
@@ -537,7 +536,6 @@ int NodeData::compute_lower_bound() {
             /**
              * Solve the pricing problem
              */
-            real_time_pricing = getRealTime();
             stat.start_resume_timer(Statistics::pricing_timer);
             // val = lp_interface_status(RMP.get(), &status_RMP);
 
@@ -563,7 +561,6 @@ int NodeData::compute_lower_bound() {
             // }
 
             stat.suspend_timer(Statistics::pricing_timer);
-            real_time_pricing = getRealTime() - real_time_pricing;
 
             if (status_RMP) {
                 // case GRB_OPTIMAL:
@@ -679,7 +676,7 @@ int NodeData::compute_lower_bound() {
     return val;
 }
 
-bool NodeData::refinement() {
+auto NodeData::refinement() -> bool {
     // auto status_RMP = 0;
     auto refined{false};
 

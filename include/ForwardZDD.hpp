@@ -48,17 +48,23 @@ class ForwardZddBase : public Eval<NodeZdd<T>, PricingSolution> {
           pi(nullptr),
           num_jobs(_num_jobs) {}
     ForwardZddBase() = default;
-    ~ForwardZddBase() = default;
+    ForwardZddBase(const ForwardZddBase<T>&) = default;
+    ForwardZddBase(ForwardZddBase<T>&&) noexcept = default;
+    ~ForwardZddBase() override = default;
+
+    auto operator=(const ForwardZddBase<T>&) -> ForwardZddBase<T>& = default;
+    auto operator=(ForwardZddBase<T>&&) noexcept
+        -> ForwardZddBase<T>& = default;
 
     virtual void initialize_pi(T* _pi) { pi = _pi; }
     void         initialize_pi(std::span<const T> _pi) { pi = _pi.data(); }
 
-    virtual void initialize_node(NodeZdd<T>& n) const = 0;
-    virtual void initialize_root_node(NodeZdd<T>& n) const = 0;
+    void initialize_node(NodeZdd<T>& n) const override = 0;
+    void initialize_root_node(NodeZdd<T>& n) const override = 0;
 
-    virtual void evalNode(NodeZdd<T>& n) const = 0;
+    void evalNode(NodeZdd<T>& n) const override = 0;
 
-    PricingSolution get_objective(NodeZdd<T>& n) const {
+    auto get_objective(NodeZdd<T>& n) const -> PricingSolution override {
         PricingSolution sol(pi[num_jobs]);
         auto            m = std::min_element(n.list.begin(), n.list.end(),
                                              compare_sub_nodes<T>);
@@ -81,11 +87,6 @@ class ForwardZddBase : public Eval<NodeZdd<T>, PricingSolution> {
 
         return sol;
     }
-
-    ForwardZddBase(const ForwardZddBase<T>&) = default;
-    ForwardZddBase(ForwardZddBase<T>&&) noexcept = default;
-    ForwardZddBase<T>& operator=(const ForwardZddBase<T>&) = default;
-    ForwardZddBase<T>& operator=(ForwardZddBase<T>&&) noexcept = default;
 };
 
 template <typename T = double>
@@ -103,7 +104,12 @@ class ForwardZddCycle : public ForwardZddBase<T> {
         pi = nullptr;
         num_jobs = 0;
     }
-    ~ForwardZddCycle() = default;
+    ForwardZddCycle(const ForwardZddCycle<T>&) = default;
+    ForwardZddCycle(ForwardZddCycle<T>&&) noexcept = default;
+    ~ForwardZddCycle() override = default;
+    auto operator=(const ForwardZddCycle<T>&) -> ForwardZddCycle<T>& = default;
+    auto operator=(ForwardZddCycle<T>&&) noexcept
+        -> ForwardZddCycle<T>& = default;
 
     void initialize_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
@@ -206,11 +212,6 @@ class ForwardZddCycle : public ForwardZddBase<T> {
             }
         }
     }
-
-    ForwardZddCycle(const ForwardZddCycle<T>&) = default;
-    ForwardZddCycle(ForwardZddCycle<T>&&) noexcept = default;
-    ForwardZddCycle<T>& operator=(const ForwardZddCycle<T>&) = default;
-    ForwardZddCycle<T>& operator=(ForwardZddCycle<T>&&) noexcept = default;
 };
 
 template <typename T = double>
@@ -230,7 +231,13 @@ class ForwardZddSimple : public ForwardZddBase<T> {
         num_jobs = 0;
     }
 
-    ~ForwardZddSimple() = default;
+    ForwardZddSimple(const ForwardZddSimple<T>&) = default;
+    ForwardZddSimple(ForwardZddSimple<T>&&) noexcept = default;
+    ~ForwardZddSimple() override = default;
+    auto operator=(const ForwardZddSimple<T>&)
+        -> ForwardZddSimple<T>& = default;
+    auto operator=(ForwardZddSimple<T>&&) noexcept
+        -> ForwardZddSimple<T>& = default;
 
     void initialize_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
@@ -250,7 +257,7 @@ class ForwardZddSimple : public ForwardZddBase<T> {
         }
     }
 
-    void initialize_pi(T* _pi) { pi = _pi; }
+    void initialize_pi(T* _pi) override { pi = _pi; }
     void initialize_pi(std::span<const T>& _pi) { pi = _pi.data(); }
 
     void evalNode(NodeZdd<T>& n) const override {
@@ -283,10 +290,6 @@ class ForwardZddSimple : public ForwardZddBase<T> {
             }
         }
     }
-    ForwardZddSimple(const ForwardZddSimple<T>&) = default;
-    ForwardZddSimple(ForwardZddSimple<T>&&) noexcept = default;
-    ForwardZddSimple<T>& operator=(const ForwardZddSimple<T>&) = default;
-    ForwardZddSimple<T>& operator=(ForwardZddSimple<T>&&) noexcept = default;
 };
 
 #endif  // DURATION_ZDD_HPP

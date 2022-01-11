@@ -79,7 +79,7 @@ class Problem {
 
    public:
     /** All methods of problem class */
-    int  to_screen();
+    auto to_screen() -> int;
     void to_csv();
     void solve();
     /** Heuristic related */
@@ -88,16 +88,18 @@ class Problem {
     Problem(int argc, const char** argv);
     Problem(const Problem&) = delete;
     Problem(Problem&&) = delete;
-    Problem& operator=(const Problem&) = delete;
-    Problem& operator=(Problem&&) = delete;
     ~Problem();
+
+    auto operator=(const Problem&) -> Problem& = delete;
+    auto operator=(Problem&&) -> Problem& = delete;
+
     friend NodeData;
 
     class ProblemException : public std::exception {
        public:
         ProblemException(const char* const msg = nullptr) : errmsg(msg) {}
 
-        [[nodiscard]] const char* what() const noexcept override {
+        [[nodiscard]] auto what() const noexcept -> const char* override {
             return (errmsg);
         }
 

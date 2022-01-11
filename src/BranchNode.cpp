@@ -315,7 +315,7 @@ void BranchNodeBase::compute_bounds([[maybe_unused]] BTree* bt) {
 
 void BranchNodeBase::assess_dominance([[maybe_unused]] State* otherState) {}
 
-bool BranchNodeBase::is_terminal_state() {
+auto BranchNodeBase::is_terminal_state() -> bool {
     auto* solver = pd->solver.get();
     set_feasible(pd->status != NodeData::infeasible);
     return (solver->get_is_integer_solution() || !is_feasible());
@@ -535,10 +535,10 @@ void BranchNodeRelBranching::branch(BTree* bt) {
     }
 }
 
-const Instance& BranchNodeBase::get_instance_info() const {
+auto BranchNodeBase::get_instance_info() const -> const Instance& {
     return pd->instance;
 }
 
-PricerSolverBase* BranchNodeBase::get_pricersolver() const {
+auto BranchNodeBase::get_pricersolver() const -> PricerSolverBase* {
     return pd->solver.get();
 }

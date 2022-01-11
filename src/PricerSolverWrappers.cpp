@@ -54,7 +54,7 @@ void NodeData::generate_cuts() {
     // 3. adjust the pricing solver (add constraints to original model)
 }
 
-int NodeData::delete_unused_rows_range(int first, int last) {
+auto NodeData::delete_unused_rows_range(int first, int last) -> int {
     int val = 0;
 
     lp_interface_deleterows(RMP.get(), first, last);
@@ -67,7 +67,7 @@ int NodeData::delete_unused_rows_range(int first, int last) {
     return val;
 }
 
-int NodeData::call_update_rows_coeff() {
+auto NodeData::call_update_rows_coeff() -> int {
     int val = 0;
 
     solver->update_rows_coeff(nb_jobs + 1);

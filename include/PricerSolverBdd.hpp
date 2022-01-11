@@ -68,9 +68,10 @@ class PricerSolverBdd : public PricerSolverBase {
 
     PricerSolverBdd(const PricerSolverBdd& src);
     PricerSolverBdd(PricerSolverBdd&&) = default;
-    PricerSolverBdd& operator=(PricerSolverBdd&&) = default;
-    PricerSolverBdd& operator=(const PricerSolverBdd&) = delete;
     ~PricerSolverBdd() override;
+
+    auto operator=(PricerSolverBdd&&) -> PricerSolverBdd& = default;
+    auto operator=(const PricerSolverBdd&) -> PricerSolverBdd& = delete;
 
     [[maybe_unused]] void check_infeasible_arcs();
     void                  topdown_filtering();
@@ -79,20 +80,21 @@ class PricerSolverBdd : public PricerSolverBase {
     [[maybe_unused]] void print_representation_file();
     void                  cleanup_arcs();
 
-    bool refinement_structure(
-        const std::vector<std::shared_ptr<Column>>& paths) override;
+    auto refinement_structure(const std::vector<std::shared_ptr<Column>>& paths)
+        -> bool override;
     void enumerate_columns() override;
     void enumerate_columns(double* _pi) override;
     void enumerate_columns(std::span<const double>& _pi) override;
-    bool evaluate_nodes(double* _pi) override;
-    bool evaluate_nodes(std::span<const double>& _pi) override;
+    auto evaluate_nodes(double* _pi) -> bool override;
+    auto evaluate_nodes(std::span<const double>& _pi) -> bool override;
 
-    bool check_column(Column const* set) override;
-    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override = 0;
-    virtual double evaluate_rc_arc(NodeBdd& n) = 0;
-    double         evaluate_rc_low_arc(NodeBdd& n);
-    virtual void   compute_labels(double* _pi) = 0;
-    virtual void   compute_labels(std::span<const double>& _pi) = 0;
+    auto               check_column(Column const* set) -> bool override;
+    [[nodiscard]] auto clone() const
+        -> std::unique_ptr<PricerSolverBase> override = 0;
+    virtual auto evaluate_rc_arc(NodeBdd& n) -> double = 0;
+    auto         evaluate_rc_low_arc(NodeBdd& n) -> double;
+    virtual void compute_labels(double* _pi) = 0;
+    virtual void compute_labels(std::span<const double>& _pi) = 0;
 
     void                  remove_layers();
     void                  remove_edges();
@@ -110,23 +112,23 @@ class PricerSolverBdd : public PricerSolverBase {
         const std::vector<std::shared_ptr<Column>>& columns) override;
 
     void project_sol_on_original_variables(const Sol& _sol) override;
-    std::vector<std::vector<BddCoeff>>& calculate_job_time() override;
-    void    split_job_time(size_t _job, int _time, bool _left) override;
-    cpp_int print_num_paths() override;
-    void    remove_constraints(int first, int nb_del) override;
-    void    update_rows_coeff(size_t first) override;
-    void    insert_constraints_lp(NodeData* pd) override;
+    auto calculate_job_time() -> std::vector<std::vector<BddCoeff>>& override;
+    void split_job_time(size_t _job, int _time, bool _left) override;
+    auto print_num_paths() -> cpp_int override;
+    void remove_constraints(int first, int nb_del) override;
+    void update_rows_coeff(size_t first) override;
+    void insert_constraints_lp(NodeData* pd) override;
 
-    int add_constraints() override;
+    auto add_constraints() -> int override;
 
-    size_t get_nb_edges() override;
-    size_t get_nb_vertices() override;
-    bool   structure_feasible() override;
-    size_t get_size_data() override {
+    auto get_nb_edges() -> size_t override;
+    auto get_nb_vertices() -> size_t override;
+    auto structure_feasible() -> bool override;
+    auto get_size_data() -> size_t override {
         return decision_diagram.getDiagram()->totalSize();
     };
 
-    inline DdStructure<NodeBdd>& get_decision_diagram() {
+    inline auto get_decision_diagram() -> DdStructure<NodeBdd>& {
         return decision_diagram;
     }
 
@@ -135,29 +137,29 @@ class PricerSolverBdd : public PricerSolverBase {
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 
    private:
-    double compute_reduced_cost(const PricingSolution& sol,
-                                double*                pi,
-                                double*                lhs) override;
+    auto compute_reduced_cost(const PricingSolution& sol,
+                              double*                pi,
+                              double*                lhs) -> double override;
 
-    double compute_reduced_cost(const PricingSolution&   sol,
-                                std::span<const double>& pi,
-                                double*                  lhs) override;
+    auto compute_reduced_cost(const PricingSolution&   sol,
+                              std::span<const double>& pi,
+                              double*                  lhs) -> double override;
 
     void compute_lhs(const PricingSolution& sol, double* lhs) override;
     void compute_lhs(const Column& sol, double* lhs) override;
 
-    double compute_lagrange(const PricingSolution&     sol,
-                            const std::vector<double>& pi) override;
-    double compute_lagrange(const PricingSolution&         sol,
-                            const std::span<const double>& pi) override;
+    auto compute_lagrange(const PricingSolution&     sol,
+                          const std::vector<double>& pi) -> double override;
+    auto compute_lagrange(const PricingSolution&         sol,
+                          const std::span<const double>& pi) -> double override;
 
-    double compute_subgradient(const PricingSolution& sol,
-                               double*                sub_gradient) override;
+    auto compute_subgradient(const PricingSolution& sol, double* sub_gradient)
+        -> double override;
 
     void update_constraints() override {}
 
-    void                                update_coeff_constraints() override;
-    std::unique_ptr<OsiSolverInterface> build_model();
+    void update_coeff_constraints() override;
+    auto build_model() -> std::unique_ptr<OsiSolverInterface>;
 };
 
 #endif  // PRICER_SOLVER_BDD_HPP

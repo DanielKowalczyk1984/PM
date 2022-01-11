@@ -21,18 +21,19 @@
 // SOFTWARE.
 
 #include "NodeBdd.hpp"
+#include <range/v3/view/zip.hpp>
 
 void NodeBdd::set_weight(int _weight) {
     weight = _weight;
 }
-[[nodiscard]] size_t NodeBdd::get_weight() const {
+[[nodiscard]] auto NodeBdd::get_weight() const -> size_t {
     return weight;
 }
 
-[[nodiscard]] Job* NodeBdd::get_job() const {
+[[nodiscard]] auto NodeBdd::get_job() const -> Job* {
     return job;
 }
-[[nodiscard]] size_t NodeBdd::get_nb_job() const {
+[[nodiscard]] auto NodeBdd::get_nb_job() const -> size_t {
     return job->job;
 }
 void NodeBdd::set_job(Job* _job) {
@@ -53,16 +54,16 @@ void NodeBdd::add_coeff_list_clear() {
     }
 }
 
-std::array<std::vector<NodeBdd::weak_ptr_bddcoeff>, 2>&
-NodeBdd::get_coeff_list() {
+
+auto NodeBdd::get_coeff_list() -> std::array<std::vector<NodeBdd::weak_ptr_bddcoeff>, 2>& {
     return coeff_list;
 }
 
-bool NodeBdd::operator!=(NodeBdd const& o) const {
+auto NodeBdd::operator!=(NodeBdd const& o) const -> bool {
     return !(*this == (o));
 }
 
-std::ostream& operator<<(std::ostream& os, NodeBdd const& o) {
+auto operator<<(std::ostream& os, NodeBdd const& o) -> std::ostream& {
     os << "(" << o[0];
 
     for (int i = 1; i < 2; ++i) {
@@ -84,16 +85,16 @@ void NodeBdd::init_node(size_t                _weight,
 }
 
 void NodeBdd::set_node_id_label(const NodeId& _id) {
-    for (auto j = 0UL; j < 2; j++) {
-        backward_label[j].set_node_id(_id);
-        forward_label[j].set_node_id(_id);
+    for (auto&& [b, f] : ranges::views::zip(backward_label, forward_label)) {
+        f.set_node_id(_id);
+        b.set_node_id(_id);
     }
 }
 
 void NodeBdd::set_job_label(Job* _job) {
-    for (auto j = 0UL; j < 2; j++) {
-        backward_label[j].set_job(_job);
-        forward_label[j].set_job(_job);
+    for (auto&& [f, b] : ranges::views::zip(forward_label, backward_label)) {
+        f.set_job(_job);
+        b.set_job(_job);
     }
 }
 
@@ -102,15 +103,18 @@ auto NodeBdd::operator<=>(const NodeBdd& rhs) {
 }
 
 /** Functions concerning reduced_cost */
-NodeBdd::dbl_array& NodeBdd::get_reduced_cost() {
+auto NodeBdd::get_reduced_cost() -> NodeBdd::dbl_array& {
     return reduced_cost;
 }
+
 void NodeBdd::reset_reduced_costs() {
     reduced_cost = cost;
 }
+
 void NodeBdd::reset_reduced_costs_farkas() {
     reduced_cost = {0.0, 0.0};
 }
+
 void NodeBdd::adjust_reduced_costs(double _x, bool high) {
     if (high) {
         reduced_cost[1] -= _x;
@@ -123,10 +127,12 @@ void NodeBdd::adjust_reduced_costs(double _x, bool high) {
 void NodeBdd::set_ptr_node_id(size_t i, size_t j) {
     ptr_node_id = NodeId(i, j);
 }
+
 void NodeBdd::set_ptr_node_id(const NodeId& _node_id) {
     ptr_node_id = _node_id;
 }
-NodeId& NodeBdd::get_ptr_node_id() {
+
+auto NodeBdd::get_ptr_node_id() -> NodeId& {
     return ptr_node_id;
 }
 void NodeBdd::reset_ptr_node_id() {
@@ -134,7 +140,7 @@ void NodeBdd::reset_ptr_node_id() {
 }
 
 /** Functions for manipulation of nb_paths */
-NodeBdd::big_int& NodeBdd::get_nb_paths() {
+auto NodeBdd::get_nb_paths() -> NodeBdd::big_int& {
     return nb_paths;
 }
 void NodeBdd::reset_nb_paths() {
@@ -151,7 +157,7 @@ void NodeBdd::reset_visited() {
 void NodeBdd::update_visited() {
     visited = true;
 }
-bool NodeBdd::get_visited() const {
+auto NodeBdd::get_visited() const -> bool {
     return visited;
 }
 
@@ -159,14 +165,14 @@ bool NodeBdd::get_visited() const {
 void NodeBdd::set_key(const size_t& _key) {
     key = _key;
 }
-size_t& NodeBdd::get_key() {
+auto NodeBdd::get_key() -> size_t& {
     return key;
 }
 
 void NodeBdd::set_key_model(const size_t& _key) {
     key_model = _key;
 }
-size_t& NodeBdd::get_key_model() {
+auto NodeBdd::get_key_model() -> size_t& {
     return key_model;
 }
 
@@ -174,15 +180,15 @@ size_t& NodeBdd::get_key_model() {
 void NodeBdd::update_lp_visited(bool _update) {
     lp_visited = _update;
 }
-bool NodeBdd::get_lp_visited() const {
+auto NodeBdd::get_lp_visited() const -> bool {
     return lp_visited;
 }
 
 /** Functions for manipulation of lp_x */
-[[nodiscard]] NodeBdd::dbl_array& NodeBdd::get_lp_x() {
+[[nodiscard]] auto NodeBdd::get_lp_x() -> NodeBdd::dbl_array& {
     return lp_x;
 }
-double& NodeBdd::get_lp_x(bool _high) {
+auto NodeBdd::get_lp_x(bool _high) -> double& {
     return _high ? lp_x[1] : lp_x[0];
 }
 
@@ -208,7 +214,7 @@ void NodeBdd::set_cost(double _cost) {
 void NodeBdd::update_best_sol_x(bool _high) {
     best_sol_x[_high] += 1.0;
 }
-double NodeBdd::get_best_sol_x(bool _high) {
+auto NodeBdd::get_best_sol_x(bool _high) -> double {
     return best_sol_x[_high];
 }
 
@@ -227,7 +233,7 @@ void NodeBdd::update_backward_distance(
     }
 }
 
-NodeBdd::int_array& NodeBdd::get_backward_distance() {
+auto NodeBdd::get_backward_distance() -> NodeBdd::int_array& {
     return backward_distance;
 }
 
@@ -236,7 +242,7 @@ void NodeBdd::reset_all(size_t _nb_elements) {
     all = boost::dynamic_bitset<>{_nb_elements, 0};
 }
 
-boost::dynamic_bitset<>& NodeBdd::get_all() {
+auto NodeBdd::get_all() -> boost::dynamic_bitset<>& {
     return all;
 }
 
@@ -249,16 +255,16 @@ void NodeBdd::union_all(const boost::dynamic_bitset<>& _set) {
 void NodeBdd::add_element(size_t _element) {
     all[_element] = true;
 }
-bool NodeBdd::is_element(size_t _element) {
+auto NodeBdd::is_element(size_t _element) -> bool {
     return all[_element];
 }
-bool NodeBdd::all_is_empty() {
+auto NodeBdd::all_is_empty() -> bool {
     return all.empty();
 }
-size_t NodeBdd::get_first_all() {
+auto NodeBdd::get_first_all() -> size_t {
     return all.find_first();
 }
-size_t NodeBdd::get_next_all(size_t _index) {
+auto NodeBdd::get_next_all(size_t _index) -> size_t {
     return all.find_next(_index);
 }
 
@@ -266,11 +272,11 @@ size_t NodeBdd::get_next_all(size_t _index) {
 void NodeBdd::reset_calc() {
     calc = {true, true};
 }
-bool NodeBdd::any_of_calc() {
+auto NodeBdd::any_of_calc() -> bool {
     return ranges::any_of(calc, [](auto& it) { return it; });
 }
 
-bool NodeBdd::get_calc(bool _high) {
+auto NodeBdd::get_calc(bool _high) -> bool {
     return _high ? calc[1] : calc[0];
 }
 
@@ -283,7 +289,7 @@ void NodeBdd::update_calc(bool _high, bool _update) {
 }
 
 /** Functions for manipulation of in_degree */
-int NodeBdd::get_in_degree(bool _high) {
+auto NodeBdd::get_in_degree(bool _high) -> int {
     return _high ? in_degree[1] : in_degree[0];
 }
 
@@ -295,7 +301,7 @@ void NodeBdd::update_in_degree(bool _high) {
     }
 }
 
-bool NodeBdd::alternative_paths() {
+auto NodeBdd::alternative_paths() -> bool {
     return (ranges::accumulate(in_degree, 0, ranges::plus{}) >= 2);
 }
 
@@ -310,7 +316,7 @@ void NodeBdd::reset_in_edges() {
     }
 }
 
-std::vector<size_t>& NodeBdd::get_in_edges(bool _high) {
+auto NodeBdd::get_in_edges(bool _high) -> std::vector<size_t>& {
     return _high ? in_edges[1] : in_edges[0];
 }
 void NodeBdd::add_in_edge(bool _high, size_t _key_parent) {
@@ -329,7 +335,7 @@ void NodeBdd::set_key_edge(bool _high, size_t _key) {
     }
 }
 
-size_t& NodeBdd::get_key_edge(bool _high) {
+auto NodeBdd::get_key_edge(bool _high) -> size_t& {
     return _high ? key_edges[1] : key_edges[0];
 }
 
@@ -360,19 +366,19 @@ void NodeBdd::reduce_coeff_cut(bool _high) {
     }
 }
 
-double NodeBdd::get_coeff_cut(bool _high) {
+auto NodeBdd::get_coeff_cut(bool _high) -> double {
     return _high ? coeff_cut[1] : coeff_cut[0];
 }
 
-NodeBdd::grb_array& NodeBdd::get_y() {
+auto NodeBdd::get_y() -> NodeBdd::grb_array& {
     return y;
 }
-NodeBdd::grb_array& NodeBdd::get_r() {
+auto NodeBdd::get_r() -> NodeBdd::grb_array& {
     return r;
 }
 void NodeBdd::set_sigma(GRBVar&& _sigma) {
     sigma = _sigma;
 }
-GRBVar& NodeBdd::get_sigma() {
+auto NodeBdd::get_sigma() -> GRBVar& {
     return sigma;
 }

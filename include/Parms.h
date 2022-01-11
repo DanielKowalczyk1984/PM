@@ -129,14 +129,15 @@ struct Parms {
         T           _value;
 
        public:
-        Parameter(const std::string name, const T& value)
-            : _name(name),
+        Parameter(std::string name, const T& value)
+            : _name(std::move(name)),
               _value(value) {}
 
-        inline const T&    value() const { return _value; }
-        inline T&          value() { return _value; }
-        const std::string& name() const { return _name; }
-        std::string&       name() { return _name; }
+        [[nodiscard]] inline auto value() const -> const T& { return _value; }
+        [[nodiscard]] auto name() const -> const std::string& { return _name; }
+
+        inline auto value() -> T& { return _value; }
+        auto        name() -> std::string& { return _name; }
 
         void set_value(const T& value) { _value = value; }
     };
@@ -169,16 +170,16 @@ struct Parms {
     std::string jobfile;
     std::string pname;
 
-    int    nb_jobs;
-    size_t nb_machines;
+    int    nb_jobs{};
+    size_t nb_machines{};
 
     Parms();
     Parms(int argc, const char** argv);
 
     Parms(const Parms&) = default;
     Parms(Parms&&) = default;
-    Parms& operator=(const Parms&) = default;
-    Parms& operator=(Parms&&) = default;
+    auto operator=(const Parms&) -> Parms& = default;
+    auto operator=(Parms&&) -> Parms& = default;
     ~Parms() = default;
 
     void        parms_set_scoring_function(int scoring);

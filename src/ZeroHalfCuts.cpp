@@ -76,7 +76,7 @@ ZeroHalfCuts::ZeroHalfCuts(size_t                    _nb_jobs,
     generate_model();
 }
 
-bool ZeroHalfCuts::add_cuts() {
+auto ZeroHalfCuts::add_cuts() -> bool {
     return true;
 }
 
@@ -240,7 +240,8 @@ void ZeroHalfCuts::construct_cut() {
     cut_list.push_back(std::move(constr));
 }
 
-std::vector<std::shared_ptr<ConstraintGeneric>> ZeroHalfCuts::get_cut_list() {
+auto ZeroHalfCuts::get_cut_list()
+    -> std::vector<std::shared_ptr<ConstraintGeneric>> {
     return cut_list;
 }
 

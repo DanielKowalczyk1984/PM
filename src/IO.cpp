@@ -72,7 +72,7 @@ void Problem::to_csv() {
                fmt::localtime(result), parms);
 }
 
-int Problem::to_screen() {
+auto Problem::to_screen() -> int {
     int val = 0;
 
     switch (status) {

@@ -9,10 +9,10 @@ class DebugLevel {
     DebugLevel() = default;
     ~DebugLevel() = default;
     friend void set_debug_lvl(int _lvl);
-    friend bool debug_lvl(int _lvl);
+    friend auto debug_lvl(int _lvl) -> bool;
 };
 
-inline bool debug_lvl(int _lvl) {
+inline auto debug_lvl(int _lvl) -> bool {
     return (DebugLevel::_debug_lvl > _lvl);
 }
 

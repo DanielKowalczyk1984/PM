@@ -41,8 +41,8 @@ struct SlopeType {
     SlopeType() = default;
     SlopeType(const SlopeType&) = default;
     SlopeType(SlopeType&&) = default;
-    SlopeType& operator=(SlopeType&&) = default;
-    SlopeType& operator=(const SlopeType&) = default;
+    auto operator=(SlopeType&&) -> SlopeType& = default;
+    auto operator=(const SlopeType&) -> SlopeType& = default;
     ~SlopeType() = default;
 
     SlopeType(int _b1, int _b2, int _c, int _alpha)
@@ -51,8 +51,8 @@ struct SlopeType {
           c(_c),
           alpha(_alpha) {}
 
-    int                operator()(int t) const { return c + alpha * (t - b1); };
-    [[nodiscard]] bool in_interval(int _c) const {
+    auto operator()(int t) const -> int { return c + alpha * (t - b1); };
+    [[nodiscard]] auto in_interval(int _c) const -> bool {
         return (b1 <= _c) && (_c < b2);
     };
 };
@@ -63,10 +63,10 @@ struct ProcessingListData {
 
     ProcessingListData() = default;
     ProcessingListData(std::size_t _pos, int _p) : pos(_pos), p(_p){};
-    ProcessingListData& operator=(const ProcessingListData&) = default;
     ProcessingListData(const ProcessingListData&) = default;
     ProcessingListData(ProcessingListData&&) = default;
-    ProcessingListData& operator=(ProcessingListData&&) = default;
+    auto operator=(const ProcessingListData&) -> ProcessingListData& = default;
+    auto operator=(ProcessingListData&&) -> ProcessingListData& = default;
     ~ProcessingListData() = default;
 };
 

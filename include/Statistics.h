@@ -41,27 +41,26 @@ class Timer : public boost::timer::cpu_timer {
     ClockType   _type;
 
    public:
-    Timer(const std::string& name_ = "timer",
-          ClockType          type = ClockType::wall_time)
+    Timer(std::string name_ = "timer", ClockType type = ClockType::wall_time)
         : boost::timer::cpu_timer{},
-          _name(name_),
+          _name(std::move(name_)),
           _type(type) {
         this->stop();
         this->elapsed().clear();
     };
 
-    Timer(const std::string& name_ = "timer", bool type = false)
+    Timer(const std::string name_ = "timer", bool type = false)
         : boost::timer::cpu_timer{},
-          _name(name_),
+          _name(std::move(name_)),
           _type(type ? cpu_time : wall_time) {
         this->stop();
         this->elapsed().clear();
     };
 
-    auto&     name() const { return _name; };
-    ClockType type() const { return _type; }
+    [[nodiscard]] auto name() const -> const std::string& { return _name; };
+    [[nodiscard]] auto type() const -> ClockType { return _type; }
 
-    double dbl_sec() const {
+    [[nodiscard]] auto dbl_sec() const -> double {
         auto aux = boost::chrono::nanoseconds();
         switch (_type) {
             case wall_time:
@@ -83,7 +82,7 @@ class Timer : public boost::timer::cpu_timer {
         return 0.0;
     }
 
-    boost::timer::nanosecond_type nano_sec() const {
+    [[nodiscard]] auto nano_sec() const -> boost::timer::nanosecond_type {
         switch (_type) {
             case wall_time:
                 return this->elapsed().wall;
@@ -96,7 +95,8 @@ class Timer : public boost::timer::cpu_timer {
         return boost::timer::nanosecond_type{};
     }
 
-    std::string str_sec(short precision = boost::timer::default_places) const {
+    [[nodiscard]] auto str_sec(
+        short precision = boost::timer::default_places) const -> std::string {
         switch (_type) {
             case cpu_time:
                 return this->format(precision, "%t");
@@ -162,9 +162,11 @@ struct Statistics {
     void start_resume_timer(TimerType _type);
     void suspend_timer(TimerType _type);
 
-    double      total_time_dbl(TimerType _type);
-    std::string total_time_str(TimerType _type, short precision) const;
-    boost::timer::nanosecond_type total_time_nano_sec(TimerType _type);
+    [[nodiscard]] auto total_time_str(TimerType _type, short precision) const
+        -> std::string;
+
+    auto total_time_dbl(TimerType _type) -> double;
+    auto total_time_nano_sec(TimerType _type) -> boost::timer::nanosecond_type;
 
     Statistics(const Parms& parms);
 };

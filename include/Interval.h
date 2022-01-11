@@ -37,7 +37,7 @@ struct compare_edd {
    public:
     compare_edd(int _a, int _b) : a(_a), b(_b){};
 
-    bool operator()(const auto lhs, const auto rhs) {
+    auto operator()(const auto lhs, const auto rhs) -> bool {
         auto diff = b - a;
         auto w_lhs = (lhs->due_time >= b) ? 0.0
                                           : static_cast<double>(lhs->weight) /
@@ -97,8 +97,8 @@ struct Interval {
     ~Interval() = default;
     Interval(const Interval&) = default;
     Interval(Interval&&) = default;
-    Interval& operator=(Interval&&) = default;
-    Interval& operator=(const Interval&) = default;
+    auto operator=(Interval&&) -> Interval& = default;
+    auto operator=(const Interval&) -> Interval& = default;
 };
 
 struct IntervalPair {
@@ -113,7 +113,7 @@ struct IntervalPair {
                  const std::shared_ptr<Job>& j2,
                  Interval*                   _I);
 
-    int operator()();
+    auto operator()() -> int;
 };
 
 #endif  // __INTERVAL_H__

@@ -78,13 +78,13 @@ PricerSolverBase::PricerSolverBase(const PricerSolverBase& other)
 
 PricerSolverBase::~PricerSolverBase() = default;
 
-int PricerSolverBase::add_constraints() {
+auto PricerSolverBase::add_constraints() -> int {
     int val = 0;
 
     return val;
 }
 
-bool PricerSolverBase::evaluate_mip_model() {
+auto PricerSolverBase::evaluate_mip_model() -> bool {
     int opt_status = model.get(GRB_IntAttr_Status);
 
     double obj_val{};
@@ -102,9 +102,9 @@ bool PricerSolverBase::evaluate_mip_model() {
     }
 }
 
-bool PricerSolverBase::compute_sub_optimal_duals(
+auto PricerSolverBase::compute_sub_optimal_duals(
     const double*                               lambda,
-    const std::vector<std::shared_ptr<Column>>& columns) {
+    const std::vector<std::shared_ptr<Column>>& columns) -> bool {
     GRBModel sub_optimal(*genv);
     sub_optimal.set(GRB_IntAttr_ModelSense, GRB_MAXIMIZE);
     std::vector<GRBVar> beta{convex_constr_id};
@@ -184,9 +184,9 @@ bool PricerSolverBase::compute_sub_optimal_duals(
     return removed;
 }
 
-bool PricerSolverBase::compute_sub_optimal_duals(
+auto PricerSolverBase::compute_sub_optimal_duals(
     const std::span<const double>&              lambda,
-    const std::vector<std::shared_ptr<Column>>& columns) {
+    const std::vector<std::shared_ptr<Column>>& columns) -> bool {
     GRBModel sub_optimal(*genv);
     // sub_optimal.set(GRB_IntParam_OutputFlag, 1);
     sub_optimal.set(GRB_IntAttr_ModelSense, GRB_MAXIMIZE);
@@ -275,11 +275,11 @@ void PricerSolverBase::remove_constraints(int first, int nb_del) {
 
 void PricerSolverBase::update_rows_coeff([[maybe_unused]] size_t first) {}
 
-boost::multiprecision::cpp_int PricerSolverBase::print_num_paths() {
+auto PricerSolverBase::print_num_paths() -> boost::multiprecision::cpp_int {
     return 0UL;
 }
 
-[[maybe_unused]] double PricerSolverBase::get_UB() const {
+[[maybe_unused]] auto PricerSolverBase::get_UB() const -> double {
     return UB;
 }
 
@@ -289,7 +289,8 @@ void PricerSolverBase::update_UB(double _ub) {
     }
 }
 
-[[maybe_unused]] int PricerSolverBase::get_int_attr_model(enum MIP_Attr c) {
+[[maybe_unused]] auto PricerSolverBase::get_int_attr_model(enum MIP_Attr c)
+    -> int {
     int val = -1;
     switch (c) {
         case MIP_Attr_Nb_Vars:
@@ -308,7 +309,7 @@ void PricerSolverBase::update_UB(double _ub) {
     return val;
 }
 
-double PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) {
+auto PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) -> double {
     double val{};
     int    status = model.get(GRB_IntAttr_Status);
     if (status != GRB_INF_OR_UNBD && status != GRB_INFEASIBLE &&
@@ -355,9 +356,9 @@ double PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) {
     return val;
 }
 
-double PricerSolverBase::compute_reduced_cost(const PricingSolution& sol,
-                                              double*                pi,
-                                              double*                lhs) {
+auto PricerSolverBase::compute_reduced_cost(const PricingSolution& sol,
+                                            double*                pi,
+                                            double* lhs) -> double {
     double result = sol.cost;
     // auto      nb_constraints = reformulation_model.get_nb_constraints();
     std::span aux_lhs{lhs, reformulation_model.size()};
@@ -391,9 +392,9 @@ double PricerSolverBase::compute_reduced_cost(const PricingSolution& sol,
     return result;
 }
 
-double PricerSolverBase::compute_reduced_cost(const PricingSolution&   sol,
-                                              std::span<const double>& pi,
-                                              double*                  lhs) {
+auto PricerSolverBase::compute_reduced_cost(const PricingSolution&   sol,
+                                            std::span<const double>& pi,
+                                            double* lhs) -> double {
     double result = sol.cost;
     // auto      nb_constraints = reformulation_model.get_nb_constraints();
     std::span aux_lhs{lhs, reformulation_model.size()};
@@ -425,6 +426,7 @@ double PricerSolverBase::compute_reduced_cost(const PricingSolution&   sol,
 
     return result;
 }
+
 void PricerSolverBase::compute_lhs(const PricingSolution& sol, double* lhs) {
     std::span aux_lhs{lhs, reformulation_model.size()};
     std::ranges::fill(aux_lhs, 0.0);
@@ -478,8 +480,8 @@ void PricerSolverBase::compute_lhs(const Column& sol, double* lhs) {
     aux_lhs[convex_constr_id] += coeff;
 }
 
-double PricerSolverBase::compute_reduced_cost_simple(const PricingSolution& sol,
-                                                     double* pi) {
+auto PricerSolverBase::compute_reduced_cost_simple(const PricingSolution& sol,
+                                                   double* pi) -> double {
     double result = sol.cost;
     // auto      nb_constraints = reformulation_model.get_nb_constraints();
     std::span aux_pi{pi, reformulation_model.size()};
@@ -508,9 +510,9 @@ double PricerSolverBase::compute_reduced_cost_simple(const PricingSolution& sol,
     return result;
 }
 
-double PricerSolverBase::compute_reduced_cost_simple(
-    const PricingSolution&   sol,
-    std::span<const double>& pi) {
+auto PricerSolverBase::compute_reduced_cost_simple(const PricingSolution&   sol,
+                                                   std::span<const double>& pi)
+    -> double {
     double result = sol.cost;
 
     for (auto& it : sol.jobs) {
@@ -537,8 +539,9 @@ double PricerSolverBase::compute_reduced_cost_simple(
     return result;
 }
 
-double PricerSolverBase::compute_lagrange(const PricingSolution&     sol,
-                                          const std::vector<double>& pi) {
+auto PricerSolverBase::compute_lagrange(const PricingSolution&     sol,
+                                        const std::vector<double>& pi)
+    -> double {
     double result = sol.cost;
     double dual_bound = 0.0;
 
@@ -580,8 +583,9 @@ double PricerSolverBase::compute_lagrange(const PricingSolution&     sol,
     return result;
 }
 
-double PricerSolverBase::compute_lagrange(const PricingSolution&         sol,
-                                          const std::span<const double>& pi) {
+auto PricerSolverBase::compute_lagrange(const PricingSolution&         sol,
+                                        const std::span<const double>& pi)
+    -> double {
     double result = sol.cost;
     double dual_bound = 0.0;
 
@@ -623,8 +627,8 @@ double PricerSolverBase::compute_lagrange(const PricingSolution&         sol,
     return result;
 }
 
-double PricerSolverBase::compute_subgradient(const PricingSolution& sol,
-                                             double* subgradient) {
+auto PricerSolverBase::compute_subgradient(const PricingSolution& sol,
+                                           double* subgradient) -> double {
     std::span aux_subgradient{subgradient, reformulation_model.size()};
     auto      rhs = -reformulation_model[convex_constr_id]->get_rhs();
 

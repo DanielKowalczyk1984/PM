@@ -36,7 +36,7 @@ class CardinalityPaths : public Eval<NodeBdd, boost::multiprecision::cpp_int> {
    public:
     CardinalityPaths() = default;
 
-    cpp_int get_objective(NodeBdd& n) const override {
+    auto get_objective(NodeBdd& n) const -> cpp_int override {
         return n.get_nb_paths();
     }
 
@@ -64,8 +64,8 @@ class BackwardDistance : public Eval<NodeBdd, std::array<int, 2>> {
    public:
     BackwardDistance() = default;
 
-    std::array<int, 2> get_objective(
-        [[maybe_unused]] NodeBdd& n) const override {
+    auto get_objective([[maybe_unused]] NodeBdd& n) const
+        -> std::array<int, 2> override {
         return {0, 0};
     }
 

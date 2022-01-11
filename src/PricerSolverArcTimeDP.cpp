@@ -178,7 +178,8 @@ void PricerSolverArcTimeDp::init_table() {
     fmt::print("Number of arcs in ATI formulation = {}\n", size_graph);
 }
 
-bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
+auto PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi)
+    -> bool {
     forward_evaluator(pi);
     backward_evaluator(pi);
     auto num_edges_removed = 0;
@@ -214,8 +215,8 @@ bool PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi) {
     return (num_edges_removed > 0);
 }
 
-bool PricerSolverArcTimeDp::evaluate_nodes(
-    [[maybe_unused]] std::span<const double>& pi) {
+auto PricerSolverArcTimeDp::evaluate_nodes(
+    [[maybe_unused]] std::span<const double>& pi) -> bool {
     forward_evaluator(pi);
     backward_evaluator(pi);
     auto num_edges_removed = 0;
@@ -554,7 +555,7 @@ void PricerSolverArcTimeDp::forward_evaluator(std::span<const double>& _pi) {
     }
 }
 
-PricingSolution PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
+auto PricerSolverArcTimeDp::pricing_algorithm(double* _pi) -> PricingSolution {
     std::span         aux_pi{_pi, reformulation_model.size()};
     PricingSolution   sol(aux_pi[n]);
     std::vector<Job*> v;
@@ -579,15 +580,15 @@ PricingSolution PricerSolverArcTimeDp::pricing_algorithm(double* _pi) {
     }
 
     sol.C_max = 0;
-    for (auto it = v.rbegin(); it != v.rend(); it++) {
-        sol.jobs.push_back(*it);
+    for (auto& it : v | ranges::views::reverse) {
+        sol.jobs.push_back(it);
     }
 
     return sol;
 }
 
-PricingSolution PricerSolverArcTimeDp::pricing_algorithm(
-    std::span<const double>& _pi) {
+auto PricerSolverArcTimeDp::pricing_algorithm(std::span<const double>& _pi)
+    -> PricingSolution {
     PricingSolution   sol(_pi[n]);
     std::vector<Job*> v;
 
@@ -611,22 +612,22 @@ PricingSolution PricerSolverArcTimeDp::pricing_algorithm(
     }
 
     sol.C_max = 0;
-    for (auto it = v.rbegin(); it != v.rend(); it++) {
-        sol.jobs.push_back(*it);
+    for (auto& it : v | ranges::views::reverse) {
+        sol.jobs.push_back(it);
     }
 
     return sol;
 }
 
-PricingSolution PricerSolverArcTimeDp::farkas_pricing(
-    [[maybe_unused]] double* _pi) {
+auto PricerSolverArcTimeDp::farkas_pricing([[maybe_unused]] double* _pi)
+    -> PricingSolution {
     PricingSolution opt_sol;
 
     return opt_sol;
 }
 
-PricingSolution PricerSolverArcTimeDp::farkas_pricing(
-    [[maybe_unused]] std::span<const double>& _pi) {
+auto PricerSolverArcTimeDp::farkas_pricing(
+    [[maybe_unused]] std::span<const double>& _pi) -> PricingSolution {
     PricingSolution opt_sol;
 
     return opt_sol;
@@ -702,7 +703,7 @@ void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     }
 }
 
-size_t PricerSolverArcTimeDp::get_nb_edges() {
+auto PricerSolverArcTimeDp::get_nb_edges() -> size_t {
     auto nb_edges = size_t{};
     for (auto& it : graph) {
         for (auto& it_in : it) {
@@ -712,7 +713,7 @@ size_t PricerSolverArcTimeDp::get_nb_edges() {
     return nb_edges;
 }
 
-size_t PricerSolverArcTimeDp::get_nb_vertices() {
+auto PricerSolverArcTimeDp::get_nb_vertices() -> size_t {
     size_t nb_vertices = 0u;
     for (auto& it : graph) {
         for (auto& it_in : it) {
@@ -724,11 +725,12 @@ size_t PricerSolverArcTimeDp::get_nb_vertices() {
     return nb_vertices;
 }
 
-boost::multiprecision::cpp_int PricerSolverArcTimeDp::print_num_paths() {
+auto PricerSolverArcTimeDp::print_num_paths()
+    -> boost::multiprecision::cpp_int {
     return 0;
 }
 
-bool PricerSolverArcTimeDp::check_column(Column const* col) {
+auto PricerSolverArcTimeDp::check_column(Column const* col) -> bool {
     // std::span aux_set{set->pdata, set->len};
     const auto& set = col->job_list;
     auto        counter = set.size() - 1;

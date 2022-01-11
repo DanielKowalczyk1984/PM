@@ -126,7 +126,7 @@ void Statistics::suspend_timer(TimerType _type) {
     }
 }
 
-double Statistics::total_time_dbl(TimerType _type) {
+auto Statistics::total_time_dbl(TimerType _type) -> double {
     switch (_type) {
         case build_dd_timer:
             return time_build_dd.dbl_sec();
@@ -150,7 +150,8 @@ double Statistics::total_time_dbl(TimerType _type) {
     return 0.0;
 }
 
-boost::timer::nanosecond_type Statistics::total_time_nano_sec(TimerType _type) {
+auto Statistics::total_time_nano_sec(TimerType _type)
+    -> boost::timer::nanosecond_type {
     switch (_type) {
         case build_dd_timer:
             return time_build_dd.nano_sec();
@@ -174,7 +175,8 @@ boost::timer::nanosecond_type Statistics::total_time_nano_sec(TimerType _type) {
     return boost::timer::nanosecond_type{};
 }
 
-std::string Statistics::total_time_str(TimerType _type, short precision) const {
+auto Statistics::total_time_str(TimerType _type, short precision) const
+    -> std::string {
     switch (_type) {
         case build_dd_timer:
             return time_build_dd.str_sec(precision);

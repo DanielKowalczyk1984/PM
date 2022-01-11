@@ -35,22 +35,23 @@ class ForwardBddBase : public Eval<NodeBdd, PricingSolution> {
     ForwardBddBase() = default;
     ForwardBddBase(const ForwardBddBase& src) = default;
     ForwardBddBase(ForwardBddBase&&) noexcept = default;
-    ForwardBddBase& operator=(ForwardBddBase&&) noexcept = default;
-    ForwardBddBase& operator=(const ForwardBddBase&) = default;
-    virtual ~ForwardBddBase() = default;
+    ~ForwardBddBase() override = default;
+
+    auto operator=(const ForwardBddBase&) -> ForwardBddBase& = default;
+    auto operator=(ForwardBddBase&&) noexcept -> ForwardBddBase& = default;
 
     void set_pi(double* _pi) { pi = _pi; }
     void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
 
-    [[nodiscard]] const double* get_pi() const { return pi; }
+    [[nodiscard]] auto get_pi() const -> const double* { return pi; }
 
-    virtual void initialize_node(NodeBdd& n) const = 0;
+    void initialize_node(NodeBdd& n) const override = 0;
 
-    virtual void initialize_root_node(NodeBdd& n) const = 0;
+    void initialize_root_node(NodeBdd& n) const override = 0;
 
-    virtual void evalNode(NodeBdd& n) const = 0;
+    void evalNode(NodeBdd& n) const override = 0;
 
-    PricingSolution get_objective(NodeBdd& n) const {
+    auto get_objective(NodeBdd& n) const -> PricingSolution override {
         PricingSolution sol(0.0);
         auto*           ptr_node = &(n.forward_label[0]);
         auto            table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
@@ -76,9 +77,10 @@ class ForwardBddCycle : public ForwardBddBase {
     ForwardBddCycle() = default;
     ForwardBddCycle(const ForwardBddCycle& src) = default;
     ForwardBddCycle(ForwardBddCycle&&) noexcept = default;
-    ForwardBddCycle& operator=(const ForwardBddCycle&) = default;
-    ForwardBddCycle& operator=(ForwardBddCycle&&) noexcept = default;
-    virtual ~ForwardBddCycle() = default;
+    ~ForwardBddCycle() override = default;
+
+    auto operator=(const ForwardBddCycle&) -> ForwardBddCycle& = default;
+    auto operator=(ForwardBddCycle&&) noexcept -> ForwardBddCycle& = default;
 
     void initialize_node(NodeBdd& n) const override {
         if (n.get_weight() == 0) {
@@ -182,9 +184,10 @@ class ForwardBddSimple : public ForwardBddBase {
 
     ForwardBddSimple(ForwardBddSimple&&) noexcept = default;
     ForwardBddSimple(const ForwardBddSimple&) = default;
-    ForwardBddSimple& operator=(const ForwardBddSimple&) = default;
-    ForwardBddSimple& operator=(ForwardBddSimple&&) noexcept = default;
-    virtual ~ForwardBddSimple() = default;
+    ~ForwardBddSimple() override = default;
+
+    auto operator=(const ForwardBddSimple&) -> ForwardBddSimple& = default;
+    auto operator=(ForwardBddSimple&&) noexcept -> ForwardBddSimple& = default;
 
     void initialize_node(NodeBdd& n) const override {
         if (n.get_weight() == 0) {

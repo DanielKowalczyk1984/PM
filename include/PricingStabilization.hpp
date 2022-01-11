@@ -34,13 +34,15 @@ class PricingStabilizationBase {
                                       std::span<const double>& _pi_out);
     PricingStabilizationBase(PricingStabilizationBase&&) = default;
     PricingStabilizationBase(const PricingStabilizationBase&) = delete;
-    PricingStabilizationBase& operator=(PricingStabilizationBase&&) = delete;
-    PricingStabilizationBase& operator=(const PricingStabilizationBase&) =
-        delete;
     virtual ~PricingStabilizationBase() = default;
-    virtual std::unique_ptr<PricingStabilizationBase> clone(
-        PricerSolverBase*,
-        std::span<const double>&);
+
+    auto operator=(PricingStabilizationBase&&)
+        -> PricingStabilizationBase& = delete;
+    auto operator=(const PricingStabilizationBase&)
+        -> PricingStabilizationBase& = delete;
+
+    virtual auto clone(PricerSolverBase*, std::span<const double>&)
+        -> std::unique_ptr<PricingStabilizationBase>;
 
     static constexpr double EPS_RC = -1e-10;
     static constexpr double ETA_DIFF = 1e-4;
@@ -56,7 +58,6 @@ class PricingStabilizationBase {
     double eta_sep{};
     double eta_out{};
 
-    // std::vector<double>& pi_out;
     std::span<const double>& pi_out;
     std::vector<double>      pi_in;
     std::vector<double>      pi_sep;
@@ -67,21 +68,23 @@ class PricingStabilizationBase {
 
     bool continueLP{};
 
-    PricingSolution& get_sol();
-    bool             get_update_stab_center();
-    double           get_reduced_cost();
-    double           get_eps_stab_solver();
-    virtual double   get_eta_in();
-    virtual double   get_eta_sep();
-    virtual void     solve(double eta_out, double* _lhs);
-    virtual bool     stopping_criteria();
-    virtual void     update_duals();
-    virtual bool     reduced_cost_fixing();
-    virtual void     remove_constraints(int first, int nb_del);
-    virtual void     update_continueLP(int _continueLP);
-    virtual int      do_reduced_cost_fixing();
-    virtual void     update_continueLP(double obj);
-    virtual void     set_alpha([[maybe_unused]] double _alpha){};
+    auto get_sol() -> PricingSolution&;
+    auto get_update_stab_center() -> bool;
+    auto get_reduced_cost() -> double;
+    auto get_eps_stab_solver() -> double;
+
+    virtual auto get_eta_in() -> double;
+    virtual auto get_eta_sep() -> double;
+    virtual auto stopping_criteria() -> bool;
+    virtual auto reduced_cost_fixing() -> bool;
+    virtual auto do_reduced_cost_fixing() -> int;
+
+    virtual void solve(double eta_out, double* _lhs);
+    virtual void update_duals();
+    virtual void remove_constraints(int first, int nb_del);
+    virtual void update_continueLP(int _continueLP);
+    virtual void update_continueLP(double obj);
+    virtual void set_alpha([[maybe_unused]] double _alpha){};
 };
 
 class PricingStabilizationStat : public PricingStabilizationBase {
@@ -90,10 +93,15 @@ class PricingStabilizationStat : public PricingStabilizationBase {
                                       std::span<const double>& _pi_out);
     PricingStabilizationStat(PricingStabilizationStat&&) = default;
     PricingStabilizationStat(const PricingStabilizationStat&) = delete;
-    PricingStabilizationStat& operator=(PricingStabilizationStat&&) = delete;
-    PricingStabilizationStat& operator=(const PricingStabilizationStat&) =
-        delete;
     ~PricingStabilizationStat() override = default;
+
+    auto operator=(PricingStabilizationStat&&)
+        -> PricingStabilizationStat& = delete;
+    auto operator=(const PricingStabilizationStat&)
+        -> PricingStabilizationStat& = delete;
+
+    auto clone(PricerSolverBase*, std::span<const double>&)
+        -> std::unique_ptr<PricingStabilizationBase> override;
 
     static constexpr double ALPHA = 0.8;
     static constexpr double ALPHA_CHG = 0.1;
@@ -107,16 +115,13 @@ class PricingStabilizationStat : public PricingStabilizationBase {
     void   compute_pi_eta_sep(double _alpha_bar);
 
    public:
-    void solve(double _eta_out, double* _lhs_coeff) override;
+    auto stopping_criteria() -> bool final;
+    auto get_eta_in() -> double final;
 
-    double get_eta_in() final;
-    bool   stopping_criteria() final;
-    void   update_duals() override;
-    void   remove_constraints(int first, int nb_del) override;
-    void   set_alpha(double _alpha) override;
-    std::unique_ptr<PricingStabilizationBase> clone(
-        PricerSolverBase*,
-        std::span<const double>&) override;
+    void solve(double _eta_out, double* _lhs_coeff) override;
+    void update_duals() override;
+    void remove_constraints(int first, int nb_del) override;
+    void set_alpha(double _alpha) override;
 };
 
 class PricingStabilizationDynamic : public PricingStabilizationStat {
@@ -125,20 +130,21 @@ class PricingStabilizationDynamic : public PricingStabilizationStat {
                                          std::span<const double>& _pi_out);
     PricingStabilizationDynamic(PricingStabilizationDynamic&&) = default;
     PricingStabilizationDynamic(const PricingStabilizationDynamic&) = delete;
-    PricingStabilizationDynamic& operator=(PricingStabilizationDynamic&&) =
-        delete;
-    PricingStabilizationDynamic& operator=(const PricingStabilizationDynamic&) =
-        delete;
     ~PricingStabilizationDynamic() override = default;
 
-    std::unique_ptr<PricingStabilizationBase> clone(
-        PricerSolverBase*,
-        std::span<const double>&) override;
+    auto operator=(PricingStabilizationDynamic&&)
+        -> PricingStabilizationDynamic& = delete;
+    auto operator=(const PricingStabilizationDynamic&)
+        -> PricingStabilizationDynamic& = delete;
+
+    auto clone(PricerSolverBase*, std::span<const double>&)
+        -> std::unique_ptr<PricingStabilizationBase> override;
 
     std::vector<double> subgradient;
-    double              subgradientnorm{};
-    double              subgradientproduct{};
-    double              dualdiffnorm{};
+
+    double subgradientnorm{};
+    double subgradientproduct{};
+    double dualdiffnorm{};
 
     void solve(double _eta_out, double* _lhs_coeff) override;
     void update_duals() override;
@@ -155,15 +161,15 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
 
     PricingStabilizationHybrid(PricingStabilizationHybrid&&) = default;
     PricingStabilizationHybrid(const PricingStabilizationHybrid&) = delete;
-    PricingStabilizationHybrid& operator=(PricingStabilizationHybrid&&) =
-        delete;
-    PricingStabilizationHybrid& operator=(const PricingStabilizationHybrid&) =
-        delete;
     ~PricingStabilizationHybrid() override = default;
 
-    std::unique_ptr<PricingStabilizationBase> clone(
-        PricerSolverBase*,
-        std::span<const double>&) override;
+    auto operator=(PricingStabilizationHybrid&&)
+        -> PricingStabilizationHybrid& = delete;
+    auto operator=(const PricingStabilizationHybrid&)
+        -> PricingStabilizationHybrid& = delete;
+
+    auto clone(PricerSolverBase*, std::span<const double>&)
+        -> std::unique_ptr<PricingStabilizationBase> override;
 
     std::vector<double> subgradient_in;
 
@@ -185,24 +191,16 @@ class PricingStabilizationHybrid : public PricingStabilizationDynamic {
         }
     }
 
+    auto is_stabilized() -> bool;
+    auto compute_dual(auto i) -> double;
+
     void calculate_dualdiffnorm();
-
     void calculate_beta();
-
     void calculate_hybridfactor();
-
-    bool is_stabilized();
-
-    double compute_dual(auto i);
-
     void update_stabcenter(const PricingSolution& _sol);
-
     void compute_subgradient_norm(const PricingSolution& _sol);
-
     void update_subgradientproduct();
-
     void update_alpha_misprice();
-
     void update_alpha();
 };
 

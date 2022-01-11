@@ -91,8 +91,8 @@ void PricerSolverSimpleDp::init_table() {
     fmt::print("Number of arcs in TI formulation = {}\n", size_graph);
 }
 
-bool PricerSolverSimpleDp::evaluate_nodes(
-    [[maybe_unused]] std::span<const double>& pi) {
+auto PricerSolverSimpleDp::evaluate_nodes(
+    [[maybe_unused]] std::span<const double>& pi) -> bool {
     forward_evaluator(pi);
     backward_evaluator(pi);
 
@@ -142,7 +142,7 @@ bool PricerSolverSimpleDp::evaluate_nodes(
     return (num_removed > 0);
 }
 
-bool PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) {
+auto PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) -> bool {
     forward_evaluator(pi);
     backward_evaluator(pi);
 
@@ -387,8 +387,8 @@ void PricerSolverSimpleDp::backward_evaluator(double* _pi) {
     }
 }
 
-PricingSolution PricerSolverSimpleDp::pricing_algorithm(
-    std::span<const double>& _pi) {
+auto PricerSolverSimpleDp::pricing_algorithm(std::span<const double>& _pi)
+    -> PricingSolution {
     PricingSolution opt_sol;
     opt_sol.cost = 0;
     std::vector<Job*> v;
@@ -425,7 +425,7 @@ PricingSolution PricerSolverSimpleDp::pricing_algorithm(
     return opt_sol;
 }
 
-PricingSolution PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
+auto PricerSolverSimpleDp::pricing_algorithm(double* _pi) -> PricingSolution {
     PricingSolution opt_sol;
     opt_sol.cost = 0;
     std::vector<Job*> v;
@@ -462,15 +462,15 @@ PricingSolution PricerSolverSimpleDp::pricing_algorithm(double* _pi) {
     return opt_sol;
 }
 
-PricingSolution PricerSolverSimpleDp::farkas_pricing(
-    [[maybe_unused]] double* _pi) {
+auto PricerSolverSimpleDp::farkas_pricing([[maybe_unused]] double* _pi)
+    -> PricingSolution {
     PricingSolution opt_sol;
 
     return opt_sol;
 }
 
-PricingSolution PricerSolverSimpleDp::farkas_pricing(
-    [[maybe_unused]] std::span<const double>& _pi) {
+auto PricerSolverSimpleDp::farkas_pricing(
+    [[maybe_unused]] std::span<const double>& _pi) -> PricingSolution {
     PricingSolution opt_sol;
 
     return opt_sol;
@@ -532,7 +532,7 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
 //     otf.close();
 // }
 
-size_t PricerSolverSimpleDp::get_nb_edges() {
+auto PricerSolverSimpleDp::get_nb_edges() -> size_t {
     size_t nb_edges = 0u;
     for (auto& it : forward_graph) {
         nb_edges += it.size();
@@ -540,7 +540,7 @@ size_t PricerSolverSimpleDp::get_nb_edges() {
     return nb_edges;
 }
 
-size_t PricerSolverSimpleDp::get_nb_vertices() {
+auto PricerSolverSimpleDp::get_nb_vertices() -> size_t {
     size_t nb_vertices = 0u;
     for (auto& it : forward_graph) {
         if (!it.empty()) {
@@ -550,11 +550,12 @@ size_t PricerSolverSimpleDp::get_nb_vertices() {
     return nb_vertices;
 }
 
-boost::multiprecision::cpp_int PricerSolverSimpleDp::print_num_paths() {
+auto PricerSolverSimpleDp::print_num_paths() -> boost::multiprecision::cpp_int {
     return 0;
 }
 
-bool PricerSolverSimpleDp::check_column([[maybe_unused]] Column const* set) {
+auto PricerSolverSimpleDp::check_column([[maybe_unused]] Column const* set)
+    -> bool {
     // int t = 0;
     // for(unsigned int j = 0; j < set->len; j++) {
     //     Job* tmp_j = static_cast<Job*>() g_ptr_array_index()atic_cast<set,

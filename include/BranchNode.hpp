@@ -38,24 +38,25 @@ class BranchNodeBase : public State {
     explicit BranchNodeBase(std::unique_ptr<NodeData> pd, bool isRoot = false);
     BranchNodeBase(BranchNodeBase&&) = default;
     BranchNodeBase(const BranchNodeBase&) = delete;
-    BranchNodeBase& operator=(BranchNodeBase&&) = default;
-    BranchNodeBase& operator=(const BranchNodeBase&) = delete;
+    auto operator=(BranchNodeBase&&) -> BranchNodeBase& = default;
+    auto operator=(const BranchNodeBase&) -> BranchNodeBase& = delete;
     ~BranchNodeBase() override = default;
-    [[nodiscard]] std::unique_ptr<State> clone() const override {
+    [[nodiscard]] auto clone() const -> std::unique_ptr<State> override {
         return nullptr;
     }
+
+    auto is_terminal_state() -> bool final;
 
     void branch(BTree* bt) override;
     void compute_bounds(BTree* bt) final;
     void assess_dominance(State* otherState) final;
-    bool is_terminal_state() final;
     void apply_final_pruning_tests(BTree* bt) final;
     void update_data(double upper_bound) final;
     void print(const BTree* bt) const override;
 
-    [[nodiscard]] NodeData*         get_data_ptr() const { return pd.get(); }
-    [[nodiscard]] const Instance&   get_instance_info() const;
-    [[nodiscard]] PricerSolverBase* get_pricersolver() const;
+    [[nodiscard]] auto get_data_ptr() const -> NodeData* { return pd.get(); }
+    [[nodiscard]] auto get_instance_info() const -> const Instance&;
+    [[nodiscard]] auto get_pricersolver() const -> PricerSolverBase*;
 
     static constexpr auto NbCandidates = 16UL;
     static constexpr auto EPS = 1e-6;
@@ -74,8 +75,10 @@ class BranchNodeRelBranching : public BranchNodeBase {
                                     bool isRoot = false);
     BranchNodeRelBranching(BranchNodeRelBranching&&) = default;
     BranchNodeRelBranching(const BranchNodeRelBranching&) = delete;
-    BranchNodeRelBranching& operator=(BranchNodeRelBranching&&) = default;
-    BranchNodeRelBranching& operator=(const BranchNodeRelBranching&) = delete;
+    auto operator=(BranchNodeRelBranching&&)
+        -> BranchNodeRelBranching& = default;
+    auto operator=(const BranchNodeRelBranching&)
+        -> BranchNodeRelBranching& = delete;
     ~BranchNodeRelBranching() override = default;
 
     void branch(BTree* bt) override;
@@ -89,8 +92,8 @@ struct BranchCandidate {
     BranchCandidate() = default;
     BranchCandidate(const BranchCandidate&) = delete;
     BranchCandidate(BranchCandidate&&) = default;
-    BranchCandidate& operator=(const BranchCandidate&) = delete;
-    BranchCandidate& operator=(BranchCandidate&&) = default;
+    auto operator=(const BranchCandidate&) -> BranchCandidate& = delete;
+    auto operator=(BranchCandidate&&) -> BranchCandidate& = default;
     ~BranchCandidate() = default;
 
     BranchCandidate(double                                     _score,

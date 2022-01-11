@@ -78,31 +78,31 @@ void PricingStabilizationBase::solve(double _eta_out,
     iterations++;
 }
 
-PricingSolution& PricingStabilizationBase::get_sol() {
+auto PricingStabilizationBase::get_sol() -> PricingSolution& {
     return sol;
 }
 
-double PricingStabilizationBase::get_reduced_cost() {
+auto PricingStabilizationBase::get_reduced_cost() -> double {
     return reduced_cost;
 }
 
-double PricingStabilizationBase::get_eps_stab_solver() {
+auto PricingStabilizationBase::get_eps_stab_solver() -> double {
     return ETA_DIFF;
 }
 
-bool PricingStabilizationBase::get_update_stab_center() {
+auto PricingStabilizationBase::get_update_stab_center() -> bool {
     return update_stab_center;
 }
 
-double PricingStabilizationBase::get_eta_in() {
+auto PricingStabilizationBase::get_eta_in() -> double {
     return eta_in;
 }
 
-double PricingStabilizationBase::get_eta_sep() {
+auto PricingStabilizationBase::get_eta_sep() -> double {
     return eta_in;
 }
 
-bool PricingStabilizationBase::stopping_criteria() {
+auto PricingStabilizationBase::stopping_criteria() -> bool {
     return eta_out - eta_in > ETA_DIFF;
 }
 
@@ -113,7 +113,7 @@ void PricingStabilizationBase::update_duals() {
     }
 }
 
-bool PricingStabilizationBase::reduced_cost_fixing() {
+auto PricingStabilizationBase::reduced_cost_fixing() -> bool {
     previous_fix = iterations;
     solver->calculate_constLB(pi_sep.data());
     return solver->evaluate_nodes(pi_sep.data());
@@ -134,7 +134,7 @@ void PricingStabilizationBase::update_continueLP(int _continueLP) {
     }
 }
 
-int PricingStabilizationBase::do_reduced_cost_fixing() {
+auto PricingStabilizationBase::do_reduced_cost_fixing() -> int {
     if ((iterations == 1 || !continueLP ||
          previous_fix <= iterations - RC_FIXING_RATE)) {
         return 1;
@@ -147,9 +147,9 @@ void PricingStabilizationBase::update_continueLP(double obj) {
     continueLP = (ETA_DIFF < eta_out - eta_in);
 }
 
-std::unique_ptr<PricingStabilizationBase> PricingStabilizationBase::clone(
-    PricerSolverBase*        _solver,
-    std::span<const double>& _pi_out) {
+auto PricingStabilizationBase::clone(PricerSolverBase*        _solver,
+                                     std::span<const double>& _pi_out)
+    -> std::unique_ptr<PricingStabilizationBase> {
     return std::make_unique<PricingStabilizationBase>(_solver, _pi_out);
 }
 /**
@@ -220,11 +220,11 @@ void PricingStabilizationStat::solve(double _eta_out, double* _lhs_coeff) {
     }
 }
 
-double PricingStabilizationStat::get_eta_in() {
+auto PricingStabilizationStat::get_eta_in() -> double {
     return eta_in;
 }
 
-bool PricingStabilizationStat::stopping_criteria() {
+auto PricingStabilizationStat::stopping_criteria() -> bool {
     return eta_in <= (eta_out - ETA_DIFF);
 }
 
@@ -259,9 +259,9 @@ void PricingStabilizationStat::compute_pi_eta_sep(double _alpha_bar) {
     eta_sep = _alpha_bar * (eta_in) + beta_bar * (eta_out);
 }
 
-std::unique_ptr<PricingStabilizationBase> PricingStabilizationStat::clone(
-    PricerSolverBase*        _solver,
-    std::span<const double>& _pi_out) {
+auto PricingStabilizationStat::clone(PricerSolverBase*        _solver,
+                                     std::span<const double>& _pi_out)
+    -> std::unique_ptr<PricingStabilizationBase> {
     return std::make_unique<PricingStabilizationStat>(_solver, _pi_out);
 }
 
@@ -355,9 +355,9 @@ void PricingStabilizationDynamic::adjust_alpha() {
     }
 }
 
-std::unique_ptr<PricingStabilizationBase> PricingStabilizationDynamic::clone(
-    PricerSolverBase*        _solver,
-    std::span<const double>& _pi_out) {
+auto PricingStabilizationDynamic::clone(PricerSolverBase*        _solver,
+                                        std::span<const double>& _pi_out)
+    -> std::unique_ptr<PricingStabilizationBase> {
     return std::make_unique<PricingStabilizationDynamic>(_solver, _pi_out);
 }
 
@@ -403,9 +403,9 @@ void PricingStabilizationHybrid::update_duals() {
     }
 }
 
-std::unique_ptr<PricingStabilizationBase> PricingStabilizationHybrid::clone(
-    PricerSolverBase*        _solver,
-    std::span<const double>& _pi_out) {
+auto PricingStabilizationHybrid::clone(PricerSolverBase*        _solver,
+                                       std::span<const double>& _pi_out)
+    -> std::unique_ptr<PricingStabilizationBase> {
     return std::make_unique<PricingStabilizationBase>(_solver, _pi_out);
 }
 
@@ -515,14 +515,14 @@ void PricingStabilizationHybrid::calculate_hybridfactor() {
     hybridfactor = ((1 - alpha) * dualdiffnorm) / aux_norm;
 }
 
-bool PricingStabilizationHybrid::is_stabilized() {
+auto PricingStabilizationHybrid::is_stabilized() -> bool {
     if (in_mispricing_schedule) {
         return alphabar > 0.0;
     }
     return alpha > 0.0;
 }
 
-double PricingStabilizationHybrid::compute_dual(auto i) {
+auto PricingStabilizationHybrid::compute_dual(auto i) -> double {
     double usedalpha = alpha;
     double usedbeta = beta;
 

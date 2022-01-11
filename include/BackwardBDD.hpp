@@ -39,9 +39,9 @@ class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
     void set_pi(double* _pi) { pi = _pi; }
     void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
 
-    [[nodiscard]] const double* get_pi() const { return pi; }
+    [[nodiscard]] auto get_pi() const -> const double* { return pi; }
 
-    PricingSolution get_objective(NodeBdd& n) const override {
+    auto get_objective(NodeBdd& n) const -> PricingSolution override {
         PricingSolution sol(0.0);
         auto*           aux_label = &(n.backward_label[0]);
         auto*           table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
@@ -65,9 +65,10 @@ class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
 
     BackwardBddBase(const BackwardBddBase&) = default;
     BackwardBddBase(BackwardBddBase&&) noexcept = default;
-    BackwardBddBase& operator=(const BackwardBddBase&) = default;
-    BackwardBddBase& operator=(BackwardBddBase&&) noexcept = default;
     ~BackwardBddBase() override = default;
+
+    auto operator=(const BackwardBddBase&) -> BackwardBddBase& = default;
+    auto operator=(BackwardBddBase&&) noexcept -> BackwardBddBase& = default;
 };
 
 class BackwardBddSimple : public BackwardBddBase {
@@ -119,9 +120,10 @@ class BackwardBddSimple : public BackwardBddBase {
 
     BackwardBddSimple(const BackwardBddSimple&) = default;
     BackwardBddSimple(BackwardBddSimple&&) noexcept = default;
-    BackwardBddSimple& operator=(const BackwardBddSimple&) = default;
-    BackwardBddSimple& operator=(BackwardBddSimple&&) noexcept = default;
     ~BackwardBddSimple() override = default;
+    auto operator=(const BackwardBddSimple&) -> BackwardBddSimple& = default;
+    auto operator=(BackwardBddSimple&&) noexcept
+        -> BackwardBddSimple& = default;
 };
 
 class BackwardBddCycle : public BackwardBddBase {
@@ -222,8 +224,8 @@ class BackwardBddCycle : public BackwardBddBase {
 
     BackwardBddCycle(const BackwardBddCycle&) = default;
     BackwardBddCycle(BackwardBddCycle&&) noexcept = default;
-    BackwardBddCycle& operator=(const BackwardBddCycle&) = default;
-    BackwardBddCycle& operator=(BackwardBddCycle&&) noexcept = default;
+    auto operator=(const BackwardBddCycle&) -> BackwardBddCycle& = default;
+    auto operator=(BackwardBddCycle&&) noexcept -> BackwardBddCycle& = default;
     ~BackwardBddCycle() override = default;
 };
 

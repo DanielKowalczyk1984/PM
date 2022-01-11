@@ -34,20 +34,16 @@ class PricerSolverZddBackwardSimple : public PricerSolverZdd {
     ForwardZddSimpleDouble  reversed_evaluator;
 
    public:
-    // PricerSolverZddBackwardSimple(GPtrArray*  _jobs,
-    //                               int         _num_machines,
-    //                               GPtrArray*  _ordered_jobs,
-    //                               const char* p_name,
-    //                               double      _UB);
     PricerSolverZddBackwardSimple(const Instance& instance);
-    PricingSolution pricing_algorithm(double* _pi) override;
-    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
-    void            compute_labels(double* _pi);
-    void            compute_labels(std::span<const double>& _pi);
-    bool            evaluate_nodes(double* pi) final;
-    bool            evaluate_nodes(std::span<const double>& pi) final;
     PricerSolverZddBackwardSimple(const PricerSolverZddBackwardSimple&) =
         default;
+    auto pricing_algorithm(double* _pi) -> PricingSolution override;
+    auto pricing_algorithm(std::span<const double>& _pi)
+        -> PricingSolution override;
+    auto evaluate_nodes(double* pi) -> bool final;
+    auto evaluate_nodes(std::span<const double>& pi) -> bool final;
+    void compute_labels(double* _pi);
+    void compute_labels(std::span<const double>& _pi);
 };
 
 class PricerSolverZddBackwardCycle : public PricerSolverZdd {
@@ -56,25 +52,22 @@ class PricerSolverZddBackwardCycle : public PricerSolverZdd {
     ForwardZddCycleDouble  reversed_evaluator;
 
    public:
-    // PricerSolverZddBackwardCycle(GPtrArray*  _jobs,
-    //                              int         _num_machines,
-    //                              GPtrArray*  _ordered_jobs,
-    //                              const char* p_name,
-    //                              double      _UB);
     PricerSolverZddBackwardCycle(const Instance& instance);
 
     PricerSolverZddBackwardCycle(const PricerSolverZddBackwardCycle&) = default;
     PricerSolverZddBackwardCycle(PricerSolverZddBackwardCycle&&) = default;
-    PricerSolverZddBackwardCycle& operator=(PricerSolverZddBackwardCycle&&) =
-        delete;
-    PricerSolverZddBackwardCycle& operator=(
-        const PricerSolverZddBackwardCycle&) = delete;
-    PricingSolution pricing_algorithm(double* _pi) override;
-    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
-    void            compute_labels(double* _pi);
-    void            compute_labels(std::span<const double>& _pi);
-    bool            evaluate_nodes(double* pi) final;
-    bool            evaluate_nodes(std::span<const double>& pi) final;
+    auto operator=(PricerSolverZddBackwardCycle&&)
+        -> PricerSolverZddBackwardCycle& = delete;
+    auto operator=(const PricerSolverZddBackwardCycle&)
+        -> PricerSolverZddBackwardCycle& = delete;
+
+    auto pricing_algorithm(double* _pi) -> PricingSolution override;
+    auto pricing_algorithm(std::span<const double>& _pi)
+        -> PricingSolution override;
+    auto evaluate_nodes(double* pi) -> bool final;
+    auto evaluate_nodes(std::span<const double>& pi) -> bool final;
+    void compute_labels(double* _pi);
+    void compute_labels(std::span<const double>& _pi);
 };
 
 #endif  // PRICER_SOLVER_ZDD_BACKWARD_HPP

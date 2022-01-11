@@ -46,16 +46,17 @@ class PricingSolution {
     PricingSolution(PricingSolution&& other) noexcept = default;
 
     /** Copy assignment operator */
-    PricingSolution& operator=(const PricingSolution& other) = delete;
+    auto operator=(const PricingSolution& other) -> PricingSolution& = delete;
 
     /** Move assignment operator */
-    PricingSolution& operator=(PricingSolution&& other) noexcept = default;
+    auto operator=(PricingSolution&& other) noexcept
+        -> PricingSolution& = default;
 
     /** Destructor */
     ~PricingSolution() = default;
 
-    friend std::ostream& operator<<(std::ostream&          os,
-                                    PricingSolution const& o) {
+    friend auto operator<<(std::ostream& os, PricingSolution const& o)
+        -> std::ostream& {
         os << "obj = " << o.obj << "," << std::endl
            << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
 
