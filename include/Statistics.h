@@ -49,7 +49,7 @@ class Timer : public boost::timer::cpu_timer {
         this->elapsed().clear();
     };
 
-    Timer(const std::string name_ = "timer", bool type = false)
+    Timer(std::string name_ = "timer", bool type = false)
         : boost::timer::cpu_timer{},
           _name(std::move(name_)),
           _type(type ? cpu_time : wall_time) {

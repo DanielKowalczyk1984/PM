@@ -17,7 +17,9 @@
 	"C_Cpp.codeAnalysis.exclude": {
 		"**/build/**/*.h": true,
 		"**/build/**/*.hpp": true,
-		"**/ThirdParty/**/*.hpp": true
+		"**/build/**/*.ipp": true,
+		"**/ThirdParty/**/*.hpp": true,
+		"**/ThirdParty/**/*.h": true
 	},
 	"files.associations": {
 		"*.ipynb": "jupyter",
