@@ -503,3 +503,8 @@ FodyWeavers.xsd
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 vcpkg/
+
+*.csv
+!results/**/*csv
+!TueServer_results/**/*.csv
+!Results Windows/**/*.csv
