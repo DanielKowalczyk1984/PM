@@ -86,7 +86,7 @@ class PricerSolverZdd : public PricerSolverBase {
     void update_constraints() override {}
     void remove_layers_init();
 
-    auto check_column(Column const* set) -> bool override;
+    auto check_column(Column const* col) -> bool override;
     auto get_nb_edges() -> size_t override;
     auto get_nb_vertices() -> size_t override;
     auto print_num_paths() -> cpp_int override;

@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __SOLUTION_NEW_H__
-#define __SOLUTION_NEW_H__
+#ifndef SOLUTION_NEW_H
+#define SOLUTION_NEW_H
 
 #include <cstddef>  // for size_t
 #include <limits>   // for numeric_limits
@@ -113,4 +113,4 @@ struct Sol {
     void calculate_partition(const VecIntervalPtr& v);
 };
 
-#endif  // __SOLUTION_NEW_H__
+#endif  // SOLUTION_NEW_H

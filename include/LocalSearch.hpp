@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __LOCALSEARCH_HPP__
-#define __LOCALSEARCH_HPP__
+#ifndef LOCALSEARCH_HPP
+#define LOCALSEARCH_HPP
 
 #include <algorithm>
 #include <array>
@@ -171,4 +171,4 @@ struct PerturbOperator {
     }
 };
 
-#endif  // __LOCALSEARCH_HPP__
+#endif  // LOCALSEARCH_HPP

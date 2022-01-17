@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __ZEROHALFCUTS_H__
-#define __ZEROHALFCUTS_H__
+#ifndef ZEROHALFCUTS_H
+#define ZEROHALFCUTS_H
 
 #include <gurobi_c++.h>               // for GRBVar, GRBEnv, GRBModel
 #include <cstddef>                    // for size_t
@@ -82,4 +82,4 @@ class ZeroHalfCuts {
     void dfs_evaluate(const NodeId& v);
 };
 
-#endif  // __ZEROHALFCUTS_H__
+#endif  // ZEROHALFCUTS_H

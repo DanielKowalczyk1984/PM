@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __ZEROHALFSYSTEM_H__
-#define __ZEROHALFSYSTEM_H__
+#ifndef ZEROHALFSYSTEM_H
+#define ZEROHALFSYSTEM_H
 
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 #include <cstddef>
@@ -94,4 +94,4 @@ class ZeroHalfSystem {
     void generate_cuts();
 };
 
-#endif  // __ZEROHALFSYSTEM_H__
+#endif  // ZEROHALFSYSTEM_H

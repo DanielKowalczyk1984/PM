@@ -67,13 +67,13 @@ class Problem {
     /** Instance data*/
     Instance instance;
 
-    std::unique_ptr<BranchBoundTree> tree;
+    std::unique_ptr<BranchBoundTree> tree{};
     std::unique_ptr<NodeData>        root_pd;
 
     problem_status status;
 
     /* Best Solution*/
-    Sol opt_sol;
+    Sol opt_sol{};
 
     static constexpr auto EPS = 1e-6;
 

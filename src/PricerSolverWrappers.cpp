@@ -28,7 +28,7 @@
 #include "PricingStabilization.hpp"  // for PricingStabilizationBase
 #include "or-utils/lp.h"             // for lp_interface_deleterows, lp_inte...
 
-void NodeData::build_solve_mip() {
+void NodeData::build_solve_mip() const {
     solver->build_mip();
 }
 
@@ -44,7 +44,7 @@ void NodeData::construct_lp_sol_from_rmp() {
                                       localColPool);
 }
 
-void NodeData::generate_cuts() {
+void NodeData::generate_cuts() const {
     // 1. add cuts to reformulation model
 
     solver->add_constraints();
@@ -67,10 +67,8 @@ auto NodeData::delete_unused_rows_range(int first, int last) -> int {
     return val;
 }
 
-auto NodeData::call_update_rows_coeff() -> int {
-    int val = 0;
+void NodeData::call_update_rows_coeff() const  {
 
     solver->update_rows_coeff(nb_jobs + 1);
 
-    return val;
 }

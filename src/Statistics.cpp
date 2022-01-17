@@ -53,7 +53,7 @@ Statistics::Statistics(const Parms& _parms)
       mip_obj_bound(0.0),
       mip_obj_bound_lp(0.0),
       mip_rel_gap(0.0),
-      mip_run_time(110.0),
+      mip_run_time(DEFAULT_MIP_RUN),
       mip_status(0),
       mip_nb_iter_simplex(),
       mip_nb_nodes(0),
@@ -126,7 +126,7 @@ void Statistics::suspend_timer(TimerType _type) {
     }
 }
 
-auto Statistics::total_time_dbl(TimerType _type) -> double {
+auto Statistics::total_time_dbl(TimerType _type) const -> double {
     switch (_type) {
         case build_dd_timer:
             return time_build_dd.dbl_sec();
@@ -150,7 +150,7 @@ auto Statistics::total_time_dbl(TimerType _type) -> double {
     return 0.0;
 }
 
-auto Statistics::total_time_nano_sec(TimerType _type)
+auto Statistics::total_time_nano_sec(TimerType _type) const
     -> boost::timer::nanosecond_type {
     switch (_type) {
         case build_dd_timer:

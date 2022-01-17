@@ -62,7 +62,7 @@ PricerSolverSimpleDp::PricerSolverSimpleDp(const Instance& instance)
       F(Hmax + 1),
       backward_F(Hmax + 1),
       TI_x(convex_constr_id * (Hmax + 1), GRBVar()),
-      take(convex_constr_id * (Hmax + 1), 0),
+      take(convex_constr_id * (Hmax + 1), false),
       lp_x(convex_constr_id * (Hmax + 1), 0.0),
       solution_x(convex_constr_id * (Hmax + 1), 0.0) {
     init_table();
@@ -533,7 +533,7 @@ void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
 // }
 
 auto PricerSolverSimpleDp::get_nb_edges() -> size_t {
-    size_t nb_edges = 0u;
+    size_t nb_edges = 0U;
     for (auto& it : forward_graph) {
         nb_edges += it.size();
     }
@@ -541,7 +541,7 @@ auto PricerSolverSimpleDp::get_nb_edges() -> size_t {
 }
 
 auto PricerSolverSimpleDp::get_nb_vertices() -> size_t {
-    size_t nb_vertices = 0u;
+    size_t nb_vertices = 0U;
     for (auto& it : forward_graph) {
         if (!it.empty()) {
             nb_vertices++;

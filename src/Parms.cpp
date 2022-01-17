@@ -65,9 +65,7 @@ Parms::Parms()
       pruning_test{"pruning_test", false},
       suboptimal_duals{"suboptimal_duals", false},
       reduce_cost_fixing{"reduce_cost_fixing", true},
-      print_csv{"print_csv", false},
-      jobfile(),
-      pname() {}
+      print_csv{"print_csv", false} {}
 
 Parms::Parms(int argc, const char** argv) : Parms() {
     program_header(argc, argv);
@@ -117,10 +115,9 @@ static auto find_match(std::string const& _instance_file) -> std::string {
     std::regex_search(_instance_file, match, regexp);
 
     if (match.size() != 2) {
-        return std::string{ "unknown_problem" };
-    } else {
-        return match[1];
+        return std::string{"unknown_problem"};
     }
+    return match[1];
 }
 
 void to_json(nlohmann::json& j, const Parms& p) {

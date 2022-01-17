@@ -42,12 +42,11 @@ PricerSolverArcTimeDp::PricerSolverArcTimeDp(const Instance& instance)
     : PricerSolverBase(instance),
       Hmax(instance.H_max),
       n(instance.nb_jobs),
-      size_graph(0u),
+      size_graph(0U),
       vector_jobs(instance.jobs | ranges::views::transform([](const auto& tmp) {
                       return tmp.get();
                   }) |
                   to_vector),
-      j0(),
       nb_edges_removed{},
       lp_x((n + 1) * (n + 1) * (Hmax + 1), 0.0),
       solution_x((n + 1) * (n + 1) * (Hmax + 1), 0.0) {
@@ -186,7 +185,7 @@ auto PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi)
 
     std::span aux_pi{pi, reformulation_model.size()};
 
-    for (auto tmp : vector_jobs | ranges::views::take(n)) {
+    for (auto* tmp : vector_jobs | ranges::views::take(n)) {
         for (auto t = size_t{}; t <= Hmax - tmp->processing_time; t++) {
             auto it = graph[tmp->job][t].begin();
             while (it != graph[tmp->job][t].end()) {
@@ -221,7 +220,7 @@ auto PricerSolverArcTimeDp::evaluate_nodes(
     backward_evaluator(pi);
     auto num_edges_removed = 0;
 
-    for (auto tmp : vector_jobs | ranges::views::take(n)) {
+    for (auto* tmp : vector_jobs | ranges::views::take(n)) {
         for (auto t = size_t{}; t <= Hmax - tmp->processing_time; t++) {
             auto it = graph[tmp->job][t].begin();
             while (it != graph[tmp->job][t].end()) {
@@ -714,7 +713,7 @@ auto PricerSolverArcTimeDp::get_nb_edges() -> size_t {
 }
 
 auto PricerSolverArcTimeDp::get_nb_vertices() -> size_t {
-    size_t nb_vertices = 0u;
+    size_t nb_vertices = 0U;
     for (auto& it : graph) {
         for (auto& it_in : it) {
             if (!it_in.empty()) {

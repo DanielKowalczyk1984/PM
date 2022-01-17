@@ -36,7 +36,7 @@ class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
    public:
     BackwardBddBase() = default;
 
-    void set_pi(double* _pi) { pi = _pi; }
+    void set_pi(const double* _pi) { pi = _pi; }
     void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
 
     [[nodiscard]] auto get_pi() const -> const double* { return pi; }
@@ -54,7 +54,7 @@ class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
             }
 
             aux_label = aux_label->get_previous();
-        } while (aux_label);
+        } while (aux_label != nullptr);
 
         return sol;
     }
@@ -76,7 +76,7 @@ class BackwardBddSimple : public BackwardBddBase {
     BackwardBddSimple() = default;
 
     void evalNode(NodeBdd& n) const override {
-        auto  table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto* table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
         auto& p0_tmp = table_tmp->node(n[0]);
         auto& p1_tmp = table_tmp->node(n[1]);
 
@@ -92,9 +92,8 @@ class BackwardBddSimple : public BackwardBddBase {
                         aux->get_coeff() * dual[aux->get_row()],
                         aux->get_high());
                     return false;
-                } else {
-                    return true;
                 }
+                return true;
             });
         }
 
@@ -131,11 +130,11 @@ class BackwardBddCycle : public BackwardBddBase {
     BackwardBddCycle() = default;
 
     void evalNode(NodeBdd& n) const override {
-        auto*      tmp_j = n.get_job();
-        auto*      table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
-        auto&      p0_tmp = table_tmp->node(n[0]);
-        auto&      p1_tmp = table_tmp->node(n[1]);
-        const auto dual = BackwardBddBase::get_pi();
+        auto* tmp_j = n.get_job();
+        auto* table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto& p0_tmp = table_tmp->node(n[0]);
+        auto& p1_tmp = table_tmp->node(n[1]);
+        const auto* const dual = BackwardBddBase::get_pi();
 
         n.reset_reduced_costs();
 
@@ -156,7 +155,7 @@ class BackwardBddCycle : public BackwardBddBase {
         //     });
         // }
 
-        auto prev_job{p1_tmp.backward_label[0].prev_job_backward()};
+        auto* prev_job{p1_tmp.backward_label[0].prev_job_backward()};
 
         n.backward_label[0].backward_update(
             &(p0_tmp.backward_label[0]),

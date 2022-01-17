@@ -49,13 +49,6 @@ NodeData::NodeData(Problem* problem)
       nb_machines(instance.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
       osi_rmp(std::make_unique<OsiGrbSolverInterface>()),
-      lambda(),
-      pi(),
-      slack(),
-      rhs(),
-      lhs_coeff(),
-      id_row(),
-      coeff_row(),
       nb_rows(0),
       nb_cols(0),
       max_nb_cuts(NB_CUTS),
@@ -67,10 +60,7 @@ NodeData::NodeData(Problem* problem)
       id_art_var_cuts{},
       id_next_var_cuts{},
       id_pseudo_schedules{},
-      solver{},
       zero_count{},
-      column_status(),
-      localColPool(),
       lower_bound(0),
       upper_bound(std::numeric_limits<int>::max()),
       LP_lower_bound(0.0),
@@ -85,7 +75,7 @@ NodeData::NodeData(Problem* problem)
           CLEANUP_ITERATION),
       branch_job(),
       completiontime(0),
-      less(-1) {}
+      less{} {}
 
 NodeData::NodeData(const NodeData& src)
     : depth(src.depth + 1),
@@ -98,13 +88,6 @@ NodeData::NodeData(const NodeData& src)
       nb_machines(src.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
       osi_rmp(std::make_unique<OsiGrbSolverInterface>()),
-      lambda(),
-      pi(),
-      slack(),
-      rhs(),
-      lhs_coeff(),
-      id_row(),
-      coeff_row(),
       nb_rows(),
       nb_cols(),
       max_nb_cuts(src.max_nb_cuts),
@@ -118,7 +101,6 @@ NodeData::NodeData(const NodeData& src)
       id_pseudo_schedules(src.id_pseudo_schedules),
       solver(src.solver->clone()),
       zero_count(),
-      column_status(),
       localColPool(src.localColPool),
       lower_bound(src.lower_bound),
       upper_bound(src.upper_bound),
@@ -132,7 +114,7 @@ NodeData::NodeData(const NodeData& src)
       retirementage(src.retirementage),
       branch_job(),
       completiontime(-1),
-      less(-1) {}
+      less{} {}
 
 auto NodeData::clone() const -> std::unique_ptr<NodeData> {
     auto aux = std::make_unique<NodeData>(*this);
@@ -189,7 +171,7 @@ void NodeData::prune_duplicated_sets() {
 }
 
 void NodeData::add_solution_to_colpool(const Sol& sol) {
-    for (auto& it : sol.machines) {
+    for (const auto& it : sol.machines) {
         localColPool.emplace_back(std::make_shared<Column>(it));
     }
 }

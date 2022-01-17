@@ -51,7 +51,7 @@ class BddCoeff : public VariableKeyBase {
     BddCoeff(BddCoeff&& op) noexcept;
     ~BddCoeff() override = default;
 
-    auto operator=(const BddCoeff&) -> BddCoeff&;
+    auto operator=(const BddCoeff& _src) -> BddCoeff&;
     auto operator=(BddCoeff&& op) noexcept -> BddCoeff& = default;
 
     [[nodiscard]] auto get_coeff() const -> double;

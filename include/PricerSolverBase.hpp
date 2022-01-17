@@ -50,7 +50,7 @@ struct PricerSolverBase {
     size_t convex_constr_id;
     size_t convex_rhs;
 
-    std::string problem_name;
+    std::string problem_name{};
 
     std::shared_ptr<GRBEnv> env;
     GRBModel                model;
@@ -288,8 +288,8 @@ struct PricerSolverBase {
     /**
      * Some printing functions
      */
-    [[maybe_unused]] virtual auto get_int_attr_model(enum MIP_Attr) -> int;
-    virtual auto                  get_dbl_attr_model(enum MIP_Attr) -> double;
+    [[maybe_unused]] virtual auto get_int_attr_model(enum MIP_Attr c) -> int;
+    virtual auto                  get_dbl_attr_model(enum MIP_Attr c) -> double;
 };
 
 #endif  // PRICER_SOLVER_BASE_HPP

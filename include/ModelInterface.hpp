@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef _MODEL_INTERFACE
-#define _MODEL_INTERFACE
+#ifndef MODEL_INTERFACE
+#define MODEL_INTERFACE
 
 #include <fmt/core.h>                     // for print
 #include <cmath>                          // for fabs
@@ -102,7 +102,7 @@ class ConstraintConvex : public ConstraintBase {
     explicit ConstraintConvex(double _rhs) : ConstraintBase('>', _rhs) {}
 
     auto operator()(const VariableKeyBase& key) -> double override {
-        if (!key.get_t()) {
+        if (key.get_t() == 0) {
             return -1.0;
         }
         return 0.0;
@@ -178,6 +178,7 @@ class GenericData : public std::unordered_map<VariableKeyBase, double> {
             }
         }
 
+
         return true;
     };
 
@@ -216,9 +217,8 @@ class ConstraintGeneric : public ConstraintBase {
         auto it = data->find(key);
         if (it == data->end()) {
             return 0.0;
-        } else {
-            return (*it).second;
         }
+        return (*it).second;
     }
 
     friend auto operator!=(const ConstraintGeneric& lhs,
@@ -261,9 +261,8 @@ class OriginalConstraint {
         auto aux = constr.lock();
         if (aux) {
             return aux.get();
-        } else {
-            return nullptr;
         }
+        return nullptr;
     }
 
     inline void add_coeff_to_list(std::shared_ptr<T> _coeff) {

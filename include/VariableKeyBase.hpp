@@ -43,8 +43,8 @@ class VariableKeyBase {
                     bool   _root = false);
 
     VariableKeyBase();
-    VariableKeyBase(const VariableKeyBase&);
-    VariableKeyBase(VariableKeyBase&&) noexcept;
+    VariableKeyBase(const VariableKeyBase& src);
+    VariableKeyBase(VariableKeyBase&& src) noexcept;
     virtual ~VariableKeyBase() = default;
 
     [[nodiscard]] auto get_j() const -> size_t;
@@ -57,8 +57,8 @@ class VariableKeyBase {
     void set_root(bool _root);
     void set_high(bool _high);
 
-    auto operator=(const VariableKeyBase&) -> VariableKeyBase&;
-    auto operator=(VariableKeyBase&&) noexcept -> VariableKeyBase&;
+    auto operator=(const VariableKeyBase& src) -> VariableKeyBase&;
+    auto operator=(VariableKeyBase&& src) noexcept -> VariableKeyBase&;
 
     auto operator==(const VariableKeyBase& other) const -> bool;
 };

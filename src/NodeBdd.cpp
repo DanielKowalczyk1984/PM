@@ -54,8 +54,8 @@ void NodeBdd::add_coeff_list_clear() {
     }
 }
 
-
-auto NodeBdd::get_coeff_list() -> std::array<std::vector<NodeBdd::weak_ptr_bddcoeff>, 2>& {
+auto NodeBdd::get_coeff_list()
+    -> std::array<std::vector<NodeBdd::weak_ptr_bddcoeff>, 2>& {
     return coeff_list;
 }
 
@@ -212,10 +212,17 @@ void NodeBdd::set_cost(double _cost) {
 
 /** Functions for manipulation of best_sol_x */
 void NodeBdd::update_best_sol_x(bool _high) {
-    best_sol_x[_high] += 1.0;
+    if (_high) {
+        best_sol_x[1] += 1.0;
+    } else {
+        best_sol_x[0] += 1.0;
+    }
 }
 auto NodeBdd::get_best_sol_x(bool _high) -> double {
-    return best_sol_x[_high];
+    if (_high) {
+        return best_sol_x[1];
+    }
+    return best_sol_x[0];
 }
 
 /** Functions for manipulation of backward distance */

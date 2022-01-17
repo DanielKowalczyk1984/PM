@@ -175,9 +175,9 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
 
         auto u_it = u[m.job_list.back()->job];
         while (u_it + 1 != 0UL) {
-            auto& I = intervals[u_it];
-            auto& Q_tmp = Q[u_it];
-            auto& Q_in_tmp = Q_in[u_it];
+            const auto& I = intervals[u_it];
+            auto&       Q_tmp = Q[u_it];
+            auto&       Q_in_tmp = Q_in[u_it];
             if (!Q_in_tmp.empty()) {
                 if (Q_in_tmp.size() + 1 == Q_tmp.size()) {
                     auto C = c[Q_in_tmp.front()->job] -
@@ -193,8 +193,8 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                         j++;
                     }
 
-                    auto tmp_out = Q_tmp[0];
-                    auto tmp_in = Q_in_tmp[0];
+                    auto* tmp_out = Q_tmp[0];
+                    auto* tmp_in = Q_in_tmp[0];
 
                     if (cmp(tmp_out, tmp_in)) {
                         u_it--;
@@ -235,7 +235,7 @@ void Sol::canonical_order(const VecIntervalPtr& intervals) {
                                 Q_tmp.end());
                             auto old_u = u_it - 1;
                             while (old_u + 1 != 0) {
-                                auto& tmp_I = intervals[old_u];
+                                const auto& tmp_I = intervals[old_u];
                                 if (c[tmp_in->job] <= tmp_I->b &&
                                     c[tmp_in->job] > tmp_I->a) {
                                     Q[old_u].push_back(tmp_in);

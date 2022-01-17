@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __FARKASZDD_H__
-#define __FARKASZDD_H__
+#ifndef FARKASZDD_H
+#define FARKASZDD_H
 
 #include "BackwardBDD.hpp"           // for BackwardBddBase
 #include "ModernDD/NodeBddEval.hpp"  // for Eval
@@ -47,7 +47,7 @@ class BackwardBddFarkas : public BackwardBddBase {
             }
         }
 
-        auto  table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto* table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
         auto& p0 = table_tmp->node(n[0]);
         auto& p1 = table_tmp->node(n[1]);
 
@@ -71,4 +71,4 @@ class BackwardBddFarkas : public BackwardBddBase {
         n.backward_label[0].get_f() = 0.0;
     }
 };
-#endif  // __FARKASZDD_H__
+#endif  // FARKASZDD_H

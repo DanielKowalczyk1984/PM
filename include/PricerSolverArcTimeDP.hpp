@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __PRICERSOLVERARCTIMEDP_H__
-#define __PRICERSOLVERARCTIMEDP_H__
+#ifndef PRICERSOLVERARCTIMEDP_H
+#define PRICERSOLVERARCTIMEDP_H
 
 #include <algorithm>             // for remove
 #include <cstddef>               // for size_t
@@ -55,7 +55,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     vector3d_jobs  graph;
     vector3d_jobs  reversed_graph;
     vector1d_jobs  vector_jobs;
-    Job            j0;
+    Job            j0{};
     vector2d_dbl   forward_F;
     vector2d_dbl   backward_F;
     vector2d_jobs  A;
@@ -128,7 +128,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     auto get_nb_edges() -> size_t override;
     auto get_nb_vertices() -> size_t override;
     auto print_num_paths() -> cpp_int override;
-    auto check_column(Column const* set) -> bool override;
+    auto check_column(Column const* col) -> bool override;
 
     void forward_evaluator(double* pi);
     void forward_evaluator(std::span<const double>& _pi);
@@ -160,4 +160,4 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
     void update_coeff_constraints() override {}
 };
-#endif  // __PRICERSOLVERARCTIMEDP_H__
+#endif  // PRICERSOLVERARCTIMEDP_H

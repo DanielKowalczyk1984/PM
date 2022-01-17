@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __INTERVAL_H__
-#define __INTERVAL_H__
+#ifndef INTERVAL_H
+#define INTERVAL_H
 #include <array>    // for array
 #include <compare>  // for operator>
 #include <memory>   // for shared_ptr
@@ -49,37 +49,35 @@ struct compare_edd {
         if (lhs->processing_time >= diff) {
             if (rhs->processing_time < diff) {
                 return true;
-            } else {
-                // if (w_lhs > w_rhs) {
-                //     return true;
-                // } else if (w_rhs > w_lhs) {
-                //     return false;
-                // } else if (lhs->processing_time > rhs->processing_time) {
-                //     return true;
-                // } else {
-                //     return false;
-                // }
+            }
+            // if (w_lhs > w_rhs) {
+            //     return true;
+            // } else if (w_rhs > w_lhs) {
+            //     return false;
+            // } else if (lhs->processing_time > rhs->processing_time) {
+            //     return true;
+            // } else {
+            //     return false;
+            // }
 
-                return std::tie(w_lhs, lhs->processing_time) >
-                       std::tie(w_rhs, rhs->processing_time);
-            }
-        } else {
-            if (rhs->processing_time >= diff) {
-                return false;
-            } else {
-                // if (w_lhs > w_rhs) {
-                //     return true;
-                // } else if (w_rhs > w_lhs) {
-                //     return false;
-                // } else if (lhs->processing_time > rhs->processing_time) {
-                //     return true;
-                // } else {
-                //     return false;
-                // }
-                return std::tie(w_lhs, lhs->processing_time) >
-                       std::tie(w_rhs, rhs->processing_time);
-            }
+            return std::tie(w_lhs, lhs->processing_time) >
+                   std::tie(w_rhs, rhs->processing_time);
         }
+
+        if (rhs->processing_time >= diff) {
+            return false;
+        }
+        // if (w_lhs > w_rhs) {
+        //     return true;
+        // } else if (w_rhs > w_lhs) {
+        //     return false;
+        // } else if (lhs->processing_time > rhs->processing_time) {
+        //     return true;
+        // } else {
+        //     return false;
+        // }
+        return std::tie(w_lhs, lhs->processing_time) >
+               std::tie(w_rhs, rhs->processing_time);
     };
 };
 
@@ -91,7 +89,7 @@ struct Interval {
 
     vector_ptr_jobs sigma;
 
-    Interval(int, int, const vector_ptr_jobs&);
+    Interval(int _a, int _b, const vector_ptr_jobs& _jobs);
 
     Interval() = default;
     ~Interval() = default;
@@ -111,9 +109,9 @@ struct IntervalPair {
                  int                         _b,
                  const std::shared_ptr<Job>& j1,
                  const std::shared_ptr<Job>& j2,
-                 Interval*                   _I);
+                 Interval*                   I_);
 
     auto operator()() -> int;
 };
 
-#endif  // __INTERVAL_H__
+#endif  // INTERVAL_H

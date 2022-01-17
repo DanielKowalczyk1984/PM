@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __PARMS_H__
-#define __PARMS_H__
+#ifndef PARMS_H
+#define PARMS_H
 
 #include <fmt/format.h>
 #include <array>                  // for array
@@ -85,42 +85,195 @@ enum Scoring_Value {
     nb_paths_scoring_value = 2,
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(PricingSolver,
-                             {{bdd_solver_simple, "BddForward"},
-                              {bdd_solver_cycle, "BddForwardCycle"},
-                              {bdd_solver_backward_simple, "BddBackward"},
-                              {bdd_solver_backward_cycle, "BddBackwardCycle"},
-                              {zdd_solver_simple, "ZddForward"},
-                              {zdd_solver_cycle, "ZddForwardCycle"},
-                              {zdd_solver_backward_simple, "ZddBackward"},
-                              {zdd_solver_backward_cycle, "ZddBackwardCycle"},
-                              {dp_solver, "Time-Indexed"},
-                              {ati_solver, "Arc-Time-Indexed"},
-                              {dp_bdd_solver, "Hybrid"}})
+#define NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(ENUM_TYPE, NB_ENUM_TYPE, ...)       \
+    template <typename BasicJsonType>                                          \
+    inline void to_json(BasicJsonType& j, const ENUM_TYPE& e) {                \
+        static_assert(std::is_enum<ENUM_TYPE>::value,                          \
+                      #ENUM_TYPE " must be an enum!");                         \
+        static const std::array<std::pair<ENUM_TYPE, BasicJsonType>,           \
+                                NB_ENUM_TYPE>                                  \
+             m = {__VA_ARGS__};                                                \
+        auto it = std::find_if(                                                \
+            std::begin(m), std::end(m),                                        \
+            [e](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool {  \
+                return ej_pair.first == e;                                     \
+            });                                                                \
+        j = ((it != std::end(m)) ? it : std::begin(m))->second;                \
+    }                                                                          \
+    template <typename BasicJsonType>                                          \
+    inline void from_json(const BasicJsonType& j, ENUM_TYPE& e) {              \
+        static_assert(std::is_enum<ENUM_TYPE>::value,                          \
+                      #ENUM_TYPE " must be an enum!");                         \
+        static const std::array<std::pair<ENUM_TYPE, BasicJsonType>,           \
+                                NB_ENUM_TYPE>                                  \
+             m = {__VA_ARGS__};                                                \
+        auto it = std::find_if(                                                \
+            std::begin(m), std::end(m),                                        \
+            [&j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool { \
+                return ej_pair.second == j;                                    \
+            });                                                                \
+        e = ((it != std::end(m)) ? it : std::begin(m))->first;                 \
+    }
 
-NLOHMANN_JSON_SERIALIZE_ENUM(StabTechniques,
-                             {
-                                 {no_stab, "NoStabilization"},
-                                 {stab_wentgnes, "WentgnesStab"},
-                                 {stab_dynamic, "DynamicStab"},
-                                 {stab_hybrid, "HybridStab"},
-                             })
+template <>
+struct fmt::formatter<PricingSolver> : formatter<string_view> {
+    // parse is inherited from formatter<string_view>.
+    template <typename FormatContext>
+    auto format(PricingSolver _solver, FormatContext& ctx) {
+        string_view name = "unknown";
+        switch (_solver) {
+            case PricingSolver::bdd_solver_simple:
+                name = "BddForward";
+                break;
+            case PricingSolver::bdd_solver_cycle:
+                name = "BddForwardCycle";
+                break;
+            case PricingSolver::bdd_solver_backward_simple:
+                name = "BddBackward";
+                break;
+            case PricingSolver::bdd_solver_backward_cycle:
+                name = "BddBackwardCycle";
+                break;
+            case PricingSolver::zdd_solver_simple:
+                name = "ZddForward";
+                break;
+            case PricingSolver::zdd_solver_cycle:
+                name = "ZddForwardCycle";
+                break;
+            case PricingSolver::zdd_solver_backward_simple:
+                name = "ZddBackward";
+                break;
+            case PricingSolver::zdd_solver_backward_cycle:
+                name = "ZddBackwardCycle";
+                break;
+            case PricingSolver::dp_solver:
+                name = "Time-Indexed";
+                break;
+            case PricingSolver::ati_solver:
+                name = "Arc-Time-Indexed";
+                break;
+            case PricingSolver::dp_bdd_solver:
+                name = "Hybrid";
+                break;
+        }
+        return formatter<string_view>::format(name, ctx);
+    }
+};
 
-NLOHMANN_JSON_SERIALIZE_ENUM(BBExploreStrategy,
-                             {{min_bb_explore_strategy, "dfs"},
-                              {bb_dfs_strategy, "dfs"},
-                              {bb_bfs_strategy, "bfs"},
-                              {bb_brfs_strategy, "brfs"},
-                              {bb_cbfs_strategy, "cbfs"}})
+NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(
+    PricingSolver,
+    11,
+    {{bdd_solver_simple, "BddForward"},
+     {bdd_solver_cycle, "BddForwardCycle"},
+     {bdd_solver_backward_simple, "BddBackward"},
+     {bdd_solver_backward_cycle, "BddBackwardCycle"},
+     {zdd_solver_simple, "ZddForward"},
+     {zdd_solver_cycle, "ZddForwardCycle"},
+     {zdd_solver_backward_simple, "ZddBackward"},
+     {zdd_solver_backward_cycle, "ZddBackwardCycle"},
+     {dp_solver, "Time-Indexed"},
+     {ati_solver, "Arc-Time-Indexed"},
+     {dp_bdd_solver, "Hybrid"}})
 
-NLOHMANN_JSON_SERIALIZE_ENUM(Scoring_Parameter,
-                             {{min_scoring_parameter, "ProductScoring"},
-                              {product_scoring_parameter, "ProductScoring"},
-                              {min_function_scoring_parameter, "MinFunction"},
-                              {max_function_scoring_parameter, "MaxFunction"},
-                              {weighted_sum_scoring_parameter, " WeightedSum"},
-                              {weighted_product_scoring_parameter,
-                               "WeightedProduct"}})
+NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(StabTechniques,
+                                   4,
+                                   {{no_stab, "NoStabilization"},
+                                    {stab_wentgnes, "WentgnesStab"},
+                                    {stab_dynamic, "DynamicStab"},
+                                    {stab_hybrid, "HybridStab"}})
+
+template <>
+struct fmt::formatter<StabTechniques> : formatter<string_view> {
+    // parse is inherited from formatter<string_view>.
+    template <typename FormatContext>
+    auto format(StabTechniques _solver, FormatContext& ctx) {
+        string_view name = "unknown";
+        switch (_solver) {
+            case StabTechniques::no_stab:
+                name = "NoStabilization";
+                break;
+            case StabTechniques::stab_wentgnes:
+                name = "WentgnesStab";
+                break;
+            case StabTechniques::stab_dynamic:
+                name = "DynamicStab";
+                break;
+            case StabTechniques::stab_hybrid:
+                name = "HybridStab";
+                break;
+        }
+        return formatter<string_view>::format(name, ctx);
+    }
+};
+
+NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(BBExploreStrategy,
+                                   5,
+                                   {{min_bb_explore_strategy, "dfs"},
+                                    {bb_dfs_strategy, "dfs"},
+                                    {bb_bfs_strategy, "bfs"},
+                                    {bb_brfs_strategy, "brfs"},
+                                    {bb_cbfs_strategy, "cbfs"}})
+
+template <>
+struct fmt::formatter<BBExploreStrategy> : formatter<string_view> {
+    // parse is inherited from formatter<string_view>.
+    template <typename FormatContext>
+    auto format(BBExploreStrategy _solver, FormatContext& ctx) {
+        string_view name = "unknown";
+        switch (_solver) {
+            case BBExploreStrategy::min_bb_explore_strategy:
+                name = "dfs";
+                break;
+            case BBExploreStrategy::bb_bfs_strategy:
+                name = "bfs";
+                break;
+            case BBExploreStrategy::bb_brfs_strategy:
+                name = "brfs";
+                break;
+            case BBExploreStrategy::bb_cbfs_strategy:
+                name = "cbfs";
+                break;
+        }
+        return formatter<string_view>::format(name, ctx);
+    }
+};
+
+NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(
+    Scoring_Parameter,
+    6,
+    {{min_scoring_parameter, "ProductScoring"},
+     {product_scoring_parameter, "ProductScoring"},
+     {min_function_scoring_parameter, "MinFunction"},
+     {max_function_scoring_parameter, "MaxFunction"},
+     {weighted_sum_scoring_parameter, " WeightedSum"},
+     {weighted_product_scoring_parameter, "WeightedProduct"}})
+
+template <>
+struct fmt::formatter<Scoring_Parameter> : formatter<string_view> {
+    // parse is inherited from formatter<string_view>.
+    template <typename FormatContext>
+    auto format(Scoring_Parameter _solver, FormatContext& ctx) {
+        string_view name = "unknown";
+        switch (_solver) {
+            case Scoring_Parameter::min_scoring_parameter:
+                name = "ProductScoring";
+                break;
+            case Scoring_Parameter::min_function_scoring_parameter:
+                name = "MinFunction";
+                break;
+            case Scoring_Parameter::max_function_scoring_parameter:
+                name = "MaxFunction";
+                break;
+            case Scoring_Parameter::weighted_sum_scoring_parameter:
+                name = " WeightedSum";
+                break;
+            case Scoring_Parameter::weighted_product_scoring_parameter:
+                name = "WeightedProduct";
+                break;
+        }
+        return formatter<string_view>::format(name, ctx);
+    }
+};
 
 struct Parms {
     template <typename T>
@@ -132,6 +285,12 @@ struct Parms {
         Parameter(std::string name, const T& value)
             : _name(std::move(name)),
               _value(value) {}
+
+        Parameter(const Parameter<T>&) = default;
+        Parameter(Parameter<T>&&) noexcept = default;
+        auto operator=(Parameter<T>&&) noexcept -> Parameter<T>& = default;
+        auto operator=(const Parameter<T>&) -> Parameter<T>& = default;
+        ~Parameter() = default;
 
         [[nodiscard]] inline auto value() const -> const T& { return _value; }
         [[nodiscard]] auto name() const -> const std::string& { return _name; }
@@ -167,8 +326,8 @@ struct Parms {
     /**
      * column generation
      */
-    std::string jobfile;
-    std::string pname;
+    std::string jobfile{};
+    std::string pname{};
 
     int    nb_jobs{};
     size_t nb_machines{};
@@ -179,7 +338,7 @@ struct Parms {
     Parms(const Parms&) = default;
     Parms(Parms&&) = default;
     auto operator=(const Parms&) -> Parms& = default;
-    auto operator=(Parms&&) -> Parms& = default;
+    auto operator=(Parms&&) noexcept -> Parms& = default;
     ~Parms() = default;
 
     void        parms_set_scoring_function(int scoring);
@@ -199,13 +358,16 @@ struct fmt::formatter<Parms::Parameter<T>> {
     char presentation = 'v';
 
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-        auto it = ctx.begin(), end = ctx.end();
-        if (it != end && (*it == 'v' || *it == 'n'))
+        const auto* it = ctx.begin();
+        const auto* end = ctx.end();
+        if (it != end && (*it == 'v' || *it == 'n')) {
             presentation = *it++;
+        }
 
         // Check if reached the end of the range:
-        if (it != end && *it != '}')
+        if (it != end && *it != '}') {
             throw format_error("invalid format");
+        }
 
         return it;
     }
@@ -225,13 +387,16 @@ struct fmt::formatter<Parms> {
     char presentation = 'v';
 
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-        auto it = ctx.begin(), end = ctx.end();
-        if (it != end && (*it == 'v' || *it == 'n'))
+        const auto* it = ctx.begin();
+        const auto* end = ctx.end();
+        if (it != end && (*it == 'v' || *it == 'n')) {
             presentation = *it++;
+        }
 
         // Check if reached the end of the range:
-        if (it != end && *it != '}')
+        if (it != end && *it != '}') {
             throw format_error("invalid format");
+        }
 
         return it;
     }
@@ -257,4 +422,4 @@ struct fmt::formatter<Parms> {
     }
 };
 
-#endif  // __PARMS_H__
+#endif  // PARMS_H

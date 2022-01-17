@@ -38,7 +38,6 @@ PricerSolverBase::PricerSolverBase(const Instance& instance)
     : jobs(instance.jobs),
       convex_constr_id(instance.nb_jobs),
       convex_rhs(instance.nb_machines),
-      problem_name(),
       env(genv),
       model(*env),
       reformulation_model(instance.nb_jobs, instance.nb_machines),
@@ -486,7 +485,7 @@ auto PricerSolverBase::compute_reduced_cost_simple(const PricingSolution& sol,
     // auto      nb_constraints = reformulation_model.get_nb_constraints();
     std::span aux_pi{pi, reformulation_model.size()};
 
-    for (auto& it : sol.jobs) {
+    for (const auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
         for (const auto&& [c, constr] :
              reformulation_model | ranges::views::enumerate) {
@@ -515,7 +514,7 @@ auto PricerSolverBase::compute_reduced_cost_simple(const PricingSolution&   sol,
     -> double {
     double result = sol.cost;
 
-    for (auto& it : sol.jobs) {
+    for (const auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
         for (const auto&& [constr, pi_aux] :
              ranges::views::zip(reformulation_model, pi)) {
@@ -545,7 +544,7 @@ auto PricerSolverBase::compute_lagrange(const PricingSolution&     sol,
     double result = sol.cost;
     double dual_bound = 0.0;
 
-    for (auto& it : sol.jobs) {
+    for (const auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
         auto            dual = pi[it->job];
         auto*           constr = reformulation_model[it->job].get();
@@ -589,7 +588,7 @@ auto PricerSolverBase::compute_lagrange(const PricingSolution&         sol,
     double result = sol.cost;
     double dual_bound = 0.0;
 
-    for (auto& it : sol.jobs) {
+    for (const auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
         auto            dual = pi[it->job];
         auto*           constr = reformulation_model[it->job].get();
@@ -637,7 +636,7 @@ auto PricerSolverBase::compute_subgradient(const PricingSolution& sol,
         ++i;
     }
 
-    for (auto& it : sol.jobs) {
+    for (const auto& it : sol.jobs) {
         VariableKeyBase k(it->job, 0);
         auto*           constr = reformulation_model[it->job].get();
         auto            coeff = (*constr)(k);

@@ -88,7 +88,7 @@ class PricerSolverBdd : public PricerSolverBase {
     auto evaluate_nodes(double* _pi) -> bool override;
     auto evaluate_nodes(std::span<const double>& _pi) -> bool override;
 
-    auto               check_column(Column const* set) -> bool override;
+    auto               check_column(Column const* col) -> bool override;
     [[nodiscard]] auto clone() const
         -> std::unique_ptr<PricerSolverBase> override = 0;
     virtual auto evaluate_rc_arc(NodeBdd& n) -> double = 0;
@@ -132,7 +132,9 @@ class PricerSolverBdd : public PricerSolverBase {
         return decision_diagram;
     }
 
-    inline auto get_nb_removed_edges() { return nb_removed_edges; }
+    [[nodiscard]] inline auto get_nb_removed_edges() const {
+        return nb_removed_edges;
+    }
 
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 

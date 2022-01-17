@@ -50,11 +50,11 @@
 PricerSolverZdd::PricerSolverZdd(const Instance& instance)
     : PricerSolverBase(instance),
       decision_diagram(
-          std::make_unique<DdStructure<NodeZdd<>>>(PricerConstruct(instance))) {
+          std::make_unique<DdStructure<NodeZdd<>>>(PricerConstruct(instance))),
+      size_graph{decision_diagram->size()} {
     remove_layers_init();
     // decision_diagram->compressBdd();
     // decision_diagram->reduceZdd();
-    size_graph = decision_diagram->size();
     init_table();
     construct_mipgraph();
     lp_x = std::vector<double>(num_edges(mip_graph), 0.0);

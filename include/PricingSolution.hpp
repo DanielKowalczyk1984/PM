@@ -60,7 +60,7 @@ class PricingSolution {
         os << "obj = " << o.obj << "," << std::endl
            << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
 
-        for (auto& it : o.jobs) {
+        for (const auto& it : o.jobs) {
             os << it->job << ' ';
         }
         return os;

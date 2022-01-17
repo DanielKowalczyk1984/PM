@@ -60,7 +60,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
     auto operator=(const PricerConstruct&) -> PricerConstruct& = default;
     auto operator=(PricerConstruct&&) -> PricerConstruct& = default;
 
-    auto getRoot(int& state) -> int {
+    auto getRoot(int& state) const -> int {
         state = 0;
         return static_cast<int>(nb_layers);
     };
@@ -69,11 +69,11 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         auto layer = nb_layers - level;
         // assert(0 <= layer && layer <= nb_layers - 1);
         // auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[layer]);
-        auto& tmp_pair = (*ptr_vector)[layer];
-        auto* tmp_j = tmp_pair.first;
-        auto* tmp_interval = tmp_pair.second;
+        const auto& tmp_pair = (*ptr_vector)[layer];
+        auto*       tmp_j = tmp_pair.first;
+        auto*       tmp_interval = tmp_pair.second;
 
-        if (value) {
+        if (value == 1) {
             state = state + tmp_j->processing_time;
         }
 
@@ -96,11 +96,11 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         // auto* tmp = static_cast<job_interval_pair*>(aux_list[j])->j;
         auto* tmp = (*ptr_vector)[j].first;
 
-        if (value) {
+        if (value != 0) {
             for (size_t i = j + 1; i < nb_layers; ++i) {
-                auto& tmp_pair = (*ptr_vector)[i];
-                auto* tmp_j = tmp_pair.first;
-                auto* tmp_interval = tmp_pair.second;
+                const auto& tmp_pair = (*ptr_vector)[i];
+                auto*       tmp_j = tmp_pair.first;
+                auto*       tmp_interval = tmp_pair.second;
                 // auto* tmp_pair =
                 // static_cast<job_interval_pair*>(aux_list[i]); auto*
                 // tmp_interval = static_cast<interval*>(tmp_pair->I); auto*
@@ -117,9 +117,9 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
             }
         } else {
             for (auto i = j + 1; i < nb_layers; ++i) {
-                auto& tmp_pair = (*ptr_vector)[i];
-                auto* tmp_j = tmp_pair.first;
-                auto* tmp_interval = tmp_pair.second;
+                const auto& tmp_pair = (*ptr_vector)[i];
+                auto*       tmp_j = tmp_pair.first;
+                auto*       tmp_interval = tmp_pair.second;
                 // auto* tmp_pair =
                 // static_cast<job_interval_pair*>(aux_list[i]); auto*
                 // tmp_interval = static_cast<interval*>(tmp_pair->I); auto*
@@ -136,7 +136,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         return val;
     }
 
-    auto diff_obj(Job* i, Job* j, int C) const -> int {
+    static auto diff_obj(Job* i, Job* j, int C) -> int {
         return i->weighted_tardiness(C) +
                j->weighted_tardiness(C + j->processing_time) -
                (j->weighted_tardiness(C - i->processing_time +

@@ -23,26 +23,26 @@
 #include <algorithm>
 #include <cstddef>
 
-Job::Job(int p, int w, int d) : processing_time(p), due_time(d), weight(w) {}
+Job::Job(int p, int w, int d) : processing_time(p), weight(w), due_time(d) {}
 
-auto Job::weighted_tardiness(int C) -> int {
+auto Job::weighted_tardiness(int C) const -> int {
     return weight * std::max(0, C - due_time);
 }
 
-auto Job::weighted_tardiness(size_t C) -> int {
+auto Job::weighted_tardiness(size_t C) const -> int {
     return weight * std::max(0, static_cast<int>(C) - due_time);
 }
 
-auto Job::weighted_tardiness_start(int S) -> int {
+auto Job::weighted_tardiness_start(int S) const -> int {
     return weight * std::max(0, S + processing_time - due_time);
 }
 
-auto Job::weighted_tardiness_start(size_t S) -> int {
+auto Job::weighted_tardiness_start(size_t S) const -> int {
     return weight *
            std::max(0, static_cast<int>(S) + processing_time - due_time);
 }
 
-auto Job::weighted_tardiness_start(long S) -> int {
+auto Job::weighted_tardiness_start(long S) const -> int {
     return weight *
            std::max(0, static_cast<int>(S) + processing_time - due_time);
 }

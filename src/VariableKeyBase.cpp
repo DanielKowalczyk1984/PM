@@ -59,12 +59,12 @@ void VariableKeyBase::set_high(bool _high) {
     high = _high;
 }
 
-VariableKeyBase::VariableKeyBase(const VariableKeyBase&) = default;
-VariableKeyBase::VariableKeyBase(VariableKeyBase&&) noexcept = default;
+VariableKeyBase::VariableKeyBase(const VariableKeyBase& src) = default;
+VariableKeyBase::VariableKeyBase(VariableKeyBase&& src) noexcept = default;
 
-auto VariableKeyBase::operator=(const VariableKeyBase&)
+auto VariableKeyBase::operator=(const VariableKeyBase& src)
     -> VariableKeyBase& = default;
-auto VariableKeyBase::operator=(VariableKeyBase&&) noexcept
+auto VariableKeyBase::operator=(VariableKeyBase&& src) noexcept
     -> VariableKeyBase& = default;
 
 auto VariableKeyBase::operator==(const VariableKeyBase& other) const -> bool {

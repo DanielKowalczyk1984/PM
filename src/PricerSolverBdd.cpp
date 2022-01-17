@@ -612,7 +612,7 @@ auto PricerSolverBdd::refinement_structure(
     const std::vector<std::shared_ptr<Column>>& paths) -> bool {
     bool  refined_structure = false;
     auto& table = *decision_diagram.getDiagram();
-    for (auto& path : paths) {
+    for (const auto& path : paths) {
         std::vector<NodeId> P;
         std::vector<bool>   L;
         std::vector<NodeId> S;
@@ -629,7 +629,7 @@ auto PricerSolverBdd::refinement_structure(
             auto& tmp_node{table.node(P.back())};
             auto* tmp_job{job_it != path->job_list.end() ? *job_it : nullptr};
 
-            if (tmp_job == tmp_node.get_job()) {
+            if (tmp_job == tmp_node.get_job() && tmp_job != nullptr) {
                 if (S[tmp_job->job] != 0) {
                     conflict_job = tmp_job;
                     break;
@@ -645,15 +645,16 @@ auto PricerSolverBdd::refinement_structure(
             }
         }
 
-        if (conflict_job) {
+        if (conflict_job != nullptr) {
             auto nodeid_new = P[index_P[conflict_job->job]];
             for (auto&& label :
                  L | ranges::views::drop(index_P[conflict_job->job])) {
                 auto& p = table.node(nodeid_new);
-                auto& c = table.node(p[label]);
+                auto& c = label ? table.node(p[1]) : table.node(p[0]);
                 auto  w = c;
-                nodeid_new =
-                    NodeId(p[label].row(), table[p[label].row()].size());
+                nodeid_new = label
+                                 ? NodeId(p[1].row(), table[p[1].row()].size())
+                                 : NodeId(p[0].row(), table[p[0].row()].size());
 
                 if (conflict_job == c.get_job()) {
                     w[0] = c[0];
@@ -662,9 +663,13 @@ auto PricerSolverBdd::refinement_structure(
 
                 w.set_node_id_label(nodeid_new);
                 w.reset_all(convex_constr_id);
-                table[p[label].row()].emplace_back(w);
+                table[label ? p[1].row() : p[0].row()].emplace_back(w);
 
-                p[label] = nodeid_new;
+                if(label) {
+                    p[1] = nodeid_new;
+                } else {
+                    p[0] = nodeid_new;
+                }
             }
             refined_structure = true;
         }
@@ -1731,7 +1736,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
 
                 auto high = (tmp_j == tmp_node.get_job());
                 tmp_node.update_lp_x(x, high);
-                tmp_nodeid = tmp_node[high];
+                tmp_nodeid = high ? tmp_node[1] : tmp_node[0];
                 if (high) {
                     ++it;
                 }
@@ -1794,7 +1799,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
 
                 auto high = (tmp_j == tmp_node.get_job());
                 tmp_node.update_lp_x(x, high);
-                tmp_nodeid = tmp_node[high];
+                tmp_nodeid = high ? tmp_node[1] : tmp_node[0];
                 if (high) {
                     ++it;
                 }
@@ -1842,7 +1847,7 @@ void PricerSolverBdd::construct_lp_sol_from_rmp(
 
 void PricerSolverBdd::project_sol_on_original_variables(const Sol& _sol) {
     auto& table = *(decision_diagram.getDiagram());
-    for (auto& m : _sol.machines) {
+    for (const auto& m : _sol.machines) {
         auto tmp_nodeid(decision_diagram.root());
         auto it = m.job_list.begin();
 
@@ -1852,7 +1857,7 @@ void PricerSolverBdd::project_sol_on_original_variables(const Sol& _sol) {
 
             auto high = (tmp_j == tmp_node.get_job());
             tmp_node.update_best_sol_x(high);
-            tmp_nodeid = tmp_node[high];
+            tmp_nodeid = high ? tmp_node[1] : tmp_node[0];
             if (high) {
                 ++it;
             }
@@ -2130,7 +2135,7 @@ auto PricerSolverBdd::check_column(Column const* col) -> bool {
         }
     }
 
-    return (tmp_nodeid == 1 && it == set.end() && !counter);
+    return (tmp_nodeid == 1 && it == set.end() && counter == 0);
 }
 
 auto PricerSolverBdd::evaluate_rc_low_arc(NodeBdd& n) -> double {

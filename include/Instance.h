@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __INSTANCE_H__
-#define __INSTANCE_H__
+#ifndef INSTANCE_H
+#define INSTANCE_H
 #include <fmt/format.h>  // for format
 #include <chrono>        // for filesystem
 #include <cstddef>       // for size_t
@@ -88,13 +88,16 @@ struct fmt::formatter<Instance> {
     char presentation = 'v';
 
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-        auto it = ctx.begin(), end = ctx.end();
-        if (it != end && (*it == 'v' || *it == 'n'))
+        const auto* it = ctx.begin();
+        const auto* end = ctx.end();
+        if (it != end && (*it == 'v' || *it == 'n')) {
             presentation = *it++;
+        }
 
         // Check if reached the end of the range:
-        if (it != end && *it != '}')
+        if (it != end && *it != '}') {
             throw format_error("invalid format");
+        }
 
         return it;
     }
@@ -104,10 +107,9 @@ struct fmt::formatter<Instance> {
         -> decltype(ctx.out()) {
         if (presentation == 'n') {
             return format_to(ctx.out(), "n,m,NameInstance");
-        } else {
-            return format_to(ctx.out(), "{},{},{}", inst.nb_jobs,
-                             inst.nb_machines, inst.pname);
         }
+        return format_to(ctx.out(), "{},{},{}", inst.nb_jobs, inst.nb_machines,
+                         inst.pname);
     }
 };
-#endif  // __INSTANCE_H__
+#endif  // INSTANCE_H

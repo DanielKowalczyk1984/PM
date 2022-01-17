@@ -37,6 +37,13 @@ class PricerSolverZddBackwardSimple : public PricerSolverZdd {
     PricerSolverZddBackwardSimple(const Instance& instance);
     PricerSolverZddBackwardSimple(const PricerSolverZddBackwardSimple&) =
         default;
+    PricerSolverZddBackwardSimple(PricerSolverZddBackwardSimple&&) = default;
+    auto operator=(PricerSolverZddBackwardSimple&&)
+        -> PricerSolverZddBackwardSimple& = default;
+    auto operator=(const PricerSolverZddBackwardSimple&)
+        -> PricerSolverZddBackwardSimple& = delete;
+    ~PricerSolverZddBackwardSimple() override = default;
+
     auto pricing_algorithm(double* _pi) -> PricingSolution override;
     auto pricing_algorithm(std::span<const double>& _pi)
         -> PricingSolution override;
@@ -60,6 +67,7 @@ class PricerSolverZddBackwardCycle : public PricerSolverZdd {
         -> PricerSolverZddBackwardCycle& = delete;
     auto operator=(const PricerSolverZddBackwardCycle&)
         -> PricerSolverZddBackwardCycle& = delete;
+    ~PricerSolverZddBackwardCycle() override = default;
 
     auto pricing_algorithm(double* _pi) -> PricingSolution override;
     auto pricing_algorithm(std::span<const double>& _pi)

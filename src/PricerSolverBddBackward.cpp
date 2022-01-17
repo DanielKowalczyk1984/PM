@@ -152,25 +152,29 @@ void PricerSolverBddBackwardCycle::compute_labels(
     get_decision_diagram().compute_labels_forward(reversed_evaluator);
 }
 
-auto PricerSolverBddBackwardCycle::evaluate_rc_arc(NodeBdd& s) -> double {
+auto PricerSolverBddBackwardCycle::evaluate_rc_arc(NodeBdd& n) -> double {
     auto& table = *(get_decision_diagram().getDiagram());
-    auto* job = s.get_job();
-    auto& child = table.node(s[1]);
+    auto* job = n.get_job();
+    auto& child = table.node(n[1]);
 
-    if (s.forward_label[0].prev_job_forward() != job &&
+    if (n.forward_label[0].prev_job_forward() != job &&
         child.backward_label[0].prev_job_backward() != job) {
-        return s.forward_label[0].get_f() + child.backward_label[0].get_f() +
-               s.get_reduced_cost()[1];
-    } else if (s.forward_label[0].prev_job_forward() == job &&
-               child.backward_label[0].prev_job_backward() != job) {
-        return s.forward_label[1].get_f() + child.backward_label[0].get_f() +
-               s.get_reduced_cost()[1];
-    } else if (s.forward_label[0].prev_job_forward() != job &&
-               child.backward_label[0].prev_job_backward() == job) {
-        return s.forward_label[0].get_f() + child.backward_label[1].get_f() +
-               s.get_reduced_cost()[1];
-    } else {
-        return s.forward_label[1].get_f() + child.backward_label[1].get_f() +
-               s.get_reduced_cost()[1];
+        return n.forward_label[0].get_f() + child.backward_label[0].get_f() +
+               n.get_reduced_cost()[1];
     }
+
+    if (n.forward_label[0].prev_job_forward() == job &&
+        child.backward_label[0].prev_job_backward() != job) {
+        return n.forward_label[1].get_f() + child.backward_label[0].get_f() +
+               n.get_reduced_cost()[1];
+    }
+
+    if (n.forward_label[0].prev_job_forward() != job &&
+        child.backward_label[0].prev_job_backward() == job) {
+        return n.forward_label[0].get_f() + child.backward_label[1].get_f() +
+               n.get_reduced_cost()[1];
+    }
+
+    return n.forward_label[1].get_f() + child.backward_label[1].get_f() +
+           n.get_reduced_cost()[1];
 }

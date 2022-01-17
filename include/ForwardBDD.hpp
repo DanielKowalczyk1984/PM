@@ -40,7 +40,7 @@ class ForwardBddBase : public Eval<NodeBdd, PricingSolution> {
     auto operator=(const ForwardBddBase&) -> ForwardBddBase& = default;
     auto operator=(ForwardBddBase&&) noexcept -> ForwardBddBase& = default;
 
-    void set_pi(double* _pi) { pi = _pi; }
+    void set_pi(const double* _pi) { pi = _pi; }
     void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
 
     [[nodiscard]] auto get_pi() const -> const double* { return pi; }
@@ -54,7 +54,7 @@ class ForwardBddBase : public Eval<NodeBdd, PricingSolution> {
     auto get_objective(NodeBdd& n) const -> PricingSolution override {
         PricingSolution sol(0.0);
         auto*           ptr_node = &(n.forward_label[0]);
-        auto            table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto*           table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
 
         while (ptr_node->get_previous() != nullptr) {
             auto* aux_prev_node = ptr_node->get_previous();
@@ -100,7 +100,7 @@ class ForwardBddCycle : public ForwardBddBase {
 
     void evalNode(NodeBdd& n) const override {
         auto*       tmp_j = n.get_job();
-        auto        table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto*       table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
         auto&       p0 = table_tmp->node(n[0]);
         auto&       p1 = table_tmp->node(n[1]);
         const auto* dual = ForwardBddBase::get_pi();

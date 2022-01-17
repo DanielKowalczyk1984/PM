@@ -84,7 +84,7 @@ void NodeData::solve_farkas_dbl() {
     if (s.obj < EPS) {
         localColPool.emplace_back(std::make_shared<Column>(std::move(s)));
         add_lhs_column_to_rmp(
-            localColPool.back().get()->total_weighted_completion_time);
+            localColPool.back()->total_weighted_completion_time);
     }
 
     solve_relaxation();

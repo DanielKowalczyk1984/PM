@@ -898,8 +898,8 @@ void LocalSearchData::calculate_g(Sol& sol) {
 void LocalSearchData::create_processing_insertion_operator(const Sol& sol,
                                                            size_t     l) {
     for (auto&& [i, m] : sol.machines | ranges::views::enumerate) {
-        auto  C = 0;
-        auto& machine = m.job_list;
+        auto        C = 0;
+        const auto& machine = m.job_list;
 
         if (machine.size() < l) {
             continue;
@@ -925,8 +925,8 @@ void LocalSearchData::create_processing_list_swap(const Sol& sol,
                                                   size_t     l1,
                                                   size_t     l2) {
     for (auto&& [i, m] : sol.machines | ranges::views::enumerate) {
-        auto&      vec_m = m.job_list;
-        const auto n = vec_m.size();
+        const auto& vec_m = m.job_list;
+        const auto  n = vec_m.size();
 
         if (n < l1 + l2) {
             continue;
@@ -978,8 +978,8 @@ void LocalSearchData::create_processing_insertion_operator_inter(const Sol& sol,
             [](const auto& tmp) { return tmp->processing_time; });
 
         for (auto j = 0UL; j < nb - l; ++j) {
-            auto j1 = vec_m[j];
-            auto j2 = vec_m[j + l];
+            auto* j1 = vec_m[j];
+            auto* j2 = vec_m[j + l];
             processing_list[0][i][j] = {j, C};
             C = C - j1->processing_time + j2->processing_time;
         }
@@ -994,8 +994,8 @@ void LocalSearchData::create_processing_list_swap_inter(const Sol& sol,
                                                         size_t     l1,
                                                         size_t     l2) {
     for (auto i = 0UL; i < nb_machines; ++i) {
-        auto&      machine = sol.machines[i].job_list;
-        const auto nb = machine.size();
+        const auto& machine = sol.machines[i].job_list;
+        const auto  nb = machine.size();
 
         if (nb < l1 || nb < l2) {
             continue;
@@ -1006,8 +1006,8 @@ void LocalSearchData::create_processing_list_swap_inter(const Sol& sol,
             [](const auto& tmp) { return tmp->processing_time; });
 
         for (auto j = 0UL; j < nb - l1; ++j) {
-            auto j1 = machine[j];
-            auto j2 = machine[j + l1];
+            auto* j1 = machine[j];
+            auto* j2 = machine[j + l1];
             processing_list[0][i][j] = {j, C};
             C = C - j1->processing_time + j2->processing_time;
         }
@@ -1022,8 +1022,8 @@ void LocalSearchData::create_processing_list_swap_inter(const Sol& sol,
             [](const auto& tmp) -> int { return tmp->processing_time; });
 
         for (auto j = 0UL; j < nb - l2; ++j) {
-            auto j1 = machine[j];
-            auto j2 = machine[j + l2];
+            auto* j1 = machine[j];
+            auto* j2 = machine[j + l2];
             processing_list[1][i][j] = {j, C};
             C = C - j1->processing_time + j2->processing_time;
         }

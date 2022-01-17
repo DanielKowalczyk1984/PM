@@ -38,21 +38,21 @@ struct Column {
     std::vector<Job*> job_list{};
 
     Column() = default;
-    explicit Column(const Machine&);
+    explicit Column(const Machine& m);
     explicit Column(PricingSolution&& pricing_solution);
     ~Column() = default;
-    Column(Column&&) = default;
-    Column(const Column&) = default;
+    Column(Column&& _col) = default;
+    Column(const Column& _col) = default;
 
     auto operator<(Column const& other) -> bool;
     auto operator==(Column const& other) const -> bool;
     auto operator<=>(Column const& other) -> bool;
-    auto operator=(const Column&) -> Column& = default;
-    auto operator=(Column&&) -> Column& = default;
+    auto operator=(const Column& other) -> Column& = default;
+    auto operator=(Column&& other) -> Column& = default;
 
     friend auto operator<<(std::ostream& os, const Column& set)
         -> std::ostream& {
-        for (auto& it : set.job_list) {
+        for (const auto& it : set.job_list) {
             os << it->job << " ";
         }
         os << "C = " << set.total_processing_time

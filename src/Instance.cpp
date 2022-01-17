@@ -55,7 +55,9 @@ Instance::Instance(Parms const& _parms)
             ss >> nb_jobs;
         }
 
-        int  p{}, d{}, w{};
+        int  p{};
+        int  d{};
+        int  w{};
         auto counter{0UL};
         while (getline(in_file, str)) {
             std::istringstream ss(str);
@@ -169,10 +171,9 @@ void Instance::find_division() {
                         (tmp + it_tmp.jobs[1]->processing_time >=
                          it_tmp.I->b)) {
                         return true;
-                    } else {
-                        it_tmp.right = tmp + it_tmp.jobs[1]->processing_time;
-                        return false;
                     }
+                    it_tmp.right = tmp + it_tmp.jobs[1]->processing_time;
+                    return false;
                 });
             }
 

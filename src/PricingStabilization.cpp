@@ -82,7 +82,7 @@ auto PricingStabilizationBase::get_sol() -> PricingSolution& {
     return sol;
 }
 
-auto PricingStabilizationBase::get_reduced_cost() -> double {
+auto PricingStabilizationBase::get_reduced_cost() const -> double {
     return reduced_cost;
 }
 
@@ -90,7 +90,7 @@ auto PricingStabilizationBase::get_eps_stab_solver() -> double {
     return ETA_DIFF;
 }
 
-auto PricingStabilizationBase::get_update_stab_center() -> bool {
+auto PricingStabilizationBase::get_update_stab_center() const -> bool {
     return update_stab_center;
 }
 
@@ -126,20 +126,9 @@ void PricingStabilizationBase::remove_constraints(int first, int nb_del) {
     pi_in.erase(it_in, it_in + nb_del);
 }
 
-void PricingStabilizationBase::update_continueLP(int _continueLP) {
-    if (_continueLP) {
-        continueLP = true;
-    } else {
-        continueLP = false;
-    }
-}
-
-auto PricingStabilizationBase::do_reduced_cost_fixing() -> int {
-    if ((iterations == 1 || !continueLP ||
-         previous_fix <= iterations - RC_FIXING_RATE)) {
-        return 1;
-    }
-    return 0;
+auto PricingStabilizationBase::do_reduced_cost_fixing() -> bool {
+    return ((iterations == 1 || !continueLP ||
+             previous_fix <= iterations - RC_FIXING_RATE));
 }
 
 void PricingStabilizationBase::update_continueLP(double obj) {
@@ -206,7 +195,7 @@ void PricingStabilizationStat::solve(double _eta_out, double* _lhs_coeff) {
     continueLP = (ETA_DIFF < eta_out - eta_in);
 
     if (eta_sep > eta_in) {
-        hasstabcenter = 1;
+        hasstabcenter = true;
         eta_in = eta_sep;
         pi_in = pi_sep;
         update_stab_center = true;
@@ -306,7 +295,7 @@ void PricingStabilizationDynamic::solve(double _eta_out, double* _lhs) {
     } while (mispricing && alphabar > 0.0);
 
     if (result_sep > eta_in) {
-        hasstabcenter = 1;
+        hasstabcenter = true;
         eta_in = result_sep;
         pi_in = pi_sep;
         update_stab_center = true;
@@ -449,17 +438,17 @@ void PricingStabilizationHybrid::solve(double _eta_out,
 
         if (reduced_cost < EPS_RC) {
             if (in_mispricing_schedule) {
-                in_mispricing_schedule = 0;
+                in_mispricing_schedule = false;
             }
             sol = std::move(aux_sol);
             update_subgradientproduct();
             update_alpha();
         } else {
             if (stabilized) {
-                in_mispricing_schedule = 1;
+                in_mispricing_schedule = true;
                 update_alpha_misprice();
             } else {
-                in_mispricing_schedule = 0;
+                in_mispricing_schedule = false;
             }
         }
     } while (in_mispricing_schedule && stabilized);
@@ -533,7 +522,9 @@ auto PricingStabilizationHybrid::compute_dual(auto i) -> double {
 
     if (hasstabcenter && (usedbeta == 0.0 || usedalpha == 0.0)) {
         return usedalpha * pi_in[i] + (1.0 - usedalpha) * pi_out[i];
-    } else if (hasstabcenter && usedbeta > 0.0) {
+    }
+
+    if (hasstabcenter && usedbeta > 0.0) {
         double dual = pi_in[i] +
                       hybridfactor *
                           (beta * (pi_in[i] + subgradient_in[i] * dualdiffnorm /
@@ -551,7 +542,7 @@ void PricingStabilizationHybrid::update_stabcenter(
         pi_in = pi_sep;
         compute_subgradient_norm(_sol);
         eta_in = eta_sep;
-        hasstabcenter = 1;
+        hasstabcenter = true;
         update_stab_center = true;
         solver->calculate_constLB(pi_sep.data());
         solver->evaluate_nodes(pi_sep.data());

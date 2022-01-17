@@ -28,9 +28,8 @@
 struct Job {
     size_t job{};
     int    processing_time{};
-    int    due_time{};
     int    weight{};
-    int    release_time{};
+    int    due_time{};
 
     Job() = default;
     Job(int p, int w, int d);
@@ -40,15 +39,15 @@ struct Job {
     auto operator=(Job&&) -> Job& = default;
     ~Job() = default;
 
-    auto weighted_tardiness(int C) -> int;
-    auto weighted_tardiness(size_t C) -> int;
-    auto weighted_tardiness_start(int S) -> int;
-    auto weighted_tardiness_start(size_t S) -> int;
-    auto weighted_tardiness_start(long S) -> int;
+    [[nodiscard]] auto weighted_tardiness(int C) const -> int;
+    [[nodiscard]] auto weighted_tardiness(size_t C) const -> int;
+    [[nodiscard]] auto weighted_tardiness_start(int S) const -> int;
+    [[nodiscard]] auto weighted_tardiness_start(size_t S) const -> int;
+    [[nodiscard]] auto weighted_tardiness_start(long S) const -> int;
 };
 
 auto value_diff_Fij(int C, Job* i, Job* j) -> int;
 auto value_diff_Fij(size_t C, Job* i, Job* j) -> int;
-auto bool_diff_Fij(int, Job*, Job*) -> bool;
+auto bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) -> bool;
 
 #endif  // JOB_H

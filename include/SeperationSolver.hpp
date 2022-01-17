@@ -39,8 +39,6 @@ class SeperationSolver {
    private:
     PricerSolverBase*            solver;
     std::vector<ConstraintBase*> cuts;
-
-    int max_nb_cuts;
 };
 
 #endif

@@ -42,7 +42,7 @@ class PricerSolverSimpleDp : public PricerSolverBase {
     std::vector<std::vector<Job*>> backward_graph;
     std::vector<std::vector<Job*>> forward_graph;
     std::vector<GRBVar>            TI_x;
-    std::vector<int>               take;
+    std::vector<bool>              take;
     std::vector<double>            lp_x;
     std::vector<double>            solution_x;
 

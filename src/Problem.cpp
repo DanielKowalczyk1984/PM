@@ -47,10 +47,8 @@ Problem::Problem(int argc, const char** argv)
     : parms(argc, argv),
       stat(parms),
       instance(parms),
-      tree(),
       root_pd(std::make_unique<NodeData>(this)),
-      status(no_sol),
-      opt_sol() {
+      status(no_sol) {
     /**
      * @brief
      * Finding heuristic solutions to the problem or start without feasible

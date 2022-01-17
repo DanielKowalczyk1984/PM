@@ -113,7 +113,7 @@ auto PricerSolverZddBackwardSimple::evaluate_nodes(double* pi) -> bool {
 
     fmt::print("removed edges = {}\n", nb_removed_edges);
 
-    return nb_removed_edges;
+    return (nb_removed_edges > 0);
 }
 
 auto PricerSolverZddBackwardSimple::evaluate_nodes(std::span<const double>& pi)
@@ -147,7 +147,7 @@ auto PricerSolverZddBackwardSimple::evaluate_nodes(std::span<const double>& pi)
 
     fmt::print("removed edges = {}\n", nb_removed_edges);
 
-    return nb_removed_edges;
+    return (nb_removed_edges > 0);
 }
 PricerSolverZddBackwardCycle::PricerSolverZddBackwardCycle(
     const Instance& instance)
@@ -253,7 +253,7 @@ auto PricerSolverZddBackwardCycle::evaluate_nodes(double* pi) -> bool {
 
     fmt::print("removed edges = {}\n", nb_removed_edges);
 
-    return nb_removed_edges;
+    return (nb_removed_edges > 0);
 }
 
 auto PricerSolverZddBackwardCycle::evaluate_nodes(std::span<const double>& pi)
@@ -322,5 +322,5 @@ auto PricerSolverZddBackwardCycle::evaluate_nodes(std::span<const double>& pi)
 
     fmt::print("removed edges = {}\n", nb_removed_edges);
 
-    return nb_removed_edges;
+    return (nb_removed_edges > 0);
 }

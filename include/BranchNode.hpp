@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __BRANCHNODE_H__
-#define __BRANCHNODE_H__
+#ifndef BRANCHNODE_H
+#define BRANCHNODE_H
 
 #include <array>                     // for array
 #include <limits>                    // for numeric_limits
@@ -67,17 +67,19 @@ class BranchNodeBase : public State {
     static constexpr auto ERROR = 1e-12;
     static constexpr auto IntegerTolerance = 1e-3;
     static constexpr auto MAX_NB_PATHS = 240000000000;
+    static constexpr auto MAX_DEPTH = 7;
+    static constexpr auto BRANCH_POINT_VALUE = 0.5;
 };
 
 class BranchNodeRelBranching : public BranchNodeBase {
    public:
-    explicit BranchNodeRelBranching(std::unique_ptr<NodeData>,
-                                    bool isRoot = false);
-    BranchNodeRelBranching(BranchNodeRelBranching&&) = default;
-    BranchNodeRelBranching(const BranchNodeRelBranching&) = delete;
-    auto operator=(BranchNodeRelBranching&&)
+    explicit BranchNodeRelBranching(std::unique_ptr<NodeData> _node,
+                                    bool                      isRoot = false);
+    BranchNodeRelBranching(BranchNodeRelBranching&& _branch_node) = default;
+    BranchNodeRelBranching(const BranchNodeRelBranching& _branch_node) = delete;
+    auto operator=(BranchNodeRelBranching&& _branch_node)
         -> BranchNodeRelBranching& = default;
-    auto operator=(const BranchNodeRelBranching&)
+    auto operator=(const BranchNodeRelBranching& _branch_node)
         -> BranchNodeRelBranching& = delete;
     ~BranchNodeRelBranching() override = default;
 
@@ -90,14 +92,16 @@ struct BranchCandidate {
     std::array<std::unique_ptr<NodeData>, 2> data_child_nodes;
 
     BranchCandidate() = default;
-    BranchCandidate(const BranchCandidate&) = delete;
-    BranchCandidate(BranchCandidate&&) = default;
-    auto operator=(const BranchCandidate&) -> BranchCandidate& = delete;
-    auto operator=(BranchCandidate&&) -> BranchCandidate& = default;
+    BranchCandidate(const BranchCandidate& _branch_cand) = delete;
+    BranchCandidate(BranchCandidate&& _branch_cand) = default;
+    auto operator=(const BranchCandidate& _branch_cand)
+        -> BranchCandidate& = delete;
+    auto operator=(BranchCandidate&& _branch_cand)
+        -> BranchCandidate& = default;
     ~BranchCandidate() = default;
 
     BranchCandidate(double                                     _score,
                     std::array<std::unique_ptr<NodeData>, 2>&& child_nodes);
     BranchCandidate(double _score);
 };
-#endif  // __BRANCHNODE_H__
+#endif  // BRANCHNODE_H
