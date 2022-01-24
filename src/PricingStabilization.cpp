@@ -21,16 +21,18 @@
 // SOFTWARE.
 
 #include "PricingStabilization.hpp"
-#include <fmt/core.h>            // for print
-#include <algorithm>             // for max, min
-#include <cmath>                 // for sqrt
-#include <memory>                // for make_unique, unique_ptr
-#include <utility>               // for move
-#include <vector>                // for vector
-#include "DebugLvl.hpp"          // for debug_lvl
-#include "ModelInterface.hpp"    // for ReformulationModel
-#include "PricerSolverBase.hpp"  // for PricerSolverBase
-#include "or-utils/util.h"       // for dbg_lvl, SQR
+#include <fmt/core.h>              // for print
+#include <algorithm>               // for max, min
+#include <cmath>                   // for sqrt
+#include <memory>                  // for make_unique, unique_ptr
+#include <range/v3/view/take.hpp>  // for take
+#include <range/v3/view/zip.hpp>   // for zip
+#include <utility>                 // for move
+#include <vector>                  // for vector
+#include "DebugLvl.hpp"            // for debug_lvl
+#include "ModelInterface.hpp"      // for ReformulationModel
+#include "PricerSolverBase.hpp"    // for PricerSolverBase
+#include "or-utils/util.h"         // for dbg_lvl, SQR
 
 /**
  * @brief Construct a new Pricing Stabilization Base:: Pricing Stabilization
@@ -115,8 +117,9 @@ void PricingStabilizationBase::update_duals() {
 
 auto PricingStabilizationBase::reduced_cost_fixing() -> bool {
     previous_fix = iterations;
-    solver->calculate_constLB(pi_sep.data());
-    return solver->evaluate_nodes(pi_sep.data());
+    auto aux_sep = std::span<const double>{pi_sep};
+    solver->calculate_constLB(aux_sep);
+    return solver->evaluate_nodes(aux_sep);
 }
 
 void PricingStabilizationBase::remove_constraints(int first, int nb_del) {
@@ -166,31 +169,32 @@ PricingStabilizationStat::PricingStabilizationStat(
  */
 void PricingStabilizationStat::solve(double _eta_out, double* _lhs_coeff) {
     k = 0;
-    bool mispricing = true;
+    bool miss_pricing = true;
     update = 0;
 
     eta_out = _eta_out;
     iterations++;
     update_stab_center = false;
 
+    auto aux_sep = std::span<const double>{ pi_sep };
     do {
         k += 1;
         alphabar =
             (hasstabcenter) ? std::max(0.0, 1.0 - k * (1.0 - alpha)) : 0.0;
         compute_pi_eta_sep(alphabar);
-        solver->calculate_constLB(pi_sep.data());
-        PricingSolution aux_sol = solver->pricing_algorithm(pi_sep.data());
+        solver->calculate_constLB(aux_sep);
+        PricingSolution aux_sol = solver->pricing_algorithm(aux_sep);
 
-        eta_sep = solver->compute_lagrange(aux_sol, pi_sep);
+        eta_sep = solver->compute_lagrange(aux_sol, aux_sep);
         reduced_cost =
             solver->compute_reduced_cost(aux_sol, pi_out, _lhs_coeff);
 
         if (reduced_cost < EPS_RC) {
             sol = std::move(aux_sol);
             update = 1;
-            mispricing = false;
+            miss_pricing = false;
         }
-    } while (mispricing && alphabar > 0); /** mispricing check */
+    } while (miss_pricing && alphabar > 0); /** miss_pricing check */
 
     continueLP = (ETA_DIFF < eta_out - eta_in);
 
@@ -241,8 +245,10 @@ void PricingStabilizationStat::set_alpha(double _alpha) {
 void PricingStabilizationStat::compute_pi_eta_sep(double _alpha_bar) {
     double beta_bar = 1.0 - _alpha_bar;
 
-    for (auto i = 0UL; i < solver->reformulation_model.size(); ++i) {
-        pi_sep[i] = _alpha_bar * pi_in[i] + (1.0 - _alpha_bar) * pi_out[i];
+    for (auto&& [sep, in, out] :
+         ranges::views::zip(pi_sep, pi_in, pi_out) |
+             ranges::views::take(solver->reformulation_model.size())) {
+        sep = _alpha_bar * in + beta_bar * out;
     }
 
     eta_sep = _alpha_bar * (eta_in) + beta_bar * (eta_out);
@@ -269,19 +275,20 @@ PricingStabilizationDynamic::PricingStabilizationDynamic(
 void PricingStabilizationDynamic::solve(double _eta_out, double* _lhs) {
     k = 0;
     double result_sep{};
-    bool   mispricing = true;
+    bool   miss_pricing = true;
     update = 0;
 
     eta_out = _eta_out;
     iterations++;
     update_stab_center = false;
 
+    auto aux_sep = std::span<const double>(pi_sep.data(), pi_sep.size());
     do {
         k += 1;
         alphabar = hasstabcenter ? std::max(0.0, 1.0 - k * (1 - alpha)) : 0.0;
         compute_pi_eta_sep(alphabar);
-        auto aux_sol = solver->pricing_algorithm(pi_sep.data());
-        result_sep = solver->compute_lagrange(aux_sol, pi_sep);
+        auto aux_sol = solver->pricing_algorithm(aux_sep);
+        result_sep = solver->compute_lagrange(aux_sol, aux_sep);
         reduced_cost = solver->compute_reduced_cost(aux_sol, pi_out, _lhs);
 
         if (reduced_cost < EPS_RC) {
@@ -290,9 +297,9 @@ void PricingStabilizationDynamic::solve(double _eta_out, double* _lhs) {
             sol = std::move(aux_sol);
             alpha = alphabar;
             update = 1;
-            mispricing = false;
+            miss_pricing = false;
         }
-    } while (mispricing && alphabar > 0.0);
+    } while (miss_pricing && alphabar > 0.0);
 
     if (result_sep > eta_in) {
         hasstabcenter = true;
@@ -300,8 +307,8 @@ void PricingStabilizationDynamic::solve(double _eta_out, double* _lhs) {
         pi_in = pi_sep;
         update_stab_center = true;
         if (iterations % RC_FIXING_RATE == 0) {
-            solver->calculate_constLB(pi_sep.data());
-            solver->evaluate_nodes(pi_sep.data());
+            solver->calculate_constLB(aux_sep);
+            solver->evaluate_nodes(aux_sep);
         }
     }
 
@@ -428,10 +435,10 @@ void PricingStabilizationHybrid::solve(double _eta_out,
             pi_sep[i] = compute_dual(i);
         }
 
-        PricingSolution aux_sol;
-        aux_sol = solver->pricing_algorithm(pi_sep.data());
+        auto            aux_sep = std::span<const double>{pi_sep};
+        PricingSolution aux_sol = solver->pricing_algorithm(aux_sep);
 
-        eta_sep = solver->compute_lagrange(aux_sol, pi_sep);
+        eta_sep = solver->compute_lagrange(aux_sol, aux_sep);
         reduced_cost = solver->compute_reduced_cost(aux_sol, pi_out, _lhs);
 
         update_stabcenter(aux_sol);
@@ -544,8 +551,9 @@ void PricingStabilizationHybrid::update_stabcenter(
         eta_in = eta_sep;
         hasstabcenter = true;
         update_stab_center = true;
-        solver->calculate_constLB(pi_sep.data());
-        solver->evaluate_nodes(pi_sep.data());
+        auto aux_sep = std::span<const double>{pi_sep};
+        solver->calculate_constLB(aux_sep);
+        solver->evaluate_nodes(aux_sep);
     }
 }
 

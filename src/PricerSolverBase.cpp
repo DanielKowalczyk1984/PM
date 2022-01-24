@@ -101,87 +101,6 @@ auto PricerSolverBase::evaluate_mip_model() -> bool {
     }
 }
 
-auto PricerSolverBase::compute_sub_optimal_duals(
-    const double*                               lambda,
-    const std::vector<std::shared_ptr<Column>>& columns) -> bool {
-    GRBModel sub_optimal(*genv);
-    sub_optimal.set(GRB_IntAttr_ModelSense, GRB_MAXIMIZE);
-    std::vector<GRBVar> beta{convex_constr_id};
-    std::vector<GRBVar> eta;
-    double              LB{};
-    auto                removed = false;
-
-    for (auto& it : beta) {
-        it = sub_optimal.addVar(0.0, GRB_INFINITY, 1.0, GRB_CONTINUOUS);
-    }
-
-    auto last = sub_optimal.addVar(
-        0.0, GRB_INFINITY, -static_cast<double>(convex_rhs), GRB_CONTINUOUS);
-
-    std::span<const double> aux_cols{lambda, columns.size()};
-
-    for (auto&& [set, x] : ranges::views::zip(columns, aux_cols)) {
-        if (x > EPS_SOLVER) {
-            eta.emplace_back(sub_optimal.addVar(0.0, GRB_INFINITY, 1.0, 'C'));
-            GRBLinExpr expr = -last;
-            for (auto& it : set->job_list) {
-                expr += beta[it->job];
-            }
-            expr += eta.back();
-            sub_optimal.addConstr(expr, '=',
-                                  set->total_weighted_completion_time);
-            LB += set->total_weighted_completion_time * x;
-        } else {
-            GRBLinExpr expr = -last;
-            for (auto& it : set->job_list) {
-                expr += beta[it->job];
-            }
-            sub_optimal.addConstr(expr, '<',
-                                  set->total_weighted_completion_time);
-        }
-    }
-
-    GRBLinExpr expr = -static_cast<double>(convex_rhs) * last;
-    for (auto& it : beta) {
-        expr += it;
-    }
-    sub_optimal.addConstr(expr, '>', LB - RC_FIXING);
-
-    auto cont = false;
-    do {
-        sub_optimal.update();
-        sub_optimal.optimize();
-
-        auto pi = beta |
-                  ranges::views::transform([&](const auto& tmp) -> double {
-                      return tmp.get(GRB_DoubleAttr_X);
-                  }) |
-                  ranges::to_vector;
-        pi.push_back(last.get(GRB_DoubleAttr_X));
-
-        auto sol = pricing_algorithm(pi.data());
-        auto rc = sol.cost + pi.back();
-        for (auto& it : sol.jobs) {
-            rc -= pi[it->job];
-        }
-
-        if (rc < -RC_FIXING) {
-            GRBLinExpr expr_pricing = -last;
-            for (auto& it : sol.jobs) {
-                expr_pricing += beta[it->job];
-            }
-            sub_optimal.addConstr(expr_pricing, '<', sol.cost);
-            cont = true;
-        } else {
-            cont = false;
-            calculate_constLB(pi.data());
-            removed = evaluate_nodes(pi.data());
-        }
-
-    } while (cont);
-
-    return removed;
-}
 
 auto PricerSolverBase::compute_sub_optimal_duals(
     const std::span<const double>&              lambda,
@@ -237,14 +156,15 @@ auto PricerSolverBase::compute_sub_optimal_duals(
         sub_optimal.update();
         sub_optimal.optimize();
 
-        auto pi = beta |
+        auto aux_pi = beta |
                   ranges::views::transform([&](const auto& tmp) -> double {
                       return tmp.get(GRB_DoubleAttr_X);
                   }) |
                   ranges::to_vector;
-        pi.push_back(last.get(GRB_DoubleAttr_X));
+        aux_pi.push_back(last.get(GRB_DoubleAttr_X));
+        auto pi = std::span<const double>{aux_pi};
 
-        auto sol = pricing_algorithm(pi.data());
+        auto sol = pricing_algorithm(pi);
         auto rc = sol.cost + pi.back();
         for (auto& it : sol.jobs) {
             rc -= pi[it->job];
@@ -259,8 +179,8 @@ auto PricerSolverBase::compute_sub_optimal_duals(
             cont = true;
         } else {
             cont = false;
-            calculate_constLB(pi.data());
-            removed = evaluate_nodes(pi.data());
+            calculate_constLB(pi);
+            removed = evaluate_nodes(pi);
         }
 
     } while (cont);
@@ -355,41 +275,6 @@ auto PricerSolverBase::get_dbl_attr_model(enum MIP_Attr c) -> double {
     return val;
 }
 
-auto PricerSolverBase::compute_reduced_cost(const PricingSolution& sol,
-                                            double*                pi,
-                                            double* lhs) -> double {
-    double result = sol.cost;
-    // auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_lhs{lhs, reformulation_model.size()};
-    std::span aux_pi{pi, reformulation_model.size()};
-    std::ranges::fill(aux_lhs, 0.0);
-
-    for (auto it : sol.jobs | ranges::views::transform(
-                                  [](const auto& tmp) { return tmp->job; })) {
-        VariableKeyBase k(it, 0);
-        for (const auto&& [constr, aux_pi_, aux_lhs_] :
-             ranges::views::zip(reformulation_model, aux_pi, aux_lhs)) {
-            if (constr == reformulation_model[convex_constr_id]) {
-                continue;
-            }
-            auto coeff = (*constr)(k);
-
-            if (std::fabs(coeff) > EPS_SOLVER) {
-                result -= coeff * aux_pi_;
-                aux_lhs_ += coeff;
-            }
-        }
-    }
-
-    double          dual = aux_pi[convex_constr_id];
-    auto*           constr = reformulation_model[convex_constr_id].get();
-    VariableKeyBase k(0, 0, true);
-    double          coeff = (*constr)(k);
-    result -= coeff * dual;
-    aux_lhs[convex_constr_id] += coeff;
-
-    return result;
-}
 
 auto PricerSolverBase::compute_reduced_cost(const PricingSolution&   sol,
                                             std::span<const double>& pi,
@@ -477,36 +362,6 @@ void PricerSolverBase::compute_lhs(const Column& sol, double* lhs) {
     VariableKeyBase k(0, 0, true);
     double          coeff = (*constr)(k);
     aux_lhs[convex_constr_id] += coeff;
-}
-
-auto PricerSolverBase::compute_reduced_cost_simple(const PricingSolution& sol,
-                                                   double* pi) -> double {
-    double result = sol.cost;
-    // auto      nb_constraints = reformulation_model.get_nb_constraints();
-    std::span aux_pi{pi, reformulation_model.size()};
-
-    for (const auto& it : sol.jobs) {
-        VariableKeyBase k(it->job, 0);
-        for (const auto&& [c, constr] :
-             reformulation_model | ranges::views::enumerate) {
-            if (c == convex_constr_id) {
-                continue;
-            }
-            auto coeff = (*constr)(k);
-
-            if (fabs(coeff) > EPS_SOLVER) {
-                result -= coeff * aux_pi[c];
-            }
-        }
-    }
-
-    double          dual = aux_pi[convex_constr_id];
-    auto*           constr = reformulation_model[convex_constr_id].get();
-    VariableKeyBase k(0, 0, true);
-    double          coeff = (*constr)(k);
-    result -= coeff * dual;
-
-    return result;
 }
 
 auto PricerSolverBase::compute_reduced_cost_simple(const PricingSolution&   sol,
@@ -660,17 +515,6 @@ auto PricerSolverBase::compute_subgradient(const PricingSolution& sol,
     return 0.0;
 }
 
-void PricerSolverBase::calculate_constLB(double* pi) {
-    constLB = 0.0;
-    std::span aux_pi{pi, reformulation_model.size()};
-    for (const auto&& [constr, pi_] :
-         ranges::views::zip(reformulation_model, aux_pi)) {
-        if (constr == reformulation_model[convex_constr_id]) {
-            continue;
-        }
-        constLB += constr->get_rhs() * pi_;
-    }
-}
 
 void PricerSolverBase::calculate_constLB(std::span<const double>& pi) {
     constLB = 0.0;

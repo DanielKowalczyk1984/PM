@@ -31,15 +31,16 @@
 #include "PricingSolution.hpp"       // for PricingSolution
 
 class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
-    const double* pi{};
+    std::span<const double> aux_pi{};
 
    public:
     BackwardBddBase() = default;
 
-    void set_pi(const double* _pi) { pi = _pi; }
-    void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
+    void set_aux_pi(std::span<const double>& _pi) { aux_pi = _pi; }
 
-    [[nodiscard]] auto get_pi() const -> const double* { return pi; }
+    [[nodiscard]] auto get_aux_pi() const -> std::span<const double> {
+        return aux_pi;
+    }
 
     auto get_objective(NodeBdd& n) const -> PricingSolution override {
         PricingSolution sol(0.0);
@@ -82,7 +83,7 @@ class BackwardBddSimple : public BackwardBddBase {
 
         n.reset_reduced_costs();
 
-        const double* dual = BackwardBddBase::get_pi();
+        auto dual = BackwardBddBase::get_aux_pi();
 
         for (auto& list : n.get_coeff_list()) {
             list |= ranges::actions::remove_if([&](auto it) {
@@ -134,7 +135,7 @@ class BackwardBddCycle : public BackwardBddBase {
         auto* table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
         auto& p0_tmp = table_tmp->node(n[0]);
         auto& p1_tmp = table_tmp->node(n[1]);
-        const auto* const dual = BackwardBddBase::get_pi();
+        auto dual = BackwardBddBase::get_aux_pi();
 
         n.reset_reduced_costs();
 

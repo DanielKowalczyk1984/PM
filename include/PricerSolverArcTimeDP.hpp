@@ -81,10 +81,8 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         -> PricerSolverArcTimeDp& = default;
     auto operator=(PricerSolverArcTimeDp&&) -> PricerSolverArcTimeDp& = default;
 
-    auto pricing_algorithm(double* _pi) -> PricingSolution override;
     auto pricing_algorithm(std::span<const double>& _pi)
         -> PricingSolution override;
-    auto farkas_pricing(double* pi) -> PricingSolution override;
     auto farkas_pricing(std::span<const double>& pi)
         -> PricingSolution override;
     // PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
@@ -113,13 +111,9 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
 
     void init_table();
 
-    auto evaluate_nodes([[maybe_unused]] double* pi) -> bool override;
     auto evaluate_nodes([[maybe_unused]] std::span<const double>& pi)
         -> bool override;
     void build_mip() override;
-    void construct_lp_sol_from_rmp(
-        const double*                               lambda,
-        const std::vector<std::shared_ptr<Column>>& columns) override;
     void construct_lp_sol_from_rmp(
         const std::span<const double>&              lambda,
         const std::vector<std::shared_ptr<Column>>& columns) override;

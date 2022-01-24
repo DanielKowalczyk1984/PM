@@ -54,11 +54,6 @@ PricerSolverSimple::PricerSolverSimple(const Instance& instance)
     reversed_evaluator = BackwardZddSimpleDouble(convex_constr_id);
 }
 
-auto PricerSolverSimple::pricing_algorithm(double* _pi) -> PricingSolution {
-    evaluator.initialize_pi(_pi);
-    return decision_diagram->evaluate_forward(evaluator);
-}
-
 auto PricerSolverSimple::pricing_algorithm(std::span<const double>& _pi)
     -> PricingSolution {
     evaluator.initialize_pi(_pi);
@@ -114,39 +109,6 @@ auto PricerSolverSimple::evaluate_nodes(std::span<const double>& pi) -> bool {
     return (nb_removed_edges > 0);
 }
 
-auto PricerSolverSimple::evaluate_nodes(double* pi) -> bool {
-    auto& table = *(decision_diagram->getDiagram());
-    compute_labels(pi);
-    double reduced_cost =
-        table.node(decision_diagram->root()).list[0]->backward_label[0].get_f();
-
-    nb_removed_edges = 0;
-
-    // /** check for each node the Lagrangian dual */
-    for (auto& it : table |
-                        ranges::views::take(decision_diagram->topLevel() + 1) |
-                        ranges::views ::drop(1) | ranges::views::join) {
-        for (auto& iter : it.list) {
-            int    w = iter->get_weight();
-            Job*   job = it.get_job();
-            double result = iter->forward_label[0].get_f() +
-                            iter->y->backward_label[0].get_f() -
-                            job->weighted_tardiness_start(w) + pi[job->job];
-            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (constLB + aux_nb_machines * reduced_cost + result >
-                    UB - 1 + RC_FIXING &&
-                (iter->calc_yes)) {
-                iter->calc_yes = false;
-                nb_removed_edges++;
-            }
-        }
-    }
-
-    fmt::print("removed edges = {}\n", nb_removed_edges);
-
-    return (nb_removed_edges > 0);
-}
-
 PricerSolverZddCycle::PricerSolverZddCycle(const Instance& instance)
     : PricerSolverZdd(instance) {
     fmt::print("Constructing ZDD with Forward ZddCycle evaluator\n");
@@ -154,11 +116,6 @@ PricerSolverZddCycle::PricerSolverZddCycle(const Instance& instance)
     fmt::print("number edges ZDD = {}", get_nb_edges());
     evaluator = ForwardZddCycleDouble(convex_constr_id);
     reversed_evaluator = BackwardZddCycleDouble(convex_constr_id);
-}
-
-auto PricerSolverZddCycle::pricing_algorithm(double* _pi) -> PricingSolution {
-    evaluator.initialize_pi(_pi);
-    return decision_diagram->evaluate_forward(evaluator);
 }
 
 auto PricerSolverZddCycle::pricing_algorithm(std::span<const double>& _pi)
@@ -195,79 +152,10 @@ auto PricerSolverZddCycle::evaluate_nodes(std::span<const double>& pi) -> bool {
                         ranges::views::take(decision_diagram->topLevel() + 1) |
                         ranges::views ::drop(1) | ranges::views::join) {
         auto* job = it.get_job();
-        for (auto& iter : it.list) {
-            auto w = iter->get_weight();
-
-            auto aux_nb_machines = static_cast<double>(convex_rhs - 1);
-            if (iter->forward_label[0].prev_job_forward() != job) {
-                if (iter->y->backward_label[0].prev_job_backward() != job) {
-                    auto result = iter->forward_label[0].get_f() +
-                                  iter->y->backward_label[0].get_f() -
-                                  job->weighted_tardiness_start(w) +
-                                  pi[job->job];
-                    if (constLB - aux_nb_machines * reduced_cost - result >
-                            UB + RC_FIXING &&
-                        (iter->calc_yes)) {
-                        iter->calc_yes = false;
-                        nb_removed_edges++;
-                    }
-                } else {
-                    auto result = iter->forward_label[0].get_f() +
-                                  iter->y->backward_label[1].get_f() -
-                                  job->weighted_tardiness_start(w) +
-                                  pi[job->job];
-                    if (constLB - aux_nb_machines * reduced_cost - result >
-                            UB + RC_FIXING &&
-                        (iter->calc_yes)) {
-                        iter->calc_yes = false;
-                        nb_removed_edges++;
-                    }
-                }
-            } else {
-                if (iter->y->backward_label[0].prev_job_backward() != job) {
-                    auto result = iter->forward_label[1].get_f() +
-                                  iter->y->backward_label[0].get_f() -
-                                  job->weighted_tardiness_start(w) +
-                                  pi[job->job];
-                    if (constLB - aux_nb_machines * reduced_cost - result >
-                            UB + RC_FIXING &&
-                        (iter->calc_yes)) {
-                        iter->calc_yes = false;
-                        nb_removed_edges++;
-                    }
-                } else {
-                    auto result = iter->forward_label[1].get_f() +
-                                  iter->y->backward_label[1].get_f() -
-                                  job->weighted_tardiness_start(w) +
-                                  pi[job->job];
-                    if (constLB - aux_nb_machines * reduced_cost - result >
-                            UB + RC_FIXING &&
-                        (iter->calc_yes)) {
-                        iter->calc_yes = false;
-                        nb_removed_edges++;
-                    }
-                }
-            }
+        if (job == nullptr) {
+            continue;
         }
-    }
 
-    fmt::print("removed edges = {}\n", nb_removed_edges);
-
-    return (nb_removed_edges > 0);
-}
-
-auto PricerSolverZddCycle::evaluate_nodes(double* pi) -> bool {
-    auto& table = *(decision_diagram->getDiagram());
-    compute_labels(pi);
-    auto reduced_cost =
-        table.node(decision_diagram->root()).list[0]->backward_label[0].get_f();
-    nb_removed_edges = 0;
-
-    /** check for each node the Lagrangian dual */
-    for (auto& it : table |
-                        ranges::views::take(decision_diagram->topLevel() + 1) |
-                        ranges::views ::drop(1) | ranges::views::join) {
-        auto* job = it.get_job();
         for (auto& iter : it.list) {
             auto w = iter->get_weight();
 

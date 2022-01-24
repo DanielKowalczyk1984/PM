@@ -52,15 +52,12 @@ class PricerSolverBddBackwardSimple : public PricerSolverBdd {
         return std::make_unique<PricerSolverBddBackwardSimple>(*this);
     };
 
-    auto pricing_algorithm(double* _pi) -> PricingSolution override;
     auto pricing_algorithm(std::span<const double>& _pi)
         -> PricingSolution override;
-    auto farkas_pricing(double* _pi) -> PricingSolution override;
     auto farkas_pricing(std::span<const double>& _pi)
         -> PricingSolution override;
     auto evaluate_rc_arc(NodeBdd& n) -> double override;
 
-    void compute_labels(double* _pi) override;
     void compute_labels(std::span<const double>& _pi) override;
 };
 
@@ -86,14 +83,11 @@ class PricerSolverBddBackwardCycle : public PricerSolverBdd {
         return std::make_unique<PricerSolverBddBackwardCycle>(*this);
     };
 
-    auto pricing_algorithm(double* _pi) -> PricingSolution override;
     auto pricing_algorithm(std::span<const double>& _pi)
         -> PricingSolution override;
-    auto farkas_pricing(double* _pi) -> PricingSolution override;
     auto farkas_pricing(std::span<const double>& _pi)
         -> PricingSolution override;
     auto evaluate_rc_arc(NodeBdd& n) -> double override;
 
     void compute_labels(std::span<const double>& _pi) override;
-    void compute_labels(double* _pi) override;
 };

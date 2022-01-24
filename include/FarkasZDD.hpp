@@ -35,7 +35,7 @@ class BackwardBddFarkas : public BackwardBddBase {
     void evalNode(NodeBdd& n) const override {
         n.reset_reduced_costs_farkas();
 
-        const double* dual = BackwardBddBase::get_pi();
+        auto dual = BackwardBddBase::get_aux_pi();
         for (auto& list : n.get_coeff_list()) {
             for (auto& it : list) {
                 auto aux = it.lock();

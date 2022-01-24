@@ -76,9 +76,6 @@ class PricerSolverZdd : public PricerSolverBase {
     void construct_mipgraph();
     void build_mip() override;
     void construct_lp_sol_from_rmp(
-        const double*                               lambda,
-        const std::vector<std::shared_ptr<Column>>& columns) override;
-    void construct_lp_sol_from_rmp(
         const std::span<const double>&              lambda,
         const std::vector<std::shared_ptr<Column>>& columns) override;
     void update_coeff_constraints() override {}
@@ -91,7 +88,6 @@ class PricerSolverZdd : public PricerSolverBase {
     auto get_nb_vertices() -> size_t override;
     auto print_num_paths() -> cpp_int override;
 
-    auto farkas_pricing(double* pi) -> PricingSolution override;
     auto farkas_pricing(std::span<const double>& pi)
         -> PricingSolution override;
 };

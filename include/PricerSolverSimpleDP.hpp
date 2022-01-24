@@ -75,13 +75,9 @@ class PricerSolverSimpleDp : public PricerSolverBase {
 
     void init_table();
 
-    auto evaluate_nodes([[maybe_unused]] double* pi) -> bool override;
     auto evaluate_nodes([[maybe_unused]] std::span<const double>& pi)
         -> bool override;
     void build_mip() override;
-    void construct_lp_sol_from_rmp(
-        const double*                               lambda,
-        const std::vector<std::shared_ptr<Column>>& columns) override;
 
     void construct_lp_sol_from_rmp(
         const std::span<const double>&              lambda,
@@ -92,10 +88,8 @@ class PricerSolverSimpleDp : public PricerSolverBase {
 
     auto check_column(Column const* set) -> bool override;
 
-    auto pricing_algorithm(double* _pi) -> PricingSolution override;
     auto pricing_algorithm(std::span<const double>& _pi)
         -> PricingSolution override;
-    auto farkas_pricing(double* _pi) -> PricingSolution override;
     auto farkas_pricing(std::span<const double>& _pi)
         -> PricingSolution override;
     void forward_evaluator(double* _pi);

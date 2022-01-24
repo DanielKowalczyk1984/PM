@@ -83,9 +83,7 @@ class PricerSolverBdd : public PricerSolverBase {
     auto refinement_structure(const std::vector<std::shared_ptr<Column>>& paths)
         -> bool override;
     void enumerate_columns() override;
-    void enumerate_columns(double* _pi) override;
     void enumerate_columns(std::span<const double>& _pi) override;
-    auto evaluate_nodes(double* _pi) -> bool override;
     auto evaluate_nodes(std::span<const double>& _pi) -> bool override;
 
     auto               check_column(Column const* col) -> bool override;
@@ -93,7 +91,6 @@ class PricerSolverBdd : public PricerSolverBase {
         -> std::unique_ptr<PricerSolverBase> override = 0;
     virtual auto evaluate_rc_arc(NodeBdd& n) -> double = 0;
     auto         evaluate_rc_low_arc(NodeBdd& n) -> double;
-    virtual void compute_labels(double* _pi) = 0;
     virtual void compute_labels(std::span<const double>& _pi) = 0;
 
     void                  remove_layers();
@@ -104,9 +101,6 @@ class PricerSolverBdd : public PricerSolverBase {
     void                  init_table();
 
     void build_mip() override;
-    void construct_lp_sol_from_rmp(
-        const double*                               lambda,
-        const std::vector<std::shared_ptr<Column>>& columns) override;
     void construct_lp_sol_from_rmp(
         const std::span<const double>&              lambda,
         const std::vector<std::shared_ptr<Column>>& columns) override;
@@ -139,9 +133,6 @@ class PricerSolverBdd : public PricerSolverBase {
     inline void add_nb_removed_edges() { nb_removed_edges++; }
 
    private:
-    auto compute_reduced_cost(const PricingSolution& sol,
-                              double*                pi,
-                              double*                lhs) -> double override;
 
     auto compute_reduced_cost(const PricingSolution&   sol,
                               std::span<const double>& pi,

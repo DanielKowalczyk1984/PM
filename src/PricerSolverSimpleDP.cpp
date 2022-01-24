@@ -142,56 +142,6 @@ auto PricerSolverSimpleDp::evaluate_nodes(
     return (num_removed > 0);
 }
 
-auto PricerSolverSimpleDp::evaluate_nodes([[maybe_unused]] double* pi) -> bool {
-    forward_evaluator(pi);
-    backward_evaluator(pi);
-
-    std::span aux_pi{pi, reformulation_model.size()};
-    auto      counter = size_t{};
-    auto      x = size_t{};
-    auto      num_removed = 0;
-
-    for (auto t = size_t{}; t < Hmax + 1; ++t) {
-        auto it = forward_graph[t].begin();
-        while (it != forward_graph[t].end()) {
-            double result = F[t - (*it)->processing_time] +
-                            (*it)->weighted_tardiness(t) - aux_pi[(*it)->job] +
-                            backward_F[t];
-
-            if (constLB + result +
-                    static_cast<double>(convex_rhs - 1) * F[Hmax] >
-                UB - 1.0 + RC_FIXING) {
-                --size_graph;
-                it = forward_graph[t].erase(it);
-                ++num_removed;
-            } else {
-                it++;
-            }
-        }
-
-        x += forward_graph[t].size();
-
-        auto iter = backward_graph[t].begin();
-        while (iter != backward_graph[t].end()) {
-            double result = F[t] + (*iter)->weighted_tardiness_start(t) -
-                            aux_pi[(*iter)->job] +
-                            backward_F[t + (*iter)->processing_time];
-            if (constLB + result +
-                    static_cast<double>(convex_rhs - 1) * F[Hmax] >
-                UB - 1.0 + RC_FIXING) {
-                take[(*iter)->job * (Hmax + 1) + t] = false;
-                iter = backward_graph[t].erase(iter);
-            } else {
-                take[(*iter)->job * (Hmax + 1) + t] = true;
-                iter++;
-            }
-        }
-
-        counter += backward_graph[t].size();
-    }
-
-    return (num_removed > 0);
-}
 
 void PricerSolverSimpleDp::build_mip() {
     try {
@@ -425,49 +375,6 @@ auto PricerSolverSimpleDp::pricing_algorithm(std::span<const double>& _pi)
     return opt_sol;
 }
 
-auto PricerSolverSimpleDp::pricing_algorithm(double* _pi) -> PricingSolution {
-    PricingSolution opt_sol;
-    opt_sol.cost = 0;
-    std::vector<Job*> v;
-
-    forward_evaluator(_pi);
-
-    /** Find optimal solution */
-    opt_sol.obj = std::numeric_limits<double>::max();
-
-    for (auto i = 0UL; i < Hmax + 1; i++) {
-        if (F[i] < opt_sol.obj) {
-            opt_sol.C_max = i;
-            opt_sol.obj = F[i];
-        }
-    }
-
-    auto t_min = opt_sol.C_max;
-
-    /** Construct the solution */
-    while (A[t_min] != nullptr) {
-        Job* job = A[t_min];
-        v.push_back(A[t_min]);
-        opt_sol.cost += A[t_min]->weighted_tardiness(t_min);
-        t_min -= job->processing_time;
-    }
-
-    auto it = v.rbegin();
-
-    for (; it != v.rend(); ++it) {
-        opt_sol.jobs.push_back(*it);
-    }
-
-    /** Free the memory */
-    return opt_sol;
-}
-
-auto PricerSolverSimpleDp::farkas_pricing([[maybe_unused]] double* _pi)
-    -> PricingSolution {
-    PricingSolution opt_sol;
-
-    return opt_sol;
-}
 
 auto PricerSolverSimpleDp::farkas_pricing(
     [[maybe_unused]] std::span<const double>& _pi) -> PricingSolution {
@@ -476,24 +383,6 @@ auto PricerSolverSimpleDp::farkas_pricing(
     return opt_sol;
 }
 
-void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
-    const double*                               lambda,
-    const std::vector<std::shared_ptr<Column>>& columns) {
-    std::span aux_cols{lambda, columns.size()};
-    // std::span aux_columns{columns->pdata, columns->len};
-    std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    for (auto k = 0UL; k < columns.size(); k++) {
-        if (aux_cols[k] > EPS_SOLVER) {
-            auto* tmp = columns[k].get();
-            int   t = 0;
-            // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->len};
-            for (auto& it : tmp->job_list) {
-                lp_x[(it->job) * (Hmax + 1) + t] += aux_cols[k];
-                t += it->processing_time;
-            }
-        }
-    }
-}
 void PricerSolverSimpleDp::construct_lp_sol_from_rmp(
     const std::span<const double>&              lambda,
     const std::vector<std::shared_ptr<Column>>& columns) {

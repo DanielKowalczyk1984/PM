@@ -98,10 +98,8 @@ struct PricerSolverBase {
      * @param _pi
      * @return PricingSolution
      */
-    virtual auto pricing_algorithm(double* _pi) -> PricingSolution = 0;
     virtual auto pricing_algorithm(std::span<const double>& pi)
         -> PricingSolution = 0;
-    virtual auto farkas_pricing(double* _pi) -> PricingSolution = 0;
     virtual auto farkas_pricing(std::span<const double>& pi)
         -> PricingSolution = 0;
 
@@ -111,7 +109,6 @@ struct PricerSolverBase {
      * @param pi
      * @return bool true if the graph is reduced
      */
-    virtual auto evaluate_nodes(double* pi) -> bool = 0;
     virtual auto evaluate_nodes(std::span<const double>& pi) -> bool = 0;
 
     /**
@@ -132,7 +129,6 @@ struct PricerSolverBase {
      *
      */
     virtual void enumerate_columns(){};
-    virtual void enumerate_columns([[maybe_unused]] double* _pi){};
     virtual void enumerate_columns(
         [[maybe_unused]] std::span<const double>& _pi){};
 
@@ -149,9 +145,6 @@ struct PricerSolverBase {
      * @param lambda values lambda corresponding columns
      * @param columns characteristics of the corresponding columns
      */
-    virtual void construct_lp_sol_from_rmp(
-        const double*                               lambda,
-        const std::vector<std::shared_ptr<Column>>& columns) = 0;
 
     virtual void construct_lp_sol_from_rmp(
         const std::span<const double>&              lambda,
@@ -165,9 +158,6 @@ struct PricerSolverBase {
      * @return bool
      */
     auto compute_sub_optimal_duals(
-        const double*                               lambda,
-        const std::vector<std::shared_ptr<Column>>& columns) -> bool;
-    auto compute_sub_optimal_duals(
         const std::span<const double>&              lambda,
         const std::vector<std::shared_ptr<Column>>& columns) -> bool;
 
@@ -180,7 +170,6 @@ struct PricerSolverBase {
      *
      * @param pi
      */
-    void calculate_constLB(double* pi);
     void calculate_constLB(std::span<const double>& pi);
 
     /**
@@ -202,9 +191,6 @@ struct PricerSolverBase {
      * @param lhs left hand side coefficients of the master program
      * @return double the reduced cost of sol
      */
-    virtual auto compute_reduced_cost(const PricingSolution& sol,
-                                      double*                pi,
-                                      double*                lhs) -> double;
     virtual auto compute_reduced_cost(const PricingSolution&   sol,
                                       std::span<const double>& pi,
                                       double*                  lhs) -> double;
@@ -225,8 +211,6 @@ struct PricerSolverBase {
      * @param pi the dual prices
      * @return double reduced cost associated with column sol and dual prices pi
      */
-    virtual auto compute_reduced_cost_simple(const PricingSolution& sol,
-                                             double* pi) -> double;
     virtual auto compute_reduced_cost_simple(const PricingSolution&   sol,
                                              std::span<const double>& pi)
         -> double;

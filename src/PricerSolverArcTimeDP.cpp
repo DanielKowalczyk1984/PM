@@ -177,42 +177,6 @@ void PricerSolverArcTimeDp::init_table() {
     fmt::print("Number of arcs in ATI formulation = {}\n", size_graph);
 }
 
-auto PricerSolverArcTimeDp::evaluate_nodes([[maybe_unused]] double* pi)
-    -> bool {
-    forward_evaluator(pi);
-    backward_evaluator(pi);
-    auto num_edges_removed = 0;
-
-    std::span aux_pi{pi, reformulation_model.size()};
-
-    for (auto* tmp : vector_jobs | ranges::views::take(n)) {
-        for (auto t = size_t{}; t <= Hmax - tmp->processing_time; t++) {
-            auto it = graph[tmp->job][t].begin();
-            while (it != graph[tmp->job][t].end()) {
-                double result =
-                    forward_F[(*it)->job][t - (*it)->processing_time] +
-                    tmp->weighted_tardiness_start(t) - aux_pi[tmp->job] +
-                    backward_F[tmp->job][t + tmp->processing_time];
-                if (result +
-                        static_cast<double>(convex_rhs - 1) *
-                            (forward_F[n][Hmax]) +
-                        constLB >
-                    UB - 1.0 + RC_FIXING) {
-                    size_graph--;
-                    num_edges_removed++;
-                    auto pend =
-                        ranges::find(reversed_graph[(*it)->job][t], tmp);
-                    reversed_graph[(*it)->job][t].erase(pend);
-                    it = graph[tmp->job][t].erase(it);
-                } else {
-                    it++;
-                }
-            }
-        }
-    }
-
-    return (num_edges_removed > 0);
-}
 
 auto PricerSolverArcTimeDp::evaluate_nodes(
     [[maybe_unused]] std::span<const double>& pi) -> bool {
@@ -554,37 +518,6 @@ void PricerSolverArcTimeDp::forward_evaluator(std::span<const double>& _pi) {
     }
 }
 
-auto PricerSolverArcTimeDp::pricing_algorithm(double* _pi) -> PricingSolution {
-    std::span         aux_pi{_pi, reformulation_model.size()};
-    PricingSolution   sol(aux_pi[n]);
-    std::vector<Job*> v;
-
-    forward_evaluator(_pi);
-
-    auto job = n;
-    auto T = Hmax;
-
-    while (T > 0) {
-        auto aux_job = A[job][T]->job;
-        int  aux_T = B[job][T];
-        if (aux_job != n) {
-            v.push_back(vector_jobs[aux_job]);
-            sol.C_max += vector_jobs[aux_job]->processing_time;
-            sol.cost += vector_jobs[aux_job]->weighted_tardiness_start(aux_T);
-            sol.obj += vector_jobs[aux_job]->weighted_tardiness_start(aux_T) -
-                       aux_pi[aux_job];
-        }
-        job = aux_job;
-        T = aux_T;
-    }
-
-    sol.C_max = 0;
-    for (auto& it : v | ranges::views::reverse) {
-        sol.jobs.push_back(it);
-    }
-
-    return sol;
-}
 
 auto PricerSolverArcTimeDp::pricing_algorithm(std::span<const double>& _pi)
     -> PricingSolution {
@@ -618,12 +551,6 @@ auto PricerSolverArcTimeDp::pricing_algorithm(std::span<const double>& _pi)
     return sol;
 }
 
-auto PricerSolverArcTimeDp::farkas_pricing([[maybe_unused]] double* _pi)
-    -> PricingSolution {
-    PricingSolution opt_sol;
-
-    return opt_sol;
-}
 
 auto PricerSolverArcTimeDp::farkas_pricing(
     [[maybe_unused]] std::span<const double>& _pi) -> PricingSolution {
@@ -632,41 +559,6 @@ auto PricerSolverArcTimeDp::farkas_pricing(
     return opt_sol;
 }
 
-void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
-    const double*                               lambda,
-    const std::vector<std::shared_ptr<Column>>& columns) {
-    std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    std::span aux_cols{lambda, columns.size()};
-
-    auto positive = [](const auto& tmp) { return (tmp.first > 0.0); };
-
-    for (auto&& [x, col] : ranges::views::zip(aux_cols, columns) |
-                               ranges::views::filter(positive)) {
-        auto counter = 0UL;
-        auto i = n;
-        auto t = 0UL;
-        while (t < Hmax + 1) {
-            Job* tmp_j = nullptr;
-            auto j = n;
-
-            if (counter < col->job_list.size()) {
-                tmp_j = col->job_list[counter];
-                j = tmp_j->job;
-            }
-
-            lp_x[i * (n + 1) * (Hmax + 1) + j * (Hmax + 1) + t] += x;
-
-            if (tmp_j == nullptr) {
-                i = n;
-                t += 1;
-            } else {
-                i = j;
-                t += tmp_j->processing_time;
-                counter++;
-            }
-        }
-    }
-}
 
 void PricerSolverArcTimeDp::construct_lp_sol_from_rmp(
     const std::span<const double>&              lambda,

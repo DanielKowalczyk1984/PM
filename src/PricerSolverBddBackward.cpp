@@ -50,41 +50,24 @@ PricerSolverBddBackwardSimple::PricerSolverBddBackwardSimple(
     evaluator.set_table(&(*(get_decision_diagram().getDiagram())));
 }
 
-auto PricerSolverBddBackwardSimple::pricing_algorithm(double* _pi)
-    -> PricingSolution {
-    evaluator.set_pi(_pi);
-    return get_decision_diagram().evaluate_backward(evaluator);
-}
 
 auto PricerSolverBddBackwardSimple::pricing_algorithm(
     std::span<const double>& pi) -> PricingSolution {
-    evaluator.set_pi(pi);
+    evaluator.set_aux_pi(pi);
     return get_decision_diagram().evaluate_backward(evaluator);
 }
 
-auto PricerSolverBddBackwardSimple::farkas_pricing(double* _pi)
-    -> PricingSolution {
-    farkas_evaluator.set_pi(_pi);
-    return get_decision_diagram().evaluate_backward(farkas_evaluator);
-}
 
 auto PricerSolverBddBackwardSimple::farkas_pricing(std::span<const double>& _pi)
     -> PricingSolution {
-    farkas_evaluator.set_pi(_pi);
+    farkas_evaluator.set_aux_pi(_pi);
     return get_decision_diagram().evaluate_backward(farkas_evaluator);
-}
-
-void PricerSolverBddBackwardSimple::compute_labels(double* _pi) {
-    evaluator.set_pi(_pi);
-    reversed_evaluator.set_pi(_pi);
-    get_decision_diagram().compute_labels_backward(evaluator);
-    get_decision_diagram().compute_labels_forward(reversed_evaluator);
 }
 
 void PricerSolverBddBackwardSimple::compute_labels(
     std::span<const double>& _pi) {
-    evaluator.set_pi(_pi);
-    reversed_evaluator.set_pi(_pi);
+    evaluator.set_aux_pi(_pi);
+    reversed_evaluator.set_aux_pi(_pi);
     get_decision_diagram().compute_labels_backward(evaluator);
     get_decision_diagram().compute_labels_forward(reversed_evaluator);
 }
@@ -113,41 +96,24 @@ PricerSolverBddBackwardCycle::PricerSolverBddBackwardCycle(
     evaluator.set_table(&(*(get_decision_diagram().getDiagram())));
 }
 
-auto PricerSolverBddBackwardCycle::pricing_algorithm(double* _pi)
-    -> PricingSolution {
-    evaluator.set_pi(_pi);
-    return get_decision_diagram().evaluate_backward(evaluator);
-}
 
 auto PricerSolverBddBackwardCycle::pricing_algorithm(
     std::span<const double>& _pi) -> PricingSolution {
-    evaluator.set_pi(_pi);
+    evaluator.set_aux_pi(_pi);
     return get_decision_diagram().evaluate_backward(evaluator);
 }
 
-auto PricerSolverBddBackwardCycle::farkas_pricing(double* _pi)
-    -> PricingSolution {
-    farkas_evaluator.set_pi(_pi);
-    return get_decision_diagram().evaluate_backward(farkas_evaluator);
-}
 
 auto PricerSolverBddBackwardCycle::farkas_pricing(std::span<const double>& _pi)
     -> PricingSolution {
-    farkas_evaluator.set_pi(_pi);
+    farkas_evaluator.set_aux_pi(_pi);
     return get_decision_diagram().evaluate_backward(farkas_evaluator);
-}
-
-void PricerSolverBddBackwardCycle::compute_labels(double* _pi) {
-    evaluator.set_pi(_pi);
-    reversed_evaluator.set_pi(_pi);
-    get_decision_diagram().compute_labels_backward(evaluator);
-    get_decision_diagram().compute_labels_forward(reversed_evaluator);
 }
 
 void PricerSolverBddBackwardCycle::compute_labels(
     std::span<const double>& _pi) {
-    evaluator.set_pi(_pi);
-    reversed_evaluator.set_pi(_pi);
+    evaluator.set_aux_pi(_pi);
+    reversed_evaluator.set_aux_pi(_pi);
     get_decision_diagram().compute_labels_backward(evaluator);
     get_decision_diagram().compute_labels_forward(reversed_evaluator);
 }

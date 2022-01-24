@@ -27,6 +27,7 @@
 #include <boost/chrono/duration.hpp>  // for den
 #include <boost/timer/timer.hpp>      // for cpu_timer
 #include <cstddef>                    // for size_t
+#include <span>                       // for span
 #include <string>                     // for string
 #include "or-utils/util.h"            // for CCutil_timer
 struct Parms;
@@ -174,15 +175,20 @@ struct Statistics {
 
 template <>
 struct fmt::formatter<Statistics> {
-    char           presentation = 'v';
-    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+    char presentation = 'v';
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
         const auto* it = ctx.begin();
         const auto* end = ctx.end();
+
+        if (it == end) {
+            return it;
+        }
+
         if (it != end && (*it == 'v' || *it == 'n')) {
             presentation = *it++;
         }
 
-        // Check if reached the end of the range:
         if (it != end && *it != '}') {
             throw format_error("invalid format");
         }

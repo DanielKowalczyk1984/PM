@@ -24,12 +24,13 @@
 #define FORWARD_BDD_HPP
 #include <limits>                         // for numeric_limits
 #include <range/v3/action/remove_if.hpp>  // for remove_if
+#include <span>                           // for span
 #include "ModernDD/NodeBddEval.hpp"       // for Eval
 #include "NodeBdd.hpp"                    // for NodeBdd
 #include "PricingSolution.hpp"            // for PricingSolution
 
 class ForwardBddBase : public Eval<NodeBdd, PricingSolution> {
-    const double* pi{};
+    std::span<const double> aux_pi;
 
    public:
     ForwardBddBase() = default;
@@ -40,10 +41,11 @@ class ForwardBddBase : public Eval<NodeBdd, PricingSolution> {
     auto operator=(const ForwardBddBase&) -> ForwardBddBase& = default;
     auto operator=(ForwardBddBase&&) noexcept -> ForwardBddBase& = default;
 
-    void set_pi(const double* _pi) { pi = _pi; }
-    void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
+    void set_aux_pi(std::span<const double>& _pi) { aux_pi = _pi; }
 
-    [[nodiscard]] auto get_pi() const -> const double* { return pi; }
+    [[nodiscard]] auto get_aux_pi() const -> std::span<const double> {
+        return aux_pi;
+    }
 
     void initialize_node(NodeBdd& n) const override = 0;
 
@@ -103,7 +105,7 @@ class ForwardBddCycle : public ForwardBddBase {
         auto*       table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
         auto&       p0 = table_tmp->node(n[0]);
         auto&       p1 = table_tmp->node(n[1]);
-        const auto* dual = ForwardBddBase::get_pi();
+        auto dual = ForwardBddBase::get_aux_pi();
 
         n.reset_reduced_costs();
         n.adjust_reduced_costs(dual[tmp_j->job], true);
@@ -206,7 +208,7 @@ class ForwardBddSimple : public ForwardBddBase {
         auto& p0 = table_tmp->node(n[0]);
         auto& p1 = table_tmp->node(n[1]);
         n.reset_reduced_costs();
-        const auto* dual = ForwardBddBase::get_pi();
+        auto dual = ForwardBddBase::get_aux_pi();
 
         for (auto& list : n.get_coeff_list()) {
             list |= ranges::actions::remove_if([&](auto& it) {

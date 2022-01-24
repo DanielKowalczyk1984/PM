@@ -44,10 +44,8 @@ class PricerSolverZddBackwardSimple : public PricerSolverZdd {
         -> PricerSolverZddBackwardSimple& = delete;
     ~PricerSolverZddBackwardSimple() override = default;
 
-    auto pricing_algorithm(double* _pi) -> PricingSolution override;
     auto pricing_algorithm(std::span<const double>& _pi)
         -> PricingSolution override;
-    auto evaluate_nodes(double* pi) -> bool final;
     auto evaluate_nodes(std::span<const double>& pi) -> bool final;
     void compute_labels(double* _pi);
     void compute_labels(std::span<const double>& _pi);
@@ -69,10 +67,8 @@ class PricerSolverZddBackwardCycle : public PricerSolverZdd {
         -> PricerSolverZddBackwardCycle& = delete;
     ~PricerSolverZddBackwardCycle() override = default;
 
-    auto pricing_algorithm(double* _pi) -> PricingSolution override;
     auto pricing_algorithm(std::span<const double>& _pi)
         -> PricingSolution override;
-    auto evaluate_nodes(double* pi) -> bool final;
     auto evaluate_nodes(std::span<const double>& pi) -> bool final;
     void compute_labels(double* _pi);
     void compute_labels(std::span<const double>& _pi);
