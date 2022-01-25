@@ -29,6 +29,7 @@
 #include <filesystem>    // for path
 #include <limits>        // for numeric_limits
 #include <memory>        // for shared_ptr
+#include <span>          // for span
 #include <string>        // for string
 #include <utility>       // for pair
 #include <vector>        // for vector
@@ -88,18 +89,22 @@ struct fmt::formatter<Instance> {
     char presentation = 'v';
 
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-        const auto* it = ctx.begin();
-        const auto* end = ctx.end();
+        auto aux = std::span<const char>{ctx.begin(), ctx.end()};
+        if(aux.empty()) {
+            return nullptr;
+        }
+
+        auto it = aux.begin();
+        auto end = aux.end();
         if (it != end && (*it == 'v' || *it == 'n')) {
             presentation = *it++;
         }
 
-        // Check if reached the end of the range:
         if (it != end && *it != '}') {
             throw format_error("invalid format");
         }
 
-        return it;
+        return std::addressof(*it);
     }
 
     template <typename FormatContext>

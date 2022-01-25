@@ -29,7 +29,8 @@
 #include <cstddef>                // for size_t
 #include <functional>             // for function
 #include <nlohmann/json.hpp>      // for json
-#include <string>                 // for allocator, string
+#include <span>
+#include <string>  // for allocator, string
 
 enum BBNodeSelection {
     min_search_strategy = 0,
@@ -144,16 +145,16 @@ struct fmt::formatter<PricingSolver> : formatter<string_view> {
     }
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(
-    PricingSolver,
-    11,
-    {{bdd_solver_simple, "BddForward"},
-     {bdd_solver_cycle, "BddForwardCycle"},
-     {bdd_solver_backward_simple, "BddBackward"},
-     {bdd_solver_backward_cycle, "BddBackwardCycle"},
-     {dp_solver, "Time-Indexed"},
-     {ati_solver, "Arc-Time-Indexed"},
-     {dp_bdd_solver, "Hybrid"}})
+NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(PricingSolver,
+                                   11,
+                                   {{bdd_solver_simple, "BddForward"},
+                                    {bdd_solver_cycle, "BddForwardCycle"},
+                                    {bdd_solver_backward_simple, "BddBackward"},
+                                    {bdd_solver_backward_cycle,
+                                     "BddBackwardCycle"},
+                                    {dp_solver, "Time-Indexed"},
+                                    {ati_solver, "Arc-Time-Indexed"},
+                                    {dp_bdd_solver, "Hybrid"}})
 
 NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(StabTechniques,
                                    4,
@@ -303,9 +304,6 @@ struct Parms {
     Parameter<bool>                                     reduce_cost_fixing;
     Parameter<bool>                                     print_csv;
 
-    /**
-     * column generation
-     */
     std::string jobfile{};
     std::string pname{};
 
@@ -338,18 +336,24 @@ struct fmt::formatter<Parms::Parameter<T>> {
     char presentation = 'v';
 
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-        const auto* it = ctx.begin();
-        const auto* end = ctx.end();
+        auto aux = std::span<const char>{ctx.begin(), ctx.end()};
+
+        if (aux.empty()) {
+            return nullptr;
+        }
+
+        auto it = aux.begin();
+        auto end = aux.end();
+
         if (it != end && (*it == 'v' || *it == 'n')) {
             presentation = *it++;
         }
 
-        // Check if reached the end of the range:
         if (it != end && *it != '}') {
             throw format_error("invalid format");
         }
 
-        return it;
+        return std::addressof(*it);
     }
 
     template <typename FormatContext>
@@ -367,18 +371,23 @@ struct fmt::formatter<Parms> {
     char presentation = 'v';
 
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-        const auto* it = ctx.begin();
-        const auto* end = ctx.end();
+        auto aux = std::span<const char>{ctx.begin(), ctx.end()};
+
+        if (aux.empty()) {
+            return nullptr;
+        }
+
+        auto it = aux.begin();
+        auto end = aux.end();
         if (it != end && (*it == 'v' || *it == 'n')) {
             presentation = *it++;
         }
 
-        // Check if reached the end of the range:
         if (it != end && *it != '}') {
             throw format_error("invalid format");
         }
 
-        return it;
+        return std::addressof(*it);
     }
 
     template <typename FormatContext>

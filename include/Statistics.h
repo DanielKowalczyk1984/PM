@@ -178,12 +178,15 @@ struct fmt::formatter<Statistics> {
     char presentation = 'v';
     template <typename ParseContext>
     constexpr auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
-        const auto* it = ctx.begin();
-        const auto* end = ctx.end();
+        auto aux = std::span<const char>{ctx.begin(), ctx.end()};
 
-        if (it == end) {
-            return it;
+        if (aux.empty())
+        {
+            return nullptr;
         }
+
+        auto it = aux.begin();
+        auto end = aux.end();
 
         if (it != end && (*it == 'v' || *it == 'n')) {
             presentation = *it++;
@@ -193,7 +196,7 @@ struct fmt::formatter<Statistics> {
             throw format_error("invalid format");
         }
 
-        return it;
+        return std::addressof(*it);
     }
 
     template <typename FormatContext>
