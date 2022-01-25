@@ -17,8 +17,10 @@
 	"C_Cpp.codeAnalysis.exclude": {
 		"**/build/**/*.h": true,
 		"**/build/**/*.hpp": true,
+		"**/build/**/*.cpp": true,
 		"**/build/**/*.ipp": true,
 		"**/ThirdParty/**/*.hpp": true,
+		"**/ThirdParty/**/*.cpp": true,
 		"**/ThirdParty/**/*.h": true
 	},
 	"files.associations": {
@@ -71,6 +73,15 @@
 		"exception": "cpp",
 		"locale": "cpp",
 		"xlocale": "cpp",
-		"future": "cpp"
+		"future": "cpp",
+		"algorithm": "cpp",
+		"compare": "cpp",
+		"execution": "cpp",
+		"typeindex": "cpp",
+		"xstddef": "cpp",
+		"initializer_list": "cpp",
+		"memory_resource": "cpp",
+		"span": "cpp",
+		"valarray": "cpp"
 	}
 }
