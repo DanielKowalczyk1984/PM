@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -46,20 +46,21 @@ class PricingSolution {
     PricingSolution(PricingSolution&& other) noexcept = default;
 
     /** Copy assignment operator */
-    PricingSolution& operator=(const PricingSolution& other) = delete;
+    auto operator=(const PricingSolution& other) -> PricingSolution& = delete;
 
     /** Move assignment operator */
-    PricingSolution& operator=(PricingSolution&& other) noexcept = default;
+    auto operator=(PricingSolution&& other) noexcept
+        -> PricingSolution& = default;
 
     /** Destructor */
     ~PricingSolution() = default;
 
-    friend std::ostream& operator<<(std::ostream&          os,
-                                    PricingSolution const& o) {
+    friend auto operator<<(std::ostream& os, PricingSolution const& o)
+        -> std::ostream& {
         os << "obj = " << o.obj << "," << std::endl
            << "cost = " << o.cost << " C_max = " << o.C_max << std::endl;
 
-        for (auto& it : o.jobs) {
+        for (const auto& it : o.jobs) {
             os << it->job << ' ';
         }
         return os;

@@ -77,10 +77,6 @@ void BranchNodeBase::branch(BTree* bt) {
     const auto& instance = get_instance_info();
     const auto& parms = pd->parms;
 
-    if (!parms.strong_branching.value() && debug_lvl(1)) {
-        fmt::print("\nDOING STRONG BRANCHING...\n\n");
-    }
-
     if (bt->getGlobalUB() < pd->upper_bound) {
         pd->upper_bound = static_cast<int>(bt->getGlobalUB());
         solver->UB = bt->getGlobalUB();
@@ -146,7 +142,7 @@ void BranchNodeBase::branch(BTree* bt) {
                 return ((j->processing_time + b.get_t()) * b.get_value() + a);
             });
 
-            if(safe_frac(sum) < EPS){
+            if (safe_frac(sum) < EPS) {
                 return false;
             }
 
@@ -181,11 +177,13 @@ void BranchNodeBase::branch(BTree* bt) {
             auto&& [x_j, job] = tmp_aux;
 
             auto br_point_it = ranges::max(x_j, std::less<>{}, [](auto& x) {
-                return 0.5 - std::abs(x.get_cum_value() -
-                                      std::floor(x.get_cum_value()) - 0.5);
+                return BRANCH_POINT_VALUE -
+                       std::abs(x.get_cum_value() -
+                                std::floor(x.get_cum_value()) -
+                                BRANCH_POINT_VALUE);
             });
             auto cum_aux = br_point_it.get_cum_value();
-            auto aux =  safe_frac(cum_aux);
+            auto aux = safe_frac(cum_aux);
 
             tmp_t = static_cast<int>(br_point_it.get_t());
             return (aux > EPS);
@@ -219,10 +217,10 @@ void BranchNodeBase::branch(BTree* bt) {
     auto best_time = 0;
 
     std::array<std::unique_ptr<BranchNodeBase>, 2> best{};
-    auto                                           nb_cand = (pd->depth <= 7)
-                                                                 ? std::min(std::max(parms.strong_branching.value(), 1),
-                                                                            static_cast<int>(candidates.size()))
-                                                                 : 1;
+    auto nb_cand = (pd->depth <= MAX_DEPTH)
+                       ? std::min(std::max(parms.strong_branching.value(), 1),
+                                  static_cast<int>(candidates.size()))
+                       : 1;
 
     candidates |= ranges::actions::sort(
         std::greater<>{}, [](const auto& tmp) { return tmp.score; });
@@ -315,7 +313,7 @@ void BranchNodeBase::compute_bounds([[maybe_unused]] BTree* bt) {
 
 void BranchNodeBase::assess_dominance([[maybe_unused]] State* otherState) {}
 
-bool BranchNodeBase::is_terminal_state() {
+auto BranchNodeBase::is_terminal_state() -> bool {
     auto* solver = pd->solver.get();
     set_feasible(pd->status != NodeData::infeasible);
     return (solver->get_is_integer_solution() || !is_feasible());
@@ -378,9 +376,9 @@ BranchCandidate::BranchCandidate(
 
 BranchCandidate::BranchCandidate(double _score) : score(_score) {}
 
-BranchNodeRelBranching::BranchNodeRelBranching(std::unique_ptr<NodeData> _data,
+BranchNodeRelBranching::BranchNodeRelBranching(std::unique_ptr<NodeData> _node,
                                                bool                      isRoot)
-    : BranchNodeBase(std::move(_data), isRoot) {}
+    : BranchNodeBase(std::move(_node), isRoot) {}
 
 void BranchNodeRelBranching::branch(BTree* bt) {
     auto* node_data = get_data_ptr();
@@ -535,10 +533,10 @@ void BranchNodeRelBranching::branch(BTree* bt) {
     }
 }
 
-const Instance& BranchNodeBase::get_instance_info() const {
+auto BranchNodeBase::get_instance_info() const -> const Instance& {
     return pd->instance;
 }
 
-PricerSolverBase* BranchNodeBase::get_pricersolver() const {
+auto BranchNodeBase::get_pricersolver() const -> PricerSolverBase* {
     return pd->solver.get();
 }

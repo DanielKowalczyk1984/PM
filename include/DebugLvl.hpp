@@ -1,5 +1,5 @@
-#ifndef __DEBUGLVL_H__
-#define __DEBUGLVL_H__
+#ifndef DEBUGLVL_H
+#define DEBUGLVL_H
 
 class DebugLevel {
    private:
@@ -8,11 +8,16 @@ class DebugLevel {
    public:
     DebugLevel() = default;
     ~DebugLevel() = default;
+    DebugLevel(const DebugLevel&) = default;
+    DebugLevel(DebugLevel&&) = default;
+    auto        operator=(const DebugLevel&) -> DebugLevel& = default;
+    auto        operator=(DebugLevel&&) -> DebugLevel& = default;
+
     friend void set_debug_lvl(int _lvl);
-    friend bool debug_lvl(int _lvl);
+    friend auto debug_lvl(int _lvl) -> bool;
 };
 
-inline bool debug_lvl(int _lvl) {
+inline auto debug_lvl(int _lvl) -> bool {
     return (DebugLevel::_debug_lvl > _lvl);
 }
 
@@ -20,4 +25,4 @@ inline void set_debug_lvl(int _lvl) {
     DebugLevel::_debug_lvl = _lvl;
 }
 
-#endif  // __DEBUGLVL_H__
+#endif  // DEBUGLVL_H

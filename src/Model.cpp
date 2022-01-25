@@ -33,7 +33,7 @@
 #include "PricerSolverBase.hpp"             // for PricerSolverBase
 #include "gurobi_c.h"                       // for GRB_INFINITY
 
-int NodeData::add_lhs_column_to_rmp(double cost) {
+auto NodeData::add_lhs_column_to_rmp(double cost) -> int {
     id_row.clear();
     coeff_row.clear();
 
@@ -58,8 +58,8 @@ int NodeData::add_lhs_column_to_rmp(double cost) {
     return 0;
 }
 
-int NodeData::add_lhs_column_to_rmp(double                     cost,
-                                    const std::vector<double>& _lhs) {
+auto NodeData::add_lhs_column_to_rmp(double                     cost,
+                                     const std::vector<double>& _lhs) -> int {
     id_row.clear();
     coeff_row.clear();
 
@@ -135,7 +135,7 @@ void NodeData::add_cols_local_pool() {
     });
 }
 
-int NodeData::build_rmp() {
+auto NodeData::build_rmp() -> int {
     /**
      * Set up messegahandler osi solver
      */

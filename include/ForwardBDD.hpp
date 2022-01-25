@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -24,36 +24,39 @@
 #define FORWARD_BDD_HPP
 #include <limits>                         // for numeric_limits
 #include <range/v3/action/remove_if.hpp>  // for remove_if
+#include <span>                           // for span
 #include "ModernDD/NodeBddEval.hpp"       // for Eval
 #include "NodeBdd.hpp"                    // for NodeBdd
 #include "PricingSolution.hpp"            // for PricingSolution
 
 class ForwardBddBase : public Eval<NodeBdd, PricingSolution> {
-    const double* pi{};
+    std::span<const double> aux_pi;
 
    public:
     ForwardBddBase() = default;
     ForwardBddBase(const ForwardBddBase& src) = default;
     ForwardBddBase(ForwardBddBase&&) noexcept = default;
-    ForwardBddBase& operator=(ForwardBddBase&&) noexcept = default;
-    ForwardBddBase& operator=(const ForwardBddBase&) = default;
-    virtual ~ForwardBddBase() = default;
+    ~ForwardBddBase() override = default;
 
-    void set_pi(double* _pi) { pi = _pi; }
-    void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
+    auto operator=(const ForwardBddBase&) -> ForwardBddBase& = default;
+    auto operator=(ForwardBddBase&&) noexcept -> ForwardBddBase& = default;
 
-    [[nodiscard]] const double* get_pi() const { return pi; }
+    void set_aux_pi(std::span<const double>& _pi) { aux_pi = _pi; }
 
-    virtual void initialize_node(NodeBdd& n) const = 0;
+    [[nodiscard]] auto get_aux_pi() const -> std::span<const double> {
+        return aux_pi;
+    }
 
-    virtual void initialize_root_node(NodeBdd& n) const = 0;
+    void initialize_node(NodeBdd& n) const override = 0;
 
-    virtual void evalNode(NodeBdd& n) const = 0;
+    void initialize_root_node(NodeBdd& n) const override = 0;
 
-    PricingSolution get_objective(NodeBdd& n) const {
+    void evalNode(NodeBdd& n) const override = 0;
+
+    auto get_objective(NodeBdd& n) const -> PricingSolution override {
         PricingSolution sol(0.0);
         auto*           ptr_node = &(n.forward_label[0]);
-        auto            table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto*           table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
 
         while (ptr_node->get_previous() != nullptr) {
             auto* aux_prev_node = ptr_node->get_previous();
@@ -76,9 +79,10 @@ class ForwardBddCycle : public ForwardBddBase {
     ForwardBddCycle() = default;
     ForwardBddCycle(const ForwardBddCycle& src) = default;
     ForwardBddCycle(ForwardBddCycle&&) noexcept = default;
-    ForwardBddCycle& operator=(const ForwardBddCycle&) = default;
-    ForwardBddCycle& operator=(ForwardBddCycle&&) noexcept = default;
-    virtual ~ForwardBddCycle() = default;
+    ~ForwardBddCycle() override = default;
+
+    auto operator=(const ForwardBddCycle&) -> ForwardBddCycle& = default;
+    auto operator=(ForwardBddCycle&&) noexcept -> ForwardBddCycle& = default;
 
     void initialize_node(NodeBdd& n) const override {
         if (n.get_weight() == 0) {
@@ -98,10 +102,10 @@ class ForwardBddCycle : public ForwardBddBase {
 
     void evalNode(NodeBdd& n) const override {
         auto*       tmp_j = n.get_job();
-        auto        table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto*       table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
         auto&       p0 = table_tmp->node(n[0]);
         auto&       p1 = table_tmp->node(n[1]);
-        const auto* dual = ForwardBddBase::get_pi();
+        auto dual = ForwardBddBase::get_aux_pi();
 
         n.reset_reduced_costs();
         n.adjust_reduced_costs(dual[tmp_j->job], true);
@@ -182,9 +186,10 @@ class ForwardBddSimple : public ForwardBddBase {
 
     ForwardBddSimple(ForwardBddSimple&&) noexcept = default;
     ForwardBddSimple(const ForwardBddSimple&) = default;
-    ForwardBddSimple& operator=(const ForwardBddSimple&) = default;
-    ForwardBddSimple& operator=(ForwardBddSimple&&) noexcept = default;
-    virtual ~ForwardBddSimple() = default;
+    ~ForwardBddSimple() override = default;
+
+    auto operator=(const ForwardBddSimple&) -> ForwardBddSimple& = default;
+    auto operator=(ForwardBddSimple&&) noexcept -> ForwardBddSimple& = default;
 
     void initialize_node(NodeBdd& n) const override {
         if (n.get_weight() == 0) {
@@ -203,7 +208,7 @@ class ForwardBddSimple : public ForwardBddBase {
         auto& p0 = table_tmp->node(n[0]);
         auto& p1 = table_tmp->node(n[1]);
         n.reset_reduced_costs();
-        const auto* dual = ForwardBddBase::get_pi();
+        auto dual = ForwardBddBase::get_aux_pi();
 
         for (auto& list : n.get_coeff_list()) {
             list |= ranges::actions::remove_if([&](auto& it) {

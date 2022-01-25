@@ -54,7 +54,7 @@ Makefile
 cmake_install.cmake
 install_manifest.txt
 *.txt
-!or-utils/CMakeLists.txt
+!CMakeLists.txt
 *.png
 *.dot
 *.pdf
@@ -76,6 +76,7 @@ build_arch/*
 debug/*
 release/*
 build*/*
+out/*
 relwithdeb/*
 third_party
 build_ubuntu
@@ -502,3 +503,8 @@ FodyWeavers.xsd
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 vcpkg/
+
+*.csv
+!results/**/*csv
+!TueServer_results/**/*.csv
+!Results Windows/**/*.csv

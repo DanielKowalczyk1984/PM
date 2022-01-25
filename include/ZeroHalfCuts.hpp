@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __ZEROHALFCUTS_H__
-#define __ZEROHALFCUTS_H__
+#ifndef ZEROHALFCUTS_H
+#define ZEROHALFCUTS_H
 
 #include <gurobi_c++.h>               // for GRBVar, GRBEnv, GRBModel
 #include <cstddef>                    // for size_t
@@ -41,13 +41,15 @@ class ZeroHalfCuts {
                  NodeTableEntity<NodeBdd>* _table);
     ZeroHalfCuts(ZeroHalfCuts&&) = default;
     ZeroHalfCuts(const ZeroHalfCuts&) = delete;
-    ZeroHalfCuts& operator=(ZeroHalfCuts&&) = default;
-    ZeroHalfCuts& operator=(const ZeroHalfCuts&) = delete;
-
     ~ZeroHalfCuts() = default;
-    bool                                            add_cuts();
-    void                                            generate_cuts();
-    std::vector<std::shared_ptr<ConstraintGeneric>> get_cut_list();
+
+    auto operator=(ZeroHalfCuts&&) -> ZeroHalfCuts& = default;
+    auto operator=(const ZeroHalfCuts&) -> ZeroHalfCuts& = delete;
+
+    auto add_cuts() -> bool;
+    auto get_cut_list() -> std::vector<std::shared_ptr<ConstraintGeneric>>;
+
+    void generate_cuts();
 
     static constexpr int ALIGN = 40;
 
@@ -80,4 +82,4 @@ class ZeroHalfCuts {
     void dfs_evaluate(const NodeId& v);
 };
 
-#endif  // __ZEROHALFCUTS_H__
+#endif  // ZEROHALFCUTS_H

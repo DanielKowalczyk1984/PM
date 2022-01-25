@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -108,24 +108,25 @@ class NodeBdd : public NodeBase {
 
     NodeBdd(const NodeBdd& src) = default;
     NodeBdd(NodeBdd&& src) noexcept = default;
-    NodeBdd& operator=(const NodeBdd& src) = default;
-    NodeBdd& operator=(NodeBdd&& src) noexcept = default;
     ~NodeBdd() = default;
 
-    void                 set_weight(int _weight);
-    [[nodiscard]] size_t get_weight() const;
+    auto operator=(const NodeBdd& src) -> NodeBdd& = default;
+    auto operator=(NodeBdd&& src) noexcept -> NodeBdd& = default;
 
-    [[nodiscard]] Job*   get_job() const;
-    [[nodiscard]] size_t get_nb_job() const;
-    void                 set_job(Job* _job);
+    void               set_weight(int _weight);
+    [[nodiscard]] auto get_weight() const -> size_t;
+
+    [[nodiscard]] auto get_job() const -> Job*;
+    [[nodiscard]] auto get_nb_job() const -> size_t;
+    void               set_job(Job* _job);
 
     void add_coeff_list(const std::shared_ptr<BddCoeff>& ptr, bool high);
     void add_coeff_list_clear();
-    std::array<std::vector<weak_ptr_bddcoeff>, 2>& get_coeff_list();
+    auto get_coeff_list() -> std::array<std::vector<weak_ptr_bddcoeff>, 2>&;
 
-    bool operator!=(NodeBdd const& o) const;
+    auto operator!=(NodeBdd const& o) const -> bool;
 
-    friend std::ostream& operator<<(std::ostream& os, NodeBdd const& o);
+    friend auto operator<<(std::ostream& os, NodeBdd const& o) -> std::ostream&;
 
     void init_node(size_t                _weight,
                    [[maybe_unused]] bool _root_node = false,
@@ -138,40 +139,40 @@ class NodeBdd : public NodeBase {
     auto operator<=>(const NodeBdd& rhs);
 
     /** Functions concerning reduced_cost */
-    dbl_array& get_reduced_cost();
-    void       reset_reduced_costs();
-    void       reset_reduced_costs_farkas();
-    void       adjust_reduced_costs(double _x, bool high);
+    auto get_reduced_cost() -> dbl_array&;
+    void reset_reduced_costs();
+    void reset_reduced_costs_farkas();
+    void adjust_reduced_costs(double _x, bool high);
 
     /** Functions concerning ptr_node_id */
-    void    set_ptr_node_id(size_t i, size_t j);
-    void    set_ptr_node_id(const NodeId& _node_id);
-    NodeId& get_ptr_node_id();
-    void    reset_ptr_node_id();
+    void set_ptr_node_id(size_t i, size_t j);
+    void set_ptr_node_id(const NodeId& _node_id);
+    auto get_ptr_node_id() -> NodeId&;
+    void reset_ptr_node_id();
 
     /** Functions for manipulation of nb_paths */
-    big_int& get_nb_paths();
-    void     reset_nb_paths();
-    void     update_nb_paths(const big_int& x = 1);
+    auto get_nb_paths() -> big_int&;
+    void reset_nb_paths();
+    void update_nb_paths(const big_int& x = 1);
 
     /** Functions for manipulation of visited */
     void               reset_visited();
     void               update_visited();
-    [[nodiscard]] bool get_visited() const;
+    [[nodiscard]] auto get_visited() const -> bool;
 
     /** Functions for manipulation of key */
-    void    set_key(const size_t& _key);
-    size_t& get_key();
+    void set_key(const size_t& _key);
+    auto get_key() -> size_t&;
 
-    void    set_key_model(const size_t& _key);
-    size_t& get_key_model();
+    void set_key_model(const size_t& _key);
+    auto get_key_model() -> size_t&;
     /** Functions for manipulation of lp_visited */
     void               update_lp_visited(bool _update);
-    [[nodiscard]] bool get_lp_visited() const;
+    [[nodiscard]] auto get_lp_visited() const -> bool;
 
     /** Functions for manipulation of lp_x */
-    [[nodiscard]] dbl_array& get_lp_x();
-    double&                  get_lp_x(bool _high);
+    [[nodiscard]] auto get_lp_x() -> dbl_array&;
+    auto               get_lp_x(bool _high) -> double&;
 
     void update_lp_x(double _x, bool _high);
 
@@ -181,55 +182,55 @@ class NodeBdd : public NodeBase {
     void set_cost(double _cost);
 
     /** Functions for manipulation of best_sol_x */
-    void   update_best_sol_x(bool _high);
-    double get_best_sol_x(bool _high);
+    void update_best_sol_x(bool _high);
+    auto get_best_sol_x(bool _high) -> double;
 
     /** Functions for manipulation of backward distance */
     void reset_backward_distance(int _x = 0);
     void update_backward_distance(const std::array<int, 2>& _backward_distance,
                                   bool                      _high);
 
-    int_array& get_backward_distance();
+    auto get_backward_distance() -> int_array&;
 
     /** Functions for manipulation of all */
     void reset_all(size_t _nb_elements);
 
-    boost::dynamic_bitset<>& get_all();
+    auto get_all() -> boost::dynamic_bitset<>&;
 
-    void   intersect_all(const boost::dynamic_bitset<>& _set);
-    void   union_all(const boost::dynamic_bitset<>& _set);
-    void   add_element(size_t _element);
-    bool   is_element(size_t _element);
-    bool   all_is_empty();
-    size_t get_first_all();
-    size_t get_next_all(size_t _index);
+    void intersect_all(const boost::dynamic_bitset<>& _set);
+    void union_all(const boost::dynamic_bitset<>& _set);
+    void add_element(size_t _element);
+    auto is_element(size_t _element) -> bool;
+    auto all_is_empty() -> bool;
+    auto get_first_all() -> size_t;
+    auto get_next_all(size_t _index) -> size_t;
 
     /** Functions for manipulation of calc */
     void reset_calc();
-    bool any_of_calc();
+    auto any_of_calc() -> bool;
 
-    bool get_calc(bool _high);
+    auto get_calc(bool _high) -> bool;
 
     void update_calc(bool _high, bool _update = false);
 
     /** Functions for manipulation of in_degree */
-    int get_in_degree(bool _high);
+    auto get_in_degree(bool _high) -> int;
 
     void update_in_degree(bool _high);
 
-    bool alternative_paths();
+    auto alternative_paths() -> bool;
 
     void reset_in_degree();
 
     /** Functions for manipulation of Zero-Half cuts formulation cut problem */
     void reset_in_edges();
 
-    std::vector<size_t>& get_in_edges(bool _high);
-    void                 add_in_edge(bool _high, size_t _key_parent);
+    auto get_in_edges(bool _high) -> std::vector<size_t>&;
+    void add_in_edge(bool _high, size_t _key_parent);
 
     void set_key_edge(bool _high, size_t _key);
 
-    size_t& get_key_edge(bool _high);
+    auto get_key_edge(bool _high) -> size_t&;
 
     void reset_coeff_cut();
     void reset_coeff_cut(bool _high);
@@ -238,12 +239,12 @@ class NodeBdd : public NodeBase {
 
     void reduce_coeff_cut(bool _high);
 
-    double get_coeff_cut(bool _high);
+    auto get_coeff_cut(bool _high) -> double;
 
-    grb_array& get_y();
-    grb_array& get_r();
-    void       set_sigma(GRBVar&& _sigma);
-    GRBVar&    get_sigma();
+    auto get_y() -> grb_array&;
+    auto get_r() -> grb_array&;
+    void set_sigma(GRBVar&& _sigma);
+    auto get_sigma() -> GRBVar&;
 };
 
 #endif  // NODE_DURATION_HPP

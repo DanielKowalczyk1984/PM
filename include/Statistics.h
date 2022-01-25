@@ -20,15 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __STATISTICS_H__
-#define __STATISTICS_H__
+#ifndef STATISTICS_H
+#define STATISTICS_H
 
 #include <fmt/format.h>               // for format
 #include <boost/chrono/duration.hpp>  // for den
 #include <boost/timer/timer.hpp>      // for cpu_timer
 #include <cstddef>                    // for size_t
+#include <span>                       // for span
 #include <string>                     // for string
-#include "or-utils/util.h"             // for CCutil_timer
+#include "or-utils/util.h"            // for CCutil_timer
 struct Parms;
 
 class Timer : public boost::timer::cpu_timer {
@@ -41,27 +42,24 @@ class Timer : public boost::timer::cpu_timer {
     ClockType   _type;
 
    public:
-    Timer(const std::string& name_ = "timer",
-          ClockType          type = ClockType::wall_time)
-        : boost::timer::cpu_timer{},
-          _name(name_),
+    Timer(std::string name_ = "timer", ClockType type = ClockType::wall_time)
+        : _name(std::move(name_)),
           _type(type) {
         this->stop();
         this->elapsed().clear();
     };
 
-    Timer(const std::string& name_ = "timer", bool type = false)
-        : boost::timer::cpu_timer{},
-          _name(name_),
+    Timer(std::string name_ = "timer", bool type = false)
+        : _name(std::move(name_)),
           _type(type ? cpu_time : wall_time) {
         this->stop();
         this->elapsed().clear();
     };
 
-    auto&     name() const { return _name; };
-    ClockType type() const { return _type; }
+    [[nodiscard]] auto name() const -> const std::string& { return _name; };
+    [[nodiscard]] auto type() const -> ClockType { return _type; }
 
-    double dbl_sec() const {
+    [[nodiscard]] auto dbl_sec() const -> double {
         auto aux = boost::chrono::nanoseconds();
         switch (_type) {
             case wall_time:
@@ -74,7 +72,7 @@ class Timer : public boost::timer::cpu_timer {
 
             case cpu_time:
                 aux = boost::chrono::nanoseconds(this->elapsed().user +
-                                                      this->elapsed().system);
+                                                 this->elapsed().system);
 
                 return static_cast<double>(aux.count()) *
                        boost::chrono::nanoseconds::period::num /
@@ -83,7 +81,7 @@ class Timer : public boost::timer::cpu_timer {
         return 0.0;
     }
 
-    boost::timer::nanosecond_type nano_sec() const {
+    [[nodiscard]] auto nano_sec() const -> boost::timer::nanosecond_type {
         switch (_type) {
             case wall_time:
                 return this->elapsed().wall;
@@ -96,7 +94,8 @@ class Timer : public boost::timer::cpu_timer {
         return boost::timer::nanosecond_type{};
     }
 
-    std::string str_sec(short precision = boost::timer::default_places) const {
+    [[nodiscard]] auto str_sec(
+        short precision = boost::timer::default_places) const -> std::string {
         switch (_type) {
             case cpu_time:
                 return this->format(precision, "%t");
@@ -162,26 +161,42 @@ struct Statistics {
     void start_resume_timer(TimerType _type);
     void suspend_timer(TimerType _type);
 
-    double      total_time_dbl(TimerType _type);
-    std::string total_time_str(TimerType _type, short precision) const;
-    boost::timer::nanosecond_type total_time_nano_sec(TimerType _type);
+    [[nodiscard]] auto total_time_str(TimerType _type, short precision) const
+        -> std::string;
+
+    [[nodiscard]] auto total_time_dbl(TimerType _type) const -> double;
+    [[nodiscard]] auto total_time_nano_sec(TimerType _type) const
+        -> boost::timer::nanosecond_type;
 
     Statistics(const Parms& parms);
+
+    static constexpr auto DEFAULT_MIP_RUN = 110.0;
 };
 
 template <>
 struct fmt::formatter<Statistics> {
-    char           presentation = 'v';
-    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-        auto it = ctx.begin(), end = ctx.end();
-        if (it != end && (*it == 'v' || *it == 'n'))
+    char presentation = 'v';
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
+        auto aux = std::span<const char>{ctx.begin(), ctx.end()};
+
+        if (aux.empty())
+        {
+            return nullptr;
+        }
+
+        auto it = aux.begin();
+        auto end = aux.end();
+
+        if (it != end && (*it == 'v' || *it == 'n')) {
             presentation = *it++;
+        }
 
-        // Check if reached the end of the range:
-        if (it != end && *it != '}')
+        if (it != end && *it != '}') {
             throw format_error("invalid format");
+        }
 
-        return it;
+        return std::addressof(*it);
     }
 
     template <typename FormatContext>
@@ -190,7 +205,8 @@ struct fmt::formatter<Statistics> {
         if (presentation == 'n') {
             return format_to(
                 ctx.out(),
-                "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},"
+                "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}"
+                ","
                 "{},{},{},{},{},{},{}",
                 "tot_real_time", stat.time_total.name(),
                 stat.time_branch_and_bound.name(), stat.time_lb.name(),
@@ -211,14 +227,15 @@ struct fmt::formatter<Statistics> {
             "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}"
             ",{},{},{},{},{},{}",
             stat.real_time_total,
-            stat.total_time_str(Statistics::cputime_timer, 5),
-            stat.total_time_str(Statistics::bb_timer, 5),
-            stat.total_time_str(Statistics::lb_timer, 5),
-            stat.total_time_str(Statistics::lb_root_timer, 5),
-            stat.total_time_str(Statistics::heuristic_timer, 5),
-            stat.total_time_str(Statistics::build_dd_timer, 5),
-            stat.total_time_str(Statistics::pricing_timer, 5),
-            stat.total_time_str(Statistics::reduced_cost_fixing_timer, 5),
+            stat.total_time_str(Statistics::cputime_timer, PRECISION),
+            stat.total_time_str(Statistics::bb_timer, PRECISION),
+            stat.total_time_str(Statistics::lb_timer, PRECISION),
+            stat.total_time_str(Statistics::lb_root_timer, PRECISION),
+            stat.total_time_str(Statistics::heuristic_timer, PRECISION),
+            stat.total_time_str(Statistics::build_dd_timer, PRECISION),
+            stat.total_time_str(Statistics::pricing_timer, PRECISION),
+            stat.total_time_str(Statistics::reduced_cost_fixing_timer,
+                                PRECISION),
             stat.rel_error, stat.global_lower_bound, stat.global_upper_bound,
             stat.root_rel_error, stat.root_upper_bound, stat.root_lower_bound,
             stat.nb_generated_col, stat.nb_generated_col_root,
@@ -227,6 +244,8 @@ struct fmt::formatter<Statistics> {
             stat.mip_obj_bound_lp, stat.mip_rel_gap, stat.mip_run_time,
             stat.mip_status, stat.mip_nb_iter_simplex, stat.mip_nb_nodes);
     }
+
+    static constexpr auto PRECISION = 5;
 };
 
-#endif  // __STATISTICS_H__
+#endif  // STATISTICS_H

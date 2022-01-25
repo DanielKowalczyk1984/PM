@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -31,17 +31,18 @@
 #include "PricingSolution.hpp"       // for PricingSolution
 
 class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
-    const double* pi{};
+    std::span<const double> aux_pi{};
 
    public:
     BackwardBddBase() = default;
 
-    void set_pi(double* _pi) { pi = _pi; }
-    void set_pi(std::span<const double>& _pi) { pi = _pi.data(); }
+    void set_aux_pi(std::span<const double>& _pi) { aux_pi = _pi; }
 
-    [[nodiscard]] const double* get_pi() const { return pi; }
+    [[nodiscard]] auto get_aux_pi() const -> std::span<const double> {
+        return aux_pi;
+    }
 
-    PricingSolution get_objective(NodeBdd& n) const override {
+    auto get_objective(NodeBdd& n) const -> PricingSolution override {
         PricingSolution sol(0.0);
         auto*           aux_label = &(n.backward_label[0]);
         auto*           table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
@@ -54,7 +55,7 @@ class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
             }
 
             aux_label = aux_label->get_previous();
-        } while (aux_label);
+        } while (aux_label != nullptr);
 
         return sol;
     }
@@ -65,9 +66,10 @@ class BackwardBddBase : public Eval<NodeBdd, PricingSolution> {
 
     BackwardBddBase(const BackwardBddBase&) = default;
     BackwardBddBase(BackwardBddBase&&) noexcept = default;
-    BackwardBddBase& operator=(const BackwardBddBase&) = default;
-    BackwardBddBase& operator=(BackwardBddBase&&) noexcept = default;
     ~BackwardBddBase() override = default;
+
+    auto operator=(const BackwardBddBase&) -> BackwardBddBase& = default;
+    auto operator=(BackwardBddBase&&) noexcept -> BackwardBddBase& = default;
 };
 
 class BackwardBddSimple : public BackwardBddBase {
@@ -75,13 +77,13 @@ class BackwardBddSimple : public BackwardBddBase {
     BackwardBddSimple() = default;
 
     void evalNode(NodeBdd& n) const override {
-        auto  table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto* table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
         auto& p0_tmp = table_tmp->node(n[0]);
         auto& p1_tmp = table_tmp->node(n[1]);
 
         n.reset_reduced_costs();
 
-        const double* dual = BackwardBddBase::get_pi();
+        auto dual = BackwardBddBase::get_aux_pi();
 
         for (auto& list : n.get_coeff_list()) {
             list |= ranges::actions::remove_if([&](auto it) {
@@ -91,9 +93,8 @@ class BackwardBddSimple : public BackwardBddBase {
                         aux->get_coeff() * dual[aux->get_row()],
                         aux->get_high());
                     return false;
-                } else {
-                    return true;
                 }
+                return true;
             });
         }
 
@@ -119,9 +120,10 @@ class BackwardBddSimple : public BackwardBddBase {
 
     BackwardBddSimple(const BackwardBddSimple&) = default;
     BackwardBddSimple(BackwardBddSimple&&) noexcept = default;
-    BackwardBddSimple& operator=(const BackwardBddSimple&) = default;
-    BackwardBddSimple& operator=(BackwardBddSimple&&) noexcept = default;
     ~BackwardBddSimple() override = default;
+    auto operator=(const BackwardBddSimple&) -> BackwardBddSimple& = default;
+    auto operator=(BackwardBddSimple&&) noexcept
+        -> BackwardBddSimple& = default;
 };
 
 class BackwardBddCycle : public BackwardBddBase {
@@ -129,11 +131,11 @@ class BackwardBddCycle : public BackwardBddBase {
     BackwardBddCycle() = default;
 
     void evalNode(NodeBdd& n) const override {
-        auto*      tmp_j = n.get_job();
-        auto*      table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
-        auto&      p0_tmp = table_tmp->node(n[0]);
-        auto&      p1_tmp = table_tmp->node(n[1]);
-        const auto dual = BackwardBddBase::get_pi();
+        auto* tmp_j = n.get_job();
+        auto* table_tmp = Eval<NodeBdd, PricingSolution>::get_table();
+        auto& p0_tmp = table_tmp->node(n[0]);
+        auto& p1_tmp = table_tmp->node(n[1]);
+        auto dual = BackwardBddBase::get_aux_pi();
 
         n.reset_reduced_costs();
 
@@ -154,7 +156,7 @@ class BackwardBddCycle : public BackwardBddBase {
         //     });
         // }
 
-        auto prev_job{p1_tmp.backward_label[0].prev_job_backward()};
+        auto* prev_job{p1_tmp.backward_label[0].prev_job_backward()};
 
         n.backward_label[0].backward_update(
             &(p0_tmp.backward_label[0]),
@@ -222,8 +224,8 @@ class BackwardBddCycle : public BackwardBddBase {
 
     BackwardBddCycle(const BackwardBddCycle&) = default;
     BackwardBddCycle(BackwardBddCycle&&) noexcept = default;
-    BackwardBddCycle& operator=(const BackwardBddCycle&) = default;
-    BackwardBddCycle& operator=(BackwardBddCycle&&) noexcept = default;
+    auto operator=(const BackwardBddCycle&) -> BackwardBddCycle& = default;
+    auto operator=(BackwardBddCycle&&) noexcept -> BackwardBddCycle& = default;
     ~BackwardBddCycle() override = default;
 };
 

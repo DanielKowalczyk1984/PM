@@ -50,7 +50,7 @@ struct PricerSolverBase {
     size_t convex_constr_id;
     size_t convex_rhs;
 
-    std::string problem_name;
+    std::string problem_name{};
 
     std::shared_ptr<GRBEnv> env;
     GRBModel                model;
@@ -79,16 +79,18 @@ struct PricerSolverBase {
     explicit PricerSolverBase(const Instance& instance);
     PricerSolverBase(const PricerSolverBase& other);
     PricerSolverBase(PricerSolverBase&& other) noexcept;
-    PricerSolverBase& operator=(const PricerSolverBase& other);
-    PricerSolverBase& operator=(PricerSolverBase&& other) noexcept;
     virtual ~PricerSolverBase();
+
+    auto operator=(const PricerSolverBase& other) -> PricerSolverBase&;
+    auto operator=(PricerSolverBase&& other) noexcept -> PricerSolverBase&;
 
     /**
      * @brief clone a PricerSolverBase
      *
      * @return std::unique_ptr<PricerSolverBase>
      */
-    [[nodiscard]] virtual std::unique_ptr<PricerSolverBase> clone() const = 0;
+    [[nodiscard]] virtual auto clone() const
+        -> std::unique_ptr<PricerSolverBase> = 0;
 
     /**
      * @brief pricing algorithms
@@ -96,10 +98,10 @@ struct PricerSolverBase {
      * @param _pi
      * @return PricingSolution
      */
-    virtual PricingSolution pricing_algorithm(double* _pi) = 0;
-    virtual PricingSolution pricing_algorithm(std::span<const double>& pi) = 0;
-    virtual PricingSolution farkas_pricing(double* _pi) = 0;
-    virtual PricingSolution farkas_pricing(std::span<const double>& pi) = 0;
+    virtual auto pricing_algorithm(std::span<const double>& pi)
+        -> PricingSolution = 0;
+    virtual auto farkas_pricing(std::span<const double>& pi)
+        -> PricingSolution = 0;
 
     /**
      * @brief Functions for the evaluation of reduced cost fixing
@@ -107,8 +109,7 @@ struct PricerSolverBase {
      * @param pi
      * @return bool true if the graph is reduced
      */
-    virtual bool evaluate_nodes(double* pi) = 0;
-    virtual bool evaluate_nodes(std::span<const double>& pi) = 0;
+    virtual auto evaluate_nodes(std::span<const double>& pi) -> bool = 0;
 
     /**
      * @brief Refinement of the graph structure
@@ -117,8 +118,9 @@ struct PricerSolverBase {
      * @return true paths removed
      * @return false paths not removed
      */
-    virtual bool refinement_structure(
-        [[maybe_unused]] const std::vector<std::shared_ptr<Column>>& paths) {
+    virtual auto refinement_structure(
+        [[maybe_unused]] const std::vector<std::shared_ptr<Column>>& paths)
+        -> bool {
         return false;
     };
 
@@ -127,7 +129,6 @@ struct PricerSolverBase {
      *
      */
     virtual void enumerate_columns(){};
-    virtual void enumerate_columns([[maybe_unused]] double* _pi){};
     virtual void enumerate_columns(
         [[maybe_unused]] std::span<const double>& _pi){};
 
@@ -136,7 +137,7 @@ struct PricerSolverBase {
      *
      */
     virtual void build_mip() = 0;
-    bool         evaluate_mip_model();
+    auto         evaluate_mip_model() -> bool;
 
     /**
      * @brief Construction of the LP solutions over the original variables
@@ -144,9 +145,6 @@ struct PricerSolverBase {
      * @param lambda values lambda corresponding columns
      * @param columns characteristics of the corresponding columns
      */
-    virtual void construct_lp_sol_from_rmp(
-        const double*                               lambda,
-        const std::vector<std::shared_ptr<Column>>& columns) = 0;
 
     virtual void construct_lp_sol_from_rmp(
         const std::span<const double>&              lambda,
@@ -159,12 +157,9 @@ struct PricerSolverBase {
      * @param columns
      * @return bool
      */
-    bool compute_sub_optimal_duals(
-        const double*                               lambda,
-        const std::vector<std::shared_ptr<Column>>& columns);
-    bool compute_sub_optimal_duals(
+    auto compute_sub_optimal_duals(
         const std::span<const double>&              lambda,
-        const std::vector<std::shared_ptr<Column>>& columns);
+        const std::vector<std::shared_ptr<Column>>& columns) -> bool;
 
     virtual void project_sol_on_original_variables(const Sol& _sol) {
         _sol.print_solution();
@@ -175,7 +170,6 @@ struct PricerSolverBase {
      *
      * @param pi
      */
-    void calculate_constLB(double* pi);
     void calculate_constLB(std::span<const double>& pi);
 
     /**
@@ -197,12 +191,9 @@ struct PricerSolverBase {
      * @param lhs left hand side coefficients of the master program
      * @return double the reduced cost of sol
      */
-    virtual double compute_reduced_cost(const PricingSolution& sol,
-                                        double*                pi,
-                                        double*                lhs);
-    virtual double compute_reduced_cost(const PricingSolution&   sol,
-                                        std::span<const double>& pi,
-                                        double*                  lhs);
+    virtual auto compute_reduced_cost(const PricingSolution&   sol,
+                                      std::span<const double>& pi,
+                                      double*                  lhs) -> double;
 
     /**
      * @brief Compute the left hand side of solution sol in the master program
@@ -220,10 +211,9 @@ struct PricerSolverBase {
      * @param pi the dual prices
      * @return double reduced cost associated with column sol and dual prices pi
      */
-    virtual double compute_reduced_cost_simple(const PricingSolution& sol,
-                                               double*                pi);
-    virtual double compute_reduced_cost_simple(const PricingSolution&   sol,
-                                               std::span<const double>& pi);
+    virtual auto compute_reduced_cost_simple(const PricingSolution&   sol,
+                                             std::span<const double>& pi)
+        -> double;
 
     /**
      * @brief Compute Lagrangian bound of pi when a optimal solution is known
@@ -233,13 +223,13 @@ struct PricerSolverBase {
      * @param pi  dual prices
      * @return double Lagrangian bound
      */
-    virtual double compute_lagrange(const PricingSolution&     sol,
-                                    const std::vector<double>& pi);
-    virtual double compute_lagrange(const PricingSolution&         sol,
-                                    const std::span<const double>& pi);
+    virtual auto compute_lagrange(const PricingSolution&     sol,
+                                  const std::vector<double>& pi) -> double;
+    virtual auto compute_lagrange(const PricingSolution&         sol,
+                                  const std::span<const double>& pi) -> double;
 
-    virtual double compute_subgradient(const PricingSolution& sol,
-                                       double*                subgradient);
+    virtual auto compute_subgradient(const PricingSolution& sol,
+                                     double* subgradient) -> double;
 
     inline void set_is_integer_solution(bool _is_solution) {
         is_integer_solution = _is_solution;
@@ -250,7 +240,7 @@ struct PricerSolverBase {
      */
 
     virtual void insert_constraints_lp(NodeData* pd) = 0;
-    virtual int  add_constraints();
+    virtual auto add_constraints() -> int;
     virtual void remove_constraints(int first, int nb_del);
     virtual void update_rows_coeff(size_t first);
     virtual void update_coeff_constraints() = 0;
@@ -259,31 +249,31 @@ struct PricerSolverBase {
     /**
      * Some getters
      */
-    virtual cpp_int      print_num_paths() = 0;
-    [[nodiscard]] double get_UB() const;
-    void                 update_UB(double _ub);
+    virtual auto       print_num_paths() -> cpp_int = 0;
+    [[nodiscard]] auto get_UB() const -> double;
+    void               update_UB(double _ub);
 
-    virtual size_t get_nb_vertices() = 0;
-    virtual size_t get_nb_edges() = 0;
-    virtual bool   structure_feasible() { return true; }
-    virtual bool   check_column([[maybe_unused]] Column const* set) {
+    virtual auto get_nb_vertices() -> size_t = 0;
+    virtual auto get_nb_edges() -> size_t = 0;
+    virtual auto structure_feasible() -> bool { return true; }
+    virtual auto check_column([[maybe_unused]] Column const* set) -> bool {
         return true;
     };
 
-    virtual size_t                            get_size_data() { return 0UL; };
-    virtual std::vector<std::vector<BddCoeff>>& calculate_job_time() {
+    virtual auto get_size_data() -> size_t { return 0UL; };
+    virtual auto calculate_job_time() -> std::vector<std::vector<BddCoeff>>& {
         return x_bar;
     };
 
-    [[nodiscard]] inline bool get_is_integer_solution() const {
+    [[nodiscard]] inline auto get_is_integer_solution() const -> bool {
         return is_integer_solution;
     }
 
     /**
      * Some printing functions
      */
-    [[maybe_unused]] virtual int get_int_attr_model(enum MIP_Attr);
-    virtual double               get_dbl_attr_model(enum MIP_Attr);
+    [[maybe_unused]] virtual auto get_int_attr_model(enum MIP_Attr c) -> int;
+    virtual auto                  get_dbl_attr_model(enum MIP_Attr c) -> double;
 };
 
 #endif  // PRICER_SOLVER_BASE_HPP

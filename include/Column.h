@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -38,20 +38,21 @@ struct Column {
     std::vector<Job*> job_list{};
 
     Column() = default;
-    explicit Column(const Machine&);
+    explicit Column(const Machine& m);
     explicit Column(PricingSolution&& pricing_solution);
     ~Column() = default;
-    Column(Column&&) = default;
-    Column& operator=(Column&&) = default;
-    Column(const Column&) = default;
-    Column& operator=(const Column&) = default;
+    Column(Column&& _col) = default;
+    Column(const Column& _col) = default;
 
-    bool operator<(Column const& other);
-    bool operator==(Column const& other) const;
-    bool operator<=>(Column const& other);
+    auto operator<(Column const& other) -> bool;
+    auto operator==(Column const& other) const -> bool;
+    auto operator<=>(Column const& other) -> bool;
+    auto operator=(const Column& other) -> Column& = default;
+    auto operator=(Column&& other) -> Column& = default;
 
-    friend std::ostream& operator<<(std::ostream& os, const Column& set) {
-        for (auto& it : set.job_list) {
+    friend auto operator<<(std::ostream& os, const Column& set)
+        -> std::ostream& {
+        for (const auto& it : set.job_list) {
             os << it->job << " ";
         }
         os << "C = " << set.total_processing_time

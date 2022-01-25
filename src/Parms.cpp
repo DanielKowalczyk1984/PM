@@ -39,7 +39,7 @@
 #include <string>                                // for allocator, string, stod
 #include "DebugLvl.hpp"                          // for debug_lvl
 #include "Usage.hpp"                             // for USAGE
-#include "or-utils/util.h"                        // for program_header
+#include "or-utils/util.h"                       // for program_header
 
 const boost::timer::nanosecond_type TIME_LIMIT = 7200;
 const double                        ALPHA_STAB_INIT = 0.8;
@@ -65,11 +65,7 @@ Parms::Parms()
       pruning_test{"pruning_test", false},
       suboptimal_duals{"suboptimal_duals", false},
       reduce_cost_fixing{"reduce_cost_fixing", true},
-      print_csv{"print_csv", false},
-      jobfile(),
-      pname(),
-      nb_jobs(0),
-      nb_machines(0) {}
+      print_csv{"print_csv", false} {}
 
 Parms::Parms(int argc, const char** argv) : Parms() {
     program_header(argc, argv);
@@ -113,16 +109,15 @@ void Parms::parms_set_scoring_function(int scoring) {
     }
 }
 
-static std::string find_match(std::string const& _instance_file) {
+static auto find_match(std::string const& _instance_file) -> std::string {
     std::regex  regexp{"^.*(wt[0-9]*_[0-9]*).*$"};
     std::smatch match{};
     std::regex_search(_instance_file, match, regexp);
 
     if (match.size() != 2) {
-        return std::string("unknown_problem");
-    } else {
-        return match[1];
+        return std::string{"unknown_problem"};
     }
+    return match[1];
 }
 
 void to_json(nlohmann::json& j, const Parms& p) {
@@ -215,7 +210,8 @@ void Parms::parse_cmd(int argc, const char** argv) {
          * All the double parameters
          */
         alpha.set_value(std::stod(args["--alpha"].asString()));
-        branching_point.set_value(std::stod(args["--branching_point"].asString()));
+        branching_point.set_value(
+            std::stod(args["--branching_point"].asString()));
 
         /**
          * @brief all the bool parameters

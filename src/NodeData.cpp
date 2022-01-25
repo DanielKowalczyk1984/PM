@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -22,21 +22,21 @@
 
 #include "NodeData.h"  // for NodeData
 #include <OsiGrbSolverInterface.hpp>
-#include <array>                                // for array
-#include <concepts/concepts.hpp>                // for return_t
-#include <cstddef>                              // for size_t
-#include <limits>                               // for numeric_limits
-#include <memory>                               // for shared_ptr, unique_ptr
-#include <range/v3/action/action.hpp>           // for action_closure, opera...
-#include <range/v3/action/sort.hpp>             // for sort, sort_fn
-#include <range/v3/action/unique.hpp>           // for unique, unique_fn
-#include "Column.h"                             // for ScheduleSet
-#include "Instance.h"                           // for Instance
-#include "Parms.h"                              // for Parms
-#include "PricerSolverBase.hpp"                 // for PricerSolverBase
-#include "PricingStabilization.hpp"             // for PricingStabilizationBase
-#include "Problem.h"                            // for Problem
-#include "Solution.hpp"                         // for Sol
+#include <array>                       // for array
+#include <concepts/concepts.hpp>       // for return_t
+#include <cstddef>                     // for size_t
+#include <limits>                      // for numeric_limits
+#include <memory>                      // for shared_ptr, unique_ptr
+#include <range/v3/action/action.hpp>  // for action_closure, opera...
+#include <range/v3/action/sort.hpp>    // for sort, sort_fn
+#include <range/v3/action/unique.hpp>  // for unique, unique_fn
+#include "Column.h"                    // for ScheduleSet
+#include "Instance.h"                  // for Instance
+#include "Parms.h"                     // for Parms
+#include "PricerSolverBase.hpp"        // for PricerSolverBase
+#include "PricingStabilization.hpp"    // for PricingStabilizationBase
+#include "Problem.h"                   // for Problem
+#include "Solution.hpp"                // for Sol
 
 NodeData::NodeData(Problem* problem)
     : depth(0UL),
@@ -49,13 +49,6 @@ NodeData::NodeData(Problem* problem)
       nb_machines(instance.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
       osi_rmp(std::make_unique<OsiGrbSolverInterface>()),
-      lambda(),
-      pi(),
-      slack(),
-      rhs(),
-      lhs_coeff(),
-      id_row(),
-      coeff_row(),
       nb_rows(0),
       nb_cols(0),
       max_nb_cuts(NB_CUTS),
@@ -67,10 +60,7 @@ NodeData::NodeData(Problem* problem)
       id_art_var_cuts{},
       id_next_var_cuts{},
       id_pseudo_schedules{},
-      solver{},
       zero_count{},
-      column_status(),
-      localColPool(),
       lower_bound(0),
       upper_bound(std::numeric_limits<int>::max()),
       LP_lower_bound(0.0),
@@ -80,11 +70,12 @@ NodeData::NodeData(Problem* problem)
       nb_non_improvements(0),
       iterations(0UL),
       solver_stab(nullptr),
-      retirementage(static_cast<int>(sqrt(static_cast<double>(instance.nb_jobs))) +
-                    CLEANUP_ITERATION),
+      retirementage(
+          static_cast<int>(sqrt(static_cast<double>(instance.nb_jobs))) +
+          CLEANUP_ITERATION),
       branch_job(),
       completiontime(0),
-      less(-1) {}
+      less{} {}
 
 NodeData::NodeData(const NodeData& src)
     : depth(src.depth + 1),
@@ -97,13 +88,6 @@ NodeData::NodeData(const NodeData& src)
       nb_machines(src.nb_machines),
       RMP(lp_interface_create(nullptr), &lp_interface_delete),
       osi_rmp(std::make_unique<OsiGrbSolverInterface>()),
-      lambda(),
-      pi(),
-      slack(),
-      rhs(),
-      lhs_coeff(),
-      id_row(),
-      coeff_row(),
       nb_rows(),
       nb_cols(),
       max_nb_cuts(src.max_nb_cuts),
@@ -117,7 +101,6 @@ NodeData::NodeData(const NodeData& src)
       id_pseudo_schedules(src.id_pseudo_schedules),
       solver(src.solver->clone()),
       zero_count(),
-      column_status(),
       localColPool(src.localColPool),
       lower_bound(src.lower_bound),
       upper_bound(src.upper_bound),
@@ -131,9 +114,9 @@ NodeData::NodeData(const NodeData& src)
       retirementage(src.retirementage),
       branch_job(),
       completiontime(-1),
-      less(-1) {}
+      less{} {}
 
-std::unique_ptr<NodeData> NodeData::clone() const {
+auto NodeData::clone() const -> std::unique_ptr<NodeData> {
     auto aux = std::make_unique<NodeData>(*this);
 
     return aux;
@@ -141,7 +124,8 @@ std::unique_ptr<NodeData> NodeData::clone() const {
 
 NodeData::~NodeData() = default;
 
-std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
+auto NodeData::clone(size_t _j, int _t, bool _left) const
+    -> std::unique_ptr<NodeData> {
     auto aux = std::make_unique<NodeData>(*this);
     aux->branch_job = _j;
     aux->completiontime = _t;
@@ -154,14 +138,14 @@ std::unique_ptr<NodeData> NodeData::clone(size_t _j, int _t, bool _left) const {
     return aux;
 }
 
-std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
-                                                                      int _t) const {
+auto NodeData::create_child_nodes(size_t _j, int _t) const
+    -> std::array<std::unique_ptr<NodeData>, 2> {
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, _t, false),
                                                     clone(_j, _t, true)};
 }
 
-std::array<std::unique_ptr<NodeData>, 2> NodeData::create_child_nodes(size_t _j,
-                                                                      long _t) const {
+auto NodeData::create_child_nodes(size_t _j, long _t) const
+    -> std::array<std::unique_ptr<NodeData>, 2> {
     auto aux_t = static_cast<int>(_t);
     return std::array<std::unique_ptr<NodeData>, 2>{clone(_j, aux_t, false),
                                                     clone(_j, aux_t, true)};
@@ -187,12 +171,12 @@ void NodeData::prune_duplicated_sets() {
 }
 
 void NodeData::add_solution_to_colpool(const Sol& sol) {
-    for (auto& it : sol.machines) {
+    for (const auto& it : sol.machines) {
         localColPool.emplace_back(std::make_shared<Column>(it));
     }
 }
 
-double NodeData::get_score_value() const {
+auto NodeData::get_score_value() const -> double {
     switch (parms.scoring_value.value()) {
         case (size_scoring_value):
             return static_cast<double>(solver->get_nb_edges());

@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -27,7 +27,7 @@
 #include "Problem.h"        // for Problem
 #include "Usage.hpp"        // for USAGE
 
-int main(int argc, const char** argv) {
+auto main(int argc, const char** argv) -> int {
     int val = 0;
     try {
         Problem problem(argc, argv);

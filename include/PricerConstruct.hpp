@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -38,12 +38,11 @@ class conflict_state {
 
     conflict_state(const conflict_state&) = default;
     conflict_state(conflict_state&&) = default;
-    conflict_state& operator=(const conflict_state&) = default;
-    conflict_state& operator=(conflict_state&&) = default;
-
     conflict_state() = default;
-
     ~conflict_state() = default;
+
+    auto operator=(const conflict_state&) -> conflict_state& = default;
+    auto operator=(conflict_state&&) -> conflict_state& = default;
 };
 
 class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
@@ -57,23 +56,24 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
 
     PricerConstruct(const PricerConstruct&) = default;
     PricerConstruct(PricerConstruct&&) = default;
-    PricerConstruct& operator=(const PricerConstruct&) = default;
-    PricerConstruct& operator=(PricerConstruct&&) = default;
+    ~PricerConstruct() = default;
+    auto operator=(const PricerConstruct&) -> PricerConstruct& = default;
+    auto operator=(PricerConstruct&&) -> PricerConstruct& = default;
 
-    int getRoot(int& state) {
+    auto getRoot(int& state) const -> int {
         state = 0;
         return static_cast<int>(nb_layers);
     };
 
-    int getChild(int& state, int level, size_t value) const {
+    auto getChild(int& state, int level, size_t value) const -> int {
         auto layer = nb_layers - level;
         // assert(0 <= layer && layer <= nb_layers - 1);
         // auto* tmp_pair = static_cast<job_interval_pair*>(aux_list[layer]);
-        auto& tmp_pair = (*ptr_vector)[layer];
-        auto* tmp_j = tmp_pair.first;
-        auto* tmp_interval = tmp_pair.second;
+        const auto& tmp_pair = (*ptr_vector)[layer];
+        auto*       tmp_j = tmp_pair.first;
+        auto*       tmp_interval = tmp_pair.second;
 
-        if (value) {
+        if (value == 1) {
             state = state + tmp_j->processing_time;
         }
 
@@ -89,19 +89,18 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         return static_cast<int>(nb_layers - _j);
     }
 
-    ~PricerConstruct() = default;
-
    private:
-    [[nodiscard]] size_t min_job(size_t j, int state, size_t value) const {
+    [[nodiscard]] auto min_job(size_t j, int state, size_t value) const
+        -> size_t {
         auto val = nb_layers;
         // auto* tmp = static_cast<job_interval_pair*>(aux_list[j])->j;
         auto* tmp = (*ptr_vector)[j].first;
 
-        if (value) {
+        if (value != 0) {
             for (size_t i = j + 1; i < nb_layers; ++i) {
-                auto& tmp_pair = (*ptr_vector)[i];
-                auto* tmp_j = tmp_pair.first;
-                auto* tmp_interval = tmp_pair.second;
+                const auto& tmp_pair = (*ptr_vector)[i];
+                auto*       tmp_j = tmp_pair.first;
+                auto*       tmp_interval = tmp_pair.second;
                 // auto* tmp_pair =
                 // static_cast<job_interval_pair*>(aux_list[i]); auto*
                 // tmp_interval = static_cast<interval*>(tmp_pair->I); auto*
@@ -118,9 +117,9 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
             }
         } else {
             for (auto i = j + 1; i < nb_layers; ++i) {
-                auto& tmp_pair = (*ptr_vector)[i];
-                auto* tmp_j = tmp_pair.first;
-                auto* tmp_interval = tmp_pair.second;
+                const auto& tmp_pair = (*ptr_vector)[i];
+                auto*       tmp_j = tmp_pair.first;
+                auto*       tmp_interval = tmp_pair.second;
                 // auto* tmp_pair =
                 // static_cast<job_interval_pair*>(aux_list[i]); auto*
                 // tmp_interval = static_cast<interval*>(tmp_pair->I); auto*
@@ -137,7 +136,7 @@ class PricerConstruct : public DdSpec<PricerConstruct, int, 2> {
         return val;
     }
 
-    int diff_obj(Job* i, Job* j, int C) const {
+    static auto diff_obj(Job* i, Job* j, int C) -> int {
         return i->weighted_tardiness(C) +
                j->weighted_tardiness(C + j->processing_time) -
                (j->weighted_tardiness(C - i->processing_time +

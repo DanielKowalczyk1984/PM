@@ -48,29 +48,31 @@ class BddCoeff : public VariableKeyBase {
              double _cum_value = 0.0);
 
     BddCoeff(const BddCoeff&) = default;
-    BddCoeff& operator=(const BddCoeff&);
     BddCoeff(BddCoeff&& op) noexcept;
-    BddCoeff& operator=(BddCoeff&& op) noexcept = default;
     ~BddCoeff() override = default;
 
-    [[nodiscard]] double get_coeff() const;
-    [[nodiscard]] double get_value() const;
-    [[nodiscard]] double get_cum_value() const;
-    [[nodiscard]] size_t get_row() const;
+    auto operator=(const BddCoeff& _src) -> BddCoeff&;
+    auto operator=(BddCoeff&& op) noexcept -> BddCoeff& = default;
+
+    [[nodiscard]] auto get_coeff() const -> double;
+    [[nodiscard]] auto get_value() const -> double;
+    [[nodiscard]] auto get_cum_value() const -> double;
+    [[nodiscard]] auto get_row() const -> size_t;
+
+    auto operator==(const BddCoeff& other) -> bool;
 
     void set_row(size_t _row);
     void update_cum_value(double _value);
 
-    bool operator==(const BddCoeff& other);
-
-    friend std::ostream& operator<<(std::ostream& os, const BddCoeff& object);
-    friend bool          operator==(const BddCoeff& lhs, const BddCoeff& rhs);
+    friend auto operator<<(std::ostream& os, const BddCoeff& object)
+        -> std::ostream&;
+    friend auto operator==(const BddCoeff& lhs, const BddCoeff& rhs) -> bool;
 };
 
 namespace std {
 template <>
 struct hash<BddCoeff> {
-    std::size_t operator()(auto const& s) const noexcept {
+    auto operator()(auto const& s) const noexcept -> std::size_t {
         std::size_t seed = 0;
         boost::hash_combine(seed, s.get_j());
         boost::hash_combine(seed, s.get_t());

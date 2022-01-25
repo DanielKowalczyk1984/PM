@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __BRANCHBOUNDTREE_H__
-#define __BRANCHBOUNDTREE_H__
+#ifndef BRANCHBOUNDTREE_H
+#define BRANCHBOUNDTREE_H
 #include <memory>                        // for unique_ptr
 #include "branch-and-bound/TreeStats.h"  // for TreeStats
 #include "branch-and-bound/btree.h"      // for BTree
@@ -29,19 +29,20 @@
 struct NodeData;
 class BranchBoundTree {
    public:
-    explicit BranchBoundTree(std::unique_ptr<NodeData> data,
-                             int                       probType = 0,
-                             bool                      isIntProb = true);
-    BranchBoundTree(BranchBoundTree&&) = default;
-    BranchBoundTree& operator=(BranchBoundTree&&) = default;
-    BranchBoundTree& operator=(const BranchBoundTree&) = delete;
-    BranchBoundTree(const BranchBoundTree&) = delete;
+    explicit BranchBoundTree(std::unique_ptr<NodeData> _data,
+                             int                       _probType = 0,
+                             bool                      _isIntProb = true);
+    BranchBoundTree(BranchBoundTree&& _tree) = default;
+    auto operator=(BranchBoundTree&& _tree) -> BranchBoundTree& = default;
     ~BranchBoundTree() = default;
+
+    auto operator=(const BranchBoundTree& _tree) -> BranchBoundTree& = delete;
+    BranchBoundTree(const BranchBoundTree& _tree) = delete;
     void explore() { tree->explore(); }
 
-    [[nodiscard]] double get_UB() const { return tree->getGlobalUB(); }
-    [[nodiscard]] double get_LB() const { return tree->getGlobalLB(); }
-    [[nodiscard]] int    get_nb_nodes_explored() const {
+    [[nodiscard]] auto get_UB() const -> double { return tree->getGlobalUB(); }
+    [[nodiscard]] auto get_LB() const -> double { return tree->getGlobalLB(); }
+    [[nodiscard]] auto get_nb_nodes_explored() const -> int {
         return tree->tStats->get_states_explored();
     }
 
@@ -49,4 +50,4 @@ class BranchBoundTree {
     std::unique_ptr<BTree> tree;
 };
 
-#endif  // __BRANCHBOUNDTREE_H__
+#endif  // BRANCHBOUNDTREE_H

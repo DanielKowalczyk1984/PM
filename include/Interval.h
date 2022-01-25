@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __INTERVAL_H__
-#define __INTERVAL_H__
+#ifndef INTERVAL_H
+#define INTERVAL_H
 #include <array>    // for array
 #include <compare>  // for operator>
 #include <memory>   // for shared_ptr
@@ -37,7 +37,7 @@ struct compare_edd {
    public:
     compare_edd(int _a, int _b) : a(_a), b(_b){};
 
-    bool operator()(const auto lhs, const auto rhs) {
+    auto operator()(const auto lhs, const auto rhs) -> bool {
         auto diff = b - a;
         auto w_lhs = (lhs->due_time >= b) ? 0.0
                                           : static_cast<double>(lhs->weight) /
@@ -49,37 +49,35 @@ struct compare_edd {
         if (lhs->processing_time >= diff) {
             if (rhs->processing_time < diff) {
                 return true;
-            } else {
-                // if (w_lhs > w_rhs) {
-                //     return true;
-                // } else if (w_rhs > w_lhs) {
-                //     return false;
-                // } else if (lhs->processing_time > rhs->processing_time) {
-                //     return true;
-                // } else {
-                //     return false;
-                // }
+            }
+            // if (w_lhs > w_rhs) {
+            //     return true;
+            // } else if (w_rhs > w_lhs) {
+            //     return false;
+            // } else if (lhs->processing_time > rhs->processing_time) {
+            //     return true;
+            // } else {
+            //     return false;
+            // }
 
-                return std::tie(w_lhs, lhs->processing_time) >
-                       std::tie(w_rhs, rhs->processing_time);
-            }
-        } else {
-            if (rhs->processing_time >= diff) {
-                return false;
-            } else {
-                // if (w_lhs > w_rhs) {
-                //     return true;
-                // } else if (w_rhs > w_lhs) {
-                //     return false;
-                // } else if (lhs->processing_time > rhs->processing_time) {
-                //     return true;
-                // } else {
-                //     return false;
-                // }
-                return std::tie(w_lhs, lhs->processing_time) >
-                       std::tie(w_rhs, rhs->processing_time);
-            }
+            return std::tie(w_lhs, lhs->processing_time) >
+                   std::tie(w_rhs, rhs->processing_time);
         }
+
+        if (rhs->processing_time >= diff) {
+            return false;
+        }
+        // if (w_lhs > w_rhs) {
+        //     return true;
+        // } else if (w_rhs > w_lhs) {
+        //     return false;
+        // } else if (lhs->processing_time > rhs->processing_time) {
+        //     return true;
+        // } else {
+        //     return false;
+        // }
+        return std::tie(w_lhs, lhs->processing_time) >
+               std::tie(w_rhs, rhs->processing_time);
     };
 };
 
@@ -91,14 +89,14 @@ struct Interval {
 
     vector_ptr_jobs sigma;
 
-    Interval(int, int, const vector_ptr_jobs&);
+    Interval(int _a, int _b, const vector_ptr_jobs& _jobs);
 
     Interval() = default;
     ~Interval() = default;
     Interval(const Interval&) = default;
     Interval(Interval&&) = default;
-    Interval& operator=(Interval&&) = default;
-    Interval& operator=(const Interval&) = default;
+    auto operator=(Interval&&) -> Interval& = default;
+    auto operator=(const Interval&) -> Interval& = default;
 };
 
 struct IntervalPair {
@@ -111,9 +109,9 @@ struct IntervalPair {
                  int                         _b,
                  const std::shared_ptr<Job>& j1,
                  const std::shared_ptr<Job>& j2,
-                 Interval*                   _I);
+                 Interval*                   I_);
 
-    int operator()();
+    auto operator()() -> int;
 };
 
-#endif  // __INTERVAL_H__
+#endif  // INTERVAL_H

@@ -10,21 +10,13 @@ project(
   VERSION 0.1.0
   LANGUAGES CXX C
   DESCRIPTION "Branch-and-Price algorithm for parallel machine scheduling problems"
-  )
-
-# # Define a local module path
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-
-#
-# Prevent building in the source directory
-#
-
-include(cmake/ConfigSafeGuards.cmake)
+)
 
 #
 # Set project options
 #
 
+include(cmake/ConfigSafeGuards.cmake)
 include(cmake/StandardSettings.cmake)
 include(cmake/StaticAnalyzers.cmake)
 include(cmake/Utils.cmake)
@@ -64,18 +56,6 @@ else()
   set(PROJECT_NAME_LOWERCASE ${PROJECT_NAME})
   set(PROJECT_NAME_UPPERCASE ${PROJECT_NAME})
 endif()
-
-#
-# Third Party packages
-#
-
-set(Boost_NO_WARN_NEW_VERSIONS ON)
-
-#
-# Enable package managers
-#
-
-include(cmake/Conan.cmake)
 
 #
 # Create library, setup header and source files
@@ -128,31 +108,39 @@ else()
   endif()
 endif()
 
-if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
-  set_target_properties(
-    ${PROJECT_NAME}_LIB
-    PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
-               LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
-               OUTPUT_NAME ${PROJECT_NAME}
-  )
-endif()
-
 message(STATUS "Added all header and implementation files.")
 
 #
 # Set the project standard and warnings
 #
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-std=c++20" COMPILER_SUPPORTS_CXX20)
+check_cxx_compiler_flag("-std=gnu++20" COMPILER_SUPPORTS_CXX20_GNU)
+check_cxx_compiler_flag("-std:c++20" COMPILER_SUPPORTS_CXX20_MSVC)
 
-if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
+if(${PROJECT_NAME}_BUILD_HEADERS_ONLY
+   AND (COMPILER_SUPPORTS_CXX20
+        OR COMPILER_SUPPORTS_CXX20_GNU
+        OR COMPILER_SUPPORTS_CXX20_MSVC)
+)
   target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
-else()
+elseif(
+  COMPILER_SUPPORTS_CXX20
+  OR COMPILER_SUPPORTS_CXX20_GNU
+  OR COMPILER_SUPPORTS_CXX20_MSVC
+)
   target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+else()
+  message(
+    FATAL_ERROR
+      "The compiler ${CMAKE_CXX_COMPILER} has no C++20 support. Please use a different C++ compiler."
+  )
 endif()
 
 include(cmake/CompilerWarnings.cmake)
 set_project_warnings(${PROJECT_NAME})
 
-verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.")
+message(STATUS "Applied compiler warnings. Using standard C++20.")
 
 #
 # Model project dependencies
@@ -160,13 +148,14 @@ verbose_message("Applied compiler warnings. Using standard ${CXX_STANDARD}.")
 
 # Identify and link with the specific "packages" the project uses find_package(package_name
 # package_version REQUIRED package_type [other_options])
+set(Boost_NO_WARN_NEW_VERSIONS ON)
 find_package(fmt CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS atomic chrono timer random regex serialization)
 find_package(docopt CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(or-utils CONFIG REQUIRED)
-find_package(moderndd CONFIG REQUIRED)
+find_package(ModernDD CONFIG REQUIRED)
 find_package(branch-and-bound CONFIG REQUIRED)
 
 include(cmake/FindGurobi.cmake)
@@ -195,18 +184,6 @@ target_link_libraries(
 )
 
 verbose_message("Successfully added all dependencies and linked against them.")
-
-# # RelWIthDebInfo Flags set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
-# -mtune=native -fPIC") set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINGFO} -std=c99
-# -mtune=native -D_XOPEN_SOURCE=500 -Wnested-externs -Wstrict-prototypes" )
-
-# # Release Flags set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native  -fPIC")
-# set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -std=c99 -D_XOPEN_SOURCE=500 -mtune=native
-# -Wnested-externs -Wstrict-prototypes" )
-
-# # Debug Flags set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -mtune=native -O0 -fPIC")
-# set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -mtune=native -D_XOPEN_SOURCE=500
-# -Wnested-externs -Wstrict-prototypes" )
 
 #
 # Set the build/user include directories
@@ -290,15 +267,7 @@ verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 #
 
 include(cmake/CPM.cmake)
-CPMAddPackage(
-  NAME Format.cmake
-  VERSION 1.7.0
-  GITHUB_REPOSITORY TheLartians/Format.cmake
-  OPTIONS # set to yes skip cmake formatting
-          "FORMAT_SKIP_CMAKE NO"
-          # path to exclude (optional, supports regular expressions)
-          "CMAKE_FORMAT_EXCLUDE cmake/CPM.cmake"
-)
+CPMAddPackage("gh:TheLartians/Format.cmake@1.7.3")
 
 #
 # Install library for easy downstream inclusion

@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __ZEROHALFSYSTEM_H__
-#define __ZEROHALFSYSTEM_H__
+#ifndef ZEROHALFSYSTEM_H
+#define ZEROHALFSYSTEM_H
 
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 #include <cstddef>
@@ -48,9 +48,10 @@ class ZeroHalfSystem {
     ZeroHalfSystem(const DdStructure<NodeBdd>& bdd);
     ZeroHalfSystem(ZeroHalfSystem&&) = default;
     ZeroHalfSystem(const ZeroHalfSystem&) = default;
-    ZeroHalfSystem& operator=(ZeroHalfSystem&&) = default;
-    ZeroHalfSystem& operator=(const ZeroHalfSystem&) = default;
     ~ZeroHalfSystem() = default;
+
+    auto operator=(ZeroHalfSystem&&) -> ZeroHalfSystem& = default;
+    auto operator=(const ZeroHalfSystem&) -> ZeroHalfSystem& = default;
 
    private:
     std::vector<CoinPackedVector>        assignment_constraints;
@@ -93,4 +94,4 @@ class ZeroHalfSystem {
     void generate_cuts();
 };
 
-#endif  // __ZEROHALFSYSTEM_H__
+#endif  // ZEROHALFSYSTEM_H

@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -26,9 +26,9 @@
 #include "NodeData.h"                // for NodeData
 #include "PricerSolverBase.hpp"      // for PricerSolverBase
 #include "PricingStabilization.hpp"  // for PricingStabilizationBase
-#include "or-utils/lp.h"              // for lp_interface_deleterows, lp_inte...
+#include "or-utils/lp.h"             // for lp_interface_deleterows, lp_inte...
 
-void NodeData::build_solve_mip() {
+void NodeData::build_solve_mip() const {
     solver->build_mip();
 }
 
@@ -44,7 +44,7 @@ void NodeData::construct_lp_sol_from_rmp() {
                                       localColPool);
 }
 
-void NodeData::generate_cuts() {
+void NodeData::generate_cuts() const {
     // 1. add cuts to reformulation model
 
     solver->add_constraints();
@@ -54,7 +54,7 @@ void NodeData::generate_cuts() {
     // 3. adjust the pricing solver (add constraints to original model)
 }
 
-int NodeData::delete_unused_rows_range(int first, int last) {
+auto NodeData::delete_unused_rows_range(int first, int last) -> int {
     int val = 0;
 
     lp_interface_deleterows(RMP.get(), first, last);
@@ -67,10 +67,8 @@ int NodeData::delete_unused_rows_range(int first, int last) {
     return val;
 }
 
-int NodeData::call_update_rows_coeff() {
-    int val = 0;
+void NodeData::call_update_rows_coeff() const  {
 
     solver->update_rows_coeff(nb_jobs + 1);
 
-    return val;
 }

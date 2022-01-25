@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -37,29 +37,30 @@ class Label;
 
 template <typename T = double>
 class ForwardZddBase : public Eval<NodeZdd<T>, PricingSolution> {
-   protected:
-    const T* pi{nullptr};
-    size_t   num_jobs{0};
+   private:
+    std::span<const T> pi;
 
    public:
-    ForwardZddBase(T* _pi, size_t _num_jobs) : pi(_pi), num_jobs(_num_jobs) {}
-    explicit ForwardZddBase(size_t _num_jobs)
-        : Eval<NodeZdd<T>, PricingSolution>(),
-          pi(nullptr),
-          num_jobs(_num_jobs) {}
     ForwardZddBase() = default;
-    ~ForwardZddBase() = default;
+    ForwardZddBase(const ForwardZddBase<T>&) = default;
+    ForwardZddBase(ForwardZddBase<T>&&) noexcept = default;
+    ~ForwardZddBase() override = default;
 
-    virtual void initialize_pi(T* _pi) { pi = _pi; }
-    void         initialize_pi(std::span<const T> _pi) { pi = _pi.data(); }
+    auto operator=(const ForwardZddBase<T>&) -> ForwardZddBase<T>& = default;
+    auto operator=(ForwardZddBase<T>&&) noexcept
+        -> ForwardZddBase<T>& = default;
 
-    virtual void initialize_node(NodeZdd<T>& n) const = 0;
-    virtual void initialize_root_node(NodeZdd<T>& n) const = 0;
+    void         initialize_pi(std::span<const T> _pi) { pi = _pi; }
 
-    virtual void evalNode(NodeZdd<T>& n) const = 0;
+    void initialize_node(NodeZdd<T>& n) const override = 0;
+    void initialize_root_node(NodeZdd<T>& n) const override = 0;
 
-    PricingSolution get_objective(NodeZdd<T>& n) const {
-        PricingSolution sol(pi[num_jobs]);
+    [[nodiscard]] auto get_pi() const -> std::span<const T> { return pi; }
+
+    void evalNode(NodeZdd<T>& n) const override = 0;
+
+    auto get_objective(NodeZdd<T>& n) const -> PricingSolution override {
+        PricingSolution sol(0.0);
         auto            m = std::min_element(n.list.begin(), n.list.end(),
                                              compare_sub_nodes<T>);
 #ifndef NDEBUG
@@ -81,35 +82,26 @@ class ForwardZddBase : public Eval<NodeZdd<T>, PricingSolution> {
 
         return sol;
     }
-
-    ForwardZddBase(const ForwardZddBase<T>&) = default;
-    ForwardZddBase(ForwardZddBase<T>&&) noexcept = default;
-    ForwardZddBase<T>& operator=(const ForwardZddBase<T>&) = default;
-    ForwardZddBase<T>& operator=(ForwardZddBase<T>&&) noexcept = default;
 };
 
 template <typename T = double>
 class ForwardZddCycle : public ForwardZddBase<T> {
-    using ForwardZddBase<T>::pi;
-    using ForwardZddBase<T>::num_jobs;
-
    public:
     ForwardZddCycle(T* _pi, size_t _num_jobs)
         : ForwardZddBase<T>(_pi, _num_jobs) {}
 
-    explicit ForwardZddCycle(size_t _num_jobs) : ForwardZddBase<T>(_num_jobs) {}
-
-    ForwardZddCycle() : ForwardZddBase<T>() {
-        pi = nullptr;
-        num_jobs = 0;
-    }
-    ~ForwardZddCycle() = default;
+    ForwardZddCycle() = default;
+    ForwardZddCycle(const ForwardZddCycle<T>&) = default;
+    ForwardZddCycle(ForwardZddCycle<T>&&) noexcept = default;
+    ~ForwardZddCycle() override = default;
+    auto operator=(const ForwardZddCycle<T>&) -> ForwardZddCycle<T>& = default;
+    auto operator=(ForwardZddCycle<T>&&) noexcept
+        -> ForwardZddCycle<T>& = default;
 
     void initialize_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             if (it->weight == 0) {
-                it->forward_label[0].forward_update(pi[num_jobs], nullptr,
-                                                    false);
+                it->forward_label[0].forward_update(0.0, nullptr, false);
                 it->forward_label[1].forward_update(
                     std::numeric_limits<double>::max() / 2, nullptr, false);
             } else {
@@ -123,7 +115,7 @@ class ForwardZddCycle : public ForwardZddBase<T> {
 
     void initialize_root_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
-            it->forward_label[0].get_f() = pi[num_jobs];
+            it->forward_label[0].get_f() = 0.0;
             it->forward_label[1].set_f(std::numeric_limits<double>::max() / 2);
         }
     }
@@ -131,14 +123,14 @@ class ForwardZddCycle : public ForwardZddBase<T> {
     void evalNode(NodeZdd<T>& n) const override {
         auto* tmp_j = n.get_job();
         assert(tmp_j != nullptr);
+        auto dual = this->get_pi();
 
         for (auto& it : n.list) {
             int                            weight = it->weight;
             T                              g;
             std::shared_ptr<SubNodeZdd<T>> p0 = it->n;
             std::shared_ptr<SubNodeZdd<T>> p1 = it->y;
-            double                         result =
-                tmp_j->weighted_tardiness_start(weight) - pi[tmp_j->job];
+            double result = tmp_j->weighted_tardiness_start(weight) - dual[tmp_j->job];
 
             /**
              * High edge calculation
@@ -206,37 +198,25 @@ class ForwardZddCycle : public ForwardZddBase<T> {
             }
         }
     }
-
-    ForwardZddCycle(const ForwardZddCycle<T>&) = default;
-    ForwardZddCycle(ForwardZddCycle<T>&&) noexcept = default;
-    ForwardZddCycle<T>& operator=(const ForwardZddCycle<T>&) = default;
-    ForwardZddCycle<T>& operator=(ForwardZddCycle<T>&&) noexcept = default;
 };
 
 template <typename T = double>
 class ForwardZddSimple : public ForwardZddBase<T> {
-    using ForwardZddBase<T>::pi;
-    using ForwardZddBase<T>::num_jobs;
-
    public:
-    ForwardZddSimple(T* _pi, size_t _num_jobs)
-        : ForwardZddBase<T>(_pi, _num_jobs) {}
+    ForwardZddSimple() = default;
 
-    explicit ForwardZddSimple(size_t _num_jobs)
-        : ForwardZddBase<T>(_num_jobs) {}
-
-    ForwardZddSimple() {
-        pi = nullptr;
-        num_jobs = 0;
-    }
-
-    ~ForwardZddSimple() = default;
+    ForwardZddSimple(const ForwardZddSimple<T>&) = default;
+    ForwardZddSimple(ForwardZddSimple<T>&&) noexcept = default;
+    ~ForwardZddSimple() override = default;
+    auto operator=(const ForwardZddSimple<T>&)
+        -> ForwardZddSimple<T>& = default;
+    auto operator=(ForwardZddSimple<T>&&) noexcept
+        -> ForwardZddSimple<T>& = default;
 
     void initialize_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             if (it->weight == 0) {
-                it->forward_label[0].forward_update(pi[num_jobs], nullptr,
-                                                    false);
+                it->forward_label[0].forward_update(0.0, nullptr, false);
             } else {
                 it->forward_label[0].reset();
             }
@@ -246,24 +226,24 @@ class ForwardZddSimple : public ForwardZddBase<T> {
     void initialize_root_node(NodeZdd<T>& n) const override {
         for (auto& it : n.list) {
             // printf("test init %f\n", -pi[num_jobs]);
-            it->forward_label[0].get_f() = pi[num_jobs];
+            it->forward_label[0].get_f() = 0.0;
         }
     }
 
-    void initialize_pi(T* _pi) { pi = _pi; }
-    void initialize_pi(std::span<const T>& _pi) { pi = _pi.data(); }
+    // void initialize_pi(T* _pi) override { pi = _pi; }
+    // void initialize_pi(std::span<const T>& _pi) { pi = _pi.data(); }
 
     void evalNode(NodeZdd<T>& n) const override {
         Job* tmp_j = n.get_job();
         assert(tmp_j != nullptr);
-
+        auto dual = this->get_pi();
         for (auto& it : n.list) {
             int                            weight = it->weight;
             T                              g;
             std::shared_ptr<SubNodeZdd<T>> p0 = it->n;
             std::shared_ptr<SubNodeZdd<T>> p1 = it->y;
-            double                         result =
-                tmp_j->weighted_tardiness_start(weight) - pi[tmp_j->job];
+            double result = tmp_j->weighted_tardiness_start(weight) -
+                            dual[tmp_j->job];
             // printf("test result %f\n", result);
 
             /**
@@ -283,10 +263,6 @@ class ForwardZddSimple : public ForwardZddBase<T> {
             }
         }
     }
-    ForwardZddSimple(const ForwardZddSimple<T>&) = default;
-    ForwardZddSimple(ForwardZddSimple<T>&&) noexcept = default;
-    ForwardZddSimple<T>& operator=(const ForwardZddSimple<T>&) = default;
-    ForwardZddSimple<T>& operator=(ForwardZddSimple<T>&&) noexcept = default;
 };
 
 #endif  // DURATION_ZDD_HPP

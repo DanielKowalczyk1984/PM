@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -67,19 +67,19 @@ class Problem {
     /** Instance data*/
     Instance instance;
 
-    std::unique_ptr<BranchBoundTree> tree;
+    std::unique_ptr<BranchBoundTree> tree{};
     std::unique_ptr<NodeData>        root_pd;
 
     problem_status status;
 
     /* Best Solution*/
-    Sol opt_sol;
+    Sol opt_sol{};
 
     static constexpr auto EPS = 1e-6;
 
    public:
     /** All methods of problem class */
-    int  to_screen();
+    auto to_screen() -> int;
     void to_csv();
     void solve();
     /** Heuristic related */
@@ -88,16 +88,18 @@ class Problem {
     Problem(int argc, const char** argv);
     Problem(const Problem&) = delete;
     Problem(Problem&&) = delete;
-    Problem& operator=(const Problem&) = delete;
-    Problem& operator=(Problem&&) = delete;
     ~Problem();
+
+    auto operator=(const Problem&) -> Problem& = delete;
+    auto operator=(Problem&&) -> Problem& = delete;
+
     friend NodeData;
 
     class ProblemException : public std::exception {
        public:
         ProblemException(const char* const msg = nullptr) : errmsg(msg) {}
 
-        [[nodiscard]] const char* what() const noexcept override {
+        [[nodiscard]] auto what() const noexcept -> const char* override {
             return (errmsg);
         }
 

@@ -23,7 +23,7 @@
 
 #include "Statistics.h"
 #include <limits>
-#include "Parms.h"         // for Parms
+#include "Parms.h"  // for Parms
 
 Statistics::Statistics(const Parms& _parms)
     : global_upper_bound(std::numeric_limits<int>::max()),
@@ -39,8 +39,9 @@ Statistics::Statistics(const Parms& _parms)
       time_build_dd{"tot_build_dd", _parms.use_cpu_time.value()},
       time_total{"tot_cputime", _parms.use_cpu_time.value()},
       time_branch_and_bound{"tot_bb", _parms.use_cpu_time.value()},
-      time_strong_branching{"tot_strong_branching", _parms.use_cpu_time.value()},
-      time_lb_root{"tot_lb_root",_parms.use_cpu_time.value()},
+      time_strong_branching{"tot_strong_branching",
+                            _parms.use_cpu_time.value()},
+      time_lb_root{"tot_lb_root", _parms.use_cpu_time.value()},
       time_lb{"tot_lb", _parms.use_cpu_time.value()},
       time_solve_lp{"tot_solve_lp", _parms.use_cpu_time.value()},
       time_pricing{"tot_pricing", _parms.use_cpu_time.value()},
@@ -52,7 +53,7 @@ Statistics::Statistics(const Parms& _parms)
       mip_obj_bound(0.0),
       mip_obj_bound_lp(0.0),
       mip_rel_gap(0.0),
-      mip_run_time(110.0),
+      mip_run_time(DEFAULT_MIP_RUN),
       mip_status(0),
       mip_nb_iter_simplex(),
       mip_nb_nodes(0),
@@ -125,7 +126,7 @@ void Statistics::suspend_timer(TimerType _type) {
     }
 }
 
-double Statistics::total_time_dbl(TimerType _type) {
+auto Statistics::total_time_dbl(TimerType _type) const -> double {
     switch (_type) {
         case build_dd_timer:
             return time_build_dd.dbl_sec();
@@ -149,7 +150,8 @@ double Statistics::total_time_dbl(TimerType _type) {
     return 0.0;
 }
 
-boost::timer::nanosecond_type Statistics::total_time_nano_sec(TimerType _type) {
+auto Statistics::total_time_nano_sec(TimerType _type) const
+    -> boost::timer::nanosecond_type {
     switch (_type) {
         case build_dd_timer:
             return time_build_dd.nano_sec();
@@ -173,8 +175,8 @@ boost::timer::nanosecond_type Statistics::total_time_nano_sec(TimerType _type) {
     return boost::timer::nanosecond_type{};
 }
 
-std::string Statistics::total_time_str(TimerType          _type,
-                                   short              precision) const {
+auto Statistics::total_time_str(TimerType _type, short precision) const
+    -> std::string {
     switch (_type) {
         case build_dd_timer:
             return time_build_dd.str_sec(precision);
@@ -197,4 +199,3 @@ std::string Statistics::total_time_str(TimerType          _type,
     }
     return "";
 }
-

@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __INSTANCE_H__
-#define __INSTANCE_H__
+#ifndef INSTANCE_H
+#define INSTANCE_H
 #include <fmt/format.h>  // for format
 #include <chrono>        // for filesystem
 #include <cstddef>       // for size_t
@@ -29,6 +29,7 @@
 #include <filesystem>    // for path
 #include <limits>        // for numeric_limits
 #include <memory>        // for shared_ptr
+#include <span>          // for span
 #include <string>        // for string
 #include <utility>       // for pair
 #include <vector>        // for vector
@@ -60,16 +61,17 @@ struct Instance {
     Instance(Parms const& _parms);
 
     Instance(const Instance&) = default;
-    Instance& operator=(const Instance&) = delete;
-    Instance& operator=(Instance&&) = delete;
-    Instance(Instance&&) = default;
     ~Instance() = default;
+    Instance(Instance&&) = default;
+
+    auto operator=(Instance&&) -> Instance& = delete;
+    auto operator=(const Instance&) -> Instance& = delete;
 
     class InstanceException : public std::exception {
        public:
         InstanceException(const char* const msg = nullptr) : errmsg(msg) {}
 
-        [[nodiscard]] const char* what() const noexcept override {
+        [[nodiscard]] auto what() const noexcept -> const char* override {
             return (errmsg);
         }
 
@@ -87,15 +89,22 @@ struct fmt::formatter<Instance> {
     char presentation = 'v';
 
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-        auto it = ctx.begin(), end = ctx.end();
-        if (it != end && (*it == 'v' || *it == 'n'))
+        auto aux = std::span<const char>{ctx.begin(), ctx.end()};
+        if(aux.empty()) {
+            return nullptr;
+        }
+
+        auto it = aux.begin();
+        auto end = aux.end();
+        if (it != end && (*it == 'v' || *it == 'n')) {
             presentation = *it++;
+        }
 
-        // Check if reached the end of the range:
-        if (it != end && *it != '}')
+        if (it != end && *it != '}') {
             throw format_error("invalid format");
+        }
 
-        return it;
+        return std::addressof(*it);
     }
 
     template <typename FormatContext>
@@ -103,10 +112,9 @@ struct fmt::formatter<Instance> {
         -> decltype(ctx.out()) {
         if (presentation == 'n') {
             return format_to(ctx.out(), "n,m,NameInstance");
-        } else {
-            return format_to(ctx.out(), "{},{},{}", inst.nb_jobs,
-                             inst.nb_machines, inst.pname);
         }
+        return format_to(ctx.out(), "{},{},{}", inst.nb_jobs, inst.nb_machines,
+                         inst.pname);
     }
 };
-#endif  // __INSTANCE_H__
+#endif  // INSTANCE_H

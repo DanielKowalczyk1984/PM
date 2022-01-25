@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -23,31 +23,31 @@
 #include <algorithm>
 #include <cstddef>
 
-Job::Job(int p, int w, int d) : processing_time(p), due_time(d), weight(w) {}
+Job::Job(int p, int w, int d) : processing_time(p), weight(w), due_time(d) {}
 
-int Job::weighted_tardiness(int C) {
+auto Job::weighted_tardiness(int C) const -> int {
     return weight * std::max(0, C - due_time);
 }
 
-int Job::weighted_tardiness(size_t C) {
+auto Job::weighted_tardiness(size_t C) const -> int {
     return weight * std::max(0, static_cast<int>(C) - due_time);
 }
 
-int Job::weighted_tardiness_start(int S) {
+auto Job::weighted_tardiness_start(int S) const -> int {
     return weight * std::max(0, S + processing_time - due_time);
 }
 
-int Job::weighted_tardiness_start(size_t S) {
+auto Job::weighted_tardiness_start(size_t S) const -> int {
     return weight *
            std::max(0, static_cast<int>(S) + processing_time - due_time);
 }
 
-int Job::weighted_tardiness_start(long S) {
+auto Job::weighted_tardiness_start(long S) const -> int {
     return weight *
            std::max(0, static_cast<int>(S) + processing_time - due_time);
 }
 
-int value_diff_Fij(int C, Job* i, Job* j) {
+auto value_diff_Fij(int C, Job* i, Job* j) -> int {
     auto val = i->weighted_tardiness_start(C - j->processing_time);
     val += j->weighted_tardiness(C + i->processing_time);
     val -= j->weighted_tardiness(C);
@@ -55,7 +55,7 @@ int value_diff_Fij(int C, Job* i, Job* j) {
     return val;
 }
 
-int value_diff_Fij(size_t C, Job* i, Job* j) {
+auto value_diff_Fij(size_t C, Job* i, Job* j) -> int {
     auto j_p = static_cast<size_t>(j->processing_time);
     auto i_p = static_cast<size_t>(i->processing_time);
     auto val = i->weighted_tardiness_start(C - j_p);
@@ -65,7 +65,7 @@ int value_diff_Fij(size_t C, Job* i, Job* j) {
     return val;
 }
 
-bool bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) {
+auto bool_diff_Fij(int weight, Job* _prev, Job* tmp_j) -> bool {
     return (_prev == nullptr) ? true
                               : (value_diff_Fij(weight + tmp_j->processing_time,
                                                 _prev, tmp_j) >= 0);

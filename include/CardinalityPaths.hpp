@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __CARDINALITYPATHS_H__
-#define __CARDINALITYPATHS_H__
+#ifndef CARDINALITYPATHS_H
+#define CARDINALITYPATHS_H
 #include <array>                             // for array
 #include <boost/multiprecision/cpp_int.hpp>  // for cpp_int
 #include <cstddef>                           // for size_t
@@ -36,7 +36,7 @@ class CardinalityPaths : public Eval<NodeBdd, boost::multiprecision::cpp_int> {
    public:
     CardinalityPaths() = default;
 
-    cpp_int get_objective(NodeBdd& n) const override {
+    auto get_objective(NodeBdd& n) const -> cpp_int override {
         return n.get_nb_paths();
     }
 
@@ -45,7 +45,7 @@ class CardinalityPaths : public Eval<NodeBdd, boost::multiprecision::cpp_int> {
     void initialize_node(NodeBdd& n) const override { n.reset_nb_paths(); }
 
     void evalNode(NodeBdd& n) const override {
-        auto table_tmp = Eval<NodeBdd, cpp_int>::get_table();
+        auto* table_tmp = Eval<NodeBdd, cpp_int>::get_table();
         if (n[0] == 1) {
             n.update_nb_paths();
         } else if (n[0] > 1) {
@@ -64,8 +64,8 @@ class BackwardDistance : public Eval<NodeBdd, std::array<int, 2>> {
    public:
     BackwardDistance() = default;
 
-    std::array<int, 2> get_objective(
-        [[maybe_unused]] NodeBdd& n) const override {
+    auto get_objective([[maybe_unused]] NodeBdd& n) const
+        -> std::array<int, 2> override {
         return {0, 0};
     }
 
@@ -74,11 +74,12 @@ class BackwardDistance : public Eval<NodeBdd, std::array<int, 2>> {
     void initialize_node([[maybe_unused]] NodeBdd& n) const override {}
 
     void evalNode(NodeBdd& n) const override {
-        auto table_tmp = Eval<NodeBdd, std::array<int, 2>>::get_table();
+        auto* table_tmp = Eval<NodeBdd, std::array<int, 2>>::get_table();
         for (size_t i = 0UL; i < 2; ++i) {
             auto& cur_node = table_tmp->node(n[i]);
-            n.update_backward_distance(cur_node.get_backward_distance(), i);
+            n.update_backward_distance(cur_node.get_backward_distance(),
+                                       i == 1);
         }
     }
 };
-#endif  // __CARDINALITYPATHS_H__
+#endif  // CARDINALITYPATHS_H

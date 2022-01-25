@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __PRICERSOLVERARCTIMEDP_H__
-#define __PRICERSOLVERARCTIMEDP_H__
+#ifndef PRICERSOLVERARCTIMEDP_H
+#define PRICERSOLVERARCTIMEDP_H
 
 #include <algorithm>             // for remove
 #include <cstddef>               // for size_t
@@ -55,7 +55,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     vector3d_jobs  graph;
     vector3d_jobs  reversed_graph;
     vector1d_jobs  vector_jobs;
-    Job            j0;
+    Job            j0{};
     vector2d_dbl   forward_F;
     vector2d_dbl   backward_F;
     vector2d_jobs  A;
@@ -75,14 +75,16 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     PricerSolverArcTimeDp(const Instance& instance);
     PricerSolverArcTimeDp(const PricerSolverArcTimeDp&) = default;
     PricerSolverArcTimeDp(PricerSolverArcTimeDp&&) = default;
-    PricerSolverArcTimeDp& operator=(const PricerSolverArcTimeDp&) = default;
-    PricerSolverArcTimeDp& operator=(PricerSolverArcTimeDp&&) = default;
     ~PricerSolverArcTimeDp() override;
 
-    PricingSolution pricing_algorithm(double* _pi) override;
-    PricingSolution pricing_algorithm(std::span<const double>& _pi) override;
-    PricingSolution farkas_pricing(double* pi) override;
-    PricingSolution farkas_pricing(std::span<const double>& pi) override;
+    auto operator=(const PricerSolverArcTimeDp&)
+        -> PricerSolverArcTimeDp& = default;
+    auto operator=(PricerSolverArcTimeDp&&) -> PricerSolverArcTimeDp& = default;
+
+    auto pricing_algorithm(std::span<const double>& _pi)
+        -> PricingSolution override;
+    auto farkas_pricing(std::span<const double>& pi)
+        -> PricingSolution override;
     // PricerSolverArcTimeDp(const PricerSolverArcTimeDp& src)
     //     : PricerSolverBase(src),
     //       Hmax(src.Hmax),
@@ -102,35 +104,32 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     //     init_table();
     // }
 
-    [[nodiscard]] std::unique_ptr<PricerSolverBase> clone() const override {
+    [[nodiscard]] auto clone() const
+        -> std::unique_ptr<PricerSolverBase> override {
         return std::make_unique<PricerSolverArcTimeDp>(*this);
     };
 
     void init_table();
 
-    bool evaluate_nodes([[maybe_unused]] double* pi) override;
-    bool evaluate_nodes([[maybe_unused]] std::span<const double>& pi) override;
+    auto evaluate_nodes([[maybe_unused]] std::span<const double>& pi)
+        -> bool override;
     void build_mip() override;
-    void construct_lp_sol_from_rmp(
-        const double*                               lambda,
-        const std::vector<std::shared_ptr<Column>>& columns) override;
     void construct_lp_sol_from_rmp(
         const std::span<const double>&              lambda,
         const std::vector<std::shared_ptr<Column>>& columns) override;
     // void add_constraint(Job* job, GPtrArray* list, int order) override;
 
-
-    size_t  get_nb_edges() override;
-    size_t  get_nb_vertices() override;
-    cpp_int print_num_paths() override;
-    bool    check_column(Column const* set) override;
+    auto get_nb_edges() -> size_t override;
+    auto get_nb_vertices() -> size_t override;
+    auto print_num_paths() -> cpp_int override;
+    auto check_column(Column const* col) -> bool override;
 
     void forward_evaluator(double* pi);
     void forward_evaluator(std::span<const double>& _pi);
     void backward_evaluator(double* _pi);
     void backward_evaluator(std::span<const double>& _pi);
 
-    int delta1(const size_t& i, const size_t& j, const int& t) {
+    auto delta1(const size_t& i, const size_t& j, const int& t) -> int {
         Job* tmp_i = vector_jobs[i];
         Job* tmp_j = vector_jobs[j];
         return (tmp_i->weighted_tardiness(t) +
@@ -146,7 +145,7 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
         graph[j][t].erase(pend);
     }
 
-    int delta2(const size_t& j, const size_t& t) {
+    auto delta2(const size_t& j, const size_t& t) -> int {
         Job* tmp_j = vector_jobs[j];
         return tmp_j->weighted_tardiness(t) - tmp_j->weighted_tardiness(t + 1);
     }
@@ -155,4 +154,4 @@ class PricerSolverArcTimeDp : public PricerSolverBase {
     void insert_constraints_lp([[maybe_unused]] NodeData* pd) override {}
     void update_coeff_constraints() override {}
 };
-#endif  // __PRICERSOLVERARCTIMEDP_H__
+#endif  // PRICERSOLVERARCTIMEDP_H

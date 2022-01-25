@@ -15,8 +15,6 @@ vcpkg_from_gitlab(
 
 if(VCPKG_TARGET_IS_WINDOWS)
   set(ENV{GUROBI_HOME} "C:/gurobi912/win64")
-elseif(VCPKG_IS_LINUX)
-  set(ENV{GUROBI_HOME} "/opt/gurobi/linux64")
 endif()
 vcpkg_cmake_configure(SOURCE_PATH ${SOURCE_PATH} PREFER_NINJA)
 

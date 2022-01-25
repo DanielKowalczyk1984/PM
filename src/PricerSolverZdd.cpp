@@ -50,11 +50,11 @@
 PricerSolverZdd::PricerSolverZdd(const Instance& instance)
     : PricerSolverBase(instance),
       decision_diagram(
-          std::make_unique<DdStructure<NodeZdd<>>>(PricerConstruct(instance))) {
+          std::make_unique<DdStructure<NodeZdd<>>>(PricerConstruct(instance))),
+      size_graph{decision_diagram->size()} {
     remove_layers_init();
     // decision_diagram->compressBdd();
     // decision_diagram->reduceZdd();
-    size_graph = decision_diagram->size();
     init_table();
     construct_mipgraph();
     lp_x = std::vector<double>(num_edges(mip_graph), 0.0);
@@ -178,13 +178,8 @@ void PricerSolverZdd::init_table() {
     }
 }
 
-PricingSolution PricerSolverZdd::farkas_pricing([[maybe_unused]] double* pi) {
-    PricingSolution sol;
-
-    return sol;
-}
-PricingSolution PricerSolverZdd::farkas_pricing(
-    [[maybe_unused]] std::span<const double>& pi) {
+auto PricerSolverZdd::farkas_pricing(
+    [[maybe_unused]] std::span<const double>& pi) -> PricingSolution {
     PricingSolution sol;
 
     return sol;
@@ -404,54 +399,6 @@ void PricerSolverZdd::build_mip() {
 }
 
 void PricerSolverZdd::construct_lp_sol_from_rmp(
-    const double*                               lambda,
-    const std::vector<std::shared_ptr<Column>>& columns) {
-    auto&     table = *(decision_diagram->getDiagram());
-    std::span aux_cols{lambda, columns.size()};
-    // std::span aux_sets{columns->pdata, columns->len};
-    std::fill(lp_x.begin(), lp_x.end(), 0.0);
-    for (auto i = 0UL; i < columns.size(); ++i) {
-        if (aux_cols[i] > EPS_SOLVER) {
-            auto  counter = 0UL;
-            auto* tmp = columns[i].get();
-            // std::span aux_jobs{tmp->job_list->pdata, tmp->job_list->pdata};
-            NodeId                        tmp_nodeid(decision_diagram->root());
-            std::shared_ptr<SubNodeZdd<>> tmp_sub_node =
-                table.node(tmp_nodeid).list[0];
-
-            while (tmp_nodeid > 1) {
-                Job* tmp_j{};
-
-                if (counter < tmp->job_list.size()) {
-                    tmp_j = tmp->job_list[counter];
-                } else {
-                    tmp_j = nullptr;
-                }
-
-                NodeZdd<>& tmp_node = table.node(tmp_nodeid);
-
-                if (tmp_j == tmp_node.get_job()) {
-                    lp_x[tmp_sub_node->high_edge_key] += aux_cols[i];
-                    tmp_nodeid = tmp_node[1];
-                    tmp_sub_node = tmp_sub_node->y;
-                    counter++;
-                } else {
-                    lp_x[tmp_sub_node->low_edge_key] += aux_cols[i];
-                    tmp_nodeid = tmp_node[0];
-                    tmp_sub_node = tmp_sub_node->n;
-                }
-            }
-        }
-    }
-
-    // ColorWriterEdge edge_writer(g, x);
-    // ColorWriterVertex vertex_writer(g, table);
-    // std::ofstream outf("min.gv");
-    // boost::write_graphviz(outf, g, vertex_writer, edge_writer);
-    // outf.close();
-}
-
-void PricerSolverZdd::construct_lp_sol_from_rmp(
     const std::span<const double>&              lambda,
     const std::vector<std::shared_ptr<Column>>& columns) {
     auto& table = *(decision_diagram->getDiagram());
@@ -498,7 +445,7 @@ void PricerSolverZdd::construct_lp_sol_from_rmp(
     // outf.close();
 }
 
-bool PricerSolverZdd::check_column(Column const* col) {
+auto PricerSolverZdd::check_column(Column const* col) -> bool {
     auto        weight = 0UL;
     const auto& set = col->job_list;
     // std::span aux_jobs{set->pdata, set->len};
@@ -526,14 +473,14 @@ bool PricerSolverZdd::check_column(Column const* col) {
     return (weight == set.size());
 }
 
-size_t PricerSolverZdd::get_nb_edges() {
+auto PricerSolverZdd::get_nb_edges() -> size_t {
     return num_edges(mip_graph);
 }
 
-size_t PricerSolverZdd::get_nb_vertices() {
+auto PricerSolverZdd::get_nb_vertices() -> size_t {
     return decision_diagram->size();
 }
 
-boost::multiprecision::cpp_int PricerSolverZdd::print_num_paths() {
+auto PricerSolverZdd::print_num_paths() -> boost::multiprecision::cpp_int {
     return 0;
 }

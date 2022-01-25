@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -33,16 +33,16 @@ VariableKeyBase::VariableKeyBase(size_t _j, size_t _t, bool _high, bool _root)
 
 VariableKeyBase::VariableKeyBase() = default;
 
-[[nodiscard]] size_t VariableKeyBase::get_j() const {
+[[nodiscard]] auto VariableKeyBase::get_j() const -> size_t {
     return j;
 }
-[[nodiscard]] size_t VariableKeyBase::get_t() const {
+[[nodiscard]] auto VariableKeyBase::get_t() const -> size_t {
     return t;
 }
-[[nodiscard]] bool VariableKeyBase::get_root() const {
+[[nodiscard]] auto VariableKeyBase::get_root() const -> bool {
     return root;
 }
-[[nodiscard]] bool VariableKeyBase::get_high() const {
+[[nodiscard]] auto VariableKeyBase::get_high() const -> bool {
     return high;
 }
 
@@ -59,12 +59,14 @@ void VariableKeyBase::set_high(bool _high) {
     high = _high;
 }
 
-VariableKeyBase::VariableKeyBase(const VariableKeyBase&) = default;
-VariableKeyBase::VariableKeyBase(VariableKeyBase&&) noexcept = default;
-VariableKeyBase& VariableKeyBase::operator=(const VariableKeyBase&) = default;
-VariableKeyBase& VariableKeyBase::operator=(VariableKeyBase&&) noexcept =
-    default;
+VariableKeyBase::VariableKeyBase(const VariableKeyBase& src) = default;
+VariableKeyBase::VariableKeyBase(VariableKeyBase&& src) noexcept = default;
 
-bool VariableKeyBase::operator==(const VariableKeyBase& other) const {
+auto VariableKeyBase::operator=(const VariableKeyBase& src)
+    -> VariableKeyBase& = default;
+auto VariableKeyBase::operator=(VariableKeyBase&& src) noexcept
+    -> VariableKeyBase& = default;
+
+auto VariableKeyBase::operator==(const VariableKeyBase& other) const -> bool {
     return (j == other.j && t == other.t && high == other.high);
 }

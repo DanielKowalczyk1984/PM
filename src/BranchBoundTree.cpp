@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -31,10 +31,10 @@
 #include "branch-and-bound/cbfstree.h"  // for CBFSTree
 #include "branch-and-bound/dfstree.h"   // for DFSTree
 
-BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
+BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> _data,
                                  int                       _probType,
                                  bool                      _isIntProb) {
-    auto& parms = root->parms;
+    const auto& parms = _data->parms;
     switch (parms.bb_explore_strategy.value()) {
         case min_bb_explore_strategy:
             tree = std::make_unique<DFSTree>(_probType, _isIntProb);
@@ -50,14 +50,14 @@ BranchBoundTree::BranchBoundTree(std::unique_ptr<NodeData> root,
             break;
     }
 
-    tree->set_global_ub(static_cast<double>(root->opt_sol.tw));
+    tree->set_global_ub(static_cast<double>(_data->opt_sol.tw));
     tree->set_retain_states(false);
     tree->set_final_test_usage(parms.pruning_test.value());
-    tree->set_time_limit(parms.branching_cpu_limit.value());
+    tree->set_time_limit(static_cast<int>(parms.branching_cpu_limit.value()));
     tree->set_node_limit(parms.bb_node_limit.value());
     tree->set_only_root_node(parms.bb_node_limit.value() == 1);
-    auto aux = root->depth;
-    auto node = std::make_unique<BranchNodeBase>(std::move(root), true);
+    auto aux = _data->depth;
+    auto node = std::make_unique<BranchNodeBase>(std::move(_data), true);
     node->set_depth(aux);
     tree->process_state(std::move(node), true);
 }

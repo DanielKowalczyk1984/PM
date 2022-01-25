@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __USAGE_H__
-#define __USAGE_H__
+#ifndef USAGE_H
+#define USAGE_H
 
 #include <string>
 
-static const char USAGE[] = R"(PM.
+static const std::string USAGE = R"(PM.
   Usage: 
     PM --json <json_file> FILE NB
     PM [-s <sn> -S <kn> -pRZHMdPD -n <nl> -b <br> -a <ln> -l <x> -f <y> -c <x> --alpha <mn> --branching_point <brp> --refinement --enumerate --scoring_value <sv>] FILE NB
@@ -62,5 +62,4 @@ static const char USAGE[] = R"(PM.
     -s --scoring_function=<sn>    Set scoring function branching[default: 0]
 )";
 
-
-#endif  // __USAGE_H__
+#endif  // USAGE_H

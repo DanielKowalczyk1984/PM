@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -46,8 +46,8 @@ class Label {
     Label() = default;
     Label(const Label<N>& src) = default;
     Label(Label<N>&& src) noexcept = default;
-    Label<N>& operator=(const Label<N>& src) = default;
-    Label<N>& operator=(Label<N>&& src) noexcept = default;
+    auto operator=(const Label<N>& src) -> Label<N>& = default;
+    auto operator=(Label<N>&& src) noexcept -> Label<N>& = default;
     ~Label() = default;
 
     void set_f(double _f) { f = _f; }
@@ -62,23 +62,23 @@ class Label {
         high = false;
     }
 
-    [[nodiscard]] double get_f() const { return f; }
+    [[nodiscard]] auto get_f() const -> double { return f; }
 
-    double& get_f() { return f; }
+    auto get_f() -> double& { return f; }
 
-    Label<N>* get_previous() { return prev_label; }
+    auto get_previous() -> Label<N>* { return prev_label; }
 
-    Job* prev_job_backward() { return prev_job; }
+    auto prev_job_backward() -> Job* { return prev_job; }
 
-    bool get_high() { return high; }
+    auto get_high() -> bool { return high; }
 
-    Job* get_job() { return label_job; }
+    auto get_job() -> Job* { return label_job; }
 
-    int get_weight() { return weight; }
+    auto get_weight() -> int { return weight; }
 
-    NodeId& get_node_id() { return node_id; }
+    auto get_node_id() -> NodeId& { return node_id; }
 
-    Job* prev_job_forward() {
+    auto prev_job_forward() -> Job* {
         return get_previous() == nullptr ? nullptr : get_previous()->get_job();
     }
 

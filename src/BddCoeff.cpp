@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -36,45 +36,45 @@ BddCoeff::BddCoeff(size_t _j,
       value(_value),
       cum_value(_cum_value) {}
 
-BddCoeff& BddCoeff::operator=(const BddCoeff&) = default;
+auto BddCoeff::operator=(const BddCoeff&) -> BddCoeff& = default;
 BddCoeff::BddCoeff(BddCoeff&& op) noexcept = default;
 
-std::ostream& operator<<(std::ostream& os, const BddCoeff& object) {
+auto operator<<(std::ostream& os, const BddCoeff& object) -> std::ostream& {
     return os << "(j = " << object.get_j() << ", t = " << object.get_t()
               << ", x = " << object.get_value()
               << ", high = " << object.get_high() << " )\n";
 }
 
-bool operator==(const BddCoeff& lhs, const BddCoeff& rhs) {
+auto operator==(const BddCoeff& lhs, const BddCoeff& rhs) -> bool {
     return lhs.get_j() == rhs.get_j() && lhs.get_t() == rhs.get_t() &&
            lhs.get_high() == rhs.get_high();
 }
 
-bool BddCoeff::operator==(const BddCoeff& other) {
+auto BddCoeff::operator==(const BddCoeff& other) -> bool {
     return get_j() == other.get_j() && get_t() == other.get_t() &&
            get_high() == other.get_high();
 }
 
-[[nodiscard]] double BddCoeff::get_coeff() const {
+[[nodiscard]] auto BddCoeff::get_coeff() const -> double {
     return coeff;
 }
 
-[[nodiscard]] double BddCoeff::get_value() const {
+[[nodiscard]] auto BddCoeff::get_value() const -> double {
     return value;
 }
 
-[[nodiscard]] double BddCoeff::get_cum_value() const {
+[[nodiscard]] auto BddCoeff::get_cum_value() const -> double {
     return cum_value;
+}
+
+[[nodiscard]] auto BddCoeff::get_row() const -> size_t {
+    return row;
 }
 
 void BddCoeff::set_row(size_t _row) {
     row = _row;
 }
 
-[[nodiscard]] size_t BddCoeff::get_row() const {
-    return row;
-}
-
-[[nodiscard]] void BddCoeff::update_cum_value(double _value) {
+void BddCoeff::update_cum_value(double _value) {
     cum_value += _value;
 }

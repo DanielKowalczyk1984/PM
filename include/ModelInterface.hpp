@@ -9,8 +9,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef _MODEL_INTERFACE
-#define _MODEL_INTERFACE
+#ifndef MODEL_INTERFACE
+#define MODEL_INTERFACE
 
 #include <fmt/core.h>                     // for print
 #include <cmath>                          // for fabs
@@ -49,26 +49,27 @@ class ConstraintBase {
     bool   can_be_deleted;
 
    public:
-    [[nodiscard]] inline double get_rhs() const { return rhs; }
+    [[nodiscard]] inline auto get_rhs() const -> double { return rhs; }
 
-    [[nodiscard]] inline char get_sense() const { return sense; }
+    [[nodiscard]] inline auto get_sense() const -> char { return sense; }
 
-    [[nodiscard]] inline bool get_can_be_deleted() const {
+    [[nodiscard]] inline auto get_can_be_deleted() const -> bool {
         return can_be_deleted;
     }
 
     ConstraintBase(const ConstraintBase&) = default;
     ConstraintBase(ConstraintBase&&) = default;
-    ConstraintBase& operator=(const ConstraintBase&) = default;
-    ConstraintBase& operator=(ConstraintBase&&) = default;
     virtual ~ConstraintBase() = default;
+
+    auto operator=(const ConstraintBase&) -> ConstraintBase& = default;
+    auto operator=(ConstraintBase&&) -> ConstraintBase& = default;
 
     ConstraintBase(char _sense, double _rhs, bool _can_be_delete = false)
         : sense(_sense),
           rhs(_rhs),
           can_be_deleted(_can_be_delete) {}
 
-    virtual double operator()(const VariableKeyBase&) = 0;
+    virtual auto operator()(const VariableKeyBase&) -> double = 0;
 };
 
 class ConstraintAssignment : public ConstraintBase {
@@ -80,7 +81,7 @@ class ConstraintAssignment : public ConstraintBase {
         : ConstraintBase('>', 1.0),
           row(_row) {}
 
-    double operator()(const VariableKeyBase& key) override {
+    auto operator()(const VariableKeyBase& key) -> double override {
         if (key.get_j() == row && key.get_high()) {
             return 1.0;
         }
@@ -90,17 +91,18 @@ class ConstraintAssignment : public ConstraintBase {
 
     ConstraintAssignment(const ConstraintAssignment&) = default;
     ConstraintAssignment(ConstraintAssignment&&) = default;
-    ConstraintAssignment& operator=(const ConstraintAssignment&) = default;
-    ConstraintAssignment& operator=(ConstraintAssignment&&) = default;
     ~ConstraintAssignment() override = default;
+    auto operator=(const ConstraintAssignment&)
+        -> ConstraintAssignment& = default;
+    auto operator=(ConstraintAssignment&&) -> ConstraintAssignment& = default;
 };
 
 class ConstraintConvex : public ConstraintBase {
    public:
     explicit ConstraintConvex(double _rhs) : ConstraintBase('>', _rhs) {}
 
-    double operator()(const VariableKeyBase& key) override {
-        if (!key.get_t()) {
+    auto operator()(const VariableKeyBase& key) -> double override {
+        if (key.get_t() == 0) {
             return -1.0;
         }
         return 0.0;
@@ -111,10 +113,10 @@ class ReformulationModel : public std::vector<std::shared_ptr<ConstraintBase>> {
    public:
     ReformulationModel(size_t nb_assignments, size_t nb_machines);
     ReformulationModel(ReformulationModel&&) = default;
-    ReformulationModel& operator=(ReformulationModel&&) = default;
     ReformulationModel(const ReformulationModel&) = default;
-    ReformulationModel& operator=(const ReformulationModel&) = default;
     ~ReformulationModel() = default;
+    auto operator=(ReformulationModel&&) -> ReformulationModel& = default;
+    auto operator=(const ReformulationModel&) -> ReformulationModel& = default;
 
     inline void delete_constraint(auto c) {
         if ((*this)[c]->get_can_be_deleted()) {
@@ -137,8 +139,8 @@ class GenericData : public std::unordered_map<VariableKeyBase, double> {
     ~GenericData() = default;
     GenericData(GenericData&&) = default;  // movable and noncopyable
     GenericData(const GenericData&) = default;
-    GenericData& operator=(GenericData&&) = default;
-    GenericData& operator=(const GenericData&) = default;
+    auto operator=(GenericData&&) -> GenericData& = default;
+    auto operator=(const GenericData&) -> GenericData& = default;
 
     void add_coeff_hash_table(size_t _j, size_t _t, bool _high, double _coeff) {
         VariableKeyBase key(_j, _t, _high);
@@ -159,7 +161,8 @@ class GenericData : public std::unordered_map<VariableKeyBase, double> {
         fmt::print("\n");
     }
 
-    friend bool operator==(const GenericData& lhs, const GenericData& rhs) {
+    friend auto operator==(const GenericData& lhs, const GenericData& rhs)
+        -> bool {
         if (lhs.size() != rhs.size()) {
             return false;
         }
@@ -175,10 +178,12 @@ class GenericData : public std::unordered_map<VariableKeyBase, double> {
             }
         }
 
+
         return true;
     };
 
-    friend bool operator!=(const GenericData& lhs, const GenericData& rhs) {
+    friend auto operator!=(const GenericData& lhs, const GenericData& rhs)
+        -> bool {
         return !(lhs == rhs);
     }
 };
@@ -203,26 +208,26 @@ class ConstraintGeneric : public ConstraintBase {
 
     ~ConstraintGeneric() override = default;
     ConstraintGeneric(ConstraintGeneric&& op) = default;
-    ConstraintGeneric& operator=(ConstraintGeneric&& op) = default;
-    ConstraintGeneric& operator=(const ConstraintGeneric&) = default;
     ConstraintGeneric(const ConstraintGeneric&) = default;
 
-    double operator()(const VariableKeyBase& key) override {
+    auto operator=(ConstraintGeneric&& op) -> ConstraintGeneric& = default;
+    auto operator=(const ConstraintGeneric&) -> ConstraintGeneric& = default;
+
+    auto operator()(const VariableKeyBase& key) -> double override {
         auto it = data->find(key);
         if (it == data->end()) {
             return 0.0;
-        } else {
-            return (*it).second;
         }
+        return (*it).second;
     }
 
-    friend bool operator!=(const ConstraintGeneric& lhs,
-                           const ConstraintGeneric& rhs) {
+    friend auto operator!=(const ConstraintGeneric& lhs,
+                           const ConstraintGeneric& rhs) -> bool {
         return !(*lhs.data == *rhs.data);
     }
 
-    friend bool operator==(const ConstraintGeneric& lhs,
-                           const ConstraintGeneric& rhs) {
+    friend auto operator==(const ConstraintGeneric& lhs,
+                           const ConstraintGeneric& rhs) -> bool {
         return (*lhs.data == *rhs.data);
     }
 
@@ -240,23 +245,24 @@ class OriginalConstraint {
     explicit OriginalConstraint(const std::shared_ptr<ConstraintBase>& _constr)
         : constr(_constr){};
     OriginalConstraint() : constr(){};
-    ~OriginalConstraint() = default;
     OriginalConstraint(OriginalConstraint&&) noexcept = default;
-    OriginalConstraint& operator=(OriginalConstraint&&) noexcept = default;
     OriginalConstraint(const OriginalConstraint<T>&) = default;
-    OriginalConstraint& operator=(const OriginalConstraint<T>&) = default;
+    ~OriginalConstraint() = default;
+    auto operator=(OriginalConstraint&&) noexcept
+        -> OriginalConstraint& = default;
+    auto operator=(const OriginalConstraint<T>&)
+        -> OriginalConstraint& = default;
 
-    inline std::list<std::shared_ptr<T>>& get_coeff_list() {
+    inline auto get_coeff_list() -> std::list<std::shared_ptr<T>>& {
         return coeff_list;
     }
 
-    inline ConstraintBase* get_constr() {
+    inline auto get_constr() -> ConstraintBase* {
         auto aux = constr.lock();
         if (aux) {
             return aux.get();
-        } else {
-            return nullptr;
         }
+        return nullptr;
     }
 
     inline void add_coeff_to_list(std::shared_ptr<T> _coeff) {
@@ -277,18 +283,20 @@ class OriginalModel : public std::vector<OriginalConstraint<T>> {
               ranges::to<std::vector<OriginalConstraint<T>>>()) {}
 
     OriginalModel(OriginalModel&& op) noexcept = default;
-    OriginalModel& operator=(OriginalModel&& op) noexcept = default;
     OriginalModel(const OriginalModel&) = default;
-    OriginalModel& operator=(const OriginalModel&) = default;
     ~OriginalModel() = default;
+    auto operator=(OriginalModel&& op) noexcept -> OriginalModel& = default;
+    auto operator=(const OriginalModel&) -> OriginalModel& = default;
 
     void add_coeff_list(int c, std::shared_ptr<T> coeff) {
         (*this)[c].add_coeff_to_list(coeff);
     }
 
-    ConstraintBase* get_constraint(int c) { return (*this)[c].get_constr(); }
+    auto get_constraint(int c) -> ConstraintBase* {
+        return (*this)[c].get_constr();
+    }
 
-    inline std::list<std::shared_ptr<T>>& get_coeff_list(size_t c) {
+    inline auto get_coeff_list(size_t c) -> std::list<std::shared_ptr<T>>& {
         return (*this)[c].get_coeff_list();
     }
 
@@ -296,7 +304,7 @@ class OriginalModel : public std::vector<OriginalConstraint<T>> {
         this->push_back(OriginalConstraint<>(_constr));
     }
 
-    inline size_t get_nb_constraints() { return this->size(); }
+    inline auto get_nb_constraints() -> size_t { return this->size(); }
 
     inline void delete_constraints(int first, int nb_del) {
         auto it = this->begin() + first;

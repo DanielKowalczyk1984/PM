@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef __NODEDATA_H__
-#define __NODEDATA_H__
+#ifndef NODEDATA_H
+#define NODEDATA_H
 
 #include <OsiSolverInterface.hpp>  //for OsiSolverInterface
 #include <array>                   // for array
@@ -31,7 +31,7 @@
 #include <span>                    // for span
 #include <string>                  // for string
 #include <vector>                  // for vector
-#include "or-utils/lp.h"            // for lp_interface
+#include "or-utils/lp.h"           // for lp_interface
 
 class PricingStabilizationBase;  // lines 14-14
 class Problem;                   // lines 15-15
@@ -71,13 +71,13 @@ struct NodeData {
     std::unique_ptr<OsiSolverInterface> osi_rmp;
     std::vector<int>                    row_status;
 
-    std::span<const double> lambda;
-    std::span<const double> pi;
-    std::vector<double>     slack;
-    std::span<const double> rhs;
-    std::vector<double>     lhs_coeff;
-    std::vector<int>        id_row;
-    std::vector<double>     coeff_row;
+    std::span<const double> lambda{};
+    std::span<const double> pi{};
+    std::vector<double>     slack{};
+    std::span<const double> rhs{};
+    std::vector<double>     lhs_coeff{};
+    std::vector<int>        id_row{};
+    std::vector<double>     coeff_row{};
 
     int nb_rows;
     int nb_cols;
@@ -95,12 +95,12 @@ struct NodeData {
     int    id_pseudo_schedules;
 
     // PricerSolver
-    std::unique_ptr<PricerSolverBase> solver;
+    std::unique_ptr<PricerSolverBase> solver{};
 
     // Columns
     int                                  zero_count;
-    std::vector<int>                     column_status;
-    std::vector<std::shared_ptr<Column>> localColPool;
+    std::vector<int>                     column_status{};
+    std::vector<std::shared_ptr<Column>> localColPool{};
 
     int lower_bound;
     int upper_bound;
@@ -122,62 +122,61 @@ struct NodeData {
     /** Branching strategies */
     size_t branch_job;
     int    completiontime;
-    int    less;
+    bool   less;
 
     /**
      * ptr to the parent node
      */
     explicit NodeData(Problem* problem);
-    NodeData(const NodeData&);
-    NodeData& operator=(const NodeData&) = delete;
-    NodeData& operator=(NodeData&&) = delete;
+    NodeData(const NodeData& src);
     NodeData(NodeData&&) = delete;
     ~NodeData();
 
-    void prune_duplicated_sets();
-    void add_solution_to_colpool(const Sol&);
+    auto operator=(const NodeData&) -> NodeData& = delete;
+    auto operator=(NodeData&&) -> NodeData& = delete;
 
-    int build_rmp();
+    void prune_duplicated_sets();
+    void add_solution_to_colpool(const Sol& sol);
+
+    auto build_rmp() -> int;
     /** lowerbound.cpp */
-    int  delete_unused_rows();
-    int  delete_old_columns();
-    int  delete_infeasible_columns();
-    int  compute_objective();
-    int  solve_relaxation();
-    int  compute_lower_bound();
-    int  estimate_lower_bound(size_t _iter);
-    bool refinement();
+    auto delete_unused_rows() -> int;
+    auto delete_old_columns() -> int;
+    auto delete_infeasible_columns() -> int;
+    auto compute_objective() -> int;
+    auto solve_relaxation() -> int;
+    auto compute_lower_bound() -> int;
+    auto estimate_lower_bound(size_t _iter) -> int;
+    auto refinement() -> bool;
     void make_pi_feasible_farkas_pricing();
 
     /** PricerSolverWrappers.cpp */
-    void build_solve_mip();
+    void build_solve_mip() const;
     void construct_lp_sol_from_rmp();
-    void generate_cuts();
-    int  delete_unused_rows_range(int first, int last);
-    int  call_update_rows_coeff();
+    void generate_cuts() const;
+    auto delete_unused_rows_range(int first, int last) -> int;
+    void call_update_rows_coeff() const;
 
     /** small getters */
-    double get_score_value() const;
+    [[nodiscard]] auto get_score_value() const -> double;
 
     /** StabilizationWrappers.cpp */
-    int  solve_pricing();
+    auto solve_pricing() -> int;
     void solve_farkas_dbl();
 
-    [[nodiscard]] std::unique_ptr<NodeData>                clone() const;
-    [[nodiscard]] std::unique_ptr<NodeData>                clone(size_t _j,
-                                                                 int    _t,
-                                                                 bool   _left) const;
-    [[nodiscard]] std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(
-        size_t _j,
-        int    _t) const;
+    [[nodiscard]] auto clone() const -> std::unique_ptr<NodeData>;
+    [[nodiscard]] auto clone(size_t _j, int _t, bool _left) const
+        -> std::unique_ptr<NodeData>;
+    [[nodiscard]] auto create_child_nodes(size_t _j, int _t) const
+        -> std::array<std::unique_ptr<NodeData>, 2>;
 
-    [[nodiscard]] std::array<std::unique_ptr<NodeData>, 2> create_child_nodes(
-        size_t _j,
-        long   _t) const;
+    [[nodiscard]] auto create_child_nodes(size_t _j, long _t) const
+        -> std::array<std::unique_ptr<NodeData>, 2>;
 
    private:
-    int add_lhs_column_to_rmp(double cost);
-    int add_lhs_column_to_rmp(double cost, const std::vector<double>& _lhs);
+    auto add_lhs_column_to_rmp(double cost) -> int;
+    auto add_lhs_column_to_rmp(double cost, const std::vector<double>& _lhs)
+        -> int;
 
     /**
      * @brief Model construction methods
@@ -189,7 +188,7 @@ struct NodeData {
     void add_cols_local_pool();
 
     /** lowerbound.cpp */
-    int  grow_ages();
+    auto grow_ages() -> int;
     void print_ages();
 
     static constexpr auto CLEANUP_ITERATION = 30;
@@ -203,4 +202,4 @@ struct NodeData {
     static constexpr auto NB_NON_IMPROVEMENTS = 5;
 };
 
-#endif  // __NODEDATA_H__
+#endif  // NODEDATA_H
