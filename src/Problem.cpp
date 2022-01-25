@@ -35,8 +35,6 @@
 #include "PricerSolverBddBackward.hpp"  // for PricerSolverBddBackwardCycle
 #include "PricerSolverBddForward.hpp"   // for PricerSolverBddCycle, PricerS...
 #include "PricerSolverSimpleDP.hpp"     // for PricerSolverSimpleDp
-#include "PricerSolverZddBackward.hpp"  // for PricerSolverZddBackwardCycle
-#include "PricerSolverZddForward.hpp"   // for PricerSolverSimple, PricerSol...
 #include "PricingStabilization.hpp"     // for PricingStabilizationBase, Pri...
 #include "Solution.hpp"                 // for Sol
 #include "Statistics.h"                 // for Statistics, Statistics::bb_timer
@@ -81,12 +79,6 @@ Problem::Problem(int argc, const char** argv)
         case bdd_solver_cycle:
             root_pd->solver = std::make_unique<PricerSolverBddCycle>(instance);
             break;
-        case zdd_solver_cycle:
-            root_pd->solver = std::make_unique<PricerSolverZddCycle>(instance);
-            break;
-        case zdd_solver_simple:
-            root_pd->solver = std::make_unique<PricerSolverSimple>(instance);
-            break;
         case bdd_solver_backward_simple:
             root_pd->solver =
                 std::make_unique<PricerSolverBddBackwardSimple>(instance);
@@ -94,14 +86,6 @@ Problem::Problem(int argc, const char** argv)
         case bdd_solver_backward_cycle:
             root_pd->solver =
                 std::make_unique<PricerSolverBddBackwardCycle>(instance);
-            break;
-        case zdd_solver_backward_simple:
-            root_pd->solver =
-                std::make_unique<PricerSolverZddBackwardSimple>(instance);
-            break;
-        case zdd_solver_backward_cycle:
-            root_pd->solver =
-                std::make_unique<PricerSolverZddBackwardCycle>(instance);
             break;
         case dp_solver:
             root_pd->solver = std::make_unique<PricerSolverSimpleDp>(instance);

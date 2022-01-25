@@ -44,13 +44,9 @@ enum PricingSolver {
     bdd_solver_cycle = 1,
     bdd_solver_backward_simple = 2,
     bdd_solver_backward_cycle = 3,
-    zdd_solver_simple = 4,
-    zdd_solver_cycle = 5,
-    zdd_solver_backward_simple = 6,
-    zdd_solver_backward_cycle = 7,
-    dp_solver = 8,
-    ati_solver = 9,
-    dp_bdd_solver = 10
+    dp_solver = 4,
+    ati_solver = 5,
+    dp_bdd_solver = 6
 };
 
 enum StabTechniques {
@@ -134,18 +130,6 @@ struct fmt::formatter<PricingSolver> : formatter<string_view> {
             case PricingSolver::bdd_solver_backward_cycle:
                 name = "BddBackwardCycle";
                 break;
-            case PricingSolver::zdd_solver_simple:
-                name = "ZddForward";
-                break;
-            case PricingSolver::zdd_solver_cycle:
-                name = "ZddForwardCycle";
-                break;
-            case PricingSolver::zdd_solver_backward_simple:
-                name = "ZddBackward";
-                break;
-            case PricingSolver::zdd_solver_backward_cycle:
-                name = "ZddBackwardCycle";
-                break;
             case PricingSolver::dp_solver:
                 name = "Time-Indexed";
                 break;
@@ -167,10 +151,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(
      {bdd_solver_cycle, "BddForwardCycle"},
      {bdd_solver_backward_simple, "BddBackward"},
      {bdd_solver_backward_cycle, "BddBackwardCycle"},
-     {zdd_solver_simple, "ZddForward"},
-     {zdd_solver_cycle, "ZddForwardCycle"},
-     {zdd_solver_backward_simple, "ZddBackward"},
-     {zdd_solver_backward_cycle, "ZddBackwardCycle"},
      {dp_solver, "Time-Indexed"},
      {ati_solver, "Arc-Time-Indexed"},
      {dp_bdd_solver, "Hybrid"}})

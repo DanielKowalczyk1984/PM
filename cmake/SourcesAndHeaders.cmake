@@ -22,8 +22,6 @@ set(sources
     src/PricerSolverSimpleDP.cpp
     src/PricerSolverWrappers.cpp
     src/PricerSolverZdd.cpp
-    src/PricerSolverZddBackward.cpp
-    src/PricerSolverZddForward.cpp
     src/PricingStabilization.cpp
     src/Problem.cpp
     src/SeperationSolver.cpp

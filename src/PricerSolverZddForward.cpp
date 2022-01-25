@@ -50,22 +50,14 @@ PricerSolverSimple::PricerSolverSimple(const Instance& instance)
     fmt::print("Constructing ZDD with Forward Simple evaluator\n");
     fmt::print("number vertices ZDD = {}\n", get_nb_vertices());
     fmt::print("number edges ZDD = {}\n", get_nb_edges());
-    evaluator = ForwardZddSimpleDouble(convex_constr_id);
-    reversed_evaluator = BackwardZddSimpleDouble(convex_constr_id);
+    evaluator = ForwardZddSimpleDouble();
+    reversed_evaluator = BackwardZddSimpleDouble();
 }
 
 auto PricerSolverSimple::pricing_algorithm(std::span<const double>& _pi)
     -> PricingSolution {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
-}
-
-void PricerSolverSimple::compute_labels(double* _pi) {
-    evaluator.initialize_pi(_pi);
-    reversed_evaluator.initialize_pi(_pi);
-
-    decision_diagram->compute_labels_forward(evaluator);
-    decision_diagram->compute_labels_backward(reversed_evaluator);
 }
 
 void PricerSolverSimple::compute_labels(std::span<const double>& _pi) {
@@ -114,22 +106,14 @@ PricerSolverZddCycle::PricerSolverZddCycle(const Instance& instance)
     fmt::print("Constructing ZDD with Forward ZddCycle evaluator\n");
     fmt::print("number vertices ZDD = {}", get_nb_vertices());
     fmt::print("number edges ZDD = {}", get_nb_edges());
-    evaluator = ForwardZddCycleDouble(convex_constr_id);
-    reversed_evaluator = BackwardZddCycleDouble(convex_constr_id);
+    evaluator = ForwardZddCycleDouble();
+    reversed_evaluator = BackwardZddCycleDouble();
 }
 
 auto PricerSolverZddCycle::pricing_algorithm(std::span<const double>& _pi)
     -> PricingSolution {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_forward(evaluator);
-}
-
-void PricerSolverZddCycle::compute_labels(double* _pi) {
-    evaluator.initialize_pi(_pi);
-    reversed_evaluator.initialize_pi(_pi);
-
-    decision_diagram->compute_labels_forward(evaluator);
-    decision_diagram->compute_labels_backward(reversed_evaluator);
 }
 
 void PricerSolverZddCycle::compute_labels(std::span<const double>& _pi) {

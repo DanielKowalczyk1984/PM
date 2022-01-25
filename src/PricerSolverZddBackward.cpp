@@ -50,22 +50,14 @@ PricerSolverZddBackwardSimple::PricerSolverZddBackwardSimple(
     fmt::print("Constructing ZDD with Backward Simple evaluator\n");
     fmt::print("number vertices ZDD = {}\n", get_nb_vertices());
     fmt::print("number edges ZDD = {}\n", get_nb_edges());
-    evaluator = BackwardZddSimpleDouble(convex_constr_id);
-    reversed_evaluator = ForwardZddSimpleDouble(convex_constr_id);
+    evaluator = BackwardZddSimpleDouble();
+    reversed_evaluator = ForwardZddSimpleDouble();
 }
 
 auto PricerSolverZddBackwardSimple::pricing_algorithm(
     std::span<const double>& _pi) -> PricingSolution {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_backward(evaluator);
-}
-
-void PricerSolverZddBackwardSimple::compute_labels(double* _pi) {
-    evaluator.initialize_pi(_pi);
-    reversed_evaluator.initialize_pi(_pi);
-
-    decision_diagram->compute_labels_backward(evaluator);
-    decision_diagram->compute_labels_forward(reversed_evaluator);
 }
 
 void PricerSolverZddBackwardSimple::compute_labels(
@@ -116,22 +108,14 @@ PricerSolverZddBackwardCycle::PricerSolverZddBackwardCycle(
     fmt::print("Constructing ZDD with Backward ZddCycle evaluator\n");
     fmt::print("number vertices ZDD = {}\n", get_nb_vertices());
     fmt::print("number edges ZDD = {}\n", get_nb_edges());
-    evaluator = BackwardZddCycleDouble(convex_constr_id);
-    reversed_evaluator = ForwardZddCycleDouble(convex_constr_id);
+    evaluator = BackwardZddCycleDouble();
+    reversed_evaluator = ForwardZddCycleDouble();
 }
 
 auto PricerSolverZddBackwardCycle::pricing_algorithm(
     std::span<const double>& _pi) -> PricingSolution {
     evaluator.initialize_pi(_pi);
     return decision_diagram->evaluate_backward(evaluator);
-}
-
-void PricerSolverZddBackwardCycle::compute_labels(double* _pi) {
-    evaluator.initialize_pi(_pi);
-    reversed_evaluator.initialize_pi(_pi);
-
-    decision_diagram->compute_labels_backward(evaluator);
-    decision_diagram->compute_labels_forward(reversed_evaluator);
 }
 
 void PricerSolverZddBackwardCycle::compute_labels(
@@ -142,7 +126,6 @@ void PricerSolverZddBackwardCycle::compute_labels(
     decision_diagram->compute_labels_backward(evaluator);
     decision_diagram->compute_labels_forward(reversed_evaluator);
 }
-
 
 auto PricerSolverZddBackwardCycle::evaluate_nodes(std::span<const double>& pi)
     -> bool {
@@ -157,6 +140,10 @@ auto PricerSolverZddBackwardCycle::evaluate_nodes(std::span<const double>& pi)
                         ranges::views::take(decision_diagram->topLevel() + 1) |
                         ranges::views ::drop(1) | ranges::views::join) {
         auto* job = it.get_job();
+        if (job == nullptr) {
+            continue;
+        }
+
         for (auto& iter : it.list) {
             auto w = iter->get_weight();
 
