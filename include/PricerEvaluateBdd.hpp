@@ -23,7 +23,7 @@
 #ifndef PRICER_EVALUATE_BDD_HPP
 #define PRICER_EVALUATE_BDD_HPP
 #include "BackwardBDD.hpp"
-#include "FarkasZDD.hpp"
+#include "FarkasBDD.hpp"
 #include "ForwardBDD.hpp"
 
 using ForwardBddSimpleDouble = ForwardBddSimple;
