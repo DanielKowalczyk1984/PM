@@ -27,10 +27,10 @@
 #include <utility>     // for move
 #include "Job.h"       // for Job, value_diff_Fij
 
-Interval::Interval(int _a, int _b, const vector_ptr_jobs& _jobs)
+Interval::Interval(int _a, int _b, vector_ptr_jobs _jobs)
     : a(_a),
       b(_b),
-      sigma(_jobs) {
+      sigma(std::move(_jobs)) {
     auto cmp = compare_edd(a, b);
     std::ranges::sort(sigma, cmp);
 }
