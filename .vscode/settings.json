@@ -21,7 +21,11 @@
 		"**/build/**/*.ipp": true,
 		"**/ThirdParty/**/*.hpp": true,
 		"**/ThirdParty/**/*.cpp": true,
-		"**/ThirdParty/**/*.h": true
+		"**/ThirdParty/**/*.h": true,
+		"**/src/ZeroHalf**.cpp": true,
+		"**/src/knapsack.c": true,
+		"**/src/PricerSolverZDD**.cpp": true,
+		"**/include/ZeroHalf**.hpp": true
 	},
 	"files.associations": {
 		"*.ipynb": "jupyter",

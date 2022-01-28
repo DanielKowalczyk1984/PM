@@ -21,7 +21,6 @@ set(sources
     src/PricerSolverBddForward.cpp
     src/PricerSolverSimpleDP.cpp
     src/PricerSolverWrappers.cpp
-    src/PricerSolverZdd.cpp
     src/PricingStabilization.cpp
     src/Problem.cpp
     src/SeperationSolver.cpp
@@ -29,8 +28,8 @@ set(sources
     src/StabilizationWrappers.cpp
     src/Statistics.cpp
     src/VariableKeyBase.cpp
-    src/ZeroHalfCuts.cpp
-    src/ZeroHalfSystem.cpp
+    # src/ZeroHalfCuts.cpp
+    # src/ZeroHalfSystem.cpp
 )
 
 set(exe_sources "src/main.cpp" ${sources})

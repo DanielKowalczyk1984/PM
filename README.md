@@ -36,80 +36,132 @@ up and running on your local machine for development and testing purposes.
 
 * **Gurobi** - We use the Gurobi optimizer to compute the linear programming
   (LP) relaxations. You can download Gurobi from the company's
-  [https://www.gurobi.com/](website). Follow the installation instructions that
+  [website](https://www.gurobi.com/). Follow the installation instructions that
   are provide by gurobi. Per Operating system you will need to adjust
   environment variables such that cmake can find gurobi on your computer. On
   windows for example the environment variables are automatically set.
 
-* **Osi** - Also [https://github.com/coin-or/Osi](Osi) is used. Osi (Open
-  Solver Interface) provides an abstract class to generic linear LP, together
-  with derived classes for specific solvers. In theory, we can use an arbitrary
-  LP solver (Gurobi, CPLEX, XPress, Soplex, ...) to solve the LP relaxation, but
+* **Osi** - Also [Osi](https://github.com/coin-or/Osi) is used. Osi (Open Solver
+  Interface) provides an abstract class to generic linear LP, together with
+  derived classes for specific solvers. In theory, we can use an arbitrary LP
+  solver (Gurobi, CPLEX, XPress, Soplex, ...) to solve the LP relaxation, but
   this is not implemented yet. For now, we can only use gurobi. To install Osi,
   we use coinbrew which can be found
-  [https://coin-or.github.io/coinbrew/](here).
+  [here](https://coin-or.github.io/coinbrew/). Please follow the instructions
+  [on](https://coin-or.github.io/coinbrew/) to install on your system. Please
+  install the Osi in a directory called ThirdParty, i.e. apply coinbrew in the
+  directory ThirdParty:
 
-### Installing
+#### Linux
+
+```bash
+mkdir -p ThirdParty && cd ThirdParty
+wget -O coinbrew https://raw.githubusercontent.com/coin-or/coinbrew/master/coinbrew
+chmod u+x coinbrew
+./coinbrew fetch Cgl@master
+./coinbrew build Cgl --no-prompt --prefix="coin-or-x64-linux-release" --with-gurobi-lflags="-L$GUROBI_HOME/lib -lgurobi91 -lpthread -lm" --with-gurobi-cflags="-I$GUROBI_HOME/include" --tests none
+./coinbrew build Cgl --no-prompt --prefix="coin-or-x64-linux-debug" --reconfigure --enable-debug --with-gurobi-lflags="-L$GUROBI_HOME/lib -lgurobi91 -lpthread -lm" --with-gurobi-cflags="-I$GUROBI_HOME/include" --tests none
+``` 
+
+#### Windows
+To compile Osi on Windows based systems you should install
+[Msys2](https://www.msys2.org/) first. Follow the next instructions instructions
+to setup the developers environment in order to compile Osi with visual studio.
+Use powershell to setup your environment correctly. First add the binaries of
+msys2 to the environment variable path:
+
+```powershell
+$env:Path = "C:\msys64\usr\bin\;$env:Path"
+```
+
+Next define the following function in Powershell such that the compiler
+executables of visual studio are recognized by your powershell environment.
+
+```powershell
+function Invoke-BatchFile
+{
+   param([string]$Path, [string]$Parameters)
+
+   $tempFile = [IO.Path]::GetTempFileName()
+
+   ## Store the output of cmd.exe.  We also ask cmd.exe to output
+   ## the environment table after the batch file completes
+   cmd.exe /c " `"$Path`" $Parameters && set > `"$tempFile`" "
+
+   ## Go through the environment variables in the temp file.
+   ## For each of them, set the variable in our local environment.
+   Get-Content $tempFile | Foreach-Object {
+       if ($_ -match "^(.*?)=(.*)$")
+       {
+           Set-Content "env:\$($matches[1])" $matches[2]
+       }
+   }
+
+   Remove-Item $tempFile
+}
+```
+
+You can now execute the following command in powershell. Here we use visual
+studio code 2022, but after correct adjustments you will probably be also
+to use earlier version of visual studio as well.
+
+```powershell
+Invoke-BatchFile 'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat' x64
+```
+
+Start now msys2:
+
+```powershell
+bash
+
+```
+Install now some tools that are needed to compile Osi with visual studio:
+
+```bash
+pacman -S make wget tar patch dos2unix diffutils git svn pkg-config zip unzip
+pacman -S mingw-w64-i686-toolchain mingw-w64-x86_64-toolchain
+pacman -S mingw-w64-x86_64-lapack \
+          mingw-w64-x86_64-winpthreads-git \
+          mingw-w64-x86_64-readline \
+          mingw-w64-x86_64-suitesparse \
+          mingw-w64-x86_64-metis
+
+```
+
+Execute the following commands in bash with this git repository as the current working directory:
+
+```bash
+mkdir -p ThirdParty && cd ThirdParty
+wget -O coinbrew https://raw.githubusercontent.com/coin-or/coinbrew/master/coinbrew
+chmod u+x coinbrew
+./coinbrew build Cgl --prefix="coin-or-x64-MD" --tests=none --enable-msvc --build=x86_64-w64-mingw32 --enable-shared=MD --with-gurobi-lflags="-L/c/gurobi912/win64/lib -lgurobi91" --with-gurobi-cflags="-I/c/gurobi912/win64/include"
+./coinbrew build Cgl --prefix="coin-or-x64-MDd" --tests=none --enable-debug --enable-msvc --build=x86_64-w64-mingw32 --enable-shared=MDd --with-gurobi-lflags="-L/c/gurobi912/win64/lib -lgurobi91" --with-gurobi-cflags="-I/c/gurobi912/win64/include"
+
+```
 
 
 ### Building the project
 
-To build the project, all you need to do, ***after correctly
-[installing the project](README.md#Installing)***, is run a similar **CMake** routine
-to the the one below:
+To build the project:
+
+#### Linux
 
 ```bash
-mkdir build/ && cd build/
-cmake .. -DCMAKE_INSTALL_PREFIX=/absolute/path/to/custom/install/directory
-cmake --build . --target install
+cmake --preset gcc-11-release && cmake --build --preset build-gcc-11-release
+cmake --preset gcc-11-debug && cmake --build --preset build-gcc-11-debug
+
 ```
 
-> ***Note:*** *The custom ``CMAKE_INSTALL_PREFIX`` can be omitted if you wish to
-install in [the default install location](https://cmake.org/cmake/help/latest/module/GNUInstallDirs.html).*
+#### Windows
 
-More options that you can set for the project can be found in the
-[`cmake/StandardSettings.cmake` file](cmake/StandardSettings.cmake). For certain
-options additional configuration may be needed in their respective `*.cmake` files
-(i.e. Conan needs the `CONAN_REQUIRES` and might need the `CONAN_OPTIONS` to be setup
-for it work correctly; the two are set in the [`cmake/Conan.cmake` file](cmake/Conan.cmake)).
+```powershell
+cmake --preset windows64-msvc-2022 && cmake --build --preset build-windows64-debug
+cmake --preset windows64-msvc-2022-release && cmake --build --preset build-windows64-release
 
-## Generating the documentation
-
-In order to generate documentation for the project, you need to configure the build
-to use Doxygen. This is easily done, by modifying the workflow shown above as follows:
-
-```bash
-mkdir build/ && cd build/
-cmake .. -D<project_name>_ENABLE_DOXYGEN=1 -DCMAKE_INSTALL_PREFIX=/absolute/path/to/custom/install/directory
-cmake --build . --target doxygen-docs
 ```
 
-> ***Note:*** *This will generate a `docs/` directory in the **project's root directory**.*
-
-## Running the tests
-
-By default, the template uses [Google Test](https://github.com/google/googletest/)
-for unit testing. Unit testing can be disabled in the options, by setting the
-`ENABLE_UNIT_TESTING` (from
-[cmake/StandardSettings.cmake](cmake/StandardSettings.cmake)) to be false. To run
-the tests, simply use CTest, from the build directory, passing the desire
-configuration for which to run tests for. An example of this procedure is:
-
-```bash
-cd build          # if not in the build directory already
-ctest -C Release  # or `ctest -C Debug` or any other configuration you wish to test
-
-# you can also run tests with the `-VV` flag for a more verbose output (i.e.
-#GoogleTest output as well)
-```
-
-### End to end tests
-
-If applicable, should be presented here.
-
-### Coding style tests
-
-If applicable, should be presented here.
+You can also you use VS code or Visual Studio to build the binaries. With
+appropriate tools both apps can detect cmake files.
 
 ## Contributing
 

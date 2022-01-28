@@ -48,7 +48,7 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "gcc-11",
                 "CMAKE_CXX_COMPILER": "g++-11",
-                "CMAKE_TOOLCHAIN_FILE": "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             }
         },
         {
@@ -62,7 +62,7 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "gcc-11",
                 "CMAKE_CXX_COMPILER": "g++-11",
-                "CMAKE_TOOLCHAIN_FILE": "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             }
         }
     ],
@@ -70,6 +70,10 @@
         {
             "name": "build-windows64-debug",
             "configuration": "Debug",
+            "targets": [
+                "PM"
+            ],
+            "jobs": 4,
             "description": "",
             "displayName": "",
             "configurePreset": "windows64-msvc-2022"
@@ -78,21 +82,29 @@
             "name": "build-windows64-release",
             "configuration": "Release",
             "targets": [
-                "PM",
-                "fix-format"
+                "PM"
             ],
+            "jobs": 4,
             "description": "",
             "displayName": "",
             "configurePreset": "windows64-msvc-2022-release"
         },
         {
             "name": "build-gcc-11-debug",
+            "targets": [
+                "PM"
+            ],
+            "jobs": 4,
             "description": "",
             "displayName": "",
             "configurePreset": "gcc-11-debug"
         },
         {
             "name": "build-gcc-11-release",
+            "targets": [
+                "PM"
+            ],
+            "jobs": 4,
             "description": "",
             "displayName": "",
             "configurePreset": "gcc-11-release"

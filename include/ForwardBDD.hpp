@@ -48,9 +48,7 @@ class ForwardBddBase : public Eval<NodeBdd, PricingSolution> {
     }
 
     void initialize_node(NodeBdd& n) const override = 0;
-
     void initialize_root_node(NodeBdd& n) const override = 0;
-
     void evalNode(NodeBdd& n) const override = 0;
 
     auto get_objective(NodeBdd& n) const -> PricingSolution override {

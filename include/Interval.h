@@ -89,7 +89,7 @@ struct Interval {
 
     vector_ptr_jobs sigma;
 
-    Interval(int _a, int _b, const vector_ptr_jobs& _jobs);
+    Interval(int _a, int _b, vector_ptr_jobs _jobs);
 
     Interval() = default;
     ~Interval() = default;
