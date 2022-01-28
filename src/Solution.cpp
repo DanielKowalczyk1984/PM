@@ -376,9 +376,12 @@ Sol::Sol(const Instance& instance)
 void Sol::update_insertion_move(size_t i, size_t j, size_t k, size_t l) {
     auto& m = machines[k];
     auto  begin = m.job_list.begin();
+    auto  it = std::next(begin, i);
+    auto  it_l = std::next(it, l);
+    auto  it_j = std::next(begin, j + 1);
     tw -= m.total_weighted_tardiness;
 
-    swap_ranges(begin + i, begin + i + l, begin + j + 1, begin + j + 1);
+    swap_ranges(it, it_l, it_j, it_j);
 
     m.reset_machine(c);
 

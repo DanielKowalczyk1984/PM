@@ -28,6 +28,7 @@
 #include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/view/drop.hpp>
 #include <range/v3/view/enumerate.hpp>
+#include <range/v3/view/iota.hpp>
 #include <range/v3/view/take.hpp>
 #include <vector>
 #include "DebugLvl.hpp"
@@ -83,9 +84,9 @@ void LocalSearchData::RVND(Sol& sol) {
 
 void LocalSearchData::insertion_operator(Sol& sol, size_t l) {
     int         max = 0;
-    auto        i_best{0UL};
-    auto        j_best{0UL};
-    auto        k_best{0UL};
+    size_t      i_best{};
+    size_t      j_best{};
+    size_t      k_best{};
     int         c{};
     SlopeListIt it;
     SlopeListIt tmp_end;
@@ -94,7 +95,7 @@ void LocalSearchData::insertion_operator(Sol& sol, size_t l) {
     create_processing_insertion_operator(sol, l);
     updated = false;
 
-    for (auto k = 0UL; auto& m : sol.machines) {
+    for (auto&& [k, m] : sol.machines | ranges::views::enumerate) {
         const auto& vec_m = m.job_list;
         const auto& n = vec_m.size();
 
@@ -185,7 +186,7 @@ void LocalSearchData::insertion_operator(Sol& sol, size_t l) {
             }
         }
 
-        k++;
+        // k++;
     }
 
     if (updated) {
@@ -207,7 +208,9 @@ void LocalSearchData::swap_operator(Sol& sol, size_t l1, size_t l2) {
     boost::timer::cpu_timer time_swap_operator;
 
     auto        max = 0;
-    auto        i_best = 0UL, j_best = 0UL, k_best = 0UL;
+    size_t      i_best{};
+    size_t      j_best{};
+    size_t      k_best{};
     SlopeListIt it;
     SlopeListIt end_tmp;
     int         c{};
@@ -216,7 +219,7 @@ void LocalSearchData::swap_operator(Sol& sol, size_t l1, size_t l2) {
     create_processing_list_swap(sol, l1, l2);
     updated = false;
 
-    for (auto k = 0UL; auto& m : sol.machines) {
+    for (auto&& [k, m] : sol.machines | ranges::views::enumerate) {
         auto&       machine = m.job_list;
         const auto& n = machine.size();
 
@@ -225,8 +228,10 @@ void LocalSearchData::swap_operator(Sol& sol, size_t l1, size_t l2) {
         }
 
         /** compute g */
-        for (auto i = 0UL; i < n - l1 - l2 + 1; ++i) {
-            auto& p_list = processing_list[0][k][i];
+        for (auto& p_list :
+             processing_list[0][k] | ranges::views::take(n - l1 - l2 + 1)) {
+            // for (auto i = 0UL; i < n - l1 - l2 + 1; ++i) {
+            // auto& p_list = it;
             it = g[k][p_list.pos].begin();
             end_tmp = g[k][p_list.pos].end();
 
@@ -382,7 +387,6 @@ void LocalSearchData::swap_operator(Sol& sol, size_t l1, size_t l2) {
                 }
             }
         }
-        k++;
     }
 
     /** update to best improvement */
@@ -401,17 +405,21 @@ void LocalSearchData::swap_operator(Sol& sol, size_t l1, size_t l2) {
     }
 
     if (debug_lvl(0)) {
+        constexpr int PRECISION = 5;
         fmt::print(
             R"(intra swap with l1 = {} and l2 = {}, running time = {} and improvement {} on machine {} on places {} {}
 )",
-            l1, l2, time_swap_operator.format(5, "%ws"), max, k_best, i_best,
+            l1, l2, time_swap_operator.format(PRECISION, "%ws"), max, k_best, i_best,
             j_best);
     }
 }
 
 void LocalSearchData::swap_operator_inter(Sol& sol, size_t l1, size_t l2) {
     auto        max = 0;
-    auto        i_best = 0UL, j_best = 0UL, k_best = 0UL, kk_best = 0UL;
+    size_t      i_best{};
+    size_t      j_best{};
+    size_t      k_best{};
+    size_t      kk_best{};
     SlopeListIt it;
     SlopeListIt end_tmp;
     int         c{};
@@ -420,11 +428,11 @@ void LocalSearchData::swap_operator_inter(Sol& sol, size_t l1, size_t l2) {
     create_processing_list_swap_inter(sol, l1, l2);
     updated = false;
 
-    for (auto k1 = 0UL; k1 < nb_machines; ++k1) {
+    for (auto k1 : ranges::views::iota(size_t{}, nb_machines)) {
         auto&      machine1 = sol.machines[k1].job_list;
         const auto nb_jobs1 = machine1.size();
 
-        for (auto k2 = 0UL; k2 < nb_machines; ++k2) {
+        for (auto k2 : ranges::views::iota(size_t{}, nb_machines)) {
             auto&      machine2 = sol.machines[k2].job_list;
             const auto nb_jobs2 = machine2.size();
 
@@ -636,7 +644,10 @@ void LocalSearchData::swap_operator_inter(Sol& sol, size_t l1, size_t l2) {
 
 void LocalSearchData::insertion_operator_inter(Sol& sol, size_t l) {
     int         max{};
-    auto        i_best = 0UL, j_best = 0UL, k_best = 0UL, kk_best = 0UL;
+    size_t      i_best{};
+    size_t      j_best{};
+    size_t      k_best{};
+    size_t      kk_best{};
     SlopeListIt it;
     SlopeListIt tmp_end;
     int         c{};
@@ -645,13 +656,12 @@ void LocalSearchData::insertion_operator_inter(Sol& sol, size_t l) {
     create_processing_insertion_operator_inter(sol, l);
     updated = false;
 
-    for (auto k1 = 0UL; auto& m1 : sol.machines) {
+    for (auto&& [k1, m1] : sol.machines | ranges::views::enumerate) {
         auto&       vec_m1 = m1.job_list;
         const auto& nb_jobs1 = vec_m1.size();
 
-        for (auto k2 = 0UL; auto& m2 : sol.machines) {
+        for (auto&& [k2, m2] : sol.machines | ranges::views::enumerate) {
             if (k1 == k2) {
-                k2++;
                 continue;
             }
 
