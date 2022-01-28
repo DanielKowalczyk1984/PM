@@ -153,7 +153,6 @@ void from_json(const nlohmann::json& j, Parms& p) {
     j.at("bb_node_limit").get_to(p.bb_node_limit.value());
     j.at("nb_iterations_rvnd").get_to(p.nb_iterations_rvnd.value());
     j.at("branching_cpu_limit").get_to(p.branching_cpu_limit.value());
-    p.branching_cpu_limit.value() *= boost::chrono::nanoseconds::period::den;
     j.at("use_cpu_time").get_to(p.use_cpu_time.value());
     j.at("alpha").get_to(p.alpha.value());
     j.at("branching_point").get_to(p.branching_point.value());

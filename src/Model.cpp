@@ -95,7 +95,6 @@ void NodeData::create_convex_contraint() {
     osi_rmp->addRows(1, start.data(), nullptr, nullptr, &rhs_lb, &rhs_ub);
 
     id_valid_cuts = osi_rmp->getNumRows();
-    nb_rows = id_valid_cuts;
 }
 
 void NodeData::create_artificial_cols() {
@@ -127,8 +126,7 @@ void NodeData::create_artificial_cols() {
 }
 
 void NodeData::add_cols_local_pool() {
-    nb_rows = osi_rmp->getNumRows();
-    std::vector<double> _lhs(nb_rows);
+    std::vector<double> _lhs(osi_rmp->getNumRows());
     ranges::for_each(localColPool, [&](auto& it) {
         solver->compute_lhs(*it.get(), _lhs.data());
         add_lhs_column_to_rmp(it->total_weighted_completion_time, _lhs);
@@ -151,11 +149,8 @@ auto NodeData::build_rmp() -> int {
     add_cols_local_pool();
     osi_rmp->initialSolve();
 
-    slack.resize(nb_jobs + 1, 0.0);
-    // rhs.resize(nb_jobs + 1, 0.0);
     rhs = std::span<const double>(osi_rmp->getRightHandSide(),
                                   static_cast<size_t>(osi_rmp->getNumRows()));
-    // lp_interface_get_rhs(RMP.get(), rhs.data());
     lhs_coeff.resize(nb_jobs + 1, 0.0);
     id_row.reserve(nb_jobs + 1);
     coeff_row.reserve(nb_jobs + 1);

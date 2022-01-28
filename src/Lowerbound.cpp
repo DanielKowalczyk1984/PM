@@ -56,19 +56,12 @@ void NodeData::print_ages() {
 auto NodeData::grow_ages() -> int {
     int val = 0;
     // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    nb_cols = osi_rmp->getNumCols();
+    auto nb_cols = osi_rmp->getNumCols();
     assert((nb_cols - id_pseudo_schedules) ==
            static_cast<int>(localColPool.size()));
     if (!localColPool.empty()) {
-        // column_status.resize(localColPool.size());
-        // val = lp_interface_basis_cols(RMP.get(), column_status.data(),
-        //   id_pseudo_schedules);
-        // CCcheck_val_2(val, "Failed in
-        // lp_interface_basis_cols");
-        nb_cols = osi_rmp->getNumCols();
         column_status.resize(nb_cols);
-        nb_rows = osi_rmp->getNumRows();
-        row_status.resize(nb_rows);
+        row_status.resize(osi_rmp->getNumRows());
         osi_rmp->getBasisStatus(column_status.data(), row_status.data());
 
         zero_count = 0;
@@ -96,17 +89,13 @@ auto NodeData::delete_unused_rows() -> int {
     int              val = 0;
     std::vector<int> del_indices{};
 
-    // lp_interface_get_nb_rows(RMP.get(), &nb_rows);
-    nb_rows = osi_rmp->getNumRows();
-    // assert(nb_rows == pd->slack->len);
-    lp_interface_slack(RMP.get(), slack.data());
-
-    // auto* osi_slack = osi_rmp->getRowActivity();
+    auto osi_slack = std::span<const double>(osi_rmp->getRowActivity(),
+                                             osi_rmp->getNumRows());
 
     int it = id_valid_cuts;
     int first_del = -1;
     int last_del = -1;
-    for (auto s : slack | ranges::views::drop(id_valid_cuts)) {
+    for (auto s : osi_slack | ranges::views::drop(id_valid_cuts)) {
         if (std::fabs(s) < EPS) {
             if (first_del != -1) {
                 val = delete_unused_rows_range(first_del, last_del);
@@ -152,7 +141,7 @@ auto NodeData::delete_old_columns() -> int {
         int              iter = 0;
         std::vector<int> dellist{};
         // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-        nb_cols = osi_rmp->getNumCols();
+        auto nb_cols = osi_rmp->getNumCols();
         assert((nb_cols - id_pseudo_schedules) ==
                static_cast<int>(localColPool.size()));
 
@@ -209,7 +198,7 @@ auto NodeData::delete_infeasible_columns() -> int {
     //                                static_cast<int>(dellist.size()));
     // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
     osi_rmp->deleteCols(static_cast<int>(dellist.size()), dellist.data());
-    nb_cols = osi_rmp->getNumCols();
+    auto nb_cols = osi_rmp->getNumCols();
     assert((nb_cols - id_pseudo_schedules) ==
            static_cast<int>(localColPool.size()));
 
@@ -342,7 +331,7 @@ auto NodeData::compute_objective() -> int {
     LP_lower_bound_dual = 0.0;
 
     /** compute lower bound with the dual variables */
-    assert(nb_rows == static_cast<int>(pi.size()));
+    assert(osi_rmp->getNumRows() == static_cast<int>(pi.size()));
 
     LP_lower_bound_dual = ranges::inner_product(pi, rhs, 0.0);
     LP_lower_bound_dual -= EPS_BOUND;
@@ -447,10 +436,6 @@ auto NodeData::estimate_lower_bound(size_t _iter) -> int {
         add_solution_to_colpool(opt_sol);
     }
 
-    if (!RMP) {
-        val = build_rmp();
-    }
-
     has_cols = true;
     // has_cuts = 0;
     while ((iterations < _iter) && has_cols &&
@@ -459,7 +444,9 @@ auto NodeData::estimate_lower_bound(size_t _iter) -> int {
         /**
          * Solve the pricing problem
          */
-        stat.start_resume_timer(Statistics::pricing_timer);
+
+        
+            stat.start_resume_timer(Statistics::pricing_timer);
         status_RMP = osi_rmp->isProvenOptimal();
 
         if (status_RMP) {
@@ -510,10 +497,6 @@ auto NodeData::compute_lower_bound() -> int {
      */
     if (localColPool.empty()) {
         add_solution_to_colpool(opt_sol);
-    }
-
-    if (!RMP) {
-        val = build_rmp();
     }
 
     // delete_infeasible_columns();
@@ -686,7 +669,7 @@ auto NodeData::refinement() -> bool {
         // switch (status_RMP) {
         // case GRB_OPTIMAL:
         // lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-        nb_cols = osi_rmp->getNumCols();
+        auto nb_cols = osi_rmp->getNumCols();
         assert(static_cast<int>(localColPool.size()) ==
                (nb_cols - id_pseudo_schedules));
         // lambda.resize(localColPool.size(), 0.0);

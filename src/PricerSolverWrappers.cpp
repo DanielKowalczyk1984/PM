@@ -33,13 +33,11 @@ void NodeData::build_solve_mip() const {
 }
 
 void NodeData::construct_lp_sol_from_rmp() {
-    lp_interface_get_nb_cols(RMP.get(), &nb_cols);
-    nb_cols = osi_rmp->getNumCols();
-    assert(nb_cols - id_pseudo_schedules ==
+    assert(osi_rmp->getNumCols() - id_pseudo_schedules ==
            static_cast<int>(localColPool.size()));
 
     lambda = std::span<const double>{osi_rmp->getColSolution(),
-                                     static_cast<size_t>(nb_cols)};
+                                     static_cast<size_t>(osi_rmp->getNumCols())};
     solver->construct_lp_sol_from_rmp(lambda.subspan(id_pseudo_schedules),
                                       localColPool);
 }
@@ -57,7 +55,7 @@ void NodeData::generate_cuts() const {
 auto NodeData::delete_unused_rows_range(int first, int last) -> int {
     int val = 0;
 
-    lp_interface_deleterows(RMP.get(), first, last);
+    // lp_interface_deleterows(RMP.get(), first, last);
     solver->remove_constraints(first, last - first + 1);
     solver_stab->remove_constraints(first, last - first + 1);
     // pi.erase(pi.begin(), pi.begin() + last - first + 1);
