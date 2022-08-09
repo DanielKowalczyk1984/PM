@@ -203,7 +203,7 @@ struct fmt::formatter<Statistics> {
     auto format(const Statistics& stat, FormatContext& ctx)
         -> decltype(ctx.out()) {
         if (presentation == 'n') {
-            return format_to(
+            return fmt::format_to(
                 ctx.out(),
                 "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}"
                 ","
@@ -222,7 +222,7 @@ struct fmt::formatter<Statistics> {
                 "mip_nb_nodes");
         }
 
-        return format_to(
+        return fmt::format_to(
             ctx.out(),
             "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}"
             ",{},{},{},{},{},{}",

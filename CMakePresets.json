@@ -1,113 +1,298 @@
 {
-    "version": 2,
-    "configurePresets": [
-        {
-            "name": "windows64-msvc-2022",
-            "displayName": "Visual Studio Community 2022 - amd64",
-            "description": "Using compilers for Visual Studio 17 2022 (x64 architecture)",
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 21,
+        "patch": 0
+    },
+    "configurePresets": [{
+            "name": "conf-common",
+            "description": "General settings that apply to all configurations",
+            "hidden": true,
             "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/install/${presetName}"
+        },
+        {
+            "name": "conf-windows-common",
+            "description": "Windows settings for MSBuild toolchain that apply to msvc and clang",
+            "hidden": true,
+            "inherits": "conf-common",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
             "architecture": {
                 "value": "x64",
                 "strategy": "external"
             },
-            "binaryDir": "${sourceDir}/build/${presetName}",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_CXX_COMPILER": "cl",
-                "CMAKE_C_COMPILER": "cl",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-            }
-        },
-        {
-            "name": "windows64-msvc-2022-release",
-            "displayName": "Visual Studio Community 2022 - amd64 - Release",
-            "description": "Using compilers for Visual Studio 17 2022 (x64 architecture)",
-            "generator": "Ninja",
-            "architecture": {
-                "value": "x64",
+            "toolset": {
+                "value": "host=x64",
                 "strategy": "external"
+            }
+        },
+        {
+            "name": "conf-windows-clion",
+            "description": "General settings that apply to CLion - Visual Studio",
+            "hidden": true,
+            "inherits": "conf-windows-common",
+            "vendor": {
+                "jetbrains.com/clion": {
+                    "toolchain": "Visual Studio"
+                }
+            }
+        },
+        {
+            "name": "conf-linux-common",
+            "description": "Linux settings for gcc and clang toolchains",
+            "hidden": true,
+            "inherits": "conf-common",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
             },
-            "binaryDir": "${sourceDir}/build/${presetName}",
+            "vendor": {
+                "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+                    "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
+                }
+            }
+        },
+        {
+            "name": "windows-msvc-debug",
+            "displayName": "msvc Debug",
+            "description": "Target Windows with the msvc compiler, debug build type",
+            "inherits": "conf-windows-common",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_CXX_COMPILER": "cl",
                 "CMAKE_C_COMPILER": "cl",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
-            "name": "gcc-11-debug",
-            "displayName": "GCC 11.1.0 - Debug",
-            "description": "Using compilers: C = /bin/x86_64-linux-gnu-gcc-11, CXX = /bin/x86_64-linux-gnu-g++-11 with Ninja",
-            "binaryDir": "${sourceDir}/build/${presetName}",
-            "generator": "Ninja",
+            "name": "windows-msvc-release",
+            "displayName": "msvc Release",
+            "description": "Target Windows with the msvc compiler, release build type",
+            "inherits": "conf-windows-common",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_C_COMPILER": "gcc-11",
-                "CMAKE_CXX_COMPILER": "g++-11",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
-            "name": "gcc-11-release",
-            "displayName": "GCC 11.1.0 - Release",
-            "description": "Using compilers: C = /bin/x86_64-linux-gnu-gcc-11, CXX = /bin/x86_64-linux-gnu-g++-11 with Ninja",
-            "binaryDir": "${sourceDir}/build/${presetName}",
-            "generator": "Ninja",
+            "name": "windows-msvc-clion-debug",
+            "displayName": "msvc Debug - CLion",
+            "description": "Target Windows with the msvc compiler, debug build type",
+            "inherits": "conf-windows-clion",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "windows-msvc-clion-release",
+            "displayName": "msvc Debug - CLion",
+            "description": "Target Windows with the msvc compiler, debug build type",
+            "inherits": "conf-windows-clion",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "windows-clang-debug",
+            "displayName": "clang Debug",
+            "description": "Target Windows with the clang compiler, debug build type",
+            "inherits": "conf-windows-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-cl",
+                "CMAKE_CXX_COMPILER": "clang-cl",
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "intelliSenseMode": "windows-clang-x64"
+                }
+            }
+        },
+        {
+            "name": "windows-clang-release",
+            "displayName": "clang Release",
+            "description": "Target Windows with the clang compiler, release build type",
+            "inherits": "conf-windows-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-cl",
+                "CMAKE_CXX_COMPILER": "clang-cl",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "intelliSenseMode": "windows-clang-x64"
+                }
+            }
+        },
+        {
+            "name": "linux-gcc-debug",
+            "displayName": "gcc Debug",
+            "description": "Target Linux with the gcc compiler, debug build type",
+            "inherits": "conf-linux-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux-gcc-release",
+            "displayName": "gcc Release",
+            "description": "Target Linux with the gcc compiler, release build type",
+            "inherits": "conf-linux-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "linux-gcc8-debug",
+            "displayName": "gcc8 Debug",
+            "description": "Target Linux with the gcc compiler, debug build type",
+            "inherits": "conf-linux-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc-8",
+                "CMAKE_CXX_COMPILER": "g++-8",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux-gcc8-release",
+            "displayName": "gcc8 Release",
+            "description": "Target Linux with the gcc compiler, release build type",
+            "inherits": "conf-linux-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc-8",
+                "CMAKE_CXX_COMPILER": "g++-8",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "linux-gcc10-debug",
+            "displayName": "gcc10 Debug",
+            "description": "Target Linux with the gcc compiler, debug build type",
+            "inherits": "conf-linux-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/gcc-10",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++-10",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux-gcc10-release",
+            "displayName": "gcc10 Release",
+            "description": "Target Linux with the gcc compiler, release build type",
+            "inherits": "conf-linux-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/gcc-10",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++-10",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "linux-gcc11-debug",
+            "displayName": "gcc11 Debug",
+            "description": "Target Linux with the gcc compiler, debug build type",
+            "inherits": "conf-linux-common",
+            "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc-11",
                 "CMAKE_CXX_COMPILER": "g++-11",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux-gcc11-release",
+            "displayName": "gcc11 Release",
+            "description": "Target Linux with the gcc compiler, release build type",
+            "inherits": "conf-linux-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc-11",
+                "CMAKE_CXX_COMPILER": "g++-11",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "linux-clang-debug",
+            "displayName": "clang Debug",
+            "description": "Target Linux with the clang compiler, debug build type",
+            "inherits": "conf-linux-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux-clang-release",
+            "displayName": "clang Release",
+            "description": "Target Linux with the clang compiler, release build type",
+            "inherits": "conf-linux-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
             }
         }
     ],
-    "buildPresets": [
-        {
-            "name": "build-windows64-debug",
-            "configuration": "Debug",
-            "targets": [
-                "PM"
-            ],
-            "jobs": 4,
-            "description": "",
-            "displayName": "",
-            "configurePreset": "windows64-msvc-2022"
+    "buildPresets": [{
+            "name": "windows-msvc-debug-build",
+            "configurePreset": "windows-msvc-debug"
         },
         {
-            "name": "build-windows64-release",
-            "configuration": "Release",
-            "targets": [
-                "PM"
-            ],
-            "jobs": 4,
-            "description": "",
-            "displayName": "",
-            "configurePreset": "windows64-msvc-2022-release"
+            "name": "windows-msvc-release-build",
+            "configurePreset": "windows-msvc-release"
         },
         {
-            "name": "build-gcc-11-debug",
-            "targets": [
-                "PM"
-            ],
-            "jobs": 4,
-            "description": "",
-            "displayName": "",
-            "configurePreset": "gcc-11-debug"
+            "name": "windows-msvc-clion-debug-build",
+            "configurePreset": "windows-msvc-clion-debug"
         },
         {
-            "name": "build-gcc-11-release",
-            "targets": [
-                "PM"
-            ],
-            "jobs": 4,
-            "description": "",
-            "displayName": "",
-            "configurePreset": "gcc-11-release"
+            "name": "windows-msvc-clion-release-build",
+            "configurePreset": "windows-msvc-clion-release"
+        },
+        {
+            "name": "linux-gcc-release-build",
+            "configurePreset": "linux-gcc-release"
+        },
+        {
+            "name": "linux-gcc-debug-build",
+            "configurePreset": "linux-gcc-debug"
+        },
+        {
+            "name": "linux-gcc8-release-build",
+            "configurePreset": "linux-gcc8-release"
+        },
+        {
+            "name": "linux-gcc8-debug-build",
+            "configurePreset": "linux-gcc8-debug"
+        },
+        {
+            "name": "linux-gcc10-release-build",
+            "configurePreset": "linux-gcc10-release"
+        },
+        {
+            "name": "linux-gcc10-debug-build",
+            "configurePreset": "linux-gcc10-debug"
+        },
+        {
+            "name": "linux-gcc11-release-build",
+            "configurePreset": "linux-gcc11-release"
+        },
+        {
+            "name": "linux-gcc11-debug-build",
+            "configurePreset": "linux-gcc11-debug"
         }
     ]
 }

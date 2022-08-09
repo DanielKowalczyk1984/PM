@@ -360,9 +360,9 @@ struct fmt::formatter<Parms::Parameter<T>> {
     auto format(const Parms::Parameter<T>& p, FormatContext& ctx)
         -> decltype(ctx.out()) {
         if (presentation == 'n') {
-            return format_to(ctx.out(), "{}", p.name());
+            return fmt::format_to(ctx.out(), "{}", p.name());
         }
-        return format_to(ctx.out(), "{}", p.value());
+        return fmt::format_to(ctx.out(), "{}", p.value());
     }
 };
 
@@ -393,7 +393,7 @@ struct fmt::formatter<Parms> {
     template <typename FormatContext>
     auto format(const Parms& parms, FormatContext& ctx) -> decltype(ctx.out()) {
         if (presentation == 'n') {
-            return format_to(
+            return fmt::format_to(
                 ctx.out(),
                 "{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n}",
                 parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
@@ -402,7 +402,7 @@ struct fmt::formatter<Parms> {
                 parms.suboptimal_duals, parms.scoring_parameter,
                 parms.scoring_value, parms.use_cpu_time);
         }
-        return format_to(
+        return fmt::format_to(
             ctx.out(), "{},{},{},{},{},{},{},{},{},{},{},{}",
             parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
             parms.pricing_solver, parms.strong_branching, parms.branching_point,

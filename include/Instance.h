@@ -111,9 +111,9 @@ struct fmt::formatter<Instance> {
     auto format(const Instance& inst, FormatContext& ctx)
         -> decltype(ctx.out()) {
         if (presentation == 'n') {
-            return format_to(ctx.out(), "n,m,NameInstance");
+            return fmt::format_to(ctx.out(), "n,m,NameInstance");
         }
-        return format_to(ctx.out(), "{},{},{}", inst.nb_jobs, inst.nb_machines,
+        return fmt::format_to(ctx.out(), "{},{},{}", inst.nb_jobs, inst.nb_machines,
                          inst.pname);
     }
 };

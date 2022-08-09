@@ -87,5 +87,6 @@
 		"memory_resource": "cpp",
 		"span": "cpp",
 		"valarray": "cpp"
-	}
+	},
+	"sonarlint.pathToCompileCommands": "${workspaceFolder}\\build\\windows-msvc-release\\compile_commands.json"
 }

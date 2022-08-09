@@ -4,6 +4,14 @@ set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg-custom-ports")
 #
 # Project details
 #
+include(cmake/Vcpkg.cmake)
+
+if(WIN32)
+    cmake_path(SET VCPKG_HOME NORMALIZE $ENV{userprofile})
+    run_vcpkg(VCPKG_DIR "${VCPKG_HOME}/vcpkg")
+else()
+    run_vcpkg(VCPKG_DIR $ENV{HOME}/vcpkg)
+endif()
 
 project(
   PM
