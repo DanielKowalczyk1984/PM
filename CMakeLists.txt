@@ -266,8 +266,6 @@ verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 # clang-format)
 #
 
-include(cmake/CPM.cmake)
-CPMAddPackage("gh:TheLartians/Format.cmake@1.7.3")
 
 #
 # Install library for easy downstream inclusion
