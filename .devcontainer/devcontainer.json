@@ -16,15 +16,18 @@
 		"seccomp=unconfined"
 	],
 	// Set *default* container specific settings.json values on container create.
-	"settings": {
-		"cmake.buildDirectory": "${workspaceFolder}/build-linux-container",
-		"cmake.configureArgs": [
-			"-DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake"
-		]
-	},
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"ms-vscode.cpptools",
-		"ms-vscode.cmake-tools"
-	]
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"cmake.buildDirectory": "${workspaceFolder}/build-linux-container",
+				"cmake.configureArgs": [
+					"-DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake"
+				]
+			},
+			"extensions": [
+				"ms-vscode.cpptools",
+				"ms-vscode.cmake-tools"
+			]
+		}
+	}
 }
