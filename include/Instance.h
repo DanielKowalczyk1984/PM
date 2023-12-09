@@ -33,6 +33,7 @@
 #include <string>        // for string
 #include <utility>       // for pair
 #include <vector>        // for vector
+#include <optional>     // for optional
 struct Interval;
 struct Job;
 struct Parms;
@@ -44,6 +45,7 @@ struct Instance {
     std::vector<std::shared_ptr<Job>>       jobs;
     std::vector<std::shared_ptr<Interval>>  intervals;
     std::vector<std::pair<Job*, Interval*>> vector_pair;
+    std::optional<int>                      best_known_sol{};
 
     /** Summary of jobs */
     std::string pname;
@@ -78,6 +80,8 @@ struct Instance {
        private:
         const char* errmsg;
     };
+    
+    void print_intervals();
 
    private:
     void calculate_H_max_H_min();
@@ -108,7 +112,7 @@ struct fmt::formatter<Instance> {
     }
 
     template <typename FormatContext>
-    auto format(const Instance& inst, FormatContext& ctx)
+    constexpr auto format(const Instance& inst, FormatContext& ctx)
         -> decltype(ctx.out()) {
         if (presentation == 'n') {
             return format_to(ctx.out(), "n,m,NameInstance");

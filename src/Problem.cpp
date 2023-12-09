@@ -133,11 +133,22 @@ Problem::Problem(int argc, const char** argv)
             break;
     }
 
+    if (instance.best_known_sol.has_value()) {
+        opt_sol.tw = *instance.best_known_sol - instance.off;
+        root_pd->solver->update_UB(*instance.best_known_sol - instance.off);
+        root_pd->upper_bound = *instance.best_known_sol - instance.off;
+        stat.root_upper_bound = *instance.best_known_sol;
+        stat.global_upper_bound = *instance.best_known_sol;
+
+    }
+    else
+    {
     root_pd->solver->update_UB(opt_sol.tw);
     root_pd->solver_stab->set_alpha(parms.alpha.value());
     root_pd->upper_bound = opt_sol.tw;
     stat.root_upper_bound = opt_sol.tw + instance.off;
     stat.global_upper_bound = opt_sol.tw + instance.off;
+    }
 
     /**
      * @brief

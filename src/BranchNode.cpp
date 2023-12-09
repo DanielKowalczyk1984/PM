@@ -66,6 +66,12 @@ BranchNodeBase::BranchNodeBase(std::unique_ptr<NodeData> _pd, bool _isRoot)
         pd->compute_lower_bound();
         pd->stat.suspend_timer(Statistics::lb_root_timer);
         set_lb(pd->lower_bound);
+        if (pd->lower_bound != pd->upper_bound) {
+            fmt::print("Root node: LB = {}, UB = {} ({}), {}",
+                       pd->lower_bound,
+                       pd->upper_bound,
+                       pd->upper_bound - pd->lower_bound, pd->LP_lower_bound);
+        }
         if (pd->solver->get_is_integer_solution()) {
             set_obj_value(pd->LP_lower_bound);
         }
@@ -355,6 +361,17 @@ void BranchNodeBase::print(const BTree* bt) const {
         bt->getGlobalLB() + pd->instance.off, 0.0, pd->branch_job,
         pd->completiontime, bt->get_run_time_start(), pd->iterations,
         solver->print_num_paths().str());
+        if(safe_frac(pd->LP_lower_bound) < EPS) {
+            fmt::print("WARNING: LP lower bound is 0.0\n");
+            // print all the x_jt
+            for(auto&& [x_j, job] : ranges::views::zip(solver->calculate_job_time(), pd->instance.jobs)) {
+                fmt::print("j={}:", job->job);
+                for(auto& x : x_j) {
+                    fmt::print(" ({},{})", x.get_t(), x.get_value());
+                }
+                fmt::print("\n");
+            }
+        }
 }
 
 BranchCandidate::BranchCandidate(

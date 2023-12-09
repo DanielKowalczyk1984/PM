@@ -140,7 +140,8 @@ void to_json(nlohmann::json& j, const Parms& p) {
                        {"pruning_test", p.pruning_test.value()},
                        {"suboptimal_duals", p.suboptimal_duals.value()},
                        {"reduce_cost_fixing", p.reduce_cost_fixing.value()},
-                       {"print_csv", p.print_csv.value()}};
+                       {"print_csv", p.print_csv.value()},
+                       {"use_bks", p.use_bks.value()}};
 }
 
 void from_json(const nlohmann::json& j, Parms& p) {
@@ -164,6 +165,7 @@ void from_json(const nlohmann::json& j, Parms& p) {
     j.at("suboptimal_duals").get_to(p.suboptimal_duals.value());
     j.at("reduce_cost_fixing").get_to(p.reduce_cost_fixing.value());
     j.at("print_csv").get_to(p.print_csv.value());
+    j.at("use_bks").get_to(p.use_bks.value());
 }
 
 void Parms::parse_cmd(int argc, const char** argv) {

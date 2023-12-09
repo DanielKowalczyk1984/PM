@@ -27,7 +27,6 @@
 #include <array>                                   // for array
 #include <boost/graph/detail/adjacency_list.hpp>   // for num_edges
 #include <boost/multiprecision/cpp_int.hpp>        // for cpp_int
-#include <iostream>                                // for operator<<, cout
 #include <range/v3/iterator/reverse_iterator.hpp>  // for reverse_cursor
 #include <range/v3/view/iota.hpp>                  // for iota_view, ints
 #include <range/v3/view/reverse.hpp>               // for reverse_fn, revers...
@@ -390,11 +389,11 @@ void PricerSolverZdd::build_mip() {
         //             ".lp");
         // model.optimize();
     } catch (GRBException& e) {
-        std::cout << "Error code = " << e.getErrorCode() << "\n";
-        std::cout << e.getMessage() << "\n";
-    } catch (...) {
-        std::cout << "Exception during optimization"
-                  << "\n";
+        fmt::print("Error code = {}\n", e.getErrorCode());
+        fmt::print("{}\n", e.getMessage());
+    }
+    catch (...) {
+        fmt::print("Exception during optimization\n");
     }
 }
 
