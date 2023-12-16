@@ -65,7 +65,8 @@ Parms::Parms()
       pruning_test{"pruning_test", false},
       suboptimal_duals{"suboptimal_duals", false},
       reduce_cost_fixing{"reduce_cost_fixing", true},
-      print_csv{"print_csv", false} {}
+      print_csv{"print_csv", false},
+      use_bks{ "use_bks", false } {}
 
 Parms::Parms(int argc, const char** argv) : Parms() {
     program_header(argc, argv);
