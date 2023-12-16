@@ -9,42 +9,49 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/coinbrew")
   message(STATUS "Coinbrew downloaded successfully.")
 endif()
 
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release")
-  set(TMP_GRB_LIB "-L$ENV{GUROBI_HOME}/lib -lgurobi91 -lpthread -lm")
-  execute_process(
-    COMMAND ./coinbrew fetch Cgl@master WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
-  )
-  execute_process(
-    COMMAND ./coinbrew build Cgl --with-gurobi-lib=${TMP_GRB_LIB}
-            --with-gurobi-incdir=$ENV{GUROBI_HOME}/include --tests none
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
-  )
-  message(STATUS "Build Osi completed.")
-endif()
 
 set(coin_modules "Osi;CoinUtils;OsiGrb;Cgl")
 
 if(${CMAKE_HOST_UNIX})
-  find_path(
-    OSI_INCLUDE_DIR
-    NAMES OsiGrbSolverInterface.hpp
-    PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/include/coin-or" REQUIRED
-  )
+    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release")
+        set(TMP_GRB_LIB "-L${GUROBI_DIR}/lib -lgurobi100 -lpthread -lm")
+        set(TMP_GRB_INC "-I ${GUROBI_DIR}/include")
+        execute_process(
+            COMMAND ./coinbrew fetch Cgl@master
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
+        )
+        execute_process(
+            COMMAND ./coinbrew build Cgl --with-gurobi-lflags=${TMP_GRB_LIB} --with-gurobi-cflags=${TMP_GRB_INC} --tests none --prefix=coin-or-x64-linux-release
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
+        )
 
-  foreach(coin_lib ${coin_modules})
-    string(TOUPPER "${coin_lib}" coin_lib_toupper)
-    find_library(
-      ${coin_lib_toupper}_LIBRARY
-      NAMES ${coin_lib}
-      PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/lib"
+        execute_process(
+            COMMAND ./coinbrew build Cgl --enable-debug --with-gurobi-lflags=${TMP_GRB_LIB} --with-gurobi-cflags=${TMP_GRB_INC} --tests none --prefix=coin-or-x64-linux-debug
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
+        )
+        message(STATUS "Build Osi completed.")
+    endif()
+
+    find_path(
+        OSI_INCLUDE_DIR
+        NAMES OsiGrbSolverInterface.hpp
+        PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/include/coin-or" REQUIRED
     )
 
-    find_library(
-      ${coin_lib_toupper}_LIBRARY_DEBUG
-      NAMES ${coin_lib}
-      PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-debug/lib"
-    )
-  endforeach()
+    foreach(coin_lib ${coin_modules})
+        string(TOUPPER "${coin_lib}" coin_lib_toupper)
+        find_library(
+            ${coin_lib_toupper}_LIBRARY
+            NAMES ${coin_lib}
+            PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/lib"
+        )
+
+        find_library(
+            ${coin_lib_toupper}_LIBRARY_DEBUG
+            NAMES ${coin_lib}
+            PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-debug/lib"
+        )
+    endforeach()
 elseif(${CMAKE_HOST_WIN32})
   find_path(
     OSI_INCLUDE_DIR
