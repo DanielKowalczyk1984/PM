@@ -160,6 +160,16 @@ cmake --preset windows64-msvc-2022-release && cmake --build --preset build-windo
 
 ```
 
+#### Docker
+We also provide a docker file to build the project. To run the docker [container](https://hub.docker.com/repository/docker/danielkowalczyk/pm_linux_compute_env/general)
+
+```bash
+docker run -it --rm -v .:/workspaces/implementation -w /workspaces/implementation danielkowalczyk/pm_linux_compute_env:latest bash
+cmake --preset gcc-11-release && cmake --build --preset build-gcc-11-release
+```
+
+Or you can also use the devcontainer provided in the repository. For more information on how to use devcontainers in VS code, please refer to the [documentation](https://code.visualstudio.com/docs/remote/containers).
+
 You can also you use VS code or Visual Studio to build the binaries. With
 appropriate tools both apps can detect cmake files.
 
