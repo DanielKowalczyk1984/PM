@@ -11,7 +11,7 @@ vcpkg_from_gitlab(
   u0056096/DecisionDiagramsModernCpp
 )
 
-vcpkg_cmake_configure(SOURCE_PATH ${SOURCE_PATH} PREFER_NINJA)
+vcpkg_cmake_configure(SOURCE_PATH ${SOURCE_PATH})
 
 vcpkg_cmake_install()
 vcpkg_cmake_config_fixup(PACKAGE_NAME "ModernDD")
