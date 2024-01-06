@@ -166,7 +166,6 @@ void from_json(const nlohmann::json& j, Parms& p) {
     j.at("suboptimal_duals").get_to(p.suboptimal_duals.value());
     j.at("reduce_cost_fixing").get_to(p.reduce_cost_fixing.value());
     j.at("print_csv").get_to(p.print_csv.value());
-    j.at("use_bks").get_to(p.use_bks.value());
     p.use_bks.set_value(j.value("use_bks", false));
 }
 
