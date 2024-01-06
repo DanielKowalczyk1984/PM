@@ -10,32 +10,14 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/coinbrew")
 endif()
 
 
-set(coin_modules "Osi;CoinUtils;OsiGrb;Cgl")
+set(coin_modules "Osi;CoinUtils;OsiGrb")
 
 if(${CMAKE_HOST_UNIX})
-    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release")
-        set(TMP_GRB_LIB "-L${GUROBI_DIR}/lib -lgurobi100 -lpthread -lm")
-        set(TMP_GRB_INC "-I ${GUROBI_DIR}/include")
-        execute_process(
-            COMMAND ./coinbrew fetch Cgl@master
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
-        )
-        execute_process(
-            COMMAND ./coinbrew build Cgl --with-gurobi-lflags=${TMP_GRB_LIB} --with-gurobi-cflags=${TMP_GRB_INC} --tests none --prefix=coin-or-x64-linux-release
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
-        )
-
-        execute_process(
-            COMMAND ./coinbrew build Cgl --enable-debug --with-gurobi-lflags=${TMP_GRB_LIB} --with-gurobi-cflags=${TMP_GRB_INC} --tests none --prefix=coin-or-x64-linux-debug
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/ThirdParty
-        )
-        message(STATUS "Build Osi completed.")
-    endif()
-
     find_path(
         OSI_INCLUDE_DIR
         NAMES OsiGrbSolverInterface.hpp
-        PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/include/coin-or" REQUIRED
+        PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/include/coin-or" "/opt/coin-or/coin-or-x64-linux-release/include/coin-or"
+        REQUIRED
     )
 
     foreach(coin_lib ${coin_modules})
@@ -44,12 +26,14 @@ if(${CMAKE_HOST_UNIX})
             ${coin_lib_toupper}_LIBRARY
             NAMES ${coin_lib}
             PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-release/lib"
+                  "/opt/coin-or/coin-or-x64-linux-release/lib"
         )
 
         find_library(
             ${coin_lib_toupper}_LIBRARY_DEBUG
             NAMES ${coin_lib}
             PATHS "${CMAKE_SOURCE_DIR}/ThirdParty/coin-or-x64-linux-debug/lib"
+                  "/opt/coin-or/coin-or-x64-linux-debug/lib"
         )
     endforeach()
 elseif(${CMAKE_HOST_WIN32})
