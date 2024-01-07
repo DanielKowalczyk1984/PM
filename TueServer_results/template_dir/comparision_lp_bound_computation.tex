@@ -1,0 +1,92 @@
+\documentclass{informs3-noredtextontop}
+\usepackage{enumerate}
+\usepackage{interval}
+\usepackage{float}
+\intervalconfig{left open fence= (,right open fence=)}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{standalone}
+\usepackage[style=base]{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes,positioning,decorations.pathreplacing,calc}
+\usepackage{booktabs} % For \toprule, \midrule and \bottomrule
+\usepackage{pgfplotstable} % Generates table from .csv
+\usepackage[normalem]{ulem}
+\newcommand{\stkout}[1]{\ifmmode\text{\sout{\ensuremath{#1}}}\else\sout{#1}\fi}
+\usepackage{soul}
+\usepackage{xcolor}
+\pgfplotsset{compat=newest}
+
+
+% Data of csv files
+\pgfplotstableread[col sep=comma]{CG_summary.csv}\summary{}
+
+% \theoremstyle{TH}
+\newtheorem{property}{Property}
+\newtheorem{prop}{Proposition}
+\makeatletter
+\newcommand\footnoteref[1]{\protected@xdef{}\@thefnmark{\ref{#1}}\@footnotemark}
+\makeatother
+
+\OneAndAHalfSpacedXII% current default line spacing
+%%\DoubleSpacedXII
+
+% Natbib setup for author-year style
+\usepackage{natbib}
+%\bibpunct[, ]{}{}{,}{a}{}{,}%
+ \def\bibfont{\small}%
+ \def\bibsep{\smallskipamount}%
+ \def\bibhang{24pt}%
+ \def\newblock{\ }%
+ \def\BIBand{and}%
+%% Setup of theorem styles. Comment out only one.
+%% Preferred default is the first option.
+\TheoremsNumberedThrough% Preferred (Theorem 1, Lemma 1, Theorem 2)
+%\TheoremsNumberedByChapter  % (Theorem 1.1, Lemma 1.1, Theorem 1.2)
+
+%% Setup of the equation numbering system. Comment out only one.
+%% Preferred default is the first option.
+\EquationsNumberedThrough% Default: (1), (2), ...
+%\EquationsNumberedBySection % (1.1), (1.2), ...
+
+% In the reviewing and copy editing stage enter the manuscript number.
+%\MANUSCRIPTNO{} % When the article is logged in and DOI assigned to it,
+                 %   this manuscript number is no longer necessary
+
+%%%%%%%%%%%%%%%%
+
+\newcommand{\TWCT}{P||\sum_{j = 1}^n
+w_jC_j}
+
+\newcommand{\TWCTm}{P_m||\sum_{j = 1}^n
+w_jC_j}
+
+\theoremstyle{TH}
+
+% Initialize data
+\renewcommand{\theARTICLETOP}{}
+\renewcommand{\RRHSecondLine}{}
+\renewcommand{\LRHSecondLine}{}
+\renewcommand{\theARTICLETOPRIGHT}{}
+\renewcommand{\setoddRH}{\hbox to \textwidth{\fs.7.8.\tabcolsep0pt
+  \begin{tabular*}{\textwidth}[b]{l@{\extracolsep\fill}r}
+  {\theRRHFirstLine}&  \raisebox{0pt}[0pt][0pt]{\fs.10.10.\thepage}\\[-4pt]
+  \rlap{\VRHDW{0.5pt}{0pt}{\textwidth}}&\\
+  \end{tabular*}}}
+\renewcommand{\setevenRH}{
+	\hbox to \textwidth{\fs.7.8.\tabcolsep0pt
+	  \begin{tabular*}{\textwidth}[b]{l@{\extracolsep\fill}r}
+	   \raisebox{0pt}[0pt][0pt]{\fs.10.10.\thepage}&{\theLRHFirstLine}\\[-4pt]
+	  \rlap{\VRHDW{0.5pt}{0pt}{\textwidth}}&\\
+	  \end{tabular*}}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% command definitions    %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand*{\red}{\textcolor{red}}
+\newcommand*{\green}{\textcolor{green}}
+\newcommand*{\blue}{\textcolor{blue}}
+
+\begin{document}
+
+\end{document}
