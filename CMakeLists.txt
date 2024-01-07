@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
+# Adding vcpkg overlay ports with custom ports for dependencies: branch-and-bound, ModernDD, or-utils, docopt
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg-custom-ports")
 #
 # Project details
