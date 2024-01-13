@@ -65,7 +65,8 @@ Parms::Parms()
       pruning_test{"pruning_test", false},
       suboptimal_duals{"suboptimal_duals", false},
       reduce_cost_fixing{"reduce_cost_fixing", true},
-      print_csv{"print_csv", false} {}
+      print_csv{"print_csv", false},
+      use_bks{ "use_bks", false } {}
 
 Parms::Parms(int argc, const char** argv) : Parms() {
     program_header(argc, argv);
@@ -140,7 +141,8 @@ void to_json(nlohmann::json& j, const Parms& p) {
                        {"pruning_test", p.pruning_test.value()},
                        {"suboptimal_duals", p.suboptimal_duals.value()},
                        {"reduce_cost_fixing", p.reduce_cost_fixing.value()},
-                       {"print_csv", p.print_csv.value()}};
+                       {"print_csv", p.print_csv.value()},
+                       {"use_bks", p.use_bks.value()}};
 }
 
 void from_json(const nlohmann::json& j, Parms& p) {
@@ -153,7 +155,6 @@ void from_json(const nlohmann::json& j, Parms& p) {
     j.at("bb_node_limit").get_to(p.bb_node_limit.value());
     j.at("nb_iterations_rvnd").get_to(p.nb_iterations_rvnd.value());
     j.at("branching_cpu_limit").get_to(p.branching_cpu_limit.value());
-    p.branching_cpu_limit.value() *= boost::chrono::nanoseconds::period::den;
     j.at("use_cpu_time").get_to(p.use_cpu_time.value());
     j.at("alpha").get_to(p.alpha.value());
     j.at("branching_point").get_to(p.branching_point.value());
@@ -165,6 +166,7 @@ void from_json(const nlohmann::json& j, Parms& p) {
     j.at("suboptimal_duals").get_to(p.suboptimal_duals.value());
     j.at("reduce_cost_fixing").get_to(p.reduce_cost_fixing.value());
     j.at("print_csv").get_to(p.print_csv.value());
+    p.use_bks.set_value(j.value("use_bks", false));
 }
 
 void Parms::parse_cmd(int argc, const char** argv) {

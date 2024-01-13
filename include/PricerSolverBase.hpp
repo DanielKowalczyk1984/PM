@@ -66,7 +66,7 @@ struct PricerSolverBase {
 
     static const std::shared_ptr<GRBEnv> genv;
 
-    static constexpr double EPS_SOLVER = 1e-6;
+    static constexpr double EPS_SOLVER = 1e-4;
     static constexpr double RC_FIXING = 1e-4;
     static constexpr int    ALIGN = 60;
     static constexpr int    ALIGN_HALF = 60;

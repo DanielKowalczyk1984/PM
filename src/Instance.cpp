@@ -41,6 +41,8 @@
 #include "Interval.h"                       // for IntervalPair, Interval
 #include "Job.h"                            // for Job
 #include "Parms.h"                          // for Parms
+#include "nlohmann/json.hpp"                // for basic_json<>::object_t
+#include <fmt/format.h>
 
 Instance::Instance(Parms const& _parms)
     : path_to_instance(_parms.jobfile),
@@ -58,7 +60,7 @@ Instance::Instance(Parms const& _parms)
         int  p{};
         int  d{};
         int  w{};
-        auto counter{0UL};
+        auto counter{ 0UL };
         while (getline(in_file, str)) {
             std::istringstream ss(str);
             ss >> p >> d >> w;
@@ -80,9 +82,26 @@ Instance::Instance(Parms const& _parms)
         }
         calculate_H_max_H_min();
         find_division();
-    } else {
-        throw InstanceException("Could not open file\n");
     }
+
+    if(_parms.use_bks.value())
+    {
+        auto json_filename = fmt::format("sol/{}.json", pname);
+        std::ifstream json_file{ json_filename };
+        if (json_file.is_open()) {
+            nlohmann::json json;
+            json_file >> json;
+            std::string nb_machines_str = std::to_string(nb_machines);
+            auto sol = json[nb_machines_str]["bks"].get<int>();
+            best_known_sol = sol;
+            json_file.close();
+        }
+        else {
+            throw InstanceException("Could not open file\n");
+        }
+    }
+
+    
 }
 
 void Instance::calculate_H_max_H_min() {
@@ -198,5 +217,25 @@ void Instance::find_division() {
 
     fmt::print(R"(The number of layers = {}
 )",
-               vector_pair.size());
+vector_pair.size());
 }
+
+void Instance::print_intervals() {
+    fmt::print(R"(The number of jobs = {}
+The number of machines = {}
+The number of intervals = {}
+)",
+nb_jobs, nb_machines, intervals.size());
+
+    for (auto& it : intervals) {
+        fmt::print(R"(Interval: [{}, {}]
+)",
+it->a, it->b);
+        for (auto& job : it->sigma) {
+            fmt::print(R"(Job: {}, processing time = {}, due time = {}, weight = {}
+)",
+job->job, job->processing_time, job->due_time, job->weight);
+        }
+    }
+}
+

@@ -132,10 +132,10 @@ struct fmt::formatter<PricingSolver> : formatter<string_view> {
                 name = "BddBackwardCycle";
                 break;
             case PricingSolver::dp_solver:
-                name = "Time-Indexed";
+                name = "TimeIndexed";
                 break;
             case PricingSolver::ati_solver:
-                name = "Arc-Time-Indexed";
+                name = "ArcTimeIndexed";
                 break;
             case PricingSolver::dp_bdd_solver:
                 name = "Hybrid";
@@ -152,8 +152,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(PricingSolver,
                                     {bdd_solver_backward_simple, "BddBackward"},
                                     {bdd_solver_backward_cycle,
                                      "BddBackwardCycle"},
-                                    {dp_solver, "Time-Indexed"},
-                                    {ati_solver, "Arc-Time-Indexed"},
+                                    {dp_solver, "TimeIndexed"},
+                                    {ati_solver, "ArcTimeIndexed"},
                                     {dp_bdd_solver, "Hybrid"}})
 
 NLOHMANN_JSON_SERIALIZE_ENUM_ARRAY(StabTechniques,
@@ -256,6 +256,26 @@ struct fmt::formatter<Scoring_Parameter> : formatter<string_view> {
     }
 };
 
+template <>
+struct fmt::formatter<Scoring_Value> : formatter<string_view> {
+    // parse is inherited from formatter<string_view>.
+    template <typename FormatContext>
+    auto format(Scoring_Value _solver, FormatContext& ctx) {
+        string_view name = "unknown";
+        switch (_solver) {
+          case Scoring_Value::lb_scoring_value:
+                name = "LbScoring";
+                break;
+          case Scoring_Value::size_scoring_value:
+                name = "SizeScoringValue";
+                break;
+          case Scoring_Value::nb_paths_scoring_value:
+                name = "NbPathsScoringValue";
+                break;
+        }
+        return formatter<string_view>::format(name, ctx);
+    }
+};
 struct Parms {
     template <typename T>
     class Parameter {
@@ -303,6 +323,7 @@ struct Parms {
     Parameter<bool>                                     suboptimal_duals;
     Parameter<bool>                                     reduce_cost_fixing;
     Parameter<bool>                                     print_csv;
+    Parameter<bool>                                     use_bks;
 
     std::string jobfile{};
     std::string pname{};
@@ -357,7 +378,7 @@ struct fmt::formatter<Parms::Parameter<T>> {
     }
 
     template <typename FormatContext>
-    auto format(const Parms::Parameter<T>& p, FormatContext& ctx)
+    constexpr auto format(const Parms::Parameter<T>& p, FormatContext& ctx)
         -> decltype(ctx.out()) {
         if (presentation == 'n') {
             return format_to(ctx.out(), "{}", p.name());
@@ -391,23 +412,23 @@ struct fmt::formatter<Parms> {
     }
 
     template <typename FormatContext>
-    auto format(const Parms& parms, FormatContext& ctx) -> decltype(ctx.out()) {
+    constexpr auto format(const Parms& parms, FormatContext& ctx) -> decltype(ctx.out()) {
         if (presentation == 'n') {
             return format_to(
                 ctx.out(),
-                "{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n}",
+                "{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n},{:n}",
                 parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
                 parms.pricing_solver, parms.strong_branching,
                 parms.branching_point, parms.refine_bdd, parms.pruning_test,
                 parms.suboptimal_duals, parms.scoring_parameter,
-                parms.scoring_value, parms.use_cpu_time);
+                parms.scoring_value, parms.use_cpu_time,parms.use_bks);
         }
         return format_to(
-            ctx.out(), "{},{},{},{},{},{},{},{},{},{},{},{}",
+            ctx.out(), "{},{},{},{},{},{},{},{},{},{},{},{},{}",
             parms.nb_iterations_rvnd, parms.stab_technique, parms.alpha,
             parms.pricing_solver, parms.strong_branching, parms.branching_point,
             parms.refine_bdd, parms.pruning_test, parms.suboptimal_duals,
-            parms.scoring_parameter, parms.scoring_value, parms.use_cpu_time);
+            parms.scoring_parameter, parms.scoring_value, parms.use_cpu_time,parms.use_bks);
     }
 };
 

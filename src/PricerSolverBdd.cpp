@@ -282,11 +282,11 @@ void PricerSolverBdd::init_table() {
 }
 
 void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
-    lp_interface_get_nb_rows(pd->RMP.get(), &(pd->nb_rows));
-    auto nb_new_constraints =
-        reformulation_model.size() - static_cast<size_t>(pd->nb_rows);
+    auto nb_rows = pd->osi_rmp->getNumRows();
+    auto nb_new_constraints = reformulation_model.size() -
+                              static_cast<size_t>(pd->osi_rmp->getNumRows());
 
-    fmt::print("nb rows initial {} {} {}\n", pd->nb_rows,
+    fmt::print("nb rows initial {} {} {}\n", nb_rows,
                reformulation_model.size(), nb_new_constraints);
 
     assert((nb_new_constraints <=
@@ -300,7 +300,7 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
 
     int pos = 0;
     for (auto&& [c, constr] : reformulation_model |
-                                  ranges::views::drop(pd->nb_rows) |
+                                  ranges::views::drop(nb_rows) |
                                   ranges::views::enumerate) {
         sense[c] = constr->get_sense();
         starts[c] = pos;
@@ -352,11 +352,8 @@ void PricerSolverBdd::insert_constraints_lp(NodeData* pd) {
 
     starts[nb_new_constraints] = pos;
 
-    lp_interface_addrows(pd->RMP.get(), static_cast<int>(nb_new_constraints),
-                         static_cast<int>(coeff.size()), starts.data(),
-                         column_ind.data(), coeff.data(), sense.data(),
-                         rhs.data(), nullptr);
-    lp_interface_get_nb_rows(pd->RMP.get(), &(pd->nb_rows));
+    pd->osi_rmp->addRows(nb_new_constraints, starts.data(), column_ind.data(),
+                         coeff.data(), nullptr, rhs.data());
     pd->id_row.resize(reformulation_model.size(), 0);
     pd->coeff_row.resize(reformulation_model.size(), 0.0);
 }

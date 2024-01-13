@@ -59,7 +59,7 @@ class BranchNodeBase : public State {
     [[nodiscard]] auto get_pricersolver() const -> PricerSolverBase*;
 
     static constexpr auto NbCandidates = 16UL;
-    static constexpr auto EPS = 1e-6;
+    static constexpr auto EPS = 1e-4;
 
    private:
     std::unique_ptr<NodeData> pd;
