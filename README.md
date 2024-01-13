@@ -33,6 +33,14 @@ up and running on your local machine for development and testing purposes.
 
 * **Vcpkg** - C/C++ dependency manager from Microsoft. For more information on
   how to install and to use vcpkg, we refer to [https://vcpkg.io](https://vcpkg.io).
+  Do not forget to integrate vcpkg with your environment, i.e. add the vcpkg binary
+  directory to your environment variable path. For example, on linux based systems
+  you can add the following lines to your .bashrc file or just execute them in the terminal:
+
+```bash
+export VCPKG_ROOT=<path to vcpkg>
+```
+  CMakelists.txt will automatically detect vcpkg and will install the required dependencies, but you need export the environment variable VCPKG_ROOT.
 
 * **Gurobi** - We use the Gurobi optimizer to compute the linear programming
   (LP) relaxations. You can download Gurobi from the company's
@@ -59,11 +67,22 @@ mkdir -p ThirdParty && cd ThirdParty
 wget -O coinbrew https://raw.githubusercontent.com/coin-or/coinbrew/master/coinbrew
 chmod u+x coinbrew
 ./coinbrew fetch Cgl@master
-./coinbrew build Cgl --no-prompt --prefix="coin-or-x64-linux-release" --with-gurobi-lflags="-L$GUROBI_HOME/lib -lgurobi91 -lpthread -lm" --with-gurobi-cflags="-I$GUROBI_HOME/include" --tests none
-./coinbrew build Cgl --no-prompt --prefix="coin-or-x64-linux-debug" --reconfigure --enable-debug --with-gurobi-lflags="-L$GUROBI_HOME/lib -lgurobi91 -lpthread -lm" --with-gurobi-cflags="-I$GUROBI_HOME/include" --tests none
+./coinbrew build Cgl --no-prompt --prefix="coin-or-x64-linux-release" --with-gurobi-lflags="-L$GUROBI_HOME/lib -l${GUROBI_VERSION} -lpthread -lm" --with-gurobi-cflags="-I$GUROBI_HOME/include" --tests none
+./coinbrew build Cgl --no-prompt --prefix="coin-or-x64-linux-debug" --reconfigure --enable-debug --with-gurobi-lflags="-L$GUROBI_HOME/lib -l${GUROBI_VERSION} -lpthread -lm" --with-gurobi-cflags="-I$GUROBI_HOME/include" --tests none
 ``` 
 
-#### Windows
+Do not forget to adjust the environment variables such that cmake can find the Gurobi and Osi libraries. For example, on linux based systems you can add the following lines to your .bashrc file or just execute them in the terminal:
+
+```bash
+export GUROBI_HOME="/opt/gurobi912/linux64"
+export GUROBI_VERSION="gurobi91"
+export PATH="${PATH}:${GUROBI_HOME}/bin"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib"
+export COIN_OR_X64_LINUX_RELEASE_DIR="/home/daniel/ThirdParty/coin-or-x64-linux-release"
+export COIN_OR_X64_LINUX_DEBUG_DIR="/home/daniel/ThirdParty/coin-or-x64-linux-debug"
+```
+
+#### Windows (Not supported, but you can try to compile it yourself)
 To compile Osi on Windows based systems you should install
 [Msys2](https://www.msys2.org/) first. Follow the next instructions instructions
 to setup the developers environment in order to compile Osi with visual studio.
@@ -160,8 +179,15 @@ cmake --preset windows64-msvc-2022-release && cmake --build --preset build-windo
 
 ```
 
-You can also you use VS code or Visual Studio to build the binaries. With
-appropriate tools both apps can detect cmake files.
+#### Docker
+We also provide a docker file to build the project. To run the docker [container](https://hub.docker.com/repository/docker/danielkowalczyk/pm_linux_compute_env/general)
+
+```bash
+docker run -it --rm -v .:/workspaces/implementation -w /workspaces/implementation danielkowalczyk/pm_linux_compute_env:latest bash
+cmake --preset gcc-11-release && cmake --build --preset build-gcc-11-release
+```
+
+Or you can also use the devcontainer provided in the repository. For more information on how to use devcontainers in VS code, please refer to the [documentation](https://code.visualstudio.com/docs/remote/containers).
 
 ## Contributing
 

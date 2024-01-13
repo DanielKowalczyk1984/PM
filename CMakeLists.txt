@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
+# Adding vcpkg overlay ports with custom ports for dependencies: branch-and-bound, ModernDD, or-utils, docopt
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg-custom-ports")
 #
 # Project details
@@ -117,17 +118,20 @@ include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-std=c++20" COMPILER_SUPPORTS_CXX20)
 check_cxx_compiler_flag("-std=gnu++20" COMPILER_SUPPORTS_CXX20_GNU)
 check_cxx_compiler_flag("-std:c++20" COMPILER_SUPPORTS_CXX20_MSVC)
+check_cxx_compiler_flag("-std=c++2a" COMPILER_SUPPORTS_CXX2A)
 
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY
    AND (COMPILER_SUPPORTS_CXX20
         OR COMPILER_SUPPORTS_CXX20_GNU
-        OR COMPILER_SUPPORTS_CXX20_MSVC)
+        OR COMPILER_SUPPORTS_CXX20_MSVC
+        OR COMPILER_SUPPORTS_CXX2A)
 )
   target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 elseif(
   COMPILER_SUPPORTS_CXX20
   OR COMPILER_SUPPORTS_CXX20_GNU
   OR COMPILER_SUPPORTS_CXX20_MSVC
+  OR COMPILER_SUPPORTS_CXX2A
 )
   target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 else()

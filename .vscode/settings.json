@@ -88,5 +88,6 @@
 		"span": "cpp",
 		"valarray": "cpp",
 		"*.tcc": "cpp"
-	}
+	},
+	"julia.environmentPath": "c:\\Users\\danie\\PapersOR\\PM\\implementation"
 }

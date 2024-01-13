@@ -65,7 +65,8 @@ Parms::Parms()
       pruning_test{"pruning_test", false},
       suboptimal_duals{"suboptimal_duals", false},
       reduce_cost_fixing{"reduce_cost_fixing", true},
-      print_csv{"print_csv", false} {}
+      print_csv{"print_csv", false},
+      use_bks{ "use_bks", false } {}
 
 Parms::Parms(int argc, const char** argv) : Parms() {
     program_header(argc, argv);
@@ -165,7 +166,7 @@ void from_json(const nlohmann::json& j, Parms& p) {
     j.at("suboptimal_duals").get_to(p.suboptimal_duals.value());
     j.at("reduce_cost_fixing").get_to(p.reduce_cost_fixing.value());
     j.at("print_csv").get_to(p.print_csv.value());
-    j.at("use_bks").get_to(p.use_bks.value());
+    p.use_bks.set_value(j.value("use_bks", false));
 }
 
 void Parms::parse_cmd(int argc, const char** argv) {
